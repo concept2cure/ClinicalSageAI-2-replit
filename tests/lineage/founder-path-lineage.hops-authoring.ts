@@ -311,6 +311,13 @@ export async function hopFileToVault(w: World): Promise<void> {
   expect(res.status, JSON.stringify(res.body)).toBe(201);
   k.vaultDocumentId = String(res.body.data.vaultDocumentId);
 
+  await hop.check('approval-carry-decided', 'approved in Authoring with no independent review, so the approval does not carry, and the filing says why (FD5 (c))', async (observe) => {
+    const approval = res.body.data.approval as { carried?: boolean; reason?: string } | undefined;
+    observe(approval?.carried);
+    expect(approval).toMatchObject({ carried: false });
+    expect(approval?.reason).toMatch(/No review signature covers this content/);
+  });
+
   await hop.check('vault-row-in-project', 'vault.documents holds the filed bytes in the same project, under their content hash', async (observe) => {
     const [v] = await q<{ program_id: string; content_hash: string; storage_version_id: string; deleted_at: unknown }>(
       'SELECT program_id, content_hash, storage_version_id, deleted_at FROM vault.documents WHERE id = $1', [k.vaultDocumentId]);

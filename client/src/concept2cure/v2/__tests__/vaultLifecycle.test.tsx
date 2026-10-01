@@ -250,3 +250,23 @@ describe('what counts as settled in a folder (VR-13, FD4)', () => {
     expect(isSettled({ ...uploadDoc({ src: 'authored', status: 'final' }) } as never)).toBe(true);
   });
 });
+
+describe('a sign-off carried from Authoring (FD5 (c))', () => {
+  it('says it was signed in Authoring, by the printed name the Authoring signature holds', async () => {
+    const { LifecycleSummary } = await import('../surfaces/VaultLifecycle');
+    const at = '2026-10-01T10:00:00.000Z';
+    render(
+      <LifecycleSummary
+        lifecycle={{
+          canonicalId: 'c1',
+          stage: 'approved',
+          review: { printedName: 'Rae Reviewer', meaning: 'REVIEWED', signedAt: at, signatureRef: 'authoring-sig:r', carriedFrom: 'authoring' },
+          approval: { printedName: 'Abe Approver', meaning: 'APPROVED', signedAt: at, signatureRef: 'authoring-sig:a', carriedFrom: 'authoring' },
+        }}
+      />,
+    );
+    const shown = screen.getByTestId('vault-version-stage').textContent ?? '';
+    expect(shown).toContain('Review signed in Authoring by Rae Reviewer · meaning: reviewed · 2026-10-01 10:00:00 UTC');
+    expect(shown).toContain('Approval signed in Authoring by Abe Approver · meaning: approved · 2026-10-01 10:00:00 UTC');
+  });
+});

@@ -19,6 +19,7 @@ import { z } from 'zod';
 import { pool } from '../db';
 import { recordGovernedAction } from './c2c/actions';
 import { signedActAttempts, signGovernedAct } from './governed-signed-act';
+import { DECISION_ACT_MEANINGS } from '../services/part11/signature-meanings';
 import { can } from '../services/governance/permissions';
 import {
   addCommitteeMemberTx,
@@ -267,6 +268,8 @@ router.post('/agenda/:id/finalize', signedActAttempts, async (req, res) => {
   // asked for a password.
   await signGovernedAct(req, res, {
     domain: 'committee',
+    target: `committee-agenda:${id}`,
+    meanings: DECISION_ACT_MEANINGS,
     codeStatus: CODE_STATUS,
     tenantRole: resolveRole(req),
     run: async (client, oid, uid) => {

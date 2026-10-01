@@ -122,6 +122,10 @@ export interface ResolvedBundle {
    *  diffs against, once an agency has accepted these bytes. */
   sequence?: string;
   submissionType?: string;
+  /** The us-regional identity the assembled backbone declared (FDA; sweep F04). */
+  submissionTypeCode?: string;
+  submissionSubTypeCode?: string;
+  submissionId?: string;
   leafManifest?: Array<{ ctdSection: string; fileName: string; href: string; md5: string; operation?: string; title?: string }>;
   /** The agency application number the package records
    *  (metadata.regulatory.applicationNumber) under the one identifier rule;
@@ -200,6 +204,18 @@ async function ensureBundleLocal(bundle: {
  * format one of the known transmit formats. A malformed descriptor is treated
  * as "no bundle", never coerced.
  */
+
+/** The us-regional identity the stored descriptor records, shape-checked: a
+ *  field that is not a code (or a four-digit sequence) is left out. */
+function storedIdentityOf(stored: Record<string, unknown>): Pick<ResolvedBundle, 'submissionTypeCode' | 'submissionSubTypeCode' | 'submissionId'> {
+  const fits = (v: unknown, re: RegExp): v is string => typeof v === 'string' && re.test(v);
+  return {
+    ...(fits(stored.submissionTypeCode, /^fdast\d{1,2}$/) ? { submissionTypeCode: stored.submissionTypeCode } : {}),
+    ...(fits(stored.submissionSubTypeCode, /^fdasst\d{1,2}$/) ? { submissionSubTypeCode: stored.submissionSubTypeCode } : {}),
+    ...(fits(stored.submissionId, /^\d{4}$/) ? { submissionId: stored.submissionId } : {}),
+  };
+}
+
 async function loadStoredBundle(
   packageId: number,
   organizationId: number,
@@ -245,6 +261,7 @@ async function loadStoredBundle(
     contentFingerprint: isContentFingerprintOfAnyScheme(stored.contentFingerprint) ? stored.contentFingerprint : undefined,
     sequence: typeof stored.sequence === 'string' && /^\d{4}$/.test(stored.sequence) ? stored.sequence : undefined,
     submissionType: typeof stored.submissionType === 'string' ? stored.submissionType : undefined,
+    ...storedIdentityOf(stored),
     // Shape-checked with the SAME guard the reader applies, and dropped whole
     // when any entry fails it. readFiledSequences drops a partial inventory
     // because a prior state missing a leaf computes `new` for a document that
@@ -420,6 +437,7 @@ async function recordTransmittedSequence(
   const recorded = await recordFiledSequence(input.packageId, {
     sequence: bundle.sequence,
     submissionType: bundle.submissionType ?? '',
+    ...storedIdentityOf(bundle as unknown as Record<string, unknown>),
     sha256: bundle.sha256,
     transmittalId,
     leaves: bundle.leafManifest,

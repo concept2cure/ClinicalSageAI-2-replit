@@ -14,8 +14,10 @@ ICH/FDA specifications that this sandbox cannot fetch (agency hosts are refused)
 
 Also in this folder: [`VERDICTS.md`](VERDICTS.md), every skeptic's return verbatim
 (probe output, the requirement and its confidence, scope, smallest fix, blast
-radius), and [`PLANS.md`](PLANS.md), the two planning passes the open work is
-built from (F19's agency-rejection action; F04, F05, F07, F08).
+radius); [`PLANS.md`](PLANS.md), the two planning passes the open work was
+built from (F19's agency-rejection action; F04, F05, F07, F08); and
+[`METHOD.md`](METHOD.md), the verifier and the still-owed lenses as runnable
+scripts.
 
 ## How the sweep ran
 
@@ -35,11 +37,11 @@ both finders, and every verifier, were cut off by account usage limits
 | F01 | backbone | high | `index.xml` and `us-regional.xml` declare `xmlns:xlink="http://www.w3.org/1999/xlink"`; the ICH 3.2 and FDA 3.3 DTDs fix it (`#FIXED`) to `http://www.w3c.org/1999/xlink` — every backbone would be DTD-invalid. The repo's own `docs/ectd/SPEC_DIGEST.md` shows the w3c.org value. | **confirmed** 2026-10-01 (high); **fixed** — see "Fixed after verification" |
 | F02 | backbone | high | `m3-2-s-drug-substance`, `m3-2-p-drug-product`, `m5-3-5-…` (and the 2.3.S/2.3.P/2.7.3 counterparts) are emitted without the attributes the DTD requires (substance, manufacturer, dosageform, indication); multiple substances/products/indications merge under one heading. | **partially confirmed** 2026-10-01 (high): Module 3/5 headings lack #REQUIRED attributes; the Module 2 ones are never emitted (F00); `product-name` is optional |
 | F03 | backbone | medium | This spine can never produce a Study Tagging File: `LeafBytes` has no study fields, so 4.2.x / 5.3.x study reports ship untagged. | **confirmed** 2026-10-01 (medium); the in-repo STF generator is not ICH STF 2.2 either |
-| F04 | m1-regional + lifecycle | high | Every follow-up is declared the Original of a new regulatory activity: `submission-id` is always the sequence's own number and sub-type always `fdasst1`; the assemble body has no field to say otherwise, and nothing checks submission type against application type (an IND accepts "Efficacy Supplement"). | **confirmed** 2026-10-01 (high) |
+| F04 | m1-regional + lifecycle | high | Every follow-up is declared the Original of a new regulatory activity: `submission-id` is always the sequence's own number and sub-type always `fdasst1`; the assemble body has no field to say otherwise, and nothing checks submission type against application type (an IND accepts "Efficacy Supplement"). | **confirmed** 2026-10-01 (high); **fixed** on the package spine (sub-type, submission-id, impossible pairs refused); the shared packager's defaults are a hand-off |
 | F05 | m1-regional | high | `<application-number>` is written exactly as entered; the product's own example is `IND123456`, while FDA application numbers are six digits. | **confirmed** 2026-10-01 (high); **fixed** at the package-spine boundary (identifiers route, assemble gate, form) |
 | F06 | m1-regional | high | Module 1 headings are written flat under `<m1-regional>` in package order (no parent headings, not in section order), Form 1571 ships as a bare leaf with no `form-type`, and FDA is marked `regionConformant: true` by region alone. | **confirmed** 2026-10-01 (high); **partly fixed** (order, honest `regionConformant`); nesting blocked on the us-regional DTD |
 | F07 | m1-regional | high | `<applicant-info/>` is always empty on this spine although the recorded applicant id and name are required and described as carried by the backbone; `application-containing-files` is also absent. | **confirmed** 2026-10-01 (high); **fixed** (markup, and the contact is recorded and passed) |
-| F08 | m1-regional | medium | Submission-type words are matched by loose substring, so `IND` files as IND Safety Reports (fdast9), `report` as Annual Report, `supplement` as Efficacy Supplement, instead of being refused. | **confirmed** 2026-10-01 (medium) |
+| F08 | m1-regional | medium | Submission-type words are matched by loose substring, so `IND` files as IND Safety Reports (fdast9), `report` as Annual Report, `supplement` as Efficacy Supplement, instead of being refused. | **confirmed** 2026-10-01 (medium); **fixed**: an operator's term is matched exactly at the assemble boundary |
 | F09 | lifecycle | high | `modified-file` names a content file, not a leaf (`../0000/index.xml#<leafId>`). | **fixed upstream** in `09c4c15d` (IND lane, 2026-09-29) |
 | F10 | lifecycle | high | A filed withdrawal never leaves the filed state: the delete entry carries no `leafKey`, so the fold keyed on `leafKey` drops nothing; the document can be withdrawn twice, replaced after withdrawal, and is refused ("already on file") when re-filed. | **confirmed** 2026-10-01; **fixed** — see "Fixed after verification" |
 | F11 | lifecycle | medium | An empty-section placeholder PDF ("[EMPTY SECTION] …") is filed to the agency and never superseded: the real document later files as `new` beside it. | **confirmed** 2026-10-01 (medium); **fixed** — an empty section files nothing |
@@ -419,6 +421,45 @@ rollback pin passes before and after by design; a mutation that un-files after
 a rollback makes it fail.
 WITH the fix: 10 suites, 333 tests passed; ci:sign-ceremony OK, selftest 17 passed
 ```
+
+**F04 and F08 — what an FDA sequence declares.** `resolveFdaSequenceIdentity`
+(`server/services/ectd/fda-sequence-identity.ts`) decides, or refuses, the
+submission type, sub-type and submission-id at the package spine's assemble
+boundary: the term is matched exactly (`resolveSubmissionTypeStrict`; the loose
+resolver stays for the other spine's internal keys); a follow-up must state its
+sub-type; an Amendment or Resubmission names the activity it continues, a filed,
+earlier sequence that opened an activity of the same type; an Original's
+submission-id is its own number and a second Original Application is refused;
+pairs that cannot exist are refused (a supplement on an IND or master file, IND
+safety reports outside an IND). The codes reach the packager, the bundle
+descriptor and the filed history (read back by the next sequence); other regions
+refuse the two FDA fields. The assemble form asks for the sub-type and the
+activity, and its example is now a term an IND can file. The route tests and
+end-to-end cases that filed IND follow-ups as 'Efficacy Supplement' now file the
+IND amendment tuple. The end-to-end harness moved to `tests/support/` so the suite
+stays one implementation as it grows.
+
+```
+WITHOUT the fix (route, real packager, PGlite): 2 failed
+  x an IND amendment declares the activity it continues ... -> us-regional.xml did not carry <submission-id submission-type="fdast1">0000</submission-id>
+  x REFUSES what an IND cannot file ... -> IND + 'Efficacy Supplement' assembled: expected 200 to be 409
+Mutation: the loose resolver back in the vocabulary -> "supplement: expected [Function] to throw"
+WITH the fix: ectd + submission-gateways + route, transmit, AnA, client and ectd-compile
+  suites: 1774 passed; 2 failures in transmit-guard-reports-checks.test.ts fail identically
+  without this change (see hand-offs)
+```
+
+Hand-offs from F04, not changed here (the IND lane's or shared files):
+`core-to-packager.ts` sends sub-type `amendment` with no submission-id, so its
+amendments still declare their own number (the shared packager's default); the
+packager-side refusal of that waits for that lane. `ind-lifecycle/ind-ectd-envelope.ts`
+is a second us-regional envelope builder that always writes submission-id = sequence.
+`ectd-regional-rules.ts` FDA-ESG-002 still requires the prefix F05 refuses.
+Not this lane's, seen in passing:
+`server/services/submission-gateways/__tests__/transmit-guard-reports-checks.test.ts`
+fails at HEAD (`[tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope`)
+since `b7bf25037` (gateway-account selection, D7) made the transmit guard query the
+database in a test that does not mock it.
 
 ## What this sweep produced that is already fixed
 

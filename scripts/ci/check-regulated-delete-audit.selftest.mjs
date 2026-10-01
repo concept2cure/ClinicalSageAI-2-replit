@@ -58,6 +58,14 @@
  *   - a commented-out audit CALL (`// await writeMutation(..., userId, ...)`)
  *     that names an actor counts as an audit — AUDIT_RE and the call scan are
  *     applied to comment lines too;
+ *   - an attributable audit call of a NEIGHBOURING handler within the 25-line
+ *     window covers a delete that has none of its own: the window, not the
+ *     handler or the transaction, is the unit;
+ *   - an actor whose value may be undefined at run time (`userId: req.user?.id`,
+ *     a ternary of nulls) counts: the gate reads the code, not its values. The
+ *     opposite strictness is asserted nowhere either: an argument built in a
+ *     variable (`logAction(entry)`) or spread (`...base`) names no actor and is
+ *     reported, so a regulated delete writes its actor in the call;
  *   - routes outside server/routes/, and .js files, are not scanned;
  *   - an allow-list entry whose file no longer has a violation is not reported
  *     stale, and a non-string truthy entry (`true`) suppresses without a reason.
@@ -393,6 +401,22 @@ const WRITE_MUTATION_NULL_ACTOR = `router.delete('/:id/sections/:key/evidence/:e
 });
 `;
 
+/* The review of the actor rule (2026-10-01, late evening): an actor that is not
+   the operator, or not an actor at all, still satisfied it. Each shape below is
+   a real unattributed row the keyword test accepted. */
+const actorLike = (call) => `async function governedDelete(client, req, docId, tenantId) {
+  await client.query('DELETE FROM authoring_documents WHERE id = $1 AND tenant_id = $2', [docId, tenantId]);
+  ${call}
+  return { kind: 'deleted' };
+}
+`;
+const ACTOR_ONLY_NESTED = actorLike("await writeChainedAuditRow(client, { tenantId, action: 'authoring.document.delete', details: { userId: subjectId } });");
+const ACTOR_ONLY_IN_STRING = actorLike("await writeChainedAuditRow(client, { tenantId, action: 'deleted by the actor named in userId' });");
+const ACTOR_ONLY_IN_COMMENT = actorLike("await writeChainedAuditRow(client, { tenantId, /* userId: who */ action: 'authoring.document.delete' });");
+const ACTOR_A_STRING = actorLike("await writeChainedAuditRow(client, { tenantId, userId: 'system', action: 'authoring.document.delete' });");
+const ACTOR_PARENTHESISED_NULL = actorLike("await writeChainedAuditRow(client, { tenantId, userId: (null), action: 'authoring.document.delete' });");
+const AUDIT_SERVICE_READ = actorLike("const prior = await auditService.getAuditLog({ userId, resourceId: docId });");
+
 /* ------------------------------------------------------------------- cases */
 
 const REGULATED = [
@@ -584,6 +608,25 @@ const cases = [
     files: { 'c2c/documents.ts': WRITE_MUTATION_NULL_ACTOR },
     expectExit: 1,
     expectIn: ['FAIL — 1 unaudited', site('c2c/documents.ts', WRITE_MUTATION_NULL_ACTOR, 'DELETE FROM c2c_document_section_evidence'), 'names no actor'],
+  },
+
+  ...[
+    ['the actor only inside a nested object (the subject, not the operator)', ACTOR_ONLY_NESTED],
+    ['the word userId only inside a string', ACTOR_ONLY_IN_STRING],
+    ['the actor only inside a comment', ACTOR_ONLY_IN_COMMENT],
+    ["userId: 'system'", ACTOR_A_STRING],
+    ['userId: (null)', ACTOR_PARENTHESISED_NULL],
+  ].map(([label, body]) => ({
+    name: `FAILS when ${label}`,
+    files: { 'authoring.router.ts': body },
+    expectExit: 1,
+    expectIn: ['FAIL — 1 unaudited', site('authoring.router.ts', body, 'DELETE FROM authoring_documents'), 'names no actor'],
+  })),
+  {
+    name: 'FAILS when the only auditService call beside the delete is a read',
+    files: { 'authoring.router.ts': AUDIT_SERVICE_READ },
+    expectExit: 1,
+    expectIn: ['FAIL — 1 unaudited', site('authoring.router.ts', AUDIT_SERVICE_READ, 'DELETE FROM authoring_documents'), 'no audit call within'],
   },
 
   /* --------------------------------------------------------- ALLOW-LIST - */

@@ -7,8 +7,10 @@
  * through the existing export path, ingests through the existing vault ingest
  * service, files through the existing filing service, audits the whole thing
  * as one governed action and answers
- * `201 { data: { vaultDocumentId, folder, sha256, format } }`. It refuses a
- * document with no program and never files a document that is mid-freeze.
+ * `201 { data: { vaultDocumentId, folder, sha256, format, approval } }`. It
+ * refuses a document with no program and never files a document that is
+ * mid-freeze. `approval` says whether the Authoring approval carried to the
+ * Vault version (FD5 (c)) and, when it did not, why.
  *
  * What is shown afterwards is exactly what came back — the vault id, the
  * folder the server chose, the SHA-256 it recorded — and on failure the
@@ -25,6 +27,34 @@ export interface FileToVaultResult {
   folder: string | null;
   sha256: string | null;
   format: string;
+  /** What the server said about the Authoring approval; null when it said nothing. */
+  approval: FiledApproval | null;
+}
+
+/** Whether the Authoring approval carried to the Vault version, as the server reported it. */
+export type FiledApproval =
+  | { carried: true; approvedBy: string | null; reviewedBy: string | null }
+  | { carried: false; reason: string };
+
+function readFiledApproval(raw: unknown): FiledApproval | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const r = raw as { carried?: unknown; approvedBy?: unknown; reviewedBy?: unknown; reason?: unknown };
+  const name = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
+  if (r.carried === true) return { carried: true, approvedBy: name(r.approvedBy), reviewedBy: name(r.reviewedBy) };
+  if (r.carried === false && typeof r.reason === 'string' && r.reason.trim()) return { carried: false, reason: r.reason.trim() };
+  return null;
+}
+
+/** The sentence the result shows about the Vault approval. */
+export function filedApprovalLine(approval: FiledApproval | null): string {
+  if (!approval) return 'The server did not report whether the approval carried. Check the version in the Vault.';
+  if (approval.carried) {
+    const who = [approval.reviewedBy && `reviewed by ${approval.reviewedBy}`, approval.approvedBy && `approved by ${approval.approvedBy}`]
+      .filter(Boolean)
+      .join(', ');
+    return `The Authoring approval carried to this file${who ? ` (${who})` : ''}. The Vault shows the version as approved.`;
+  }
+  return `Not approved in the Vault: ${approval.reason} Review and approve this version in the Vault before it is transmitted.`;
 }
 
 export interface FileToVaultDialogProps {
@@ -61,6 +91,7 @@ export function readFileToVaultResult(body: unknown): FileToVaultResult | null {
     folder: readFolderLabel(data.folder),
     sha256: typeof data.sha256 === 'string' ? data.sha256 : null,
     format: typeof data.format === 'string' ? data.format : '',
+    approval: readFiledApproval(data.approval),
   };
 }
 
@@ -140,6 +171,12 @@ function FileToVaultOutcome({
           </span>
         </div>
       )}
+      {result && (
+        <div className={result.approval?.carried ? 'de-gov' : 'de-err'} role="status" data-testid="ftv-approval">
+          {result.approval?.carried && <span className="ico">{I.checkCircle}</span>}
+          <span className="de-gov-t">{filedApprovalLine(result.approval)}</span>
+        </div>
+      )}
       {error && (
         <div className="de-err" role="alert" data-testid="ftv-error">{error}</div>
       )}
@@ -213,7 +250,11 @@ export function FileToVaultDialog({ docId, docTitle, docStatus, programId, progr
           {sealed && (
             <div className="de-gov" role="status">
               <span className="ico">{I.lock}</span>
-              <span className="de-gov-t">This document is frozen; the export is taken from the sealed content and its hash.</span>
+              <span className="de-gov-t">
+                This document is frozen; the export is taken from the sealed content and its hash.
+                {String(docStatus ?? '').toUpperCase() === 'APPROVED' &&
+                  ' Its approval carries to the Vault copy when a different person reviewed it first and neither signer is its author.'}
+              </span>
             </div>
           )}
           <fieldset className="de-field" disabled={!canFile}>

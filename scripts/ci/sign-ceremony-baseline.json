@@ -43,7 +43,7 @@
     },
     "server/services/grants/grants-service.ts": {
       "count": 1,
-      "reason": "Approval stamp (2026-10-01): approveNceTx, the no-cost-extension approval. Grants are outside the launch catalog. The AnA door already refuses (35794a160, 'AnA cannot sign'); the HTTP door is the grants module's own and has no ceremony. Recorded so it cannot grow."
+      "reason": "Approval stamp (2026-10-01): approveNceTx, the no-cost-extension approval. Its only caller is POST /api/grants/nce/:id/approve, which runs the signing ceremony (routes/governed-signed-act.ts since ae36f2c8: re-verification, a declared meaning, the electronic_signatures row in the same transaction); the proof is one function boundary away, which this scanner cannot follow. The AnA door refuses (35794a160, 'AnA cannot sign'). Grants are outside the launch catalog. Reason corrected 2026-10-01 (it said the HTTP door had no ceremony)."
     },
     "server/services/pathway-engines/estar/estar-submission-service.ts": {
       "count": 1,

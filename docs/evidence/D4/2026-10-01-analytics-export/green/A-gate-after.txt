@@ -1,0 +1,2 @@
+[ci:pdf-runtime-canonicality] OK — no new PDF entry points outside the approved list
+exit 0

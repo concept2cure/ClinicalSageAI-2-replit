@@ -219,7 +219,14 @@ const BASE_DDL = `
     document_id integer NOT NULL REFERENCES documents(id) ON DELETE CASCADE
   );
   -- Retained on purpose (the audit trail outlives the tenant) and baselined.
-  CREATE TABLE audit_logs (id serial PRIMARY KEY, organization_id integer, action text NOT NULL);
+  -- Every column writeChainedAuditRow writes (ci:audit-logs-fixture); this case
+  -- needs only the table's name and its organization_id.
+  CREATE TABLE audit_logs (
+    id serial PRIMARY KEY, organization_id integer, action text NOT NULL,
+    tenant_id text, user_id integer, table_name text, record_id text, actor_id text, target text,
+    payload_hash text, sha256_chain text, occurred_at timestamptz, hmac_seal text,
+    old_values jsonb, new_values jsonb, ip_address text, user_agent text, reason text
+  );
   -- Not org-keyed: cross-tenant reference data.
   CREATE TABLE code_lists (id serial PRIMARY KEY, code text NOT NULL);
   -- A VIEW carrying organization_id holds no rows of its own.
