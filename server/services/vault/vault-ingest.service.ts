@@ -107,6 +107,12 @@ export interface VaultIngestArgs {
    * note in middleware/uploadSafety.
    */
   origin?: UploadOrigin;
+  /**
+   * The data-room capture these bytes were filed from (VR-11a, VR-16b). Named
+   * in the ingest's audit row, so the chain links the capture to the Vault
+   * document it became. Set only by vault-data-room-filing.ts.
+   */
+  dataRoomSourceId?: number;
 }
 
 export interface VaultIngestFiling {
@@ -680,6 +686,7 @@ async function admitVaultDocument(
         classification: doc.classification,
         storageKey: doc.s3_key,
         ...(recorded ? { changes } : {}),
+        ...(args.dataRoomSourceId != null ? { dataRoomSource: { sourceId: args.dataRoomSourceId } } : {}),
         // A check-in names what it succeeds; its filing is the head's (above).
         ...(checkIn ? { lineage: { supersedes: checkIn.head.id, predecessorVersion: checkIn.head.version, filingKept: true } } : {}),
         /* WHERE the document was filed and WHO/WHAT decided — the audit

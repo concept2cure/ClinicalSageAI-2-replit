@@ -115,6 +115,66 @@ export interface DocumentCanvasProps {
    * Authoring surface, tests of the card alone) the editor expands in place.
    */
   paneEl?: HTMLElement | null;
+  /**
+   * A new value re-reads the record quietly. The thread bumps it when AnA's
+   * turn ends, so a revision AnA made is on the card without reopening the
+   * thread; the sections whose text changed are marked updated.
+   */
+  refreshKey?: number;
+}
+
+/** The stored document type (`product_code`), in words: `clinical_overview` → "Clinical overview". */
+export function documentTypeLabel(code: string | null | undefined): string | null {
+  const c = (code ?? '').trim();
+  if (!c) return null;
+  const words = c.replace(/[_-]+/g, ' ').trim();
+  return words.charAt(0).toUpperCase() + words.slice(1).toLowerCase();
+}
+
+/** One read of the record: the document row, the caller's access, the sections. */
+type RecordRead =
+  | { ok: true; doc: DocRow; access: unknown; sections: SectionRow[] }
+  | { ok: false; message: string; doc?: DocRow };
+
+/**
+ * GET /docs/:id and /sections, together. A failure is the sentence to show,
+ * never an empty document: a missing row, a row whose sections did not read,
+ * or a store that could not be reached each say which.
+ */
+async function readDocumentRecord(docId: string): Promise<RecordRead> {
+  try {
+    const [d, s] = await Promise.all([
+      apiRequest('GET', `/api/authoring/docs/${encodeURIComponent(docId)}`),
+      apiRequest('GET', `/api/authoring/docs/${encodeURIComponent(docId)}/sections`),
+    ]);
+    const dj = (await d.json().catch(() => null)) as { document?: DocRow; access?: unknown } | null;
+    const sj = (await s.json().catch(() => null)) as { sections?: SectionRow[] } | null;
+    if (!d.ok || !dj?.document) {
+      return {
+        ok: false,
+        message: serverMessage(dj) ?? (d.status === 404 ? 'This document is not in your organization’s authoring records.' : `The document did not load (HTTP ${d.status}).`),
+      };
+    }
+    if (!s.ok || !sj) {
+      /* The document row is real; its sections did not read. Say that,
+         rather than rendering a document with no sections. */
+      return { ok: false, doc: dj.document, message: `“${dj.document.title}” exists, but its sections did not load (HTTP ${s.status}).` };
+    }
+    return { ok: true, doc: dj.document, access: dj.access, sections: Array.isArray(sj.sections) ? sj.sections : [] };
+  } catch (e) {
+    return { ok: false, message: redactInternals(e instanceof Error ? e.message : '', 'The authoring store could not be reached.') };
+  }
+}
+
+/** The codes of sections that are new, or whose stored text changed, between two reads. */
+export function changedSectionCodes(before: readonly SectionRow[], next: readonly SectionRow[]): string[] {
+  const was = new Map(before.map(x => [x.id, x.content ?? '']));
+  return next.filter(x => !was.has(x.id) || was.get(x.id) !== (x.content ?? '')).map(x => x.code);
+}
+
+/** A section counts as drafted when its stored text has any visible content. */
+function isDrafted(content: string | null): boolean {
+  return (content ?? '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim().length > 0;
 }
 
 /* `escapeBelongsToInner` — true when the keydown should NOT collapse the
@@ -136,6 +196,7 @@ export function DocumentCanvas({
   fireToast,
   liveDrive,
   paneEl = null,
+  refreshKey = 0,
 }: DocumentCanvasProps) {
   /* Beside the conversation the card stays in the thread, marked as the
      document that is open; in place it gives way to the editor. */
@@ -150,6 +211,13 @@ export function DocumentCanvas({
   const assignRefusalId = useId();
   const [sections, setSections] = useState<SectionRow[]>([]);
   const [showAll, setShowAll] = useState(false);
+  /* The section the outline chose; null shows the first. */
+  const [focusId, setFocusId] = useState<string | null>(null);
+  /* Codes whose text changed on the last quiet re-read, and whether that
+     re-read failed (the record already on screen stays). */
+  const [updatedCodes, setUpdatedCodes] = useState<string[]>([]);
+  const [refreshFailed, setRefreshFailed] = useState(false);
+  const sectionsRef = useRef<SectionRow[]>([]);
   const [fileToVaultOpen, setFileToVaultOpen] = useState(false);
   const [assignReviewOpen, setAssignReviewOpen] = useState(false);
   /* The workbench mounts on the FIRST expand and stays mounted afterwards,
@@ -169,41 +237,45 @@ export function DocumentCanvas({
      controls (`aria-controls`) rather than only that it is expanded. */
   const expandedId = useId();
 
-  const load = useCallback(async () => {
-    setState('loading');
-    setError(null);
-    try {
-      const [d, s] = await Promise.all([
-        apiRequest('GET', `/api/authoring/docs/${encodeURIComponent(docId)}`),
-        apiRequest('GET', `/api/authoring/docs/${encodeURIComponent(docId)}/sections`),
-      ]);
-      const dj = (await d.json().catch(() => null)) as { document?: DocRow; access?: unknown } | null;
-      const sj = (await s.json().catch(() => null)) as { sections?: SectionRow[] } | null;
-      if (!d.ok || !dj?.document) {
-        setState('error');
-        setError(serverMessage(dj) ?? (d.status === 404 ? 'This document is not in your organization’s authoring records.' : `The document did not load (HTTP ${d.status}).`));
-        return;
-      }
-      setDoc(dj.document);
-      setAccess(readDocumentAccess(dj.access));
-      if (!s.ok || !sj) {
-        /* The document row is real; its sections did not read. Say that,
-           rather than rendering a document with no sections. */
-        setState('error');
-        setError(`“${dj.document.title}” exists, but its sections did not load (HTTP ${s.status}).`);
-        return;
-      }
-      setSections(Array.isArray(sj.sections) ? sj.sections : []);
-      setState('ready');
-    } catch (e) {
-      setState('error');
-      setError(redactInternals(e instanceof Error ? e.message : '', 'The authoring store could not be reached.'));
+  const load = useCallback(async (quiet = false) => {
+    if (!quiet) {
+      setState('loading');
+      setError(null);
     }
+    const read = await readDocumentRecord(docId);
+    if (!read.ok) {
+      /* A refresh that failed is not an empty document: keep the record on
+         screen and say the refresh did not land. */
+      if (quiet) {
+        setRefreshFailed(true);
+        return;
+      }
+      setState('error');
+      setError(read.message);
+      if (read.doc) setDoc(read.doc);
+      return;
+    }
+    if (quiet) setUpdatedCodes(changedSectionCodes(sectionsRef.current, read.sections));
+    setRefreshFailed(false);
+    setDoc(read.doc);
+    setAccess(readDocumentAccess(read.access));
+    sectionsRef.current = read.sections;
+    setSections(read.sections);
+    setState('ready');
   }, [docId]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  /* A new refreshKey (AnA's turn ended) re-reads quietly. The first value is
+     the mount, which the load above already covers. */
+  const firstRefresh = useRef(refreshKey);
+  useEffect(() => {
+    if (refreshKey === firstRefresh.current) return;
+    firstRefresh.current = refreshKey;
+    void load(true);
+  }, [refreshKey, load]);
 
   /* Escape collapses, from anywhere the key is not already owned by something
      inside; focus returns to the header control that expands.
@@ -275,8 +347,11 @@ export function DocumentCanvas({
   const title = doc?.title ?? draftTitle ?? 'Document';
   const programLine = programHeadline(program);
   const sectionCount = sections.length || Number(doc?.section_count ?? 0) || 0;
+  const draftedCount = sections.filter(x => isDrafted(x.content)).length;
   const first = sections[0] ?? null;
-  const shown = showAll ? sections : first ? [first] : [];
+  const focused = (focusId && sections.find(x => x.id === focusId)) || first;
+  const shown = showAll ? sections : focused ? [focused] : [];
+  const typeLabel = documentTypeLabel(doc?.product_code);
 
   const openInAuthoring = () => {
     /* The thread's Edit carries the document identity on the one editor
@@ -312,7 +387,7 @@ export function DocumentCanvas({
       <div className="dcv-card" hidden={expanded && !beside} data-open-beside={(expanded && beside) || undefined}>
         <div className="dcv-head">
           <div className="dcv-kind">
-            {I.fileText} Document{doc?.module ? ` · ${doc.module}` : ''}{doc?.status ? ` · ${String(doc.status).replace(/_/g, ' ').toLowerCase()}` : ''}
+            {I.fileText} Document{typeLabel ? ` · ${typeLabel}` : ''}{doc?.module ? ` · ${doc.module}` : ''}{doc?.status ? ` · ${String(doc.status).replace(/_/g, ' ').toLowerCase()}` : ''}
           </div>
           <h3 className="dcv-title" id={titleId}>{title}</h3>
           <div className="dcv-meta">
@@ -322,11 +397,24 @@ export function DocumentCanvas({
               <span className="dcv-project dcv-project-none" data-testid="dc-no-program">{I.folder} Not filed under a program</span>
             )}
             {state === 'ready' && (
-              <span>{sectionCount} section{sectionCount === 1 ? '' : 's'}</span>
+              <span data-testid="dc-progress">
+                {sectionCount === 0 ? 'No sections' : `${draftedCount} of ${sectionCount} section${sectionCount === 1 ? '' : 's'} drafted`}
+              </span>
             )}
           </div>
           {provenance && (
             <div className="dcv-prov" data-source={provenance.source} data-testid="dc-provenance">{provenance.line}</div>
+          )}
+          {updatedCodes.length > 0 && (
+            <div className="dcv-updated" role="status" data-testid="dc-updated">
+              Updated after AnA’s last turn: {updatedCodes.join(', ')}
+            </div>
+          )}
+          {refreshFailed && (
+            <div className="dcv-updated" role="status" data-tone="err" data-testid="dc-refresh-failed">
+              Couldn’t refresh after AnA’s last turn — this is the version read earlier.{' '}
+              <button type="button" className="nda-open" onClick={() => void load(true)}>Retry</button>
+            </div>
           )}
         </div>
 
@@ -345,6 +433,31 @@ export function DocumentCanvas({
           <p className="dcv-empty">This document has no sections yet. Open the full editor to add one, or ask AnA to draft the sections.</p>
         ) : (
           <div className="dcv-body">
+            {sections.length > 1 && (
+              <ol className="dcv-outline" aria-label="Sections">
+                {sections.map(sec => {
+                  const drafted = isDrafted(sec.content);
+                  const updated = updatedCodes.includes(sec.code);
+                  const current = !showAll && focused?.id === sec.id;
+                  return (
+                    <li key={sec.id} data-drafted={drafted ? 'true' : 'false'} data-updated={updated || undefined}>
+                      <button
+                        type="button"
+                        className="dcv-outline-item"
+                        aria-current={current || undefined}
+                        onClick={() => { setFocusId(sec.id); setShowAll(false); }}
+                      >
+                        <span className="dcv-outline-code">{sec.code}</span>
+                        <span className="dcv-outline-t">{sec.title}</span>
+                      </button>
+                      <span className="dcv-outline-state">
+                        {updated ? 'Updated' : drafted ? 'Drafted' : 'Not drafted'}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
             {shown.map(sec => (
               <article key={sec.id} className="dcv-sec" aria-label={`${sec.code} ${sec.title}`}>
                 <div className="dcv-sec-h">

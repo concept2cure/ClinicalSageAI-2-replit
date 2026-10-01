@@ -1,0 +1,68 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T13:39:45.821Z","pid":19054,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T13:39:45.823Z","pid":19054,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T13:39:45.823Z","pid":19054,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/cross-object-resolver.dbtest.ts
+[Orchestrator] Registered workflow template: submission_readiness_review
+
+stdout | tests/db/cross-object-resolver.dbtest.ts
+[Orchestrator] Registered workflow template: draft_validate_route
+
+stdout | tests/db/cross-object-resolver.dbtest.ts
+[Orchestrator] Registered workflow template: project_blocker_scan
+
+stdout | tests/db/cross-object-resolver.dbtest.ts
+{
+  "timestamp": "2026-10-01T13:39:46.280Z",
+  "level": "info",
+  "message": "[index] Phase 3 orchestration system loaded",
+  "context": {}
+}
+
+ ↓ tests/db/cross-object-resolver.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing
+ ↓ tests/db/cross-object-resolver.dbtest.ts > a project the organisation holds > is assembled from reads that all succeed, and names the project
+ ↓ tests/db/cross-object-resolver.dbtest.ts > a project the organisation holds > is reviewed to completion, and the review says which project it read
+ ↓ tests/db/cross-object-resolver.dbtest.ts > what the review cannot read > a program uuid fails the payload, naming every read it broke
+ ↓ tests/db/cross-object-resolver.dbtest.ts > what the review cannot read > a program uuid ends the review run as failed, with no step completed and the reason recorded
+ ↓ tests/db/cross-object-resolver.dbtest.ts > what the review cannot read > a project another organisation holds is refused, not assessed as empty
+ × tests/db/cross-object-resolver.dbtest.ts > the project's tasks, counted from every store > counts schedule, board and correspondence tasks, and how many are done, blocked and overdue 85ms
+   → expected { id: 174, …(13) } to match object { totalTasks: 5, doneTasks: 2, …(3) }
+(9 matching properties omitted from actual)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/cross-object-resolver.dbtest.ts > the project's tasks, counted from every store > counts schedule, board and correspondence tasks, and how many are done, blocked and overdue
+AssertionError: expected { id: 174, …(13) } to match object { totalTasks: 5, doneTasks: 2, …(3) }
+(9 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "blockedTasks": 2,
+-   "doneTasks": 2,
++   "doneTasks": 1,
+    "overdueTasks": 2,
+    "taskCountsPartial": false,
+-   "totalTasks": 5,
++   "totalTasks": 4,
+  }
+
+ ❯ tests/db/cross-object-resolver.dbtest.ts:291:29
+    289|
+    290|     const payload = await asMember(() => resolver.assembleCrossObjectP…
+    291|     expect(payload.project).toMatchObject({
+       |                             ^
+    292|       totalTasks: 5,
+    293|       doneTasks: 2,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 skipped (7)
+   Start at  13:39:42
+   Duration  4.30s (transform 1.39s, setup 98ms, import 87ms, tests 3.70s, environment 0ms)
+
