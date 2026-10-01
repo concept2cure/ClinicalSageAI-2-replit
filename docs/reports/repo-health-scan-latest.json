@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-01T08:49:07.363Z",
+  "generatedAt": "2026-10-01T09:49:51.664Z",
   "git": {
-    "sha": "3d317cdf0a55cef1b93ecb2bf2972ef3fb56a7a4",
+    "sha": "4b9311f9a80a192fea232b11fec6d733ca2ebfa8",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2042,7 +2042,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 224479
+        "bytes": 226286
       },
       {
         "file": "server/statistics-service.ts",
@@ -2070,7 +2070,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 161180
+        "bytes": 161199
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
@@ -2216,7 +2216,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 5623
+        "lines": 5663
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2367,12 +2367,12 @@
         "lines": 2278
       },
       {
-        "file": "server/routes/c2c/reviews.ts",
-        "lines": 2240
-      },
-      {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
         "lines": 2197
+      },
+      {
+        "file": "server/routes/c2c/reviews.ts",
+        "lines": 2196
       },
       {
         "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",
@@ -2439,16 +2439,16 @@
         "lines": 1968
       },
       {
-        "file": "server/routes/c2c/projects.ts",
-        "lines": 1956
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 1953
+        "lines": 1967
       },
       {
         "file": "server/routes/c2c/project-vault.ts",
-        "lines": 1949
+        "lines": 1966
+      },
+      {
+        "file": "server/routes/c2c/projects.ts",
+        "lines": 1956
       },
       {
         "file": "server/routes/ectd-compile.ts",
