@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | URS-002 |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 |
 | Verified by | OQ-002 (`tests/validation/oq/vault/run.mjs`) |
@@ -15,6 +15,7 @@
 | Version | Date | Author | Change |
 |---|---|---|---|
 | 0.1 | 2026-09-21 | W3a | Drafted from `server/routes/vault-ingest.ts`, `server/services/vault/vault-ingest.service.ts`, `server/routes/c2c/project-vault.ts`, `server/services/vault/vault-placement.service.ts`, `shared/constants/domain/vault-taxonomy.ts` and the `Vault` surface. |
+| 0.2 | 2026-09-30 | `…01DiJJAk` (VR-08) | URS-VAULT-011, version check-in, verified by OQ-VAULT-11. Not yet executed: the run needs the validation identities (W3). |
 
 ## 1. Intended use
 
@@ -34,6 +35,7 @@ The Vault is the program's document store: the regulatory user uploads source do
 | URS-VAULT-008 | Ingest and filing are written to the hash-chained audit log, the chain verifies after the writes, and the organisation's audit ledger surface shows them. | §11.10(e) | high | `server/services/auditService.ts` (`writeChainedAuditRow`), `server/services/audit/chain.ts:182`, `server/routes/audit-trail-ledger.routes.ts:160` |
 | URS-VAULT-009 | The Vault surface renders the program's data room with the stored documents, the upload control and the filing control. | none | medium | `client/src/concept2cure/v2/surfaces/Vault.tsx`, `useVaultUpload.ts` |
 | URS-VAULT-010 | A program the organisation does not own answers 404 on the vault read model; no cross-tenant listing. | §11.10(d) | high | `server/routes/c2c/project-vault.ts:834-845` |
+| URS-VAULT-011 | A new version of a document is recorded by naming the document (`supersedesDocumentId`). The server assigns the next major version (1.0 → 2.0), keeps the document code and filing, and links the predecessor. It refuses a version that is not the current one, bytes the document already holds, and a document outside the caller's program or organisation, and the database refuses a link outside the document's family. | §11.10(e) | high | `server/services/vault/vault-version-checkin.ts`, `vault-ingest.service.ts`, `migrations/20260930_vault_documents_version_lineage.sql` |
 
 ## 3. Assumptions and constraints
 

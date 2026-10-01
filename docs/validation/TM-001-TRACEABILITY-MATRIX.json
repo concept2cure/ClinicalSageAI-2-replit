@@ -1,15 +1,15 @@
 {
   "documentId": "TM-001",
-  "generatedAt": "2026-09-28T01:38:02.054Z",
+  "generatedAt": "2026-10-01T00:03:42.894Z",
   "generator": "scripts/validation/build-traceability.mjs",
   "runDate": "2026-09-27",
   "summary": {
-    "requirements": 71,
+    "requirements": 72,
     "pass": 69,
     "partial": 2,
     "fail": 0,
     "open": 0,
-    "uncovered": 0
+    "uncovered": 1
   },
   "byApp": {
     "Projects": {
@@ -21,12 +21,12 @@
       "uncovered": 0
     },
     "Vault": {
-      "requirements": 10,
+      "requirements": 11,
       "pass": 10,
       "partial": 0,
       "fail": 0,
       "open": 0,
-      "uncovered": 0
+      "uncovered": 1
     },
     "Authoring": {
       "requirements": 15,
@@ -773,6 +773,22 @@
         "rationale": "negative test"
       },
       "verdict": "pass"
+    },
+    {
+      "id": "URS-VAULT-011",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "A new version of a document is recorded by naming the document (`supersedesDocumentId`). The server assigns the next major version (1.0 → 2.0), keeps the document code and filing, and links the predecessor. It refuses a version that is not the current one, bytes the document already holds, and a document outside the caller's program or organisation, and the database refuses a link outside the document's family.",
+      "part11": "§11.10(e)",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "Version check-in: server-assigned version, kept code and filing, a validated predecessor link",
+        "risk": "high — a wrong link or number misstates which bytes a filing used",
+        "assurance": "scripted",
+        "rationale": "positive check-in, known-bytes and stale-head negatives; database refusals in `tests/db/vault-version-checkin.dbtest.ts`"
+      },
+      "verdict": "uncovered"
     },
     {
       "id": "URS-AUTH-001",

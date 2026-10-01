@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | TM-001 |
-| Version | generated 2026-09-28T01:38:02.054Z |
+| Version | generated 2026-10-01T00:03:42.894Z |
 | Status | DRAFT — UNSIGNED — GENERATED, DO NOT EDIT |
 | Generator | `scripts/validation/build-traceability.mjs` (`npm run validation:traceability`) |
 | Sources | URS-001…006 requirement tables · RA-001 rows · docs/evidence/W3/2026-09-27/OQ-*/result.json · IQ/iq-results.json |
@@ -12,14 +12,14 @@
 
 ## Summary
 
-- Requirements: **71** — pass 69 · partial 2 · fail 0 · open 0 · uncovered 0
+- Requirements: **72** — pass 69 · partial 2 · fail 0 · open 0 · uncovered 1
 - OQ steps executed: **103** — pass 101 · fail 0 · deviation 2 · not-executed 0
 - IQ-001: 12 pass · 0 fail · 3 deviation (executed 2026-09-28T01:18:32.421Z)
 
 | App | Requirements | Pass | Partial | Fail | Open | Uncovered |
 |---|---|---|---|---|---|---|
 | Projects | 13 | 13 | 0 | 0 | 0 | 0 |
-| Vault | 10 | 10 | 0 | 0 | 0 | 0 |
+| Vault | 11 | 10 | 0 | 0 | 0 | 1 |
 | Authoring | 15 | 14 | 1 | 0 | 0 | 0 |
 | Submission Center | 12 | 12 | 0 | 0 | 0 | 0 |
 | Submission Readiness | 8 | 7 | 1 | 0 | 0 | 0 |
@@ -63,6 +63,7 @@
 | URS-VAULT-008 | Ingest and filing are written to the hash-chained audit log, the chain verifies after the writes, and the organisation's audit ledger surface shows them. | §11.10(e) | high | scripted | OQ-VAULT-08 (pass)<br>OQ-VAULT-08b (pass) | **pass** |
 | URS-VAULT-009 | The Vault surface renders the program's data room with the stored documents, the upload control and the filing control. | none | medium | unscripted | OQ-VAULT-09 (pass) | **pass** |
 | URS-VAULT-010 | A program the organisation does not own answers 404 on the vault read model; no cross-tenant listing. | §11.10(d) | high | scripted | OQ-VAULT-10 (pass) | **pass** |
+| URS-VAULT-011 | A new version of a document is recorded by naming the document (`supersedesDocumentId`). The server assigns the next major version (1.0 → 2.0), keeps the document code and filing, and links the predecessor. It refuses a version that is not the current one, bytes the document already holds, and a document outside the caller's program or organisation, and the database refuses a link outside the document's family. | §11.10(e) | high | scripted | — | **uncovered** |
 | URS-AUTH-001 | Authoring endpoints require an authenticated actor; identity for every write comes from the verified JWT, never from a header or the body. | §11.10(d) | high | scripted | OQ-AUTH-01 (pass) | **pass** |
 | URS-AUTH-002 | A document is created with a title (required, 400 otherwise), a module and an optional program binding (`client_program_id`, validated as UUID); a template that cannot be honoured refuses before anything is written. | none | medium | scripted | OQ-AUTH-02 (pass)<br>OQ-AUTH-03 (pass) | **pass** |
 | URS-AUTH-003 | Sections are created under a document with a CTD code and title and are read back in filing order; duplicate codes and order ties are reported as structure issues. | none | medium | scripted | OQ-AUTH-04 (pass) | **pass** |
