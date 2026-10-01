@@ -40,6 +40,7 @@ import {
 } from '../services/part11/signature-persistence.js';
 import { clientIpOf } from '../utils/client-ip.js';
 import { resolveUserRole } from '../types/auth-request';
+import { signMeaningRefusal } from '../services/part11/signature-meanings.js';
 
 const router = Router();
 
@@ -157,12 +158,41 @@ router.post('/verify-mfa', signerCheckLimiter('mfa'), async (req: Request, res: 
 });
 
 /**
+ * The request-shape refusals for POST /sign, answered before anything is read:
+ * the version anchor, the purpose, the action, and the §11.50(a)(3) meaning.
+ *
+ * The meaning is the signer's statement of what the signature means, from the
+ * closed vocabulary every governed sign uses (services/part11/signature-meanings
+ * — the same `signMeaningRefusal` and the same two codes as
+ * /api/c2c/actions/sign and the disclosure certify route). Until P1-42
+ * (security audit 2026-09-24, DP-55) this route took it as optional free text
+ * and stored `signatureMeaning ?? null`, so a signature could say nothing about
+ * what it meant. Checked before re-verification, so no password is asked for a
+ * request that would be refused anyway; the caller's text is not echoed back.
+ */
+function signRequestRefusal(body: Record<string, unknown>): { error: string; code?: string } | null {
+  if (!Number.isFinite(Number(body.documentId)) || !Number.isFinite(Number(body.versionId))) {
+    return { error: 'documentId and versionId are required (numeric)' };
+  }
+  if (typeof body.signaturePurpose !== 'string' || !body.signaturePurpose) {
+    return { error: 'signaturePurpose is required' };
+  }
+  if (typeof body.action !== 'string' || !body.action) {
+    return { error: 'action is required' };
+  }
+  const meaning = signMeaningRefusal(body.signatureMeaning);
+  if (!meaning) return null;
+  const what = meaning.error === 'SIGNATURE_MEANING_REQUIRED' ? 'A signature meaning is required' : 'That is not a signature meaning';
+  return { error: `${what} (21 CFR Part 11 §11.50(a)(3)). ${meaning.detail} Nothing was signed.`, code: meaning.error };
+}
+
+/**
  * POST /api/esignature/sign
  * Body: {
  *   documentId: number,
  *   versionId: number,
  *   signaturePurpose: string,    // "approval" | "review" | "verification" | …
- *   signatureMeaning: string,    // human-readable declaration text
+ *   signatureMeaning: string,    // §11.50(a)(3), one of GOVERNED_SIGN_MEANINGS (required)
  *   action: string,              // "approved" | "reviewed" | "rejected" | …
  *   password: string,            // re-authenticated server-side (Part 11 §11.200)
  *   mfaToken?: string,           // required when the signer has MFA enabled
@@ -216,15 +246,8 @@ router.post('/sign', async (req: Request, res: Response) => {
     // server-side from the signer's own users row below.
   } = req.body ?? {};
 
-  if (!Number.isFinite(Number(documentId)) || !Number.isFinite(Number(versionId))) {
-    return res.status(400).json({ error: 'documentId and versionId are required (numeric)' });
-  }
-  if (typeof signaturePurpose !== 'string' || !signaturePurpose) {
-    return res.status(400).json({ error: 'signaturePurpose is required' });
-  }
-  if (typeof action !== 'string' || !action) {
-    return res.status(400).json({ error: 'action is required' });
-  }
+  const refused = signRequestRefusal(req.body ?? {});
+  if (refused) return res.status(400).json(refused);
 
   // signature_type is client-supplied and lands in a column the release-gate
   // uniqueness index keys on. Accept only the document-signing vocabulary and
@@ -368,7 +391,7 @@ router.post('/sign', async (req: Request, res: Response) => {
     documentId: Number(documentId),
     versionId: Number(versionId),
     signaturePurpose,
-    signatureMeaning: signatureMeaning ?? null,
+    signatureMeaning,
     action,
     signerId: userId,
     signerEmail,
@@ -415,7 +438,7 @@ router.post('/sign', async (req: Request, res: Response) => {
       authenticationTimestamp: signedAt,
       secondFactorVerified,
       signatureHash,
-      signatureMeaning: signatureMeaning ?? null,
+      signatureMeaning,
       signatureManifest,
       isValid: signatureIsValid,
       complianceStatement: complianceStatement ?? null,
@@ -452,7 +475,7 @@ router.post('/sign', async (req: Request, res: Response) => {
         documentId: Number(documentId),
         versionId: Number(versionId),
         signaturePurpose,
-        signatureMeaning: signatureMeaning ?? null,
+        signatureMeaning,
         action,
         signatureHash,
         secondFactorVerified,

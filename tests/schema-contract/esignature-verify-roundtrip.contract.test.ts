@@ -113,7 +113,7 @@ describe('e-signature verify round-trip (§11.70 integrity)', () => {
       documentId: 10,
       documentType: 'approval',
       signatureReason: 'approve',
-      signatureMeaning: 'I approve this content',
+      signatureMeaning: 'approval', // closed vocabulary (P1-42); the release path passes the same
       // What the caller's signing ceremony verified (reverify-signer.ts); the
       // service records it and checks no password of its own.
       reverified: { ok: true, authenticationMethod: 'password', secondFactorVerified: false },

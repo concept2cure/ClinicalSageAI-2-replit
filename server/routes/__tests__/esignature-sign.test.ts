@@ -114,7 +114,9 @@ const signBody = (over: Record<string, unknown> = {}) => ({
   documentId: 10,
   versionId: 1,
   signaturePurpose: 'approval',
-  signatureMeaning: 'I approve',
+  // A meaning from the closed vocabulary (part11/signature-meanings.ts). Free
+  // text ('I approve') was accepted here until P1-42 and is now refused.
+  signatureMeaning: 'approval',
   action: 'approved',
   password: PASSWORD,
   ...over,
@@ -263,6 +265,71 @@ describe('POST /api/esignature/sign — input + authority guards', () => {
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/mfaToken/i);
   });
+});
+
+/* §11.50(a)(3) — security audit 2026-09-24 DP-55, plan P1-42. The route took
+   signatureMeaning as optional free text and wrote `signatureMeaning ?? null`,
+   so a signature could be recorded with no meaning at all, or one nobody
+   defined. The governed sign path (/api/c2c/actions/sign) has refused both
+   since P1-21; this route now refuses them the same way, with the same codes,
+   BEFORE the signer is re-verified (no password is checked for a request that
+   would be refused anyway). */
+describe('POST /api/esignature/sign — §11.50(a)(3) signature meaning', () => {
+  const withoutMeaning = () => {
+    const body: Record<string, unknown> = signBody();
+    delete body.signatureMeaning;
+    return body;
+  };
+
+  it('refuses a signature that declares no meaning (400 SIGNATURE_MEANING_REQUIRED) before re-verifying the signer', async () => {
+    const res = await request(makeApp()).post('/api/esignature/sign').send(withoutMeaning());
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('SIGNATURE_MEANING_REQUIRED');
+    // Nothing read: not the password hash, not the signer, not the version.
+    expect(hoisted.poolQuery).not.toHaveBeenCalled();
+    expect(hoisted.clientQuery).not.toHaveBeenCalled();
+    expect(hoisted.writeChainedAuditRow).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['an empty string', ''],
+    ['null', null],
+    ['a number', 1],
+    ['an object', { id: 'approval' }],
+  ])('refuses %s as a meaning with the same code', async (_label, meaning) => {
+    const res = await request(makeApp()).post('/api/esignature/sign').send(signBody({ signatureMeaning: meaning }));
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('SIGNATURE_MEANING_REQUIRED');
+    expect(hoisted.poolQuery).not.toHaveBeenCalled();
+  });
+
+  it('refuses free text outside the vocabulary (400 SIGNATURE_MEANING_UNKNOWN), names what is accepted, and checks no password', async () => {
+    const res = await request(makeApp()).post('/api/esignature/sign').send(signBody({ signatureMeaning: 'I approve' }));
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('SIGNATURE_MEANING_UNKNOWN');
+    expect(String(res.body.error)).toContain('approval');
+    // The caller's text is not echoed back.
+    expect(JSON.stringify(res.body)).not.toContain('I approve');
+    expect(hoisted.poolQuery).not.toHaveBeenCalled();
+  });
+
+  it('refuses a near-miss spelling rather than normalising it (Approval is not approval)', async () => {
+    const res = await request(makeApp()).post('/api/esignature/sign').send(signBody({ signatureMeaning: 'Approval' }));
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('SIGNATURE_MEANING_UNKNOWN');
+  });
+
+  it.each(['approval', 'review', 'APPROVED', 'AUTHORSHIP'])(
+    'signs with the vocabulary meaning %s and persists exactly that meaning',
+    async (meaning) => {
+      const res = await request(makeApp()).post('/api/esignature/sign').send(signBody({ signatureMeaning: meaning }));
+      expect(res.status).toBe(201);
+      const insert = hoisted.clientQuery.mock.calls.find((c) => /INSERT INTO electronic_signatures/i.test(String(c[0])));
+      expect(insert).toBeDefined();
+      // $16 is signature_meaning (persistElectronicSignature's column order).
+      expect((insert![1] as unknown[])[15]).toBe(meaning);
+    },
+  );
 });
 
 describe('POST /api/esignature/sign — §11.50 signer attribution', () => {
