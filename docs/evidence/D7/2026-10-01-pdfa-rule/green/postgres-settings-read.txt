@@ -1,0 +1,7 @@
+ ✓ tests/db/pdfa-requirement.dbtest.ts > the PDF/A requirement, read from organizations.settings > no submission section: not required 17ms
+ ✓ tests/db/pdfa-requirement.dbtest.ts > the PDF/A requirement, read from organizations.settings > requirePdfA true: required by the organisation 3ms
+ ✓ tests/db/pdfa-requirement.dbtest.ts > the PDF/A requirement, read from organizations.settings > the string "true" or false: not required 6ms
+ ✓ tests/db/pdfa-requirement.dbtest.ts > the PDF/A requirement, read from organizations.settings > another organisation's setting never applies 4ms
+ ✓ tests/db/pdfa-requirement.dbtest.ts > the PDF/A requirement, read from organizations.settings > the deployment requirement wins 2ms
+ Test Files  1 passed (1)
+      Tests  5 passed (5)

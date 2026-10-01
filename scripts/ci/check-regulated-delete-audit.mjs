@@ -7,7 +7,17 @@
  * (Drizzle `.delete(<Table>)` and raw `DELETE FROM <table>`) and fails if a
  * delete has no audit call nearby — so no NEW unaudited regulated delete can
  * land. It does not assert ordering/transactionality (a separate concern); it
- * asserts an audit call exists.
+ * asserts an audit call exists, and that the call names who deleted.
+ *
+ * An audit call counts only when its own argument list names an actor
+ * (userId, actorId, actor, …), or for a raw INSERT INTO audit_events, when its
+ * column list carries user_id; an actor written as null or undefined is no
+ * actor. 2026-10-01 (D6, plan P1-30 second half, DP-33): the UAT clean-up
+ * delete on authoring_documents logged through auditService.logAction with no
+ * user, and this gate accepted the row, which no inspector could attribute
+ * (21 CFR 11.10(e) records the operator's identity). A delete inside a
+ * governedQmsWrite(...) call is attributable by construction: the helper's
+ * opts.userId is a required number (server/services/qms/governed-qms-write.ts).
  *
  * The allow-list below is now empty: every regulated-table delete is positively
  * audited, so this is a pure positive-coverage guard — any new unaudited
@@ -67,6 +77,33 @@ const REGULATED = [
 // pins the row it writes (action, reason, actor, digest).
 const AUDIT_RE =
   /\b(writeMutation|logAuditEntry|recordGovernedAction|logAuditEvent|recordGovernedDecision|logRegulatedDeletion|recordCoauthorDocumentEvent|writeChainedAuditRow)\s*\(|\bauditService\.|INSERT\s+INTO\s+audit_events\b/i;
+
+/* Each audit call, found anywhere in the file, with the text that must name its
+   actor: a writer's argument list (to its closing ')'), an auditService method
+   call's argument list, or an audit_events INSERT's column list (to VALUES or
+   SELECT). auditService. with no call after it is not a call. */
+const AUDIT_CALL_RE =
+  /\b(?:writeMutation|logAuditEntry|recordGovernedAction|logAuditEvent|recordGovernedDecision|logRegulatedDeletion|recordCoauthorDocumentEvent|writeChainedAuditRow|auditService\.\w+)\s*\(|INSERT\s+INTO\s+audit_events\b/gi;
+const ACTOR_RE = /\b(?:userId|user_id|actorId|actor_id|actorUserId|actor|performedBy|performed_by)\b(?!\s*:\s*(?:null|undefined)\b)/;
+
+/** [start, end, attributable] of every audit call in `src`. */
+function auditCalls(src) {
+  const calls = [];
+  let m;
+  AUDIT_CALL_RE.lastIndex = 0;
+  while ((m = AUDIT_CALL_RE.exec(src))) {
+    let end;
+    if (m[0].endsWith('(')) {
+      end = callEnd(src, m.index + m[0].length - 1);
+    } else {
+      const tail = /\b(?:VALUES|SELECT)\b/i.exec(src.slice(m.index));
+      end = tail ? m.index + tail.index : src.length;
+    }
+    // The name itself is not the actor ("auditService.logAction" names none).
+    calls.push([m.index, end, ACTOR_RE.test(src.slice(m.index + m[0].length, end))]);
+  }
+  return calls;
+}
 
 // Operator-tracked unaudited regulated deletes (PRODUCT_QC_REVIEW Part 11).
 // Empty — every regulated-table delete is now positively audited. New entries
@@ -142,15 +179,23 @@ for (const file of SCAN_DIRS.flatMap((dir) => listTsFiles(dir))) {
   const spans = governedSpans(src);
   let offset = 0;
   const lineStart = lines.map((l) => { const at = offset; offset += l.length + 1; return at; });
+  const calls = auditCalls(src);
+  const lineOfOffset = (at) => lineStart.findLastIndex((st) => st <= at) + 1;
   lines.forEach((line, i) => {
     if (!siteRe.test(line) || isCommentLine(line)) return;
     const from = Math.max(0, i - WINDOW);
     const to = Math.min(lines.length, i + WINDOW + 1);
-    const hasAudit = lines.slice(from, to).some(l => AUDIT_RE.test(l));
-    if (hasAudit) return;
     if (spans.some(([a, b]) => lineStart[i] > a && lineStart[i] < b)) return; // inside a governed write
+    const hasAudit = lines.slice(from, to).some(l => AUDIT_RE.test(l));
+    // The calls that begin in the window; one that names its actor covers the delete.
+    const near = calls.filter(([at]) => at >= lineStart[from] && at < (lineStart[to] ?? src.length));
+    if (hasAudit && near.some(([, , attributable]) => attributable)) return;
     if (ALLOWLIST[rel]) return; // operator-tracked
-    violations.push({ file: rel, line: i + 1, excerpt: line.trim().slice(0, 120) });
+    const anonymous = near.find(([, , attributable]) => !attributable);
+    const reason = hasAudit && anonymous
+      ? `the audit call at line ${lineOfOffset(anonymous[0])} names no actor`
+      : `no audit call within ${WINDOW} lines`;
+    violations.push({ file: rel, line: i + 1, excerpt: line.trim().slice(0, 120), reason });
   });
 }
 
@@ -161,15 +206,18 @@ if (jsonOut) {
     '[regulated-delete-audit] OK — every regulated-table delete has an audit call (or is operator-allow-listed).'
   );
 } else {
-  console.error(`[regulated-delete-audit] FAIL — ${violations.length} unaudited regulated delete(s):\n`);
+  console.error(
+    `[regulated-delete-audit] FAIL — ${violations.length} unaudited regulated delete(s) (no audit call, or one that names no actor):\n`
+  );
   for (const v of violations) {
     console.error(`  ${v.file}:${v.line}`);
     console.error(`    ${v.excerpt}`);
+    console.error(`    ${v.reason}`);
   }
   console.error(
-    '\n21 CFR Part 11 §11.10(e): a delete of a regulated record must write an audit-trail entry.\n' +
-      'Add an audit call (writeMutation / logAuditEntry / recordGovernedAction) before the delete,\n' +
-      'or, if intentional, allow-list it with a justification in this script.'
+    '\n21 CFR Part 11 §11.10(e): a delete of a regulated record must write an audit-trail entry that names\n' +
+      'who deleted. Add an audit call (writeChainedAuditRow / writeMutation / recordGovernedAction) with the\n' +
+      'actor in its arguments, or, if intentional, allow-list it with a justification in this script.'
   );
 }
 
