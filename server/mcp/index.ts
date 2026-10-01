@@ -197,12 +197,14 @@ export function createMcpRouter(config: McpConfig = resolveMcpConfig()): express
     clientRegistrationBodyError,
   );
   if (config.clientRegistration.openInProduction) {
-    // Once, here — never per request, and nothing about the state is exposed
-    // on the wire. Whether production ships an allowlist is the founder's.
-    log.warn(
-      `Dynamic client registration (POST /register) is open in production: any https origin may register an OAuth client. ` +
-        `Set ${MCP_CLIENT_REDIRECT_ALLOWLIST_ENV} to the origins allowed to register (e.g. https://claude.ai,https://claude.com) to bind it.`,
-      { control: MCP_CLIENT_REDIRECT_ALLOWLIST_ENV, finding: 'IAM-02', plan: 'P0-2d' },
+    // IAM-22 (2026-10-01; ADR-0014, the connector): production never runs with
+    // open registration. Until this date it logged a warning and served POST
+    // /register to any https origin. server/index.ts builds this router at boot
+    // when MCP_ENABLED=true, so the refusal stops the process starting.
+    throw new Error(
+      `[mcp] REFUSING TO BOOT: MCP_ENABLED=true in production with no ${MCP_CLIENT_REDIRECT_ALLOWLIST_ENV}, ` +
+        `so any https origin could register an OAuth client. Set it to the origins allowed to register ` +
+        `(for the Claude connector: https://claude.ai,https://claude.com), or leave MCP_ENABLED unset.`,
     );
   }
 
