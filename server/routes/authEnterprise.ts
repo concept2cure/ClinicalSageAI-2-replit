@@ -31,7 +31,14 @@ import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 import { revokeToken, verifyLiveToken } from '../services/token-revocation';
 import { continuedSessionClaims, idleWindowSecondsOf, openSession } from '../services/session-inactivity';
 import { recordAuthEvent } from '../services/audit/auth-event-audit';
-import { ACCOUNT_INACTIVE_MESSAGE, isAccountActive, isActiveAccountStatus, isPendingVerificationStatus } from '../services/account-standing';
+import {
+  ACCOUNT_INACTIVE_MESSAGE,
+  isActiveAccountStatus,
+  isPendingVerificationStatus,
+  organizationIdOfClaims,
+  readAccountStanding,
+  sessionEndedByStanding,
+} from '../services/account-standing';
 import { EMAIL_UNVERIFIED_MESSAGE } from '../services/email-verification';
 import { runWithTenantScope } from '../db/tenantStore';
 import { requireAccessTokenReason } from '../middleware/tokenType';
@@ -543,9 +550,26 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
 
     // A challenge issued before the account was suspended or deprovisioned does
     // not become a session after it (the rule routes/auth.ts's /mfa/verify
-    // applies; audit IAM-18 item 5). Checked before the code, so an account out
-    // of use spends none.
-    if (!(await isAccountActive(userId))) {
+    // applies; audit IAM-18 item 5). Nor does one issued before the account's
+    // sessions were ended: a password change, a sign-out everywhere or a removal
+    // from the organisation after the first factor (plan P0-4b R3, the question
+    // every door asks; this door did not until 2026-10-01). One reading of the
+    // standing, before the code, so a refused sign-in spends none.
+    const standing = await readAccountStanding(userId, organizationIdOfClaims(decoded));
+    if (standing.active && sessionEndedByStanding(decoded, standing)) {
+      await recordAuthEvent({
+        action: 'user_login',
+        userId,
+        tenantId: decoded.organizationId,
+        email: decoded.email,
+        outcome: 'failure',
+        reason: 'sign_in_begun_before_sessions_ended',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      return res.status(401).json({ error: 'SIGN_IN_ENDED', message: 'This sign-in has ended. Sign in again.' });
+    }
+    if (!standing.active) {
       await recordAuthEvent({
         action: 'user_login',
         userId,
