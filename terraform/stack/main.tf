@@ -226,6 +226,14 @@ resource "terraform_data" "boot_contract" {
       condition     = var.api_memory - module.ecs.scanner_memory >= 2048
       error_message = "api_memory must leave the application 2048 MiB beside the virus scanner's ${module.ecs.scanner_memory} MiB: at least ${module.ecs.scanner_memory + 2048}."
     }
+    # The self-hosted embedding lane embeds PII and PHI only under an approval
+    # naming it for that use (ADR-0014 §1.5, amended 2026-10-01). Without one,
+    # every chunk carrying a name or an address is refused per request, on a
+    # deployment whose readiness probe (non-sensitive text) reports it ready.
+    precondition {
+      condition     = local.embedding_provider != "local" || contains(try(jsondecode(var.ai_provider_placement_approvals)["local"].approvedIntendedUses, []), "embedding")
+      error_message = "ai_provider_placement_approvals must name \"local\" with intended use \"embedding\" while the embedding lane is the self-hosted one. ADR-0014 §1.5 records the value: \"local\":{\"region\":\"on_prem\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\",\"phi\"],\"approvedIntendedUses\":[\"embedding\"]} (terraform.tfvars.example)."
+    }
   }
 }
 
@@ -432,10 +440,69 @@ module "ecs" {
   worker_secrets = local.boot_secrets
 
   # The release signer (release_signing.tf) and the boot contract's plain values.
-  api_environment    = concat(local.signer_environment, local.boot_environment, local.observability_environment, local.owner_environment)
-  worker_environment = concat(local.signer_environment, local.boot_environment, local.observability_environment)
+  api_environment    = concat(local.signer_environment, local.boot_environment, local.observability_environment, local.owner_environment, local.embedding_environment)
+  worker_environment = concat(local.signer_environment, local.boot_environment, local.observability_environment, local.embedding_environment)
 
   tags = var.tags
+}
+
+# ── Embeddings: the self-hosted lane (P1-54, ADR-0014 §1.5) ──────────────────
+#
+# Vault and knowledge-base search embed every document and every query. Since
+# P1-45 the gateway refuses OpenAI embeddings for every organisation that has
+# not elected OpenAI, and since P0-11 this stack provisions no OpenAI key unless
+# one has; with EMBEDDING_PROVIDER unset (OpenAI) a deployment searched nothing
+# for an ordinary tenant. This lane is inside the VPC and serves every tenant
+# the placement decision admits. tests/boot_contract.tftest.hcl holds the wiring.
+#
+# One lane for every tenant (ADR-0014 §1.5, amended 2026-10-01): the lane does
+# not follow an OpenAI election, which covers generation and fallback only; a
+# corpus searched with one model must be written with that model. bge-m3 emits
+# 1024 values and the corpora are 1536 and 3072 wide: the application asks the
+# server for 1024 and zero-pads (server/services/ai-gateway/embeddings/
+# embedding-provider.ts), and /readyz is not ready until it has embedded one
+# text that way (server/startup/ana-readiness-state.ts).
+
+module "embeddings" {
+  source = "../modules/embedding-service"
+
+  name                      = local.long
+  region                    = var.region
+  cluster_id                = module.ecs.cluster_id
+  vpc_id                    = module.vpc.vpc_id
+  private_subnet_ids        = module.vpc.private_subnet_ids
+  client_security_group_ids = [module.ecs.ecs_tasks_security_group_id]
+
+  image          = var.embedding_image
+  model_revision = var.embedding_model_revision
+  cpu            = var.embedding_cpu
+  memory         = var.embedding_memory
+  desired_count  = var.embedding_desired_count
+
+  tags = var.tags
+}
+
+locals {
+  # Unconditional: no variable moves it (INF-36, resolved by the decision above).
+  embedding_provider = "local"
+
+  # The API and the worker both run the embedding runtime. With local and no
+  # address, resolveEmbeddingProvider refuses rather than falling back to OpenAI.
+  # EMBEDDING_LOCAL_MODEL is the model the server loads, so the ledger names
+  # what served each call; the readiness probe refuses a server that answers as
+  # any model but the corpus policy's (SELF_HOSTED_EMBEDDING_MODEL).
+  embedding_environment = [
+    { name = "EMBEDDING_PROVIDER", value = local.embedding_provider },
+    { name = "EMBEDDING_LOCAL_BASE_URL", value = module.embeddings.base_url },
+    { name = "EMBEDDING_LOCAL_MODEL", value = module.embeddings.model_id },
+  ]
+}
+
+check "embedding_model_is_pinned" {
+  assert {
+    condition     = var.embedding_model_revision != null
+    error_message = "embedding_model_revision is unset, so the embedding server loads BAAI/bge-m3 from the hub's main branch. Pin the commit (variables.tf says how): a model that changes under a corpus mixes two vector spaces."
+  }
 }
 
 # ── Compliance Evidence (S3 + CloudTrail) ────────────────────────────────────

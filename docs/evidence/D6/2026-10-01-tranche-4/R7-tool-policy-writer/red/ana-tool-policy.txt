@@ -1,0 +1,5 @@
+ × server/__tests__/routes/ana-tool-policy.test.ts > PUT /api/ana-tool-policy > persists through the one settings writer, recorded as ana_tool_policy.update 12ms
+ × server/__tests__/routes/ana-tool-policy.test.ts > PUT /api/ana-tool-policy > never writes organizations.settings itself 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 12 passed (14)

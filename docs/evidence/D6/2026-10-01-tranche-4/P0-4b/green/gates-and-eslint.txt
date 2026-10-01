@@ -1,0 +1,43 @@
+== npm run ci:migration-drop-safety
+[ci:migration-drop-safety] OK — 341 migrations, 35 DROP(s), none re-created by the set; 4 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 17 dynamic DROP(s) in 17 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+
+== npm run ci:migration-set-order
+[ci:migration-set-order] OK — 341 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+
+== npm run ci:column-reachability
+[ci:column-reachability] OK — 3194 column add(s) on no applier, 0 queried by the server.
+
+== npm run ci:model-migration-agreement
+  divergent tables           : 12
+  baselined (known, unfixed) : 28
+
+✅ no new divergence. 28 baselined and awaiting burn-down.
+
+== npm run ci:migration-prefix-collisions
+[ci:migration-prefix-collisions] OK — no NEW collisions (3 baselined collision prefix(es) tolerated)
+
+== npm run ci:migration-reachability
+[ci:migration-reachability] 1346 durably-created tables; 0 server-referenced table(s) created only by a deploy-dead migration; 0 baselined
+[ci:migration-reachability] ✅ no new unreachable table references.
+
+== npm run ci:insert-columns-declared
+  tables unknown to BOTH       : 9
+  baselined (known, unfixed)   : 47
+
+✅ no new violations. 47 baselined and awaiting burn-down.
+
+== npm run check:security-patterns
+check-security-patterns: 0 violations across 2958 file(s).
+
+== ESLint finding count per changed file, HEAD -> working tree
+0 -> 0  server/services/account-standing.ts
+3 -> 3  server/services/token-revocation.ts
+0 -> 0  server/middleware/auth.ts
+1 -> 1  server/auth.ts
+21 -> 21  server/routes/auth.ts
+0 -> 0  server/services/__tests__/account-standing-session-currency.test.ts
+0 -> 0  server/routes/__tests__/auth-refresh-session-currency.test.ts
+0 -> 0  tests/field-sync-auth.contract.test.ts
+1 -> 1  tests/socket-tenant-isolation.contract.test.ts
+2 -> 2  server/services/collab/__tests__/collab-governance.pglite.integration.test.ts
+tests/db/session-termination.dbtest.ts (new): 0

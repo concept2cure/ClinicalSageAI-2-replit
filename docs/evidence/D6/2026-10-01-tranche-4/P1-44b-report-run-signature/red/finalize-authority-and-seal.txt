@@ -1,0 +1,248 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts
+{
+  "timestamp": "2026-10-01T14:07:32.895Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/report-os-audit-recording.test.ts
+{
+  "timestamp": "2026-10-01T14:07:33.458Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T14:07:33.459Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts
+{
+  "timestamp": "2026-10-01T14:07:33.459Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain > answers 503 saying the run exists but was not recorded when the row cannot be written
+{
+  "timestamp": "2026-10-01T14:07:33.981Z",
+  "level": "error",
+  "message": "[report-os] report event not recorded on the audit chain",
+  "context": {
+    "action": "report_os.run_created",
+    "resourceId": "41",
+    "error": "audit_logs refused the row"
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs never computes a prediction (reporting review 2026-10-01) > refuses a prediction-family type with 422 before the plan gate, the computation or any write 40ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain > writes report_os.run_created for the run, on a tenant-stamped transaction, and answers 201 11ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain > answers 503 saying the run exists but was not recorded when the row cannot be written 8ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > refuses a member with 403 before reading anything 6ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > refuses a viewer with 403 before reading anything 5ms
+ × server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > lets the owner finalize where the signing policy admits the role: status, seal, chain row and signature commit together 18ms
+   → expected "vi.fn()" to be called with arguments: [ 5, 7 ]
+
+Number of calls: 0
+
+ × server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > lets the admin finalize where the signing policy admits the role: status, seal, chain row and signature commit together 7ms
+   → expected "vi.fn()" to be called with arguments: [ 5, 7 ]
+
+Number of calls: 0
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > answers 503 with nothing changed when the signature row cannot be written
+{
+  "timestamp": "2026-10-01T14:07:34.105Z",
+  "level": "error",
+  "message": "[report-os] report finalize not recorded on the audit chain; rolled back",
+  "context": {
+    "runId": 41,
+    "error": "electronic_signatures refused the row"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > answers 503 with nothing changed when the chain row cannot be written: the writes roll back with it
+{
+  "timestamp": "2026-10-01T14:07:34.119Z",
+  "level": "error",
+  "message": "[report-os] report finalize not recorded on the audit chain; rolled back",
+  "context": {
+    "runId": 41,
+    "error": "audit_logs refused the row"
+  }
+}
+
+ × server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > lets the manager finalize where the signing policy admits the role: status, seal, chain row and signature commit together 6ms
+   → expected "vi.fn()" to be called with arguments: [ 5, 7 ]
+
+Number of calls: 0
+
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize is an electronic signature (reporting review 2026-10-01) > limits signing attempts on finalize (11.300(d)) 2ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize is an electronic signature (reporting review 2026-10-01) > refuses no reason with 400 REASON_REQUIRED before reading anything 8ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize is an electronic signature (reporting review 2026-10-01) > refuses a reason under 8 characters with 400 REASON_REQUIRED before reading anything 6ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize is an electronic signature (reporting review 2026-10-01) > refuses a password that is not accepted with 401, before any transaction 5ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize is an electronic signature (reporting review 2026-10-01) > refuses a meaning a finalize cannot carry 6ms
+ × server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize needs signing authority (P1-44b, 21 CFR 11.10(g)) > refuses the role owner, which the default signing policy does not admit: 403, before anything is read 9ms
+   → expected 200 to be 403 // Object.is equality
+ × server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize needs signing authority (P1-44b, 21 CFR 11.10(g)) > refuses the role manager, which the default signing policy does not admit: 403, before anything is read 5ms
+   → expected 200 to be 403 // Object.is equality
+ × server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize needs signing authority (P1-44b, 21 CFR 11.10(g)) > refuses a viewer membership under a token saying admin (the role is the membership's) 7ms
+   → expected 'NOT_AN_AUTHOR' to be 'ESIGNATURE_NO_AUTHORITY' // Object.is equality
+ × server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize needs signing authority (P1-44b, 21 CFR 11.10(g)) > refuses no membership in the organization 6ms
+   → expected 'NOT_AN_AUTHOR' to be 'ESIGNATURE_NO_AUTHORITY' // Object.is equality
+ × server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize needs signing authority (P1-44b, 21 CFR 11.10(g)) > a membership that cannot be read is a 500 with no detail, and nothing is written 5ms
+   → expected 403 to be 500 // Object.is equality
+ × server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize keeps the seal it signs (P1-44b) > refuses a run with no snapshot to carry the seal: 409, rolled back, nothing signed or recorded 5ms
+   → expected 200 to be 409 // Object.is equality
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > refuses an approval from the run's own requester (separation of duties) and rolls back 5ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > refuses an authorship signature from someone who did not request the run 4ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > answers 503 with nothing changed when the signature row cannot be written 5ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > refuses a run that is already final with 409 RUN_ALREADY_FINAL and writes nothing 4ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > refuses when a concurrent finalize won the lock, and rolls back 4ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > answers 503 with nothing changed when the chain row cannot be written: the writes roll back with it 5ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > records nothing when the truthfulness gate refuses the finalize 4ms
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > answers 503 and sends no PDF when the export cannot be recorded
+{
+  "timestamp": "2026-10-01T14:07:34.191Z",
+  "level": "error",
+  "message": "[report-os] report event not recorded on the audit chain",
+  "context": {
+    "action": "report_os.run_exported",
+    "resourceId": "41",
+    "error": "audit_logs refused the row"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > answers 503 and sends no PDF when the bundle export cannot be recorded
+{
+  "timestamp": "2026-10-01T14:07:34.221Z",
+  "level": "error",
+  "message": "[report-os] report event not recorded on the audit chain",
+  "context": {
+    "action": "report_os.bundle_exported",
+    "resourceId": "11111111-1111-4111-8111-111111111111",
+    "error": "audit_logs refused the row"
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > writes report_os.run_exported carrying the hash of the bytes sent, then sends the PDF 55ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > answers 503 and sends no PDF when the export cannot be recorded 13ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > refuses with the run export gate when a report in the bundle is above the plan, and sends nothing 7ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > writes report_os.bundle_exported carrying the hash of the bytes sent, then sends the PDF 11ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > answers 503 and sends no PDF when the bundle export cannot be recorded 12ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > the registry has one writer > POST /taxonomy/seed no longer exists: the generated migration seeds the registry 7ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > lets the owner finalize where the signing policy admits the role: status, seal, chain row and signature commit together
+ FAIL  server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > lets the admin finalize where the signing policy admits the role: status, seal, chain row and signature commit together
+ FAIL  server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > lets the manager finalize where the signing policy admits the role: status, seal, chain row and signature commit together
+AssertionError: expected "vi.fn()" to be called with arguments: [ 5, 7 ]
+
+Number of calls: 0
+
+ ❯ server/routes/__tests__/report-os-audit-recording.test.ts:277:26
+    275|     const res = await finalize(role);
+    276|     expect(res.status).toBe(200);
+    277|     expect(h.memberRole).toHaveBeenCalledWith(5, 7);
+       |                          ^
+    278|     const seal = res.body.data.seal;
+    279|     expect(seal.contentHash).toMatch(/^[0-9a-f]{64}$/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize needs signing authority (P1-44b, 21 CFR 11.10(g)) > refuses the role owner, which the default signing policy does not admit: 403, before anything is read
+ FAIL  server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize needs signing authority (P1-44b, 21 CFR 11.10(g)) > refuses the role manager, which the default signing policy does not admit: 403, before anything is read
+AssertionError: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/__tests__/report-os-audit-recording.test.ts:376:26
+    374|       lockedAs('completed');
+    375|       const res = await finalize(role);
+    376|       expect(res.status).toBe(403);
+       |                          ^
+    377|       expect(res.body).toMatchObject({ success: false, error: { code: …
+    378|       expect(res.body.error.message).toMatch(/Nothing was finalized/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize needs signing authority (P1-44b, 21 CFR 11.10(g)) > refuses a viewer membership under a token saying admin (the role is the membership's)
+ FAIL  server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize needs signing authority (P1-44b, 21 CFR 11.10(g)) > refuses no membership in the organization
+AssertionError: expected 'NOT_AN_AUTHOR' to be 'ESIGNATURE_NO_AUTHORITY' // Object.is equality
+
+Expected: "ESIGNATURE_NO_AUTHORITY"
+Received: "NOT_AN_AUTHOR"
+
+ ❯ server/routes/__tests__/report-os-audit-recording.test.ts:395:33
+    393|     const res = await finalize('admin');
+    394|     expect(res.status).toBe(403);
+    395|     expect(res.body.error.code).toBe('ESIGNATURE_NO_AUTHORITY');
+       |                                 ^
+    396|     nothingWritten();
+    397|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize needs signing authority (P1-44b, 21 CFR 11.10(g)) > a membership that cannot be read is a 500 with no detail, and nothing is written
+AssertionError: expected 403 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 403
+
+ ❯ server/routes/__tests__/report-os-audit-recording.test.ts:403:24
+    401|     eligible();
+    402|     const res = await finalize('admin');
+    403|     expect(res.status).toBe(500);
+       |                        ^
+    404|     expect(JSON.stringify(res.body)).not.toContain('secret-detail');
+    405|     expect(h.reauth).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize keeps the seal it signs (P1-44b) > refuses a run with no snapshot to carry the seal: 409, rolled back, nothing signed or recorded
+AssertionError: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/report-os-audit-recording.test.ts:421:24
+    419|     h.respond.fn = (sql) => (/FROM report_runs/.test(sql) ? [{ status:…
+    420|     const res = await finalize();
+    421|     expect(res.status).toBe(409);
+       |                        ^
+    422|     expect(res.body).toMatchObject({ success: false, error: { code: 'R…
+    423|     expect(res.body.error.message).toMatch(/Nothing was signed/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed | 23 passed (32)
+   Start at  14:07:30
+   Duration  4.06s (transform 1.95s, setup 94ms, import 3.34s, tests 312ms, environment 0ms)
+

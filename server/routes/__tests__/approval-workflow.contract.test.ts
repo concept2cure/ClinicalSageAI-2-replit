@@ -29,12 +29,14 @@ vi.mock('../../db', () => ({ get db() { return holder.db; } }));
 // Faked JWT verifier — `verifyJwtWithRotation` is the only auth dependency of
 // the router. A mutable identity lets each test set/clear the "current user".
 const auth = vi.hoisted(() => ({
-  current: null as null | { userId: string; organizationId?: string },
+  current: null as null | { userId: string; organizationId?: string; type?: string },
 }));
+// An access token unless a case says otherwise: since IAM-23 (bf83e12b) the
+// router refuses any other token class (requireAccessTokenReason).
 vi.mock('../../utils/jwtVerify.js', () => ({
   verifyJwtWithRotation: vi.fn(() => {
     if (!auth.current) throw new Error('invalid token');
-    return auth.current;
+    return { type: 'access', ...auth.current };
   }),
 }));
 
@@ -242,6 +244,12 @@ describe('auth gating', () => {
 
   it('401 when the token fails verification', async () => {
     auth.current = null; // verifier throws
+    const res = await authed().get('/api/approval-workflows/pending');
+    expect(res.status).toBe(401);
+  });
+
+  it('401 for a token that is not an access token (an MFA challenge), IAM-23', async () => {
+    auth.current = { userId: USER, organizationId: String(ORG), type: 'mfa_challenge' };
     const res = await authed().get('/api/approval-workflows/pending');
     expect(res.status).toBe(401);
   });

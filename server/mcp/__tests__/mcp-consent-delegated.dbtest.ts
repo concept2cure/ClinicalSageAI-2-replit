@@ -194,7 +194,9 @@ async function provisionRuntimeRole(): Promise<void> {
 
 async function seed(): Promise<{ userId: number; email: string; orgUuid: string }> {
   const org = await owner.query(
-    `INSERT INTO organizations (name, slug, tier, industry_mode, status) VALUES ($1, $1, 'free', 'biotech', 'active') RETURNING id, uuid::text AS uuid`,
+    // Its owner has turned the connector on (P1-47; mcp-connector-enablement.dbtest.ts proves the off state).
+    `INSERT INTO organizations (name, slug, tier, industry_mode, status, settings)
+     VALUES ($1, $1, 'free', 'biotech', 'active', '{"claudeConnector":{"enabled":true}}'::json) RETURNING id, uuid::text AS uuid`,
     [`${TAG}-org-${RUN}`],
   );
   orgId = Number(org.rows[0].id);

@@ -213,6 +213,8 @@ describe('GET /api/audit/reports/:reportId — a run', () => {
       sections: [
         { key: 'members', rowCount: 3, truncated: false },
         { key: 'privileged', rowCount: 2, truncated: false },
+        // P1-43: the latest signed access review, or the statement that there is none (one row either way).
+        { key: 'review', rowCount: 1, truncated: false },
       ],
       signingKeyId: 'k-route',
       description: `Ran User access review (as of 2026-09-30, json), export ${exp.manifest.exportId}`,

@@ -28,12 +28,15 @@ vi.mock('../../middleware/auth', () => ({
     next();
   },
 }));
-// requireProgramAccess: the program is the caller's.
+// requireProgramAccess: the program is the caller's (programInOrganization,
+// trunk 2026-10-01, replaced the inline read).
 vi.mock('../../db', () => ({
   db: {
     select: () => ({ from: () => ({ where: () => ({ limit: async () => [{ id: 'prog-1' }] }) }) }),
   },
+  pool: {},
 }));
+vi.mock('../../services/c2c/program-access', () => ({ programInOrganization: async () => true }));
 vi.mock('../../services/evidence-sufficiency/evidence-sufficiency.service', () => svc);
 vi.mock('../../services/audit/audit-write-outcome', () => ({
   recordAuditRow: vi.fn(async () => ({ persisted: true, chained: true })),

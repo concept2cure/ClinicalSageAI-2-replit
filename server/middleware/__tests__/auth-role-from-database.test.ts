@@ -71,7 +71,8 @@ interface Admitted {
   reachedHandler: boolean;
 }
 
-async function admit(token: string): Promise<Admitted> {
+/** `identity` is what the global /api gate (server/auth.ts) leaves on a request it admitted, when it ran. */
+async function admit(token: string, identity?: Record<string, unknown>): Promise<Admitted> {
   const { authenticateToken } = await importRealMiddlewareAuth();
   return new Promise<Admitted>((resolve, reject) => {
     const req = {
@@ -80,6 +81,7 @@ async function admit(token: string): Promise<Admitted> {
       path: '/probe',
       baseUrl: '/api',
       originalUrl: '/api/probe',
+      ...(identity ? { identity } : {}),
     } as unknown as Request;
     const res: any = { statusCode: 200 };
     res.status = (code: number) => {
@@ -178,5 +180,50 @@ describe('the role a guard reads is the membership row, not the token', () => {
     const next = vi.fn();
     await requirePlatformAdmin(r.req, res, next);
     expect(next).toHaveBeenCalledOnce();
+  });
+});
+
+/**
+ * Plan P0-4b fix round, 2026-10-01. The membership role above is cached for
+ * 60 s per server task, and the role writers invalidate it only on the task
+ * that wrote. Behind the global /api gate, which has just read the role
+ * uncached, a router gate takes that reading instead, so a demotion holds on
+ * every task at the next request; a reading for another account or another
+ * organisation is never taken.
+ */
+describe("behind the global gate, the role is that gate's uncached reading on this request", () => {
+  const gateRead = (role: string, over: Record<string, unknown> = {}) => ({
+    externalSubject: '7',
+    provider: 'local-jwt',
+    legacyUserId: 7,
+    organizationId: 42,
+    role,
+    email: base.email,
+    ...over,
+  });
+
+  it('a demotion the global gate read is the role requireRole sees, though the cached row still says admin', async () => {
+    membershipRows.current = [{ role: 'admin', orgUuid: null }];
+    const r = await admit(tokenWithRole('admin'), gateRead('member'));
+    expect(r.reachedHandler).toBe(true);
+    expect(r.req.user?.role).toBe('member');
+    expect(r.req.user?.roles).not.toContain('admin');
+    const { res, next } = await guard(r.req, 'admin');
+    expect(res.statusCode).toBe(403);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it("another organisation's reading is not taken: the membership row's role is", async () => {
+    membershipRows.current = [{ role: 'admin', orgUuid: null }];
+    const r = await admit(tokenWithRole('member'), gateRead('viewer', { organizationId: 43 }));
+    expect(r.reachedHandler).toBe(true);
+    expect(r.req.user?.role).toBe('admin');
+  });
+
+  it("another account's reading is not taken: the membership row's role is", async () => {
+    membershipRows.current = [{ role: 'admin', orgUuid: null }];
+    const r = await admit(tokenWithRole('member'), gateRead('viewer', { legacyUserId: 8 }));
+    expect(r.reachedHandler).toBe(true);
+    expect(r.req.user?.role).toBe('admin');
   });
 });

@@ -1,0 +1,11 @@
+# Fix round ESLint, 2026-10-01T14:29:17Z, HEAD 0812a990 + working tree.
+# (a) The warning ratchet's own --since mode on every tracked file changed since HEAD (all lanes' working-tree files; this item's are among them):
+[ci:eslint-warning-ratchet] --since HEAD (0812a9907) -- 51 lintable file(s) changed; linting both versions of each...
+
+    -1  server/routes/scim.ts  (6 -> 5)
+
+[ci:eslint-warning-ratchet] net -1 warning(s) across the files changed since HEAD.
+exit=0
+
+# (b) The untracked files this item adds, which git diff (and so --since) cannot see; a new file must carry none:
+exit=0 (no output above = 0 errors, 0 warnings)

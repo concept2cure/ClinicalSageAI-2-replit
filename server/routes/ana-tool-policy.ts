@@ -4,14 +4,15 @@
  *   GET  /api/ana-tool-policy        Read current policy for the caller's org.
  *   PUT  /api/ana-tool-policy        Replace policy ({ allow?: string[], deny?: string[] }).
  *
- * Admin-only. Audited with action='ana_tool_policy.update'.
+ * Admin-only. Written through the one settings writer and audited in its
+ * transaction with action='ana_tool_policy.update'.
  */
 
 import { Router, Request, Response } from 'express';
 
 import { authenticateToken } from '../middleware/auth';
 import { pool } from '../db';
-import { recordAuditRow } from '../services/audit/audit-write-outcome';
+import { writeTenantSettings } from '../services/tenant/tenant-settings-writer';
 import { loadAnaToolPolicy, type AnaToolPolicy } from '../services/ana-ri/mdx-tool-policy';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
@@ -78,42 +79,22 @@ router.put('/', async (req: Request, res: Response) => {
   }
 
   try {
-    // Read existing settings, merge anaToolPolicy, write back.
-    const { rows } = await pool.query(
-      `SELECT settings FROM organizations WHERE id = $1 LIMIT 1`,
-      [orgId],
-    );
-    if (rows.length === 0) return res.status(404).json({ error: 'Organization not found' });
-
-    const settings = (rows[0].settings ?? {}) as Record<string, unknown>;
-    const previousPolicy = (settings.anaToolPolicy ?? {}) as AnaToolPolicy;
-    settings.anaToolPolicy = next;
-
-    await pool.query(
-      `UPDATE organizations SET settings = $1, updated_at = NOW() WHERE id = $2`,
-      [settings, orgId],
-    );
-
-    /* WO-16C #133. Was `void auditService.logAction({…})` — the discarded
-       AuditWriteResult was the only place a lost row was visible, and this row is
-       the change record for which agent tools a tenant permits. The UPDATE above
-       has committed, so this is a log beside it: the policy change stands and the
-       response says whether the record of it was written. `previousPolicy` and
-       `newPolicy` are in the row's details, so the row is the before/after
-       evidence for a governance change — which is why losing it silently is worth
-       reporting. */
-    const auditTrail = await recordAuditRow({
-      tenantId: orgId,
-      userId: (req as any).user?.id ?? null,
+    /* Through the one settings writer (services/tenant/tenant-settings-writer.ts;
+       R7, 2026-10-01): the stored settings are read under a row lock and the
+       policy is overlaid on them in one transaction with its chained audit row.
+       This door read the whole object, wrote it all back with no lock, and
+       recorded the change after commit, so a setting changed in between (the
+       connector switch, a session limit) was silently reverted, and a lost
+       audit row left the change unrecorded. The action keeps its name, which
+       audit.explain reads; the row carries the policy before and after. */
+    const stored = await writeTenantSettings(req, orgId, {
       action: 'ana_tool_policy.update',
-      resourceType: 'organization_settings',
-      resourceId: String(orgId),
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent'] as string | undefined,
-      details: { previousPolicy, newPolicy: next },
+      next: (current) => ({ ...current, anaToolPolicy: next }),
+      sections: () => ['anaToolPolicy'],
     });
+    if (!stored) return res.status(404).json({ error: 'Organization not found' });
 
-    res.json({ organizationId: orgId, policy: next, auditTrail });
+    res.json({ organizationId: orgId, policy: next, auditTrail: { persisted: true, chained: true } });
   } catch (err) {
     return serverError(res, log, 'updating the tool policy', err);
   }

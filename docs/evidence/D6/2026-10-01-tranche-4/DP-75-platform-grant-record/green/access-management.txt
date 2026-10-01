@@ -1,0 +1,73 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/admin/__tests__/access-management.test.ts > access boundary > 403s a non-platform user
+{
+  "timestamp": "2026-10-01T19:03:13.254Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "userId": 5,
+    "role": "member",
+    "email": "m***@x.io",
+    "path": "/api/admin/access/grants"
+  }
+}
+
+stderr | server/routes/admin/__tests__/access-management.test.ts > a grant is recorded in its transaction (DP-75) > when the row cannot be written nothing is granted: 503 GRANT_NOT_RECORDED, rolled back
+{
+  "timestamp": "2026-10-01T19:03:13.315Z",
+  "level": "error",
+  "message": "[admin-access-management] Grant not recorded; rolled back",
+  "context": {
+    "userId": 42,
+    "role": "support",
+    "error": "audit_logs refused the row: secret-detail"
+  }
+}
+
+stderr | server/routes/admin/__tests__/access-management.test.ts > a grant is recorded in its transaction (DP-75) > a failed grant write is a 500, and no row claims it
+{
+  "timestamp": "2026-10-01T19:03:13.321Z",
+  "level": "error",
+  "message": "[admin-access-management] Grant create failed",
+  "context": {}
+}
+
+ ✓ server/routes/admin/__tests__/access-management.test.ts > access boundary > 401s an unauthenticated request 21ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > access boundary > 403s a non-platform user 7ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > access boundary > lists grants for a platform admin 4ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > granting platform/support roles > lets a super_admin grant support (and audits it) 14ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > granting platform/support roles > 400s a grant without a reason 5ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > granting platform/support roles > 404s an unknown email 3ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > business-tier grants require a business-admin caller > 403s when a support user tries to grant business_admin 3ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > business-tier grants require a business-admin caller > 403s when a platform_admin (not business) tries to grant business_admin 3ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > business-tier grants require a business-admin caller > 200s when a super_admin (platform + business) grants business_admin 10ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > business-tier grants require a business-admin caller > 200s when a business_admin holding an active platform grant grants business_admin 4ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > a grant is recorded in its transaction (DP-75) > writes the grant and its chained row on one transaction, row after the grant, then commits 7ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > a grant is recorded in its transaction (DP-75) > when the row cannot be written nothing is granted: 503 GRANT_NOT_RECORDED, rolled back 7ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > a grant is recorded in its transaction (DP-75) > a failed grant write is a 500, and no row claims it 5ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > revoke > revokes a grant and audits it, and says the row was written 4ms
+stderr | server/routes/admin/__tests__/access-management.test.ts > revoke > a revocation stands when its row is lost, and says so (DP-75)
+{
+  "timestamp": "2026-10-01T19:03:13.330Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "data_modify",
+    "resourceType": "platform_role_grant",
+    "resourceId": "42:support",
+    "reason": "store down"
+  }
+}
+
+ ✓ server/routes/admin/__tests__/access-management.test.ts > revoke > a revocation stands when its row is lost, and says so (DP-75) 5ms
+ ✓ server/routes/admin/__tests__/access-management.test.ts > revoke > 404s revoking a non-existent / already-revoked grant 4ms
+
+ Test Files  1 passed (1)
+      Tests  16 passed (16)
+   Start at  19:03:12
+   Duration  929ms (transform 239ms, setup 147ms, import 264ms, tests 112ms, environment 0ms)
+
+exit 0

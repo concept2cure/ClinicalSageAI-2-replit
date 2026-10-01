@@ -84,7 +84,6 @@ import { setTenantContextTx } from '../services/tenant/governed-tenant-context.j
 import {
   AUDIT_CHAIN_HEAD_ORDER_SQL,
   AUDIT_CHAIN_ORDER_ASC_SQL,
-  type ChainVerificationResult,
 } from '../services/audit/chain.js';
 import { tenantChainVerdict } from '../services/audit/audited-export.js';
 
@@ -514,8 +513,8 @@ const AUDIT_EVENTS_SQL = `
 /**
  * The tenant chain's verdict as this organization may read it
  * (services/audit/audited-export.ts tenantChainVerdict): `ok: null` with a
- * `reason` when there was nothing to verify, and a break that names only this
- * organization's own rows.
+ * `reason` when there was nothing to verify or the anchor could not be read
+ * (fix round DP-72), and a break that names only this organization's own rows.
  */
 export interface AuditLedgerChainVerdict {
   store: 'audit_logs';
@@ -525,10 +524,16 @@ export interface AuditLedgerChainVerdict {
   sequencedRows: number;
   reason?: string;
   brokenAt?: Record<string, unknown>;
+  /**
+   * The chain head against the latest anchor, this organisation's only
+   * (tenant-chain-verdict.ts): verified, broken with its breaks, or a reason
+   * beginning "head not verified against the anchor" (fix round DP-71).
+   */
+  head?: TenantChainHead;
 }
 
 /** The verifier's walk, stated for `orgId`. */
-const ledgerVerdict = (orgId: number, v: Omit<ChainVerificationResult, 'tenants'>): AuditLedgerChainVerdict => ({
+const ledgerVerdict = (orgId: number, v: Awaited<ReturnType<TenantChainVerifier>>): AuditLedgerChainVerdict => ({
   store: 'audit_logs',
   legacyRows: v.legacyRows,
   sequencedRows: v.sequencedRows,
@@ -557,6 +562,7 @@ export interface AuditLedgerResponse {
 export type { TenantChainVerifier } from '../services/audit/tenant-chain-verdict.js';
 import {
   verifyTenantChainOnAdminScope as verifyOnSuperAdminScope,
+  type TenantChainHead,
   type TenantChainVerifier,
 } from '../services/audit/tenant-chain-verdict.js';
 

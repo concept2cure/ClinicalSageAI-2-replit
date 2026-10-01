@@ -71,11 +71,15 @@ async function recordMembershipChange(
 /**
  * The member's role before (locked), the change, and its audit row. An
  * unchanged role writes nothing and records nothing: there is no change.
+ *
+ * `onlyFrom` makes the change conditional on the role held: a SCIM group
+ * removal (routes/scim.ts PATCH /Groups/:id) sets 'member' only for a member
+ * who holds that group's role (P1-49). Any other role is left, unrecorded.
  */
 export async function changeMemberRole(
   client: MembershipTxClient,
   actor: MembershipActor,
-  change: MembershipChange & { role: string }
+  change: MembershipChange & { role: string; onlyFrom?: string }
 ): Promise<'changed' | 'unchanged' | 'not_found'> {
   const current = await client.query(
     'SELECT role FROM organization_users WHERE organization_id = $1 AND user_id = $2 FOR UPDATE',
@@ -83,6 +87,7 @@ export async function changeMemberRole(
   );
   const previousRole = current.rows[0]?.role;
   if (typeof previousRole !== 'string') return 'not_found';
+  if (change.onlyFrom !== undefined && previousRole !== change.onlyFrom) return 'unchanged';
   if (previousRole === change.role) return 'unchanged';
   await client.query(
     'UPDATE organization_users SET role = $1, updated_at = NOW() WHERE organization_id = $2 AND user_id = $3',

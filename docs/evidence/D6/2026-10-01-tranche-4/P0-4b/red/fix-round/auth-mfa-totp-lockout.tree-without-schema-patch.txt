@@ -1,0 +1,302 @@
+# Fix round 2: the same suite on the working tree as it stands (shared/schema.ts without sessionsEndedAt). 2026-10-01T15:41:32Z
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > 5 wrong codes lock the account in its users row; the right code is then refused 423 AUTH_002 without being spent
+{
+  "timestamp": "2026-10-01T15:41:38.836Z",
+  "level": "error",
+  "message": "[auth] MFA verify error",
+  "context": {
+    "err": "column \"sessions_ended_at\" does not exist"
+  }
+}
+
+ × server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > 5 wrong codes lock the account in its users row; the right code is then refused 423 AUTH_002 without being spent 3372ms
+   → wrong code 1 was not refused: expected 500 to be 401 // Object.is equality
+stderr | server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > the count is one per account across tasks: wrong codes on two tasks lock it, and a third task refuses the right code
+{
+  "timestamp": "2026-10-01T15:41:39.026Z",
+  "level": "error",
+  "message": "[auth] MFA verify error",
+  "context": {
+    "err": "column \"sessions_ended_at\" does not exist"
+  }
+}
+
+ × server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > the count is one per account across tasks: wrong codes on two tasks lock it, and a third task refuses the right code 182ms
+   → expected 500 to be 401 // Object.is equality
+stderr | server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > the last wrong code is audited as the one that locked the account
+{
+  "timestamp": "2026-10-01T15:41:39.271Z",
+  "level": "error",
+  "message": "[auth] MFA verify error",
+  "context": {
+    "err": "column \"sessions_ended_at\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > the last wrong code is audited as the one that locked the account
+{
+  "timestamp": "2026-10-01T15:41:39.278Z",
+  "level": "error",
+  "message": "[auth] MFA verify error",
+  "context": {
+    "err": "column \"sessions_ended_at\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > the last wrong code is audited as the one that locked the account
+{
+  "timestamp": "2026-10-01T15:41:39.283Z",
+  "level": "error",
+  "message": "[auth] MFA verify error",
+  "context": {
+    "err": "column \"sessions_ended_at\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > the last wrong code is audited as the one that locked the account
+{
+  "timestamp": "2026-10-01T15:41:39.288Z",
+  "level": "error",
+  "message": "[auth] MFA verify error",
+  "context": {
+    "err": "column \"sessions_ended_at\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > the last wrong code is audited as the one that locked the account
+{
+  "timestamp": "2026-10-01T15:41:39.292Z",
+  "level": "error",
+  "message": "[auth] MFA verify error",
+  "context": {
+    "err": "column \"sessions_ended_at\" does not exist"
+  }
+}
+
+ × server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > the last wrong code is audited as the one that locked the account 263ms
+   → expected undefined to be 'invalid_code_threshold_exceeded' // Object.is equality
+stderr | server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > a right password does not clear what the second factor counted, so signing in again buys no fresh guesses
+{
+  "timestamp": "2026-10-01T15:41:39.436Z",
+  "level": "error",
+  "message": "[auth] MFA verify error",
+  "context": {
+    "err": "column \"sessions_ended_at\" does not exist"
+  }
+}
+
+ × server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > a right password does not clear what the second factor counted, so signing in again buys no fresh guesses 143ms
+   → expected 500 to be 401 // Object.is equality
+stderr | server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > a completed sign-in (right code) clears the count the wrong codes built
+{
+  "timestamp": "2026-10-01T15:41:39.592Z",
+  "level": "error",
+  "message": "[auth] MFA verify error",
+  "context": {
+    "err": "column \"sessions_ended_at\" does not exist"
+  }
+}
+
+ × server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > a completed sign-in (right code) clears the count the wrong codes built 157ms
+   → expected 500 to be 401 // Object.is equality
+stderr | server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > wrong passwords and wrong codes are one count, one threshold: the password step refuses an account the codes locked
+{
+  "timestamp": "2026-10-01T15:41:39.736Z",
+  "level": "error",
+  "message": "[auth] MFA verify error",
+  "context": {
+    "err": "column \"sessions_ended_at\" does not exist"
+  }
+}
+
+ × server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > wrong passwords and wrong codes are one count, one threshold: the password step refuses an account the codes locked 143ms
+   → expected 500 to be 401 // Object.is equality
+stderr | server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an account whose second factor is an emailed code > a locked account completes no sign-in with a challenge issued before the lock, even with a code that would verify
+{
+  "timestamp": "2026-10-01T15:41:39.904Z",
+  "level": "error",
+  "message": "[auth] MFA verify error",
+  "context": {
+    "err": "column \"sessions_ended_at\" does not exist"
+  }
+}
+
+ × server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an account whose second factor is an emailed code > a locked account completes no sign-in with a challenge issued before the lock, even with a code that would verify 168ms
+   → a locked account was signed in with an emailed code: expected 500 to be 423 // Object.is equality
+stderr | server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an account whose second factor is an emailed code > control: wrong emailed codes keep their own cap (emailOtpService) and are not added to the account lockout
+{
+  "timestamp": "2026-10-01T15:41:40.082Z",
+  "level": "error",
+  "message": "[auth] MFA verify error",
+  "context": {
+    "err": "column \"sessions_ended_at\" does not exist"
+  }
+}
+
+ × server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an account whose second factor is an emailed code > control: wrong emailed codes keep their own cap (emailOtpService) and are not added to the account lockout 178ms
+   → expected 500 to be 401 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > 5 wrong codes lock the account in its users row; the right code is then refused 423 AUTH_002 without being spent
+AssertionError: wrong code 1 was not refused: expected 500 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 500
+
+ ❯ server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts:177:59
+    175|     for (let i = 1; i <= THRESHOLD; i++) {
+    176|       const r = await verify(app, String(100000 + i));
+    177|       expect(r.status, `wrong code ${i} was not refused`).toBe(401);
+       |                                                           ^
+    178|       expect(r.body.error.code).toBe('AUTH_004');
+    179|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > the count is one per account across tasks: wrong codes on two tasks lock it, and a third task refuses the right code
+AssertionError: expected 500 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 500
+
+ ❯ server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts:201:80
+    199|   it('the count is one per account across tasks: wrong codes on two ta…
+    200|     const taskA = await task();
+    201|     for (let i = 0; i < 3; i++) expect((await verify(taskA, '000001'))…
+       |                                                                                ^
+    202|     const taskB = await task();
+    203|     for (let i = 0; i < 2; i++) expect((await verify(taskB, '000002'))…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > the last wrong code is audited as the one that locked the account
+AssertionError: expected undefined to be 'invalid_code_threshold_exceeded' // Object.is equality
+
+- Expected:
+"invalid_code_threshold_exceeded"
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts:217:36
+    215|     const reasons = authEvents.mock.calls.map(([e]) => (e as { reason?…
+    216|     expect(reasons.slice(0, THRESHOLD - 1).every((r) => r === 'invalid…
+    217|     expect(reasons[THRESHOLD - 1]).toBe('invalid_code_threshold_exceed…
+       |                                    ^
+    218|   }, T);
+    219|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > a right password does not clear what the second factor counted, so signing in again buys no fresh guesses
+AssertionError: expected 500 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 500
+
+ ❯ server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts:222:90
+    220|   it('a right password does not clear what the second factor counted, …
+    221|     const app = await task();
+    222|     for (let i = 0; i < THRESHOLD - 1; i++) expect((await verify(app, …
+       |                                                                                          ^
+    223|     expect((await lockRow()).attempts).toBe(THRESHOLD - 1);
+    224|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > a completed sign-in (right code) clears the count the wrong codes built
+AssertionError: expected 500 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 500
+
+ ❯ server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts:237:78
+    235|   it('a completed sign-in (right code) clears the count the wrong code…
+    236|     const app = await task();
+    237|     for (let i = 0; i < 2; i++) expect((await verify(app, '000006')).s…
+       |                                                                              ^
+    238|     expect((await lockRow()).attempts).toBe(2);
+    239|     const r = await verify(app, RIGHT_CODE);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > wrong passwords and wrong codes are one count, one threshold: the password step refuses an account the codes locked
+AssertionError: expected 500 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 500
+
+ ❯ server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts:249:78
+    247|   it('wrong passwords and wrong codes are one count, one threshold: th…
+    248|     const app = await task();
+    249|     for (let i = 0; i < 3; i++) expect((await verify(app, '000007')).s…
+       |                                                                              ^
+    250|     for (let i = 0; i < 2; i++) {
+    251|       const r = await request(app).post('/api/auth/login').send({ emai…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an account whose second factor is an emailed code > a locked account completes no sign-in with a challenge issued before the lock, even with a code that would verify
+AssertionError: a locked account was signed in with an emailed code: expected 500 to be 423 // Object.is equality
+
+- Expected
++ Received
+
+- 423
++ 500
+
+ ❯ server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts:267:77
+    265|     const app = await task();
+    266|     const r = await verify(app, '123456', 'email');
+    267|     expect(r.status, 'a locked account was signed in with an emailed c…
+       |                                                                             ^
+    268|     expect(r.body.error.code).toBe('AUTH_002');
+    269|     expect(otp.verifyEmailOtp, 'the emailed code was spent for a locke…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an account whose second factor is an emailed code > control: wrong emailed codes keep their own cap (emailOtpService) and are not added to the account lockout
+AssertionError: expected 500 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 500
+
+ ❯ server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts:274:95
+    272|   it('control: wrong emailed codes keep their own cap (emailOtpService…
+    273|     const app = await task();
+    274|     for (let i = 0; i < THRESHOLD; i++) expect((await verify(app, '000…
+       |                                                                                               ^
+    275|     expect((await lockRow()).attempts).toBe(0);
+    276|   }, T);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed (8)
+   Start at  15:41:33
+   Duration  6.54s (transform 1.19s, setup 99ms, import 1.49s, tests 4.63s, environment 0ms)
+

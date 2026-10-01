@@ -241,6 +241,19 @@ function sessionToken(secret: string, m: { id: number; email: string }): string 
   );
 }
 
+/**
+ * The account signs in again: a session minted now, as POST /api/auth/login
+ * issues it, once the stamp that ended its earlier sessions has passed. An
+ * ending stamp names the first whole second after its event (plan P0-4b,
+ * account-standing.ts endingStampOf), so a session begun in the event's own
+ * second is one the event ended.
+ */
+async function signInAgain(m: Member): Promise<Member> {
+  await new Promise((r) => setTimeout(r, 1100));
+  const { activeJwtSecret } = await import('../../utils/jwtVerify');
+  return { ...m, session: sessionToken(activeJwtSecret(), m) };
+}
+
 beforeAll(async () => {
   owner = new Pool({ connectionString: databaseUrl, max: 4 });
   await cleanup();
@@ -264,9 +277,10 @@ beforeAll(async () => {
   process.env.RLS_ENFORCE = 'on';
   process.env.ALLOW_DEV_AUTH = '0';
 
+  // Its owner has turned the connector on (P1-47; mcp-connector-enablement.dbtest.ts proves the off state).
   const org = await owner.query(
-    `INSERT INTO organizations (name, slug, tier, industry_mode, status)
-     VALUES ($1, $1, 'free', 'biotech', 'active') RETURNING id, uuid::text AS uuid`,
+    `INSERT INTO organizations (name, slug, tier, industry_mode, status, settings)
+     VALUES ($1, $1, 'free', 'biotech', 'active', '{"claudeConnector":{"enabled":true}}'::json) RETURNING id, uuid::text AS uuid`,
     [`${TAG}-org-${RUN}`],
   );
   orgId = Number(org.rows[0].id);
@@ -466,8 +480,8 @@ describe('a connector grant made while the account was in use', () => {
     ['suspended', suspend],
     ['deprovisioned', deprovision],
   ] as const) {
-    it(`ends when the account is ${label}: the access token, the refresh token and an unredeemed code`, async () => {
-      const m = members.held;
+    it(`ends when the account is ${label}: the access token, the refresh token and an unredeemed code, and stays ended once it is back in use`, async () => {
+      const m = await signInAgain(members.held);
       const g = await grant(m);
       const pending = await codeFor(m);
       expect((await mcp(g.access)).status).toBe(200);
@@ -495,11 +509,22 @@ describe('a connector grant made while the account was in use', () => {
         await reactivate(m);
       }
 
-      // The refusal was the account's standing and nothing else: once the
-      // account is back in use, the same grant works again. A suspension is
-      // reversible, and refusing it did not quietly destroy the grant.
+      // Product decision R2 (plan P0-4b, 2026-10-01): taking an account out of
+      // use ends its connector grants as it ends its sessions, durably. Until
+      // then a reactivation revived the grant: the refresh token minted again,
+      // as a reactivated session had come back to life at every first-party
+      // door. The account is back in use, so it signs in and connects afresh.
       const back = await refresh(g.refresh);
-      expect(back.status, `the grant did not work again after reactivation: ${shown(back.body)}`).toBe(200);
+      expect(back.status, `a grant made before the account was ${label} refreshed again once it was back in use: ${shown(back.body)}`).toBe(400);
+      expect(back.body.error).toBe('invalid_grant');
+      expect(back.body.access_token).toBeUndefined();
+      expect(back.body.error_description).toMatch(/ended/);
+      expect((await mcp(g.access)).status, `a ${label} account's connector token opened /mcp again once it was back in use`).toBe(401);
+      const fresh = await signInAgain(members.held);
+      const again = await grant(fresh);
+      expect((await mcp(again.access)).status).toBe(200);
+      const rotated = await refresh(again.refresh);
+      expect(rotated.status, shown(rotated.body)).toBe(200);
     });
   }
 });
@@ -518,7 +543,7 @@ describe('a password change ends the connector grants authorised before it', () 
     owner.query(`UPDATE users SET password_changed_at = (now() AT TIME ZONE 'utc') WHERE id = $1`, [m.id]);
 
   it('refuses the access token, the refresh token and an unredeemed code, says why, and a fresh sign-in connects again', async () => {
-    const m = members.held;
+    const m = await signInAgain(members.held);
     const g = await grant(m);
     const pending = await codeFor(m);
     expect((await mcp(g.access)).status).toBe(200);
@@ -553,6 +578,50 @@ describe('a password change ends the connector grants authorised before it', () 
     } finally {
       // tenant-isolation-safe: restores this suite's fixture user's stamp
       await owner.query(`UPDATE users SET password_changed_at = NULL WHERE id = $1`, [m.id]);
+    }
+  });
+});
+
+/*
+ * Product decision R2 (plan P0-4b, 2026-10-01): the connector's /token
+ * exchanges ask the one question every first-party door asks of the account's
+ * standing (account-standing.ts sessionEndedByStanding), so a sign-out of every
+ * session ends the grants authorised before it, as a password change does.
+ */
+describe('a sign-out of every session ends the connector grants authorised before it (R2)', () => {
+  it('refuses the access token, the refresh token and an unredeemed code, says why, and a fresh sign-in connects again', async () => {
+    const m = await signInAgain(members.held);
+    const g = await grant(m);
+    const pending = await codeFor(m);
+    expect((await mcp(g.access)).status).toBe(200);
+
+    // What POST /api/auth/logout with terminateAllSessions writes, as the runtime role writes it.
+    const { endEverySessionOf } = await import('../../services/account-standing');
+    const { runWithPreAuthScope } = await import('../../db/tenantStore');
+    expect(await runWithPreAuthScope('dbd8:sign-out-everywhere', () => endEverySessionOf(m.id))).toBe(true);
+    try {
+      const access = await mcp(g.access);
+      expect(access.status, 'a connector token issued before the sign-out everywhere still opened /mcp').toBe(401);
+
+      const r = await refresh(g.refresh);
+      expect(r.status, `a grant authorised before the sign-out everywhere still refreshed: ${shown(r.body)}`).toBe(400);
+      expect(r.body.error).toBe('invalid_grant');
+      expect(r.body.error_description).toMatch(/every session was signed out/);
+      expect(r.body.access_token).toBeUndefined();
+
+      const c = await exchangeCode(pending.code, pending.verifier);
+      expect(c.status, `a code issued before the sign-out everywhere still redeemed: ${shown(c.body)}`).toBe(400);
+      expect(c.body.error).toBe('invalid_grant');
+      expect(c.body.access_token).toBeUndefined();
+
+      const fresh = await signInAgain(members.held);
+      const again = await grant(fresh);
+      expect((await mcp(again.access)).status).toBe(200);
+      const rotated = await refresh(again.refresh);
+      expect(rotated.status, shown(rotated.body)).toBe(200);
+    } finally {
+      // tenant-isolation-safe: restores this suite's fixture user's stamp
+      await owner.query(`UPDATE users SET sessions_ended_at = NULL WHERE id = $1`, [m.id]);
     }
   });
 });

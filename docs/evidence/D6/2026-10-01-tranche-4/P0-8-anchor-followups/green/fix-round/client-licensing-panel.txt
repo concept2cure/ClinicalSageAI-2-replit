@@ -1,0 +1,28 @@
+# Green: fix round, licensing panel (DP-71 a), 2026-10-01T15:54:37Z. The three new cases sit in their own describe (ESLint max-lines-per-function); the red run had them inside 'honest about integrity', same assertions.
+# npx vitest run client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > the decisions themselves > shows what changed, on which workspace and module, by whom, when, and why 114ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > the decisions themselves > names an action it has never heard of, instead of dropping or dumping it 18ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > the decisions themselves > filters to one workspace and one module 45ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about completeness > says how much of the record this page is NOT showing 210ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about completeness > says a complete page is complete 36ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about completeness > flags entries it could not fully read, and still lists them 16ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about completeness > a failed read renders an error, never an empty history 20ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about completeness > shows the honest empty state only when the service reports nothing 14ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about integrity > shows a verified row as verified when the chain AND the seal were checked 16ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about integrity > does not imply a seal check that could not happen 16ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about integrity > claims no verification at all when none was performed 15ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about integrity > reports a broken chain, and does not vouch for what follows the break 19ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about integrity > says when an entry was never committed to the chain 15ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about the newest entries (the anchor outside the database) > says plainly that the end of the chain does not match its anchor, not that the check failed 13ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about the newest entries (the anchor outside the database) > says when the newest entries were not checked against the anchor 11ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about the newest entries (the anchor outside the database) > adds no such caveat when the newest entries were checked 13ms
+
+ Test Files  1 passed (1)
+      Tests  16 passed (16)
+   Start at  15:54:38
+   Duration  2.17s (transform 387ms, setup 196ms, import 486ms, tests 597ms, environment 679ms)
+

@@ -1,0 +1,20 @@
+{
+  "extends": "/home/user/ClinicalSageAI-2-replit/tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "incremental": false,
+    "skipLibCheck": true
+  },
+  "include": [],
+  "files": [
+    "/home/user/ClinicalSageAI-2-replit/server/routes/report-os.ts",
+    "/home/user/ClinicalSageAI-2-replit/server/services/report-os/scheduling/delivery.ts",
+    "/home/user/ClinicalSageAI-2-replit/server/services/report-os/scheduling/types.ts",
+    "/home/user/ClinicalSageAI-2-replit/server/services/report-os/scheduling/worker-register.ts",
+    "/home/user/ClinicalSageAI-2-replit/shared/types/third-party.d.ts",
+    "/home/user/ClinicalSageAI-2-replit/server/middleware/tenantContext.ts",
+    "/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/report-os-audit-recording.test.ts",
+    "/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/report-os-delivery-recording.test.ts",
+    "/home/user/ClinicalSageAI-2-replit/server/services/report-os/scheduling/__tests__/scheduling.test.ts"
+  ]
+}

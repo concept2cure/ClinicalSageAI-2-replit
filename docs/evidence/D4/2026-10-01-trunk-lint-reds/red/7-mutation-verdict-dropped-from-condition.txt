@@ -1,0 +1,4 @@
+ × tests/schema-contract/deploy-frontend-after-api.contract.test.ts > deploy-frontend publishes only behind a deployed API > does not publish: the commit's CI is red, on a full release 11ms
+ × tests/schema-contract/deploy-frontend-after-api.contract.test.ts > deploy-frontend publishes only behind a deployed API > does not publish: the commit's CI is red, on a frontend-only dispatch 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 8 passed (10)

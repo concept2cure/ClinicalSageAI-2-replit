@@ -84,15 +84,15 @@ const STABILITY_BODY =
  * with the words they share. Crude, and exactly enough for "does retrieval pick
  * the right passage" — which a constant vector cannot answer.
  */
-function bagOfWords(text: string): number[] {
-  const v = new Array(1536).fill(0);
+function bagOfWords(text: string, width = 1536): number[] {
+  const v = new Array(width).fill(0);
   for (const token of text.toLowerCase().match(/[a-z0-9]+/g) ?? []) {
     let h = 2166136261;
     for (let i = 0; i < token.length; i += 1) {
       h ^= token.charCodeAt(i);
       h = Math.imul(h, 16777619);
     }
-    v[Math.abs(h) % 1536] += 1;
+    v[Math.abs(h) % width] += 1;
   }
   const norm = Math.sqrt(v.reduce((s, x) => s + x * x, 0)) || 1;
   return v.map(x => x / norm);
@@ -126,7 +126,10 @@ function startEmbeddingStub(): Promise<string> {
             object: 'list',
             model: parsed.model ?? 'stub-embedder',
             data: inputs.map((text, index) => {
-              const embedding = bagOfWords(text);
+              // In the width asked for, as Text Embeddings Inference answers:
+              // the self-hosted lane asks for its model's own width and
+              // zero-pads to the corpus's (embedding-provider.ts, P1-54 round 2).
+              const embedding = bagOfWords(text, Number(parsed.dimensions) || 1536);
               return {
                 object: 'embedding',
                 index,
