@@ -314,6 +314,34 @@ export interface StaleOnFile {
   movedTo?: { ctdSection: string; fileName: string };
 }
 
+/**
+ * Take this submission's own documents (see planSequence's `perSubmission`) out
+ * of the diff. One that is byte for byte the document on file under the same
+ * identity is the earlier submission's and does not ship; any other files
+ * `new`. Matched the way the operator matches (identity, else the path when
+ * either side has none), and compared like with like (`sourceMd5`).
+ */
+function splitPerSubmission<D extends { ctdSection: string; fileName: string; md5: string; leafKey?: string }>(
+  prior: readonly PriorLeaf[],
+  desired: readonly D[],
+  perSubmission: ((ctdSection: string) => boolean) | undefined,
+): { perSubmission: D[]; diffed: D[] } {
+  if (!perSubmission) return { perSubmission: [], diffed: [...desired] };
+  const byKey = new Map(prior.filter((p) => p.leafKey).map((p) => [p.leafKey!, p]));
+  const byPath = new Map(prior.map((p) => [`${p.ctdSection}/${p.fileName}`, p]));
+  const own: D[] = [];
+  const diffed: D[] = [];
+  for (const d of desired) {
+    if (!perSubmission(d.ctdSection)) { diffed.push(d); continue; }
+    const atPath = byPath.get(`${d.ctdSection}/${d.fileName}`);
+    const onFile = (d.leafKey ? byKey.get(d.leafKey) : undefined)
+      ?? (atPath && !(d.leafKey && atPath.leafKey && atPath.leafKey !== d.leafKey) ? atPath : undefined);
+    if (onFile && (onFile.sourceMd5 ?? onFile.md5) === d.md5) continue; // the earlier submission's, unchanged
+    own.push(d);
+  }
+  return { perSubmission: own, diffed };
+}
+
 /** `artifact:<id>@<code>` → the artifact id, or null for any other identity. */
 function artifactOf(leafKey: string | undefined): string | null {
   if (!leafKey?.startsWith('artifact:')) return null;
@@ -396,6 +424,17 @@ export function planSequence(params: {
    * happens, and without it `summary.delete` could only ever be 0.
    */
   withdraw?: ReadonlyArray<{ ctdSection: string; fileName: string }>;
+  /**
+   * Sections whose documents belong to ONE submission — FDA's cover letters
+   * (1.2) and forms (1.1, 1.1.x): every sequence carries its own. Such a leaf
+   * is never diffed into a `replace` of the one on file (that would tell the
+   * agency sequence 0000's letter was superseded); it files `new` when it
+   * differs from the one on file, and is left out when it is that same
+   * document unchanged, since it is then the earlier submission's (W5/D7,
+   * sweep F13, 2026-10-01). Absent: every leaf is diffed alike — true of every
+   * region but FDA.
+   */
+  perSubmission?: (ctdSection: string) => boolean;
 }): SequencePlan {
   const { sequence, filed, desired } = params;
 
@@ -478,7 +517,8 @@ export function planSequence(params: {
   // The canonical operator does the diff. `sourcePath` is a placeholder here:
   // this plan decides operations only, and the assemble route pairs them back
   // onto the leaves whose real bytes it already holds.
-  const desiredLeaves: DesiredLeaf[] = desired.map((d) => ({
+  const { perSubmission: ownLeaves, diffed } = splitPerSubmission(prior, desired, params.perSubmission);
+  const desiredLeaves: DesiredLeaf[] = diffed.map((d) => ({
     ctdSection: d.ctdSection,
     fileName: d.fileName,
     title: d.title,
@@ -516,7 +556,15 @@ export function planSequence(params: {
     });
   }
 
-  const { leaves, summary } = computeLifecycleOperations(prior, desiredLeaves, {});
+  const operated = computeLifecycleOperations(prior, desiredLeaves, {});
+  // This submission's own documents file `new`, beside the operator's leaves.
+  // The ones they would have superseded stay on file, and the operator already
+  // counts each of those as unchanged.
+  const leaves: Array<{ ctdSection: string; fileName: string; operation: string; modifiedFile?: string; title?: string; md5?: string }> = [
+    ...operated.leaves,
+    ...ownLeaves.map((d) => ({ ctdSection: d.ctdSection, fileName: d.fileName, operation: 'new' })),
+  ];
+  const summary = { ...operated.summary, new: operated.summary.new + ownLeaves.length };
 
   // A desired leaf that did not ship is unchanged — that is the only outcome
   // the operator does not emit. Keyed on the path because that is what the

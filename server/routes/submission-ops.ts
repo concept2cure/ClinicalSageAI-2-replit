@@ -2119,6 +2119,48 @@ function fdaIdentifierRefusal(
   };
 }
 
+/** FDA Module 1 sections whose documents belong to one submission: the cover
+ *  letter (1.2) and the forms (1.1, and 1.1.x where a form is filed under it). */
+function isFdaPerSubmissionSection(ctdSection: string): boolean {
+  return ctdSection === '1.2' || ctdSection === '1.1' || ctdSection.startsWith('1.1.');
+}
+
+/**
+ * What an FDA follow-up sequence lacks of its own Module 1 (sweep F13,
+ * 2026-10-01). Its own cover letter and forms file `new`; one that is the
+ * document on file, unchanged, is the earlier submission's and does not ship —
+ * so a follow-up whose letter or form nobody revised now carries none, and
+ * says so. Form FDA 1571 accompanies every IND submission, each with its own
+ * serial number: missing, it blocks. A cover letter is expected with every
+ * submission: missing, it warns.
+ */
+function fdaFollowUpModule1Findings(
+  sequence: string,
+  shipping: ReadonlyArray<{ ctdSection: string }>,
+  isInd: boolean,
+): Array<{ severity: 'error' | 'warning'; ruleId: string; message: string }> {
+  const findings: Array<{ severity: 'error' | 'warning'; ruleId: string; message: string }> = [];
+  if (isInd && !shipping.some((l) => l.ctdSection === '1.1' || l.ctdSection.startsWith('1.1.'))) {
+    findings.push({
+      severity: 'error',
+      ruleId: 'M1-FORM-1571-MISSING',
+      message:
+        `Sequence ${sequence} carries no Form FDA 1571 (Module 1.1). Form FDA 1571 accompanies every IND submission, ` +
+        'each with its own serial number; the form on file belongs to the sequence that filed it. Map this submission’s signed 1571.',
+    });
+  }
+  if (!shipping.some((l) => l.ctdSection === '1.2')) {
+    findings.push({
+      severity: 'warning',
+      ruleId: 'M1-COVER-LETTER-MISSING',
+      message:
+        `Sequence ${sequence} carries no cover letter (Module 1.2). Each FDA submission is expected to carry its own; ` +
+        'the letter on file belongs to the sequence that filed it. Map this submission’s letter.',
+    });
+  }
+  return findings;
+}
+
 /**
  * The finding for a document this sequence leaves current on file although the
  * package no longer files it there. A moved document is an ERROR: the agency
@@ -2679,6 +2721,8 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
             : null,
           filed: readFiledSequences(existingMetadata),
           withdraw: parsed.data.withdraw,
+          // FDA: each submission carries its own cover letter and forms (sweep F13).
+          ...(packagerRegion === 'fda' ? { perSubmission: isFdaPerSubmissionSection } : {}),
           desired: ctdLeaves.map((l) => ({
             ctdSection: l.ctdSection,
             fileName: l.fileName,
@@ -2753,6 +2797,11 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
       }
       ctdLeaves.length = 0;
       ctdLeaves.push(...kept);
+      if (packagerRegion === 'fda' && sequence !== '0000') {
+        placementFindings.push(
+          ...fdaFollowUpModule1Findings(sequence, kept, fdaEctdApplicationType(pkg.packageFamily, { region, format }) === 'fdaat4'),
+        );
+      }
     }
 
     // Internal eCTD structural validation (pre-flight). Findings are stored on

@@ -414,6 +414,50 @@ describe('planSequence', () => {
     expect(whole.staleOnFile).toEqual([]);
   });
 
+  describe('per-submission documents (FDA cover letters and forms) — sweep F13', () => {
+    // Each FDA submission carries its OWN cover letter and forms. Diffed like
+    // dossier content, an edited letter was filed as a `replace` of 0000's —
+    // telling the agency the original IND's letter was superseded — and an
+    // unchanged one was silently left out.
+    const FDA_PER_SUBMISSION = (s: string) => s === '1.2' || s === '1.1' || s.startsWith('1.1.');
+    const filed: FiledSequence = {
+      ...SEQ_0000,
+      leaves: [
+        leaf('1.2', 'cover.pdf', 'md5-cover-0000', { leafKey: 'artifact:artifact_cover@1.2' }),
+        leaf('2.5', 'co.pdf', 'md5-co-v1', { leafKey: 'artifact:artifact_co@2.5' }),
+      ],
+    };
+    const cover = (md5: string) => ({ ctdSection: '1.2', fileName: 'cover.pdf', md5, title: 'Cover', leafKey: 'artifact:artifact_cover@1.2' });
+    const co = (md5: string) => ({ ctdSection: '2.5', fileName: 'co.pdf', md5, title: 'CO', leafKey: 'artifact:artifact_co@2.5' });
+
+    it('a new cover letter files as NEW, never as a replace of the one on file', () => {
+      const plan = planSequence({
+        sequence: '0001', submissionType: 'Efficacy Supplement', filed: [filed],
+        desired: [cover('md5-cover-0001'), co('md5-co-v1')], perSubmission: FDA_PER_SUBMISSION,
+      });
+      expect(plan.leaves).toEqual([{ ctdSection: '1.2', fileName: 'cover.pdf', operation: 'new' }]);
+      expect(plan.summary).toMatchObject({ new: 1, replace: 0, unchanged: 2 });
+    });
+
+    it('the letter on file, unchanged, is not filed again as this sequence\'s letter', () => {
+      const plan = planSequence({
+        sequence: '0001', submissionType: 'Efficacy Supplement', filed: [filed],
+        desired: [cover('md5-cover-0000'), co('md5-co-v2')], perSubmission: FDA_PER_SUBMISSION,
+      });
+      expect(plan.leaves.map((l) => [l.ctdSection, l.operation])).toEqual([['2.5', 'replace']]);
+      expect(plan.omitted).toEqual([{ ctdSection: '1.2', fileName: 'cover.pdf' }]);
+      expect(plan.summary).toMatchObject({ new: 0, replace: 1, unchanged: 1 });
+    });
+
+    it('without the predicate (every region but FDA) a letter is diffed like any document', () => {
+      const plan = planSequence({
+        sequence: '0001', submissionType: 'Efficacy Supplement', filed: [filed],
+        desired: [cover('md5-cover-0001'), co('md5-co-v1')],
+      });
+      expect(plan.leaves).toEqual([expect.objectContaining({ ctdSection: '1.2', operation: 'replace' })]);
+    });
+  });
+
   it('a document filed at TWO sections on purpose is not a move', () => {
     const filed: FiledSequence = {
       ...SEQ_0000,
