@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-01T13:25:41.260Z",
+  "generatedAt": "2026-10-01T14:18:14.517Z",
   "git": {
-    "sha": "8b966c1fb9c8423290197c46643b49e2b64ac530",
+    "sha": "dffe9f404d06979d795ef21d887cb6f1edb60fda",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2371,12 +2371,12 @@
         "lines": 2278
       },
       {
-        "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
-        "lines": 2197
+        "file": "server/routes/c2c/reviews.ts",
+        "lines": 2213
       },
       {
-        "file": "server/routes/c2c/reviews.ts",
-        "lines": 2196
+        "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
+        "lines": 2197
       },
       {
         "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",

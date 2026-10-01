@@ -26,6 +26,7 @@ import type {
   ReadinessBlocker,
   ReadinessAssessment,
   Recommendation,
+  ProjectSnapshot,
 } from '../../../shared/types/orchestration';
 
 // ---------------------------------------------------------------------------
@@ -149,6 +150,19 @@ async function recordSnapshot(orgId: number, projectId: number, briefing: Contin
 /**
  * The latest recorded continuity snapshot for a project, from any task.
  */
+/**
+ * Done over total, from every task store (cross-object-resolver), as a whole
+ * percent. null when there is nothing to complete, or a store went unread and the
+ * counts are a floor: until 2026-10-01 a zero total read as 100%, and the ratio was
+ * the non-blocked share, so a project with no finished task could still show 100%.
+ */
+export function taskCompletionPercent(
+  project: Pick<ProjectSnapshot, 'totalTasks' | 'doneTasks' | 'taskCountsPartial'>,
+): number | null {
+  if (project.taskCountsPartial || project.totalTasks <= 0) return null;
+  return Math.round((project.doneTasks / project.totalTasks) * 100);
+}
+
 export async function getLatestSnapshot(
   orgId: number,
   projectId: number
@@ -226,9 +240,7 @@ export async function generateContinuitySnapshot(
       documentCount: payload.documents.length,
       validatedCount: payload.validations.length,
       blockerCount: readiness.blockers.length,
-      taskCompletionPercent: payload.project.totalTasks > 0
-        ? Math.round(((payload.project.totalTasks - payload.project.blockedTasks) / payload.project.totalTasks) * 100)
-        : 100,
+      taskCompletionPercent: taskCompletionPercent(payload.project),
     },
   };
 

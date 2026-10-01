@@ -67,6 +67,8 @@ function emptyPayload(): CrossObjectReasoningPayload {
       totalTasks: 0,
       blockedTasks: 0,
       overdueTasks: 0,
+      doneTasks: 0,
+      taskCountsPartial: false,
     },
     documents: [],
     artifacts: [],
