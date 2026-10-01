@@ -25,6 +25,14 @@ export declare const DEFAULT_TABLE_PRIVILEGES: readonly string[];
 
 /** Relations the runtime role must never own nor hold more than the override on. */
 export declare const APPEND_ONLY_TABLES: readonly { schema: string; name: string }[];
+/** The ceiling on an APPEND_ONLY_TABLES relation: SELECT, INSERT. */
+export declare const APPEND_ONLY_PRIVILEGES: readonly string[];
+/** REVOKE UPDATE, DELETE, TRUNCATE on every present APPEND_ONLY_TABLES relation; returns those withdrawn from. */
+export declare function withdrawAppendOnlyWrites(
+  db: { query: QueryFn },
+  roleIdent: string,
+  opts?: { log?: (msg: string) => void },
+): Promise<string[]>;
 
 /** Resolve and validate the runtime role name (APP_SERVICE_DB_ROLE, default app_service). */
 /**

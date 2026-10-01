@@ -268,6 +268,22 @@ variable "openai_api_key" {
   sensitive = true
 }
 
+# The drafting provider (D1 brief B4, decided 2026-10-01 under the CPO mandate):
+# Anthropic first party. Every model approved for high-risk regulatory drafting
+# is Anthropic (server/services/ai-governance/approved-models.ts); without one
+# enabled, every Authoring draft is refused and /readyz reports AnA down.
+# First party, not Bedrock: the Bedrock SDK is not a dependency of this
+# repository, and the first-party entry is the one pinned to the PQ target.
+# Covered by the Anthropic BAA that D6 lists as owed.
+variable "anthropic_api_key" {
+  type      = string
+  sensitive = true
+  validation {
+    condition     = startswith(var.anthropic_api_key, "sk-ant-")
+    error_message = "anthropic_api_key must be an Anthropic API key (sk-ant-…): regulatory drafting runs only on an approved Anthropic model."
+  }
+}
+
 # D1 brief B4. Which AI provider may see which data classes is a compliance
 # decision, not an engineering default, so there is none.
 variable "ai_provider_placement_approvals" {

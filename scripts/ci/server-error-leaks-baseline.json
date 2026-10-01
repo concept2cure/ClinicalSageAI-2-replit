@@ -2,8 +2,8 @@
   "note": "Server 5xx responses that put the caught error text in the body instead of the log. The canonical answer is serverError(res, log, where, err) in server/lib/api-response.ts, which logs the detail against the request id and returns { error: CODE, message, correlationId }. Migrate a site onto it and re-run with --write-baseline to shrink this list. It must never grow.",
   "rule": "MDX_WORK_ORDER W0-3 acceptance criterion 3; BIOPHARMA_WORK_ORDER hard guardrail 3.",
   "generatedBy": "scripts/ci/check-server-error-leaks.mjs --write-baseline",
-  "totalSites": 96,
-  "totalFiles": 62,
+  "totalSites": 95,
+  "totalFiles": 61,
   "counts": {
     "server/routes/cortex-unified.ts": 1,
     "server/routes/cortexQueryRoutes.ts": 1,
@@ -54,7 +54,6 @@
     "server/routes/protocol-risks.ts": 1,
     "server/routes/protocol-soa.ts": 1,
     "server/routes/protocol-templates.ts": 1,
-    "server/routes/qms.ts": 1,
     "server/routes/real-world-evidence.ts": 2,
     "server/routes/reports/manifest-routes.ts": 4,
     "server/routes/reports/subscriptions-routes.ts": 4,

@@ -44,6 +44,8 @@ const SIGNER = 46;
  */
 const APPROVER = 47;
 const PASSWORD = 'correct horse battery staple';
+/** The signer's own reason: a sign-off carries one (VR-13; none is written for them). */
+const REASON = 'Checked against the protocol';
 
 /** How many times the ceremony ran — a refused transition must not run it. */
 let reverifyCalls = 0;
@@ -134,7 +136,7 @@ describe('governed document pipeline (HTTP → PGlite)', () => {
     expect(id).toMatch(/[0-9a-f-]{36}/);
 
     // 2. The gate rejects an illegal jump (authoring → approved is not legal).
-    const illegal = await request(app).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'approved' });
+    const illegal = await request(app).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'approved', reason: REASON });
     expect(illegal.status).toBe(409);
     expect(illegal.body.blockedBy).toContain('ILLEGAL_TRANSITION');
 
@@ -142,15 +144,15 @@ describe('governed document pipeline (HTTP → PGlite)', () => {
     expect((await request(app).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'in_review' })).status).toBe(200);
 
     // 4. in_review → approved is blocked until a review sign-off exists.
-    const noReview = await request(approver).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'approved' });
+    const noReview = await request(approver).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'approved', reason: REASON });
     expect(noReview.status).toBe(409);
     expect(noReview.body.blockedBy).toContain('REVIEW_SIGNOFF_REQUIRED');
 
     // 5. Record the review sign-off, then approve (applies the approval signature).
-    const review = await request(signer).post(`/api/regulatory/documents/${id}/sign`).send({ meaning: 'reviewed', password: PASSWORD });
+    const review = await request(signer).post(`/api/regulatory/documents/${id}/sign`).send({ meaning: 'reviewed', password: PASSWORD, reason: REASON });
     expect(review.status).toBe(200);
     expect(review.body.signature.actor).toBe(String(SIGNER));
-    expect((await request(approver).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'approved', password: PASSWORD })).status).toBe(200);
+    expect((await request(approver).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'approved', reason: REASON, password: PASSWORD })).status).toBe(200);
 
     // 6. approved → placed needs a complete dossier placement.
     const noPlacement = await request(app).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'placed' });
@@ -257,13 +259,17 @@ describe('signing re-verifies, and writes are role-gated (2026-09-24)', () => {
 
   it('refuses a sign-off with no password, and with a wrong one', async () => {
     const id = await inReview();
-    const none = await request(signer).post(`/api/regulatory/documents/${id}/sign`).send({ meaning: 'reviewed' });
+    // A sign-off carries the signer's own reason (VR-13): refused before the ceremony.
+    const noReason = await request(signer).post(`/api/regulatory/documents/${id}/sign`).send({ meaning: 'reviewed', password: PASSWORD });
+    expect(noReason.status).toBe(400);
+    expect(noReason.body.error).toBe('REASON_REQUIRED');
+    const none = await request(signer).post(`/api/regulatory/documents/${id}/sign`).send({ meaning: 'reviewed', reason: REASON });
     expect(none.status).toBe(400);
     expect(none.body.error).toBe('PASSWORD_REQUIRED');
-    const wrong = await request(signer).post(`/api/regulatory/documents/${id}/sign`).send({ meaning: 'reviewed', password: 'guess' });
+    const wrong = await request(signer).post(`/api/regulatory/documents/${id}/sign`).send({ meaning: 'reviewed', reason: REASON, password: 'guess' });
     expect(wrong.status).toBe(401);
     // Neither recorded anything: approval is still blocked for want of a review.
-    const approve = await request(approver).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'approved', password: PASSWORD });
+    const approve = await request(approver).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'approved', reason: REASON, password: PASSWORD });
     expect(approve.status).toBe(409);
     expect(approve.body.blockedBy).toContain('REVIEW_SIGNOFF_REQUIRED');
   });
@@ -272,15 +278,15 @@ describe('signing re-verifies, and writes are role-gated (2026-09-24)', () => {
     const id = await inReview();
     const res = await request(signer)
       .post(`/api/regulatory/documents/${id}/sign`)
-      .send({ meaning: 'reviewed', password: PASSWORD, role: 'qualified-person' });
+      .send({ meaning: 'reviewed', password: PASSWORD, reason: REASON, role: 'qualified-person' });
     expect(res.status).toBe(200);
     expect(res.body.signature.role).toBe('admin');
   });
 
   it('approving signs: no password, no approval — and the stage does not move', async () => {
     const id = await inReview();
-    expect((await request(signer).post(`/api/regulatory/documents/${id}/sign`).send({ meaning: 'reviewed', password: PASSWORD })).status).toBe(200);
-    const res = await request(approver).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'approved' });
+    expect((await request(signer).post(`/api/regulatory/documents/${id}/sign`).send({ meaning: 'reviewed', password: PASSWORD, reason: REASON })).status).toBe(200);
+    const res = await request(approver).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'approved', reason: REASON });
     expect(res.status).toBe(400);
     const view = await request(app).get(`/api/regulatory/documents/${id}`);
     expect(view.body.stage).toBe('in_review');
@@ -288,10 +294,10 @@ describe('signing re-verifies, and writes are role-gated (2026-09-24)', () => {
 
   it('a signatureRef in the body is never cited: the approval carries a server-minted reference', async () => {
     const id = await inReview();
-    expect((await request(signer).post(`/api/regulatory/documents/${id}/sign`).send({ meaning: 'reviewed', password: PASSWORD })).status).toBe(200);
+    expect((await request(signer).post(`/api/regulatory/documents/${id}/sign`).send({ meaning: 'reviewed', password: PASSWORD, reason: REASON })).status).toBe(200);
     const res = await request(approver)
       .post(`/api/regulatory/documents/${id}/advance`)
-      .send({ to: 'approved', password: PASSWORD, signatureRef: 'forged-ref' });
+      .send({ to: 'approved', reason: REASON, password: PASSWORD, signatureRef: 'forged-ref' });
     expect(res.status).toBe(200);
     const view = await request(app).get(`/api/regulatory/documents/${id}`);
     const approved = view.body.audit.find((e: DocumentAuditEvent) => e.to === 'approved');
@@ -303,7 +309,7 @@ describe('signing re-verifies, and writes are role-gated (2026-09-24)', () => {
   it('a role without signing authority cannot sign, even re-verified', async () => {
     const id = await inReview();
     const member = appAs({ id: 43, organizationId: ORG, role: 'member', roles: ['member', 'regulatory-author'] });
-    const res = await request(member).post(`/api/regulatory/documents/${id}/sign`).send({ meaning: 'reviewed', password: PASSWORD });
+    const res = await request(member).post(`/api/regulatory/documents/${id}/sign`).send({ meaning: 'reviewed', password: PASSWORD, reason: REASON });
     expect(res.status).toBe(403);
     expect(res.body.error).toBe('ESIGNATURE_NO_AUTHORITY');
   });
@@ -312,16 +318,16 @@ describe('signing re-verifies, and writes are role-gated (2026-09-24)', () => {
     const id = await inReview();
     const viewer = appAs({ id: 44, organizationId: ORG, role: 'viewer', roles: ['viewer'] });
     expect((await request(viewer).post('/api/regulatory/documents').send({ title: 'x', documentType: 'US_IND' })).status).toBe(403);
-    expect((await request(viewer).post(`/api/regulatory/documents/${id}/sign`).send({ meaning: 'reviewed', password: PASSWORD })).status).toBe(403);
-    expect((await request(viewer).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'approved', password: PASSWORD })).status).toBe(403);
+    expect((await request(viewer).post(`/api/regulatory/documents/${id}/sign`).send({ meaning: 'reviewed', password: PASSWORD, reason: REASON })).status).toBe(403);
+    expect((await request(viewer).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'approved', reason: REASON, password: PASSWORD })).status).toBe(403);
     expect((await request(viewer).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'placed', placement: PLACEMENT })).status).toBe(403);
   });
 
   it('no user, no write: the actor is the authenticated user or nothing — never "unknown"', async () => {
     const id = await inReview();
     const anon = appAs(null);
-    expect((await request(anon).post(`/api/regulatory/documents/${id}/sign`).send({ meaning: 'reviewed', password: PASSWORD })).status).toBe(401);
-    expect((await request(anon).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'approved', password: PASSWORD })).status).toBe(401);
+    expect((await request(anon).post(`/api/regulatory/documents/${id}/sign`).send({ meaning: 'reviewed', password: PASSWORD, reason: REASON })).status).toBe(401);
+    expect((await request(anon).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'approved', reason: REASON, password: PASSWORD })).status).toBe(401);
   });
 
   it('an illegal jump is refused by the gate and costs the signer no credential check', async () => {
@@ -334,7 +340,7 @@ describe('signing re-verifies, and writes are role-gated (2026-09-24)', () => {
     reverifyCalls = 0;
     const res = await request(app)
       .post(`/api/regulatory/documents/${id}/advance`)
-      .send({ to: 'approved', password: 'a wrong guess' });
+      .send({ to: 'approved', reason: REASON, password: 'a wrong guess' });
     expect(res.status).toBe(409);
     expect(res.body.blockedBy).toContain('ILLEGAL_TRANSITION');
     expect(reverifyCalls).toBe(0);
@@ -376,8 +382,8 @@ describe('the writer\'s refusals keep their status', () => {
     const id = (await request(app).post('/api/regulatory/documents')
       .send({ title: 'Writer refusal', documentType: 'US_IND', hasContent: true })).body.canonicalId;
     await request(app).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'in_review' });
-    await request(signer).post(`/api/regulatory/documents/${id}/sign`).send({ meaning: 'reviewed', password: PASSWORD });
-    expect((await request(approver).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'approved', password: PASSWORD })).status).toBe(200);
+    await request(signer).post(`/api/regulatory/documents/${id}/sign`).send({ meaning: 'reviewed', password: PASSWORD, reason: REASON });
+    expect((await request(approver).post(`/api/regulatory/documents/${id}/advance`).send({ to: 'approved', reason: REASON, password: PASSWORD })).status).toBe(200);
     return id;
   }
 
@@ -414,7 +420,7 @@ describe('the lifecycle record cannot be rewritten (VR-03, 2026-09-25)', () => {
     return id;
   }
   const sign = (id: string, meaning: string) =>
-    request(signer).post(`/api/regulatory/documents/${id}/sign`).send({ meaning, password: PASSWORD });
+    request(signer).post(`/api/regulatory/documents/${id}/sign`).send({ meaning, password: PASSWORD, reason: REASON });
   // Approving signs, the author may not sign (VR-12), and the reviewer does
   // not also approve (VR-13): the approval goes through a third person.
   const advance = (id: string, to: string, extra: Record<string, unknown> = {}) =>
@@ -462,13 +468,13 @@ describe('the lifecycle record cannot be rewritten (VR-03, 2026-09-25)', () => {
     expect((await advance(id, 'in_review')).status).toBe(200);
 
     // The first round's sign-off no longer approves anything.
-    const stale = await advance(id, 'approved', { password: PASSWORD });
+    const stale = await advance(id, 'approved', { reason: REASON, password: PASSWORD });
     expect(stale.status).toBe(409);
     expect(stale.body.blockedBy).toContain('REVIEW_SIGNOFF_REQUIRED');
 
     const secondRound = await sign(id, 'reviewed');
     expect(secondRound.status).toBe(200);
-    expect((await advance(id, 'approved', { password: PASSWORD })).status).toBe(200);
+    expect((await advance(id, 'approved', { reason: REASON, password: PASSWORD })).status).toBe(200);
 
     const view = await request(app).get(`/api/regulatory/documents/${id}`);
     expect(view.body.chainValid).toBe(true);

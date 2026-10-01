@@ -31,7 +31,7 @@ import { fetchPortfolioReport, fetchOrgPortfolioSummary } from '../services/repo
 import { resolveCapabilities } from '../services/entitlements/resolver';
 import type { Tier } from '../services/entitlements/types';
 import { computeInitialRun } from '../services/report-os/orchestrator';
-import { renderReport, type RenderInput } from '../services/report-os/render/render';
+import { renderReport, gapsWereEvaluated, type RenderInput } from '../services/report-os/render/render';
 import type { RenderedReport } from '../services/report-os/render/types';
 import { buildSealedRecord } from '../services/report-os/sealing/seal';
 import type { SealedRecord } from '../services/report-os/sealing/types';
@@ -47,12 +47,18 @@ import { createScopedLogger } from '../utils/logger';
 import { writeChainedAuditRow } from '../services/auditService';
 import type { PoolClient } from 'pg';
 import { requireRole } from '../middleware/auth';
+import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
 
 const router = Router();
 
 const logger = createScopedLogger('report-os');
 router.use(authMiddleware);
+/* Reporting review 2026-10-01: only finalize asked for a role, so a read-only
+   'viewer' could create runs, program groups, snapshots, bundles and
+   deliveries. Every write now needs a writing role; finalize keeps its
+   narrower requireRole. Reads stay open to a viewer. */
+router.use(requireEditorAccessForWrites);
 
 /*
  * Request schemas carry no organization and no actor. Both come from the
@@ -135,21 +141,6 @@ const createDeliverySchema = z
     }
   });
 
-const captureCorrespondenceSchema = z.object({
-  projectId: z.number().int().positive(),
-  submissionId: z.string().optional(),
-  direction: z.enum(['inbound', 'outbound', 'internal']).default('inbound'),
-  sourceChannel: z.enum(['manual_upload', 'mailbox_sync', 'api_import']).default('manual_upload'),
-  communicationType: z.string().min(3).max(80).default('deficiency_letter'),
-  subject: z.string().min(2).max(240),
-  body: z.string().min(1).max(120000),
-  recipients: z.array(z.string().max(200)).default([]),
-  sender: z.string().max(200).optional(),
-  urgency: z.enum(['low', 'medium', 'high', 'critical']).default('medium'),
-  responseRequired: z.boolean().default(true),
-  captureForLearning: z.boolean().default(true),
-});
-
 type ReportBundleItem = {
   runId: number;
   runUuid: string;
@@ -193,7 +184,6 @@ type DeliveryRecord = {
   correspondenceId?: string;
 };
 
-const REPORT_OS_RECORD_CATEGORY = 'regulatory';
 const REPORT_OS_RECORD_SOURCE = 'report_os_state';
 const REPORT_OS_BUNDLE_SUBCATEGORY = 'report_bundle_record';
 const REPORT_OS_DELIVERY_SUBCATEGORY = 'report_delivery_record';
@@ -1759,7 +1749,9 @@ function buildRenderedFromRun(
       confidence: run.confidence ?? 0,
       blockers,
       criticalBlockers,
-      gapsSection: true,
+      gapsSection: gapsWereEvaluated(summary),
+      // The generic renderer and the stored lineage report emit no disclosure block.
+      disclosure: false,
     },
     rules
   );
@@ -2266,75 +2258,13 @@ router.post('/deliveries', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/correspondence/capture', async (req: Request, res: Response) => {
-  try {
-    const organizationId = requireSessionOrg(req, res);
-    if (organizationId == null) return;
-    const parsed = captureCorrespondenceSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
-    const payload = parsed.data;
-    const userId = getUserId(req);
-    // An agency letter filed against another tenant's project or submission is
-    // not found, the same answer the canonical intake route gives.
-    if (!(await projectsInOrg(organizationId, [payload.projectId])).has(payload.projectId)) {
-      return res.status(404).json({ error: 'Project not found' });
-    }
-    if (
-      payload.submissionId &&
-      !(await submissionInProject(organizationId, payload.projectId, payload.submissionId))
-    ) {
-      return res.status(404).json({ error: 'Submission not found' });
-    }
-    const persisted = await persistCorrespondenceToPlatform({
-      organizationId,
-      projectId: payload.projectId,
-      submissionId: payload.submissionId,
-      direction: payload.direction,
-      sourceChannel: payload.sourceChannel,
-      communicationType: payload.communicationType,
-      subject: payload.subject,
-      body: payload.body,
-      recipients: payload.recipients,
-      sender: payload.sender,
-      urgency: payload.urgency,
-      responseRequired: payload.responseRequired,
-      userId,
-    });
-
-    if (payload.captureForLearning) {
-      await captureLearningMemory({
-        organizationId,
-        projectId: payload.projectId,
-        userId,
-        title: `Regulatory correspondence — ${payload.subject}`,
-        subcategory:
-          payload.communicationType.toLowerCase().includes('reject') ||
-          payload.communicationType.toLowerCase().includes('deficiency')
-            ? 'rejection_or_deficiency_signal'
-            : 'regulatory_correspondence_signal',
-        confidenceScore: 0.86,
-        content: [
-          `direction=${payload.direction}`,
-          `sourceChannel=${payload.sourceChannel}`,
-          `communicationType=${payload.communicationType}`,
-          `subject=${payload.subject}`,
-          `issues=${persisted.issues.map(issue => `${issue.category}:${issue.severity}`).join(',')}`,
-          `body=${payload.body.slice(0, 5000)}`,
-        ].join('\n'),
-      });
-    }
-
-    return res.status(201).json({
-      data: {
-        correspondenceId: persisted.correspondenceId,
-        persistedToPlatform: persisted.persisted,
-        issues: persisted.issues,
-      },
-    });
-  } catch (error: any) {
-    return serverError(res, logger, 'saving capture', error);
-  }
-});
+/* POST /correspondence/capture was removed 2026-10-01 (reporting review). It
+   wrote the regulatory correspondence register, its issues and a project
+   memory entry with no audit row, no role gate, a client-chosen source channel
+   and a second keyword parser at a constant 0.72 confidence. No client called
+   it. The canonical intake is POST /api/regulatory-correspondence/correspondence/intake
+   (routes/regulatory-correspondence.ts): the governed parser, one transaction
+   with its timeline event, and the central audit trail. */
 
 router.get('/health', async (_req: Request, res: Response) => {
   try {

@@ -145,12 +145,41 @@ export const SCHEMA_PRIVILEGE_OVERRIDES = Object.freeze({
 export const DEFAULT_TABLE_PRIVILEGES = Object.freeze(['SELECT', 'INSERT', 'UPDATE', 'DELETE']);
 
 /**
- * Relations the runtime role must NEVER own and never hold more than the
- * schema override on. Ownership confers every privilege, so a runtime role that
- * owns the Part 11 store can rewrite it no matter what was granted; the audit
- * reports that as a failure, not an observation.
+ * Relations the runtime role must NEVER own and may only read and append to.
+ * Ownership confers every privilege, so a runtime role that owns a Part 11
+ * store can rewrite it no matter what was granted; the audit reports that as a
+ * failure, not an observation.
+ *
+ * Until 2026-10-01 this named audit.tamper_proof_log alone, and the runtime
+ * role held UPDATE and DELETE on every public record table below: only their
+ * triggers refused a rewrite (security plan P0-8, the grant half). Each one
+ * here refuses every UPDATE and DELETE by trigger, so no runtime path can
+ * need either privilege. Its deletes, where it has any, run as their own role
+ * through a SECURITY DEFINER door: audit_logs as audit_archiver
+ * (20260617_audit_logs_immutability.sql), the turn records as
+ * ana_record_purger (20260926_ana_turn_records.sql). Tables whose triggers
+ * admit a governed UPDATE (electronic_signatures' supersession,
+ * authoring_comments' status, vault.documents' write-once columns) are not
+ * here.
  */
-export const APPEND_ONLY_TABLES = Object.freeze([{ schema: 'audit', name: 'tamper_proof_log' }]);
+export const APPEND_ONLY_TABLES = Object.freeze([
+  { schema: 'audit', name: 'tamper_proof_log' },
+  { schema: 'public', name: 'audit_logs' },
+  { schema: 'public', name: 'audit_log_archives' },
+  { schema: 'public', name: 'audit_events' },
+  { schema: 'public', name: 'ana_turn_records' },
+  { schema: 'public', name: 'ana_record_blobs' },
+  { schema: 'public', name: 'authoring_audit_trail' },
+  { schema: 'public', name: 'doc_revisions' },
+  { schema: 'public', name: 'concept2cure_signatures' },
+  { schema: 'public', name: 'concept2cure_submission_snapshots' },
+]);
+
+/** The ceiling on an APPEND_ONLY_TABLES relation, whatever its schema's default. */
+export const APPEND_ONLY_PRIVILEGES = Object.freeze(['SELECT', 'INSERT']);
+
+/** Every table privilege the audit reads. TRUNCATE is never granted; it is read to catch a hand GRANT. */
+const AUDITED_TABLE_PRIVILEGES = Object.freeze([...DEFAULT_TABLE_PRIVILEGES, 'TRUNCATE']);
 
 /** System schemas the recipe and the audit never touch. */
 const SYSTEM_SCHEMA_FILTER = `nspname NOT IN ('pg_catalog', 'information_schema') AND nspname !~ '^pg_'`;
@@ -407,6 +436,9 @@ async function grantRuntimeRolePrivileges(db, roleIdent, { log = () => {} } = {}
     grantedSchemas.push(`${schema}(${privList})`);
   }
 
+  // After the schema grants, which give every public table full DML.
+  await withdrawAppendOnlyWrites(db, roleIdent, { log });
+
   // Last, so nothing above re-grants it: an unreviewed definer function is not
   // the runtime role's to execute (see revokeUnreviewedDefinerExecute).
   await revokeUnreviewedDefinerExecute(db, roleIdent, { log });
@@ -414,6 +446,32 @@ async function grantRuntimeRolePrivileges(db, roleIdent, { log = () => {} } = {}
   log(`  ✓ grants applied on: ${grantedSchemas.join('; ') || '(no known schemas present)'}`);
   log(`  ✓ default privileges set — future owner-created tables auto-grant to ${roleIdent}`);
   return grantedSchemas;
+}
+
+/**
+ * REVOKE UPDATE, DELETE and TRUNCATE, from the runtime role and PUBLIC, on
+ * every APPEND_ONLY_TABLES relation present. The schema loop just granted
+ * full DML on public, and ALTER DEFAULT PRIVILEGES gives a table created later
+ * the same; this runs on every deploy after both, so neither survives it.
+ * A role that OWNS one of these keeps every privilege regardless; the audit
+ * reports that (ownedAppendOnly).
+ *
+ * @returns {Promise<string[]>} the relations withdrawn from
+ */
+export async function withdrawAppendOnlyWrites(db, roleIdent, { log = () => {} } = {}) {
+  const withdrawn = [];
+  for (const t of APPEND_ONLY_TABLES) {
+    const { rows } = await db.query(
+      `SELECT to_regclass(format('%I.%I', $1::text, $2::text)) IS NOT NULL AS present,
+              format('%I.%I', $1::text, $2::text) AS ref`,
+      [t.schema, t.name],
+    );
+    if (!rows[0]?.present) continue;
+    await db.query(`REVOKE UPDATE, DELETE, TRUNCATE ON ${rows[0].ref} FROM PUBLIC, ${roleIdent}`);
+    withdrawn.push(`${t.schema}.${t.name}`);
+  }
+  log(`  ✓ append-only: UPDATE, DELETE, TRUNCATE withdrawn on ${withdrawn.length} record table(s)`);
+  return withdrawn;
 }
 
 /**
@@ -608,7 +666,8 @@ export async function auditRuntimeRoleGrants(db, role) {
               has_table_privilege($1, c.oid, 'SELECT') AS can_select,
               has_table_privilege($1, c.oid, 'INSERT') AS can_insert,
               has_table_privilege($1, c.oid, 'UPDATE') AS can_update,
-              has_table_privilege($1, c.oid, 'DELETE') AS can_delete
+              has_table_privilege($1, c.oid, 'DELETE') AS can_delete,
+              has_table_privilege($1, c.oid, 'TRUNCATE') AS can_truncate
          FROM pg_class c
          JOIN pg_namespace n ON n.oid = c.relnamespace
         WHERE c.relkind IN ('r', 'p', 'v', 'm', 'f')
@@ -627,9 +686,10 @@ export async function auditRuntimeRoleGrants(db, role) {
 
   for (const r of rows) {
     const relation = `${r.schema}.${r.name}`;
-    const override = SCHEMA_PRIVILEGE_OVERRIDES[r.schema];
+    // An append-only record table has its own ceiling in any schema (P0-8).
+    const override = appendOnly.has(relation) ? APPEND_ONLY_PRIVILEGES : SCHEMA_PRIVILEGE_OVERRIDES[r.schema];
     const required = override || DEFAULT_TABLE_PRIVILEGES;
-    const held = DEFAULT_TABLE_PRIVILEGES.filter((p) => r[`can_${p.toLowerCase()}`]);
+    const held = AUDITED_TABLE_PRIVILEGES.filter((p) => r[`can_${p.toLowerCase()}`]);
     if (!r.schema_usage) schemasWithoutUsage.add(r.schema);
     const missing = [...(r.schema_usage ? [] : ['USAGE']), ...required.filter((p) => !held.includes(p))];
     if (missing.length) denied.push({ relation, missing });

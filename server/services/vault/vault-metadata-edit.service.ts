@@ -92,6 +92,15 @@ function requested(args: EditVaultDocumentMetadataArgs): Partial<Record<Metadata
   return out;
 }
 
+/** A frozen version's stage, in words (VR-13). */
+const FROZEN_PHRASE: Record<string, string> = {
+  approved: 'approved',
+  placed: 'approved and placed in a submission',
+  packaged: 'approved and packaged',
+  submitted: 'approved and submitted',
+  superseded: 'superseded',
+};
+
 export async function editVaultDocumentMetadata(
   args: EditVaultDocumentMetadataArgs,
 ): Promise<EditVaultDocumentMetadataResult> {
@@ -142,7 +151,8 @@ export async function editVaultDocumentMetadata(
     if (stage.rows.length > 0) {
       await client.query('ROLLBACK');
       return refuse(409, 'APPROVED_VERSION_IMMUTABLE',
-        `This version is ${stage.rows[0].stage}, so its details are kept as approved. Add a new version to change them. Nothing was changed.`);
+        `This version is ${FROZEN_PHRASE[stage.rows[0].stage as string] ?? 'approved'}, so its details cannot be changed. ` +
+          'Upload a new version to change them. Nothing was changed.');
     }
     const before = found.rows[0] as Record<MetadataChange['field'], string | null>;
     const changes: MetadataChange[] = [];

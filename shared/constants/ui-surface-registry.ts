@@ -292,7 +292,9 @@ export const UI_SURFACES: UiSurface[] = [
     uiKit: 'mdx',
     // Launch-scope API (2026-09-25, ci:launch-scope-api): MdxSurfaceHost (useMdxPrograms, useWorkbench, useSubmissions) calls these for the Vault too.
     // '/api/mdx/vault' (2026-09-26): mdx/hooks/useVault.ts, the list and version reads.
-    apiPrefixes: ['/api/c2c/project-vault', '/api/vault/ingest', '/api/regulatory-programs', '/api/submission-ops', '/api/mdx/vault'],
+    // /api/regulatory/documents: a Vault version's review and approval, on the
+    // one document lifecycle (VR-13).
+    apiPrefixes: ['/api/c2c/project-vault', '/api/vault/ingest', '/api/regulatory-programs', '/api/submission-ops', '/api/mdx/vault', '/api/regulatory/documents'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -560,7 +562,9 @@ export const UI_SURFACES: UiSurface[] = [
     uiKit: 'tasking',
     // Launch-scope API (2026-09-25, ci:launch-scope-api): MdxSurfaceHost (useMdxPrograms, useWorkbench, useSubmissions) and the shell's TaskTray call these.
     // Launch-scope API (2026-09-25, ci:launch-scope-api): the task board and the shell's task tray.
-    apiPrefixes: ['/api/task-management', '/api/regulatory/tasks', '/api/project-sections', '/api/regulatory-programs', '/api/submission-ops', '/api/approval-workflows/pending', '/api/tasks'],
+    // /api/project-rules: the task board reads the rule definitions it shows
+    // (TaskBoard.tsx); claimed by no surface until the gate saw it (2026-10-01).
+    apiPrefixes: ['/api/task-management', '/api/regulatory/tasks', '/api/project-sections', '/api/regulatory-programs', '/api/submission-ops', '/api/approval-workflows/pending', '/api/tasks', '/api/project-rules'],
     anaToolFamilies: [],
     sharedContract: '@shared/schema',
     discoveryCatalog: null,

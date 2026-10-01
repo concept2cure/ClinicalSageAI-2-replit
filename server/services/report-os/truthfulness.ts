@@ -20,6 +20,10 @@ export interface TruthfulnessRules {
   requireConfidence?: boolean;
   forbidFinalIfMissingCritical?: boolean;
   requireExplicitGaps?: boolean;
+  /** Advisory types (predictions) are never `final`, whatever else holds. */
+  forbidFinal?: boolean;
+  /** The report may not be issued above `draft` without a disclosure of its method and limits. */
+  requireDisclosure?: boolean;
   [key: string]: unknown;
 }
 
@@ -31,8 +35,12 @@ export interface RunTruthfulnessState {
   confidence: number;
   blockers: string[];
   criticalBlockers: string[];
-  /** Whether the rendered report includes an explicit gaps section. */
+  /** Whether a gap evaluation ran, so the gaps section states a result rather
+   *  than its absence (render.ts gapsWereEvaluated). It was the constant `true`
+   *  at both callers, which made requireExplicitGaps vacuous. */
   gapsSection: boolean;
+  /** Whether the rendered report carries a disclosure block. */
+  disclosure: boolean;
 }
 
 export interface TruthfulnessEvaluation {
@@ -57,6 +65,21 @@ export function evaluateTruthfulness(
   const { requestedStatus } = state;
   let status: ReportRunStatus = requestedStatus;
   const reasons: string[] = [];
+
+  /* forbidFinal and requireDisclosure were declared by the two prediction types
+     (taxonomy.ts, and the deployed registry seed) and enforced by nothing, so a
+     "CRL / RTF Pre-Mortem" sealed as final with no disclosure while the canvas
+     said it was "held at partial, never final" (reporting review 2026-10-01). */
+  if (rules.requireDisclosure && !state.disclosure && status !== 'draft') {
+    status = 'draft';
+    reasons.push(
+      'This report type must disclose its method and limits, and this rendering carries no disclosure; it is held at draft.',
+    );
+  }
+  if (rules.forbidFinal && status === 'final') {
+    status = rules.allowPartial === true ? 'partial' : 'draft';
+    reasons.push('This report type is advisory and is never final.');
+  }
 
   // Critical blockers forbid a final report. Downgrade to partial when partial
   // is allowed, otherwise straight to draft.
