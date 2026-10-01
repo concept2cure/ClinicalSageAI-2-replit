@@ -344,23 +344,26 @@ router.post('/sign', async (req: Request, res: Response) => {
   try {
     // Tenant-scoped: the version is resolved only within the signer's org
     // (join documents.organization_id), so a signature can never be bound to
-    // another tenant's version by supplying a foreign versionId.
+    // another tenant's version by supplying a foreign versionId. And it must be
+    // a version OF the document the body names (§11.70): until 2026-10-01 the
+    // lookup ignored documentId, so a body naming document B with a version of
+    // document A was signed, the row saying B while the digest covered A.
     const ver = await pool.query(
       `SELECT dv.document_id, dv.version_number, dv.content
          FROM document_versions dv
          JOIN documents d ON d.id = dv.document_id
-        WHERE dv.id = $1 AND d.organization_id = $2
+        WHERE dv.id = $1 AND d.organization_id = $2 AND dv.document_id = $3
         LIMIT 1`,
-      [Number(versionId), orgId],
+      [Number(versionId), orgId, Number(documentId)],
     );
     if (ver.rows.length === 0) {
       return res.status(422).json({
-        error: 'Cannot sign: the referenced document version does not exist in your organization.',
+        error: 'Cannot sign: the referenced version is not a version of this document in your organization.',
         code: 'ESIGNATURE_VERSION_NOT_FOUND',
       });
     }
     boundPayloadDigest = buildVersionBindingDigest({
-      documentId: Number(ver.rows[0].document_id ?? documentId),
+      documentId: Number(documentId),
       versionId: Number(versionId),
       versionNumber: ver.rows[0].version_number ?? null,
       content: ver.rows[0].content,

@@ -382,3 +382,37 @@ describe('POST /api/esignature/verify-password — whether a second factor is en
     expect(res.body).toEqual({ valid: true });
   });
 });
+
+describe('POST /api/esignature/sign — §11.70: the version signed belongs to the document named', () => {
+  /* Version 1 belongs to document 10 in the signer's organisation. The lookup
+     used to be (version id, organisation) only, so a body naming document 99
+     with version 1 was signed: the row and manifest said document 99 while the
+     binding digest was taken over document 10's content. The SQL stub honours
+     a document predicate when the route sends one. */
+  function wireVersionOfDocument10() {
+    hoisted.poolQuery.mockImplementation(async (sql: string, params: unknown[] = []) => {
+      if (/SELECT password_hash FROM users/i.test(sql)) return { rows: [{ password_hash: PW_HASH }] };
+      if (/FROM users u\s+JOIN organization_users/i.test(sql)) return { rows: [{ name: 'A Signer', email: 's@x.test', title: 'Study Director' }] };
+      if (/FROM document_versions/i.test(sql)) {
+        const documentParam = /dv\.document_id\s*=\s*\$3/i.test(sql) ? Number(params[2]) : undefined;
+        if (documentParam !== undefined && documentParam !== 10) return { rows: [] };
+        return { rows: [{ document_id: 10, version_number: '1', content: 'body' }] };
+      }
+      return { rows: [] };
+    });
+  }
+
+  it('refuses a version of another document, and writes nothing', async () => {
+    wireVersionOfDocument10();
+    const res = await request(makeApp()).post('/api/esignature/sign').send(signBody({ documentId: 99, versionId: 1 }));
+    expect(res.status).toBe(422);
+    expect(res.body.code).toBe('ESIGNATURE_VERSION_NOT_FOUND');
+    expect(issued(/INSERT INTO electronic_signatures/i)).toBe(false);
+  });
+
+  it('signs a version of the document it names', async () => {
+    wireVersionOfDocument10();
+    const res = await request(makeApp()).post('/api/esignature/sign').send(signBody({ documentId: 10, versionId: 1 }));
+    expect(res.status).toBe(201);
+  });
+});
