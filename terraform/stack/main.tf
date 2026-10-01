@@ -233,6 +233,15 @@ locals {
     # deployment on any other domain boots, reports ready, and nobody can sign
     # in. domain_aliases are validated to be lowercase hostnames (variables.tf).
     { name = "ALLOWED_ORIGINS", value = local.app_origin },
+    # The connector for Claude (D8, decision P-2 in docs/LAUNCH_DEFINITION_OF_DONE.md):
+    # on, at the deployment's own origin (the OAuth issuer and the resource the
+    # tokens are bound to), registering clients from Claude's origins only. It
+    # is mounted only when MCP_ENABLED is `true` (server/index.ts), and with no
+    # allowlist production refuses every registration (server/mcp/index.ts).
+    # CloudFront already routes its paths here (modules/cloudfront).
+    { name = "MCP_ENABLED", value = "true" },
+    { name = "MCP_PUBLIC_URL", value = local.app_origin },
+    { name = "MCP_CLIENT_REDIRECT_ALLOWLIST", value = "https://claude.ai,https://claude.com" },
     # Vault documents go to this stack's bucket (vault_storage.tf). Without a
     # named store production refuses to boot (storage-posture.ts); the preflight
     # requires both names and accepts only `s3` here. AWS_REGION: the provider

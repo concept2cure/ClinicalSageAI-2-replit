@@ -1,0 +1,79 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/middleware/__tests__/requireBusinessAdmin.test.ts > requireBusinessAdmin > 403s a support user (has Master Admin, not Business Center; no grant)
+{
+  "timestamp": "2026-10-01T13:04:11.587Z",
+  "level": "warn",
+  "message": "[business-center-guard] Business Center access denied",
+  "context": {
+    "userId": 3,
+    "role": "support",
+    "path": "/api/admin/business/cost-accounting"
+  }
+}
+
+ ✓ server/middleware/__tests__/requireBusinessAdmin.test.ts > isBusinessAdmin > accepts business role owner 3ms
+ ✓ server/middleware/__tests__/requireBusinessAdmin.test.ts > isBusinessAdmin > accepts business role business_admin 1ms
+ ✓ server/middleware/__tests__/requireBusinessAdmin.test.ts > isBusinessAdmin > accepts business role super_admin 1ms
+ ✓ server/middleware/__tests__/requireBusinessAdmin.test.ts > isBusinessAdmin > rejects non-business role support (stricter than Master Admin) 0ms
+ ✓ server/middleware/__tests__/requireBusinessAdmin.test.ts > isBusinessAdmin > rejects non-business role platform_admin (stricter than Master Admin) 0ms
+ ✓ server/middleware/__tests__/requireBusinessAdmin.test.ts > isBusinessAdmin > rejects non-business role admin (stricter than Master Admin) 0ms
+ ✓ server/middleware/__tests__/requireBusinessAdmin.test.ts > isBusinessAdmin > rejects non-business role member (stricter than Master Admin) 0ms
+ ✓ server/middleware/__tests__/requireBusinessAdmin.test.ts > isBusinessAdmin > rejects non-business role viewer (stricter than Master Admin) 0ms
+ ✓ server/middleware/__tests__/requireBusinessAdmin.test.ts > isBusinessAdmin > honours BUSINESS_CENTER_EMAILS (case-insensitive) 1ms
+ ✓ server/middleware/__tests__/requireBusinessAdmin.test.ts > requireBusinessAdmin > 401s when unauthenticated 1ms
+ ✓ server/middleware/__tests__/requireBusinessAdmin.test.ts > requireBusinessAdmin > 403s a support user (has Master Admin, not Business Center; no grant) 3ms
+ ✓ server/middleware/__tests__/requireBusinessAdmin.test.ts > requireBusinessAdmin > calls next() for a business admin (sync fast-path, no db) 0ms
+ × server/middleware/__tests__/requireBusinessAdmin.test.ts > BUSINESS_CENTER_EMAILS does not apply to a federated (SAML) identity > refuses the owner's address asserted by an IdP — 403, grants consulted 10ms
+   → expected true to be false // Object.is equality
+ × server/middleware/__tests__/requireBusinessAdmin.test.ts > BUSINESS_CENTER_EMAILS does not apply to a federated (SAML) identity > still admits the same address on the owner's own password sign-in 2ms
+   → expected true to be false // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/middleware/__tests__/requireBusinessAdmin.test.ts > BUSINESS_CENTER_EMAILS does not apply to a federated (SAML) identity > refuses the owner's address asserted by an IdP — 403, grants consulted
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/middleware/__tests__/requireBusinessAdmin.test.ts:132:34
+    130|       identity: { provider: 'saml', email: OWNER },
+    131|     });
+    132|     expect(isBusinessAdmin(req)).toBe(false);
+       |                                  ^
+    133|     const res = mkRes();
+    134|     const next = vi.fn();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/middleware/__tests__/requireBusinessAdmin.test.ts > BUSINESS_CENTER_EMAILS does not apply to a federated (SAML) identity > still admits the same address on the owner's own password sign-in
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/middleware/__tests__/requireBusinessAdmin.test.ts:142:113
+    140|   it('still admits the same address on the owner\'s own password sign-…
+    141|     expect(isBusinessAdmin(mkReq({ userRole: 'member', userEmail: OWNE…
+    142|     expect(isBusinessAdmin(mkReq({ userRole: 'member', userEmail: OWNE…
+       |                                                                                                                 ^
+    143|   });
+    144| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 12 passed (14)
+   Start at  13:04:11
+   Duration  502ms (transform 101ms, setup 87ms, import 50ms, tests 29ms, environment 0ms)
+
