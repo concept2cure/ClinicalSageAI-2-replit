@@ -142,6 +142,8 @@ export const INDL_STATUS_LABEL: Record<string, string> = {
   approved: 'Approved',
   signed: 'Signed',
   locked: 'Locked',
+  // A frozen authoring document: sealed, not approved, so not complete (DP-35).
+  frozen: 'Frozen, not approved',
 };
 
 export const INDL_CLOCK_STATUS: Record<string, IndlClockStatusEntry> = {

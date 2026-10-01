@@ -12,7 +12,7 @@
  */
 
 import { computeInitialRun } from '../orchestrator';
-import { renderReport, type RenderInput } from '../render/render';
+import { renderReport, gapsWereEvaluated, type RenderInput } from '../render/render';
 import { evaluateTruthfulness, type TruthfulnessRules } from '../truthfulness';
 import { REPORT_TYPE_SEED } from '../taxonomy';
 import { GLOBAL_REPORT_TYPE_SEED } from '../taxonomy-global';
@@ -58,7 +58,9 @@ export async function renderGovernedReport(
       confidence: computed.confidence,
       blockers: computed.blockers,
       criticalBlockers: computed.criticalBlockers,
-      gapsSection: true,
+      gapsSection: gapsWereEvaluated(computed.summary),
+      // The generic renderer emits no disclosure block.
+      disclosure: false,
     },
     rules,
   );
