@@ -19,7 +19,8 @@ version: '3.9'
 #   JWT_SECRET, SESSION_SECRET, REFRESH_TOKEN_SECRET, MFA_ENCRYPTION_KEY,
 #   AUDIT_HMAC_KEY, AUDIT_HMAC_SECRET, AUDIT_EXPORT_SIGNING_KEY, AUDIT_ATTESTATION_KEY, CONNECTOR_ENCRYPTION_KEY,
 #   ANTHROPIC_API_KEY, CONCEPT2CURE_SIGNER_ACCEPT_HMAC, AI_PROVIDER_PLACEMENT_APPROVALS,
-#   APP_URL, ALLOWED_ORIGINS, SMTP_HOST, SMTP_USER, SMTP_PASS, SMTP_FROM.
+#   APP_URL, ALLOWED_ORIGINS, SMTP_HOST, SMTP_USER, SMTP_PASS, SMTP_FROM,
+#   AUDIT_ANCHOR_BUCKET, MCP_PUBLIC_URL.
 # The list is held to deploy-aws.yml's preflight by
 # scripts/ci/check-compose-boot-contract.mjs (npm run ci:compose-boot-contract).
 # The app speaks plain HTTP on APP_PORT: put a TLS proxy in front of it.
@@ -184,6 +185,17 @@ services:
       # enforced. Terraform's production stack sets both; so does this one.
       AUDIT_TRAIL_ENABLED: 'true'
       AUDIT_REQUIRE_ENFORCE: 'true'
+      # ── Audit chain anchor (server/services/audit/chain-anchor.ts; P0-8) ──
+      # The daily sweep verifies every organisation's audit chain head against
+      # the latest anchor in this object-locked bucket, then writes the next.
+      # Without it nothing outside the database records the head.
+      AUDIT_ANCHOR_BUCKET: ${AUDIT_ANCHOR_BUCKET:?AUDIT_ANCHOR_BUCKET must be set (the object-locked bucket that anchors the audit chain head)}
+      # ── Connector for Claude (server/mcp; product decision P-2) ─────────────
+      # Mounted at launch; clients register only from Claude's origins, and each
+      # organisation's owner or administrator opens it for its members (P1-47).
+      MCP_ENABLED: ${MCP_ENABLED:-true}
+      MCP_PUBLIC_URL: ${MCP_PUBLIC_URL:?MCP_PUBLIC_URL must be set to this stack's public https origin}
+      MCP_CLIENT_REDIRECT_ALLOWLIST: ${MCP_CLIENT_REDIRECT_ALLOWLIST:-https://claude.ai,https://claude.com}
       # ── Public origin ──────────────────────────────────────────────────────
       # Reset and invitation links are built on APP_URL, never on the Host
       # header, and production's CSRF check admits sign-in only from
