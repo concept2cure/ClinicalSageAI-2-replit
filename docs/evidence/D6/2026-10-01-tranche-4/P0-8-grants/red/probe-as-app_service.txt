@@ -1,0 +1,74 @@
+# HEAD c6f2028b, 2026-10-01T06:07:08Z, as app_service, BEFORE any change
+Pager usage is off.
+    role     | rolsuper | rolbypassrls 
+-------------+----------+--------------
+ app_service | f        | f
+(1 row)
+
+== 1. table-level privileges the runtime role holds on each store
+                  store                   | sel | ins | upd | del | trunc 
+------------------------------------------+-----+-----+-----+-----+-------
+ public.audit_logs                        | t   | t   | t   | t   | f
+ public.audit_events                      | t   | t   | t   | t   | f
+ public.audit_log_archives                | t   | t   | t   | t   | f
+ audit.tamper_proof_log                   | t   | t   | f   | f   | f
+ public.electronic_signatures             | t   | t   | t   | t   | f
+ public.ana_turn_records                  | t   | t   | t   | t   | f
+ public.ana_record_blobs                  | t   | t   | t   | t   | f
+ public.authoring_audit_trail             | t   | t   | t   | t   | f
+ public.doc_revisions                     | t   | t   | t   | t   | f
+ public.concept2cure_signatures           | t   | t   | t   | t   | f
+ public.concept2cure_submission_snapshots | t   | t   | t   | t   | f
+(11 rows)
+
+== 2. electronic_signatures: the supersession columns stay updatable, the attested ones do not
+         col         | can_update 
+---------------------+------------
+ superseded_by       | t
+ is_valid            | t
+ verification_status | t
+ verification_date   | t
+ updated_at          | t
+ signer_id           | t
+ signature_hash      | t
+ signed_at           | t
+(8 rows)
+
+== 3. statements the role can run today: UPDATE/DELETE ... WHERE false (no row, so no trigger fires)
+UPDATE 0
+DELETE 0
+UPDATE 0
+DELETE 0
+UPDATE 0
+DELETE 0
+UPDATE 0
+DELETE 0
+UPDATE 0
+DELETE 0
+UPDATE 0
+DELETE 0
+UPDATE 0
+DELETE 0
+   the governed revocation path (superseded_by et al.) must still be allowed:
+UPDATE 0
+== 4. a real audit row in the role's own tenant: who refuses, the privilege or the trigger?
+BEGIN
+SET
+SET
+INSERT 0 1
+SAVEPOINT
+psql:probe-as-app_service.sql:58: ERROR:  P0A02: IMMUTABILITY_VIOLATION: audit_logs are append-only
+DETAIL:  DELETE is not permitted on audit_logs outside the authorized retention/archival path. Attempted to delete row id=a73e2a84-17dd-4422-a5f2-bafe7a55f268 as app_service. 21 CFR Part 11 §11.10(e) requires immutable audit trails.
+HINT:  Only public.audit_logs_archive_delete(ids, locator, sha256, cutoff) may delete, and only rows older than the 24-month hot window that have been written to cold storage. The session setting app.audit_archive_bypass is not honoured. Insert a superseding event rather than deleting history.
+CONTEXT:  PL/pgSQL function enforce_audit_logs_no_delete() line 9 at RAISE
+LOCATION:  exec_stmt_raise, pl_exec.c:3897
+ROLLBACK
+psql:probe-as-app_service.sql:60: ERROR:  P0A01: IMMUTABILITY_VIOLATION: audit_logs are append-only
+DETAIL:  UPDATE is not permitted on audit_logs. Attempted to update row id=a73e2a84-17dd-4422-a5f2-bafe7a55f268. 21 CFR Part 11 §11.10(e) requires immutable audit trails.
+HINT:  Insert a new corrective event (e.g., AMENDMENT, REVOCATION) rather than modifying history.
+CONTEXT:  PL/pgSQL function enforce_audit_logs_no_update() line 3 at RAISE
+LOCATION:  exec_stmt_raise, pl_exec.c:3897
+ROLLBACK
+psql:probe-as-app_service.sql:62: ERROR:  42501: permission denied for table audit_logs
+LOCATION:  aclcheck_error, aclchk.c:2812
+ROLLBACK
