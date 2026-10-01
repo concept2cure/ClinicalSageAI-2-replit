@@ -68,19 +68,36 @@ router.use(requireOrganizationContext);
 
 type ThreadPermission = 'read' | 'comment' | 'request_changes' | 'resolve' | 'assign';
 
+const LEAD: readonly ThreadPermission[] = ['read', 'comment', 'request_changes', 'resolve', 'assign'];
+const REVIEW: readonly ThreadPermission[] = ['read', 'comment', 'request_changes', 'resolve'];
+
+/**
+ * What a role may do on a review thread. The roles are the organisation's own
+ * (organization_users.role, resolved live per request: owner, admin, manager,
+ * member, the legacy editor, viewer), the vocabulary ORG_ROLE_FUNCTIONAL_GRANTS
+ * in middleware/auth.ts maps. Whoever does the regulatory work there takes part
+ * in its review; assigning review work stays with those who lead it.
+ *
+ * Until 2026-10-01 this named document roles no membership carries (approver,
+ * reviewer, author, user), so every organisation role but admin was read-only:
+ * a manager could not comment on a review, and neither could a member doing
+ * the work. Those names are kept for tokens that still carry them.
+ */
+const THREAD_PERMISSIONS_BY_ROLE: ReadonlyMap<string, readonly ThreadPermission[]> = new Map([
+  ['owner', LEAD],
+  ['admin', LEAD],
+  ['manager', LEAD],
+  ['member', REVIEW],
+  ['editor', REVIEW],
+  ['approver', LEAD],
+  ['reviewer', REVIEW],
+  ['author', ['read', 'comment']],
+  ['user', ['read', 'comment']],
+]);
+
 function getThreadPermissions(role: string): Set<ThreadPermission> {
-  const r = role.toLowerCase();
-  if (['admin', 'approver'].includes(r)) {
-    return new Set(['read', 'comment', 'request_changes', 'resolve', 'assign']);
-  }
-  if (r === 'reviewer') {
-    return new Set(['read', 'comment', 'request_changes', 'resolve']);
-  }
-  if (r === 'author' || r === 'user') {
-    return new Set(['read', 'comment']);
-  }
-  // viewer
-  return new Set(['read']);
+  // viewer, and any role this map does not name: read only.
+  return new Set(THREAD_PERMISSIONS_BY_ROLE.get(role.toLowerCase()) ?? ['read']);
 }
 
 // ── Auto-propagation: Document events → Project Management signals ───────────

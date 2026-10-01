@@ -223,3 +223,51 @@ describe('a comment goes only with what it belongs to', () => {
     expect(await chainedRow('review.comment.posted', id)).toHaveLength(1);
   });
 });
+
+describe('who takes part in a review: the organisation’s own roles', () => {
+  // Until 2026-10-01 the permission map named roles no membership carries
+  // (reviewer, approver, author, user), so every organisation role but admin
+  // was read-only on the Review surface.
+  let thread3: string;
+  const tokens = new Map<string, Record<string, string>>();
+  /** One member of the organisation per role, provisioned once. */
+  const as = async (role: string) => {
+    if (!tokens.has(role)) tokens.set(role, auth(accessToken(await provisionMember(ORG_A, role, `review-${role}`), ORG_A, role)));
+    return tokens.get(role)!;
+  };
+
+  beforeAll(async () => {
+    thread3 = `${THREAD}-3`;
+    const art = await owner.query('SELECT artifact_id FROM concept2cure_review_threads WHERE id = $1', [threadPk]);
+    await owner.query(
+      `INSERT INTO concept2cure_review_threads (thread_id, org_id, project_id, artifact_id, created_by_id, created_by_name, title, status)
+       VALUES ($1, $2, $3, $4, $5, 'Reviewer', 'Listing 16.2.6 dose units', 'open')`,
+      [thread3, ORG_A, Number(ids.A.projects), art.rows[0].artifact_id, reviewer],
+    );
+  });
+
+  it('a member doing the work comments and asks for changes', async () => {
+    const member = await as('member');
+    const comment = await request(app).post(`${BASE}/review-threads/${thread3}/comments`).set(member).send({ body: 'Units are mg, not mg/kg.', kind: 'comment' });
+    expect(comment.status, JSON.stringify(comment.body)).toBe(200);
+    const changes = await request(app).post(`${BASE}/review-threads/${thread3}/comments`).set(member).send({ body: 'Please correct the listing.', kind: 'request_changes' });
+    expect(changes.status, JSON.stringify(changes.body)).toBe(200);
+  });
+
+  it('a member cannot reassign the thread; a manager can, and resolves it', async () => {
+    const member = await as('member');
+    const reassign = await request(app).patch(`${BASE}/review-threads/${thread3}`).set(member).send({ assigneeId: null });
+    expect(reassign.status).toBe(403);
+    const manager = await as('manager');
+    expect((await request(app).patch(`${BASE}/review-threads/${thread3}`).set(manager).send({ assigneeId: null })).status).toBe(200);
+    const resolved = await request(app).post(`${BASE}/review-threads/${thread3}/resolve`).set(manager).send({});
+    expect(resolved.status, JSON.stringify(resolved.body)).toBe(200);
+  });
+
+  it('a viewer reads and cannot comment', async () => {
+    const viewer = await as('viewer');
+    expect((await request(app).get(`${BASE}/review-threads/${thread3}/comments`).set(viewer)).status).toBe(200);
+    const res = await request(app).post(`${BASE}/review-threads/${thread3}/comments`).set(viewer).send({ body: 'x', kind: 'comment' });
+    expect(res.status).toBe(403);
+  });
+});
