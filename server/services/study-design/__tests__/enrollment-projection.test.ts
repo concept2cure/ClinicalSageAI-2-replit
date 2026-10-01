@@ -254,7 +254,13 @@ describe('projectEnrollment — bounded work', () => {
     expect(f.nSim).toBeGreaterThanOrEqual(ENROLLMENT_MIN_SIMULATIONS);
     expect(f).toMatchObject({ nSimReducedFrom: ENROLLMENT_SIMULATIONS, probReached: 1 });
     expect(p.note).toContain(`${f.nSim} simulations were run rather than ${ENROLLMENT_SIMULATIONS}`);
-    expect(ms).toBeLessThan(8000);
+    // The work bound above is the contract; this wall-clock line only catches
+    // a pathological per-unit cost. 760 ms uninstrumented, but 10.1 s inside
+    // the coverage job (instrumented, 36k tests in parallel; CI run 12756),
+    // which failed an 8 s limit and left that job with no coverage report.
+    // 20 s keeps the guard within the 30 s timeout. An unbounded 20,000×150 run
+    // takes minutes.
+    expect(ms).toBeLessThan(20_000);
   }, 30_000);
 
   it('a plan too large to simulate within the budget is not simulated: a gap, never an unbounded run', () => {
