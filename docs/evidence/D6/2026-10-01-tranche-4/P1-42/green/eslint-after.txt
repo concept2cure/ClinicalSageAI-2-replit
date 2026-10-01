@@ -1,0 +1,20 @@
+server/routes/__tests__/esignature-sign.test.ts errors 0 warnings 0
+server/routes/esignature.ts errors 0 warnings 2
+   212 max-lines-per-function Async arrow function has too many lines (202). Maximum allowed is 100.
+   212 complexity Async arrow function has a complexity of 42. Maximum allowed is 15.
+server/services/ana-ri/__tests__/command-rbac.test.ts errors 0 warnings 0
+server/services/ana-ri/command-rbac.ts errors 0 warnings 1
+   484 complexity Async function 'authorizeCommand' has a complexity of 20. Maximum allowed is 15.
+server/services/part11/__tests__/electronic-signature-meaning-required.test.ts errors 0 warnings 0
+server/services/part11/signature-persistence.ts errors 0 warnings 1
+   304 complexity Async function 'persistElectronicSignature' has a complexity of 23. Maximum allowed is 15.
+tests/routes/concept2cure.test.ts errors 0 warnings 3
+   40 max-lines-per-function Arrow function has too many lines (137). Maximum allowed is 100.
+   177 complexity Async arrow function has a complexity of 16. Maximum allowed is 15.
+   288 max-lines-per-function Arrow function has too many lines (284). Maximum allowed is 100.
+tests/schema-contract/esignature-verify-roundtrip.contract.test.ts errors 0 warnings 0
+TOTAL warnings 7
+HEAD tests/routes/concept2cure.test.ts warnings=3
+HEAD tests/schema-contract/esignature-verify-roundtrip.contract.test.ts warnings=0
+HEAD server/routes/__tests__/esignature-sign.test.ts warnings=0
+HEAD server/services/ana-ri/__tests__/command-rbac.test.ts warnings=0

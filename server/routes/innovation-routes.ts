@@ -30,6 +30,8 @@ import ComplianceGuardrailsSDKService from '../services/innovation/compliance-gu
 import { createScopedLogger } from '../utils/logger.js';
 import { requireAuthedOrgId } from '../utils/authedOrgId';
 import { pool as sharedPool } from '../db';
+import { programInOrganization } from '../services/c2c/program-access';
+import { isVerificationUnavailable } from '../lib/verification-outcome';
 
 const logger = createScopedLogger('innovation-routes');
 
@@ -129,9 +131,11 @@ const asyncHandler = (fn: (req: Request, res: Response, next: NextFunction) => P
  * control that is working. Nothing logged, no metric, no distinguishing return
  * value — an operator could not tell, and neither could a test.
  *
- * It is not even reliably fail-CLOSED. `programBelongsToOrg` ORs three sources;
- * with one broken the verdict is decided by whichever sources still parse, so
- * the outcome is "whatever happens to work" rather than a decision.
+ * It was not even reliably fail-CLOSED. The program check then ORed three
+ * sources; with one broken, the verdict was decided by whichever sources still
+ * parsed, so the outcome was "whatever happens to work" rather than a decision.
+ * (The program check is now `programInOrganization`, one source; see
+ * `programIsOrgs` below.)
  *
  * `server/middleware/moduleEntitlementGate.ts:189` already states the invariant
  * this broke. It fails OPEN, which is the opposite direction — right for a
@@ -223,9 +227,9 @@ async function guarded(res: Response, fn: () => Promise<boolean>): Promise<boole
   try {
     return await fn();
   } catch (err) {
-    if (err instanceof GuardUnavailableError) {
+    if (err instanceof GuardUnavailableError || isVerificationUnavailable(err)) {
       logger.error('denying a request because the ownership check was unavailable', {
-        detail: err.detail,
+        detail: (err as { detail: string }).detail,
       });
       res.status(503).json({
         success: false,
@@ -237,61 +241,23 @@ async function guarded(res: Response, fn: () => Promise<boolean>): Promise<boole
   }
 }
 
-// `id::text` comparisons keep garbage input from raising uuid cast errors;
-// `::text` on the org column tolerates integer or uuid org id shapes.
-const PROGRAM_ORG_SOURCES: readonly string[] = [
-  'SELECT 1 FROM programs WHERE id::text = $1 AND organization_id::text = $2 LIMIT 1',
-  'SELECT 1 FROM core.programs WHERE id::text = $1 AND org_id::text = $2 LIMIT 1',
-  'SELECT 1 FROM regulatory_programs WHERE id::text = $1 AND organization_id::text = $2 LIMIT 1',
-];
-
 /**
- * Exported so non-route callers can reuse this check rather than writing a
- * fourth copy of it. `server/routes/pdev/pdev-routes.ts` already carries a
- * second, and AnA's submission-readiness tool needs the same guarantee: a
- * program id supplied by a model must be proven to belong to the caller's org
- * before anything is read for it.
+ * Is this program the organization's? The one answer, `programInOrganization`
+ * (server/services/c2c/program-access.ts), on the pool this router reads with
+ * (a test injects one through createInnovationRoutes).
+ *
+ * Until 2026-10-01 (D3) this file carried its own check: an OR over three
+ * registries with row-level security "bypassed". Two of the registries,
+ * `programs` and `core.programs`, are written by nothing — `core.programs` is
+ * keyed by a uuid organization, which no tenant has — and the bypass was a
+ * no-op, because `regulatory_programs`' policy does not read `app.bypass_rls`.
+ * It also admitted a deleted project. A check that cannot run still throws
+ * (VerificationUnavailableError), which `guarded` answers with 503.
  */
-export async function programBelongsToOrg(programId: string, orgId: number): Promise<boolean> {
-  const failures: string[] = [];
-  let anySourceRan = false;
-
-  for (const source of PROGRAM_ORG_SOURCES) {
-    const outcome = await guardQuery(source, [programId, String(orgId)]);
-    if (!outcome.ran) {
-      failures.push(outcome.reason);
-      continue;
-    }
-    anySourceRan = true;
-    if (outcome.rows.length > 0) return true;
-  }
-
-  // A `false` from here must mean "at least one registry was consulted and
-  // none of them claims this program for this org". If EVERY source failed to
-  // run, we know nothing, and returning false would be inventing the verdict.
-  //
-  // This is not hypothetical for source 2: on a database where install-fresh's
-  // gcc step was skipped, core.programs exists without org_id and that query
-  // raises 42703 (WO-15 finding 1). Before this change it was swallowed, and
-  // the route answered "Program not found".
-  if (!anySourceRan) {
-    throw new GuardUnavailableError(
-      `all ${PROGRAM_ORG_SOURCES.length} program->org sources failed: ${failures.join(' | ')}`,
-    );
-  }
-
-  // Some sources may legitimately be absent in a given environment — the three
-  // registries are not all provisioned everywhere — so a partial failure is
-  // still a usable verdict. It is worth knowing about, though: a source that
-  // is permanently broken narrows the check silently.
-  if (failures.length > 0) {
-    logger.warn('program->org check ran on a reduced source set', {
-      ran: PROGRAM_ORG_SOURCES.length - failures.length,
-      total: PROGRAM_ORG_SOURCES.length,
-      failures,
-    });
-  }
-  return false;
+async function programIsOrgs(programId: string, orgId: number): Promise<boolean> {
+  const pool = guardPool ?? (sharedPool as Pool | null);
+  if (!pool) throw new GuardUnavailableError('program ownership check: no database pool available');
+  return programInOrganization(pool, programId, orgId);
 }
 
 /**
@@ -304,7 +270,7 @@ async function assertProgramInOrg(res: Response, programId: unknown, orgId: numb
     return false;
   }
   return guarded(res, async () => {
-    if (!(await programBelongsToOrg(programId, orgId))) {
+    if (!(await programIsOrgs(programId, orgId))) {
       res.status(404).json({ success: false, error: 'Program not found' });
       return false;
     }
@@ -361,7 +327,7 @@ async function assertChildInOrg(
   return guarded(res, async () => {
     const rows = rowsOrThrow(await guardQuery(resolveSql, [id]), `${label} -> program resolution`);
     const programId = rows[0]?.program_id;
-    if (programId == null || !(await programBelongsToOrg(String(programId), orgId))) {
+    if (programId == null || !(await programIsOrgs(String(programId), orgId))) {
       res.status(404).json({ success: false, error: `${label} not found` });
       return false;
     }

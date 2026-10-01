@@ -51,6 +51,20 @@
  * UPDATE on audit.tamper_proof_log fails the deploy; the recipe never grants
  * it and never will.
  *
+ * ── …nor the append-only stores in `public` (2026-10-01, P0-8, DP-04) ────────
+ * The ceiling used to stop at the `audit` schema. audit_logs, audit_events,
+ * electronic_signatures and the other append-only records live in `public`,
+ * where the blanket grant gave the runtime role UPDATE and DELETE, so their
+ * immutability rested on a trigger alone: with the trigger out of the way (a
+ * restore without triggers, replica mode, DISABLE TRIGGER) the role deleted an
+ * audit row, and the audit reported that estate clean (evidence
+ * docs/evidence/D6/2026-10-01-tranche-4/P0-8-grants/). The recipe now
+ * withholds UPDATE, DELETE and TRUNCATE on every APPEND_ONLY_TABLES store after
+ * the blanket grant (withholdAppendOnlyPrivileges), and the audit holds each
+ * store to SELECT, INSERT. The one governed UPDATE, signature revocation, gets
+ * exactly the columns its trigger admits. audit_logs' only deletion path stays
+ * the archive door, audit_logs_archive_delete(), which runs as audit_archiver.
+ *
  * ── Idempotency ───────────────────────────────────────────────────────────────
  * Safe to re-run. The role is created or aligned; grants and default privileges
  * are re-applied. `GRANT ... ON ALL TABLES` only reaches tables that exist at
@@ -63,6 +77,7 @@
  */
 
 import { createHash, createHmac, pbkdf2Sync, randomBytes } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 
 /** A single, unqualified PostgreSQL identifier: no quoting metacharacters. */
 const ROLE_NAME_RE = /^[a-z_][a-z0-9_]*$/;
@@ -144,12 +159,60 @@ export const SCHEMA_PRIVILEGE_OVERRIDES = Object.freeze({
 export const DEFAULT_TABLE_PRIVILEGES = Object.freeze(['SELECT', 'INSERT', 'UPDATE', 'DELETE']);
 
 /**
- * Relations the runtime role must NEVER own and never hold more than the
- * schema override on. Ownership confers every privilege, so a runtime role that
- * owns the Part 11 store can rewrite it no matter what was granted; the audit
- * reports that as a failure, not an observation.
+ * The append-only audit stores: relations the runtime role may read and append
+ * to and must NEVER update, delete from, truncate or own. Ownership confers
+ * every privilege, so a runtime role that owns a store can rewrite it no matter
+ * what was granted; the audit reports that as a failure, not an observation.
+ *
+ * Membership: each store's immutability trigger is one the production boot
+ * requires (server/services/audit/audit-immutability-triggers.ts
+ * EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS), plus audit_log_archives, the archive
+ * door's own ledger. server/db/__tests__/provision-app-role.test.ts pins the
+ * two lists to each other, naming each trigger-guarded table that is not here
+ * and why. No runtime path UPDATEs, DELETEs, TRUNCATEs, upserts or row-locks
+ * any of them (census 2026-10-01); audit_logs is deleted only through
+ * audit_logs_archive_delete(), which runs as audit_archiver.
+ *
+ * `updatableColumns` is the one governed UPDATE: a signature's revocation sets
+ * superseded_by and the verification column group (signature-persistence.ts
+ * persistGovernedSignatureRevocation), exactly what trg_electronic_signatures_immutable
+ * admits. The runtime role gets UPDATE on those columns and on no other.
+ *
+ * Not here: P1-24's domain-history stores (workflow_history,
+ * document_audit_logs, regulatory_audit_logs, c2c_ana_actions,
+ * authoring_signatures) join once migrations/20261001_domain_history_append_only.sql
+ * lands, with that lane's dbtest reading a refusal as 42501 as well as the trigger's.
  */
-export const APPEND_ONLY_TABLES = Object.freeze([{ schema: 'audit', name: 'tamper_proof_log' }]);
+export const APPEND_ONLY_TABLES = Object.freeze(
+  [
+    { schema: 'audit', name: 'tamper_proof_log' },
+    { schema: 'public', name: 'audit_logs' },
+    { schema: 'public', name: 'audit_log_archives' },
+    { schema: 'public', name: 'audit_events' },
+    {
+      schema: 'public',
+      name: 'electronic_signatures',
+      updatableColumns: Object.freeze(['superseded_by', 'is_valid', 'verification_status', 'verification_date', 'updated_at']),
+    },
+    { schema: 'public', name: 'ana_turn_records' },
+    { schema: 'public', name: 'ana_record_blobs' },
+    { schema: 'public', name: 'authoring_audit_trail' },
+    { schema: 'public', name: 'doc_revisions' },
+    { schema: 'public', name: 'concept2cure_signatures' },
+    { schema: 'public', name: 'concept2cure_submission_snapshots' },
+  ].map((t) => Object.freeze(t)),
+);
+
+/** The ceiling on an append-only store: read and append. */
+export const APPEND_ONLY_PRIVILEGES = Object.freeze(['SELECT', 'INSERT']);
+
+/** What the recipe withholds on every append-only store, from PUBLIC and the runtime role. */
+export const WITHHELD_APPEND_ONLY_PRIVILEGES = Object.freeze(['UPDATE', 'DELETE', 'TRUNCATE']);
+
+/** The table privileges the audit reads per relation. */
+const PROBED_TABLE_PRIVILEGES = Object.freeze(['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE']);
+
+const qualified = (t) => `${t.schema}.${t.name}`;
 
 /** System schemas the recipe and the audit never touch. */
 const SYSTEM_SCHEMA_FILTER = `nspname NOT IN ('pg_catalog', 'information_schema') AND nspname !~ '^pg_'`;
@@ -292,11 +355,115 @@ async function assertRuntimeRoleAttributes(db, role) {
 }
 
 /**
+ * The SECURITY DEFINER functions the runtime role may execute, by signature
+ * (`schema.name(identity arguments)`), from ./security-definer-allowlist.json.
+ *
+ * A definer function runs as its owner, past every tenant policy, so each one
+ * the runtime role can execute is a way around RLS. Only a reviewed one — its
+ * entry says why it cannot cross a tenant, or what its caller must guarantee —
+ * stays executable. Kept beside this script because the production image
+ * ships scripts/db (D3, docs/evidence/D3/2026-09-30-definer-revoke/).
+ */
+export function loadDefinerAllowlist() {
+  const doc = JSON.parse(readFileSync(new URL('./security-definer-allowlist.json', import.meta.url), 'utf8'));
+  return new Set(
+    Object.entries(doc.functions)
+      .filter(([, v]) => v.status === 'reviewed' || v.status === 'reviewed-risk')
+      .map(([sig]) => sig),
+  );
+}
+
+/**
+ * REVOKE EXECUTE, from PUBLIC and the runtime role, on every SECURITY DEFINER
+ * function not on the reviewed allowlist. The last step of the grant recipe,
+ * which runs after the migration set on every deploy: the recipe itself
+ * GRANTs EXECUTE on every function in every schema, and a function is
+ * PUBLIC-executable when created, so a revoke anywhere earlier would not hold.
+ * An unreviewed definer function therefore fails closed ("permission denied
+ * for function") for the runtime role rather than reading past RLS for it.
+ * Functions the owner calls — policy helpers, trigger functions, other definer
+ * functions — are unaffected: those run with their owner's privileges.
+ *
+ * Runs inside the caller's transaction. `roleIdent` must come from quote_ident.
+ *
+ * @returns {Promise<string[]>} the signatures revoked.
+ */
+export async function revokeUnreviewedDefinerExecute(
+  db,
+  roleIdent,
+  { allowlist = loadDefinerAllowlist(), log = () => {} } = {},
+) {
+  const { rows } = await db.query(
+    `SELECT p.oid::regprocedure::text AS ref,
+            n.nspname || '.' || p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')' AS sig
+       FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+      WHERE p.prosecdef AND p.prokind = 'f' AND ${SYSTEM_SCHEMA_FILTER}
+      ORDER BY 2`,
+  );
+  const revoked = [];
+  for (const { ref, sig } of rows) {
+    if (allowlist.has(sig)) continue;
+    await db.query(`REVOKE EXECUTE ON FUNCTION ${ref} FROM PUBLIC, ${roleIdent}`);
+    revoked.push(sig);
+  }
+  log(`  ✓ EXECUTE revoked on ${revoked.length} unreviewed SECURITY DEFINER function(s)`);
+  return revoked;
+}
+
+/**
+ * REVOKE UPDATE, DELETE and TRUNCATE on every append-only store present, from
+ * PUBLIC and the runtime role, then GRANT back UPDATE on a store's
+ * `updatableColumns` (the revocation carve-out) where it has them. Runs after
+ * the blanket per-schema grants — `GRANT … ON ALL TABLES IN SCHEMA public` and
+ * the default privileges hand every new table full DML — so each run of the
+ * recipe, and so each deploy, withholds them again. A store this edition does
+ * not have is skipped; a carve-out column it does not have is not named.
+ *
+ * The owner's own privileges are untouched (REVOKE … FROM PUBLIC never reaches
+ * the owner). Runs inside the caller's transaction. `roleIdent` must come from
+ * quote_ident.
+ *
+ * @returns {Promise<string[]>} the stores withheld on, as `schema.name`.
+ */
+export async function withholdAppendOnlyPrivileges(
+  db,
+  roleIdent,
+  { stores = APPEND_ONLY_TABLES, log = () => {} } = {},
+) {
+  const { rows } = await db.query(
+    `SELECT t.schema, t.name, c.oid::regclass::text AS ref,
+            ARRAY(SELECT quote_ident(a.attname)::text FROM pg_attribute a
+                   WHERE a.attrelid = c.oid AND a.attnum > 0 AND NOT a.attisdropped
+                     AND a.attname = ANY (string_to_array(t.cols, ','))
+                   ORDER BY a.attnum) AS cols
+       FROM unnest($1::text[], $2::text[], $3::text[]) WITH ORDINALITY AS t(schema, name, cols, ord)
+       JOIN pg_namespace n ON n.nspname = t.schema
+       JOIN pg_class c ON c.relnamespace = n.oid AND c.relname = t.name AND c.relkind IN ('r', 'p')
+      ORDER BY t.ord`,
+    [stores.map((s) => s.schema), stores.map((s) => s.name), stores.map((s) => (s.updatableColumns ?? []).join(','))],
+  );
+  const withheld = [];
+  for (const { schema, name, ref, cols } of rows) {
+    await db.query(`REVOKE ${WITHHELD_APPEND_ONLY_PRIVILEGES.join(', ')} ON TABLE ${ref} FROM PUBLIC, ${roleIdent}`);
+    if (cols.length) await db.query(`GRANT UPDATE (${cols.join(', ')}) ON TABLE ${ref} TO ${roleIdent}`);
+    withheld.push(`${schema}.${name}`);
+  }
+  log(
+    `  ✓ ${WITHHELD_APPEND_ONLY_PRIVILEGES.join(', ')} withheld on ${withheld.length}/${stores.length} append-only ` +
+      `store(s) present${withheld.length ? `: ${withheld.join(', ')}` : ''}`,
+  );
+  return withheld;
+}
+
+/**
  * THE grant recipe. Grants the runtime role, on every application schema
  * present: USAGE; the per-schema table privileges; USAGE, SELECT on sequences;
  * EXECUTE on functions; and the same as DEFAULT PRIVILEGES for objects the
- * connecting role (the owner) creates later. Grants only — it never REVOKEs,
- * so the owner's own privileges on relations it happens to own are untouched.
+ * connecting role (the owner) creates later. Grants only, with two exceptions
+ * at the end: UPDATE, DELETE and TRUNCATE are withheld on every append-only
+ * store (withholdAppendOnlyPrivileges), and EXECUTE on an unreviewed SECURITY
+ * DEFINER function is revoked (revokeUnreviewedDefinerExecute). The owner's own
+ * privileges on relations it happens to own are untouched.
  *
  * Runs inside the caller's transaction. `roleIdent` must come from quote_ident.
  *
@@ -347,6 +514,13 @@ async function grantRuntimeRolePrivileges(db, roleIdent, { log = () => {} } = {}
     );
     grantedSchemas.push(`${schema}(${privList})`);
   }
+
+  // After the blanket grants, so nothing above re-grants them: an append-only
+  // store is read and appended to, never rewritten (withholdAppendOnlyPrivileges).
+  await withholdAppendOnlyPrivileges(db, roleIdent, { log });
+  // Last, so nothing above re-grants it: an unreviewed definer function is not
+  // the runtime role's to execute (see revokeUnreviewedDefinerExecute).
+  await revokeUnreviewedDefinerExecute(db, roleIdent, { log });
 
   log(`  ✓ grants applied on: ${grantedSchemas.join('; ') || '(no known schemas present)'}`);
   log(`  ✓ default privileges set — future owner-created tables auto-grant to ${roleIdent}`);
@@ -502,16 +676,79 @@ export async function ensureRuntimeRole(db, { env = process.env, log = () => {} 
 }
 
 /**
+ * Per relation, which columns of the append-only stores `role` may UPDATE
+ * (column-level privilege), as `Map<"schema.name", {col, can_update}[]>`.
+ * attnum form: never throws on a column, and needs no quoting.
+ */
+async function readAppendOnlyColumnUpdates(db, role) {
+  const { rows } = await db.query(
+    `SELECT n.nspname || '.' || c.relname AS relation, a.attname::text AS col,
+            has_column_privilege($1, c.oid, a.attnum, 'UPDATE') AS can_update
+       FROM pg_class c
+       JOIN pg_namespace n ON n.oid = c.relnamespace
+       JOIN pg_attribute a ON a.attrelid = c.oid AND a.attnum > 0 AND NOT a.attisdropped
+      WHERE n.nspname || '.' || c.relname = ANY ($2::text[])
+      ORDER BY 1, a.attnum`,
+    [role, APPEND_ONLY_TABLES.map(qualified)],
+  );
+  const byRelation = new Map();
+  for (const r of rows) {
+    if (!byRelation.has(r.relation)) byRelation.set(r.relation, []);
+    byRelation.get(r.relation).push({ col: r.col, can_update: Boolean(r.can_update) });
+  }
+  return byRelation;
+}
+
+/**
+ * An append-only store's column-level findings for a role that does not own
+ * it: carve-out columns it cannot UPDATE (`missing`, the revocation would
+ * fail), and any other column it can (`beyond`). Table-level UPDATE is already
+ * reported as `UPDATE`, so columns are not listed again under it.
+ */
+function appendOnlyColumnFindings(store, columns, tableLevelUpdate) {
+  const allowed = new Set(store.updatableColumns ?? []);
+  const lacking = columns.filter((c) => allowed.has(c.col) && !c.can_update).map((c) => c.col);
+  const extra = tableLevelUpdate ? [] : columns.filter((c) => c.can_update && !allowed.has(c.col)).map((c) => c.col);
+  return {
+    missing: lacking.length ? [`UPDATE(${lacking.join(', ')})`] : [],
+    beyond: extra.length ? [`UPDATE(${extra.join(', ')})`] : [],
+  };
+}
+
+/**
+ * One relation against the recipe: what the role lacks (`missing`), and — on a
+ * relation under a ceiling (an override schema, or an append-only store
+ * wherever it lives) that the role does not own — what it holds beyond it.
+ */
+function auditRelation(r, store, columns) {
+  const ceiling = store ? APPEND_ONLY_PRIVILEGES : SCHEMA_PRIVILEGE_OVERRIDES[r.schema];
+  const required = ceiling || DEFAULT_TABLE_PRIVILEGES;
+  const held = PROBED_TABLE_PRIVILEGES.filter((p) => r[`can_${p.toLowerCase()}`]);
+  const missing = [...(r.schema_usage ? [] : ['USAGE']), ...required.filter((p) => !held.includes(p))];
+  const beyond = ceiling && !r.owned ? held.filter((p) => !ceiling.includes(p)) : [];
+  if (store && !r.owned) {
+    const cols = appendOnlyColumnFindings(store, columns ?? [], held.includes('UPDATE'));
+    missing.push(...cols.missing);
+    beyond.push(...cols.beyond);
+  }
+  return { ceiling, missing, beyond };
+}
+
+/**
  * Audit what `role` can actually do against the recipe, relation by relation.
  *
  * For every table, partitioned table, view, materialized view and foreign
  * table in every application schema:
  *   - `denied`  — the role lacks USAGE on the schema or a privilege the recipe
- *                 requires there (full DML, or the schema's override);
- *   - `excess`  — on a relation in an override schema that the role does NOT
- *                 own, it holds a privilege beyond the override (UPDATE/DELETE
- *                 on an audit table). The recipe never grants those; a PUBLIC
- *                 grant or a hand GRANT did.
+ *                 requires there (full DML, the schema's override, or — on an
+ *                 append-only store — SELECT, INSERT and UPDATE on its
+ *                 carve-out columns, as `UPDATE(col, …)`);
+ *   - `excess`  — on a relation under a ceiling that the role does NOT own, it
+ *                 holds a privilege beyond it: UPDATE/DELETE/TRUNCATE on an
+ *                 audit-schema table or on an APPEND_ONLY_TABLES store wherever
+ *                 it lives (audit_logs is in `public`), or UPDATE on a store
+ *                 column outside its carve-out (`UPDATE(col)`). The recipe
+ *                 withholds those; a PUBLIC grant or a hand GRANT gave them.
  *   - `ownedAppendOnly` — the role owns an APPEND_ONLY_TABLES relation, which
  *                 confers every privilege regardless of grants.
  * Relations in an override schema that the role owns (a single-role history:
@@ -545,7 +782,8 @@ export async function auditRuntimeRoleGrants(db, role) {
               has_table_privilege($1, c.oid, 'SELECT') AS can_select,
               has_table_privilege($1, c.oid, 'INSERT') AS can_insert,
               has_table_privilege($1, c.oid, 'UPDATE') AS can_update,
-              has_table_privilege($1, c.oid, 'DELETE') AS can_delete
+              has_table_privilege($1, c.oid, 'DELETE') AS can_delete,
+              has_table_privilege($1, c.oid, 'TRUNCATE') AS can_truncate
          FROM pg_class c
          JOIN pg_namespace n ON n.oid = c.relnamespace
         WHERE c.relkind IN ('r', 'p', 'v', 'm', 'f')
@@ -554,30 +792,28 @@ export async function auditRuntimeRoleGrants(db, role) {
       [role],
     )
   ).rows;
+  const columns = await readAppendOnlyColumnUpdates(db, role);
 
   const denied = [];
   const excess = [];
   const ownedAppendOnly = [];
   const schemasWithoutUsage = new Set();
   let ownedInOverrideSchemas = 0;
-  const appendOnly = new Set(APPEND_ONLY_TABLES.map((t) => `${t.schema}.${t.name}`));
+  const stores = new Map(APPEND_ONLY_TABLES.map((t) => [qualified(t), t]));
 
   for (const r of rows) {
     const relation = `${r.schema}.${r.name}`;
-    const override = SCHEMA_PRIVILEGE_OVERRIDES[r.schema];
-    const required = override || DEFAULT_TABLE_PRIVILEGES;
-    const held = DEFAULT_TABLE_PRIVILEGES.filter((p) => r[`can_${p.toLowerCase()}`]);
+    const store = stores.get(relation);
+    const { ceiling, missing, beyond } = auditRelation(r, store, columns.get(relation));
     if (!r.schema_usage) schemasWithoutUsage.add(r.schema);
-    const missing = [...(r.schema_usage ? [] : ['USAGE']), ...required.filter((p) => !held.includes(p))];
     if (missing.length) denied.push({ relation, missing });
-    if (override) {
-      if (r.owned) {
-        if (appendOnly.has(relation)) ownedAppendOnly.push(relation);
-        else ownedInOverrideSchemas += 1;
-      } else {
-        const beyond = held.filter((p) => !override.includes(p));
-        if (beyond.length) excess.push({ relation, held: beyond });
-      }
+    if (!ceiling) continue;
+    if (!r.owned) {
+      if (beyond.length) excess.push({ relation, held: beyond });
+    } else if (store) {
+      ownedAppendOnly.push(relation);
+    } else {
+      ownedInOverrideSchemas += 1;
     }
   }
 

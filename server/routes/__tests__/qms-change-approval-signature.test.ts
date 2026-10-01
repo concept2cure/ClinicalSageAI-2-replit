@@ -94,7 +94,7 @@ function app(userId = SIGNER) {
   const a = express();
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
-    (req as unknown as { user: unknown }).user = { organizationId: ORG, id: userId };
+    (req as unknown as { user: unknown }).user = { organizationId: ORG, id: userId, role: 'member' };
     next();
   });
   a.use('/api/mdx', mdxQmsRouter);

@@ -100,4 +100,51 @@ describe('scorePatientCohort', () => {
     // `rare` appears once (< MIN_COHORT) so it must not drive a flag.
     expect(out.find(o => o.subjectId === 'P1')!.topDimension).not.toBe('rare');
   });
+
+  it('returns the per-dimension breakdown that explains each score', () => {
+    // A score alone is not actionable: "4.8, top dimension queries" cannot tell a
+    // monitor one bad dimension from a patient atypical across the board.
+    const out = scorePatientCohort(cohort);
+    const p5 = out.find(o => o.subjectId === 'P5')!;
+    expect(p5.dimensions.map(d => d.dimension).sort()).toEqual(['deviations', 'queries']);
+    // Most extreme first, so the reason reads off the top of the list, and the
+    // top entry agrees with topDimension / anomalyScore.
+    expect(p5.dimensions[0].dimension).toBe('queries');
+    expect(Math.abs(p5.dimensions[0].z)).toBe(p5.anomalyScore);
+    expect(Math.abs(p5.dimensions[0].z)).toBeGreaterThanOrEqual(Math.abs(p5.dimensions[1].z));
+  });
+
+  it('keeps the sign, because the direction is the finding', () => {
+    // Under-reporting looks like a NEGATIVE z. Reporting |z| would make a subject
+    // with no adverse events at all indistinguishable from a very sick one.
+    const under: PatientMetric[] = [
+      { subjectId: 'A', siteId: 'S1', metrics: { aes: 30 } },
+      { subjectId: 'B', siteId: 'S1', metrics: { aes: 31 } },
+      { subjectId: 'C', siteId: 'S2', metrics: { aes: 30 } },
+      { subjectId: 'D', siteId: 'S2', metrics: { aes: 32 } },
+      { subjectId: 'E', siteId: 'S3', metrics: { aes: 0 } },
+    ];
+    const e = scorePatientCohort(under).find(o => o.subjectId === 'E')!;
+    expect(e.dimensions[0].dimension).toBe('aes');
+    expect(e.dimensions[0].z).toBeLessThan(0);
+    // The aggregate score stays absolute — it ranks severity, not direction.
+    expect(e.anomalyScore).toBeGreaterThan(0);
+  });
+
+  it('omits a dimension the cohort was too small to score, rather than zeroing it', () => {
+    // An absent dimension means NOT COMPARABLE. A zero would read as "typical",
+    // which is a claim the engine has no basis for.
+    const sparse: PatientMetric[] = cohort.map((p, i) =>
+      i === 0 ? { ...p, metrics: { ...p.metrics, rare: 999 } } : p);
+    const p1 = scorePatientCohort(sparse).find(o => o.subjectId === 'P1')!;
+    expect(p1.dimensions.some(d => d.dimension === 'rare')).toBe(false);
+  });
+
+  it('gives a subject with no comparable dimension an empty breakdown', () => {
+    const alone: PatientMetric[] = [{ subjectId: 'X', siteId: null, metrics: { queries: 5 } }];
+    const out = scorePatientCohort(alone);
+    expect(out[0].dimensions).toEqual([]);
+    expect(out[0].topDimension).toBeNull();
+    expect(out[0].status).toBe('normal');
+  });
 });

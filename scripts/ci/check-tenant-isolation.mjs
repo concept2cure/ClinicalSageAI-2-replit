@@ -337,6 +337,9 @@ function walk(dir) {
     } else if (entry.isFile() && (full.endsWith('.ts') || full.endsWith('.js'))) {
       if (full.endsWith('.test.ts') || full.endsWith('.test.js')) continue;
       if (full.endsWith('.spec.ts') || full.endsWith('.spec.js')) continue;
+      // A real-database test (vitest.db.config.ts) is a test file too; its
+      // fixtures TRUNCATE and seed by design.
+      if (full.endsWith('.dbtest.ts')) continue;
       out.push(full);
     }
   }
@@ -398,13 +401,21 @@ const SQL_KEYWORD_RE = /\b(?:SELECT|INSERT\s+INTO|UPDATE|DELETE\s+FROM)\b/i;
  * without pretending to evaluate JavaScript.
  */
 function expandLocalInterpolations(sql, text) {
-  if (!sql.includes('${')) return sql;
-  return sql.replace(/\$\{(\w+)\}/g, (whole, ident) => {
-    const def = new RegExp(
-      '\\bconst\\s+' + ident + '\\s*(?::[^=]+)?=\\s*`([^`]*)`',
-    ).exec(text);
-    return def ? def[1] : whole;
-  });
+  /* A fragment may itself be built from fragments (`headsWhere` =
+     `${uploadsWhere} AND …`): expand until nothing more resolves, bounded so a
+     self-referencing const cannot loop. */
+  let out = sql;
+  for (let depth = 0; depth < 4 && out.includes('${'); depth++) {
+    const next = out.replace(/\$\{(\w+)\}/g, (whole, ident) => {
+      const def = new RegExp(
+        '\\bconst\\s+' + ident + '\\s*(?::[^=]+)?=\\s*`([^`]*)`',
+      ).exec(text);
+      return def ? def[1] : whole;
+    });
+    if (next === out) break;
+    out = next;
+  }
+  return out;
 }
 
 const findings = [];

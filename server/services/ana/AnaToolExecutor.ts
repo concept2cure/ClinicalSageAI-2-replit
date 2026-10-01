@@ -16,6 +16,8 @@
 
 import { isGovernedContentWriteTool } from './governed-write-tools.js';
 import { buildToolRefusal, toolAuthorizationOf } from './tool-authorization.js';
+import { registeredToolTier } from './governed-tool-gate.js';
+import { foreignProgramRefusal, foreignRecordRefusal } from './tool-record-scope.js';
 import { buildHumanConfirmationRequiredResult } from '../ana-ri/part11-governance.js';
 import type { AuditRowOutcome } from '../audit/audit-write-outcome.js';
 import { isServedModelApprovedForHighRisk } from '../ai-governance/approved-models.js';
@@ -111,6 +113,12 @@ import {
 import { lookupIcd10 } from '../integrations/icd10-client.js';
 import { composeSafetyNarrative } from './safety-narrative.js';
 import { screenPromotionalLanguage } from './promotional-screening.js';
+import {
+  critiqueDraft,
+  critiqueDocument,
+  verifyRevision,
+  buildRevisionBrief,
+} from './writing-precision-gate.js';
 import { narrateStatisticalResult, type AnalysisType, type EffectMeasure } from './statistical-narrator.js';
 import { composeValueDossierGuidance, listValueDossierCatalog } from './value-dossier.js';
 import { adviseRegulatoryPathway, listRegulatoryPathways } from './regulatory-pathway.js';
@@ -195,9 +203,15 @@ import {
 } from './agentic-tool-dispatch.js';
 import { modelCallRefusal } from '../ai-gateway/model-call-scope.js';
 import { registerAgenticWorkflowHandlers } from './agentic-workflow-tools.js';
+import { HIDDEN_APP_TOOLS, anaCapabilityInLaunchScope } from './ana-launch-scope';
+import { launchScopeEnforced } from '../entitlements/launch-scope';
 import { registerBiotechProgramHandlers } from './biotech-program.js';
 import { registerDocumentSpineHandlers } from './document-spine.js';
 import { registerDocumentCatalogHandlers } from './document-catalog-tools.js';
+import { GOVERNED_REASON_MIN, ReasonNotStatedError, gatedReason, reasonFieldOf, statedReason, type StatedReasonField, REASON_REQUIRED_TOOLS } from './stated-reason-input.js';
+// Re-exported: the set's home is the pure module, so the tool gate and the
+// confirmation route read it without loading this executor.
+export { REASON_REQUIRED_TOOLS };
 import {
   anaScratchDir,
   assertWithinDocumentWorkspace,
@@ -273,10 +287,12 @@ export interface ToolContext {
    */
   projectRef?: string | null;
   /**
-   * The conversation this turn belongs to, its turn id and the model the
-   * gateway is answering with — recorded as provenance by tools that create a
-   * document (draft_authoring_document). Optional: the stream's dispatch does
-   * not pass them yet, and a tool never claims a model it was not told about.
+   * The conversation this turn belongs to, its turn id (the run id) and the
+   * model the gateway is answering with — recorded as provenance by tools that
+   * create a document (draft_authoring_document). Built once for dispatch,
+   * hold and confirm by services/ana/turn-tool-context.ts (PF-10 S5). Null
+   * when unknown (no thread persisted, a run held before S5): a tool never
+   * claims a model it was not told about.
    */
   threadId?: string | null;
   turnId?: string | null;
@@ -350,7 +366,8 @@ function getRequiredInputKeys(tool: string): string[] {
  *
  * recordGovernedAction writes it to audit_logs.reason, and the inspector's
  * ledger shows it as the reason for the change. It is the person's, relayed by
- * the model in `input.reason`: at least GOVERNED_REASON_MIN characters,
+ * the model in `input.reason` (`input.reason_for_change` for the tools
+ * reasonFieldOf names): at least GOVERNED_REASON_MIN characters,
  * trimmed — the rule every other path that writes these rows already applies
  * (the REST routes these tools share a service with, e.g. protocol-reviews.ts
  * and financial-disclosures.ts `reasonSchema`; /api/c2c/actions REASON_REQUIRED;
@@ -364,17 +381,15 @@ function getRequiredInputKeys(tool: string): string[] {
  * row. It is not recorded as a "no reason stated" marker instead, because no
  * other path that writes these rows accepts a change without a reason, and a
  * weaker rule on the chat surface is the gap this closes.
+ *
+ * The minimum, the reading (statedReason, gatedReason) and ReasonNotStatedError
+ * live in stated-reason-input.ts, shared with the handlers registered from
+ * other modules (document-spine.ts commit_document_revision), so the wrapper
+ * below recognises the refusal whichever module threw it.
  */
-const GOVERNED_REASON_MIN = 8;
-
-/** The person's stated reason, trimmed, or null when none of at least GOVERNED_REASON_MIN characters was given. */
-function statedReason(input: Record<string, unknown>): string | null {
-  const r = typeof input.reason === 'string' ? input.reason.trim() : '';
-  return r.length >= GOVERNED_REASON_MIN ? r : null;
-}
 
 /** The answer to a governed write sent without the person's reason. Nothing was written. */
-function reasonNotStated(tool: string): string {
+function reasonNotStated(tool: string, field: StatedReasonField = reasonFieldOf(tool)): string {
   return JSON.stringify({
     ok: false,
     code: 'REASON_REQUIRED',
@@ -383,133 +398,12 @@ function reasonNotStated(tool: string): string {
     error:
       `${tool} was not run: it is a governed change, and the audit trail records the person's reason for it, ` +
       `but no reason of at least ${GOVERNED_REASON_MIN} characters was given. Nothing was recorded or changed. ` +
-      `Ask the person why they are making this change, then call ${tool} again with their answer in "reason". ` +
+      `Ask the person why they are making this change, then call ${tool} again with their answer in "${field}". ` +
       'Do not write a reason they did not give.',
   });
 }
 
-/**
- * Every tool whose handler records a governed action (recordGovernedAction ->
- * audit_logs.reason): the person is asked for their reason before they are
- * asked to confirm. governed-reason-not-invented.test.ts holds this list to the
- * source: a handler that records a governed action and is missing here fails it.
- */
-export const REASON_REQUIRED_TOOLS: ReadonlySet<string> = new Set([
-  'add_amendment_change',
-  'add_biological_agent',
-  'add_capa_action',
-  'add_committee_agenda_item',
-  'add_coverage_item',
-  'add_disclosure_interest',
-  'add_effort_line',
-  'add_eligibility_criterion',
-  'add_grant_budget_line',
-  'add_irb_site',
-  'add_other_support_entry',
-  'add_personnel_training',
-  'add_protocol_budget_item',
-  'add_protocol_milestone',
-  'add_protocol_objective',
-  'add_protocol_review_comment',
-  'add_protocol_risk',
-  'add_soa_assessment',
-  'apply_protocol_design_derivation',
-  'assign_committee_member',
-  'assign_protocol_reviewer',
-  'bind_protocol_to_study_design',
-  'cast_committee_vote',
-  'classify_coverage_item',
-  'classify_tmf_artifact',
-  'clone_protocol_template',
-  'convene_committee_meeting',
-  'create_biosketch',
-  'create_clinical_investigator',
-  'create_coi_disclosure',
-  'create_consent_form',
-  'create_coverage_analysis',
-  'create_dms_plan',
-  'create_effort_certification',
-  'create_export_control_review',
-  'create_financial_disclosure',
-  'create_grant_proposal',
-  'create_ha_interaction',
-  'create_iacuc_protocol',
-  'create_ibc_registration',
-  'create_inspection',
-  'create_invention_disclosure',
-  'create_irb_submission',
-  'create_lifecycle_obligation',
-  'create_nonclinical_study',
-  'create_other_support',
-  'create_protocol_amendment',
-  'create_protocol_document',
-  'create_protocol_template',
-  'create_qms_document',
-  'create_regulatory_commitment',
-  'create_research_agreement',
-  'create_rim_product',
-  'create_tmf',
-  'fulfill_regulatory_commitment',
-  'import_citi_records',
-  'log_cs_transaction',
-  'log_inspection_finding',
-  'open_grant_closeout',
-  'record_cost_share_contribution',
-  'record_grant_award',
-  'record_grant_expenditure',
-  'record_grant_opportunity',
-  'record_subaward',
-  'register_animal_cohort',
-  'register_controlled_substance',
-  'register_dea',
-  'report_protocol_deviation',
-  'request_no_cost_extension',
-  'revise_qms_document',
-  'save_document_as_template',
-  'save_document_to_vault',
-  'screen_subaward',
-  'seed_tmf',
-  'set_coverage_qualifying_determination',
-  'set_funding_profile',
-  'set_grant_milestone_status',
-  'set_protocol_budget_params',
-  'set_protocol_milestone_status',
-  'set_registration_status',
-  'set_soa_cell',
-  'submit_invention_disclosure',
-  'triage_compliance_attention',
-  'update_biosketch_section',
-  'update_consent_element',
-  'update_dms_plan_element',
-  'update_export_control_review',
-  'update_grant_closeout',
-  'update_invention_disclosure',
-  'update_protocol_section',
-  'update_research_agreement',
-  'update_tmf_artifact_status',
-  'update_vault_document',
-]);
 
-/** A governed write without the person's reason; the registration wrapper answers it with reasonNotStated. */
-class ReasonNotStatedError extends Error {
-  constructor() {
-    super('No reason was stated for a governed write. Nothing was recorded or changed.');
-    this.name = 'ReasonNotStatedError';
-  }
-}
-
-/**
- * The person's stated reason, read where a handler resolves its inputs —
- * after its own input checks, before it opens a connection. Without one it
- * throws ReasonNotStatedError, which registerToolHandler's wrapper turns into
- * the refusal (reasonNotStated): the handler never reaches a write, and needs
- * no branch of its own for it.
- */
-function gatedReason(input: Record<string, unknown>): string {
-  const reason = statedReason(input);
-  if (!reason) throw new ReasonNotStatedError();
-  return reason;
-}
 
 /**
  * Register a handler for a named tool. Every handler is wrapped with execution
@@ -524,6 +418,14 @@ function gatedReason(input: Record<string, unknown>): string {
  * directly. A refusal is a tool result the model reads and relays, not a throw,
  * so the turn continues honestly.
  *
+ *   L. A tool that serves only apps outside the release (ana-launch-scope.ts)
+ *      is refused as LAUNCH_SCOPE while launch scope is enforced (production).
+ *      governedToolsetFor already withholds it from what AnA is offered, but
+ *      every path resolves a handler by name, offered or not: the stream's
+ *      [INTELLIGENCE_ANSWER] fast path calls answer_intelligence_question
+ *      directly, and the loop and stream run any registered name the model
+ *      emits (2026-09-30, ana-launch-scope-execution.test.ts). First, so a
+ *      hidden write is never put to a person to confirm.
  *   0. Below the person's own turn (a sub-agent, ctx.agentDepth >= 1), only a
  *      tool the register classes `read` runs; anything else is refused as
  *      SUB_AGENT_READ_ONLY. First, so a child never gets as far as rule 3's
@@ -549,6 +451,16 @@ function preHandlerRefusal(
   input: Record<string, any>,
   ctx: ToolContext | undefined,
 ): { code: string; result: string } | null {
+  if (launchScopeEnforced() && !anaCapabilityInLaunchScope(name, HIDDEN_APP_TOOLS)) {
+    return {
+      code: 'LAUNCH_SCOPE',
+      result: JSON.stringify({
+        error: 'LAUNCH_SCOPE',
+        tool: name,
+        message: `${name} belongs to a part of the product that is not in this release. Nothing was run.`,
+      }),
+    };
+  }
   if ((ctx?.agentDepth ?? 0) >= 1 && toolAuthorizationOf(name, input).class !== 'read') {
     return {
       code: 'SUB_AGENT_READ_ONLY',
@@ -570,12 +482,12 @@ function preHandlerRefusal(
     return { code: 'NOT_AN_ANA_ACTION', result: JSON.stringify(buildToolRefusal(name, auth.why)) };
   }
   if (auth.class === 'confirm' && ctx?.humanConfirmed !== true) {
-    if (REASON_REQUIRED_TOOLS.has(name) && !statedReason(input ?? {})) {
+    if (REASON_REQUIRED_TOOLS.has(name) && !statedReason(input ?? {}, reasonFieldOf(name))) {
       return { code: 'REASON_REQUIRED', result: reasonNotStated(name) };
     }
     return {
       code: 'HUMAN_CONFIRMATION_REQUIRED',
-      result: JSON.stringify(buildHumanConfirmationRequiredResult(name, input ?? {})),
+      result: JSON.stringify(buildHumanConfirmationRequiredResult(name, input ?? {}, registeredToolTier(name))),
     };
   }
   return null;
@@ -620,7 +532,12 @@ async function writeRoleRefusal(
 export function registerToolHandler(name: string, handler: ToolHandler): void {
   const instrumented: ToolHandler = async (input, ctx) => {
     const orgId = ctx?.organizationId ?? undefined;
-    const refusal = preHandlerRefusal(name, input, ctx) ?? (await writeRoleRefusal(name, input, ctx));
+    const refusal =
+      preHandlerRefusal(name, input, ctx) ??
+      (await writeRoleRefusal(name, input, ctx)) ??
+      // A program or record the model names must be the caller's (tool-record-scope.ts).
+      (await foreignProgramRefusal(input, ctx?.organizationId)) ??
+      (await foreignRecordRefusal(name, input, ctx?.organizationId));
     if (refusal) {
       recordToolOutcome(name, 'failure', 0, refusal.code, orgId);
       return refusal.result;
@@ -641,7 +558,7 @@ export function registerToolHandler(name: string, handler: ToolHandler): void {
     } catch (e) {
       if (e instanceof ReasonNotStatedError) {
         recordToolOutcome(name, 'failure', Date.now() - start, 'REASON_REQUIRED', orgId);
-        return reasonNotStated(name);
+        return reasonNotStated(name, e.field);
       }
       recordToolOutcome(name, 'failure', Date.now() - start, e instanceof Error ? e.message : String(e), orgId);
       throw e;
@@ -3275,11 +3192,26 @@ registerToolHandler('assess_site_risk', async (input, ctx) => {
   if (orgId == null) {
     return JSON.stringify({ source: 'AnA RBM', error: 'Organization context required.' });
   }
-  const { recomputeSiteRisk } = await import('../rbm/site-risk-engine.js');
+  const { recomputeSiteRisk, SITE_READ_MESSAGE } = await import('../rbm/site-risk-engine.js');
   const { getPool } = await import('../../db.js');
+  // recomputeSiteRisk reports WHY it produced nothing (#1128): the study is not
+  // this org's, Site Intelligence is unavailable, or the read failed. Handed an
+  // empty array instead, the model would tell the user the study has no site
+  // data — a clean bill of health it has no evidence for. Return the reason.
+  const recompute = async (): Promise<any[] | string> => {
+    const out = await recomputeSiteRisk(orgId, programId);
+    if (!out.ok) {
+      return JSON.stringify({
+        source: 'AnA RBM Site Risk', error: SITE_READ_MESSAGE[out.reason], reason: out.reason,
+      });
+    }
+    return out.snapshots;
+  };
   let sites: any[];
   if (input.persist === true) {
-    sites = await recomputeSiteRisk(orgId, programId);
+    const r = await recompute();
+    if (typeof r === 'string') return r;
+    sites = r;
   } else {
     const { rows } = await getPool().query(
       `SELECT site_number, site_name, composite_risk, monitoring_tier, drivers FROM rbm_site_risk_scores
@@ -3287,7 +3219,11 @@ registerToolHandler('assess_site_risk', async (input, ctx) => {
       [orgId, programId],
     );
     sites = rows;
-    if (sites.length === 0) sites = await recomputeSiteRisk(orgId, programId);
+    if (sites.length === 0) {
+      const r = await recompute();
+      if (typeof r === 'string') return r;
+      sites = r;
+    }
   }
   const tiers = { reduced: 0, standard: 0, enhanced: 0 } as Record<string, number>;
   for (const s of sites) tiers[s.monitoringTier ?? s.monitoring_tier] = (tiers[s.monitoringTier ?? s.monitoring_tier] ?? 0) + 1;
@@ -3297,7 +3233,11 @@ registerToolHandler('assess_site_risk', async (input, ctx) => {
     siteCount: sites.length,
     tierCounts: tiers,
     sites,
-    note: sites.length === 0 ? 'No Site Intelligence data found for this program.' : undefined,
+    // Only reachable on a SUCCESSFUL read that found nothing, so it now means
+    // what it says instead of standing in for every failure mode.
+    note: sites.length === 0
+      ? 'Site Intelligence was read successfully and holds no sites for this program.'
+      : undefined,
   });
 });
 
@@ -3673,7 +3613,16 @@ registerToolHandler('create_monitoring_action', async (input, ctx) => {
     signalId: rbmNum(input.signalId) ?? null,
     owner: rbmNum(input.owner) ?? null,
   });
-  if (!out.created) return rbmErr('Monitoring plan not found in this tenant.');
+  // Actions are logged against the plan in force. A superseded version or an
+  // amendment not yet approved is a 409 that names the plan in force, so the
+  // model can retry there instead of reporting a plan that exists as "not found".
+  if (!out.created) {
+    if (out.reason === 'plan_not_found') return rbmErr('Monitoring plan not found in this tenant.');
+    return JSON.stringify({
+      source: 'AnA RBM', status: 409, error: out.message,
+      reason: out.reason, governingPlanId: out.governingPlanId,
+    });
+  }
   return JSON.stringify({ source: 'AnA RBM · create_monitoring_action', ...out });
 });
 
@@ -3862,6 +3811,93 @@ registerToolHandler('medical_writing_review', async (input) => {
   const draftText = typeof input.draft_text === 'string' ? input.draft_text : undefined;
   const review = reviewMedicalWriting(documentType, draftText);
   return JSON.stringify({ source: 'AnA Medical-Writing QC', ...review });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Writing Precision Gate (PR #1003 port) — composes the checkers above
+// (grounding, readability, abbreviations, promotional screening, structure) plus
+// in-document terminology consistency into one deterministic score + verdict +
+// revision brief. The model revises; the gate decides. No DB, no org context.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function precisionAudience(v: unknown): ReadabilityAudience | undefined {
+  return typeof v === 'string' && ['patient', 'clinician', 'regulator', 'general'].includes(v)
+    ? (v as ReadabilityAudience)
+    : undefined;
+}
+
+registerToolHandler('critique_draft', async (input) => {
+  const text = typeof input.text === 'string' ? input.text : '';
+  if (!text.trim()) {
+    return JSON.stringify({ status: 'needs_parameters', message: 'text (the draft to critique) is required' });
+  }
+  const report = critiqueDraft({
+    text,
+    audience: precisionAudience(input.audience),
+    documentType: typeof input.documentType === 'string' ? input.documentType : undefined,
+  });
+  return JSON.stringify({
+    status: 'computed',
+    engine: 'deterministic',
+    score: report.score,
+    verdict: report.verdict,
+    metrics: report.metrics,
+    findings: report.findings,
+    revisionBrief: buildRevisionBrief(report),
+    instruction:
+      report.verdict === 'pass'
+        ? 'The draft passes the deterministic precision gate. You may still improve prose, but no machine-checkable defect remains.'
+        : 'Revise the draft against the revisionBrief (most severe first), preserving every value that is already correct and cited, then re-run critique_draft until the verdict is pass.',
+  });
+});
+
+registerToolHandler('verify_revision', async (input) => {
+  const originalText = typeof input.originalText === 'string' ? input.originalText : '';
+  const revisedText = typeof input.revisedText === 'string' ? input.revisedText : '';
+  if (!originalText.trim() || !revisedText.trim()) {
+    return JSON.stringify({ status: 'needs_parameters', message: 'originalText and revisedText are both required' });
+  }
+  const audience = precisionAudience(input.audience);
+  const documentType = typeof input.documentType === 'string' ? input.documentType : undefined;
+  const result = verifyRevision(
+    { text: originalText, audience, documentType },
+    { text: revisedText, audience, documentType },
+  );
+  return JSON.stringify({
+    status: 'computed',
+    engine: 'deterministic',
+    result,
+    instruction: result.passesNow
+      ? 'The revision passes the precision gate. Confirm the improvement and proceed.'
+      : result.improved
+        ? 'The revision improved but has not fully passed; re-critique and continue revising the remaining findings.'
+        : 'The revision did not improve (or introduced regressions). Re-read the original critique and try again.',
+  });
+});
+
+registerToolHandler('critique_document', async (input) => {
+  const sections = Array.isArray(input.sections) ? input.sections : [];
+  const clean = sections
+    .filter((s): s is { title: string; text: string } =>
+      !!s && typeof (s as any).title === 'string' && typeof (s as any).text === 'string')
+    .map((s) => ({ title: s.title, text: s.text }));
+  if (clean.length === 0) {
+    return JSON.stringify({ status: 'needs_parameters', message: 'sections[] with {title, text} is required' });
+  }
+  const result = critiqueDocument(clean, {
+    audience: precisionAudience(input.audience),
+    documentType: typeof input.documentType === 'string' ? input.documentType : undefined,
+  });
+  return JSON.stringify({
+    status: 'computed',
+    engine: 'deterministic',
+    documentScore: result.documentScore,
+    verdict: result.verdict,
+    crossSectionFindings: result.crossSectionFindings,
+    sections: result.sections.map((s) => ({ title: s.title, score: s.score, verdict: s.verdict, findings: s.report.findings })),
+    instruction:
+      'Report the document score and, first, any cross-section findings (a value stated inconsistently across sections is a reviewer blocker). Then list per-section findings for the sections that need revision.',
+  });
 });
 
 // Describe Capabilities — AnA's deterministic self-knowledge: registered tools
@@ -4412,67 +4448,42 @@ registerToolHandler('search_medicare_coverage', async (input) => {
 
 // Lookup FDA Guidance
 registerToolHandler('lookup_fda_guidance', async (input) => {
-  const topic = input.topic as string;
-  const regulationType = input.regulation_type as string || 'any';
-
-  // FDA guidance database lookup via openFDA or internal knowledge
-  const guidanceMap: Record<string, any> = {
-    '510(k)': {
-      title: 'The 510(k) Program: Evaluating Substantial Equivalence in Premarket Notifications',
-      documentNumber: 'FDA-2013-D-0718',
-      url: 'https://www.fda.gov/regulatory-information/search-fda-guidance-documents',
-      keyRequirements: [
-        'Identify predicate device(s)',
-        'Compare intended use and technological characteristics',
-        'Demonstrate substantial equivalence',
-        'Include performance data if different technology',
-      ],
-    },
-    'biocompatibility': {
-      title: 'Use of International Standard ISO 10993-1, Biological evaluation of medical devices',
-      documentNumber: 'FDA-2013-D-0350',
-      regulations: ['21 CFR 820.30(g)', 'ISO 10993-1:2018'],
-      keyRequirements: [
-        'Material characterization',
-        'Biological evaluation plan',
-        'Risk-based approach to testing',
-        'Chemical characterization per ISO 10993-18',
-      ],
-    },
-    'software': {
-      title: 'Content of Premarket Submissions for Device Software Functions',
-      documentNumber: 'FDA-2018-D-3241',
-      regulations: ['21 CFR 820', 'IEC 62304'],
-      keyRequirements: [
-        'Software level of concern determination',
-        'Software requirements specification',
-        'Architecture design chart',
-        'Software testing (verification & validation)',
-      ],
-    },
-  };
-
-  // Find best match
-  const topicLower = topic.toLowerCase();
-  let bestMatch = null;
-  for (const [key, value] of Object.entries(guidanceMap)) {
-    if (topicLower.includes(key.toLowerCase())) {
-      bestMatch = { keyword: key, ...value };
-      break;
-    }
-  }
-
-  if (bestMatch) {
-    return JSON.stringify({ source: 'FDA Guidance Database', match: bestMatch });
-  }
-
+  /* No FDA guidance index is connected (plan open decision 11), so this names
+     no guidance, docket number or requirement. It used to answer from a
+     three-entry map ("510(k)", "biocompatibility", "software") whose docket
+     numbers nothing verified and whose requirements were typed from memory —
+     "software level of concern", which the 2023 device-software guidance
+     replaced, and 21 CFR 820.30(g), which the QMSR superseded — and returned a
+     fixed list of CFR parts for anything else. What it can stand behind is the
+     dated US facts in the verified currency registry, each with its source. */
+  const topic = typeof input.topic === 'string' ? input.topic.trim() : '';
+  if (!topic) return JSON.stringify({ error: 'lookup_fda_guidance requires a topic.' });
+  const { findFacts, verificationAgeDays, isVerificationStale } = await import(
+    '../regulatory-currency/currency-registry.js'
+  );
+  const asOf = new Date().toISOString().slice(0, 10);
+  const facts = findFacts({ topic, jurisdiction: 'US', asOf }).map((f) => ({
+    id: f.id,
+    topic: f.topic,
+    status: f.status,
+    effectiveDate: f.effectiveDate,
+    note: f.note,
+    sourceUrl: f.sourceUrl,
+    lastVerified: f.lastVerified,
+    verificationAgeDays: verificationAgeDays(f, asOf),
+    verificationStale: isVerificationStale(f, asOf),
+  }));
   return JSON.stringify({
-    source: 'FDA Guidance Database',
     topic,
-    note: `No exact match found. Search FDA guidance at https://www.fda.gov/regulatory-information/search-fda-guidance-documents for: "${topic}"`,
-    relatedRegulations: regulationType === '21cfr'
-      ? ['21 CFR Part 807 (510k)', '21 CFR Part 814 (PMA)', '21 CFR Part 820 (QSR)', '21 CFR Part 11 (Electronic Records)']
-      : undefined,
+    status: facts.length > 0 ? 'registry_facts' : 'not_indexed',
+    guidanceIndex: 'not_connected',
+    asOf,
+    facts,
+    note:
+      'No FDA guidance index is connected, so this cannot name an FDA guidance, its docket number or its ' +
+      'requirements. Any facts listed are dated entries from the verified regulatory currency registry. Name an ' +
+      'FDA guidance only from a document the user supplied, or say it needs confirming at ' +
+      'https://www.fda.gov/regulatory-information/search-fda-guidance-documents.',
   });
 });
 
@@ -4557,42 +4568,112 @@ registerToolHandler('check_regulatory_compliance', async (input) => {
 });
 
 // Validate Cross References
-registerToolHandler('validate_cross_references', async (input) => {
-  const documentId = input.document_id as string;
-  const references = input.section_references as string[] || [];
-
-  return JSON.stringify({
-    documentId,
-    referencesChecked: references.length,
-    results: references.map(ref => ({
-      reference: ref,
-      status: 'unverified',
-      note: 'Cross-reference validation requires document store access — flagged for manual review',
-    })),
-    recommendation: 'Run full cross-reference validation after document assembly',
-  });
+registerToolHandler('validate_cross_references', async (input, ctx) => {
+  /* Each reference is checked against the section outlines of the tenant's
+     own documents (c2c_document_sections): this document, then the other
+     documents of its project (cross-reference-check.ts). It used to read
+     nothing and return every reference 'unverified' — "requires document
+     store access". A table or figure number has no resolver, so it is not
+     assessed, never passed. */
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'validate_cross_references requires tenant context.' });
+  const documentId = typeof input.document_id === 'string' ? input.document_id.trim() : '';
+  if (!documentId) return JSON.stringify({ error: 'document_id (string) is required.' });
+  const references = Array.isArray(input.section_references)
+    ? (input.section_references as unknown[]).filter((r): r is string => typeof r === 'string' && r.trim() !== '')
+    : [];
+  if (references.length === 0) {
+    return JSON.stringify({
+      error: 'section_references is required: list the references to check, e.g. ["Section 3.2.P.5.1"].',
+    });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const { checkCrossReference } = await import('./cross-reference-check.js');
+    const doc = await getPool().query(
+      `SELECT id, project_id, title FROM c2c_documents
+        WHERE org_id = $1 AND id = $2 LIMIT 1`,
+      [ctx.organizationId, documentId],
+    );
+    if (!doc.rows.length) return JSON.stringify({ error: `No document '${documentId}' in this organization.` });
+    /* This document's outline always, even when it belongs to no project
+       (project_id is nullable for legacy rows); the project's other
+       documents unless archived. */
+    const outlines = await getPool().query(
+      `SELECT s.document_id, d.title, s.section_key, s.status
+         FROM c2c_document_sections s
+         JOIN c2c_documents d ON d.id = s.document_id
+        WHERE d.org_id = $1
+          AND (d.id = $3 OR (d.project_id = $2 AND d.status <> 'archived'))
+        ORDER BY s.document_id, s.section_key`,
+      [ctx.organizationId, doc.rows[0].project_id, documentId],
+    );
+    const results = references.map((reference) => checkCrossReference(reference, documentId, outlines.rows));
+    const count = (...statuses: string[]) => results.filter((r) => statuses.includes(r.status)).length;
+    return JSON.stringify({
+      documentId,
+      referencesChecked: results.length,
+      results,
+      summary: {
+        found: count('found_in_document', 'found_in_project'),
+        outlineOnly: count('outline_only'),
+        parentOnly: count('parent_only'),
+        notFound: count('not_found'),
+        notAssessed: count('not_assessed'),
+      },
+      checkedAgainst: 'the section outlines of this document and of the other documents in its project',
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `validate_cross_references failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
 });
 
 // Generate Citation
 registerToolHandler('generate_citation', async (input) => {
-  const sourceType = input.source_type as string;
-  const sourceId = input.source_identifier as string;
-  const style = input.citation_style as string || 'regulatory';
+  /* Formats only what it can stand behind, and says which (citation-generator.ts).
+     It filled a string template per type: a journal article came back as
+     `[Author(s)]. "[Title]." [Journal], <id>. DOI: [doi].`, and the style asked
+     for was echoed but never applied. */
+  const { generateCitation } = await import('./citation-generator.js');
+  return JSON.stringify(
+    await generateCitation({
+      sourceType: input.source_type,
+      sourceIdentifier: input.source_identifier,
+      style: input.citation_style,
+    }),
+  );
+});
 
-  const citationTemplates: Record<string, string> = {
-    fda_guidance: `U.S. Food and Drug Administration. "${sourceId}." Available at: https://www.fda.gov/regulatory-information/search-fda-guidance-documents.`,
-    ich_guideline: `International Council for Harmonisation. "${sourceId}." Available at: https://ich.org/page/ich-guidelines.`,
-    '21cfr': `Title 21, Code of Federal Regulations, Part ${sourceId}. U.S. Government Publishing Office.`,
-    eu_mdr: `Regulation (EU) 2017/745 of the European Parliament and of the Council, ${sourceId}.`,
-    iso_standard: `International Organization for Standardization. ${sourceId}. Geneva, Switzerland.`,
-    journal_article: `[Author(s)]. "[Title]." [Journal], ${sourceId}. DOI: [doi].`,
+// Verify Citations
+registerToolHandler('verify_citations', async (input) => {
+  /* A thin handler over citation-verification-service: the verdicts are the
+     engine's (PubMed, Crossref, retraction status, the tenant's public-source
+     egress honoured), counted. It was reachable only through
+     POST /api/citations/verify, so AnA audited a reference list by reading it. */
+  const citations = Array.isArray(input.citations) ? (input.citations as Array<Record<string, unknown>>) : [];
+  if (citations.length === 0) return JSON.stringify({ error: 'verify_citations requires citations (a non-empty array).' });
+  if (citations.length > 50) return JSON.stringify({ error: 'verify_citations checks at most 50 references per call.' });
+  const unidentified = citations.findIndex((c) => !c || !['raw', 'title', 'doi', 'pmid'].some((k) => typeof c[k] === 'string' && (c[k] as string).trim()));
+  if (unidentified >= 0) {
+    return JSON.stringify({ error: `Reference ${unidentified + 1} needs at least one of raw, title, doi or pmid.` });
+  }
+  const { verifyCitations } = await import('../citation-verification-service.js');
+  const results = await verifyCitations(citations as Parameters<typeof verifyCitations>[0]);
+  const count = (status: string) => results.filter((r) => r.status === status).length;
+  const summary = {
+    total: results.length,
+    verified: count('verified'),
+    retracted: results.filter((r) => r.retracted === true).length,
+    notFound: count('not_found'),
+    unverifiable: count('unverifiable'),
+    error: count('error'),
   };
-
   return JSON.stringify({
-    sourceType,
-    sourceIdentifier: sourceId,
-    citation: citationTemplates[sourceType] || `${sourceType}: ${sourceId}`,
-    style,
+    results,
+    summary,
+    message:
+      `${summary.verified} of ${summary.total} verified` +
+      (summary.retracted ? `, ${summary.retracted} retracted` : '') +
+      `; ${summary.notFound} not found, ${summary.unverifiable} unverifiable, ${summary.error} could not be checked.`,
   });
 });
 
@@ -5433,8 +5514,10 @@ registerToolHandler('load_nonclinical_program', async (input: Record<string, unk
 // Bridges the agentic tool loop into the governed ana-ri command executor so the
 // conversational ANA can discover and invoke every platform command (project /
 // artifact / task / dossier / Module 3 / CMC / MDX / PDEV / …). Reads are open;
-// governed mutations still require confirm + reason and are audit-logged. Tenant
-// and user come from the session context, never from model input.
+// a write comes back as a proposal (executeCommands' propose-only gate, which
+// reads only the confirmation POST /api/ana-ri/governed-action stamps — never a
+// flag in params) and runs only when a person confirms it. Tenant and user come
+// from the session context, never from model input.
 
 registerToolHandler('list_platform_commands', async (input: Record<string, unknown>) => {
   try {
@@ -5448,7 +5531,7 @@ registerToolHandler('list_platform_commands', async (input: Record<string, unkno
       count: list.length,
       commands: list.map(c => ({ command: c.name, description: c.description, parameters: c.parameters })),
       instruction:
-        "Invoke any of these with execute_platform_command { command, params }. This is ANA's full platform command surface beyond the typed tools; governed mutations need params.confirm=true and params.reason.",
+        "Invoke any of these with execute_platform_command { command, params }, passing the parameters each command lists. This is ANA's full platform command surface beyond the typed tools. Reads run. A write never runs on your call: it comes back as a proposal (HUMAN_CONFIRMATION_REQUIRED or PART11_SIGNATURE_REQUIRED) that only the person's confirmation in the platform runs.",
     });
   } catch (err: any) {
     return JSON.stringify({ error: `Listing platform commands failed: ${err?.message || 'unknown error'}` });
@@ -5487,7 +5570,7 @@ registerToolHandler('execute_platform_command', async (input: Record<string, unk
       command,
       result,
       instruction:
-        'Governed mutations require confirm + reason in params. If the result indicates confirmation is required, re-issue with params.confirm=true and params.reason set. Report the result message verbatim.',
+        "If the result's error is HUMAN_CONFIRMATION_REQUIRED or PART11_SIGNATURE_REQUIRED, nothing ran: it is a proposal, and only the person's confirmation in the platform runs it. Tell the person what you proposed and that it has not been done. Do not re-issue it: calling again, with any params, only proposes it again. Report the result message verbatim.",
     });
   } catch (err: any) {
     return JSON.stringify({ error: `Platform command failed: ${err?.message || 'unknown error'}` });
@@ -6163,6 +6246,8 @@ registerToolHandler('establish_governed_fact', async (input: Record<string, unkn
   if (!programId || !entity || !field) {
     return JSON.stringify({ status: 'needs_parameters', message: 'programId, entity, and field are required' });
   }
+  // Recorded on the §11.10(e) row as the reason the value was established.
+  const reason = gatedReason(input);
   try {
     const { establishGovernedFact } = await import('../living-record/fact-change-orchestrator.js');
     const result = await establishGovernedFact({
@@ -6172,7 +6257,7 @@ registerToolHandler('establish_governed_fact', async (input: Record<string, unkn
       field,
       value: proposedValueFromInput(input),
       comparator: typeof input.comparator === 'string' ? input.comparator : undefined,
-      reason: typeof input.reason === 'string' ? input.reason : undefined,
+      reason,
       actor: ctx?.userId ?? null,
     });
     if (!result.ok) return JSON.stringify({ status: result.code, message: result.message });
@@ -6273,13 +6358,8 @@ registerToolHandler('apply_fact_change', async (input: Record<string, unknown>, 
     return JSON.stringify({ error: 'apply_fact_change requires organization context' });
   }
   const factId = String(input.factId ?? '');
-  const reason = typeof input.reason === 'string' ? input.reason.trim() : '';
-  if (!factId || !reason) {
-    return JSON.stringify({
-      status: 'needs_parameters',
-      message: 'factId and a reason-for-change are required. Ask the user for the reason if not supplied.',
-    });
-  }
+  if (!factId) return JSON.stringify({ status: 'needs_parameters', message: 'factId is required' });
+  const reason = gatedReason(input);
   try {
     const { applyFactChange } = await import('../living-record/fact-change-orchestrator.js');
     const result = await applyFactChange({
@@ -6523,15 +6603,13 @@ async function predicateShadowCall(
   path: string,
   opts: { body?: unknown; query?: Record<string, string | undefined> } = {}
 ): Promise<string> {
-  const { db } = await import('../../db.js');
-  const { regulatoryPrograms } = await import('../../../shared/schema/programs.js');
-  const { and, eq } = await import('drizzle-orm');
-  const [program] = await db
-    .select({ id: regulatoryPrograms.id })
-    .from(regulatoryPrograms)
-    .where(and(eq(regulatoryPrograms.id, programId), eq(regulatoryPrograms.organizationId, organizationId)))
-    .limit(1);
-  if (!program) return JSON.stringify({ error: 'Access denied: program not in your organization.' });
+  const [{ getPool }, { programInOrganization }] = await Promise.all([
+    import('../../db.js'),
+    import('../c2c/program-access.js'),
+  ]);
+  if (!(await programInOrganization(getPool, programId, organizationId))) {
+    return JSON.stringify({ error: 'Access denied: program not in your organization.' });
+  }
 
   const base = (process.env.SHADOW_SERVICE_URL || 'http://localhost:8001').replace(/\/$/, '');
   const url = new URL(path, base + '/');
@@ -6898,39 +6976,57 @@ registerToolHandler('ind_get_status', async (input: Record<string, unknown>) => 
   }
 });
 
-registerToolHandler('rasterize_page', async (input: Record<string, unknown>) => {
-  const documentPath = input.document_path as string;
-  const pageNumber = (input.page_number as number) || 1;
-  const dpi = (input.dpi as number) || 150;
-
-  // Rasterization requires Puppeteer or LibreOffice — return instructions
-  return JSON.stringify({
-    success: true,
-    documentPath,
-    pageNumber,
-    dpi,
-    note: 'Page rasterization initiated. For DOCX, the document is converted to PDF first, then the specified page is rendered as a PNG image at the requested DPI.',
-    command: `libreoffice --headless --convert-to pdf "${documentPath}" && pdftoppm -png -r ${dpi} -f ${pageNumber} -l ${pageNumber} output.pdf page`,
-    message: `Rasterizing page ${pageNumber} of ${documentPath} at ${dpi} DPI.`,
-  });
+registerToolHandler('rasterize_page', async (input, ctx) => {
+  /* Renders one page of a PDF or DOCX in the tenant's document workspace to a
+     PNG in its scratch area (page-render.ts) and succeeds only when that file
+     exists. It used to return `success: true` and a shell command it never
+     ran, for any path at all. */
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ success: false, error: 'rasterize_page requires tenant context (organizationId).' });
+  }
+  const confined = workspacePathOrRefusal(input.document_path, 'document_path', ctx.organizationId);
+  if (!confined.ok) return confined.refusal;
+  const page = input.page_number === undefined || input.page_number === null ? 1 : Number(input.page_number);
+  if (!Number.isInteger(page) || page < 1) {
+    return JSON.stringify({ success: false, error: 'page_number must be a whole number of 1 or more.' });
+  }
+  const dpi = Math.min(300, Math.max(36, Math.round(Number(input.dpi) || 150)));
+  try {
+    const { renderDocumentPage } = await import('./page-render.js');
+    const rendered = await renderDocumentPage({
+      documentPath: confined.path,
+      page,
+      dpi,
+      outputDir: anaScratchDir(ctx.organizationId, 'docbuilder'),
+    });
+    const lowered = rendered.dpi < dpi ? ` (lowered from ${dpi} dpi to stay within the page pixel limit)` : '';
+    return JSON.stringify({
+      success: true,
+      ...rendered,
+      displayed: false,
+      message:
+        `Rendered page ${page} of ${rendered.pageCount} at ${rendered.dpi} dpi${lowered} to ${rendered.pngPath} ` +
+        `(${rendered.widthPx}×${rendered.heightPx} px). The image is a file on the server; it is not shown to you or the user.`,
+    });
+  } catch (err) {
+    return JSON.stringify({ success: false, error: err instanceof Error ? err.message : String(err) });
+  }
 });
 
-registerToolHandler('pdf_overlay', async (input: Record<string, unknown>) => {
-  const basePdfPath = input.base_pdf_path as string;
-  const overlays = input.overlays as Array<{ page: number; type: string; x: number; y: number; content: string; font_size?: number; color?: string }> || [];
-  const outputPath = input.output_path as string || basePdfPath.replace('.pdf', '_finalized.pdf');
-
-  // PDF overlay requires a PDF manipulation library (pdf-lib, PyPDF2, or reportlab)
-  return JSON.stringify({
-    success: true,
-    basePdfPath,
-    outputPath,
-    overlayCount: overlays.length,
-    overlays: overlays.map(o => ({ page: o.page, type: o.type, position: `(${o.x}, ${o.y})` })),
-    note: 'PDF overlay operations queued. Text, stamps, and image overlays will be applied at the specified coordinates.',
-    message: `${overlays.length} overlay operations will be applied to ${basePdfPath}.`,
-  });
-});
+registerToolHandler('pdf_overlay', async () =>
+  /* No overlay engine exists, so this applies nothing and says so. It used to
+     report overlays "queued" and "will be applied" — including approval
+     stamps and signatures — and write nothing. The planned replacement is the
+     deterministic bind engine (bind_pdf_package, plan WS13); whether to keep
+     this name until then or remove it is open founder decision 8. */
+  JSON.stringify({
+    success: false,
+    status: 'unavailable',
+    error:
+      'pdf_overlay is not available: no PDF overlay engine is connected, so nothing was applied or written. ' +
+      'Tell the user the overlay was not made.',
+  }),
+);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Precedent Engine handlers — exposes server/services/precedent-engine.ts.
@@ -9742,16 +9838,23 @@ registerToolHandler('check_consistency', async (input, ctx) => {
   if (!dimension) return JSON.stringify({ error: 'dimension is required.' });
   if (!left || !left.ref || !left.text) return JSON.stringify({ error: 'left { ref, text } is required.' });
   if (right.length === 0) return JSON.stringify({ error: 'right (non-empty array) is required.' });
+  if (right.some((r) => typeof r?.ref !== 'string' || !r.ref || typeof r?.text !== 'string')) {
+    return JSON.stringify({ error: 'each right item needs a ref and a text.' });
+  }
   try {
     const { runConsistencyCheck } = await import('../truth-engine/truth-engine-service.js');
-    const { findings, auditTrail } = await runConsistencyCheck(
+    const { findings, notCompared, auditTrail } = await runConsistencyCheck(
       { submissionId, dimension, left: { ref: left.ref, text: left.text }, right },
       { organizationId: ctx.organizationId, userId: ctx.userId }
     );
     const conflicts = findings.filter((f) => f.status === 'conflict').length;
+    const unread = notCompared.length
+      ? ` ${notCompared.length} figure(s) of the claim were not compared (see notCompared for which and why). That is not a finding of consistency.`
+      : '';
     return JSON.stringify({
-      ok: true, findings, conflicts, auditTrail,
-      message: withAuditNote(`${findings.length} finding(s) recorded, ${conflicts} conflict(s).`, auditTrail),
+      ok: true, findings, conflicts, notCompared, auditTrail,
+      comparedBy: 'deterministic comparison of labelled figures (enrolled N, sample size, sites, events, alpha, power, hazard ratio, primary p-value)',
+      message: withAuditNote(`${findings.length} finding(s) recorded, ${conflicts} conflict(s).${unread}`, auditTrail),
     });
   } catch (err) {
     return JSON.stringify({ error: `check_consistency failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as any)?.code });
@@ -12891,7 +12994,7 @@ registerToolHandler('request_no_cost_extension', async (input, ctx) => {
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, ctx.organizationId);
-    const { id, requiresSponsorApproval, months } = await requestNceTx(client, ctx.organizationId, ctx.userId, awardId, { newEndDate, reason: typeof input.reason === 'string' ? input.reason : null });
+    const { id, requiresSponsorApproval, months } = await requestNceTx(client, ctx.organizationId, ctx.userId, awardId, { newEndDate, reason });
     await recordGovernedAction(client, {
       orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
       target: `grant-award:${awardId}`, reason,
@@ -14111,9 +14214,8 @@ registerToolHandler('revise_qms_document', async (input, ctx) => {
   const refusal = await editorRoleRefusal('revise_qms_document', 'opening a controlled revision', ctx);
   if (refusal) return refusal;
   const id = typeof input.document_id === 'number' ? input.document_id : NaN;
-  const reason = typeof input.reason === 'string' ? input.reason.trim() : '';
   if (!Number.isFinite(id)) return JSON.stringify({ error: 'document_id (number) is required.' });
-  if (reason.length < GOVERNED_REASON_MIN) return JSON.stringify({ error: `A reason for change is required to open a controlled revision (21 CFR Part 11), at least ${GOVERNED_REASON_MIN} characters — ask the user for it.` });
+  const reason = gatedReason(input);
   const { getPool } = await import('../../db.js');
   const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
   const client = await getPool().connect();
@@ -14227,6 +14329,7 @@ registerToolHandler('qms_change_create', async (input, ctx) => {
   const changeNumber = typeof input.change_number === 'string' ? input.change_number.trim() : '';
   const title = typeof input.title === 'string' ? input.title.trim() : '';
   if (!changeNumber || !title) return JSON.stringify({ error: 'change_number and title are required.' });
+  const reason = gatedReason(input);
   try {
     const { createChange } = await import('../qms/changeControl.service.js');
     const row = await createChange(ctx.organizationId, {
@@ -14235,7 +14338,7 @@ registerToolHandler('qms_change_create', async (input, ctx) => {
       changeType: typeof input.change_type === 'string' ? input.change_type : undefined,
       classification: typeof input.classification === 'string' ? input.classification : undefined,
       riskLevel: typeof input.risk_level === 'string' ? input.risk_level : null,
-      reason: typeof input.reason === 'string' ? input.reason : null,
+      reason,
       impactAssessment: typeof input.impact_assessment === 'string' ? input.impact_assessment : null,
       implementationPlan: typeof input.implementation_plan === 'string' ? input.implementation_plan : null,
       targetImplementationDate: typeof input.target_implementation_date === 'string' ? input.target_implementation_date : null,
@@ -14245,7 +14348,7 @@ registerToolHandler('qms_change_create', async (input, ctx) => {
     const { recordAuditRow } = await import('../audit/audit-write-outcome.js');
     const auditTrail = await recordAuditRow({
       tenantId: ctx.organizationId, userId: ctx.userId ?? undefined,
-      action: 'mdx.qms.change.create', resourceType: 'qms_change_control', resourceId: row.id,
+      action: 'mdx.qms.change.create', resourceType: 'qms_change_control', resourceId: row.id, reason,
       details: { changeNumber: row.change_number, classification: row.classification, via: 'ana' },
     });
     return JSON.stringify({
@@ -14262,10 +14365,9 @@ registerToolHandler('qms_change_transition', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'qms_change_transition requires tenant context.' });
   const id = typeof input.change_id === 'number' ? input.change_id : NaN;
   const to = typeof input.to === 'string' ? input.to : '';
-  const reason = typeof input.reason === 'string' ? input.reason.trim() : '';
   if (!Number.isFinite(id)) return JSON.stringify({ error: 'change_id (number) is required.' });
   if (!to) return JSON.stringify({ error: 'to (target lifecycle state) is required.' });
-  if (reason.length < 3) return JSON.stringify({ error: 'A reason for change is required for this governed (21 CFR Part 11) transition — ask the user for it.' });
+  const reason = gatedReason(input);
   try {
     const svc = await import('../qms/changeControl.service.js');
     const row = await svc.transitionChange(ctx.organizationId, id, to as Parameters<typeof svc.transitionChange>[2], {
@@ -14276,8 +14378,8 @@ registerToolHandler('qms_change_transition', async (input, ctx) => {
     const { recordAuditRow } = await import('../audit/audit-write-outcome.js');
     const auditTrail = await recordAuditRow({
       tenantId: ctx.organizationId, userId: ctx.userId ?? undefined,
-      action: 'mdx.qms.change.transition', resourceType: 'qms_change_control', resourceId: id,
-      details: { to, reason, via: 'ana' },
+      action: 'mdx.qms.change.transition', resourceType: 'qms_change_control', resourceId: id, reason,
+      details: { to, via: 'ana' },
     });
     return JSON.stringify({
       ok: true, governed: true, ...row, auditTrail,
@@ -17204,9 +17306,9 @@ registerToolHandler('assess_recorded_batch_poolability', async (input, ctx) => {
    Two things this handler owns beyond the service call:
 
    1. TENANT PROOF. The program id comes from the model, so it must be proven to
-      belong to the caller's org before anything is read. It reuses the same
-      `programBelongsToOrg` the innovation routes use rather than a fourth copy
-      of that query.
+      belong to the caller's org before anything is read: `programInOrganization`,
+      the one program check (the registry wrapper's tool-record-scope asks it
+      too, before this handler runs).
 
    2. "NOT ASSESSED" vs "SCORED ZERO". getDashboard returns getEmptyDashboard()
       — overallScore 0, approvalProbability 0, no criteria — when no assessment
@@ -17226,8 +17328,11 @@ registerToolHandler('get_submission_readiness_twin', async (input, ctx) => {
     ? input.agency.trim() : 'FDA';
 
   try {
-    const { programBelongsToOrg } = await import('../../routes/innovation-routes.js');
-    if (!(await programBelongsToOrg(programId, Number(orgId)))) {
+    const [{ programInOrganization }, { getPool: ownershipPool }] = await Promise.all([
+      import('../c2c/program-access.js'),
+      import('../../db.js'),
+    ]);
+    if (!(await programInOrganization(ownershipPool, programId, Number(orgId)))) {
       return JSON.stringify({
         status: 'not_found',
         message: `No program "${programId}" in this organization. Do not report a readiness score; confirm the program with the user.`,
@@ -17266,13 +17371,13 @@ registerToolHandler('get_submission_readiness_twin', async (input, ctx) => {
         'Lead with the overall score, its trend, and the criteria met-vs-total. Then the ranked recommendations with their effort, because that is what the user acts on. Report per-module readiness where it is uneven rather than averaging it away. The predicted approval probability, review time and deficiency count are MODEL ESTIMATES from historical patterns — attribute them as such and never assert them as the likelihood of approval.',
     });
   } catch (err: any) {
-    // programBelongsToOrg now THROWS when every program->org source failed to
-    // run, rather than returning false (2026-09-10). Keep that distinction all
+    // The program check THROWS when it could not run, rather than returning
+    // false (2026-09-10; VerificationUnavailableError since D3). Keep that distinction all
     // the way out to the model: "we could not check" must not be paraphrased
     // to the user as "no such program", which is what a bare error string
     // invites. The instruction to withhold a score is the important half —
     // a readiness figure for an unverified program is an invented answer.
-    if (err?.name === 'GuardUnavailableError') {
+    if (err?.name === 'VerificationUnavailableError') {
       return JSON.stringify({
         status: 'ownership_unverifiable',
         message:

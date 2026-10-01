@@ -14,10 +14,9 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
-import { db } from '../db';
-import { regulatoryPrograms } from '../../shared/schema/programs';
+import { db, pool } from '../db';
 import { aiMlPccpPlans, aiMlModifications } from '../../shared/schema/ai-ml-pccp';
 import { authenticateToken } from '../middleware/auth';
 import {
@@ -39,6 +38,7 @@ import { signerReverificationDeps } from '../services/part11/reverify-signer-dep
 import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role';
 import { isSigningAuthorized } from '../services/part11/signing-authority';
 import { createScopedLogger } from '../utils/logger';
+import { programInOrganization } from '../services/c2c/program-access';
 
 const router = Router();
 
@@ -58,12 +58,7 @@ async function requireProgramAccess(req: Request, res: Response, next: NextFunct
     res.status(403).json({ error: 'Organization context required' });
     return;
   }
-  const [row] = await db
-    .select({ id: regulatoryPrograms.id })
-    .from(regulatoryPrograms)
-    .where(and(eq(regulatoryPrograms.id, String(req.params.programId)), eq(regulatoryPrograms.organizationId, orgId)))
-    .limit(1);
-  if (!row) {
+    if (!(await programInOrganization(pool, String(req.params.programId), orgId))) {
     res.status(403).json({ error: 'Access denied' });
     return;
   }

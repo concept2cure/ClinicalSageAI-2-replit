@@ -1,0 +1,1069 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/protocol-development-study-design.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/protocol-development-study-design.test.ts
+{
+  "timestamp": "2026-10-01T08:09:47.424Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/cortex-unified-tenant-context.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/cortex-unified-tenant-context.test.ts
+{
+  "timestamp": "2026-10-01T08:09:50.270Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/etmf-artifacts.routes.test.ts > eTMF artifact persistence > POST file → 201 (org from session); 400 for an unknown artifact code
+{
+  "timestamp": "2026-10-01T08:09:52.496Z",
+  "level": "info",
+  "message": "[tmf-artifact-persistence] Filed TMF artifact",
+  "context": {
+    "trialId": "T-1",
+    "artifactCode": "protocol",
+    "organizationId": 1
+  }
+}
+
+stdout | server/routes/__tests__/etmf-artifacts.routes.test.ts > eTMF artifact persistence > re-filing the same artifact is idempotent (updates, no duplicate)
+{
+  "timestamp": "2026-10-01T08:09:52.509Z",
+  "level": "info",
+  "message": "[tmf-artifact-persistence] Filed TMF artifact",
+  "context": {
+    "trialId": "T-1",
+    "artifactCode": "protocol",
+    "organizationId": 1
+  }
+}
+
+ ✓ server/routes/__tests__/etmf-artifacts.routes.test.ts > eTMF artifact persistence > 401 when unauthenticated 40ms
+ ✓ server/routes/__tests__/etmf-artifacts.routes.test.ts > eTMF artifact persistence > POST file → 201 (org from session); 400 for an unknown artifact code 36ms
+ ✓ server/routes/__tests__/etmf-artifacts.routes.test.ts > eTMF artifact persistence > re-filing the same artifact is idempotent (updates, no duplicate) 18ms
+ ✓ server/routes/__tests__/etmf-artifacts.routes.test.ts > eTMF artifact persistence > GET completeness reflects stored artifacts (not ready until all essentials filed) 23ms
+ ✓ server/routes/__tests__/etmf-artifacts.routes.test.ts > eTMF artifact persistence > does not leak another org's artifacts 19ms
+ ✓ server/routes/__tests__/etmf-artifacts.routes.test.ts > eTMF artifact persistence > DELETE → 204 then absent; unknown id → 404 85ms
+stdout | server/routes/__tests__/cortex-unified-tenant-context.test.ts
+{
+  "timestamp": "2026-10-01T08:09:54.024Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T08:09:54.025Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/cortex-unified-tenant-context.test.ts
+{
+  "timestamp": "2026-10-01T08:09:54.025Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/document-lifecycle-part11-record.test.ts
+{
+  "timestamp": "2026-10-01T08:09:56.888Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T08:09:56.908Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/document-lifecycle-part11-record.test.ts
+{
+  "timestamp": "2026-10-01T08:09:56.908Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/document-lifecycle-part11-record.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/document-lifecycle-part11-record.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/document-lifecycle-part11-record.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/routes/__tests__/cortex-unified-tenant-context.test.ts
+Loaded 0 academic documents
+
+stderr | server/routes/__tests__/document-lifecycle-part11-record.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/document-lifecycle-part11-record.test.ts
+{
+  "timestamp": "2026-10-01T08:09:58.915Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/protocol-development-study-design.test.ts > POST /api/protocol-development/documents/:id/study-design > binds the design and records the governed action 224ms
+ ✓ server/routes/__tests__/protocol-development-study-design.test.ts > POST /api/protocol-development/documents/:id/study-design > 404s for another organization's protocol and writes nothing 69ms
+ ✓ server/routes/__tests__/protocol-development-study-design.test.ts > POST /api/protocol-development/documents/:id/study-design > 404s for a design that is not this tenant's 67ms
+ ✓ server/routes/__tests__/protocol-development-study-design.test.ts > POST /api/protocol-development/documents/:id/study-design > refuses a reason shorter than the governed minimum 79ms
+ ✓ server/routes/__tests__/protocol-development-study-design.test.ts > POST /api/protocol-development/documents/:id/study-design > refuses a request with no organisation context, and writes nothing 136ms
+ ✓ server/routes/__tests__/protocol-development-study-design.test.ts > POST /api/protocol-development/documents/:id/study-design/remove > unbinds and records the governed action 118ms
+ ✓ server/routes/__tests__/protocol-development-study-design.test.ts > POST /api/protocol-development/documents/:id/study-design/remove > 404s for another organization's protocol 19ms
+ ✓ server/__tests__/routes/smoke.test.ts > Critical API Routes > Compliance Routes > should define audit trail routes 3ms
+ ✓ server/__tests__/routes/smoke.test.ts > Critical API Routes > Cognitive Ecosystem Routes > should define cognitive ecosystem routes 1ms
+ ✓ server/__tests__/routes/smoke.test.ts > Critical API Routes > FHIR Routes > should define FHIR routes 0ms
+ ✓ server/__tests__/routes/smoke.test.ts > Critical API Routes > Compatibility Facade Routes > should define compatibility facade contracts 2ms
+stdout | server/__tests__/routes/smoke.test.ts > Service Layer Integration > should have CortexComplianceService exportable
+{
+  "timestamp": "2026-10-01T08:10:05.690Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T08:10:05.691Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/__tests__/routes/smoke.test.ts > Service Layer Integration > should have CortexComplianceService exportable
+{
+  "timestamp": "2026-10-01T08:10:05.692Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/smoke.test.ts > Service Layer Integration > should have CortexComplianceService exportable
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/__tests__/routes/smoke.test.ts > Service Layer Integration > should have CortexComplianceService exportable
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/__tests__/routes/smoke.test.ts > Service Layer Integration > should have CortexComplianceService exportable
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/__tests__/routes/smoke.test.ts > Service Layer Integration > should have CortexComplianceService exportable 2755ms
+ ✓ server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow Guards > protects /api/cortex/chat with requireAuth 1ms
+ ✓ server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow Guards > protects /api/ana-cortex/regulatory-analysis with requireAuth 0ms
+ ✓ server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow Guards > keeps /api/knowledge-base generation endpoints behind authenticateToken 1ms
+ ✓ server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow Guards > mounts core workflow routes in server index 2ms
+stderr | server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > rejects invalid JWT on POST /api/cortex/chat
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > rejects invalid JWT on POST /api/cortex/chat
+{
+  "timestamp": "2026-10-01T08:10:06.454Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/cortex-unified-tenant-context.test.ts
+✅ Unified Cortex Query API initialized
+
+stdout | server/routes/__tests__/cortex-unified-tenant-context.test.ts
+{
+  "timestamp": "2026-10-01T08:10:07.902Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /advisory (AI advisory)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/cortex-unified-tenant-context.test.ts
+{
+  "timestamp": "2026-10-01T08:10:07.903Z",
+  "level": "warn",
+  "message": "[cortex-unified] Cortex management routes require explicit initialization with database pool",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/cortex-unified-tenant-context.test.ts
+{
+  "timestamp": "2026-10-01T08:10:07.903Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /query (AI queries)",
+  "context": {}
+}
+
+stdout | server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > rejects invalid JWT on POST /api/cortex/chat
+Loaded 0 academic documents
+
+ ✓ server/routes/__tests__/cortex-unified-tenant-context.test.ts > /api/cortex tenant context is the session’s, never a header > keeps the session’s organisation uuid when the request names another tenant 97ms
+ ✓ server/routes/__tests__/cortex-unified-tenant-context.test.ts > /api/cortex tenant context is the session’s, never a header > never publishes a workspace taken from the x-client-workspace-id header 7ms
+ ✓ server/routes/__tests__/cortex-unified-tenant-context.test.ts > /api/cortex tenant context is the session’s, never a header > a session with no organisation uuid does not get one from the x-org-uuid header 4ms
+ ✓ server/routes/__tests__/cortex-unified-tenant-context.test.ts > /api/cortex tenant context is the session’s, never a header > the tenant-keyed query route refuses (403) a session with no tenant scope, header or not 31ms
+stdout | Object.info (/home/user/ClinicalSageAI-2-replit/server/utils/logger.js:141:13)
+{
+  "timestamp": "2026-10-01T08:10:08.302Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /ana (AnA 1.0 RI integration)",
+  "context": {}
+}
+
+stdout | server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > rejects invalid JWT on POST /api/knowledge-base/generate-docx
+{
+  "timestamp": "2026-10-01T08:10:08.809Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /advisory (AI advisory)",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > rejects invalid JWT on POST /api/knowledge-base/generate-docx
+{
+  "timestamp": "2026-10-01T08:10:08.809Z",
+  "level": "warn",
+  "message": "[cortex-unified] Cortex management routes require explicit initialization with database pool",
+  "context": {}
+}
+
+stdout | server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > rejects invalid JWT on POST /api/knowledge-base/generate-docx
+{
+  "timestamp": "2026-10-01T08:10:08.813Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /query (AI queries)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > a review sign-off is an electronic signature record (VR-12) > writes exactly one electronic_signatures row, bound to the Vault version, and one chained audit row 154ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > a review sign-off is an electronic signature record (VR-12) > approving writes its own record, bound to the same content, with the approver named 126ms
+stdout | server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > rejects invalid JWT on POST /api/knowledge-base/generate-docx
+{
+  "timestamp": "2026-10-01T08:10:09.183Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /ana (AnA 1.0 RI integration)",
+  "context": {}
+}
+
+ ✓ server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > rejects invalid JWT on POST /api/cortex/chat 3008ms
+ ✓ server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > enforces auth on POST /api/ana-cortex/regulatory-analysis 0ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > a review sign-off is an electronic signature record (VR-12) > a document with no source the server can read binds the ledger, and says so 256ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > a review sign-off is an electronic signature record (VR-12) > the signature record refuses UPDATE (control: the §11.70 trigger is in force here) 48ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > the content hash is the server reading, never the request > ignores a body contentHash: the stored hash is the Vault row's 12ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > the content hash is the server reading, never the request > ignores a body contentHash on a document with no readable source 6ms
+stderr | server/routes/__tests__/document-lifecycle-part11-record.test.ts > signature, audit row and stage change commit together or not at all > an audit INSERT that fails rolls the transition back
+{
+  "timestamp": "2026-10-01T08:10:09.336Z",
+  "level": "error",
+  "message": "[document-lifecycle] handling the document lifecycle request failed",
+  "context": {
+    "err": "Failed query: INSERT INTO audit_logs\n       (id, tenant_id, user_id, action, table_name, record_id,\n        actor_id, target, payload_hash, sha256_chain, occurred_at, hmac_seal,\n        old_values, new_values, ip_address, user_agent)\n     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::json,$15,$16)\nparams: 097b4db5-82d6-4374-8df6-e43bf5287b44,1,42,regulated_document.in_review,canonical_document,3a543a60-23f5-4abe-a229-417759c8d723,42,canonical_document:3a543a60-23f5-4abe-a229-417759c8d723,82bb16f88107283b87b30a525f45ab7680aa3e8aab26055de79b615f81f910ad,1e8d213ce6d31e7e21cc966159c6c05bbe4cb1690f6631ecdd85111fc43a1d55,2026-10-01T08:10:09.325Z,,,{\"from\":\"authoring\",\"to\":\"in_review\",\"version\":1,\"contentHash\":\"f3df443665c3fa26060f9c16d0e0725c9e1d90e8552e8da914e505a6ecd4317e\"},,",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > the content hash is the server reading, never the request > ignores a body contentHash on a transition: the trail records the stored one 27ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > the content hash is the server reading, never the request > refuses a Vault source that is not this organization's, and records nothing 11ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > signature, audit row and stage change commit together or not at all > an audit INSERT that fails rolls the transition back 46ms
+stderr | server/routes/__tests__/document-lifecycle-part11-record.test.ts > signature, audit row and stage change commit together or not at all > a signature INSERT that fails rolls the approval back
+{
+  "timestamp": "2026-10-01T08:10:09.460Z",
+  "level": "error",
+  "message": "[document-lifecycle] handling the document lifecycle request failed",
+  "context": {
+    "err": "Failed query: INSERT INTO electronic_signatures (\n       document_id, version_id, signed_target, binding_basis,\n       signature_type, signature_purpose, signature_level,\n       signer_id, signer_name, signer_title, signer_email,\n       authentication_method, authentication_timestamp, second_factor_verified,\n       signature_hash, signature_meaning, signature_manifest,\n       is_valid, verification_status, compliance_statement, legal_disclaimer,\n       ip_address, device_info, signed_at, bound_payload_digest, organization_id\n     ) VALUES (\n       $1, $2, $3, $4,\n       $5, $6, $7,\n       $8, $9, $10, $11,\n       $12, $13, $14,\n       $15, $16, $17,\n       $18, $19, $20, $21,\n       $22, $23, $24, $25, $26\n     ) RETURNING id, signed_at\nparams: ,,canonical_document:3187b048-dfbf-420a-9588-12990f520219,vault-document-version-sha256,regulated-document-lifecycle,Approval of \"Clinical Overview\", version 1,1,44,Abe Approver,,abe@example.test,password,Thu Oct 01 2026 08:10:09 GMT+0000 (Coordinated Universal Time),false,1bc69bbea9b8034719d746953f4935e131a8d7f29ece1ee123dde65d736c6e2f,APPROVED,{\"kind\":\"regulated-document-lifecycle\",\"actionId\":\"act_fc97b02bfa794f6e817964426dec97be\",\"auditId\":\"b40f4806-c4b8-42d5-95ff-a77426e46482\",\"auditSha256Chain\":\"b4d090e6bab738e8e04875369969bd66aed6bb5a300ae20d54083d799ee11c89\",\"target\":\"canonical_document:3187b048-dfbf-420a-9588-12990f520219\",\"command\":\"sign\",\"reason\":\"Approval of \\\"Clinical Overview\\\", version 1\",\"meaning\":\"APPROVED\",\"signerId\":44,\"signerName\":\"Abe Approver\",\"signerEmail\":\"abe@example.test\",\"organizationId\":1,\"signedAt\":\"2026-10-01T08:10:09.426Z\",\"boundPayloadDigest\":\"f3df443665c3fa26060f9c16d0e0725c9e1d90e8552e8da914e505a6ecd4317e\",\"bindingBasis\":\"vault-document-version-sha256\",\"bindingNote\":\"sha256 of Vault version 60f2f3a9-f9d6-422b-bf78-63aaccc72cbd (vault.documents.content_hash), read FOR SHARE in the signing transaction.\",\"canonicalId\":\"3187b048-dfbf-420a-9588-12990f520219\",\"title\":\"Clinical Overview\",\"version\":1,\"stage\":\"in_review\"},true,,Regulated-document lifecycle sign-off applied as an electronic signature under 21 CFR Part 11 §11.50/§11.70/§11.200; ledger-chained to the audit_logs sha256 chain, in the same transaction as the lifecycle record.,,127.0.0.1,,Thu Oct 01 2026 08:10:09 GMT+0000 (Coordinated Universal Time),f3df443665c3fa26060f9c16d0e0725c9e1d90e8552e8da914e505a6ecd4317e,1",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/document-lifecycle-part11-record.test.ts > signature, audit row and stage change commit together or not at all > a signature INSERT that fails leaves no review sign-off
+{
+  "timestamp": "2026-10-01T08:10:09.509Z",
+  "level": "error",
+  "message": "[document-lifecycle] handling the document lifecycle request failed",
+  "context": {
+    "err": "Failed query: INSERT INTO electronic_signatures (\n       document_id, version_id, signed_target, binding_basis,\n       signature_type, signature_purpose, signature_level,\n       signer_id, signer_name, signer_title, signer_email,\n       authentication_method, authentication_timestamp, second_factor_verified,\n       signature_hash, signature_meaning, signature_manifest,\n       is_valid, verification_status, compliance_statement, legal_disclaimer,\n       ip_address, device_info, signed_at, bound_payload_digest, organization_id\n     ) VALUES (\n       $1, $2, $3, $4,\n       $5, $6, $7,\n       $8, $9, $10, $11,\n       $12, $13, $14,\n       $15, $16, $17,\n       $18, $19, $20, $21,\n       $22, $23, $24, $25, $26\n     ) RETURNING id, signed_at\nparams: ,,canonical_document:2b96673f-e76f-4209-aca7-12cd7a0de32d,vault-document-version-sha256,regulated-document-lifecycle,Review of \"Clinical Overview\", version 1,1,43,Rae Reviewer,,rae@example.test,password,Thu Oct 01 2026 08:10:09 GMT+0000 (Coordinated Universal Time),false,f5c5f3b600f53fce6ede1eecd849d0bf589167c39ac189f278fbac9a6abf42d6,REVIEWED,{\"kind\":\"regulated-document-lifecycle\",\"actionId\":\"act_d624e9fcfc1a44d28d465bba3b877c86\",\"auditId\":\"7028de6d-9525-4e87-bc52-0cecc72757f7\",\"auditSha256Chain\":\"19c13a6fd3c84580943189b996fc6ff3e0bc890375c574364fd5cedd6094a967\",\"target\":\"canonical_document:2b96673f-e76f-4209-aca7-12cd7a0de32d\",\"command\":\"sign\",\"reason\":\"Review of \\\"Clinical Overview\\\", version 1\",\"meaning\":\"REVIEWED\",\"signerId\":43,\"signerName\":\"Rae Reviewer\",\"signerEmail\":\"rae@example.test\",\"organizationId\":1,\"signedAt\":\"2026-10-01T08:10:09.499Z\",\"boundPayloadDigest\":\"f3df443665c3fa26060f9c16d0e0725c9e1d90e8552e8da914e505a6ecd4317e\",\"bindingBasis\":\"vault-document-version-sha256\",\"bindingNote\":\"sha256 of Vault version d5b45deb-d264-4f20-bcb5-df4683d21445 (vault.documents.content_hash), read FOR SHARE in the signing transaction.\",\"canonicalId\":\"2b96673f-e76f-4209-aca7-12cd7a0de32d\",\"title\":\"Clinical Overview\",\"version\":1,\"stage\":\"in_review\"},true,,Regulated-document lifecycle sign-off applied as an electronic signature under 21 CFR Part 11 §11.50/§11.70/§11.200; ledger-chained to the audit_logs sha256 chain, in the same transaction as the lifecycle record.,,127.0.0.1,,Thu Oct 01 2026 08:10:09 GMT+0000 (Coordinated Universal Time),f3df443665c3fa26060f9c16d0e0725c9e1d90e8552e8da914e505a6ecd4317e,1",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > signature, audit row and stage change commit together or not at all > a signature INSERT that fails rolls the approval back 125ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > signature, audit row and stage change commit together or not at all > a signature INSERT that fails leaves no review sign-off 46ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > nobody signs off a document they created or uploaded > the creator cannot review it: 403 SELF_APPROVAL, before any credential check, and nothing is written 45ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > nobody signs off a document they created or uploaded > the uploader of the Vault version cannot review it 35ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > nobody signs off a document they created or uploaded > the creator cannot approve it after someone else reviewed it 70ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > nobody signs off a document they created or uploaded > the creator is recorded, and the record cannot be reassigned 20ms
+ ✓ server/routes/__tests__/document-lifecycle-part11-record.test.ts > a review covers the content it was signed over > after a revision that changed the content, the round-1 review does not satisfy the approval gate 114ms
+ ✓ server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > rejects invalid JWT on POST /api/knowledge-base/generate-docx 1377ms
+ ✓ server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > enforces auth on GET /api/knowledge-base/search-connectors (DMS cross-repo search mount) 8ms
+ ✓ server/__tests__/routes/smoke.test.ts > Stage 4: Backend beta contract smoke net > mounts beta-critical route families via bootstrap registrars 1ms
+ ✓ server/__tests__/routes/smoke.test.ts > Stage 4: Backend beta contract smoke net > wires the ui-v2 backend gap closures (DMS search, rollup, registrations, validation-kit, HAQ, eTMF) 1ms
+ ✓ server/__tests__/routes/smoke.test.ts > Stage 4: Backend beta contract smoke net > keeps concept2cure router tenant-scoped and envelope-based 1ms
+ ✓ server/__tests__/routes/smoke.test.ts > Stage 4: Backend beta contract smoke net > keeps ana-ri core endpoints reachable via mount* functions 0ms
+ ✓ server/__tests__/routes/smoke.test.ts > Stage 4: Backend beta contract smoke net > keeps CERV2, document data center, and eCTD/IND entry routes visible 1ms
+stdout | tests/regulatory/document-lifecycle-pipeline.pglite.test.ts
+{
+  "timestamp": "2026-10-01T08:10:10.612Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T08:10:10.614Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/regulatory/document-lifecycle-pipeline.pglite.test.ts
+{
+  "timestamp": "2026-10-01T08:10:10.615Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/regulatory/document-lifecycle-pipeline.pglite.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | tests/regulatory/document-lifecycle-pipeline.pglite.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/regulatory/document-lifecycle-pipeline.pglite.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | tests/regulatory/document-lifecycle-pipeline.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/regulatory/document-lifecycle-pipeline.pglite.test.ts
+{
+  "timestamp": "2026-10-01T08:10:10.726Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T08:10:11.732Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > Configuration guard > POST /suggest returns 503 when REVIEW_ADMIN_TOKEN is empty
+{
+  "timestamp": "2026-10-01T08:10:12.064Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db.js\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > Configuration guard > POST /suggest returns 503 when REVIEW_ADMIN_TOKEN is empty 1331ms
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > Configuration guard > POST /candidates returns 503 when token is empty 36ms
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > Input validation > POST /suggest without program_id → 422 6ms
+stderr | server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > Program ownership guard (IDOR prevention) > POST /suggest returns 403 when org does not own program
+[predicate-intel] IDOR blocked: org=2 tried program=00000000-0000-0000-0000-000000000001
+
+stderr | server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > Program ownership guard (IDOR prevention) > POST /candidates returns 403 when org does not own program
+[predicate-intel] IDOR blocked: org=2 tried program=00000000-0000-0000-0000-000000000001
+
+stderr | server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > Program ownership guard (IDOR prevention) > allows access when org owns program (502 = auth passed, proxy reached)
+[predicate-intel] suggest proxy error: fetch failed
+
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > Input validation > POST /candidates without program_id → 422 8ms
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > Input validation > POST /analyze without program_id → 422 10ms
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > Input validation > POST /defense-preview without program_id → 422 33ms
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > Input validation > POST /se-matrix without program_id → 422 4ms
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > Program ownership guard (IDOR prevention) > POST /suggest returns 403 when org does not own program 7ms
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > Program ownership guard (IDOR prevention) > POST /candidates returns 403 when org does not own program 8ms
+stderr | server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > Proxy error handling > POST /suggest returns 502 when shadow service is unreachable
+[predicate-intel] suggest proxy error: fetch failed
+
+stderr | server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > Route structure > has POST /suggest endpoint
+[predicate-intel] suggest proxy error: fetch failed
+
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > Program ownership guard (IDOR prevention) > allows access when org owns program (502 = auth passed, proxy reached) 40ms
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > Proxy error handling > POST /suggest returns 502 when shadow service is unreachable 6ms
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > Proxy error handling > POST /candidates returns 502 when shadow is unreachable 6ms
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > Proxy error handling > POST /analyze returns 502 when shadow is unreachable 5ms
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > Route structure > has POST /suggest endpoint 15ms
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > Route structure > has POST /candidates endpoint 5ms
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > Route structure > has GET /candidates endpoint 6ms
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > Route structure > has POST /analyze endpoint 8ms
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > Route structure > has POST /defense-preview endpoint 6ms
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > Route structure > has GET /defense-preview endpoint 7ms
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > Route structure > has POST /se-matrix endpoint 9ms
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > Route structure > has GET /se-matrix endpoint 9ms
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > Route structure > has GET /radar endpoint 7ms
+stderr | server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > POST /suggest > browser request needs NO shadow admin token (injected server-side)
+[predicate-intel] suggest proxy error: fetch failed
+
+stderr | server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > POST /suggest > accepts program_id in body instead of query
+[predicate-intel] suggest proxy error: fetch failed
+
+stderr | server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > V2 SE Matrix endpoints > POST /generate-se-matrix-v2 exists (not 404)
+[predicate-intel] SE matrix V2 generation error: fetch failed
+
+stderr | server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > V2 SE Matrix endpoints > POST /generate-se-matrix-v2 IDOR → 403 when org does not own program
+[predicate-intel] IDOR blocked: org=2 tried program=00000000-0000-0000-0000-000000000001
+
+stderr | server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > V2 SE Matrix endpoints > POST /generate-se-matrix-v2 returns 502 when shadow unreachable
+[predicate-intel] SE matrix V2 generation error: fetch failed
+
+stderr | server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > V2 SE Matrix endpoints > POST /render-se-docx-v2 exists (not 404)
+[predicate-intel] SE DOCX V2 render error: fetch failed
+
+stderr | server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > V2 SE Matrix endpoints > POST /render-se-docx-v2 IDOR → 403 when org does not own program
+[predicate-intel] IDOR blocked: org=2 tried program=00000000-0000-0000-0000-000000000001
+
+stderr | server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > V2 SE Matrix endpoints > POST /render-se-docx-v2 returns 502 when shadow unreachable
+[predicate-intel] SE DOCX V2 render error: fetch failed
+
+stderr | server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > V2 SE Matrix endpoints > V2 endpoints inject admin token server-side (no client token needed)
+[predicate-intel] SE matrix V2 generation error: fetch failed
+
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > Route structure > has POST /generate-510k-preview endpoint 14ms
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > POST /suggest > browser request needs NO shadow admin token (injected server-side) 10ms
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > POST /suggest > accepts program_id in body instead of query 30ms
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > V2 SE Matrix endpoints > POST /generate-se-matrix-v2 exists (not 404) 11ms
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > V2 SE Matrix endpoints > POST /generate-se-matrix-v2 returns 503 when token is empty 3ms
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > V2 SE Matrix endpoints > POST /generate-se-matrix-v2 without program_id → 422 4ms
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > V2 SE Matrix endpoints > POST /generate-se-matrix-v2 IDOR → 403 when org does not own program 4ms
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > V2 SE Matrix endpoints > POST /generate-se-matrix-v2 returns 502 when shadow unreachable 4ms
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > V2 SE Matrix endpoints > POST /render-se-docx-v2 exists (not 404) 11ms
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > V2 SE Matrix endpoints > POST /render-se-docx-v2 returns 503 when token is empty 4ms
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > V2 SE Matrix endpoints > POST /render-se-docx-v2 without program_id → 422 3ms
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > V2 SE Matrix endpoints > POST /render-se-docx-v2 IDOR → 403 when org does not own program 7ms
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > V2 SE Matrix endpoints > POST /render-se-docx-v2 returns 502 when shadow unreachable 6ms
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > V2 SE Matrix endpoints > V2 endpoints inject admin token server-side (no client token needed) 18ms
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > POST /se-discussion/author — server-derived provenance > a client-supplied matrix is ALWAYS sample provenance, even when it claims analyzed 8ms
+ ✓ server/__tests__/routes/predicate-intelligence.test.ts > Predicate Intelligence BFF Proxy > POST /se-discussion/author — server-derived provenance > program_id in the body triggers the live analyzed-matrix fetch (502 when shadow unreachable, never a silent sample) 7ms
+stderr | server/routes/__tests__/protocol-write-authority.routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/protocol-write-authority.routes.test.ts
+{
+  "timestamp": "2026-10-01T08:10:16.165Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > governed document pipeline (HTTP → PGlite) > runs the spine authoring → approved with gates, re-verified signatures and a verified audit chain, and refuses to place without a sequence 413ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > governed document pipeline (HTTP → PGlite) > scopes reads to the tenant — another org cannot see the document 20ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > governed document pipeline (HTTP → PGlite) > instantiates the type's blueprint outline at creation (blueprints reach the document) 57ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > reads the write routes from the routers themselves 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > a viewer adding a risk is refused, and nothing is filed or ledgered 64ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > the same request from a member is filed and ledgered 16ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-amendments/amendments 13ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-amendments/amendments/1/changes 11ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PATCH /api/protocol-amendments/amendments/1/status 13ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-budget/documents/1/items 15ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PUT /api/protocol-budget/documents/1/params 41ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > refuses a sign-off with no password, and with a wrong one 97ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-consent/forms 39ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PATCH /api/protocol-consent/elements/1 24ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-consent/forms/1/approve 15ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents 9ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PATCH /api/protocol-development/documents/1/synopsis 10ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PATCH /api/protocol-development/documents/1 6ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents/1/study-design 12ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents/1/study-design/remove 11ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > records the server role, never the one in the request body 156ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents/1/design-derivation/apply 13ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PATCH /api/protocol-development/sections/1 8ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents/1/objectives 16ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents/1/eligibility 11ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents/1/visits 10ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PATCH /api/protocol-development/documents/1/visits/1 3ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents/1/visits/1/remove 47ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents/1/assessments/1/remove 9ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents/1/team 20ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents/1/versions 11ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-development/documents/1/finalize 13ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-deviations/deviations 11ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-deviations/deviations/1/assessment 7ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-deviations/deviations/1/capa 7ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PATCH /api/protocol-deviations/capa/1/status 7ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-deviations/deviations/1/close 3ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-milestones/documents/1/milestones 7ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PATCH /api/protocol-milestones/milestones/1/status 4ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > approving signs: no password, no approval — and the stage does not move 187ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-reviews/documents/1/reviewers 9ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-reviews/documents/1/comments 11ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PATCH /api/protocol-reviews/comments/1/resolve 9ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PATCH /api/protocol-reviews/assignments/1/disposition 3ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-risks/documents/1/risks 10ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: PATCH /api/protocol-risks/risks/1 3ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-soa/documents/1/assessments 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-soa/cells 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-soa/cells/clear 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-templates/templates 5ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-templates/templates/1/sections 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-templates/templates/1/clone 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a viewer: POST /api/protocol-templates/documents/1/save-as-template 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-amendments/amendments 4ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-amendments/amendments/1/changes 3ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PATCH /api/protocol-amendments/amendments/1/status 11ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > a signatureRef in the body is never cited: the approval carries a server-minted reference 167ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-budget/documents/1/items 28ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PUT /api/protocol-budget/documents/1/params 23ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-consent/forms 3ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PATCH /api/protocol-consent/elements/1 6ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-consent/forms/1/approve 3ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents 6ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PATCH /api/protocol-development/documents/1/synopsis 3ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PATCH /api/protocol-development/documents/1 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents/1/study-design 3ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents/1/study-design/remove 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents/1/design-derivation/apply 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PATCH /api/protocol-development/sections/1 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents/1/objectives 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents/1/eligibility 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents/1/visits 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PATCH /api/protocol-development/documents/1/visits/1 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents/1/visits/1/remove 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents/1/assessments/1/remove 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents/1/team 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents/1/versions 11ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > a role without signing authority cannot sign, even re-verified 54ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > a viewer can create, sign and advance nothing 59ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-development/documents/1/finalize 21ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-deviations/deviations 3ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-deviations/deviations/1/assessment 3ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-deviations/deviations/1/capa 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PATCH /api/protocol-deviations/capa/1/status 13ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-deviations/deviations/1/close 8ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-milestones/documents/1/milestones 53ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PATCH /api/protocol-milestones/milestones/1/status 16ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > no user, no write: the actor is the authenticated user or nothing — never "unknown" 95ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > signing re-verifies, and writes are role-gated (2026-09-24) > an illegal jump is refused by the gate and costs the signer no credential check 23ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-reviews/documents/1/reviewers 24ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-reviews/documents/1/comments 7ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PATCH /api/protocol-reviews/comments/1/resolve 7ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PATCH /api/protocol-reviews/assignments/1/disposition 4ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-risks/documents/1/risks 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: PATCH /api/protocol-risks/risks/1 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-soa/documents/1/assessments 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-soa/cells 5ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-soa/cells/clear 3ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-templates/templates 3ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-templates/templates/1/sections 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-templates/templates/1/clone 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > lets a member past the role check: POST /api/protocol-templates/documents/1/save-as-template 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-amendments/amendments 3ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-amendments/amendments/1 6ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-amendments/amendments/1/readiness 8ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-amendments/amendments/1/substantiality 7ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-budget/documents/1/summary 5ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-consent/forms 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-consent/forms/1 4ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-consent/forms/1/completeness 3ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-development/documents 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-development/documents/1 10ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-development/documents/1/completeness 3ms
+stderr | server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-reviews/documents/1/summary
+{
+  "timestamp": "2026-10-01T08:10:19.514Z",
+  "level": "error",
+  "message": "[protocol-reviews] handling the protocol review request failed",
+  "context": {
+    "err": "Cannot read properties of undefined (reading 'n')",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-development/documents/1/design-derivation 24ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-development/documents/1/spirit 4ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-development/documents/1/redline 6ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-deviations/deviations 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-deviations/deviations/trends 7ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-deviations/deviations/1 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-milestones/documents/1/milestones 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-milestones/documents/1/timeline 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-reviews/documents/1/summary 3ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-risks/documents/1/register 3ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-soa/documents/1/matrix 4ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-templates/templates 6ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > leaves a read open to a viewer: GET /api/protocol-templates/templates/1 12ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller whose session carries no role 6ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: POST /api/protocol-amendments/amendments 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: POST /api/protocol-amendments/amendments/1/changes 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: PATCH /api/protocol-amendments/amendments/1/status 4ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: POST /api/protocol-budget/documents/1/items 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: PUT /api/protocol-budget/documents/1/params 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: POST /api/protocol-consent/forms 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: PATCH /api/protocol-consent/elements/1 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: POST /api/protocol-consent/forms/1/approve 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: POST /api/protocol-development/documents 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: PATCH /api/protocol-development/documents/1/synopsis 7ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: PATCH /api/protocol-development/documents/1 39ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: POST /api/protocol-development/documents/1/study-design 16ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: POST /api/protocol-development/documents/1/study-design/remove 15ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: POST /api/protocol-development/documents/1/design-derivation/apply 14ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: PATCH /api/protocol-development/sections/1 3ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > the writer's refusals keep their status > a frozen sequence is a 409 in the orchestrator's shape, not a 500 181ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: POST /api/protocol-development/documents/1/objectives 46ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: POST /api/protocol-development/documents/1/eligibility 3ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: POST /api/protocol-development/documents/1/visits 7ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: PATCH /api/protocol-development/documents/1/visits/1 7ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: POST /api/protocol-development/documents/1/visits/1/remove 7ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: POST /api/protocol-development/documents/1/assessments/1/remove 7ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: POST /api/protocol-development/documents/1/team 19ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: POST /api/protocol-development/documents/1/versions 13ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: POST /api/protocol-development/documents/1/finalize 7ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: POST /api/protocol-deviations/deviations 2ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > the writer's refusals keep their status > a sequence that does not exist is a 404 245ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: POST /api/protocol-deviations/deviations/1/assessment 28ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: POST /api/protocol-deviations/deviations/1/capa 7ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: PATCH /api/protocol-deviations/capa/1/status 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: POST /api/protocol-deviations/deviations/1/close 11ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: POST /api/protocol-milestones/documents/1/milestones 18ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: PATCH /api/protocol-milestones/milestones/1/status 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: POST /api/protocol-reviews/documents/1/reviewers 6ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: POST /api/protocol-reviews/documents/1/comments 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: PATCH /api/protocol-reviews/comments/1/resolve 6ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: PATCH /api/protocol-reviews/assignments/1/disposition 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: POST /api/protocol-risks/documents/1/risks 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: PATCH /api/protocol-risks/risks/1 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: POST /api/protocol-soa/documents/1/assessments 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: POST /api/protocol-soa/cells 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: POST /api/protocol-soa/cells/clear 1ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: POST /api/protocol-templates/templates 9ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: POST /api/protocol-templates/templates/1/sections 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: POST /api/protocol-templates/templates/1/clone 2ms
+ ✓ server/routes/__tests__/protocol-write-authority.routes.test.ts > a viewer can read a protocol and cannot change it (P11-C-1) > refuses a caller with no organisation role: POST /api/protocol-templates/documents/1/save-as-template 2ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > the lifecycle record cannot be rewritten (VR-03, 2026-09-25) > a review sign-off is recorded once: a second is refused before the ceremony, and the first stands 73ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > the lifecycle record cannot be rewritten (VR-03, 2026-09-25) > a review sign-off outside review is refused, before the ceremony 11ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > the lifecycle record cannot be rewritten (VR-03, 2026-09-25) > an approval is not recorded by /sign: approving is the transition, which signs 47ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > carries the printed name recorded at signing, the time, the meaning and the reason 420ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > the lifecycle record cannot be rewritten (VR-03, 2026-09-25) > a revision ends the review round: the next round needs its own sign-off, and the first stays in the trail 160ms
+ ✓ tests/regulatory/document-lifecycle-pipeline.pglite.test.ts > the lifecycle record cannot be rewritten (VR-03, 2026-09-25) > reading a document recomputes its hashes: an event edited in place reads as broken, at that event 55ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > is the name as recorded, not the account as it reads today 138ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > a revoked signature reads as revoked, still naming who signed; the revocation row is not the signature 96ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > a finalized protocol with no signature row says none, never a signer 50ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the finalization signature, on the protocol read model > another organisation’s row on the same target string is not this protocol’s signature 21ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a disposition’s signature, on its review row > names who signed and the meaning; a decision recorded for a reviewer with no account says so 50ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a disposition’s signature, on its review row > the assigned reviewer’s own signature, as review 111ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a disposition’s signature, on its review row > an unsigned review has no signature 89ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > a signature store that cannot be read > is reported on the signature facet only; the rest of the protocol still reads 88ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the protocol export carries the same manifestation > status, printed name, UTC time, meaning and reason, from the signature row 53ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the protocol export carries the same manifestation > a protocol not yet finalized still exports when the store cannot be read: it carries no signature 29ms
+ ✓ server/services/protocol-development/__tests__/protocol-signature-manifestation.pglite.integration.test.ts > the protocol export carries the same manifestation > a finalized protocol whose signature record cannot be read is not exported without it 160ms
+stderr | server/routes/__tests__/preclinical-upload-guards.test.ts > POST /api/preclinical/ingest: the upload guard > refuses bytes that are not a PDF under a PDF declaration (the shared byte check)
+{
+  "timestamp": "2026-10-01T08:10:21.221Z",
+  "level": "warn",
+  "message": "[upload-safety] Upload rejected by signature check",
+  "context": {
+    "filename": "study.pdf",
+    "declaredMime": "application/pdf",
+    "reason": "not a PDF (no %PDF prefix)"
+  }
+}
+
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > GET /models advertises only what runs > lists no model as active except the rule-based extractor 23ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > GET /models advertises only what runs > claims no pretraining corpus, because nothing was pretrained 5ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > GET /models advertises only what runs > still names the retired ids, so an integrator can see what changed 4ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > GET /models advertises only what runs > states the limitations that decide whether the output is usable 11ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a request for a model that does not exist is refused, not echoed > POST /analyze rejects model=layoutlmv3 44ms
+stderr | server/routes/__tests__/preclinical-upload-guards.test.ts > POST /api/preclinical/ingest: the upload guard > control: a real PDF passes the guard and reaches ingestStudy
+{
+  "timestamp": "2026-10-01T08:10:21.240Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | server/routes/__tests__/preclinical-upload-guards.test.ts > POST /api/preclinical/ingest: the upload guard > control: a real PDF passes the guard and reaches ingestStudy
+{
+  "timestamp": "2026-10-01T08:10:21.240Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study ingested",
+  "context": {
+    "programId": 42,
+    "studyId": 1,
+    "sourcePdfId": "pdf-b3365b1d-45d2-4267-976b-f38475a66c76",
+    "confidence": 0.9
+  }
+}
+
+ ✓ server/routes/__tests__/preclinical-upload-guards.test.ts > POST /api/preclinical/ingest: the upload guard > refuses a body over the size limit with 413 instead of buffering it 378ms
+ ✓ server/routes/__tests__/preclinical-upload-guards.test.ts > POST /api/preclinical/ingest: the upload guard > refuses an executable named file whatever type it declares (415) 36ms
+ ✓ server/routes/__tests__/preclinical-upload-guards.test.ts > POST /api/preclinical/ingest: the upload guard > refuses a declared type this route does not read (415, not a silent "no file") 5ms
+ ✓ server/routes/__tests__/preclinical-upload-guards.test.ts > POST /api/preclinical/ingest: the upload guard > refuses bytes that are not a PDF under a PDF declaration (the shared byte check) 9ms
+ ✓ server/routes/__tests__/preclinical-upload-guards.test.ts > POST /api/preclinical/ingest: the upload guard > leaves a request with no file to the handler (its own NO_FILE code, unchanged) 8ms
+ ✓ server/routes/__tests__/preclinical-upload-guards.test.ts > POST /api/preclinical/ingest: the upload guard > control: a real PDF passes the guard and reaches ingestStudy 8ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a request for a model that does not exist is refused, not echoed > POST /analyze rejects model=donut 10ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a request for a model that does not exist is refused, not echoed > POST /analyze rejects model=table-transformer 9ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a request for a model that does not exist is refused, not echoed > POST /analyze rejects model=dit 18ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a request for a model that does not exist is refused, not echoed > POST /analyze rejects model=ensemble 6ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > GET /health describes the mechanism it has > names no primary model 4ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > GET /health describes the mechanism it has > does not claim an OCR fallback it never applies 3ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > GET /health describes the mechanism it has > says what its scores are 2ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /analyze refuses org B naming org A’s file, without the path or its contents 15ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-tables refuses org B naming org A’s file, without the path or its contents 14ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-form-fields refuses org B naming org A’s file, without the path or its contents 9ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /analyze still reads the caller’s own file (positive control) 14ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-tables still reads the caller’s own file (positive control) 7ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-form-fields still reads the caller’s own file (positive control) 5ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /analyze fails closed with no tenant context on the request 4ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-tables fails closed with no tenant context on the request 12ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-form-fields fails closed with no tenant context on the request 3ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /analyze does not reach a legacy flat file, whoever asks 3ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-tables does not reach a legacy flat file, whoever asks 3ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-form-fields does not reach a legacy flat file, whoever asks 8ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /analyze does not echo the path for a missing file inside the caller’s own prefix 7ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-tables does not echo the path for a missing file inside the caller’s own prefix 3ms
+ ✓ server/routes/__tests__/document-understanding-honesty.contract.test.ts > a filePath is read only inside the caller’s own tenant prefix (IAM-07 / P0-6) > /extract-form-fields does not echo the path for a missing file inside the caller’s own prefix 2ms
+ ✓ server/services/regulatory/__tests__/lifecycle-unwired-bindings.test.ts > advanceDocument — a missing filing binding blocks the transition > refuses `placed` when upsertLeaf is not wired, and invents no leaf id 9ms
+ ✓ server/services/regulatory/__tests__/lifecycle-unwired-bindings.test.ts > advanceDocument — a missing filing binding blocks the transition > refuses `packaged` when assemble is not wired, and does not claim packaging was validated 1ms
+ ✓ server/services/regulatory/__tests__/lifecycle-unwired-bindings.test.ts > advanceDocument — a missing filing binding blocks the transition > still advances normally when the bindings ARE wired, using the real leaf id and package digest 1ms
+ ✓ server/routes/__tests__/ind-generation-no-fabrication.test.ts > the orphaned assembly routes are gone > /api/ind-generation/assemble is not a route 38ms
+ ✓ server/routes/__tests__/ind-generation-no-fabrication.test.ts > the orphaned assembly routes are gone > /api/ind-generation/generate-form is not a route 5ms
+ ✓ server/routes/__tests__/ind-generation-no-fabrication.test.ts > POST /api/ind-generation/generate-section — no fabrication > signals needsData (never "drafted successfully") when the model leaves an unresolved placeholder 57ms
+ ✓ server/routes/__tests__/ind-generation-no-fabrication.test.ts > POST /api/ind-generation/generate-section — no fabrication > reports "drafted successfully" when the content has no unresolved placeholders 6ms
+ ✓ server/routes/__tests__/ind-generation-no-fabrication.test.ts > POST /api/ind-generation/generate-section — no fabrication > sends the AI gateway an explicit anti-fabrication / do-not-invent system prompt 5ms
+ ✓ server/routes/__tests__/ind-generation-no-fabrication.test.ts > POST /api/ind-generation/generate-section — no fabrication > threads an optional sourceData field into the user prompt so the model has real material to ground on 4ms
+stderr | server/routes/__tests__/protocol-signatures.routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/protocol-signatures.routes.test.ts
+{
+  "timestamp": "2026-10-01T08:10:23.230Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > corpus structural invariants > has a substantial, growing corpus 10ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > corpus structural invariants > every entry has stable id, required fields, and at least one citation 107ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > corpus structural invariants > entry ids are unique 3ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > corpus structural invariants > every related reference resolves to a real entry (no dangling links) 16ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > corpus structural invariants > covers all four domains 1ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > search > finds the IVDR Annex VIII classification entry 26ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > search > finds the LDT entry by topical query 7ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > search > finds detection-capability for LoD/LoB/LoQ 7ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > search > respects the domain filter 1ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > search > respects the jurisdiction filter 1ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > search > honors the limit 4ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > search > ranks title/tag matches above detail-only matches 4ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > pagination > listEntriesPaged returns total + window and is stable across offsets 2ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > pagination > listEntriesPaged total reflects filters, not the page size 0ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > pagination > searchPaged total counts all matches; window respects offset/limit 5ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > retrieval helpers > gets an entry by id and resolves its related entries 1ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > retrieval helpers > returns null for an unknown id 0ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > retrieval helpers > listEntries filters by topic 0ms
+ ✓ server/services/ivd-knowledge/__tests__/ivd-knowledge.test.ts > retrieval helpers > lists domains and topics 1ms
+stderr | server/routes/__tests__/lifecycle-renewals-read.test.ts > GET /api/lifecycle/renewals > 500s on a non-42P01 store error — never a 200 empty list
+{
+  "timestamp": "2026-10-01T08:10:23.841Z",
+  "level": "error",
+  "message": "[lifecycle] handling the lifecycle-obligation request failed",
+  "context": {
+    "err": "connection reset",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/lifecycle-renewals-read.test.ts > GET /api/lifecycle/renewals > 401 without org context 43ms
+ ✓ server/routes/__tests__/lifecycle-renewals-read.test.ts > GET /api/lifecycle/renewals > projects recurring obligations into the renewal-cycle shape 27ms
+ ✓ server/routes/__tests__/lifecycle-renewals-read.test.ts > GET /api/lifecycle/renewals > falls back to the nearest event due date when the parent obligation is undated 16ms
+ ✓ server/routes/__tests__/lifecycle-renewals-read.test.ts > GET /api/lifecycle/renewals > fails closed to an empty list when the store is missing (42P01) 4ms
+ × server/routes/__tests__/lifecycle-renewals-read.test.ts > GET /api/lifecycle/renewals > 500s on a non-42P01 store error — never a 200 empty list 20ms
+   → expected undefined to be 'INTERNAL' // Object.is equality
+stderr | server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > if the signature row cannot be written, nothing is committed
+{
+  "timestamp": "2026-10-01T08:10:23.882Z",
+  "level": "error",
+  "message": "[protocol-development] handling the protocol development request failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses without re-authentication, and writes nothing 37ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses a wrong password the same way 6ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses an undeclared meaning before asking for credentials (21 CFR 11.50) 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses a meaning finalization cannot carry 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > a viewer cannot sign, and nothing is asked or written 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > an enrolled second factor that was not given is named as such 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > finalizes, checks independence, and writes the ledger AND the signature row in one transaction 10ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > records the second factor only when one was verified 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > a non-author cannot sign as the author 6ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > an approval is checked for independence on the signing client 26ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > an author approving their own protocol is refused before the finalization runs 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > an authorship lookup that fails is a 503 with an authored sentence; its internal cause is logged, not returned 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > if the signature row cannot be written, nothing is committed 5ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > refuses without re-authentication, and records no disposition 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > a viewer cannot sign a disposition 2ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > passes the signer and the declared meaning to the domain write, then signs 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > a review assigned to someone else is refused and rolled back 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > refuses authorship as a review meaning 3ms
+ ✓ tests/knowledge-routes.test.ts > GET /api/knowledge/summary > reports counts across all corpora 35ms
+ ✓ tests/knowledge-routes.test.ts > GET /api/knowledge/ich-guidelines > resolves an exact code with the ich.org caveat 6ms
+ ✓ tests/knowledge-routes.test.ts > GET /api/knowledge/ich-guidelines > searches by topic 6ms
+ ✓ tests/knowledge-routes.test.ts > GET /api/knowledge/ich-guidelines > rejects an invalid category with 422 4ms
+ ✓ tests/knowledge-routes.test.ts > GET /api/knowledge/pathways > lists a regulator with the verify caveat 5ms
+ ✓ tests/knowledge-routes.test.ts > GET /api/knowledge/pathways > rejects an unknown agency with 422 12ms
+ ✓ tests/knowledge-routes.test.ts > GET /api/knowledge/standards > returns standards and filters by domain 15ms
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > returns 503 when PRECLINICAL_INGEST_ENABLED is unset
+{
+  "timestamp": "2026-10-01T08:10:24.729Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > returns 400 when programId is missing or not a positive integer
+{
+  "timestamp": "2026-10-01T08:10:24.751Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > returns 200 + studyId when ingestion succeeds
+{
+  "timestamp": "2026-10-01T08:10:24.780Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > returns 200 + studyId when ingestion succeeds
+{
+  "timestamp": "2026-10-01T08:10:24.781Z",
+  "level": "info",
+  "message": "[preclinical-routes] Preclinical study ingested",
+  "context": {
+    "programId": 42,
+    "studyId": 1234,
+    "sourcePdfId": "pdf-abc-123",
+    "confidence": 0.87
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > maps Zod-style validation errors to 422
+{
+  "timestamp": "2026-10-01T08:10:24.797Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > maps Zod-style validation errors to 422
+{
+  "timestamp": "2026-10-01T08:10:24.798Z",
+  "level": "error",
+  "message": "[preclinical-routes] Preclinical ingest failed",
+  "context": {
+    "sourcePdfId": "pdf-bf19a377-1f46-4481-8038-0bb37410802c",
+    "message": "Invalid studyType: expected enum value"
+  }
+}
+
+ ✓ tests/knowledge-routes.test.ts > GET /api/knowledge/deficiencies > filters by category and agency 17ms
+ ✓ tests/knowledge-routes.test.ts > GET /api/knowledge/pharmacopoeia > lists pharmacopoeias and chapters with the verify caveat 5ms
+ ✓ tests/knowledge-routes.test.ts > GET /api/knowledge/pharmacopoeia > resolves an exact chapter and searches by test 7ms
+ ✓ tests/knowledge-routes.test.ts > GET /api/knowledge/validation-rules > returns the corpus and scopes by region 69ms
+ ✓ tests/knowledge-routes.test.ts > GET /api/knowledge/validation-rules > rejects an unknown region with 422 3ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > returns 503 when PRECLINICAL_INGEST_ENABLED is unset 112ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > returns 400 when programId is missing or not a positive integer 12ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > returns 400 when no file is attached 11ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > returns 200 + studyId when ingestion succeeds 20ms
+ ✓ tests/integration/preclinical-ingest.test.ts > POST /api/preclinical/ingest > maps Zod-style validation errors to 422 17ms
+ ✓ tests/ci/readyz-schema-gate.test.ts > /readyz schema-readiness gate > returns 503 and names schema when the boot check found missing tables 30ms
+ ✓ tests/ci/readyz-schema-gate.test.ts > /readyz schema-readiness gate > returns 200 when the schema is verified ready 6ms
+ ✓ tests/ci/readyz-schema-gate.test.ts > /readyz schema-readiness gate > FAILS readiness when schema state is unknown (never verified) 5ms
+ ✓ tests/ci/readyz-schema-gate.test.ts > /readyz schema-readiness gate > FAILS readiness when schema verification itself threw 3ms
+ ✓ tests/ci/readyz-schema-gate.test.ts > /readyz schema-readiness gate > serves traffic when degraded, but names the missing tables 25ms
+ ✓ server/routes/__tests__/financial-disclosure-certify-meaning.test.ts > certify: the meaning is required, and one of the governed meanings > no meaning is refused 400 before the signer is asked for a password, and nothing is opened 61ms
+ ✓ server/routes/__tests__/financial-disclosure-certify-meaning.test.ts > certify: the meaning is required, and one of the governed meanings > an empty meaning is refused 400 before the signer is asked for a password, and nothing is opened 7ms
+ ✓ server/routes/__tests__/financial-disclosure-certify-meaning.test.ts > certify: the meaning is required, and one of the governed meanings > the old default, outside the vocabulary is refused 400 before the signer is asked for a password, and nothing is opened 6ms
+ ✓ server/routes/__tests__/financial-disclosure-certify-meaning.test.ts > certify: the meaning is required, and one of the governed meanings > a governed meaning is carried, unchanged, into the certification, the ledger and the signature row 11ms
+stdout | server/routes/__tests__/etmf.routes.test.ts
+{
+  "timestamp": "2026-10-01T08:10:27.288Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T08:10:27.290Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/etmf.routes.test.ts
+{
+  "timestamp": "2026-10-01T08:10:27.290Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/etmf.routes.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/etmf.routes.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/etmf.routes.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/routes/__tests__/etmf.routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/etmf.routes.test.ts
+{
+  "timestamp": "2026-10-01T08:10:27.415Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/analytics-demo-analysis-prod-gate.test.ts > demo-analysis production gate > returns 404 in production 57ms
+ ✓ server/routes/__tests__/analytics-demo-analysis-prod-gate.test.ts > demo-analysis production gate > runs none of the handler in production — no analysis, no model call, no file written 5ms
+ ✓ server/routes/__tests__/analytics-demo-analysis-prod-gate.test.ts > demo-analysis production gate > still serves the endpoint outside production 5ms
+ ✓ server/routes/__tests__/analytics-demo-analysis-prod-gate.test.ts > demo-analysis production gate > gates on the environment at request time, not at module load 18ms
+ ✓ server/routes/__tests__/etmf.routes.test.ts > eTMF routes > 403 without the regulatory-author role 47ms
+ ✓ server/routes/__tests__/etmf.routes.test.ts > eTMF routes > GET /reference-model → 200 with 11 zones 5ms
+ ✓ server/routes/__tests__/etmf.routes.test.ts > eTMF routes > POST /completeness → 200 not-ready for an empty TMF 12ms
+ ✓ server/routes/__tests__/etmf.routes.test.ts > eTMF routes > POST /completeness → 400 without providedArtifacts 4ms
+ ✓ server/services/irb/__tests__/lifecycle.test.ts > an approval with no recorded date is unknown, not current > reports unknown and says so in words 4ms
+ ✓ server/services/irb/__tests__/lifecycle.test.ts > an approval with no recorded date is unknown, not current > differs from continuingReviewStatus exactly where that helper cannot say "unknown" 1ms
+ ✓ server/services/irb/__tests__/lifecycle.test.ts > an approval with no recorded date is unknown, not current > treats an unrecorded review type as unknown, not as "continuing review not required" 1ms
+ ✓ server/services/irb/__tests__/lifecycle.test.ts > expiration > computes one year from approval for a full-board determination 1ms
+ ✓ server/services/irb/__tests__/lifecycle.test.ts > expiration > prefers the board’s recorded date over the computed one 0ms
+ ✓ server/services/irb/__tests__/lifecycle.test.ts > expiration > reports expiring_soon inside the window and current outside it 0ms
+ ✓ server/services/irb/__tests__/lifecycle.test.ts > expiration > reports a past expiration as expired, with the date and the stop-activity consequence 0ms
+ ✓ server/services/irb/__tests__/lifecycle.test.ts > expiration > derives no expiration for an expedited determination, and does not call that current 0ms
+ ✓ server/services/irb/__tests__/lifecycle.test.ts > status > reports the pre-approval statuses as not approved 1ms
+ ✓ server/services/irb/__tests__/lifecycle.test.ts > status > reports a closed submission as not approved 0ms
+ ✓ server/services/irb/__tests__/lifecycle.test.ts > status > refuses to reduce a suspension to current or expired 0ms
+ ✓ server/services/irb/__tests__/lifecycle.test.ts > status > honours a recorded expired status even with a future computed date 0ms
+ ✓ server/services/irb/__tests__/lifecycle.test.ts > modifications > flags a substantive amendment submitted and not approved, and says what it did not check 0ms
+ ✓ server/services/irb/__tests__/lifecycle.test.ts > modifications > does not flag an approved amendment 0ms
+ ✓ server/services/irb/__tests__/lifecycle.test.ts > modifications > flags an IRB amendment that cannot be traced to a protocol amendment 0ms
+ ✓ server/services/irb/__tests__/lifecycle.test.ts > modifications > reports modifications as unassessed when no amendment record was supplied 0ms
+ ✓ server/services/irb/__tests__/lifecycle.test.ts > reportable events > flags open events without judging promptness 0ms
+ ✓ server/services/irb/__tests__/lifecycle.test.ts > reportable events > reports an undated event as promptness-undeterminable, not as timely 2ms
+ ✓ server/services/irb/__tests__/lifecycle.test.ts > reportable events > reports events as unassessed when none were supplied 0ms
+ ✓ server/services/irb/__tests__/lifecycle.test.ts > reportable events > raises nothing when an empty list is genuinely supplied 1ms
+ ✓ server/services/irb/__tests__/lifecycle.test.ts > shape > gives every finding a basis and a remediation 0ms
+ ✓ server/services/irb/__tests__/lifecycle.test.ts > shape > never states a review category the board will apply 1ms
+ ✓ server/services/irb/__tests__/lifecycle.test.ts > shape > is deterministic 0ms
+ ✓ server/services/irb/__tests__/lifecycle.test.ts > shape > has no clock of its own 0ms
+ ✓ server/middleware/__tests__/audit-outcome-headers-exposed.test.ts > Access-Control-Expose-Headers covers the audit-outcome carriers > exposes every audit-outcome header 3ms
+ ✓ server/middleware/__tests__/audit-outcome-headers-exposed.test.ts > Access-Control-Expose-Headers covers the audit-outcome carriers > every audit-outcome header actually set by a route is in the list above 55ms
+ ✓ tests/gates/unverified-verdicts/signature-write-paths.gate.test.ts > no second electronic-signature writer (WO-16B) > grdheService no longer writes or "verifies" signatures 3ms
+ ✓ tests/gates/unverified-verdicts/signature-write-paths.gate.test.ts > no second electronic-signature writer (WO-16B) > the GRDHE signing route answers 410 and names the canonical route 6ms
+ ✓ tests/gates/unverified-verdicts/signature-write-paths.gate.test.ts > no second electronic-signature writer (WO-16B) > the GRDHE verify route no longer answers valid:true for every row 3ms
+ ✓ tests/gates/unverified-verdicts/signature-write-paths.gate.test.ts > no second electronic-signature writer (WO-16B) > the stability sign-off no longer records an unverified signature 3ms
+stderr | server/routes/__tests__/protocol-soa-finalized.routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/protocol-soa-finalized.routes.test.ts
+{
+  "timestamp": "2026-10-01T08:10:28.513Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/__tests__/route-evidence-literature.test.ts > routeEvidenceRequest literature_first > routes through the canonical PubMed client with the legacy result contract 4ms
+ ✓ server/__tests__/route-evidence-literature.test.ts > routeEvidenceRequest literature_first > degrades honestly when PubMed is unreachable — zero results, reason in summary 1ms
+ ✓ server/__tests__/route-evidence-literature.test.ts > routeEvidenceRequest literature_first > reports an honest empty summary for zero hits 0ms
+ ✓ server/routes/__tests__/protocol-soa-finalized.routes.test.ts > a signed protocol’s schedule of assessments refuses a change, and says why (SEC-C-2) > adding an assessment is a 409 naming the state, rolled back, with no ledger entry 32ms
+ ✓ server/routes/__tests__/protocol-soa-finalized.routes.test.ts > a signed protocol’s schedule of assessments refuses a change, and says why (SEC-C-2) > setting a cell is a 409 naming the state, rolled back, with no ledger entry 6ms
+ ✓ server/routes/__tests__/protocol-soa-finalized.routes.test.ts > a signed protocol’s schedule of assessments refuses a change, and says why (SEC-C-2) > clearing a cell is a 409 naming the state, rolled back, with no ledger entry 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/lifecycle-renewals-read.test.ts > GET /api/lifecycle/renewals > 500s on a non-42P01 store error — never a 200 empty list
+AssertionError: expected undefined to be 'INTERNAL' // Object.is equality
+
+- Expected:
+"INTERNAL"
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/lifecycle-renewals-read.test.ts:116:33
+    114|     const res = await request(appWith(7)).get('/api/lifecycle/renewals…
+    115|     expect(res.status).toBe(500);
+    116|     expect(res.body.error.code).toBe('INTERNAL');
+       |                                 ^
+    117|     expect(res.body.data).toBeUndefined();
+    118|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 26 passed (27)
+      Tests  1 failed | 432 passed (433)
+   Start at  08:09:42
+   Duration  45.80s (transform 33.63s, setup 1.37s, import 46.34s, tests 77.69s, environment 4ms)
+

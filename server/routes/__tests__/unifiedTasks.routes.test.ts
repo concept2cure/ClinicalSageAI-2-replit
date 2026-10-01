@@ -428,7 +428,7 @@ describe('T1 — a completion, the dependents it unblocks and all their ledger r
     ledger: [{
       orgId: 2, userId: 7, command: 'task.transition', taskId: 'TASK-B',
       payload: { from: 'blocked', to: 'in-progress', cause: 'predecessor-completed', predecessor: 'TASK-A' },
-      reason: 'Unblocked: predecessor TASK-A completed',
+      summary: 'Unblocked: predecessor TASK-A completed',
     }],
     notices: [{ organizationId: 2, recipientUserId: 42, category: 'task_update', title: 'Unblocked: B', taskId: 'TASK-B' }],
   };
@@ -449,7 +449,9 @@ describe('T1 — a completion, the dependents it unblocks and all their ledger r
       'notify:TASK-B', 'notify:TASK-A',
     ]);
     expect(h.audits.map((a) => a.target)).toEqual(['task:TASK-A', 'task:TASK-B']);
-    expect(h.audits[1]).toMatchObject({ command: 'task.transition', userId: 7, reason: 'Unblocked: predecessor TASK-A completed' });
+    // D5: the dependent's move records no reason (nobody gave one); its summary says what happened.
+    expect(h.audits[1]).toMatchObject({ command: 'task.transition', userId: 7, reason: null });
+    expect(h.audits[1].payload.summary).toBe('Unblocked: predecessor TASK-A completed');
   });
 
   it('a dependent’s ledger row that fails rolls back the completion and the unblocking; nobody is notified', async () => {

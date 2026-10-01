@@ -56,17 +56,24 @@ until the founder signs it and the production environment is live.
 ## Not yet done — and we will not claim otherwise
 - **SOC 2 Type II:** no observation window is open. We publish this statement
   and the policy set (`docs/security/policies/`) instead of a report we do not have.
-- **Penetration test:** none performed. The first will be scheduled before the
-  first production tenant files, and findings will be closed before launch.
+- **Penetration test:** none performed. The GA scope is written
+  (`docs/security/PEN_TEST_SCOPE_2026-09-26.md`); the first engagement will be
+  scheduled before the first production tenant files, and findings will be closed
+  before launch.
 - **Anthropic BAA:** not signed. It is required before any tenant places PHI in
   the platform; the default posture is that submission content is de-identified.
 - **Incident tabletop, access reviews, restore timing on production-size data.**
 
 ## Sub-processors (planned for launch)
-Amazon Web Services (hosting, storage, keys); Anthropic (Claude models);
-GitHub (source control and CI). Additional model lanes (OpenAI, Moonshot,
-Google Vertex, Azure OpenAI, AWS Bedrock) are disabled unless a tenant's
-placement approval names them.
+Amazon Web Services (hosting, storage, keys; and Claude on Amazon Bedrock
+where deployed); Anthropic (Claude models); GitHub (source control and CI).
+OpenAI, Google Vertex and Azure OpenAI receive a tenant's content only when
+that tenant's placement policy names them, as its Order Form records; in
+production the AI gateway enforces this for generation, fallback and
+embeddings, and a tenant that has not elected a second provider gets an error
+when Anthropic is unavailable, never another vendor's answer. Moonshot (Kimi)
+is not used in production for any tenant: a production server configured with
+a Moonshot key refuses to start.
 
 ## Contact
 Security questions and vulnerability reports: security@concept2cure.pro

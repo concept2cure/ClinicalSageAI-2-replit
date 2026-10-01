@@ -32,6 +32,11 @@ mock_provider "aws" {
   mock_data "aws_region" {
     defaults = { name = "us-east-1" }
   }
+  # The evidence module builds its bucket ARN from the partition, so its
+  # policies are asserted against production's real ARN below.
+  mock_data "aws_partition" {
+    defaults = { partition = "aws" }
+  }
   # A mock invents random strings for computed attributes. These resources'
   # ARNs are given ARN-shaped values because the IAM policy documents that
   # consume them are rendered into assertions below; nothing else is implied.
@@ -72,6 +77,19 @@ mock_provider "aws" {
 
 # Throwaway values of the right SHAPE, for production's settings. Nothing here
 # is a real credential.
+# The database tier's two keys get distinct ARNs for every run (file level: runs
+# share state, so a per-run override of a key an earlier run created is
+# ignored). Without them, assertions that RDS uses the database key and the
+# secrets the secrets key cannot tell the two apart.
+override_resource {
+  target = aws_kms_key.database
+  values = { arn = "arn:aws:kms:us-east-1:123456789012:key/database", key_id = "database" }
+}
+override_resource {
+  target = aws_kms_key.secrets
+  values = { arn = "arn:aws:kms:us-east-1:123456789012:key/secrets", key_id = "secrets" }
+}
+
 variables {
   environment                     = "production"
   region                          = "us-east-1"
@@ -80,7 +98,8 @@ variables {
   private_subnets                 = ["10.10.1.0/24", "10.10.2.0/24"]
   azs                             = ["us-east-1a", "us-east-1b"]
   rds_instance_class              = "db.t3.medium"
-  rds_engine_version              = "15.4"
+  rds_engine_version              = "15"
+  db_credentials_rotation         = "initial"
   rds_allocated_storage           = 50
   rds_max_allocated_storage       = 500
   rds_multi_az                    = true
@@ -90,7 +109,7 @@ variables {
   evidence_object_lock_mode       = "COMPLIANCE"
   evidence_retention_days         = 2555
   api_cpu                         = 1024
-  api_memory                      = 2048
+  api_memory                      = 6144
   api_desired_count               = 2
   worker_desired_count            = 1
   image_tag                       = "v1.0.0"
@@ -99,17 +118,20 @@ variables {
   domain_aliases                  = ["app.example.com"]
   cloudfront_origin_secret        = "c2cTestOriginSecret_0123456789abcdef"
   create_github_oidc_provider     = true
-  openai_api_key                  = "test-openai-key"
+  anthropic_api_key               = "sk-ant-test-0123456789"
   jwt_secret                      = "jwt-0123456789abcdef0123456789abcdef"
   refresh_token_secret            = "refresh-0123456789abcdef0123456789abcdef"
   mfa_encryption_key              = "mfa-0123456789abcdef0123456789abcdef"
   audit_hmac_key                  = "audkey-0123456789abcdef0123456789abcdef"
   audit_hmac_secret               = "audsec-0123456789abcdef0123456789abcdef"
+  audit_export_signing_key        = "audexp-0123456789abcdef0123456789abcdef"
+  audit_attestation_key           = "attest-0123456789abcdef0123456789abcdef"
   connector_encryption_key        = "conn-0123456789abcdef0123456789abcdef"
   smtp_host                       = "email-smtp.us-east-1.amazonaws.com"
   smtp_user                       = "test-smtp-user"
   smtp_pass                       = "test-smtp-pass-0123456789"
   smtp_from                       = "noreply@example.com"
+  platform_owner_emails           = ["owner@example.com"]
   ai_provider_placement_approvals = "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\"],\"approvedIntendedUses\":[\"drafting\"]}}"
 }
 
@@ -157,6 +179,117 @@ run "renders_the_boot_contract" {
   assert {
     condition     = one([for e in module.ecs.api_container.environment : e.value if e.name == "APP_URL"]) == "https://${var.domain_aliases[0]}"
     error_message = "APP_URL must be the https origin of the first CloudFront alias, in the API environment."
+  }
+
+  # The connector for Claude is on, at the deployment's own origin, and admits
+  # client registrations from Claude's origins only (D8 decision P-2,
+  # docs/LAUNCH_DEFINITION_OF_DONE.md). Without MCP_ENABLED the connector is not
+  # mounted though CloudFront routes its paths here; without the allowlist
+  # production refuses every registration, so no client could connect.
+  assert {
+    condition = alltrue([
+      for defs in [module.ecs.api_container, module.ecs.worker_container] : alltrue([
+        one([for e in defs.environment : e.value if e.name == "MCP_ENABLED"]) == "true",
+        one([for e in defs.environment : e.value if e.name == "MCP_PUBLIC_URL"]) == "https://${var.domain_aliases[0]}",
+        one([for e in defs.environment : e.value if e.name == "MCP_CLIENT_REDIRECT_ALLOWLIST"]) == "https://claude.ai,https://claude.com",
+      ])
+    ])
+    error_message = "The connector must be on (MCP_ENABLED=true) at the deployment's origin (MCP_PUBLIC_URL) and admit registrations from https://claude.ai and https://claude.com only."
+  }
+
+  # The deployment has an owner from its first boot (D1, 2026-10-01). The
+  # e-mail allowlists are the documented bootstrap: Master Administration
+  # (PLATFORM_ADMIN_EMAILS) and the Business Center (BUSINESS_CENTER_EMAILS),
+  # whose holder can then designate a super_admin in the audited in-app console,
+  # after which the lists can shrink. Both apply to a password sign-in only.
+  # MASTER_ADMIN_EMAILS stays unset: that grant follows a designation. API only;
+  # the worker serves no requests.
+  assert {
+    condition = alltrue([
+      for n in ["PLATFORM_ADMIN_EMAILS", "BUSINESS_CENTER_EMAILS"] :
+      one([for e in module.ecs.api_container.environment : e.value if e.name == n]) == "owner@example.com"
+    ])
+    error_message = "The API must name the platform owner in PLATFORM_ADMIN_EMAILS and BUSINESS_CENTER_EMAILS."
+  }
+
+  assert {
+    condition = length([
+      for e in concat(module.ecs.api_container.environment, module.ecs.worker_container.environment) : e.name
+      if e.name == "MASTER_ADMIN_EMAILS"
+      ]) == 0 && length([
+      for e in module.ecs.worker_container.environment : e.name
+      if contains(["PLATFORM_ADMIN_EMAILS", "BUSINESS_CENTER_EMAILS"], e.name)
+    ]) == 0
+    error_message = "MASTER_ADMIN_EMAILS stays unset, and the worker carries no owner allowlist."
+  }
+
+  # First-run setup takes the deployment's own secret in production
+  # (server/routes/setup.ts). Generated here, held in Secrets Manager, given to
+  # the API alone, and never a plain environment value.
+  assert {
+    condition = (
+      one([for s in module.ecs.api_container.secrets : s.valueFrom if s.name == "SETUP_TOKEN"]) == module.secrets.secret_arns["setup_token"] &&
+      length([for s in module.ecs.worker_container.secrets : s.name if s.name == "SETUP_TOKEN"]) == 0 &&
+      length([for e in module.ecs.api_container.environment : e.name if e.name == "SETUP_TOKEN"]) == 0
+    )
+    error_message = "SETUP_TOKEN must reach the API (only) from the setup_token secret."
+  }
+
+  # Every upload is scanned before it is stored, and production refuses one the
+  # scanner did not see (server/middleware/uploadSafety.ts: 503
+  # FILE_SCAN_UNAVAILABLE). Until 2026-10-01 nothing here set CLAMAV_HOST, so a
+  # deployed stack booted, read ready, and refused every Vault upload
+  # (docs/evidence/W2/2026-09-24-multi-task/audit-findings.md). clamd runs in
+  # the API task; on awsvpc the two share one network namespace.
+  assert {
+    condition = (
+      one([for e in module.ecs.api_container.environment : e.value if e.name == "CLAMAV_HOST"]) == "127.0.0.1" &&
+      one([for e in module.ecs.api_container.environment : e.value if e.name == "CLAMAV_PORT"]) == "3310"
+    )
+    error_message = "The API container must reach clamd at CLAMAV_HOST=127.0.0.1, CLAMAV_PORT=3310: the scanner in its own task."
+  }
+
+  # The scanner is in the task, essential, health-checked, pinned by digest, and
+  # the API does not start until it answers: an API that starts first refuses
+  # every upload until clamd has loaded its database.
+  assert {
+    condition = length([
+      for c in module.ecs.api_task_containers : c.name
+      if c.name != "api" && c.essential && try(c.healthCheck.command, null) != null &&
+      can(regex("@sha256:[0-9a-f]{64}$", c.image)) &&
+      contains([for d in try(module.ecs.api_container.dependsOn, []) : d.containerName if d.condition == "HEALTHY"], c.name)
+    ]) == 1
+    error_message = "The API task must carry one essential, health-checked, digest-pinned scanner container that the API container waits on (dependsOn HEALTHY)."
+  }
+
+  # clamd refuses a stream longer than StreamMaxLength, and the client then
+  # cannot tell that from an outage (503). The limit is the platform's own
+  # largest upload, read from the file that defines it, so the two cannot drift.
+  assert {
+    condition = one(flatten([
+      for c in module.ecs.api_task_containers : [
+        for e in try(c.environment, []) : e.value if e.name == "CLAMD_CONF_StreamMaxLength"
+      ] if c.name != "api"
+    ])) == "${one(regex("maxUploadBytes: ([0-9]+) \\* 1024 \\* 1024", file("../../server/config/platform-limits.ts")))}M"
+    error_message = "The scanner's StreamMaxLength must equal FILE_LIMITS.maxUploadBytes (server/config/platform-limits.ts)."
+  }
+
+  # A file too large or too deeply nested to scan whole is reported, not passed:
+  # by default clamd answers OK for what it skipped.
+  assert {
+    condition = one(flatten([
+      for c in module.ecs.api_task_containers : [
+        for e in try(c.environment, []) : e.value if e.name == "CLAMD_CONF_AlertExceedsMax"
+      ] if c.name != "api"
+    ])) == "yes"
+    error_message = "The scanner must report a file it could not scan whole (AlertExceedsMax yes), not answer OK for it."
+  }
+
+  # The worker has no scanner beside it, so it is given no address for one:
+  # an upload reaching it is refused as unscanned rather than sent nowhere.
+  assert {
+    condition     = length([for e in module.ecs.worker_container.environment : e.name if e.name == "CLAMAV_HOST"]) == 0
+    error_message = "The worker task has no scanner; it must not be pointed at one."
   }
 
   # Sign-in is accepted only from ALLOWED_ORIGINS (csrfProtection); the
@@ -246,12 +379,14 @@ run "renders_the_boot_contract" {
     condition = nonsensitive(alltrue(flatten([
       for defs in [module.ecs.api_container, module.ecs.worker_container] : [
         for e in defs.environment : [
+          # An unset optional key (openai_api_key, no tenant elected OpenAI) is "",
+          # which every string contains; it is not a secret to look for.
           for secret in [
             random_password.db_master.result, random_password.db_app_service.result,
             var.jwt_secret, var.refresh_token_secret, var.mfa_encryption_key, var.audit_hmac_key,
-            var.audit_hmac_secret, var.connector_encryption_key, var.openai_api_key,
+            var.audit_hmac_secret, var.audit_export_signing_key, var.audit_attestation_key, var.connector_encryption_key, var.openai_api_key, var.anthropic_api_key,
             var.smtp_user, var.smtp_pass,
-          ] : !strcontains(e.value, secret)
+          ] : !strcontains(e.value, secret) if secret != ""
         ]
       ]
     ])))
@@ -373,6 +508,87 @@ run "vault_documents_go_to_a_private_versioned_bucket_the_task_role_can_use" {
   }
 }
 
+# The audit chain's head, anchored outside the database (security plan P0-8,
+# finding DP-04). Nothing outside the database recorded it, so deleting or
+# rewriting the newest audit rows left a valid, shorter chain. The daily sweep
+# (server/jobs/auditChainIntegritySweep.ts) now verifies the database against
+# the latest anchor in the object-locked evidence bucket, then writes the next
+# one under anchors/. Both containers run the sweep, so both name the bucket.
+# The task role reaches anchors/ and nothing else there: put and get anchor
+# objects, list that prefix, use the evidence key only through S3, and never
+# delete or unlock what it wrote. The module's policies name the bucket by the
+# ARN AWS gives it, arn:aws:s3:::<name>; the mock invents aws_s3_bucket's arn,
+# so the bucket policy is checked against production's literal ARN.
+run "the_audit_chain_head_is_anchored_in_the_object_locked_evidence_bucket" {
+  command = apply
+
+  assert {
+    condition = alltrue([
+      for c in [module.ecs.api_container, module.ecs.worker_container] :
+      contains([for e in c.environment : "${e.name}=${e.value}"], "AUDIT_ANCHOR_BUCKET=${module.evidence.evidence_bucket}")
+    ])
+    error_message = "Both containers must name the evidence bucket in AUDIT_ANCHOR_BUCKET; without it the sweep reports the anchor not configured."
+  }
+  assert {
+    condition     = module.evidence.evidence_bucket == "c2c-prod-part11-evidence" && module.evidence.object_lock.mode == "COMPLIANCE" && module.evidence.object_lock.days >= 2555
+    error_message = "Production's anchors go to c2c-prod-part11-evidence, under COMPLIANCE object lock for at least seven years."
+  }
+  assert {
+    condition = anytrue([
+      for st in jsondecode(module.evidence.bucket_policy).Statement :
+      st.Effect == "Allow" && try(st.Principal.AWS, "") == module.ecs.task_role_arn &&
+      st.Resource == "arn:aws:s3:::c2c-prod-part11-evidence/anchors/*" &&
+      length(setsubtract(toset(["s3:PutObject", "s3:GetObject"]), toset(flatten([st.Action])))) == 0
+    ])
+    error_message = "The task role must put and get objects under anchors/ in the evidence bucket."
+  }
+  assert {
+    condition = anytrue([
+      for st in jsondecode(module.evidence.bucket_policy).Statement :
+      st.Effect == "Allow" && try(st.Principal.AWS, "") == module.ecs.task_role_arn &&
+      st.Resource == "arn:aws:s3:::c2c-prod-part11-evidence" && contains(flatten([st.Action]), "s3:ListBucket") &&
+      try(st.Condition.StringLike["s3:prefix"], "") == "anchors/*"
+    ])
+    error_message = "The verifier must list the anchors/ prefix, and only it, to find the latest anchor."
+  }
+  assert {
+    condition = alltrue([
+      for st in jsondecode(module.evidence.bucket_policy).Statement :
+      alltrue([for r in flatten([st.Resource]) : r == "arn:aws:s3:::c2c-prod-part11-evidence" || startswith(r, "arn:aws:s3:::c2c-prod-part11-evidence/anchors/")]) &&
+      length(setintersection(toset(flatten([st.Action])), toset(["s3:*", "s3:DeleteObject", "s3:DeleteObjectVersion", "s3:PutObjectRetention", "s3:BypassGovernanceRetention", "s3:PutObjectLegalHold"]))) == 0
+      if st.Effect == "Allow" && try(st.Principal.AWS, "") == module.ecs.task_role_arn
+    ])
+    error_message = "The bucket policy may let the task role reach only anchors/, and never delete or unlock an object."
+  }
+  assert {
+    condition = anytrue([
+      for st in jsondecode(module.evidence.bucket_policy).Statement :
+      st.Effect == "Deny" && try(st.Principal.AWS, "") == module.ecs.task_role_arn &&
+      length(setsubtract(toset(["s3:DeleteObject", "s3:DeleteObjectVersion", "s3:PutObjectRetention", "s3:BypassGovernanceRetention"]), toset(flatten([st.Action])))) == 0
+    ])
+    error_message = "The bucket policy must deny the task role deleting or unlocking evidence, whatever IAM grants it later."
+  }
+  # The task role's own S3 grant on the evidence bucket used to be the bucket
+  # ARN: object actions there match nothing, and ListBucket listed every key,
+  # CloudTrail's included. It is anchors/ now, and never the bucket as a whole.
+  assert {
+    condition = alltrue([
+      for r in flatten([for st in jsondecode(module.ecs.task_s3_policy).Statement : st.Resource]) :
+      startswith(r, "${module.evidence.evidence_bucket_arn}/anchors/")
+    ])
+    error_message = "The task role's identity grant on the evidence bucket must be anchors/ only."
+  }
+  assert {
+    condition = anytrue([
+      for st in jsondecode(module.evidence.key_policy).Statement :
+      try(st.Principal.AWS, "") == module.ecs.task_role_arn &&
+      length(setsubtract(toset(["kms:GenerateDataKey", "kms:Decrypt"]), toset(flatten([st.Action])))) == 0 &&
+      try(st.Condition.StringEquals["kms:ViaService"], "") == "s3.${var.region}.amazonaws.com"
+    ])
+    error_message = "The task role must use the evidence key through S3 only, to write and read an anchor (the bucket encrypts under it)."
+  }
+}
+
 # The SPA comes straight from S3 through CloudFront, so the server's security
 # headers never reach it; the distribution has to add them (security plan
 # P0-15, INF-04).
@@ -475,6 +691,36 @@ run "provision_workflow_names_are_the_ones_terraform_creates" {
 
 # ── Each of these must FAIL. A check only ever seen to pass has not been tested.
 
+# The virus scanner's memory comes out of the API task's; a task sized as it
+# was before the scanner (2048) would starve one or the other.
+# A deployment with no named owner has nobody who can reach Master
+# Administration or designate anyone.
+run "refuses_a_deployment_without_an_owner" {
+  command = plan
+  variables {
+    platform_owner_emails = []
+  }
+  expect_failures = [var.platform_owner_emails]
+}
+
+# The allowlists compare lower-cased addresses; an upper-case entry would never
+# match and the owner would be locked out without a word.
+run "refuses_an_owner_address_that_could_never_match" {
+  command = plan
+  variables {
+    platform_owner_emails = ["Owner@Example.com"]
+  }
+  expect_failures = [var.platform_owner_emails]
+}
+
+run "refuses_an_api_task_too_small_for_the_scanner" {
+  command = plan
+  variables {
+    api_memory = 4096
+  }
+  expect_failures = [terraform_data.boot_contract]
+}
+
 run "refuses_a_refresh_secret_equal_to_the_jwt_secret" {
   command = plan
   variables {
@@ -503,6 +749,33 @@ run "refuses_equal_audit_seal_and_chain_keys" {
   command = plan
   variables {
     audit_hmac_secret = "audkey-0123456789abcdef0123456789abcdef"
+  }
+  expect_failures = [terraform_data.boot_contract]
+}
+
+# The audit export key (P1-19b): the app refuses to boot on a short one, or one
+# equal to the JWT secret (server/services/audit/auditExportKeyPosture.ts). It must
+# also differ from both audit HMAC keys: each seals a different record.
+run "refuses_a_short_audit_export_key" {
+  command = plan
+  variables {
+    audit_export_signing_key = "too-short"
+  }
+  expect_failures = [var.audit_export_signing_key]
+}
+
+run "refuses_an_audit_export_key_equal_to_the_jwt_secret" {
+  command = plan
+  variables {
+    audit_export_signing_key = "jwt-0123456789abcdef0123456789abcdef"
+  }
+  expect_failures = [terraform_data.boot_contract]
+}
+
+run "refuses_an_audit_export_key_equal_to_an_audit_seal_key" {
+  command = plan
+  variables {
+    audit_export_signing_key = "audkey-0123456789abcdef0123456789abcdef"
   }
   expect_failures = [terraform_data.boot_contract]
 }
@@ -613,4 +886,278 @@ run "refuses_an_smtp_port_without_required_tls" {
   }
 
   expect_failures = [var.smtp_port]
+}
+
+# Regulatory drafting runs only on an approved Anthropic model: both containers
+# carry the key, as a secret only.
+run "every_container_can_reach_the_drafting_provider" {
+  command = apply
+
+  assert {
+    condition = alltrue([
+      for defs in [module.ecs.api_container, module.ecs.worker_container] :
+      contains([for e in defs.secrets : e.name], "ANTHROPIC_API_KEY") &&
+      !contains([for e in defs.environment : e.name], "ANTHROPIC_API_KEY")
+    ])
+    error_message = "Each container needs ANTHROPIC_API_KEY as a secret, never in its plain environment."
+  }
+}
+
+run "refuses_a_key_that_is_not_anthropics" {
+  command = plan
+
+  variables {
+    anthropic_api_key = "test-openai-key"
+  }
+
+  expect_failures = [var.anthropic_api_key]
+}
+
+run "refuses_placement_approvals_that_omit_the_drafting_provider" {
+  command = plan
+
+  variables {
+    ai_provider_placement_approvals = "{\"openai\":{\"region\":\"us\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\"],\"approvedIntendedUses\":[\"drafting\"]}}"
+  }
+
+  expect_failures = [terraform_data.boot_contract]
+}
+
+# OpenAI is a lane a tenant elects in writing (ADR-0014 §1; DPA Annex III; P0-11).
+# The gateway refuses it for every organisation that has not elected it (P1-45),
+# so the key is provisioned exactly when one has: absent by default, a secret
+# when elected, and the two settings go together.
+run "openai_is_absent_unless_a_tenant_elected_it" {
+  command = apply
+
+  assert {
+    condition = alltrue([
+      for defs in [module.ecs.api_container, module.ecs.worker_container] :
+      !contains([for e in defs.secrets : e.name], "OPENAI_API_KEY") &&
+      !contains([for e in defs.environment : e.name], "OPENAI_API_KEY")
+    ]) && !contains(keys(module.secrets.secret_arns), "openai_api_key")
+    error_message = "With no tenant electing OpenAI, no OpenAI key is stored and no container is given OPENAI_API_KEY."
+  }
+}
+
+run "openai_is_a_secret_when_a_tenant_elected_it" {
+  command = apply
+
+  variables {
+    openai_enabled = true
+    openai_api_key = "sk-test-openai-0123456789"
+  }
+
+  assert {
+    condition = alltrue([
+      for defs in [module.ecs.api_container, module.ecs.worker_container] :
+      one([for e in defs.secrets : e.valueFrom if e.name == "OPENAI_API_KEY"]) == module.secrets.secret_arns["openai_api_key"] &&
+      !contains([for e in defs.environment : e.name], "OPENAI_API_KEY")
+    ])
+    error_message = "An elected OpenAI key reaches each container as a secret, never in its plain environment."
+  }
+}
+
+run "refuses_an_openai_election_without_a_key" {
+  command = plan
+
+  variables {
+    openai_enabled = true
+  }
+
+  expect_failures = [terraform_data.boot_contract]
+}
+
+run "refuses_an_openai_key_without_an_election" {
+  command = plan
+
+  variables {
+    openai_api_key = "sk-test-openai-0123456789"
+  }
+
+  expect_failures = [terraform_data.boot_contract]
+}
+
+run "refuses_an_anthropic_key_as_the_openai_key" {
+  command = plan
+
+  variables {
+    openai_api_key = "sk-ant-test-0123456789"
+  }
+
+  expect_failures = [var.openai_api_key]
+}
+
+# Tenant-export attestations are signed with AUDIT_ATTESTATION_KEY. No deploy path
+# provided it before 2026-10-01, so every attestation failed to sign in
+# production (D1, docs/evidence/W2/2026-10-01-inventory-gaps/). The preflight now
+# names it, so renders_the_boot_contract requires it in both containers.
+run "refuses_a_short_attestation_key" {
+  command = plan
+
+  variables {
+    audit_attestation_key = "too-short"
+  }
+
+  expect_failures = [var.audit_attestation_key]
+}
+
+run "refuses_an_attestation_key_equal_to_the_audit_export_key" {
+  command = plan
+
+  variables {
+    audit_attestation_key = "audexp-0123456789abcdef0123456789abcdef"
+  }
+
+  expect_failures = [terraform_data.boot_contract]
+}
+
+run "error_reporting_is_absent_unless_configured" {
+  command = apply
+
+  assert {
+    condition     = !contains([for e in module.ecs.api_container.environment : e.name], "SENTRY_DSN")
+    error_message = "With no sentry_dsn, SENTRY_DSN is absent rather than empty."
+  }
+}
+
+run "error_reporting_reaches_both_containers_when_configured" {
+  command = apply
+
+  variables {
+    sentry_dsn = "https://0123456789abcdef@o0.ingest.sentry.io/0"
+  }
+
+  assert {
+    condition = alltrue([
+      for defs in [module.ecs.api_container, module.ecs.worker_container] :
+      one([for e in defs.environment : e.value if e.name == "SENTRY_DSN"]) == "https://0123456789abcdef@o0.ingest.sentry.io/0"
+    ])
+    error_message = "SENTRY_DSN must reach the API and the worker when sentry_dsn is set."
+  }
+}
+
+run "refuses_a_sentry_dsn_that_is_not_https" {
+  command = plan
+
+  variables {
+    sentry_dsn = "http://0123456789abcdef@o0.ingest.sentry.io/0"
+  }
+
+  expect_failures = [var.sentry_dsn]
+}
+
+# B10 (W2 / D1): RDS retires old minor versions, and a retired minor cannot be
+# created. "15.4" was pinned here and is deprecated on RDS, so the first apply,
+# and every rebuild of the database from nothing, would have failed. The
+# version is the MAJOR only; RDS picks its current minor and patches it in the
+# maintenance window.
+run "refuses_a_pinned_rds_minor_version" {
+  command = plan
+  variables {
+    rds_engine_version = "15.4"
+  }
+  expect_failures = [var.rds_engine_version]
+}
+
+# P1-11 / INF-13 (W2 / D1): the parameter group set pgaudit.log from the start,
+# and pgaudit recorded nothing, because RDS runs it only when it is preloaded.
+# Preloading replaces RDS's default list, so pg_stat_statements must stay in it.
+# Every task carries DB_AUDIT_REQUIRED=pgaudit, so deploy-migrate (which runs as
+# a task derived from the API's) refuses to roll services onto a database that
+# is not recording (scripts/db/database-audit.mjs).
+run "database_level_audit_is_loaded_and_required" {
+  command = plan
+
+  assert {
+    condition     = contains([for l in split(",", lookup(module.rds.parameters, "shared_preload_libraries", "")) : trimspace(l)], "pgaudit")
+    error_message = "pgaudit must be in shared_preload_libraries: pgaudit.log alone records nothing on RDS."
+  }
+  assert {
+    condition     = contains([for l in split(",", lookup(module.rds.parameters, "shared_preload_libraries", "")) : trimspace(l)], "pg_stat_statements")
+    error_message = "Setting shared_preload_libraries replaces RDS's default; pg_stat_statements must stay loaded."
+  }
+  assert {
+    condition     = !contains(["", "none"], lower(lookup(module.rds.parameters, "pgaudit.log", "")))
+    error_message = "pgaudit.log must name the classes to record."
+  }
+  assert {
+    condition = alltrue([
+      for defs in [module.ecs.api_container, module.ecs.worker_container] :
+      one([for e in defs.environment : e.value if e.name == "DB_AUDIT_REQUIRED"]) == "pgaudit"
+    ])
+    error_message = "Every task must carry DB_AUDIT_REQUIRED=pgaudit, so the deploy refuses a database that is not recording."
+  }
+}
+
+# P1-11 / INF-14, INF-18 (W2 / D1): the database's storage, its Performance
+# Insights data (which holds query text) and every secret the tasks read were
+# under AWS-managed keys. Unset, the mock invents a random string for these
+# computed attributes, so the assertions require an ARN in this account.
+run "the_database_tier_is_under_customer_managed_keys" {
+  command = apply
+
+  assert {
+    condition     = startswith(coalesce(module.rds.storage_kms_key_id, "none"), "arn:aws:kms:us-east-1:123456789012:key/")
+    error_message = "RDS storage (and so its snapshots and backups) must be on a customer-managed key, not aws/rds: ${coalesce(module.rds.storage_kms_key_id, "none")}"
+  }
+  assert {
+    condition     = module.rds.performance_insights_kms_key_id == module.rds.storage_kms_key_id
+    error_message = "Performance Insights holds query text; it must be on the database's key."
+  }
+  assert {
+    condition = alltrue([
+      for name, key in module.secrets.kms_key_ids :
+      startswith(coalesce(key, "none"), "arn:aws:kms:us-east-1:123456789012:key/")
+    ])
+    error_message = "Every secret must be on a customer-managed key, not aws/secretsmanager."
+  }
+  assert {
+    condition = anytrue([
+      for st in jsondecode(module.ecs.execution_secrets_policy).Statement :
+      contains(flatten([st.Action]), "kms:Decrypt")
+      && contains(flatten([st.Resource]), one(distinct(values(module.secrets.kms_key_ids))))
+      && try(st.Condition.StringEquals["kms:ViaService"], "") == "secretsmanager.us-east-1.amazonaws.com"
+    ])
+    error_message = "The execution role must be able to decrypt the secrets' key, through Secrets Manager only; otherwise no task can start."
+  }
+}
+
+# The same, by identity: each key carries its own ARN (the file-level overrides
+# above; under the shared mock ARN the database key wired where the secrets key
+# belongs would pass). And the two database passwords rotate on the marker.
+run "each_key_is_used_where_it_belongs_and_the_passwords_rotate_on_the_marker" {
+  command = apply
+
+  assert {
+    condition     = module.rds.storage_kms_key_id == aws_kms_key.database.arn && module.rds.performance_insights_kms_key_id == aws_kms_key.database.arn
+    error_message = "RDS storage and Performance Insights must be on the database key."
+  }
+  assert {
+    condition     = alltrue([for k, v in module.secrets.kms_key_ids : v == aws_kms_key.secrets.arn])
+    error_message = "Every secret must be on the secrets key."
+  }
+  assert {
+    condition = anytrue([
+      for st in jsondecode(module.ecs.execution_secrets_policy).Statement :
+      contains(flatten([st.Action]), "kms:Decrypt") && flatten([st.Resource]) == [aws_kms_key.secrets.arn]
+    ])
+    error_message = "The execution role decrypts with the secrets key, and only that key."
+  }
+  assert {
+    condition     = aws_kms_key.database.enable_key_rotation && aws_kms_key.secrets.enable_key_rotation
+    error_message = "Both keys rotate annually."
+  }
+  assert {
+    condition     = random_password.db_master.keepers.rotation == var.db_credentials_rotation && random_password.db_app_service.keepers.rotation == var.db_credentials_rotation
+    error_message = "Both database passwords must be replaced when the rotation marker changes."
+  }
+}
+
+run "refuses_an_empty_rotation_marker" {
+  command = plan
+  variables {
+    db_credentials_rotation = " "
+  }
+  expect_failures = [var.db_credentials_rotation]
 }

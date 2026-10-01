@@ -3,7 +3,9 @@
  * three documents with real sections; comments resolved on one, a review
  * request and workflow on another, one left in draft with an open comment; the
  * Protocol Synopsis frozen and e-signed by the second signer (OQ-003's sequence:
- * resolve comments → freeze → e-sign with meaning + intent).
+ * resolve comments → freeze → e-sign with meaning + intent). The freeze is
+ * itself signed (DP-35, 2026-10-01): the second signer seals it as REVIEWER, so
+ * without that credential neither the freeze nor the e-signature is executed.
  */
 import { must } from '../lib.mjs';
 import { AUTHORING_DOCS, STUDY, T, findDemoByTitle } from './biotech-content.mjs';
@@ -115,13 +117,20 @@ async function ensureReview(ctx, spec, docRec) {
   return `reviewer ${reviewer.email} (${docRec.review.status}); workflow ${JSON.stringify(docRec.workflow).slice(0, 80)}`;
 }
 
-async function ensureFreeze({ api, tally }, spec, docRec) {
+/** A freeze is a signature (DP-35): the second signer, the requested reviewer, seals v1.0 as REVIEWER. */
+export async function ensureFreeze({ api, run, tally, signer }, spec, docRec) {
   const f = await api('GET', `/api/authoring/docs/${docRec.id}/frozen`);
   if (f.status === 200 && /content_hash|contentHash/.test(JSON.stringify(f.json ?? ''))) tally.found('authoring-freeze');
-  else {
-    must(await api('POST', `/api/authoring/docs/${docRec.id}/freeze`, {
+  else if (!signer) {
+    docRec.frozen = NOT_EXECUTED_NO_SIGNER;
+    run.note(`Authoring freeze of ${spec.name}: ${NOT_EXECUTED_NO_SIGNER}`);
+    return NOT_EXECUTED_NO_SIGNER;
+  } else {
+    must(await signer.api('POST', `/api/authoring/docs/${docRec.id}/freeze`, {
       reason: `Protocol Synopsis ${STUDY} settled: reviewer comments resolved; frozen as v1.0 for the IND (demo seed).`,
       version: '1.0',
+      meaning: 'REVIEWER',
+      password: signer.password,
     }), 200, `freeze ${spec.key}`);
     tally.created('authoring-freeze');
   }
@@ -131,7 +140,7 @@ async function ensureFreeze({ api, tally }, spec, docRec) {
   return `frozen v${docRec.frozen.version} ${String(docRec.frozen.contentHash ?? '').slice(0, 12)}…`;
 }
 
-async function ensureSignature({ api, run, tally, signer }, spec, docRec) {
+export async function ensureSignature({ api, run, tally, signer }, spec, docRec) {
   const rows = must(await api('GET', `/api/authoring/docs/${docRec.id}/signatures`), 200, `signatures ${spec.key}`).signatures ?? [];
   if (!signer) {
     const existing = rows[0] ?? null;
@@ -139,7 +148,10 @@ async function ensureSignature({ api, run, tally, signer }, spec, docRec) {
     run.note(`Authoring e-signature on ${spec.name}: ${NOT_EXECUTED_NO_SIGNER}`);
     return existing ? `found signature ${existing.id} by ${existing.signer_email}` : NOT_EXECUTED_NO_SIGNER;
   }
-  const mine = rows.find((s) => s.signer_email === signer.email) || null;
+  const intent = `Reviewed Protocol Synopsis ${STUDY} v1.0 against Protocol v1.0 and SAP v1.0; content is consistent and settled for the IND (demo seed, second signer).`;
+  // This step's own signature, told from the signer's REVIEWER signature on the freeze by its intent.
+  const isMine = (s) => s.signer_email === signer.email && s.meaning === 'REVIEWER' && s.reason === intent;
+  const mine = rows.find(isMine) || null;
   if (mine) {
     tally.found('authoring-signature');
     docRec.signature = { id: mine.id, signer: mine.signer_email, meaning: mine.meaning, coveredContentHash: mine.covered_content_hash };
@@ -150,10 +162,10 @@ async function ensureSignature({ api, run, tally, signer }, spec, docRec) {
   must(await signer.api('POST', `/api/authoring/docs/${docRec.id}/e-sign`, {
     password: signer.password,
     meaning: 'REVIEWER',
-    intent: `Reviewed Protocol Synopsis ${STUDY} v1.0 against Protocol v1.0 and SAP v1.0; content is consistent and settled for the IND (demo seed, second signer).`,
+    intent,
   }), 200, `e-sign ${spec.key}`);
   const after = must(await api('GET', `/api/authoring/docs/${docRec.id}/signatures`), 200, `signatures ${spec.key}`);
-  const sig = (after.signatures ?? []).find((s) => s.signer_email === signer.email);
+  const sig = (after.signatures ?? []).find(isMine);
   if (!sig || !/^password/.test(String(sig.method)) || !sig.covered_content_hash) throw new Error(`e-sign ${spec.key}: signature not stored as expected — ${JSON.stringify(after).slice(0, 300)}`);
   tally.created('authoring-signature');
   docRec.signature = { id: sig.id, signer: sig.signer_email, meaning: sig.meaning, coveredFreezeVersion: sig.covered_freeze_version, coveredContentHash: sig.covered_content_hash };

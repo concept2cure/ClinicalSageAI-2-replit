@@ -4,7 +4,8 @@
  * Governed CRUD across the coverage-analysis lifecycle: analyses, the NCD 310.1
  * qualifying-trial determination, items, deterministic item classification,
  * ICD-10 validation, the exportable billing grid, and a gated finalize. Every
- * mutation runs BEGIN → Tx → recordGovernedAction → COMMIT, org-scoped. Creating
+ * mutation runs BEGIN → Tx → recordGovernedAction → COMMIT, org-scoped; finalize
+ * is an electronic signature (governed-signed-act.ts). Creating
  * an analysis under an IRB submission threads irb_submission → coverage_analysis
  * provenance. Mounted at /api/coverage-analysis.
  *
@@ -19,6 +20,7 @@ import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import { pool } from '../db';
 import { recordGovernedAction } from './c2c/actions';
+import { signedActAttempts, signGovernedAct } from './governed-signed-act';
 import {
   createAnalysisTx,
   setQualifyingDeterminationTx,
@@ -34,8 +36,11 @@ import {
 } from '../services/coverage-analysis/coverage-service';
 import { recordCoverageAnalysisCreated, recordCoverageQualifyingDetermination, recordCoverageItemAdded, recordCoverageItemClassified, recordCoverageFinalized } from '../services/coverage-metrics';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('coverage-analysis');
 
 function resolveUserId(req: Request): number | null {
   const r = req as any;
@@ -56,7 +61,7 @@ function fail(res: Response, err: unknown): void {
     res.status(CODE_STATUS[code]).json({ error: { code, message: err instanceof Error ? err.message : 'Request failed.' } });
     return;
   }
-  res.status(500).json({ error: { code: 'INTERNAL', message: err instanceof Error ? err.message : 'Request failed.' } });
+  serverError(res, log, 'handling the coverage-analysis request', err);
 }
 const reason = z.string().trim().min(8, 'Provide a reason of at least 8 characters.');
 const CATEGORY = z.enum(['procedure', 'lab', 'imaging', 'drug_administration', 'visit', 'device', 'other']);
@@ -233,15 +238,18 @@ router.get('/analyses/:id/suggest', async (req, res) => {
 
 // ─── Finalize (gated) ────────────────────────────────────────────────────────
 
-router.post('/analyses/:id/finalize', async (req, res) => {
+// Finalizing is an electronic signature (P0-10a): governed-signed-act.ts.
+router.post('/analyses/:id/finalize', signedActAttempts, async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
-  const parsed = z.object({ reason }).safeParse(req.body ?? {});
-  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
-  await governed(req, res, 'sign', parsed.data.reason, async (client, orgId, userId) => {
-    const { readiness } = await finalizeAnalysisTx(client, orgId, userId, id);
-    recordCoverageFinalized();
-    return { target: `coverage-analysis:${id}`, payload: { finalized: true }, body: { id, finalized: true, readiness } };
+  await signGovernedAct(req, res, {
+    domain: 'coverage',
+    codeStatus: CODE_STATUS,
+    run: async (client, orgId, userId) => {
+      const { readiness } = await finalizeAnalysisTx(client, orgId, userId, id);
+      recordCoverageFinalized();
+      return { target: `coverage-analysis:${id}`, payload: { finalized: true }, body: { id, finalized: true, readiness } };
+    },
   });
 });
 

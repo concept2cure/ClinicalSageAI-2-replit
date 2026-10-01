@@ -1,0 +1,647 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts
+{
+  "timestamp": "2026-10-01T08:16:06.410Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > quality_specifications is scoped to the caller tenant, and only to it > does not list a NULL-tenant row to a foreign tenant 17169ms
+ ✓ tests/schema-contract/cmc-batch-record-tenant-scope.contract.test.ts > cmc_batch_records is scoped to the caller organization, and only to it > does not list a legacy NULL-tenant row to a foreign organization 18092ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 198ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 138ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > refuses a member whose role carries no signing authority before checking the password (§11.10(g)) 34ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 31ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 14ms
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-01T08:16:15.198Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 30ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 59ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > an outcome that is not an approval is recorded as 'resolve', with no password asked 11ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 25ms
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-01T08:16:15.320Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 13ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > refuses a member whose role carries no signing authority before checking the password (§11.10(g)) 14ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 5ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 14ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 15ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 12ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > an outcome that is not an approval is recorded as 'resolve', with no password asked 32ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 24ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 11ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > refuses a member whose role carries no signing authority before checking the password (§11.10(g)) 47ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 12ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 3ms
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-01T08:16:15.480Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 27ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 4ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > an outcome that is not an approval is recorded as 'resolve', with no password asked 16ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 30ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 26ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > refuses a member whose role carries no signing authority before checking the password (§11.10(g)) 19ms
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-01T08:16:15.620Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 6ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 16ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 5ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 45ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > an outcome that is not an approval is recorded as 'update', with no password asked 8ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 24ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 46ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > refuses a member whose role carries no signing authority before checking the password (§11.10(g)) 6ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 88ms
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-01T08:16:16.073Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 205ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 39ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'consent-form approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 15ms
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-01T08:16:16.277Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back
+{
+  "timestamp": "2026-10-01T08:16:16.315Z",
+  "level": "error",
+  "message": "[governed-signed-act] signing the governed act failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 168ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > refuses a member whose role carries no signing authority before checking the password (§11.10(g)) 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 2ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 5ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'deviation closure' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 20ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > refuses a request that carries no credentials, and writes nothing 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 13ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > refuses a member whose role carries no signing authority before checking the password (§11.10(g)) 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > refuses a meaning outside the closed vocabulary before checking the password 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > refuses a signature that declares no meaning, and writes nothing 3ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 8ms
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'BLA assessment sign-off' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 6ms
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB submission' status PATCH cannot set what a determination sets > refuses status 'approved', and writes nothing 33ms
+   → IRB submission: PATCH set 'approved' without a determination: {"id":5,"status":"approved","actionId":"act_1","auditId":"aud_1","sha256Chain":"chain_1"}: expected 201 to be 409 // Object.is equality
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB submission' status PATCH cannot set what a determination sets > refuses status 'modifications_required', and writes nothing 7ms
+   → IRB submission: PATCH set 'modifications_required' without a determination: {"id":5,"status":"modifications_required","actionId":"act_1","auditId":"aud_1","sha256Chain":"chain_1"}: expected 201 to be 409 // Object.is equality
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB submission' status PATCH cannot set what a determination sets > still records a status no determination sets, as a transition 4ms
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC protocol' status PATCH cannot set what a determination sets > refuses status 'approved', and writes nothing 4ms
+   → IACUC protocol: PATCH set 'approved' without a determination: {"id":5,"status":"approved","actionId":"act_1","auditId":"aud_1","sha256Chain":"chain_1"}: expected 201 to be 409 // Object.is equality
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC protocol' status PATCH cannot set what a determination sets > refuses status 'conditional', and writes nothing 3ms
+   → IACUC protocol: PATCH set 'conditional' without a determination: {"id":5,"status":"conditional","actionId":"act_1","auditId":"aud_1","sha256Chain":"chain_1"}: expected 201 to be 409 // Object.is equality
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC protocol' status PATCH cannot set what a determination sets > still records a status no determination sets, as a transition 3ms
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC registration' status PATCH cannot set what a determination sets > refuses status 'approved', and writes nothing 4ms
+   → IBC registration: PATCH set 'approved' without a determination: {"id":5,"status":"approved","actionId":"act_1","auditId":"aud_1","sha256Chain":"chain_1"}: expected 201 to be 409 // Object.is equality
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC registration' status PATCH cannot set what a determination sets > refuses status 'conditional', and writes nothing 3ms
+   → IBC registration: PATCH set 'conditional' without a determination: {"id":5,"status":"conditional","actionId":"act_1","auditId":"aud_1","sha256Chain":"chain_1"}: expected 201 to be 409 // Object.is equality
+ ✓ server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC registration' status PATCH cannot set what a determination sets > still records a status no determination sets, as a transition 5ms
+ ✓ tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > quality_specifications is scoped to the caller tenant, and only to it > refuses a foreign tenant PUT on a NULL-tenant row, and leaves the row untouched 10685ms
+ ✓ tests/schema-contract/cmc-batch-record-tenant-scope.contract.test.ts > cmc_batch_records is scoped to the caller organization, and only to it > refuses a foreign-organization PUT on a legacy row, and leaves the row untouched 10323ms
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' writes the electronic_signatures row with its ledger sign > records the signature row on the ledger's own client, before COMMIT
+[CMC Batch] Release testing for batch 9: released
+
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' writes the electronic_signatures row with its ledger sign > records the signature row on the ledger's own client, before COMMIT 88ms
+stderr | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back
+[CMC Batch] Error processing release: Error: signer identity unresolvable
+    at /home/user/ClinicalSageAI-2-replit/server/api/cmc/__tests__/cmc-sign-signature-row.test.ts:168:17
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back 59ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' writes the electronic_signatures row with its ledger sign > a request with no credentials is refused and writes nothing 25ms
+stderr | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back
+[CMC Specs] Error approving specification: Error: signer identity unresolvable
+    at /home/user/ClinicalSageAI-2-replit/server/api/cmc/__tests__/cmc-sign-signature-row.test.ts:168:17
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+stderr | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back
+{
+  "timestamp": "2026-10-01T08:16:24.748Z",
+  "level": "error",
+  "message": "[cmc-routes] CMC write failed",
+  "context": {
+    "operation": "Failed to qualify container closure system",
+    "error": "signer identity unresolvable"
+  }
+}
+
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' writes the electronic_signatures row with its ledger sign > records the signature row on the ledger's own client, before COMMIT 68ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back 34ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' writes the electronic_signatures row with its ledger sign > a request with no credentials is refused and writes nothing 4ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' writes the electronic_signatures row with its ledger sign > records the signature row on the ledger's own client, before COMMIT 29ms
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' requires a signer with signing authority > refuses a viewer who knows their own password before re-authentication, and writes nothing
+[CMC Batch] Release testing for batch 9: released
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' requires a signer with signing authority > refuses a user with no membership row in the organization
+[CMC Batch] Release testing for batch 9: released
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a 'approved' disposition is signed with meaning 'release', on the ledger and the signature row
+[CMC Batch] Release testing for batch 9: released
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a 'conditional' disposition is signed with meaning 'responsibility', on the ledger and the signature row
+[CMC Batch] Release testing for batch 9: conditional-release
+
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back 23ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' writes the electronic_signatures row with its ledger sign > a request with no credentials is refused and writes nothing 12ms
+ × server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' requires a signer with signing authority > refuses a viewer who knows their own password before re-authentication, and writes nothing 14ms
+   → a viewer signed the batch release: {"success":true,"data":{"batchRecord":{"id":9,"status":"draft","approval_status":"draft","project_id":null,"tenant_id":"7","organization_id":7},"releaseEvaluation":{"decision":"approved","releasedBy":"QA Head","comments":null,"testResults":[{"test":"assay","result":"pass","passed":true,"evaluatedAt":"2026-10-01T08:16:24.778Z"}],"allTestsPassed":true,"releaseStatus":"released","releasedAt":"2026-10-01T08:16:24.778Z"}},"governance":{"actionId":"act_1","sha256Chain":"chain_1"},"message":"Batch released successfully","timestamp":"2026-10-01T08:16:24.780Z","module3Linked":true}: expected 200 to be 403 // Object.is equality
+ × server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' requires a signer with signing authority > refuses a user with no membership row in the organization 4ms
+   → expected 200 to be 403 // Object.is equality
+ × server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' requires a signer with signing authority > refuses a viewer who knows their own password before re-authentication, and writes nothing 3ms
+   → a viewer signed the specification approval: {"success":true,"data":{"id":9,"status":"draft","approval_status":"draft","project_id":null,"tenant_id":"7","organization_id":7},"governance":{"actionId":"act_1","sha256Chain":"chain_1"},"timestamp":"2026-10-01T08:16:24.795Z","module3Linked":true}: expected 200 to be 403 // Object.is equality
+ × server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' requires a signer with signing authority > refuses a user with no membership row in the organization 4ms
+   → expected 200 to be 403 // Object.is equality
+ × server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' requires a signer with signing authority > refuses a viewer who knows their own password before re-authentication, and writes nothing 6ms
+   → a viewer signed the container-closure qualification: {"success":true,"data":{"id":9},"governance":{"actionId":"act_1","sha256Chain":"chain_1"},"module3Linked":true}: expected 200 to be 403 // Object.is equality
+ × server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' requires a signer with signing authority > refuses a user with no membership row in the organization 4ms
+   → expected 200 to be 403 // Object.is equality
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a 'approved' disposition is signed with meaning 'release', on the ledger and the signature row 39ms
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a 'rejected' disposition is signed with meaning 'responsibility', on the ledger and the signature row
+[CMC Batch] Release testing for batch 9: rejected
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > refuses a declared 'release' on a rejected batch before re-authentication, and writes nothing
+[CMC Batch] Release testing for batch 9: rejected
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > refuses a declared meaning outside the closed vocabulary, and writes nothing
+[CMC Batch] Release testing for batch 9: released
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > accepts a declared meaning that agrees with the disposition
+[CMC Batch] Release testing for batch 9: released
+
+ × server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a 'conditional' disposition is signed with meaning 'responsibility', on the ledger and the signature row 24ms
+   → expected { meaning: 'release', …(2) } to match object { meaning: 'responsibility', …(1) }
+(1 matching property omitted from actual)
+ × server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a 'rejected' disposition is signed with meaning 'responsibility', on the ledger and the signature row 6ms
+   → expected { meaning: 'release', …(2) } to match object { meaning: 'responsibility', …(1) }
+(1 matching property omitted from actual)
+ × server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > refuses a declared 'release' on a rejected batch before re-authentication, and writes nothing 3ms
+   → {"success":true,"data":{"batchRecord":{"id":9,"status":"draft","approval_status":"draft","project_id":null,"tenant_id":"7","organization_id":7},"releaseEvaluation":{"decision":"rejected","releasedBy":"QA Head","comments":null,"testResults":[{"test":"assay","result":"pass","passed":true,"evaluatedAt":"2026-10-01T08:16:24.881Z"}],"allTestsPassed":true,"releaseStatus":"rejected","releasedAt":"2026-10-01T08:16:24.881Z"}},"governance":{"actionId":"act_1","sha256Chain":"chain_1"},"message":"Batch release decision recorded successfully","timestamp":"2026-10-01T08:16:24.881Z","module3Linked":true}: expected 200 to be 400 // Object.is equality
+ × server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > refuses a declared meaning outside the closed vocabulary, and writes nothing 3ms
+   → expected 200 to be 400 // Object.is equality
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > accepts a declared meaning that agrees with the disposition 6ms
+ ✓ tests/schema-contract/cmc-batch-record-tenant-scope.contract.test.ts > cmc_batch_records is scoped to the caller organization, and only to it > refuses a foreign-organization RELEASE on a legacy row, and signs nothing 4937ms
+ ✓ tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > quality_specifications is scoped to the caller tenant, and only to it > refuses a foreign tenant approve on a NULL-tenant row, and leaves it in draft 6994ms
+ ✓ tests/schema-contract/cmc-batch-record-tenant-scope.contract.test.ts > cmc_batch_records is scoped to the caller organization, and only to it > still lists the owning organization BOTH its rows, legacy included 5460ms
+ ✓ tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > quality_specifications is scoped to the caller tenant, and only to it > does not return the audit history of a NULL-tenant row to a foreign tenant 7373ms
+stdout | tests/schema-contract/cmc-batch-record-tenant-scope.contract.test.ts > cmc_batch_records is scoped to the caller organization, and only to it > lets the owning organization release its own legacy row
+[CMC Batch] Release testing for batch 45492d54-2aaf-4336-a9f1-c1c3ad55d99a: released
+
+ ✓ tests/schema-contract/cmc-batch-record-tenant-scope.contract.test.ts > cmc_batch_records is scoped to the caller organization, and only to it > lets the owning organization release its own legacy row 6028ms
+ ✓ tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > quality_specifications is scoped to the caller tenant, and only to it > still lists the owning tenant its own row 3957ms
+stdout | tests/schema-contract/cmc-batch-record-tenant-scope.contract.test.ts > cmc_batch_records is scoped to the caller organization, and only to it > lets the owning organization update its own row
+[CMC Batch] Updated batch record 81b872c2-b061-4098-bb13-f3f41e9d00b5
+
+ ✓ tests/schema-contract/cmc-batch-record-tenant-scope.contract.test.ts > cmc_batch_records is scoped to the caller organization, and only to it > lets the owning organization update its own row 4450ms
+stdout | tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > quality_specifications is scoped to the caller tenant, and only to it > lets the owning tenant update its own row
+[CMC Specs] Updated specification a585f665-396a-42d3-8f70-f4a588f077f6
+
+ ✓ tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > quality_specifications is scoped to the caller tenant, and only to it > lets the owning tenant update its own row 5414ms
+stdout | tests/schema-contract/cmc-batch-record-tenant-scope.contract.test.ts > the writes are tenant-scoped in their own right > PUT does not write a row that stopped being the caller's between SELECT and UPDATE
+[CMC Batch] Updated batch record 58cabf05-22ea-455a-8acc-0b7c0114f064
+
+ ✓ tests/schema-contract/cmc-batch-record-tenant-scope.contract.test.ts > the writes are tenant-scoped in their own right > PUT does not write a row that stopped being the caller's between SELECT and UPDATE 7198ms
+ ✓ tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > quality_specifications is scoped to the caller tenant, and only to it > lets the owning tenant approve its own row 8089ms
+ ✓ tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > quality_specifications is scoped to the caller tenant, and only to it > returns the owning tenant its own audit history 5984ms
+ ✓ tests/schema-contract/cmc-batch-record-tenant-scope.contract.test.ts > the writes are tenant-scoped in their own right > RELEASE does not disposition a row that stopped being the caller's, and signs nothing 8511ms
+ ✓ tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > the store refuses a tenant-less specification > ships a migration that requires tenant_id 4950ms
+ ✓ tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > the store refuses a tenant-less specification > rejects an INSERT with no tenant_id 8918ms
+ ✓ tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > the store refuses a tenant-less specification > leaves legacy NULL rows in place rather than deleting them 8926ms
+ ✓ tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > approve fails closed when the record vanishes mid-transaction > returns 404 and records no signature when the UPDATE matches no row 3962ms
+ ✓ tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > approve fails closed when the record vanishes mid-transaction > writes no audit-log row attesting the phantom approval 3019ms
+ ✓ tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > approve fails closed when the record vanishes mid-transaction > still approves normally while the seam is armed for another row 3076ms
+stdout | tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > a specification is created unsigned > refuses approvalStatus 'approved' and stores nothing
+[CMC Specs] Created specification fa25cb4c-169b-4131-b517-4a7a68268f89 for Created by the test
+
+ × tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > a specification is created unsigned > refuses approvalStatus 'approved' and stores nothing 3683ms
+   → create stored a specification as approved: {"success":true,"data":{"id":"fa25cb4c-169b-4131-b517-4a7a68268f89","project_id":"11111111-1111-4111-8111-111111111111","tenant_id":1,"material_type":"drug-substance","material_name":"Created by the test","test_parameters":null,"acceptance_criteria":null,"test_methods":null,"justification":null,"regulatory_basis":null,"approval_status":"approved","created_at":"2026-10-01T08:17:36.918Z","updated_at":"2026-10-01T08:17:36.918Z"},"message":"Specification created successfully","timestamp":"2026-10-01T08:17:36.926Z","module3Linked":true}: expected 201 to be 400 // Object.is equality
+stdout | tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > a specification is created unsigned > creates with approvalStatus undefined as draft
+[CMC Specs] Created specification 9a547ac4-01f3-46ee-be4b-3a963f2f6ff0 for Created by the test
+
+ ✓ tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > a specification is created unsigned > creates with approvalStatus undefined as draft 4410ms
+stdout | tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > a specification is created unsigned > creates with approvalStatus draft as draft
+[CMC Specs] Created specification 418f42bd-d696-4649-bb7f-92815e5c2095 for Created by the test
+
+ ✓ tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > a specification is created unsigned > creates with approvalStatus draft as draft 5525ms
+stdout | tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > a specification is created unsigned > creates with approvalStatus review as review
+[CMC Specs] Created specification e491384e-c066-4ac5-a89a-d70e3f443181 for Created by the test
+
+ ✓ tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > a specification is created unsigned > creates with approvalStatus review as review 4530ms
+stdout | tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > a specification is created unsigned > records the authenticated user as the creator, not 'system'
+[CMC Specs] Created specification 653f24f6-fe56-4e21-8e6f-59284673e7b2 for Created by the test
+
+ × tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > a specification is created unsigned > records the authenticated user as the creator, not 'system' 4967ms
+   → expected [ { changed_by: 'system' } ] to deeply equal [ { changed_by: '42' } ]
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 18 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > a specification is created unsigned > refuses approvalStatus 'approved' and stores nothing
+AssertionError: create stored a specification as approved: {"success":true,"data":{"id":"fa25cb4c-169b-4131-b517-4a7a68268f89","project_id":"11111111-1111-4111-8111-111111111111","tenant_id":1,"material_type":"drug-substance","material_name":"Created by the test","test_parameters":null,"acceptance_criteria":null,"test_methods":null,"justification":null,"regulatory_basis":null,"approval_status":"approved","created_at":"2026-10-01T08:17:36.918Z","updated_at":"2026-10-01T08:17:36.918Z"},"message":"Specification created successfully","timestamp":"2026-10-01T08:17:36.926Z","module3Linked":true}: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts:424:98
+    422|     currentTenant = 1;
+    423|     const res = await request(app).post('/api/cmc/specifications').sen…
+    424|     expect(res.status, `create stored a specification as approved: ${J…
+       |                                                                                                  ^
+    425|     expect(JSON.stringify(res.body)).toContain('/api/cmc/specification…
+    426|     expect(await createdRows()).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/18]⎯
+
+ FAIL  tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > a specification is created unsigned > records the authenticated user as the creator, not 'system'
+AssertionError: expected [ { changed_by: 'system' } ] to deeply equal [ { changed_by: '42' } ]
+
+- Expected
++ Received
+
+  [
+    {
+-     "changed_by": "42",
++     "changed_by": "system",
+    },
+  ]
+
+ ❯ tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts:449:22
+    447|       [res.body.data.id],
+    448|     );
+    449|     expect(log.rows).toEqual([{ changed_by: '42' }]);
+       |                      ^
+    450|   }, 60_000);
+    451| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/18]⎯
+
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB submission' status PATCH cannot set what a determination sets > refuses status 'approved', and writes nothing
+AssertionError: IRB submission: PATCH set 'approved' without a determination: {"id":5,"status":"approved","actionId":"act_1","auditId":"aud_1","sha256Chain":"chain_1"}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ server/routes/__tests__/domain-sign-ceremony.routes.test.ts:343:116
+    341|   it.each(door.determined)("refuses status '%s', and writes nothing", …
+    342|     const res = await patch(status);
+    343|     expect(res.status, `${door.name}: PATCH set '${status}' without a …
+       |                                                                                                                    ^
+    344|     expect(codeOf(res.body)).toBe('STATUS_SET_BY_DETERMINATION');
+    345|     expect(res.body.error.message).toContain(door.path.replace(/\/stat…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/18]⎯
+
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB submission' status PATCH cannot set what a determination sets > refuses status 'modifications_required', and writes nothing
+AssertionError: IRB submission: PATCH set 'modifications_required' without a determination: {"id":5,"status":"modifications_required","actionId":"act_1","auditId":"aud_1","sha256Chain":"chain_1"}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ server/routes/__tests__/domain-sign-ceremony.routes.test.ts:343:116
+    341|   it.each(door.determined)("refuses status '%s', and writes nothing", …
+    342|     const res = await patch(status);
+    343|     expect(res.status, `${door.name}: PATCH set '${status}' without a …
+       |                                                                                                                    ^
+    344|     expect(codeOf(res.body)).toBe('STATUS_SET_BY_DETERMINATION');
+    345|     expect(res.body.error.message).toContain(door.path.replace(/\/stat…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/18]⎯
+
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC protocol' status PATCH cannot set what a determination sets > refuses status 'approved', and writes nothing
+AssertionError: IACUC protocol: PATCH set 'approved' without a determination: {"id":5,"status":"approved","actionId":"act_1","auditId":"aud_1","sha256Chain":"chain_1"}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ server/routes/__tests__/domain-sign-ceremony.routes.test.ts:343:116
+    341|   it.each(door.determined)("refuses status '%s', and writes nothing", …
+    342|     const res = await patch(status);
+    343|     expect(res.status, `${door.name}: PATCH set '${status}' without a …
+       |                                                                                                                    ^
+    344|     expect(codeOf(res.body)).toBe('STATUS_SET_BY_DETERMINATION');
+    345|     expect(res.body.error.message).toContain(door.path.replace(/\/stat…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/18]⎯
+
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC protocol' status PATCH cannot set what a determination sets > refuses status 'conditional', and writes nothing
+AssertionError: IACUC protocol: PATCH set 'conditional' without a determination: {"id":5,"status":"conditional","actionId":"act_1","auditId":"aud_1","sha256Chain":"chain_1"}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ server/routes/__tests__/domain-sign-ceremony.routes.test.ts:343:116
+    341|   it.each(door.determined)("refuses status '%s', and writes nothing", …
+    342|     const res = await patch(status);
+    343|     expect(res.status, `${door.name}: PATCH set '${status}' without a …
+       |                                                                                                                    ^
+    344|     expect(codeOf(res.body)).toBe('STATUS_SET_BY_DETERMINATION');
+    345|     expect(res.body.error.message).toContain(door.path.replace(/\/stat…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/18]⎯
+
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC registration' status PATCH cannot set what a determination sets > refuses status 'approved', and writes nothing
+AssertionError: IBC registration: PATCH set 'approved' without a determination: {"id":5,"status":"approved","actionId":"act_1","auditId":"aud_1","sha256Chain":"chain_1"}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ server/routes/__tests__/domain-sign-ceremony.routes.test.ts:343:116
+    341|   it.each(door.determined)("refuses status '%s', and writes nothing", …
+    342|     const res = await patch(status);
+    343|     expect(res.status, `${door.name}: PATCH set '${status}' without a …
+       |                                                                                                                    ^
+    344|     expect(codeOf(res.body)).toBe('STATUS_SET_BY_DETERMINATION');
+    345|     expect(res.body.error.message).toContain(door.path.replace(/\/stat…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/18]⎯
+
+ FAIL  server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC registration' status PATCH cannot set what a determination sets > refuses status 'conditional', and writes nothing
+AssertionError: IBC registration: PATCH set 'conditional' without a determination: {"id":5,"status":"conditional","actionId":"act_1","auditId":"aud_1","sha256Chain":"chain_1"}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ server/routes/__tests__/domain-sign-ceremony.routes.test.ts:343:116
+    341|   it.each(door.determined)("refuses status '%s', and writes nothing", …
+    342|     const res = await patch(status);
+    343|     expect(res.status, `${door.name}: PATCH set '${status}' without a …
+       |                                                                                                                    ^
+    344|     expect(codeOf(res.body)).toBe('STATUS_SET_BY_DETERMINATION');
+    345|     expect(res.body.error.message).toContain(door.path.replace(/\/stat…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/18]⎯
+
+ FAIL  server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' requires a signer with signing authority > refuses a viewer who knows their own password before re-authentication, and writes nothing
+AssertionError: a viewer signed the batch release: {"success":true,"data":{"batchRecord":{"id":9,"status":"draft","approval_status":"draft","project_id":null,"tenant_id":"7","organization_id":7},"releaseEvaluation":{"decision":"approved","releasedBy":"QA Head","comments":null,"testResults":[{"test":"assay","result":"pass","passed":true,"evaluatedAt":"2026-10-01T08:16:24.778Z"}],"allTestsPassed":true,"releaseStatus":"released","releasedAt":"2026-10-01T08:16:24.778Z"}},"governance":{"actionId":"act_1","sha256Chain":"chain_1"},"message":"Batch released successfully","timestamp":"2026-10-01T08:16:24.780Z","module3Linked":true}: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts:199:86
+    197|     signerRole.value = 'viewer';
+    198|     const res = await request(app).post(c.path).send({ ...c.body, reau…
+    199|     expect(res.status, `a viewer signed the ${c.name}: ${JSON.stringif…
+       |                                                                                      ^
+    200|     expect(res.body.error).toBe('ESIGNATURE_NO_AUTHORITY');
+    201|     expect(verifyReauth).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/18]⎯
+
+ FAIL  server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' requires a signer with signing authority > refuses a user with no membership row in the organization
+ FAIL  server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' requires a signer with signing authority > refuses a user with no membership row in the organization
+ FAIL  server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' requires a signer with signing authority > refuses a user with no membership row in the organization
+AssertionError: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts:208:24
+    206|     signerRole.value = null;
+    207|     const res = await request(app).post(c.path).send({ ...c.body, reau…
+    208|     expect(res.status).toBe(403);
+       |                        ^
+    209|     expect(res.body.error).toBe('ESIGNATURE_NO_AUTHORITY');
+    210|     expect(nothingWritten()).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/18]⎯
+
+ FAIL  server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' requires a signer with signing authority > refuses a viewer who knows their own password before re-authentication, and writes nothing
+AssertionError: a viewer signed the specification approval: {"success":true,"data":{"id":9,"status":"draft","approval_status":"draft","project_id":null,"tenant_id":"7","organization_id":7},"governance":{"actionId":"act_1","sha256Chain":"chain_1"},"timestamp":"2026-10-01T08:16:24.795Z","module3Linked":true}: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts:199:86
+    197|     signerRole.value = 'viewer';
+    198|     const res = await request(app).post(c.path).send({ ...c.body, reau…
+    199|     expect(res.status, `a viewer signed the ${c.name}: ${JSON.stringif…
+       |                                                                                      ^
+    200|     expect(res.body.error).toBe('ESIGNATURE_NO_AUTHORITY');
+    201|     expect(verifyReauth).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/18]⎯
+
+ FAIL  server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' requires a signer with signing authority > refuses a viewer who knows their own password before re-authentication, and writes nothing
+AssertionError: a viewer signed the container-closure qualification: {"success":true,"data":{"id":9},"governance":{"actionId":"act_1","sha256Chain":"chain_1"},"module3Linked":true}: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts:199:86
+    197|     signerRole.value = 'viewer';
+    198|     const res = await request(app).post(c.path).send({ ...c.body, reau…
+    199|     expect(res.status, `a viewer signed the ${c.name}: ${JSON.stringif…
+       |                                                                                      ^
+    200|     expect(res.body.error).toBe('ESIGNATURE_NO_AUTHORITY');
+    201|     expect(verifyReauth).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/18]⎯
+
+ FAIL  server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a 'conditional' disposition is signed with meaning 'responsibility', on the ledger and the signature row
+AssertionError: expected { meaning: 'release', …(2) } to match object { meaning: 'responsibility', …(1) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "decision": "conditional",
+-   "meaning": "responsibility",
++   "meaning": "release",
+  }
+
+ ❯ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts:236:59
+    234|     const res = await release({ decision });
+    235|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    236|     expect(recordGovernedAction.mock.calls[0][1].payload).toMatchObjec…
+       |                                                           ^
+    237|     expect(persistGovernedActionSignature.mock.calls[0][1].payload.mea…
+    238|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/18]⎯
+
+ FAIL  server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a 'rejected' disposition is signed with meaning 'responsibility', on the ledger and the signature row
+AssertionError: expected { meaning: 'release', …(2) } to match object { meaning: 'responsibility', …(1) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "decision": "rejected",
+-   "meaning": "responsibility",
++   "meaning": "release",
+  }
+
+ ❯ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts:236:59
+    234|     const res = await release({ decision });
+    235|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    236|     expect(recordGovernedAction.mock.calls[0][1].payload).toMatchObjec…
+       |                                                           ^
+    237|     expect(persistGovernedActionSignature.mock.calls[0][1].payload.mea…
+    238|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/18]⎯
+
+ FAIL  server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > refuses a declared 'release' on a rejected batch before re-authentication, and writes nothing
+AssertionError: {"success":true,"data":{"batchRecord":{"id":9,"status":"draft","approval_status":"draft","project_id":null,"tenant_id":"7","organization_id":7},"releaseEvaluation":{"decision":"rejected","releasedBy":"QA Head","comments":null,"testResults":[{"test":"assay","result":"pass","passed":true,"evaluatedAt":"2026-10-01T08:16:24.881Z"}],"allTestsPassed":true,"releaseStatus":"rejected","releasedAt":"2026-10-01T08:16:24.881Z"}},"governance":{"actionId":"act_1","sha256Chain":"chain_1"},"message":"Batch release decision recorded successfully","timestamp":"2026-10-01T08:16:24.881Z","module3Linked":true}: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts:242:50
+    240|   it("refuses a declared 'release' on a rejected batch before re-authe…
+    241|     const res = await release({ decision: 'rejected', meaning: 'releas…
+    242|     expect(res.status, JSON.stringify(res.body)).toBe(400);
+       |                                                  ^
+    243|     expect(res.body.error).toBe('SIGNATURE_MEANING_CONFLICT');
+    244|     expect(verifyReauth).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/18]⎯
+
+ FAIL  server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > refuses a declared meaning outside the closed vocabulary, and writes nothing
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts:250:24
+    248|   it('refuses a declared meaning outside the closed vocabulary, and wr…
+    249|     const res = await release({ decision: 'approved', meaning: 'rubber…
+    250|     expect(res.status).toBe(400);
+       |                        ^
+    251|     expect(res.body.error).toBe('SIGNATURE_MEANING_UNKNOWN');
+    252|     expect(verifyReauth).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/18]⎯
+
+
+ Test Files  3 failed | 1 passed (4)
+      Tests  18 failed | 92 passed (110)
+   Start at  08:15:49
+   Duration  126.74s (transform 18.77s, setup 793ms, import 37.37s, tests 188.97s, environment 1ms)
+

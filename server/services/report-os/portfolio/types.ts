@@ -17,7 +17,9 @@ export interface ProgramMemberInsight {
   code?: string | null;
   /** Therapeutic area / indication, from projects.therapeutic_area when present. */
   indication?: string | null;
-  readinessScore: number;
+  /** The evaluated submission readiness (evaluateReadiness), or null when none
+   *  was computed for the member. Never the run's confidence. */
+  readinessScore: number | null;
   confidence: number;
   status: 'ready' | 'partial' | 'missing';
   criticalBlockerCount: number;
@@ -33,7 +35,8 @@ export interface ProgramMemberInsight {
  */
 export interface PortfolioAggregate {
   memberCount: number;
-  avgReadiness: number;
+  /** Mean over members with a computed readiness; null when none has one. */
+  avgReadiness: number | null;
   avgConfidence: number;
   worstRisk: RiskLevel;
   readyCount: number;

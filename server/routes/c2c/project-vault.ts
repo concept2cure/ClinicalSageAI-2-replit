@@ -69,6 +69,10 @@ import { readVaultCoverage, type VaultCoverage } from '../../services/vault/vaul
 import { normalizeCtdCode, compareSectionCode } from '../../../shared/regulatory/section-code.js';
 import { writeChainedAuditRow } from '../../services/auditService.js';
 import { readRecordAuditHistory } from '../audit-trail-ledger.routes.js';
+import { readVersionFamily, supersededSql, versionCountLateral } from '../../services/vault/vault-version-family.js';
+import { readVaultLifecycles } from '../../services/vault/vault-lifecycle.js';
+import { fileDataRoomSources, readFiledAs } from '../../services/vault/vault-data-room-filing.js';
+import { searchVaultDocuments } from '../../services/vault/vault-search.js';
 import { setTenantContextTx } from '../../services/tenant/governed-tenant-context.js';
 import { requireEditorAccess } from '../../middleware/orgMembership.js';
 import { getStorageProvider, getStorageProviderFor } from '../../services/storage/index.js';
@@ -76,6 +80,7 @@ import { getStorageProvider, getStorageProviderFor } from '../../services/storag
    governed artifact registry FKs to. Its contract requires every caller to
    branch on the resolution and keep an honest degraded path. */
 import { resolveCmcArtifactProject } from '../../services/cmc/resolve-cmc-artifact-project.js';
+import { programInOrganization } from '../../services/c2c/program-access';
 
 const logger = createScopedLogger('c2c-project-vault-routes');
 
@@ -110,6 +115,12 @@ interface VaultDoc {
   /** The version's recorded descriptive fields, as stored (uploads only):
    *  what Edit details starts from. */
   details?: { documentTitle: string | null; documentType: string | null; classification: string | null };
+  /** How many versions the document has (VR-09); the leaf is its current one. */
+  versionCount?: number;
+  /** vault.documents.document_code (uploads only): a 409 at this code offers a check-in (VR-09). */
+  documentCode?: string | null;
+  /** This version's lifecycle stage (uploads only, VR-13): null when it has no record, i.e. not reviewed. */
+  lifecycleStage?: string | null;
 }
 
 /** The placement block for an uploaded document — mirrors vault-ingest. */
@@ -151,6 +162,9 @@ interface DataRoomRow {
   evidenceKind: string | null;
   confidence: string | null;
   needsReview: boolean;
+  /** Which Vault version its bytes became (VR-16): `supersededBy` names the
+   *  family's current version when a later one replaced it. Null when not filed. */
+  filedAs: { version: string | null; supersededBy: string | null } | null;
 }
 
 interface DataRoomBlock {
@@ -203,6 +217,10 @@ interface VaultDisplayShape {
    *  WHOLE program, not over `uploadsWindow` — a queue derived from a capped
    *  page would shrink as the backlog grew. */
   unfiledCount?: number;
+  /** Documents in a suggested folder that no person has confirmed (VR-11b).
+   *  Counted over the whole program, like `unfiledCount`. Absent when the
+   *  uploads store could not be read. */
+  awaitingConfirmationCount?: number;
   /**
    * How much of the filing cabinet the tree above actually carries. The vault
    * is unbounded and the tree read is capped (VAULT_TREE_MAX_DOCS), so a
@@ -442,6 +460,10 @@ export interface UploadRow {
   placement_rationale: string | null;
   updated_at: string | Date | null;
   owner_name: string | null;
+  /** Versions back through valid predecessors, this one included (VR-09). */
+  version_count?: number | null;
+  /** This version's lifecycle stage; null when it has no record: not reviewed (VR-13). */
+  lifecycle_stage?: string | null;
 }
 
 /**
@@ -473,6 +495,15 @@ function uploadTypeLabel(row: UploadRow): string {
     return vaultIngestTypeLabel(row.document_type);
   }
   return 'File';
+}
+
+/** Where the leaf sits among its document's versions (VR-09) and in review (VR-13). */
+function versionFacts(row: UploadRow): Pick<VaultDoc, 'versionCount' | 'documentCode' | 'lifecycleStage'> {
+  return {
+    versionCount: row.version_count ?? 1,
+    documentCode: row.document_code,
+    lifecycleStage: row.lifecycle_stage ?? null,
+  };
 }
 
 /** An uploaded vault.documents row → a VaultDoc leaf (all real columns).
@@ -515,6 +546,7 @@ export function uploadLeaf(view: VaultViewId, row: UploadRow): VaultDoc {
       documentType: row.document_type,
       classification: row.classification ?? null,
     },
+    ...versionFacts(row),
   };
   if (placementStatus === 'unfiled') {
     leaf.flag = row.placement_rationale ?? 'Not filed into the dossier yet.';
@@ -998,8 +1030,86 @@ async function module3Branch(programId: string, orgId: number): Promise<Module3B
 
 // ─── Router factory ─────────────────────────────────────────────────────────────
 
+/**
+ * A document's history across its versions (VR-09) and their review and
+ * approval (VR-13): the audit rows recorded against each version, and those
+ * recorded against each version's lifecycle record (its transitions and
+ * sign-offs), as one list, newest first. Each entry names the version it was
+ * recorded against. A deleted version has no live family, so its own trail is
+ * read, as before.
+ */
+async function readFamilyHistory(
+  client: PoolClient,
+  orgId: number,
+  family: Awaited<ReturnType<typeof readVersionFamily>>,
+  documentId: string,
+) {
+  const versionIds = family ? family.map((v) => v.id) : [];
+  const history = await readRecordAuditHistory(client, orgId, {
+    tableName: 'vault_document',
+    recordId: family ? versionIds : documentId,
+  });
+  const lifecycles = family ? await readVaultLifecycles(client, orgId, versionIds) : new Map();
+  const records = [...lifecycles.entries()].map(([vaultId, l]) => ({ vaultId, canonicalId: l.canonicalId as string }));
+  const lifecycle = records.length > 0
+    ? await readRecordAuditHistory(client, orgId, { tableName: 'canonical_document', recordId: records.map((r) => r.canonicalId) })
+    : { data: [] as typeof history.data };
+  const keys = [
+    ...(family ?? []).map((v) => ({ key: v.id, version: v.version })),
+    ...records.map((r) => ({ key: r.canonicalId, version: family?.find((v) => v.id === r.vaultId)?.version ?? null })),
+  ];
+  const versionOf = (e: { target?: string | null; targetRef?: string | null }) =>
+    keys.find((k) => [e.target, e.targetRef].some((t) => typeof t === 'string' && t.endsWith(k.key)))?.version ?? null;
+  const order = (e: { seq?: number | null; at?: string | null }) => [e.seq ?? -1, e.at ?? ''] as const;
+  const entries = [...history.data, ...lifecycle.data]
+    .sort((a, b) => {
+      const [sa, ta] = order(a);
+      const [sb, tb] = order(b);
+      return sa !== sb ? sb - sa : tb.localeCompare(ta);
+    })
+    .map((e) => ({ ...e, version: versionOf(e) }));
+  return { entries, chain: history.meta.chain };
+}
+
 export default function createProjectVaultRoutes(): Router {
   const router = Router();
+
+  /**
+   * GET /api/c2c/project-vault/search?q=&limit=&offset=&includeSuperseded=
+   * Library search (plan critique 15): the project search's query across every
+   * program the organisation holds (vault-search.ts), each hit naming its
+   * program. Registered before GET /:id, which would otherwise take "search"
+   * for a project id. An empty query is not "match everything"; an error is
+   * never an empty result.
+   */
+  router.get('/search', async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+    const limit = Math.min(Math.max(parseInt(String(req.query.limit ?? '25'), 10) || 25, 1), 100);
+    const offset = Math.max(parseInt(String(req.query.offset ?? '0'), 10) || 0, 0);
+    const includeSuperseded = req.query.includeSuperseded === 'true';
+    if (!q) {
+      return res.json({ success: true, data: { query: '', results: [], total: 0, limit, offset, reason: 'EMPTY_QUERY' } });
+    }
+    try {
+      const found = await searchVaultDocuments(pool, { organizationId: orgId, programId: null, q, limit, offset, includeSuperseded });
+      return res.json({
+        success: true,
+        data: {
+          query: q, total: found.total, limit, offset, includeSuperseded,
+          results: found.results.map((r) => ({ ...r, size: prettySize(r.sizeBytes) })),
+        },
+      });
+    } catch (err) {
+      logger.error('vault library search failed', { err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({
+        success: false,
+        error: 'SEARCH_FAILED',
+        message: 'The library could not be searched. This is not an empty result — nothing was searched.',
+      });
+    }
+  });
 
   /**
    * GET /api/c2c/project-vault/:id
@@ -1156,10 +1266,15 @@ export default function createProjectVaultRoutes(): Router {
                    AND rp.organization_id = $2
                    AND rp.deleted_at IS NULL
               )`;
+      /** The tree lists a document once, at its current version (VR-09): a row
+       *  a later live version of its family supersedes is not a document of its
+       *  own. The checksum join below keeps the whole program, every version. */
+      const headsWhere = `${uploadsWhere} AND NOT ${supersededSql('d')}`;
       let uploads: UploadRow[] = [];
       let uploadsStoreMissing = false;
       let uploadsWindow: { shown: number; total: number; truncated: boolean } | undefined;
       let unfiledCount = 0;
+      let awaitingConfirmationCount: number | undefined;
       try {
         // cap + 1 detects the overflow without a second round trip.
         const upRes = await pool.query(
@@ -1168,10 +1283,19 @@ export default function createProjectVaultRoutes(): Router {
                   d.folder_id, d.evidence_kind, d.ctd_section,
                   d.placement_status, d.placement_confidence, d.placement_rationale,
                   d.updated_at,
-                  COALESCE(u.name, u.email) AS owner_name
+                  COALESCE(u.name, u.email) AS owner_name,
+                  vc.version_count,
+                  lc.stage AS lifecycle_stage
              FROM vault.documents d
              LEFT JOIN LATERAL public.actor_name(d.created_by) u ON TRUE
-            WHERE ${uploadsWhere}
+             ${versionCountLateral('d')}
+             LEFT JOIN LATERAL (
+               SELECT c.stage FROM canonical_documents c
+                WHERE c.organization_id = $2 AND c.source_refs ? 'vault_documents'
+                  AND c.source_refs -> 'vault_documents' ->> 'nativeId' = d.id::text
+                ORDER BY c.created_at, c.canonical_id LIMIT 1
+             ) lc ON TRUE
+            WHERE ${headsWhere}
             ORDER BY d.updated_at DESC
             LIMIT $3`,
           [id, orgId, uploadsCap + 1],
@@ -1186,13 +1310,17 @@ export default function createProjectVaultRoutes(): Router {
                   COUNT(*) FILTER (
                     WHERE d.folder_id IS NULL
                        OR COALESCE(d.placement_status, 'unfiled') = 'unfiled'
-                  )::int AS unfiled
+                  )::int AS unfiled,
+                  COUNT(*) FILTER (
+                    WHERE d.folder_id IS NOT NULL AND d.placement_status = 'suggested'
+                  )::int AS suggested
              FROM vault.documents d
-            WHERE ${uploadsWhere}`,
+            WHERE ${headsWhere}`,
           [id, orgId],
         );
-        const counts = (cntRes.rows[0] ?? {}) as { total?: number; unfiled?: number };
+        const counts = (cntRes.rows[0] ?? {}) as { total?: number; unfiled?: number; suggested?: number };
         unfiledCount = counts.unfiled ?? 0;
+        awaitingConfirmationCount = counts.suggested ?? 0;
         uploadsWindow = {
           shown: uploads.length,
           total: counts.total ?? uploads.length,
@@ -1242,26 +1370,20 @@ export default function createProjectVaultRoutes(): Router {
           const sourceChecksums = Array.from(
             new Set(sources.map(s => s.checksum).filter((h): h is string => Boolean(h))),
           );
-          const vaultHashes = new Set<string>();
-          if (sourceChecksums.length > 0) {
-            const matchRes = await pool.query(
-              `SELECT DISTINCT d.content_hash
-                 FROM vault.documents d
-                WHERE ${uploadsWhere}
-                  AND d.content_hash = ANY($3::text[])`,
-              [id, orgId, sourceChecksums],
-            );
-            for (const r of matchRes.rows as Array<{ content_hash: string | null }>) {
-              if (r.content_hash) vaultHashes.add(r.content_hash);
-            }
-          }
+          // …and as which version (VR-16): the version its bytes are, and the
+          // family's current version when a later one replaced it.
+          // One join for the stage and for "File into Vault" (VR-11), so the
+          // two cannot disagree about what is filed.
+          const vaultHashes = await readFiledAs(pool, id, orgId, sourceChecksums);
           const rows: DataRoomRow[] = sources.map(s => {
             const meta = (s.metadata ?? {}) as Record<string, unknown>;
             const dossier = (meta.dossier ?? null) as
               | { evidenceKind?: string | null; suggestedFolder?: string | null;
                   confidence?: string | null; needsReview?: boolean }
               | null;
-            const filed = Boolean(s.checksum && vaultHashes.has(s.checksum));
+            const match = s.checksum ? vaultHashes.get(s.checksum) : undefined;
+            const filedAs = match ? { version: match.version, supersededBy: match.supersededBy } : null;
+            const filed = filedAs !== null;
             const proposed = Boolean(dossier?.suggestedFolder);
             const stage: DataRoomRow['stage'] =
               filed ? 'filed' : proposed ? 'classified' : dossier ? 'needs_review' : 'captured';
@@ -1291,6 +1413,7 @@ export default function createProjectVaultRoutes(): Router {
               evidenceKind: dossier?.evidenceKind ?? null,
               confidence: dossier?.confidence ?? null,
               needsReview: Boolean(dossier?.needsReview),
+              filedAs,
             };
           });
           dataRoom = {
@@ -1338,6 +1461,7 @@ export default function createProjectVaultRoutes(): Router {
         tree,
         coverage,
         unfiledCount,
+        ...(awaitingConfirmationCount !== undefined ? { awaitingConfirmationCount } : {}),
         ...(uploadsWindow ? { uploadsWindow } : {}),
         ...(dataRoom ? { dataRoom } : {}),
         ...(unavailable.length ? { unavailable } : {}),
@@ -1431,6 +1555,9 @@ export default function createProjectVaultRoutes(): Router {
     const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
     const limit = Math.min(Math.max(parseInt(String(req.query.limit ?? '25'), 10) || 25, 1), 100);
     const offset = Math.max(parseInt(String(req.query.offset ?? '0'), 10) || 0, 0);
+    // Current versions only unless asked (VR-09): an earlier version is the same
+    // document, and listing it beside its successor reads as two.
+    const includeSuperseded = req.query.includeSuperseded === 'true';
 
     /* An empty query is not "match everything" — that is the browse view, which
        is what GET /:id already serves. Returning the whole vault here would make
@@ -1445,86 +1572,31 @@ export default function createProjectVaultRoutes(): Router {
     try {
       // The program must be this org's before any of its documents are listed —
       // the same guard the read and download routes apply.
-      const prog = await pool.query(
-        `SELECT id FROM regulatory_programs
-          WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
-        [id, orgId],
-      );
-      if (prog.rows.length === 0) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+      if (!(await programInOrganization(pool, id, orgId))) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
 
-      /* `websearch_to_tsquery` rather than `to_tsquery`: it accepts arbitrary
-         user text (quotes, OR, -negation) and never raises a syntax error, so a
-         stray colon in a search box is a query, not a 500. */
-      const MATCH = `vault.document_search_vector(d.document_title, d.file_name, left(d.extracted_text, 900000))
-                     @@ websearch_to_tsquery('english', $3)`;
-
-      /** The program+tenant+match predicate, shared by the page and its count for
-       *  the same reason `uploadsWhere` above is shared: a total taken over a
-       *  different set than the rows is a wrong number, not a display detail.
-       *
-       *  The EXISTS carries the tenant boundary IN the statement. The route does
-       *  prove ownership first (the regulatory_programs SELECT above 404s when
-       *  the program is not this org's), so these reads were already scoped —
-       *  but `vault.documents` has no organization_id to filter on directly, its
-       *  own RLS is program-scoped through core.can_access_program(program_id),
-       *  and relying on a check twenty lines up means the next edit that moves
-       *  or copies this query loses the boundary silently. `ci:tenant-isolation`
-       *  flags raw SQL against a tenant-scoped table with no org reference in the
-       *  same statement, and it was right to: this is the shape that decays. */
-      const searchWhere = `d.program_id = $1 AND d.deleted_at IS NULL
-              AND EXISTS (
-                SELECT 1 FROM regulatory_programs rp
-                 WHERE rp.id = d.program_id
-                   AND rp.organization_id = $2
-                   AND rp.deleted_at IS NULL
-              )
-              AND ${MATCH}`;
-
-      const counted = await pool.query(
-        `SELECT count(*)::int AS total
-           FROM vault.documents d
-          WHERE ${searchWhere}`,
-        [id, orgId, q],
-      );
-
-      const rows = await pool.query(
-        `SELECT d.id, d.document_title, d.file_name, d.document_type, d.file_size,
-                d.folder_id, d.ctd_section, d.placement_status, d.created_at,
-                ts_rank_cd(
-                  vault.document_search_vector(d.document_title, d.file_name, left(d.extracted_text, 900000)),
-                  websearch_to_tsquery('english', $3)
-                ) AS rank,
-                -- A snippet from the body so a hit on content is legible as one.
-                -- ts_headline is expensive, so it runs on the returned page only.
-                ts_headline('english', COALESCE(left(d.extracted_text, 900000), ''),
-                            websearch_to_tsquery('english', $3),
-                            'MaxFragments=1, MaxWords=28, MinWords=8, ShortWord=2') AS snippet
-           FROM vault.documents d
-          WHERE ${searchWhere}
-          ORDER BY rank DESC, d.created_at DESC
-          LIMIT $4 OFFSET $5`,
-        [id, orgId, q, limit, offset],
-      );
-
+      // The one search query (vault-search.ts), here scoped to this program; the
+      // library search below asks the same query across the organisation.
+      const found = await searchVaultDocuments(pool, { organizationId: orgId, programId: id, q, limit, offset, includeSuperseded });
       return res.json({
         success: true,
         data: {
           query: q,
-          total: counted.rows[0]?.total ?? 0,
+          total: found.total,
           limit,
           offset,
-          results: rows.rows.map(r => ({
+          includeSuperseded,
+          results: found.results.map((r) => ({
             id: r.id,
-            title: r.document_title || r.file_name || 'Untitled',
-            fileName: r.file_name,
-            documentType: r.document_type,
-            size: prettySize(r.file_size),
-            folderId: r.folder_id,
-            ctdSection: r.ctd_section,
-            placementStatus: r.placement_status,
-            // Only offered when the match was in the body; a snippet echoing the
-            // title back is noise.
-            snippet: typeof r.snippet === 'string' && r.snippet.trim() ? r.snippet : null,
+            title: r.title,
+            fileName: r.fileName,
+            documentType: r.documentType,
+            size: prettySize(r.sizeBytes),
+            folderId: r.folderId,
+            ctdSection: r.ctdSection,
+            placementStatus: r.placementStatus,
+            version: r.version,
+            current: r.current,
+            snippet: r.snippet,
           })),
         },
       });
@@ -1540,6 +1612,77 @@ export default function createProjectVaultRoutes(): Router {
         error: 'SEARCH_FAILED',
         message: 'The vault could not be searched. This is not an empty result — nothing was searched.',
       });
+    }
+  });
+
+  /* ── GET /:id/documents/:documentId/versions ─────────────────────────────
+     Every version of the document, newest first, from any of its versions
+     (VR-09): version, SHA-256, size, uploader, date, which one is current, and
+     whether its link to a predecessor is one the database rules admit
+     (vault-version-family.ts). The tree lists only the current version, so this
+     is where an earlier one is found; any version downloads through the one
+     hash-verified, audited route below. The document must be this program's
+     and this organization's, as for a download. */
+  router.get('/:id/documents/:documentId/versions', async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const id = Array.isArray(req.params.id) ? (req.params.id[0] ?? '') : req.params.id;
+    const documentId = String(req.params.documentId ?? '');
+    if (!UUID_RE.test(id) || !UUID_RE.test(documentId)) {
+      return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+    }
+    try {
+      const family = await readVersionFamily(pool, { programId: id, organizationId: orgId, documentId });
+      if (!family) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+      // Each version's review and approval (VR-13): its lifecycle record's stage
+      // and sign-offs, or none (not reviewed). An unreadable stage fails the
+      // read: "not reviewed" would be a claim about a record not read.
+      const lifecycles = await readVaultLifecycles(pool, orgId, family.map((v) => v.id));
+      const versions = family.map((v) => ({ ...v, lifecycle: lifecycles.get(v.id) ?? null }));
+      return res.json({ success: true, data: { versions } });
+    } catch (err) {
+      if (isMissingStore(err)) {
+        return res.status(503).json({ success: false, error: 'STORE_UNAVAILABLE',
+          message: 'The vault uploads store is not provisioned in this environment.' });
+      }
+      logger.error('vault versions read failed', { documentId, err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({ success: false, error: 'VERSIONS_UNAVAILABLE',
+        message: "This document's versions could not be read. Nothing is shown rather than an incomplete list." });
+    }
+  });
+
+  /* ── GET /:id/documents/:documentId/compare?against=<versionId> ──────────
+     What changed between two versions of one document (plan critique 15):
+     the changed lines of their extracted text, unchanged runs collapsed, and
+     the recorded details that differ (vault-version-compare.ts). Both must be
+     in the same family; another document's version is refused, another
+     organisation's document reads as not found. */
+  router.get('/:id/documents/:documentId/compare', async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const id = String(req.params.id ?? '');
+    const documentId = String(req.params.documentId ?? '');
+    const against = typeof req.query.against === 'string' ? req.query.against : '';
+    if (!UUID_RE.test(id) || !UUID_RE.test(documentId)) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+    if (!UUID_RE.test(against)) {
+      return res.status(400).json({ success: false, error: 'AGAINST_REQUIRED', message: 'Name the version to compare with (?against=<version id>).' });
+    }
+    try {
+      const { compareVaultVersions } = await import('../../services/vault/vault-version-compare.js');
+      const out = await compareVaultVersions(pool, { programId: id, organizationId: orgId, documentId, againstId: against });
+      if (!out.ok) return res.status(out.status).json({ success: false, error: out.code, message: out.message });
+      return res.json({
+        success: true,
+        data: { from: out.from, to: out.to, sameBytes: out.sameBytes, details: out.details, text: out.text },
+      });
+    } catch (err) {
+      if (isMissingStore(err)) {
+        return res.status(503).json({ success: false, error: 'STORE_UNAVAILABLE',
+          message: 'The vault uploads store is not provisioned in this environment.' });
+      }
+      logger.error('vault version compare failed', { documentId, err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({ success: false, error: 'COMPARE_UNAVAILABLE',
+        message: 'The two versions could not be compared. Nothing is shown rather than a partial comparison.' });
     }
   });
 
@@ -1574,15 +1717,15 @@ export default function createProjectVaultRoutes(): Router {
       );
       if (docRes.rows.length === 0) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
 
+      // Every version's trail (VR-09). A deleted version has no live family,
+      // so its own trail is read, as before.
+      const family = await readVersionFamily(pool, { programId: id, organizationId: orgId, documentId });
       client = await pool.connect();
       await client.query('BEGIN');
       await setTenantContextTx(client, orgId);
-      const history = await readRecordAuditHistory(client, orgId, {
-        tableName: 'vault_document',
-        recordId: documentId,
-      });
+      const { entries, chain } = await readFamilyHistory(client, orgId, family, documentId);
       await client.query('COMMIT');
-      return res.json({ success: true, data: { entries: history.data, chain: history.meta.chain } });
+      return res.json({ success: true, data: { entries, chain } });
     } catch (err) {
       await client?.query('ROLLBACK').catch(() => undefined);
       logger.error('vault document history read failed', {
@@ -1610,12 +1753,7 @@ export default function createProjectVaultRoutes(): Router {
 
     try {
       // The program must be this org's before any document of it is served.
-      const prog = await pool.query(
-        `SELECT id FROM regulatory_programs
-          WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
-        [id, orgId],
-      );
-      if (prog.rows.length === 0) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+      if (!(await programInOrganization(pool, id, orgId))) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
 
       const docRes = await pool.query(
         `SELECT id, file_name, document_title, mime_type, file_size, s3_key,
@@ -1783,6 +1921,106 @@ export default function createProjectVaultRoutes(): Router {
     }
   });
 
+  /* POST /:id/data-room/file — File into Vault (VR-11, D2).
+     Captured sources, chosen in the data room, each filed through the one
+     upload-to-Vault orchestration (vault-data-room-filing.ts). Behind the same
+     governed-write gate as filing, so a viewer is refused before any byte is
+     read. 200 carries a result per source; `complete: false` when any was
+     refused. */
+  router.post('/:id/data-room/file', requireEditorAccess, async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    try {
+      const outcome = await fileDataRoomSources({
+        organizationId: orgId,
+        userId: (req as any).user?.id ?? null,
+        programId: String(req.params.id),
+        sourceIds: (req.body ?? {}).sourceIds,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      if (!outcome.ok) {
+        return res.status(outcome.status).json({ success: false, error: outcome.code, message: outcome.message });
+      }
+      return res.json({ success: true, complete: outcome.complete, items: outcome.items });
+    } catch (err: unknown) {
+      logger.error('data room file error', { err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({
+        success: false,
+        error: 'FILING_FAILED',
+        message: 'The files could not be filed. Check the data room before trying again: some may have been filed.',
+      });
+    }
+  });
+
+  /* POST /:id/file-batch — Confirm N suggested (VR-11b, D2).
+     The suggested filings in one folder, confirmed by a person with one
+     reason (vault-placement-batch.ts): each through placeVaultDocument, each
+     with its own chained row carrying the reason. 422 without a reason;
+     otherwise 200 with an answer per document, `complete: false` when any was
+     refused. */
+  router.post('/:id/file-batch', requireEditorAccess, async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    try {
+      const { confirmSuggestedFilings } = await import('../../services/vault/vault-placement-batch.js');
+      const outcome = await confirmSuggestedFilings({
+        programId: String(req.params.id),
+        organizationId: orgId,
+        userId: (req as any).user?.id ?? null,
+        folderId: body.folderId,
+        documentIds: body.documentIds,
+        note: body.note,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      if (!outcome.ok) {
+        return res.status(outcome.status).json({ success: false, error: outcome.code, message: outcome.message });
+      }
+      return res.json({ success: true, complete: outcome.complete, items: outcome.items });
+    } catch (err: unknown) {
+      logger.error('project vault file-batch error', { err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({
+        success: false,
+        error: 'CONFIRM_FAILED',
+        message: 'The filings could not be confirmed. Reload the Vault before trying again: some may have been confirmed.',
+      });
+    }
+  });
+
+  /* POST /:id/fixity — re-prove every stored version (plan critique 15, D5).
+     Each version is read through readVerifiedVaultBytes, the verifier a
+     download uses, and its verdict is written to the audit chain as its own
+     vault.document.fixity row (vault-fixity.ts). Behind the governed-write
+     gate, because each verdict is a record attributed to the person. */
+  router.post('/:id/fixity', requireEditorAccess, async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    try {
+      const { checkProgramFixity } = await import('../../services/vault/vault-fixity.js');
+      const out = await checkProgramFixity({
+        programId: String(req.params.id),
+        organizationId: orgId,
+        userId: (req as any).user?.id ?? null,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      if (!out.ok) return res.status(out.status).json({ success: false, error: out.code, message: out.message });
+      return res.json({
+        success: true,
+        data: { checkedAt: out.checkedAt, checked: out.checked, counts: out.counts, findings: out.findings, truncated: out.truncated },
+      });
+    } catch (err) {
+      logger.error('vault fixity check failed', { err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({
+        success: false,
+        error: 'FIXITY_FAILED',
+        message: 'The check did not finish. No result is shown; the verdicts recorded before it stopped are in each document\'s history.',
+      });
+    }
+  });
+
   /* POST /:id/documents/:documentId/details — Edit details (VR-05, D5).
      A version's title, type and classification, changed by a person with a
      reason for change. The writer (vault-metadata-edit.service.ts) checks the
@@ -1816,6 +2054,81 @@ export default function createProjectVaultRoutes(): Router {
     } catch (err: unknown) {
       logger.error('project vault details error', { err: err instanceof Error ? err.message : String(err) });
       return res.status(500).json({ success: false, error: 'The details could not be saved. Nothing was changed.' });
+    }
+  });
+
+  /* ── Document relationships (plan critique 15, D2) ─────────────────────
+     One version names the documents that support it, that it references or
+     that it is based on: the replacement for the parentDocumentId VR-05
+     refused. vault-relationships.ts checks the role, the organisation and the
+     vocabulary, and writes each change with a chained row on both documents.
+     A relationship is removed with a reason, never deleted. */
+  const relationshipFailure = (res: Response, err: unknown, what: string) => {
+    logger.error(`vault relationships ${what} failed`, { err: err instanceof Error ? err.message : String(err) });
+    return res.status(500).json({ success: false, error: 'RELATIONSHIPS_UNAVAILABLE',
+      message: what === 'read'
+        ? "This document's relationships could not be read. Nothing is shown rather than an incomplete list."
+        : 'The relationship could not be saved. Nothing was changed.' });
+  };
+
+  router.get('/:id/documents/:documentId/relationships', async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const id = String(req.params.id ?? '');
+    if (!UUID_RE.test(id)) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+    try {
+      const { listRelationships } = await import('../../services/vault/vault-relationships.js');
+      const out = await listRelationships(pool, { programId: id, organizationId: orgId, documentId: String(req.params.documentId ?? '') });
+      if (!out.ok) return res.status(out.status).json({ success: false, error: out.code, message: out.message });
+      return res.json({ success: true, data: { relationships: out.relationships } });
+    } catch (err) {
+      return relationshipFailure(res, err, 'read');
+    }
+  });
+
+  router.post('/:id/documents/:documentId/relationships', requireEditorAccess, async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    try {
+      const { addRelationship } = await import('../../services/vault/vault-relationships.js');
+      const out = await addRelationship({
+        programId: String(req.params.id),
+        organizationId: orgId,
+        userId: (req as any).user?.id ?? null,
+        documentId: String(req.params.documentId ?? ''),
+        toDocumentId: body.toDocumentId,
+        type: body.type,
+        note: body.note,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      if (!out.ok) return res.status(out.status).json({ success: false, error: out.code, message: out.message });
+      return res.status(201).json({ success: true, data: { id: out.id } });
+    } catch (err) {
+      return relationshipFailure(res, err, 'write');
+    }
+  });
+
+  router.post('/:id/relationships/:relationshipId/remove', requireEditorAccess, async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    try {
+      const { removeRelationship } = await import('../../services/vault/vault-relationships.js');
+      const out = await removeRelationship({
+        programId: String(req.params.id),
+        organizationId: orgId,
+        userId: (req as any).user?.id ?? null,
+        relationshipId: String(req.params.relationshipId ?? ''),
+        reason: body.reason,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      if (!out.ok) return res.status(out.status).json({ success: false, error: out.code, message: out.message });
+      return res.json({ success: true });
+    } catch (err) {
+      return relationshipFailure(res, err, 'write');
     }
   });
 

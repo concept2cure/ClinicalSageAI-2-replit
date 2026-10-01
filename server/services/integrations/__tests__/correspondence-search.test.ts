@@ -9,6 +9,17 @@ import {
   type CorrespondenceDeps,
 } from '../correspondence-search';
 
+/* 2026-10-01 (D6, decision P-8): the deployment's own account serves only the
+   organisation PLATFORM_INTEGRATIONS_ORGANIZATION_ID names. This suite tests
+   the client's own behaviour as that organisation;
+   platform-integration-owner.test.ts tests the rule, through this client, for
+   every other caller. */
+vi.mock('../platform-integration-owner', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  callerOwnsPlatformIntegrations: () => true,
+}));
+
+
 const MESSAGES = [
   { id: '1', threadId: 't1', subject: 'FDA Information Request — Module 2.5', from: 'reviewer@fda.gov', to: 'us@co.com', date: new Date('2026-05-01T10:00:00Z'), snippet: 'Please clarify the endpoint', body: 'deficiency details' },
   { id: '2', threadId: 't2', subject: 'Newsletter', from: 'news@vendor.com', to: 'us@co.com', date: new Date('2026-05-02T10:00:00Z'), snippet: 'monthly update', body: 'marketing' },

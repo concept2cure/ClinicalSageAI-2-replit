@@ -8,7 +8,7 @@
  *   SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM
  */
 
-import nodemailer from 'nodemailer';
+import nodemailer, { type Transporter } from 'nodemailer';
 import { createScopedLogger } from '../utils/logger.js';
 const log = createScopedLogger('email-service');
 
@@ -16,7 +16,7 @@ const log = createScopedLogger('email-service');
 // SMTP Configuration
 // ---------------------------------------------------------------------------
 
-function getTransporter(): nodemailer.Transporter | null {
+function getTransporter(): Transporter | null {
   const host = process.env.SMTP_HOST;
   const port = parseInt(process.env.SMTP_PORT || '465', 10);
   const user = process.env.SMTP_USER;

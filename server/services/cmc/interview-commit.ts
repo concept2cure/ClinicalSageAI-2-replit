@@ -710,10 +710,13 @@ export async function commitInterviewSession(
       committed: [], unprojected: plan.unprojected,
     };
   }
-  /* A project bound at commit time is bound once, and only to one of the
-     tenant's own programs or projects — the records would otherwise file
-     under a dossier this tenant does not hold. */
-  if (!session.projectId) {
+  /* The project the records file under is one of the tenant's own live
+     programs or projects, checked on every commit — whether it is bound here
+     (once) or was bound when the session started. A session's own binding
+     used to be trusted, and a session started before the start-time check
+     (PF-15) may name another organization's project or a deleted one; its
+     records would file under a dossier this tenant does not hold. */
+  {
     let belongs = false;
     try {
       belongs = await projectBelongsToTenant({ organizationId: session.organizationId, projectId }, deps.q);

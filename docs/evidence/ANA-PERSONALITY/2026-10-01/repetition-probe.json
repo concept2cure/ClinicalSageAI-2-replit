@@ -1,0 +1,5 @@
+{"turns":[
+ {"id":"a","conversationId":"c1","text":"Section 3 is clean. Another one bites the dust!"},
+ {"id":"b","conversationId":"c1","text":"Module 2 is clean too. Another one bites the dust!"},
+ {"id":"c","conversationId":"c1","text":"Done."}
+]}

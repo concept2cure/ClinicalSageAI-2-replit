@@ -1,0 +1,128 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/audit/compliance-reports/__tests__/signed-export-broken-at.test.ts > the audit_logs break in a signed export manifest > names this organisation's broken row and its hashes, not [object Object] 9ms
+   → expected '[object Object]' not to be '[object Object]' // Object.is equality
+ × server/services/audit/compliance-reports/__tests__/signed-export-broken-at.test.ts > the audit_logs break in a signed export manifest > does not name another organisation's row, its hashes or its organisation 1ms
+   → "[object Object]" is not valid JSON
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/audit-compliance-reports.test.ts [ server/routes/__tests__/audit-compliance-reports.test.ts ]
+Error: Cannot find module '/server/routes/audit-compliance-reports' imported from /home/user/ClinicalSageAI-2-replit/server/routes/__tests__/audit-compliance-reports.test.ts
+ ❯ server/routes/__tests__/audit-compliance-reports.test.ts:28:1
+     26| vi.mock('../../services/tenant/governed-tenant-context.js', () => ({ s…
+     27|
+     28| import { createComplianceReportRoutes } from '../audit-compliance-repo…
+       | ^
+     29| import { verifySignedAuditExport } from '../../services/audit/signedAu…
+     30|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/catalog.test.ts [ server/services/audit/compliance-reports/__tests__/catalog.test.ts ]
+Error: Cannot find module '../catalog' imported from /home/user/ClinicalSageAI-2-replit/server/services/audit/compliance-reports/__tests__/catalog.test.ts
+ ❯ server/services/audit/compliance-reports/__tests__/catalog.test.ts:11:1
+      9| import { describe, expect, it } from 'vitest';
+     10|
+     11| import {
+       | ^
+     12|   COMPLIANCE_REPORT_CATALOG,
+     13|   FULL_AUDIT_TRAIL_ID,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/csv.test.ts [ server/services/audit/compliance-reports/__tests__/csv.test.ts ]
+Error: Cannot find module '../csv' imported from /home/user/ClinicalSageAI-2-replit/server/services/audit/compliance-reports/__tests__/csv.test.ts
+ ❯ server/services/audit/compliance-reports/__tests__/csv.test.ts:9:1
+      7| import { describe, expect, it } from 'vitest';
+      8|
+      9| import { formatReportCsv } from '../csv';
+       | ^
+     10| import type { ReportData } from '../types';
+     11|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/integrity-report.test.ts [ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts ]
+Error: Cannot find module '../catalog' imported from /home/user/ClinicalSageAI-2-replit/server/services/audit/compliance-reports/__tests__/integrity-report.test.ts
+ ❯ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts:8:1
+      6| import { describe, expect, it, vi } from 'vitest';
+      7|
+      8| import { findReport } from '../catalog';
+       | ^
+      9| import type { IntegrityChecks, LinkageSnapshot, RunContext, SealCheck,…
+     10|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/period.test.ts [ server/services/audit/compliance-reports/__tests__/period.test.ts ]
+Error: Cannot find module '../period' imported from /home/user/ClinicalSageAI-2-replit/server/services/audit/compliance-reports/__tests__/period.test.ts
+ ❯ server/services/audit/compliance-reports/__tests__/period.test.ts:9:1
+      7| import { describe, expect, it } from 'vitest';
+      8|
+      9| import { parseReportPeriod } from '../period';
+       | ^
+     10|
+     11| const NOW = new Date('2026-09-30T15:42:00.000Z');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/signed-report.test.ts [ server/services/audit/compliance-reports/__tests__/signed-report.test.ts ]
+Error: Cannot find module '../signed-report' imported from /home/user/ClinicalSageAI-2-replit/server/services/audit/compliance-reports/__tests__/signed-report.test.ts
+ ❯ server/services/audit/compliance-reports/__tests__/signed-report.test.ts:12:1
+     10| import { stableStringify } from '../../../../../shared/canonical-json';
+     11| import { sealManifestV2, sha256Hex, verifySignedAuditExport } from '..…
+     12| import { buildSignedReport } from '../signed-report';
+       | ^
+     13| import type { ReportData } from '../types';
+     14|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/signed-export-broken-at.test.ts > the audit_logs break in a signed export manifest > names this organisation's broken row and its hashes, not [object Object]
+AssertionError: expected '[object Object]' not to be '[object Object]' // Object.is equality
+ ❯ server/services/audit/compliance-reports/__tests__/signed-export-broken-at.test.ts:48:32
+     46|     const chain = out.manifest.auditLogsChain!;
+     47|     expect(chain.status).toBe('broken');
+     48|     expect(chain.brokenAt).not.toBe('[object Object]');
+       |                                ^
+     49|     expect(JSON.parse(chain.brokenAt!)).toEqual({
+     50|       segment: 'sequenced',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/signed-export-broken-at.test.ts > the audit_logs break in a signed export manifest > does not name another organisation's row, its hashes or its organisation
+SyntaxError: "[object Object]" is not valid JSON
+ ❯ server/services/audit/compliance-reports/__tests__/signed-export-broken-at.test.ts:69:17
+     67|     const out = await generateSignedAuditExport(pool, base, { verifyAu…
+     68|     const brokenAt = out.manifest.auditLogsChain!.brokenAt!;
+     69|     expect(JSON.parse(brokenAt)).toEqual({ segment: 'legacy', row: 'an…
+       |                 ^
+     70|     for (const secret of ['their-row', 'their-prev', 'x'.repeat(64), '…
+     71|       expect(brokenAt).not.toContain(secret);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  7 failed (7)
+      Tests  2 failed (2)
+   Start at  00:14:10
+   Duration  1.66s (transform 809ms, setup 828ms, import 36ms, tests 15ms, environment 1ms)
+

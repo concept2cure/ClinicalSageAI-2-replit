@@ -8,10 +8,13 @@ const migrationSource = readFileSync('migrations/0014_report_os_foundation.sql',
 const progressSource = readFileSync('docs/reports/REPORT_OS_SESSION_PROGRESS_2026-03-30.md', 'utf8');
 const orchestratorSource = readFileSync('server/services/report-os/orchestrator.ts', 'utf8');
 const startupScriptSource = readFileSync('scripts/startup.sh', 'utf8');
+const seedMigrationSource = readFileSync('migrations/20260930_report_type_registry_seed.sql', 'utf8');
 
-test('report-os route guards taxonomy seed and supports dependency endpoint', () => {
-  assert.ok(routeSource.includes('canSeedTaxonomy'));
-  assert.ok(routeSource.includes("router.post('/taxonomy/seed'"));
+test('report-os registry is seeded by its migration, and the route supports dependency endpoint', () => {
+  // POST /taxonomy/seed was deleted on 2026-09-30 (review round 1): the generated
+  // migration is the registry's one writer.
+  assert.ok(!routeSource.includes("router.post('/taxonomy/seed'"));
+  assert.ok(seedMigrationSource.includes('ON CONFLICT (type_id) DO UPDATE SET'));
   assert.ok(routeSource.includes("router.get('/runs/:id/dependencies'"));
   assert.ok(routeSource.includes("router.get('/health'"));
 });
@@ -21,7 +24,9 @@ test('report-os route includes reporting bundle and delivery endpoints', () => {
   assert.ok(routeSource.includes("router.post('/bundles'"));
   assert.ok(routeSource.includes("router.get('/bundles/:bundleId/export.pdf'"));
   assert.ok(routeSource.includes("router.post('/deliveries'"));
-  assert.ok(routeSource.includes("router.post('/correspondence/capture'"));
+  // Removed 2026-10-01: a second, unaudited correspondence writer. The canonical
+  // intake is /api/regulatory-correspondence/correspondence/intake.
+  assert.ok(!routeSource.includes("router.post('/correspondence/capture'"));
 });
 
 test('report-os taxonomy seed includes regional agency report packs', () => {
@@ -32,7 +37,7 @@ test('report-os taxonomy seed includes regional agency report packs', () => {
     'china_nmpa.registration_dossier_readiness',
   ];
   for (const typeId of requiredRegionalTypeIds) {
-    assert.ok(routeSource.includes("router.post('/taxonomy/seed'"));
+    assert.ok(seedMigrationSource.includes(`'${typeId}'`), `expected the registry seed to include ${typeId}`);
     const taxonomySource = readFileSync('server/services/report-os/taxonomy.ts', 'utf8');
     assert.ok(taxonomySource.includes(typeId), `expected taxonomy seed to include ${typeId}`);
   }

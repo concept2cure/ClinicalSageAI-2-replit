@@ -41,6 +41,7 @@
 
 import { isProposeOnlyCommand } from '../ana-ri/command-rbac.js';
 import { governedTierOf } from '../ana-ri/part11-governance.js';
+import { REASON_REQUIRED_TOOLS } from './stated-reason-input.js';
 import { buildToolRefusal, toolAuthorizationOf } from './tool-authorization.js';
 
 /** The tool that carries a platform command in its input. */
@@ -111,12 +112,28 @@ export function classifyToolCall(call: ClassifiableToolCall): ToolGateVerdict {
 
   if (!isProposeOnlyCommand(command)) return { kind: 'UNGOVERNED' };
 
+  const params = asRecord(input.params) ?? {};
   return {
     kind: 'NEEDS_APPROVAL',
     command,
-    params: asRecord(input.params) ?? {},
-    tier: governedTierOf(command),
+    params,
+    // With the params: a command's tier can follow what the call does
+    // (part11-governance.ts requiredSignatureMeaning — AnA approving or locking
+    // an artifact is an e-signature, moving it to review is not).
+    tier: governedTierOf(command, params),
   };
+}
+
+/**
+ * The tier a person approves a registered tool's write at. A tool that records
+ * the person's reason for change (REASON_REQUIRED_TOOLS) is put to them at the
+ * reason tier: the reason is typed, or AnA's wording adopted, by the person at
+ * confirmation, and that text is what the tool records — not the reason the
+ * model wrote into the call (D5, 2026-09-29). Every other write is a yes.
+ * The confirmation route reads the same answer (routes/ana-ri/utility.ts).
+ */
+export function registeredToolTier(name: string): ApprovalTier {
+  return REASON_REQUIRED_TOOLS.has(name) ? 'reason' : 'confirm';
 }
 
 /** A tool other than the command carrier, judged by the register. */
@@ -131,5 +148,5 @@ function classifyRegisteredTool(call: ClassifiableToolCall): ToolGateVerdict {
   // What a person is asked to confirm is the call itself, so it must be readable.
   const toolInput = asRecord(call.input);
   if (!toolInput) return { kind: 'UNDECIDABLE', why: 'the call carried no arguments object' };
-  return { kind: 'NEEDS_APPROVAL', command: call.name, params: toolInput, tier: 'confirm' };
+  return { kind: 'NEEDS_APPROVAL', command: call.name, params: toolInput, tier: registeredToolTier(call.name) };
 }

@@ -74,12 +74,12 @@ const ORG = 7;
 const PROJECT = 1;
 const USER = 1;
 
-async function command(name: string, params: Record<string, unknown>) {
+async function command(name: string, params: Record<string, unknown>, ctx: Record<string, unknown> = {}) {
   const { executeCommands } = await import('../command-executor');
   // A person confirmed the proposal: since 2026-09-26 (audit DP-08, P0-12)
   // every write is a proposal, and the ledger atomicity these cases pin is
   // the execution after that confirmation.
-  const res = await executeCommands([{ command: name, params }] as never, { organizationId: ORG, userId: USER, humanConfirmed: true } as never);
+  const res = await executeCommands([{ command: name, params }] as never, { organizationId: ORG, userId: USER, humanConfirmed: true, ...ctx } as never);
   return (res as Array<{ success: boolean; message?: string; data?: Row }>)[0];
 }
 
@@ -178,5 +178,53 @@ describe('AnA update_task', () => {
     ).toBe('in-progress');
     expect(await ledger('task.transition', `TASK-PT-${ORG}-202`)).toEqual({ actions: 0, audit: 0 });
     expect(out.message).toMatch(/task board/i);
+  });
+});
+
+/**
+ * D5 (2026-10-01): the reason on these rows is the person's, or null. Both
+ * commands are the confirm tier (part11-governance.ts governedTierOf): a person
+ * says yes and is asked for no reason, so none exists to record. They used to
+ * record "Task created by AnA and mirrored to the canonical task board" and
+ * "Task status changed by AnA" as the reason for change. A `reason` the model
+ * wrote into params is not the person's either. A reason reaches the row only
+ * from a verified sign-off (ctx.signoff, stamped by POST /governed-action).
+ */
+describe('AnA task events record the person’s reason, or none', () => {
+  const reasons = async (commandName: string, taskId: string) => {
+    const target = `task:${taskId}`;
+    const action = await run(`SELECT decision_reason, payload FROM c2c_ana_actions WHERE command = $1 AND target = $2`, [commandName, target]);
+    const audit = await run(`SELECT reason FROM audit_logs WHERE action = $1 AND target = $2`, [`c2c.work.${commandName}`, target]);
+    return { decision: action.rows[0]?.decision_reason, audit: audit.rows[0]?.reason, payload: action.rows[0]?.payload as Row };
+  };
+
+  it('create_task with no stated reason records null — not a sentence, not the model’s params.reason', async () => {
+    const out = await command('create_task', { projectId: PROJECT, title: 'Draft Module 2.5', reason: 'Because the model said so' });
+    const got = await reasons('task.create', `TASK-PT-${ORG}-${out.data?.taskId}`);
+    expect(got.audit).toBeNull();
+    expect(got.decision).toBeNull();
+    expect(got.payload.summary).toBe('Task created by AnA and mirrored to the canonical task board');
+  });
+
+  it('update_task with no stated reason records null; what happened is the payload summary', async () => {
+    await seedMirroredTask(203);
+    await command('update_task', { projectId: PROJECT, taskId: 203, updates: { status: 'review' }, reason: 'Model-written' });
+    const got = await reasons('task.transition', `TASK-PT-${ORG}-203`);
+    expect(got.audit).toBeNull();
+    expect(got.decision).toBeNull();
+    expect(got.payload).toMatchObject({ from: 'in-progress', to: 'review', summary: 'Task status changed by AnA' });
+  });
+
+  it('a reason the person stated through a verified sign-off is recorded verbatim, trimmed', async () => {
+    const signoff = { reasonForChange: '  Sponsor asked for the 2.7.4 gap to be tracked  ', signatureVerified: false };
+    const out = await command('create_task', { projectId: PROJECT, title: 'Close the 2.7.4 gap' }, { signoff });
+    const created = await reasons('task.create', `TASK-PT-${ORG}-${out.data?.taskId}`);
+    await seedMirroredTask(204);
+    await command('update_task', { projectId: PROJECT, taskId: 204, updates: { status: 'review' } }, { signoff });
+    const moved = await reasons('task.transition', `TASK-PT-${ORG}-204`);
+    for (const got of [created, moved]) {
+      expect(got.audit).toBe('Sponsor asked for the 2.7.4 gap to be tracked');
+      expect(got.decision).toBe('Sponsor asked for the 2.7.4 gap to be tracked');
+    }
   });
 });

@@ -34,13 +34,20 @@ function app() {
   return a;
 }
 
-const entry = { id: 'AUD-1', event: 'Vault Document Download', actor: 'Dana Reviewer', at: '2026-09-24T10:00:00.000Z', hash: 'h1', prevHash: 'h0', seq: 9 };
+const entry = { id: 'AUD-1', event: 'Vault Document Download', actor: 'Dana Reviewer', at: '2026-09-24T10:00:00.000Z', hash: 'h1', prevHash: 'h0', seq: 9, target: `vault_document:${DOC}` };
+const V0 = '33333333-3333-4333-8333-333333333333';
+/** The version family read (VR-09): this document at 2.0, and its predecessor. */
+const familyRows = [
+  { id: DOC, version: '2.0', created_at: '2026-09-24T09:00:00.000Z', current: true, link: 'verified' },
+  { id: V0, version: '1.0', created_at: '2026-09-23T09:00:00.000Z', current: false, link: 'none' },
+];
 const verdict = { store: 'audit_logs', ok: true, rowsChecked: 3, legacyRows: 0, sequencedRows: 3 };
 
 beforeEach(() => {
   vi.clearAllMocks();
   query.mockImplementation(async (sql: string) =>
-    /FROM regulatory_programs/.test(sql) && !/vault\.documents/.test(sql) ? { rows: [{ id: PROGRAM }] }
+    /WITH RECURSIVE/.test(sql) ? { rows: familyRows }
+    : /FROM regulatory_programs/.test(sql) && !/vault\.documents/.test(sql) ? { rows: [{ id: PROGRAM }] }
     : /FROM vault\.documents/.test(sql) ? { rows: [{ id: DOC }] }
     : { rows: [] });
   clientQuery.mockResolvedValue({ rows: [] });
@@ -51,13 +58,25 @@ describe('document history route', () => {
   it('reads this document\'s rows from the ledger, in a tenant-stamped transaction', async () => {
     const res = await request(app()).get(url);
     expect(res.status).toBe(200);
-    expect(res.body.data.entries).toEqual([entry]);
+    // Each entry names the version it was recorded against (VR-09).
+    expect(res.body.data.entries).toEqual([{ ...entry, version: '2.0' }]);
     expect(res.body.data.chain).toEqual(verdict);
     const [, orgId, record] = readRecordAuditHistory.mock.calls[0];
     expect(orgId).toBe(7);
-    expect(record).toMatchObject({ tableName: 'vault_document', recordId: DOC });
+    // Every version's trail, not this row's alone (VR-09).
+    expect(record).toMatchObject({ tableName: 'vault_document', recordId: [DOC, V0] });
     expect(setTenantContextTx).toHaveBeenCalledWith(expect.anything(), 7);
     expect(clientQuery.mock.calls.map((c) => c[0])).toEqual(expect.arrayContaining(['BEGIN', 'COMMIT']));
+  });
+
+  it('reads its own trail when it has no live family (a deleted version)', async () => {
+    query.mockImplementation(async (sql: string) =>
+      /WITH RECURSIVE/.test(sql) ? { rows: [] }
+      : /FROM vault\.documents/.test(sql) ? { rows: [{ id: DOC }] }
+      : { rows: [{ id: PROGRAM }] });
+    const res = await request(app()).get(url);
+    expect(res.status).toBe(200);
+    expect(readRecordAuditHistory.mock.calls[0][2]).toMatchObject({ recordId: DOC });
   });
 
   it('404s a document that is not this program\'s or this org\'s, and reads nothing', async () => {

@@ -1,0 +1,75 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T03:08:35.206Z","pid":3753,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T03:08:35.208Z","pid":3753,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T03:08:35.208Z","pid":3753,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-10-01T03:08:35.498Z","pid":3753,"hostname":"vm","context":{"resource":"http://localhost:34805/mcp","issuer":"http://localhost:34805/","resourceMetadataUrl":"http://localhost:34805/.well-known/oauth-protected-resource/mcp"},"msg":"[mcp] Concept2Cure MCP connector mounted"}
+stdout | server/mcp/__tests__/mcp-connector.dbtest.ts > tools/list > lists the 19 curated tools with annotations through the SDK client
+[database] Database connection successful
+
+stdout | server/mcp/__tests__/mcp-connector.dbtest.ts > tools/list > lists the 19 curated tools with annotations through the SDK client
+[database] Database connection successful { timestamp: '2026-10-01T03:08:35.629Z', poolSize: 1 }
+
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 16ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > discovery and authentication over HTTP > 401 + resource_metadata without a bearer; metadata documents resolve 39ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > tools/list > lists the 19 curated tools with annotations through the SDK client 133ms
+{"level":30,"time":"2026-10-01T03:08:36.012Z","pid":3753,"hostname":"vm","context":{"userId":86,"tenantId":26,"resourceId":"c2c_list_projects"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+stderr | server/mcp/__tests__/mcp-connector.dbtest.ts > tool calls are scoped to the token’s organisation > c2c_list_projects: A sees A’s program; B sees B’s and never A’s
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":30,"time":"2026-10-01T03:08:36.056Z","pid":3753,"hostname":"vm","context":{"userId":87,"tenantId":27,"resourceId":"c2c_list_projects"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > tool calls are scoped to the token’s organisation > c2c_list_projects: A sees A’s program; B sees B’s and never A’s 337ms
+{"level":30,"time":"2026-10-01T03:08:36.218Z","pid":3753,"hostname":"vm","context":{"userId":86,"tenantId":26,"resourceId":"c2c_list_vault_documents"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+{"level":30,"time":"2026-10-01T03:08:36.250Z","pid":3753,"hostname":"vm","context":{"userId":87,"tenantId":27,"resourceId":"c2c_list_vault_documents"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > tool calls are scoped to the token’s organisation > c2c_list_vault_documents: each organisation sees only its own document 187ms
+{"level":30,"time":"2026-10-01T03:08:38.442Z","pid":3753,"hostname":"vm","context":{"userId":86,"tenantId":26,"resourceId":"c2c_assess_sequence_readiness"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+{"level":30,"time":"2026-10-01T03:08:38.470Z","pid":3753,"hostname":"vm","context":{"userId":87,"tenantId":27,"resourceId":"c2c_assess_sequence_readiness"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+{"level":30,"time":"2026-10-01T03:08:38.574Z","pid":3753,"hostname":"vm","context":{"userId":87,"tenantId":27,"resourceId":"c2c_list_sequences"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > tool calls are scoped to the token’s organisation > c2c_assess_sequence_readiness: A gets the engine verdict; B is refused for A’s sequence 2325ms
+{"level":30,"time":"2026-10-01T03:08:38.628Z","pid":3753,"hostname":"vm","context":{"userId":86,"tenantId":26,"resourceId":"c2c_list_projects"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+{"level":30,"time":"2026-10-01T03:08:38.653Z","pid":3753,"hostname":"vm","context":{"userId":86,"tenantId":26,"resourceId":"c2c_file_draft_for_review"},"msg":"[audit-service] [AUDIT] mcp_governed_tool_call mcp_tool"}
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > the governed write > is denied to a connector token without c2c:file 78ms
+{"level":30,"time":"2026-10-01T03:08:38.750Z","pid":3753,"hostname":"vm","context":{"userId":86,"tenantId":26,"resourceId":"7"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-01T03:08:38.761Z","pid":3753,"hostname":"vm","context":{"userId":86,"tenantId":26,"resourceId":"c2c_file_draft_for_review"},"msg":"[audit-service] [AUDIT] mcp_governed_tool_call mcp_tool"}
+{"level":30,"time":"2026-10-01T03:08:38.818Z","pid":3753,"hostname":"vm","context":{"userId":86,"tenantId":26,"resourceId":"c2c_file_draft_for_review"},"msg":"[audit-service] [AUDIT] mcp_governed_tool_call mcp_tool"}
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > the governed write > files a DRAFT leaf pointing at a vault document, returns the sign-off link, and is audited with tool + org 110ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > the governed write > refuses a vault document from another organisation verbatim (no cross-tenant pointer) 54ms
+{"level":30,"time":"2026-10-01T03:08:38.859Z","pid":3753,"hostname":"vm","context":{"userId":86,"tenantId":26,"resourceId":"c2c_draft_agency_response"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > model-backed tool without a provider key > returns the gateway refusal verbatim, never demo-mode text 43ms
+{"level":30,"time":"2026-10-01T03:08:42.959Z","pid":3753,"hostname":"vm","context":{"userId":86,"tenantId":26,"resourceId":"c2c_lookup_ich_guideline"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > model-backed tool without a provider key > a deterministic reference tool (ICH corpus) answers through the AnA handler 4101ms
+{"level":30,"time":"2026-10-01T03:08:45.423Z","pid":3771,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T03:08:45.426Z","pid":3771,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T03:08:45.426Z","pid":3771,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-10-01T03:08:45.534Z","pid":3771,"hostname":"vm","context":{"resource":"http://localhost:43391/mcp","issuer":"http://localhost:43391/","resourceMetadataUrl":"http://localhost:43391/.well-known/oauth-protected-resource/mcp"},"msg":"[mcp] Concept2Cure MCP connector mounted"}
+stdout | server/mcp/__tests__/mcp-account-standing.dbtest.ts
+[database] Database connection successful
+
+stdout | server/mcp/__tests__/mcp-account-standing.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T03:08:45.717Z', poolSize: 1 }
+
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 5ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > the posture is the one production runs in > the accounts are in the states the admin route and SCIM leave them in 3ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > its session opens /mcp, authorises a client, and the grant opens /mcp and refreshes 132ms
+{"level":30,"time":"2026-10-01T03:08:46.004Z","pid":3771,"hostname":"vm","context":{"userId":88,"tenantId":28,"resourceId":"c2c_list_projects"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+stderr | server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > the grant runs a tool as the runtime role, not only the handshake
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > the grant runs a tool as the runtime role, not only the handshake 159ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session no longer opens /mcp, and says why 7ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session cannot authorise a new client at the consent page, and is told why 12ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session no longer opens /mcp, and says why 6ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session cannot authorise a new client at the consent page, and is told why 9ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session its holder signed out > no longer opens /mcp 5ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session its holder signed out > cannot authorise a new client at the consent page 8ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is suspended: the access token, the refresh token and an unredeemed code 97ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is deprovisioned: the access token, the refresh token and an unredeemed code 94ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector token is not a platform session (IAM-02, P0-2 part a) > the first-party session opens both /api authenticators (control) 20ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector token is not a platform session (IAM-02, P0-2 part a) > a token the connector issued for c2c:read opens neither 100ms
+
+ Test Files  2 passed (2)
+      Tests  25 passed (25)
+   Start at  03:08:32
+   Duration  14.39s (transform 6.40s, setup 122ms, import 499ms, tests 13.33s, environment 0ms)
+

@@ -57,6 +57,7 @@ import {
   GovernedConfirmDialog,
   type ConfirmConfig,
 } from '../../_shared/components/GovernedConfirmDialog';
+import { RetentionPeriodCard } from './RetentionPeriodCard';
 import '../styles/project-home-v2.css';
 import '../styles/ana-v2.css';
 import '../styles/translation-v2.css';
@@ -900,6 +901,11 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
             </div>
           )}
         </div>
+
+        {/* -- Records retention (P1-22; ADR-0014 §6) -- its own read and its
+            own governed save, because the period has its own route and its own
+            chained audit row; see RetentionPeriodCard.tsx. */}
+        <RetentionPeriodCard describeFailure={saveFailure} />
       </div>
     </div>
   );
@@ -909,16 +915,31 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
  *  AuditLedgerChainVerdict), reduced to what the banner and AnA state. */
 type ChainVerdictView = {
   verdict: 'intact' | 'broken' | 'unverified';
+  /** The server's reason when it verified nothing (no chained rows). */
+  reason: string | null;
   rowsChecked: number;
   legacyRows: number;
   sequencedRows: number;
-  brokenAt: { id: string; segment: string; commitsTo: string | null } | null;
+  /**
+   * Where it breaks, as this organisation may be told (audited-export.ts
+   * breakForTenant): its own entry by id, another organisation's only as such.
+   * `commitsTo` is the entry the stored hash derives from, 'genesis', or null
+   * when no predecessor derives it.
+   */
+  brokenAt: { id: string | null; segment: string; commitsTo: string | null } | null;
 };
+
+/** The break's "commits to" as a phrase: an entry id, genesis, another organisation's entry, or nothing. */
+function commitsToOf(v: unknown): string | null {
+  if (v && typeof v === 'object' && typeof (v as { id?: unknown }).id === 'string') return `entry ${(v as { id: string }).id}`;
+  return typeof v === 'string' ? (v === 'genesis' ? 'genesis' : `an entry of ${v}`) : null;
+}
 
 function readChainVerdict(meta: Record<string, unknown> | undefined): ChainVerdictView {
   const c = meta?.chain as
     | {
         ok?: unknown;
+        reason?: unknown;
         rowsChecked?: unknown;
         legacyRows?: unknown;
         sequencedRows?: unknown;
@@ -927,18 +948,19 @@ function readChainVerdict(meta: Record<string, unknown> | undefined): ChainVerdi
     | undefined;
   const n = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
   if (!c || typeof c.ok !== 'boolean') {
-    return { verdict: 'unverified', rowsChecked: 0, legacyRows: 0, sequencedRows: 0, brokenAt: null };
+    const reason = c && c.ok === null && typeof c.reason === 'string' ? c.reason : null;
+    return { verdict: 'unverified', reason, rowsChecked: 0, legacyRows: 0, sequencedRows: 0, brokenAt: null };
   }
   const b = c.brokenAt;
   return {
     verdict: c.ok ? 'intact' : 'broken',
+    reason: null,
     rowsChecked: n(c.rowsChecked),
     legacyRows: n(c.legacyRows),
     sequencedRows: n(c.sequencedRows),
-    brokenAt:
-      b && typeof b.id === 'string'
-        ? { id: b.id, segment: String(b.segment ?? ''), commitsTo: typeof b.commitsTo === 'string' ? b.commitsTo : null }
-        : null,
+    brokenAt: b && typeof b === 'object'
+      ? { id: typeof b.id === 'string' ? b.id : null, segment: String(b.segment ?? ''), commitsTo: commitsToOf(b.commitsTo) }
+      : null,
   };
 }
 
@@ -948,11 +970,13 @@ function chainTone(v: ChainVerdictView): string {
 
 function chainSummary(v: ChainVerdictView): string {
   if (v.verdict === 'unverified') {
-    return 'The server returned no chain verdict on this read, so the chain is not verified here';
+    return v.reason
+      ? `The chain is not verified: ${v.reason.replace(/\.$/, '')}`
+      : 'The server returned no chain verdict on this read, so the chain is not verified here';
   }
   const span = `${v.rowsChecked} chained ${v.rowsChecked === 1 ? 'entry' : 'entries'} verified server-side (${v.sequencedRows} sequenced, ${v.legacyRows} legacy)`;
   if (v.verdict === 'intact') return `Hash chain verifies intact over ${span}`;
-  return `Hash chain breaks at entry ${v.brokenAt?.id ?? 'unknown'} (${v.brokenAt?.segment ?? 'unknown'} segment, ${
+  return `Hash chain breaks at ${v.brokenAt?.id ? `entry ${v.brokenAt.id}` : "another organisation's entry"} (${v.brokenAt?.segment || 'unknown'} segment, ${
     v.brokenAt?.commitsTo ? `commits to ${v.brokenAt.commitsTo}` : 'content does not derive from any predecessor'
   }) over ${span}`;
 }
@@ -1016,7 +1040,7 @@ function ActorRef({ value }: { value?: string | null }) {
   );
 }
 
-export function AuditTrail({ onAsk }: SurfaceViewProps) {
+export function AuditTrail({ onAsk, onNav }: SurfaceViewProps) {
   const [kind, setKind] = useState('all');
   const [q, setQ] = useState('');
   const [sel, setSel] = useState<string | null>(null);
@@ -1168,6 +1192,12 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
               }
             >
               {I.link || I.network} Hash chain
+            </button>
+            {/* The scoped, per-question reports (access review, sign-ins,
+                signatures, retention) are sealed the same way and live on
+                their own surface. */}
+            <button type="button" className="btn ghost" onClick={() => onNav('compliance-reports')}>
+              {I.fileCheck} Compliance reports
             </button>
             <button className="btn primary" onClick={doExport} disabled={exporting}>
               {I.scroll} {exporting ? 'Generating…' : 'Export signed bundle'}
@@ -2467,7 +2497,7 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
         // eslint-disable-next-line no-alert
         window.alert(
           'Not downloaded — ' +
-            (why?.message || why?.error || `the server refused it (HTTP ${res.status})`) + '.',
+            (why?.message || why?.error || `the server refused it (HTTP ${res.status})`).replace(/\.$/, '') + '.',
         );
         return;
       }

@@ -21,16 +21,22 @@
  */
 
 // ── Controlled documents (mirror the SOP-register fixtures + the change-control docs) ──
+// Every document is seeded in review, none effective (2026-10-01, P0-18). A
+// document becomes effective only through the signed approval in the same
+// transaction (migrations/20261001_qms_document_signature_required.sql), and a
+// seed has no signer to stand behind one: an "effective" row here would be an
+// approval no one gave. In a demo, approve one through the QMS surface's sign
+// dialog to show the signed path; its read-and-understood training follows.
 const DOCS = [
-  { num: 'QM-001',      title: 'Quality manual',                          type: 'manual',     cat: 'mgmt',       ver: '4.0', status: 'effective',  eff: '2025-09-01', review: '2026-09-01' },
-  { num: 'POL-002',     title: 'Data integrity policy',                   type: 'policy',     cat: 'mgmt',       ver: '2.1', status: 'effective',  eff: '2025-11-15', review: '2026-05-15' },
+  { num: 'QM-001',      title: 'Quality manual',                          type: 'manual',     cat: 'mgmt',       ver: '4.0', status: 'in_review',  eff: '2025-09-01', review: '2026-09-01' },
+  { num: 'POL-002',     title: 'Data integrity policy',                   type: 'policy',     cat: 'mgmt',       ver: '2.1', status: 'in_review',  eff: '2025-11-15', review: '2026-05-15' },
   { num: 'SOP-820-50',  title: 'Supplier controls procedure',             type: 'sop',        cat: 'purchasing', ver: '3.1', status: 'in_review',  eff: '2024-12-01', review: '2026-05-20' },
-  { num: 'SOP-820-100', title: 'Corrective and preventive action (CAPA)', type: 'sop',        cat: 'capa',       ver: '5.0', status: 'effective',  eff: '2026-03-30', review: '2027-03-30' },
+  { num: 'SOP-820-100', title: 'Corrective and preventive action (CAPA)', type: 'sop',        cat: 'capa',       ver: '5.0', status: 'in_review',  eff: '2026-03-30', review: '2027-03-30' },
   { num: 'WI-014',      title: 'Incoming inspection — dimensional check',  type: 'wi',         cat: 'production', ver: '1.2', status: 'draft',      eff: null,         review: null },
-  { num: 'VP-7',        title: 'Sterilizer OQ/PQ validation protocol',     type: 'protocol',   cat: 'design',     ver: '1.0', status: 'effective',  eff: '2025-08-10', review: '2026-02-10' },
-  { num: 'TC-1',        title: 'New-hire quality system curriculum',        type: 'curriculum', cat: 'training',   ver: '2.0', status: 'effective',  eff: '2026-01-05', review: '2026-07-05' },
-  { num: 'SOP-CC-01',   title: 'Change-control procedure',                 type: 'sop',        cat: 'capa',       ver: '2.0', status: 'effective',  eff: '2026-02-01', review: '2027-02-01' },
-  { num: 'CC-FORM-01',  title: 'Change-request form',                      type: 'form',       cat: 'capa',       ver: '1.0', status: 'effective',  eff: '2026-02-01', review: null },
+  { num: 'VP-7',        title: 'Sterilizer OQ/PQ validation protocol',     type: 'protocol',   cat: 'design',     ver: '1.0', status: 'in_review',  eff: '2025-08-10', review: '2026-02-10' },
+  { num: 'TC-1',        title: 'New-hire quality system curriculum',        type: 'curriculum', cat: 'training',   ver: '2.0', status: 'in_review',  eff: '2026-01-05', review: '2026-07-05' },
+  { num: 'SOP-CC-01',   title: 'Change-control procedure',                 type: 'sop',        cat: 'capa',       ver: '2.0', status: 'in_review',  eff: '2026-02-01', review: '2027-02-01' },
+  { num: 'CC-FORM-01',  title: 'Change-request form',                      type: 'form',       cat: 'capa',       ver: '1.0', status: 'in_review',  eff: '2026-02-01', review: null },
 ];
 
 // ── Change-control log (mirror the Change-control surface fixtures) ──

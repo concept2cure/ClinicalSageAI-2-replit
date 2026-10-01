@@ -409,12 +409,12 @@ export const TRACE_PROVENANCE: AnaTool = {
 export const CHECK_CONSISTENCY: AnaTool = {
   name: 'check_consistency',
   description:
-    'Cross-check a claim against other parts of the dossier for consistency along a named dimension (e.g. subject-counts, spec-vs-qos, label-vs-safety), and record each verdict (match or conflict) as a consistency finding. Tenant comes from the active context; the call is audited. Use it to catch contradictions before review.',
+    'Compare the labelled figures in a claim (enrolled N, sample size, sites, events, alpha, power, hazard ratio, primary p-value) with the same figures in other parts of the dossier, by deterministic extraction, and record each as a consistency finding: match when they agree, conflict when they do not. A source sharing no labelled figure with the claim is returned as notCompared — not a finding of consistency. Prose claims are not compared. Tenant comes from the active context; the call is audited.',
   input_schema: {
     type: 'object',
     properties: {
       submission_id: { type: 'number', description: 'The submission.' },
-      dimension: { type: 'string', description: 'What is being checked, e.g. "subject-counts".' },
+      dimension: { type: 'string', description: 'What is being checked, recorded with each finding, e.g. "subject-counts".' },
       left: {
         type: 'object',
         description: 'The claim under review.',

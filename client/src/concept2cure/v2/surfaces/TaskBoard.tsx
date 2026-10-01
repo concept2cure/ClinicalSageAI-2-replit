@@ -4,6 +4,7 @@ import { useDialog } from '../useDialog';
 import { useLiveRows, useLiveData, hasKeys, EmptyState } from '../dataConnect';
 import { apiRequest, ApiRequestError, serverMessage } from '@/lib/queryClient';
 import { useAuth } from '@/services/portal/authService';
+import { canGovernedWrite } from '@shared/constants/permissions';
 import { EsignModal, esignSignerOf, type EsigSignedManifest, type EsignSigner } from '../../_shared/components/EsignModal';
 import type { EsigMeaning } from '../../hooks/useEsignature';
 import { describeSignatureMethod } from '@shared/part11/signature-method';
@@ -299,6 +300,11 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
      returned an empty board for every user of the product. */
   const { user } = useAuth();
   const myId = user?.id != null ? String(user.id) : '';
+  /* Every task write is refused to a viewer by requireEditorAccess. The board
+     offered a viewer New task, Start workflow, move, archive and sign anyway,
+     and refused only after the click (T2's UI half). The session now carries
+     the permission the server derives from the same role set. */
+  const canWrite = canGovernedWrite(user);
 
   const [view, setView] = useState('board');
   const [proj, setProj] = useState<string>(() => {
@@ -741,10 +747,16 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
           <h1 className="ph-title">Task board</h1>
           <div className="ph-sub">The org-wide unified task board. Org-scoped by design — filter to a project below. Tasks from sections, the pyramid engine, the legacy WBS and modules are surfaced here with their origin store labelled.</div>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn ghost" onClick={() => setWf(true)}>{I.workflow} Start workflow</button>
-          <button className="btn primary" onClick={() => setCreating(true)}>{I.plus} New task</button>
-        </div>
+        {canWrite ? (
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn ghost" onClick={() => setWf(true)}>{I.workflow} Start workflow</button>
+            <button className="btn primary" onClick={() => setCreating(true)}>{I.plus} New task</button>
+          </div>
+        ) : (
+          <div className="ph-sub" role="note" data-testid="tb-view-only">
+            {I.lock} View only. Creating and changing tasks needs an editor role in this organization.
+          </div>
+        )}
       </div>
 
       {actionErr && (
@@ -797,11 +809,11 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
                  to watch a path that does not exist. */
               : undefined
         }
-        action={{
+        action={canWrite ? {
           label: critBlocked ? 'Unblock the critical path' : overdue.length ? 'Triage the overdue work' : critDesignated ? 'Start a workflow from a template' : 'Mark the tasks that gate the milestone',
           onClick: () => { if (critBlocked || overdue.length) { setView('path'); } else { setWf(true); } },
           alt: { label: 'Auto-balance assignments', onClick: () => onAsk && onAsk('Rebalance open task assignments by workload using getOptimalAssignee') },
-        }}
+        } : { label: 'See the critical path', onClick: () => setView('path') }}
         secondary="Or work the board, critical path, and analytics below."
       />
 
@@ -891,10 +903,12 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
                         <span className="tb-due" data-over={isOverdue(t) || undefined}>{t.due}</span>
                         <span className="tb-av" title={nameOf(t.assignee)}>{tbAvatar(nameOf(t.assignee))}</span>
                       </div>
-                      <div className="tb-move" onClick={e => e.stopPropagation()}>
-                        <button disabled={t.status === 'pending'} onClick={() => move(t, -1)} title="Move back" aria-label="Move back">{I.left}</button>
-                        <button disabled={t.status === 'completed'} onClick={() => move(t, 1)} title="Advance" aria-label="Advance">{I.chevRight}</button>
-                      </div>
+                      {canWrite && (
+                        <div className="tb-move" onClick={e => e.stopPropagation()}>
+                          <button disabled={t.status === 'pending'} onClick={() => move(t, -1)} title="Move back" aria-label="Move back">{I.left}</button>
+                          <button disabled={t.status === 'completed'} onClick={() => move(t, 1)} title="Advance" aria-label="Advance">{I.chevRight}</button>
+                        </div>
+                      )}
                     </div>
                   ))}
                   {!items.length && <div className="tb-empty">No tasks</div>}
@@ -1052,6 +1066,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
           onAsk={onAsk}
           onMove={move}
           nameOf={nameOf}
+          canWrite={canWrite}
           onArchived={() => { setSel(null); setReloadKey((k) => k + 1); }}
         />
       )}
@@ -1081,12 +1096,14 @@ interface TaskDetailProps {
   nameOf: (id: string | null | undefined) => string;
   /** Called after a successful soft-delete so the board closes + refetches. */
   onArchived: () => void;
+  /** False for a role the server refuses every task write (see canGovernedWrite). */
+  canWrite: boolean;
 }
 
 /** archiveTaskSchema's ceiling on the archive reason (server/routes/taskManagement.routes.ts). */
 const ARCHIVE_REASON_MAX = 1000;
 
-function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onArchived }: TaskDetailProps) {
+function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onArchived, canWrite }: TaskDetailProps) {
   const src = TB_SRC[t.source] || TB_SRC.unified;
   const owner = nameOf(t.assignee) || 'Unassigned';
   const dep = (id: string) => { const d = byId(id); return d ? d.title : id; };
@@ -1266,20 +1283,26 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onArch
         )}
         <div className="tb-detail-f">
           <button className="btn ghost" onClick={() => { onAsk && onAsk('Draft a status update for ' + t.taskId + ': ' + t.title); onClose(); }}>{I.sparkles} Ask AnA</button>
-          {confirmArchive && (
+          {canWrite && confirmArchive && (
             <button className="btn ghost" onClick={() => { setConfirmArchive(false); setArchiveReason(''); setArchiveErr(''); }}>Cancel</button>
           )}
-          <button
-            className="btn ghost"
-            style={confirmArchive ? { color: 'var(--error)', borderColor: 'var(--error)' } : undefined}
-            disabled={archiving || (confirmArchive && !archiveReasonOk)}
-            onClick={archive}
-            title={confirmArchive && !archiveReasonOk ? (archiveReasonTooLong ? archiveReasonTooLongText : 'Give a reason to archive') : undefined}
-            aria-label={confirmArchive ? `Confirm archiving "${t.title}"` : `Archive "${t.title}"`}
-          >{archiving ? 'Archiving…' : confirmArchive ? 'Confirm archive' : 'Archive'}</button>
+          {canWrite && (
+            <button
+              className="btn ghost"
+              style={confirmArchive ? { color: 'var(--error)', borderColor: 'var(--error)' } : undefined}
+              disabled={archiving || (confirmArchive && !archiveReasonOk)}
+              onClick={archive}
+              title={confirmArchive && !archiveReasonOk ? (archiveReasonTooLong ? archiveReasonTooLongText : 'Give a reason to archive') : undefined}
+              aria-label={confirmArchive ? `Confirm archiving "${t.title}"` : `Archive "${t.title}"`}
+            >{archiving ? 'Archiving…' : confirmArchive ? 'Confirm archive' : 'Archive'}</button>
+          )}
           <span className="sp" />
-          <button className="btn ghost" disabled={t.status === 'pending'} onClick={() => { onMove(t, -1); onClose(); }}>Move back</button>
-          <button className="btn primary" disabled={t.status === 'completed'} onClick={() => { onMove(t, 1); onClose(); }}>{I.chevRight} Advance</button>
+          {canWrite && (
+            <>
+              <button className="btn ghost" disabled={t.status === 'pending'} onClick={() => { onMove(t, -1); onClose(); }}>Move back</button>
+              <button className="btn primary" disabled={t.status === 'completed'} onClick={() => { onMove(t, 1); onClose(); }}>{I.chevRight} Advance</button>
+            </>
+          )}
         </div>
       </div>
     </div>

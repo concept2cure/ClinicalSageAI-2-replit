@@ -145,7 +145,9 @@ describe('embedding placement gate (before the SDK client exists)', () => {
 
   it("a zero-retention tenant's plain text never reaches OpenAI: GatewayPolicyError before any client is constructed", async () => {
     process.env.NODE_ENV = 'production';
-    const resolve = vi.fn(async () => ({ zeroDataRetention: true }));
+    // Elected OpenAI (ADR-0014 §1, P1-45), so the refusal is the zero-retention
+    // floor's; an unelected tenant is refused earlier (embedding-provider-election.test.ts).
+    const resolve = vi.fn(async () => ({ zeroDataRetention: true, allowedProviders: ['openai' as const] }));
     setOrgPlacementResolver({ resolve });
     const provider = getEmbeddingProvider();
     expect(provider.kind).toBe('openai');
@@ -180,6 +182,8 @@ describe('embedding placement gate (before the SDK client exists)', () => {
         approvedIntendedUses: ['chat'],
       },
     });
+    // Elected OpenAI (P1-45), so the refusal is the intended-use approval's.
+    setOrgPlacementResolver({ resolve: async () => ({ allowedProviders: ['openai'] }) });
     const provider = getEmbeddingProvider();
 
     // Vault ingestion embeds inside a tenant scope; an unbound production call

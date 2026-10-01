@@ -1,0 +1,58 @@
+BEGIN
+SET
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+== the legitimate path: INSERT, as app_service under RLS
+SET
+ rls | tenant | current_user 
+-----+--------+--------------
+ on  | 78     | app_service
+(1 row)
+
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+== UPDATE, as app_service under RLS (each must be refused)
+psql:docs/evidence/D6/2026-10-01-tranche-4/P1-24/probe.sql:38: ERROR:  IMMUTABILITY_VIOLATION: workflow_history is append-only (21 CFR Part 11 §11.10(e)) — UPDATE refused.
+psql:docs/evidence/D6/2026-10-01-tranche-4/P1-24/probe.sql:39: ERROR:  IMMUTABILITY_VIOLATION: document_audit_logs is append-only (21 CFR Part 11 §11.10(e)) — UPDATE refused.
+psql:docs/evidence/D6/2026-10-01-tranche-4/P1-24/probe.sql:40: ERROR:  IMMUTABILITY_VIOLATION: regulatory_audit_logs is append-only (21 CFR Part 11 §11.10(e)) — UPDATE refused.
+psql:docs/evidence/D6/2026-10-01-tranche-4/P1-24/probe.sql:41: ERROR:  IMMUTABILITY_VIOLATION: c2c_ana_actions is append-only (21 CFR Part 11 §11.10(e)) — UPDATE refused.
+psql:docs/evidence/D6/2026-10-01-tranche-4/P1-24/probe.sql:42: ERROR:  IMMUTABILITY_VIOLATION: authoring_signatures is append-only (21 CFR Part 11 §11.10(e)) — UPDATE refused.
+== DELETE, as app_service under RLS (each must be refused)
+psql:docs/evidence/D6/2026-10-01-tranche-4/P1-24/probe.sql:45: ERROR:  IMMUTABILITY_VIOLATION: workflow_history is append-only (21 CFR Part 11 §11.10(e)) — DELETE refused.
+psql:docs/evidence/D6/2026-10-01-tranche-4/P1-24/probe.sql:46: ERROR:  IMMUTABILITY_VIOLATION: document_audit_logs is append-only (21 CFR Part 11 §11.10(e)) — DELETE refused.
+psql:docs/evidence/D6/2026-10-01-tranche-4/P1-24/probe.sql:47: ERROR:  IMMUTABILITY_VIOLATION: regulatory_audit_logs is append-only (21 CFR Part 11 §11.10(e)) — DELETE refused.
+psql:docs/evidence/D6/2026-10-01-tranche-4/P1-24/probe.sql:48: ERROR:  IMMUTABILITY_VIOLATION: c2c_ana_actions is append-only (21 CFR Part 11 §11.10(e)) — DELETE refused.
+psql:docs/evidence/D6/2026-10-01-tranche-4/P1-24/probe.sql:49: ERROR:  IMMUTABILITY_VIOLATION: authoring_signatures is append-only (21 CFR Part 11 §11.10(e)) — DELETE refused.
+RESET
+== cascades from a parent, as the owner (each must be refused)
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+psql:docs/evidence/D6/2026-10-01-tranche-4/P1-24/probe.sql:57: ERROR:  IMMUTABILITY_VIOLATION: workflow_history is append-only (21 CFR Part 11 §11.10(e)) — DELETE refused.
+psql:docs/evidence/D6/2026-10-01-tranche-4/P1-24/probe.sql:58: ERROR:  IMMUTABILITY_VIOLATION: document_audit_logs is append-only (21 CFR Part 11 §11.10(e)) — DELETE refused.
+psql:docs/evidence/D6/2026-10-01-tranche-4/P1-24/probe.sql:59: ERROR:  IMMUTABILITY_VIOLATION: c2c_ana_actions is append-only (21 CFR Part 11 §11.10(e)) — UPDATE refused.
+== TRUNCATE, as the owner (each must be refused)
+psql:docs/evidence/D6/2026-10-01-tranche-4/P1-24/probe.sql:62: ERROR:  IMMUTABILITY_VIOLATION: workflow_history is append-only (21 CFR Part 11 §11.10(e)) — TRUNCATE refused.
+psql:docs/evidence/D6/2026-10-01-tranche-4/P1-24/probe.sql:63: ERROR:  IMMUTABILITY_VIOLATION: document_audit_logs is append-only (21 CFR Part 11 §11.10(e)) — TRUNCATE refused.
+psql:docs/evidence/D6/2026-10-01-tranche-4/P1-24/probe.sql:64: ERROR:  IMMUTABILITY_VIOLATION: regulatory_audit_logs is append-only (21 CFR Part 11 §11.10(e)) — TRUNCATE refused.
+psql:docs/evidence/D6/2026-10-01-tranche-4/P1-24/probe.sql:65: NOTICE:  truncate cascades to table "c2c_document_section_versions"
+psql:docs/evidence/D6/2026-10-01-tranche-4/P1-24/probe.sql:65: ERROR:  IMMUTABILITY_VIOLATION: c2c_ana_actions is append-only (21 CFR Part 11 §11.10(e)) — TRUNCATE refused.
+psql:docs/evidence/D6/2026-10-01-tranche-4/P1-24/probe.sql:66: ERROR:  IMMUTABILITY_VIOLATION: authoring_signatures is append-only (21 CFR Part 11 §11.10(e)) — TRUNCATE refused.
+== what survived inside the transaction
+           t           | count 
+-----------------------+-------
+ workflow_history      |     2
+ document_audit_logs   |     2
+ regulatory_audit_logs |     1
+ c2c_ana_actions       |     2
+ authoring_signatures  |     1
+(5 rows)
+
+ROLLBACK

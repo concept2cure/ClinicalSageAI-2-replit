@@ -19,6 +19,7 @@
 import { readFileSync } from 'node:fs';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
+import { applyGovernedSigning } from './fixtures/governed-signing-pglite';
 
 /**
  * canonical_documents' append-only guard (VR-03) — the real migration file, not
@@ -34,7 +35,9 @@ const CANONICAL_DOCUMENTS_GUARD = new URL(
    harness table that names a project is held to its organization exactly as
    the deployed one is. Each block skips itself when its tables are absent. */
 const PROGRAM_SAME_ORG_KEYS = new URL('../../migrations/20260926b_program_same_org_keys.sql', import.meta.url);
-
+/* The integer project key (PF-03), applied after it for the same reason. */
+const INTEGER_PROJECT_SAME_ORG_KEYS = new URL('../../migrations/20261001_integer_project_same_org_keys.sql', import.meta.url);
+const ONE_ANCHOR_PER_PROGRAM = new URL('../../migrations/20261001b_projects_one_anchor_per_program.sql', import.meta.url);
 /** CREATE TABLE statements for the IND tables (mirrors the migrations). */
 export const IND_PGLITE_DDL = `
 CREATE TABLE IF NOT EXISTS ind_sponsors (
@@ -368,7 +371,12 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   user_agent   TEXT,
   -- Production has it (migrations/20260527_mutation_primitives.sql, on the
   -- deploy set): the stated reason the inspector's ledger shows.
-  reason       TEXT
+  reason       TEXT,
+  -- The governed-action ledger's columns (recordGovernedAction,
+  -- server/routes/c2c/actions.ts), so a signed act can be exercised here too.
+  target_type   TEXT,
+  target_id     TEXT,
+  ana_action_id TEXT
 );
 `;
 
@@ -440,7 +448,9 @@ CREATE TABLE IF NOT EXISTS canonical_documents (
   outline             JSONB NOT NULL DEFAULT '[]'::jsonb,
   audit               JSONB NOT NULL DEFAULT '[]'::jsonb,
   created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+  updated_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+  -- Who created the record (VR-12): the separation-of-duties check reads it.
+  created_by          INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS ctd_onboarding_documents (
@@ -579,6 +589,7 @@ CREATE TABLE IF NOT EXISTS c2c_document_sections (
 );
 `;
 
+
 /** A statement that failed because the database lacked a relation or column. */
 export interface SchemaGap {
   /** Postgres SQLSTATE: 42P01 undefined_table, 42703 undefined_column. */
@@ -675,6 +686,8 @@ export async function createIndPgliteDb(
     formArtifacts?: boolean;
     governedSections?: boolean;
     programSpine?: boolean;
+    /** The governed-signing tables and migrations (fixtures/governed-signing-pglite). */
+    governedSigning?: boolean;
   } = {}
 ): Promise<IndPgliteDb> {
   const pglite = new PGlite();
@@ -685,6 +698,7 @@ export async function createIndPgliteDb(
   if (opts.formArtifacts) await pglite.exec(FORM_ARTIFACT_PGLITE_DDL);
   if (opts.governedSections) await pglite.exec(GOVERNED_SECTIONS_PGLITE_DDL);
   if (opts.programSpine) await pglite.exec(PROGRAM_SPINE_PGLITE_DDL);
+  if (opts.governedSigning) await applyGovernedSigning(pglite);
   // After every DDL block: canonical_documents is created by LEAF_SOURCE_PGLITE_DDL,
   // and the guard skips itself (to_regclass) when the table is absent — so run
   // any earlier and it silently guards nothing.
@@ -692,6 +706,8 @@ export async function createIndPgliteDb(
   // After every DDL block too: the keys need both the program spine and the
   // tables that name it, and each skips itself when either is absent.
   await pglite.exec(readFileSync(PROGRAM_SAME_ORG_KEYS, 'utf8'));
+  await pglite.exec(readFileSync(INTEGER_PROJECT_SAME_ORG_KEYS, 'utf8'));
+  await pglite.exec(readFileSync(ONE_ANCHOR_PER_PROGRAM, 'utf8'));
   const guard = await pglite.query<{ table_present: boolean; triggers: number }>(
     `SELECT to_regclass('public.canonical_documents') IS NOT NULL AS table_present,
             (SELECT COUNT(*)::int FROM pg_trigger

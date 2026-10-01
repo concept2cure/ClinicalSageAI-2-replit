@@ -1,8 +1,9 @@
 /**
  * Launch scope — the one list of what ships in the launch catalog.
  *
- * `docs/LAUNCH_DEFINITION_OF_DONE.md` row D2: six apps on by default for a
- * new organisation, every other surface behind a flag that is off in
+ * `docs/LAUNCH_DEFINITION_OF_DONE.md` row D2: seven apps on by default for a
+ * new organisation (six until 2026-09-30, when the founder made Reporting &
+ * analytics a launch app), every other surface behind a flag that is off in
  * production. This file IS that flag's data. It is read by:
  *
  *   - server/services/entitlements/navigation-entitlements.ts — emits a
@@ -39,7 +40,7 @@ export interface LaunchApp {
   modules: readonly string[];
 }
 
-/** The six launch apps, in the order the definition of done lists them. */
+/** The seven launch apps, in the order the definition of done lists them. */
 export const LAUNCH_APPS: readonly LaunchApp[] = [
   {
     id: 'projects',
@@ -118,6 +119,17 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
     surfaces: ['quality', 'qmp'],
     modules: ['quality', 'qmp'],
   },
+  {
+    id: 'reporting',
+    label: 'Reporting & analytics',
+    // Founder decision, 2026-09-26: Reporting and analytics is a central service
+    // for every client type, like Vault, Projects, Submissions and Tasks, and
+    // belongs on the rail of every organisation. The canvas is the rail entry;
+    // the audit and compliance reports surface is reached from it and from the
+    // audit trail. Both were hidden in production because neither was listed here.
+    surfaces: ['insights', 'compliance-reports'],
+    modules: ['insights'],
+  },
 ] as const;
 
 /**
@@ -146,7 +158,7 @@ export const LAUNCH_SHELL_SURFACES: Readonly<Record<string, string>> = {
   'identity-console': 'SSO / SCIM; a security reviewer expects it (D6)',
 };
 
-/** Every surface id in the launch scope: the six apps plus the shell set. */
+/** Every surface id in the launch scope: the seven apps plus the shell set. */
 export const LAUNCH_SURFACE_IDS: ReadonlySet<string> = new Set([
   ...LAUNCH_APPS.flatMap((a) => a.surfaces),
   ...Object.keys(LAUNCH_SHELL_SURFACES),

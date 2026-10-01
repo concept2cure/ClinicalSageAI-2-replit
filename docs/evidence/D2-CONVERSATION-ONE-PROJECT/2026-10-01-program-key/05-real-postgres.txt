@@ -1,0 +1,71 @@
+PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+== c2c_dbtest: before — threads, threads whose metadata names a program, of which same-organization
+6|0|0
+== c2c_dbtest: apply 20261001c twice (replay)
+DO
+DO
+DO
+DO
+DO
+DO
+             conname              | convalidated |                                                          pg_get_constraintdef                                                           
+----------------------------------+--------------+-----------------------------------------------------------------------------------------------------------------------------------------
+ chat_threads_program_needs_org   | f            | CHECK (((program_id IS NULL) OR (organization_id IS NOT NULL))) NOT VALID
+ chat_threads_program_same_org_fk | f            | FOREIGN KEY (program_id, organization_id) REFERENCES regulatory_programs(id, organization_id) ON DELETE SET NULL (program_id) NOT VALID
+(2 rows)
+
+                                                                 indexdef                                                                  
+-------------------------------------------------------------------------------------------------------------------------------------------
+ CREATE INDEX idx_chat_threads_org_program ON public.chat_threads USING btree (organization_id, program_id) WHERE (program_id IS NOT NULL)
+(1 row)
+
+ bound 
+-------
+     0
+(1 row)
+
+== c2c_pf03: before — threads, threads whose metadata names a program, of which same-organization
+0|0|0
+== c2c_pf03: apply 20261001c twice (replay)
+DO
+DO
+DO
+DO
+DO
+DO
+             conname              | convalidated |                                                          pg_get_constraintdef                                                           
+----------------------------------+--------------+-----------------------------------------------------------------------------------------------------------------------------------------
+ chat_threads_program_needs_org   | f            | CHECK (((program_id IS NULL) OR (organization_id IS NOT NULL))) NOT VALID
+ chat_threads_program_same_org_fk | f            | FOREIGN KEY (program_id, organization_id) REFERENCES regulatory_programs(id, organization_id) ON DELETE SET NULL (program_id) NOT VALID
+(2 rows)
+
+                                                                 indexdef                                                                  
+-------------------------------------------------------------------------------------------------------------------------------------------
+ CREATE INDEX idx_chat_threads_org_program ON public.chat_threads USING btree (organization_id, program_id) WHERE (program_id IS NOT NULL)
+(1 row)
+
+ bound 
+-------
+     0
+(1 row)
+
+== c2c_dbtest: own program bound; foreign refused 23503; no-org with program refused 23514; program delete keeps the organization. One transaction, rolled back.
+BEGIN
+INSERT 0 2
+INSERT 0 2
+INSERT 0 1
+SAVEPOINT
+ERROR:  insert or update on table "chat_threads" violates foreign key constraint "chat_threads_program_same_org_fk"
+DETAIL:  Key (program_id, organization_id)=(0d000000-0000-4000-8000-000000000022, 990021) is not present in table "regulatory_programs".
+ROLLBACK
+SAVEPOINT
+ERROR:  new row for relation "chat_threads" violates check constraint "chat_threads_program_needs_org"
+DETAIL:  Failing row contains (pf10-noorg, null, null, null, null, null, null, null, 2026-10-01 06:58:31.546755, 2026-10-01 06:58:31.546755, 0d000000-0000-4000-8000-000000000021).
+ROLLBACK
+DELETE 1
+    id    | organization_id | program_id 
+----------+-----------------+------------
+ pf10-own |          990021 | 
+(1 row)
+
+ROLLBACK

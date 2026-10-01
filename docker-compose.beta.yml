@@ -14,10 +14,14 @@ version: '3.9'
 # REQUIRED (see .env.beta.example, and the per-variable rationale on the `app`
 # service below):
 #   DB_PASSWORD, APP_SERVICE_DB_PASSWORD, APP_DATABASE_URL, JWT_SECRET,
-#   REFRESH_TOKEN_SECRET, MFA_ENCRYPTION_KEY, AUDIT_HMAC_KEY, AUDIT_HMAC_SECRET,
-#   CONNECTOR_ENCRYPTION_KEY, ANTHROPIC_API_KEY
+#   REFRESH_TOKEN_SECRET, MFA_ENCRYPTION_KEY, AUDIT_HMAC_KEY, AUDIT_HMAC_SECRET, AUDIT_EXPORT_SIGNING_KEY, AUDIT_ATTESTATION_KEY,
+#   CONNECTOR_ENCRYPTION_KEY, ANTHROPIC_API_KEY, CONCEPT2CURE_SIGNER_ACCEPT_HMAC,
+#   AI_PROVIDER_PLACEMENT_APPROVALS, APP_URL, ALLOWED_ORIGINS,
+#   SMTP_HOST, SMTP_USER, SMTP_PASS, SMTP_FROM
 # Optional:
-#   OPENAI_API_KEY, SENDGRID_API_KEY, STRIPE_SECRET_KEY, SENTRY_DSN
+#   OPENAI_API_KEY, STRIPE_SECRET_KEY, SENTRY_DSN
+# The list is held to deploy-aws.yml's preflight by
+# scripts/ci/check-compose-boot-contract.mjs (npm run ci:compose-boot-contract).
 
 services:
   # ---------- Database ----------
@@ -130,14 +134,24 @@ services:
       # anyone with the source recompute the chain, defeating the integrity
       # guarantee (server/lib/tamper-proof-audit.ts).
       AUDIT_HMAC_SECRET: ${AUDIT_HMAC_SECRET:?AUDIT_HMAC_SECRET must be set}
+      # Seals the signed audit export an inspector re-verifies. Production refuses
+      # to boot without it, or with it equal to the JWT secret; there is no accept
+      # flag (server/services/audit/auditExportKeyPosture.ts).
+      AUDIT_EXPORT_SIGNING_KEY: ${AUDIT_EXPORT_SIGNING_KEY:?AUDIT_EXPORT_SIGNING_KEY must be set (>=32 chars, not the JWT secret)}
+      # Signs the attestation a departing tenant's export carries
+      # (server/services/tenant-export/attestation-report.service.ts, >=32 chars).
+      # The server boots without it, and every attestation then fails to sign.
+      AUDIT_ATTESTATION_KEY: ${AUDIT_ATTESTATION_KEY:?AUDIT_ATTESTATION_KEY must be set (>=32 chars, distinct from the other audit keys)}
       # AES key for stored third-party connector credentials. Deliberately NOT
       # derived from JWT_SECRET — the two are separate trust domains and the
       # module throws at import in production when it is unset
       # (server/services/connectors/connector-registry.ts).
       CONNECTOR_ENCRYPTION_KEY: ${CONNECTOR_ENCRYPTION_KEY:?CONNECTOR_ENCRYPTION_KEY must be set}
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      # Drafting runs only on an approved Anthropic model
+      # (server/services/ai-governance/approved-models.ts): without this key every
+      # Authoring draft is refused and /readyz reports AnA down.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:?ANTHROPIC_API_KEY must be set (regulatory drafting runs only on an approved Anthropic model)}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       SENTRY_DSN: ${SENTRY_DSN:-}
       VITE_SENTRY_DSN: ${VITE_SENTRY_DSN:-}
@@ -148,6 +162,48 @@ services:
       LOG_LEVEL: info
       # Do not seed the publicly-known demo admin in a shared beta env.
       SEED_DEMO_USER: ${SEED_DEMO_USER:-false}
+      # ── Release signing (server/services/signature/signer-mode.ts) ─────────
+      # Production refuses to boot without a signer mode. A Compose host has no
+      # AWS KMS key unless you give it one, so this stack defaults to the HMAC
+      # seal over AUDIT_HMAC_KEY, which production accepts only when the
+      # operator records that choice. Set CONCEPT2CURE_SIGNER_ACCEPT_HMAC=true to
+      # accept it; or set CONCEPT2CURE_SIGNER_MODE=kms with the KMS key id and
+      # region below, and CONCEPT2CURE_SIGNER_ACCEPT_HMAC=false.
+      CONCEPT2CURE_SIGNER_MODE: ${CONCEPT2CURE_SIGNER_MODE:-hmac}
+      CONCEPT2CURE_SIGNER_ACCEPT_HMAC: ${CONCEPT2CURE_SIGNER_ACCEPT_HMAC:?CONCEPT2CURE_SIGNER_ACCEPT_HMAC must be set (true accepts the HMAC signer; false with CONCEPT2CURE_SIGNER_MODE=kms)}
+      CONCEPT2CURE_SIGNER_KMS_KEY_ID: ${CONCEPT2CURE_SIGNER_KMS_KEY_ID:-}
+      CONCEPT2CURE_SIGNER_KMS_REGION: ${CONCEPT2CURE_SIGNER_KMS_REGION:-}
+      # ── AI data placement (server/services/ai-gateway/sensitive-placement-policy.ts)
+      # Production refuses to boot unless the policy enforces and the approvals
+      # name each provider that may receive data: its region, the data classes
+      # approved and whether zero retention is approved. That is a compliance
+      # decision, so there is no default. JSON, e.g.
+      #   {"anthropic":{"region":"global","zeroRetentionApproved":false,"approvedDataClasses":[],"approvedIntendedUses":["drafting"]}}
+      AI_SENSITIVE_DATA_POLICY_MODE: enforce
+      AI_PROVIDER_PLACEMENT_APPROVALS: ${AI_PROVIDER_PLACEMENT_APPROVALS:?AI_PROVIDER_PLACEMENT_APPROVALS must be set (which AI provider may receive which data; a compliance decision)}
+      # ── Part 11 audit trail (server/startup/audit-enforcement.ts) ──────────
+      # The tamper-proof trail and its integrity monitor run only when enabled,
+      # and a missing trail or failed immutability probe refuses boot only when
+      # enforced. Terraform's production stack sets both; so does this one.
+      AUDIT_TRAIL_ENABLED: 'true'
+      AUDIT_REQUIRE_ENFORCE: 'true'
+      # ── Public origin ──────────────────────────────────────────────────────
+      # Reset and invitation links are built on APP_URL, never on the Host
+      # header, and production's CSRF check admits sign-in only from
+      # ALLOWED_ORIGINS (server/middleware/enterprise-security.ts). Both are this
+      # stack's https address behind your TLS proxy, e.g. https://beta.example.com.
+      APP_URL: ${APP_URL:?APP_URL must be set to this stack's public https origin}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?ALLOWED_ORIGINS must be set (comma-separated https origins; sign-in is refused from any other)}
+      # ── Email (server/services/emailService.ts) ────────────────────────────
+      # The emailed login code is the mandatory second factor: without SMTP the
+      # server boots but no one can sign in. 465 (implicit TLS) is the default
+      # and the only port Terraform's stack accepts; the mailer requires TLS
+      # only there. SMTP_FROM must be an address your provider will send from.
+      SMTP_HOST: ${SMTP_HOST:?SMTP_HOST must be set (login codes are emailed; no SMTP, no sign-in)}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_USER: ${SMTP_USER:?SMTP_USER must be set}
+      SMTP_PASS: ${SMTP_PASS:?SMTP_PASS must be set}
+      SMTP_FROM: ${SMTP_FROM:?SMTP_FROM must be set to an address your SMTP provider sends from}
       # ── Vault document storage (server/services/storage/storage-posture.ts) ──
       # Production refuses to boot without a named durable store. This stack
       # keeps vault bytes on the `vaultdata` volume mounted at /app/storage

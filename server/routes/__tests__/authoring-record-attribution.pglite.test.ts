@@ -18,14 +18,18 @@
  *          by email — Number(email) is NaN, so it had none).
  *      A review that states a reason records it as the reason; nothing else
  *      gets one it was not given.
+ *   3. Who may read and export a document's record (DP-42): a holder of the
+ *      action on the document, or an organization audit reader — not every
+ *      member of the organization.
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import request from 'supertest';
 import type express from 'express';
 import { randomUUID } from 'node:crypto';
+import { SignJWT } from 'jose';
 
 import { createJourneyDb, assertNoSchemaGaps, type JourneyDb } from '../../../tests/golden-journeys/harness';
-import { PREREQ, AUTHOR, ORG, OTHER_ORG, mint, makeApp, asToken } from './_authoring-canvas-fixture';
+import { PREREQ, AUTHOR, ORG, OTHER_ORG, JWT_SECRET, mint, makeApp, asToken } from './_authoring-canvas-fixture';
 
 const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown }));
 vi.mock('../../db', () => ({
@@ -37,6 +41,21 @@ vi.mock('../../db', () => ({
 }));
 
 const T = 180_000;
+
+/** A member of the organization with no grant on the documents below. */
+const COLLEAGUE = { id: '11', organizationId: ORG, email: 'colleague@canvas.example', name: 'Casey Colleague' };
+/** The organization's QA manager: an audit reader (owner/admin/manager, DP-18),
+ *  but not a global authoring admin, and holding no grant on the documents. */
+const QA_ADMIN = { id: '12', organizationId: ORG, email: 'qa@canvas.example', name: 'Quinn QA', role: 'manager' };
+
+/** A token carrying a role claim, as the product issues one; the fixture's mint carries none. */
+async function mintWithRole(u: typeof QA_ADMIN): Promise<string> {
+  return new SignJWT({ userId: u.id, email: u.email, name: u.name, role: u.role, organizationId: u.organizationId, tenant_id: u.organizationId })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('1h')
+    .sign(new TextEncoder().encode(JWT_SECRET));
+}
 
 let jdb: JourneyDb;
 let app: express.Express;
@@ -106,6 +125,14 @@ beforeAll(async () => {
       // The standalone path's logAction also writes the tamper-proof log.
       'db/migrations/20260813_audit_tamper_proof_log.sql',
     ],
+    testOnlySql: `
+      INSERT INTO users (id, name, email) VALUES
+        (${COLLEAGUE.id}, '${COLLEAGUE.name}', '${COLLEAGUE.email}'),
+        (${QA_ADMIN.id}, '${QA_ADMIN.name}', '${QA_ADMIN.email}');
+      INSERT INTO organization_users (organization_id, user_id, role) VALUES
+        (${ORG}, ${COLLEAGUE.id}, 'member'),
+        (${ORG}, ${QA_ADMIN.id}, 'manager');
+    `,
   });
   h.db = jdb.db;
   h.pool = jdb.pool;
@@ -191,6 +218,77 @@ describe('2 — the acts the legacy wrapper wrote carry the real actor, and no i
     expect(await rows(`SELECT 1 FROM authoring_audit_trail WHERE change_reason = 'Legacy audit event'`)).toEqual([]);
     expect(await rows(`SELECT 1 FROM audit_logs WHERE reason = 'Legacy audit event'`)).toEqual([]);
   });
+});
+
+describe('3 — who may read and export a document\'s record', () => {
+  const read = (as: (r: request.Test) => request.Test, docId: string) => as(request(app).get(`/api/authoring/docs/${docId}/audit`));
+  const exportOf = (as: (r: request.Test) => request.Test, docId: string) => as(request(app).get(`/api/authoring/docs/${docId}/audit/export`));
+  const exportRows = (docId: string) => rows(`SELECT 1 FROM audit_logs WHERE action = 'authoring.record.exported' AND record_id = $1`, [docId]);
+
+  it('a member with no grant on the document: 403 on the read and the export, and nothing is exported', async () => {
+    const { docId } = await seedDoc();
+    const colleague = asToken(await mint(COLLEAGUE));
+    const r = await read(colleague, docId);
+    expect(r.status, r.text).toBe(403);
+    expect(r.body.error.code).toBe('AUDIT_TRAIL_NOT_PERMITTED');
+    expect(r.text).not.toContain('author@canvas.example');
+    const e = await exportOf(colleague, docId);
+    expect(e.status, e.text).toBe(403);
+    expect(e.headers['content-disposition']).toBeUndefined();
+    expect(await exportRows(docId)).toEqual([]);
+  }, T);
+
+  it('a VIEWER grant reads the trail but may not export it; a revoked grant reads nothing', async () => {
+    const { docId } = await seedDoc();
+    const colleague = asToken(await mint(COLLEAGUE));
+    await jdb.pool.query(
+      `INSERT INTO doc_permissions (doc_id, tenant_id, principal_id, email, role, granted_by)
+       VALUES ($1, $2, $3, $4, 'VIEWER', $5)`,
+      [docId, ORG, COLLEAGUE.id, COLLEAGUE.email, AUTHOR.id],
+    );
+    expect((await read(colleague, docId)).status).toBe(200);
+    expect((await exportOf(colleague, docId)).status).toBe(403);
+    await jdb.pool.query(`UPDATE doc_permissions SET revoked_at = NOW(), revoked_by = $3 WHERE doc_id = $1 AND principal_id = $2`, [docId, COLLEAGUE.id, AUTHOR.id]);
+    expect((await read(colleague, docId)).status).toBe(403);
+  }, T);
+
+  it('the document\'s owner, and the organization\'s audit reader, read and export it', async () => {
+    const { docId } = await seedDoc();
+    expect((await read(author, docId)).status).toBe(200);
+    const qa = asToken(await mintWithRole(QA_ADMIN));
+    expect((await read(qa, docId)).status).toBe(200);
+    const e = await exportOf(qa, docId);
+    expect(e.status, e.text).toBe(200);
+    expect(JSON.parse(e.text).summary).toMatchObject({ truncated: false });
+    expect(await exportRows(docId)).toHaveLength(1);
+  }, T);
+
+  it('another organization\'s document, or an id that is not one: 404 either way', async () => {
+    const { docId } = await seedDoc(OTHER_ORG);
+    const qa = asToken(await mintWithRole(QA_ADMIN));
+    expect((await read(qa, docId)).status).toBe(404);
+    expect((await exportOf(qa, 'not-a-document')).status).toBe(404);
+  }, T);
+});
+
+describe('4 — the session a trail row names is the token\'s, not a header', () => {
+  it('records the verified token\'s sid, and ignores a caller-sent x-session-id', async () => {
+    const { docId, sectionIds } = await seedDoc();
+    const token = await new SignJWT({ userId: AUTHOR.id, email: AUTHOR.email, name: AUTHOR.name, organizationId: ORG, tenant_id: ORG, sid: 'sess-from-token' })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
+      .setExpirationTime('1h')
+      .sign(new TextEncoder().encode(JWT_SECRET));
+    const res = await asToken(token)(request(app).post(`/api/authoring/docs/${docId}/sections/reorder`))
+      .set('x-session-id', 'forged-session')
+      .send({ section_ids: [...sectionIds].reverse() });
+    expect(res.status, res.text).toBe(200);
+    const [row] = await rows<{ session_id: string }>(
+      `SELECT session_id FROM authoring_audit_trail WHERE doc_id = $1 AND operation_type = 'REORDER_SECTIONS'`,
+      [docId],
+    );
+    expect(row.session_id).toBe('sess-from-token');
+  }, T);
 });
 
 describe('the database this ran on', () => {

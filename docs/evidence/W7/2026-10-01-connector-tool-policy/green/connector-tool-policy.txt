@@ -1,0 +1,53 @@
+# green at 48031657 + the runtime change
+ ✓ server/mcp/auth/__tests__/findMembership.pglite.test.ts > findMembership (MCP pre-auth lookup) > returns the membership of an active user in an active organisation 7ms
+ ✓ server/mcp/auth/__tests__/findMembership.pglite.test.ts > findMembership (MCP pre-auth lookup) > refuses a suspended user even though the membership row exists 2ms
+ ✓ server/mcp/auth/__tests__/findMembership.pglite.test.ts > findMembership (MCP pre-auth lookup) > refuses a deactivated (inactive) user 3ms
+ ✓ server/mcp/auth/__tests__/findMembership.pglite.test.ts > findMembership (MCP pre-auth lookup) > refuses any member of a suspended organisation 1ms
+ ✓ server/mcp/auth/__tests__/findMembership.pglite.test.ts > findMembership (MCP pre-auth lookup) > still refuses a user with no membership in the organisation 1ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > serves RFC 9728 protected-resource metadata for /mcp 22ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > serves RFC 8414 authorization-server metadata with PKCE S256 and dynamic registration 5ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > answers /mcp without a token with 401 and a resource_metadata challenge 20ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > answers /mcp with a forged token with 401 (same verifier as the API: HS256 + rotation) 7ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > rejects a refresh-class token on the MCP path (token-class allow-list) 8ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > curated tool catalog > has 19 uniquely named tools, each with all four annotation hints, a scope and exactly one governed write 8ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > fail-closed model-backed tool > returns the gateway’s own refusal verbatim when no provider key is configured 119ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > fail-closed model-backed tool > maps an AnA handler error to a verbatim refusal, never an empty success 1ms
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > refuses a viewer before the tool runs, and records the denial 39ms
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > refuses someone who is no longer a member before the tool runs, and records the denial 1ms
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > fails closed when the role cannot be read 1ms
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > lets an editor run the governed tool 1ms
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > does not ask for a role on a tool that is not governed 1ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > /mcp > control: with the standing readable, the session opens the connector 163ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > /mcp > refuses as an outage when the standing cannot be read — never admits, never "bad token" 8ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the consent POST > control: with the standing readable, consent issues a code 8ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the consent POST > answers 503 and issues no code when the standing cannot be read 5ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the /token exchanges > control: with the standing readable, a refresh rotates and issues 2ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the /token exchanges > a refresh refuses as an outage, and neither rotates nor issues 2ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the /token exchanges > control: with the standing readable, a code exchange issues 1ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the /token exchanges > a code exchange refuses as an outage and issues nothing 1ms
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the token carries the session claims: a fresh id, its start, and the token TTL as its idle window 7ms
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the idle window is the TTL held inside the platform window [1 min, 24 h] 2ms
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the lifetime rule is the platform rule: the session is over ABSOLUTE_SESSION_HOURS after its start, whatever the TTL 1ms
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > connector sessions hold slots in their own pool: beyond the limit the oldest connector token is superseded, the browser session is not 4ms
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the limit is the membership organisation's maxConcurrentSessions, as at sign-in 1ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > removes a denied tool from the surface the model is offered 3ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > returns everything when the tenant denies nothing 1ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > does NOT apply the allowlist — that would strip every search tool 1ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > skips the policy lookup entirely when there is no organization 1ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > ignores a non-numeric organization id rather than passing it to the query 0ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > is default-allow when the policy cannot be read 1ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor — the catalog gate > does not offer the catalog tools to an organization whose catalog is off 1ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor — the catalog gate > offers them when the catalog is on 1ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor — the catalog gate > fails closed when the toggle cannot be read — a tool that would refuse is not offered 2ms
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor — the catalog gate > does not offer them to an org-less turn, which they refuse outright 1ms
+ ✓ server/services/ana/__tests__/governed-toolset-hosted-tools.test.ts > governedToolsetFor — Anthropic-hosted tools > a tenant with no placement policy is offered none of them 4ms
+ ✓ server/services/ana/__tests__/governed-toolset-hosted-tools.test.ts > governedToolsetFor — Anthropic-hosted tools > an opted-in tenant is offered web search and web fetch, never code execution 3ms
+ ✓ server/services/ana/__tests__/governed-toolset-hosted-tools.test.ts > governedToolsetFor — Anthropic-hosted tools > a private-lane tenant is offered none, whatever its opt-in says 1ms
+ ✓ server/services/ana/__tests__/governed-toolset-hosted-tools.test.ts > governedToolsetFor — Anthropic-hosted tools > a zero-retention or residency-bound tenant is offered none 1ms
+ ✓ server/services/ana/__tests__/governed-toolset-hosted-tools.test.ts > governedToolsetFor — Anthropic-hosted tools > a policy that cannot be read offers none (fail closed) 1ms
+ ✓ server/services/ana/__tests__/governed-toolset-hosted-tools.test.ts > governedToolsetFor — Anthropic-hosted tools > an org-less turn is offered none 0ms
+ ✓ server/mcp/__tests__/mcp-tenant-tool-policy.test.ts > callAnaHandler and the tenant tool policy > refuses a tool the organization denied 7270ms
+ ✓ server/mcp/__tests__/mcp-tenant-tool-policy.test.ts > callAnaHandler and the tenant tool policy > runs it for an organization that did not deny it 24ms
+ ✓ server/mcp/__tests__/mcp-tenant-tool-policy.test.ts > callAnaHandler and the tenant tool policy > does not let an allowlist for governed mutations strip a read tool, as on the chat doors 1ms
+ Test Files  8 passed (8)
+      Tests  50 passed (50)

@@ -11,9 +11,11 @@
 import { describe, it, expect } from 'vitest';
 import {
   usRegionalSectionElement,
+  usRegionalHeadingPlacement,
   nearestUsRegionalHeading,
   isKnownUsRegionalSection,
 } from '../fda-regional-sections';
+import { CV_CONTEXT_OF_USE } from '../cv-v4-data';
 
 describe('usRegionalSectionElement', () => {
   it('maps a published heading to its element', () => {
@@ -45,5 +47,44 @@ describe('usRegionalSectionElement', () => {
 
   it('keeps the derived fallback for a code with no published ancestor', () => {
     expect(usRegionalSectionElement('1.99')).toBe('m1-99');
+  });
+});
+
+/**
+ * Package-spine sweep F06 (2026-10-01): every heading is written directly under
+ * <m1-regional>, and only a top-level one belongs there. A deeper heading's
+ * parent element name is not recorded in this repository, so the placement
+ * reports a gap instead of inventing one, and the bundle cannot claim
+ * conformance for it.
+ */
+describe('usRegionalHeadingPlacement', () => {
+  it('a top-level heading (or a section filed under one) is a placement this code can stand behind', () => {
+    expect(usRegionalHeadingPlacement('1.2')).toEqual({ heading: '1.2', element: 'm1-2-cover-letters' });
+    expect(usRegionalHeadingPlacement('m1.1.3')).toEqual({ heading: '1.1', element: 'm1-1-forms' });
+  });
+
+  it('a deeper heading is written directly under <m1-regional>, and the gap names every parent it should sit in', () => {
+    const debarment = usRegionalHeadingPlacement('1.3.3');
+    expect(debarment.element).toBe(usRegionalSectionElement('1.3.3'));
+    expect(debarment.gap).toMatch(/^1\.3\.3 is written directly under <m1-regional>, not inside its parent heading 1\.3:/);
+    expect(usRegionalHeadingPlacement('1.14.4.1').gap).toMatch(/parent heading 1\.14, 1\.14\.4:/);
+  });
+
+  it('1.18: the one recorded parent derives a name that encodes 1.18.1, so neither it nor its children can be stood behind', () => {
+    expect(usRegionalHeadingPlacement('1.18').gap).toMatch(/<m1-18-1-naming>, a recorded name that does not encode 1\.18$/);
+    expect(usRegionalHeadingPlacement('1.18.1').gap).toMatch(/1\.18 \(recorded as <m1-18-1-naming>\)/);
+  });
+
+  it('a section with no published heading gets the fallback element, and a gap saying it is not an FDA element', () => {
+    expect(usRegionalHeadingPlacement('1.99')).toEqual({
+      heading: '1.99', element: 'm1-99', gap: '1.99 has no published FDA heading, so <m1-99> is not an FDA heading element',
+    });
+  });
+
+  it('of the 124 published headings, exactly the top-level four carry no gap', () => {
+    const clean = CV_CONTEXT_OF_USE.codes
+      .map((r) => r.code.replace(/^us_/, ''))
+      .filter((s) => !usRegionalHeadingPlacement(s).gap);
+    expect(clean).toEqual(['1.1', '1.2', '1.19', '1.20']);
   });
 });

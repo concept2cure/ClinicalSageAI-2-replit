@@ -2,10 +2,20 @@
  * Bearer verification and minting for the connector.
  *
  * ONE verifier. `verifyPlatformBearer` is the connector's only way to accept a
- * token and it delegates to `verifyJwtWithRotation` — the function the REST
- * API's authenticateToken uses — plus the same `requireAccessTokenReason`
- * token-class rule and a live organization_users membership re-check. A token
- * the API would reject, the connector rejects for the same reason.
+ * token (the /mcp bearer check and the consent POST both call it). It verifies
+ * through `verifyLiveToken`, the check every first-party authenticator makes —
+ * signature and expiry, the revocation list, the account's standing, and a
+ * password change since the token was issued — then the same
+ * `requireAccessTokenReason` token-class rule and a live organization_users
+ * membership re-check. A token the API would reject, the connector rejects for
+ * the same reason.
+ *
+ * Until 2026-09-25 it called verifyJwtWithRotation directly, so it read neither
+ * the revocation list nor the account's standing: a session its holder had
+ * signed out, or one held by an account since suspended or deprovisioned,
+ * opened /mcp and could authorise a new client at the consent page for the rest
+ * of its life (review 2026-09-22 finding #6; audit IAM-02, P0-2 part c;
+ * mcp-account-standing.dbtest.ts).
  *
  * Two token populations pass through it:
  *   1. First-party platform access tokens (POST /api/auth/login, /dev-login,
@@ -15,12 +25,19 @@
  *      with the same active secret, plus `client_id`, `scope` and `aud` bound
  *      to the resource identifier. Scopes are exactly what the user consented
  *      to and are enforced per tool.
+ *
+ * Only the first is admitted for the `grant` purpose (the consent POST). Until
+ * 2026-10-01 both were: a `c2c:read` connector token posted to /oauth/consent
+ * authorised a new grant of every scope, for any registered client, with no
+ * user present: a 30-day refresh token and the governed write (IAM-02 part b,
+ * reopened; P0-2 residual fix round; mcp-consent-delegated.dbtest.ts).
  */
 
 import jwt from 'jsonwebtoken';
 import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
-import { InvalidTokenError } from '@modelcontextprotocol/sdk/server/auth/errors.js';
+import { InvalidTokenError, ServerError } from '@modelcontextprotocol/sdk/server/auth/errors.js';
 import { verifyJwtWithRotation, activeJwtSecret } from '../../utils/jwtVerify';
+import { verifyLiveToken } from '../../services/token-revocation';
 import { requireAccessTokenReason } from '../../middleware/tokenType';
 import { CONNECTOR_TOKEN_USE, openConnectorSession } from '../../services/session-inactivity';
 import { ALL_MCP_SCOPES, type McpConfig } from '../config';
@@ -64,15 +81,55 @@ function toPositiveInt(v: unknown): number | null {
   return Number.isSafeInteger(n) && n > 0 ? n : null;
 }
 
-function decodeAccessClaims(token: string): PlatformClaims {
+const JWT_ERRORS = new Set(['JsonWebTokenError', 'TokenExpiredError', 'NotBeforeError']);
+
+/**
+ * What a bearer is presented for. `resource` (the default) is /mcp, the
+ * resource server for connector tokens, which admits them. `grant` is the
+ * consent POST, which authorises a NEW grant: only the user's own session can
+ * do that, so there a connector token is refused by the token-class rule
+ * itself, before any read. Otherwise a delegated credential could widen its
+ * own scope, or hand itself to another client.
+ */
+export type BearerPurpose = 'resource' | 'grant';
+
+export const CONNECTOR_TOKEN_CANNOT_GRANT =
+  'A connector token cannot authorise a grant. Sign in to Concept2Cure and try again.';
+
+/**
+ * The claims of a live access token, or the refusal the SDK maps to a status:
+ * InvalidTokenError → 401 (the client must authorise again), ServerError → 500.
+ *
+ * A revocation list or an account that cannot be read is a ServerError, never
+ * a pass and never "your token is bad": the token may be fine, and a client
+ * told otherwise would send its user back through consent for an outage.
+ */
+async function decodeAccessClaims(token: string, purpose: BearerPurpose): Promise<PlatformClaims> {
+  // In the order authenticateToken checks: the signature, the token class, and
+  // only then the reads, so a token of the wrong class is refused for its class
+  // and costs no round trip.
   let claims: PlatformClaims;
   try {
     claims = verifyJwtWithRotation<PlatformClaims>(token);
   } catch {
     throw new InvalidTokenError('Invalid or expired token');
   }
-  const nonAccess = requireAccessTokenReason(claims);
+  // The connector is the resource server for its own delegated tokens, and for
+  // no other kind (middleware/tokenType.ts). It is never their grantor.
+  const nonAccess = requireAccessTokenReason(claims, purpose === 'resource' ? { delegatedUse: MCP_TOKEN_USE } : {});
+  if (nonAccess === 'delegated_token' && claims.token_use === MCP_TOKEN_USE) {
+    throw new InvalidTokenError(CONNECTOR_TOKEN_CANNOT_GRANT);
+  }
   if (nonAccess) throw new InvalidTokenError('Token is not valid for this operation');
+  try {
+    await verifyLiveToken(token);
+  } catch (err) {
+    const name = (err as { name?: unknown } | null)?.name;
+    // By name, as server/routes/users.ts does: the class may load twice.
+    if (name === 'SessionEndedError') throw new InvalidTokenError((err as Error).message);
+    if (typeof name === 'string' && JWT_ERRORS.has(name)) throw new InvalidTokenError('Invalid or expired token');
+    throw new ServerError('The session could not be checked. Try again.');
+  }
   return claims;
 }
 
@@ -103,8 +160,12 @@ function resolveScopes(claims: PlatformClaims, tokenUse: McpPrincipal['tokenUse'
   return (claims.scope ?? '').split(' ').filter((s) => known.has(s));
 }
 
-export async function verifyPlatformBearer(token: string, config: McpConfig): Promise<AuthInfo> {
-  const claims = decodeAccessClaims(token);
+export async function verifyPlatformBearer(
+  token: string,
+  config: McpConfig,
+  purpose: BearerPurpose = 'resource',
+): Promise<AuthInfo> {
+  const claims = await decodeAccessClaims(token, purpose);
   const { userId, organizationId } = resolveSubject(claims);
   checkAudience(claims, config);
 
@@ -154,6 +215,8 @@ export interface MintAccessTokenInput {
  * the token is a session opened through openConnectorSession — registered in
  * the account's connector pool at the organisation's limit, idle at its own
  * TTL, over at the platform lifetime; that function explains the policy.
+ * `token_use` is what every other authenticator refuses it by
+ * (middleware/tokenType.ts): it opens the connector and nothing else.
  * `activeJwtSecret()` rather than the config snapshot, for the reason that
  * function documents: minting and verifying must read the same secret at the
  * same moment.

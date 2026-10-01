@@ -97,7 +97,11 @@ describe('document lifecycle orchestrator', () => {
   describe('routes each transition to the right blessed service + one audit', () => {
     it('approval → signs (Part 11) + registers governed doc + one audit', async () => {
       const b = mockBindings();
-      const s = state({ stage: 'in_review', reviewSignature: { actor: 'qa', role: 'qa', signatureRef: 's', signedAt: 't', meaning: 'reviewed' } });
+      // The review covers the content it was bound to (VR-12): here, the empty hash.
+      const s = state({
+        stage: 'in_review',
+        reviewSignature: { actor: 'qa', role: 'qa', signatureRef: 's', signedAt: 't', meaning: 'reviewed', boundContentHash: '' },
+      });
       const r = await advanceDocument(s, 'approved', { actor: 'ra', at: 't' }, b, doc());
       expect(r.ok).toBe(true);
       expect(b.calls).toEqual(['sign', 'register', 'audit']);

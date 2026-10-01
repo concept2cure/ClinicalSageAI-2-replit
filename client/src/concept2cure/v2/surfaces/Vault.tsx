@@ -5,6 +5,8 @@ import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceAc
 import { I } from '../icons';
 import { VaultPlaceIntoSubmission } from './VaultPlaceIntoSubmission';
 import { VaultEditDetails } from './VaultEditDetails';
+import { VaultVersions } from './VaultVersions';
+import { APPROVED_STAGES, stageLabel } from './VaultLifecycle';
 import { VaultCoverage, type VaultCoverageShape, type CoverageDocument } from './VaultCoverage';
 import { useLiveData, EmptyState, type ShapeGuard } from '../dataConnect';
 import { useVaultUpload } from '../useVaultUpload';
@@ -24,6 +26,11 @@ import {
   type VaultFolder,
 } from '../fixtures/vault-data';
 import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
+import { DataRoomFileBar, RoomPick, useDataRoomFiling, type DataRoomFiling } from './VaultDataRoomFiling';
+import { ConfirmSuggestedBar, useConfirmSuggested } from './VaultConfirmSuggested';
+import { VaultLibraryResults } from './VaultLibraryResults';
+import { VaultFixityCheck } from './VaultFixityCheck';
+import { VaultRelationships } from './VaultRelationships';
 import { downloadBlob, safeFileName } from '../download';
 import {
   EDITOR_TARGET_DOC_TYPES,
@@ -64,6 +71,8 @@ interface DataRoomRow {
   evidenceKind: string | null;
   confidence: string | null;
   needsReview: boolean;
+  /** Which Vault version its bytes became, and what replaced it (VR-16). Absent on an older server. */
+  filedAs?: { version: string | null; supersededBy: string | null } | null;
 }
 
 interface DataRoomBlock {
@@ -88,6 +97,19 @@ const ROOM_STAGE: Record<DataRoomRow['stage'], { label: string; tone: string }> 
   needs_review: { label: 'Needs review', tone: 'warn' },
   captured: { label: 'Captured', tone: 'idle' },
 };
+
+/**
+ * A data-room source's stage in words. A filed one names the Vault version its
+ * bytes are, and the version that replaced it (VR-16): "Filed as v1.0,
+ * superseded by v2.0". A filed file that is no longer current reads as such.
+ */
+export function roomStageLabel(s: Pick<DataRoomRow, 'stage' | 'filedAs'>): string {
+  const base = (ROOM_STAGE[s.stage] ?? ROOM_STAGE.captured).label;
+  if (s.stage !== 'filed' || !s.filedAs) return base;
+  const as = s.filedAs.version ? ` as v${s.filedAs.version}` : '';
+  const replaced = s.filedAs.supersededBy ? `, superseded by v${s.filedAs.supersededBy}` : '';
+  return `${base}${as}${replaced}`;
+}
 
 /** What the lane's counts cover, and what needs a person. */
 function RoomNotes({ block }: { block: DataRoomBlock }) {
@@ -118,6 +140,8 @@ interface VaultDisplayShape {
    *  Counted over the whole programme by the server, NOT over `uploadsWindow` —
    *  a queue derived from the page below would shrink as the backlog grew. */
   unfiledCount?: number;
+  /** Suggested filings no person has confirmed, program-wide (VR-11b). Absent on an older server. */
+  awaitingConfirmationCount?: number;
   /** How much of the filing cabinet the tree actually carries. The server caps
    *  that read (the vault is unbounded), so rendering the page without saying
    *  so would state a partial cabinet as the whole one. */
@@ -224,6 +248,32 @@ interface VaultTreeProps {
   toggle: (id: string) => void;
 }
 
+/**
+ * An upload's review stage beside its filing status (VR-13), where the server
+ * said it: tree leaves carry it, search hits do not, and a hit is never
+ * labelled "Not reviewed" for a stage nobody read.
+ */
+function reviewText(d: VaultDoc): string {
+  return d.src === 'upload' && d.lifecycleStage !== undefined ? ` · ${stageLabel(d.lifecycleStage)}` : '';
+}
+
+/** The review stage's chip tone: approved reads as settled, in review as pending, the rest as idle. */
+function stageTone(stage: string | null | undefined): string {
+  if (APPROVED_STAGES.includes(stage ?? '')) return 'ok';
+  return stage === 'in_review' ? 'ai' : 'idle';
+}
+
+/**
+ * Whether a document counts as settled in its folder's count. An upload is
+ * settled when its version is approved (VR-13; FD4's strict default): a
+ * confirmed filing says where it belongs, not that anyone approved it. An
+ * authored section keeps its own status.
+ */
+export function isSettled(d: VaultDoc): boolean {
+  if (d.src === 'upload') return APPROVED_STAGES.includes(d.lifecycleStage ?? '');
+  return ['final', 'approved', 'reviewed'].includes(d.status);
+}
+
 function VaultTree({ nodes, depth, activeFolder, onPick, expanded, toggle }: VaultTreeProps) {
   return (
     <div>
@@ -232,11 +282,7 @@ function VaultTree({ nodes, depth, activeFolder, onPick, expanded, toggle }: Vau
         const folder = n as VaultFolder;
         const docs = flattenDocs(folder.children);
         const isOpen = expanded[folder.id] !== false;
-        const ready = docs.filter((d) =>
-          // 'confirmed' = an upload a person filed; it counts as settled the
-          // way an approved authored section does.
-          ['final', 'approved', 'reviewed', 'confirmed'].includes(d.status),
-        ).length;
+        const ready = docs.filter(isSettled).length;
         return (
           <div key={folder.id}>
             <button
@@ -289,6 +335,8 @@ function VaultTree({ nodes, depth, activeFolder, onPick, expanded, toggle }: Vau
 interface HistoryEntry {
   id: string;
   event: string;
+  /** The version the event was recorded against, across the document's versions (VR-09). */
+  version?: string | null;
   actor: string;
   at: string;
   when: string;
@@ -297,7 +345,12 @@ interface HistoryEntry {
 }
 interface HistoryShape {
   entries: HistoryEntry[];
-  chain: { ok: boolean; rowsChecked: number; legacyRows: number; brokenAt?: string };
+  /**
+   * The server's verdict (audit-trail-ledger.routes.ts AuditLedgerChainVerdict):
+   * `ok: null` with a reason when there was nothing to verify; a break names
+   * this organization's own row by id, or only says it is another's.
+   */
+  chain: { ok: boolean | null; rowsChecked: number; legacyRows: number; reason?: string; brokenAt?: { id?: string; row?: string } };
 }
 
 /** A body without an entries list and a chain verdict is a failed read, not an empty history. */
@@ -305,8 +358,14 @@ const isHistoryShape: ShapeGuard<HistoryShape> = (v): v is HistoryShape =>
   !!v && typeof v === 'object' && Array.isArray((v as HistoryShape).entries) &&
   !!(v as HistoryShape).chain && typeof (v as HistoryShape).chain === 'object';
 
+/** Where the chain breaks, as this organization may be told it. */
+function breakPlace(b: HistoryShape['chain']['brokenAt']): string {
+  if (typeof b?.id === 'string') return ` at entry ${b.id}`;
+  return b?.row ? ` at an entry of ${b.row}` : '';
+}
+
 function ChainVerdict({ chain }: { chain: HistoryShape['chain'] }) {
-  if (chain.ok) {
+  if (chain.ok === true) {
     return (
       <div className="vd-d-idx">
         <span className="vd-idx-dot" /> Audit chain verified — {chain.rowsChecked} rows checked
@@ -314,9 +373,16 @@ function ChainVerdict({ chain }: { chain: HistoryShape['chain'] }) {
       </div>
     );
   }
+  if (chain.ok !== false) {
+    return (
+      <div className="vd-d-idx">
+        Audit chain not verified: {chain.reason ?? 'the server gave no verdict on this read'}
+      </div>
+    );
+  }
   return (
     <div className="vd-dr-err" role="alert">
-      {I.alertTriangle} Audit chain check failed{chain.brokenAt ? ` at ${chain.brokenAt}` : ''}. The entries below
+      {I.alertTriangle} Audit chain check failed{breakPlace(chain.brokenAt)}. The entries below
       are what is recorded; the chain that should prove them has a break.
     </div>
   );
@@ -347,7 +413,10 @@ function DocumentHistory({ projectId, documentUuid }: { projectId: string; docum
         <div className="vd-vers">
           {st.data.entries.map((e) => (
             <div key={e.id} className="vd-ver">
-              <span className="vd-ver-v">{e.event}</span>
+              <span className="vd-ver-v">
+                {e.version ? `v${e.version} · ` : ''}
+                {e.event}
+              </span>
               <span className="vd-ver-m">
                 {e.when || e.at} · {e.actor} · <span className="mono" title={e.hash}>{e.hash.slice(0, 12)}</span>
               </span>
@@ -376,11 +445,14 @@ function DocumentHistory({ projectId, documentUuid }: { projectId: string; docum
 function DataRoomLane({
   block,
   unavailableReason,
+  filing,
 }: {
   block?: DataRoomBlock;
   /** The server's `unavailable` reason for the Data room branch, when it
    *  could not be served — rendered as a failure, never as an empty room. */
   unavailableReason?: string | null;
+  /** Selection and "File into Vault" (VR-11). */
+  filing: DataRoomFiling;
 }) {
   const [open, setOpen] = useState(false);
   if (unavailableReason) {
@@ -408,6 +480,8 @@ function DataRoomLane({
   }
   // Collapsed, the stage strip is the summary; expanding lists the sources.
   const rows = open ? block.sources : [];
+  const unfiledIds = block.sources.filter((s) => s.stage !== 'filed').map((s) => s.id);
+  const titleOf = (id: number) => block.sources.find((s) => s.id === id)?.title ?? `Source ${id}`;
   return (
     <div className="vd-dr" data-testid="vault-data-room">
       <div className="vd-dr-head">
@@ -433,10 +507,14 @@ function DataRoomLane({
           the filing cabinet and are listed under Uploaded files.
         </div>
       )}
+      {(open && unfiledIds.length > 0) || filing.outcome || filing.error ? (
+        <DataRoomFileBar filing={filing} unfiledIds={unfiledIds} titleOf={titleOf} />
+      ) : null}
       {rows.length > 0 && (
         <div className="vd-dr-rows">
           {rows.map((s) => (
             <div key={s.id} className="vd-dr-row">
+              <RoomPick id={s.id} title={s.title} filed={s.stage === 'filed'} filing={filing} />
               <span className="vd-dr-kind">{s.kind}</span>
               <span className="vd-dr-name" title={s.title}>{s.title}</span>
               <span className="vd-dr-detail">
@@ -448,7 +526,7 @@ function DataRoomLane({
                 </span>
               ) : null}
               <span className={'rd-chip tone-' + (ROOM_STAGE[s.stage] ?? ROOM_STAGE.captured).tone}>
-                {(ROOM_STAGE[s.stage] ?? ROOM_STAGE.captured).label}
+                {roomStageLabel(s)}
               </span>
             </div>
           ))}
@@ -576,9 +654,13 @@ interface VaultSearchHit {
   placementStatus: string | null;
   /** A body excerpt when the match was in the content; null when it was not. */
   snippet: string | null;
+  /** The version, and whether it is the document's current one (VR-09). */
+  version?: string | null;
+  current?: boolean;
 }
 interface VaultSearchShape {
   query: string;
+  includeSuperseded?: boolean;
   total: number;
   limit: number;
   offset: number;
@@ -603,8 +685,10 @@ function searchHitToDoc(h: VaultSearchHit): VaultDoc {
     status: h.placementStatus || 'unfiled',
     pct: null,
     owner: '',
-    ver: '',
+    ver: h.version ? `v${h.version}` : '',
     updated: '',
+    // Only listed when the search asked for earlier versions (VR-09).
+    earlierVersion: h.current === false,
     /* The server's ts_headline excerpt, with its <b> markers stripped: this is
        rendered as text, and a highlight that arrives as literal markup would
        read as corruption. */
@@ -635,6 +719,11 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
   const [vaultEpoch, setVaultEpoch] = useState(0);
   const vaultState = useLiveData<VaultDisplayShape>(vaultPath, [vaultPath, vaultEpoch]);
   const vault = vaultState.data;
+  /* The data room's "File into Vault" (VR-11): held here so its answer
+     survives the re-read that follows a filing. */
+  const roomFiling = useDataRoomFiling(projectId ?? null, () => setVaultEpoch((n) => n + 1));
+  /* Confirm N suggested (VR-11b): held here for the same reason. */
+  const confirmSuggested = useConfirmSuggested(projectId ?? null, () => setVaultEpoch((n) => n + 1));
 
   /* Live document tree — real VaultFolder/VaultDoc from the read-model. Stable
      EMPTY_TREE reference while loading/absent so the memo below is loop-safe. */
@@ -670,11 +759,38 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
   /* What the user says the file is; travels with every file in the batch. */
   const [docType, setDocType] = useState<VaultIngestDocumentType>('OTHER');
 
+  /* A file refused because a different file is recorded at that name (409
+     VERSION_CONTENT_CONFLICT) is offered as the next version of that document
+     (VR-09), rather than left at a dead end. The document is the tree's leaf
+     with that code, which is its current version. */
+  const [checkInOffers, setCheckInOffers] = useState<Array<{ file: File; doc: VaultDoc }>>([]);
   const uploadFiles = async (files: FileList | null) => {
     const outcome = await upload(files, { documentType: docType });
+    setCheckInOffers(
+      outcome.conflicts.flatMap(({ name, file }) => {
+        const doc = allDocs.find((d) => d.src === 'upload' && d.docId && d.documentCode === name);
+        return doc ? [{ file, doc }] : [];
+      }),
+    );
     // Re-read the tree so what is shown is what the server stored.
     if (outcome.succeeded.length) setVaultEpoch((n) => n + 1);
     if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+  /** Add `file` as the next version of `doc`: the server numbers it and keeps the code and filing. */
+  const uploadNewVersion = async (file: File, doc: VaultDoc, currentId?: string) => {
+    if (!doc.docId) return;
+    const recordedType = doc.details?.documentType;
+    const outcome = await upload([file], {
+      documentType: (VAULT_INGEST_DOCUMENT_TYPES as readonly string[]).includes(recordedType ?? '')
+        ? (recordedType as VaultIngestDocumentType)
+        : docType,
+      newVersionOf: { documentId: currentId ?? doc.docId, title: doc.details?.documentTitle || doc.title },
+    });
+    // The offer stays until the version is recorded: a dropped connection must not lose the file.
+    if (outcome.succeeded.includes(file.name)) {
+      setCheckInOffers((offers) => offers.filter((o) => o.file !== file));
+      setVaultEpoch((n) => n + 1);
+    }
   };
 
   /* ── Filing decisions (confirm / move / unfile) ────────────────────────────
@@ -702,14 +818,15 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
   /* Reported in the SAME banner the upload path uses, rather than a second
      notification mechanism on one surface. */
   const [downloadNote, setDownloadNote] = useState<{ text: string; tone: 'ok' | 'error' } | null>(null);
-  const downloadVaultDoc = async (docId: string, title: string) => {
-    if (!projectId || downloading) return;
+  /* `programId`: a library hit downloads through the project that holds it. */
+  const downloadVaultDoc = async (docId: string, title: string, programId: string | null = projectId) => {
+    if (!programId || downloading) return;
     setDownloading(docId);
     setDownloadNote(null);
     try {
       const res = await apiRequest(
         'GET',
-        `/api/c2c/project-vault/${encodeURIComponent(projectId)}/documents/${encodeURIComponent(docId)}/download`,
+        `/api/c2c/project-vault/${encodeURIComponent(programId)}/documents/${encodeURIComponent(docId)}/download`,
       );
       if (!res.ok) {
         const j = await res.json().catch(() => null);
@@ -954,9 +1071,17 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
      GET /:id/search is ranked full text over title, file name and extracted
      body. The tree stays the browse view; this is the find view. */
   const trimmedQ = q.trim();
+  /* Current versions only unless asked (VR-09): an earlier version is the same
+     document, and listing it beside its successor reads as two. */
+  const [includeEarlier, setIncludeEarlier] = useState(false);
+  /* Library search (plan critique 15): every project's Vault. While it is on,
+     the project search does not run; VaultLibraryResults reads the library. */
+  const [allProjects, setAllProjects] = useState(false);
+  const libraryMode = Boolean(trimmedQ) && allProjects;
   const searchPath =
-    projectId && trimmedQ ? '/api/c2c/project-vault/' + encodeURIComponent(projectId) +
-      '/search?q=' + encodeURIComponent(trimmedQ) + '&limit=100' : null;
+    projectId && trimmedQ && !allProjects ? '/api/c2c/project-vault/' + encodeURIComponent(projectId) +
+      '/search?q=' + encodeURIComponent(trimmedQ) + '&limit=100' +
+      (includeEarlier ? '&includeSuperseded=true' : '') : null;
   const searchState = useLiveData<VaultSearchShape>(searchPath, [searchPath]);
 
   const results = searching
@@ -1017,6 +1142,8 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
         totalDocuments: vault?.documentCount ?? 0,
         documentCounts: vault?.documentCounts ?? null,
         unfiledUploads: vault?.unfiledCount ?? 0,
+        // Filed to a suggested folder that no person has confirmed (VR-11b); null from an older server.
+        awaitingConfirmation: vault?.awaitingConfirmationCount ?? null,
         // Required sections against confirmed filings (VR-15), as the server
         // counted them, or why there is no figure. Not a readiness figure.
         vaultCoverage: vault?.coverage ?? null,
@@ -1134,6 +1261,9 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
               {vault && (vault.unfiledCount ?? 0) > 0 ? (
                 <> {I.dot} {vault.unfiledCount} unfiled — needs review</>
               ) : null}
+              {vault && (vault.awaitingConfirmationCount ?? 0) > 0 ? (
+                <> {I.dot} {vault.awaitingConfirmationCount} awaiting confirmation</>
+              ) : null}
             </span>
           </div>
         </div>
@@ -1235,6 +1365,16 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
           {(downloadNote ?? uploadNote)!.text}
         </div>
       )}
+      {checkInOffers.map(({ file, doc }) => (
+        <div key={`${file.name}-${doc.docId}`} className="scaf-note" role="status" style={{ margin: '0 0 12px' }}>
+          {file.name} was not uploaded: a different file is already recorded under this name as “{doc.title}”
+          ({doc.ver}). Added as a new version, it is numbered by the server, keeps the document's filing, and the
+          earlier versions stay in the Vault.{' '}
+          <button className="sp-ask" disabled={uploading} onClick={() => void uploadNewVersion(file, doc)}>
+            Upload as a new version of {doc.title}
+          </button>
+        </div>
+      ))}
 
       {filingIntoSubmission && (
         <VaultPlaceIntoSubmission
@@ -1319,6 +1459,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
         <>
           <DataRoomLane
             block={vault?.dataRoom}
+            filing={roomFiling}
             unavailableReason={
               vault?.unavailable?.find((u) => u.branch === 'Data room')?.reason ?? null
             }
@@ -1344,6 +1485,8 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
               onOpen={openUpload}
             />
           )}
+          {/* Fixity (plan critique 15): re-prove every stored version on demand. */}
+          {!searching && vault ? <VaultFixityCheck projectId={projectId ?? null} /> : null}
           {filingNote && (
             <div
               className="scaf-note"
@@ -1360,8 +1503,8 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                 title="No documents in this project's vault yet"
                 hint={
                   vault?.pendingStore
-                    ? "The governed document store isn't provisioned for this environment yet. Documents built here organize by build type into the CTD / eSTAR / IVDR / TMF spine, each classified and version-tracked."
-                    : "Nothing has been filed into this project's vault yet. Upload a file — it is classified and auto-filed to a suggested dossier folder — or start a document build; both organize into the submission spine, version-tracked."
+                    ? "The governed document store isn't provisioned for this environment yet. Documents built here organize by build type into the CTD / eSTAR / IVDR / TMF spine, each classified."
+                    : "Nothing has been filed into this project's vault yet. Upload a file — it is classified and auto-filed to a suggested dossier folder — or start a document build; both organize into the submission spine. A changed file uploaded under an existing document's name is offered as a new version of that document."
                 }
               />
             </div>
@@ -1428,6 +1571,22 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                   aria-label="Search this vault"
                 />
               </label>
+              <label className="vd-search">
+                <input
+                  type="checkbox"
+                  checked={includeEarlier}
+                  onChange={(e) => setIncludeEarlier(e.target.checked)}
+                />{' '}
+                Include earlier versions
+              </label>
+              <label className="vd-search">
+                <input
+                  type="checkbox"
+                  checked={allProjects}
+                  onChange={(e) => setAllProjects(e.target.checked)}
+                />{' '}
+                All projects
+              </label>
             </div>
             {searching && searchState.error && (
               /* An error is not an empty result. Without this the screen reads
@@ -1443,6 +1602,16 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                 Searching…
               </div>
             )}
+            {!searching ? <ConfirmSuggestedBar docs={folderDocs} state={confirmSuggested} /> : null}
+            {libraryMode ? (
+              <VaultLibraryResults
+                query={trimmedQ}
+                includeEarlier={includeEarlier}
+                currentProjectId={projectId ?? null}
+                onDownload={(docId, title, programId) => void downloadVaultDoc(docId, title, programId)}
+                downloadingId={downloading}
+              />
+            ) : (<>
             <div className="vd-cols">
               <span className="vd-col-name">Name</span>
               <span className="vd-col-type">Type</span>
@@ -1472,7 +1641,12 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                       </span>
                     )}
                   </span>
-                  <span className="vd-col-type">{d.type}</span>
+                  <span className="vd-col-type" title={`${d.type}${reviewText(d)}`}>
+                    {d.type}
+                    {(d.versionCount ?? 1) > 1 ? ` · ${d.ver}, ${d.versionCount} versions` : ''}
+                    {d.earlierVersion ? ` · ${d.ver}, earlier version` : ''}
+                    {reviewText(d)}
+                  </span>
                   <span className="vd-col-owner">{d.owner}</span>
                   <span className="vd-col-mod">{d.updated}</span>
                   <span className="vd-col-status">
@@ -1489,6 +1663,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                 </div>
               )}
             </div>
+            </>)}
           </section>
 
           <aside className="vd-detail">
@@ -1499,7 +1674,20 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                     {st(sel.status).label}
                   </span>
                   {sel.ver && sel.ver !== '—' && (
-                    <span className="vd-d-ver">{sel.ver}</span>
+                    <span className="vd-d-ver">
+                      {sel.ver}
+                      {(sel.versionCount ?? 1) > 1 ? ` · ${sel.versionCount} versions` : ''}
+                      {sel.earlierVersion ? ' · earlier version' : ''}
+                    </span>
+                  )}
+                  {sel.src === 'upload' && sel.lifecycleStage !== undefined && (
+                    <span
+                      className={'rd-chip tone-' + stageTone(sel.lifecycleStage)}
+                      title="Review and approval, apart from filing"
+                      aria-label={`Review and approval: ${stageLabel(sel.lifecycleStage)}`}
+                    >
+                      {stageLabel(sel.lifecycleStage)}
+                    </span>
                   )}
                 </div>
                 <div className="vd-d-title">
@@ -1678,10 +1866,6 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                           <span className="v">{sel.sizeLabel}</span>
                         </div>
                       )}
-                      <div className="vd-d-filing-row">
-                        <span className="k">Version</span>
-                        <span className="v mono">{sel.ver && sel.ver !== '—' ? sel.ver : '—'}</span>
-                      </div>
                       {sel.hash && (
                         <div className="vd-d-filing-row">
                           <span className="k">SHA-256</span>
@@ -1692,8 +1876,58 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                       )}
                     </div>
                     {projectId && sel.docId ? (
+                      <VaultVersions
+                        key={`versions-${sel.docId}-${vaultEpoch}`}
+                        projectId={projectId}
+                        documentId={sel.docId}
+                        title={sel.title}
+                        onDownload={(docId, title) => void downloadVaultDoc(docId, title)}
+                        downloadingId={downloading}
+                        onUploadNewVersion={(file, currentId) => void uploadNewVersion(file, sel, currentId)}
+                        uploading={uploading}
+                        onLifecycleChanged={() => setVaultEpoch((n) => n + 1)}
+                      />
+                    ) : null}
+                    {projectId && sel.docId ? (
+                      <VaultRelationships
+                        key={`relationships-${sel.docId}`}
+                        projectId={projectId}
+                        documentId={sel.docId}
+                        onChanged={() => setVaultEpoch((n) => n + 1)}
+                      />
+                    ) : null}
+                    {projectId && sel.docId ? (
                       <DocumentHistory key={`${sel.docId}-${vaultEpoch}`} projectId={projectId} documentUuid={sel.docId} />
                     ) : null}
+                  </>
+                ) : sel.src === 'upload' && sel.docId && projectId ? (
+                  /* A search hit the tree does not list: an earlier version, or a
+                     document outside the loaded window. Its versions and history
+                     are read as for any upload; the filing is the current version's. */
+                  <>
+                    {sel.earlierVersion && (
+                      <div className="vd-d-idx">
+                        An earlier version. The tree lists the current one, which carries the document's filing.
+                      </div>
+                    )}
+                    <VaultVersions
+                      key={`versions-${sel.docId}-${vaultEpoch}`}
+                      projectId={projectId}
+                      documentId={sel.docId}
+                      title={sel.title}
+                      onDownload={(docId, title) => void downloadVaultDoc(docId, title)}
+                      downloadingId={downloading}
+                      onUploadNewVersion={(file, currentId) => void uploadNewVersion(file, sel, currentId)}
+                      uploading={uploading}
+                      onLifecycleChanged={() => setVaultEpoch((n) => n + 1)}
+                    />
+                    <VaultRelationships
+                      key={`relationships-${sel.docId}`}
+                      projectId={projectId}
+                      documentId={sel.docId}
+                      onChanged={() => setVaultEpoch((n) => n + 1)}
+                    />
+                    <DocumentHistory key={`${sel.docId}-${vaultEpoch}`} projectId={projectId} documentUuid={sel.docId} />
                   </>
                 ) : (
                   <>
@@ -1708,10 +1942,10 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                       <span>Indexing status isn't reported for this document yet.</span>
                     </div>
 
-                    {/* No version-history endpoint backs this surface: the read model
-                        returns each section's CURRENT version only, not a history
-                        list. Show the real current version honestly — don't
-                        synthesize a "history". */}
+                    {/* An authored section: the read model returns each section's
+                        CURRENT version only, not a history list. Show the real
+                        current version honestly — don't synthesize a "history".
+                        (Uploaded documents list every version: VaultVersions.) */}
                     <div className="vd-d-seclbl">Version</div>
                     <div className="vd-vers">
                       <div className="vd-ver">

@@ -14,6 +14,9 @@
  *   audit_logs.seals          hmac_seal under AUDIT_HMAC_KEY
  *                             (audit-integrity-service.ts verifyAuditIntegrity,
  *                             which fails closed to "unverifiable" without the key)
+ *   audit_logs.anchor         every organisation's chain head against the latest
+ *                             anchor in the object-locked evidence bucket
+ *                             (chain-anchor.ts verifyAuditChainAnchor)
  *   audit_events.linkage      previous_hash → record_hash per org
  *                             (chainIntegrityMonitor.ts summarizeChainLinkage)
  *   audit_events.seals        hmac_seal under AUDIT_HMAC_KEY (chain.ts)
@@ -27,6 +30,23 @@
  * a tampered tamper_proof_log row, a broken audit_events link or a dropped
  * trigger were never reported by the daily check (security audit 2026-09-24
  * findings DP-06 and DP-04; plan item P0-8a).
+ *
+ * The chain head is anchored OUTSIDE the database (finding DP-04, plan P0-8):
+ * the walk proves each row derives from the one before it, and a chain whose
+ * newest rows were removed still does. After every store is verified, a run
+ * that found no incident writes every organisation's head to the evidence
+ * bucket named by AUDIT_ANCHOR_BUCKET (chain-anchor.ts writeAuditChainAnchor);
+ * the next run checks the database against it first. A run that found an
+ * incident writes nothing, so the last good anchor stays the reference and a
+ * tampered state is never anchored. Without AUDIT_ANCHOR_BUCKET the anchor is
+ * `unverifiable` ("anchor not configured"), in production as everywhere: never
+ * ok. On demand: runAuditChainIntegrityCheck() runs the same verify-then-anchor.
+ * An anchor that is `unverifiable` because the archive door removed rows since
+ * it does not block the next anchor: otherwise one legitimate archive batch
+ * would stop anchoring for good. What may reach `unverifiable` that way is
+ * bounded by the verifier, not here: only ledger rows the door could have
+ * written count, and no head inside the 24-month hot window is ever excused
+ * (chain-anchor.ts archiveAllowance; finding DP-68, fix round 2026-10-01).
  *
  * Three outcomes per store, not two: `ok`, an incident (`broken`, `missing`,
  * `error`), or `unverifiable` — the store could not be positively verified
@@ -56,16 +76,27 @@ import {
 } from '../services/audit/chainIntegrityMonitor.js';
 import { assertAuditImmutabilityTriggers } from '../services/audit/audit-immutability-triggers.js';
 import { verifyTamperProofLogRows, type TamperProofLogRow } from '../lib/tamper-proof-audit.js';
+import {
+  resolveAuditAnchorStore,
+  verifyAuditChainAnchor,
+  writeAuditChainAnchor,
+  type AnchorBreak,
+  type AuditAnchorStore,
+} from '../services/audit/chain-anchor.js';
 import { reportSecurityAlert } from '../services/security-alerts.js';
 import { resolveAuditChainSweepPosture } from '../startup/audit-enforcement.js';
 import { createScopedLogger } from '../utils/logger.js';
 import { runWithSystemTenantScope } from '../db/tenantStore';
+import { runScheduledOncePerWindow, windowKeyOf } from '../db/scheduledOnce';
 
 const logger = createScopedLogger('audit-chain-integrity');
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 export type AuditStoreName =
   | 'audit_logs.chain'
   | 'audit_logs.seals'
+  | 'audit_logs.anchor'
   | 'audit_events.linkage'
   | 'audit_events.seals'
   | 'audit.tamper_proof_log'
@@ -90,6 +121,14 @@ export interface AuditStoreVerdict {
   reason?: string;
 }
 
+/** What the anchor step did after the stores were verified. */
+export interface AnchorWriteOutcome {
+  written: boolean;
+  key?: string;
+  organizations?: number;
+  reason?: string;
+}
+
 export interface AuditChainCheckResult {
   /** True only when EVERY store is `ok`. */
   ok: boolean;
@@ -104,6 +143,13 @@ export interface AuditChainCheckResult {
   failures: AuditStoreName[];
   /** Stores that could not be positively verified. */
   unverifiable: AuditStoreName[];
+  /** The chain-head anchor this run wrote, or why it wrote none. */
+  anchorWrite?: AnchorWriteOutcome;
+}
+
+export interface AuditChainCheckOptions {
+  /** Where anchors live. Omitted: resolved from AUDIT_ANCHOR_BUCKET; null: not configured. */
+  anchorStore?: AuditAnchorStore | null;
 }
 
 const INCIDENT_STATUSES: ReadonlySet<AuditStoreStatus> = new Set(['broken', 'missing', 'error']);
@@ -290,6 +336,55 @@ async function verifyTamperProofStore(client: PoolClient): Promise<AuditStoreVer
   });
 }
 
+const ANCHOR_NOT_CONFIGURED =
+  'anchor not configured: AUDIT_ANCHOR_BUCKET is unset, so nothing outside the database records the ' +
+  'chain head and removal of the newest audit rows cannot be detected';
+
+function describeAnchorBreak(b: AnchorBreak): string {
+  const now = b.currentRows === null ? 'an uncountable number' : String(b.currentRows);
+  return `organization ${b.organizationId}: ${b.kind} (${b.anchoredRows} rows anchored at or before the head, ${now} now)`;
+}
+
+/** audit_logs against the latest chain-head anchor in the evidence bucket (P0-8, DP-04). */
+async function verifyAnchorStore(client: PoolClient, anchorStore: AuditAnchorStore | null): Promise<AuditStoreVerdict> {
+  const store = 'audit_logs.anchor';
+  if (!anchorStore) return { store, status: 'unverifiable', reason: ANCHOR_NOT_CONFIGURED };
+  return guarded(store, async () => {
+    const v = await verifyAuditChainAnchor(client, anchorStore);
+    if (v.status === 'broken') {
+      return { store, status: 'broken', firstFailure: v.breaks[0]?.rowId, reason: v.breaks.map(describeAnchorBreak).join('; ') };
+    }
+    if (v.status === 'ok') {
+      return { store, status: 'ok', reason: `verified against ${v.anchorKey} (${v.organizations} organisation(s), anchored ${v.anchoredAt})` };
+    }
+    const archived = v.archived.length ? `: ${v.archived.map(describeAnchorBreak).join('; ')}` : '';
+    return { store, status: 'unverifiable', reason: v.status === 'not_anchored' ? `not verified: ${v.reason}` : `${v.reason}${archived}` };
+  });
+}
+
+/** Anchor every organisation's head, only over a run that found no incident. */
+async function writeAnchor(
+  client: PoolClient,
+  anchorStore: AuditAnchorStore | null,
+  failures: AuditStoreName[],
+): Promise<AnchorWriteOutcome> {
+  if (!anchorStore) return { written: false, reason: ANCHOR_NOT_CONFIGURED };
+  if (failures.length > 0) {
+    return {
+      written: false,
+      reason: `not written: the sweep found an incident in ${failures.join(', ')}; the previous anchor stays the reference`,
+    };
+  }
+  try {
+    const { key, organizations } = await writeAuditChainAnchor(client, anchorStore);
+    return { written: true, key, organizations };
+  } catch (err) {
+    const reason = `anchor write failed: ${err instanceof Error ? err.message : String(err)}`;
+    logger.error(`Audit chain head NOT anchored to ${anchorStore.location}: ${reason}`);
+    return { written: false, reason };
+  }
+}
+
 /** The append-only triggers on every store above. */
 async function verifyImmutabilityTriggers(client: PoolClient): Promise<AuditStoreVerdict> {
   const store = 'immutability_triggers';
@@ -312,73 +407,99 @@ async function verifyImmutabilityTriggers(client: PoolClient): Promise<AuditStor
   });
 }
 
-/** Run a single sweep over every audit store. Never throws. */
-export async function runAuditChainIntegrityCheck(): Promise<AuditChainCheckResult> {
+/** Log the outcome; an incident also raises the alert path. Counts and identifiers only. */
+function reportSweepOutcome(
+  stores: AuditStoreVerdict[],
+  failures: AuditStoreName[],
+  unverifiable: AuditStoreName[],
+  anchorWrite: AnchorWriteOutcome,
+  verifiedSummary: string,
+): void {
+  const summary = stores.map(({ store, status, rowsChecked, firstFailure, reason }) => ({
+    store,
+    status,
+    ...(rowsChecked === undefined ? {} : { rowsChecked }),
+    ...(firstFailure === undefined ? {} : { firstFailure }),
+    ...(reason === undefined ? {} : { reason }),
+  }));
+
+  if (failures.length > 0) {
+    // A break is a data-integrity incident: surface loudly for alerting.
+    logger.error(
+      `AUDIT INTEGRITY FAILURE in ${failures.join(', ')} — investigate immediately`,
+      { failures, stores: summary, anchorWrite },
+    );
+    process.emitWarning(
+      `Audit integrity sweep failed: ${failures.join(', ')}`,
+      'AuditChainIntegrity',
+    );
+    reportSecurityAlert({
+      kind: 'audit_integrity_sweep_failed',
+      message: `Daily audit integrity sweep failed for ${failures.join(', ')}`,
+      detail: { failures, unverifiable, stores: summary },
+    });
+  } else if (unverifiable.length > 0) {
+    logger.warn(
+      `Audit integrity sweep NOT fully verified: ${unverifiable.join(', ')} could not be checked`,
+      { unverifiable, stores: summary, anchorWrite },
+    );
+  } else {
+    logger.info(`Every audit store verified (${verifiedSummary})`, { anchorWrite });
+  }
+}
+
+/** One sweep on one connection: verify every store, then anchor a clean state. */
+async function sweepOnce(client: PoolClient, anchorStore: AuditAnchorStore | null): Promise<AuditChainCheckResult> {
+  const auditLogs = await verifyAuditLogsStore(client);
+  const anchor = await verifyAnchorStore(client, anchorStore);
+  const auditEvents = await verifyAuditEventsStore(client);
+  const tamperProof = await verifyTamperProofStore(client);
+  const triggers = await verifyImmutabilityTriggers(client);
+
+  const stores: AuditStoreVerdict[] = [...auditLogs.verdicts, anchor, ...auditEvents, tamperProof, triggers];
+  const failures = stores.filter((s) => INCIDENT_STATUSES.has(s.status)).map((s) => s.store);
+  const unverifiable = stores.filter((s) => s.status === 'unverifiable').map((s) => s.store);
+  const ok = failures.length === 0 && unverifiable.length === 0;
+
+  // After every store is verified, never before: the anchor records a state
+  // this run found no incident in.
+  const anchorWrite = await writeAnchor(client, anchorStore, failures);
+
+  reportSweepOutcome(
+    stores,
+    failures,
+    unverifiable,
+    anchorWrite,
+    `audit_logs ${auditLogs.rowsChecked} rows, ` +
+      `audit_events ${auditEvents[0].rowsChecked ?? 0} rows, ` +
+      `tamper_proof_log ${tamperProof.rowsChecked ?? 0} rows, ` +
+      `${triggers.rowsChecked ?? 0} immutability triggers, chain heads anchored`,
+  );
+
+  return {
+    ok,
+    rowsChecked: auditLogs.rowsChecked,
+    ...(auditLogs.brokenAt ? { brokenAt: auditLogs.brokenAt } : {}),
+    stores,
+    failures,
+    unverifiable,
+    anchorWrite,
+  };
+}
+
+/**
+ * Run a single sweep over every audit store, then anchor the chain heads.
+ * Never throws. The daily schedule calls it; it is also the on-demand entry.
+ */
+export async function runAuditChainIntegrityCheck(
+  options: AuditChainCheckOptions = {},
+): Promise<AuditChainCheckResult> {
+  const anchorStore = options.anchorStore !== undefined ? options.anchorStore : resolveAuditAnchorStore();
   return runWithSystemTenantScope('audit-chain-integrity-sweep', async () => {
     try {
       const client = await pool.connect();
       try {
-        const auditLogs = await verifyAuditLogsStore(client);
-        const auditEvents = await verifyAuditEventsStore(client);
-        const tamperProof = await verifyTamperProofStore(client);
-        const triggers = await verifyImmutabilityTriggers(client);
-
-        const stores: AuditStoreVerdict[] = [
-          ...auditLogs.verdicts,
-          ...auditEvents,
-          tamperProof,
-          triggers,
-        ];
-        const failures = stores.filter((s) => INCIDENT_STATUSES.has(s.status)).map((s) => s.store);
-        const unverifiable = stores.filter((s) => s.status === 'unverifiable').map((s) => s.store);
-        const ok = failures.length === 0 && unverifiable.length === 0;
-
-        // Counts and identifiers only — this travels to the log and the webhook.
-        const summary = stores.map(({ store, status, rowsChecked, firstFailure, reason }) => ({
-          store,
-          status,
-          ...(rowsChecked === undefined ? {} : { rowsChecked }),
-          ...(firstFailure === undefined ? {} : { firstFailure }),
-          ...(reason === undefined ? {} : { reason }),
-        }));
-
-        if (failures.length > 0) {
-          // A break is a data-integrity incident: surface loudly for alerting.
-          logger.error(
-            `AUDIT INTEGRITY FAILURE in ${failures.join(', ')} — investigate immediately`,
-            { failures, stores: summary },
-          );
-          process.emitWarning(
-            `Audit integrity sweep failed: ${failures.join(', ')}`,
-            'AuditChainIntegrity',
-          );
-          reportSecurityAlert({
-            kind: 'audit_integrity_sweep_failed',
-            message: `Daily audit integrity sweep failed for ${failures.join(', ')}`,
-            detail: { failures, unverifiable, stores: summary },
-          });
-        } else if (unverifiable.length > 0) {
-          logger.warn(
-            `Audit integrity sweep NOT fully verified: ${unverifiable.join(', ')} could not be checked`,
-            { unverifiable, stores: summary },
-          );
-        } else {
-          logger.info(
-            `Every audit store verified (audit_logs ${auditLogs.rowsChecked} rows, ` +
-              `audit_events ${auditEvents[0].rowsChecked ?? 0} rows, ` +
-              `tamper_proof_log ${tamperProof.rowsChecked ?? 0} rows, ` +
-              `${triggers.rowsChecked ?? 0} immutability triggers)`,
-          );
-        }
-
-        return {
-          ok,
-          rowsChecked: auditLogs.rowsChecked,
-          ...(auditLogs.brokenAt ? { brokenAt: auditLogs.brokenAt } : {}),
-          stores,
-          failures,
-          unverifiable,
-        };
+        return await sweepOnce(client, anchorStore);
       } finally {
         client.release();
       }
@@ -425,8 +546,12 @@ export function startAuditChainIntegritySchedule(): void {
 
   const expr = process.env.AUDIT_CHAIN_CHECK_CRON || '0 2 * * *';
   try {
+    // Every server process schedules this; one check per day across them
+    // (U19) — three meant three full scans and three alerts per break.
     cron.schedule(expr, () => {
-      void runAuditChainIntegrityCheck().catch(err =>
+      void runScheduledOncePerWindow('audit-chain-integrity-sweep', windowKeyOf(DAY_MS), () =>
+        runAuditChainIntegrityCheck()
+      ).catch(err =>
         logger.error(`Audit chain integrity check failed: ${err?.message ?? String(err)}`)
       );
     });

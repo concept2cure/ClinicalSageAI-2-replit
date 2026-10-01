@@ -39,8 +39,11 @@ import {
   pharmacopoeiaSummary,
 } from '../services/ana-ri/pharmacopoeia-corpus.js';
 import { REGULATORY_STANDARDS_SEED } from '../../shared/schema/regulatory-standards.seed.js';
+import { serverError } from '../lib/api-response.js';
+import { createScopedLogger } from '../utils/logger.js';
 
 const router = Router();
+const log = createScopedLogger('knowledge');
 
 const ICH_NOTE = 'ICH revisions/step status evolve. Confirm the current revision on ich.org before citing.';
 const PATHWAY_NOTE = 'Designations and criteria change. Confirm eligibility against current agency guidance.';
@@ -145,8 +148,9 @@ router.get('/validation-rules', async (req: Request, res: Response) => {
     const { RULE_CORPUS, rulesForRegion, corpusSummary } = await import('../services/ectd/validation-rule-corpus.js');
     const rules = region ? rulesForRegion(region as (typeof REGIONS)[number]) : RULE_CORPUS;
     res.json({ region: region || 'all', summary: corpusSummary(), count: rules.length, rules });
-  } catch (err: any) {
-    res.status(500).json({ error: 'Validation-rule corpus unavailable', detail: err?.message });
+  } catch (err) {
+    // A failed import's message is the module's absolute path: log, not body.
+    serverError(res, log, 'loading the validation-rule corpus', err);
   }
 });
 

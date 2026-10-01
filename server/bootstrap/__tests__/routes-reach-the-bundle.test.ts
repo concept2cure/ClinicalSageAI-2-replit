@@ -234,7 +234,9 @@ describe('route registration reaches the production bundle', () => {
       ['server/bootstrap/register-tenant-routes.ts', ['tenants-simple.js', 'tenant-users.js']],
       ['server/bootstrap/register-project-routes.ts', ['project-hierarchy.js', 'planner-routes.js']],
       ['server/bootstrap/register-clinical-intel-routes.ts', ['ind.js', 'regulatoryRoutes.js']],
-      ['server/bootstrap/register-document-routes.ts', ['ectd-compile.js', 'qms.js', 'evidence.js']],
+      // qms.js was this file's QMS representative until P1-31 (DP-34) deleted the
+      // legacy /api/qms router; capa-mdr.js is the same device-QMS stack's.
+      ['server/bootstrap/register-document-routes.ts', ['ectd-compile.js', 'capa-mdr.js', 'evidence.js']],
       ['server/bootstrap/register-advanced-platform-routes.ts', ['market-access.js', 'cro.js']],
     ];
 

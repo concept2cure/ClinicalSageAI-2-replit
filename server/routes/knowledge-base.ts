@@ -171,8 +171,10 @@ router.get('/search-connectors', async (req: Request, res: Response) => {
       sample: false,
     });
   } catch (err: any) {
-    console.error('[knowledge-base] connector search failed:', err?.message);
-    res.status(502).json({ error: 'Connector search failed', detail: err?.message });
+    /* 502 with a stable sentence keeps its status (`serverError()` answers only
+       500); the connector client's own text goes to the log, not the body. */
+    logger.error('connector search failed', { err: err?.message });
+    res.status(502).json({ error: 'Connector search failed' });
   }
 });
 
@@ -270,6 +272,18 @@ async function proxyJson(
   };
 }
 
+/**
+ * A shadow answer of 500 or above is the service's own failure text — a
+ * traceback, a driver error, a file path — not an answer about this request.
+ * It goes to the log; the caller keeps the status and gets a fixed sentence
+ * (IAM-18 (1), P1-17 tranche 3 fix round). Below 500 the relays in this file
+ * pass the shadow answer through unchanged.
+ */
+function sendShadowFailure(res: Response, where: string, status: number, shadowBody: unknown): void {
+  logger.error(`${where}: shadow service answered a server error`, { shadowStatus: status, shadowBody });
+  res.status(status).json({ error: 'Shadow service failed' });
+}
+
 // Helper — proxy and pipe binary (DOCX) response
 async function proxyBinary(
   path: string,
@@ -286,6 +300,10 @@ async function proxyBinary(
     },
     body: JSON.stringify(body),
   });
+
+  if (resp.status >= 500) {
+    return sendShadowFailure(res, `binary proxy ${path}`, resp.status, await resp.text());
+  }
 
   // Copy status + headers that matter
   res.status(resp.status);
@@ -814,10 +832,12 @@ router.post(
       body: form,
     });
     const json = await resp.json();
+    if (resp.status >= 500) return void sendShadowFailure(res, 'upload proxy', resp.status, json);
     res.status(resp.status).json(json);
   } catch (err: any) {
-    console.error('[knowledge-base] upload proxy error:', err.message);
-    res.status(502).json({ error: 'Shadow service unreachable', detail: err.message });
+    // The transport error names the internal host and port: log, not body.
+    logger.error('upload proxy failed', { err: err?.message });
+    res.status(502).json({ error: 'Shadow service unreachable' });
   }
 });
 
@@ -855,10 +875,14 @@ router.get('/context/:projectId', async (req: Request, res: Response) => {
       undefined,
       qp
     );
+    if (result.status >= 500) {
+      return void sendShadowFailure(res, 'context proxy', result.status, result.body);
+    }
     res.status(result.status).type(result.contentType).send(result.body);
   } catch (err: any) {
-    console.error('[knowledge-base] context proxy error:', err.message);
-    res.status(502).json({ error: 'Shadow service unreachable', detail: err.message });
+    // The transport error names the internal host and port: log, not body.
+    logger.error('context proxy failed', { err: err?.message });
+    res.status(502).json({ error: 'Shadow service unreachable' });
   }
 });
 
@@ -972,6 +996,9 @@ router.post('/generate-ind-package', async (req: Request, res: Response) => {
 router.post('/generate-ind-section', async (req: Request, res: Response) => {
   try {
     const result = await proxyJson('/knowledge/generate-ind-section', 'POST', req.body);
+    if (result.status >= 500) {
+      return void sendShadowFailure(res, 'IND section proxy', result.status, result.body);
+    }
     res.status(result.status).type(result.contentType).send(result.body);
   } catch (err: any) {
     // Generation failed. This used to answer 200 with a one-paragraph

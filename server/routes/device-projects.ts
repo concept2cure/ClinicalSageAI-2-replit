@@ -38,6 +38,8 @@ import { projects } from '@shared/schema';
 import { db } from '../db';
 import { governedActorId, requireEditorAccess } from '../middleware/orgMembership';
 import { recordAuditRow, setAuditRowHeaders } from '../services/audit/audit-write-outcome';
+import { queryableFromDrizzle } from '../db/drizzle-queryable';
+import { projectDeletionHolds, projectDeletionRefusal } from '../services/c2c/project-retention';
 
 const router = Router();
 
@@ -372,11 +374,39 @@ router.delete('/:id', requireEditorAccess, async (req: Request, res: Response) =
     const actorId = governedActorId(req);
     if (actorId === null) return res.status(403).json({ error: 'Authenticated actor required' });
 
-    const [deleted] = await db
-      .delete(projects)
-      .where(and(eq(projects.id, projectId), eq(projects.organizationId, organization_id)))
-      .returning();
-
+    /* A program's anchor row, and a project holding documents that are
+       records, is never hard-deleted here (PF-08; PF-13 founder decision
+       2026-09-26): the delete cascades them away. Judged and deleted in one
+       transaction, and only this router's own device projects: it filtered
+       by id and organization alone, so it could delete any project. */
+    const outcome = await db.transaction(async (tx) => {
+      /* Ownership first, as the two sibling deletes already do. The holds read
+         judges every row the cascade would remove, whatever its organization,
+         and its 409 names the anchored programs. Asked first about another
+         organization's project id, it could answer with that organization's
+         program ids before the org-scoped delete below said 404 (RLS hides
+         those rows when enforced; this does not depend on it). */
+      const [own] = await tx
+        .select({ id: projects.id })
+        .from(projects)
+        .where(and(eq(projects.id, projectId), eq(projects.organizationId, organization_id), eq(projects.type, 'medical-device')))
+        .limit(1);
+      if (!own) return { deleted: undefined } as const;
+      const refused = projectDeletionRefusal(
+        await projectDeletionHolds(queryableFromDrizzle(tx), { projectIds: [projectId] }),
+        'project',
+      );
+      if (refused) return { refused } as const;
+      const [row] = await tx
+        .delete(projects)
+        .where(and(eq(projects.id, projectId), eq(projects.organizationId, organization_id), eq(projects.type, 'medical-device')))
+        .returning();
+      return { deleted: row } as const;
+    });
+    if ('refused' in outcome && outcome.refused) {
+      return res.status(outcome.refused.status).json(outcome.refused.body);
+    }
+    const deleted = 'deleted' in outcome ? outcome.deleted : undefined;
     if (!deleted) {
       return res.status(404).json({ error: 'Project not found' });
     }

@@ -30,6 +30,41 @@ vi.mock('../../server/db', () => ({
   pool: { query: vi.fn() },
 }));
 
+// D5 (a05ba7eb0): an export is recorded before it is delivered, as an
+// EXPORT_GENERATED audit row carrying the SHA-256 of the delivered bytes, and
+// is not delivered when that row does not persist. The mocked db above cannot
+// persist a row, so the audit writer reports a persisted one here. The refusal
+// branch is proven in server/routes/c2c/__tests__/exports-recorded.test.ts.
+const mockLogAction = vi.hoisted(() => vi.fn());
+vi.mock('../../server/services/auditService', () => ({
+  default: { logAction: (...a: unknown[]) => mockLogAction(...a) },
+}));
+
+const sha256 = (b: Buffer) => nodeCrypto.createHash('sha256').update(b).digest('hex');
+
+// What authMiddleware + tenantContextMiddleware leave on the request; both are
+// mocked to pass-through below. The export record is attributed to them.
+const PRINCIPAL = { organizationId: 4242, userId: 17 };
+function withPrincipal(req: any) {
+  return Object.assign(req, PRINCIPAL);
+}
+
+/** The file was recorded, then delivered: the row names the exact bytes sent. */
+function expectRecordedThenDelivered(res: any, bytes: Buffer) {
+  expect(mockLogAction).toHaveBeenCalledWith(
+    expect.objectContaining({
+      ...PRINCIPAL,
+      action: 'EXPORT_GENERATED',
+      details: expect.objectContaining({ sha256: sha256(bytes) }),
+    })
+  );
+  expect(res.setHeader).toHaveBeenCalledWith('X-Export-Sha256', sha256(bytes));
+  expect(res.send).toHaveBeenCalledWith(bytes);
+  expect(mockLogAction.mock.invocationCallOrder[0]).toBeLessThan(
+    res.send.mock.invocationCallOrder[0]
+  );
+}
+
 vi.mock('../../server/utils/logger', () => ({
   createScopedLogger: () => ({
     info: vi.fn(),
@@ -67,6 +102,7 @@ describe('Concept2Cure export governance gates', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockLogAction.mockResolvedValue({ persisted: true, chained: true, tamperProof: true });
     process.env.NODE_ENV = 'test';
     delete process.env.CONCEPT2CURE_REQUIRE_EXPORT_HUMAN_REVIEW;
   });
@@ -113,6 +149,7 @@ describe('Concept2Cure export governance gates', () => {
         content: 'Draft content',
       },
     }) as any;
+    withPrincipal(req);
     const res = createMockResponse();
 
     const handler = getRouteHandler('/artifacts/export-docx', 'post');
@@ -125,7 +162,7 @@ describe('Concept2Cure export governance gates', () => {
     expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-AI-Generated', 'true');
     expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-Human-Review-Approved', 'false');
     expect(res.setHeader).toHaveBeenCalledWith('X-Concept2Cure-Review-Required', 'true');
-    expect(res.send).toHaveBeenCalled();
+    expectRecordedThenDelivered(res, Buffer.from('docx-bytes'));
   });
 
   it('rejects a fabricated approval state without complete reviewer attribution', async () => {
@@ -188,6 +225,7 @@ describe('Concept2Cure export governance gates', () => {
         },
       },
     }) as any;
+    withPrincipal(req);
     const res = createMockResponse();
 
     const handler = getRouteHandler('/artifacts/export-pptx', 'post');
@@ -199,7 +237,7 @@ describe('Concept2Cure export governance gates', () => {
       'X-Concept2Cure-Review-Timestamp',
       '2026-03-24T12:00:00.000Z'
     );
-    expect(res.send).toHaveBeenCalled();
+    expectRecordedThenDelivered(res, Buffer.from('pptx-bytes'));
   });
 });
 

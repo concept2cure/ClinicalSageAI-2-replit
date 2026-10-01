@@ -23,6 +23,7 @@
  * @module server/services/ai-gateway/providers/org-placement
  */
 
+import { isProductionEnv } from '../pii-screen';
 import type { DataResidency, ProviderName, SubstrateClass } from '../types';
 
 /** The values a stored policy may name — shared by the resolver and the writer. */
@@ -48,6 +49,87 @@ export const PLACEMENT_PROVIDERS: ReadonlySet<ProviderName> = new Set<ProviderNa
   'local',
 ]);
 
+// ── Production provider election (ADR-0014 §1, P1-45, 2026-10-01) ────────────
+//
+// Until 2026-10-01 an organization with no placement row, or a row whose
+// allowedProviders is NULL, read as "no vendor constraint": in production its
+// content reached OpenAI as soon as Anthropic failed and an OpenAI key was
+// configured, and Moonshot whenever its key was. The DPA's "disabled for a
+// tenant unless its Order Form lists them" was true only because Terraform
+// provisioned no such key. In production it is now this rule, applied by the
+// gateway's single placement predicate (tenantPlacementVerdict) to selection,
+// every fallback rung, streaming, tool calls, the last-mile re-check and
+// embeddings. Outside production nothing changes.
+
+/**
+ * Vendors an organization reaches in production without naming them: the ones
+ * already on the default sub-processor list (Anthropic; AWS for Bedrock) or
+ * involving no third party (the self-hosted lane).
+ */
+export const PRODUCTION_DEFAULT_PROVIDERS: ReadonlySet<ProviderName> = new Set<ProviderName>([
+  'anthropic',
+  'bedrock',
+  'local',
+]);
+
+/** Never a production lane, for any organization, under any election (ADR-0014 §1.3). */
+export const NEVER_IN_PRODUCTION_PROVIDERS: ReadonlySet<ProviderName> = new Set<ProviderName>(['moonshot']);
+
+/** True when `provider` may not run in this environment at all (Moonshot, in production). */
+export function isProviderExcludedInEnvironment(
+  provider: ProviderName,
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
+  return isProductionEnv(env) && NEVER_IN_PRODUCTION_PROVIDERS.has(provider);
+}
+
+/**
+ * Why `provider` may not receive an organization's content under the
+ * production provider election, or null when it may. Always null outside
+ * production.
+ *
+ * `elected` is the organization's stored allowedProviders — undefined when it
+ * has no placement policy, its row lists none, its policy could not be read, or
+ * the request carries no organization. In production:
+ *  - Moonshot is refused, listed or not;
+ *  - anthropic, bedrock and local are allowed by default;
+ *  - openai, azure and vertex are allowed only when `elected` names them.
+ * The organization's own list still narrows the default set; that is the
+ * tenant allow-list the gateway applies separately (and which a public-source
+ * opt-in may lift). This election is not liftable: it says which vendors may
+ * receive anything of the organization's at all.
+ */
+export function providerElectionRefusal(
+  provider: ProviderName,
+  elected: readonly ProviderName[] | undefined,
+  env: NodeJS.ProcessEnv = process.env,
+): string | null {
+  if (!isProductionEnv(env)) return null;
+  if (NEVER_IN_PRODUCTION_PROVIDERS.has(provider)) {
+    return `${provider} is not a production AI service for any organization (ADR-0014 §1)`;
+  }
+  if (PRODUCTION_DEFAULT_PROVIDERS.has(provider) || elected?.includes(provider)) return null;
+  return (
+    `${provider} is not an AI service the organization has elected; in production OpenAI, Azure and ` +
+    "Vertex are used only when the organization's placement policy names them (ADR-0014 §1)"
+  );
+}
+
+/**
+ * The vendors an organization with this stored list may reach in this
+ * environment, or null for no vendor constraint (outside production, when it
+ * lists none). The set {@link providerElectionRefusal} and the tenant
+ * allow-list admit together for a tenant payload.
+ */
+export function effectiveAllowedProviders(
+  elected: readonly ProviderName[] | null | undefined,
+  env: NodeJS.ProcessEnv = process.env,
+): ProviderName[] | null {
+  if (!isProductionEnv(env)) return elected ? [...elected] : null;
+  const base = elected ?? [...PRODUCTION_DEFAULT_PROVIDERS];
+  return base.filter(p => !NEVER_IN_PRODUCTION_PROVIDERS.has(p));
+}
+
 export interface OrgPlacementPolicy {
   /** Required data residency for this org's requests, if any. */
   residency?: DataResidency;
@@ -59,10 +141,13 @@ export interface OrgPlacementPolicy {
    */
   allowedSubstrates?: SubstrateClass[];
   /**
-   * Vendors this org may use — Claude, OpenAI, Kimi (Moonshot), a private-cloud
-   * lane or its own models. Absent = no vendor constraint. Empty = none. The DPA
-   * says OpenAI and Moonshot are disabled for a tenant unless its Order Form
-   * lists them; this is where that is recorded and enforced.
+   * Vendors this org has elected — Claude, OpenAI, a private-cloud lane or its
+   * own models. Empty = none. Absent means different things by environment
+   * (see {@link providerElectionRefusal}): outside production, no vendor
+   * constraint; in production, the default set only (anthropic, bedrock,
+   * local). The DPA says OpenAI and Moonshot are disabled for a tenant unless
+   * its Order Form lists them; this is where the election is recorded, and in
+   * production Moonshot is refused even when listed (ADR-0014 §1).
    */
   allowedProviders?: ProviderName[];
   /**

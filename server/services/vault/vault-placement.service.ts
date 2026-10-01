@@ -53,6 +53,7 @@ import { writeChainedAuditRow } from '../auditService.js';
 import { resolveVaultView, isFolderInView, folderLabel, filingVocabularyRefusal } from './vault-filing.service.js';
 import { vaultWriteRefusal } from './vault-write-authority.js';
 import type { VaultViewId } from '../../../shared/constants/domain/vault-taxonomy.js';
+import { programInOrganization } from '../c2c/program-access';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -86,6 +87,13 @@ export interface PlaceVaultDocumentArgs {
    * the agent acted, and that person — not the agent — confirms in the Vault.
    */
   agent?: Record<string, unknown>;
+  /**
+   * The placement the person saw (VR-11b, confirming in bulk). Checked under
+   * the row lock: a document whose folder or status changed since is refused
+   * CONFLICT and not touched, so a confirmation never lands on a placement the
+   * person did not see.
+   */
+  expected?: { folderId: string; placementStatus: string };
 }
 
 /** The placement as it stands after the write — the shape the Vault renders. */
@@ -223,12 +231,7 @@ export async function placeVaultDocument(
 
   // Program ownership — the same guard as the read path. A program in another
   // organization is reported as absent, not as forbidden.
-  const projRes = await pool.query(
-    `SELECT id FROM regulatory_programs
-      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
-    [programId, organizationId],
-  );
-  if (projRes.rows.length === 0) {
+  if (!(await programInOrganization(pool, programId, organizationId))) {
     return invalid('NOT_FOUND', 'No such project.', 404);
   }
   const view = await resolveVaultView(programId, organizationId);
@@ -264,6 +267,11 @@ export async function placeVaultDocument(
       placement_rationale: string | null;
     };
 
+    if (args.expected && (before.folder_id !== args.expected.folderId
+        || (before.placement_status ?? 'unfiled') !== args.expected.placementStatus)) {
+      await client.query('ROLLBACK');
+      return invalid('CONFLICT', 'Its filing changed since this list was loaded, so it was not confirmed. Reload and check it.', 409);
+    }
     const target = resolveTargetFolder(args, view, before.folder_id);
     if ('refusal' in target) {
       await client.query('ROLLBACK');

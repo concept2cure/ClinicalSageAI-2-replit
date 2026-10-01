@@ -1,0 +1,161 @@
+$ NODE_OPTIONS=--max-old-space-size=3072 npx vitest run server/routes/__tests__/report-os-audit-recording.test.ts   # against the route before the change
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain > writes report_os.run_created for the run, in its own transaction, and answers 201 42ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain > answers 503 saying the run exists but was not recorded when the row cannot be written 8ms
+   → expected 201 to be 503 // Object.is equality
+ × server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize records the seal on the audit chain > writes report_os.run_finalized carrying the seal hash, and answers 200 8ms
+   → expected undefined to match object { tenantId: 7, userId: 5, …(4) }
+ × server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize records the seal on the audit chain > answers 503 saying the report was sealed but not recorded when the row cannot be written 4ms
+   → expected 200 to be 503 // Object.is equality
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize records the seal on the audit chain > records nothing when the truthfulness gate refuses the finalize 4ms
+ × server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > writes report_os.run_exported carrying the hash of the bytes sent, then sends the PDF 53ms
+   → expected undefined to match object { tenantId: 7, userId: 5, …(4) }
+ × server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > answers 503 and sends no PDF when the export cannot be recorded 18ms
+   → expected 200 to be 503 // Object.is equality
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /taxonomy/seed and the registry migration write the same rows > upserts exactly the generator rows, in the generator order 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain > writes report_os.run_created for the run, in its own transaction, and answers 201
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ server/routes/__tests__/report-os-audit-recording.test.ts:138:21
+    136|     const res = await post();
+    137|     expect(res.status).toBe(201);
+    138|     expect(h.audit).toHaveBeenCalledTimes(1);
+       |                     ^
+    139|     expect(auditEntry()).toMatchObject({
+    140|       tenantId: 7,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain > answers 503 saying the run exists but was not recorded when the row cannot be written
+AssertionError: expected 201 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 201
+
+ ❯ server/routes/__tests__/report-os-audit-recording.test.ts:153:24
+    151|     auditFails();
+    152|     const res = await post();
+    153|     expect(res.status).toBe(503);
+       |                        ^
+    154|     expect(res.body).toMatchObject({ success: false, error: { code: 'R…
+    155|     expect(res.body.error.message).toMatch(/created/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize records the seal on the audit chain > writes report_os.run_finalized carrying the seal hash, and answers 200
+AssertionError: expected undefined to match object { tenantId: 7, userId: 5, …(4) }
+
+- Expected:
+{
+  "action": "report_os.run_finalized",
+  "details": {
+    "algorithm": "sha256",
+    "atomCount": 0,
+    "reportTypeId": "readiness.executive_digest",
+    "sealHash": "cbb68689daabb3cc169404741d42ffc4fbcfc3339111b743b978a51f4589227d",
+  },
+  "resourceId": "41",
+  "resourceType": "report_run",
+  "tenantId": 7,
+  "userId": 5,
+}
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/report-os-audit-recording.test.ts:171:26
+    169|     const seal = res.body.data.seal;
+    170|     expect(seal.contentHash).toMatch(/^[0-9a-f]{64}$/);
+    171|     expect(auditEntry()).toMatchObject({
+       |                          ^
+    172|       tenantId: 7,
+    173|       userId: 5,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize records the seal on the audit chain > answers 503 saying the report was sealed but not recorded when the row cannot be written
+AssertionError: expected 200 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 200
+
+ ❯ server/routes/__tests__/report-os-audit-recording.test.ts:186:24
+    184|     auditFails();
+    185|     const res = await finalize();
+    186|     expect(res.status).toBe(503);
+       |                        ^
+    187|     expect(res.body).toMatchObject({ success: false, error: { code: 'R…
+    188|     expect(res.body.error.message).toMatch(/sealed/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > writes report_os.run_exported carrying the hash of the bytes sent, then sends the PDF
+AssertionError: expected undefined to match object { tenantId: 7, userId: 5, …(4) }
+
+- Expected:
+{
+  "action": "report_os.run_exported",
+  "details": {
+    "byteLength": 1265,
+    "filename": "report-run-41.pdf",
+    "format": "pdf",
+    "reportTypeId": "readiness.executive_digest",
+    "sha256": "90b147308a0dc2a37295a96e2143a95f37706e0f2430fe3176d0c77781ff6dd5",
+  },
+  "resourceId": "41",
+  "resourceType": "report_run",
+  "tenantId": 7,
+  "userId": 5,
+}
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/report-os-audit-recording.test.ts:224:26
+    222|     const body = res.body as Buffer;
+    223|     expect(body.subarray(0, 4).toString()).toBe('%PDF');
+    224|     expect(auditEntry()).toMatchObject({
+       |                          ^
+    225|       tenantId: 7,
+    226|       userId: 5,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > answers 503 and sends no PDF when the export cannot be recorded
+AssertionError: expected 200 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 200
+
+ ❯ server/routes/__tests__/report-os-audit-recording.test.ts:244:24
+    242|     auditFails();
+    243|     const res = await exportPdf();
+    244|     expect(res.status).toBe(503);
+       |                        ^
+    245|     expect(res.headers['content-type']).toMatch(/application\/json/);
+    246|     expect(res.headers['content-disposition']).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 2 passed (8)
+   Start at  00:14:11
+   Duration  3.23s (transform 1.45s, setup 97ms, import 2.53s, tests 145ms, environment 0ms)
+
+exit=1

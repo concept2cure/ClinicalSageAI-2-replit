@@ -1,0 +1,21 @@
+# P1-19b route text, red: the route cases against audit-trail-routes.ts unchanged
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > exports inside a tenant-stamped transaction, with the chain verifier 26ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > passes the record filters 6ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > refuses a malformed filter rather than exporting everything 5ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > rolls back and releases when the export fails 7ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > exports inside a tenant-stamped transaction, with the chain verifier 5ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > passes the record filters 3ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > refuses a malformed filter rather than exporting everything 3ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > rolls back and releases when the export fails 4ms
+ × server/routes/__tests__/audit-export-tenant-scope.test.ts > the export names its key (P1-19b) > the signed export tells the inspector to use the key its manifest names 7ms
+ × server/routes/__tests__/audit-export-tenant-scope.test.ts > the export names its key (P1-19b) > verification says which key vouched for the export 17ms
+ × server/routes/__tests__/audit-export-tenant-scope.test.ts > the export names its key (P1-19b) > a manifest from before key ids verifies and says no key was named 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/audit-export-tenant-scope.test.ts > the export names its key (P1-19b) > the signed export tells the inspector to use the key its manifest names
+AssertionError: expected undefined to be 'k2' // Object.is equality
+ FAIL  server/routes/__tests__/audit-export-tenant-scope.test.ts > the export names its key (P1-19b) > verification says which key vouched for the export
+AssertionError: expected { valid: true, errors: [], …(2) } to match object { valid: true, signingKeyId: 'k1' }
+ FAIL  server/routes/__tests__/audit-export-tenant-scope.test.ts > the export names its key (P1-19b) > a manifest from before key ids verifies and says no key was named
+AssertionError: expected undefined to be null
+ Test Files  1 failed (1)
+      Tests  3 failed | 8 passed (11)

@@ -5,7 +5,8 @@
  * DMS plan elements per NIH NOT-OD-21-013), edit an element's content + addressed
  * flag, read plans / a single plan with elements, read completeness, and finalize
  * behind the deterministic completeness gate. Every mutation runs BEGIN → Tx →
- * recordGovernedAction → COMMIT, org-scoped. Mounted at /api/dmsp.
+ * recordGovernedAction → COMMIT, org-scoped; finalize is an electronic signature
+ * (governed-signed-act.ts). Mounted at /api/dmsp.
  *
  * @module server/routes/dmsp
  */
@@ -14,6 +15,7 @@ import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import { pool } from '../db';
 import { recordGovernedAction } from './c2c/actions';
+import { signedActAttempts, signGovernedAct } from './governed-signed-act';
 import {
   createPlanTx,
   updateElementTx,
@@ -26,8 +28,11 @@ import {
   recordDmsPlanCreated, recordDmsPlanElementUpdated, recordDmsPlanFinalized,
 } from '../services/dmsp-metrics';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('dmsp');
 
 function resolveUserId(req: Request): number | null {
   const r = req as any;
@@ -48,7 +53,7 @@ function fail(res: Response, err: unknown): void {
     res.status(CODE_STATUS[code]).json({ error: { code, message: err instanceof Error ? err.message : 'Request failed.' } });
     return;
   }
-  res.status(500).json({ error: { code: 'INTERNAL', message: err instanceof Error ? err.message : 'Request failed.' } });
+  serverError(res, log, 'handling the DMSP request', err);
 }
 const reason = z.string().trim().min(8, 'Provide a reason of at least 8 characters.');
 
@@ -149,15 +154,18 @@ router.patch('/elements/:id', async (req, res) => {
 
 // ─── Finalize ────────────────────────────────────────────────────────────────
 
-router.post('/plans/:id/finalize', async (req, res) => {
+// Finalizing is an electronic signature (P0-10a): governed-signed-act.ts.
+router.post('/plans/:id/finalize', signedActAttempts, async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
-  const parsed = z.object({ reason }).safeParse(req.body ?? {});
-  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
-  await governed(req, res, 'sign', parsed.data.reason, async (client, orgId, userId) => {
-    const result = await finalizePlanTx(client, orgId, userId, id);
-    recordDmsPlanFinalized();
-    return { target: `dms-plan:${id}`, payload: { addressedPct: result.completeness.addressedPct }, body: { planId: id, ...result } };
+  await signGovernedAct(req, res, {
+    domain: 'protocol_development',
+    codeStatus: CODE_STATUS,
+    run: async (client, orgId, userId) => {
+      const result = await finalizePlanTx(client, orgId, userId, id);
+      recordDmsPlanFinalized();
+      return { target: `dms-plan:${id}`, payload: { addressedPct: result.completeness.addressedPct }, body: { planId: id, ...result } };
+    },
   });
 });
 

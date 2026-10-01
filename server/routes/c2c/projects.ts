@@ -34,6 +34,7 @@ import {
 import {
   canCreateProgram,
   canMutateProgram,
+  programInOrganization,
   resolveProgramAuthzMode,
   resolveProgramQuotaMode,
 } from '../../services/c2c/program-access.js';
@@ -1025,12 +1026,7 @@ router.get('/:id/workstreams', async (req: Request, res: Response) => {
   if (!orgId) return send403(res);
 
   try {
-    // Verify project access.
-    const check = await pool.query(
-      `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-      [req.params.id, orgId],
-    );
-    if (check.rows.length === 0) return send404(res);
+    if (!(await programInOrganization(pool, req.params.id, orgId))) return send404(res);
 
     const { rows } = await pool.query(
       `SELECT
@@ -1072,11 +1068,7 @@ router.get('/:id/drafts', async (req: Request, res: Response) => {
   const limit = Math.min(parseInt(String((req.query as any).limit ?? '7'), 10) || 7, 50);
 
   try {
-    const check = await pool.query(
-      `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-      [req.params.id, orgId],
-    );
-    if (check.rows.length === 0) return send404(res);
+    if (!(await programInOrganization(pool, req.params.id, orgId))) return send404(res);
 
     const { rows } = await pool.query(
       `SELECT
@@ -1184,11 +1176,7 @@ router.get('/:id/evidence', async (req: Request, res: Response) => {
   if (!orgId) return send403(res);
 
   try {
-    const check = await pool.query(
-      `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-      [req.params.id, orgId],
-    );
-    if (check.rows.length === 0) return send404(res);
+    if (!(await programInOrganization(pool, req.params.id, orgId))) return send404(res);
 
     const { rows } = await pool.query(
       `SELECT
@@ -1298,11 +1286,7 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
   if (!UUID_RE.test(String(req.params.id))) return send404(res);
 
   try {
-    const check = await pool.query(
-      `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-      [req.params.id, orgId],
-    );
-    if (check.rows.length === 0) return send404(res);
+    if (!(await programInOrganization(pool, req.params.id, orgId))) return send404(res);
 
     // Columns aliased from what audit_logs ACTUALLY has (table_name /
     // record_id / new_values — see migrations/0000_sweet_joseph.sql plus the
@@ -1395,11 +1379,7 @@ router.get('/:id/records', async (req: Request, res: Response) => {
   const id = String(req.params.id);
   if (!UUID_RE.test(id)) return send404(res);
   try {
-    const check = await pool.query(
-      `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
-      [id, orgId],
-    );
-    if (check.rows.length === 0) return send404(res);
+    if (!(await programInOrganization(pool, id, orgId))) return send404(res);
     const records: Record<string, RecordSection> = {};
     for (const [section, sql] of PROJECT_RECORD_READS) records[section] = await readRecordSection(sql, id, orgId);
     return res.json({ projectId: id, records });
@@ -1509,11 +1489,7 @@ router.get('/:id/conversation-files', async (req: Request, res: Response) => {
   const programId = String(req.params.id);
   if (!UUID_RE.test(programId)) return send404(res);
   try {
-    const check = await pool.query(
-      `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
-      [programId, orgId],
-    );
-    if (check.rows.length === 0) return send404(res);
+    if (!(await programInOrganization(pool, programId, orgId))) return send404(res);
     const { rows } = await pool.query(
       `SELECT f.id, f.original_name, f.mime_type, f.file_size, f.created_at
          FROM file_uploads f
@@ -1691,12 +1667,7 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
   if (!orgId) return send403(res);
 
   try {
-    // Verify project access before reading anything scoped to it.
-    const check = await pool.query(
-      `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-      [req.params.id, orgId],
-    );
-    if (check.rows.length === 0) return send404(res);
+    if (!(await programInOrganization(pool, req.params.id, orgId))) return send404(res);
 
     const { listClientDocuments } = await import(
       '../../services/clinical-regulatory-evidence/evidence-spine.service.js'
@@ -1785,11 +1756,9 @@ router.get('/:id/source-changes', async (req: Request, res: Response) => {
   if (!orgId) return send403(res);
 
   try {
-    const check = await pool.query(
-      `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-      [req.params.id, orgId],
-    );
-    if (check.rows.length === 0) return send404(res);
+    /* The canonical program check (PF-11): it refuses a deleted program, and a
+       non-UUID id, which the inline query sent to a uuid column. */
+    if (!(await programInOrganization(pool, req.params.id, orgId))) return send404(res);
 
     const { listChangedSourceUsages } = await import(
       '../../services/clinical-regulatory-evidence/source-usage.service.js'

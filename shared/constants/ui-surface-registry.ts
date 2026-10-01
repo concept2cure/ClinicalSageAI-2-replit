@@ -292,7 +292,13 @@ export const UI_SURFACES: UiSurface[] = [
     uiKit: 'mdx',
     // Launch-scope API (2026-09-25, ci:launch-scope-api): MdxSurfaceHost (useMdxPrograms, useWorkbench, useSubmissions) calls these for the Vault too.
     // '/api/mdx/vault' (2026-09-26): mdx/hooks/useVault.ts, the list and version reads.
-    apiPrefixes: ['/api/c2c/project-vault', '/api/vault/ingest', '/api/regulatory-programs', '/api/submission-ops', '/api/mdx/vault'],
+    // '/api/vault/legal-holds' (2026-10-01, P1-22; ADR-0014 §6): the legal-hold list, place and lift
+    // (server/routes/vault-legal-holds.ts). No screen calls them yet, so ci:launch-scope-api could not
+    // see they were unclaimed, and production refused every one 403 LAUNCH_SCOPE. Its /retention
+    // sub-path is Setup's, below.
+    // /api/regulatory/documents: a Vault version's review and approval, on the
+    // one document lifecycle (VR-13).
+    apiPrefixes: ['/api/c2c/project-vault', '/api/vault/ingest', '/api/regulatory-programs', '/api/submission-ops', '/api/mdx/vault', '/api/vault/legal-holds', '/api/regulatory/documents'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -560,7 +566,9 @@ export const UI_SURFACES: UiSurface[] = [
     uiKit: 'tasking',
     // Launch-scope API (2026-09-25, ci:launch-scope-api): MdxSurfaceHost (useMdxPrograms, useWorkbench, useSubmissions) and the shell's TaskTray call these.
     // Launch-scope API (2026-09-25, ci:launch-scope-api): the task board and the shell's task tray.
-    apiPrefixes: ['/api/task-management', '/api/regulatory/tasks', '/api/project-sections', '/api/regulatory-programs', '/api/submission-ops', '/api/approval-workflows/pending', '/api/tasks'],
+    // /api/project-rules: the task board reads the rule definitions it shows
+    // (TaskBoard.tsx); claimed by no surface until the gate saw it (2026-10-01).
+    apiPrefixes: ['/api/task-management', '/api/regulatory/tasks', '/api/project-sections', '/api/regulatory-programs', '/api/submission-ops', '/api/approval-workflows/pending', '/api/tasks', '/api/project-rules'],
     anaToolFamilies: [],
     sharedContract: '@shared/schema',
     discoveryCatalog: null,
@@ -864,7 +872,9 @@ export const UI_SURFACES: UiSurface[] = [
     group: 'admin',
     uiKit: null,
     // Launch-scope API (2026-09-25, ci:launch-scope-api): AdminSurfaces.tsx Setup reads the GAMP 5 validation kit.
-    apiPrefixes: ['/api/setup', '/api/admin', '/api/users', '/api/api-keys', '/api/validation-kit'],
+    // 2026-10-01 (P1-22; ADR-0014 §6): Setup's Records retention card (RetentionPeriodCard.tsx)
+    // reads and sets the organisation's retention period.
+    apiPrefixes: ['/api/setup', '/api/admin', '/api/users', '/api/api-keys', '/api/validation-kit', '/api/vault/legal-holds/retention'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,

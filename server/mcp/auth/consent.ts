@@ -12,10 +12,17 @@
  * If the browser already holds the app's session token (localStorage key
  * `trialsage_access_token`, the app's own convention), the page skips the
  * login form and asks only for consent. The server still verifies the token.
+ *
+ * Only the user's own session authorises a grant: the token is verified for the
+ * `grant` purpose, which refuses a connector-issued token. Until 2026-10-01 it
+ * was verified as /mcp verifies a bearer, so a `c2c:read` connector token posted
+ * here authorised `c2c:read c2c:draft c2c:file` for any registered client
+ * (IAM-02 part b, reopened; mcp-consent-delegated.dbtest.ts).
  */
 
 import { randomBytes } from 'crypto';
 import type { Request, Response } from 'express';
+import { InvalidTokenError, ServerError } from '@modelcontextprotocol/sdk/server/auth/errors.js';
 import { SCOPE_DESCRIPTIONS, type McpConfig, type McpScope } from '../config';
 import { readPendingAuthorization, verifyPlatformBearer, principalOf } from './platform-token';
 import * as store from './store';
@@ -132,10 +139,21 @@ export function consentHandler(config: McpConfig) {
       return;
     }
     const accessToken = typeof body.access_token === 'string' ? body.access_token : '';
+    // The refusal says which it was. An account out of use is told so (signing in
+    // again cannot help it), a connector token is told it cannot grant, and a
+    // check that could not run is not reported as a bad sign-in.
     let principal;
     try {
-      principal = principalOf(await verifyPlatformBearer(accessToken, config));
-    } catch {
+      principal = principalOf(await verifyPlatformBearer(accessToken, config, 'grant'));
+    } catch (err) {
+      if (err instanceof ServerError) {
+        res.status(503).json({ error: 'temporarily_unavailable', error_description: 'The session could not be checked. Try again.' });
+        return;
+      }
+      if (err instanceof InvalidTokenError) {
+        res.status(401).json({ error: 'invalid_token', error_description: err.message });
+        return;
+      }
       principal = null;
     }
     if (!principal) {

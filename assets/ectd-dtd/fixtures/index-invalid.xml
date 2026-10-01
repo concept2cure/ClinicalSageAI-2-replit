@@ -11,7 +11,9 @@
     DTD_NO_DOCTYPE             — <!DOCTYPE ... ich-ectd-3-2.dtd> omitted
     DTD_BAD_ROOT               — root is <bad-root> instead of <ectd:ectd>
     DTD_MISSING_ECTD_NS        — xmlns:ectd not declared
-    DTD_MISSING_XLINK_NS       — xmlns:xlink not declared
+    DTD_MISSING_XLINK_NS       — xmlns:xlink not declared (so DTD_WRONG_XLINK_NS,
+                                 a declaration with the wrong value, cannot also
+                                 fire here; submission-orchestrator.test.ts pins it)
     DTD_LEAF_MISSING_ATTR      — first leaf lacks xlink:href / checksum / operation
     DTD_CHECKSUM_TYPE          — second leaf declares checksum-type="sha1"
     DTD_UNKNOWN_ELEMENT        — <m2-summaries>, <m5-clinical>, <m5-3> are legacy

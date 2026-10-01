@@ -31,7 +31,7 @@ import request from 'supertest';
 // connect() is what tells "reached the export" from "refused before it".
 vi.mock('../../services/tenant/governed-tenant-context.js', () => ({ setTenantContextTx: vi.fn(async () => undefined) }));
 vi.mock('../../services/audit/tenant-chain-verdict.js', () => ({ verifyTenantChainOnAdminScope: vi.fn(async () => ({ ok: true })) }));
-const monitor = vi.hoisted(() => ({ runOnDemandCheck: vi.fn(async () => ({ lastRun: 'now', broken: 0 })), getChainMonitorStatus: vi.fn(() => ({ running: true })) }));
+const monitor = vi.hoisted(() => ({ runOnDemandCheck: vi.fn(async () => ({ lastRun: 'now', broken: 0 })), getChainMonitorStatus: vi.fn(() => ({ running: true })), getSharedChainMonitorStatus: vi.fn(async () => ({ running: true })) }));
 vi.mock('../../services/audit/chainIntegrityMonitor.js', () => monitor);
 // The chain monitor is estate-wide: only a platform administrator may read or run it. The harness marks one with user.platformAdmin.
 vi.mock('../../middleware/requirePlatformAdmin.js', () => ({ isPlatformAdmin: (req: any) => req.user?.platformAdmin === true }));
@@ -100,6 +100,15 @@ describe('exporting the audit trail', () => {
     expect(pool.connect).not.toHaveBeenCalled();
   });
 
+  it('a session whose organisation is 0 is refused before any read: 0 is not a tenant (SECURITY-9)', async () => {
+    for (const path of ['/api/audit/export?format=json', '/api/audit/export/signed?format=json', '/api/audit/logs']) {
+      const r = await request(app('admin', { organizationId: 0 })).get(path);
+      expect(r.status, path).toBe(403);
+    }
+    expect(pool.connect).not.toHaveBeenCalled();
+    expect(pool.query).not.toHaveBeenCalled();
+  });
+
   it('an admin gets past the gate to the export itself', async () => {
     const r = await request(app('admin')).get('/api/audit/export/signed?format=json');
     expect(r.status).not.toBe(403);
@@ -142,6 +151,18 @@ describe('recording an event from a client', () => {
     expect(r.status).toBeLessThan(300);
     expect(inserted.map((e) => e.eventType)).toEqual(['orchestration.gate_decision']);
     expect(JSON.stringify(r.body)).toMatch(/not a recognised event type|unknown event type|vocabulary/i);
+  });
+
+  it('a batch insert the database refuses is reported as insert_failed, with none of the database text (DP-63)', async () => {
+    pool.query.mockImplementationOnce(async () => {
+      throw new Error('null value in column "event_type" of relation "audit_events" violates not-null constraint');
+    });
+    const r = await request(app('admin')).post('/api/audit/events/batch').send({
+      events: [{ eventType: 'orchestration.gate_decision', entityType: 'gate', entityId: 2, reason: 'gate decided' }],
+    });
+    expect(r.status).toBe(207);
+    expect(r.body.skippedDetails).toEqual([{ index: 0, reason: 'insert_failed' }]);
+    expect(JSON.stringify(r.body)).not.toMatch(/audit_events|constraint|column/);
   });
 
   it('a member may not record events at all', async () => {

@@ -1,0 +1,4 @@
+ × server/routes/__tests__/artifacts-center-foreign-project.pglite.test.ts > GET /api/artifacts-center — the project shown is the artifact’s own organization’s > an artifact under another organization's project id never shows that project's code or name 17ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)

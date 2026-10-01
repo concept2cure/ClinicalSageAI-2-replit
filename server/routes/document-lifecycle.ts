@@ -40,9 +40,38 @@ import {
   type CanonicalStoreDb,
 } from '../services/regulatory/canonicalDocumentStore';
 import {
+  startVaultLifecycleRecord,
+  supersedeOnVaultApproval,
+  SupersessionRefused,
+  vaultApprovalRefusal,
+} from '../services/regulatory/vault-lifecycle-record';
+import {
   buildLifecycleBindings,
   type LifecycleBindingDeps,
 } from '../services/regulatory/lifecycleBindings';
+import {
+  deriveLifecycleBinding,
+  LIFECYCLE_DECLARED_MEANING,
+  LIFECYCLE_SIGNATURE_TYPE,
+  lifecycleTarget,
+  LifecycleSignatureRefusal,
+  vaultSourceId,
+  type LifecycleBinding,
+  type LifecycleSigner,
+} from '../services/regulatory/lifecycle-signature';
+import {
+  drizzleSignatureClient,
+  persistGovernedActionSignature,
+  type SignatureDbClient,
+} from '../services/part11/signature-persistence';
+import { recordGovernedAction } from './c2c/actions';
+import { requireGovernedReason } from './governed-reason';
+import {
+  assertSignerIsNotAuthor,
+  SeparationOfDutiesAuthorUnresolvedError,
+  SeparationOfDutiesError,
+  SeparationOfDutiesUnverifiedError,
+} from '../services/governance/separation-of-duties';
 import type { LifecycleBindings } from '../services/regulatory/documentLifecycleOrchestrator';
 import {
   canAdvanceDocument,
@@ -50,7 +79,6 @@ import {
   type ApprovalSignature,
   type DocumentStage,
 } from '../../shared/regulatory/document-lifecycle';
-import { randomUUID } from 'crypto';
 import {
   makeUpsertLeafBinding,
   LeafBindingRefusal,
@@ -60,6 +88,10 @@ import {
   SubmissionError,
   SUBMISSION_ERROR_STATUS,
 } from '../services/submission-service/submission-service';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
+
+const log = createScopedLogger('document-lifecycle');
 
 export interface DocumentLifecycleRouterOptions {
   /** Drizzle handle. Defaults to the runtime db. */
@@ -80,6 +112,16 @@ const AUTHOR = 'regulatory-author';
 const isStage = (v: unknown): v is DocumentStage =>
   typeof v === 'string' &&
   ['authoring', 'in_review', 'approved', 'placed', 'packaged', 'submitted', 'superseded', 'withdrawn'].includes(v);
+
+/**
+ * A sign-off carries the signer's own reason (VR-13): the 400 to answer when it
+ * does not, else null. Asked before the ceremony; a reason is never written for
+ * the signer.
+ */
+function reasonRefusal(value: unknown): { ok: false; error: 'REASON_REQUIRED'; message: string } | null {
+  const reason = requireGovernedReason(value);
+  return reason.ok ? null : { ok: false, error: 'REASON_REQUIRED', message: `${reason.error} Nothing was signed.` };
+}
 
 export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptions = {}): Router {
   const router = express.Router();
@@ -108,7 +150,7 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
   async function reverifiedSigner(
     req: Request,
     res: Response,
-  ): Promise<{ userId: number; role: string; authenticationMethod: string } | null> {
+  ): Promise<{ userId: number; role: string; authenticationMethod: string; secondFactorVerified: boolean } | null> {
     const userId = resolveUserId(req);
     if (userId === null) {
       res.status(401).json({ ok: false, error: 'AUTH_REQUIRED' });
@@ -128,7 +170,12 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
       res.status(verdict.status).json({ ok: false, error: verdict.code, message: verdict.error });
       return null;
     }
-    return { userId, role, authenticationMethod: verdict.authenticationMethod };
+    return {
+      userId,
+      role,
+      authenticationMethod: verdict.authenticationMethod,
+      secondFactorVerified: verdict.secondFactorVerified,
+    };
   }
 
   // The runtime db is resolved lazily so importing this module never forces a
@@ -142,18 +189,182 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
 
   // Async handlers must not throw into Express unguarded (Express 4 does not
   // catch async rejections — the request would hang). Every handler is wrapped
-  // so a failure returns a clean 500 with the reason.
+  // so a failure returns a clean 500. The reason goes to the log against the
+  // request id, never into the body: a Drizzle failure's message is the SQL
+  // text with its table and column names (P1-17, IAM-18 (1)).
   const wrap =
     (fn: (req: Request, res: Response) => Promise<Response | void>) =>
     async (req: Request, res: Response): Promise<Response | void> => {
       try {
         return await fn(req, res);
       } catch (err) {
-        return res
-          .status(500)
-          .json({ ok: false, error: 'internal_error', detail: err instanceof Error ? err.message : String(err) });
+        return serverError(res, log, 'handling the document lifecycle request', err);
       }
     };
+
+  /**
+   * Before any credential is asked for (F-27), a sign-off must be one that can
+   * be recorded: an authenticated signer who is not an author of the record
+   * (the platform's one separation-of-duties check; for a Vault-made document
+   * the uploader is an author too), over content the server can read. Returns
+   * the binding, or the refusal to answer with. Runs on the signing
+   * transaction, under the document's row lock.
+   */
+  async function signingPrecheck(
+    req: Request,
+    client: SignatureDbClient,
+    doc: ProjectionInput,
+    meaning: 'REVIEWED' | 'APPROVED',
+  ): Promise<{ binding: LifecycleBinding } | { status: number; body: unknown }> {
+    const userId = resolveUserId(req);
+    if (userId === null) return { status: 401, body: { ok: false, error: 'AUTH_REQUIRED' } };
+    try {
+      await assertSignerIsNotAuthor(lifecycleTarget(doc.canonicalId), doc.organizationId, userId, {
+        command: 'sign',
+        meaning,
+        client,
+      });
+    } catch (err) {
+      if (err instanceof SeparationOfDutiesError) {
+        return { status: 403, body: { ok: false, error: 'SELF_APPROVAL', message: err.message } };
+      }
+      if (err instanceof SeparationOfDutiesAuthorUnresolvedError) {
+        return { status: 409, body: { ok: false, error: err.code, message: err.message } };
+      }
+      if (err instanceof SeparationOfDutiesUnverifiedError) {
+        return { status: 503, body: { ok: false, error: err.code, message: err.message } };
+      }
+      throw err;
+    }
+    try {
+      return { binding: await deriveLifecycleBinding(client, doc) };
+    } catch (err) {
+      if (err instanceof LifecycleSignatureRefusal) {
+        return { status: err.status, body: { ok: false, error: err.code, message: err.message } };
+      }
+      throw err;
+    }
+  }
+
+  /**
+   * Record one lifecycle sign-off as a Part 11 record (VR-12): the governed
+   * ledger pair (the chained audit_logs row and its c2c_ana_actions row), then
+   * ONE electronic_signatures row with the printed name, declared meaning and
+   * time, bound to `binding`, all on `client`, the transaction that records the
+   * lifecycle change. Returns the canonical row's copy, which names the record
+   * (`esig:<id>`). A failure throws and rolls everything back.
+   *
+   * Called only after reverifiedSigner has passed, and it lives here, beside
+   * that ceremony, for that reason. Before, a sign-off was a `csig:<uuid>`
+   * object with no signature record behind it.
+   */
+  async function recordLifecycleSignature(
+    client: SignatureDbClient,
+    params: {
+      doc: ProjectionInput;
+      meaning: 'reviewed' | 'approved';
+      signer: LifecycleSigner;
+      binding: LifecycleBinding;
+      /** The signer's own reason, required and validated by the route (never written for them). */
+      reason: string;
+      occurredAt: Date;
+    },
+  ): Promise<ApprovalSignature> {
+    const { doc, signer, binding, occurredAt } = params;
+    const target = lifecycleTarget(doc.canonicalId);
+    const meaning = LIFECYCLE_DECLARED_MEANING[params.meaning];
+    const reason = params.reason;
+
+    const gov = await recordGovernedAction(client, {
+      orgId: doc.organizationId,
+      userId: signer.userId,
+      command: 'sign',
+      target,
+      reason,
+      payload: { meaning, contentDigest: binding.digest, bindingBasis: binding.basis, version: doc.version, stage: doc.stage },
+      domain: 'regulatory',
+      surface: 'document-lifecycle',
+    });
+    const signed = await persistGovernedActionSignature(client, {
+      orgId: doc.organizationId,
+      userId: signer.userId,
+      target,
+      reason,
+      payload: { meaning },
+      actionId: gov.actionId,
+      auditId: gov.auditId,
+      sha256Chain: gov.sha256Chain,
+      authenticationMethod: signer.authenticationMethod,
+      secondFactorVerified: signer.secondFactorVerified,
+      ipAddress: signer.ipAddress ?? null,
+      occurredAt,
+      signatureType: LIFECYCLE_SIGNATURE_TYPE,
+      manifestKind: LIFECYCLE_SIGNATURE_TYPE,
+      command: 'sign',
+      binding: { digest: binding.digest, basis: binding.basis, note: binding.note },
+      extraManifest: { canonicalId: doc.canonicalId, title: doc.title, version: doc.version, stage: doc.stage },
+      complianceStatement:
+        'Regulated-document lifecycle sign-off applied as an electronic signature under 21 CFR Part 11 §11.50/§11.70/§11.200; ' +
+        'ledger-chained to the audit_logs sha256 chain, in the same transaction as the lifecycle record.',
+    });
+    return {
+      actor: String(signer.userId),
+      role: signer.role,
+      signatureRef: `esig:${signed.id}`,
+      signedAt: occurredAt.toISOString(),
+      meaning: params.meaning,
+      boundContentHash: binding.contentHash,
+      bindingBasis: binding.basis,
+    };
+  }
+
+  /**
+   * Prepare in_review → approved, which signs. It goes through the same
+   * ceremony as /:id/sign, and the approval's signatureRef is the record the
+   * binding writes: a `signatureRef` in the request body is never read, so no
+   * caller can cite a signature into the audit trail.
+   *
+   * The GATE is asked first, then the signing precheck (author, content). A
+   * transition that will be refused must not cost the signer a credential
+   * check: a wrong password counts against the account's lockout (F-27).
+   * advanceDocument asks the gate again; this is the same pure check, not a
+   * second policy.
+   *
+   * Returns the applySignature binding (a Part 11 record on this transaction,
+   * VR-12), or the outcome to answer with.
+   */
+  async function prepareApproval(
+    req: Request,
+    res: Response,
+    client: SignatureDbClient,
+    input: ProjectionInput,
+    state: ReturnType<typeof projectCanonicalDocument>['state'],
+  ): Promise<{ applySignature: NonNullable<LifecycleBindingDeps['applySignature']> } | Outcome> {
+    const gate = canAdvanceDocument(state, 'approved');
+    if (!gate.allowed) {
+      return { status: 409, body: { ok: false, from: state.stage, to: 'approved', blockedBy: gate.blockedBy } };
+    }
+    const refusal = await vaultApprovalRefusal(client, input, resolveUserId(req));
+    if (refusal) return refusal;
+    const pre = await signingPrecheck(req, client, input, 'APPROVED');
+    if (!('binding' in pre)) return pre;
+    const signer = await reverifiedSigner(req, res);
+    if (!signer) return { responded: true };
+    return {
+      applySignature: async (_doc, meaning, signCtx) => {
+        if (meaning !== 'approved') throw new Error(`A lifecycle approval signs as approved, not ${meaning}.`);
+        return recordLifecycleSignature(client, {
+          doc: input,
+          meaning,
+          signer: { ...signer, ipAddress: req.ip ?? null },
+          binding: pre.binding,
+          // Validated by the advance route before anything ran; never written for the signer.
+          reason: signCtx.reason ?? '',
+          occurredAt: new Date(signCtx.at),
+        });
+      },
+    };
+  }
 
   /** Create a canonical document (starts at `authoring`). */
   // Every write is gated like the canonical leaf write it can lead to
@@ -164,18 +375,30 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
     const organizationId = resolveOrgId(req);
     if (organizationId === null) return res.status(403).json({ ok: false, error: 'organization_context_required' });
 
-    const { title, documentType, projectId, hasContent, contentHash, sources } = req.body ?? {};
+    const createdBy = resolveUserId(req);
+    if (createdBy === null) return res.status(401).json({ ok: false, error: 'AUTH_REQUIRED' });
+
+    // A body `contentHash` is not read (VR-12): the hash a signature binds is
+    // the server's reading. A document made from a Vault version is that
+    // version's record (VR-13): see startVaultLifecycle.
+    const { title, documentType, projectId, hasContent, sources } = req.body ?? {};
+    const vaultId = vaultSourceId(sources);
+    if (vaultId !== null) {
+      const started = await startVaultLifecycleRecord(getDb(), { organizationId, createdBy, vaultId });
+      return res.status(started.status).json(started.body);
+    }
     if (typeof title !== 'string' || !title.trim() || typeof documentType !== 'string' || !documentType.trim()) {
       return res.status(400).json({ ok: false, error: 'title_and_document_type_required' });
     }
 
     const canonicalId = await createCanonicalDocument(getDb(), {
       organizationId,
+      createdBy,
       title: title.trim(),
       documentType: documentType.trim(),
       projectId: typeof projectId === 'string' ? projectId : undefined,
       hasContent: Boolean(hasContent),
-      contentHash: typeof contentHash === 'string' ? contentHash : undefined,
+      contentHash: '',
       sources,
     });
     // Report how many blueprint sections were instantiated as the outline.
@@ -214,6 +437,10 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
     if (meaning !== 'reviewed' && meaning !== 'approved') {
       return res.status(400).json({ ok: false, error: 'meaning_must_be_reviewed_or_approved' });
     }
+    // A sign-off carries the signer's own reason; none is written for them.
+    const noReason = reasonRefusal(req.body?.reason);
+    if (noReason) return res.status(400).json(noReason);
+    const reason = String(req.body.reason).trim();
     const id = String(req.params.id);
 
     let outcome: Outcome;
@@ -235,22 +462,29 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
         // cost the signer a credential check (F-27, as on /:id/advance).
         const refusal = reviewSignatureRefusal(existing);
         if (refusal) return { status: 409, body: refusalBody(refusal) };
+        const client = drizzleSignatureClient(tx);
+        const pre = await signingPrecheck(req, client, existing, 'REVIEWED');
+        if (!('binding' in pre)) return pre;
 
         const signer = await reverifiedSigner(req, res);
         if (!signer) return { responded: true };
 
-        const signature: ApprovalSignature = {
-          actor: String(signer.userId),
-          role: signer.role,
-          signatureRef: `csig:${randomUUID()}`,
-          signedAt: new Date().toISOString(),
+        // The Part 11 record (VR-12): the chained ledger row and one
+        // electronic_signatures row on this transaction, then the canonical
+        // copy, which names it. That ledger row is the sign-off's org-wide
+        // audit record. Any failure rolls all of it back.
+        const signature = await recordLifecycleSignature(client, {
+          doc: existing,
           meaning: 'reviewed',
-        };
+          signer: { ...signer, ipAddress: req.ip ?? null },
+          binding: pre.binding,
+          reason,
+          occurredAt: new Date(),
+        });
         const event = await recordReviewSignature(tx, id, organizationId, signature);
-        if (!event) return { status: 404, body: { ok: false, error: 'not_found' } };
-        // The org-wide trail, inside the same transaction's lifetime: if it
-        // cannot be written, the sign-off rolls back with it.
-        await bindingsFactory({ organizationId, actor: signature.actor, signerRole: signer.role }).audit(event);
+        // Unreachable under the row lock; thrown, not answered, so the
+        // signature written above rolls back.
+        if (!event) throw new Error(`Canonical document ${id} disappeared while its sign-off was recorded`);
         return { status: 200, body: { ok: true, signature } };
       });
     } catch (err) {
@@ -276,6 +510,9 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
 
     const to = req.body?.to;
     if (!isStage(to)) return res.status(400).json({ ok: false, error: 'invalid_target_stage' });
+    // Approving signs, so it carries the signer's own reason (as /:id/sign does).
+    const noReason = to === 'approved' ? reasonRefusal(req.body?.reason) : null;
+    if (noReason) return res.status(400).json(noReason);
     const id = String(req.params.id);
 
     let outcome: Outcome;
@@ -298,36 +535,24 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
         if (actorUserId === null) return { status: 401, body: { ok: false, error: 'AUTH_REQUIRED' } };
         const actor = String(actorUserId);
 
-        // Approving signs. It goes through the same ceremony as /:id/sign, and the
-        // approval's signatureRef is minted server-side by the binding — a
-        // `signatureRef` in the request body is no longer read by any transition,
-        // so no caller can cite a signature into the audit trail.
-        //
-        // The GATE is asked first. A transition the gate refuses must not cost the
-        // signer a credential check: a wrong password counts against the account's
-        // lockout (F-27), so asking for one on a request that is refused anyway
-        // would let an illegal jump burn a signer's attempts. advanceDocument asks
-        // the gate again; this is the same pure check, not a second policy.
-        //
-        // Only in_review → approved signs. placed → approved un-places a document
-        // whose approval is already recorded (VR-03): it asks for no credentials
-        // and mints nothing.
-        let signerRole: string | undefined;
+        // Approving signs; see prepareApproval. placed → approved un-places a
+        // document whose approval is already recorded (VR-03): it asks for no
+        // credentials and mints nothing.
+        const client = drizzleSignatureClient(tx);
+        let applySignature: LifecycleBindingDeps['applySignature'];
         if (to === 'approved' && projected.state.stage === 'in_review') {
-          const gate = canAdvanceDocument(projected.state, to);
-          if (!gate.allowed) {
-            return { status: 409, body: { ok: false, from: projected.state.stage, to, blockedBy: gate.blockedBy } };
-          }
-          const signer = await reverifiedSigner(req, res);
-          if (!signer) return { responded: true };
-          signerRole = signer.role;
+          const prepared = await prepareApproval(req, res, client, input, projected.state);
+          if (!('applySignature' in prepared)) return prepared;
+          applySignature = prepared.applySignature;
         }
 
+        // The content hash is the stored one. A body `contentHash` is not read
+        // (VR-12): before, the trail recorded whatever the request said.
         const ctx = {
           actor,
           at: new Date().toISOString(),
           reason: typeof req.body?.reason === 'string' ? req.body.reason : undefined,
-          contentHash: typeof req.body?.contentHash === 'string' ? req.body.contentHash : input.contentHash,
+          contentHash: input.contentHash,
           placement: req.body?.placement,
         };
         /* The real leaf writer. Without it the orchestrator refuses `placed`
@@ -342,7 +567,8 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
         const bindings = bindingsFactory({
           organizationId,
           actor,
-          ...(signerRole ? { signerRole } : {}),
+          client,
+          ...(applySignature ? { applySignature } : {}),
           upsertLeaf: makeUpsertLeafBinding({
             upsertLeaf: (leafInput, leafCtx) => upsertLeaf(leafInput as never, leafCtx),
             organizationId,
@@ -401,13 +627,22 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
         }
 
         const sealed = await persistState(tx, id, organizationId, result.state, result.auditEvent!, exportFacet);
+        // Approving a Vault version supersedes the version it replaces, on this
+        // transaction (VR-13). A failure rolls the approval back with it.
+        const superseded =
+          to === 'approved' && projected.state.stage === 'in_review'
+            ? await supersedeOnVaultApproval(tx, client, input, bindings, ctx)
+            : [];
         return {
           status: 200,
-          body: { ok: true, from: result.from, to: result.to, stage: result.state.stage, auditEvent: sealed },
+          body: { ok: true, from: result.from, to: result.to, stage: result.state.stage, auditEvent: sealed, superseded },
         };
       });
     } catch (err) {
       if (err instanceof LifecycleRecordRefusal) return res.status(409).json(refusalBody(err));
+      if (err instanceof SupersessionRefused) {
+        return res.status(409).json({ ok: false, error: err.code, message: `${err.message} Nothing was approved.` });
+      }
       throw err;
     }
     return send(res, outcome);

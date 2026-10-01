@@ -177,7 +177,8 @@ import {
 } from '../../services/ana/run-control.js';
 import { MAX_PAUSE_MS, type HumanControlEvent, type TurnStoppedReason } from '../../services/ana/run-status.js';
 import { createRunHold, type RunHold } from '../../services/ana/run-hold.js';
-import { classifyToolCall, PLATFORM_COMMAND_TOOL } from '../../services/ana/governed-tool-gate.js';
+import { classifyToolCall } from '../../services/ana/governed-tool-gate.js';
+import { heldToolContext, turnToolContext } from '../../services/ana/turn-tool-context.js';
 import { buildHumanConfirmationRequiredResult } from '../../services/ana-ri/part11-governance.js';
 import {
   describeServerToolStep,
@@ -273,25 +274,6 @@ export function buildUnconfirmedMovesTurn(moves: string[]): GatewayMessage | nul
 }
 
 /** Register POST /stream on the given router. */
-/**
- * For a tool that writes on its own handler (anything but the command carrier),
- * the context the loop would have run it with — recorded on the held run so
- * the governed-action route runs the tool from it, never from the browser's
- * body. Undefined for a platform command, which JSON drops from the row.
- */
-function heldToolContext(
-  toolName: string,
-  projectId: unknown,
-  servingModel: { provider?: string | null; model?: string | null; requestId?: string | null } | null | undefined,
-) {
-  if (toolName === PLATFORM_COMMAND_TOOL) return undefined;
-  return {
-    projectId: projectId ? Number(projectId) || null : null,
-    projectRef: projectId ? String(projectId) : null,
-    servingModel: servingModel ?? null,
-  };
-}
-
 /**
  * The turn's round-boundary hold (services/ana/run-hold.ts), wired to its run
  * row. The checkpoint's pause wait used to be a loop written inline in the
@@ -1869,7 +1851,11 @@ export function mountStreamRoute(router: Router): void {
             rationale: typeof (verdict.params as any)?.reason === 'string'
               ? String((verdict.params as any).reason)
               : undefined,
-            toolContext: heldToolContext(toolUse.name, streamProjectId, lastServedModel),
+            toolContext: heldToolContext(toolUse.name, streamProjectId, {
+              threadId,
+              turnId: runId,
+              servingModel: lastServedModel,
+            }),
             // The model call that proposed it, for the Part 11 row (D6).
             proposedBy: lastServedModel,
           }).catch(() => false);
@@ -1886,7 +1872,7 @@ export function mountStreamRoute(router: Router): void {
           // the tier and what it asks for are said one way. GovernedActionSignoff
           // opens on it. runId + toolUseId are what let the decision
           // come back to THIS waiting turn instead of running on its own.
-          const proposal = buildHumanConfirmationRequiredResult(verdict.command, verdict.params);
+          const proposal = buildHumanConfirmationRequiredResult(verdict.command, verdict.params, verdict.tier);
           emitControl({
             type: 'approval_required',
             round,
@@ -2061,11 +2047,12 @@ export function mountStreamRoute(router: Router): void {
                     // are listed under this run on the ledger (D6).
                     runWithRunScope({ runId }, () =>
                     handler(toolUse.input, {
-                      servingModel: lastServedModel,
                       organizationId: orgId,
                       userId: userId || null,
-                      projectId: streamProjectId ? Number(streamProjectId) || null : null,
-                      projectRef: streamProjectId ? String(streamProjectId) : null,
+                      // The project, and the conversation, turn and model this
+                      // call serves (PF-10 S5): a document a tool creates
+                      // records them as its provenance.
+                      ...turnToolContext(streamProjectId, { threadId, turnId: runId, servingModel: lastServedModel }),
                       // Lets navigate_to tell the model the truth about what its
                       // directive does this turn (applied live vs offered chip).
                       liveDrive: driveState.enabled,

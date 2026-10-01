@@ -18,7 +18,7 @@
  */
 
 import { createScopedLogger } from '../../utils/logger';
-import { programInOrganization } from '../c2c/program-access';
+import { resolveOpenProgram } from '../c2c/program-access';
 import type { AuthoringPool } from './authoring-documents';
 import {
   createDocumentFromDraft,
@@ -30,7 +30,6 @@ import type { AuthoringAuditContext } from './authoring-evidence';
 
 const logger = createScopedLogger('draft-authoring-document-tool');
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** The refusal, verbatim, when no project is open. */
 export const DRAFT_AUTHORING_DOCUMENT_NO_PROJECT =
@@ -61,32 +60,11 @@ export interface DraftToolResult {
 }
 
 /**
- * Resolve the open program as a regulatory_programs UUID the organization
- * owns. Null when there is none — the caller refuses.
- *
- * Both branches end at the same check. The legacy integer project's anchor
- * (`projects.regulatory_program_id`) is a soft link with no key, so a row can
- * name another organization's program, a missing one or a deleted one; it is
- * never trusted on its own (PF-04 precondition P2).
+ * The open program: one resolver, in services/c2c/program-access.ts beside the
+ * membership check it ends at (PF-10 S7 moved it there so the catalog tools use
+ * the same one). Re-exported here for the callers that import it from the tool.
  */
-export async function resolveOpenProgram(pool: AuthoringPool, ctx: DraftToolContext): Promise<string | null> {
-  const orgId = Number(ctx.organizationId);
-  const ref = typeof ctx.projectRef === 'string' ? ctx.projectRef.trim() : '';
-  if (ref && UUID_RE.test(ref)) {
-    return (await programInOrganization(pool, ref, orgId)) ? ref : null;
-  }
-  const legacy = Number(ctx.projectId);
-  if (Number.isSafeInteger(legacy) && legacy > 0) {
-    const anchored = await pool.query(
-      `SELECT regulatory_program_id FROM projects WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-      [legacy, orgId],
-    );
-    const programId = anchored.rows[0]?.regulatory_program_id;
-    if (typeof programId !== 'string' || !UUID_RE.test(programId)) return null;
-    return (await programInOrganization(pool, programId, orgId)) ? programId : null;
-  }
-  return null;
-}
+export { resolveOpenProgram } from '../c2c/program-access';
 
 /** The acting user's email for the audit row — their own row, or 'unknown' as the router records an absent one. */
 async function actorEmail(pool: AuthoringPool, userId: number): Promise<string | null> {

@@ -1,0 +1,54 @@
+# The two route tests (stream dispatch, governed-action confirm) against HEAD's stream.ts and utility.ts
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > an ordinary write runs with no reason and no password, confirmed by a person
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > does not run without an explicit yes
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > does not run when the confirmation could not be recorded
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > the Part 11 tiers still demand what they demanded
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > a read is still not something this route runs
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a yes on a held run runs the command from the ROW and releases the run
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a yes on a held command runs it with the model call that proposed it, from the ROW (D6)
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a command posted without its run names no model call: null, never the body's claim (D6)
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a decline records the decision, runs nothing, and releases the run at once
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a decline whose audit row was lost still releases the run, and says so
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a decline needs a run to apply to
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > an approval proposed by AnA asks for a reason, not a click
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > runs on a yes, with the run's own context and the confirmation stamped
+ × server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > runs as the conversation and turn that proposed it, under the model that served it (PF-10 S5)
+   → expected { organizationId: 1, userId: 42, …(4) } to match object { threadId: 'ana-ri_7', …(2) }
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > is not run without an explicit yes
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > is not run from a body alone — there is no held run to take its context from
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > can be declined like any proposal
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > any write the register classes confirm runs on a yes — not only the original five
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > never runs a person's own act, whatever the held row says and whatever was clicked
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > a tool the register does not know is still a tool, confirmed like any write (it failed closed)
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a tool that records a reason for change > is not run on a bare yes: the person states the reason
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a tool that records a reason for change > runs with the person's reason in place of the model's, and records both
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a tool that records a reason for change > a person who adopts AnA's wording is recorded as having done so
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a tool that records a reason for change > a tool whose reason input is reason_for_change gets the person's reason there
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > a signer who declares Authorship is recorded as Authorship, not Approval — on the sign-off and the audit row
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > REVIEWER is recorded as review
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > APPROVER is recorded as approval
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > refuses an e-signature with no declared meaning, and runs and records nothing
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > refuses an unknown meaning ("approval"), and runs and records nothing
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > refuses an unknown meaning ("OWNER"), and runs and records nothing
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > refuses an unknown meaning ("author"), and runs and records nothing
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > refuses an unknown meaning (""), and runs and records nothing
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > refuses an unknown meaning (7), and runs and records nothing
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > the FDA ESG transmit is handed the declared meaning — the value its signature row records
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > on a held run the meaning is the signer's, from the posted body — never one the model wrote into the row
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > the reason-only tier is unchanged: no meaning is asked for
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature sign-off carries the verified factors > the sign-off carries the factors re-verification actually checked (MFA as MFA)
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > the sign-off names the run, the tool call, the model call and a hash of the params authorised
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > an executed row follows, with the outcome, the duration and the same trace
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > a command its own gate refused is recorded refused, not ok
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > a failed execution is recorded failed, with what failed
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > a failed execution whose row did not persist says that too
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > an executed row that did not persist is said, to the person and to the waiting run
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > a command posted without its run still gets both rows, with no run and no model call
+ × server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the tool context names the conversation, the turn and the model (PF-10 S5, LX-06) > a dispatched tool receives the resolved thread, the run as its turn, and the served model
+   → expected { servingModel: { …(3) }, …(8) } to match object { threadId: 'thread-1', …(2) }
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a run that is not paused runs its round with no pause frames
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a paused run holds the round, says paused once and resumed once, then runs it
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a run cancelled while paused says cancelled and runs nothing more
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a pause nobody answers is resumed as abandoned once, at MAX_PAUSE_MS, and the round runs
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 47 passed (49)

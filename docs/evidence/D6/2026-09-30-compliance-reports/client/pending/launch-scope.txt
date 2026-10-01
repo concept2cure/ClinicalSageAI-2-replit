@@ -1,0 +1,4 @@
+[ci:launch-scope] 6 apps · 39 surfaces · 19 modules · 34 surface files checked for fixture imports
+  ✗ gated: SURFACE_VIEWS key 'compliance-reports' is outside the launch scope and not in UI_SURFACES, so the server emits no verdict for it and a deep link renders it with enforcement on — register it, alias it to a registered surface, or add it to the scope
+❌ 1 finding(s)
+launch_scope_exit=1

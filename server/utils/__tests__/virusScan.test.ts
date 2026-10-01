@@ -124,6 +124,43 @@ describe('virusScan — FOUND response', () => {
   });
 });
 
+/**
+ * With AlertExceedsMax (set on the deployed scanner, terraform/modules/ecs-fargate),
+ * clamd reports a file over MaxFileSize / MaxScanSize / MaxRecursion as a
+ * Heuristics.Limits.Exceeded "FOUND" rather than answering OK for the part it
+ * read. That is not a virus and not an all-clear: it is a scan that did not
+ * cover the file. Still not clean, so every caller refuses it; marked, so the
+ * refusal can say why.
+ */
+describe('virusScan — a file clamd could not scan whole', () => {
+  it('marks a Heuristics.Limits.Exceeded result incomplete, and not clean', async () => {
+    const server = await startMockClamd('stream: Heuristics.Limits.Exceeded.MaxScanSize FOUND');
+    process.env.CLAMAV_HOST = '127.0.0.1';
+    process.env.CLAMAV_PORT = String(server.port);
+    try {
+      const result = await scanBuffer(Buffer.from('payload'));
+      expect(result.clean).toBe(false);
+      expect(result.incomplete).toBe(true);
+      expect(result.signature).toBe('Heuristics.Limits.Exceeded.MaxScanSize');
+    } finally {
+      await server.close();
+    }
+  });
+
+  it('does not mark a real signature incomplete', async () => {
+    const server = await startMockClamd('stream: Eicar-Test-Signature FOUND');
+    process.env.CLAMAV_HOST = '127.0.0.1';
+    process.env.CLAMAV_PORT = String(server.port);
+    try {
+      const result = await scanBuffer(Buffer.from('EICAR test payload'));
+      expect(result.clean).toBe(false);
+      expect(result.incomplete).toBeUndefined();
+    } finally {
+      await server.close();
+    }
+  });
+});
+
 describe('virusScan — fail-open posture', () => {
   it('returns clean=true with reason on unparseable response', async () => {
     // Server closes without sending anything — the on('close')

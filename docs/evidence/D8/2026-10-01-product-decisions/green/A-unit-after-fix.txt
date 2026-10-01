@@ -1,0 +1,340 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract
+{
+  "timestamp": "2026-10-01T12:40:49.576Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T12:40:49.578Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract
+{
+  "timestamp": "2026-10-01T12:40:49.578Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract
+[database] Database connection successful
+
+stdout | server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract
+{
+  "timestamp": "2026-10-01T12:40:50.115Z",
+  "level": "info",
+  "message": "[mcp] Concept2Cure MCP connector mounted",
+  "context": {
+    "resource": "http://localhost:5300/mcp",
+    "issuer": "http://localhost:5300/",
+    "resourceMetadataUrl": "http://localhost:5300/.well-known/oauth-protected-resource/mcp"
+  }
+}
+
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > serves RFC 9728 protected-resource metadata for /mcp 43ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > serves RFC 8414 authorization-server metadata with PKCE S256 and dynamic registration 8ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > answers /mcp without a token with 401 and a resource_metadata challenge 34ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > answers /mcp with a forged token with 401 (same verifier as the API: HS256 + rotation) 9ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > rejects a refresh-class token on the MCP path (token-class allow-list) 14ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > curated tool catalog > has 19 uniquely named tools, each with all four annotation hints, a scope and exactly one governed write 10ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > fail-closed model-backed tool > returns the gateway’s own refusal verbatim when no provider key is configured 167ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > fail-closed model-backed tool > maps an AnA handler error to a verbatim refusal, never an empty success 1ms
+ ✓ server/mcp/auth/__tests__/findMembership.pglite.test.ts > findMembership (MCP pre-auth lookup) > returns the membership of an active user in an active organisation 12ms
+ ✓ server/mcp/auth/__tests__/findMembership.pglite.test.ts > findMembership (MCP pre-auth lookup) > refuses a suspended user even though the membership row exists 3ms
+ ✓ server/mcp/auth/__tests__/findMembership.pglite.test.ts > findMembership (MCP pre-auth lookup) > refuses a deactivated (inactive) user 5ms
+ ✓ server/mcp/auth/__tests__/findMembership.pglite.test.ts > findMembership (MCP pre-auth lookup) > refuses any member of a suspended organisation 3ms
+ ✓ server/mcp/auth/__tests__/findMembership.pglite.test.ts > findMembership (MCP pre-auth lookup) > still refuses a user with no membership in the organisation 2ms
+stdout | server/mcp/__tests__/mcp-standing-unreadable.test.ts
+{
+  "timestamp": "2026-10-01T12:40:52.506Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T12:40:52.509Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/mcp/__tests__/mcp-standing-unreadable.test.ts
+{
+  "timestamp": "2026-10-01T12:40:52.509Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/mcp/__tests__/mcp-standing-unreadable.test.ts
+[database] Database connection successful
+
+stdout | server/mcp/__tests__/mcp-standing-unreadable.test.ts
+{
+  "timestamp": "2026-10-01T12:40:52.759Z",
+  "level": "info",
+  "message": "[mcp] Concept2Cure MCP connector mounted",
+  "context": {
+    "resource": "http://localhost:5300/mcp",
+    "issuer": "http://localhost:5300/",
+    "resourceMetadataUrl": "http://localhost:5300/.well-known/oauth-protected-resource/mcp"
+  }
+}
+
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > /mcp > control: with the standing readable, the session opens the connector 163ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > /mcp > refuses as an outage when the standing cannot be read — never admits, never "bad token" 34ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the consent POST > control: with the standing readable, consent issues a code 39ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the consent POST > answers 503 and issues no code when the standing cannot be read 44ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the /token exchanges > control: with the standing readable, a refresh rotates and issues 3ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the /token exchanges > a refresh refuses as an outage, and neither rotates nor issues 4ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the /token exchanges > control: with the standing readable, a code exchange issues 2ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the /token exchanges > a code exchange refuses as an outage and issues nothing 1ms
+stdout | server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > parses MCP_CLIENT_REDIRECT_ALLOWLIST as trimmed, lower-cased origins
+{
+  "timestamp": "2026-10-01T12:40:53.047Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T12:40:53.048Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > parses MCP_CLIENT_REDIRECT_ALLOWLIST as trimmed, lower-cased origins
+{
+  "timestamp": "2026-10-01T12:40:53.049Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > parses MCP_CLIENT_REDIRECT_ALLOWLIST as trimmed, lower-cased origins
+[database] Database connection successful
+
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > parses MCP_CLIENT_REDIRECT_ALLOWLIST as trimmed, lower-cased origins 1740ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > is null when the variable is unset; production + null is the open state, development + null is not 2ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > throws on a malformed allowlist instead of resolving to an open or partial one (fail closed) 2ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > resolveMcpConfig — clientRegistration policy > keeps the existing behaviour and shape of the rest of the config 1ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — the guard alone > allowlist set + foreign origin → 400 invalid_redirect_uri, the SDK handler never runs, and the body is not logged 38ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — the guard alone > allowlist set + a listed origin (any path, host case-insensitive) → next() is called 6ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — the guard alone > matches by origin, never by prefix: a look-alike host or a different port is refused 17ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — the guard alone > one bad entry refuses the whole registration 6ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — scheme, fragment and shape > production posture: an http redirect is refused even with no allowlist, and even for loopback 18ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — scheme, fragment and shape > development posture: http://localhost and http://127.0.0.1 pass; any other http host does not 29ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — scheme, fragment and shape > a fragment is refused whatever the posture 10ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — scheme, fragment and shape > not an absolute URL, or not a string → invalid_redirect_uri 33ms
+stdout | server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > installs the /register route layer with the guard BEFORE the SDK router layer
+{
+  "timestamp": "2026-10-01T12:40:53.527Z",
+  "level": "info",
+  "message": "[mcp] Concept2Cure MCP connector mounted",
+  "context": {
+    "resource": "https://app.example.test/mcp",
+    "issuer": "https://app.example.test/",
+    "resourceMetadataUrl": "https://app.example.test/.well-known/oauth-protected-resource/mcp"
+  }
+}
+
+stdout | server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > end to end: a foreign origin is refused by the guard; a listed origin reaches the SDK handler and is registered
+{
+  "timestamp": "2026-10-01T12:40:53.536Z",
+  "level": "info",
+  "message": "[mcp] Concept2Cure MCP connector mounted",
+  "context": {
+    "resource": "https://app.example.test/mcp",
+    "issuer": "https://app.example.test/",
+    "resourceMetadataUrl": "https://app.example.test/.well-known/oauth-protected-resource/mcp"
+  }
+}
+
+stdout | server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > no path spelling reaches the SDK handler around the guard
+{
+  "timestamp": "2026-10-01T12:40:53.586Z",
+  "level": "info",
+  "message": "[mcp] Concept2Cure MCP connector mounted",
+  "context": {
+    "resource": "https://app.example.test/mcp",
+    "issuer": "https://app.example.test/",
+    "resourceMetadataUrl": "https://app.example.test/.well-known/oauth-protected-resource/mcp"
+  }
+}
+
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > clientRegistrationGuard — scheme, fragment and shape > missing, empty or non-array redirect_uris, or no JSON object at all → invalid_client_metadata 64ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > installs the /register route layer with the guard BEFORE the SDK router layer 34ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > end to end: a foreign origin is refused by the guard; a listed origin reaches the SDK handler and is registered 49ms
+stdout | server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > rate-limits registration attempts per IP (20 per hour), counting refused attempts too
+{
+  "timestamp": "2026-10-01T12:40:53.619Z",
+  "level": "info",
+  "message": "[mcp] Concept2Cure MCP connector mounted",
+  "context": {
+    "resource": "https://app.example.test/mcp",
+    "issuer": "https://app.example.test/",
+    "resourceMetadataUrl": "https://app.example.test/.well-known/oauth-protected-resource/mcp"
+  }
+}
+
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > no path spelling reaches the SDK handler around the guard 32ms
+stdout | server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > production + no allowlist: openInProduction is true and exactly one warning names MCP_CLIENT_REDIRECT_ALLOWLIST, at creation, never per request
+{
+  "timestamp": "2026-10-01T12:40:53.700Z",
+  "level": "info",
+  "message": "[mcp] Concept2Cure MCP connector mounted",
+  "context": {
+    "resource": "https://app.example.test/mcp",
+    "issuer": "https://app.example.test/",
+    "resourceMetadataUrl": "https://app.example.test/.well-known/oauth-protected-resource/mcp"
+  }
+}
+
+stderr | server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > production + no allowlist: openInProduction is true and exactly one warning names MCP_CLIENT_REDIRECT_ALLOWLIST, at creation, never per request
+{
+  "timestamp": "2026-10-01T12:40:53.698Z",
+  "level": "warn",
+  "message": "[mcp] Dynamic client registration (POST /register) is open in production: any https origin may register an OAuth client. Set MCP_CLIENT_REDIRECT_ALLOWLIST to the origins allowed to register (e.g. https://claude.ai,https://claude.com) to bind it.",
+  "context": {
+    "control": "MCP_CLIENT_REDIRECT_ALLOWLIST",
+    "finding": "IAM-02",
+    "plan": "P0-2d"
+  }
+}
+
+stdout | server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > an allowlist, or a non-production posture, emits no such warning
+{
+  "timestamp": "2026-10-01T12:40:53.730Z",
+  "level": "info",
+  "message": "[mcp] Concept2Cure MCP connector mounted",
+  "context": {
+    "resource": "https://app.example.test/mcp",
+    "issuer": "https://app.example.test/",
+    "resourceMetadataUrl": "https://app.example.test/.well-known/oauth-protected-resource/mcp"
+  }
+}
+{
+  "timestamp": "2026-10-01T12:40:53.735Z",
+  "level": "info",
+  "message": "[mcp] Concept2Cure MCP connector mounted",
+  "context": {
+    "resource": "http://localhost:5300/mcp",
+    "issuer": "http://localhost:5300/",
+    "resourceMetadataUrl": "http://localhost:5300/.well-known/oauth-protected-resource/mcp"
+  }
+}
+
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > rate-limits registration attempts per IP (20 per hour), counting refused attempts too 85ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > production + no allowlist: openInProduction is true and exactly one warning names MCP_CLIENT_REDIRECT_ALLOWLIST, at creation, never per request 29ms
+ ✓ server/__tests__/security/mcp-client-registration.contract.test.ts > createMcpRouter — the guard sits in front of the SDK router > an allowlist, or a non-production posture, emits no such warning 11ms
+stdout | server/mcp/__tests__/mcp-governed-role-gate.test.ts
+{
+  "timestamp": "2026-10-01T12:40:54.665Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T12:40:54.667Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/mcp/__tests__/mcp-governed-role-gate.test.ts
+{
+  "timestamp": "2026-10-01T12:40:54.667Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/mcp/__tests__/mcp-governed-role-gate.test.ts
+[database] Database connection successful
+
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > refuses a viewer before the tool runs, and records the denial 56ms
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > refuses someone who is no longer a member before the tool runs, and records the denial 2ms
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > fails closed when the role cannot be read 2ms
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > lets an editor run the governed tool 1ms
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > does not ask for a role on a tool that is not governed 1ms
+stdout | server/mcp/__tests__/platform-token-session.test.ts
+{
+  "timestamp": "2026-10-01T12:40:55.300Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T12:40:55.302Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/mcp/__tests__/platform-token-session.test.ts
+{
+  "timestamp": "2026-10-01T12:40:55.303Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/mcp/__tests__/platform-token-session.test.ts
+[database] Database connection successful
+
+stdout | server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > connector sessions hold slots in their own pool: beyond the limit the oldest connector token is superseded, the browser session is not
+{
+  "timestamp": "2026-10-01T12:40:55.412Z",
+  "level": "info",
+  "message": "[session-inactivity] Sessions ended by a sign-in beyond the account limit",
+  "context": {
+    "account": "connector:7",
+    "limit": 5,
+    "ended": 1
+  }
+}
+
+stdout | server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the limit is the membership organisation's maxConcurrentSessions, as at sign-in
+{
+  "timestamp": "2026-10-01T12:40:55.415Z",
+  "level": "info",
+  "message": "[session-inactivity] Sessions ended by a sign-in beyond the account limit",
+  "context": {
+    "account": "connector:7",
+    "limit": 1,
+    "ended": 1
+  }
+}
+
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the token carries the session claims: a fresh id, its start, and the token TTL as its idle window 9ms
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the idle window is the TTL held inside the platform window [1 min, 24 h] 2ms
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the lifetime rule is the platform rule: the session is over ABSOLUTE_SESSION_HOURS after its start, whatever the TTL 1ms
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > connector sessions hold slots in their own pool: beyond the limit the oldest connector token is superseded, the browser session is not 6ms
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the limit is the membership organisation's maxConcurrentSessions, as at sign-in 2ms
+ ✓ server/mcp/__tests__/mcp-tenant-tool-policy.test.ts > callAnaHandler and the tenant tool policy > refuses a tool the organization denied 3ms
+ ✓ server/mcp/__tests__/mcp-tenant-tool-policy.test.ts > callAnaHandler and the tenant tool policy > runs it for an organization that did not deny it 32ms
+ ✓ server/mcp/__tests__/mcp-tenant-tool-policy.test.ts > callAnaHandler and the tenant tool policy > does not let an allowlist for governed mutations strip a read tool, as on the chat doors 1ms
+
+ Test Files  7 passed (7)
+      Tests  53 passed (53)
+   Start at  12:40:45
+   Duration  11.25s (transform 10.09s, setup 421ms, import 4.19s, tests 23.94s, environment 1ms)
+

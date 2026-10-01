@@ -1,0 +1,450 @@
+# red at 4240ae0e with only the tests changed
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > returns all known ICH guidelines when no filters are provided 12ms
+   → expected 'ich.org' to be 'curated_registry' // Object.is equality
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > filters by category Q 2ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > filters by category E 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > filters by category M 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > filters by since date 1ms
+ × server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > dates M11 as the verified currency registry does 1ms
+   → expected '2024-11' to be '2025-11' // Object.is equality
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > combines category and since filters 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > returns empty when category has no results 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness > flags stale guidance when citedDate predates effectiveDate 2ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness > marks current guidance as current 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness > flags void guidance from the currency registry 1ms
+ × server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness > reports a guidance it cannot identify as unverified, never as current 1ms
+   → expected true to be null
+ × server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness > reports a superseded ICH revision as not current, naming its successor 1ms
+   → expected undefined to be 'identified' // Object.is equality
+ × server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness > does not read another ICH guideline as E6(R3) because both titles say "ICH" 1ms
+   → expected false to be null
+ × server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness > does not match a registry keyword found inside another word 1ms
+   → expected false to be null
+ × server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness > does not date a 510(k) guidance by the eSTAR mandate because both mention 510(k) 1ms
+   → expected false to be null
+ × server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness > refuses to identify a fact from another jurisdiction than the one cited 1ms
+   → expected true to be null
+ × server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness > names the registry entry and source every identified verdict rests on 1ms
+   → expected undefined to be 'identified' // Object.is equality
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness > throws when citedGuidances is missing 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness > checks multiple guidances at once 0ms
+ × server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchFdaGuidanceList > says no FDA guidance index is connected, and makes no request 3ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "https://api.fda.gov/other/substance.json?search=biomarker%2BAND%2Bfinal&limit=5",
+      Object {
+        "signal": AbortSignal {
+          Symbol(kEvents): Map {},
+          Symbol(events.maxEventTargetListeners): 0,
+          Symbol(events.maxEventTargetListenersWarned): false,
+          Symbol(kHandlers): Map {},
+          Symbol(kAborted): false,
+          Symbol(kReason): undefined,
+          Symbol(kComposite): false,
+          Symbol(kTimeout): true,
+        },
+      },
+    ]
+
+
+Number of calls: 1
+
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchFdaGuidanceList > never throws 1ms
+stdout | server/services/ana/__tests__/lookup-fda-guidance-honest.test.ts
+{
+  "timestamp": "2026-09-30T23:35:59.548Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-30T23:35:59.549Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/lookup-fda-guidance-honest.test.ts
+{
+  "timestamp": "2026-09-30T23:35:59.549Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/lookup-fda-guidance-honest.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/lookup-fda-guidance-honest.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/lookup-fda-guidance-honest.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ × server/services/ana/__tests__/lookup-fda-guidance-honest.test.ts > lookup_fda_guidance > answers "510(k)" with no invented docket number, title or requirement 8ms
+   → expected '{"source":"FDA Guidance Database","ma…' not to match /FDA-20\d\d-D-\d+/
+ × server/services/ana/__tests__/lookup-fda-guidance-honest.test.ts > lookup_fda_guidance > answers "biocompatibility" with no invented docket number, title or requirement 1ms
+   → expected '{"source":"FDA Guidance Database","ma…' not to match /FDA-20\d\d-D-\d+/
+ × server/services/ana/__tests__/lookup-fda-guidance-honest.test.ts > lookup_fda_guidance > answers "software" with no invented docket number, title or requirement 1ms
+   → expected '{"source":"FDA Guidance Database","ma…' not to match /FDA-20\d\d-D-\d+/
+ × server/services/ana/__tests__/lookup-fda-guidance-honest.test.ts > lookup_fda_guidance > returns the dated registry fact for a topic the registry holds, with its source 1ms
+   → expected undefined to be 'registry_facts' // Object.is equality
+ × server/services/ana/__tests__/lookup-fda-guidance-honest.test.ts > lookup_fda_guidance > says nothing is indexed for a topic the registry does not hold 1ms
+   → expected undefined to be 'not_indexed' // Object.is equality
+ × server/services/ana/__tests__/lookup-fda-guidance-honest.test.ts > lookup_fda_guidance > asks for a topic instead of throwing 66ms
+   → Cannot read properties of undefined (reading 'toLowerCase')
+ × server/services/ana/__tests__/lookup-fda-guidance-honest.test.ts > lookup_fda_guidance > does not promise document numbers or requirements in its definition 1ms
+   → expected 'Look up FDA guidance documents, regul…' not to match /document number|key requirements|cit…/i
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 17 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/lookup-fda-guidance-honest.test.ts > lookup_fda_guidance > answers "510(k)" with no invented docket number, title or requirement
+AssertionError: expected '{"source":"FDA Guidance Database","ma…' not to match /FDA-20\d\d-D-\d+/
+
+- Expected:
+/FDA-20\d\d-D-\d+/
+
++ Received:
+"{\"source\":\"FDA Guidance Database\",\"match\":{\"keyword\":\"510(k)\",\"title\":\"The 510(k) Program: Evaluating Substantial Equivalence in Premarket Notifications\",\"documentNumber\":\"FDA-2013-D-0718\",\"url\":\"https://www.fda.gov/regulatory-information/search-fda-guidance-documents\",\"keyRequirements\":[\"Identify predicate device(s)\",\"Compare intended use and technological characteristics\",\"Demonstrate substantial equivalence\",\"Include performance data if different technology\"]}}"
+
+ ❯ server/services/ana/__tests__/lookup-fda-guidance-honest.test.ts:25:24
+     23|       const out = await run({ topic });
+     24|       const text = JSON.stringify(out);
+     25|       expect(text).not.toMatch(/FDA-20\d\d-D-\d+/);
+       |                        ^
+     26|       expect(text).not.toMatch(/level of concern|820\.30\(g\)|keyRequi…
+     27|       expect(text).not.toMatch(/FDA Guidance Database/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/17]⎯
+
+ FAIL  server/services/ana/__tests__/lookup-fda-guidance-honest.test.ts > lookup_fda_guidance > answers "biocompatibility" with no invented docket number, title or requirement
+AssertionError: expected '{"source":"FDA Guidance Database","ma…' not to match /FDA-20\d\d-D-\d+/
+
+- Expected:
+/FDA-20\d\d-D-\d+/
+
++ Received:
+"{\"source\":\"FDA Guidance Database\",\"match\":{\"keyword\":\"biocompatibility\",\"title\":\"Use of International Standard ISO 10993-1, Biological evaluation of medical devices\",\"documentNumber\":\"FDA-2013-D-0350\",\"regulations\":[\"21 CFR 820.30(g)\",\"ISO 10993-1:2018\"],\"keyRequirements\":[\"Material characterization\",\"Biological evaluation plan\",\"Risk-based approach to testing\",\"Chemical characterization per ISO 10993-18\"]}}"
+
+ ❯ server/services/ana/__tests__/lookup-fda-guidance-honest.test.ts:25:24
+     23|       const out = await run({ topic });
+     24|       const text = JSON.stringify(out);
+     25|       expect(text).not.toMatch(/FDA-20\d\d-D-\d+/);
+       |                        ^
+     26|       expect(text).not.toMatch(/level of concern|820\.30\(g\)|keyRequi…
+     27|       expect(text).not.toMatch(/FDA Guidance Database/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/17]⎯
+
+ FAIL  server/services/ana/__tests__/lookup-fda-guidance-honest.test.ts > lookup_fda_guidance > answers "software" with no invented docket number, title or requirement
+AssertionError: expected '{"source":"FDA Guidance Database","ma…' not to match /FDA-20\d\d-D-\d+/
+
+- Expected:
+/FDA-20\d\d-D-\d+/
+
++ Received:
+"{\"source\":\"FDA Guidance Database\",\"match\":{\"keyword\":\"software\",\"title\":\"Content of Premarket Submissions for Device Software Functions\",\"documentNumber\":\"FDA-2018-D-3241\",\"regulations\":[\"21 CFR 820\",\"IEC 62304\"],\"keyRequirements\":[\"Software level of concern determination\",\"Software requirements specification\",\"Architecture design chart\",\"Software testing (verification & validation)\"]}}"
+
+ ❯ server/services/ana/__tests__/lookup-fda-guidance-honest.test.ts:25:24
+     23|       const out = await run({ topic });
+     24|       const text = JSON.stringify(out);
+     25|       expect(text).not.toMatch(/FDA-20\d\d-D-\d+/);
+       |                        ^
+     26|       expect(text).not.toMatch(/level of concern|820\.30\(g\)|keyRequi…
+     27|       expect(text).not.toMatch(/FDA Guidance Database/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/17]⎯
+
+ FAIL  server/services/ana/__tests__/lookup-fda-guidance-honest.test.ts > lookup_fda_guidance > returns the dated registry fact for a topic the registry holds, with its source
+AssertionError: expected undefined to be 'registry_facts' // Object.is equality
+
+- Expected:
+"registry_facts"
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/lookup-fda-guidance-honest.test.ts:34:24
+     32|   it('returns the dated registry fact for a topic the registry holds, …
+     33|     const out = await run({ topic: '510(k)' });
+     34|     expect(out.status).toBe('registry_facts');
+       |                        ^
+     35|     const estar = out.facts.find((f: { id: string }) => f.id === 'fda-…
+     36|     expect(estar).toMatchObject({ status: 'in_force', effectiveDate: '…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/17]⎯
+
+ FAIL  server/services/ana/__tests__/lookup-fda-guidance-honest.test.ts > lookup_fda_guidance > says nothing is indexed for a topic the registry does not hold
+AssertionError: expected undefined to be 'not_indexed' // Object.is equality
+
+- Expected:
+"not_indexed"
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/lookup-fda-guidance-honest.test.ts:43:24
+     41|   it('says nothing is indexed for a topic the registry does not hold',…
+     42|     const out = await run({ topic: 'biocompatibility', regulation_type…
+     43|     expect(out.status).toBe('not_indexed');
+       |                        ^
+     44|     expect(out.facts).toEqual([]);
+     45|     expect(out).not.toHaveProperty('relatedRegulations');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/17]⎯
+
+ FAIL  server/services/ana/__tests__/lookup-fda-guidance-honest.test.ts > lookup_fda_guidance > asks for a topic instead of throwing
+TypeError: Cannot read properties of undefined (reading 'toLowerCase')
+ ❯ server/services/ana/AnaToolExecutor.ts:4451:28
+    4449|
+    4450|   // Find best match
+    4451|   const topicLower = topic.toLowerCase();
+       |                            ^
+    4452|   let bestMatch = null;
+    4453|   for (const [key, value] of Object.entries(guidanceMap)) {
+ ❯ instrumented server/services/ana/AnaToolExecutor.ts:632:28
+ ❯ run server/services/ana/__tests__/lookup-fda-guidance-honest.test.ts:17:14
+ ❯ server/services/ana/__tests__/lookup-fda-guidance-honest.test.ts:49:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/17]⎯
+
+ FAIL  server/services/ana/__tests__/lookup-fda-guidance-honest.test.ts > lookup_fda_guidance > does not promise document numbers or requirements in its definition
+AssertionError: expected 'Look up FDA guidance documents, regul…' not to match /document number|key requirements|cit…/i
+
+- Expected:
+/document number|key requirements|citation-ready/i
+
++ Received:
+"Look up FDA guidance documents, regulations (21 CFR), and draft/final guidance relevant to a topic. Returns guidance title, document number, key requirements, and citation-ready references."
+
+ ❯ server/services/ana/__tests__/lookup-fda-guidance-honest.test.ts:56:34
+     54|     const def = ALL_ANA_TOOLS.find((t) => t.name === 'lookup_fda_guida…
+     55|     expect(def).toBeDefined();
+     56|     expect(def!.description).not.toMatch(/document number|key requirem…
+       |                                  ^
+     57|     expect(def!.description).toMatch(/no FDA guidance index/i);
+     58|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/17]⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > returns all known ICH guidelines when no filters are provided
+AssertionError: expected 'ich.org' to be 'curated_registry' // Object.is equality
+
+Expected: "curated_registry"
+Received: "ich.org"
+
+ ❯ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts:26:27
+     24|     expect(result.status).toBe('fetched');
+     25|     // A static list is not a fetch from ich.org; the label said it wa…
+     26|     expect(result.source).toBe('curated_registry');
+       |                           ^
+     27|     expect(result.guidelines.length).toBeGreaterThanOrEqual(6);
+     28|     // Known entries should be present
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/17]⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > dates M11 as the verified currency registry does
+AssertionError: expected '2024-11' to be '2025-11' // Object.is equality
+
+Expected: "2025-11"
+Received: "2024-11"
+
+ ❯ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts:85:27
+     83|     const fact = REGULATORY_FACTS.find((f) => f.id === 'ich-m11-ceshar…
+     84|     expect(fact).toBeDefined();
+     85|     expect(m11?.stepDate).toBe(fact!.effectiveDate.slice(0, 7));
+       |                           ^
+     86|   });
+     87|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/17]⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness > reports a guidance it cannot identify as unverified, never as current
+AssertionError: expected true to be null
+
+- Expected:
+null
+
++ Received:
+true
+
+ ❯ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts:160:23
+    158|     const r = result.results[0];
+    159|     // It used to answer `current: true` here ("conservatively assume …
+    160|     expect(r.current).toBeNull();
+       |                       ^
+    161|     expect(r.verification).toBe('unverified');
+    162|     expect(r.basis).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/17]⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness > reports a superseded ICH revision as not current, naming its successor
+AssertionError: expected undefined to be 'identified' // Object.is equality
+
+- Expected:
+"identified"
+
++ Received:
+undefined
+
+ ❯ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts:172:28
+    170|     }).results;
+    171|     expect(r.current).toBe(false);
+    172|     expect(r.verification).toBe('identified');
+       |                            ^
+    173|     expect(r.warning).toMatch(/superseded/i);
+    174|     expect(r.warning).toMatch(/E6\(R3\)/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/17]⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness > does not read another ICH guideline as E6(R3) because both titles say "ICH"
+AssertionError: expected false to be null
+
+- Expected:
+null
+
++ Received:
+false
+
+ ❯ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts:182:23
+    180|       citedGuidances: [{ title: 'ICH E9(R1) Statistical Principles for…
+    181|     }).results;
+    182|     expect(r.current).toBeNull();
+       |                       ^
+    183|     expect(r.verification).toBe('unverified');
+    184|     expect(r.latestKnownDate).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/17]⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness > does not match a registry keyword found inside another word
+AssertionError: expected false to be null
+
+- Expected:
+null
+
++ Received:
+false
+
+ ❯ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts:192:23
+    190|       citedGuidances: [{ title: 'Guidance on training requirements for…
+    191|     }).results;
+    192|     expect(r.current).toBeNull();
+       |                       ^
+    193|     expect(r.basis).toBeUndefined();
+    194|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/17]⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness > does not date a 510(k) guidance by the eSTAR mandate because both mention 510(k)
+AssertionError: expected false to be null
+
+- Expected:
+null
+
++ Received:
+false
+
+ ❯ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts:203:23
+    201|       }],
+    202|     }).results;
+    203|     expect(r.current).toBeNull();
+       |                       ^
+    204|     expect(r.warning ?? '').not.toMatch(/2023-10-01/);
+    205|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/17]⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness > refuses to identify a fact from another jurisdiction than the one cited
+AssertionError: expected true to be null
+
+- Expected:
+null
+
++ Received:
+true
+
+ ❯ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts:211:23
+    209|       citedGuidances: [{ title: 'EUDAMED', jurisdiction: 'US' }],
+    210|     }).results;
+    211|     expect(r.current).toBeNull();
+       |                       ^
+    212|   });
+    213|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/17]⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness > names the registry entry and source every identified verdict rests on
+AssertionError: expected undefined to be 'identified' // Object.is equality
+
+- Expected:
+"identified"
+
++ Received:
+undefined
+
+ ❯ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts:218:28
+    216|       citedGuidances: [{ title: 'E6(R3)', citedDate: '2026-01-01' }],
+    217|     }).results;
+    218|     expect(r.verification).toBe('identified');
+       |                            ^
+    219|     expect(r.basis).toMatchObject({ registry: 'currency_registry', id:…
+    220|     expect(r.basis?.sourceUrl).toMatch(/^https:\/\//);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/17]⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchFdaGuidanceList > says no FDA guidance index is connected, and makes no request
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "https://api.fda.gov/other/substance.json?search=biomarker%2BAND%2Bfinal&limit=5",
+      Object {
+        "signal": AbortSignal {
+          Symbol(kEvents): Map {},
+          Symbol(events.maxEventTargetListeners): 0,
+          Symbol(events.maxEventTargetListenersWarned): false,
+          Symbol(kHandlers): Map {},
+          Symbol(kAborted): false,
+          Symbol(kReason): undefined,
+          Symbol(kComposite): false,
+          Symbol(kTimeout): true,
+        },
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts:268:27
+    266|     const result = await fetchFdaGuidanceList({ topic: 'biomarker', st…
+    267|
+    268|     expect(fetchMock).not.toHaveBeenCalled();
+       |                           ^
+    269|     expect(result.status).toBe('unavailable');
+    270|     expect(result.message).toMatch(/no FDA guidance index is connected…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/17]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  17 failed | 12 passed (29)
+   Start at  23:35:55
+   Duration  7.56s (transform 4.85s, setup 173ms, import 7.14s, tests 122ms, environment 0ms)
+

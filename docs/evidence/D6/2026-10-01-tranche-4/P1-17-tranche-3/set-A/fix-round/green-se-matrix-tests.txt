@@ -1,0 +1,19 @@
+2026-10-01T08:30:05Z
+# se-matrix.ts AFTER the fix-round edit (sha256 below)
+d3a200c7c12bfb5d1facd857dcc9b783537e4c90ca1fe13c33131d52db6fcd52  server/routes/se-matrix.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/se-matrix-5xx-containment.test.ts > se-matrix: no thrower text in a 5xx body > a failed program-access read answers 500 with the envelope 35ms
+ ✓ server/routes/__tests__/se-matrix-5xx-containment.test.ts > se-matrix: no thrower text in a 5xx body > an unreachable shadow service answers 502 with its sentence and no detail 10ms
+ ✓ server/routes/__tests__/se-matrix-5xx-containment.test.ts > se-matrix: no thrower text in a 5xx body > a shadow service answering >= 500 with 'a JSON 500 body' answers 502 with no detail 6ms
+ ✓ server/routes/__tests__/se-matrix-5xx-containment.test.ts > se-matrix: no thrower text in a 5xx body > a shadow service answering >= 500 with 'a plain-text 503 body' answers 502 with no detail 5ms
+ ✓ server/routes/__tests__/se-matrix-5xx-containment.test.ts > se-matrix: no thrower text in a 5xx body > still relays a shadow 4xx validation body with its status (intended behaviour) 5ms
+ ✓ server/routes/__tests__/se-matrix-5xx-containment.test.ts > se-matrix: no thrower text in a 5xx body > leaves the 403 and 422 answers unchanged 7ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  08:30:06
+   Duration  2.04s (transform 297ms, setup 150ms, import 1.34s, tests 74ms, environment 0ms)
+

@@ -12,6 +12,7 @@ import { AISentinel } from './sentinel';
 import { emitRuleEvent } from '../rules-engine';
 import { createScopedLogger } from '../../utils/logger.js';
 import { runWithSystemTenantScope, runWithTenantScope } from '../../db/tenantStore';
+import { runScheduledOncePerWindow, windowKeyOf } from '../../db/scheduledOnce';
 import {
   recordBackgroundJobRun,
   registerBackgroundJob,
@@ -101,12 +102,12 @@ export class SentinelScheduler {
     const intervalMs = config.intervalMinutes * 60 * 1000;
 
     // Run immediately, then on interval
-    this.runScan(organizationId).catch(err =>
+    this.runScan(organizationId, intervalMs).catch(err =>
       log.error(`[SentinelScheduler] Initial scan failed for org ${organizationId}:`, err)
     );
 
     const timer = setInterval(() => {
-      this.runScan(organizationId).catch(err =>
+      this.runScan(organizationId, intervalMs).catch(err =>
         log.error(`[SentinelScheduler] Scan failed for org ${organizationId}:`, err)
       );
     }, intervalMs);
@@ -120,7 +121,7 @@ export class SentinelScheduler {
   /**
    * Run a full scan and feed findings into the rules engine.
    */
-  private async runScan(organizationId: number): Promise<void> {
+  private async runScan(organizationId: number, intervalMs: number): Promise<void> {
     // Skip if a scan for this org is already in progress. setInterval fires on a
     // fixed cadence regardless of how long the previous scan took; overlapping
     // scans would double-emit rule events and pile load onto the analyzers.
@@ -137,16 +138,38 @@ export class SentinelScheduler {
       // Under RLS_ENFORCE=on this is what lets the scan's pooled queries and the
       // rule-event writes see exactly org `organizationId`'s rows instead of
       // failing closed.
-      await runWithTenantScope(
-        {
-          tenantId: String(organizationId),
-          orgUuid: null,
-          role: null,
-          source: 'job',
-          caller: 'sentinel-scan',
-        },
-        () => this.runScanInner(organizationId)
+      //
+      // Every server process (two API tasks and the worker) schedules every
+      // organisation, on its own boot-relative timer, and scans at boot. Each
+      // scan's high/critical findings notify and escalate through the rules
+      // engine, so the organisation's users were told three times an hour, and
+      // again by each task a deploy started. One scan per organisation per
+      // interval window across them (U19); a scan that throws gives its window
+      // back.
+      const claim = await runScheduledOncePerWindow(
+        'sentinel-scan',
+        windowKeyOf(intervalMs),
+        () =>
+          runWithTenantScope(
+            {
+              tenantId: String(organizationId),
+              orgUuid: null,
+              role: null,
+              source: 'job',
+              caller: 'sentinel-scan',
+            },
+            () => this.runScanInner(organizationId)
+          ),
+        { organizationId }
       );
+      if (!claim.ran) {
+        log.debug(`[SentinelScheduler] org ${organizationId}: this window's scan ran (or is running) elsewhere (${claim.reason})`);
+        // The scanner on this process is alive and the window is covered, as
+        // the digest heartbeat records a skipped tick; recording nothing made
+        // /api/health/jobs on the skipping tasks read 'stale' (degraded).
+        recordBackgroundJobRun(BACKGROUND_JOB.SENTINEL_SCAN, { ok: true, processed: 0 });
+        return;
+      }
       // Single aggregate heartbeat across orgs: "the scanner is alive and a scan
       // completed". Per-org detail stays in logs; a per-org metric label would
       // add unbounded cardinality for no ops benefit here.

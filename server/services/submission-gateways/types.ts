@@ -126,6 +126,10 @@ export interface SubmissionBundle {
      *  manifests recorded before 2026-09-29, which cannot be acted on. */
     leafId?: string;
     backbone?: string;
+    /** md5 of the bytes the packager was HANDED, when it changed them (PDF/A
+     *  normalization) — the comparand for the next sequence's "unchanged"
+     *  decision. `md5` is the checksum of what shipped. */
+    sourceMd5?: string;
   }>;
   /** Optional human-readable display name. */
   displayName?: string;

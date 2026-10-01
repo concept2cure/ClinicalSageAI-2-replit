@@ -1290,7 +1290,9 @@ describe('AnA RI Persona — character & dissent', () => {
     expect(prompt).not.toMatch(/Kind by default, never performative/);
     const assembled = buildAnaRISystemPrompt();
     expect(assembled).toMatch(/\*\*Kind, always\.\*\*/);
-    expect(assembled).toMatch(/\*\*Warm, never performative\.\*\*/);
+    // 2026-10-01: warmth may show (an earned moment), and never performs.
+    expect(assembled).toMatch(/\*\*Warm, and allowed to show it\.\*\*/);
+    expect(assembled).toMatch(/It never becomes performance/);
   });
 
   it('licenses polite, grounded pushback (Constructive Dissent)', () => {
