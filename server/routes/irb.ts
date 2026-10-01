@@ -19,6 +19,7 @@ import { pool } from '../db';
 import { recordGovernedAction } from './c2c/actions';
 import { signGovernedAct, signedActAttempts } from './governed-signed-act';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
+import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 import {
   createSubmissionTx,
   setSubmissionStatusTx,
@@ -39,6 +40,10 @@ import { evaluateIrbCompleteness, recommendReviewType } from '../services/irb/ir
 import { recordIrbSubmissionCreated, recordIrbApproval, recordIrbReportableEvent } from '../services/irb-metrics';
 
 const router = Router();
+// A viewer reads these records and writes none of them: one gate for every
+// write, as the ProtocolDev routers (P11-C-1). The signed review routes also
+// check signing authority (P0-10b).
+router.use(requireEditorAccessForWrites);
 
 /** The one place a clock enters this module. The engines take dates as inputs. */
 function todayIso(): string {

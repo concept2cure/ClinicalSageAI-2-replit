@@ -15,6 +15,7 @@ import { pool } from '../db';
 import { recordGovernedAction } from './c2c/actions';
 import { signGovernedAct, signedActAttempts } from './governed-signed-act';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
+import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 import {
   createRegistrationTx,
   setRegistrationStatusTx,
@@ -27,6 +28,10 @@ import { evaluateContainment, registrationExpiration, requiresConvenedReview } f
 import { recordIbcRegistrationCreated, recordIbcApproval, recordIbcAgentRegistered } from '../services/ibc-metrics';
 
 const router = Router();
+// A viewer reads these records and writes none of them: one gate for every
+// write, as the ProtocolDev routers (P11-C-1). The signed review routes also
+// check signing authority (P0-10b).
+router.use(requireEditorAccessForWrites);
 
 function resolveUserId(req: Request): number | null {
   const r = req as any;

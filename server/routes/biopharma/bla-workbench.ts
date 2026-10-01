@@ -23,6 +23,7 @@
 import { Router, type Request, type Response } from 'express';
 import { pool } from '../../db.js';
 import { signGovernedAct, signedActAttempts } from '../governed-signed-act.js';
+import { requireEditorAccessForWrites } from '../../middleware/orgMembership.js';
 import { assessAnalyticalSimilarity, type SimilarityAssessmentInput } from '../../services/biologics/analytical-similarity.js';
 import { assessComparability, type ComparabilityInput } from '../../services/biologics/comparability.js';
 import { assessImmunogenicity, type ImmunogenicityInput } from '../../services/biologics/immunogenicity.js';
@@ -31,6 +32,22 @@ import { assessBlaFilingRisk, type BlaFilingRiskInput } from '../../services/bio
 const router = Router();
 
 type Kind = 'analytical_similarity' | 'comparability' | 'immunogenicity' | 'filing_risk';
+
+const COMPUTE_PATHS: ReadonlySet<string> = new Set(['/analytical-similarity', '/comparability', '/immunogenicity', '/filing-risk']);
+
+/** Whether a computation's request asks for its result to be saved (maybePersist's rule). */
+function willPersist(body: { persist?: boolean; programId?: string | null } | undefined): boolean {
+  const programId = body?.programId ?? null;
+  return body?.persist ?? Boolean(programId);
+}
+
+// A viewer reads assessments and saves none: every write passes the editor
+// gate (as the ProtocolDev routers, P11-C-1). A computation that saves nothing
+// is a read, and a viewer may run it. Sign-off also checks signing authority.
+router.use((req, res, next) => {
+  if (req.method === 'POST' && COMPUTE_PATHS.has(req.path) && !willPersist(req.body)) return next();
+  return requireEditorAccessForWrites(req, res, next);
+});
 
 function resolveOrgId(req: Request): number | null {
   const r = req as any;
@@ -73,8 +90,7 @@ async function maybePersist(
 ): Promise<Record<string, unknown> | null> {
   const body = req.body ?? {};
   const programId: string | null = body.programId ?? null;
-  const persist: boolean = body.persist ?? Boolean(programId);
-  if (!persist) return null;
+  if (!willPersist(body)) return null;
 
   const { rows } = await pool.query(
     `INSERT INTO c2c_bla_assessments

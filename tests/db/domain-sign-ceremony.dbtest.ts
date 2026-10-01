@@ -99,19 +99,20 @@ interface Route {
   act: Record<string, unknown>;
   /** The BLA and CMC handlers read a real row: one per case, made in beforeAll. */
   rows?: 'bla' | 'batch' | 'spec' | 'closure';
-  /** The router mounts requireEditorAccessForWrites, which refuses a viewer before the ceremony. */
+  /** The router mounts requireEditorAccessForWrites, which refuses a viewer before the ceremony
+   *  (IRB, IACUC, IBC, RIM and BLA joined consent and deviations on 2026-10-01). */
   writeGate?: true;
 }
 
 /** The seven routes that now run signGovernedAct (body: meaning, password, mfaToken). */
 const CEREMONY: Route[] = [
-  { key: 'irb', mount: '/api/irb', path: (id) => `/submissions/${id}/reviews`, target: (id) => `irb-submission:${id}`, act: { reviewType: 'full_board', outcome: 'approved' } },
-  { key: 'iacuc', mount: '/api/iacuc', path: (id) => `/protocols/${id}/reviews`, target: (id) => `iacuc-protocol:${id}`, act: { reviewType: 'full_committee_review', outcome: 'approved' } },
-  { key: 'ibc', mount: '/api/ibc', path: (id) => `/registrations/${id}/reviews`, target: (id) => `ibc-registration:${id}`, act: { outcome: 'approved' } },
-  { key: 'rim', mount: '/api/rim', path: (id) => `/products/${id}/labels`, target: (id) => `rim-product:${id}`, act: { labelType: 'uspi', status: 'approved' } },
+  { key: 'irb', mount: '/api/irb', path: (id) => `/submissions/${id}/reviews`, target: (id) => `irb-submission:${id}`, act: { reviewType: 'full_board', outcome: 'approved' }, writeGate: true },
+  { key: 'iacuc', mount: '/api/iacuc', path: (id) => `/protocols/${id}/reviews`, target: (id) => `iacuc-protocol:${id}`, act: { reviewType: 'full_committee_review', outcome: 'approved' }, writeGate: true },
+  { key: 'ibc', mount: '/api/ibc', path: (id) => `/registrations/${id}/reviews`, target: (id) => `ibc-registration:${id}`, act: { outcome: 'approved' }, writeGate: true },
+  { key: 'rim', mount: '/api/rim', path: (id) => `/products/${id}/labels`, target: (id) => `rim-product:${id}`, act: { labelType: 'uspi', status: 'approved' }, writeGate: true },
   { key: 'consent', mount: '/api/protocol-consent', path: (id) => `/forms/${id}/approve`, target: (id) => `consent-form:${id}`, act: {}, writeGate: true },
   { key: 'deviations', mount: '/api/protocol-deviations', path: (id) => `/deviations/${id}/close`, target: (id) => `protocol-deviation:${id}`, act: {}, writeGate: true },
-  { key: 'bla', mount: '/api/biopharma/bla', path: (id) => `/assessments/${id}/sign`, target: (id) => `bla_assessment:${id}`, act: {}, rows: 'bla' },
+  { key: 'bla', mount: '/api/biopharma/bla', path: (id) => `/assessments/${id}/sign`, target: (id) => `bla_assessment:${id}`, act: {}, rows: 'bla', writeGate: true },
 ];
 
 /** The three CMC signatures: they re-authenticated already (verifyReauth, body `reauth`) and now write the row. */
