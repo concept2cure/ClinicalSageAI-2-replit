@@ -1,5 +1,16 @@
 /**
- * The connector against real PostgreSQL (vitest.db.config.ts, RLS_ENFORCE=on).
+ * The connector against real PostgreSQL (vitest.db.config.ts, RLS_ENFORCE=on),
+ * connecting as the role production connects as.
+ *
+ * ── Why the role is the point (2026-10-01, row D8) ───────────────────────────
+ * Until this date the suite connected as the database owner. The owner here is
+ * a superuser, and RLS never binds a superuser — so `RLS_ENFORCE=on` was set
+ * and no policy applied to a single query below. The launch row's "tenant
+ * scoping under RLS" rested on this file, and under enforced RLS the connector
+ * could not even issue a grant (fixed in 3bdb50458). It now runs as a freshly
+ * provisioned NOSUPERUSER NOBYPASSRLS role, asserted before anything else, so
+ * a cross-tenant result here is one the database itself would have returned.
+ * Fixtures are still seeded and removed through the owner.
  *
  * Proves, with the SDK's own client over Streamable HTTP:
  *   1. tools/list returns the curated catalog with annotations;
@@ -21,8 +32,16 @@ import jwt from 'jsonwebtoken';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { databaseUrl } from '../../../tests/setup.db';
+import {
+  provisionAppServiceRole,
+  resolveAppServiceRole,
+} from '../../../scripts/db/provision-app-role.mjs';
 
 const PREFIX = 'dbtest-w7';
+const RUN = `${process.pid}_${Date.now().toString(36)}`;
+const RUNTIME_PASSWORD = 'dbtest-w7-connector-runtime-password';
+const runtimeRole = resolveAppServiceRole({ APP_SERVICE_DB_ROLE: `dbw7_rt_${RUN}` });
+let runtimePool: { query: Pool['query']; end: () => Promise<void> } | null = null;
 
 let owner: Pool;
 let server: http.Server;
@@ -104,6 +123,27 @@ beforeAll(async () => {
   for (const k of ['ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'MOONSHOT_API_KEY', 'AZURE_OPENAI_API_KEY']) delete process.env[k];
   owner = new Pool({ connectionString: databaseUrl, max: 4 });
   await cleanup();
+
+  // The role production connects as, before any server module opens a pool.
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const provisioned = await provisionAppServiceRole(owner, {
+        env: { APP_SERVICE_DB_ROLE: runtimeRole, APP_SERVICE_DB_PASSWORD: RUNTIME_PASSWORD },
+      });
+      if (provisioned.skipped) throw new Error('[dbtest-w7] provisionAppServiceRole skipped — no runtime role.');
+      break;
+    } catch (err) {
+      if (attempt >= 5 || !/tuple concurrently updated/.test((err as Error).message)) throw err;
+      await new Promise((r) => setTimeout(r, 250 * attempt));
+    }
+  }
+  const runtimeUrl = new URL(databaseUrl);
+  runtimeUrl.username = runtimeRole;
+  runtimeUrl.password = RUNTIME_PASSWORD;
+  process.env.APP_DATABASE_URL = runtimeUrl.toString();
+  process.env.RLS_ENFORCE = 'on';
+  process.env.ALLOW_DEV_AUTH = '0';
+
   A = await seedTenant('a');
   B = await seedTenant('b');
   const sub = await owner.query(
@@ -129,6 +169,8 @@ beforeAll(async () => {
   const { resolveMcpConfig } = await import('../config');
   const config = resolveMcpConfig({ ...process.env, MCP_ENABLED: 'true', MCP_PUBLIC_URL: baseUrl });
   app.use(createMcpRouter(config));
+  const { getPool } = await import('../../db');
+  runtimePool = getPool() as unknown as typeof runtimePool;
 
   const { activeJwtSecret } = await import('../../utils/jwtVerify');
   const platformToken = (t: Tenant) =>
@@ -151,8 +193,35 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await new Promise<void>((resolve) => (server ? server.close(() => resolve()) : resolve()));
+  if (runtimePool) await runtimePool.end().catch(() => {});
   await cleanup().catch(() => {});
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await owner.query(`REASSIGN OWNED BY ${runtimeRole} TO CURRENT_USER; DROP OWNED BY ${runtimeRole}`);
+      await owner.query(`DROP ROLE IF EXISTS ${runtimeRole}`);
+      break;
+    } catch (err) {
+      if (attempt >= 5) {
+        console.warn('[dbtest-w7] runtime role left behind:', (err as Error).message);
+        break;
+      }
+      await new Promise((r) => setTimeout(r, 250 * attempt));
+    }
+  }
   await owner.end().catch(() => {});
+});
+
+describe('the posture is the one production runs in', () => {
+  it('connects as a non-superuser runtime role with RLS enforcing', async () => {
+    const { runWithPreAuthScope } = await import('../../db/tenantStore');
+    const { rows } = await runWithPreAuthScope('dbtest-w7:posture', () =>
+      runtimePool!.query(
+        `SELECT current_user AS role, r.rolsuper, r.rolbypassrls, current_setting('app.rls_enforce', true) AS rls
+           FROM pg_roles r WHERE r.rolname = current_user`,
+      ),
+    );
+    expect(rows[0]).toMatchObject({ role: runtimeRole, rolsuper: false, rolbypassrls: false, rls: 'on' });
+  });
 });
 
 describe('discovery and authentication over HTTP', () => {

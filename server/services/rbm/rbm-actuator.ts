@@ -600,7 +600,6 @@ export interface AmendPlanResult {
   amended: boolean;
   reason?: 'not_found' | 'not_approved' | 'amendment_already_open';
   plan?: any;
-  actions?: any[];
   /** The version this amendment was opened from. */
   supersedes?: number;
 }
@@ -615,11 +614,13 @@ export interface AmendPlanResult {
  * Monitoring plans genuinely change mid-study — that is the premise of
  * risk-proportionate monitoring — so revision is supported, just not silently.
  *
- * Unfinished actions are copied forward so the amendment starts from the
- * operational state, each copy reopened at `open`: a copy is a new instruction
- * under a new plan version, and marking it `in_progress` would credit work to a
- * plan that did not exist when the work was done. Actions already `done` stay
- * with the version they were completed under.
+ * Monitoring actions are NOT copied. They are execution records — issues,
+ * CAPAs, visits, queries, escalations raised while the study runs under its
+ * approved plan (ICH E6(R3)) — not part of the signed plan content. They stay
+ * logged against the plan in force, and the draft governs nothing until it is
+ * approved; approvePlan then moves the unfinished ones onto the new version.
+ * (Until 2026-10 this copied unfinished actions into the draft, reset to
+ * `open`; that duplicated live work onto a version that governed nothing.)
  *
  * The new version carries NO approval fields — copying the previous signer
  * forward would forge a signature — and records the amender as its author
@@ -663,20 +664,7 @@ export async function amendMonitoringPlan(
     ],
   )).rows[0];
 
-  const actions = (await exec.query(
-    `INSERT INTO rbm_monitoring_actions (
-       organization_id, plan_id, risk_item_id, signal_id, action_type, description,
-       priority, owner, due_date, status
-     )
-     SELECT organization_id, $1, risk_item_id, signal_id, action_type, description,
-            priority, owner, due_date, 'open'
-       FROM rbm_monitoring_actions
-      WHERE organization_id = $2 AND plan_id = $3 AND status <> 'done'
-     RETURNING *`,
-    [plan.id, organizationId, current.id],
-  )).rows;
-
-  return { amended: true, plan, actions, supersedes: current.version };
+  return { amended: true, plan, supersedes: current.version };
 }
 
 export interface CreateActionInput {
@@ -690,29 +678,109 @@ export interface CreateActionInput {
   dueDate?: string | null;
 }
 
-/** Create a monitoring action under a plan, verifying the plan is in-tenant AND
- *  still a draft.
+/** The plan in force for a study: its active (approved) version. Null for a
+ *  plan with no study (program_id NULL) — such plans are never superseded by
+ *  approvePlan, so there is no "plan in force" to compare against. */
+async function planInForce(exec: Exec, organizationId: number, programId: string | null) {
+  if (programId == null) return null;
+  const { rows } = await exec.query(
+    `SELECT id, version FROM rbm_monitoring_plans
+      WHERE organization_id = $1 AND program_id = $2
+        AND deleted_at IS NULL AND status = 'active'
+      ORDER BY version DESC LIMIT 1`,
+    [organizationId, programId],
+  );
+  return rows[0] ?? null;
+}
+
+/**
+ * The plan new monitoring actions are logged against, from a study's plan
+ * versions: the active version if there is one, else a draft (the study's
+ * first plan, before approval), else null. An open amendment draft is never
+ * it — it governs nothing until approved. Pure, so the board and the tests
+ * share createAction's rule.
+ */
+export function governingPlanId(
+  plans: ReadonlyArray<{ id: number; status: string | null; version?: number | null }>,
+): number | null {
+  const byVersion = [...plans].sort((x, y) => (y.version ?? 0) - (x.version ?? 0));
+  const active = byVersion.find(p => p.status === 'active');
+  if (active) return active.id;
+  const draft = byVersion.find(p => p.status === 'draft');
+  return draft ? draft.id : null;
+}
+
+export type CreateActionResult =
+  | { created: true; action: any }
+  | { created: false; reason: 'plan_not_found' }
+  | {
+      created: false;
+      reason: 'plan_superseded' | 'amendment_not_in_force';
+      planStatus: string;
+      /** The plan in force for the study — where the action belongs — or null. */
+      governingPlanId: number | null;
+      message: string;
+    };
+
+/**
+ * Create a monitoring action, logged against the plan in force.
  *
- *  Adding an action to an approved (or archived) plan changes the set of
- *  actions the approver's signature attests to, and leaves the signed record
- *  mutable. New actions go on a draft; to add one to an approved plan, amend it
- *  (amendMonitoringPlan), which opens a new draft version. This is the one
- *  implementation behind POST /rbm-monitoring-actions and the AnA tool. */
-export async function createAction(exec: Exec, organizationId: number, input: CreateActionInput) {
+ * Monitoring actions are execution records raised while a study runs under its
+ * approved plan (ICH E6(R3)); they are not part of the signed plan content,
+ * which stays locked (PATCH 409, /amend). So an action is accepted on:
+ *   - the ACTIVE plan (the plan in force), or
+ *   - a DRAFT that is the study's first plan, before any version is approved.
+ * It is refused (409) on:
+ *   - an ARCHIVED version → `plan_superseded`, naming the plan in force;
+ *   - a draft AMENDMENT while an active plan exists → `amendment_not_in_force`:
+ *     the draft governs nothing until approved, and approvePlan moves the open
+ *     actions onto it at that point.
+ * Both refusals return `governingPlanId` so a caller can retry on the right
+ * plan. This is the one implementation behind POST /rbm-monitoring-actions,
+ * POST /rbm-signals/:id/investigate and the AnA tool.
+ */
+export async function createAction(
+  exec: Exec,
+  organizationId: number,
+  input: CreateActionInput,
+): Promise<CreateActionResult> {
   const own = await exec.query(
-    `SELECT status, version FROM rbm_monitoring_plans WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+    `SELECT id, status, version, program_id FROM rbm_monitoring_plans WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
     [input.planId, organizationId],
   );
-  if (own.rows.length === 0) return { created: false as const, reason: 'plan_not_found' as const };
-  if (own.rows[0].status !== 'draft') {
-    return {
-      created: false as const,
-      reason: 'plan_not_draft' as const,
-      planStatus: String(own.rows[0].status),
-      message: `Monitoring plan ${input.planId} is ${own.rows[0].status}, not a draft, so its actions are frozen under its signature. `
-        + `POST /rbm-monitoring-plans/${input.planId}/amend to open a new draft version and add the action there.`,
-    };
+  if (own.rows.length === 0) return { created: false, reason: 'plan_not_found' };
+  const plan = own.rows[0];
+  const status = String(plan.status);
+
+  if (status !== 'active') {
+    const inForce = await planInForce(exec, organizationId, plan.program_id ?? null);
+    const governing = inForce ? Number(inForce.id) : null;
+    const inForceLabel = inForce
+      ? `plan ${inForce.id}${inForce.version != null ? ` (v${inForce.version})` : ''}`
+      : null;
+    if (status !== 'draft') {
+      return {
+        created: false,
+        reason: 'plan_superseded',
+        planStatus: status,
+        governingPlanId: governing,
+        message: inForceLabel
+          ? `Monitoring plan ${input.planId} is ${status}. Actions are logged against the plan in force, ${inForceLabel}.`
+          : `Monitoring plan ${input.planId} is ${status}, and this study has no approved plan in force to log the action against.`,
+      };
+    }
+    if (inForce && governing !== Number(plan.id)) {
+      return {
+        created: false,
+        reason: 'amendment_not_in_force',
+        planStatus: status,
+        governingPlanId: governing,
+        message: `Monitoring plan ${input.planId} is an amendment that is not yet approved. `
+          + `Actions are logged against the plan in force, ${inForceLabel}, and move to the amendment when it is approved.`,
+      };
+    }
   }
+
   const { rows } = await exec.query(
     `INSERT INTO rbm_monitoring_actions (organization_id, plan_id, risk_item_id, signal_id, action_type, description, priority, owner, due_date, status)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'open') RETURNING *`,
@@ -722,7 +790,7 @@ export async function createAction(exec: Exec, organizationId: number, input: Cr
       input.owner ?? null, input.dueDate ?? null,
     ],
   );
-  return { created: true as const, action: rows[0] };
+  return { created: true, action: rows[0] };
 }
 
 export interface UpdateActionInput {
@@ -870,16 +938,31 @@ export async function approvePlan(
   /* Approving a version supersedes the one it replaces, so a study never has
      two plans claiming to direct monitoring at once. Atomic with the UPDATE
      above only when the caller passes its transaction client — the route does.
-     The archived row and its actions are otherwise untouched: that is the
-     signed record of what was being done before. */
+     The archived row's content is untouched: that is the signed record.
+
+     Its UNFINISHED actions move to the new version in the same executor.
+     Actions are execution records under the plan in force, not signed plan
+     content, so open work follows the plan that now governs it; each moved row
+     records where it came from (carriedFromPlanId / carriedFromVersion).
+     Completed actions stay with the archived version as its history. */
   if (rows[0].program_id) {
-    await exec.query(
+    const archived = await exec.query(
       `UPDATE rbm_monitoring_plans SET status = 'archived', updated_at = NOW()
         WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
           AND id <> $3 AND status = 'active'
-        RETURNING version`,
+        RETURNING id, version`,
       [organizationId, rows[0].program_id, planId],
     );
+    for (const old of archived.rows ?? []) {
+      await exec.query(
+        `UPDATE rbm_monitoring_actions
+            SET plan_id = $1, updated_at = NOW(),
+                metadata = COALESCE(metadata, '{}'::jsonb)
+                           || jsonb_build_object('carriedFromPlanId', $3::int, 'carriedFromVersion', $4::int)
+          WHERE organization_id = $2 AND plan_id = $3 AND status <> 'done'`,
+        [planId, organizationId, old.id, old.version ?? null],
+      );
+    }
   }
   return rows[0];
 }
