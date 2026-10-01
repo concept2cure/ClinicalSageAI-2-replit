@@ -37,6 +37,9 @@ vi.mock('../../middleware/auth.js', () => ({
 }));
 vi.mock('../../db.js', () => ({
   db: { select: () => ({ from: () => ({ where: () => ({ limit: dbLimit }) }) }) },
+  // The program check (programInOrganization, D3) reads on the pool; it
+  // answers from the same holder, so a failed read is still a failed read.
+  pool: { query: async () => ({ rows: await dbLimit() }) },
 }));
 vi.mock('../../services/audit/auditLogger.js', () => ({ logAuditEvent }));
 vi.mock('../../utils/logger', async (importOriginal) => {
@@ -62,13 +65,13 @@ function app() {
   return a;
 }
 
-const RENDER = '/api/programs/prog-1/se-matrix/render';
+const RENDER = '/api/programs/aaaaaaaa-1111-4111-8111-aaaaaaaaaaa1/se-matrix/render';
 
 beforeEach(() => {
   vi.clearAllMocks();
   vi.spyOn(console, 'error').mockImplementation(() => {});
   vi.spyOn(console, 'warn').mockImplementation(() => {});
-  dbLimit.mockResolvedValue([{ id: 'prog-1' }]);
+  dbLimit.mockResolvedValue([{ id: 'aaaaaaaa-1111-4111-8111-aaaaaaaaaaa1' }]);
 });
 
 describe('se-matrix: no thrower text in a 5xx body', () => {
@@ -120,14 +123,14 @@ describe('se-matrix: no thrower text in a 5xx body', () => {
     expect(JSON.stringify(res.body)).not.toMatch(/SENTINEL-SHADOW|psycopg2|UndefinedTable|\/srv\/shadow|Traceback/);
     // The shadow body goes to the log against the program, not to the caller.
     expect(JSON.stringify(logError.mock.calls)).toContain('SENTINEL-SHADOW');
-    expect(JSON.stringify(logError.mock.calls)).toContain('prog-1');
+    expect(JSON.stringify(logError.mock.calls)).toContain('aaaaaaaa-1111-4111-8111-aaaaaaaaaaa1');
     // The failure is still audited with the shadow status.
     expect(logAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'SE_MATRIX_GENERATION_FAILED',
         success: false,
         errorMessage: `Shadow returned ${status}`,
-        metadata: expect.objectContaining({ program_id: 'prog-1', shadow_status: status }),
+        metadata: expect.objectContaining({ program_id: 'aaaaaaaa-1111-4111-8111-aaaaaaaaaaa1', shadow_status: status }),
       }),
     );
   });
@@ -145,7 +148,7 @@ describe('se-matrix: no thrower text in a 5xx body', () => {
     const denied = await request(app()).post(RENDER).send({ selectedPredicate: { kNumber: 'K1' } });
     expect(denied.status).toBe(403);
     expect(denied.body).toEqual({ error: 'Access denied', detail: 'You do not have access to this program' });
-    dbLimit.mockResolvedValue([{ id: 'prog-1' }]);
+    dbLimit.mockResolvedValue([{ id: 'aaaaaaaa-1111-4111-8111-aaaaaaaaaaa1' }]);
     const bad = await request(app()).post(RENDER).send({});
     expect(bad.status).toBe(422);
     expect(bad.body).toEqual({ error: 'selectedPredicate.kNumber is required' });
