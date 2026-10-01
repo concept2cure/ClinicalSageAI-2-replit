@@ -251,31 +251,46 @@ const PASSWORD = 'report-finalize-dbtest-password';
 const SIGNED = { reason: 'Issued for the review round 1 dbtest', meaning: 'approval', reauth: { password: PASSWORD } };
 const finalize = (token: string, body: Record<string, unknown> = SIGNED) =>
   request(ro).post(`/api/report-os/runs/${runId}/finalize`).set(auth(token)).send(body);
-const signatureRows = async () =>
-  (
-    await owner.query(
-      `SELECT signer_id, signature_meaning FROM electronic_signatures WHERE organization_id = $1 AND signed_target = $2`,
-      [ORG_B, `report-run:${runId}`]
-    )
-  ).rows;
+/** The rows of one read on the owner connection. */
+const rowsOf = async (sql: string, params: unknown[]) => (await owner.query(sql, params)).rows;
+const signatureRows = (id = runId) =>
+  rowsOf('SELECT signer_id, signature_meaning FROM electronic_signatures WHERE organization_id = $1 AND signed_target = $2', [ORG_B, `report-run:${id}`]);
+/** A run the truthfulness gate lets be final, requested by the member, with its snapshot. */
+async function finalEligibleRun(): Promise<number> {
+  const run = await owner.query(
+    `INSERT INTO report_runs (organization_id,scope_type,scope_id,report_type_id,status,confidence,blockers,dependency_summary,requested_by)
+     VALUES ($1,'project',$2,$3,'completed',90,'[]'::json,$4::json,$5) RETURNING id`,
+    [ORG_B, ids.B.projects, RUN_TYPE, JSON.stringify({ providers: [], summary: {}, criticalBlockers: [] }), userB]
+  );
+  const id = run.rows[0].id as number;
+  await owner.query(
+    `INSERT INTO report_snapshots (run_id,organization_id,scope_type,scope_id,snapshot_version,is_latest,snapshot_metadata)
+     VALUES ($1,$2,'project',$3,1,true,$4::json)`,
+    [id, ORG_B, ids.B.projects, JSON.stringify({ reportTypeId: RUN_TYPE })]
+  );
+  return id;
+}
 
-const finalizedRows = async () =>
+/** The chained rows recording `action` on one record of organisation B. */
+const chainRows = (action: string, recordId: string) =>
+  rowsOf(
+    `SELECT new_values::jsonb AS details, sha256_chain IS NOT NULL AS chained FROM audit_logs
+      WHERE tenant_id = $1 AND record_id = $2 AND action = $3`,
+    [ORG_B, recordId, action]
+  );
+const finalizedRows = () => chainRows('report_os.run_finalized', String(runId));
+/** The run's latest snapshot as stored, put back after a case rewrites it. */
+const storedSnapshot = async () =>
+  (await rowsOf('SELECT id, snapshot_metadata::text AS meta FROM report_snapshots WHERE run_id = $1 AND is_latest', [runId]))[0] as { id: number; meta: string };
+const runState = async (id = runId) =>
   (
-    await owner.query(
-      `SELECT new_values::jsonb AS details, sha256_chain IS NOT NULL AS chained FROM audit_logs
-        WHERE tenant_id = $1 AND record_id = $2 AND action = 'report_os.run_finalized'`,
-      [ORG_B, String(runId)]
-    )
-  ).rows;
-const runState = async () =>
-  (
-    await owner.query(
+    await rowsOf(
       `SELECT r.status, s.snapshot_metadata::jsonb -> 'seal' ->> 'contentHash' AS seal_hash
          FROM report_runs r JOIN report_snapshots s ON s.run_id = r.id AND s.is_latest
         WHERE r.id = $1`,
-      [runId]
+      [id]
     )
-  ).rows[0];
+  )[0];
 
 describe('finalize on the record (review round 1, DP-47)', () => {
   beforeAll(async () => {
@@ -285,17 +300,7 @@ describe('finalize on the record (review round 1, DP-47)', () => {
     await owner.query('UPDATE users SET password_hash = $2 WHERE id = $1', [adminId, await bcrypt.hash(PASSWORD, 4)]);
     // A run the truthfulness gate lets be final: no blockers, no critical
     // blockers. Requested by the member, so the admin's approval is independent.
-    const run = await owner.query(
-      `INSERT INTO report_runs (organization_id,scope_type,scope_id,report_type_id,status,confidence,blockers,dependency_summary,requested_by)
-       VALUES ($1,'project',$2,$3,'completed',90,'[]'::json,$4::json,$5) RETURNING id`,
-      [ORG_B, ids.B.projects, RUN_TYPE, JSON.stringify({ providers: [], summary: {}, criticalBlockers: [] }), userB]
-    );
-    runId = run.rows[0].id;
-    await owner.query(
-      `INSERT INTO report_snapshots (run_id,organization_id,scope_type,scope_id,snapshot_version,is_latest,snapshot_metadata)
-       VALUES ($1,$2,'project',$3,1,true,$4::json)`,
-      [runId, ORG_B, ids.B.projects, JSON.stringify({ reportTypeId: RUN_TYPE })]
-    );
+    runId = await finalEligibleRun();
   });
 
   it('refuses a member: nothing is sealed and nothing is recorded', async () => {
@@ -349,6 +354,23 @@ describe('finalize on the record (review round 1, DP-47)', () => {
       details: { sealHash, reportTypeId: RUN_TYPE, reason: SIGNED.reason, meaning: 'approval', priorStatus: 'completed' },
     });
     expect(await signatureRows()).toEqual([{ signer_id: adminId, signature_meaning: 'approval' }]);
+    // P1-44b: the signature row is the run's, live, and its manifest (what the
+    // §11.200 attribution hash covers) names the seal the run now carries.
+    const signed = await owner.query(
+      `SELECT id, signature_type, is_valid, superseded_by,
+              signature_manifest::jsonb -> 'act' ->> 'sealHash' AS signed_seal
+         FROM electronic_signatures WHERE organization_id = $1 AND signed_target = $2`,
+      [ORG_B, `report-run:${runId}`]
+    );
+    expect(signed.rows).toEqual([
+      { id: res.body.data.signature.signatureId, signature_type: 'governed-action', is_valid: true, superseded_by: null, signed_seal: sealHash },
+    ]);
+    // R1: the binding columns carry the seal itself, not the ledger chain hash.
+    const bound = await owner.query(
+      `SELECT binding_basis, bound_payload_digest FROM electronic_signatures WHERE organization_id = $1 AND signed_target = $2`,
+      [ORG_B, `report-run:${runId}`]
+    );
+    expect(bound.rows).toEqual([{ binding_basis: 'report-run-seal-sha256', bound_payload_digest: sealHash }]);
   });
 
   it('a second finalize is refused: the seal stands and nothing more is recorded', async () => {
@@ -358,6 +380,52 @@ describe('finalize on the record (review round 1, DP-47)', () => {
     expect(res.body.error.code).toBe('RUN_ALREADY_FINAL');
     expect(await runState()).toEqual(before);
     expect(await finalizedRows()).toHaveLength(1);
+  });
+});
+
+/*
+ * P1-44b (2026-10-01, product owner): finalizing is the run's signed act. The
+ * signer needs signing authority as well as finalize's tier, and a signed final
+ * report is exported with no second ceremony. After the cases above, so the run
+ * the admin sealed there is the signed report exported here.
+ */
+describe('finalize is the run\'s signed act (P1-44b)', () => {
+  /* 21 CFR 11.10(g): finalize's tier is owner, admin and manager (DP-61), and
+     finalizing is a signature, so the signer's role must also carry signing
+     authority under the platform's one policy
+     (services/part11/signing-authority.ts; by default admin, approver and
+     reviewer). A manager who knows their own password used to sign. The case
+     runs on a run of its own. */
+  it('refuses a manager whose role carries no signing authority, with the right password: nothing sealed, signed or recorded', async () => {
+    const managerId = await provisionMember(ORG_B, 'manager', 'report-finalize-manager');
+    await owner.query('UPDATE users SET password_hash = $2 WHERE id = $1', [managerId, await bcrypt.hash(PASSWORD, 4)]);
+    const own = await finalEligibleRun();
+    const res = await request(ro)
+      .post(`/api/report-os/runs/${own}/finalize`)
+      .set(auth(accessToken(managerId, ORG_B, 'manager')))
+      .send(SIGNED);
+    expect(res.status, JSON.stringify(res.body)).toBe(403);
+    expect(res.body.error.code).toBe('ESIGNATURE_NO_AUTHORITY');
+    expect(await runState(own)).toEqual({ status: 'completed', seal_hash: null });
+    expect(await signatureRows(own)).toEqual([]);
+  });
+
+  /* A final report is a signed record, so its external export needs no second
+     ceremony. Until now the e-signature rule refused every external send of a
+     final report ("report runs cannot be e-signed yet"). */
+  it('the signed final report is exported with no second ceremony, and the chain row names its signature', async () => {
+    const [signature] = (await rowsOf('SELECT id FROM electronic_signatures WHERE organization_id = $1 AND signed_target = $2', [
+      ORG_B, `report-run:${runId}`,
+    ])) as Array<{ id: number }>;
+    const subject = `Signed report ${runId} for the partner`;
+    const res = await request(ro)
+      .post('/api/report-os/deliveries')
+      .set(auth(adminToken))
+      .send({ runId, channel: 'external_pdf_export', subject, recipients: ['partner'], captureForLearning: false });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(res.body.data).toMatchObject({ status: 'exported', runId, signatureIds: [signature.id] });
+    const chain = await chainRows('report_os.delivery_exported', res.body.data.deliveryId);
+    expect(chain).toMatchObject([{ chained: true, details: { runId, subject, signatureIds: [signature.id] } }]);
   });
 });
 
@@ -394,12 +462,7 @@ describe('the seal on the record', () => {
   });
 
   it('a stored document changed after sealing reads as a mismatch, not intact', async () => {
-    const restore = (
-      await owner.query(
-        `SELECT id, snapshot_metadata::text AS meta FROM report_snapshots WHERE run_id = $1 AND is_latest`,
-        [runId]
-      )
-    ).rows[0] as { id: number; meta: string };
+    const restore = await storedSnapshot();
     const meta = JSON.parse(restore.meta);
     meta.sealedDocument.sections[0].title = 'Edited after sealing';
     await owner.query('UPDATE report_snapshots SET snapshot_metadata = $2::json WHERE id = $1', [restore.id, JSON.stringify(meta)]);
@@ -426,9 +489,7 @@ async function sealAndRendered() {
 
 describe('the seal on the record: what a rewrite of the mutable rows cannot hide', () => {
   it('a sealed document removed from the snapshot reads as a mismatch, and nothing is re-rendered in its place', async () => {
-    const restore = (
-      await owner.query(`SELECT id, snapshot_metadata::text AS meta FROM report_snapshots WHERE run_id = $1 AND is_latest`, [runId])
-    ).rows[0] as { id: number; meta: string };
+    const restore = await storedSnapshot();
     const meta = JSON.parse(restore.meta);
     delete meta.sealedDocument;
     await owner.query('UPDATE report_snapshots SET snapshot_metadata = $2::json WHERE id = $1', [restore.id, JSON.stringify(meta)]);

@@ -32,9 +32,10 @@ vi.mock('../../middleware/auth.js', () => ({
 }));
 vi.mock('../../db.js', () => ({
   db: { select: () => ({ from: () => ({ where: () => ({ limit: () => [{ id: PROGRAM_ID }] }) }) }) },
-  // The program check (programInOrganization, D3) reads on the pool.
-  pool: { query: async () => ({ rows: [{ id: PROGRAM_ID }] }) },
+  pool: {},
 }));
+// The program is the caller's (programInOrganization, trunk 2026-10-01).
+vi.mock('../../services/c2c/program-access', () => ({ programInOrganization: async () => true }));
 vi.mock('../../services/ana/se-discussion/se-discussion-author.js', () => ({
   isSeDiscussionAuthoringEnabled: () => true,
   authorSEDiscussion: (...a: unknown[]) => author(...a),

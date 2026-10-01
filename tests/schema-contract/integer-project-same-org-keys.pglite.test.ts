@@ -107,9 +107,17 @@ describe('20261001 on the applier', () => {
       { conname: 'c2c_submission_packages_project_same_org_fk', convalidated: false, confdeltype: 'c', confupdtype: 'a' },
       { conname: 'concept2cure_artifacts_project_same_org_fk', convalidated: false, confdeltype: 'c', confupdtype: 'a' },
       { conname: 'concept2cure_conversations_project_same_org_fk', convalidated: false, confdeltype: 'c', confupdtype: 'a' },
-      // NO ACTION, as 20260820's own key on the column: two keys on one column must agree on delete.
-      { conname: 'conversation_working_memory_project_same_org_fk', convalidated: false, confdeltype: 'a', confupdtype: 'a' },
+      // SET NULL, as 20260820's own key on the column: two keys on one column must agree on delete.
+      { conname: 'conversation_working_memory_project_same_org_fk', convalidated: false, confdeltype: 'n', confupdtype: 'a' },
     ]);
+  });
+
+  it("20260820's own key on working memory is SET NULL too, and only one of it", async () => {
+    const { rows } = await db.query<{ n: number; confdeltype: string }>(
+      `SELECT count(*)::int AS n, min(confdeltype) AS confdeltype FROM pg_constraint
+        WHERE conrelid = 'conversation_working_memory'::regclass AND confrelid = 'projects'::regclass AND array_length(conkey, 1) = 1`,
+    );
+    expect(rows[0]).toEqual({ n: 1, confdeltype: 'n' });
   });
 });
 
@@ -170,6 +178,7 @@ describe('legacy rows and the existing behaviour', () => {
     await artifact('doomed-a', 40, 1);
     await pkg('doomed-p', 40, 1);
     await conv('doomed-c', 40, 1);
+    await memory('doomed-m', 40, 1);
     await db.query(`DELETE FROM projects WHERE id = 40`);
     const left = await db.query<{ a: number; p: number; c: number }>(
       `SELECT (SELECT count(*)::int FROM concept2cure_artifacts WHERE project_id = 40) AS a,
@@ -177,5 +186,61 @@ describe('legacy rows and the existing behaviour', () => {
               (SELECT count(*)::int FROM concept2cure_conversations WHERE project_id = 40) AS c`,
     );
     expect(left.rows[0]).toEqual({ a: 0, p: 0, c: 0 });
+  });
+
+  it('and detaches the working memory of its conversations: kept, with its organization, under no project', async () => {
+    const { rows } = await db.query(`SELECT project_id, organization_id FROM conversation_working_memory WHERE thread_id = 'doomed-m'`);
+    expect(rows).toEqual([{ project_id: null, organization_id: 1 }]);
+  });
+});
+
+describe('a database that deployed the NO ACTION working-memory keys (PF-13 follow-up)', () => {
+  let old: PGlite;
+  beforeAll(async () => {
+    old = new PGlite();
+    await old.exec(`CREATE TABLE organizations (id integer PRIMARY KEY); CREATE TABLE users (id integer PRIMARY KEY);
+                    CREATE TABLE client_workspaces (id integer PRIMARY KEY);`);
+    await old.exec(extractTableDdl('migrations/0000_sweet_joseph.sql', ['projects', 'concept2cure_artifacts', 'concept2cure_conversations']));
+    await old.exec(extractTableDdl('migrations/0002_phase15_submission_ops.sql', ['c2c_submission_packages']));
+    // The keys as they were deployed: a drizzle-pushed name, and the S11 key, both NO ACTION.
+    await old.exec(`
+      CREATE TABLE conversation_working_memory (
+        id serial PRIMARY KEY, conversation_id integer, thread_id text,
+        project_id integer CONSTRAINT conversation_working_memory_project_id_projects_id_fk REFERENCES projects(id),
+        organization_id integer NOT NULL REFERENCES organizations(id), summary text NOT NULL, structured_data json,
+        message_count_at_generation integer NOT NULL, generated_at timestamp DEFAULT now() NOT NULL);
+      CREATE UNIQUE INDEX projects_id_org_uq ON projects (id, organization_id);
+      ALTER TABLE conversation_working_memory ADD CONSTRAINT conversation_working_memory_project_same_org_fk
+        FOREIGN KEY (project_id, organization_id) REFERENCES projects (id, organization_id) NOT VALID;
+      INSERT INTO organizations VALUES (1); INSERT INTO client_workspaces VALUES (1);
+      INSERT INTO projects (id, organization_id, client_workspace_id, name, type) VALUES (10, 1, 1, 'Chatted in', 'ind');
+      INSERT INTO conversation_working_memory (thread_id, project_id, organization_id, summary, message_count_at_generation)
+        VALUES ('kept', 10, 1, 's', 20);
+    `);
+    // The next two deploys.
+    for (let i = 0; i < 2; i += 1) {
+      await old.exec(read('migrations/20260820_working_memory_project_id.sql'));
+      await old.exec(read(KEYS));
+    }
+  }, 60_000);
+  afterAll(async () => {
+    await old?.close();
+  });
+
+  it('both keys are SET NULL, under their own names, one of each', async () => {
+    const { rows } = await old.query<{ conname: string; confdeltype: string }>(
+      `SELECT conname, confdeltype FROM pg_constraint
+        WHERE conrelid = 'conversation_working_memory'::regclass AND confrelid = 'projects'::regclass ORDER BY conname`,
+    );
+    expect(rows).toEqual([
+      { conname: 'conversation_working_memory_project_id_projects_id_fk', confdeltype: 'n' },
+      { conname: 'conversation_working_memory_project_same_org_fk', confdeltype: 'n' },
+    ]);
+  });
+
+  it('the project its conversation was summarized in can now be deleted, and the summary stays', async () => {
+    expect(await code(old.query(`DELETE FROM projects WHERE id = 10`))).toBe('ok');
+    const { rows } = await old.query(`SELECT project_id, summary FROM conversation_working_memory WHERE thread_id = 'kept'`);
+    expect(rows).toEqual([{ project_id: null, summary: 's' }]);
   });
 });

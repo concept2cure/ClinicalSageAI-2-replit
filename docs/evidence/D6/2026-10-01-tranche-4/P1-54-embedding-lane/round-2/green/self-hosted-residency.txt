@@ -1,0 +1,57 @@
+# GREEN, 2026-10-01T16:24:47Z: npx vitest run server/services/ai-gateway/__tests__/self-hosted-residency.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/ai-gateway/__tests__/self-hosted-residency.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ai-gateway/__tests__/self-hosted-residency.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ai-gateway/__tests__/self-hosted-residency.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > the self-hosted embedding lane admits sensitive text whatever the tenant residency > the approval still decides: without intended use "embedding" the lane is refused PII
+[AI Gateway Audit] AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > a provider that is not self-hosted is still held to the tenant residency > the tenant floor: an EU-resident tenant elected OpenAI (global only) and is still refused, any data class
+[AI Gateway Audit] AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > a provider that is not self-hosted is still held to the tenant residency > the sensitive gate: Bedrock in Frankfurt for an EU-resident tenant > an approval granted for another region does not carry PII for an EU tenant (DENY_TENANT_POLICY)
+[AI Gateway Audit] AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > a provider that is not self-hosted is still held to the tenant residency > the sensitive gate: Bedrock in Frankfurt for an EU-resident tenant > the same request is dispatched when the approval is for the region the tenant requires
+[AI Gateway Audit] AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > a provider that is not self-hosted is still held to the tenant residency > the sensitive gate compares the tenant's region, not the lane's first one: Azure declared for us and eu > an approval for US data does not carry an EU tenant's PII (DENY_TENANT_POLICY)
+[AI Gateway Audit] AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > a provider that is not self-hosted is still held to the tenant residency > the sensitive gate compares the tenant's region, not the lane's first one: Azure declared for us and eu > an approval for EU data does, at the EU region
+[AI Gateway Audit] AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+(node:11410) AuditWarning: AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:11410) AuditWarning: AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:11410) AuditWarning: AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:11410) AuditWarning: AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:11410) AuditWarning: AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:11410) AuditWarning: AI provenance ledger unusable: probe failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+ ✓ server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > the self-hosted embedding lane admits sensitive text whatever the tenant residency > an EU-resident tenant embeds PII through the in-VPC lane 7ms
+ ✓ server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > the self-hosted embedding lane admits sensitive text whatever the tenant residency > a US-resident zero-retention tenant embeds PHI through it 2ms
+ ✓ server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > the self-hosted embedding lane admits sensitive text whatever the tenant residency > an on-prem tenant was already admitted, and still is 1ms
+ ✓ server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > the self-hosted embedding lane admits sensitive text whatever the tenant residency > the approval still decides: without intended use "embedding" the lane is refused PII 4ms
+ ✓ server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > a provider that is not self-hosted is still held to the tenant residency > the tenant floor: an EU-resident tenant elected OpenAI (global only) and is still refused, any data class 2ms
+ ✓ server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > a provider that is not self-hosted is still held to the tenant residency > the sensitive gate: Bedrock in Frankfurt for an EU-resident tenant > an approval granted for another region does not carry PII for an EU tenant (DENY_TENANT_POLICY) 10ms
+ ✓ server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > a provider that is not self-hosted is still held to the tenant residency > the sensitive gate: Bedrock in Frankfurt for an EU-resident tenant > the same request is dispatched when the approval is for the region the tenant requires 31ms
+ ✓ server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > a provider that is not self-hosted is still held to the tenant residency > the sensitive gate compares the tenant's region, not the lane's first one: Azure declared for us and eu > an approval for US data does not carry an EU tenant's PII (DENY_TENANT_POLICY) 5ms
+ ✓ server/services/ai-gateway/__tests__/self-hosted-residency.test.ts > a provider that is not self-hosted is still held to the tenant residency > the sensitive gate compares the tenant's region, not the lane's first one: Azure declared for us and eu > an approval for EU data does, at the EU region 6ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  16:24:48
+   Duration  3.04s (transform 1.51s, setup 100ms, import 2.50s, tests 74ms, environment 0ms)
+

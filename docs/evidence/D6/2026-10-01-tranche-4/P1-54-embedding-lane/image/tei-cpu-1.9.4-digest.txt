@@ -1,0 +1,37 @@
+# Resolved 2026-10-01T14:25:41Z from ghcr.io (registry API, anonymous pull token)
+# GET https://ghcr.io/v2/huggingface/text-embeddings-inference/manifests/cpu-1.9.4
+content-type: application/vnd.oci.image.index.v1+json
+docker-content-digest: sha256:2538ea1c9640d3763b15af668039d24172d063b42337b0c27796fc2be180c78d
+# sha256 of the index body (must equal the digest above):
+2538ea1c9640d3763b15af668039d24172d063b42337b0c27796fc2be180c78d  manifest.json
+# index body:
+{
+  "schemaVersion": 2,
+  "mediaType": "application/vnd.oci.image.index.v1+json",
+  "manifests": [
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:8419f533857b503ebf6ec292a95d4f1cf9c0464ac8b8abeef39518cf110e5726",
+      "size": 2790,
+      "platform": {
+        "architecture": "amd64",
+        "os": "linux"
+      }
+    },
+    {
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "digest": "sha256:5a4aecebdb7fdb9244f169ee7018f962b6c524f9135c8004416b4e1d592e4f3b",
+      "size": 838,
+      "annotations": {
+        "vnd.docker.reference.digest": "sha256:8419f533857b503ebf6ec292a95d4f1cf9c0464ac8b8abeef39518cf110e5726",
+        "vnd.docker.reference.type": "attestation-manifest"
+      },
+      "platform": {
+        "architecture": "unknown",
+        "os": "unknown"
+      }
+    }
+  ]
+}
+# linux/amd64 manifest sha256 (Fargate's default platform):
+8419f533857b503ebf6ec292a95d4f1cf9c0464ac8b8abeef39518cf110e5726  amd64.json

@@ -62,6 +62,13 @@ const STORES = [
   'public.concept2cure_submission_snapshots',
 ] as const;
 const WITHHELD = ['UPDATE', 'DELETE', 'TRUNCATE'] as const;
+/**
+ * Stores the runtime role may read and not append to (P0-8 follow-up,
+ * 2026-10-01): the archive ledger, which only audit_logs_archive_delete()
+ * writes, as audit_archiver. Named here, as STORES is.
+ */
+const SELECT_ONLY: readonly string[] = ['public.audit_log_archives'];
+const withheldOn = (store: string): readonly string[] => (SELECT_ONLY.includes(store) ? [...WITHHELD, 'INSERT'] : WITHHELD);
 /** The write-once supersession its trigger admits (signature-persistence.ts revocation). */
 const SUPERSESSION = ['superseded_by', 'is_valid', 'verification_status', 'verification_date', 'updated_at'];
 const ATTESTED = ['signer_id', 'signer_email', 'signature_hash', 'signature_meaning', 'signed_at', 'bound_payload_digest'];
@@ -128,11 +135,11 @@ async function privileges(role: string): Promise<Record<string, Record<string, b
   return out;
 }
 
-/** What a role holds beyond SELECT and INSERT on each store, as `store: PRIV,…` lines (empty = the ceiling holds). */
+/** What a role holds beyond each store's ceiling (SELECT, INSERT; SELECT on the ledger), as `store: PRIV,…` lines (empty = the ceiling holds). */
 async function beyondCeiling(role: string): Promise<string[]> {
   const held = await privileges(role);
   return Object.entries(held)
-    .map(([store, p]) => [store, WITHHELD.filter((w) => p[w])] as const)
+    .map(([store, p]) => [store, withheldOn(store).filter((w) => p[w])] as const)
     .filter(([, w]) => w.length > 0)
     .map(([store, w]) => `${store}: ${w.join(',')}`)
     .sort();
@@ -202,7 +209,9 @@ describe('the grant recipe (provisionAppServiceRole) on a per-run role', () => {
   it('withholds UPDATE, DELETE and TRUNCATE on every append-only store, and keeps SELECT and INSERT', async () => {
     expect(await beyondCeiling(runtimeRole)).toEqual([]);
     const held = await privileges(runtimeRole);
-    for (const { store } of present) expect([store, held[store].SELECT, held[store].INSERT]).toEqual([store, true, true]);
+    for (const { store } of present) {
+      expect([store, held[store].SELECT, held[store].INSERT]).toEqual([store, true, !SELECT_ONLY.includes(store)]);
+    }
   });
 
   it('electronic_signatures: the supersession columns stay updatable (revocation), the attested ones do not', async () => {
@@ -307,6 +316,17 @@ describe(`${APP_ROLE}, as deploy-migrate step 4/5 leaves it`, () => {
       await c.query('ROLLBACK').catch(() => {});
       c.release();
     }
+  });
+
+  it(`cannot append to the archive ledger itself: the forged row of DP-68 is refused by the privilege (42501)`, async () => {
+    const forged = await inTenant(appPool, (c) =>
+      attempt(
+        c,
+        `INSERT INTO public.audit_log_archives (archived_at, row_count, min_created_at, max_created_at, cutoff, locator, sha256)
+         VALUES (now(), 1000000, '2000-01-01', '2000-01-02', timestamptz '2100-01-01', 'dbtest-p08://forged', repeat('f', 64))`,
+      ),
+    );
+    expect(outcome(forged)).toMatch(/^42501 permission denied for table audit_log_archives/);
   });
 
   it(`the archive door still deletes for ${APP_ROLE}, and records the batch in its ledger`, async () => {

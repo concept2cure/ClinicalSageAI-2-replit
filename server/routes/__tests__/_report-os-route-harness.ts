@@ -50,6 +50,8 @@ export function createReportOsHarness() {
     queued, reads, db, pool, statements, params, respond,
     audit: vi.fn(), gate: vi.fn(), compute: vi.fn(),
     reauth: vi.fn(), ledger: vi.fn(), signature: vi.fn(),
+    /** The signer's role as the membership row holds it (resolveSignerOrgRole, P1-44b). */
+    memberRole: vi.fn(),
     limiterScopes: [] as string[],
   };
 }
@@ -76,6 +78,8 @@ export function resetReportOsHarness(h: ReportOsHarness) {
     h.statements.push('<signature row>');
     return { id: 'sig_1', signedAt: new Date('2026-10-01T09:00:00Z') };
   });
+  h.memberRole.mockReset().mockResolvedValue('admin');
+  delete process.env.ESIGNATURE_SIGNING_ROLES;
 }
 
 /**

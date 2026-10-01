@@ -1,0 +1,78 @@
+# Fix round, 2026-10-01T15:26:39Z: the IAM-25 it.fails case shown turning red when a decision lands.
+# Mutant (reverted at once, file restored byte-identical): server/mcp/auth/connector-enablement.ts CONNECTOR_OPENER_ROLE = 'admin' (decision (b)'s one-line core).
+# The sign-up creator then reads canChange true and turns it on (PUT 200), so it.fails reports 'Expect test to fail'.
+# npx vitest run --config vitest.db.config.ts server/mcp/__tests__/mcp-connector-enablement.dbtest.ts -t IAM-25
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T15:26:24.270Z","pid":15011,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T15:26:24.299Z","pid":15011,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T15:26:24.299Z","pid":15011,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-10-01T15:26:24.804Z","pid":15011,"hostname":"vm","context":{"resource":"http://localhost:38607/mcp","issuer":"http://localhost:38607/","resourceMetadataUrl":"http://localhost:38607/.well-known/oauth-protected-resource/mcp"},"msg":"[mcp] Concept2Cure MCP connector mounted"}
+stderr | server/mcp/__tests__/mcp-connector-enablement.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ↓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing
+ ↓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > until the owner enables it, the connector is closed to the organization > the organization starts with no connector setting (absent means disabled)
+ ↓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > until the owner enables it, the connector is closed to the organization > a member is refused at consent: 403, no code, no code row
+ ↓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > until the owner enables it, the connector is closed to the organization > a connector token minted for the organization is refused at /mcp
+ ↓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > until the owner enables it, the connector is closed to the organization > the member's own session is refused at /mcp too
+ ↓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > until the owner enables it, the connector is closed to the organization > every member sees it is off; only the owner is told they can change it
+ ↓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > an administrator who is not the owner cannot enable it, through tenant-config's doors > PUT /api/tenant-config/:id/claude-connector → 403
+ ↓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > an administrator who is not the owner cannot enable it, through tenant-config's doors > PATCH /api/tenant-config/:id/settings naming the connector → 403
+ ↓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > an administrator who is not the owner cannot enable it, through tenant-config's doors > PATCH /api/tenant-config/:id/settings/claudeConnector → refused
+ ↓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > an administrator who is not the owner cannot enable it, through tenant-config's doors > nothing was stored and nothing was recorded as a change
+ ↓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the owner enables it > PUT by the owner: 200, stored, and one chained audit row naming the owner, the value before and after
+ ↓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the owner enables it > the same connector token is now admitted at /mcp
+ ↓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the owner enables it > a member can now consent, and the grant opens /mcp
+ ↓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the owner disables it: tokens already issued are cut > PUT {enabled:false} by the owner: 200 and a second audit row
+ ↓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the owner disables it: tokens already issued are cut > the same connector token is refused at /mcp again
+ ↓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the owner disables it: tokens already issued are cut > the refresh token of a grant made while it was enabled is refused at /token
+ ↓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the owner disables it: tokens already issued are cut > a member is refused at consent again
+ ↓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the settings doors outside tenant-config do not let an administrator turn it on > control: the AnA settings door is open to this administrator for another setting
+ ↓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the settings doors outside tenant-config do not let an administrator turn it on > PATCH /api/ana/platform/settings naming the connector → 403, nothing stored, the token still refused
+ ↓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the settings doors outside tenant-config do not let an administrator turn it on > control: the organizations settings door is open to this administrator for another setting
+ ↓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the settings doors outside tenant-config do not let an administrator turn it on > PATCH /api/organizations/:id/settings naming the connector → 403, nothing stored, the token still refused
+ ↓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the settings doors outside tenant-config do not let an administrator turn it on > control: a door with no connector check of its own writes another setting through the one writer
+ ↓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the settings doors outside tenant-config do not let an administrator turn it on > that door cannot turn it on: the one writer refuses, nothing stored, nothing recorded, the token still refused
+stdout | server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > IAM-25: the organisation a sign-up creates has someone who can open the connector > sign-up and e-mail verification, through production's own routes, leave one membership: its creator's
+[database] Database connection successful
+
+stderr | server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > IAM-25: the organisation a sign-up creates has someone who can open the connector > sign-up and e-mail verification, through production's own routes, leave one membership: its creator's
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > IAM-25: the organisation a sign-up creates has someone who can open the connector > sign-up and e-mail verification, through production's own routes, leave one membership: its creator's
+✅ Platform health/auth routes mounted
+
+stdout | server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > IAM-25: the organisation a sign-up creates has someone who can open the connector > sign-up and e-mail verification, through production's own routes, leave one membership: its creator's
+{
+  "timestamp": "2026-10-01T15:26:28.201Z",
+  "level": "info",
+  "message": "[launch-scope] launch catalog provisioned",
+  "context": {
+    "organizationId": 415,
+    "granted": 20
+  }
+}
+
+{"level":30,"time":"2026-10-01T15:26:28.211Z","pid":15011,"hostname":"vm","context":{"userId":2909,"tenantId":415,"resourceId":"2909"},"msg":"[audit-service] [AUDIT] user_signup user"}
+{"level":30,"time":"2026-10-01T15:26:28.302Z","pid":15011,"hostname":"vm","context":{"userId":2909,"tenantId":415,"resourceId":"2909"},"msg":"[audit-service] [AUDIT] email_verified user"}
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > IAM-25: the organisation a sign-up creates has someone who can open the connector > sign-up and e-mail verification, through production's own routes, leave one membership: its creator's 2430ms
+stdout | server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > IAM-25: the organisation a sign-up creates has someone who can open the connector > IAM-25 (open): that creator is told they can change it, and turns it on
+[database] Database connection successful { timestamp: '2026-10-01T15:26:28.337Z', poolSize: 1 }
+
+ × server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > IAM-25: the organisation a sign-up creates has someone who can open the connector > IAM-25 (open): that creator is told they can change it, and turns it on 207ms
+   → Expect test to fail
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > IAM-25: the organisation a sign-up creates has someone who can open the connector > IAM-25 (open): that creator is told they can change it, and turns it on
+Error: Expect test to fail
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed | 23 skipped (25)
+   Start at  15:26:18
+   Duration  10.70s (transform 4.44s, setup 158ms, import 861ms, tests 8.71s, environment 0ms)
+

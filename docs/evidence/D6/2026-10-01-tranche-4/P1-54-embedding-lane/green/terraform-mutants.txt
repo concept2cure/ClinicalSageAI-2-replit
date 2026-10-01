@@ -1,0 +1,58 @@
+# Mutation pass: each new run must FAIL on the regression it exists to catch.
+# A copy of the changed tree with only the embedding runs (boot contract mocks + variables + the 9 new runs);
+# one mutation at a time (scratch script mutants.py, replacements shown). terraform 1.9.8, 2026-10-01T14:52:05Z
+
+## M1 the embedding tasks get a public IP
+# terraform/modules/embedding-service/main.tf: 'assign_public_ip = false' -> 'assign_public_ip = true'
+  run "the_embedding_service_runs_in_the_private_subnets_with_no_public_address"... fail
+Failure! 8 passed, 1 failed.
+errors: ['Error: Test assertion failed']
+
+## M2 the service runs in the public subnets
+# terraform/stack/main.tf: 'private_subnet_ids        = module.vpc.private_subnet_ids\n  client_security_group_ids' -> 'private_subnet_ids        = module.vpc.public_subnet_ids\n  client_security_group_ids'
+  run "the_embedding_service_runs_in_the_private_subnets_with_no_public_address"... fail
+Failure! 8 passed, 1 failed.
+errors: ['Error: Test assertion failed']
+
+## M3 the port is also open to the VPC CIDR
+# terraform/modules/embedding-service/main.tf: 'security_groups = var.client_security_group_ids' -> 'security_groups = var.client_security_group_ids\n    cidr_blocks     = ["10.0.0.0/8"]'
+  run "the_embedding_service_admits_the_application_tasks_alone"... fail
+Failure! 8 passed, 1 failed.
+errors: ['Error: Test assertion failed']
+
+## M4 the worker is not given the lane
+# terraform/stack/main.tf: 'local.observability_environment, local.embedding_environment)' -> 'local.observability_environment)'
+  run "the_api_and_worker_embed_through_the_self_hosted_lane"... fail
+Failure! 8 passed, 1 failed.
+errors: ['Error: Test assertion failed']
+
+## M5 egress opened to every protocol
+# terraform/modules/embedding-service/main.tf: 'from_port   = 443\n    to_port     = 443\n    protocol    = "tcp"' -> 'from_port   = 0\n    to_port     = 0\n    protocol    = "-1"'
+  run "the_embedding_service_admits_the_application_tasks_alone"... fail
+Failure! 8 passed, 1 failed.
+errors: ['Error: Test assertion failed']
+
+## M6 log retention shorter than the application logs'
+# terraform/modules/embedding-service/variables.tf: 'variable "log_retention_days" {\n  type    = number\n  default = 90' -> 'variable "log_retention_days" {\n  type    = number\n  default = 30'
+  run "the_embedding_logs_are_kept_as_the_application_logs_are"... fail
+Failure! 8 passed, 1 failed.
+errors: ['Error: Test assertion failed']
+
+## M7 the server keeps its default batch limit (32)
+# terraform/modules/embedding-service/variables.tf: 'variable "max_client_batch_size" {\n  type    = number\n  default = 128' -> 'variable "max_client_batch_size" {\n  type    = number\n  default = 32'
+  run "the_embedding_server_is_pinned_and_serves_bge_m3"... fail
+Failure! 8 passed, 1 failed.
+errors: ['Error: Test assertion failed']
+
+## M8 the API is pointed at OpenAI again
+# terraform/stack/main.tf: '{ name = "EMBEDDING_PROVIDER", value = "local" }' -> '{ name = "EMBEDDING_PROVIDER", value = "openai" }'
+  run "the_api_and_worker_embed_through_the_self_hosted_lane"... fail
+Failure! 8 passed, 1 failed.
+errors: ['Error: Test assertion failed']
+
+## M9 a second ingress rule from anywhere in the VPC
+# terraform/modules/embedding-service/main.tf: '# HTTPS out through the NAT' -> 'ingress {\n    from_port   = 8080\n    to_port     = 8080\n    protocol    = "tcp"\n    cidr_blocks = ["10.10.0.0/16"]\n  }\n\n  # HTTPS out through the NAT'
+  run "the_embedding_service_admits_the_application_tasks_alone"... fail
+Failure! 8 passed, 1 failed.
+errors: ['Error: Test assertion failed']
+

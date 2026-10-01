@@ -61,6 +61,10 @@ mock_provider "aws" {
   mock_resource "aws_cloudwatch_log_group" {
     defaults = { arn = "arn:aws:logs:us-east-1:123456789012:log-group:mock" }
   }
+  # The embedding service registers in it, and ECS validates the ARN.
+  mock_resource "aws_service_discovery_service" {
+    defaults = { arn = "arn:aws:servicediscovery:us-east-1:123456789012:service/srv-mock" }
+  }
   mock_resource "aws_db_instance" {
     defaults = {
       arn      = "arn:aws:rds:us-east-1:123456789012:db:mock"
@@ -132,7 +136,13 @@ variables {
   smtp_pass                       = "test-smtp-pass-0123456789"
   smtp_from                       = "noreply@example.com"
   platform_owner_emails           = ["owner@example.com"]
-  ai_provider_placement_approvals = "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\"],\"approvedIntendedUses\":[\"drafting\"]}}"
+  ai_provider_placement_approvals = "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\"],\"approvedIntendedUses\":[\"drafting\"]},\"local\":{\"region\":\"on_prem\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\",\"phi\"],\"approvedIntendedUses\":[\"embedding\"]}}"
+  # The approvals above: Anthropic for drafting, and the in-VPC embedding lane
+  # for PII and PHI with zero retention, embedding only, the value ADR-0014 §1.5
+  # (amended 2026-10-01) records for `local`, which boot_contract now requires.
+  # A commit id's shape, not bge-m3's real commit (the stack leaves it unset
+  # until one is recorded; warns_while_the_embedding_model_is_unpinned below).
+  embedding_model_revision = "0123456789abcdef0123456789abcdef01234567"
 }
 
 run "renders_the_boot_contract" {
@@ -821,12 +831,14 @@ run "refuses_a_missing_region" {
   expect_failures = [var.ai_provider_placement_approvals]
 }
 
-# The fail-closed interim value (no pii/phi to any provider) must be ACCEPTED:
-# it is the option put to the founder while B4 is open.
+# The fail-closed interim value for the drafting provider (no pii/phi to it)
+# must be ACCEPTED: it is the option put to the founder while B4 is open. Since
+# ADR-0014 §1.5 was amended (2026-10-01) it carries the decided embedding lane
+# beside it; without that, boot_contract refuses it (below).
 run "accepts_the_fail_closed_interim_approvals" {
   command = plan
   variables {
-    ai_provider_placement_approvals = "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":false,\"approvedDataClasses\":[],\"approvedIntendedUses\":[]}}"
+    ai_provider_placement_approvals = "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":false,\"approvedDataClasses\":[],\"approvedIntendedUses\":[]},\"local\":{\"region\":\"on_prem\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\",\"phi\"],\"approvedIntendedUses\":[\"embedding\"]}}"
   }
 }
 
@@ -1058,6 +1070,294 @@ run "refuses_a_pinned_rds_minor_version" {
     rds_engine_version = "15.4"
   }
   expect_failures = [var.rds_engine_version]
+}
+
+# ── The self-hosted embedding lane (P1-54, ADR-0014 §1.5) ────────────────────
+#
+# Vault and knowledge-base search embed every document and every query. Since
+# P1-45 the gateway refuses OpenAI embeddings for every organisation that has
+# not elected OpenAI, and since P0-11 the stack provisions no OpenAI key unless
+# one has, so a deployment whose only embedding lane was OpenAI (the default
+# when EMBEDDING_PROVIDER is unset) searched nothing for any ordinary tenant.
+# The lane is an OpenAI-compatible embedding server (Text Embeddings Inference,
+# BAAI bge-m3) inside the VPC: in the private subnets, reachable from the
+# application tasks alone, behind no load balancer.
+
+run "the_api_and_worker_embed_through_the_self_hosted_lane" {
+  command = apply
+
+  # Read from the rendered containers, not from the module that will set them.
+  assert {
+    condition = alltrue([
+      for defs in [module.ecs.api_container, module.ecs.worker_container] :
+      one([for e in defs.environment : e.value if e.name == "EMBEDDING_PROVIDER"]) == "local" &&
+      can(regex("^http://[a-z0-9.-]+\\.internal:[0-9]+/v1$", one([for e in defs.environment : e.value if e.name == "EMBEDDING_LOCAL_BASE_URL"])))
+    ])
+    error_message = "The API and the worker must carry EMBEDDING_PROVIDER=local and EMBEDDING_LOCAL_BASE_URL=http://<host>.internal:<port>/v1 (the self-hosted lane in the VPC)."
+  }
+
+  # And the address is the service's own, as registered in service discovery.
+  assert {
+    condition = alltrue([
+      for defs in [module.ecs.api_container, module.ecs.worker_container] :
+      one([for e in defs.environment : e.value if e.name == "EMBEDDING_LOCAL_BASE_URL"]) == module.embeddings.base_url
+    ]) && module.embeddings.base_url == "http://${module.embeddings.discovery.service_name}.${module.embeddings.discovery.namespace}:${module.embeddings.port}/v1"
+    error_message = "EMBEDDING_LOCAL_BASE_URL must be the embedding service's service-discovery name and port."
+  }
+
+  # The model the API and the worker ask for, and name on the ledger, is the one
+  # the server serves, and the one the corpus policy says every corpus holds
+  # (server/services/embedding-corpus-policy.ts, SELF_HOSTED_EMBEDDING_MODEL).
+  assert {
+    condition = alltrue([
+      for defs in [module.ecs.api_container, module.ecs.worker_container] :
+      one([for e in defs.environment : e.value if e.name == "EMBEDDING_LOCAL_MODEL"]) == one([for e in module.embeddings.container.environment : e.value if e.name == "MODEL_ID"])
+    ]) && module.embeddings.model_id == one(regex("SELF_HOSTED_EMBEDDING_MODEL[^=]*= \\{ model: '([^']+)'", file("../../server/services/embedding-corpus-policy.ts")))
+    error_message = "EMBEDDING_LOCAL_MODEL must be the model the embedding server loads (MODEL_ID), and that must be the model the corpus policy names for the self-hosted lane."
+  }
+
+  # Plain configuration: neither variable is a secret, and no key is needed to
+  # reach the lane (the security group is the boundary).
+  assert {
+    condition = alltrue([
+      for defs in [module.ecs.api_container, module.ecs.worker_container] :
+      length([for s in defs.secrets : s.name if startswith(s.name, "EMBEDDING_")]) == 0
+    ])
+    error_message = "The embedding lane's settings are plain environment values, not secrets."
+  }
+}
+
+run "the_embedding_service_runs_in_the_private_subnets_with_no_public_address" {
+  command = apply
+
+  assert {
+    condition = (
+      length(module.embeddings.service.subnets) > 0 &&
+      length(setsubtract(module.embeddings.service.subnets, module.vpc.private_subnet_ids)) == 0 &&
+      length(setintersection(module.embeddings.service.subnets, module.vpc.public_subnet_ids)) == 0
+    )
+    error_message = "The embedding service must run in the private subnets only."
+  }
+
+  assert {
+    condition     = module.embeddings.service.assign_public_ip == false
+    error_message = "The embedding service's tasks must have no public IP."
+  }
+
+  # No load balancer of any kind: the API and the worker reach the tasks by
+  # their private addresses, which service discovery publishes in a private
+  # namespace that resolves inside this VPC only.
+  assert {
+    condition     = module.embeddings.service.load_balancers == 0
+    error_message = "The embedding service must not sit behind a load balancer."
+  }
+
+  assert {
+    condition = (
+      module.embeddings.discovery.namespace_vpc == module.vpc.vpc_id &&
+      module.embeddings.service.registries == [module.embeddings.discovery.service_arn]
+    )
+    error_message = "The embedding service must register in a private DNS namespace of this VPC."
+  }
+
+  assert {
+    condition     = module.embeddings.service.cluster == module.ecs.cluster_id && module.embeddings.service.launch_type == "FARGATE"
+    error_message = "The embedding service runs on Fargate in the stack's own cluster."
+  }
+}
+
+run "the_embedding_service_admits_the_application_tasks_alone" {
+  command = apply
+
+  # One rule: the serving port, from the security group the API and worker run in.
+  assert {
+    condition = length(module.embeddings.ingress) == 1 && alltrue([
+      for r in module.embeddings.ingress :
+      r.protocol == "tcp" && r.from_port == module.embeddings.port && r.to_port == module.embeddings.port &&
+      r.security_groups == toset([module.ecs.ecs_tasks_security_group_id]) &&
+      # Unset is null under the mock and empty from AWS: either way, none.
+      try(length(r.cidr_blocks), 0) == 0 && try(length(r.ipv6_cidr_blocks), 0) == 0 &&
+      try(length(r.prefix_list_ids), 0) == 0 && r.self != true
+    ])
+    error_message = "The embedding service must admit its port from the application tasks' security group and nothing else: ${jsonencode(module.embeddings.ingress)}"
+  }
+
+  assert {
+    condition     = module.embeddings.service.security_groups == toset([module.embeddings.security_group_id])
+    error_message = "The embedding tasks must run in the embedding security group alone."
+  }
+
+  # Out: HTTPS only (the image registry, the model hub, CloudWatch Logs).
+  assert {
+    condition = length(module.embeddings.egress) > 0 && alltrue([
+      for r in module.embeddings.egress : r.protocol == "tcp" && r.from_port == 443 && r.to_port == 443
+    ])
+    error_message = "The embedding service may open HTTPS connections and nothing else."
+  }
+}
+
+run "the_embedding_server_is_pinned_and_serves_bge_m3" {
+  command = apply
+
+  assert {
+    condition     = can(regex("@sha256:[0-9a-f]{64}$", module.embeddings.container.image))
+    error_message = "The embedding image must be pinned by digest: ${module.embeddings.container.image}"
+  }
+
+  assert {
+    condition = (
+      one([for e in module.embeddings.container.environment : e.value if e.name == "MODEL_ID"]) == "BAAI/bge-m3" &&
+      one([for e in module.embeddings.container.environment : e.value if e.name == "PORT"]) == tostring(module.embeddings.port) &&
+      one([for p in module.embeddings.container.portMappings : p.containerPort]) == module.embeddings.port
+    )
+    error_message = "The embedding container must serve BAAI/bge-m3 on the service's port."
+  }
+
+  # The runtime sends up to 100 texts per request (enhancedEmbeddingService
+  # batchSize); the server refuses more than MAX_CLIENT_BATCH_SIZE, default 32.
+  assert {
+    condition = tonumber(one([for e in module.embeddings.container.environment : e.value if e.name == "MAX_CLIENT_BATCH_SIZE"])) >= max([
+      for n in regexall("batchSize: ([0-9]+),", file("../../server/services/enhancedEmbeddingService.ts")) : tonumber(n[0])
+    ]...)
+    error_message = "MAX_CLIENT_BATCH_SIZE must admit the largest batch the embedding runtime sends (server/services/enhancedEmbeddingService.ts)."
+  }
+
+  assert {
+    condition = (
+      module.embeddings.container.essential &&
+      module.embeddings.container.healthCheck.command == ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:${module.embeddings.port}/health"]
+    )
+    error_message = "The embedding container must be essential and health-checked on /health with curl (which the pinned image carries)."
+  }
+}
+
+run "the_embedding_logs_are_kept_as_the_application_logs_are" {
+  command = apply
+
+  assert {
+    condition = (
+      module.embeddings.container.logConfiguration.logDriver == "awslogs" &&
+      module.embeddings.container.logConfiguration.options["awslogs-group"] == module.embeddings.log_group.name &&
+      module.embeddings.container.logConfiguration.options["awslogs-region"] == var.region
+    )
+    error_message = "The embedding container must log to its CloudWatch log group in the stack's region."
+  }
+
+  # The application log groups' retention, read from the module that sets it.
+  assert {
+    condition     = module.embeddings.log_group.retention_in_days == tonumber(one(regex("variable \"log_retention_days\" \\{[^}]*default = ([0-9]+)", file("../modules/ecs-fargate/variables.tf"))))
+    error_message = "The embedding logs must be retained as long as the application logs (modules/ecs-fargate log_retention_days)."
+  }
+
+  # Keyed as the application log groups are: CloudWatch's own key. If those
+  # move to a customer-managed key, this fails until the embedding logs move too.
+  assert {
+    condition     = module.embeddings.log_group.kms_key_id == null && !strcontains(file("../modules/ecs-fargate/main.tf"), "kms_key_id")
+    error_message = "The embedding log group must be encrypted the way the application log groups are."
+  }
+}
+
+# Each of these must FAIL.
+
+run "refuses_an_embedding_image_by_tag" {
+  command = plan
+  variables {
+    embedding_image = "ghcr.io/huggingface/text-embeddings-inference:cpu-1.9.4"
+  }
+  expect_failures = [var.embedding_image]
+}
+
+# A branch name moves under a running deployment; the corpus would then mix
+# vectors from two models without a word.
+run "refuses_a_model_revision_that_is_not_a_commit" {
+  command = plan
+  variables {
+    embedding_model_revision = "main"
+  }
+  expect_failures = [var.embedding_model_revision]
+}
+
+# Unset (the stack's default until the commit is recorded), the server loads the
+# hub's main and every plan says so. A check warns rather than blocks a plan;
+# terraform test reports it as a failure, which is what this run expects.
+run "warns_while_the_embedding_model_is_unpinned" {
+  command = plan
+  variables {
+    embedding_model_revision = null
+  }
+  expect_failures = [check.embedding_model_is_pinned]
+}
+
+# Pinned, the server is given exactly that commit.
+run "the_embedding_server_loads_the_pinned_commit" {
+  command = apply
+  assert {
+    condition     = one([for e in module.embeddings.container.environment : e.value if e.name == "REVISION"]) == var.embedding_model_revision
+    error_message = "The embedding container must load the pinned model commit (REVISION)."
+  }
+}
+
+# ── P1-54 round 2: the decision recorded in ADR-0014 §1.5 (amended 2026-10-01) ──
+#
+# One lane for every tenant (INF-36, resolved by the decision). An OpenAI
+# election covers generation and fallback, not embeddings: a corpus searched with
+# one model must be written with that model, so the lane does not follow the
+# election. This must PASS on the stack as it is, and fail if the lane is ever
+# made to depend on openai_enabled.
+run "an_openai_election_does_not_move_the_embedding_lane" {
+  command = apply
+
+  variables {
+    openai_enabled = true
+    openai_api_key = "sk-test-openai-0123456789"
+  }
+
+  assert {
+    condition = alltrue([
+      for defs in [module.ecs.api_container, module.ecs.worker_container] :
+      one([for e in defs.environment : e.value if e.name == "EMBEDDING_PROVIDER"]) == "local" &&
+      one([for e in defs.environment : e.value if e.name == "EMBEDDING_LOCAL_BASE_URL"]) == module.embeddings.base_url
+    ])
+    error_message = "An OpenAI election must leave both containers on the self-hosted embedding lane (ADR-0014 §1.5, amended 2026-10-01)."
+  }
+}
+
+# The lane embeds PII and PHI only under an approval naming it for that use
+# (sensitive-placement-policy.ts). Without one, every chunk that carries a name
+# or an e-mail address is refused, on a deployment that reports ready.
+run "refuses_placement_approvals_without_the_embedding_lane" {
+  command = plan
+
+  variables {
+    ai_provider_placement_approvals = "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\"],\"approvedIntendedUses\":[\"drafting\"]}}"
+  }
+
+  expect_failures = [terraform_data.boot_contract]
+}
+
+run "refuses_a_local_approval_that_does_not_name_embedding" {
+  command = plan
+
+  variables {
+    ai_provider_placement_approvals = "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\"],\"approvedIntendedUses\":[\"drafting\"]},\"local\":{\"region\":\"on_prem\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\",\"phi\"],\"approvedIntendedUses\":[\"chat\"]}}"
+  }
+
+  expect_failures = [terraform_data.boot_contract]
+}
+
+# The environment roots' examples show the approval the ADR records, exactly, so
+# an operator who copies it gets the decided value and not an approximation; and
+# it is the value this suite deploys with.
+run "the_environment_examples_show_the_decided_embedding_approval" {
+  command = plan
+
+  assert {
+    condition = alltrue([
+      for env in ["production", "staging"] :
+      strcontains(file("../environments/${env}/terraform.tfvars.example"), "\"local\":{\"region\":\"on_prem\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\",\"phi\"],\"approvedIntendedUses\":[\"embedding\"]}")
+    ]) && jsondecode(var.ai_provider_placement_approvals)["local"] == jsondecode("{\"region\":\"on_prem\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\",\"phi\"],\"approvedIntendedUses\":[\"embedding\"]}")
+    error_message = "Both terraform.tfvars.example files, and this suite's approvals, must carry the local embedding approval exactly as ADR-0014 §1.5 records it."
+  }
 }
 
 # P1-11 / INF-13 (W2 / D1): the parameter group set pgaudit.log from the start,

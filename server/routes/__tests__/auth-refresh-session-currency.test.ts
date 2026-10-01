@@ -14,12 +14,16 @@ vi.hoisted(() => {
 
 const state = vi.hoisted(() => ({
   passwordChangedAt: null as Date | null,
+  // users.sessions_ended_at as whole seconds: a sign-out everywhere (P0-4b).
+  sessionsEndedAtSeconds: null as number | null,
 }));
 const revokeToken = vi.hoisted(() => vi.fn(async (_token: string, _reason?: string) => undefined));
 
 // The refresh handler reads the user row with `db.select()` (no projection) and
 // the memberships with `db.select({ organizationId, role })`; the double keys on
-// that. The raw pool answers the revocation lookup (nothing revoked).
+// that. The raw pool answers the revocation lookup (nothing revoked) and the
+// account's standing (services/account-standing.ts), which the refresh reads
+// since P0-4b instead of the row's own status and password_changed_at.
 const dbDouble = vi.hoisted(() => {
   const chain = (rows: () => unknown[]) => {
     const c: any = {};
@@ -41,6 +45,15 @@ const dbDouble = vi.hoisted(() => {
   const pool = {
     query: async (sql: string) => {
       if (/FROM revoked_tokens/i.test(sql)) return { rows: [], rowCount: 0 };
+      if (/SELECT status FROM users/i.test(sql)) {
+        const changed = state.passwordChangedAt;
+        const row = {
+          status: 'active',
+          password_changed_at_seconds: changed ? String(Math.floor(changed.getTime() / 1000)) : null,
+          sessions_ended_at_seconds: state.sessionsEndedAtSeconds === null ? null : String(state.sessionsEndedAtSeconds),
+        };
+        return { rows: [row], rowCount: 1 };
+      }
       return { rows: [], rowCount: 0 };
     },
   };
@@ -137,6 +150,7 @@ const refreshTokenIssuedAt = (iat: number) =>
 beforeEach(() => {
   revokeToken.mockClear();
   state.passwordChangedAt = null;
+  state.sessionsEndedAtSeconds = null;
 });
 
 describe('POST /api/auth/refresh after a password change', () => {
@@ -168,6 +182,30 @@ describe('POST /api/auth/refresh after a password change', () => {
   it('mints for an account that never changed its password', async () => {
     // Within the 12-hour session lifetime (P1-1); the age is not what this case is about.
     const res = await request(app()).post('/api/auth/refresh').send({ refreshToken: refreshTokenIssuedAt(nowSeconds() - 3600) });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+  });
+});
+
+describe('POST /api/auth/refresh after a sign-out everywhere (P0-4b)', () => {
+  const refreshTokenOfSession = (iat: number, sst: number) =>
+    jwt.sign({ userId: '1', email: 'u@example.com', type: 'refresh', iat, sid: `sid-${sst}`, sst, idl: 24 * 3600 }, REFRESH_SECRET, {
+      algorithm: 'HS256',
+      expiresIn: '7d',
+    });
+
+  it('refuses a refresh token whose session began before it, even one rotated after it', async () => {
+    const ended = nowSeconds() - 60;
+    state.sessionsEndedAtSeconds = ended;
+    const res = await request(app()).post('/api/auth/refresh').send({ refreshToken: refreshTokenOfSession(ended + 30, ended - 600) });
+    expect(res.status, JSON.stringify(res.body)).toBe(401);
+    expect(res.body.accessToken).toBeUndefined();
+    expect(revokeToken).not.toHaveBeenCalled();
+  });
+
+  it('mints for a session that began after it', async () => {
+    const ended = nowSeconds() - 600;
+    state.sessionsEndedAtSeconds = ended;
+    const res = await request(app()).post('/api/auth/refresh').send({ refreshToken: refreshTokenOfSession(ended + 30, ended + 30) });
     expect(res.status, JSON.stringify(res.body)).toBe(200);
   });
 });

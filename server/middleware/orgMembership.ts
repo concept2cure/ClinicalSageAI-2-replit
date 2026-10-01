@@ -34,6 +34,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { createScopedLogger } from '../utils/logger';
 import { runWithTenantScope } from '../db/tenantStore';
 import { GOVERNED_WRITE_PERMISSION, REPORT_FINALIZE_PERMISSION, REPORT_FINALIZE_ROLES } from '../../shared/constants/permissions';
+import { isSigningAuthorized } from '../services/part11/signing-authority';
 
 const logger = createScopedLogger('auth-middleware');
 
@@ -520,8 +521,12 @@ export const GOVERNED_WRITE_ROLES: ReadonlySet<string> = new Set([
  */
 export function sessionPermissions(role: string | null | undefined): string[] {
   const permissions = GOVERNED_WRITE_ROLES.has(String(role ?? '').toLowerCase()) ? [GOVERNED_WRITE_PERMISSION] : [];
-  // requireRole compares exactly, so this does too.
-  if ((REPORT_FINALIZE_ROLES as readonly string[]).includes(String(role ?? ''))) permissions.push(REPORT_FINALIZE_PERMISSION);
+  // requireRole compares exactly, so this does too. Finalize is a signature
+  // (P1-44b): offered only to a role the signing policy also authorises, so the
+  // canvas never offers what the server refuses with ESIGNATURE_NO_AUTHORITY.
+  if ((REPORT_FINALIZE_ROLES as readonly string[]).includes(String(role ?? '')) && isSigningAuthorized(role)) {
+    permissions.push(REPORT_FINALIZE_PERMISSION);
+  }
   return permissions;
 }
 

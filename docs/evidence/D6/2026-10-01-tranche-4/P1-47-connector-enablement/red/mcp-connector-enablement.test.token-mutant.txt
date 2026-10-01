@@ -1,0 +1,103 @@
+# MUTANT: findGrantMembership's enablement check disabled (P147_MUTANT=1) in server/mcp/auth/platform-token.ts, after the issuedAt fixture fix; restored after this run
+# command: P147_MUTANT=1 npx vitest run server/mcp/__tests__/mcp-connector-enablement.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/mcp/__tests__/mcp-connector-enablement.test.ts
+
+stderr | server/mcp/__tests__/mcp-connector-enablement.test.ts
+
+stderr | server/mcp/__tests__/mcp-connector-enablement.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+
+stdout | server/mcp/__tests__/mcp-connector-enablement.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/mcp/__tests__/mcp-connector-enablement.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/mcp/__tests__/mcp-connector-enablement.test.ts
+
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > control: enabled, both a connector token and the session open the connector 85ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > no settings at all: a connector token is refused with invalid_token and the reason 12ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > settings without the connector: a connector token is refused with invalid_token and the reason 13ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > enabled: false: a connector token is refused with invalid_token and the reason 12ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > enabled: "true" (a string, not true): a connector token is refused with invalid_token and the reason 10ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > the connector stored as a bare true: a connector token is refused with invalid_token and the reason 14ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > the session token is refused the same way 6ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > refuses as an outage when the organization cannot be read: never admits, never "bad token" 7ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > control: enabled, consent issues a code 9ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > no settings at all: 403 access_denied with the reason, and no code 5ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > settings without the connector: 403 access_denied with the reason, and no code 4ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > enabled: false: 403 access_denied with the reason, and no code 4ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > enabled: "true" (a string, not true): 403 access_denied with the reason, and no code 5ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > the connector stored as a bare true: 403 access_denied with the reason, and no code 4ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > answers 503 and issues no code when the organization cannot be read 4ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the /token exchanges > control: enabled, a refresh rotates and issues, and a code exchange issues 3ms
+ × server/mcp/__tests__/mcp-connector-enablement.test.ts > the /token exchanges > not enabled: a refresh is refused (invalid_grant) and the grant is left as it was 15ms
+   → promise resolved "{ …(5) }" instead of rejecting
+ × server/mcp/__tests__/mcp-connector-enablement.test.ts > the /token exchanges > not enabled: a code exchange is refused and issues nothing 2ms
+   → promise resolved "{ …(5) }" instead of rejecting
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the /token exchanges > a refresh refuses as an outage when the organization cannot be read, and neither rotates nor issues 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/mcp/__tests__/mcp-connector-enablement.test.ts > the /token exchanges > not enabled: a refresh is refused (invalid_grant) and the grant is left as it was
+AssertionError: promise resolved "{ …(5) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIzIiwiZW1haWwiOm51bGwsIm9yZ2FuaXphdGlvbklkIjoiNyIsIm9yZ2FuaXphdGlvblV1aWQiOm51bGwsInJvbGUiOiJtZW1iZXIiLCJ0eXBlIjoiYWNjZXNzIiwidG9rZW5fdXNlIjoibWNwIiwiY2xpZW50X2lkIjoiY2xpZW50LTEiLCJzY29wZSI6ImMyYzpyZWFkIiwic2lkIjoiOTA3ZmRkM2QtODY0NC00MjdhLWEzMjYtZmZhZmI3YmE1NDZkIiwic3N0IjoxNzkwODY0MDMwLCJpZGwiOjM2MDAsImlhdCI6MTc5MDg2NDAzMCwiZXhwIjoxNzkwODY3NjMwLCJhdWQiOiJodHRwOi8vbG9jYWxob3N0OjUzMDAvbWNwIn0.lUtbd8alxtK491lpsI_p8tLLXbFyDXPOLywpHWayi68",
++   "expires_in": 3600,
++   "refresh_token": "7.issued-refresh-token-issued-refresh-token-issued-refresh",
++   "scope": "c2c:read",
++   "token_type": "bearer",
+
+ ❯ server/mcp/__tests__/mcp-connector-enablement.test.ts:203:70
+    201|   it('not enabled: a refresh is refused (invalid_grant) and the grant …
+    202|     org.settings = { claudeConnector: { enabled: false } };
+    203|     await expect(provider.exchangeRefreshToken(client, '7.presented'))…
+       |                                                                      ^
+    204|       errorCode: 'invalid_grant',
+    205|       message: expect.stringMatching(/connector for Claude is not enab…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/mcp/__tests__/mcp-connector-enablement.test.ts > the /token exchanges > not enabled: a code exchange is refused and issues nothing
+AssertionError: promise resolved "{ …(5) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIzIiwiZW1haWwiOm51bGwsIm9yZ2FuaXphdGlvbklkIjoiNyIsIm9yZ2FuaXphdGlvblV1aWQiOm51bGwsInJvbGUiOiJtZW1iZXIiLCJ0eXBlIjoiYWNjZXNzIiwidG9rZW5fdXNlIjoibWNwIiwiY2xpZW50X2lkIjoiY2xpZW50LTEiLCJzY29wZSI6ImMyYzpyZWFkIiwic2lkIjoiMmM1NTE2YzgtMmUwMS00YjY0LWJmNDctZTcyODEwZTU1YjA1Iiwic3N0IjoxNzkwODY0MDMwLCJpZGwiOjM2MDAsImlhdCI6MTc5MDg2NDAzMCwiZXhwIjoxNzkwODY3NjMwLCJhdWQiOiJodHRwOi8vbG9jYWxob3N0OjUzMDAvbWNwIn0.C0oZMtaxEJk9zf7OWl1mQosfJQYHEeYBAqbGlpmSXAo",
++   "expires_in": 3600,
++   "refresh_token": "7.issued-refresh-token-issued-refresh-token-issued-refresh",
++   "scope": "c2c:read",
++   "token_type": "bearer",
+
+ ❯ server/mcp/__tests__/mcp-connector-enablement.test.ts:213:70
+    211|   it('not enabled: a code exchange is refused and issues nothing', asy…
+    212|     org.settings = null;
+    213|     await expect(provider.exchangeAuthorizationCode(client, '7.code'))…
+       |                                                                      ^
+    214|     expect(grants.issueRefreshToken).not.toHaveBeenCalled();
+    215|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 17 passed (19)
+   Start at  14:13:45
+   Duration  4.58s (transform 2.03s, setup 218ms, import 299ms, tests 3.57s, environment 0ms)
+

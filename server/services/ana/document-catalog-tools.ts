@@ -22,9 +22,11 @@
  *                              summary / key data), REFUSED until the receipts
  *                              cover the entire text. A sampled page cannot be
  *                              recorded as "reviewed".
- *   search_project_documents — semantic search over the comprehension records
- *                              (document-catalog-search.ts), fail-closed when
- *                              the index is unavailable.
+ *   search_project_documents — AnA's own Vault search. Always the key-free
+ *                              Postgres full-text search users have
+ *                              (vault-search.ts), plus the semantic catalog
+ *                              arm (document-catalog-search.ts) when the
+ *                              catalog is on and an embedding provider answers.
  *
  * Handlers are registered via the inject-and-sibling pattern
  * (registerDocumentCatalogHandlers) to avoid an import cycle with
@@ -32,9 +34,10 @@
  * are imported by AnaToolDefinitions, so the registry-consistency suite holds
  * def ↔ handler parity automatically.
  *
- * Feature-gated per tenant on 'ana.document_catalog' (FeatureToggleService,
- * off by default, fails closed) with the ANA_DOCUMENT_CATALOG_FORCE_ON env
- * override — the same rollout shape as the document stack.
+ * list, read and search need no flag and no key (D2, 2026-10-01): every
+ * organisation's AnA can find and read its Vault. Cataloging and filing stay
+ * gated per tenant on 'ana.document_catalog' (FeatureToggleService, off by
+ * default, fails closed; ANA_DOCUMENT_CATALOG_FORCE_ON overrides).
  */
 
 import type { ToolContext } from './AnaToolExecutor.js';
@@ -42,6 +45,7 @@ import type { ProjectDocumentPage } from '../vault/document-catalog.service.js';
 import {
   CHAT_UPLOAD_ID,
   requireCatalog,
+  requireDocumentAccess,
   unknownDocumentRefusal,
   withCaughtErrors,
   type CatalogService,
@@ -125,7 +129,7 @@ async function handleListProjectDocuments(
   input: Record<string, unknown>,
   ctx?: ToolContext,
 ): Promise<string> {
-  const gate = await requireCatalog(ctx, 'list_project_documents');
+  const gate = await requireDocumentAccess(ctx, 'list_project_documents');
   if ('refusal' in gate) return JSON.stringify({ error: gate.refusal });
   const { svc, orgId } = gate;
 
@@ -281,7 +285,7 @@ async function handleReadProjectDocument(
   input: Record<string, unknown>,
   ctx?: ToolContext,
 ): Promise<string> {
-  const gate = await requireCatalog(ctx, 'read_project_document');
+  const gate = await requireDocumentAccess(ctx, 'read_project_document');
   if ('refusal' in gate) return JSON.stringify({ error: gate.refusal });
   const { svc, orgId } = gate;
 
@@ -449,52 +453,44 @@ async function handleSearchProjectDocuments(
   input: Record<string, unknown>,
   ctx?: ToolContext,
 ): Promise<string> {
-  const gate = await requireCatalog(ctx, 'search_project_documents');
+  const gate = await requireDocumentAccess(ctx, 'search_project_documents');
   if ('refusal' in gate) return JSON.stringify({ error: gate.refusal });
-  const { orgId } = gate;
+  const { svc, orgId } = gate;
 
   const query = typeof input.query === 'string' ? input.query.trim() : '';
   if (query.length < 3) {
     return JSON.stringify({ error: 'search_project_documents requires a query of at least 3 characters.' });
   }
+  const limit = Math.min(Math.max(typeof input.limit === 'number' ? Math.floor(input.limit) : 8, 1), 25);
   // The open project's documents only (PF-10 S7); the organization's with no project open.
   const scope = await catalogScope(ctx, orgId, null, 'read');
   if ('error' in scope) return JSON.stringify({ ok: false, error: scope.error, code: scope.code });
-  const { searchCatalog, CatalogSearchUnavailableError } = await import(
-    '../vault/document-catalog-search.js'
-  );
-  try {
-    const result = await searchCatalog(orgId, query, {
-      limit: typeof input.limit === 'number' ? input.limit : undefined,
-      programId: scope.programId,
-    });
-    const unsearchable =
-      result.unsearchableCount > 0
-        ? ` ${result.unsearchableCount} document(s) exist but are not searchable yet (not cataloged) — absence here does not mean absence; use list_project_documents.`
-        : '';
-    return JSON.stringify({
-      ok: true,
-      query,
-      hits: result.hits,
-      searchedCount: result.searchedCount,
-      unsearchableCount: result.unsearchableCount,
-      message:
-        result.hits.length === 0
-          ? `No cataloged document matched across the ${result.searchedCount} searched.${unsearchable}`
-          : `${result.hits.length} match(es) across ${result.searchedCount} cataloged document(s).${unsearchable}`,
-    });
-  } catch (err) {
-    if (err instanceof CatalogSearchUnavailableError) {
-      // Unavailable is not "no matches" — say it, and route to discovery.
-      return JSON.stringify({
-        ok: false,
-        unavailable: true,
-        error: err.message,
-        message: 'Fall back to list_project_documents + read_project_document; do not report "nothing found".',
-      });
-    }
-    throw err;
-  }
+
+  // Text always (no key, no flag); meaning when the catalog and an embedding provider allow.
+  const { pool } = await import('../../db.js');
+  const { searchVaultForAssistant } = await import('../vault/vault-assistant-search.js');
+  const result = await searchVaultForAssistant(pool, {
+    organizationId: orgId,
+    programId: scope.programId,
+    query,
+    limit,
+    catalogEnabled: await svc.isDocumentCatalogEnabled(orgId),
+  });
+
+  const list = result.hits;
+  return JSON.stringify({
+    ok: true,
+    query,
+    hits: list,
+    textMatches: result.textMatches,
+    semantic: result.semantic,
+    message:
+      list.length === 0
+        ? 'No Vault document matched by its title, file name or text. Absence here means no word of the query ' +
+          'appears in a current document; try other terms, or list_project_documents to browse.'
+        : `${list.length} document(s) matched. Text matching finds documents that use the query's words; ` +
+          'read_project_document before relying on one.',
+  });
 }
 
 

@@ -25,6 +25,10 @@
  *      written BEFORE anything is sent (audited-export.ts sendAuditedExport);
  *      when it cannot be written: 503 REPORT_NOT_RECORDED and nothing leaves.
  *
+ * The periodic review records the reports name (/api/audit/reviews; P1-25,
+ * P1-43) are mounted here, behind this router's own gate
+ * (routes/audit-compliance-reviews.ts).
+ *
  * @module server/routes/audit-compliance-reports
  */
 import { Router, type NextFunction, type Request, type Response } from 'express';
@@ -34,7 +38,13 @@ import { serverError } from '../lib/api-response.js';
 import { canReadAuditTrail, requireAuditReader } from '../services/audit/audit-api-authority.js';
 import { resolveExportSigningKey, type ResolvedExportSigningKey } from '../services/audit/auditExportKeyPosture.js';
 import { sendAuditedExport, walkTenantChain } from '../services/audit/audited-export.js';
-import { FULL_AUDIT_TRAIL_ID, findReport, reportSummaries } from '../services/audit/compliance-reports/catalog.js';
+import {
+  FULL_AUDIT_TRAIL_ID,
+  REPORT_RESOURCE_TYPE,
+  REPORT_RUN_ACTION,
+  findReport,
+  reportSummaries,
+} from '../services/audit/compliance-reports/catalog.js';
 import { runComplianceReport } from '../services/audit/compliance-reports/generate.js';
 import { platformIntegrityChecks } from '../services/audit/compliance-reports/integrity-checks.js';
 import { parseReportPeriod } from '../services/audit/compliance-reports/period.js';
@@ -52,14 +62,15 @@ import {
 import type { ReportDefinition, ReportPeriod } from '../services/audit/compliance-reports/types.js';
 import { authedOrgId, usableOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger.js';
+import { createComplianceReviewRoutes } from './audit-compliance-reviews.js';
 
 const log = createScopedLogger('audit-compliance-reports');
 
 /** Who may run a report, in the words the catalog shows: AUDIT_READER_ROLES plus platform administrators. */
 export const AUDIT_REPORT_READERS = 'organisation owners, admins and managers, and platform administrators';
 
-export const REPORT_RUN_ACTION = 'compliance.report_run';
-export const REPORT_RESOURCE_TYPE = 'compliance_report';
+// Defined beside the catalog, where the review record also reads them; re-exported for this router's importers.
+export { REPORT_RESOURCE_TYPE, REPORT_RUN_ACTION };
 
 const NOT_RECORDED_MESSAGE =
   'The export was refused because it could not be recorded in the audit trail. Nothing was exported.';
@@ -244,6 +255,8 @@ export function createComplianceReportRoutes(pool: Pool): Router {
       inProgress.release(orgId);
     }
   });
+
+  router.use(createComplianceReviewRoutes(pool, { sessionOrg, readerGate }));
 
   return router;
 }

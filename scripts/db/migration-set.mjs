@@ -2864,6 +2864,7 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20260930_report_type_registry_seed.sql',
   'migrations/20261001_organization_retention_settings.sql', // P1-22-org (ADR-0014 §6): one public org-keyed table, no DROP; above the pair so the sweep gives it RLS
   'migrations/20261001_domain_history_append_only.sql', // P1-24 (DP-15/16): append-only triggers on workflow_history, document_audit_logs, regulatory_audit_logs, c2c_ana_actions, authoring_signatures; after every creator; no table, no DROP
+  'migrations/20261001_users_sessions_ended_at.sql', // P0-4b (IAM-04 b): users.sessions_ended_at + a trigger stamping it when status leaves 'active'; additive, no table, no DROP of anything the set creates
   'migrations/20261001_qms_document_signature_required.sql', // P0-18 (DP-01 residual): deferred constraint triggers refusing qms_documents → effective/retired without a same-transaction signature; after 20260813d (signed_target); no table, no DROP
 
   // ── IND lifecycle and assessment tables reach every deployed database (2026-10-01, D1) ─
@@ -2942,6 +2943,7 @@ export const C2C_MIGRATION_FILES = [
   // the final pair because ci:migration-set-order pins the tail. Evidence
   // docs/evidence/D5-ANA-RECORD/2026-10-01-review-comments/.
   'migrations/20261001_review_comments_record.sql',
+  'migrations/20261001_compliance_review_records.sql', // P1-25 + P1-43 (ADR-0014 §8): one public org-keyed table (audit-trail and access reviews), signed through the ceremony, fixed once signed; after electronic_signatures' creators; no DROP of anything another file creates; above the pair so the sweep gives it RLS
   /* Vault document relationships (plan critique 15, D2, 2026-10-01): the
      replacement for parentDocumentId. One public, org-keyed table (Rule 1),
      frozen identity, one-way removal with a reason, no TRUNCATE, DELETE only

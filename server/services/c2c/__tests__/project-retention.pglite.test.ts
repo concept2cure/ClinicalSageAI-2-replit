@@ -15,7 +15,7 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
-import { projectDeletionHolds, projectDeletionRefusal } from '../project-retention';
+import { projectDeleteBlockedRefusal, projectDeletionHolds, projectDeletionRefusal } from '../project-retention';
 
 const PROGRAM = '11111111-1111-4111-8111-111111111111';
 const DELETED_PROGRAM = '22222222-2222-4222-8222-222222222222';
@@ -128,5 +128,35 @@ describe('projectDeletionRefusal', () => {
 
   it('drafts only: no refusal', () => {
     expect(projectDeletionRefusal({ anchoredPrograms: [], governedArtifacts: 0 }, 'project')).toBeNull();
+  });
+});
+
+describe('projectDeleteBlockedRefusal: the database refused the delete (PF-13 follow-up)', () => {
+  // The driver's 23503, as drizzle wraps it (DrizzleQueryError, the pg error in `cause`).
+  const refused = Object.assign(new Error('Failed query: delete from "projects" …'), {
+    cause: Object.assign(new Error('update or delete on table "projects" violates foreign key constraint'), {
+      code: '23503',
+      table: 'fda_communications',
+      constraint: 'fda_communications_project_id_projects_id_fk',
+    }),
+  });
+
+  it('a store keeping a record under the project: 409, archive instead; the store is named for the log only', () => {
+    const r = projectDeleteBlockedRefusal(refused, 'project');
+    expect(r?.status).toBe(409);
+    expect(r?.body.error).toBe('PROJECT_HOLDS_RECORDS');
+    expect(r?.body.message).toMatch(/^This project still has records .* Archive it instead\. Nothing was deleted\.$/);
+    expect(JSON.stringify(r?.body)).not.toMatch(/fda_communications|_fk/);
+    expect(r?.heldBy).toEqual({ table: 'fda_communications', constraint: 'fda_communications_project_id_projects_id_fk' });
+  });
+
+  it('the driver error unwrapped, and a workspace, read the same', () => {
+    expect(projectDeleteBlockedRefusal(refused.cause, 'workspace')?.body.message).toMatch(/^This workspace still has records/);
+  });
+
+  it('any other failure is not a refusal: it stays the route\'s 500', () => {
+    expect(projectDeleteBlockedRefusal(Object.assign(new Error('x'), { cause: { code: '40P01' } }), 'project')).toBeNull();
+    expect(projectDeleteBlockedRefusal(new Error('connection terminated'), 'project')).toBeNull();
+    expect(projectDeleteBlockedRefusal(undefined, 'project')).toBeNull();
   });
 });

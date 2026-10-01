@@ -1,0 +1,1867 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > names each sequence and section that carries a version, with the operation 5033ms
+   → Unable to find an element by: [data-testid="vault-version-placed-22222222-2222-4222-8222-222222222222"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      data-testid="vault-versions"
+    >
+      <div
+        class="vd-d-seclbl"
+      >
+        Versions
+      </div>
+      <div
+        class="vd-vers"
+      >
+        <div
+          class="vd-ver"
+          data-testid="vault-version-22222222-2222-4222-8222-222222222222"
+        >
+          <span
+            class="vd-ver-v"
+          >
+            v2.0
+             · current
+          </span>
+          <span
+            class="vd-ver-m"
+          >
+            2026-09-30 10:00 UTC
+             · 
+            Uma Uploader
+             · 
+            2.0 KB
+             · SHA-256 
+            <span
+              class="mono"
+              title="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            >
+              bbbbbbbbbbbb
+            </span>
+            <span
+              class="vd-ver-lc"
+              data-testid="vault-version-stage"
+            >
+              Not sent for review
+            </span>
+          </span>
+          <button
+            aria-label="Download version 2.0 of Stability summary"
+            class="sp-ask"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-download"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+              />
+              <polyline
+                points="7 10 12 15 17 10"
+              />
+              <line
+                x1="12"
+                x2="12"
+                y1="15"
+                y2="3"
+              />
+            </svg>
+             Download
+          </button>
+        </div>
+        <div
+          class="vd-ver"
+          data-testid="vault-version-33333333-3333-4333-8333-333333333333"
+        >
+          <span
+            class="vd-ver-v"
+          >
+            v1.0
+             · earlier
+          </span>
+          <span
+            class="vd-ver-m"
+          >
+            2026-09-30 10:00 UTC
+             · 
+            Uma Uploader
+             · 
+            2.0 KB
+             · SHA-256 
+            <span
+              class="mono"
+              title="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            >
+              aaaaaaaaaaaa
+            </span>
+            <span
+              class="vd-ver-lc"
+              data-testid="vault-version-stage"
+            >
+              Not sent for review
+            </span>
+          </span>
+          <button
+            aria-label="Download version 1.0 of Stability summary"
+            class="sp-ask"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-download"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+              />
+              <polyline
+                points="7 10 12 15 17 10"
+              />
+              <line
+                x1="12"
+                x2="12"
+                y1="15"
+                y2="3"
+              />
+            </svg>
+             Download
+          </button>
+          <button
+            class="sp-ask"
+          >
+            Compare with 
+            v2.0
+          </button>
+        </div>
+      </div>
+      <input
+        aria-label="File to add as a new version of Stability summary"
+        hidden=""
+        type="file"
+      />
+      <button
+        class="sp-ask"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-upload"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+          />
+          <polyline
+            points="17 8 12 3 7 8"
+          />
+          <line
+            x1="12"
+            x2="12"
+            y1="3"
+            y2="15"
+          />
+        </svg>
+         Upload new version
+      </button>
+      <button
+        class="sp-ask"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-download"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+          />
+          <polyline
+            points="7 10 12 15 17 10"
+          />
+          <line
+            x1="12"
+            x2="12"
+            y1="15"
+            y2="3"
+          />
+        </svg>
+         Export signed history
+      </button>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      data-testid="vault-versions"
+    >
+      <div
+        class="vd-d-seclbl"
+      >
+        Versions
+      </div>
+      <div
+        class="vd-vers"
+      >
+        <div
+          class="vd-ver"
+          data-testid="vault-version-22222222-2222-4222-8222-222222222222"
+        >
+          <span
+            class="vd-ver-v"
+          >
+            v2.0
+             · current
+          </span>
+          <span
+            class="vd-ver-m"
+          >
+            2026-09-30 10:00 UTC
+             · 
+            Uma Uploader
+             · 
+            2.0 KB
+             · SHA-256 
+            <span
+              class="mono"
+              title="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            >
+              bbbbbbbbbbbb
+            </span>
+            <span
+              class="vd-ver-lc"
+              data-testid="vault-version-stage"
+            >
+              Not sent for review
+            </span>
+          </span>
+          <button
+            aria-label="Download version 2.0 of Stability summary"
+            class="sp-ask"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-download"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+              />
+              <polyline
+                points="7 10 12 15 17 10"
+              />
+              <line
+                x1="12"
+                x2="12"
+                y1="15"
+                y2="3"
+              />
+            </svg>
+             Download
+          </button>
+        </div>
+        <div
+          class="vd-ver"
+          data-testid="vault-version-33333333-3333-4333-8333-333333333333"
+        >
+          <span
+            class="vd-ver-v"
+          >
+            v1.0
+             · earlier
+          </span>
+          <span
+            class="vd-ver-m"
+          >
+            2026-09-30 10:00 UTC
+             · 
+            Uma Uploader
+             · 
+            2.0 KB
+             · SHA-256 
+            <span
+              class="mono"
+              title="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            >
+              aaaaaaaaaaaa
+            </span>
+            <span
+              class="vd-ver-lc"
+              data-testid="vault-version-stage"
+            >
+              Not sent for review
+            </span>
+          </span>
+          <button
+            aria-label="Download version 1.0 of Stability summary"
+            class="sp-ask"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-download"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+              />
+              <polyline
+                points="7 10 12 15 17 10"
+              />
+              <line
+                x1="12"
+                x2="12"
+                y1="15"
+                y2="3"
+              />
+            </svg>
+             Download
+          </button>
+          <button
+            class="sp-ask"
+          >
+            Compare with 
+            v2.0
+          </button>
+        </div>
+      </div>
+      <input
+        aria-label="File to add as a new version of Stability summary"
+        hidden=""
+        type="file"
+      />
+      <button
+        class="sp-ask"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-upload"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+          />
+          <polyline
+            points="17 8 12 3 7 8"
+          />
+          <line
+            x1="12"
+            x2="12"
+            y1="3"
+            y2="15"
+          />
+        </svg>
+         Upload new version
+      </button>
+      <button
+        class="sp-ask"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-download"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+          />
+          <polyline
+            points="7 10 12 15 17 10"
+          />
+          <line
+            x1="12"
+            x2="12"
+            y1="15"
+            y2="3"
+          />
+        </svg>
+         Export signed history
+      </button>
+    </div>
+  </div>
+</body>
+ × client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > a version placed nowhere says so, and a row the server said nothing about claims nothing 5008ms
+   → Unable to find an element by: [data-testid="vault-version-placed-22222222-2222-4222-8222-222222222222"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      data-testid="vault-versions"
+    >
+      <div
+        class="vd-d-seclbl"
+      >
+        Versions
+      </div>
+      <div
+        class="vd-vers"
+      >
+        <div
+          class="vd-ver"
+          data-testid="vault-version-22222222-2222-4222-8222-222222222222"
+        >
+          <span
+            class="vd-ver-v"
+          >
+            v2.0
+             · current
+          </span>
+          <span
+            class="vd-ver-m"
+          >
+            2026-09-30 10:00 UTC
+             · 
+            Uma Uploader
+             · 
+            2.0 KB
+             · SHA-256 
+            <span
+              class="mono"
+              title="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            >
+              bbbbbbbbbbbb
+            </span>
+            <span
+              class="vd-ver-lc"
+              data-testid="vault-version-stage"
+            >
+              Not sent for review
+            </span>
+          </span>
+          <button
+            aria-label="Download version 2.0 of Stability summary"
+            class="sp-ask"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-download"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+              />
+              <polyline
+                points="7 10 12 15 17 10"
+              />
+              <line
+                x1="12"
+                x2="12"
+                y1="15"
+                y2="3"
+              />
+            </svg>
+             Download
+          </button>
+        </div>
+        <div
+          class="vd-ver"
+          data-testid="vault-version-33333333-3333-4333-8333-333333333333"
+        >
+          <span
+            class="vd-ver-v"
+          >
+            v1.0
+             · earlier
+          </span>
+          <span
+            class="vd-ver-m"
+          >
+            2026-09-30 10:00 UTC
+             · 
+            Uma Uploader
+             · 
+            2.0 KB
+             · SHA-256 
+            <span
+              class="mono"
+              title="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            >
+              aaaaaaaaaaaa
+            </span>
+            <span
+              class="vd-ver-lc"
+              data-testid="vault-version-stage"
+            >
+              Not sent for review
+            </span>
+          </span>
+          <button
+            aria-label="Download version 1.0 of Stability summary"
+            class="sp-ask"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-download"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+              />
+              <polyline
+                points="7 10 12 15 17 10"
+              />
+              <line
+                x1="12"
+                x2="12"
+                y1="15"
+                y2="3"
+              />
+            </svg>
+             Download
+          </button>
+          <button
+            class="sp-ask"
+          >
+            Compare with 
+            v2.0
+          </button>
+        </div>
+      </div>
+      <input
+        aria-label="File to add as a new version of Stability summary"
+        hidden=""
+        type="file"
+      />
+      <button
+        class="sp-ask"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-upload"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+          />
+          <polyline
+            points="17 8 12 3 7 8"
+          />
+          <line
+            x1="12"
+            x2="12"
+            y1="3"
+            y2="15"
+          />
+        </svg>
+         Upload new version
+      </button>
+      <button
+        class="sp-ask"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-download"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+          />
+          <polyline
+            points="7 10 12 15 17 10"
+          />
+          <line
+            x1="12"
+            x2="12"
+            y1="15"
+            y2="3"
+          />
+        </svg>
+         Export signed history
+      </button>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      data-testid="vault-versions"
+    >
+      <div
+        class="vd-d-seclbl"
+      >
+        Versions
+      </div>
+      <div
+        class="vd-vers"
+      >
+        <div
+          class="vd-ver"
+          data-testid="vault-version-22222222-2222-4222-8222-222222222222"
+        >
+          <span
+            class="vd-ver-v"
+          >
+            v2.0
+             · current
+          </span>
+          <span
+            class="vd-ver-m"
+          >
+            2026-09-30 10:00 UTC
+             · 
+            Uma Uploader
+             · 
+            2.0 KB
+             · SHA-256 
+            <span
+              class="mono"
+              title="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            >
+              bbbbbbbbbbbb
+            </span>
+            <span
+              class="vd-ver-lc"
+              data-testid="vault-version-stage"
+            >
+              Not sent for review
+            </span>
+          </span>
+          <button
+            aria-label="Download version 2.0 of Stability summary"
+            class="sp-ask"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-download"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+              />
+              <polyline
+                points="7 10 12 15 17 10"
+              />
+              <line
+                x1="12"
+                x2="12"
+                y1="15"
+                y2="3"
+              />
+            </svg>
+             Download
+          </button>
+        </div>
+        <div
+          class="vd-ver"
+          data-testid="vault-version-33333333-3333-4333-8333-333333333333"
+        >
+          <span
+            class="vd-ver-v"
+          >
+            v1.0
+             · earlier
+          </span>
+          <span
+            class="vd-ver-m"
+          >
+            2026-09-30 10:00 UTC
+             · 
+            Uma Uploader
+             · 
+            2.0 KB
+             · SHA-256 
+            <span
+              class="mono"
+              title="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            >
+              aaaaaaaaaaaa
+            </span>
+            <span
+              class="vd-ver-lc"
+              data-testid="vault-version-stage"
+            >
+              Not sent for review
+            </span>
+          </span>
+          <button
+            aria-label="Download version 1.0 of Stability summary"
+            class="sp-ask"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-download"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+              />
+              <polyline
+                points="7 10 12 15 17 10"
+              />
+              <line
+                x1="12"
+                x2="12"
+                y1="15"
+                y2="3"
+              />
+            </svg>
+             Download
+          </button>
+          <button
+            class="sp-ask"
+          >
+            Compare with 
+            v2.0
+          </button>
+        </div>
+      </div>
+      <input
+        aria-label="File to add as a new version of Stability summary"
+        hidden=""
+        type="file"
+      />
+      <button
+        class="sp-ask"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-upload"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+          />
+          <polyline
+            points="17 8 12 3 7 8"
+          />
+          <line
+            x1="12"
+            x2="12"
+            y1="3"
+            y2="15"
+          />
+        </svg>
+         Upload new version
+      </button>
+      <button
+        class="sp-ask"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-download"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+          />
+          <polyline
+            points="7 10 12 15 17 10"
+          />
+          <line
+            x1="12"
+            x2="12"
+            y1="15"
+            y2="3"
+          />
+        </svg>
+         Export signed history
+      </button>
+    </div>
+  </div>
+</body>
+ × client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > several placements read as one list 1ms
+   → placedInText is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > names each sequence and section that carries a version, with the operation
+TestingLibraryElementError: Unable to find an element by: [data-testid="vault-version-placed-22222222-2222-4222-8222-222222222222"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      data-testid="vault-versions"
+    >
+      <div
+        class="vd-d-seclbl"
+      >
+        Versions
+      </div>
+      <div
+        class="vd-vers"
+      >
+        <div
+          class="vd-ver"
+          data-testid="vault-version-22222222-2222-4222-8222-222222222222"
+        >
+          <span
+            class="vd-ver-v"
+          >
+            v2.0
+             · current
+          </span>
+          <span
+            class="vd-ver-m"
+          >
+            2026-09-30 10:00 UTC
+             · 
+            Uma Uploader
+             · 
+            2.0 KB
+             · SHA-256 
+            <span
+              class="mono"
+              title="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            >
+              bbbbbbbbbbbb
+            </span>
+            <span
+              class="vd-ver-lc"
+              data-testid="vault-version-stage"
+            >
+              Not sent for review
+            </span>
+          </span>
+          <button
+            aria-label="Download version 2.0 of Stability summary"
+            class="sp-ask"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-download"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+              />
+              <polyline
+                points="7 10 12 15 17 10"
+              />
+              <line
+                x1="12"
+                x2="12"
+                y1="15"
+                y2="3"
+              />
+            </svg>
+             Download
+          </button>
+        </div>
+        <div
+          class="vd-ver"
+          data-testid="vault-version-33333333-3333-4333-8333-333333333333"
+        >
+          <span
+            class="vd-ver-v"
+          >
+            v1.0
+             · earlier
+          </span>
+          <span
+            class="vd-ver-m"
+          >
+            2026-09-30 10:00 UTC
+             · 
+            Uma Uploader
+             · 
+            2.0 KB
+             · SHA-256 
+            <span
+              class="mono"
+              title="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            >
+              aaaaaaaaaaaa
+            </span>
+            <span
+              class="vd-ver-lc"
+              data-testid="vault-version-stage"
+            >
+              Not sent for review
+            </span>
+          </span>
+          <button
+            aria-label="Download version 1.0 of Stability summary"
+            class="sp-ask"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-download"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+              />
+              <polyline
+                points="7 10 12 15 17 10"
+              />
+              <line
+                x1="12"
+                x2="12"
+                y1="15"
+                y2="3"
+              />
+            </svg>
+             Download
+          </button>
+          <button
+            class="sp-ask"
+          >
+            Compare with 
+            v2.0
+          </button>
+        </div>
+      </div>
+      <input
+        aria-label="File to add as a new version of Stability summary"
+        hidden=""
+        type="file"
+      />
+      <button
+        class="sp-ask"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-upload"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+          />
+          <polyline
+            points="17 8 12 3 7 8"
+          />
+          <line
+            x1="12"
+            x2="12"
+            y1="3"
+            y2="15"
+          />
+        </svg>
+         Upload new version
+      </button>
+      <button
+        class="sp-ask"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-download"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+          />
+          <polyline
+            points="7 10 12 15 17 10"
+          />
+          <line
+            x1="12"
+            x2="12"
+            y1="15"
+            y2="3"
+          />
+        </svg>
+         Export signed history
+      </button>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      data-testid="vault-versions"
+    >
+      <div
+        class="vd-d-seclbl"
+      >
+        Versions
+      </div>
+      <div
+        class="vd-vers"
+      >
+        <div
+          class="vd-ver"
+          data-testid="vault-version-22222222-2222-4222-8222-222222222222"
+        >
+          <span
+            class="vd-ver-v"
+          >
+            v2.0
+             · current
+          </span>
+          <span
+            class="vd-ver-m"
+          >
+            2026-09-30 10:00 UTC
+             · 
+            Uma Uploader
+             · 
+            2.0 KB
+             · SHA-256 
+            <span
+              class="mono"
+              title="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            >
+              bbbbbbbbbbbb
+            </span>
+            <span
+              class="vd-ver-lc"
+              data-testid="vault-version-stage"
+            >
+              Not sent for review
+            </span>
+          </span>
+          <button
+            aria-label="Download version 2.0 of Stability summary"
+            class="sp-ask"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-download"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+              />
+              <polyline
+                points="7 10 12 15 17 10"
+              />
+              <line
+                x1="12"
+                x2="12"
+                y1="15"
+                y2="3"
+              />
+            </svg>
+             Download
+          </button>
+        </div>
+        <div
+          class="vd-ver"
+          data-testid="vault-version-33333333-3333-4333-8333-333333333333"
+        >
+          <span
+            class="vd-ver-v"
+          >
+            v1.0
+             · earlier
+          </span>
+          <span
+            class="vd-ver-m"
+          >
+            2026-09-30 10:00 UTC
+             · 
+            Uma Uploader
+             · 
+            2.0 KB
+             · SHA-256 
+            <span
+              class="mono"
+              title="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            >
+              aaaaaaaaaaaa
+            </span>
+            <span
+              class="vd-ver-lc"
+              data-testid="vault-version-stage"
+            >
+              Not sent for review
+            </span>
+          </span>
+          <button
+            aria-label="Download version 1.0 of Stability summary"
+            class="sp-ask"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-download"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+              />
+              <polyline
+                points="7 10 12 15 17 10"
+              />
+              <line
+                x1="12"
+                x2="12"
+                y1="15"
+                y2="3"
+              />
+            </svg>
+             Download
+          </button>
+          <button
+            class="sp-ask"
+          >
+            Compare with 
+            v2.0
+          </button>
+        </div>
+      </div>
+      <input
+        aria-label="File to add as a new version of Stability summary"
+        hidden=""
+        type="file"
+      />
+      <button
+        class="sp-ask"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-upload"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+          />
+          <polyline
+            points="17 8 12 3 7 8"
+          />
+          <line
+            x1="12"
+            x2="12"
+            y1="3"
+            y2="15"
+          />
+        </svg>
+         Upload new version
+      </button>
+      <button
+        class="sp-ask"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-download"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+          />
+          <polyline
+            points="7 10 12 15 17 10"
+          />
+          <line
+            x1="12"
+            x2="12"
+            y1="15"
+            y2="3"
+          />
+        </svg>
+         Export signed history
+      </button>
+    </div>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx:57:26
+     55|     ] });
+     56|     mount();
+     57|     expect((await screen.findByTestId(`vault-version-placed-${V2}`)).t…
+       |                          ^
+     58|       .toBe(' · placed in IND 123456, sequence 0001, 3.2.P.8.1 (replac…
+     59|     expect(screen.getByTestId(`vault-version-placed-${V1}`).textConten…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > a version placed nowhere says so, and a row the server said nothing about claims nothing
+TestingLibraryElementError: Unable to find an element by: [data-testid="vault-version-placed-22222222-2222-4222-8222-222222222222"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      data-testid="vault-versions"
+    >
+      <div
+        class="vd-d-seclbl"
+      >
+        Versions
+      </div>
+      <div
+        class="vd-vers"
+      >
+        <div
+          class="vd-ver"
+          data-testid="vault-version-22222222-2222-4222-8222-222222222222"
+        >
+          <span
+            class="vd-ver-v"
+          >
+            v2.0
+             · current
+          </span>
+          <span
+            class="vd-ver-m"
+          >
+            2026-09-30 10:00 UTC
+             · 
+            Uma Uploader
+             · 
+            2.0 KB
+             · SHA-256 
+            <span
+              class="mono"
+              title="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            >
+              bbbbbbbbbbbb
+            </span>
+            <span
+              class="vd-ver-lc"
+              data-testid="vault-version-stage"
+            >
+              Not sent for review
+            </span>
+          </span>
+          <button
+            aria-label="Download version 2.0 of Stability summary"
+            class="sp-ask"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-download"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+              />
+              <polyline
+                points="7 10 12 15 17 10"
+              />
+              <line
+                x1="12"
+                x2="12"
+                y1="15"
+                y2="3"
+              />
+            </svg>
+             Download
+          </button>
+        </div>
+        <div
+          class="vd-ver"
+          data-testid="vault-version-33333333-3333-4333-8333-333333333333"
+        >
+          <span
+            class="vd-ver-v"
+          >
+            v1.0
+             · earlier
+          </span>
+          <span
+            class="vd-ver-m"
+          >
+            2026-09-30 10:00 UTC
+             · 
+            Uma Uploader
+             · 
+            2.0 KB
+             · SHA-256 
+            <span
+              class="mono"
+              title="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            >
+              aaaaaaaaaaaa
+            </span>
+            <span
+              class="vd-ver-lc"
+              data-testid="vault-version-stage"
+            >
+              Not sent for review
+            </span>
+          </span>
+          <button
+            aria-label="Download version 1.0 of Stability summary"
+            class="sp-ask"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-download"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+              />
+              <polyline
+                points="7 10 12 15 17 10"
+              />
+              <line
+                x1="12"
+                x2="12"
+                y1="15"
+                y2="3"
+              />
+            </svg>
+             Download
+          </button>
+          <button
+            class="sp-ask"
+          >
+            Compare with 
+            v2.0
+          </button>
+        </div>
+      </div>
+      <input
+        aria-label="File to add as a new version of Stability summary"
+        hidden=""
+        type="file"
+      />
+      <button
+        class="sp-ask"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-upload"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+          />
+          <polyline
+            points="17 8 12 3 7 8"
+          />
+          <line
+            x1="12"
+            x2="12"
+            y1="3"
+            y2="15"
+          />
+        </svg>
+         Upload new version
+      </button>
+      <button
+        class="sp-ask"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-download"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+          />
+          <polyline
+            points="7 10 12 15 17 10"
+          />
+          <line
+            x1="12"
+            x2="12"
+            y1="15"
+            y2="3"
+          />
+        </svg>
+         Export signed history
+      </button>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      data-testid="vault-versions"
+    >
+      <div
+        class="vd-d-seclbl"
+      >
+        Versions
+      </div>
+      <div
+        class="vd-vers"
+      >
+        <div
+          class="vd-ver"
+          data-testid="vault-version-22222222-2222-4222-8222-222222222222"
+        >
+          <span
+            class="vd-ver-v"
+          >
+            v2.0
+             · current
+          </span>
+          <span
+            class="vd-ver-m"
+          >
+            2026-09-30 10:00 UTC
+             · 
+            Uma Uploader
+             · 
+            2.0 KB
+             · SHA-256 
+            <span
+              class="mono"
+              title="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            >
+              bbbbbbbbbbbb
+            </span>
+            <span
+              class="vd-ver-lc"
+              data-testid="vault-version-stage"
+            >
+              Not sent for review
+            </span>
+          </span>
+          <button
+            aria-label="Download version 2.0 of Stability summary"
+            class="sp-ask"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-download"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+              />
+              <polyline
+                points="7 10 12 15 17 10"
+              />
+              <line
+                x1="12"
+                x2="12"
+                y1="15"
+                y2="3"
+              />
+            </svg>
+             Download
+          </button>
+        </div>
+        <div
+          class="vd-ver"
+          data-testid="vault-version-33333333-3333-4333-8333-333333333333"
+        >
+          <span
+            class="vd-ver-v"
+          >
+            v1.0
+             · earlier
+          </span>
+          <span
+            class="vd-ver-m"
+          >
+            2026-09-30 10:00 UTC
+             · 
+            Uma Uploader
+             · 
+            2.0 KB
+             · SHA-256 
+            <span
+              class="mono"
+              title="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            >
+              aaaaaaaaaaaa
+            </span>
+            <span
+              class="vd-ver-lc"
+              data-testid="vault-version-stage"
+            >
+              Not sent for review
+            </span>
+          </span>
+          <button
+            aria-label="Download version 1.0 of Stability summary"
+            class="sp-ask"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-download"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+              />
+              <polyline
+                points="7 10 12 15 17 10"
+              />
+              <line
+                x1="12"
+                x2="12"
+                y1="15"
+                y2="3"
+              />
+            </svg>
+             Download
+          </button>
+          <button
+            class="sp-ask"
+          >
+            Compare with 
+            v2.0
+          </button>
+        </div>
+      </div>
+      <input
+        aria-label="File to add as a new version of Stability summary"
+        hidden=""
+        type="file"
+      />
+      <button
+        class="sp-ask"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-upload"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+          />
+          <polyline
+            points="17 8 12 3 7 8"
+          />
+          <line
+            x1="12"
+            x2="12"
+            y1="3"
+            y2="15"
+          />
+        </svg>
+         Upload new version
+      </button>
+      <button
+        class="sp-ask"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-download"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.75"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+          />
+          <polyline
+            points="7 10 12 15 17 10"
+          />
+          <line
+            x1="12"
+            x2="12"
+            y1="15"
+            y2="3"
+          />
+        </svg>
+         Export signed history
+      </button>
+    </div>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx:66:26
+     64|     onVersions = () => ok({ versions: [version(V2, '2.0', true, []), v…
+     65|     mount();
+     66|     expect((await screen.findByTestId(`vault-version-placed-${V2}`)).t…
+       |                          ^
+     67|     expect(screen.getByTestId(`vault-version-placed-${V1}`).textConten…
+     68|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > several placements read as one list
+TypeError: placedInText is not a function
+ ❯ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx:71:12
+     69|
+     70|   it('several placements read as one list', () => {
+     71|     expect(placedInText([leaf({}), leaf({ submissionTitle: null, submi…
+       |            ^
+     72|       .toBe(' · placed in IND 123456, sequence 0000, 3.2.P.8.1 (new; s…
+     73|         + 'submission 9, sequence not numbered, 2.3 (new; sequence sta…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  18:07:17
+   Duration  11.27s (transform 358ms, setup 153ms, import 437ms, tests 10.05s, environment 481ms)
+

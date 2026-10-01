@@ -1,0 +1,4 @@
+docker-compose.beta.yml: service "app": DB_AUDIT_REQUIRED may be empty: use ${DB_AUDIT_REQUIRED:?…} so a missing value stops "docker compose up"
+docker-compose.yml: service "app": DB_AUDIT_REQUIRED may be empty: use ${DB_AUDIT_REQUIRED:?…} so a missing value stops "docker compose up"
+[ci:compose-boot-contract] 2 problem(s). The server refuses to boot, or boots and signs no one in, without these; the list is deploy-aws.yml's preflight (28 names) plus ALLOWED_ORIGINS.
+exit 1

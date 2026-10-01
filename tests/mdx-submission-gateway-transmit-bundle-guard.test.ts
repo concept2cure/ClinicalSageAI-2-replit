@@ -147,7 +147,7 @@ function makeApp(orgId = CALLER_ORG) {
  * BOTH the id and the org_id bind params match, mirroring the tenant-scoped
  * WHERE clause the route issues.
  */
-type StoredPackage = { id: number; orgId: number; bundle: unknown; regulatory?: Record<string, unknown> };
+type StoredPackage = { id: number; orgId: number; bundle: unknown; regulatory?: Record<string, unknown>; filedSequences?: unknown[] };
 let packages: StoredPackage[] = [];
 const packageSelects: Array<unknown[]> = [];
 
@@ -210,7 +210,7 @@ function installDb() {
       const [id, orgId] = params as [number, number];
       const row = packages.find((p) => p.id === id && p.orgId === orgId);
       return row
-        ? Promise.resolve({ rows: [{ metadata: { bundle: row.bundle, regulatory: row.regulatory } }], rowCount: 1 })
+        ? Promise.resolve({ rows: [{ metadata: { bundle: row.bundle, regulatory: row.regulatory, filedSequences: row.filedSequences } }], rowCount: 1 })
         : Promise.resolve({ rows: [], rowCount: 0 });
     }
     if (typeof sql === 'string' && /SELECT\s+id,\s+status\s+FROM submission_transmittals/.test(sql)) {
@@ -1000,5 +1000,105 @@ describe('POST transmit — packager evidence is forwarded to the pre-transmit g
     });
     expect(reported.cleared).toBe(true);
     expect(reported.checks.find((c) => c.name === 'dtd-self-contained')?.passed).toBe(false);
+  });
+});
+
+/*
+ * 2026-10-01 (W5/D7, sweep F19). The filed history answered `true` for a
+ * DIFFERENT bundle sent under a sequence already on file, and kept the first
+ * one's inventory — so a second filing under one number left the platform and
+ * was reported recorded. Such a send is now refused before the bytes leave,
+ * from the package row the transmit already reads; one that races in during
+ * the send is reported as a conflict. A sequence the agency REJECTED (the
+ * governed technical-rejection action) no longer holds its number.
+ */
+describe('POST transmit — one bundle per filed sequence (sweep F19)', () => {
+  const SHA_OTHER = 'f'.repeat(64);
+  const LEAVES = [{ ctdSection: '2.5', fileName: 'clinical-overview.pdf', href: 'm2/25-clin-overview/clinical-overview.pdf', md5: 'md5-co-v2', operation: 'replace' }];
+  const FILED_0000 = { sequence: '0000', submissionType: 'original', sha256: 'a'.repeat(64), transmittalId: 4200, filedAt: '2026-09-01T00:00:00.000Z', leaves: [{ ...LEAVES[0], md5: 'md5-co', operation: 'new' }] };
+  const FILED_0001 = { sequence: '0001', submissionType: 'Efficacy Supplement', sha256: SHA_OTHER, transmittalId: 4300, filedAt: '2026-09-20T00:00:00.000Z', leaves: LEAVES };
+  const REJECTED_0001 = {
+    ...FILED_0001, state: 'rejected',
+    rejection: {
+      recordedAt: '2026-09-25T00:00:00.000Z', recordedBy: 777, reason: 'FDA Ack3 reports a technical rejection',
+      evidence: { vaultDocumentId: '0b6f8f3e-6c1d-4f43-9a63-2f1d0c9b7a51', contentSha256: 'e'.repeat(64) },
+      transmittalStatus: { previous: 'ack2_received', current: 'validation_failed' }, actionId: 'act_r', signatureId: 31,
+    },
+  };
+  const CONFLICT = { sequence: '0001', filedSha256: SHA_OTHER, filedTransmittalId: 4300 };
+  const sequenceOne = () => goodDescriptor({ sequence: '0001', submissionType: 'Efficacy Supplement', leafManifest: LEAVES });
+  const send = (environment: string) => request(makeApp())
+    .post('/api/mdx/gateways/fda/esg/transmit')
+    .send({ packageId: 5, environment, ...REAUTH });
+  /** What the history writer reads under the package row lock (the transaction client). */
+  function lockReads(history: () => unknown[]) {
+    const signer = ledgerQuery.getMockImplementation()!;
+    ledgerQuery.mockImplementation(async (sql: unknown, params?: unknown) =>
+      /FROM c2c_submission_packages WHERE id = \$1 FOR UPDATE/.test(String(sql))
+        ? { rows: [{ metadata: { bundle: sequenceOne(), filedSequences: history() } }], rowCount: 1 }
+        : signer(sql, params));
+  }
+  const historyWrite = () => ledgerQuery.mock.calls.find((c) => /^UPDATE c2c_submission_packages/.test(String(c[0])));
+
+  it('refuses a bundle of a sequence the history holds on file as ANOTHER bundle, before the gateway, from the row it already reads', async () => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: sequenceOne(), filedSequences: [FILED_0000, FILED_0001] }];
+    const res = await send('production');
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(res.body.details).toEqual({ code: 'SEQUENCE_ALREADY_FILED', ...CONFLICT });
+    expect(res.body.error).toMatch(/Sequence 0001/);
+    expect(res.body.error).toMatch(/transmittal 4300/);
+    expect(res.body.error, 'the operator is not handed an API path').not.toMatch(/\/api\/|POST /);
+    expect(transmitFn).not.toHaveBeenCalled();
+    expect(packageSelects, 'no second read of the package').toEqual([[5, CALLER_ORG]]);
+  });
+
+  it('the same bundle already on file is not refused (a re-send after a rollback), and the history is left as it is', async () => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: sequenceOne(), filedSequences: [FILED_0000, { ...FILED_0001, sha256: legitSha }] }];
+    lockReads(() => [FILED_0000, { ...FILED_0001, sha256: legitSha }]);
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4309, transmissionId: 'mdn-resend', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await send('production');
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(res.body.data).toMatchObject({ filedSequenceRecorded: true, filedSequenceReason: 'already-recorded', filedSequenceConflict: null });
+    expect(historyWrite()).toBeUndefined();
+  });
+
+  it('a send to the agency TEST environment files nothing, so the history does not hold it back', async () => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: sequenceOne(), filedSequences: [FILED_0000, FILED_0001] }];
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4308, transmissionId: 'mdn-staging', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await send('staging');
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(res.body.data.filedSequenceReason).toBe('test-environment');
+  });
+
+  it('a 0001 the agency REJECTED does not hold the number: the new bundle is sent and recorded beside it', async () => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: sequenceOne(), filedSequences: [FILED_0000, REJECTED_0001] }];
+    lockReads(() => [FILED_0000, REJECTED_0001]);
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4310, transmissionId: 'mdn-refile', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await send('production');
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(res.body.data).toMatchObject({ filedSequenceRecorded: true, filedSequenceReason: 'recorded', filedSequenceConflict: null });
+    const written = JSON.parse(String((historyWrite()![1] as unknown[])[1]));
+    expect(written.filedSequences).toHaveLength(3);
+    expect(written.filedSequences[1], 'the rejected entry is kept, for audit').toEqual(REJECTED_0001);
+    expect(written.filedSequences[2]).toMatchObject({ sequence: '0001', sha256: legitSha, transmittalId: 4310, state: 'transmitted' });
+  });
+
+  it('a different bundle of the sequence recorded WHILE this one was sending: not recorded, said, and on the sign record', async () => {
+    let history: unknown[] = [FILED_0000];
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: sequenceOne(), filedSequences: history }];
+    lockReads(() => history);
+    transmitFn.mockImplementationOnce(async () => {
+      history = [FILED_0000, FILED_0001]; // another send of 0001 was recorded meanwhile
+      return { transmittalId: 4311, transmissionId: 'mdn-race', status: 'received', transport: 'as2', httpStatus: 200 };
+    });
+    const res = await send('production');
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(res.body.data).toMatchObject({ filedSequenceRecorded: false, filedSequenceReason: 'sequence-conflict', filedSequenceConflict: CONFLICT });
+    expect(res.body.data.filedSequenceWarning).toMatch(/could not be added to the package filed history/);
+    expect(res.body.data.filedSequenceWarning).toMatch(/transmittal 4300/);
+    expect(res.body.data.filedSequenceWarning).toMatch(/at most one/);
+    expect(historyWrite(), 'nothing was written over the other bundle').toBeUndefined();
+    expect(signPayload()).toMatchObject({ filedSequenceReason: 'sequence-conflict', filedSequenceConflict: CONFLICT });
+    expect(transmitManifest()).toMatchObject({ filedSequenceRecorded: false, filedSequenceConflict: CONFLICT });
   });
 });

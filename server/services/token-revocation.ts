@@ -23,9 +23,9 @@ import { runWithPreAuthScope } from '../db/tenantStore';
 import {
   ACCOUNT_INACTIVE_MESSAGE,
   accountIdOfClaims,
-  issuedAtOfClaims,
+  organizationIdOfClaims,
   readAccountStandingBeforeTenant,
-  sessionPredatesPasswordChange,
+  sessionEndedByStanding,
 } from './account-standing';
 import { verifyJwtWithRotation, type JwtVerifyOptions } from '../utils/jwtVerify';
 import {
@@ -270,7 +270,14 @@ export class SessionEndedError extends Error {
  * or change stamps users.password_changed_at, and until this check no
  * authenticator compared it with the token's iat, so the sessions a holder
  * most needs ended kept working. The standing and the stamp are one read
- * (readAccountStanding).
+ * (readAccountStanding). Plan P0-4b: so is a session that began before the
+ * account's last sign-out everywhere or its last suspension or deprovisioning
+ * (users.sessions_ended_at, the same read), measured from the session's start
+ * so that rotating a token does not carry a session past either stamp
+ * (sessionEndedByStanding). The reason stays 'password-changed': every caller
+ * words it as a signed-out session, which it is. And (R1) so is a session that
+ * began before the account's membership in the token's organisation did: the
+ * membership's start is read in the same statement, for a token that names one.
  *
  * And SessionEndedError('idle' | 'lifetime' | 'superseded') for a session idle
  * past its window, older than its lifetime, or ended by a later sign-in beyond
@@ -288,11 +295,9 @@ export async function verifyLiveToken<T = unknown>(
   if (await isTokenRevoked(token)) throw new SessionEndedError();
   const accountId = accountIdOfClaims(decoded);
   if (accountId !== null) {
-    const standing = await readAccountStandingBeforeTenant(accountId);
+    const standing = await readAccountStandingBeforeTenant(accountId, organizationIdOfClaims(decoded));
     if (!standing.active) throw new SessionEndedError('account-inactive');
-    if (sessionPredatesPasswordChange(issuedAtOfClaims(decoded), standing.passwordChangedAtSeconds)) {
-      throw new SessionEndedError('password-changed');
-    }
+    if (sessionEndedByStanding(decoded, standing)) throw new SessionEndedError('password-changed');
   }
   const inactivity = await sessionInactivityReason(token, decoded, session);
   if (inactivity) {

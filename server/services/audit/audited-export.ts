@@ -22,13 +22,24 @@ import type { Response } from 'express';
 
 import { writeChainedAuditRow } from '../auditService.js';
 import type { ChainBreak } from './chain.js';
-import { verifyTenantChainOnAdminScope } from './tenant-chain-verdict.js';
+import { verifyTenantChainOnAdminScope, type TenantChainHead } from './tenant-chain-verdict.js';
 
 type ConnectablePool = {
   connect: () => Promise<{ query: (sql: string, params?: unknown[]) => Promise<unknown>; release: () => void }>;
 };
 
-export type TenantChainVerdict = { ok: boolean | null; rowsChecked?: number; brokenAt?: unknown; reason?: string };
+/**
+ * `head` is the chain head against the latest anchor, this organisation's
+ * only: verified, broken with its breaks, or a reason beginning "head not
+ * verified against the anchor" (tenant-chain-verdict.ts; fix round DP-71).
+ */
+export type TenantChainVerdict = {
+  ok: boolean | null;
+  rowsChecked?: number;
+  brokenAt?: unknown;
+  reason?: string;
+  head?: TenantChainHead;
+};
 
 /** What an export may say about where another organization's row is involved. */
 const ANOTHER_ORGANIZATION = 'another organization';
@@ -67,15 +78,28 @@ export const NO_CHAINED_ROWS_REASON = 'No chained rows exist for this organisati
  */
 export function tenantChainVerdict(
   orgId: number,
-  walk: { ok: boolean; rowsChecked: number; brokenAt?: ChainBreak },
-): { ok: boolean | null; rowsChecked: number; reason?: string; brokenAt?: Record<string, unknown> } {
-  if (walk.ok && walk.rowsChecked === 0) return { ok: null, rowsChecked: 0, reason: NO_CHAINED_ROWS_REASON };
-  return { ok: walk.ok, rowsChecked: walk.rowsChecked, ...(walk.brokenAt ? { brokenAt: breakForTenant(orgId, walk.brokenAt) } : {}) };
+  walk: { ok: boolean | null; rowsChecked: number; brokenAt?: ChainBreak; head?: TenantChainHead },
+): { ok: boolean | null; rowsChecked: number; reason?: string; brokenAt?: Record<string, unknown>; head?: TenantChainHead } {
+  // The anchored head is carried as the verifier gave it (this organisation's
+  // only); `ok: null` from the verifier is an anchor that could not be read,
+  // and its reason says so (fix round DP-72).
+  const head = walk.head ? { head: walk.head } : {};
+  if (walk.ok === null) {
+    return { ok: null, rowsChecked: walk.rowsChecked, reason: walk.head?.reason ?? 'The chain head could not be checked against its anchor.', ...head };
+  }
+  if (walk.ok && walk.rowsChecked === 0) return { ok: null, rowsChecked: 0, reason: NO_CHAINED_ROWS_REASON, ...head };
+  return {
+    ok: walk.ok,
+    rowsChecked: walk.rowsChecked,
+    ...(walk.brokenAt ? { brokenAt: breakForTenant(orgId, walk.brokenAt) } : {}),
+    ...head,
+  };
 }
 
 /**
  * The tenant's whole audit chain, walked now; `ok: null` when the walk could
- * not run, and when there was nothing to walk.
+ * not run, when there was nothing to walk, and when the anchor could not be
+ * read (the head's reason says so). `head` is carried as the verifier gave it.
  */
 export async function walkTenantChain(orgId: number): Promise<TenantChainVerdict> {
   try {

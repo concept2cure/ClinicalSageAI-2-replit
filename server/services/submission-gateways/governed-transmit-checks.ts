@@ -12,6 +12,7 @@
  */
 
 import { findActiveTransmittal } from './fda-esg';
+import { filedEntryHolding } from '../ectd/package-sequence-lifecycle';
 import { usableIdentifier } from '../ectd/regulatory-identifiers';
 import type { GovernedTransmitInput, ResolvedBundle } from './governed-transmit';
 
@@ -35,6 +36,7 @@ export type GovernedTransmitRefusalCode =
   | 'BUNDLE_CONTENT_DRIFT'
   | 'BUNDLE_CONTENT_UNPROVEN'
   | 'METADATA_DESCRIPTOR_MISMATCH'
+  | 'SEQUENCE_ALREADY_FILED'
   | 'ACTIVE_TRANSMITTAL';
 
 /** A refusal the caller should surface verbatim to the operator. */
@@ -113,6 +115,34 @@ export function agencyMetadata(input: GovernedTransmitInput, bundle: ResolvedBun
     if (recorded) metadata.applicationId = recorded;
   }
   return { ...metadata, environment: input.environment };
+}
+
+/**
+ * One bundle per filed sequence. A production send of a package bundle whose
+ * sequence the package's filed history already holds ON FILE as a DIFFERENT
+ * bundle is refused before the bytes leave: the agency loads at most one of
+ * two filings under one number, and the history can describe only one
+ * (2026-10-01, W5/D7, sweep F19 — the second was sent, and reported recorded
+ * while the history kept the first). Asked with the writer's own question
+ * (filedEntryHolding), of the history on the row loadStoredBundle read. The
+ * same bundle again is not refused: re-sending it after a rollback is the
+ * documented recovery, and a rollback does not un-file. Only a production send
+ * files anything, so only one is held back.
+ */
+export function assertSequenceNotFiledAsAnotherBundle(input: GovernedTransmitInput, bundle: ResolvedBundle): void {
+  if (input.clientBundle || !bundle.sequence || input.environment !== 'production') return;
+  const filed = filedEntryHolding(bundle.filedSequences, bundle.sequence);
+  if (!filed || filed.sha256 === bundle.sha256.toLowerCase()) return;
+  const holding = filed.transmittalId == null ? 'an earlier transmittal' : `transmittal ${filed.transmittalId}`;
+  throw new GovernedTransmitRefusal(
+    'SEQUENCE_ALREADY_FILED',
+    `Sequence ${bundle.sequence} of this package is already on file, sent by ${holding} as a different bundle. ` +
+      'Sending this one would put two filings under one sequence number, and the agency loads at most one of them. ' +
+      "If the agency did not load that filing (a technical rejection), record the rejection with the agency's notice " +
+      `as evidence before sending sequence ${bundle.sequence} again; otherwise assemble the next sequence.`,
+    409,
+    { sequence: bundle.sequence, filedSha256: filed.sha256, filedTransmittalId: filed.transmittalId },
+  );
 }
 
 /**

@@ -1,0 +1,7 @@
+# Fix round, 2026-10-01T15:29:49Z: npm run ci:untracked-imports
+
+> concept2cure-riai@1.0.0 ci:untracked-imports
+> node scripts/ci/check-untracked-imports.mjs
+
+[ci:untracked-imports] no source files changed against origin/concept2cure-v2.
+exit=0

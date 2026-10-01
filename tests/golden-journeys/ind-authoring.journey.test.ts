@@ -223,6 +223,10 @@ beforeAll(async () => {
       // gained password_changed_at (613c6e00) and, without it, every signature
       // here was refused ACCOUNT_STATE_UNKNOWN — fail-closed, correctly.
       'db/migrations/20260725_users_signing_lockout_columns.sql',
+      // The account standing every authenticator and the signer re-verify read
+      // gained users.sessions_ended_at (P0-4b); without it every signature is
+      // refused REAUTH_ACCOUNT_STATE_UNKNOWN, fail-closed.
+      'migrations/20261001_users_sessions_ended_at.sql',
       // The project the document belongs to (PF-07). createDocument checks the
       // anchor against the real regulatory_programs table (LX-20:
       // programInOrganization — this org, not soft-deleted), so the table is

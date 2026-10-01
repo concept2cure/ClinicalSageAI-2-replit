@@ -22,8 +22,9 @@ const UPSTREAM_SENTINEL = 'SENTINEL-UPSTREAM-DETAIL connect ECONNREFUSED 10.0.4.
 const SHADOW_SENTINEL =
   'SENTINEL-SHADOW psycopg2.errors.UndefinedTable: relation "predicate_devices" does not exist File "/srv/shadow/app.py", line 88';
 
-const { dbLimit, fetchMock, logAuditEvent, logError } = vi.hoisted(() => ({
+const { dbLimit, programAccess, fetchMock, logAuditEvent, logError } = vi.hoisted(() => ({
   dbLimit: vi.fn(),
+  programAccess: vi.fn(),
   fetchMock: vi.fn(),
   logAuditEvent: vi.fn(async () => undefined),
   logError: vi.fn(),
@@ -37,10 +38,11 @@ vi.mock('../../middleware/auth.js', () => ({
 }));
 vi.mock('../../db.js', () => ({
   db: { select: () => ({ from: () => ({ where: () => ({ limit: dbLimit }) }) }) },
-  // The program check (programInOrganization, D3) reads on the pool; it
-  // answers from the same holder, so a failed read is still a failed read.
-  pool: { query: async () => ({ rows: await dbLimit() }) },
+  pool: {},
 }));
+// The program's ownership check (programInOrganization, trunk 2026-10-01) is the
+// read whose failure the first case is about.
+vi.mock('../../services/c2c/program-access', () => ({ programInOrganization: programAccess }));
 vi.mock('../../services/audit/auditLogger.js', () => ({ logAuditEvent }));
 vi.mock('../../utils/logger', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../utils/logger')>();
@@ -65,18 +67,19 @@ function app() {
   return a;
 }
 
-const RENDER = '/api/programs/aaaaaaaa-1111-4111-8111-aaaaaaaaaaa1/se-matrix/render';
+const RENDER = '/api/programs/prog-1/se-matrix/render';
 
 beforeEach(() => {
   vi.clearAllMocks();
   vi.spyOn(console, 'error').mockImplementation(() => {});
   vi.spyOn(console, 'warn').mockImplementation(() => {});
-  dbLimit.mockResolvedValue([{ id: 'aaaaaaaa-1111-4111-8111-aaaaaaaaaaa1' }]);
+  dbLimit.mockResolvedValue([{ id: 'prog-1' }]);
+  programAccess.mockResolvedValue(true);
 });
 
 describe('se-matrix: no thrower text in a 5xx body', () => {
   it('a failed program-access read answers 500 with the envelope', async () => {
-    dbLimit.mockRejectedValue(new Error(DB_SENTINEL));
+    programAccess.mockRejectedValue(new Error(DB_SENTINEL));
     const res = await request(app()).post(RENDER).send({ selectedPredicate: { kNumber: 'K123456' } });
     expect(res.status).toBe(500);
     expect(JSON.stringify(res.body)).not.toMatch(/SENTINEL-DB-DETAIL|regulatory_programs|does not exist/);
@@ -123,14 +126,14 @@ describe('se-matrix: no thrower text in a 5xx body', () => {
     expect(JSON.stringify(res.body)).not.toMatch(/SENTINEL-SHADOW|psycopg2|UndefinedTable|\/srv\/shadow|Traceback/);
     // The shadow body goes to the log against the program, not to the caller.
     expect(JSON.stringify(logError.mock.calls)).toContain('SENTINEL-SHADOW');
-    expect(JSON.stringify(logError.mock.calls)).toContain('aaaaaaaa-1111-4111-8111-aaaaaaaaaaa1');
+    expect(JSON.stringify(logError.mock.calls)).toContain('prog-1');
     // The failure is still audited with the shadow status.
     expect(logAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'SE_MATRIX_GENERATION_FAILED',
         success: false,
         errorMessage: `Shadow returned ${status}`,
-        metadata: expect.objectContaining({ program_id: 'aaaaaaaa-1111-4111-8111-aaaaaaaaaaa1', shadow_status: status }),
+        metadata: expect.objectContaining({ program_id: 'prog-1', shadow_status: status }),
       }),
     );
   });
@@ -144,11 +147,11 @@ describe('se-matrix: no thrower text in a 5xx body', () => {
   });
 
   it('leaves the 403 and 422 answers unchanged', async () => {
-    dbLimit.mockResolvedValue([]);
+    programAccess.mockResolvedValue(false);
     const denied = await request(app()).post(RENDER).send({ selectedPredicate: { kNumber: 'K1' } });
     expect(denied.status).toBe(403);
     expect(denied.body).toEqual({ error: 'Access denied', detail: 'You do not have access to this program' });
-    dbLimit.mockResolvedValue([{ id: 'aaaaaaaa-1111-4111-8111-aaaaaaaaaaa1' }]);
+    programAccess.mockResolvedValue(true);
     const bad = await request(app()).post(RENDER).send({});
     expect(bad.status).toBe(422);
     expect(bad.body).toEqual({ error: 'selectedPredicate.kNumber is required' });

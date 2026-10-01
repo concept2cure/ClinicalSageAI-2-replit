@@ -65,7 +65,75 @@ export interface FiledSequence {
   leaves: FiledLeaf[];
 }
 
+/**
+ * Whether the agency holds a filed sequence. ABSENT reads as 'transmitted':
+ * every history written before 2026-10-01 has no state, and all of it is on
+ * file. 'rejected' is written only by the governed technical-rejection action
+ * (./filed-sequence-rejection) — an entry is never deleted, it is marked.
+ */
+export type FiledSequenceState = 'transmitted' | 'rejected';
+
+/**
+ * The record that took a filed sequence off file: the agency did not load it
+ * (a technical rejection — FDA's failed Ack3). There is no Ack3 ingestion, so
+ * it is an operator's signed act carrying the agency's evidence, and it states
+ * when it was RECORDED and by whom — not an agency rejection time this platform
+ * never received. A rollback is not this: the agency still holds those bytes.
+ */
+export interface FiledSequenceRejection {
+  recordedAt: string;
+  recordedBy: number;
+  reason: string;
+  /** The Vault document holding the agency's notice, and its content hash. */
+  evidence: { vaultDocumentId: string; contentSha256: string };
+  /** The transmittal's status before and after the act. */
+  transmittalStatus: { previous: string; current: string };
+  /** The governed `sign` ledger row and the electronic signature. */
+  actionId: string;
+  signatureId: number;
+}
+
+/**
+ * Whether a filed-history entry has been taken off file. THE predicate: the
+ * reader (readFiledSequences) and the writers (recordFiledSequence, the
+ * rejection action) all ask it, so they cannot disagree about which entries
+ * are on file — the disagreement that let a writer report a filing the reader
+ * then dropped (isFiledLeaf, above). Only 'rejected' WITH its evidence and
+ * signature counts: a bare or hand-edited state takes nothing off file.
+ */
+export function isRejectedFiling(e: unknown): boolean {
+  const entry = e as { state?: unknown; rejection?: Partial<FiledSequenceRejection> } | null;
+  if (!entry || typeof entry !== 'object' || entry.state !== 'rejected') return false;
+  const r = entry.rejection;
+  return (
+    !!r && typeof r === 'object' && typeof r.actionId === 'string' && typeof r.signatureId === 'number' &&
+    typeof r.evidence?.vaultDocumentId === 'string' && typeof r.evidence?.contentSha256 === 'string'
+  );
+}
+
 const SEQUENCE_RE = /^\d{4}$/;
+
+/**
+ * The filed entry that holds `sequence` — the first entry on file under that
+ * number, whether or not its inventory is readable — or null. The writer asks
+ * this before appending and governed transmit asks it before sending, so a
+ * second, different bundle under a number already on file is refused before
+ * the bytes leave rather than discovered after.
+ */
+export function filedEntryHolding(
+  history: unknown,
+  sequence: string,
+): { sha256: string; transmittalId: number | null } | null {
+  if (!Array.isArray(history)) return null;
+  for (const e of history as Array<Record<string, unknown> | null>) {
+    if (!e || typeof e !== 'object' || e.sequence !== sequence || isRejectedFiling(e)) continue;
+    return {
+      sha256: typeof e.sha256 === 'string' ? e.sha256.toLowerCase() : '',
+      transmittalId: typeof e.transmittalId === 'number' ? e.transmittalId : null,
+    };
+  }
+  return null;
+}
 
 /** Fields a filed leaf MAY carry, each a string when present. A field of any
  *  other type makes the whole entry unreadable, like a missing required one. */
@@ -93,7 +161,9 @@ export function isFiledLeaf(v: unknown): v is FiledLeaf {
  * The package's filed history, read from stored metadata and shape-checked
  * rather than trusted: a malformed entry is DROPPED, because a prior state
  * reconstructed from a half-readable record would compute `new` for a leaf that
- * is already on file. Returned oldest-first.
+ * is already on file. An entry the agency rejected (isRejectedFiling) is
+ * skipped too — it stays in the metadata for audit, but nothing it carried is
+ * on file. Returned oldest-first.
  */
 export function readFiledSequences(metadata: Record<string, unknown> | null | undefined): FiledSequence[] {
   const raw = (metadata ?? {}).filedSequences;
@@ -101,7 +171,7 @@ export function readFiledSequences(metadata: Record<string, unknown> | null | un
   const out: FiledSequence[] = [];
   for (const entry of raw) {
     const e = entry as Record<string, unknown> | null;
-    if (!e || typeof e !== 'object') continue;
+    if (!e || typeof e !== 'object' || isRejectedFiling(e)) continue;
     if (typeof e.sequence !== 'string' || !SEQUENCE_RE.test(e.sequence)) continue;
     if (!Array.isArray(e.leaves)) continue;
     const leaves = e.leaves.filter(isFiledLeaf);
@@ -220,6 +290,95 @@ export interface SequencePlan {
   /** Leaves unchanged since the last filing: they do not ship at all. */
   omitted: Array<{ ctdSection: string; fileName: string }>;
   summary: { new: number; replace: number; append: number; delete: number; unchanged: number };
+  /** Documents this sequence leaves current at the agency although the package
+   *  no longer files them where they sit (see `staleOnFile`). Empty for 0000. */
+  staleOnFile: StaleOnFile[];
+}
+
+/**
+ * A document on file that this sequence leaves current although the package no
+ * longer places it there. Withdrawal stays explicit, so the plan does not
+ * withdraw it; it names it, as the leaf a `withdraw` entry has to name.
+ */
+export interface StaleOnFile {
+  /** 'relocated': the same artifact is placed at another CTD section now, and
+   *  files there as a new document (sweep F12). 'placeholder': a generated
+   *  empty-section leaf, filed before an empty section stopped filing one
+   *  (sweep F11). */
+  reason: 'relocated' | 'placeholder';
+  ctdSection: string;
+  fileName: string;
+  /** The sequence that holds it. */
+  sequenceNumber?: string;
+  /** For 'relocated': where the artifact is placed now. */
+  movedTo?: { ctdSection: string; fileName: string };
+}
+
+/**
+ * Take this submission's own documents (see planSequence's `perSubmission`) out
+ * of the diff. One that is byte for byte the document on file under the same
+ * identity is the earlier submission's and does not ship; any other files
+ * `new`. Matched the way the operator matches (identity, else the path when
+ * either side has none), and compared like with like (`sourceMd5`).
+ */
+function splitPerSubmission<D extends { ctdSection: string; fileName: string; md5: string; leafKey?: string }>(
+  prior: readonly PriorLeaf[],
+  desired: readonly D[],
+  perSubmission: ((ctdSection: string) => boolean) | undefined,
+): { perSubmission: D[]; diffed: D[] } {
+  if (!perSubmission) return { perSubmission: [], diffed: [...desired] };
+  const byKey = new Map(prior.filter((p) => p.leafKey).map((p) => [p.leafKey!, p]));
+  const byPath = new Map(prior.map((p) => [`${p.ctdSection}/${p.fileName}`, p]));
+  const own: D[] = [];
+  const diffed: D[] = [];
+  for (const d of desired) {
+    if (!perSubmission(d.ctdSection)) { diffed.push(d); continue; }
+    const atPath = byPath.get(`${d.ctdSection}/${d.fileName}`);
+    const onFile = (d.leafKey ? byKey.get(d.leafKey) : undefined)
+      ?? (atPath && !(d.leafKey && atPath.leafKey && atPath.leafKey !== d.leafKey) ? atPath : undefined);
+    if (onFile && (onFile.sourceMd5 ?? onFile.md5) === d.md5) continue; // the earlier submission's, unchanged
+    own.push(d);
+  }
+  return { perSubmission: own, diffed };
+}
+
+/** `artifact:<id>@<code>` → the artifact id, or null for any other identity. */
+function artifactOf(leafKey: string | undefined): string | null {
+  if (!leafKey?.startsWith('artifact:')) return null;
+  const at = leafKey.lastIndexOf('@');
+  return at > 'artifact:'.length ? leafKey.slice('artifact:'.length, at) : null;
+}
+
+/**
+ * What this sequence leaves current on file that the package no longer files
+ * where it sits. 2026-10-01 (W5/D7, sweep F12): a document whose CTD section
+ * was corrected was filed `new` at its new heading — correctly, a move is never
+ * a replace across headings — while the copy at its old heading stayed current
+ * at the agency with no finding, and every later revision replaced only the
+ * new copy. A document deliberately filed at two headings is not a move: it is
+ * still desired at its old one. A leaf this sequence withdraws is not stale.
+ */
+function staleOnFile(
+  prior: readonly PriorLeaf[],
+  desired: ReadonlyArray<{ ctdSection: string; fileName: string; leafKey?: string }>,
+  withdraw: ReadonlyArray<{ ctdSection: string; fileName: string }>,
+): StaleOnFile[] {
+  const withdrawn = new Set(withdraw.map((w) => `${w.ctdSection}/${w.fileName}`));
+  const desiredKeys = new Set(desired.map((d) => d.leafKey).filter(Boolean));
+  const placedAt = new Map<string, { ctdSection: string; fileName: string }>();
+  for (const d of desired) {
+    const id = artifactOf(d.leafKey);
+    if (id && !placedAt.has(id)) placedAt.set(id, { ctdSection: d.ctdSection, fileName: d.fileName });
+  }
+  const stale: StaleOnFile[] = [];
+  for (const p of prior) {
+    if (withdrawn.has(`${p.ctdSection}/${p.fileName}`) || (p.leafKey && desiredKeys.has(p.leafKey))) continue;
+    const at = { ctdSection: p.ctdSection, fileName: p.fileName, ...(p.sequenceNumber ? { sequenceNumber: p.sequenceNumber } : {}) };
+    const movedTo = placedAt.get(artifactOf(p.leafKey) ?? '');
+    if (movedTo) stale.push({ reason: 'relocated', ...at, movedTo });
+    else if (p.leafKey?.startsWith('section:')) stale.push({ reason: 'placeholder', ...at });
+  }
+  return stale;
 }
 
 /**
@@ -265,6 +424,17 @@ export function planSequence(params: {
    * happens, and without it `summary.delete` could only ever be 0.
    */
   withdraw?: ReadonlyArray<{ ctdSection: string; fileName: string }>;
+  /**
+   * Sections whose documents belong to ONE submission — FDA's cover letters
+   * (1.2) and forms (1.1, 1.1.x): every sequence carries its own. Such a leaf
+   * is never diffed into a `replace` of the one on file (that would tell the
+   * agency sequence 0000's letter was superseded); it files `new` when it
+   * differs from the one on file, and is left out when it is that same
+   * document unchanged, since it is then the earlier submission's (W5/D7,
+   * sweep F13, 2026-10-01). Absent: every leaf is diffed alike — true of every
+   * region but FDA.
+   */
+  perSubmission?: (ctdSection: string) => boolean;
 }): SequencePlan {
   const { sequence, filed, desired } = params;
 
@@ -294,6 +464,7 @@ export function planSequence(params: {
       leaves: desired.map((d) => ({ ctdSection: d.ctdSection, fileName: d.fileName, operation: 'new' })),
       omitted: [],
       summary: { new: desired.length, replace: 0, append: 0, delete: 0, unchanged: 0 },
+      staleOnFile: [],
     };
   }
 
@@ -346,7 +517,8 @@ export function planSequence(params: {
   // The canonical operator does the diff. `sourcePath` is a placeholder here:
   // this plan decides operations only, and the assemble route pairs them back
   // onto the leaves whose real bytes it already holds.
-  const desiredLeaves: DesiredLeaf[] = desired.map((d) => ({
+  const { perSubmission: ownLeaves, diffed } = splitPerSubmission(prior, desired, params.perSubmission);
+  const desiredLeaves: DesiredLeaf[] = diffed.map((d) => ({
     ctdSection: d.ctdSection,
     fileName: d.fileName,
     title: d.title,
@@ -384,7 +556,15 @@ export function planSequence(params: {
     });
   }
 
-  const { leaves, summary } = computeLifecycleOperations(prior, desiredLeaves, {});
+  const operated = computeLifecycleOperations(prior, desiredLeaves, {});
+  // This submission's own documents file `new`, beside the operator's leaves.
+  // The ones they would have superseded stay on file, and the operator already
+  // counts each of those as unchanged.
+  const leaves: Array<{ ctdSection: string; fileName: string; operation: string; modifiedFile?: string; title?: string; md5?: string }> = [
+    ...operated.leaves,
+    ...ownLeaves.map((d) => ({ ctdSection: d.ctdSection, fileName: d.fileName, operation: 'new' })),
+  ];
+  const summary = { ...operated.summary, new: operated.summary.new + ownLeaves.length };
 
   // A desired leaf that did not ship is unchanged — that is the only outcome
   // the operator does not emit. Keyed on the path because that is what the
@@ -423,5 +603,6 @@ export function planSequence(params: {
     })),
     omitted,
     summary,
+    staleOnFile: staleOnFile(prior, desired, params.withdraw ?? []),
   };
 }

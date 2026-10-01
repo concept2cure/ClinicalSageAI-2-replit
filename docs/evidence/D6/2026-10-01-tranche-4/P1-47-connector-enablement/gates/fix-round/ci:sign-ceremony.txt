@@ -1,0 +1,7 @@
+# Fix round, 2026-10-01T15:29:46Z: npm run ci:sign-ceremony
+
+> concept2cure-riai@1.0.0 ci:sign-ceremony
+> node scripts/ci/check-sign-ceremony.mjs
+
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 19 baselined site(s) remain, exactly as baselined.
+exit=0

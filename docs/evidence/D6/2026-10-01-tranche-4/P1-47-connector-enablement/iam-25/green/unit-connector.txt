@@ -1,0 +1,124 @@
+# IAM-25 GREEN, 2026-10-01T16:19:22Z: CONNECTOR_OPENER_ROLES = ['owner', 'admin'], CONNECTOR_OPENER_ONLY, client copy "owner or administrator".
+# command: npx vitest run server/routes/__tests__/tenant-config-claude-connector.test.ts server/mcp/__tests__/mcp-connector-enablement.test.ts client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx
+# (structured JSON log lines filtered out)
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/mcp/__tests__/mcp-connector-enablement.test.ts
+  "timestamp": "2026-10-01T16:19:25.523Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+  "timestamp": "2026-10-01T16:19:25.525Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/mcp/__tests__/mcp-connector-enablement.test.ts
+  "timestamp": "2026-10-01T16:19:25.525Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > absent is disabled; the administrator is told they can change it 1577ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > the administrator of this organization is told they can change it 5ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > an owner of this organization is told they can change it 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a manager sees the state and that they cannot change it 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a member sees the state and that they cannot change it 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a viewer sees the state and that they cannot change it 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a stored value that is not exactly true reads as disabled 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > another organization's setting is not read 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a manager is refused with 403, and nothing is written or recorded 20ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a member is refused with 403, and nothing is written or recorded 5ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a viewer is refused with 403, and nothing is written or recorded 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > platform staff (super_admin) is refused with 403, and nothing is written or recorded 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > another organization's administrator is refused with 403, and nothing is written or recorded 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > another organization's owner is refused with 403, and nothing is written or recorded 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > an owner, if one is ever provisioned, changes it too 6ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > the administrator enables it: one transaction, the setting and its chained audit row with the value before and after 4ms
+stderr | server/mcp/__tests__/mcp-connector-enablement.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/mcp/__tests__/mcp-connector-enablement.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/mcp/__tests__/mcp-connector-enablement.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a refused audit row is a refused change: rolled back, 500, not reported as saved
+  "timestamp": "2026-10-01T16:19:25.658Z",
+  "level": "error",
+  "message": "[tenant-config-api] Error changing the connector setting for tenant 900",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > the administrator disables it, and the row records true → false 8ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a body of {} is refused with 400 and nothing is written 5ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a body of {"enabled":"yes"} is refused with 400 and nothing is written 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a body of {"enabled":true,"extra":1} is refused with 400 and nothing is written 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a body of null is refused with 400 and nothing is written 7ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only this organization's owner or administrator changes it > a refused audit row is a refused change: rolled back, 500, not reported as saved 6ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it, whoever asks > PATCH /settings naming claudeConnector, as role admin → 403, nothing written 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it, whoever asks > PATCH /settings naming claudeConnector, as role owner → 403, nothing written 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it, whoever asks > PATCH /settings naming claudeConnector, as role super_admin → 403, nothing written 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it, whoever asks > PATCH /settings naming claudeConnector, as role member → 403, nothing written 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it, whoever asks > control: PATCH /settings without it still writes 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it, whoever asks > PATCH /settings/claudeConnector is not a section the section door writes 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it, whoever asks > a reset keeps the stored connector setting: it is not a default to restore 5ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > turning it on is refused: rolled back before the UPDATE, nothing recorded 5ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > turning it off is refused too: only its own door changes it, either way 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > nulling it is refused (a null reads as off, so it would turn it off) 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > erasing it is refused (a door that replaces the settings whole and leaves the key out) 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > control: a general write that leaves it as stored is written, and keeps it 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the one settings writer refuses a connector change from any door but its own > control: the connector's own door changes it 4ms
+stdout | server/mcp/__tests__/mcp-connector-enablement.test.ts
+  "timestamp": "2026-10-01T16:19:26.040Z",
+  "level": "info",
+  "message": "[mcp] Concept2Cure MCP connector mounted",
+  "context": {
+    "resource": "http://localhost:5300/mcp",
+    "issuer": "http://localhost:5300/",
+    "resourceMetadataUrl": "http://localhost:5300/.well-known/oauth-protected-resource/mcp"
+  }
+}
+
+ ✓ client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx > Connector for Claude on Admin → Settings > the owner or administrator turns it on after confirming, and the stored value is read back 407ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > control: enabled, both a connector token and the session open the connector 75ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > no settings at all: a connector token is refused with invalid_token and the reason 8ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > settings without the connector: a connector token is refused with invalid_token and the reason 8ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > enabled: false: a connector token is refused with invalid_token and the reason 5ms
+ ✓ client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx > Connector for Claude on Admin → Settings > cancel sends nothing 115ms
+ ✓ client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx > Connector for Claude on Admin → Settings > anyone but the owner or administrator sees the state, no switch, and who can change it 39ms
+ ✓ client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx > Connector for Claude on Admin → Settings > a read that fails is "Could not be read", never "Off" 42ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > enabled: "true" (a string, not true): a connector token is refused with invalid_token and the reason 6ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > the connector stored as a bare true: a connector token is refused with invalid_token and the reason 6ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > the session token is refused the same way 7ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > refuses as an outage when the organization cannot be read: never admits, never "bad token" 9ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > control: enabled, consent issues a code 10ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > no settings at all: 403 access_denied with the reason, and no code 5ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > settings without the connector: 403 access_denied with the reason, and no code 7ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > enabled: false: 403 access_denied with the reason, and no code 10ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > enabled: "true" (a string, not true): 403 access_denied with the reason, and no code 4ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > the connector stored as a bare true: 403 access_denied with the reason, and no code 5ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > answers 503 and issues no code when the organization cannot be read 4ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the /token exchanges > control: enabled, a refresh rotates and issues, and a code exchange issues 2ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the /token exchanges > not enabled: a refresh is refused (invalid_grant) and the grant is left as it was 2ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the /token exchanges > not enabled: a code exchange is refused and issues nothing 1ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the /token exchanges > a refresh refuses as an outage when the organization cannot be read, and neither rotates nor issues 1ms
+ ✓ client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx > Connector for Claude on Admin → Settings > a read that answers in a shape the page does not know is "Could not be read", never "Off" 47ms
+ ✓ client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx > Connector for Claude on Admin → Settings > a refused change says it was not changed, and the state stays as stored 112ms
+
+ Test Files  3 passed (3)
+      Tests  60 passed (60)
+   Start at  16:19:23
+   Duration  3.09s (transform 2.60s, setup 302ms, import 1.80s, tests 4.83s, environment 617ms)
+

@@ -1,0 +1,14 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > names each sequence and section that carries a version, with the operation 49ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > a version placed nowhere says so, and a row the server said nothing about claims nothing 15ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > names each official eSTAR export that attached a version, and claims nothing when there is none 12ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > several placements read as one list 0ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  18:38:09
+   Duration  1.32s (transform 313ms, setup 198ms, import 392ms, tests 81ms, environment 514ms)
+

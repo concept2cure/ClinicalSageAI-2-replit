@@ -36,6 +36,10 @@ vi.mock('@aws-sdk/client-s3', () => {
       }
       const i = cmd.input;
       if (cmd instanceof PutObjectCommand) {
+        // S3's conditional write: If-None-Match '*' refuses a key whose current version exists (412).
+        if (i.IfNoneMatch === '*' && objects.has(i.Key)) {
+          throw Object.assign(new Error('PreconditionFailed'), { name: 'PreconditionFailed', $metadata: { httpStatusCode: 412 } });
+        }
         objects.set(i.Key, Buffer.from(i.Body));
         return {};
       }
@@ -115,6 +119,18 @@ describe('the S3 anchor store', () => {
     });
     // The bucket's default SSE-KMS and object lock apply; a per-request header would override the key.
     expect(sent[0].input).not.toHaveProperty('ServerSideEncryption');
+  });
+
+  it('writes each key once: the put is conditional (If-None-Match *), so it never replaces an existing anchor', async () => {
+    const key = anchorObjectKey(new Date('2026-10-01T02:00:00.000Z'));
+    await store().put(key, anchorDoc());
+    expect(sent[0].input).toMatchObject({ IfNoneMatch: '*' });
+
+    // A second put to the same key, as a forger re-using a dated key would send it:
+    // S3 answers 412, the error reaches the caller, and the first anchor is what stays.
+    await expect(store().put(key, anchorDoc({ heads: [] }))).rejects.toThrow('PreconditionFailed');
+    expect(sent[1].input).toMatchObject({ Key: key, IfNoneMatch: '*' });
+    expect(JSON.parse(objects.get(key)!.toString('utf8')).heads).toEqual([HEAD]);
   });
 
   it('latest() follows the listing to its last page and returns the newest anchor', async () => {
