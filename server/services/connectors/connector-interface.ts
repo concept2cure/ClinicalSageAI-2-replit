@@ -274,22 +274,25 @@ export const CONNECTOR_CATALOG: ConnectorCatalogEntry[] = [
     name: 'PMDA Review Reports',
     type: 'scraper',
     category: 'regulatory',
-    description: 'Japanese Pharmaceuticals and Medical Devices Agency review reports and approval information.',
+    description:
+      'Japanese Pharmaceuticals and Medical Devices Agency review reports. Not connected: no search runs, so it returns no results.',
     requiredTier: 'professional',
     requiresCredentials: false,
     icon: 'scroll',
     setupGuide: {
-      overview: 'PMDA review reports are publicly accessible. English translations are available for most recently approved products.',
+      overview:
+        'PMDA review reports are public web pages and PDFs with no search API, and this connector does not read them yet. Search them on the PMDA website.',
       prerequisites: ['Professional tier subscription'],
       credentialFields: [],
       steps: [
-        { step: 1, title: 'Enable the connector', instructions: 'Toggle the connector on to access PMDA review reports.' },
-        { step: 2, title: 'Search by product', instructions: 'Search by INN, product name, or therapeutic area. English translations are available for recent approvals.' },
+        {
+          step: 1,
+          title: 'Search on the PMDA website',
+          instructions:
+            'Open https://www.pmda.go.jp/english/review-services/reviews/approved-information/drugs/0002.html and search there.',
+        },
       ],
-      troubleshooting: [
-        'Some review reports are only available in Japanese. Machine translation is applied where English versions are unavailable.',
-        'PMDA website may have intermittent availability during maintenance windows.',
-      ],
+      troubleshooting: ['A search through this connector is refused and reported as skipped; it returns no results.'],
     },
   },
   {
@@ -297,22 +300,24 @@ export const CONNECTOR_CATALOG: ConnectorCatalogEntry[] = [
     name: 'NMPA / CDE Approvals',
     type: 'scraper',
     category: 'regulatory',
-    description: 'China National Medical Products Administration and Center for Drug Evaluation approval data.',
+    description:
+      'China National Medical Products Administration and Center for Drug Evaluation approval data. Not connected: no search runs, so it returns no results.',
     requiredTier: 'professional',
     requiresCredentials: false,
     icon: 'scroll',
     setupGuide: {
-      overview: 'NMPA/CDE approval data is scraped from public Chinese regulatory databases.',
+      overview:
+        'This connector does not read the CDE or NMPA databases yet. Search them on the agency websites.',
       prerequisites: ['Professional tier subscription'],
       credentialFields: [],
       steps: [
-        { step: 1, title: 'Enable the connector', instructions: 'Toggle the connector on to access NMPA/CDE approval data.' },
-        { step: 2, title: 'Search by drug name', instructions: 'Search by INN, Chinese drug name, or registration number.' },
+        {
+          step: 1,
+          title: 'Search on the agency websites',
+          instructions: 'Open https://www.cde.org.cn/ or https://www.nmpa.gov.cn/ and search there.',
+        },
       ],
-      troubleshooting: [
-        'Data is primarily in Chinese with machine-translated summaries. Use INN for best cross-language matching.',
-        'CDE website access may be intermittent from non-China regions.',
-      ],
+      troubleshooting: ['A search through this connector is refused and reported as skipped; it returns no results.'],
     },
   },
 
