@@ -129,15 +129,21 @@ export const RUNTIME_PATHS = {
     reason: 'The built client, served by serveStatic() in server/vite.ts; builder output, copied with dist/.',
   },
 
-  // ── known-gap: the image lacks it and should not — a decision, printed every run ──
   'workers/artifact-compute': {
-    kind: 'known-gap',
+    kind: 'ship',
     reason:
-      'Python DOCX tools (compute/workerClient.ts, compute/scriptWorker.ts) spawned with python3. ' +
-      'The image ships neither the scripts nor python-docx; python3 is present only as a ' +
-      'dependency of ocrmypdf. Shipping a Python runtime for AnA document compute is a FOUNDER ' +
-      'DECISION (not taken 2026-09-24); until then these tools fail in production.',
+      'Python DOCX runtimes for AnA document tools (compute/workerClient.ts, compute/scriptWorker.ts). ' +
+      'A known gap until 2eda0ed0f shipped them with python-docx; this gate then failed on the stale entry.',
   },
+  'SECURITY.md': {
+    kind: 'ship',
+    reason:
+      'The vulnerability-disclosure policy served at /.well-known/security-policy (routes/well-known.ts). ' +
+      '.dockerignore excluded every root *.md but README.md, so production served only the short ' +
+      'fallback text instead of the full policy. Re-included 2026-10-01.',
+  },
+
+  // ── known-gap: the image lacks it and should not — a decision, printed every run ──
   'ingestion/pdf_extractor.py': {
     kind: 'known-gap',
     reason:

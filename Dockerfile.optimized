@@ -190,6 +190,11 @@ COPY --from=builder /app/assets ./assets
 # repository path the bundled server resolves, and fails on the next one.
 COPY --from=builder /app/templates/forms/acroforms ./templates/forms/acroforms
 
+# The vulnerability-disclosure policy, served whole at /.well-known/security-policy
+# (server/routes/well-known.ts reads <cwd>/SECURITY.md; without it the route falls
+# back to a short summary). .dockerignore re-includes it.
+COPY --from=builder /app/SECURITY.md ./SECURITY.md
+
 # The Amazon RDS certificate bundle, from the assets copied above
 # (assets/rds-ca/README.md). Production verifies the database certificate, and
 # Node's built-in roots contain no RDS CA, so without this every connection to
