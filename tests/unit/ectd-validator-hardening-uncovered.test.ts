@@ -384,7 +384,7 @@ describe('validateEctdPackageHardened (composite)', () => {
 
   const backboneOk = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE ectd:ectd SYSTEM "ich-ectd-3-2.dtd">
-<ectd:ectd xmlns:ectd="http://www.ich.org/ectd" xmlns:xlink="http://www.w3.org/1999/xlink">
+<ectd:ectd xmlns:ectd="http://www.ich.org/ectd" xmlns:xlink="http://www.w3c.org/1999/xlink">
   <admin />
 </ectd:ectd>`;
 

@@ -424,7 +424,7 @@ describe('ectd-validator-hardening', () => {
     it('flags missing eCTD namespace', () => {
       const xml = `<?xml version="1.0"?>
         <!DOCTYPE ectd:ectd SYSTEM "ich-ectd-3-2.dtd">
-        <ectd:ectd xmlns:xlink="http://www.w3.org/1999/xlink"></ectd:ectd>`;
+        <ectd:ectd xmlns:xlink="http://www.w3c.org/1999/xlink"></ectd:ectd>`;
       const findings = validateDtdConformance(xml, []);
       expect(findings.some(f => f.code === 'DTD_MISSING_ECTD_NS')).toBe(true);
     });
@@ -432,11 +432,36 @@ describe('ectd-validator-hardening', () => {
     it('flags leaf missing required attributes', () => {
       const xml = `<?xml version="1.0"?>
         <!DOCTYPE ectd:ectd SYSTEM "ich-ectd-3-2.dtd">
-        <ectd:ectd xmlns:ectd="http://www.ich.org/ectd" xmlns:xlink="http://www.w3.org/1999/xlink">
+        <ectd:ectd xmlns:ectd="http://www.ich.org/ectd" xmlns:xlink="http://www.w3c.org/1999/xlink">
           <leaf title="Bad leaf"></leaf>
         </ectd:ectd>`;
       const findings = validateDtdConformance(xml, []);
       expect(findings.some(f => f.code === 'DTD_LEAF_MISSING_ATTR')).toBe(true);
+    });
+
+    // 2026-10-01 (W5/D7, sweep F01): the ICH eCTD 3.2 DTD declares xmlns:xlink
+    // #FIXED "http://www.w3c.org/1999/xlink" on ectd:ectd. This gate required
+    // the W3C spelling instead, so it passed every DTD-invalid backbone the
+    // packager wrote and refused a valid one as "missing" its declaration. A
+    // declaration with the wrong value is its own finding, not a missing one.
+    const backboneDeclaringXlink = (xlinkNs: string) => `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE ectd:ectd SYSTEM "util/dtd/ich-ectd-3-2.dtd">
+<ectd:ectd xmlns:ectd="http://www.ich.org/ectd" xmlns:xlink="${xlinkNs}" dtd-version="3.2">
+</ectd:ectd>`;
+
+    it('reports the W3C spelling of xmlns:xlink as DTD_WRONG_XLINK_NS, naming the #FIXED value', () => {
+      const findings = validateDtdConformance(backboneDeclaringXlink('http://www.w3.org/1999/xlink'), []);
+      const wrong = findings.filter(f => f.code === 'DTD_WRONG_XLINK_NS');
+      expect(wrong).toHaveLength(1);
+      expect(wrong[0].severity).toBe('error');
+      expect(wrong[0].message).toContain('"http://www.w3c.org/1999/xlink"');
+      expect(wrong[0].fix).toContain('xmlns:xlink="http://www.w3c.org/1999/xlink"');
+      expect(findings.some(f => f.code === 'DTD_MISSING_XLINK_NS')).toBe(false);
+    });
+
+    it('raises no xlink finding for the value the DTD fixes', () => {
+      const findings = validateDtdConformance(backboneDeclaringXlink('http://www.w3c.org/1999/xlink'), []);
+      expect(findings.filter(f => f.code.includes('XLINK'))).toEqual([]);
     });
 
     // The vendored fixtures are the gate's own acceptance case. Nothing loaded

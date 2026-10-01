@@ -137,10 +137,14 @@ states, leaf by leaf, what it does to what is already on file. `planSequence`
 the FILED history and its fold — and delegates the diff itself to the canonical
 `lifecycle-operator`.
 
-- **Filed means transmitted.** The history is appended by governed transmit when the
-  gateway accepts the bytes, never at assembly. A bundle that was built and never sent is
-  not at the agency and must not be a baseline. The append is shape-checked with the same
-  guard the reader applies, so an unreadable inventory is never persisted: it is reported
+- **Filed means transmitted to production.** The history is appended by governed transmit
+  when the gateway accepts the bytes in the `production` environment, never at assembly. A
+  bundle that was built and never sent is not at the agency and must not be a baseline; nor
+  is one sent to the agency's test environment (`staging`), which is not a regulatory
+  submission. That send reports `filedSequenceRecorded: 'not-applicable'` with
+  `filedSequenceReason: 'test-environment'` (2026-10-01, sweep F14). The append is
+  shape-checked with the same guard the reader applies, so an unreadable inventory is
+  never persisted: it is reported
   as `filedSequenceRecorded: false` with `filedSequenceReason: 'no-usable-manifest'`, and
   the response says to re-assemble before the next sequence. A descriptor assembled before
   the inventory existed is exactly this case. The governed `sign` row and its signature
