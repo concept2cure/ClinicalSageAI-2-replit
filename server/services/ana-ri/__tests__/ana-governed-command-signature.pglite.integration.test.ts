@@ -497,6 +497,22 @@ describe('erase_personal_data', () => {
   });
 });
 
+// 2026-10-01 (D5): the reason on the erasure record is the one the person
+// stated in the ceremony, never the model's params.reason or a stock line.
+describe('erase_personal_data records the reason the person stated', () => {
+  it('takes it from the sign-off, not from what AnA wrote', async () => {
+    const { erasePersonalData } = await import('../command-executor');
+    const r = await erasePersonalData(ctxWith(signoff()) as never, {
+      dataSubjectId: SIGNER,
+      reason: 'AnA decided this subject should be erased',
+    });
+    expect(r.success).toBe(true);
+    const [row] = await q(`SELECT response_details FROM gdpr_data_subject_requests WHERE data_subject_id = $1`, [String(SIGNER)]);
+    expect(row.response_details).toContain(`Reason: ${REASON}.`);
+    expect(row.response_details).not.toMatch(/AnA decided|GDPR Art\. 17 erasure request/);
+  });
+});
+
 /* 2026-09-28. tagArtifact's "this section already has an artifact" branch
    merged metadata with `metadata || $7::jsonb`; concept2cure_artifacts.metadata
    is json, which has no `||`, so every write down that branch failed at plan
