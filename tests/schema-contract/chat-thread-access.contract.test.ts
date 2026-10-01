@@ -43,6 +43,12 @@ import { fileURLToPath } from 'node:url';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const MIGRATION = path.join(REPO_ROOT, 'migrations/20260728_chat_thread_store.sql');
+/** The program spine and the thread's program key (PF-10 S1), which the mint now writes. */
+const PROGRAMS = path.join(REPO_ROOT, 'migrations/20260524_program_workbench_schema.sql');
+const THREAD_PROGRAM_KEY = path.join(REPO_ROOT, 'migrations/20261001c_chat_threads_program_key.sql');
+const P_A = '0a000000-0000-4000-8000-00000000000a'; // organization A
+const P_B = '0b000000-0000-4000-8000-00000000000b'; // organization B
+const P_A_DELETED = '0a000000-0000-4000-8000-0000000000de'; // organization A, soft-deleted
 const T = 60_000;
 
 /** node-postgres shape over PGlite, for the ONE `pool` the helpers import. */
@@ -86,7 +92,17 @@ async function messagesOf(id: string): Promise<string[]> {
 
 beforeAll(async () => {
   pg = new PGlite();
+  await pg.exec(`CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT); CREATE TABLE users (id SERIAL PRIMARY KEY, name TEXT);`);
+  await pg.exec(fs.readFileSync(PROGRAMS, 'utf8'));
   await pg.exec(fs.readFileSync(MIGRATION, 'utf8'));
+  await pg.exec(fs.readFileSync(THREAD_PROGRAM_KEY, 'utf8'));
+  for (const [id, org, deleted] of [[P_A, ORG_A, false], [P_B, ORG_B, false], [P_A_DELETED, ORG_A, true]] as const) {
+    await pg.query(
+      `INSERT INTO regulatory_programs (id, organization_id, name, code, program_type, product_type, primary_agency, product_name, deleted_at)
+       VALUES ($1, $2, 'p', $3, 'ind', 'drug', 'FDA', 'p', ${deleted ? 'now()' : 'NULL'})`,
+      [id, org, id.slice(-4)],
+    );
+  }
   h.pool = {
     query: (text: string, params?: unknown[]) => pg.query(text, params as never),
     connect: async () => ({ query: (t: string, p?: unknown[]) => pg.query(t, p as never), release() {} }),
@@ -205,4 +221,45 @@ describe('ensureThread cannot adopt someone else’s stable id', () => {
     expect(await messagesOf('ana-ri_1_bob000001')).toEqual(['bob: our CMC blocker']);
     expect(await messagesOf('ana-ri_1_carol0001')).toEqual(['carol: tenant-b confidential']);
   }, T);
+});
+
+describe("a minted thread is bound only to a program of its own organization (PF-10 S2)", () => {
+  const programOf = async (id: string) =>
+    (await pg.query<{ program_id: string | null }>(`SELECT program_id FROM chat_threads WHERE id = $1`, [id])).rows[0]?.program_id;
+
+  it("the organization's own program is bound, lower-cased", async () => {
+    const { getOrCreateThread } = await import('../../server/services/chat-thread-helpers');
+    const id = await getOrCreateThread(null, ALICE, 'ana-ri', ORG_A, P_A.toUpperCase());
+    expect(await programOf(id)).toBe(P_A);
+  });
+
+  it("another organization's program is never bound: the thread is minted unbound", async () => {
+    const { getOrCreateThread } = await import('../../server/services/chat-thread-helpers');
+    const id = await getOrCreateThread(null, ALICE, 'ana-ri', ORG_A, P_B);
+    expect(await programOf(id)).toBeNull();
+    const meta = await pg.query<{ metadata: unknown }>(`SELECT metadata FROM chat_threads WHERE id = $1`, [id]);
+    expect(JSON.stringify(meta.rows[0].metadata ?? null)).not.toContain(P_B);
+  });
+
+  it('a deleted program of the organization is not bound either', async () => {
+    const { getOrCreateThread } = await import('../../server/services/chat-thread-helpers');
+    const id = await getOrCreateThread(null, ALICE, 'ana-ri', ORG_A, P_A_DELETED);
+    expect(await programOf(id)).toBeNull();
+  });
+
+  it("the program list shows the thread under its own program, never under another organization's", async () => {
+    const { listThreads } = await import('../../server/routes/chat/threads');
+    const list = async (orgId: number, program: string) => {
+      const r: { body?: { threads: Array<{ id: string }> } } = {};
+      const res = { status: () => res, json: (b: { threads: Array<{ id: string }> }) => { r.body = b; return res; } };
+      await listThreads({ query: { program_id: program }, tenantId: orgId } as never, res as never);
+      return (r.body?.threads ?? []).map((t) => t.id);
+    };
+    const { getOrCreateThread } = await import('../../server/services/chat-thread-helpers');
+    const ours = await getOrCreateThread(null, ALICE, 'ana-ri', ORG_A, P_A);
+    const foreignAttempt = await getOrCreateThread(null, ALICE, 'ana-ri', ORG_A, P_B);
+    expect(await list(ORG_A, P_A)).toContain(ours);
+    expect(await list(ORG_B, P_B)).not.toContain(foreignAttempt);
+    expect(await list(ORG_A, P_B)).not.toContain(foreignAttempt);
+  });
 });
