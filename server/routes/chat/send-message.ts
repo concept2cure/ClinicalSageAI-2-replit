@@ -965,7 +965,9 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       | DemoStartChip
     > = [];
 
-    if (numericOrgId && turnProjectId !== null) {
+    // With no project too: the executor is the one place the ```ana-action
+    // blocks are stripped, and with no project it creates nothing and says so.
+    if (numericOrgId) {
       try {
         const actionResult = await processResponseActions(assistantMessage, {
           projectId: turnProjectId,

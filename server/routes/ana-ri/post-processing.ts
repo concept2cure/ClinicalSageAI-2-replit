@@ -333,8 +333,11 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     // The turn's project, resolved once for every step below (PF-10 S6a).
     const projectId = await turnProjectId(streamProjectId, orgId, 'ana-ri.post-processing');
 
-    // Guidance executor — auto-create artifacts if response contains action signals
-    if (fullContent && projectId !== null && orgId && isPositiveIntegerId(userId)) {
+    // Guidance executor — auto-create artifacts if response contains action
+    // signals. Run with no project too: it is the one place the ```ana-action
+    // blocks are stripped, and with no project it creates nothing and says so
+    // (PF-10 S6a review, wf_2358b437-4c8).
+    if (fullContent && orgId && isPositiveIntegerId(userId)) {
       try {
         const guidance = await processResponseActions(fullContent, {
           projectId,

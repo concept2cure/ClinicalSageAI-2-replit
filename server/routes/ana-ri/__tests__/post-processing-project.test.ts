@@ -68,7 +68,7 @@ async function projectsSeen(streamProjectId: StreamPostProcessingContext['stream
   // Fire-and-forget steps settle on the next ticks.
   await new Promise((r) => setTimeout(r, 0));
   return {
-    guidance: (h.guidance.mock.calls[0] as any)?.[1]?.projectId ?? 'not called',
+    guidance: h.guidance.mock.calls.length ? (h.guidance.mock.calls[0] as any)[1].projectId : 'not called',
     commands: (h.commands.mock.calls[0] as any)?.[1]?.activeProjectId,
     memory: (h.memory.mock.calls[0] as any)?.[0]?.projectId,
     rim: (h.rim.mock.calls[0] as any)?.[0]?.projectId ?? 'not called',
@@ -94,7 +94,11 @@ describe('which project post-processing acts on', () => {
   it('a program with no anchor row: no step acts on any project', async () => {
     h.anchor.mockResolvedValue(null);
     expect(await projectsSeen(DIGITS_FIRST)).toEqual({
-      guidance: 'not called', commands: undefined, memory: null, rim: 'not called', provenance: undefined, reliability: 'not called',
+      // The guidance executor still runs, with no project: it is the one place
+      // the ```ana-action blocks are stripped, and it then creates nothing
+      // (guidance-executor-no-project.test.ts). Skipping it left the raw block
+      // in the saved answer (review wf_2358b437-4c8).
+      guidance: null, commands: undefined, memory: null, rim: 'not called', provenance: undefined, reliability: 'not called',
     });
   });
 
@@ -106,6 +110,6 @@ describe('which project post-processing acts on', () => {
   });
 
   it('a malformed project is no project', async () => {
-    expect(await projectsSeen('7abc')).toMatchObject({ guidance: 'not called', commands: undefined, memory: null });
+    expect(await projectsSeen('7abc')).toMatchObject({ guidance: null, commands: undefined, memory: null });
   });
 });
