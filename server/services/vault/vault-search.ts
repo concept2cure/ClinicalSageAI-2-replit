@@ -29,6 +29,24 @@ export interface VaultSearchParams {
   limit: number;
   offset: number;
   includeSuperseded: boolean;
+  /**
+   * 'all' (the default, the search box's meaning): every term must match.
+   * 'any': a document matching any term qualifies, and ts_rank_cd ranks those
+   * matching more of them higher. AnA asks in sentences ("which report shows
+   * 24-month stability for batch 12?"), and requiring every word of a sentence
+   * answers nothing (D2, docs/evidence/D2/2026-10-01-vault-search-no-key/).
+   */
+  match?: 'all' | 'any';
+}
+
+/**
+ * A question as an OR of its words, in websearch_to_tsquery syntax. Words only:
+ * quotes and -negation in a sentence are punctuation, not operators. English
+ * stop words fall out in the tsquery itself.
+ */
+export function anyTermsQuery(q: string): string {
+  const words = q.toLowerCase().match(/[\p{L}\p{N}][\p{L}\p{N}._]*/gu) ?? [];
+  return [...new Set(words)].join(' or ');
 }
 
 export interface VaultSearchHit {
@@ -51,7 +69,7 @@ const MATCH = `vault.document_search_vector(d.document_title, d.file_name, left(
                @@ websearch_to_tsquery('english', $2)`;
 
 export async function searchVaultDocuments(db: Queryable, p: VaultSearchParams): Promise<{ total: number; results: VaultSearchHit[] }> {
-  const params: unknown[] = [p.organizationId, p.q];
+  const params: unknown[] = [p.organizationId, p.match === 'any' ? anyTermsQuery(p.q) : p.q];
   const inProgram = p.programId ? `AND d.program_id = $${params.push(p.programId)}::uuid` : '';
   /* `websearch_to_tsquery` rather than `to_tsquery`: it accepts arbitrary user
      text (quotes, OR, -negation) and never raises a syntax error. */
