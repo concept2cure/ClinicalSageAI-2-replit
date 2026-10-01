@@ -113,6 +113,7 @@ variables {
   smtp_user                       = "test-smtp-user"
   smtp_pass                       = "test-smtp-pass-0123456789"
   smtp_from                       = "noreply@example.com"
+  platform_owner_emails           = ["owner@example.com"]
   ai_provider_placement_approvals = "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\"],\"approvedIntendedUses\":[\"drafting\"]}}"
 }
 
@@ -160,6 +161,44 @@ run "renders_the_boot_contract" {
   assert {
     condition     = one([for e in module.ecs.api_container.environment : e.value if e.name == "APP_URL"]) == "https://${var.domain_aliases[0]}"
     error_message = "APP_URL must be the https origin of the first CloudFront alias, in the API environment."
+  }
+
+  # The deployment has an owner from its first boot (D1, 2026-10-01). The
+  # e-mail allowlists are the documented bootstrap: Master Administration
+  # (PLATFORM_ADMIN_EMAILS) and the Business Center (BUSINESS_CENTER_EMAILS),
+  # whose holder can then designate a super_admin in the audited in-app console,
+  # after which the lists can shrink. Both apply to a password sign-in only.
+  # MASTER_ADMIN_EMAILS stays unset: that grant follows a designation. API only;
+  # the worker serves no requests.
+  assert {
+    condition = alltrue([
+      for n in ["PLATFORM_ADMIN_EMAILS", "BUSINESS_CENTER_EMAILS"] :
+      one([for e in module.ecs.api_container.environment : e.value if e.name == n]) == "owner@example.com"
+    ])
+    error_message = "The API must name the platform owner in PLATFORM_ADMIN_EMAILS and BUSINESS_CENTER_EMAILS."
+  }
+
+  assert {
+    condition = length([
+      for e in concat(module.ecs.api_container.environment, module.ecs.worker_container.environment) : e.name
+      if e.name == "MASTER_ADMIN_EMAILS"
+      ]) == 0 && length([
+      for e in module.ecs.worker_container.environment : e.name
+      if contains(["PLATFORM_ADMIN_EMAILS", "BUSINESS_CENTER_EMAILS"], e.name)
+    ]) == 0
+    error_message = "MASTER_ADMIN_EMAILS stays unset, and the worker carries no owner allowlist."
+  }
+
+  # First-run setup takes the deployment's own secret in production
+  # (server/routes/setup.ts). Generated here, held in Secrets Manager, given to
+  # the API alone, and never a plain environment value.
+  assert {
+    condition = (
+      one([for s in module.ecs.api_container.secrets : s.valueFrom if s.name == "SETUP_TOKEN"]) == module.secrets.secret_arns["setup_token"] &&
+      length([for s in module.ecs.worker_container.secrets : s.name if s.name == "SETUP_TOKEN"]) == 0 &&
+      length([for e in module.ecs.api_container.environment : e.name if e.name == "SETUP_TOKEN"]) == 0
+    )
+    error_message = "SETUP_TOKEN must reach the API (only) from the setup_token secret."
   }
 
   # Every upload is scanned before it is stored, and production refuses one the
@@ -537,6 +576,26 @@ run "provision_workflow_names_are_the_ones_terraform_creates" {
 
 # The virus scanner's memory comes out of the API task's; a task sized as it
 # was before the scanner (2048) would starve one or the other.
+# A deployment with no named owner has nobody who can reach Master
+# Administration or designate anyone.
+run "refuses_a_deployment_without_an_owner" {
+  command = plan
+  variables {
+    platform_owner_emails = []
+  }
+  expect_failures = [var.platform_owner_emails]
+}
+
+# The allowlists compare lower-cased addresses; an upper-case entry would never
+# match and the owner would be locked out without a word.
+run "refuses_an_owner_address_that_could_never_match" {
+  command = plan
+  variables {
+    platform_owner_emails = ["Owner@Example.com"]
+  }
+  expect_failures = [var.platform_owner_emails]
+}
+
 run "refuses_an_api_task_too_small_for_the_scanner" {
   command = plan
   variables {

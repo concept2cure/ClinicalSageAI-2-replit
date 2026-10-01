@@ -95,6 +95,8 @@ module "stack" {
   smtp_pass = var.smtp_pass
   smtp_from = var.smtp_from
 
+  platform_owner_emails = var.platform_owner_emails
+
   ai_provider_placement_approvals = var.ai_provider_placement_approvals
 }
 

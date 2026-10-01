@@ -56,3 +56,8 @@ smtp_from = "noreply@example.com"                # REPLACE_ME
 # Regulatory drafting runs only on an approved Anthropic model: pass
 # TF_VAR_anthropic_api_key (sk-ant-…), under the Anthropic BAA. The placement
 # approvals above must name "anthropic".
+
+# The platform owner(s): the address each signs in with by password, lower
+# case. Create that account with first-run setup (the stack's first_run_setup
+# output says how).
+platform_owner_emails = ["owner@example.com"] # REPLACE_ME

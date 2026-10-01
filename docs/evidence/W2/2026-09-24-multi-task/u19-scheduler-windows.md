@@ -157,3 +157,54 @@ of the three processes records a live heartbeat.
 
 - Before the fix, it failed: `expected [ { ok: true } ] to have a length of 3 but got 1`.
 - After the fix, the sentinel and qa-storm suites pass 15/15.
+
+## Follow-up: the 5-minute audit-chain monitor runs once per window, and every task reports its result
+
+`services/audit/chainIntegrityMonitor.ts` had two problems on the three
+processes:
+
+- **Every process ran the full check.** Each one scanned all of
+  `audit_events` every five minutes and wrote its own failure event for each
+  break.
+- **Its status lived in each process's memory.** That status is the §11.10(e)
+  evidence a platform administrator reads at
+  `GET /api/audit/chain-monitor/status`. A per-window claim alone would
+  therefore have left two tasks serving a stale answer.
+
+**Fix.**
+
+- **Scheduled ticks:** `runScheduledCheck` sends both the boot tick and the
+  interval tick through `runScheduledOncePerWindow`, with `storeResult`. The
+  process that runs the check records the status it found in the window's
+  claim. The others skip and record a live heartbeat.
+- **Status read:** `getSharedChainMonitorStatus` serves the latest recorded
+  status, or this process's own if that is newer (an on-demand check run
+  here). If the shared status cannot be read, it reports `error` ("could not
+  read the shared monitor status") rather than its own possibly idle view.
+- **The status route** uses it.
+- **`stopChainMonitor`** now also clears the boot timer.
+- **`scheduled_job_claims.result JSONB`.** It is in the CREATE for a fresh
+  database, plus `ADD COLUMN IF NOT EXISTS` for an existing one. It is
+  additive only, and the migration has a dated header note.
+- **`readLatestWindowResult`** throws when the claims cannot be read.
+
+**Tests.**
+
+- **`chainIntegrityMonitor.once-per-window.test.ts`.** Three module graphs act
+  as three processes and share one claim store.
+  - Before the fix: 3 failed. The scheduled tick and the shared status did not
+    exist; until now each process scanned on its own.
+  - After the fix: one scan per window, three live heartbeats, a process that
+    did not scan serves the scanning process's `healthy`, and an unreadable
+    shared status reads `error`.
+- **`scheduled-once-window.dbtest.ts`**, against real Postgres.
+  - Before: two new cases failed (store and read the latest result; nothing is
+    stored unless asked).
+  - After: 10/10.
+- **The audit suites and every test that touches the monitor or its routes**
+  pass 271/271. The route test's mock gained the shared reader.
+
+**Recorded, not changed:** on a break, the monitor's failure event is still
+written into organisation 1's audit trail (`organization_id` 1 is hard-coded).
+That event belongs to the platform, not to any tenant. It is now written once
+per window instead of three times.
