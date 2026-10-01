@@ -1,0 +1,61 @@
+# 2026-10-01T07:33:12Z HEAD 0e58e794 + working tree. Packs fixed: the second signer freezes as REVIEWER with the password; without a signer the freeze is recorded as not executed.
+# PostgreSQL 16, c2c_testdb on 127.0.0.1:55433 (the shared local cluster, served on that port by another lane at the time), RLS_ENFORCE=on
+# NODE_OPTIONS=--max-old-space-size=2560 npx vitest run --config vitest.db.config.ts tests/db/authoring-governed-delete-signed-freeze.dbtest.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T07:33:17.959Z","pid":10368,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T07:33:17.981Z","pid":10368,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T07:33:17.981Z","pid":10368,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/authoring-governed-delete-signed-freeze.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/authoring-governed-delete-signed-freeze.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/authoring-governed-delete-signed-freeze.dbtest.ts
+✅ Template tables initialized
+
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > an organisation member (not owner/admin/manager) is refused and the document stays 83ms
+{"level":30,"time":"2026-10-01T07:33:21.906Z","pid":10368,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 6d039b2a-72b1-493a-80d2-de4899d87f87 by d***@c2c.test"}
+{"level":30,"time":"2026-10-01T07:33:21.907Z","pid":10368,"hostname":"vm","context":{"userId":"441","tenantId":97,"resourceId":"966410f3-045e-47c0-adb2-7f86eabc89bc"},"msg":"[audit-service] [AUDIT] authoring.section.CREATE authoring_section"}
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > an admin deletes an empty document of their organisation; the chained row names the actor and the reason 40ms
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > a document with a section (so a revision) answers 409 and stays — the ledger is append-only 75ms
+{"level":30,"time":"2026-10-01T07:33:22.007Z","pid":10368,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 25ec570b-3dfa-4014-ac19-62d2238ba30f by d***@c2c.test"}
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > a draft that carries a signature answers 409 and stays — the signature keeps its record 89ms
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-33 — the governed delete, on the real database > another organisation's admin gets 404 for this organisation's document, and it stays 43ms
+{"level":30,"time":"2026-10-01T07:33:22.331Z","pid":10368,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: FREEZE on doc 3b0a52a0-48ec-446e-b735-63037ccba1d6 by d***@c2c.test"}
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > an admin freezing without the password is refused by the ceremony; the document stays a draft 173ms
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > a member without a signing role is refused before any credential is read 31ms
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > an admin with the ceremony seals it, and the signature row names the snapshot it sealed 63ms
+{"level":30,"time":"2026-10-01T07:33:22.591Z","pid":10368,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 891cf03a-baab-4728-9a8b-37a47e8fccc8 by d***@c2c.test"}
+{"level":30,"time":"2026-10-01T07:33:22.591Z","pid":10368,"hostname":"vm","context":{"userId":"441","tenantId":97,"resourceId":"9ecd499c-6d84-4838-957d-d715ff17d058"},"msg":"[audit-service] [AUDIT] authoring.section.CREATE authoring_section"}
+{"level":30,"time":"2026-10-01T07:33:22.720Z","pid":10368,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: FREEZE on doc 891cf03a-baab-4728-9a8b-37a47e8fccc8 by d***@c2c.test"}
+{"level":30,"time":"2026-10-01T07:33:22.755Z","pid":10368,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: VIEW_FROZEN on doc 891cf03a-baab-4728-9a8b-37a47e8fccc8 by d***@c2c.test"}
+{"level":30,"time":"2026-10-01T07:33:22.755Z","pid":10368,"hostname":"vm","context":{"userId":"441","tenantId":97,"resourceId":"891cf03a-baab-4728-9a8b-37a47e8fccc8"},"msg":"[audit-service] [AUDIT] authoring.section.VIEW_FROZEN authoring_document"}
+{"level":30,"time":"2026-10-01T07:33:22.825Z","pid":10368,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 891cf03a-baab-4728-9a8b-37a47e8fccc8 by d***@c2c.test"}
+{"level":30,"time":"2026-10-01T07:33:22.859Z","pid":10368,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: VIEW_FROZEN on doc 891cf03a-baab-4728-9a8b-37a47e8fccc8 by d***@c2c.test"}
+{"level":30,"time":"2026-10-01T07:33:22.860Z","pid":10368,"hostname":"vm","context":{"userId":"441","tenantId":97,"resourceId":"891cf03a-baab-4728-9a8b-37a47e8fccc8"},"msg":"[audit-service] [AUDIT] authoring.section.VIEW_FROZEN authoring_document"}
+{"level":30,"time":"2026-10-01T07:33:22.885Z","pid":10368,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: VIEW_FROZEN on doc 891cf03a-baab-4728-9a8b-37a47e8fccc8 by d***@c2c.test"}
+{"level":30,"time":"2026-10-01T07:33:22.886Z","pid":10368,"hostname":"vm","context":{"userId":"441","tenantId":97,"resourceId":"891cf03a-baab-4728-9a8b-37a47e8fccc8"},"msg":"[audit-service] [AUDIT] authoring.section.VIEW_FROZEN authoring_document"}
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — the demo seed packs freeze through the ceremony, on the real database > biotech pack: the second signer seals the synopsis as REVIEWER, then e-signs; a re-run adds nothing 505ms
+{"level":30,"time":"2026-10-01T07:33:23.085Z","pid":10368,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc af31fa61-0586-410f-ab5e-c4f98e93a5b5 by d***@c2c.test"}
+{"level":30,"time":"2026-10-01T07:33:23.085Z","pid":10368,"hostname":"vm","context":{"userId":"441","tenantId":97,"resourceId":"b9886b1f-6278-4b4b-8ed9-39ac478bc0f7"},"msg":"[audit-service] [AUDIT] authoring.section.CREATE authoring_section"}
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — the demo seed packs freeze through the ceremony, on the real database > biotech pack: without a signer credential the freeze is recorded as not executed and the pack goes on 75ms
+{"level":30,"time":"2026-10-01T07:33:23.180Z","pid":10368,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 15104b5b-d04b-4d43-b1ed-982cda981ef6 by d***@c2c.test"}
+{"level":30,"time":"2026-10-01T07:33:23.180Z","pid":10368,"hostname":"vm","context":{"userId":"441","tenantId":97,"resourceId":"2b59e561-f092-4d97-8e17-f7b294666f8d"},"msg":"[audit-service] [AUDIT] authoring.section.CREATE authoring_section"}
+{"level":30,"time":"2026-10-01T07:33:23.250Z","pid":10368,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: FREEZE on doc 15104b5b-d04b-4d43-b1ed-982cda981ef6 by d***@c2c.test"}
+{"level":30,"time":"2026-10-01T07:33:23.269Z","pid":10368,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: VIEW_FROZEN on doc 15104b5b-d04b-4d43-b1ed-982cda981ef6 by d***@c2c.test"}
+{"level":30,"time":"2026-10-01T07:33:23.270Z","pid":10368,"hostname":"vm","context":{"userId":"441","tenantId":97,"resourceId":"15104b5b-d04b-4d43-b1ed-982cda981ef6"},"msg":"[audit-service] [AUDIT] authoring.section.VIEW_FROZEN authoring_document"}
+{"level":30,"time":"2026-10-01T07:33:23.317Z","pid":10368,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 15104b5b-d04b-4d43-b1ed-982cda981ef6 by d***@c2c.test"}
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — the demo seed packs freeze through the ceremony, on the real database > mdx pack: the second signer seals the summary as REVIEWER, then approves; the approval is its own signature 233ms
+{"level":30,"time":"2026-10-01T07:33:23.417Z","pid":10368,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 3f1d861e-fce9-476b-9993-0b76781a406b by d***@c2c.test"}
+{"level":30,"time":"2026-10-01T07:33:23.417Z","pid":10368,"hostname":"vm","context":{"userId":"441","tenantId":97,"resourceId":"cacbf8dc-1a49-4471-8483-c43a6b34ecc9"},"msg":"[audit-service] [AUDIT] authoring.section.CREATE authoring_section"}
+ ✓ tests/db/authoring-governed-delete-signed-freeze.dbtest.ts > DP-35 — the demo seed packs freeze through the ceremony, on the real database > mdx pack: without a signer credential the freeze is recorded as not executed and the pack goes on 90ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  07:33:13
+   Duration  9.64s (transform 4.45s, setup 133ms, import 375ms, tests 8.53s, environment 0ms)
+
+exit=0

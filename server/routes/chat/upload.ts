@@ -25,8 +25,6 @@ import { resolveGovernedContext } from '../../services/concept2cure/governedDocu
 import { recordArtifactProvenance } from '../../services/provenance/artifact-provenance';
 import { sha256, sha256Bytes } from './provenance.js';
 import { createScopedLogger } from '../../utils/logger.js';
-import { verifyFileSignature } from '../../utils/fileSignature';
-import { scanBuffer as scanForViruses } from '../../utils/virusScan';
 import { sha256Hex } from '../../services/ana/uploaded-file-access';
 // Pure, dependency-free (no db import), so it is safe to load statically —
 // unlike the evidence spine below, which is imported lazily so a database
@@ -105,56 +103,10 @@ export const uploadHandler = async (req: Request, res: Response) => {
     const userId = (req as any).user?.id || null;
     const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
 
-    // SECURITY: verify the actual file bytes match the declared MIME
-    // type. multer's `file.mimetype` comes from the request's
-    // Content-Type header — an attacker can set it to anything. The
-    // magic-number check catches an executable uploaded as
-    // `application/pdf`, an HTML phishing payload uploaded as
-    // `image/png`, etc. Only applied when we have a real buffer
-    // (memory-storage uploads); body-only requests skip this gate.
-    if (fileBuffer && fileBuffer.length > 0) {
-      const sig = verifyFileSignature(fileBuffer, mimeType);
-      if (!sig.ok) {
-        logger.warn('Upload rejected by signature check', {
-          fileName,
-          declaredMime: mimeType,
-          reason: sig.reason,
-        });
-        return res.status(400).json({
-          error: 'File content does not match declared type',
-          code: 'FILE_SIGNATURE_MISMATCH',
-        });
-      }
-
-      // Antivirus scan. No-op when CLAMAV_HOST is unset (returns
-      // scanned=false, clean=true) — production must set the env var
-      // for the scanner to engage. When the scan finds something,
-      // reject with a generic 400 and a specific log entry. We do
-      // NOT echo the signature name back to the client (it would
-      // help an attacker craft a payload that evades the scanner).
-      const scan = await scanForViruses(fileBuffer);
-      if (!scan.clean) {
-        logger.warn('Upload rejected by virus scanner', {
-          fileName,
-          declaredMime: mimeType,
-          signature: scan.signature,
-          orgId,
-        });
-        return res.status(400).json({
-          error: 'File rejected by content scan',
-          code: 'FILE_SCAN_REJECTED',
-        });
-      }
-      if (!scan.scanned) {
-        // Fail-open path: we let the upload through but record the
-        // miss so ops can monitor scanner reachability. Log volume
-        // is bounded by upload volume.
-        logger.warn('Virus scan bypassed', {
-          fileName,
-          reason: scan.reason,
-        });
-      }
-    }
+    // The bytes were verified before this handler ran: signature, name binding
+    // and the content scan (fail-closed in production), by assertUploadSafe in
+    // server/routes/chat.ts (assertEvidenceSafe). This handler kept its own
+    // copy of the first and the last, and its scan failed OPEN.
 
     // Which project id-space this upload arrived with, resolved once and used
     // by the ownership check here, the governed-artifact block and the source
