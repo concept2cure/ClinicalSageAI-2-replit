@@ -18,6 +18,7 @@ import { z } from 'zod';
 import { pool } from '../db';
 import { recordGovernedAction } from './c2c/actions';
 import { signGovernedAct, signedActAttempts } from './governed-signed-act';
+import { DECISION_ACT_MEANINGS } from '../services/part11/signature-meanings';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
 import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 import {
@@ -253,7 +254,7 @@ router.post('/submissions/:id/reviews', whenApproving, async (req, res) => {
     return { target: `irb-submission:${id}`, payload: { outcome: parsed.data.outcome, expirationDate: result.expirationDate, provenanceLinkId: result.provenanceLinkId }, body: { id, ...result } };
   };
   if (parsed.data.outcome !== 'approved') return governed(req, res, 'resolve', parsed.data.reason, record);
-  await signGovernedAct(req, res, { domain: 'irb', codeStatus: CODE_STATUS, run: record });
+  await signGovernedAct(req, res, { domain: 'irb', target: `irb-submission:${id}`, meanings: DECISION_ACT_MEANINGS, codeStatus: CODE_STATUS, run: record });
 });
 
 const siteSchema = z.object({ siteName: z.string().min(1).max(300), principalInvestigator: z.string().max(300).optional(), localContext: z.string().max(4000).optional(), reason });

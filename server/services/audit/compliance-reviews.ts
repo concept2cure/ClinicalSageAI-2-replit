@@ -61,7 +61,6 @@ import { latestSignedReview, nextDueSql, REVIEW_KINDS, type LatestReview, type R
 import { actorJoin, isoUtc } from './compliance-reports/queries/section';
 import type { SqlClient } from './compliance-reports/types';
 
-export const REVIEW_MEANING = 'review';
 export const REVIEW_TARGET_PREFIX = 'compliance-review';
 export const REVIEW_DRAFTED_ACTION = 'compliance.review_drafted';
 export const REVIEW_KIND_LABEL: Readonly<Record<ReviewKind, string>> = { access: 'access review', audit_trail: 'audit trail review' };

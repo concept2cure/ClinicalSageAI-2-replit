@@ -35,6 +35,25 @@ export const GOVERNED_SIGN_MEANINGS = [
 ] as const;
 export type GovernedSignMeaning = (typeof GOVERNED_SIGN_MEANINGS)[number];
 
+/*
+ * The meanings each kind of signed act can carry (§11.50(a)(3); plan P1-51,
+ * DP-64). A meaning is what the signer declares the signature to mean, and it
+ * has to be true of the act. Until 2026-10-01 every domain route that signs
+ * through routes/governed-signed-act.ts accepted the whole vocabulary, so a
+ * biosketch was finalized "as review" and an IRB approval could be signed "as
+ * release". Each of those routes now declares one of these sets, and the
+ * ceremony refuses any other meaning before it asks for the password. The ids
+ * are the sign dialog's (client/src/concept2cure/_shared/esignMeanings.ts).
+ */
+/** A decision on a record (approving, certifying, executing, determining, finalizing it): the signer approves it or answers for it. */
+export const DECISION_ACT_MEANINGS = ['approval', 'responsibility'] as const satisfies readonly GovernedSignMeaning[];
+/** Finalizing a record the signer may have written (a biosketch, a data management plan): authorship too. */
+export const AUTHORED_RECORD_ACT_MEANINGS = ['authorship', 'approval', 'responsibility'] as const satisfies readonly GovernedSignMeaning[];
+/** Signing off a review's own record (an audit-trail or access review): the signer reviewed. */
+export const REVIEW_ACT_MEANINGS = ['review'] as const satisfies readonly GovernedSignMeaning[];
+/** Signing off an assessment, or closing a deviation: the signer reviewed it, approves its outcome, or answers for it. */
+export const SIGN_OFF_ACT_MEANINGS = ['review', 'approval', 'responsibility'] as const satisfies readonly GovernedSignMeaning[];
+
 /** True only for a string that is exactly one of GOVERNED_SIGN_MEANINGS. */
 export function isGovernedSignMeaning(value: unknown): value is GovernedSignMeaning {
   return typeof value === 'string' && (GOVERNED_SIGN_MEANINGS as readonly string[]).includes(value);

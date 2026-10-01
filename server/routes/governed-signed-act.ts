@@ -23,15 +23,20 @@
  *   2. every component is present: reason, meaning,
  *      password (§11.200(a)(1))                        400 ESIGNATURE_COMPONENT_MISSING
  *   3. the meaning is from the closed vocabulary
- *      (§11.50(a)(3)), checked before the password so
- *      a refused meaning spends no guess                400 SIGNATURE_MEANING_*
+ *      (§11.50(a)(3)) and one this act can carry (the
+ *      route's `meanings`; plan P1-51, DP-64), checked
+ *      before the password so a refused meaning spends
+ *      no guess                                         400 SIGNATURE_MEANING_* / MEANING_NOT_ALLOWED
  *   3a. the signer's role carries signing authority
  *      (§11.10(g): identity is not authority), read
  *      from the membership row, before the password     403 ESIGNATURE_NO_AUTHORITY
  *   4. reverifySigner: the password, the second factor
  *      whenever one is enrolled, the account's lockout
  *      and standing (services/part11/reverify-signer)    its own status and code
- *   5. BEGIN, the tenant context, the domain write (a coded domain error refuses)
+ *   5. BEGIN, the tenant context, a lock on the act's target held to COMMIT
+ *      (DP-65: a second sign of the same record waits, then reads it as the
+ *      first left it, and its domain write refuses), the domain write (a coded
+ *      domain error refuses)
  *   6. the `sign` ledger pair and the electronic_signatures row, on the same client
  *   7. COMMIT: the act, its ledger pair and its signature land together or not at all
  *
@@ -101,6 +106,18 @@ export interface SignedActResult {
 export interface SignedAct {
   /** c2c_ana_actions.domain, as the route's other governed writes record it. */
   domain: string;
+  /**
+   * The record being signed, as the ledger names it (`biosketch:12`). Locked
+   * before the domain write and held to COMMIT, so two signs of one record run
+   * one after the other (DP-65); `run` must return the same target.
+   */
+  target: string;
+  /**
+   * The meanings this act can carry (§11.50(a)(3); DP-64): one of the act sets
+   * in services/part11/signature-meanings.ts. Any other meaning is refused
+   * before the password is asked for.
+   */
+  meanings: readonly GovernedSignMeaning[];
   /** The route's domain refusal codes and their statuses. Any other error is a 500 with no error text. */
   codeStatus: Readonly<Record<string, number>>;
   /** Set as app.current_user_role on the signing transaction, where the route's other writes set it. */
@@ -124,7 +141,7 @@ function refusal(res: Response, status: number, code: string, message: string, e
 }
 
 /** Steps 1-3: who is signing, and whether every component arrived. Writes the refusal and returns null otherwise. */
-function signatureComponents(req: Request, res: Response): SignatureComponents | null {
+function signatureComponents(req: Request, res: Response, meanings: readonly GovernedSignMeaning[]): SignatureComponents | null {
   const userId = resolveUserId(req);
   const orgId = resolveOrgId(req);
   if (!userId || !orgId) return refusal(res, 401, 'AUTH_REQUIRED', 'Authentication required.');
@@ -144,7 +161,12 @@ function signatureComponents(req: Request, res: Response): SignatureComponents |
   if (meaningRefused) {
     return refusal(res, 400, meaningRefused.error, `The signature meaning is not one the platform records. ${meaningRefused.detail} Nothing was signed.`);
   }
-  return { orgId, userId, ...parsed.data, meaning: parsed.data.meaning as GovernedSignMeaning };
+  const meaning = parsed.data.meaning as GovernedSignMeaning;
+  // The refusal the other ceremony gives (services/part11/governed-signature-ceremony.ts).
+  if (!meanings.includes(meaning)) {
+    return refusal(res, 400, 'MEANING_NOT_ALLOWED', `This signature can mean ${meanings.join(', ')}; "${meaning}" is not one of them. Nothing was signed.`);
+  }
+  return { orgId, userId, ...parsed.data, meaning };
 }
 
 /** A coded domain refusal keeps its status and sentence; anything else is a 500 that carries no error text. */
@@ -162,7 +184,7 @@ function answerFailure(res: Response, codeStatus: Readonly<Record<string, number
  * the act's body, the ledger ids and the signature id, or the refusal.
  */
 export async function signGovernedAct(req: Request, res: Response, act: SignedAct): Promise<void> {
-  const parts = signatureComponents(req, res);
+  const parts = signatureComponents(req, res, act.meanings);
   if (!parts) return;
   const { orgId, userId, reason, meaning } = parts;
 
@@ -209,7 +231,12 @@ export async function signGovernedAct(req: Request, res: Response, act: SignedAc
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, orgId, act.tenantRole);
+    // DP-65: the domain writes read the record's state unlocked, so two signs
+    // that both read a draft both signed it. A second sign of this target now
+    // waits here until the first commits or rolls back, then reads what it left.
+    await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1, 0))', [`governed-signed-act:${orgId}:${act.target}`]);
     const { target, payload = {}, body } = await act.run(client, orgId, userId);
+    if (target !== act.target) throw new Error(`signed act wrote ${target}, declared ${act.target}`);
     const signedPayload = { ...payload, meaning };
     const gov = await recordGovernedAction(client, { orgId, userId, command: 'sign', target, reason, payload: signedPayload, domain: act.domain });
     const signature = await persistGovernedSignSignature(client, {
