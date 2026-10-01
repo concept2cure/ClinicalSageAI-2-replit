@@ -1,11 +1,12 @@
 /**
- * OQ-002 steps OQ-VAULT-15 to OQ-VAULT-20: filing from the data room (VR-11a),
+ * OQ-002 steps OQ-VAULT-15 to OQ-VAULT-21: filing from the data room (VR-11a),
  * confirming suggestions together (VR-11b), comparing two versions, the
- * library search, the stored-file fixity check and document relationships
- * (plan critique 15). Run by ./run.mjs after OQ-VAULT-14, in this order.
+ * library search, the stored-file fixity check, document relationships
+ * (plan critique 15) and where a version is placed (VR-14a). Run by ./run.mjs
+ * after OQ-VAULT-14, in this order.
  * Kept in their own module so the runner stays within the file-length limit.
  */
-import { ingestPdf, makePdfBuffer } from '../../lib/fixtures.mjs';
+import { createProgram, createSubmissionWithSequence, ingestPdf, makePdfBuffer } from '../../lib/fixtures.mjs';
 
 /** Capture a PDF into the program's data room through chat upload; the source id. */
 async function captureIntoRoom(api, expect, state, stamp) {
@@ -257,6 +258,48 @@ async function relationshipStep({ step, state, stamp }) {
   );
 }
 
+async function whereUsedStep({ step, stamp }) {
+  await step(
+    {
+      id: 'OQ-VAULT-21',
+      urs: ['URS-VAULT-020'],
+      title: 'A version placed in a submission sequence lists that placement; an unplaced version says it is placed nowhere',
+      action:
+        'Create a program, ingest two PDFs into it, create an IND submission on it with sequence 0000; ' +
+        'PUT /api/submissions/sequences/:seq/leaves {sectionCode: "2.5", documentTable: "vault_documents", documentUuid: <the first PDF>, lifecycleOp: "new", reason}; ' +
+        'GET /api/c2c/project-vault/:program/documents/<each PDF>/versions',
+      expected:
+        'The leaf is placed (200). The first PDF\'s version lists one placement: the submission, sequence 0000, section 2.5, operation new. ' +
+        'The second PDF\'s version lists none.',
+      dependsOn: ['OQ-VAULT-00'],
+      note: 'A program of its own, so that the submission it carries does not become the OQ-002 program\'s newest spine (as OQ-SUBC-03 notes).',
+    },
+    async ({ api, expect }) => {
+      const program = await createProgram(api, expect, `OQ-002 Where-used program ${stamp}`);
+      const placed = await ingestPdf(api, expect, { programId: program.id, title: `OQ-002 placed overview ${stamp}` });
+      const unplaced = await ingestPdf(api, expect, { programId: program.id, title: `OQ-002 unplaced overview ${stamp}` });
+      const { submission, sequence } = await createSubmissionWithSequence(api, expect, { title: `OQ-002 IND ${stamp}`, programId: program.id });
+      const leaf = await api('PUT', `/api/submissions/sequences/${sequence.id}/leaves`, {
+        sectionCode: '2.5', title: 'Clinical overview', documentTable: 'vault_documents', documentUuid: placed.document.id,
+        lifecycleOp: 'new', reason: 'Placed by the validation run to show where it is used',
+      });
+      expect(leaf.status === 200, `place: expected 200, got ${leaf.status}`, leaf.json);
+      const placementsOf = async (doc) => {
+        const r = await api('GET', `/api/c2c/project-vault/${program.id}/documents/${doc.document.id}/versions`);
+        expect(r.status === 200, `versions: expected 200, got ${r.status}`, r.json);
+        return r.json.data.versions.find((v) => v.id === doc.document.id)?.placements;
+      };
+      const found = await placementsOf(placed);
+      const one = Array.isArray(found) && found.length === 1 ? found[0] : null;
+      const named = one && one.submissionId === submission.id && one.sequenceId === sequence.id && one.sectionCode === '2.5' && one.operation === 'new';
+      expect(named, 'the placed version does not list its placement', found);
+      const none = await placementsOf(unplaced);
+      expect(Array.isArray(none) && none.length === 0, 'the unplaced version does not say it is placed nowhere', none);
+      return `version ${placed.document.id} lists submission ${submission.id}, sequence ${sequence.id}, 2.5 (new); the unplaced version lists none`;
+    },
+  );
+}
+
 /** @param {{ step: Function, state: Record<string, any>, stamp: string }} run */
 export async function runFilingAndCompareSteps(run) {
   await fileFromRoomStep(run);
@@ -265,4 +308,5 @@ export async function runFilingAndCompareSteps(run) {
   await librarySearchStep(run);
   await fixityStep(run);
   await relationshipStep(run);
+  await whereUsedStep(run);
 }
