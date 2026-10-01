@@ -206,6 +206,9 @@ describe('File into Vault from the data room (VR-11)', () => {
     expect((await vaultRows(theirs))).toHaveLength(0);
     const audit = await owner.query(`SELECT action, user_id FROM audit_logs WHERE record_id = $1`, [added.id]);
     expect(audit.rows).toEqual([{ action: 'vault.document.ingest', user_id: userId }]);
+    // The ingest's row names the capture it was filed from (VR-16b).
+    const named = await owner.query(`SELECT new_values -> 'dataRoomSource' AS src FROM audit_logs WHERE record_id = $1`, [added.id]);
+    expect(named.rows[0].src).toEqual({ sourceId: fresh });
 
     // The data room now reads the source as filed, as v1.0.
     const room = await request(await appFor(mine)).get(`/api/c2c/project-vault/${mine.programId}`);
