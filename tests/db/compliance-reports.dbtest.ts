@@ -22,6 +22,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import express from 'express';
 import request from 'supertest';
+import type { Pool, PoolClient } from 'pg';
 
 import { createAuthBoundary } from '../../server/middleware/authBoundary';
 import { createComplianceReportRoutes } from '../../server/routes/audit-compliance-reports';
@@ -45,6 +46,7 @@ import {
   owner,
   provisionMember,
   signerA,
+  signerB,
   provisionTwoTenantFixture,
   teardownTwoTenantFixture,
   tokenA,
@@ -114,12 +116,7 @@ async function seed(side: 'A' | 'B', org: number, member: number, admin: number)
     [org, `${TAG}-hold-${side}`, program, admin],
   );
   s.hold = hold.rows[0].id;
-  const doc = await owner.query(
-    `INSERT INTO qms_documents (organization_id, doc_number, title, doc_type, version, status, author_id)
-     VALUES ($1,$2,$3,'SOP','1.0','effective',$4) RETURNING id::text`,
-    [org, `${TAG}-QMS-${side}`, `${TAG} controlled document ${side}`, admin],
-  );
-  s.qms = doc.rows[0].id;
+  Object.assign(s, await effectiveQmsDocument(side, org, admin));
   // Closed two days ago: on today's register (raised by the date), though no longer open.
   const change = await owner.query(
     `INSERT INTO qms_change_controls (organization_id, change_number, title, description, reason, status, created_at, closed_at)
@@ -130,19 +127,54 @@ async function seed(side: 'A' | 'B', org: number, member: number, admin: number)
   s.change = change.rows[0].id;
 }
 
-/** An approval signature on A's QMS document, written as the approval writer anchors one; removed in afterAll. */
-async function approvalSignature(docId: string, label: string, ago: string, revoked: boolean): Promise<string> {
-  const r = await owner.query(
+/** An approval signature on a side's QMS document, written as the approval writer anchors one; removed in afterAll. */
+async function approvalSignature(
+  db: Pool | PoolClient,
+  { side, docId, label, ago, revoked }: { side: 'A' | 'B'; docId: string; label: string; ago: string; revoked: boolean },
+): Promise<string> {
+  const r = await db.query(
     `INSERT INTO electronic_signatures
        (organization_id, signed_target, signature_type, signature_purpose, signature_meaning, signer_id, signer_name,
         signer_email, authentication_method, authentication_timestamp, signature_hash, signature_manifest, is_valid,
         verification_status, signed_at)
-     VALUES ($1, $2, 'qms-document-approval', 'Approve the probe SOP', 'APPROVED', $3, 'WO03 signer A',
-             'wo03-fixture-signer-a@example.invalid', 'password', now(), $4, $5::json, $6, $7, now() - $8::interval)
+     VALUES ($1, $2, 'qms-document-approval', 'Approve the probe SOP', 'APPROVED', $3, $4,
+             $5, 'password', now(), $6, $7::json, $8, $9, now() - $10::interval)
      RETURNING id::text`,
-    [ORG_A, `qms-document:${docId}`, signerA, `${TAG}-${label}`, JSON.stringify({ version: '1.0' }), !revoked, revoked ? 'revoked' : null, ago],
+    [
+      side === 'A' ? ORG_A : ORG_B, `qms-document:${docId}`, side === 'A' ? signerA : signerB, `WO03 signer ${side}`,
+      `wo03-fixture-signer-${side.toLowerCase()}@example.invalid`, `${TAG}-${label}`, JSON.stringify({ version: '1.0' }),
+      !revoked, revoked ? 'revoked' : null, ago,
+    ],
   );
   return r.rows[0].id;
+}
+
+/**
+ * A controlled document made effective the way the approval writer makes one: the status and its
+ * approval signature on ONE transaction. The database refuses an effective document without that
+ * (P0-18, migrations/20261001_qms_document_signature_required.sql), so the fixture signs it.
+ */
+async function effectiveQmsDocument(side: 'A' | 'B', org: number, author: number): Promise<{ qms: string; approval: string }> {
+  const c = await owner.connect();
+  try {
+    await c.query('BEGIN');
+    const doc = await c.query(
+      `INSERT INTO qms_documents (organization_id, doc_number, title, doc_type, version, status, author_id)
+       VALUES ($1,$2,$3,'SOP','1.0','draft',$4) RETURNING id::text`,
+      [org, `${TAG}-QMS-${side}`, `${TAG} controlled document ${side}`, author],
+    );
+    const qms = doc.rows[0].id as string;
+    const label = side === 'A' ? 'approval-valid' : 'approval-valid-B';
+    const approval = await approvalSignature(c, { side, docId: qms, label, ago: '2 hours', revoked: false });
+    await c.query(`UPDATE qms_documents SET status = 'effective' WHERE id = $1`, [qms]);
+    await c.query('COMMIT');
+    return { qms, approval };
+  } catch (err) {
+    await c.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    c.release();
+  }
 }
 
 /** The production stack, built per request: each run here gets a fresh rate-limit allowance (run-limits.ts). */
@@ -179,9 +211,11 @@ beforeAll(async () => {
   tokenAdminA = accessToken(adminA, ORG_A, 'admin');
   await seed('A', ORG_A, userA, adminA);
   await seed('B', ORG_B, userB, adminB);
-  // The later signature is revoked: the register must show the earlier, valid one.
-  seeded.A.approval = await approvalSignature(seeded.A.qms, 'approval-valid', '2 hours', false);
-  seeded.A.approvalRevoked = await approvalSignature(seeded.A.qms, 'approval-revoked', '1 hour', true);
+  // seed() signed each document effective (seeded.X.approval). The later signature is revoked:
+  // the register must show the earlier, valid one.
+  seeded.A.approvalRevoked = await approvalSignature(owner, {
+    side: 'A', docId: seeded.A.qms, label: 'approval-revoked', ago: '1 hour', revoked: true,
+  });
   // The fixture signature is permanent (§11.70) and reused for the life of the database:
   // the period starts on the day it was written, within the 366-day limit.
   const sig = await owner.query(

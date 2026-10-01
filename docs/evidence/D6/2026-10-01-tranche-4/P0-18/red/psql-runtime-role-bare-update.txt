@@ -1,0 +1,49 @@
+# HEAD 0e58e794, 2026-10-01T06:40:40Z, PostgreSQL 16.13, before the migration
+--- as the runtime role: psql as app_service (NOSUPERUSER NOBYPASSRLS), app.rls_enforce=on, tenant 93180
+BEGIN;
+BEGIN
+SELECT set_config('app.rls_enforce','on',true) AS rls, set_config('app.current_tenant_id','93180',true) AS tenant, current_user;
+ rls | tenant | current_user 
+-----+--------+--------------
+ on  | 93180  | app_service
+(1 row)
+
+SELECT r.rolsuper, r.rolbypassrls FROM pg_roles r WHERE r.rolname = current_user;
+ rolsuper | rolbypassrls 
+----------+--------------
+ f        | f
+(1 row)
+
+UPDATE qms_documents SET status = 'effective' WHERE doc_number = 'dbqsr-psql-repro-e' RETURNING doc_number, status;
+     doc_number     |  status   
+--------------------+-----------
+ dbqsr-psql-repro-e | effective
+(1 row)
+
+UPDATE 1
+COMMIT;
+COMMIT
+BEGIN;
+BEGIN
+SELECT set_config('app.rls_enforce','on',true) AS rls, set_config('app.current_tenant_id','93180',true) AS tenant;
+ rls | tenant 
+-----+--------
+ on  | 93180
+(1 row)
+
+UPDATE qms_documents SET status = 'retired' WHERE doc_number = 'dbqsr-psql-repro-r' RETURNING doc_number, status;
+     doc_number     | status  
+--------------------+---------
+ dbqsr-psql-repro-r | retired
+(1 row)
+
+UPDATE 1
+COMMIT;
+COMMIT
+--- what is stored afterwards (owner read)
+     doc_number     |  status   | signatures 
+--------------------+-----------+------------
+ dbqsr-psql-repro-e | effective |          0
+ dbqsr-psql-repro-r | retired   |          0
+(2 rows)
+
