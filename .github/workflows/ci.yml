@@ -692,6 +692,12 @@ jobs:
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:frontend-sync-coverage:selftest && npm run ci:frontend-sync-coverage
 
+      # Three builds of @napi-rs/canvas, each with its own Skia, were mixed in
+      # one render: a scanned PDF crashed the API task with SIGSEGV. One copy.
+      - name: Guardrails — one native canvas library in the lockfile (with selftest)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run ci:single-native-canvas:selftest && npm run ci:single-native-canvas
+
       # A required security scan that gets cancelled by the next push produces
       # no release evidence for the commit it was meant to certify — 74 of the
       # last 100 canonical-branch CodeQL runs, before codeql.yml and

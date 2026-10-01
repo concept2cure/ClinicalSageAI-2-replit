@@ -1,0 +1,6 @@
+ × tests/services/scanned-pdf-native-canvas.test.ts > scanned PDF (a page that is an image) > is read by OCR and the process survives 1950ms
+   → expected { status: null, …(2) } to deeply equal { Object (status, signal, ...) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected { status: null, …(2) } to deeply equal { Object (status, signal, ...) }
+-   "signal": null,
++   "signal": "SIGABRT",

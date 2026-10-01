@@ -22,6 +22,7 @@ import {
   verifyReadinessContract,
 } from '../../../scripts/db/readiness-contract.mjs';
 import { CRITICAL_TABLES, REQUIRED_SCHEMAS } from '../ensureCoreTables';
+import { APPEND_ONLY_TABLES } from '../../../scripts/db/provision-app-role.mjs';
 import { SECURITY_CRITICAL_TABLES } from '../../startup/services';
 
 describe('readiness-contract.mjs mirrors the server-side readiness lists', () => {
@@ -56,6 +57,10 @@ describe('readiness-contract.mjs mirrors the server-side readiness lists', () =>
  */
 // Scripted client and full-contract fixtures shared by the verifier pins below.
 type Row = Record<string, unknown>;
+const APPEND_ONLY = new Set(
+  (APPEND_ONLY_TABLES as ReadonlyArray<{ schema: string; name: string }>).map((t) => `${t.schema}.${t.name}`),
+);
+
 function scriptedClient(opts: {
   role?: Row;
   schemasPresent?: string[];
@@ -91,7 +96,10 @@ function scriptedClient(opts: {
         const rows = [...present].map((key) => {
           const [schema, name] = key.split('.');
           const canSelect = selectable.has(key);
-          return { schema, name, relkind: 'r', owned: false, schema_usage: true, can_select: canSelect, can_insert: true, can_update: schema !== 'audit', can_delete: schema !== 'audit' };
+          // What the recipe grants: full DML, except SELECT/INSERT on the audit
+          // schema and on every append-only record table (P0-8).
+          const writable = schema !== 'audit' && !APPEND_ONLY.has(key);
+          return { schema, name, relkind: 'r', owned: false, schema_usage: true, can_select: canSelect, can_insert: true, can_update: writable, can_delete: writable };
         });
         for (const r of opts.extraRelations ?? []) {
           const [schema, name] = r.relation.split('.');
