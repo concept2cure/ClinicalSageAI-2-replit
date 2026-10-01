@@ -2891,6 +2891,17 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20261001_project_continuity_snapshots.sql',
   'db/migrations/20261001_collab_presence.sql',
 
+  // ── Scheduled jobs run once per window, not once per process (2026-10-01,
+  //    D1, audit W2 fix unit U19) ────────────────────────────────────────────
+  // The advisory lease stopped overlapping runs only; a tick on another task
+  // that did not overlap ran the same window again (retention archived and
+  // audited each disposition up to three times; the sentinel notified three
+  // times an hour). One claim row per (organization, job, window), in public
+  // with organization_id INTEGER NOT NULL so the sweep below gives it its
+  // tenant policy. IF NOT EXISTS only, no DROP. Evidence
+  // docs/evidence/W2/2026-09-24-multi-task/u19-scheduler-windows.md.
+  'migrations/20261001d_scheduled_job_claims.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)
