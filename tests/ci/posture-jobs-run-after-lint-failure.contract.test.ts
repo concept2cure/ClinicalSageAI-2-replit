@@ -44,6 +44,7 @@ const POSTURE_JOBS = [
   'integration-tests',
   'blank-db-provisioning',
   'production-boot-smoke',
+  'production-image-boot',
   'coverage',
   'ana-readiness-tests',
   'aios-audit-assets',

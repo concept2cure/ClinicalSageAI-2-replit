@@ -217,118 +217,83 @@ export async function analyzeProtocolSections(
 }
 
 /**
- * Generates highly tailored protocol optimization recommendations
- * @param protocolText The protocol text content
- * @param protocolMeta The protocol metadata (indication, phase, etc.)
- * @param matchedCsrs List of similar CSRs with the same therapeutic area and phase
- * @param academicReferences List of relevant academic references
- * @returns Detailed, specific recommendations tailored to the protocol
+ * A narrative protocol recommendation, from supplied evidence only.
+ *
+ * ── 2026-10-01 ───────────────────────────────────────────────────────────────
+ * The prompt this replaces told the model to "Cite EXACT successful approaches
+ * from similar CSRs … with SPECIFIC details", to cite "specific journal
+ * articles", to "Reference specific FDA/EMA guidances or precedent approvals"
+ * and to provide "COMPETITIVE INTELLIGENCE" — and then, in the same message,
+ * said "No specific matching CSRs available." and "No specific academic
+ * references available.", which is what the caller always sent. It asked for
+ * citations to sources it had not supplied, so any it got were invented. It
+ * also sent its own source comment ("// Limit to first 4000 chars…") to the
+ * model inside the protocol text.
+ *
+ * Now the model narrates evidence computed elsewhere (CLAUDE.md RULE 2: the
+ * numbers come from the deterministic comparison; the model narrates) and is
+ * told to cite nothing it was not given.
+ *
+ * @param protocolText The protocol text (may be empty when only a summary exists)
+ * @param protocolMeta Indication and phase the comparison matched on
+ * @param comparableTrials Corpus trials, as the caller read them
+ * @param evidenceSummary The deterministic comparison, as plain text
  */
 export async function generateTailoredProtocolRecommendations(
   protocolText: string,
   protocolMeta: {
     indication: string;
     phase: string;
-    studyType: string;
+    studyType?: string;
     title?: string;
   },
-  matchedCsrs: any[] = [],
-  academicReferences: any[] = []
+  comparableTrials: any[],
+  evidenceSummary: string
 ): Promise<string> {
-  // Create a system prompt that instructs the model to be specific to this protocol
-  const systemPrompt = `
-    You are the world's foremost expert on clinical study design and protocol optimization with extensive experience in ${protocolMeta.indication} trials.
+  const systemPrompt = [
+    'You review a clinical trial protocol against the evidence supplied with it.',
+    'Rules:',
+    '1. Use only the protocol text and the evidence in the user message. Do not cite or name any study, publication, guidance, approval or precedent that is not in that evidence.',
+    '2. Do not state any number that is not in the protocol text or the evidence. The comparison with comparable trials has already been computed; quote it, do not recompute or extend it.',
+    '3. Where the evidence is insufficient to support a recommendation, say so plainly instead of filling the gap.',
+    '4. Write 3 to 6 recommendations, each under a heading in markdown ** formatting, each naming the protocol element it concerns and the supplied evidence it rests on.',
+  ].join('\n');
 
-    Your task is to analyze a clinical trial protocol and provide HIGHLY SPECIFIC, DATA-DRIVEN recommendations
-    that are directly relevant to this exact protocol. Focus exclusively on the submitted protocol
-    for a ${protocolMeta.indication} study in ${protocolMeta.phase.replace('phase', 'Phase ')}.
+  const trialsContext =
+    comparableTrials.length > 0
+      ? comparableTrials
+          .map((t, i) =>
+            [
+              `Trial ${i + 1}: ${t.title || 'Untitled'}${t.nct_id ? ` (${t.nct_id})` : ''}`,
+              t.design ? `- Design: ${t.design}` : null,
+              t.sample_size ? `- Enrolment: ${t.sample_size}` : null,
+              t.duration_weeks ? `- Duration: ${t.duration_weeks} weeks` : null,
+              t.primary_endpoint ? `- Primary endpoint: ${t.primary_endpoint}` : null,
+              t.registry_status ? `- Registry status: ${t.registry_status}` : null,
+              t.efficacy_data ? `- Recorded efficacy results: ${t.efficacy_data}` : null,
+            ]
+              .filter(Boolean)
+              .join('\n')
+          )
+          .join('\n\n')
+      : 'No comparable trials were found in the corpus for this indication and phase.';
 
-    Important instructions:
-    1. Make every recommendation SPECIFICALLY about this ${protocolMeta.indication} protocol
-    2. Reference CONCRETE specific elements from the protocol in your suggestions
-    3. Cite EXACT successful approaches from similar CSRs in the same therapeutic area with SPECIFIC details
-    4. Analyze what makes THIS protocol unique - avoid generic advice completely
-    5. Structure your response with clear headings using markdown ** formatting
-    6. For each recommendation, include detailed subsections that cite:
-       - SPECIFIC CSR EXAMPLES: Detail exact methods from similar studies that were successful including exact endpoints, methods, or design elements that directly relate to this protocol's objectives
-       - ACADEMIC EVIDENCE: Cite specific journal articles, publications and findings relevant to this exact indication and study methods
-       - REGULATORY PRECEDENT: Reference specific FDA/EMA guidances or precedent approvals for this indication
-       - COMPETITIVE INTELLIGENCE: Provide specific insights about how this protocol compares to other successful trials in this therapeutic area
-       - IMPLEMENTATION GUIDANCE: Give exact, concrete steps to implement the recommendation
-    7. For each element of the protocol, COMPARE the current approach with what has worked in past successful trials with the same indication and phase
-    8. Emphasize statistically significant outcomes from previous studies when suggesting methodology improvements
-  `;
-
-  // Prepare CSR context information
-  const csrContext =
-    matchedCsrs.length > 0
-      ? `
-      Relevant Clinical Study Reports (CSRs):
-      ${matchedCsrs
-        .map(
-          (csr, index) => `
-        CSR ${index + 1}: ${csr.title || 'Untitled'}
-        - Phase: ${csr.phase || 'Unknown'}
-        - Indication: ${csr.indication || 'Unknown'}
-        - Key findings: ${csr.insight || 'No specific insights available'}
-        ${
-          csr.suggestions && csr.suggestions.length > 0
-            ? `- Relevant learnings: ${csr.suggestions.join('; ')}`
-            : ''
-        }
-      `
-        )
-        .join('\n')}
-    `
-      : 'No specific matching CSRs available.';
-
-  // Prepare academic reference context
-  const academicContext =
-    academicReferences.length > 0
-      ? `
-      Relevant Academic References:
-      ${academicReferences
-        .map(
-          (ref, index) => `
-        Reference ${index + 1}: ${ref.title || 'Untitled'}
-        - Author: ${ref.author || 'Unknown'}
-        - Publication: ${ref.publication || 'Unknown'}
-        - Year: ${ref.year || 'Unknown'}
-        - Relevance: ${ref.relevance || 'Unknown'}
-      `
-        )
-        .join('\n')}
-    `
-      : 'No specific academic references available.';
-
-  // Construct the user prompt
-  const userPrompt = `
-    Please analyze this clinical trial protocol for a ${protocolMeta.indication} study (${protocolMeta.phase.replace('phase', 'Phase ')})
-    and provide HIGHLY SPECIFIC recommendations tailored to this exact protocol.
-
-    PROTOCOL TEXT:
-    ${protocolText.substring(0, 4000)} // Limit to first 4000 chars to avoid token limits
-
-    PROTOCOL METADATA:
-    - Title: ${protocolMeta.title || `${protocolMeta.indication} Clinical Trial`}
-    - Indication/Disease: ${protocolMeta.indication}
-    - Phase: ${protocolMeta.phase.replace('phase', 'Phase ')}
-    - Study Type: ${protocolMeta.studyType === 'rct' ? 'Randomized Controlled Trial' : protocolMeta.studyType}
-
-    ${csrContext}
-
-    ${academicContext}
-
-    IMPORTANT: Provide 4-6 major recommendation categories. Each recommendation must be:
-    1. HIGHLY SPECIFIC to this ${protocolMeta.indication} protocol
-    2. Reference EXACT elements from this protocol
-    3. Cite SPECIFIC approaches from similar CSRs in the same therapeutic area (${protocolMeta.indication})
-    4. Address the UNIQUE challenges of this study
-  `;
+  const userPrompt = [
+    `Protocol: ${protocolMeta.title ?? '(untitled)'} — ${protocolMeta.indication}, ${protocolMeta.phase}` +
+      (protocolMeta.studyType ? `, study type ${protocolMeta.studyType}` : ''),
+    '',
+    'PROTOCOL TEXT (first 4000 characters):',
+    protocolText.trim() ? protocolText.substring(0, 4000) : '(no protocol text was supplied)',
+    '',
+    'COMPARISON WITH COMPARABLE TRIALS (computed):',
+    evidenceSummary,
+    '',
+    'COMPARABLE TRIALS:',
+    trialsContext,
+  ].join('\n');
 
   try {
-    const response = await analyzeText(userPrompt, systemPrompt, 0.5, 3000);
-    return response;
+    return await analyzeText(userPrompt, systemPrompt, 0.3, 3000);
   } catch (error: any) {
     console.error('Error generating tailored protocol recommendations:', error);
     throw new Error(`Failed to generate tailored recommendations: ${error.message}`);

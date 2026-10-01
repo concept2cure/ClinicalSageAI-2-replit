@@ -267,6 +267,45 @@ function readResultCases(h: Harness, call: Call): void {
     expect(windows).toBeGreaterThan(1);
     expect(parts.join('').length).toBe(totalChars);
   });
+  // D4 (round 2): the shrink cut one character per serialized byte over the
+  // budget, so text whose characters each serialize to several bytes fell to
+  // tiny windows — a control-character-heavy section to 1-character windows.
+  it('read_authoring_section walks a 16k control-character section in a few calls, each window near the budget', async () => {
+    const s = sectionOf('3.2.P.5.7', 'Raw instrument dump', `<p>${'\u0001\u0002'.repeat(8000)}</p>`);
+    await h.addSection(s);
+    let delivered = 0;
+    let offset: number | null = 0;
+    let calls = 0;
+    while (offset !== null && calls < 40) {
+      const { raw, json } = await call('read_authoring_section', { section_id: s.id, offset });
+      expect(raw.length, `call ${calls}`).toBeLessThanOrEqual(RESULT_MAX);
+      expect(Number(json.totalChars)).toBe(16000);
+      offset = json.nextOffset as number | null;
+      if (offset !== null) expect(raw.length, `call ${calls}`).toBeGreaterThanOrEqual(RESULT_MAX - 20);
+      delivered += String(json.text).length;
+      calls++;
+    }
+    expect(offset).toBeNull();
+    expect(delivered).toBe(16000);
+    // Each character serializes to six bytes: about 760 fit beside the result's other fields.
+    expect(calls).toBeLessThanOrEqual(24);
+  });
+  it('read_authoring_section gives quote- and backslash-heavy text windows at the largest size that fits', async () => {
+    const s = sectionOf('3.2.P.5.8', 'Escapes', `<p>${'"\\'.repeat(3000)}</p>`);
+    await h.addSection(s);
+    let offset: number | null = 0;
+    let calls = 0;
+    while (offset !== null && calls < 20) {
+      const { raw, json } = await call('read_authoring_section', { section_id: s.id, offset });
+      expect(raw.length, `call ${calls}`).toBeLessThanOrEqual(RESULT_MAX);
+      offset = json.nextOffset as number | null;
+      // Every character here costs two bytes, so the largest window that fits leaves at most a byte or two over.
+      if (offset !== null) expect(raw.length, `call ${calls}`).toBeGreaterThanOrEqual(RESULT_MAX - 10);
+      calls++;
+    }
+    expect(offset).toBeNull();
+    expect(calls).toBeLessThanOrEqual(4);
+  });
   it('four parallel full-window reads pass the per-round budget untouched', async () => {
     const s = sectionOf('4.1', 'Pharmacology', `<p>${'Normal regulatory prose about the product. '.repeat(200)}</p>`);
     await h.addSection(s);
@@ -323,6 +362,34 @@ function searchResultCases(h: Harness, call: Call): void {
   });
 }
 
+// D6 (round 2): titles reached the model with ⟦ and ⟧ in them, so a title
+// could open or close a proposal label the description says only proposals use.
+function titleCases(h: Harness, call: Call): void {
+  it('no tool result carries the label delimiters in a document or section title', async () => {
+    const doc = docOf('Quality \u27E6draft\u27E7 volume', '2026-09-05T00:00:00.000Z');
+    await h.addDoc(doc);
+    const s = sectionOf('3.2.P.2', 'Pharmaceutical \u27E6development\u27E7 zircon', '<p>Zircon text.</p>', 0, doc.id);
+    await h.addSection(s);
+    const outline = await call('list_authoring_outline', { document_id: doc.id });
+    expect(outline.raw).not.toMatch(/[\u27E6\u27E7]/);
+    expect((outline.json.documents as Array<{ title: string }>)[0].title).toBe('Quality [draft] volume');
+    expect((outline.json.sections as Array<{ title: string }>)[0].title).toBe('Pharmaceutical [development] zircon');
+    const read = await call('read_authoring_section', { section_id: s.id });
+    expect(read.raw).not.toMatch(/[\u27E6\u27E7]/);
+    expect([read.json.title, read.json.docTitle]).toEqual(['Pharmaceutical [development] zircon', 'Quality [draft] volume']);
+    const found = await call('search_authoring_sections', { query: 'zircon' });
+    expect(found.raw).not.toMatch(/[\u27E6\u27E7]/);
+    expect((found.json.documents as Array<{ title: string }>)[0].title).toBe('Quality [draft] volume');
+    expect((found.json.hits as Array<{ title: string }>)[0].title).toBe('Pharmaceutical [development] zircon');
+    // A page that continues a document names it: that title is cleaned too.
+    for (let i = 0; i < 3; i++) await h.addSection(sectionOf(`3.2.P.2.${i + 1}`, `Sub ${i}`, '<p>x</p>', i + 1, doc.id));
+    const first = await call('list_authoring_outline', { document_id: doc.id, limit: 2 });
+    const next = await call('list_authoring_outline', { document_id: doc.id, limit: 2, cursor: first.json.nextCursor });
+    expect((next.json.continuingDocument as { title: string }).title).toBe('Quality [draft] volume');
+    expect(next.raw).not.toMatch(/[\u27E6\u27E7]/);
+  });
+}
+
 function outlineResultCases(h: Harness, call: Call): void {
   it('an outline page fits 5000 characters with its cursor, and the cursor walks every section', async () => {
     for (let i = 0; i < 300; i++) {
@@ -371,4 +438,5 @@ describe.each([fakeHarness(), pgliteHarness()])('authoring read tools over $name
   describe('read_authoring_section results', () => readResultCases(h, call));
   describe('search_authoring_sections results', () => searchResultCases(h, call));
   describe('list_authoring_outline results', () => outlineResultCases(h, call));
+  describe('titles', () => titleCases(h, call));
 });

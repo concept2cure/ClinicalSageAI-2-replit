@@ -392,3 +392,38 @@ export function outsideProposals(text: string): string {
 export function withoutContinuations(text: string): string {
   return text.replace(/^\u27E6\(continued\) proposed (?:insertion|deletion) by [^:]*: /, '').replace(/…\(continues\)\u27E7$/, '');
 }
+
+// ── Sections for the second verifier round's rendering cases ────────────────
+
+/**
+ * Astral characters in settled text, at a proposal's first and last character,
+ * in adjacent proposals, in a caption and in table cells: a 1-character window
+ * once stopped advancing on the first of these (0→1 1→2 2→29 29→29).
+ */
+export const WALK_CASES = [
+  '<p>a <ins data-author-name="A">x\u{1F600}y z</ins> b</p>',
+  '<p>\u{1F600}<ins data-author-name="A">\u{1F600}</ins>\u{1F600}<del data-author-name="B">\u{1F600}\u{1F600}</del>\u{1F600}</p>',
+  '<p>ab \u{1F600} cd \u{1D518}\u{1D52B}</p><ul><li>\u{1F600} item <ins data-author-name="C">\u{2070E} new</ins></li></ul>',
+  '<table><caption>Cap <ins data-author-name="A">\u{1F600} more</ins></caption><tr><td>\u{1F600}</td><td><del data-author-name="B">\u{2070E}</del></td></tr></table>',
+  '<p><ins data-author-name="A">a</ins><ins data-author-name="B">\u{1F600}</ins><del data-author-name="C">b</del></p>',
+  `<p>${'\u{1F600}'.repeat(30)}<ins data-author-name="A">${'é\u{1F600}'.repeat(25)}</ins></p>`,
+];
+export const WALK_SIZES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 31, 200, 4000];
+/** Half of a surrogate pair with its other half missing. */
+export const LONE_SURROGATE = /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/;
+
+/** A settled copy of /f.png the parser skips (caption, row, table body, empty citation), then a proposed copy it emits. */
+export const FIGURE_PROPOSED_EMITTED = [
+  '<table><caption><img src="/f.png"></caption><tr><td>Cell</td></tr></table><ins data-author-name="Ann"><img src="/f.png" alt="Zeta figure"></ins>',
+  '<table><tr><img src="/f.png"><td>Cell</td></tr></table><ins data-author-name="Ann"><img src="/f.png" alt="Zeta figure"></ins>',
+  '<p>See <a data-cite="src-1"><img src="/f.png"></a></p><ins data-author-name="Ann"><img src="/f.png" alt="Zeta figure"></ins>',
+  '<table><tr><td>Cell</td></tr><img src="/f.png"></table><table><tr><td><ins data-author-name="Ann"><img src="/f.png" alt="Zeta figure"></ins></td></tr></table>',
+];
+/** The other order: a proposed copy the parser skips, then a settled copy it emits. */
+export const FIGURE_SETTLED_EMITTED = [
+  '<table><caption><ins data-author-name="Ann"><img src="/f.png" alt="Zeta"></ins></caption><tr><td>Cell</td></tr></table><img src="/f.png" alt="Settled figure">',
+  '<table><tr><ins data-author-name="Ann"><img src="/f.png"></ins><td>Cell</td></tr></table><img src="/f.png" alt="Settled figure">',
+  '<table><tr><td>Cell</td></tr><ins data-author-name="Ann"><img src="/f.png"></ins></table><img src="/f.png" alt="Settled figure">',
+  '<p>See <ins data-author-name="Ann"><a data-cite="src-1"><img src="/f.png"></a></ins></p><img src="/f.png" alt="Settled figure">',
+  '<table><tr><td>Cell</td></tr><ins data-author-name="Ann"><img src="/f.png"></ins></table><table><tr><td><img src="/f.png" alt="Settled figure"></td></tr></table>',
+];

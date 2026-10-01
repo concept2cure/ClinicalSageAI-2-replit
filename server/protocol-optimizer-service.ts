@@ -29,61 +29,38 @@ export interface Recommendation {
 
 export class ProtocolOptimizerService {
   /**
-   * Generates tailored recommendations based on the exact protocol submitted
-   * with specific references to similar CSRs and academic literature
+   * A narrative recommendation for the submitted protocol, written by the
+   * configured model from the evidence the caller supplies: the protocol text,
+   * the comparable trials, and the deterministic comparison of the two.
+   *
+   * Returns null when no model is configured. A failed model call throws.
+   *
+   * ── 2026-10-01 ─────────────────────────────────────────────────────────────
+   * With no model configured this used to return a template — "Based on our
+   * analysis of your Phase 3 obesity protocol, we recommend…", "Optimize
+   * sample size … Based on similar studies in obesity" — describing an analysis
+   * that had not run and studies nobody read. A failed model call returned the
+   * string 'Unable to generate tailored recommendations. Please try again.' AS
+   * the recommendation, so an error rendered as content.
    */
   async generateTailoredRecommendations(
     protocolText: string,
     protocolMeta: {
       indication: string;
       phase: string;
-      studyType: string;
+      studyType?: string;
       title?: string;
     },
-    matchedCsrs: any[] = [],
-    academicReferences: any[] = []
-  ): Promise<string> {
-    try {
-      // If OpenAI API is available, use that for more tailored recommendations
-      if (isApiKeyAvailable()) {
-        return await generateTailoredProtocolRecommendations(
-          protocolText,
-          protocolMeta,
-          matchedCsrs,
-          academicReferences
-        );
-      } else {
-        // Fallback template. `indication` and `phase` are optional now — the
-        // analyser no longer defaults them — so these read "your protocol"
-        // rather than naming a therapeutic area the document never stated.
-        const area = protocolMeta.indication ?? 'your';
-        const phaseLabel = protocolMeta.phase
-          ? `${protocolMeta.phase.replace('phase', 'Phase ')} `
-          : '';
-        return `## Protocol Optimization Recommendations for ${area} Study
-
-Based on our analysis of your ${phaseLabel}${area} protocol, we recommend the following optimizations:
-
-1. **Consider industry standard endpoints for ${area} studies**
-   - Ensure alignment with regulatory expectations
-   - Include patient-reported outcomes
-
-2. **Optimize sample size for statistical power**
-   - Based on similar studies in ${area}
-   - Account for expected effect size and dropout rate
-
-3. **Enhance inclusion/exclusion criteria**
-   - Target appropriate patient population
-   - Balance enrollment feasibility with population specificity
-
-4. **Review safety monitoring procedures**
-   - Implement standard safety assessments for ${area} studies
-   - Include appropriate stopping rules`;
-      }
-    } catch (error) {
-      console.error('Error generating tailored recommendations:', error);
-      return 'Unable to generate tailored recommendations. Please try again.';
-    }
+    comparableTrials: any[],
+    evidenceSummary: string
+  ): Promise<string | null> {
+    if (!isApiKeyAvailable()) return null;
+    return generateTailoredProtocolRecommendations(
+      protocolText,
+      protocolMeta,
+      comparableTrials,
+      evidenceSummary
+    );
   }
 
   /**

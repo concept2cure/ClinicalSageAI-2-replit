@@ -1,0 +1,17 @@
+ ✓ tests/db/cross-object-resolver.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 11ms
+ ✓ tests/db/cross-object-resolver.dbtest.ts > a project the organisation holds > is assembled from reads that all succeed, and names the project 45ms
+ ✓ tests/db/cross-object-resolver.dbtest.ts > a project the organisation holds > is reviewed to completion, and the review says which project it read 29ms
+ ✓ tests/db/cross-object-resolver.dbtest.ts > what the review cannot read > a program uuid fails the payload, naming every read it broke 23ms
+ ✓ tests/db/cross-object-resolver.dbtest.ts > what the review cannot read > a program uuid ends the review run as failed, with no step completed and the reason recorded 24ms
+ ✓ tests/db/cross-object-resolver.dbtest.ts > what the review cannot read > a project another organisation holds is refused, not assessed as empty 21ms
+ ✓ tests/db/cross-object-resolver.dbtest.ts > the project's tasks, counted from every store > counts schedule, board and correspondence tasks, and how many are done, blocked and overdue 38ms
+ ✓ tests/db/cross-object-resolver.dbtest.ts > the project's tasks reach the readiness review and the recommendations > lists every store's open work by its real id, flags what is blocked and overdue, and the counts agree 27ms
+ ✓ tests/db/cross-object-resolver.dbtest.ts > the project's tasks reach the readiness review and the recommendations > the readiness review raises the blocked work, and the recommendations name the overdue work 20ms
+ ✓ tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > runs as a role that RLS binds (the posture these results depend on) 4ms
+ ✓ tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > shows the schedule's, correspondence's and filings' work, each labelled, read-only, with the screen that owns it 69ms
+ ✓ tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > keeps the board's own tasks editable, and shows a task AnA created once, as its editable board card 28ms
+ ✓ tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > counts blocked work from every store, and never another organisation's 32ms
+ ✓ tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > says it read every store 31ms
+ ✓ tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > names a store it could not read and says it is partial, instead of showing less without a word 29ms
+ Test Files  2 passed (2)
+      Tests  15 passed (15)

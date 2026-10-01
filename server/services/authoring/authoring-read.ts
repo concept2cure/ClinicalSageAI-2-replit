@@ -50,12 +50,15 @@
  *     (`⟦(continued) proposed insertion by X: `) and one that stops inside a
  *     proposal closes it (`…(continues)⟧`), so the second window of a long
  *     insertion does not begin with unlabelled proposed text;
- *   - a figure inside `<ins>`/`<del>` is labelled too. The block parser does not
- *     carry suggestion state onto image blocks, so figureProposals reads it
- *     from the markup itself.
+ *   - a figure inside `<ins>`/`<del>`, and proposed words in a table's caption,
+ *     are labelled too. The block parser carries suggestion state on text runs
+ *     only, so emittedObjects (authoring-read-render.ts) reads it from the markup, following the
+ *     parser's own traversal so the Nth figure it finds is the Nth rendered;
+ *   - a section or document title, code or name carries no ⟦ or ⟧ either.
  * A cut never falls inside a label's own words: a window that would end there
  * ends before the label, and one asked to start there starts at the
- * proposal's text, re-opened.
+ * proposal's text, re-opened. Nor does a cut split a surrogate pair, and every
+ * window of a walk advances, at every window size from 1 up.
  *
  * ── Sizes ────────────────────────────────────────────────────────────────────
  * The outline carries no content, only each section's length and a SHA-256 of
@@ -69,10 +72,17 @@
  * @module server/services/authoring/authoring-read
  */
 
-import { parse, HTMLElement, type Node } from 'node-html-parser';
 import { compareSectionCode } from '../../../shared/regulatory/section-code';
-import { MAX_LIST_DEPTH, contentLooksLikeHtml, sectionContentToBlocks } from '../../export/authoring-section-content';
-import type { ContentBlock, InlineRun, TableCell } from '../../export/authoring-section-content';
+import {
+  SEARCH_QUERY_MAX, escapeDelimiters, layout, renderSection, snippetOf, windowOf, type RenderedSection,
+} from './authoring-read-render';
+
+// The rendering, windowing and snippet code lives in authoring-read-render.ts;
+// these are re-exported so callers keep importing from this module.
+export {
+  PROPOSAL_CLOSE, PROPOSAL_OPEN, renderSection, sectionReadableText, windowOf,
+  type ProposalSpan, type RenderedSection,
+} from './authoring-read-render';
 
 /** Anything with pg's `query` — the app pool, a client, or a test double. */
 export interface AuthoringReadQueryable { query(sql: string, params?: unknown[]): Promise<{ rows: unknown[] }> }
@@ -170,19 +180,10 @@ export const SEARCH_MAX_LIMIT = 6;
  * fetched and sorted here. Past this many the result says the scan was capped.
  */
 export const SEARCH_SCAN_MAX = 1000;
-const SNIPPET_CHARS = 200;
 const QUERY_MIN = 2;
-const QUERY_MAX = 200;
-const AUTHOR_MAX = 60;
+const QUERY_MAX = SEARCH_QUERY_MAX;
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-/** Opens a proposal label. Never occurs in rendered content (see escapeDelimiters). */
-export const PROPOSAL_OPEN = '⟦';
-/** Closes a proposal label. */
-export const PROPOSAL_CLOSE = '⟧';
-/** How a window that stops inside a proposal closes it. */
-const PROPOSAL_CONTINUES = `…(continues)${PROPOSAL_CLOSE}`;
 
 // ── SQL ──────────────────────────────────────────────────────────────────────
 
@@ -241,265 +242,18 @@ function iso(v: unknown): string | null {
 }
 
 const str = (v: unknown): string | null => (typeof v === 'string' ? v : v == null ? null : String(v));
+/**
+ * A stored title, code or name as a result carries it: ⟦ and ⟧ become [ and ],
+ * as they do in content, so nothing in a result but a proposal label uses them.
+ */
+const cleanField = (v: unknown): string | null => {
+  const t = str(v);
+  return t === null ? null : escapeDelimiters(t);
+};
 /** A code as a sort key: blank is no code, and sorts with null after every coded section. */
 const codeKey = (v: unknown): string | null => str(v)?.trim() || null;
 const notFound = (what: string): ReadOutcome<never> => ({ ok: false, code: 'not_found', message: `${what} was not found in this project.` });
 const badInput = (message: string): ReadOutcome<never> => ({ ok: false, code: 'bad_input', message });
-
-// ── Rendering stored content as text a model can read ───────────────────────
-
-interface Proposal { kind: 'insertion' | 'deletion'; author: string }
-/** A stretch of rendered text; `proposal` set when it is pending, unaccepted change. */
-interface Piece { text: string; proposal?: Proposal }
-
-/** One proposal's place in the rendered text. Its label runs labelStart..bodyStart; its close is the one character at bodyEnd. */
-export interface ProposalSpan extends Proposal { labelStart: number; bodyStart: number; bodyEnd: number }
-
-export interface RenderedSection {
-  text: string;
-  spans: ProposalSpan[];
-}
-
-/** The label delimiters never appear in content: a stored ⟦ or ⟧ becomes [ or ]. */
-function escapeDelimiters(t: string): string {
-  return t.replace(/⟦/g, '[').replace(/⟧/g, ']');
-}
-
-function authorName(raw: string | null | undefined): string {
-  const a = escapeDelimiters(String(raw ?? '')).replace(/\s+/g, ' ').trim();
-  if (!a) return 'an unnamed author';
-  return a.length > AUTHOR_MAX ? `${a.slice(0, AUTHOR_MAX - 1)}…` : a;
-}
-
-function openLabel(p: Proposal, continued: boolean): string {
-  return `${PROPOSAL_OPEN}${continued ? '(continued) ' : ''}proposed ${p.kind} by ${p.author}: `;
-}
-
-function runText(r: InlineRun): string {
-  let t = r.text;
-  if (r.citationSourceId) t = `[citation: ${t.trim() || r.citationSourceId}${r.citationLocator ? `, ${r.citationLocator}` : ''}]`;
-  if (r.footnote) t += ` [footnote: ${r.footnote}]`;
-  return escapeDelimiters(t);
-}
-
-/** Inline runs as pieces, each pending change one proposal with who proposed it. */
-function runsPieces(runs: InlineRun[]): Piece[] {
-  const out: Piece[] = [];
-  for (let i = 0; i < runs.length; ) {
-    const r = runs[i];
-    if (!r.suggestion) {
-      out.push({ text: runText(r) });
-      i++;
-      continue;
-    }
-    // Adjacent runs of one change (bold and plain inside one insertion) are one proposal.
-    let j = i;
-    let text = '';
-    while (j < runs.length && runs[j].suggestion === r.suggestion && runs[j].suggestionAuthor === r.suggestionAuthor) {
-      text += runText(runs[j]);
-      j++;
-    }
-    out.push({ text, proposal: { kind: r.suggestion, author: authorName(r.suggestionAuthor) } });
-    i = j;
-  }
-  return out;
-}
-
-/** Trim the outer whitespace of a line — settled text only; a proposal's text is shown as proposed. */
-function trimPieces(pieces: Piece[]): Piece[] {
-  const out = pieces.filter((p) => p.text.length > 0).map((p) => ({ ...p }));
-  while (out.length && !out[0].proposal) {
-    out[0].text = out[0].text.replace(/^\s+/, '');
-    if (out[0].text) break;
-    out.shift();
-  }
-  while (out.length && !out[out.length - 1].proposal) {
-    const last = out[out.length - 1];
-    last.text = last.text.replace(/\s+$/, '');
-    if (last.text) break;
-    out.pop();
-  }
-  return out;
-}
-
-/** Hands out, in document order, whether each figure sits inside a pending change. */
-type FigureProposals = (src: string) => Proposal | undefined;
-type Mark = { kind: Proposal['kind']; author?: string };
-
-/** The parser's applyMark rule: an ins/del sets the kind, and its author when it names one. */
-function markOf(tag: string, el: HTMLElement, mark: Mark | undefined): Mark | undefined {
-  if (tag !== 'ins' && tag !== 'del') return mark;
-  return { kind: tag === 'ins' ? 'insertion' : 'deletion', author: el.getAttribute('data-author-name') || mark?.author };
-}
-
-/**
- * Which figures are inside `<ins>`/`<del>`. The block parser keeps suggestion
- * state on text runs only, so a figure proposed for insertion came out as an
- * ordinary `[figure: …]` — read as part of the document. This walks the same
- * markup with the same rule as the parser's applyMark (the innermost mark
- * decides the kind; an author is inherited when the inner mark names none)
- * and queues each figure's state per `src`, in document order, which is the
- * order the renderer meets them.
- */
-function figureProposals(stored: string | null | undefined): FigureProposals {
-  const s = stored ?? '';
-  if (!/<img\b/i.test(s) || !/<(ins|del)[\s>/]/i.test(s) || !contentLooksLikeHtml(s)) return () => undefined;
-  const queues = new Map<string, Array<Proposal | undefined>>();
-  const visit = (node: Node, mark: Mark | undefined): void => {
-    if (!(node instanceof HTMLElement)) return;
-    const tag = (node.rawTagName || '').toLowerCase();
-    if (tag === 'script' || tag === 'style') return;
-    const next = markOf(tag, node, mark);
-    const src = tag === 'img' ? (node.getAttribute('src') ?? '').trim() : '';
-    if (src) queues.set(src, [...(queues.get(src) ?? []), next ? { kind: next.kind, author: authorName(next.author) } : undefined]);
-    if (tag !== 'img') for (const child of node.childNodes) visit(child, next);
-  };
-  for (const child of parse(s).childNodes) visit(child, undefined);
-  return (src) => queues.get(src.trim())?.shift();
-}
-
-function figurePiece(src: string | undefined, alt: string | undefined, figures: FigureProposals): Piece {
-  const text = `[figure${alt ? `: ${escapeDelimiters(alt)}` : ''}]`;
-  const proposal = src ? figures(src) : undefined;
-  return proposal ? { text, proposal } : { text };
-}
-
-function cellPieces(c: TableCell, figures: FigureProposals): Piece[] {
-  const parts: Piece[][] = [trimPieces(runsPieces(c.runs)), ...(c.images ?? []).map((im) => [figurePiece(im.src, im.alt, figures)])]
-    .filter((p) => p.length > 0);
-  return parts.flatMap((p, i) => (i === 0 ? p : [{ text: ' ' }, ...p]));
-}
-
-function listMarker(b: ContentBlock, depth: number, counters: number[]): string {
-  counters.length = depth + 1;
-  if (!b.ordered) return '-';
-  counters[depth] = (counters[depth] ?? 0) + 1;
-  return `${counters[depth]}.`;
-}
-
-function blockPieces(b: ContentBlock, counters: number[], figures: FigureProposals): Piece[] {
-  if (b.kind !== 'list-item') counters.length = 0;
-  switch (b.kind) {
-    case 'heading':
-      return [{ text: `${'#'.repeat(b.level ?? 1)} ` }, ...trimPieces(runsPieces(b.runs))];
-    case 'list-item': {
-      const depth = Math.min(MAX_LIST_DEPTH, Math.max(0, b.depth ?? 0));
-      return [{ text: `${'  '.repeat(depth)}${listMarker(b, depth, counters)} ` }, ...trimPieces(runsPieces(b.runs))];
-    }
-    case 'table': {
-      const lines: Piece[][] = [];
-      if (b.caption) lines.push([{ text: `Table: ${escapeDelimiters(b.caption)}` }]);
-      for (const row of b.rows ?? []) {
-        lines.push(row.flatMap((cell, i) => (i === 0 ? cellPieces(cell, figures) : [{ text: ' | ' }, ...cellPieces(cell, figures)])));
-      }
-      return lines.filter((l) => l.length > 0).flatMap((l, i) => (i === 0 ? l : [{ text: '\n' }, ...l]));
-    }
-    case 'image':
-      return [figurePiece(b.src, b.alt, figures)];
-    default:
-      return trimPieces(runsPieces(b.runs));
-  }
-}
-
-/** Lay pieces out as one string, recording where each proposal's label, text and close sit. */
-function layout(pieces: Piece[]): RenderedSection {
-  let text = '';
-  const spans: ProposalSpan[] = [];
-  for (const p of pieces) {
-    if (!p.text) continue;
-    if (!p.proposal) {
-      text += p.text;
-      continue;
-    }
-    const labelStart = text.length;
-    text += openLabel(p.proposal, false);
-    const bodyStart = text.length;
-    text += p.text;
-    spans.push({ ...p.proposal, labelStart, bodyStart, bodyEnd: text.length });
-    text += PROPOSAL_CLOSE;
-  }
-  return { text, spans };
-}
-
-/**
- * A section's stored content as text with its block structure kept: headings
- * as `#`, list items as `-` or `1.`, table rows as ` | `-joined cells, blocks
- * separated by a blank line (list items by a newline), and every pending
- * change inside a ⟦…⟧ label.
- */
-export function renderSection(stored: string | null | undefined): RenderedSection {
-  const figures = figureProposals(stored);
-  const counters: number[] = [];
-  const pieces: Piece[] = [];
-  let prev: ContentBlock['kind'] | null = null;
-  for (const b of sectionContentToBlocks(stored)) {
-    if (prev !== null) pieces.push({ text: prev === 'list-item' && b.kind === 'list-item' ? '\n' : '\n\n' });
-    pieces.push(...blockPieces(b, counters, figures));
-    prev = b.kind;
-  }
-  return layout(pieces);
-}
-
-export function sectionReadableText(stored: string | null | undefined): string {
-  return renderSection(stored).text;
-}
-
-// ── Windows over rendered text ──────────────────────────────────────────────
-
-/** The proposal whose label, text or close holds position `i`. */
-function spanHolding(r: RenderedSection, i: number): ProposalSpan | undefined {
-  return r.spans.find((s) => i >= s.labelStart && i <= s.bodyEnd);
-}
-
-const isHighSurrogate = (t: string, i: number): boolean => i >= 0 && i < t.length && /[\uD800-\uDBFF]/.test(t[i]);
-
-/**
- * `maxChars` of `r.text` from `offset`, labelled so that every character of
- * proposed text in the result is inside a ⟦…⟧:
- *   - a start inside a label moves to the proposal's text; a start on a close
- *     moves past it (the close alone says nothing);
- *   - an end inside a label (no proposed character reached) moves back before
- *     the label — unless the window starts at that label, when it takes at
- *     least one character of the proposal so a walk always advances;
- *   - an end exactly before a close takes the close too;
- *   - a start inside proposed text re-opens the label, an end inside it closes
- *     it with `…(continues)⟧`.
- * `end` is exactly where the next window starts, so a walk from 0 by `end`
- * delivers every character of `r.text` once, labels and all.
- */
-export function windowOf(r: RenderedSection, offset: number, maxChars: number): { start: number; end: number; text: string } {
-  const t = r.text;
-  const start = windowStart(r, offset);
-  if (start >= t.length) return { start: t.length, end: t.length, text: '' };
-  const { end, suffix } = windowEnd(r, start, maxChars);
-  const open = spanHolding(r, start);
-  const prefix = open && start >= open.bodyStart && start < open.bodyEnd ? openLabel(open, true) : '';
-  return { start, end, text: prefix + t.slice(start, end) + suffix };
-}
-
-/** A start inside a label moves to the proposal's text; a start on a close moves past it (the close alone says nothing). */
-function windowStart(r: RenderedSection, offset: number): number {
-  const start = Math.min(Math.max(0, Math.floor(offset)), r.text.length);
-  const s = spanHolding(r, start);
-  if (s && start > s.labelStart && start < s.bodyStart) return s.bodyStart;
-  return s && start === s.bodyEnd ? s.bodyEnd + 1 : start;
-}
-
-function windowEnd(r: RenderedSection, start: number, maxChars: number): { end: number; suffix: string } {
-  const t = r.text;
-  let end = Math.min(t.length, start + Math.max(1, Math.floor(maxChars)));
-  // Never cut a surrogate pair in half: the window would end in an invalid character.
-  if (end < t.length && end > start + 1 && isHighSurrogate(t, end - 1)) end--;
-  const cut = r.spans.find((s) => s.labelStart < end && end <= s.bodyEnd);
-  if (!cut) return { end, suffix: '' };
-  // No proposed character reached: stop before the label, or — when the window begins at it — take one.
-  if (end <= cut.bodyStart) end = cut.labelStart > start ? cut.labelStart : cut.bodyStart + 1;
-  if (end <= cut.bodyStart) return { end, suffix: '' };
-  // Keep a surrogate pair whole inside a proposal too.
-  if (end < cut.bodyEnd && isHighSurrogate(t, end - 1)) end = end - 1 > cut.bodyStart ? end - 1 : end + 1;
-  // The whole proposal is in: take its close. Otherwise close it as continuing.
-  return end >= cut.bodyEnd ? { end: cut.bodyEnd + 1, suffix: '' } : { end, suffix: PROPOSAL_CONTINUES };
-}
 
 // ── Outline ─────────────────────────────────────────────────────────────────
 
@@ -580,7 +334,7 @@ async function sectionFacts(pool: AuthoringReadQueryable, scope: ProgramScope, i
 function toOutlineSection(r: KeyRow, f: FactRow | undefined): OutlineSection {
   const code = str(r.code);
   return {
-    id: r.id, docId: r.doc_id, code, title: str(r.title), depth: sectionDepth(code),
+    id: r.id, docId: r.doc_id, code: cleanField(code), title: cleanField(r.title), depth: sectionDepth(code),
     orderIndex: Number(r.order_index ?? 0), updatedAt: iso(r.updated_at),
     length: Number(f?.length ?? 0), sha256: String(f?.sha256 ?? ''),
     drafted: f?.drafted === true, pendingChanges: f?.pending_changes === true,
@@ -639,8 +393,8 @@ export async function outlineForProgram(
   const facts = await sectionFacts(pool, opts, page.flatMap((x) => (x.sec ? [x.sec.id] : [])));
 
   const toDocument = (d: DocRow): OutlineDocument => ({
-    id: d.id, title: d.title, module: str(d.module), productCode: str(d.product_code),
-    status: String(d.status ?? ''), updatedAt: iso(d.updated_at), sectionCount: counts.get(d.id) ?? 0,
+    id: d.id, title: cleanField(d.title) ?? '', module: cleanField(d.module), productCode: cleanField(d.product_code),
+    status: cleanField(d.status) ?? '', updatedAt: iso(d.updated_at), sectionCount: counts.get(d.id) ?? 0,
   });
   const firstSec = page[0]?.sec;
   return {
@@ -674,7 +428,7 @@ export async function loadSection(
     `${SCOPED_SECTIONS} AND s.id = $3 LIMIT 1`;
   const row = (await pool.query(sql, [opts.tenantId, opts.programId, opts.sectionId])).rows[0] as ReadRow | undefined;
   if (!row) return notFound(`Section ${opts.sectionId}`);
-  const identity = { docId: row.doc_id, docTitle: String(row.doc_title ?? ''), sectionId: row.id, code: str(row.code), title: str(row.title) };
+  const identity = { docId: row.doc_id, docTitle: cleanField(row.doc_title) ?? '', sectionId: row.id, code: cleanField(row.code), title: cleanField(row.title) };
   const version = { updatedAt: iso(row.updated_at), sha256: String(row.sha256 ?? '') };
   return { ok: true, value: { ...identity, ...version, rendered: renderSection(str(row.content)) } };
 }
@@ -710,36 +464,6 @@ interface SearchContentRow { id: string; title: unknown; content: unknown; doc_t
 /** A LIKE pattern matching `q` literally: `%`, `_` and the escape itself are escaped. */
 function containsPattern(q: string): string {
   return `%${q.replace(/[\\%_]/g, (m) => `\\${m}`)}%`;
-}
-
-/**
- * Where `q` first occurs in the rendered text, ignoring the labels' own words
- * — so a phrase that runs from settled text into a proposal is still found —
- * and treating any run of whitespace as one space, as the SQL match does.
- */
-function locate(r: RenderedSection, q: string): number {
-  let content = '';
-  const at: number[] = [];
-  let k = 0;
-  for (let i = 0; i < r.text.length; i++) {
-    while (k < r.spans.length && i > r.spans[k].bodyEnd) k++;
-    const s = r.spans[k];
-    if (s && ((i >= s.labelStart && i < s.bodyStart) || i === s.bodyEnd)) continue;
-    content += r.text[i];
-    at.push(i);
-  }
-  const words = q.split(/\s+/).filter(Boolean).map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-  const m = new RegExp(words.join('\\s+'), 'i').exec(content);
-  return m ? at[m.index] : -1;
-}
-
-/** About SNIPPET_CHARS around the first hit, through windowOf so a proposal in it stays labelled. */
-function snippetOf(r: RenderedSection, q: string): string {
-  const hit = locate(r, q);
-  const from = hit < 0 ? 0 : Math.max(0, hit - Math.floor((SNIPPET_CHARS - q.length) / 2));
-  const w = windowOf(r, from, SNIPPET_CHARS);
-  const body = w.text.replace(/\s+/g, ' ').trim();
-  return `${w.start > 0 ? '…' : ''}${body}${w.end < r.text.length ? '…' : ''}`;
 }
 
 /**
@@ -790,7 +514,7 @@ export async function searchSections(
         if (!c) return [];
         const rendered = renderSection(str(c.content));
         const shown = rendered.text ? rendered : layout([{ text: escapeDelimiters(String(c.title ?? '')) }]);
-        const identity = { docId: r.doc_id, docTitle: String(c.doc_title ?? ''), sectionId: r.id, code: str(r.code), title: str(c.title) };
+        const identity = { docId: r.doc_id, docTitle: cleanField(c.doc_title) ?? '', sectionId: r.id, code: cleanField(r.code), title: cleanField(c.title) };
         return [{ ...identity, snippet: snippetOf(shown, q) }];
       }),
     },

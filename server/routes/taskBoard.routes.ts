@@ -41,8 +41,23 @@
  * `task_dependencies` through the request-scoped Drizzle client
  * (requestDb(req)) so the tenant session vars set by requireTenantContext apply
  * on the same connection; also filters organizationId explicitly as
- * defense-in-depth for the RLS-not-yet-enforced window. Fails closed to an
- * empty board if the table is unprovisioned (undefined_table / 42P01).
+ * defense-in-depth for the RLS-not-yet-enforced window. An unprovisioned
+ * `unified_tasks` (undefined_table / 42P01) is reported as an unread store.
+ *
+ * EVERY STORE (2026-10-01, row D2). The board read `unified_tasks` only, so the
+ * schedule's and the Communication Center's tasks (`project_tasks`), agency
+ * correspondence (`c2c_project_work_items`) and tracked filings
+ * (`estar_submissions`) never reached it, and its Blocked count could not see a
+ * task blocked anywhere else. It now also reads them through the platform's one
+ * cross-store view (services/unified-work/unified-work-view.ts loadUnifiedWork,
+ * completed work included for the Done column); it does not merge them itself.
+ * Those cards are read-only here and carry the screen that owns them (`home`):
+ * the board invents no write path into another store. A task AnA created lives
+ * in both `project_tasks` and the board (its mirror carries
+ * source_entity_type 'project_task'), and is shown once, as the editable board
+ * card. `meta.partial` / `meta.unreadSources` name any store that could not be
+ * read, so a short board is never mistaken for a complete one; that now
+ * includes the board's own table, which used to read as an empty board.
  *
  * Style template: server/routes/pharmacovigilance-routes.ts /
  * pharmacovigilance-board.routes.ts (Router factory default export, org id from
@@ -56,7 +71,13 @@ import { Router, Request, Response } from 'express';
 import { and, asc, eq, inArray, isNull, or } from 'drizzle-orm';
 
 import { createScopedLogger } from '../utils/logger.js';
-import { requestDb } from '../db/requestDb';
+import { requestDb, type RequestDb } from '../db/requestDb';
+import {
+  loadUnifiedWork,
+  type UnifiedWorkItem,
+  type UnifiedWorkSourceTable,
+  type UnifiedWorkStatus,
+} from '../services/unified-work/unified-work-view';
 import { getSecureOrgId } from '../utils/tenantContext';
 import { unifiedTasks, taskDependencies, users, organizationUsers } from '../../shared/schema';
 
@@ -111,8 +132,9 @@ interface TaskBoardItem {
   priority: string;
   /** Real assignee user-id FK as a string; '' when unassigned. */
   assignee: string;
-  /** Real assigned-by user-id FK as a string; '' when unknown. */
-  assignedBy: string;
+  /** Real assigned-by user-id FK as a string; '' when unknown. Null on another
+   *  store's card: that store records no assigner, and none is invented. */
+  assignedBy: string | null;
   progress: number;
   /** 0-10 submission impact; null when never scored (not fabricated). */
   impactScore: number | null;
@@ -151,6 +173,22 @@ interface TaskBoardItem {
   phase: string | null;
   blocked: boolean;
   estimatedHours: number | null;
+  /**
+   * True for work that lives in another store (schedule, correspondence,
+   * filing). The board shows it and does not write it; `home` says where it is
+   * changed. Absent on the board's own tasks.
+   */
+  readOnly?: boolean;
+  /** The screen that owns a read-only card, and its project. */
+  home?: { surface: 'project-home' | 'submission-center'; projectId: number | null };
+  /** The owning store's own note (a blocker, a module, a catalogue key), when it has one. */
+  detail?: string | null;
+}
+
+/** What the board says about its own read: which stores it could not read. */
+interface BoardReadMeta {
+  partial: boolean;
+  unreadSources: UnifiedWorkSourceTable[];
 }
 
 // ── Pure helpers ────────────────────────────────────────────────────────────────
@@ -209,6 +247,180 @@ function isMissingTable(error: unknown): boolean {
   );
 }
 
+/** The cross-store view's status, in the board's column vocabulary. */
+const BOARD_STATUS: Record<UnifiedWorkStatus, string> = {
+  open: 'pending',
+  in_progress: 'in-progress',
+  blocked: 'blocked',
+  done: 'completed',
+};
+
+/** The screen that owns each store's work. */
+const HOME: Record<Exclude<UnifiedWorkItem['source'], 'board'>, 'project-home' | 'submission-center'> = {
+  schedule: 'project-home',
+  review: 'project-home',
+  correspondence: 'project-home',
+  filing: 'submission-center',
+};
+
+/**
+ * Another store's work as a read-only board card. Fields that store does not
+ * record are empty, never invented: no assignee id, no progress, no approval,
+ * no dependency edges, no impact score.
+ */
+export function otherStoreCard(item: UnifiedWorkItem): TaskBoardItem | null {
+  if (item.source === 'board') return null;
+  const status = BOARD_STATUS[item.status];
+  const due = item.dueAt ? new Date(item.dueAt) : null;
+  return {
+    taskId: item.id,
+    title: item.title,
+    project: item.projectId != null ? String(item.projectId) : '',
+    moduleType: '',
+    taskType: '',
+    status,
+    priority: item.priority ?? '',
+    assignee: '',
+    assignedBy: null,
+    progress: 0,
+    impactScore: null,
+    criticalPath: false,
+    regulatoryImpact: false,
+    approvalRequired: false,
+    approvalStatus: 'not_started',
+    approvalHistory: [],
+    dependsOn: [],
+    blocks: [],
+    comments: 0,
+    attachments: 0,
+    source: item.source,
+    due: humanizeDue(due, status),
+    dueDateIso: item.dueAt,
+    phase: null,
+    blocked: item.status === 'blocked',
+    estimatedHours: null,
+    readOnly: true,
+    home: { surface: HOME[item.source], projectId: item.projectId },
+    detail: item.detail,
+  };
+}
+
+/**
+ * The other stores' cards for this board. Work the board already holds is left
+ * out: the view's own `unified_tasks` read, and every `project_tasks` row whose
+ * board mirror is on the board (AnA's create_task writes both).
+ */
+export function otherStoreCards(items: UnifiedWorkItem[], mirroredProjectTaskIds: ReadonlySet<string>): TaskBoardItem[] {
+  const out: TaskBoardItem[] = [];
+  for (const item of items) {
+    if (item.source === 'schedule' && mirroredProjectTaskIds.has(item.nativeId)) continue;
+    const card = otherStoreCard(item);
+    if (card) out.push(card);
+  }
+  return out;
+}
+
+/**
+ * The board's own store, `unified_tasks`, with its dependency edges: the cards
+ * that keep their move and edit behaviour. Also returns the project_tasks ids
+ * these cards mirror, so the other stores' read does not show them twice.
+ * A missing table throws (42P01); the caller reports it as an unread store.
+ */
+async function readOwnBoard(
+  db: RequestDb,
+  organizationId: number,
+): Promise<{ tasks: TaskBoardItem[]; mirrored: Set<string> }> {
+  const mirrored = new Set<string>();
+  // Soft-deleted (archived) rows never reach the board (D24).
+  const rows = await db
+    .select()
+    .from(unifiedTasks)
+    .where(
+      and(eq(unifiedTasks.organizationId, organizationId), isNull(unifiedTasks.deletedAt))
+    )
+    .orderBy(asc(unifiedTasks.dueDate));
+
+  const taskIds = rows.map(row => row.taskId);
+  const orgTaskIds = new Set(taskIds);
+
+  // Dependency DAG (task_dependencies carries no org column; scope by the
+  // org's own task ids on BOTH endpoints so no foreign-org id can leak in).
+  const deps = taskIds.length
+    ? await db
+        .select({
+          predecessorTaskId: taskDependencies.predecessorTaskId,
+          successorTaskId: taskDependencies.successorTaskId,
+        })
+        .from(taskDependencies)
+        .where(
+          or(
+            inArray(taskDependencies.predecessorTaskId, taskIds),
+            inArray(taskDependencies.successorTaskId, taskIds),
+          ),
+        )
+    : [];
+
+  const dependsOnMap = new Map<string, string[]>();
+  const blocksMap = new Map<string, string[]>();
+  for (const dep of deps) {
+    if (!orgTaskIds.has(dep.predecessorTaskId) || !orgTaskIds.has(dep.successorTaskId)) {
+      continue;
+    }
+    // A finish-to-start edge (predecessor -> successor): the successor
+    // dependsOn the predecessor; the predecessor blocks the successor.
+    const dependsOn = dependsOnMap.get(dep.successorTaskId) ?? [];
+    dependsOn.push(dep.predecessorTaskId);
+    dependsOnMap.set(dep.successorTaskId, dependsOn);
+
+    const blocks = blocksMap.get(dep.predecessorTaskId) ?? [];
+    blocks.push(dep.successorTaskId);
+    blocksMap.set(dep.predecessorTaskId, blocks);
+  }
+
+  const tasks: TaskBoardItem[] = rows.map(row => {
+    const status = row.status;
+    const blocked =
+      status === 'blocked' || (Array.isArray(row.blockedBy) && row.blockedBy.length > 0);
+    return {
+      taskId: row.taskId,
+      title: row.title,
+      project: row.projectId != null ? String(row.projectId) : '',
+      moduleType: row.moduleType,
+      taskType: row.taskType ?? '',
+      status,
+      priority: row.priority,
+      assignee: row.assigneeId != null ? String(row.assigneeId) : '',
+      assignedBy: row.assignedBy != null ? String(row.assignedBy) : '',
+      progress: row.progress ?? 0,
+      impactScore: row.impactScore ?? null,
+      criticalPath: row.criticalPath ?? false,
+      regulatoryImpact: row.regulatoryImpact ?? false,
+      approvalRequired: row.approvalRequired ?? false,
+      approvalStatus: row.approvalStatus ?? 'not_started',
+      approvalHistory: readManifestations(row.approvalHistory),
+      dependsOn: dependsOnMap.get(row.taskId) ?? [],
+      blocks: blocksMap.get(row.taskId) ?? [],
+      comments: jsonArrayLength(row.comments),
+      attachments: jsonArrayLength(row.attachments),
+      source: mapSource(row.sourceEntityType),
+      due: humanizeDue(row.dueDate, status),
+      dueDateIso: row.dueDate ? new Date(row.dueDate).toISOString() : null,
+      phase: row.lifecyclePhase ?? null,
+      blocked,
+      estimatedHours: row.estimatedHours ?? null,
+    };
+  });
+
+  // A task AnA created is also a project_tasks row; its mirror is this card.
+  for (const row of rows) {
+    if (row.sourceEntityType === 'project_task' && row.sourceEntityId != null) {
+      mirrored.add(String(row.sourceEntityId));
+    }
+  }
+
+  return { tasks, mirrored };
+}
+
 // ── Router factory ──────────────────────────────────────────────────────────────
 
 export default function createTaskBoardRoutes(): Router {
@@ -229,95 +441,31 @@ export default function createTaskBoardRoutes(): Router {
 
     try {
       const db = requestDb(req);
+      const unreadSources: UnifiedWorkSourceTable[] = [];
+      let tasks: TaskBoardItem[] = [];
+      let mirroredProjectTaskIds = new Set<string>();
 
-      // Soft-deleted (archived) rows never reach the board (D24).
-      const rows = await db
-        .select()
-        .from(unifiedTasks)
-        .where(
-          and(eq(unifiedTasks.organizationId, organizationId), isNull(unifiedTasks.deletedAt))
-        )
-        .orderBy(asc(unifiedTasks.dueDate));
-
-      const taskIds = rows.map(row => row.taskId);
-      const orgTaskIds = new Set(taskIds);
-
-      // Dependency DAG (task_dependencies carries no org column; scope by the
-      // org's own task ids on BOTH endpoints so no foreign-org id can leak in).
-      const deps = taskIds.length
-        ? await db
-            .select({
-              predecessorTaskId: taskDependencies.predecessorTaskId,
-              successorTaskId: taskDependencies.successorTaskId,
-            })
-            .from(taskDependencies)
-            .where(
-              or(
-                inArray(taskDependencies.predecessorTaskId, taskIds),
-                inArray(taskDependencies.successorTaskId, taskIds),
-              ),
-            )
-        : [];
-
-      const dependsOnMap = new Map<string, string[]>();
-      const blocksMap = new Map<string, string[]>();
-      for (const dep of deps) {
-        if (!orgTaskIds.has(dep.predecessorTaskId) || !orgTaskIds.has(dep.successorTaskId)) {
-          continue;
-        }
-        // A finish-to-start edge (predecessor -> successor): the successor
-        // dependsOn the predecessor; the predecessor blocks the successor.
-        const dependsOn = dependsOnMap.get(dep.successorTaskId) ?? [];
-        dependsOn.push(dep.predecessorTaskId);
-        dependsOnMap.set(dep.successorTaskId, dependsOn);
-
-        const blocks = blocksMap.get(dep.predecessorTaskId) ?? [];
-        blocks.push(dep.successorTaskId);
-        blocksMap.set(dep.predecessorTaskId, blocks);
-      }
-
-      const tasks: TaskBoardItem[] = rows.map(row => {
-        const status = row.status;
-        const blocked =
-          status === 'blocked' || (Array.isArray(row.blockedBy) && row.blockedBy.length > 0);
-        return {
-          taskId: row.taskId,
-          title: row.title,
-          project: row.projectId != null ? String(row.projectId) : '',
-          moduleType: row.moduleType,
-          taskType: row.taskType ?? '',
-          status,
-          priority: row.priority,
-          assignee: row.assigneeId != null ? String(row.assigneeId) : '',
-          assignedBy: row.assignedBy != null ? String(row.assignedBy) : '',
-          progress: row.progress ?? 0,
-          impactScore: row.impactScore ?? null,
-          criticalPath: row.criticalPath ?? false,
-          regulatoryImpact: row.regulatoryImpact ?? false,
-          approvalRequired: row.approvalRequired ?? false,
-          approvalStatus: row.approvalStatus ?? 'not_started',
-          approvalHistory: readManifestations(row.approvalHistory),
-          dependsOn: dependsOnMap.get(row.taskId) ?? [],
-          blocks: blocksMap.get(row.taskId) ?? [],
-          comments: jsonArrayLength(row.comments),
-          attachments: jsonArrayLength(row.attachments),
-          source: mapSource(row.sourceEntityType),
-          due: humanizeDue(row.dueDate, status),
-          dueDateIso: row.dueDate ? new Date(row.dueDate).toISOString() : null,
-          phase: row.lifecyclePhase ?? null,
-          blocked,
-          estimatedHours: row.estimatedHours ?? null,
-        };
-      });
-
-      return res.json({ success: true, data: tasks, total: tasks.length });
-    } catch (error) {
-      if (isMissingTable(error)) {
-        logger.error('task board: unified_tasks unprovisioned — returning empty board', {
+      // The board's own store: its cards keep their move and edit behaviour.
+      try {
+        ({ tasks, mirrored: mirroredProjectTaskIds } = await readOwnBoard(db, organizationId));
+      } catch (error) {
+        if (!isMissingTable(error)) throw error;
+        logger.error('task board: unified_tasks unprovisioned — the board reports it unread', {
           err: error instanceof Error ? error.message : String(error),
         });
-        return res.json({ success: true, data: [], total: 0 });
+        unreadSources.push('unified_tasks');
       }
+
+      // Every other store, through the one cross-store view. Its own read of
+      // unified_tasks is the board's store above, so only the others count here.
+      const view = await loadUnifiedWork({ organizationId, includeCompleted: true });
+      for (const [table, outcome] of Object.entries(view.sources) as Array<[UnifiedWorkSourceTable, { ran: boolean }]>) {
+        if (table !== 'unified_tasks' && !outcome.ran) unreadSources.push(table);
+      }
+      const cards = [...tasks, ...otherStoreCards(view.items, mirroredProjectTaskIds)];
+      const meta: BoardReadMeta = { partial: unreadSources.length > 0, unreadSources };
+      return res.json({ success: true, data: cards, total: cards.length, meta });
+    } catch (error) {
       logger.error('task board error', {
         err: error instanceof Error ? error.message : String(error),
       });
