@@ -200,6 +200,23 @@ export function runnerSteps(source) {
   return steps;
 }
 
+/**
+ * The runner's source and the step modules it imports from its own folder
+ * (`import … from './steps-x.mjs'`). A long runner may move steps into such a
+ * module; they are still the runner's steps. A module it does not import is
+ * not, so a step left in an orphaned file still reads as unexecuted.
+ */
+export function runnerSource(root, runnerPath) {
+  const abs = path.join(root, runnerPath);
+  const text = fs.readFileSync(abs, 'utf8');
+  const parts = [text];
+  for (const m of text.matchAll(/from\s+'(\.\/[^']+\.mjs)'/g)) {
+    const mod = path.join(path.dirname(abs), m[1]);
+    if (fs.existsSync(mod)) parts.push(fs.readFileSync(mod, 'utf8'));
+  }
+  return parts.join('\n');
+}
+
 export function collectKindFindings(root) {
   const findings = [];
   const docsDir = path.join(root, 'docs', 'validation');
@@ -216,7 +233,7 @@ export function collectKindFindings(root) {
       const m = /^\|\s*(OQ-[A-Z]+-\d+[a-z]?)\s*\|[^|]*\|([^|]*)\|/.exec(line);
       if (m && !declared.has(m[1])) declared.set(m[1], protocolKind(m[2]));
     }
-    const executed = runnerSteps(fs.readFileSync(path.join(root, runnerPath), 'utf8'));
+    const executed = runnerSteps(runnerSource(root, runnerPath));
     for (const [id, kind] of executed) {
       if (!declared.has(id)) {
         findings.push({ rule: 'undescribed-step', id, detail: `${runnerPath} executes it; ${file} does not describe it` });
@@ -339,10 +356,17 @@ function selfTest() {
     ['an ad-hoc step the runner records as unscripted', '| OQ-X-01 | U | ad-hoc (browser) | a | e |\n', step('OQ-X-01', 'unscripted'), 1],
     ['a step the protocol describes and the runner never executes', '| OQ-X-01 | U | scripted | a | e |\n| OQ-X-02 | U | scripted | a | e |\n', step('OQ-X-01'), 1],
     ['a step the runner executes and the protocol does not describe', '| OQ-X-01 | U | scripted | a | e |\n', step('OQ-X-01') + step('OQ-X-03'), 1],
+    // A runner may keep steps in a module it imports from its own folder.
+    ['control — a step in a module the runner imports is executed', '| OQ-X-01 | U | scripted | a | e |\n| OQ-X-02 | U | scripted | a | e |\n',
+      `import { more } from './more.mjs';\n${step('OQ-X-01')}await more();\n`, 0, step('OQ-X-02')],
+    ['a step in a module the runner does not import is not executed', '| OQ-X-01 | U | scripted | a | e |\n| OQ-X-02 | U | scripted | a | e |\n',
+      step('OQ-X-01'), 1, step('OQ-X-02')],
   ];
-  for (const [name, table, runner, expect] of kindCases) {
+  for (const [name, table, runner, expect, more] of kindCases) {
     fs.writeFileSync(path.join(docs, 'OQ-001-X.md'), PROTOCOL_HEAD + table);
     fs.writeFileSync(path.join(root, 'tests', 'oq', 'run.mjs'), runner);
+    fs.rmSync(path.join(root, 'tests', 'oq', 'more.mjs'), { force: true });
+    if (more) fs.writeFileSync(path.join(root, 'tests', 'oq', 'more.mjs'), more);
     const findings = collectKindFindings(root);
     const ok = (findings.length > 0 ? 1 : 0) === expect;
     if (!ok) failures += 1;
