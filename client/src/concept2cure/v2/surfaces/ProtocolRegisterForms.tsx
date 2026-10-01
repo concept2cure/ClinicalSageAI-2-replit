@@ -32,7 +32,7 @@
 import React from 'react';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, errorCodeOf, serverMessage } from '@/lib/queryClient';
 
 export type RegisterKind =
   | 'risk' | 'milestone' | 'amendment' | 'deviation'
@@ -204,9 +204,11 @@ export async function submitProtocolRegister(
   const json = (await res.json().catch(() => null)) as Record<string, unknown> | null;
   if (res.status === 401) throw new Error('Not recorded — your session isn’t authenticated.');
   if (!res.ok) {
-    const detail =
-      (json as any)?.error?.message ?? (json as any)?.error?.code ?? (json as any)?.error ?? `HTTP ${res.status}`;
-    throw new Error(`Couldn’t record the ${kind} — ${typeof detail === 'string' ? detail : JSON.stringify(detail)}. Nothing was persisted.`);
+    // serverMessage() first: a 500 answered through serverError() puts the code
+    // INTERNAL_ERROR in `error` and its sentence in `message`, and reading
+    // `error` first showed the code as the reason (P1-17, IAM-18 (1)).
+    const detail = serverMessage(json) ?? errorCodeOf(json) ?? `HTTP ${res.status}`;
+    throw new Error(`Couldn’t record the ${kind} — ${detail}. Nothing was persisted.`);
   }
   return json ?? {};
 }

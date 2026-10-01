@@ -13,6 +13,8 @@ const m = vi.hoisted(() => ({
   verifyTamperProofLogRows: vi.fn(),
   assertAuditImmutabilityTriggers: vi.fn(),
   reportSecurityAlert: vi.fn(),
+  verifyAuditChainAnchor: vi.fn(),
+  writeAuditChainAnchor: vi.fn(),
 }));
 const { scheduleMock } = m;
 vi.mock('node-cron', () => ({ default: { schedule: m.scheduleMock } }));
@@ -32,6 +34,13 @@ vi.mock('../../services/audit/audit-immutability-triggers.js', () => ({
 }));
 vi.mock('../../services/security-alerts.js', () => ({
   reportSecurityAlert: m.reportSecurityAlert,
+}));
+// The anchor's verifier and writer are faked; how the store is chosen from the
+// environment (AUDIT_ANCHOR_BUCKET) is the real code.
+vi.mock('../../services/audit/chain-anchor.js', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  verifyAuditChainAnchor: m.verifyAuditChainAnchor,
+  writeAuditChainAnchor: m.writeAuditChainAnchor,
 }));
 
 import { startAuditChainIntegritySchedule, runAuditChainIntegrityCheck } from '../auditChainIntegritySweep';
@@ -123,6 +132,11 @@ describe('startAuditChainIntegritySchedule in production (Part 11 default-ON)', 
 // webhook) fires for each store.
 
 const chainOk = { ok: true, rowsChecked: 12, tenants: 2, legacyRows: 0, sequencedRows: 12 };
+const ANCHOR_KEY = 'anchors/audit-chain/2026/09/30/2026-09-30T02-00-00-000Z-0a1b2c3d.json';
+const anchorOk = {
+  status: 'ok', anchorKey: ANCHOR_KEY, anchoredAt: '2026-09-30T02:00:00.000Z',
+  organizations: 2, breaks: [], archived: [], reason: 'every anchored head is present and unchanged',
+};
 
 /** Rows the fake client returns per statement, keyed by a substring of the SQL. */
 function answerQueries(overrides: Partial<Record<'regclass' | 'audit_events' | 'tamper_proof_log', unknown>> = {}) {
@@ -147,34 +161,41 @@ function answerQueries(overrides: Partial<Record<'regclass' | 'audit_events' | '
   });
 }
 
+const originalEnv = { ...process.env };
+let emitWarning: ReturnType<typeof vi.spyOn>;
+
+/** Every store verifies, the anchor bucket is configured and its latest anchor holds. */
+function setUpSweep(): void {
+  process.env.NODE_ENV = 'test';
+  process.env.AUDIT_HMAC_KEY = 'k'.repeat(32);
+  process.env.AUDIT_HMAC_SECRET = 's'.repeat(32);
+  process.env.AUDIT_ANCHOR_BUCKET = 'c2c-prod-part11-evidence';
+  m.verifyAuditChainAnchor.mockReset().mockResolvedValue(anchorOk);
+  m.writeAuditChainAnchor.mockReset().mockResolvedValue({ key: 'anchors/audit-chain/2026/10/01/new.json', organizations: 2 });
+  m.clientQuery.mockReset();
+  m.clientRelease.mockReset();
+  m.reportSecurityAlert.mockReset();
+  m.verifyAuditChain.mockReset().mockResolvedValue(chainOk);
+  m.verifyAuditChainSeals.mockReset().mockResolvedValue({ valid: true, brokenAt: null });
+  m.verifyAuditEventsChainSeals.mockReset().mockResolvedValue({ valid: true, brokenAt: null });
+  m.verifyTamperProofLogRows
+    .mockReset()
+    .mockReturnValue({ valid: true, entriesVerified: 2, lastChainHash: 'x', signedEntries: 2 });
+  m.assertAuditImmutabilityTriggers
+    .mockReset()
+    .mockResolvedValue({ ok: true, expected: 8, present: 8, missing: [], disabled: [], tablesAbsent: [] });
+  answerQueries();
+  emitWarning = vi.spyOn(process, 'emitWarning').mockImplementation(() => undefined);
+}
+
+function tearDownSweep(): void {
+  emitWarning.mockRestore();
+  process.env = { ...originalEnv };
+}
+
 describe('runAuditChainIntegrityCheck verifies every audit store', () => {
-  const original = { ...process.env };
-  let emitWarning: ReturnType<typeof vi.spyOn>;
-
-  beforeEach(() => {
-    process.env.NODE_ENV = 'test';
-    process.env.AUDIT_HMAC_KEY = 'k'.repeat(32);
-    process.env.AUDIT_HMAC_SECRET = 's'.repeat(32);
-    m.clientQuery.mockReset();
-    m.clientRelease.mockReset();
-    m.reportSecurityAlert.mockReset();
-    m.verifyAuditChain.mockReset().mockResolvedValue(chainOk);
-    m.verifyAuditChainSeals.mockReset().mockResolvedValue({ valid: true, brokenAt: null });
-    m.verifyAuditEventsChainSeals.mockReset().mockResolvedValue({ valid: true, brokenAt: null });
-    m.verifyTamperProofLogRows
-      .mockReset()
-      .mockReturnValue({ valid: true, entriesVerified: 2, lastChainHash: 'x', signedEntries: 2 });
-    m.assertAuditImmutabilityTriggers
-      .mockReset()
-      .mockResolvedValue({ ok: true, expected: 8, present: 8, missing: [], disabled: [], tablesAbsent: [] });
-    answerQueries();
-    emitWarning = vi.spyOn(process, 'emitWarning').mockImplementation(() => undefined);
-  });
-
-  afterEach(() => {
-    emitWarning.mockRestore();
-    process.env = { ...original };
-  });
+  beforeEach(setUpSweep);
+  afterEach(tearDownSweep);
 
   it('reports ok and raises no alert when every store verifies', async () => {
     const result = await runAuditChainIntegrityCheck();
@@ -184,6 +205,7 @@ describe('runAuditChainIntegrityCheck verifies every audit store', () => {
     expect(result.stores.map((s) => [s.store, s.status])).toEqual([
       ['audit_logs.chain', 'ok'],
       ['audit_logs.seals', 'ok'],
+      ['audit_logs.anchor', 'ok'],
       ['audit_events.linkage', 'ok'],
       ['audit_events.seals', 'ok'],
       ['audit.tamper_proof_log', 'ok'],
@@ -333,5 +355,106 @@ describe('runAuditChainIntegrityCheck verifies every audit store', () => {
     const result = await runAuditChainIntegrityCheck();
     expect(result.ok).toBe(false);
     expect(result.error).toMatch(/pool down/);
+  });
+});
+
+describe('runAuditChainIntegrityCheck anchors the chain head outside the database (P0-8)', () => {
+  beforeEach(setUpSweep);
+  afterEach(tearDownSweep);
+
+  // ── P0-8 (anchor half): the chain head recorded outside the database ──────
+  //
+  // DP-04: nothing outside the database recorded the chain head, so deleting
+  // or rewriting the newest rows was undetectable — the walk proves each row
+  // derives from the one before it, and a chain that ends early still does.
+  // The sweep now verifies the database against the latest anchor in the
+  // object-locked evidence bucket, then writes today's anchor.
+
+  const anchorVerdict = (result: Awaited<ReturnType<typeof runAuditChainIntegrityCheck>>) =>
+    result.stores.find((s) => s.store === 'audit_logs.anchor');
+
+  it('in production without AUDIT_ANCHOR_BUCKET the anchor is "not configured": never ok, never written', async () => {
+    process.env.NODE_ENV = 'production';
+    delete process.env.AUDIT_ANCHOR_BUCKET;
+    const result = await runAuditChainIntegrityCheck();
+    expect(anchorVerdict(result)).toMatchObject({ status: 'unverifiable' });
+    expect(anchorVerdict(result)?.reason).toMatch(/anchor not configured.*AUDIT_ANCHOR_BUCKET/);
+    expect(result.ok).toBe(false);
+    expect(result.unverifiable).toEqual(['audit_logs.anchor']);
+    expect(result.failures).toEqual([]);
+    expect(result.anchorWrite).toMatchObject({ written: false });
+    expect(result.anchorWrite?.reason).toMatch(/anchor not configured/);
+    expect(m.verifyAuditChainAnchor).not.toHaveBeenCalled();
+    expect(m.writeAuditChainAnchor).not.toHaveBeenCalled();
+    expect(m.reportSecurityAlert).not.toHaveBeenCalled();
+  });
+
+  it('verifies against the latest anchor FIRST, then writes the new anchor to the configured bucket', async () => {
+    const result = await runAuditChainIntegrityCheck();
+    expect(anchorVerdict(result)).toMatchObject({ status: 'ok' });
+    expect(anchorVerdict(result)?.reason).toContain(ANCHOR_KEY);
+    expect(result.ok).toBe(true);
+    expect(m.verifyAuditChainAnchor).toHaveBeenCalledOnce();
+    expect(m.writeAuditChainAnchor).toHaveBeenCalledOnce();
+    expect(m.verifyAuditChainAnchor.mock.invocationCallOrder[0]).toBeLessThan(
+      m.writeAuditChainAnchor.mock.invocationCallOrder[0],
+    );
+    const store = m.writeAuditChainAnchor.mock.calls[0][1];
+    expect(store.location).toBe('s3://c2c-prod-part11-evidence/anchors/audit-chain/');
+    expect(m.verifyAuditChainAnchor.mock.calls[0][1]).toBe(store);
+    expect(result.anchorWrite).toEqual({ written: true, key: 'anchors/audit-chain/2026/10/01/new.json', organizations: 2 });
+  });
+
+  it('a truncated chain after an anchor is an incident: alerted, and no new anchor papers over it', async () => {
+    m.verifyAuditChainAnchor.mockResolvedValue({
+      ...anchorOk, status: 'broken', reason: '1 anchored head(s) missing or different',
+      breaks: [{ organizationId: 7, rowId: '6f1c0d2e-0000-4000-8000-000000000007', kind: 'head_missing', anchoredRows: 4, currentRows: 2 }],
+    });
+    const result = await runAuditChainIntegrityCheck();
+    expect(result.ok).toBe(false);
+    expect(result.failures).toEqual(['audit_logs.anchor']);
+    expect(anchorVerdict(result)).toMatchObject({
+      status: 'broken', firstFailure: '6f1c0d2e-0000-4000-8000-000000000007',
+    });
+    expect(anchorVerdict(result)?.reason).toMatch(/organization 7: head_missing \(4 rows anchored at or before the head, 2 now\)/);
+    expect(m.reportSecurityAlert).toHaveBeenCalledOnce();
+    expect(m.reportSecurityAlert.mock.calls[0][0].detail.failures).toEqual(['audit_logs.anchor']);
+    expect(m.writeAuditChainAnchor).not.toHaveBeenCalled();
+    expect(result.anchorWrite?.reason).toMatch(/incident in audit_logs\.anchor/);
+  });
+
+  it('with no anchor written yet the head is "not verified" (unverifiable), and the first anchor is written', async () => {
+    m.verifyAuditChainAnchor.mockResolvedValue({
+      status: 'not_anchored', anchorKey: null, anchoredAt: null, organizations: 0, breaks: [], archived: [],
+      reason: 'no anchor has been written to s3://c2c-prod-part11-evidence/anchors/audit-chain/',
+    });
+    const result = await runAuditChainIntegrityCheck();
+    expect(anchorVerdict(result)).toMatchObject({ status: 'unverifiable' });
+    expect(anchorVerdict(result)?.reason).toMatch(/not verified: no anchor has been written/);
+    expect(result.ok).toBe(false);
+    expect(result.failures).toEqual([]);
+    expect(m.writeAuditChainAnchor).toHaveBeenCalledOnce();
+  });
+
+  it('the anchor cannot be read: an incident for that store, and nothing is anchored', async () => {
+    m.verifyAuditChainAnchor.mockRejectedValue(new Error('AccessDenied'));
+    const result = await runAuditChainIntegrityCheck();
+    expect(anchorVerdict(result)).toMatchObject({ status: 'error', reason: 'AccessDenied' });
+    expect(result.failures).toEqual(['audit_logs.anchor']);
+    expect(m.writeAuditChainAnchor).not.toHaveBeenCalled();
+  });
+
+  it('an incident in another store blocks the new anchor too: a tampered state is never anchored', async () => {
+    m.verifyAuditChainSeals.mockResolvedValue({ valid: false, brokenAt: 3 });
+    const result = await runAuditChainIntegrityCheck();
+    expect(anchorVerdict(result)).toMatchObject({ status: 'ok' });
+    expect(result.failures).toEqual(['audit_logs.seals']);
+    expect(m.writeAuditChainAnchor).not.toHaveBeenCalled();
+  });
+
+  it('a failed anchor write is reported, not swallowed', async () => {
+    m.writeAuditChainAnchor.mockRejectedValue(new Error('SlowDown'));
+    const result = await runAuditChainIntegrityCheck();
+    expect(result.anchorWrite).toEqual({ written: false, reason: 'anchor write failed: SlowDown' });
   });
 });

@@ -1,0 +1,152 @@
+# Fix round neighbours, 2026-10-01.
+## Real PostgreSQL: mcp-connector, mcp-account-standing, delegated-credential-scope (with the fix)
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > posture and controls (every refusal below is read against these) > connects as a non-superuser runtime role with RLS enforcing 16ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > posture and controls (every refusal below is read against these) > the catalog yields API prefixes for all seven launch apps, none on the public allowlist 2ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > posture and controls (every refusal below is read against these) > A's own session reaches a launch write handler in A's scope and sees A's row 141ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > posture and controls (every refusal below is read against these) > B's own session reaches it in B's scope and cannot see or touch A's row 33ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > a c2c:read connector token writes nowhere on /api > is the connector issuer's own token: type access, token_use mcp, scope c2c:read 1ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > a c2c:read connector token writes nowhere on /api > projects: every write method on every API prefix is refused before a handler runs 184ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > a c2c:read connector token writes nowhere on /api > vault: every write method on every API prefix is refused before a handler runs 53ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > a c2c:read connector token writes nowhere on /api > authoring: every write method on every API prefix is refused before a handler runs 288ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > a c2c:read connector token writes nowhere on /api > submission-center: every write method on every API prefix is refused before a handler runs 106ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > a c2c:read connector token writes nowhere on /api > submission-readiness: every write method on every API prefix is refused before a handler runs 6ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > a c2c:read connector token writes nowhere on /api > qms: every write method on every API prefix is refused before a handler runs 22ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > a c2c:read connector token writes nowhere on /api > reporting: every write method on every API prefix is refused before a handler runs 39ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > a c2c:read connector token writes nowhere on /api > the /api/v1 pyramid write, outside the boundary, refuses it too 4ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key is limited to its scopes > requireScope reads the key's scopes: granted passes, not granted is 403 INSUFFICIENT_SCOPE 64ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key is limited to its scopes > projects: the key alone is refused on every write route, before a handler runs 89ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key is limited to its scopes > vault: the key alone is refused on every write route, before a handler runs 40ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key is limited to its scopes > authoring: the key alone is refused on every write route, before a handler runs 179ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key is limited to its scopes > submission-center: the key alone is refused on every write route, before a handler runs 82ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key is limited to its scopes > submission-readiness: the key alone is refused on every write route, before a handler runs 6ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key is limited to its scopes > qms: the key alone is refused on every write route, before a handler runs 8ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key is limited to its scopes > reporting: the key alone is refused on every write route, before a handler runs 29ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key is limited to its scopes > off the public API the key opens no tenant scope, even on a path that takes no session 2ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key is limited to its scopes > nor on the session alias under /api/v1, in any letter case Express routes 3ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key does not carry a session into the key's organisation > projects: A's read-only key with B's session is refused on every write route 93ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key does not carry a session into the key's organisation > vault: A's read-only key with B's session is refused on every write route 58ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key does not carry a session into the key's organisation > authoring: A's read-only key with B's session is refused on every write route 235ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key does not carry a session into the key's organisation > submission-center: A's read-only key with B's session is refused on every write route 98ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key does not carry a session into the key's organisation > submission-readiness: A's read-only key with B's session is refused on every write route 15ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key does not carry a session into the key's organisation > qms: A's read-only key with B's session is refused on every write route 29ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key does not carry a session into the key's organisation > reporting: A's read-only key with B's session is refused on every write route 20ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key does not carry a session into the key's organisation > the /api/v1 pyramid write refuses the pair too 4ms
+ ✓ server/middleware/__tests__/delegated-credential-scope.dbtest.ts > an API key does not carry a session into the key's organisation > A's row was never written by B 4ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 5ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > the posture is the one production runs in > the accounts are in the states the admin route and SCIM leave them in 2ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > its session opens /mcp, authorises a client, and the grant opens /mcp and refreshes 290ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > the grant runs a tool as the runtime role, not only the handshake 550ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session no longer opens /mcp, and says why 11ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session cannot authorise a new client at the consent page, and is told why 21ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session no longer opens /mcp, and says why 6ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session cannot authorise a new client at the consent page, and is told why 15ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session its holder signed out > no longer opens /mcp 4ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session its holder signed out > cannot authorise a new client at the consent page 7ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is suspended: the access token, the refresh token and an unredeemed code 146ms
+ × server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is deprovisioned: the access token, the refresh token and an unredeemed code 26ms
+   → consent refused an account in use: {"error":"invalid_token","error_description":"This session has ended. Sign in again."}: expected 401 to be 302 // Object.is equality
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector token is not a platform session (IAM-02, P0-2 part a) > the first-party session opens both /api authenticators (control) 74ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector token is not a platform session (IAM-02, P0-2 part a) > a token the connector issued for c2c:read opens neither 273ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 26ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > discovery and authentication over HTTP > 401 + resource_metadata without a bearer; metadata documents resolve 49ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > tools/list > lists the 19 curated tools with annotations through the SDK client 216ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > tool calls are scoped to the token’s organisation > c2c_list_projects: A sees A’s program; B sees B’s and never A’s 406ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > tool calls are scoped to the token’s organisation > c2c_list_vault_documents: each organisation sees only its own document 303ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > tool calls are scoped to the token’s organisation > c2c_assess_sequence_readiness: A gets the engine verdict; B is refused for A’s sequence 3636ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > the governed write > is denied to a connector token without c2c:file 100ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > the governed write > files a DRAFT leaf pointing at a vault document, returns the sign-off link, and is audited with tool + org 151ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > the governed write > refuses a vault document from another organisation verbatim (no cross-tenant pointer) 75ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > model-backed tool without a provider key > returns the gateway refusal verbatim, never demo-mode text 46ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > model-backed tool without a provider key > a deterministic reference tool (ICH corpus) answers through the AnA handler 6182ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 56 passed (57)
+
+## mcp-account-standing.dbtest.ts with consent.ts and platform-token.ts at HEAD 0e58e794 (control: the one failure does not depend on this change)
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 5ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > the posture is the one production runs in > the accounts are in the states the admin route and SCIM leave them in 2ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > its session opens /mcp, authorises a client, and the grant opens /mcp and refreshes 191ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > the grant runs a tool as the runtime role, not only the handshake 376ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session no longer opens /mcp, and says why 7ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session cannot authorise a new client at the consent page, and is told why 20ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session no longer opens /mcp, and says why 7ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session cannot authorise a new client at the consent page, and is told why 14ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session its holder signed out > no longer opens /mcp 5ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session its holder signed out > cannot authorise a new client at the consent page 10ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is suspended: the access token, the refresh token and an unredeemed code 132ms
+ × server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is deprovisioned: the access token, the refresh token and an unredeemed code 19ms
+   → consent refused an account in use: {"error":"invalid_token","error_description":"This session has ended. Sign in again."}: expected 401 to be 302 // Object.is equality
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector token is not a platform session (IAM-02, P0-2 part a) > the first-party session opens both /api authenticators (control) 21ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector token is not a platform session (IAM-02, P0-2 part a) > a token the connector issued for c2c:read opens neither 57ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 passed (14)
+
+## Unit: MCP suites (--testTimeout=60000)
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the token carries the session claims: a fresh id, its start, and the token TTL as its idle window 32ms
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the idle window is the TTL held inside the platform window [1 min, 24 h] 11ms
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the lifetime rule is the platform rule: the session is over ABSOLUTE_SESSION_HOURS after its start, whatever the TTL 2ms
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > connector sessions hold slots in their own pool: beyond the limit the oldest connector token is superseded, the browser session is not 5ms
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the limit is the membership organisation's maxConcurrentSessions, as at sign-in 2ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > serves RFC 9728 protected-resource metadata for /mcp 42ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > serves RFC 8414 authorization-server metadata with PKCE S256 and dynamic registration 8ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > answers /mcp without a token with 401 and a resource_metadata challenge 23ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > answers /mcp with a forged token with 401 (same verifier as the API: HS256 + rotation) 8ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > rejects a refresh-class token on the MCP path (token-class allow-list) 12ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > curated tool catalog > has 19 uniquely named tools, each with all four annotation hints, a scope and exactly one governed write 8ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > /mcp > control: with the standing readable, the session opens the connector 198ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > /mcp > refuses as an outage when the standing cannot be read — never admits, never "bad token" 9ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the consent POST > control: with the standing readable, consent issues a code 11ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the consent POST > answers 503 and issues no code when the standing cannot be read 6ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the /token exchanges > control: with the standing readable, a refresh rotates and issues 3ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the /token exchanges > a refresh refuses as an outage, and neither rotates nor issues 2ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the /token exchanges > control: with the standing readable, a code exchange issues 1ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the /token exchanges > a code exchange refuses as an outage and issues nothing 1ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > fail-closed model-backed tool > returns the gateway’s own refusal verbatim when no provider key is configured 1023ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > fail-closed model-backed tool > maps an AnA handler error to a verbatim refusal, never an empty success 1ms
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > refuses a viewer before the tool runs, and records the denial 61ms
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > refuses someone who is no longer a member before the tool runs, and records the denial 2ms
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > fails closed when the role cannot be read 2ms
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > lets an editor run the governed tool 3ms
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > does not ask for a role on a tool that is not governed 1ms
+ ✓ server/mcp/auth/__tests__/findMembership.pglite.test.ts > findMembership (MCP pre-auth lookup) > returns the membership of an active user in an active organisation 14ms
+ ✓ server/mcp/auth/__tests__/findMembership.pglite.test.ts > findMembership (MCP pre-auth lookup) > refuses a suspended user even though the membership row exists 4ms
+ ✓ server/mcp/auth/__tests__/findMembership.pglite.test.ts > findMembership (MCP pre-auth lookup) > refuses a deactivated (inactive) user 11ms
+ ✓ server/mcp/auth/__tests__/findMembership.pglite.test.ts > findMembership (MCP pre-auth lookup) > refuses any member of a suspended organisation 2ms
+ ✓ server/mcp/auth/__tests__/findMembership.pglite.test.ts > findMembership (MCP pre-auth lookup) > still refuses a user with no membership in the organisation 4ms
+ ✓ server/mcp/__tests__/mcp-tenant-tool-policy.test.ts > callAnaHandler and the tenant tool policy > refuses a tool the organization denied 9714ms
+ ✓ server/mcp/__tests__/mcp-tenant-tool-policy.test.ts > callAnaHandler and the tenant tool policy > runs it for an organization that did not deny it 55ms
+ ✓ server/mcp/__tests__/mcp-tenant-tool-policy.test.ts > callAnaHandler and the tenant tool policy > does not let an allowlist for governed mutations strip a read tool, as on the chat doors 1ms
+ Test Files  6 passed (6)
+      Tests  34 passed (34)
+
+## Unit: security-swarm-hardening, session-open-contract
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > accepts a normal access token (returns null) 4ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > rejects an MFA-partial token (mfaPending claim) 1ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > rejects an MFA-partial token (pending_mfa role) 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > rejects a refresh token 1ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > rejects an MFA challenge token 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > is case-insensitive on the type claim 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > rejects UNKNOWN explicit token classes (allow-list, not deny-list) 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > strict access-token requirement: requireAccessTokenReason > accepts only an explicit access token 1ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > strict access-token requirement: requireAccessTokenReason > rejects a token with NO type claim (missing_token_type) 3ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > strict access-token requirement: requireAccessTokenReason > rejects every non-access class, known or unknown 1ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > delegated-token rule: a connector-issued token is not a first-party session > every first-party authenticator refuses it, on either entry point 1ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > delegated-token rule: a connector-issued token is not a first-party session > refuses any delegated use, known or unknown, and whatever the type claim says 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > delegated-token rule: a connector-issued token is not a first-party session > the connector, and only a caller naming that use, accepts its own tokens 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > delegated-token rule: a connector-issued token is not a first-party session > an absent or null claim is not a delegated token 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildRegionArray > accepts valid regions without throwing 2ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildRegionArray > defaults to US_EAST when empty/undefined 1ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildRegionArray > rejects an unknown region 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildRegionArray > rejects a SQL-injection payload that breaks out of the array literal 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildEncryptionFieldArray > accepts valid snake_case field names 1ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildEncryptionFieldArray > defaults to the standard PHI fields when empty/undefined 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildEncryptionFieldArray > rejects a field name containing a quote / injection characters 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildEncryptionFieldArray > rejects an uppercase / non-identifier field name 1ms
+ ✓ server/routes/__tests__/session-open-contract.test.ts > sign-in mints register their session > no route mints session claims without registering them 6ms
+ ✓ server/routes/__tests__/session-open-contract.test.ts > sign-in mints register their session > each sign-in door opens its session through openSession 2ms
+ ✓ server/routes/__tests__/session-open-contract.test.ts > every access token the server signs carries a session (P1-38) > finds the mints (the scan is not empty and every payload is a literal it can read) 1ms
+ ✓ server/routes/__tests__/session-open-contract.test.ts > every access token the server signs carries a session (P1-38) > a type:access payload spreads the session openSession, openConnectorSession or continuedSessionClaims gave it 24ms
+ ✓ server/routes/__tests__/session-open-contract.test.ts > every access token the server signs carries a session (P1-38) > a file that mints an access token gets its session from the service, never from newSessionClaims 2ms
+ Test Files  2 passed (2)
+      Tests  27 passed (27)

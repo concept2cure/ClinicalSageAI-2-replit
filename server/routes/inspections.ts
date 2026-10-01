@@ -26,8 +26,11 @@ import {
 } from '../services/inspection/inspection-service';
 import { scoreReadiness } from '../services/inspection/inspection-logic';
 import { recordInspectionCreated, recordInspectionFinding, recordInspectionOutcome } from '../services/inspection-metrics';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('inspections');
 
 function resolveUserId(req: Request): number | null {
   const r = req as any;
@@ -48,7 +51,7 @@ function fail(res: Response, err: unknown): void {
     res.status(CODE_STATUS[code]).json({ error: { code, message: err instanceof Error ? err.message : 'Request failed.' } });
     return;
   }
-  res.status(500).json({ error: { code: 'INTERNAL', message: err instanceof Error ? err.message : 'Request failed.' } });
+  serverError(res, log, 'handling the inspection request', err);
 }
 const reason = z.string().trim().min(8, 'Provide a reason of at least 8 characters.');
 

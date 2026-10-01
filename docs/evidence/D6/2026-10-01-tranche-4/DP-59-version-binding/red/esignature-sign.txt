@@ -1,0 +1,6 @@
+ × server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.70: the version signed belongs to the document named > refuses a version of another document, and writes nothing 69ms
+   → expected 201 to be 422 // Object.is equality
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.70: the version signed belongs to the document named > signs a version of the document it names 9ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 201 to be 422 // Object.is equality
+      Tests  1 failed | 1 passed | 25 skipped (27)

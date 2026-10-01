@@ -3,10 +3,15 @@
  * compliance reports): the catalog's words, the columns a reader relies on,
  * and the chain summary of the integrity attestation.
  */
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { describe, expect, it } from 'vitest';
 
 import { findReport } from '../catalog';
 import { summarizeIntegrityChecks } from '../queries/audit-trail-integrity';
+import { ADMINISTRATIVE_ACTIONS } from '../queries/administrative-changes';
 import { VERIFY_INSTRUCTION, buildSignedReport } from '../signed-report';
 import type { ReportData } from '../types';
 
@@ -69,25 +74,75 @@ describe('item 3 — what the seal is, and who verifies it, said plainly', () =>
 
 describe('item 4 — the access review says what it cannot show', () => {
   const r = findReport('access-review')!;
-  it('role history and the review decision are stated as not recorded', () => {
-    expect(r.notRecorded).toContain("A member's role on a past date cannot be reported: role changes are not recorded.");
+  it('the past role and the review decision are stated as not shown; role changes are where they are recorded', () => {
+    expect(r.notRecorded).toContain(
+      "A member's role on a past date is not reconstructed: the role shown is the current one. A role change made by an administrator in the product is listed, with the role before and after, in the administrative changes report. A role change made through a SCIM group, which is how an identity provider assigns roles, is not recorded, so a role the identity provider assigned has no record of when it was assigned or what it replaced.",
+    );
     expect(r.notRecorded).toContain(
       'This report records no review decision, reviewer or sign-off. POLICY-AC-002 §4a keeps those in the access-review record.',
     );
-    expect(r.notRecorded.join(' ')).toMatch(/role change made by an administrator/);
+  });
+  it('P1-41: no longer says an administrator\'s role change or removal goes unrecorded', () => {
+    const text = r.notRecorded.join(' ');
+    expect(text).not.toMatch(/role changes are not recorded/);
+    expect(text).not.toMatch(/not written to the audit trail/);
+    expect(text).toMatch(/A removal made by an administrator in the product or through SCIM provisioning is recorded/);
+    expect(text).toMatch(/A role change made by an administrator in the product is listed, with the role before and after/);
+  });
+  it('P1-41 fix round: no sentence says role changes in general are listed or recorded', () => {
+    // A role change through a SCIM group writes no row (routes/scim.ts PATCH
+    // /Groups/:id), so an unqualified "role changes ... are listed/recorded" is
+    // false for every role an identity provider manages.
+    for (const line of r.notRecorded) {
+      for (const sentence of line.split(/(?<=\.)\s+/)) {
+        if (!/\b(are|is) (listed|recorded)\b/.test(sentence) || /\bnot recorded\b/.test(sentence)) continue;
+        if (!/role change/i.test(sentence)) continue;
+        expect(sentence, sentence).toMatch(/made by an administrator in the product/);
+      }
+    }
+  });
+});
+
+describe('P1-41 fix round — both reports disclose the SCIM-group role change while it writes no row', () => {
+  const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..', '..');
+  const scim = readFileSync(path.join(repoRoot, 'server', 'routes', 'scim.ts'), 'utf8');
+  const start = scim.indexOf("router.patch('/Groups/:id'");
+  const end = scim.indexOf('\nrouter.', start + 1);
+  const handler = scim.slice(start, end);
+  const writesRoleChange = /UPDATE organization_users SET role/.test(handler);
+  const recordsIt = /auditScim\(|writeChainedAuditRow\(|INSERT INTO audit_/.test(handler);
+  const disclosure = /role change (?:made|that arrives) through a SCIM group[^.]*is not recorded/;
+  it('the SCIM group handler is where the test thinks it is', () => {
+    expect(start).toBeGreaterThan(-1);
+    expect(end).toBeGreaterThan(start);
+    expect(writesRoleChange).toBe(true);
+  });
+  it.each(['access-review', 'administrative-changes'])('%s states the gap while the handler writes no row, and stops once it writes one', (id) => {
+    const text = findReport(id)!.notRecorded.join(' ');
+    if (recordsIt) expect(text).not.toMatch(disclosure);
+    else expect(text).toMatch(disclosure);
   });
 });
 
 describe('item 5 — administrative changes: which settings changes are recorded, exactly', () => {
   const text = findReport('administrative-changes')!.notRecorded.join(' ');
-  it('tenant configuration changes are not recorded; organisation settings are recorded by section name only', () => {
-    expect(text).toMatch(/tenant configuration/);
+  it('tenant configuration is recorded by section and field name, with values only for security and audit-trail retention', () => {
+    expect(text).toMatch(/Tenant configuration changes and resets are recorded by section and by the names of the fields changed/);
     expect(text).toMatch(/second-factor requirement/);
     expect(text).toMatch(/session timeout/);
     expect(text).toMatch(/IP restrictions/);
     expect(text).toMatch(/audit-trail retention/);
-    expect(text).toMatch(/integrations/);
+    expect(text).toMatch(/webhook addresses, are not recorded/);
     expect(text).toMatch(/organisation settings are recorded by section name only/);
+  });
+  it('P1-41: no longer says a role change, a removal or a tenant configuration change goes unrecorded', () => {
+    expect(text).not.toMatch(/organisation role, and a member's removal by an administrator, are not recorded/);
+    expect(text).not.toMatch(/Settings changed through the tenant configuration are not recorded/);
+  });
+  it('P1-41: reads the actions the membership and tenant configuration writers store', () => {
+    for (const action of ['member_role_changed', 'member_removed', 'tenant_settings_changed', 'tenant_settings_reset']) {
+      expect(ADMINISTRATIVE_ACTIONS).toContain(action);
+    }
   });
 });
 

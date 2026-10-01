@@ -1,0 +1,55 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts
+✅ Template tables initialized
+
+ ↓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-33 — DELETE /docs/:docId is the governed delete, not an admin-token door > the static x-admin-token authorises nothing: a member holding it is refused and nothing is deleted
+ ↓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-33 — DELETE /docs/:docId is the governed delete, not an admin-token door > an organisation manager deletes its own document: tenant-scoped, one transaction, chained row naming the actor
+ ↓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-33 — DELETE /docs/:docId is the governed delete, not an admin-token door > a document outside the caller's organisation answers 404 and deletes nothing
+ ↓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-33 — DELETE /docs/:docId is the governed delete, not an admin-token door > a delete with no stated reason is refused before anything is read
+ ↓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-33 — DELETE /docs/:docId is the governed delete, not an admin-token door > a sealed (FROZEN) document is not deleted
+ ↓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-33 — DELETE /docs/:docId is the governed delete, not an admin-token door > a document with revision history answers 409 before any DELETE — the ledger is append-only
+ × server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-33 — DELETE /docs/:docId is the governed delete, not an admin-token door > a draft that carries a signature answers 409 — the signature is never left naming a record that is gone 70ms
+   → expected 200 to be 409 // Object.is equality
+ ↓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-33 — DELETE /docs/:docId is the governed delete, not an admin-token door > the router no longer reads x-admin-token or ADMIN_TOKEN
+ ↓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-35 — freeze is the signing ceremony > a member without signing authority cannot freeze (403) and nothing is sealed
+ ↓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-35 — freeze is the signing ceremony > a freeze without the password is refused by the ceremony and nothing is sealed
+ ↓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-35 — freeze is the signing ceremony > a wrong password is refused (401) and nothing is sealed
+ ↓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-35 — freeze is the signing ceremony > a freeze without a §11.50 meaning is refused
+ ↓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-35 — freeze is the signing ceremony > an approval is not a freeze meaning — approval is E-sign, which approves and freezes in one act
+ ↓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-35 — freeze is the signing ceremony > the signed freeze writes the signature bound to the snapshot it seals, in the freeze transaction
+ ↓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > IAM-14 — POST /images and POST /import/docx run assertUploadSafe > a PNG named and declared as a PNG is stored
+ ↓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > IAM-14 — POST /images and POST /import/docx run assertUploadSafe > a file whose name says GIF but whose bytes and declared type are PNG is refused (the name binds the type)
+ ↓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > IAM-14 — POST /images and POST /import/docx run assertUploadSafe > in production a figure the scanner could not scan is refused (503), not admitted
+ ↓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > IAM-14 — POST /images and POST /import/docx run assertUploadSafe > a .docx whose bytes are not a Word container is refused before it is parsed
+ ↓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > IAM-14 — POST /images and POST /import/docx run assertUploadSafe > a Word container that the scanner flags is refused before it is parsed
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-33 — DELETE /docs/:docId is the governed delete, not an admin-token door > a draft that carries a signature answers 409 — the signature is never left naming a record that is gone
+AssertionError: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts:274:24
+    272|     hasSignature = true;
+    273|     const res = await del();
+    274|     expect(res.status).toBe(409);
+       |                        ^
+    275|     expect(res.body.code).toBe('AUTHORING_DOCUMENT_SIGNED');
+    276|     expect(deletedAnything()).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 18 skipped (19)
+   Start at  05:58:33
+   Duration  6.07s (transform 3.01s, setup 147ms, import 5.33s, tests 77ms, environment 0ms)
+

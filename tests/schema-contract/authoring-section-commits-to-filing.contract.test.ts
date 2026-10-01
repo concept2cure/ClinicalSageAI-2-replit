@@ -122,6 +122,30 @@ vi.mock('../../server/db', () => ({
     (h.pool as { query: (t: string, p?: unknown[]) => Promise<unknown> }).query(text, params),
 }));
 
+/* DP-35 (2026-10-01): a freeze is signed — §11.10(g) signing authority and the
+   platform's §11.200 re-verification. Both have their own suites
+   (server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts and
+   the sign-ceremony suites); here they pass, so this file keeps proving what it
+   is about. The author's membership row stays 'member' for the edit paths. */
+vi.mock('../../server/services/part11/resolve-signer-role.js', () => ({
+  resolveSignerOrgRole: async () => 'approver',
+}));
+vi.mock('../../server/services/part11/reverify-signer-deps', () => ({
+  signerReverificationDeps: () => ({
+    loadPasswordHash: async () => 'stored-hash',
+    comparePassword: async (plain: string) => plain === 'signer-password',
+    isMfaEnabled: async () => false,
+    verifyMfaToken: async () => false,
+    isAccountActive: async () => true,
+    isAccountLocked: async () => false,
+    recordFailedAttempt: async () => {},
+    warn: () => {},
+  }),
+}));
+const SIGNER_PASSWORD = 'signer-password';
+/** What a freeze carries now: its meaning and the re-verified password. */
+const FREEZE_CEREMONY = { meaning: 'AUTHOR', password: SIGNER_PASSWORD } as const;
+
 const T = 180_000;
 let jdb: JourneyDb;
 let app: express.Express;
@@ -422,7 +446,7 @@ describe('a section save reaches the hash-chained ledger', () => {
 
     const before = Number((await q<{ n: string }>(`SELECT count(*) AS n FROM audit_logs`))[0].n);
     const res = await as(request(app).post(`/api/authoring/docs/${freezeDocId}/freeze`))
-      .send({ reason: 'Locked for submission.' });
+      .send({ reason: 'Locked for submission.', ...FREEZE_CEREMONY });
     expect(res.status, 'the freeze did not succeed, so this proves nothing').toBe(200);
 
     const rows = await q<{ action: string }>(
@@ -698,7 +722,7 @@ describe('a freeze refuses a document that is still asking questions', () => {
 
   const freeze = (docId: string, body: Record<string, unknown> = {}) =>
     as(request(app).post(`/api/authoring/docs/${docId}/freeze`)).send({
-      reason: 'Locked for submission.', ...body,
+      reason: 'Locked for submission.', ...FREEZE_CEREMONY, ...body,
     });
 
   it('refuses while a reviewer comment is still open, and says how many', async () => {
@@ -774,7 +798,7 @@ describe('a freeze refuses a document that is still asking questions', () => {
     expect(frozen.frozen_reason).toMatch(/acknowledged by/i);
   });
 
-  it('freezes a settled document with no ceremony at all', async () => {
+  it('freezes a settled document with nothing to acknowledge', async () => {
     /* The working path. A finished document must not have acquired a new
        hurdle — nothing to acknowledge, nothing appended to its reason. */
     const { docId } = await freshDoc('<p>Settled prose, no comments, no marks.</p>');

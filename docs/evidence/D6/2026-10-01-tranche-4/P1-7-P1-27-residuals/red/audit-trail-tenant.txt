@@ -1,0 +1,71 @@
+# HEAD c6f2028b; server/startup/audit-trail.ts unchanged
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/startup/__tests__/audit-trail-tenant.test.ts > audit trail rows carry the request’s verified tenant > names the tenant the auth boundary resolved, not the one a header claims
+🔒 Tamper-proof audit trail middleware enabled (AUDIT_TRAIL_ENABLED=true)
+
+stdout | server/startup/__tests__/audit-trail-tenant.test.ts > audit trail rows carry the request’s verified tenant > a request with no tenant is an explicit platform row
+🔒 Tamper-proof audit trail middleware enabled (AUDIT_TRAIL_ENABLED=true)
+
+ × server/startup/__tests__/audit-trail-tenant.test.ts > audit trail rows carry the request’s verified tenant > names the tenant the auth boundary resolved, not the one a header claims 55ms
+   → expected { userId: '7', …(4) } to match object { organizationId: 11 }
+(5 matching properties omitted from actual)
+ × server/startup/__tests__/audit-trail-tenant.test.ts > audit trail rows carry the request’s verified tenant > a request with no tenant is an explicit platform row 11ms
+   → expected { userId: undefined, …(4) } to have property "organizationId" with value null
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/startup/__tests__/audit-trail-tenant.test.ts > audit trail rows carry the request’s verified tenant > names the tenant the auth boundary resolved, not the one a header claims
+AssertionError: expected { userId: '7', …(4) } to match object { organizationId: 11 }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "organizationId": 11,
++   "correlationId": undefined,
++   "ipAddress": "127.0.0.1",
++   "resourceType": "projects",
++   "userAgent": undefined,
++   "userId": "7",
+  }
+
+ ❯ server/startup/__tests__/audit-trail-tenant.test.ts:66:40
+     64|       .set('x-tenant-id', '12')
+     65|       .send({});
+     66|     expect(await contextOfLoggedRow()).toMatchObject({ organizationId:…
+       |                                        ^
+     67|   });
+     68|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/startup/__tests__/audit-trail-tenant.test.ts > audit trail rows carry the request’s verified tenant > a request with no tenant is an explicit platform row
+AssertionError: expected { userId: undefined, …(4) } to have property "organizationId" with value null
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ server/startup/__tests__/audit-trail-tenant.test.ts:71:40
+     69|   it('a request with no tenant is an explicit platform row', async () …
+     70|     await request(app()).post('/api/projects/5').set('x-tenant-id', '1…
+     71|     expect(await contextOfLoggedRow()).toHaveProperty('organizationId'…
+       |                                        ^
+     72|   });
+     73| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  06:13:14
+   Duration  976ms (transform 170ms, setup 93ms, import 309ms, tests 77ms, environment 0ms)
+
+exit=1

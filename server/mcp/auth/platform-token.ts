@@ -25,6 +25,12 @@
  *      with the same active secret, plus `client_id`, `scope` and `aud` bound
  *      to the resource identifier. Scopes are exactly what the user consented
  *      to and are enforced per tool.
+ *
+ * Only the first is admitted for the `grant` purpose (the consent POST). Until
+ * 2026-10-01 both were: a `c2c:read` connector token posted to /oauth/consent
+ * authorised a new grant of every scope, for any registered client, with no
+ * user present: a 30-day refresh token and the governed write (IAM-02 part b,
+ * reopened; P0-2 residual fix round; mcp-consent-delegated.dbtest.ts).
  */
 
 import jwt from 'jsonwebtoken';
@@ -78,6 +84,19 @@ function toPositiveInt(v: unknown): number | null {
 const JWT_ERRORS = new Set(['JsonWebTokenError', 'TokenExpiredError', 'NotBeforeError']);
 
 /**
+ * What a bearer is presented for. `resource` (the default) is /mcp, the
+ * resource server for connector tokens, which admits them. `grant` is the
+ * consent POST, which authorises a NEW grant: only the user's own session can
+ * do that, so there a connector token is refused by the token-class rule
+ * itself, before any read. Otherwise a delegated credential could widen its
+ * own scope, or hand itself to another client.
+ */
+export type BearerPurpose = 'resource' | 'grant';
+
+export const CONNECTOR_TOKEN_CANNOT_GRANT =
+  'A connector token cannot authorise a grant. Sign in to Concept2Cure and try again.';
+
+/**
  * The claims of a live access token, or the refusal the SDK maps to a status:
  * InvalidTokenError → 401 (the client must authorise again), ServerError → 500.
  *
@@ -85,7 +104,7 @@ const JWT_ERRORS = new Set(['JsonWebTokenError', 'TokenExpiredError', 'NotBefore
  * a pass and never "your token is bad": the token may be fine, and a client
  * told otherwise would send its user back through consent for an outage.
  */
-async function decodeAccessClaims(token: string): Promise<PlatformClaims> {
+async function decodeAccessClaims(token: string, purpose: BearerPurpose): Promise<PlatformClaims> {
   // In the order authenticateToken checks: the signature, the token class, and
   // only then the reads, so a token of the wrong class is refused for its class
   // and costs no round trip.
@@ -96,8 +115,11 @@ async function decodeAccessClaims(token: string): Promise<PlatformClaims> {
     throw new InvalidTokenError('Invalid or expired token');
   }
   // The connector is the resource server for its own delegated tokens, and for
-  // no other kind (middleware/tokenType.ts).
-  const nonAccess = requireAccessTokenReason(claims, { delegatedUse: MCP_TOKEN_USE });
+  // no other kind (middleware/tokenType.ts). It is never their grantor.
+  const nonAccess = requireAccessTokenReason(claims, purpose === 'resource' ? { delegatedUse: MCP_TOKEN_USE } : {});
+  if (nonAccess === 'delegated_token' && claims.token_use === MCP_TOKEN_USE) {
+    throw new InvalidTokenError(CONNECTOR_TOKEN_CANNOT_GRANT);
+  }
   if (nonAccess) throw new InvalidTokenError('Token is not valid for this operation');
   try {
     await verifyLiveToken(token);
@@ -138,8 +160,12 @@ function resolveScopes(claims: PlatformClaims, tokenUse: McpPrincipal['tokenUse'
   return (claims.scope ?? '').split(' ').filter((s) => known.has(s));
 }
 
-export async function verifyPlatformBearer(token: string, config: McpConfig): Promise<AuthInfo> {
-  const claims = await decodeAccessClaims(token);
+export async function verifyPlatformBearer(
+  token: string,
+  config: McpConfig,
+  purpose: BearerPurpose = 'resource',
+): Promise<AuthInfo> {
+  const claims = await decodeAccessClaims(token, purpose);
   const { userId, organizationId } = resolveSubject(claims);
   checkAudience(claims, config);
 

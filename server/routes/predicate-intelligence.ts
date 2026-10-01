@@ -26,6 +26,8 @@ import { pool } from '../db.js';
 import { setRequestQuery } from '../utils/expressQuery.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { recordAuditRow, type AuditRowOutcome, setAuditRowHeaders } from '../services/audit/audit-write-outcome.js';
+import { serverError } from '../lib/api-response.js';
+import { createScopedLogger } from '../utils/logger.js';
 import { programInOrganization } from '../services/c2c/program-access';
 
 /**
@@ -83,6 +85,7 @@ async function logProxyMutation(
  */
 
 const router = Router();
+const log = createScopedLogger('predicate-intelligence');
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Configuration
@@ -757,8 +760,10 @@ router.post(
         ctx,
       );
       return res.status(200).json(result);
-    } catch (err: any) {
-      return res.status(500).json({ error: 'SE discussion authoring failed', detail: err.message });
+    } catch (err) {
+      // The authoring pipeline's text (model call, document build, verifier
+      // store) goes to the log against the request id, not into the body.
+      return serverError(res, log, 'authoring the SE discussion', err);
     }
   },
 );
