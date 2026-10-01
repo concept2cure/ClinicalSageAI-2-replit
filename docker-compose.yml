@@ -185,6 +185,14 @@ services:
       # enforced. Terraform's production stack sets both; so does this one.
       AUDIT_TRAIL_ENABLED: 'true'
       AUDIT_REQUIRE_ENFORCE: 'true'
+      # ── Statement audit inside the database (scripts/db/database-audit.mjs; P1-11)
+      # 'pgaudit' makes deploy-migrate refuse to roll onto a database whose
+      # pgaudit is not preloaded and recording; empty means not required, and any
+      # other value is refused. This stack's Postgres (pgvector/pgvector:pg15)
+      # does not preload pgaudit, so the default is empty: the application's
+      # chained trail is then the only record of a statement. With a database
+      # that preloads pgaudit, set it to pgaudit, as terraform/stack does.
+      DB_AUDIT_REQUIRED: ${DB_AUDIT_REQUIRED:-}
       # ── Audit chain anchor (server/services/audit/chain-anchor.ts; P0-8) ──
       # The daily sweep verifies every organisation's audit chain head against
       # the latest anchor in this object-locked bucket, then writes the next.

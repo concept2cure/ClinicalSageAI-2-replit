@@ -28,6 +28,12 @@
  *     (server/services/storage/storage-posture.ts), which is required instead.
  *   - The preflight's refusal of *_ACCEPT_* overrides. They exist for these
  *     stacks.
+ *   - DEPLOY_ONLY names: the preflight requires them for the deploy's own steps,
+ *     and the server never reads them. DB_AUDIT_REQUIRED=pgaudit makes
+ *     deploy-migrate refuse a database whose pgaudit is not recording
+ *     (scripts/db/database-audit.mjs). These stacks run no deploy-migrate, their
+ *     Postgres (pgvector/pgvector:pg15) cannot preload pgaudit, and 'pgaudit' is
+ *     the only non-empty value it accepts, so it may be empty or absent here.
  *
  * For each required name, the service's environment must give it:
  *   - a literal value;
@@ -62,6 +68,8 @@ const PINNED = {
   AUDIT_REQUIRE_ENFORCE: 'true',
 };
 const COMPOSE_ADDED = ['ALLOWED_ORIGINS'];
+/** Preflight names only the deploy reads, never the server (header, "Excused for Compose"). */
+const DEPLOY_ONLY = ['DB_AUDIT_REQUIRED'];
 
 /** The names deploy-aws.yml's preflight requires on the API task. */
 export function preflightRequiredNames(workflowText) {
@@ -122,6 +130,7 @@ export function checkService(env, required) {
   };
   const storage = effective('STORAGE_PROVIDER');
   const names = new Set([...required, ...COMPOSE_ADDED]);
+  for (const name of DEPLOY_ONLY) names.delete(name);
   if (storage !== undefined && storage !== 's3') {
     names.delete('AWS_S3_BUCKET');
     names.add('STORAGE_ACCEPT_LOCAL_DISK');
@@ -220,6 +229,12 @@ function selfTest(required) {
       { ...base, ALLOWED_ORIGINS: undefined },
       ['ALLOWED_ORIGINS is not passed'],
     ],
+    [
+      'DB_AUDIT_REQUIRED, which only the deploy reads, empty',
+      { ...base, DB_AUDIT_REQUIRED: '${DB_AUDIT_REQUIRED:-}' },
+      [],
+    ],
+    ['DB_AUDIT_REQUIRED absent', { ...base, DB_AUDIT_REQUIRED: undefined }, []],
   ];
   let failed = 0;
   for (const [label, env, expect] of cases) {
