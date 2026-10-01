@@ -88,7 +88,7 @@ export async function assembleCrossObjectPayload(
     resolveDocuments(organizationId, projectId, scope.module),
     resolveArtifacts(organizationId, projectId, scope.module),
     resolveValidations(organizationId, projectId),
-    resolveTasks(organizationId, projectId, scope.module),
+    resolveTasks(organizationId, projectId),
     resolveModulePlacements(organizationId, projectId),
     resolveRecentActions(organizationId, projectId),
     resolveEvidence(organizationId, projectId),
@@ -119,7 +119,7 @@ export async function assembleCrossObjectPayload(
     DocumentSnapshot[],
     ArtifactSnapshot[],
     ValidationSnapshot[],
-    TaskSnapshot[],
+    { tasks: TaskSnapshot[]; partial: boolean },
     ModulePlacementSnapshot[],
     ActionHistoryEntry[],
     EvidenceSnapshot[],
@@ -128,11 +128,11 @@ export async function assembleCrossObjectPayload(
   ];
 
   return {
-    project: projectSnap,
+    project: { ...projectSnap, ...taskCounts(tasks.tasks, tasks.partial) },
     documents,
     artifacts,
     validations,
-    tasks,
+    tasks: tasks.tasks,
     moduleMap,
     recentActions,
     evidence,
@@ -188,7 +188,13 @@ async function resolveProjectSnapshot(
       therapeuticArea: (project as any).therapeuticArea,
       targetDate: (project as any).targetDate,
       totalDocuments: artifactCounts?.count ?? 0,
-      ...(await projectTaskCounts(orgId, projectId)),
+      // Filled from the task list in assembleCrossObjectPayload: one read of
+      // the work view serves both, so the counts and the list cannot disagree.
+      totalTasks: 0,
+      doneTasks: 0,
+      blockedTasks: 0,
+      overdueTasks: 0,
+      taskCountsPartial: false,
     };
   } catch (err) {
     throw readFailed('project', err);
@@ -196,31 +202,22 @@ async function resolveProjectSnapshot(
 }
 
 /**
- * The project's tasks from every store the platform keeps — the schedule of
- * events, the board, agency correspondence and filings — through the one
- * cross-store view (loadUnifiedWork), completed board work included.
- *
- * Until 2026-10-01 these were hardcoded to 0, and the continuity briefing turns a
- * zero total into "100% done": AnA Command showed every project's tasks as
- * complete, and AnA's context said nothing was blocked. A store that could not
- * be read is named by the view; it travels here as `taskCountsPartial`, so a
- * floor is never read as a total.
+ * The project's counts, from its task list. Derived, not read: the list and the
+ * counts come from one read of the work view (resolveTasks), so a review that
+ * says "2 blocked" names the two. Until 2026-10-01 the counts were hardcoded
+ * to 0, and then (7694bcad0) read the view separately while the list still
+ * came from an audit-log query that returned nothing.
  */
-async function projectTaskCounts(
-  orgId: number,
-  projectId: number,
-): Promise<Pick<ProjectSnapshot, 'totalTasks' | 'doneTasks' | 'blockedTasks' | 'overdueTasks' | 'taskCountsPartial'>> {
-  const view = await loadUnifiedWork({ organizationId: orgId, projectId, includeCompleted: true });
-  const now = Date.now();
-  const overdue = view.items.filter(
-    (i) => i.status !== 'done' && i.dueAt !== null && Date.parse(i.dueAt) < now,
-  ).length;
+function taskCounts(
+  tasks: TaskSnapshot[],
+  partial: boolean,
+): Pick<ProjectSnapshot, 'totalTasks' | 'doneTasks' | 'blockedTasks' | 'overdueTasks' | 'taskCountsPartial'> {
   return {
-    totalTasks: view.summary.total,
-    doneTasks: view.summary.done,
-    blockedTasks: view.summary.blocking,
-    overdueTasks: overdue,
-    taskCountsPartial: view.summary.partial,
+    totalTasks: tasks.length,
+    doneTasks: tasks.filter((t) => t.status === 'done').length,
+    blockedTasks: tasks.filter((t) => t.isBlocked).length,
+    overdueTasks: tasks.filter((t) => t.isOverdue).length,
+    taskCountsPartial: partial,
   };
 }
 
@@ -342,32 +339,35 @@ async function resolveValidations(
 async function resolveTasks(
   orgId: number,
   projectId: number,
-  module?: string
-): Promise<TaskSnapshot[]> {
-  // Tasks come from the unified task service — query if available
+): Promise<{ tasks: TaskSnapshot[]; partial: boolean }> {
+  // The project's tasks from every store the platform keeps — the schedule of
+  // events, the board, agency correspondence and filings — through the one
+  // cross-store view, completed work included.
+  //
+  // Until 2026-10-01 this read regulatory_audit_logs rows tagged 'task': the
+  // whole organisation's, not the project's, from a row no writer produces,
+  // numbered 1, 2, 3. The list was empty, so the readiness review never raised
+  // a blocked task and nothing overdue was ever recommended. A store the view
+  // could not read travels as `partial`: the review says so, rather than
+  // reading a short list as a complete one.
   try {
-    const taskLogs = await db
-      .select()
-      .from(regulatoryAuditLogs)
-      .where(
-        and(
-          eq(regulatoryAuditLogs.organizationId, orgId),
-          eq(regulatoryAuditLogs.entityType, 'task')
-        )
-      )
-      .orderBy(desc(regulatoryAuditLogs.createdAt))
-      .limit(50);
-
-    return taskLogs.map((log, i) => ({
-      id: i + 1,
-      title: (log.newValue as any)?.title || log.action || 'Task',
-      status: (log.newValue as any)?.status || 'pending',
-      priority: (log.newValue as any)?.priority || 'medium',
-      module: (log.newValue as any)?.module,
-      assignee: log.userName || undefined,
-      isBlocked: (log.newValue as any)?.status === 'blocked',
-      isOverdue: false,
-    }));
+    const view = await loadUnifiedWork({ organizationId: orgId, projectId, includeCompleted: true });
+    // No store read at all is a failed read, not a project with no tasks.
+    if (Object.values(view.sources).every((source) => !source.ran)) throw new CrossObjectReadError(['tasks']);
+    const now = Date.now();
+    const tasks = view.items.map(
+      (i): TaskSnapshot => ({
+        id: i.id,
+        title: i.title,
+        status: i.status,
+        priority: i.priority ?? 'unset',
+        assignee: i.ownerName ?? undefined,
+        dueDate: i.dueAt ?? undefined,
+        isBlocked: i.blocking,
+        isOverdue: i.status !== 'done' && i.dueAt !== null && Date.parse(i.dueAt) < now,
+      }),
+    );
+    return { tasks, partial: view.summary.partial };
   } catch (err) {
     throw readFailed('tasks', err);
   }
