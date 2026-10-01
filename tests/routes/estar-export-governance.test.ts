@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import fs from 'node:fs';
 import { createMockRequest, createMockResponse } from '../setup';
 
 const {
@@ -62,11 +63,12 @@ vi.mock('../../server/export/renderers', () => ({
   renderCombinedDocx: vi.fn(async () => Buffer.from('PK-docx')),
 }));
 
-vi.mock('../../server/export/stylePacks/config', () => ({
-  stylePacks: {
-    '510k_v1': {},
-  },
-}));
+// stylePacks/config is deliberately NOT mocked. Hollowing it out to `{}` hid
+// U8: the real module resolved every pack to <appRoot>/dist/*.html in the
+// production bundle, so this route 500'd with ENOENT in production while this
+// suite stayed green. The route now receives the real pack, and the build test
+// below asserts it names files that exist. Bundle-side resolution is pinned by
+// tests/export/stylepacks-bundle-resolution.test.ts.
 
 vi.mock('../../server/auth', () => ({
   authMiddleware: (_req: any, _res: any, next: any) => next(),
@@ -169,6 +171,11 @@ describe('510(k) eSTAR governed export', () => {
     await handler(req, res);
 
     expect(mockRender510k).toHaveBeenCalledTimes(1);
+    // The route hands the renderer the real 510(k) style pack, and both of its
+    // files exist — the renderer reads them, so a dangling path is a 500.
+    const pack = (mockRender510k.mock.calls[0] as unknown[])[1] as { html: string; css: string };
+    expect(fs.existsSync(pack.html), pack.html).toBe(true);
+    expect(fs.existsSync(pack.css), pack.css).toBe(true);
     expect(mockGovernedConsequence).toHaveBeenCalledTimes(1);
 
     // Truthfulness invariant (B0): the loose section-PDF ZIP must NOT be
