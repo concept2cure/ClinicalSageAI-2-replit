@@ -94,6 +94,48 @@ be substituted without changing an answer.
   federated learning and the manufacturing digital twin. They stay in the tree
   behind flags and get no sessions until D1–D10 are green.
 
+## Product decisions, 2026-10-01 (product owner, under the founder's delegation)
+
+The founder delegated these to the product owner on 2026-10-01 ("make those decisions … as the product manager and
+product owner"). Each is recorded with its reason so no later session re-opens it without new facts.
+
+### P-1 — A password change ends every connector grant authorised before it
+
+A password is changed in a regulated tenant most often because it may be known to someone else. A connector grant
+authorised with that password is a credential derived from it: left alone, the remedy would leave it minting access
+for the refresh token's 30 days. §11.300(b) and (d) ask that a compromised credential can be recalled; this recalls the
+credentials made from it too. The cost to a legitimate user is one reconnection. The platform already ends sessions
+and connector access tokens issued before a change (`verifyLiveToken`, D6 P0-4); grants now end on the same
+comparison (`sessionPredatesPasswordChange`). Implemented in `server/mcp/auth/provider.ts`; evidence
+`docs/evidence/D8/2026-10-01-product-decisions/`.
+
+### P-2 — The connector ships at launch, enabled, and registers clients from Claude's origins only
+
+D8 is one of the ten rows that define "commercially deployed", and the connector now meets the posture the rest of
+the platform holds (account standing, revocation, token class, tenant isolation proven as the runtime role —
+`docs/evidence/D8/`). So production runs with `MCP_ENABLED=true`, `MCP_PUBLIC_URL` set to the production origin, and
+`MCP_CLIENT_REDIRECT_ALLOWLIST=https://claude.ai,https://claude.com`: the connector serves Claude, the client the
+directory submission and the D8 evidence name. Production with no allowlist **refuses** every registration rather
+than warning and admitting any https origin — a missing list is a configuration fault and it fails closed
+(`server/mcp/index.ts`). Loopback redirects (local CLI clients) stay refused in production at launch; admitting them
+is a later decision on its own evidence. The three values belong in `terraform/stack`'s boot environment and the
+deploy preflight (W2), handed on in `docs/work-orders/README.md`.
+
+### P-3 — Repository and release controls fit the one-branch model
+
+- **No required-status-check ruleset on `concept2cure-v2`.** Under RULE 0 every change lands by a direct push, and a
+  required check must pass before a push is accepted — which no commit can do before it is on the branch. Such a
+  ruleset would refuse every push. P0-14's "required checks" is replaced by the next two items.
+- **Apply now, in GitHub settings (founder; needs repository admin):** a ruleset on `concept2cure-v2` that blocks
+  force-pushes and deletion (it costs nothing and protects the code's own history); secret scanning with push
+  protection; and a required reviewer — the founder — on the `production` environment, so no deploy reaches
+  production without a named human approving it (§11.10(k)(2), change control of the system itself).
+- **The release gate is at deploy:** production deploys only a commit whose CI run on `concept2cure-v2` passed the
+  release-evidence gate (Integration Tests, Boot Smoke, Blank DB Provisioning, Build and the security jobs included;
+  these now run whatever Lint says, `17ba398e7`). `deploy-aws.yml` verifies that verdict for the tagged commit before
+  `build-push` (W2, handed on). A release therefore needs a green trunk commit, which is the standard a regulated
+  customer's auditor will ask about.
+
 ## How sessions run under this file
 
 - One control-tower session, at most four scoped workers, each with one

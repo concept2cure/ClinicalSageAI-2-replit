@@ -104,6 +104,14 @@ export function checkClientRegistration(body: unknown, policy: McpClientRegistra
   if (!body || typeof body !== 'object' || Array.isArray(body)) return metadata;
   const uris = (body as Record<string, unknown>).redirect_uris;
   if (!Array.isArray(uris) || uris.length === 0) return metadata;
+  // Production with no listed origin is closed, not open (config.ts,
+  // closedInProduction): no redirect origin is one this server accepts.
+  if (policy.closedInProduction) {
+    return {
+      error: 'invalid_redirect_uri',
+      error_description: `Registration is closed: this server accepts clients only from the redirect origins its operator lists (${MCP_CLIENT_REDIRECT_ALLOWLIST_ENV}), and none are listed.`,
+    };
+  }
   for (let i = 0; i < uris.length; i++) {
     const refusal = redirectUriRefusal(uris[i], i, policy);
     if (refusal) return refusal;
@@ -196,12 +204,12 @@ export function createMcpRouter(config: McpConfig = resolveMcpConfig()): express
     clientRegistrationGuard(config),
     clientRegistrationBodyError,
   );
-  if (config.clientRegistration.openInProduction) {
-    // Once, here — never per request, and nothing about the state is exposed
-    // on the wire. Whether production ships an allowlist is the founder's.
+  if (config.clientRegistration.closedInProduction) {
+    // Once, here — never per request. The state itself is enforced by the
+    // guard above (registration refused); this tells the operator why.
     log.warn(
-      `Dynamic client registration (POST /register) is open in production: any https origin may register an OAuth client. ` +
-        `Set ${MCP_CLIENT_REDIRECT_ALLOWLIST_ENV} to the origins allowed to register (e.g. https://claude.ai,https://claude.com) to bind it.`,
+      `Dynamic client registration (POST /register) is refused in production: no redirect origins are listed. ` +
+        `Set ${MCP_CLIENT_REDIRECT_ALLOWLIST_ENV} to the origins allowed to register (for launch: https://claude.ai,https://claude.com).`,
       { control: MCP_CLIENT_REDIRECT_ALLOWLIST_ENV, finding: 'IAM-02', plan: 'P0-2d' },
     );
   }
