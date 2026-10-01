@@ -101,32 +101,36 @@ function decrypt(text: string): string {
 // REGISTRY
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// In-memory connector instances (shared, not org-specific)
-const connectors: Map<string, DataConnector> = new Map();
+// How to build each connector. Never a shared instance: getAuthenticatedConnector
+// writes the calling organization's credentials onto the instance, and the
+// Drive, Box and OneDrive connectors keep their access token while it is
+// valid — so one instance shared across tenants sent organization B's search
+// out with organization A's token (D6, 2026-10-01). One instance per call.
+const connectors: Map<string, () => DataConnector> = new Map();
 
 function initializeConnectors(): void {
   if (connectors.size > 0) return;
 
-  connectors.set('clinical_trials_gov', new ClinicalTrialsGovConnector());
-  connectors.set('pubmed', new PubMedConnector());
-  connectors.set('fda_drugs', new FDADrugsConnector());
-  connectors.set('ema_epar', new EMAEPARConnector());
+  connectors.set('clinical_trials_gov', () => new ClinicalTrialsGovConnector());
+  connectors.set('pubmed', () => new PubMedConnector());
+  connectors.set('fda_drugs', () => new FDADrugsConnector());
+  connectors.set('ema_epar', () => new EMAEPARConnector());
   // Live EU/global data connectors (close the geographic data gap).
-  connectors.set('eudamed', new EudamedConnector());
-  connectors.set('eu_ctis', new EuCtisConnector());
-  connectors.set('pmda_reviews', new PMDAConnector());
-  connectors.set('nmpa_cde', new NMPACDEConnector());
-  connectors.set('veeva_vault', new VeevaVaultConnector());
-  connectors.set('medidata_rave', new MedidataRaveConnector());
-  connectors.set('sharepoint', new SharePointConnector());
-  connectors.set('fhir-r4', new FHIRR4Connector());
-  connectors.set('onedrive', new OneDriveConnector());
-  connectors.set('google_drive', new GoogleDriveConnector());
-  connectors.set('box', new BoxConnector());
+  connectors.set('eudamed', () => new EudamedConnector());
+  connectors.set('eu_ctis', () => new EuCtisConnector());
+  connectors.set('pmda_reviews', () => new PMDAConnector());
+  connectors.set('nmpa_cde', () => new NMPACDEConnector());
+  connectors.set('veeva_vault', () => new VeevaVaultConnector());
+  connectors.set('medidata_rave', () => new MedidataRaveConnector());
+  connectors.set('sharepoint', () => new SharePointConnector());
+  connectors.set('fhir-r4', () => new FHIRR4Connector());
+  connectors.set('onedrive', () => new OneDriveConnector());
+  connectors.set('google_drive', () => new GoogleDriveConnector());
+  connectors.set('box', () => new BoxConnector());
   // Sponsored programs / research administration.
-  connectors.set('grants_gov', new GrantsGovConnector());
-  connectors.set('sam_exclusions', new SamExclusionsConnector());
-  connectors.set('ellucian_banner', new EllucianBannerConnector());
+  connectors.set('grants_gov', () => new GrantsGovConnector());
+  connectors.set('sam_exclusions', () => new SamExclusionsConnector());
+  connectors.set('ellucian_banner', () => new EllucianBannerConnector());
 }
 
 /**
@@ -217,15 +221,17 @@ export async function storeCredentials(
 }
 
 /**
- * Load and authenticate a connector with org-specific credentials.
+ * A new connector instance, authenticated with this organization's own
+ * credentials. Never reused across calls or tenants.
  */
 async function getAuthenticatedConnector(
   organizationId: number,
   connectorId: string
 ): Promise<DataConnector | null> {
   initializeConnectors();
-  const connector = connectors.get(connectorId);
-  if (!connector) return null;
+  const make = connectors.get(connectorId);
+  if (!make) return null;
+  const connector = make();
 
   // Load credentials if needed
   if (connector.requiresCredentials) {
