@@ -38,6 +38,10 @@ vi.mock('../../db/requestDb', () => ({
       select: () => chain([{ id: '11111111-2222-3333-4444-555555555555' }]),
     };
   },
+  // The program check (programInOrganization) reads on the request's client.
+  requestPgClient: () => ({
+    query: async (_sql: string, params: unknown[]) => ({ rows: params[1] === 7 ? [{ id: params[0] }] : [] }),
+  }),
 }));
 vi.mock('../../services/audit/audit-write-outcome', () => ({
   recordAuditRow: vi.fn(async () => ({ persisted: true, chained: true })),

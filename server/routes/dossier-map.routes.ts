@@ -31,10 +31,11 @@
  * list on 42P01 so an unprovisioned store never 500s.
  */
 import { Router, type Request, type Response } from 'express';
-import { requestDb, requestPgClient, type RequestSqlClient } from '../db/requestDb';
+import { requestDb, requestPgClient } from '../db/requestDb';
 import { isUuid } from '../middleware/uuidParam';
 import { resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
 import { assembleProjectDossierMap } from '../services/dossier/dossier-map-view-assembler.js';
+import { programInOrganization } from '../services/c2c/program-access';
 
 const router = Router();
 
@@ -59,20 +60,6 @@ function legacyProjectId(raw: string): number | null {
   return Number.isSafeInteger(n) ? n : null;
 }
 
-/** Does this program exist in the acting org? Org-scoped and soft-delete aware. */
-async function programExists(
-  db: RequestSqlClient,
-  programId: string,
-  orgId: number,
-): Promise<boolean> {
-  const { rows } = await db.query(
-    `SELECT id FROM regulatory_programs
-      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
-      LIMIT 1`,
-    [programId, orgId],
-  );
-  return rows.length > 0;
-}
 
 router.get('/', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
@@ -96,7 +83,7 @@ router.get('/', async (req: Request, res: Response) => {
   try {
     let projectId: number;
     if (programId !== null) {
-      if (!(await programExists(requestPgClient(req), programId, orgId))) {
+      if (!(await programInOrganization(requestPgClient(req), programId, orgId))) {
         return res
           .status(404)
           .json({ error: { code: 'PROGRAM_NOT_FOUND', message: 'Program not found in your organization.' } });

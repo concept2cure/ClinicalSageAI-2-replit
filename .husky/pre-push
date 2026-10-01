@@ -398,6 +398,23 @@ if ! npm run --silent ci:fabricated-identity 2>&1; then
 fi
 echo "   ✅ Fabricated-identity check passed."
 
+# One program-ownership check (D3, 2026-10-01). "Is this program the caller's
+# organization's?" is answered by programInOrganization and nothing else. LX-20
+# made it canonical on 2026-09-25 and five days later there were 51 copies
+# again, disagreeing: deleted projects admitted, registries nothing writes
+# consulted, RBM records taken as proof of ownership. The selftest shows the
+# gate catching each shape before it is trusted to report none.
+echo "   Checking that every program-ownership check is the one check..."
+if ! npm run --silent ci:program-ownership-single-source:selftest 2>&1 || ! npm run --silent ci:program-ownership-single-source 2>&1; then
+  echo ""
+  echo "🚫 ERROR: A second program-ownership check."
+  echo "   Call programInOrganization(db, programId, organizationId) from"
+  echo "   server/services/c2c/program-access.ts instead of writing the query."
+  echo ""
+  exit 1
+fi
+echo "   ✅ One program-ownership check."
+
 # ── A Part 11 audit row written and its outcome discarded (unconditional) ──
 #
 # `auditService.logAction` does not reject when persistence fails. That is

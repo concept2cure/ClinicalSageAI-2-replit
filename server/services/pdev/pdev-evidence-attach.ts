@@ -22,14 +22,14 @@
  */
 
 import { and, eq } from 'drizzle-orm';
-import { db } from '../../db';
+import { db, pool } from '../../db';
 import { createScopedLogger } from '../../utils/logger';
-import { regulatoryPrograms } from '../../../shared/schema/programs';
 import { evidenceObjects, evidenceLinks } from '../../../shared/schema/programs';
 import type { EvidenceObject } from '../../../shared/schema/programs';
 import { pdevProgramActivities } from '../../../shared/schema/pdev-workflow';
 import { getActivityByKey } from './pdev-activity-registry';
 import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
+import { programInOrganization } from '../c2c/program-access';
 
 const logger = createScopedLogger('pdev-evidence-attach');
 
@@ -104,17 +104,7 @@ export class PdevEvidenceAttachService {
     }
 
     // Tenant gate: program belongs to org.
-    const programRows = await db
-      .select({ id: regulatoryPrograms.id })
-      .from(regulatoryPrograms)
-      .where(
-        and(
-          eq(regulatoryPrograms.id, input.programId),
-          eq(regulatoryPrograms.organizationId, input.organizationId)
-        )
-      )
-      .limit(1);
-    if (!programRows[0]) {
+        if (!(await programInOrganization(pool, input.programId, input.organizationId))) {
       throw new Error('PDEV program not found in tenant');
     }
 
@@ -267,17 +257,7 @@ export class PdevEvidenceAttachService {
       throw new Error(`Unknown PDEV activity key: ${input.activityKey}`);
     }
 
-    const programRows = await db
-      .select({ id: regulatoryPrograms.id })
-      .from(regulatoryPrograms)
-      .where(
-        and(
-          eq(regulatoryPrograms.id, input.programId),
-          eq(regulatoryPrograms.organizationId, input.organizationId)
-        )
-      )
-      .limit(1);
-    if (!programRows[0]) {
+        if (!(await programInOrganization(pool, input.programId, input.organizationId))) {
       throw new Error('PDEV program not found in tenant');
     }
 
@@ -359,17 +339,7 @@ export class PdevEvidenceAttachService {
     const activity = getActivityByKey(activityKey);
     if (!activity) return [];
 
-    const programRows = await db
-      .select({ id: regulatoryPrograms.id })
-      .from(regulatoryPrograms)
-      .where(
-        and(
-          eq(regulatoryPrograms.id, programId),
-          eq(regulatoryPrograms.organizationId, organizationId)
-        )
-      )
-      .limit(1);
-    if (!programRows[0]) return [];
+        if (!(await programInOrganization(pool, programId, organizationId))) return [];
 
     const state = await db
       .select()

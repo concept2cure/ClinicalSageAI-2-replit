@@ -9,11 +9,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const ownership = vi.hoisted(() => ({ ours: new Set<string>(['11111111-1111-4111-8111-111111111111']), unavailable: false }));
-vi.mock('../../../routes/innovation-routes.js', () => ({
-  programBelongsToOrg: vi.fn(async (programId: string) => {
-    if (ownership.unavailable) throw new Error('all program->org sources failed');
-    return ownership.ours.has(programId);
-  }),
+// The one program check (server/services/c2c/program-access.ts), answered by the test.
+const programCheck = vi.hoisted(() => async (_db: unknown, programId: string) => {
+  if (ownership.unavailable) throw Object.assign(new Error('program ownership check could not be run'), { name: 'VerificationUnavailableError' });
+  return ownership.ours.has(programId);
+});
+vi.mock('../../c2c/program-access', async importOriginal => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  programInOrganization: programCheck,
+}));
+vi.mock('../../c2c/program-access.js', async importOriginal => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  programInOrganization: programCheck,
 }));
 const { resolveSignerOrgRole } = vi.hoisted(() => ({ resolveSignerOrgRole: vi.fn(async () => 'member') }));
 vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));

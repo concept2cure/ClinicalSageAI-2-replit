@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   canCreateProgram,
   canMutateProgram,
+  programInOrganization,
   resolveProgramQuotaMode,
   resolveProgramAuthzMode,
 } from '../program-access.js';
@@ -166,5 +167,66 @@ describe('resolveProgramAuthzMode', () => {
     expect(
       resolveProgramAuthzMode({ PROGRAM_AUTHZ_MODE: 'off' } as NodeJS.ProcessEnv)
     ).toBe('enforce');
+  });
+});
+
+describe('programInOrganization — the one program check (D3, 2026-10-01)', () => {
+  const PROGRAM = '33333333-3333-4333-8333-333333333333';
+  const answering = (rows: unknown[]) => {
+    const calls: Array<{ sql: string; params?: unknown[] }> = [];
+    return {
+      calls,
+      db: { query: async (sql: string, params?: unknown[]) => (calls.push({ sql, params }), { rows }) },
+    };
+  };
+
+  it('asks regulatory_programs for a live program of this organization', async () => {
+    const { db, calls } = answering([{ id: PROGRAM }]);
+    expect(await programInOrganization(db, PROGRAM, 7)).toBe(true);
+    expect(calls).toHaveLength(1);
+    expect(calls[0].sql).toMatch(/FROM regulatory_programs WHERE id = \$1 AND organization_id = \$2 AND deleted_at IS NULL/);
+    expect(calls[0].params).toEqual([PROGRAM, 7]);
+  });
+
+  it('is false when the query finds nothing', async () => {
+    expect(await programInOrganization(answering([]).db, PROGRAM, 7)).toBe(false);
+  });
+
+  it('admits a deleted program only when the caller opts in by name', async () => {
+    const { db, calls } = answering([{ id: PROGRAM }]);
+    await programInOrganization(db, PROGRAM, 7, { includeDeleted: true });
+    expect(calls[0].sql).not.toMatch(/deleted_at/);
+  });
+
+  it.each([['not-a-uuid'], [''], [42], [null], [undefined]])('refuses %j without asking the database', async id => {
+    const { db, calls } = answering([{ id: PROGRAM }]);
+    expect(await programInOrganization(db, id, 7)).toBe(false);
+    expect(calls).toHaveLength(0);
+  });
+
+  it('reads a digit-string organization as that organization, and nothing else as one', async () => {
+    const ok = answering([{ id: PROGRAM }]);
+    expect(await programInOrganization(ok.db, PROGRAM, '7')).toBe(true);
+    expect(ok.calls[0].params).toEqual([PROGRAM, 7]);
+    for (const org of ['7a', '', '0', 0, -1, Number.NaN, 1.5]) {
+      const { db, calls } = answering([{ id: PROGRAM }]);
+      expect(await programInOrganization(db, PROGRAM, org as number)).toBe(false);
+      expect(calls).toHaveLength(0);
+    }
+  });
+
+  it('throws VerificationUnavailableError, not false, when the query cannot run', async () => {
+    const broken = { query: async () => { throw Object.assign(new Error('relation does not exist'), { code: '42P01' }); } };
+    await expect(programInOrganization(broken, PROGRAM, 7)).rejects.toMatchObject({
+      name: 'VerificationUnavailableError',
+      detail: '42P01: relation does not exist',
+    });
+  });
+
+  it('resolves a connection given as a function inside the check, so "no pool" is "could not check"', async () => {
+    const noPool = () => { throw new Error('Database connection not available'); };
+    await expect(programInOrganization(noPool, PROGRAM, 7)).rejects.toMatchObject({ name: 'VerificationUnavailableError' });
+    const { db } = answering([{ id: PROGRAM }]);
+    expect(await programInOrganization(() => db, PROGRAM, 7)).toBe(true);
   });
 });
