@@ -544,7 +544,11 @@ describe('GatewayTransmittals — real dispatch layer', () => {
     // operator reaches for and the one FDA has no code for, so suggesting it
     // sent them to a refusal — and before that, to a bare 500.
     expect(field.placeholder).not.toMatch(/amendment/i);
-    expect(field.placeholder).toMatch(/Efficacy Supplement/);
+    // An IND amendment is an Original Application; supplements are for an
+    // approved NDA or BLA, so an IND could not file the old example (sweep F04).
+    expect(field.placeholder).toMatch(/Original Application/);
+    const keys = (globalThis as any).__c2cFormConfig.fields.map((f: any) => f.key);
+    expect(keys).toEqual(expect.arrayContaining(['submissionSubType', 'submissionId']));
     fireEvent.click(screen.getByTestId('form-submit'));
     // A sequence carries what changed, so the leaf count alone would mislead.
     await screen.findByText(/Sequence 0001: 1 new, 1 replaced, 3 left unchanged on file/);
@@ -589,7 +593,8 @@ describe('GatewayTransmittals — real dispatch layer', () => {
     });
     // Set before the dialog mounts: the stub captures its values at render.
     (globalThis as any).__c2cFormValues = {
-      packageId: 'pkg_77', sequence: '0001', submissionType: 'Efficacy Supplement',
+      packageId: 'pkg_77', sequence: '0001', submissionType: 'Original Application',
+      submissionSubType: ' Amendment ', submissionId: '0000',
       withdraw: '2.5/clinical-overview.pdf\n\n  3.2.P.1/description.pdf  \n',
       reason: 'Withdraw the superseded overview and file the revision',
     };
@@ -598,7 +603,7 @@ describe('GatewayTransmittals — real dispatch layer', () => {
     fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
     fireEvent.click(screen.getByTestId('form-submit'));
     await screen.findByText(/Sequence 0001/);
-    expect(sent.submissionType).toBe('Efficacy Supplement');
+    expect(sent).toMatchObject({ submissionType: 'Original Application', submissionSubType: 'Amendment', submissionId: '0000' });
     expect(sent.withdraw).toEqual([
       { ctdSection: '2.5', fileName: 'clinical-overview.pdf' },
       { ctdSection: '3.2.P.1', fileName: 'description.pdf' },

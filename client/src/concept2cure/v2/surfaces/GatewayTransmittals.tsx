@@ -161,11 +161,21 @@ const ASSEMBLE_FORM = (def: string | undefined, packages: PackageOption[] | null
     { key: 'region', label: 'Region', type: 'select', options: ['FDA', 'EMA', 'PMDA', 'CA'], default: 'FDA', half: true },
     { key: 'sequence', label: 'Sequence', type: 'text', default: '0000', half: true, placeholder: '0000', desc: 'Four digits. 0000 is the original filing.' },
     {
-      key: 'submissionType', label: 'Submission type', type: 'text', half: true, placeholder: 'e.g. Efficacy Supplement',
-      // "amendment" is the word that comes to mind and the one FDA has no code
-      // for, so the example here is a term that files. The full list travels
-      // with the refusal rather than being restated in a field description.
-      desc: 'Required for any sequence after 0000: only the original is an original by definition. FDA files from a fixed list — Original Application, Efficacy Supplement, Annual Report and others; other regions take their own term. A term that cannot be filed is refused with the list.',
+      key: 'submissionType', label: 'Submission type', type: 'text', half: true, placeholder: 'e.g. Original Application',
+      // "amendment" is the word that comes to mind and the one FDA has no
+      // submission-type code for: on FDA it is a SUB-type (below). The full
+      // list travels with the refusal rather than being restated here.
+      desc: 'Required for any sequence after 0000: only the original is an original by definition. FDA matches a term from its fixed list exactly — an IND amendment is an Original Application; supplements are for an approved NDA or BLA. Other regions take their own term. A term that cannot be filed is refused with the list.',
+    },
+    /* FDA's sub-type and submission-id (sweep F04, 2026-10-01): without them
+       every follow-up was declared the Original of a new regulatory activity. */
+    {
+      key: 'submissionSubType', label: 'Sub-type (FDA)', type: 'text', half: true, placeholder: 'e.g. Amendment',
+      desc: 'What this sequence is within its regulatory activity: Original, Amendment, Resubmission, Report, Correspondence… Required for an FDA sequence after 0000.',
+    },
+    {
+      key: 'submissionId', label: 'Activity it continues (FDA)', type: 'text', half: true, placeholder: 'e.g. 0000',
+      desc: 'The first sequence of the regulatory activity this one belongs to — 0000 for an amendment to the original IND. Leave empty for a sequence that opens its own.',
     },
     {
       key: 'withdraw', label: 'Withdraw from the application', type: 'textarea',
@@ -635,6 +645,8 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     // submission type a follow-up sequence is refused for want of a value the
     // operator supplied and this never forwarded.
     if (v.submissionType?.trim()) body.submissionType = v.submissionType.trim();
+    if (v.submissionSubType?.trim()) body.submissionSubType = v.submissionSubType.trim();
+    if (v.submissionId?.trim()) body.submissionId = v.submissionId.trim();
     const withdraw = parseWithdrawals(v.withdraw);
     if (withdraw.length > 0) body.withdraw = withdraw;
     const id = encodeURIComponent(v.packageId);

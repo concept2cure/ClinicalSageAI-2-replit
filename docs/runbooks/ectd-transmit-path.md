@@ -218,6 +218,21 @@ the value used to reach the packager and fail there with the reason discarded. E
 and Health Canada take this field as free text on this path, so nothing is checked against
 a list they do not have.
 
+**What an FDA sequence declares** (2026-10-01, sweep F04, F08). The term is matched to
+FDA's list *exactly* (a code, or the term with case and `_`/`-` ignored), never by
+resemblance: the loose match filed `IND` as IND Safety Reports. An FDA follow-up also
+states its **sub-type** (`submissionSubType`: Original, Amendment, Resubmission, Report,
+Correspondence, ...) and, when it continues a regulatory activity, that activity's first
+sequence (`submissionId`). An IND amendment is `{ submissionType: 'Original Application',
+submissionSubType: 'Amendment', submissionId: '0000' }`. Refusals, all 409 under the same
+gate: `SUBMISSION_TYPE_NOT_FOR_APPLICATION` (a supplement on an IND or master file; IND
+safety reports outside an IND), `SUBMISSION_SUB_TYPE_REQUIRED` / `_UNKNOWN` (with
+`acceptedSubmissionSubTypes`), `SUBMISSION_ID_REQUIRED` (an Amendment or Resubmission names
+no activity), `SUBMISSION_ID_NOT_FILED`, `SUBMISSION_ID_WRONG_ACTIVITY` (the named sequence
+did not open an activity of this type) and `ORIGINAL_APPLICATION_ALREADY_FILED`. The codes
+reach the packager, the bundle descriptor and the filed history. Other regions refuse the
+two fields (400 `FIELD_NOT_FOR_REGION`): their backbones have no place for them.
+
 ### 3. Transmit
 
 `executeGovernedTransmit` refuses (422) a stored bundle with `errorCount > 0`, with no
