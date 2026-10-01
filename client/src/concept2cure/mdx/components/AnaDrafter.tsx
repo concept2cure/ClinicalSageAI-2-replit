@@ -14,12 +14,15 @@
 
 import * as React from 'react';
 import { I } from '../icons';
-import { CORRESP_DETAIL } from '../data/correspondenceDetail';
+import { toDrafterView } from '../data/correspondenceDetail';
+import { useCorrespondenceDetail } from '../../hooks/useProgramTabs';
 import type {
   Deficiency,
   DraftDeficiency,
   DraftReviewer,
   DrafterLetterDoc,
+  DrafterResponsePackage,
+  DrafterView,
   ResponseDraft,
 } from '../data/correspondenceDetail';
 import type { Correspondence, PathwayKey, SectionTarget } from '../types';
@@ -72,19 +75,49 @@ export interface AnaDrafterProps {
   pathway: PathwayKey;
   onClose: () => void;
   onOpenSection: (t: SectionTarget) => void;
+  /** Hands the real letter to AnA, which drafts in the conversation. */
+  onAskAna: (text: string) => void;
 }
 
-export function AnaDrafter({ correspondence, onClose, onOpenSection }: AnaDrafterProps) {
-  const detail = CORRESP_DETAIL[correspondence.id];
-  const deficiencies: Deficiency[] = detail?.deficiencies ?? [];
+/** The prompt that hands this letter to AnA: the letter's own subject and its
+ *  parsed issues, verbatim — nothing paraphrased into a claim. */
+export function drafterPrompt(c: Correspondence, view: DrafterView): string {
+  const issues = view.deficiencies
+    .map((d) => `${d.n}. ${d.title}${d.body ? ` — "${d.body}"` : ''}${d.refs.length ? ` (${d.refs.map((r) => r.label).join(', ')})` : ''}`)
+    .join('\n');
+  return (
+    `Draft a response to ${c.kind || 'this letter'}: "${c.subject}"` +
+    (c.from ? ` from ${c.from}` : '') +
+    (c.due ? `, due ${c.due}` : '') +
+    '.' +
+    (issues
+      ? `\nAddress each issue the letter raises, citing the dossier sections and evidence that support each answer:\n${issues}`
+      : '\nThe letter has no parsed issues on record; work from its text.')
+  );
+}
+
+export function AnaDrafter({ correspondence, onClose, onOpenSection, onAskAna }: AnaDrafterProps) {
+  /* The letter is the tenant's own record: GET /api/regulatory-correspondence/
+     correspondence/:id. This used to look the id up in CORRESP_DETAIL, a set
+     of four invented agency letters, and open only for those — so it never
+     showed a real one. */
+  const detailQ = useCorrespondenceDetail(correspondence.id);
+  const view = React.useMemo(() => (detailQ.data ? toDrafterView(detailQ.data) : null), [detailQ.data]);
+  const deficiencies: Deficiency[] = view?.deficiencies ?? [];
 
   // Hooks must run unconditionally (Rules of Hooks) — guard the body, not the hooks.
-  const [draft, setDraft] = React.useState<ResponseDraft>(detail?.draft ?? { status: 'unstarted' });
-  const [activeDefId, setActiveDefId] = React.useState<string | undefined>(deficiencies[0]?.id);
-  const [generating, setGenerating] = React.useState(false);
+  /* There is no stored per-issue response for a letter, so a draft starts and
+     stays unstarted here. The structured editor below renders a ResponseDraft
+     when one exists; the only thing that ever supplied one was the fixture's
+     invented "AnA" draft for one invented letter. */
+  const [draft, setDraft] = React.useState<ResponseDraft>({ status: 'unstarted' });
+  const [activeDefId, setActiveDefId] = React.useState<string | undefined>(undefined);
   const [showCitations, setShowCitations] = React.useState(true);
-  /* Why a draft could not be produced. Never a silent no-op, never a fake one. */
-  const [genError, setGenError] = React.useState<string | null>(null);
+  const [handedOff, setHandedOff] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!activeDefId && deficiencies[0]) setActiveDefId(deficiencies[0].id);
+  }, [activeDefId, deficiencies]);
 
   const due = correspondence.due;
   const days = React.useMemo(() => daysUntil(due), [due]);
@@ -100,42 +133,45 @@ export function AnaDrafter({ correspondence, onClose, onOpenSection }: AnaDrafte
     }
   }, [activeDefId]);
 
-  if (!detail) {
+  if (detailQ.isLoading) {
     return (
-      <div className="drafter-empty">
+      <div className="drafter-empty" aria-busy="true">
         <div className="drafter-empty-icon">{I.fileText}</div>
-        <div className="drafter-empty-title">No structured letter on file for this item.</div>
-        <div className="drafter-empty-sub">Open the original document to begin drafting manually, or contact the lead reviewer to request a structured copy.</div>
+        <div className="drafter-empty-title">Loading this letter…</div>
+      </div>
+    );
+  }
+
+  if (detailQ.isError || !view) {
+    return (
+      <div className="drafter-empty" role={detailQ.isError ? 'alert' : undefined} data-testid="drafter-unavailable">
+        <div className="drafter-empty-icon">{I.fileText}</div>
+        <div className="drafter-empty-title">
+          {detailQ.isError ? 'This letter could not be loaded.' : 'This letter is not on record.'}
+        </div>
+        <div className="drafter-empty-sub">
+          {detailQ.isError
+            ? 'The correspondence record could not be read. Try again, or return to the correspondence list.'
+            : 'No correspondence record exists for this item in your organization.'}
+        </div>
+        {detailQ.isError && (
+          <button className="drafter-empty-act" onClick={() => void detailQ.refetch()}>Try again</button>
+        )}
         <button className="drafter-empty-act" onClick={onClose}>Back to correspondence</button>
       </div>
     );
   }
 
-  const { letter } = detail;
+  const { letter } = view;
 
-  /* This button used to fabricate. It waited 850ms to look like work, then
-     built a response to an AGENCY DEFICIENCY LETTER out of string templates,
-     stamped it `generated_by: 'AnA'`, and populated the sign-off roster with
-     four invented people (a Reg Lead, a Biostat, a Med Affairs reviewer and a
-     QA reviewer who do not exist). No request was ever made to AnA. A reviewer
-     reading that screen saw AnA-attributed regulatory prose and a named
-     approval chain, all of it manufactured in the browser.
-
-     It now adopts the persisted draft when there is one and fails closed when
-     there is not. It never authors a response, and it never signs one. */
-  const generate = () => {
-    setGenerating(true);
-    const saved = detail.draft && detail.draft.deficiencies ? detail.draft : null;
-    if (!saved) {
-      setGenError(
-        'No AnA-drafted response exists for this letter, and this surface cannot draft one. Ask AnA for the response in the conversation, then return here to review it.'
-      );
-      setGenerating(false);
-      return;
-    }
-    setGenError(null);
-    setDraft(saved);
-    setGenerating(false);
+  /* Drafting happens with AnA, in the conversation, from this letter's real
+     text and issues. This button once fabricated a response in the browser
+     (string templates, an 850 ms delay, four invented reviewers), then was
+     made to adopt a "persisted" draft that existed only in the fixture. It now
+     does the one honest thing this screen can: hand the letter to AnA. */
+  const handOff = () => {
+    onAskAna(drafterPrompt(correspondence, view));
+    setHandedOff(true);
   };
 
   const status = draft.status || 'unstarted';
@@ -149,8 +185,8 @@ export function AnaDrafter({ correspondence, onClose, onOpenSection }: AnaDrafte
         draft={draft}
         days={days}
         overdue={overdue}
-        onRegenerate={generate}
-        generating={generating}
+        onRegenerate={handOff}
+        generating={false}
         showCitations={showCitations}
         setShowCitations={setShowCitations}
         onClose={onClose}
@@ -166,7 +202,12 @@ export function AnaDrafter({ correspondence, onClose, onOpenSection }: AnaDrafte
 
         <div className="drafter-response" ref={responseScrollRef}>
           {status === 'unstarted' ? (
-            <DrafterUnstarted deficiencies={deficiencies} onGenerate={generate} generating={generating} error={genError} />
+            <DrafterUnstarted
+              deficiencies={deficiencies}
+              packages={view.packages}
+              onGenerate={handOff}
+              handedOff={handedOff}
+            />
           ) : (
             <DrafterDraftedBody
               draft={draft}
@@ -309,14 +350,16 @@ function DrafterLetter({ letter, deficiencies, activeDefId, setActiveDefId }: {
             ))}
           </div>
 
-          <div className="dl-signoff">
-            <div>{letter.signature.sign_off}</div>
-            <div className="dl-signoff-name">{letter.signature.name}</div>
-            <div className="dl-signoff-title">{letter.signature.title}</div>
-            {letter.signature.cc && (
-              <div className="dl-signoff-cc">cc: {letter.signature.cc.join(' · ')}</div>
-            )}
-          </div>
+          {letter.signature && (
+            <div className="dl-signoff">
+              <div>{letter.signature.sign_off}</div>
+              <div className="dl-signoff-name">{letter.signature.name}</div>
+              <div className="dl-signoff-title">{letter.signature.title}</div>
+              {letter.signature.cc && (
+                <div className="dl-signoff-cc">cc: {letter.signature.cc.join(' · ')}</div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -351,36 +394,48 @@ function enrichParagraph(para: string, deficiencies: Deficiency[], activeDefId: 
 }
 
 /* ── Response pane (right) — unstarted ── */
-function DrafterUnstarted({ deficiencies, onGenerate, generating, error }: { deficiencies: Deficiency[]; onGenerate: () => void; generating: boolean; error?: string | null }) {
+function DrafterUnstarted({ deficiencies, packages, onGenerate, handedOff }: {
+  deficiencies: Deficiency[];
+  packages: DrafterResponsePackage[];
+  onGenerate: () => void;
+  handedOff: boolean;
+}) {
+  /* The copy here used to promise a structured draft with proposed §section
+     diffs, "pulling from attached evidence", and "no changes written until you
+     accept" — a description of the in-browser fabrication this screen used to
+     perform. It now says what happens: AnA drafts in the conversation from the
+     letter's own text and issues, and nothing is stored or sent from here. */
   return (
     <div className="drafter-unstarted">
       <div className="du-hero">
         <div className="du-icon">{I.sparkles}</div>
         <div className="du-title">Draft a response with AnA</div>
         <div className="du-sub">
-          AnA will draft a structured response addressing each of the {deficiencies.length} item{deficiencies.length === 1 ? '' : 's'} in this letter,
-          pulling from the relevant dossier sections and attached evidence. You review and edit before sending.
+          AnA drafts the response in the conversation, from this letter&apos;s text and its {deficiencies.length} parsed
+          issue{deficiencies.length === 1 ? '' : 's'}. The draft is not stored on this screen, and nothing is sent from it.
         </div>
       </div>
-      <div className="du-plan">
-        <div className="du-plan-label">AnA will:</div>
-        <ol className="du-plan-list">
-          <li>Read each deficiency and identify the dossier sections it touches.</li>
-          <li>Pull current text + attached evidence from the relevant §sections.</li>
-          <li>Generate response prose, tables, and discussion against each ask.</li>
-          <li>Propose §section updates (with diff) where the response requires them.</li>
-          <li>Attach citation footnotes for every claim, evidence file, and reg.</li>
-        </ol>
-        <div className="du-plan-foot">No changes are written to the dossier until you accept the proposed updates.</div>
-      </div>
-      {error && (
-        <div className="du-error" role="alert">
-          {error}
+      {packages.length > 0 && (
+        <div className="du-plan" data-testid="drafter-packages">
+          <div className="du-plan-label">Response packages on file</div>
+          <ul className="du-plan-list">
+            {packages.map((p) => (
+              <li key={p.id}>
+                {p.title} · {p.status}
+                {p.createdAt ? ` · ${fmtDate(p.createdAt)}` : ''}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
-      <button className="du-cta" onClick={onGenerate} disabled={generating}>
+      {handedOff && (
+        <div className="du-plan-foot" role="status">
+          Sent to AnA. Continue in the conversation.
+        </div>
+      )}
+      <button className="du-cta" onClick={onGenerate}>
         {I.sparkles}
-        <span>{generating ? 'AnA is drafting…' : 'Generate draft'}</span>
+        <span>{handedOff ? 'Send to AnA again' : 'Draft with AnA'}</span>
       </button>
     </div>
   );

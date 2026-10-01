@@ -343,6 +343,14 @@ handed to that lane on the board.
 
 With these the register stands at **140** (137 + 3), all three closed.
 
+Found while re-verifying POLICY-DR-007 against the code (2026-10-01, late evening):
+
+| Id | Sev | Finding | Evidence | Hook | Status |
+|---|---|---|---|---|---|
+| DP-78 | Low | The retention clock of a Vault version starts at admission (`server/services/vault/vault-ingest.service.ts`, `retention_until = CURRENT_DATE + the organisation's period`), while ADR-0014 §6 keeps a governed record 25 years from its finalization. A version approved long after it was admitted (a trial master file document approved at the end of a study, which EU CTR Art. 58 keeps 25 years after the trial ends) falls due for disposal early. The earliest such date is in 2051. | `vault-ingest.service.ts` admission insert; `server/jobs/retentionCron.ts` `findExpiredDocuments`; ADR-0014 §6 | 11.10(c); EU CTR Art. 58; Annex 11 §17 | **open, handed to the D5 lane**: at a Vault version's approval (the canonical lifecycle's `approved` transition, `server/routes/document-lifecycle.ts`), set `retention_until = GREATEST(retention_until, approval date + the organisation's period)` in the approval's transaction, and have the sweep refuse a version whose approval plus period has not passed. Both files were changed by other lanes inside 24 hours |
+
+With this the register stands at **141**.
+
 ## 5. Verified strengths (with the file that proves each)
 
 **Boot and posture.** Production refuses to start on: an unrecognised `NODE_ENV`; missing or short JWT, previous-JWT
