@@ -78,10 +78,10 @@ describe('Report OS takes the tenant from the session, never the request (L184, 
     ro.use(express.json());
     ro.use('/api/report-os', reportOsRouter);
 
-    /* A deployed database has no report types: no migration seeds
-       report_type_registry, so POST /runs answers 404 there until someone seeds
-       it through the dev-gated /taxonomy/seed route. The fixture type is the
-       smallest row that route would write. */
+    /* A deployed database holds the report types the registry seed writes
+       (migrations/20260930_report_type_registry_seed.sql, since 2026-09-30; the
+       dev-gated /taxonomy/seed route it replaced is deleted). The fixture type is
+       a test-only row, the smallest the registry accepts. */
     await owner.query(
       `INSERT INTO report_type_registry (type_id,label,family,allowed_scopes)
        VALUES ($1,$2,'readiness','["project","program"]'::json)`,

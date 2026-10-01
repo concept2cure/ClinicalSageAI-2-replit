@@ -123,6 +123,15 @@ async function baseSchemaFixture(): Promise<PGlite> {
   // there with `relation "submissions" does not exist` and no assertion below
   // ran. A real deploy applies the creator first and is unaffected.
   await safe(readMig('migrations/20260604_submission_core_canonical.sql'));
+  // report_type_registry comes from drizzle push (shared/schema/report-os.ts) on a
+  // provisioned database, not from the journal this fixture replays. The registry
+  // seed in the set (20260930_report_type_registry_seed.sql) refuses a database
+  // without it, as it should, so the fixture creates the table from its original
+  // DDL. Only that table: the rest of 0014 needs tables the journal lacks.
+  const reportOs = readMig('migrations/0014_report_os_foundation.sql');
+  const registryDdl = reportOs.match(/CREATE TABLE IF NOT EXISTS report_type_registry \([\s\S]*?\n\);/);
+  if (!registryDdl) throw new Error('0014_report_os_foundation.sql no longer creates report_type_registry');
+  await safe(registryDdl[0]);
   return pg;
 }
 
