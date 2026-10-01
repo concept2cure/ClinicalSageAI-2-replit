@@ -13,11 +13,13 @@ import { createHash } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import {
+  loadSection,
   outlineForProgram,
   readSection,
   searchSections,
   sectionDepth,
   sectionReadableText,
+  sectionWindow,
   type AuthoringReadQueryable,
   type ReadOutcome,
   type SectionSearch,
@@ -25,6 +27,7 @@ import {
 } from '../authoring-read';
 import {
   DOC_A1, DOC_A2, DOC_B1, DOC_X1, LONG_PARAGRAPH, OTHER_TENANT, PGLITE_DDL, PROGRAM_A, SEC, TENANT,
+  FIGURE_PROPOSED_EMITTED, FIGURE_SETTLED_EMITTED, LONE_SURROGATE, WALK_CASES, WALK_SIZES,
   makeFakePool, outsideProposals, pgliteInsertDoc, pgliteInsertSection, pglitePool, pgliteSeed, seedState,
   withoutContinuations, type FakeDoc, type FakeSection, type FakeState,
 } from './authoring-read-fixture';
@@ -320,6 +323,92 @@ function readCases(h: Harness): void {
   });
 }
 
+/** Second verifier round: walks at every window size, captions, and figures the parser skipped. */
+function renderingCases(h: Harness): void {
+  // D1 (round 2): a 1-character window stopped advancing on an emoji inside a
+  // proposal (0→1 1→2 2→29 29→29). These sections put astral characters in
+  // settled text, at a proposal's first and last character, in adjacent
+  // proposals, in a caption and in table cells.
+  it('a walk at every window size from 1 up advances on every call, never splits a surrogate pair, and delivers every character once', async () => {
+    for (const html of WALK_CASES) {
+      const s = sectionOf('7.1', html);
+      await h.addSection(s);
+      const loaded = value(await loadSection(h.pool(), { ...A, sectionId: s.id }));
+      const whole = loaded.rendered.text;
+      expect(whole).not.toMatch(LONE_SURROGATE);
+      for (const size of WALK_SIZES) {
+        const parts: string[] = [];
+        let offset = 0;
+        let calls = 0;
+        for (;;) {
+          const w = sectionWindow(loaded, offset, size);
+          const at = `${html} size ${size} offset ${offset}`;
+          expect(w.offset, at).toBe(offset);
+          expect(w.text, at).not.toMatch(LONE_SURROGATE);
+          outsideProposals(w.text);
+          parts.push(withoutContinuations(w.text));
+          if (w.nextOffset === null) break;
+          expect(w.nextOffset, at).toBeGreaterThan(offset);
+          offset = w.nextOffset;
+          if (++calls > whole.length) throw new Error(`the walk did not end: ${at}`);
+        }
+        expect(parts.join(''), `${html} size ${size}`).toBe(whole);
+      }
+      // From ANY offset, even one inside a pair or a label, a 1-character window moves on and splits nothing.
+      for (let off = 0; off < whole.length; off++) {
+        const w = sectionWindow(loaded, off, 1);
+        expect(w.text, `${html} offset ${off}`).not.toMatch(LONE_SURROGATE);
+        expect(w.nextOffset ?? whole.length, `${html} offset ${off}`).toBeGreaterThan(off);
+      }
+    }
+  });
+
+  // D2 (round 2): a table caption was read as plain text, so proposed words in it went unlabelled.
+  it('labels proposed text in a table caption, and reads only the table\'s own caption, never a nested table\'s', async () => {
+    const cases: Array<[string, string]> = [
+      ['<table><caption>Assay <ins data-author-name="Ann">zeta limits</ins></caption><tr><td>Row</td></tr></table>',
+        'Table: Assay ⟦proposed insertion by Ann: zeta limits⟧\nRow'],
+      ['<table><caption>Assay <del data-author-name="Ann">zeta limits</del></caption><tr><td>Row</td></tr></table>',
+        'Table: Assay ⟦proposed deletion by Ann: zeta limits⟧\nRow'],
+      ['<ins data-author-name="Ann"><table><caption>Zeta caption</caption><tr><td>Zeta cell</td></tr></table></ins><p>After.</p>',
+        'Table: ⟦proposed insertion by Ann: Zeta caption⟧\n⟦proposed insertion by Ann: Zeta cell⟧\n\nAfter.'],
+      ['<table><caption>Outer caption</caption><tr><td><table><caption>Inner</caption><tr><td>x</td></tr></table></td></tr></table>',
+        'Table: Outer caption\nInner x'],
+    ];
+    for (const [html, want] of cases) {
+      const s = sectionOf('7.2', html);
+      await h.addSection(s);
+      const w = value(await readSection(h.pool(), { ...A, sectionId: s.id }));
+      expect(w.text, html).toBe(want);
+      expect(outsideProposals(w.text), html).not.toMatch(/zeta/i);
+    }
+    const nested = sectionOf('7.3', '<table><tr><td>Outer <table><caption>Inner caption</caption><tr><td>inner</td></tr></table></td></tr></table>');
+    await h.addSection(nested);
+    const w = value(await readSection(h.pool(), { ...A, sectionId: nested.id }));
+    expect(w.text).not.toContain('Table:');
+    expect(w.text).toContain('Outer');
+  });
+
+  // D3 (round 2): figure state was queued per src, so an image the parser
+  // skipped (in a caption, directly in a row, in an empty citation anchor)
+  // took the state meant for the next copy of the same image.
+  it('a figure the parser skipped never shifts a later copy\'s proposal state, in either order', async () => {
+    for (const html of FIGURE_PROPOSED_EMITTED) {
+      const s = sectionOf('7.4', html);
+      await h.addSection(s);
+      const t = value(await readSection(h.pool(), { ...A, sectionId: s.id })).text;
+      expect(t, html).toContain('⟦proposed insertion by Ann: [figure: Zeta figure]⟧');
+      expect(outsideProposals(t), html).not.toMatch(/zeta/i);
+    }
+    for (const html of FIGURE_SETTLED_EMITTED) {
+      const s = sectionOf('7.5', html);
+      await h.addSection(s);
+      const t = value(await readSection(h.pool(), { ...A, sectionId: s.id })).text;
+      expect(outsideProposals(t), html).toContain('[figure: Settled figure]');
+    }
+  });
+}
+
 function searchCases(h: Harness): void {
   it('finds a phrase in tag-stripped content, with a snippet around the hit', async () => {
     const r = value(await searchSections(h.pool(), { ...A, query: 'BIOAVAILABILITY' }));
@@ -399,6 +488,31 @@ function searchCases(h: Harness): void {
     expect(r.hits[0].snippet).toBe('The dose is \u27E6proposed insertion by AnA: zeta-raised to 40 mg\u27E7 daily.');
   });
 
+  // D5 (round 2): the SQL match turns every tag into a space; the rendered
+  // text has none between `is` and an insertion, and puts list markers, cell
+  // separators and heading marks between blocks. The snippet must still show the match.
+  it('a snippet shows the matched text when the match runs across a tag, list items, table cells or blocks', async () => {
+    const pad = 'Filler sentence here. '.repeat(40);
+    const sections = [
+      sectionOf('4.4', `<p>${pad}The dose is<ins data-author-name="AnA">zeta-raised to 50 mg</ins>.</p>`),
+      sectionOf('4.5', `<ul><li>${pad}</li><li>alpha beta</li><li>gamma delta</li></ul>`),
+      sectionOf('4.6', `<p>${pad}</p><table><tr><td>kappa</td><td>lambda</td></tr></table>`),
+      sectionOf('4.7', `<p>${pad}end of omicron</p><h2>Sigma heading</h2>`),
+    ];
+    for (const x of sections) await h.addSection(x);
+    const snippet = async (query: string): Promise<string> => {
+      const r = value(await searchSections(h.pool(), { ...A, query }));
+      expect(r.hits, query).toHaveLength(1);
+      return r.hits[0].snippet;
+    };
+    const ins = await snippet('dose is zeta-raised');
+    expect(ins).toContain('The dose is⟦proposed insertion by AnA: zeta-raised to 50 mg⟧.');
+    expect(outsideProposals(ins)).not.toMatch(/zeta/i);
+    expect(await snippet('beta gamma')).toContain('- alpha beta - gamma delta');
+    expect(await snippet('kappa lambda')).toContain('kappa | lambda');
+    expect(await snippet('omicron sigma')).toContain('end of omicron ## Sigma heading');
+  });
+
   it('refuses a query too short to mean anything', async () => {
     const out = await searchSections(h.pool(), { ...A, query: ' ' });
     expect(out.ok).toBe(false);
@@ -438,6 +552,7 @@ describe.each([fakeHarness(), pgliteHarness()])('authoring-read over $name', (h)
   describe('outlineForProgram', () => outlineCases(h));
   describe('outlineForProgram paging', () => outlinePagingCases(h));
   describe('readSection', () => readCases(h));
+  describe('readSection rendering', () => renderingCases(h));
   describe('searchSections', () => searchCases(h));
   describe('tenant and program scope', () => scopeCases(h));
 });

@@ -1,0 +1,13 @@
+ ✓ tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > runs as a role that RLS binds (the posture these results depend on) 4ms
+ × tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > shows the schedule's, correspondence's and filings' work, each labelled, read-only, with the screen that owns it 48ms
+   → a blocked schedule task is missing from the board: expected undefined to match object { source: 'schedule', …(5) }
+ ✓ tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > keeps the board's own tasks editable, and shows a task AnA created once, as its editable board card 17ms
+ × tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > counts blocked work from every store, and never another organisation's 19ms
+   → expected [] to deeply equal [ …(2) ]
+ × tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > says it read every store 24ms
+   → expected undefined to match object { partial: false, unreadSources: [] }
+ × tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > names a store it could not read and says it is partial, instead of showing less without a word 19ms
+   → expected undefined to match object { partial: true, …(1) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  4 failed | 2 passed (6)

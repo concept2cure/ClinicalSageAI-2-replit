@@ -1,6 +1,6 @@
 # D1 — the production image boots in a container: blocked by this environment
 
-**Row:** D1. **Date:** 2026-10-01. **Status: blocked**, not done.
+**Row:** D1. **Date:** 2026-10-01. **Status:** moved to CI (see _Resumed_ below); done when the `production-image-boot` job is green.
 
 ## What was attempted
 
@@ -43,3 +43,37 @@ access → allowed domains, or a broader access level). Then re-run:
 The CI image build in `deploy-aws.yml` runs on GitHub's runners, which reach
 Debian. That build, and the `check-pdfa-toolchain` step inside it, are
 unaffected.
+
+## Resumed, 2026-10-01: the image boots in CI instead
+
+The environment still refuses `deb.debian.org`, and only the founder can change
+that setting. GitHub's runners reach Debian, as `deploy-aws.yml`'s image build
+does, so the proof now runs there. The new `ci.yml` job, `production-image-boot`:
+
+1. builds both targets the deploy builds, `provision` and `production`, and
+   checks that the production image runs as `appuser`;
+2. starts an **empty** PostgreSQL 15 with pgvector over TLS;
+3. provisions it with the **provision image's own** `npm run db:provision`,
+   owner and `app_service` split;
+4. starts the **production image** with `RLS_ENFORCE=on` as `app_service`, in
+   the posture `production-boot-smoke` runs, and requires `/readyz` and
+   `/healthz` to answer 200 (the container log is printed on failure);
+5. signs a person in from inside the image (`scripts/ci/image-boot-signin.mjs`,
+   which uses the image's own `pg` and `bcryptjs`). Production always asks for
+   a second factor, so the script enrols an authenticator the way
+   `mfaService` stores one and completes it. A wrong code must be refused.
+
+The job is listed with the posture jobs in
+`tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts`, so a red lint
+cannot skip it.
+
+**Proven here, before CI:** the same provision path and sign-in, against the
+production bundle booted from source in production mode on a freshly
+provisioned database (`local/`). The sign-in script was made to fail twice: an
+authenticator under a key the server does not hold, and an origin the
+deployment does not allow. Both were refused.
+
+**Noted, not changed:** an authenticator secret the server cannot decrypt
+answers `500 AUTH_010` at `/api/auth/mfa/verify`, not a 401. It is reachable
+only after a key rotation that missed a secret, so it is a key-management
+defect, not a sign-in bypass.

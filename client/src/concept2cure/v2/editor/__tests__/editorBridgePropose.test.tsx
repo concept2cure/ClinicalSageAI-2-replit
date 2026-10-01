@@ -84,9 +84,14 @@ for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unkn
   }
 }
 
+import { Editor } from '@tiptap/core';
+import StarterKit from '@tiptap/starter-kit';
+import { TableKit } from '@tiptap/extension-table';
 import { DocumentCanvas } from '../DocumentCanvas';
 import type { EditorBridge } from '../DocumentWorkbench';
 import { clearEditorTarget } from '../../editorTarget';
+import { TrackChanges, proposeReplacement } from '../suggestions';
+import { computeMatches } from '../findReplace';
 
 const DOC = 'aaaaaaaa-0000-4000-8000-0000000000b4';
 const PID = '5ac45b38-a1d8-4a41-9488-fac39a57b852';
@@ -105,7 +110,7 @@ const ANA = { id: 'ana', name: 'AnA (AI draft)', sourceRecord: TURN };
 const ok = (payload: unknown, status = 200) =>
   ({ ok: status < 400, status, json: async () => payload }) as Response;
 
-function mockApi(status = 'DRAFT') {
+function mockApi(status = 'DRAFT', stored = STORED) {
   const exact: Record<string, () => Response> = {
     [`/api/authoring/docs/${DOC}`]: () =>
       ok({
@@ -121,7 +126,7 @@ function mockApi(status = 'DRAFT') {
         sections: [
           {
             id: 'S1', doc_id: DOC, code: '3.2.P.8.1', title: 'Stability Summary and Conclusion',
-            content: STORED, order_index: 0,
+            content: stored, order_index: 0,
             comment_count: 0, revision_count: 1, citation_count: 0, updated_at: SAVED_AT,
           },
         ],
@@ -273,6 +278,24 @@ describe('EditorBridge.propose — which section, and which version of it', () =
   });
 });
 
+describe('EditorBridge.propose — text the editor cannot strike', () => {
+  it('passes unsupported-content through for a quote in inline code, and changes nothing', async () => {
+    // Inline code takes no other mark, so the quote could not be struck: the
+    // editor used to answer ok with nothing struck (round two, D1).
+    const withCode = '<p>Store the lot under <code>batch_id</code> for 18 months.</p>';
+    mockApi('DRAFT', withCode);
+    const bridge = await openBridge();
+    await expect(
+      bridge().propose({ sectionId: 'S1', quote: 'batch_id', replacement: 'lot_id', baseSha256: sha256(withCode) }, ANA),
+    ).resolves.toEqual({ ok: false, reason: 'unsupported-content' });
+    noRedline();
+    // The plain words beside it still take a proposal.
+    await expect(
+      bridge().propose({ ...PROPOSAL, baseSha256: sha256(withCode) }, ANA),
+    ).resolves.toEqual({ ok: true });
+  });
+});
+
 describe('EditorBridge.propose — after a save', () => {
   it('a base read before the save is stale after it, through the old bridge and the new one', async () => {
     const bridge = await openBridge();
@@ -339,5 +362,192 @@ describe('EditorBridge.propose — a sealed document', () => {
       reason: 'not-editable',
     });
     expect(stub.calls, 'a sealed document\u2019s proposal reached the editor').toBe(1);
+  });
+});
+
+/* ── Round two of the review: the editor behind the bridge ─────────────────
+ *
+ * What a proposal that reaches the editor (above) then does to the section,
+ * for the verifier's second-round findings (2026-10-01, 2-fixes-round2.txt).
+ * They belong with suggestionsPropose.test.tsx's contract — Reject all leaves
+ * the section exactly as it was, live and after a reload; Accept all leaves
+ * exactly what was proposed — and live here only because that file is at its
+ * max-lines limit. Plain editors, built as RichSectionEditor builds them; the
+ * mocks above do not reach them.
+ */
+
+const editors: Editor[] = [];
+afterEach(() => {
+  while (editors.length) editors.pop()!.destroy();
+});
+function makeEditor(content: string): Editor {
+  const ed = new Editor({
+    element: document.createElement('div'),
+    extensions: [
+      StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
+      TableKit.configure({ table: { resizable: false } }),
+      TrackChanges.configure({ enabled: true, author: { id: 'user-7', name: 'Jordan Medical Writer' } }),
+    ],
+    content,
+  });
+  editors.push(ed);
+  return ed;
+}
+
+type Act = (ed: Editor) => void;
+const ask = (ed: Editor, quote: string, replacement: string, ctx: { prefix?: string; suffix?: string } = {}) =>
+  proposeReplacement(ed, { quote, replacement, author: ANA, ...ctx });
+const propose = (quote: string, replacement: string): Act => (ed) => {
+  expect(ask(ed, quote, replacement)).toEqual({ ok: true });
+};
+/** The person selects `quote` and asks for `draft` over it. */
+const draftOver = (quote: string, draft: string): Act => (ed) => {
+  ed.commands.setTextSelection(computeMatches(ed.state.doc, quote, true)[0]);
+  expect(ed.commands.insertSuggestedContent(draft, ANA)).toBe(true);
+};
+/** Decide everything `act` proposed, `action`, on an editor holding `html`
+ *  as the app restores saved HTML (setContentUntracked). */
+const decideReloaded = (html: string, action: 'accept' | 'reject') => {
+  const ed = makeEditor('<p></p>');
+  ed.commands.setContentUntracked(html);
+  ed.commands.resolveAllSuggestions(action);
+  return ed.getHTML();
+};
+
+/** Reject all restores the section, live and after a reload; Accept all, live
+ *  and after a reload, is `intended`. */
+function expectRoundTrip(content: string, act: Act, intended: string) {
+  const ed = makeEditor(content);
+  const original = ed.getHTML();
+  act(ed);
+  const proposed = ed.getHTML();
+  expect(proposed, 'the act proposed nothing').not.toBe(original);
+  const live = makeEditor(content);
+  act(live);
+  live.commands.resolveAllSuggestions('accept');
+  expect(live.getHTML(), 'Accept all').toBe(intended);
+  ed.commands.resolveAllSuggestions('reject');
+  expect(ed.getHTML(), 'Reject all').toBe(original);
+  expect(decideReloaded(proposed, 'reject'), 'Reject all after a reload').toBe(original);
+  expect(decideReloaded(proposed, 'accept'), 'Accept all after a reload').toBe(intended);
+}
+
+/** `act` refused — `outcome` is what it returned — and the section untouched. */
+function expectRefused(content: string, act: (ed: Editor) => unknown, outcome: unknown) {
+  const ed = makeEditor(content);
+  const before = ed.getHTML();
+  expect(act(ed)).toEqual(outcome);
+  expect(ed.getHTML()).toBe(before);
+}
+
+const INLINE_CODE = '<p>Use <code>batch_id</code> here.</p>';
+const CODE_BLOCK = '<pre><code>let x = 1;</code></pre><p>Closing.</p>';
+const STORE = '<p>Store at 25 C for use.</p>';
+const ITEMS = '<ul><li><p>Old item</p></li><li><p>Keep</p></li></ul><p>x</p>';
+
+describe('round two, D1 — text that cannot be struck is refused, not silently kept', () => {
+  // Inline code excludes every other mark and a code block allows none, so
+  // the strike was skipped: ok came back with the quote unstruck, and Accept
+  // all left words nobody proposed beside the replacement.
+  it.each([
+    [INLINE_CODE, 'batch_id', 'lot_id'],
+    [INLINE_CODE, 'Use batch_id here.', 'Use lot here.'],
+    [CODE_BLOCK, 'x = 1', ''],
+    [CODE_BLOCK, 'x = 1', 'y = 2'],
+  ])('%s: a proposal on %j refuses unsupported-content', (content, quote, replacement) => {
+    expectRefused(content, (ed) => ask(ed, quote, replacement), { ok: false, reason: 'unsupported-content' });
+  });
+
+  it.each(['batch_id', 'Use batch_id'])('a draft over a selection of %j returns false', (quote) => {
+    const act = (ed: Editor) => {
+      ed.commands.setTextSelection(computeMatches(ed.state.doc, quote, true)[0]);
+      return ed.commands.insertSuggestedContent('lot_id', ANA);
+    };
+    expectRefused(INLINE_CODE, act, false);
+  });
+
+  it('the plain text beside the code still takes a proposal', () => {
+    expectRoundTrip(INLINE_CODE, propose('here.', 'there.'), '<p>Use <code>batch_id</code> there.</p>');
+  });
+});
+
+describe('round two, D2 — an edge space is never owned only by the suggestion', () => {
+  // Saved HTML collapses the insertion's edge space into the document's own
+  // (or drops it at a paragraph edge). When the one kept was inside <ins>,
+  // '25 C' → '30 C ' rejected after a reload gave "25 Cfor use.".
+  it.each([
+    ['ends in a space before the document\u2019s own', STORE, propose('25 C', '30 C '), '<p>Store at 30 C for use.</p>'],
+    ['ends in a space at its paragraph\u2019s end', `${STORE}<p>End.</p>`, propose('for use.', 'for storage. '), '<p>Store at 25 C for storage.</p><p>End.</p>'],
+    ['starts with a space after a quote ending in one', STORE, propose('25 C ', ' 30 C '), '<p>Store at 30 C for use.</p>'],
+    ['drafted over a selection ends in a space before the document\u2019s own', STORE, draftOver('25 C', '30 C '), '<p>Store at 30 C for use.</p>'],
+    ['keeps an edge space the document does not have', STORE, propose('25 C for', '30 C, for'), '<p>Store at 30 C, for use.</p>'],
+  ])('a replacement that %s', (_case, content, act, intended) => {
+    expectRoundTrip(content, act, intended);
+  });
+});
+
+describe('round two, D3 — whole list items', () => {
+  it.each([
+    ['a struck item goes on accept', '<ul><li><p>A</p></li><li><p>Old</p></li></ul><p>x</p>', propose('Old', ''), '<ul><li><p>A</p></li></ul><p>x</p>'],
+    ['a struck middle item goes on accept', '<ol><li><p>A</p></li><li><p>Old</p></li><li><p>C</p></li></ol><p>x</p>', propose('Old', ''), '<ol><li><p>A</p></li><li><p>C</p></li></ol><p>x</p>'],
+    ['a list replacing an item becomes sibling items', ITEMS, propose('Old item', '- first\n- second'), '<ul><li><p>first</p></li><li><p>second</p></li><li><p>Keep</p></li></ul><p>x</p>'],
+    ['so does a numbered one', '<ol><li><p>Keep</p></li><li><p>Old item</p></li></ol><p>x</p>', propose('Old item', '1. first\n2. second'), '<ol><li><p>Keep</p></li><li><p>first</p></li><li><p>second</p></li></ol><p>x</p>'],
+    ['so does a list drafted over a selected item', '<ul><li><p>Old</p></li></ul><p>B</p>', draftOver('Old', '- x'), '<ul><li><p>x</p></li></ul><p>B</p>'],
+    ['paragraphs replacing an item stay in it', '<ul><li><p>Old</p></li></ul><p>x</p>', propose('Old', 'P1\n\nP2'), '<ul><li><p>P1</p><p>P2</p></li></ul><p>x</p>'],
+  ])('%s', (_case, content, act, intended) => {
+    expectRoundTrip(content, act, intended);
+  });
+
+  it.each(['## Heading\n\nBody', '| A | B |\n| --- | --- |\n| 1 | 2 |', '- a\n\nAfter the list'])(
+    'refuses structural for a whole item replaced by %j, which a list item cannot be',
+    (replacement) => {
+      expectRefused(ITEMS, (ed) => ask(ed, 'Old item', replacement), { ok: false, reason: 'structural' });
+    },
+  );
+});
+
+describe('round two, D4 — the person\u2019s selection does not grow over AnA\u2019s insertion', () => {
+  // The quote itself, a selection ending at it, one starting where AnA's words go.
+  it.each(['25 C', 'at 25 C', ' for use'])('a selection of %j keeps exactly its words', (words) => {
+    const ed = makeEditor(STORE);
+    ed.commands.setTextSelection(computeMatches(ed.state.doc, words, true)[0]);
+    expect(ask(ed, '25 C', '30 C')).toEqual({ ok: true });
+    expect(ed.state.doc.textBetween(ed.state.selection.from, ed.state.selection.to)).toBe(words);
+  });
+
+  it('a caret at the end of the quote stays there, before AnA\u2019s words', () => {
+    const ed = makeEditor(STORE);
+    ed.commands.setTextSelection(computeMatches(ed.state.doc, '25 C', true)[0].to);
+    expect(ask(ed, '25 C', '30 C')).toEqual({ ok: true });
+    expect(ed.state.doc.textBetween(1, ed.state.selection.from)).toBe('Store at 25 C');
+  });
+});
+
+describe('round two, D5 — real text that looks like a reader marker still anchors', () => {
+  it.each([
+    ['a prefix line', '<p>Intro.</p><p>- 5 mg daily.</p><p>Assay is ok.</p><p>Assay is ok.</p>', { prefix: 'Intro.\n- 5 mg daily.\n' }, 2],
+    ['a suffix line', '<p>Assay is</p><p>1. high</p><p>Assay is</p><p>low</p>', { suffix: '\n1. high' }, 0],
+  ])('%s that is a paragraph\u2019s own text', (_case, content, ctx, struck) => {
+    const ed = makeEditor(content);
+    expect(ask(ed, 'Assay is', 'X', ctx)).toEqual({ ok: true });
+    const paras = Array.from(ed.view.dom.querySelectorAll('p'));
+    expect(paras.findIndex((p) => p.querySelector('del'))).toBe(struck);
+    expect(ed.view.dom.querySelectorAll('del')).toHaveLength(1);
+  });
+
+  it('still reads a real marker past, and still refuses context that fits neither way', () => {
+    const list = '<ul><li><p>Assay is 98.0%.</p></li><li><p>Assay is 99.1%.</p></li></ul>';
+    expect(ask(makeEditor(list), 'Assay is', 'X', { prefix: '- Other.\n- ' })).toEqual({ ok: false, reason: 'not-found' });
+    expect(ask(makeEditor(list), 'Assay is', 'X', { prefix: '- Assay is 98.0%.\n- ' })).toEqual({ ok: true });
+  });
+});
+
+describe('round two, D6 — the documented trailing-paragraph limit', () => {
+  it('a section ending in a list gains the editor\u2019s empty paragraph on any transaction', () => {
+    // StarterKit's TrailingNode, not suggestions.ts; documented there.
+    const ed = makeEditor('<p>Intro.</p><ul><li><p>Assay is 98.0%.</p></li></ul>');
+    expect(ed.getHTML()).not.toMatch(/<p><\/p>$/);
+    expect(ask(ed, 'Intro.', 'Opening.')).toEqual({ ok: true });
+    expect(ed.getHTML()).toMatch(/<\/ul><p><\/p>$/);
   });
 });

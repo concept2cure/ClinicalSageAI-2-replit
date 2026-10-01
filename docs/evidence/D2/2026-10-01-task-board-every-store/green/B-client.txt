@@ -1,0 +1,6 @@
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardEveryStore.test.tsx > TaskBoard — every store's work > labels another store's card with its store and offers no move; the board's own card keeps its controls 337ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardEveryStore.test.tsx > TaskBoard — every store's work > counts work blocked in another store in the Blocked column 77ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardEveryStore.test.tsx > TaskBoard — every store's work > opening it says where it lives and opens that screen on its project, with no board edit control 103ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardEveryStore.test.tsx > TaskBoard — every store's work > opens a filing in the Submission Center 83ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardEveryStore.test.tsx > TaskBoard — every store's work > names a store it could not read, and says nothing when every store was read 71ms
+      Tests  5 passed (5)
