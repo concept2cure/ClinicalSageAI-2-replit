@@ -19,6 +19,7 @@ import {
   ok, clientError, orgRequired, serverError,
 } from '../lib/api-response';
 import { pool } from '../db';
+import { canReadAuditTrail } from '../services/audit/audit-api-authority';
 
 const router = Router();
 const log = createScopedLogger('mdx-search');
@@ -76,7 +77,9 @@ router.get('/search', async (req: Request, res: Response) => {
   const limit = parsed.data.limit ?? 25;
   const requestedTypes = (parsed.data.type ?? SEARCH_TYPES.join(','))
     .split(',').map((s) => s.trim()).filter(Boolean) as SearchType[];
-  const wants = (t: SearchType) => requestedTypes.length === 0 || requestedTypes.includes(t);
+  // Audit hits only for the audit trail's readers (DP-18, second door).
+  const wants = (t: SearchType) =>
+    (t !== 'audit' || canReadAuditTrail(req)) && (requestedTypes.length === 0 || requestedTypes.includes(t));
 
   try {
     const fanout: Promise<SearchHit[]>[] = [];
