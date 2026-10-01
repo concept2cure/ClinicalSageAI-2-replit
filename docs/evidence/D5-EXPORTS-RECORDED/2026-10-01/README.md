@@ -22,9 +22,10 @@ delivered, and nothing is delivered when the row does not persist.
 | `POST /api/ana/citations/:artifactId/export.docx` (artifact with its embedded AnALedger) | DOCX returned, nothing recorded | Recorded, `resourceType` `ana_citation_export` |
 | `GET /api/ana/citations/:artifactId/export?format=csv` | CSV returned, nothing recorded | Recorded, as above |
 | `GET /api/ana/citations/projects/:projectId/export?format=csv` | CSV returned, nothing recorded | Recorded, as above |
+| `GET /api/ana-ri/documents/:artifactId/lineage-dossier.xml` (the dossier as structured metadata) | XML returned, nothing recorded | Recorded, `resourceType` `ana_lineage_dossier`; now an attachment; needs an identified user |
 
 The citation `format=json` responses are ordinary API reads, not files. They
-are unchanged. `ExportSourceType` gains `export_csv`.
+are unchanged. `ExportSourceType` gains `export_csv` and `export_xml`.
 
 When the record cannot be written, each route answers 503
 `UNAUDITED_EXPORT_REFUSED` and sends no file. The lineage screen
@@ -40,7 +41,7 @@ its own export audit row. Its file is also inside another lane's window
 
 | Check | Red | Green |
 |---|---|---|
-| `server/routes/__tests__/record-exports-recorded.test.ts`: for each of the four routes, an `EXPORT_GENERATED` row with the organisation, the user and the SHA-256 of the delivered bytes (also in `X-Export-Sha256`); and 503 with no `Content-Disposition` when the row does not persist | 8 failed of 8 (`red.txt`): every file delivered, none recorded | 8/8 (`green.txt`) |
+| `server/routes/__tests__/record-exports-recorded.test.ts`: for each of the four routes (five with the lineage dossier XML, added second: `lineage-xml-red.txt`, 2 of 10 failed), an `EXPORT_GENERATED` row with the organisation, the user and the SHA-256 of the delivered bytes (also in `X-Export-Sha256`); and 503 with no `Content-Disposition` when the row does not persist | 8 failed of 8 (`red.txt`): every file delivered, none recorded | 10/10 (`green.txt`) |
 
 Neighbouring suites pass: `server/routes/__tests__`, `server/routes/c2c`,
 `server/services/export`, `server/services/clinical-regulatory-evidence` and
@@ -49,7 +50,22 @@ warnings are unchanged (17 across the touched files, before and after).
 
 ## Where the sweep stands
 
-Every download served in production now does one of three things: it records
-what it delivered, it serves a document that is already stored, or it is
-operator tooling. The remaining handlers from the 2026-09-29 sweep are no
-longer served in production (`docs/evidence/D2-API-SCOPE/`).
+Re-measured on 2026-10-01, after Reporting & analytics joined the launch
+catalog. The real route registration was run in production posture
+(`scripts/ci/launch-scope-route-inventory.ts --rows`) and joined with every
+handler that sends a file. Results:
+
+- **Recorded:** the exports above; the eCTD export; the chat-artifact and
+  template exports (`../2026-09-29/`); the audit-trail export; and Reporting's
+  report-run PDF, which that lane records and refuses when the record fails
+  (`server/routes/report-os.ts`, `REPORT_EXPORT_NOT_RECORDED`).
+- **Already-stored documents:** the project-vault download, and the gateway
+  transmittal acknowledgement.
+- **Open, handed off:** `GET /api/artifacts-center/:artifactId/export`
+  (`server/routes/artifacts-center-routes.ts`). It renders approved or signed
+  regulatory content as DOCX/TXT, and the Artifacts Center's Export button calls
+  it. It records nothing. This is the most important export of the set, because
+  it is governed content leaving the system. The file is inside another lane's
+  window (`1ec8ea494`, `…01KnUGoX`, until 2026-10-02 00:22 UTC). The fix is the
+  same `sendAuditedDownload` call; this lane takes it when the window closes
+  unless its owner does first.

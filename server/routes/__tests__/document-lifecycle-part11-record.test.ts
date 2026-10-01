@@ -74,8 +74,17 @@ const signatures = (id: string) =>
   q(`SELECT * FROM electronic_signatures WHERE signed_target = $1 ORDER BY id`, [`canonical_document:${id}`]);
 const stageOf = async (id: string) => (await q<{ stage: string }>('SELECT stage FROM canonical_documents WHERE canonical_id = $1', [id]))[0].stage;
 
-/** A document created by AUTHOR over the Vault version UPLOADER uploaded. */
+/**
+ * A document created by AUTHOR over a fresh Vault version UPLOADER uploaded.
+ * Fresh, because a version has one lifecycle record (VR-13): starting it again
+ * returns the same one.
+ */
 async function vaultDocument(extra: Record<string, unknown> = {}): Promise<string> {
+  vaultId = (await q<{ id: string }>(
+    `INSERT INTO vault.documents (organization_id, content_hash, created_by, document_code, document_title, document_type, version)
+     VALUES ($1, $2, $3, gen_random_uuid()::text, 'Clinical Overview', 'US_IND', '1.0') RETURNING id`,
+    [ORG, VAULT_HASH, UPLOADER],
+  ))[0].id;
   const res = await request(appAs(AUTHOR))
     .post('/docs')
     .send({
@@ -115,7 +124,13 @@ beforeAll(async () => {
       organization_id INTEGER,
       content_hash CHARACTER(64) NOT NULL,
       created_by INTEGER,
-      deleted_at TIMESTAMPTZ
+      deleted_at TIMESTAMPTZ,
+      -- What a lifecycle record takes from its version, and the family rule (VR-13).
+      document_code TEXT,
+      document_title TEXT,
+      document_type TEXT,
+      version TEXT,
+      supersedes_id UUID
     );`);
   for (const [id, name] of [
     [AUTHOR, 'Ana Author'],
