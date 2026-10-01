@@ -31,6 +31,7 @@ import {
 } from './ectd-regional-rules.js';
 import {
   ICH_BACKBONE,
+  ECTD_XLINK_NS,
   allHeadingElements,
 } from '../submission-gateways/ectd-packager/ich-headings.js';
 
@@ -244,6 +245,37 @@ export async function validateEctdPackageHardened(
 // ── DTD validation ──────────────────────────────────────────────────────────
 
 /**
+ * xmlns:xlink is #FIXED by the ICH 3.2 DTD to ECTD_XLINK_NS, the non-W3C
+ * spelling; see that constant. 2026-10-01 (W5/D7, sweep F01): this check
+ * required the W3C value, so it passed every DTD-invalid backbone the packager
+ * wrote and refused a valid one as missing. A declaration with the wrong value
+ * is reported as such, apart from a missing one.
+ */
+function xlinkNamespaceFindings(xml: string): DtdFinding[] {
+  const declared = [...xml.matchAll(/\bxmlns:xlink\s*=\s*(?:"([^"]*)"|'([^']*)')/g)].map(
+    (m) => m[1] ?? m[2],
+  );
+  if (declared.length === 0) {
+    return [{
+      severity: 'error',
+      code: 'DTD_MISSING_XLINK_NS',
+      message: 'XLink namespace declaration missing on root element',
+      fix: `Add xmlns:xlink="${ECTD_XLINK_NS}" to the root element`,
+    }];
+  }
+  const wrong = declared.find((ns) => ns !== ECTD_XLINK_NS);
+  if (wrong === undefined) return [];
+  return [{
+    severity: 'error',
+    code: 'DTD_WRONG_XLINK_NS',
+    message:
+      `xmlns:xlink is declared as "${wrong}", but the ICH eCTD 3.2 DTD fixes it (#FIXED) ` +
+      `to "${ECTD_XLINK_NS}"; any other value, including the W3C spelling, is a DTD validity error`,
+    fix: `Set xmlns:xlink="${ECTD_XLINK_NS}" on the root element`,
+  }];
+}
+
+/**
  * Validate that the backbone XML conforms to the ICH eCTD DTD reference structure.
  * This is a structural check (element tree, required attributes) — not a full
  * SAX parser bind, but sufficient to catch the common gateway-rejection cases.
@@ -292,7 +324,7 @@ export function validateDtdConformance(backboneXml: string, leaves: ECTDLeaf[]):
       severity: 'error',
       code: 'DTD_BAD_ROOT',
       message: 'Root element is not <ectd:ectd>',
-      fix: 'Wrap content in <ectd:ectd xmlns:ectd="http://www.ich.org/ectd" xmlns:xlink="http://www.w3.org/1999/xlink">',
+      fix: `Wrap content in <ectd:ectd xmlns:ectd="http://www.ich.org/ectd" xmlns:xlink="${ECTD_XLINK_NS}">`,
     });
   }
 
@@ -305,14 +337,7 @@ export function validateDtdConformance(backboneXml: string, leaves: ECTDLeaf[]):
       fix: 'Add xmlns:ectd="http://www.ich.org/ectd" to the root element',
     });
   }
-  if (!/xmlns:xlink="http:\/\/www\.w3\.org\/1999\/xlink"/.test(xml)) {
-    findings.push({
-      severity: 'error',
-      code: 'DTD_MISSING_XLINK_NS',
-      message: 'XLink namespace declaration missing on root element',
-      fix: 'Add xmlns:xlink="http://www.w3.org/1999/xlink" to the root element',
-    });
-  }
+  findings.push(...xlinkNamespaceFindings(xml));
 
   // Per-leaf attribute requirements
   const leafMatches = xml.matchAll(/<leaf\b([^>]*)\/?>/g);
