@@ -50,7 +50,7 @@ both finders, and every verifier, were cut off by account usage limits
 | F16 | transmit | medium | The AS2 message: `AS2-To` defaults to `FDA-CESUB`, no Center/submission-type routing, no S/MIME signing or encryption (a signature is computed and dropped), and the MDN is not verified. | **confirmed** 2026-10-01 (medium); **`FDA-CESUB` default removed**; S/MIME, routing and MDN verification open |
 | F17 | transmit | medium | The uploaded archive has no sequence folder: `index.xml` sits at the zip root and the payload is always `ectd.zip`. | **partially confirmed** 2026-10-01 (medium): no sequence folder; `ectd.zip` is not a defect |
 | F18 | transmit | low | Bundles over 1 GiB go to an SFTP path built from caller-typed sequence and application number, and a bare deposit is recorded as filed. | **partially confirmed** 2026-10-01 (low); **fixed** (identifier rule, descriptor-authoritative metadata) |
-| F19 | transmit + lifecycle | critical | A sequence is recorded FILED on the ESG's MDN (Ack1) or a bare SFTP deposit, and nothing un-files it when FDA rejects it at Ack3 or it is rolled back; a second bundle with the same sequence number also reports "recorded". | **partially confirmed** 2026-10-01 (high); **in part fixed**: one bundle per filed sequence; the agency-rejection action is open |
+| F19 | transmit + lifecycle | critical | A sequence is recorded FILED on the ESG's MDN (Ack1) or a bare SFTP deposit, and nothing un-files it when FDA rejects it at Ack3 or it is rolled back; a second bundle with the same sequence number also reports "recorded". | **partially confirmed** 2026-10-01 (high); **fixed** — one bundle per filed sequence, and a governed action records an agency technical rejection; Ack3 ingestion remains procurement-blocked |
 | F20 | m1-regional | medium | The us-regional 3.3 admin block never carries `<form form-type="fdaft…">`; Form FDA 1571 ships only as an `m1-1-forms` leaf, sequence 0000 included (raised by the F13 skeptic). | unverified |
 
 ## Verification round 1 — 2026-10-01 (F10, F11, F12, F14, F19)
@@ -391,6 +391,33 @@ WITHOUT the fix: 3 failed
   × e2e: an IND follow-up that carries no Form FDA 1571 is blocked … → expected [] to deeply equal [ ObjectContaining{…} ]
 WITH the fix: lifecycle unit, package-spine e2e, assemble, preflight, transmit-guard and
   gateway routes, client: 247 passed
+```
+
+**F19, second part — recording an agency technical rejection.** `POST
+/api/mdx/gateways/transmittals/:id/technical-rejection` (same re-auth ceremony
+as rollback and transmit) runs `recordFiledSequenceRejection`
+(`server/services/ectd/filed-sequence-rejection.ts`): keyed on the transmittal,
+latest non-rejected filed sequence only, refused when the transmittal records
+agency acceptance, evidence read from the Vault (tenant-scoped, not deleted),
+and — in one transaction under the package lock — a governed `sign` ledger row
+and an electronic signature bound to the evidence's content hash; the
+transmittal moves to `validation_failed`, the filed entry is marked
+`state: 'rejected'` and kept, and a stored bundle above it is cleared. The next
+assembly reuses the number and diffs against what the agency holds. A rollback
+still does not un-file (pinned by a test). The Submission Center's transmittal
+log has the control; a transmit refused `SEQUENCE_ALREADY_FILED` shows the
+server's sentence. `ci:sign-ceremony` carries one "proof across a boundary"
+entry for the service, as it does for governed transmit and the eSTAR filing
+signature: the route re-authenticates, the service refuses without that proof.
+Ack3 ingestion does not exist (ESG procurement); there is no reinstate action.
+
+```
+Fail-first: the e2e cases could not import the module at HEAD; against a no-op
+stub 5 of 6 e2e, all 25 unit and 10 route cases failed, and 5 client cases
+(e.g. Unable to find role "button" and name /Technical rejection/). The
+rollback pin passes before and after by design; a mutation that un-files after
+a rollback makes it fail.
+WITH the fix: 10 suites, 333 tests passed; ci:sign-ceremony OK, selftest 17 passed
 ```
 
 ## What this sweep produced that is already fixed
