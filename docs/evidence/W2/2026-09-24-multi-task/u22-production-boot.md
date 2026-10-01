@@ -115,3 +115,32 @@ security event that no tenant owns goes to the platform chain (tenant 0).
   exercised.
 - A deploy after more than 15 minutes of activity. The real-Postgres test in
   U20 covers that.
+
+## Probe: every API path the v2 client names, against the production bundle
+
+All 480 `/api/...` literals found under `client/src/concept2cure/v2` were
+called with GET, as the organisation's administrator, on a fresh session.
+
+- **Session.** It was minted with this simulation's own JWT secret. The setup
+  session had correctly been signed out after 15 idle minutes: 449 × 401
+  `SESSION_IDLE` on the first attempt.
+- **Client addresses.** Varied per request, so the `/api` per-address limiter
+  did not mask results. The per-account limiter still answered 27 × 429.
+
+| Status | Count | Reading |
+|---|---|---|
+| 200 | 96 | |
+| 403 | 215 | 202 × `LAUNCH_SCOPE`, by design: surfaces outside this release (CMC, biostatistics, CRO, the submission twin). None of them is called from a launch-catalog surface. The Reporting callers among them are the reporting lane's deliberate cut ("production reaches only the routes its screens call"). 12 × Master Administration, platform staff only. |
+| 404 | 128 | POST-only paths reached with GET, and ids that do not exist |
+| 429 | 27 | the per-account limiter |
+| 500 | 9 | all Authoring routes called with the client fixtures' literal ids `D1`/`S1`/`S2`: `invalid input syntax for type uuid` |
+| 501 | 1 | SAML callback: SSO not configured |
+
+**The nine 500s are not a defect to fix here.** `server/middleware/uuidParam.ts`
+records that this guard was added to the Authoring router and withdrawn on
+purpose. No client sends a malformed id; `D1`/`S1` exist only in test
+fixtures, and the guard turned 21 fixture tests red. The probe picked those
+literals up from client source.
+
+**Error-level log lines in the probe run:** only those nine. No fail-closed
+scope errors, no missing files, and no unhandled rejections on any path.
