@@ -32,7 +32,23 @@ export interface PriorLeaf {
   leafKey?: string;
   ctdSection: string;
   fileName: string;
+  /** Checksum of the bytes SHIPPED — what the backbone carried, and what a
+   *  withdrawal's delete leaf must carry for the file it names. */
   md5: string;
+  /**
+   * Checksum of the bytes the caller HANDED the packager, when the packager
+   * changed them (PDF/A normalization). This is what "did the document change"
+   * is compared against, because a caller computes its desired md5 at that same
+   * stage — over what it rendered or staged, before the packager converts it.
+   *
+   * Comparing a desired leaf with `md5` instead compares two different stages
+   * of one document. They are never equal once Ghostscript has run (it stamps
+   * dates and a random document ID), and the production image carries it: every
+   * follow-up re-filed every unchanged document as `replace`. Absent when the
+   * packager shipped the bytes it was handed, and on manifests filed before
+   * this was recorded — `md5` is then the right comparand.
+   */
+  sourceMd5?: string;
   title?: string;
   sourcePath?: string;
   /**
@@ -283,7 +299,9 @@ export function computeLifecycleOperations(
       leaves.push({ ...base, md5, operation: 'new' });
       continue;
     }
-    if (prev.md5 === md5) {
+    // Like with like: the prior's pre-normalization digest where it was
+    // recorded, because `md5` here was computed before any normalization.
+    if ((prev.sourceMd5 ?? prev.md5) === md5) {
       // Unchanged: not re-emitted in the new sequence. Optionally surface it as a
       // no-op `append` for callers that want the full tree (rare).
       summary.unchanged++;

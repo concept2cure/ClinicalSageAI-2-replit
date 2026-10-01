@@ -1,0 +1,4 @@
+ × server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > create_submission_package signs the creation decision > another organization's project is refused before anything is written, signature included (PF-03) 25ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 18 passed (19)

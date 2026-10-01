@@ -1,0 +1,4 @@
+ × tests/routes/device-projects-governed-writes.test.ts > /api/device-projects — the writes are gated and audited > delete /:id refuses a program's anchor row 409 — nothing is deleted or audited (PF-08) 9ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 passed (14)

@@ -71,6 +71,7 @@ export const LEGACY_NO_TABLES_SKIP_REASON =
    this module imports the gate, so keeping it here would have made a cycle.
    Re-exported so this module's own name for it still resolves. */
 import { readSectionTables } from './compiled-record';
+import { resolveCmcArtifactProject } from './resolve-cmc-artifact-project';
 export { readSectionTables };
 
 export interface PlaceModule3Input {
@@ -119,6 +120,18 @@ export type PlaceModule3Result =
       error: string;
       /** The vocabulary the target actually files on — named, not implied. */
       vocabulary: PlacementVocabulary;
+    }
+  | {
+      placed: false;
+      /**
+       * The submission is another project's (PF-11; founder decision
+       * 2026-09-26: a cross-project placement is refused by default). Refused
+       * before anything is read or written.
+       */
+      refusedBy: 'cross-project';
+      error: string;
+      cmcProjectId: string;
+      submissionProgramId: string;
     }
   | {
       placed: false;
@@ -291,6 +304,17 @@ async function priorModule3Leaves(
   return prior;
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** True only when both sides record a project and they differ. */
+async function isOtherProject(orgId: number, cmcProjectId: string, submissionProgramId: string): Promise<boolean> {
+  const id = String(cmcProjectId).trim();
+  if (UUID_RE.test(id)) return id.toLowerCase() !== submissionProgramId.toLowerCase();
+  if (!/^\d+$/.test(id)) return false;
+  const anchor = await resolveCmcArtifactProject(orgId, submissionProgramId, { strict: true });
+  return anchor.state === 'linked' && anchor.artifactProjectId !== Number(id);
+}
+
 export async function placeModule3IntoSubmission(input: PlaceModule3Input): Promise<PlaceModule3Result> {
   const { orgId, userId, cmcProjectId, submissionId, sequenceId } = input;
 
@@ -345,7 +369,28 @@ export async function placeModule3IntoSubmission(input: PlaceModule3Input): Prom
     };
   }
 
-  // 2b. A section already placed in an earlier sequence of this submission is
+  // 2b. The submission is this project's (PF-11; founder decision 2026-09-26).
+  // Each section is snapshotted into coauthor_documents with no alias, so
+  // upsertLeaf's own project check reads no project for it and cannot judge
+  // it: this is the one place that knows both. A v2 project is the program's
+  // UUID and is compared directly. A legacy numeric project is compared with
+  // the program's anchored projects row. A side that records no project, or a
+  // program with no anchor, cannot be judged and is not refused, as upsertLeaf
+  // does.
+  const submissionProgramId = (submission as { programId?: string | null }).programId ?? null;
+  if (submissionProgramId && (await isOtherProject(orgId, cmcProjectId, submissionProgramId))) {
+    return {
+      placed: false,
+      refusedBy: 'cross-project',
+      error:
+        'This submission belongs to another project. Module 3 is placed only into a submission of its own ' +
+        'project. Nothing was written.',
+      cmcProjectId,
+      submissionProgramId,
+    };
+  }
+
+  // 2c. A section already placed in an earlier sequence of this submission is
   // a revision of that leaf, not a new document. This always filed 'new', so
   // an amendment's m3.2.S.7 was announced to the agency as brand-new content
   // with no lifecycle link to the leaf it replaces.

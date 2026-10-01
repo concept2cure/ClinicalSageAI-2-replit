@@ -1,0 +1,34 @@
+# red at 48031657 with only the test added
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/mcp/__tests__/mcp-tenant-tool-policy.test.ts > callAnaHandler and the tenant tool policy > refuses a tool the organization denied 5973ms
+   → expected 'ok' to be 'refused' // Object.is equality
+ ✓ server/mcp/__tests__/mcp-tenant-tool-policy.test.ts > callAnaHandler and the tenant tool policy > runs it for an organization that did not deny it 1ms
+ ✓ server/mcp/__tests__/mcp-tenant-tool-policy.test.ts > callAnaHandler and the tenant tool policy > does not let an allowlist for governed mutations strip a read tool, as on the chat doors 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/mcp/__tests__/mcp-tenant-tool-policy.test.ts > callAnaHandler and the tenant tool policy > refuses a tool the organization denied
+AssertionError: expected 'ok' to be 'refused' // Object.is equality
+
+Expected: "refused"
+Received: "ok"
+
+ ❯ server/mcp/__tests__/mcp-tenant-tool-policy.test.ts:39:22
+     37|     h.settings.set(7, { anaToolPolicy: { deny: ['lookup_ich_guideline'…
+     38|     const out = await callAnaHandler('lookup_ich_guideline', { guideli…
+     39|     expect(out.kind).toBe('refused');
+       |                      ^
+     40|     expect(out.kind === 'refused' && out.reason).toMatch(/disabled by …
+     41|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  01:19:08
+   Duration  6.62s (transform 4.59s, setup 84ms, import 227ms, tests 5.98s, environment 0ms)
+

@@ -44,8 +44,6 @@ export const GOVERNED_CONTENT_WRITE_TOOLS: Readonly<Record<string, string>> = {
     'Stores model-authored section content or template replacements as a generated regulatory document file (for example a CSR) that can be exported, with no audit or lineage.',
   insert_document_content:
     'Writes model-authored insertions into an edited .docx that is an exportable deliverable, with no audit trail.',
-  pdf_overlay:
-    'Its declared contract is to stamp model-authored text into a finalized PDF deliverable. It does no analysis, and it is a false-success stub, so it is gated as a write that fails closed rather than exempted as analysis.',
   save_document_to_vault:
     'Stores model-authored content as a versioned, audited vault document.',
   update_biosketch_section:
@@ -79,7 +77,7 @@ export const FREE_TEXT_NON_GOVERNED_TOOLS: Readonly<Record<string, string>> = {
   build_abbreviation_list:
     'Returns a deterministic acronym extraction; nothing is stored.',
   check_consistency:
-    'The supplied texts are inputs to a model consistency check whose findings are kept as an analysis log; the texts themselves are not stored as governed content.',
+    'The supplied texts are inputs to a deterministic comparison of labelled figures whose findings are kept as an analysis log; the texts themselves are not stored as governed content.',
   check_grounding:
     'Returns a deterministic grounding report; the text is not stored.',
   check_numerical_integrity:
@@ -96,6 +94,8 @@ export const FREE_TEXT_NON_GOVERNED_TOOLS: Readonly<Record<string, string>> = {
     'Stores the model-written title and body as an operational in-app notification, not as a governed record that can be filed, signed, submitted or exported.',
   generate_spl:
     'The SPL XML built from spec text is returned inline to the conversation only; nothing is stored as a labeling artifact (re-check this if the result key ever becomes \'content\').',
+  pdf_overlay:
+    'Applies nothing: no PDF overlay engine is connected, so it answers unavailable and writes no file. It was gated as a governed write while it was a false-success stub; gating it now only made an unapproved model ask for a retry that also answers unavailable. When an overlay engine lands (bind_pdf_package, plan WS13) it is a governed write again.',
   reconcile_dossier_numbers:
     'Runs a deterministic cross-document number reconciliation and returns the discrepancies; the input text is not stored.',
   review_informed_consent:

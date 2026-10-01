@@ -1018,6 +1018,7 @@
    "validate_spl_structure",
    "validate_udi",
    "value_dossier_guidance",
+   "verify_citations",
    "verify_docx_against_source",
    "verify_memory_atom",
    "verify_revision"

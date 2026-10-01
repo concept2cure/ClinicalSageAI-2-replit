@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-01T00:11:42.051Z",
+  "generatedAt": "2026-10-01T01:54:55.881Z",
   "git": {
-    "sha": "f2e5b99ed993c6653a3b9d03ad284c828333ca65",
+    "sha": "e000003b9bf700550f9adffe3e4a9a0cfa1e08a0",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1977,7 +1977,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1106410
+        "bytes": 1111576
       },
       {
         "file": "shared/schema.ts",
@@ -2001,7 +2001,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 222639
+        "bytes": 223354
       },
       {
         "file": "server/statistics-service.ts",
@@ -2053,7 +2053,7 @@
       },
       {
         "file": "server/routes/submission-ops.ts",
-        "bytes": 139613
+        "bytes": 140368
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2068,16 +2068,16 @@
         "bytes": 134822
       },
       {
+        "file": "server/services/ana/AnaToolDefinitions.ts",
+        "bytes": 134704
+      },
+      {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
         "bytes": 133645
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
         "bytes": 132755
-      },
-      {
-        "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 132508
       },
       {
         "file": "shared/regulatory/global-document-registry.ts",
@@ -2125,7 +2125,7 @@
       },
       {
         "file": "server/services/submission-service/submission-service.ts",
-        "bytes": 109701
+        "bytes": 111167
       },
       {
         "file": "server/services/rwe/rwe-methodology-knowledge.ts",
@@ -2159,7 +2159,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21357
+        "lines": 21452
       },
       {
         "file": "shared/schema.ts",
@@ -2175,7 +2175,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 5595
+        "lines": 5608
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2219,7 +2219,7 @@
       },
       {
         "file": "server/routes/submission-ops.ts",
-        "lines": 3329
+        "lines": 3340
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
@@ -2259,7 +2259,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2864
+        "lines": 2897
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
@@ -2302,6 +2302,10 @@
         "lines": 2358
       },
       {
+        "file": "server/services/submission-service/submission-service.ts",
+        "lines": 2349
+      },
+      {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
         "lines": 2348
       },
@@ -2312,10 +2316,6 @@
       {
         "file": "services/regulatory/ind-ectd-sections.ts",
         "lines": 2320
-      },
-      {
-        "file": "server/services/submission-service/submission-service.ts",
-        "lines": 2317
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
@@ -2395,7 +2395,7 @@
       },
       {
         "file": "server/routes/c2c/projects.ts",
-        "lines": 1987
+        "lines": 1986
       },
       {
         "file": "client/src/concept2cure/v2/Shell.tsx",
@@ -2519,7 +2519,7 @@
       },
       {
         "file": "server/routes/submissions.ts",
-        "lines": 1749
+        "lines": 1755
       },
       {
         "file": "server/services/combination-products/combination-products-knowledge.ts",

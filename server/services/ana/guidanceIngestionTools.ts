@@ -45,7 +45,7 @@ export const FETCH_FDA_GUIDANCE_LIST: AnaTool = {
 export const FETCH_ICH_GUIDELINE_UPDATES: AnaTool = {
   name: 'fetch_ich_guideline_updates',
   description:
-    'Check for ICH guideline updates in a curated list of ICH guidelines with their step dates. Covers E6(R3), M11, Q12, Q14, E8(R1), M4(R4) only. Filter by category (Q/S/E/M) and/or a since-date to find guidelines that reached a milestone after a given point. Deterministic — no network call; a guideline not in the list is not covered, not absent.',
+    'Check for ICH guideline updates in a curated list of ICH guidelines with their step dates. Covers E6(R3), M11, Q12, Q14, E8(R1) only. Filter by category (Q/S/E/M) and/or a since-date to find guidelines that reached a milestone after a given point. Deterministic — no network call; a guideline not in the list is not covered, not absent.',
   input_schema: {
     type: 'object',
     properties: {

@@ -1,0 +1,9 @@
+   → retention/anchor-row-not-hard-deleted FAILS and is not baselined — the legacy project delete cannot remove the program's anchor row: refused 409, and the row and every document under it survive
+    observed {"status":200,"anchorKept":0,"documentsBefore":1,"documentsAfter":0}
+retention/legacy-draft-project-deleted FAILS and is not baselined — a legacy project holding only drafts is still deleted by the same route
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+Error: retention/anchor-row-not-hard-deleted FAILS and is not baselined — the legacy project delete cannot remove the program's anchor row: refused 409, and the row and every document under it survive
+    observed {"status":200,"anchorKept":0,"documentsBefore":1,"documentsAfter":0}
+retention/legacy-draft-project-deleted FAILS and is not baselined — a legacy project holding only drafts is still deleted by the same route
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 passed (14)

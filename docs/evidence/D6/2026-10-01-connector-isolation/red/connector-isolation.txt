@@ -1,0 +1,156 @@
+# red at 55d5b8f2 with only the test added
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/connectors/__tests__/connector-tenant-isolation.test.ts > a credentialed connector searches with the caller's credentials > Google Drive: organization B, right after A, searches with its own token
+{
+  "timestamp": "2026-10-01T01:10:03.149Z",
+  "level": "info",
+  "message": "[connector:google-drive] Google Drive connector authenticated",
+  "context": {}
+}
+
+stdout | server/services/connectors/__tests__/connector-tenant-isolation.test.ts > a credentialed connector searches with the caller's credentials > Google Drive: organization B, right after A, searches with its own token
+{
+  "timestamp": "2026-10-01T01:10:03.151Z",
+  "level": "info",
+  "message": "[connector:google-drive] Google Drive connector authenticated",
+  "context": {}
+}
+
+stdout | server/services/connectors/__tests__/connector-tenant-isolation.test.ts > a credentialed connector searches with the caller's credentials > Box: the same, organization by organization
+{
+  "timestamp": "2026-10-01T01:10:03.163Z",
+  "level": "info",
+  "message": "[connector:box] Box connector authenticated",
+  "context": {}
+}
+
+stdout | server/services/connectors/__tests__/connector-tenant-isolation.test.ts > a credentialed connector searches with the caller's credentials > Box: the same, organization by organization
+{
+  "timestamp": "2026-10-01T01:10:03.164Z",
+  "level": "info",
+  "message": "[connector:box] Box connector authenticated",
+  "context": {}
+}
+
+stdout | server/services/connectors/__tests__/connector-tenant-isolation.test.ts > a credentialed connector searches with the caller's credentials > two organizations searching at once each use their own token
+{
+  "timestamp": "2026-10-01T01:10:03.167Z",
+  "level": "info",
+  "message": "[connector:box] Box connector authenticated",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T01:10:03.167Z",
+  "level": "info",
+  "message": "[connector:box] Box connector authenticated",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T01:10:03.167Z",
+  "level": "info",
+  "message": "[connector:box] Box connector authenticated",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T01:10:03.167Z",
+  "level": "info",
+  "message": "[connector:box] Box connector authenticated",
+  "context": {}
+}
+
+stdout | server/services/connectors/__tests__/connector-tenant-isolation.test.ts > a credentialed connector searches with the caller's credentials > an organization with no credentials gets no search, even after another authenticated
+{
+  "timestamp": "2026-10-01T01:10:03.222Z",
+  "level": "info",
+  "message": "[connector:google-drive] Google Drive connector authenticated",
+  "context": {}
+}
+
+ × server/services/connectors/__tests__/connector-tenant-isolation.test.ts > a credentialed connector searches with the caller's credentials > Google Drive: organization B, right after A, searches with its own token 121ms
+   → expected [ …(2) ] to deeply equal [ …(2) ]
+ × server/services/connectors/__tests__/connector-tenant-isolation.test.ts > a credentialed connector searches with the caller's credentials > Box: the same, organization by organization 4ms
+   → expected [ 'Bearer box-token-box-a', …(1) ] to deeply equal [ 'Bearer box-token-box-a', …(1) ]
+ × server/services/connectors/__tests__/connector-tenant-isolation.test.ts > a credentialed connector searches with the caller's credentials > two organizations searching at once each use their own token 4ms
+   → expected [ 'Bearer box-token-box-a', …(3) ] to deeply equal [ 'Bearer box-token-box-a', …(3) ]
+ ✓ server/services/connectors/__tests__/connector-tenant-isolation.test.ts > a credentialed connector searches with the caller's credentials > an organization with no credentials gets no search, even after another authenticated 55ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/connectors/__tests__/connector-tenant-isolation.test.ts > a credentialed connector searches with the caller's credentials > Google Drive: organization B, right after A, searches with its own token
+AssertionError: expected [ …(2) ] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+  [
+    "Bearer drive-token-svc-a@a.iam",
+-   "Bearer drive-token-svc-b@b.iam",
++   "Bearer drive-token-svc-a@a.iam",
+  ]
+
+ ❯ server/services/connectors/__tests__/connector-tenant-isolation.test.ts:78:43
+     76|     expect(a.error).toBeUndefined();
+     77|     expect(b.error).toBeUndefined();
+     78|     expect(h.requests.map((r) => r.auth)).toEqual(['Bearer drive-token…
+       |                                           ^
+     79|   });
+     80|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/services/connectors/__tests__/connector-tenant-isolation.test.ts > a credentialed connector searches with the caller's credentials > Box: the same, organization by organization
+AssertionError: expected [ 'Bearer box-token-box-a', …(1) ] to deeply equal [ 'Bearer box-token-box-a', …(1) ]
+
+- Expected
++ Received
+
+  [
+    "Bearer box-token-box-a",
+-   "Bearer box-token-box-b",
++   "Bearer box-token-box-a",
+  ]
+
+ ❯ server/services/connectors/__tests__/connector-tenant-isolation.test.ts:88:43
+     86|     await search(2, 'box');
+     87|
+     88|     expect(h.requests.map((r) => r.auth)).toEqual(['Bearer box-token-b…
+       |                                           ^
+     89|   });
+     90|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/connectors/__tests__/connector-tenant-isolation.test.ts > a credentialed connector searches with the caller's credentials > two organizations searching at once each use their own token
+AssertionError: expected [ 'Bearer box-token-box-a', …(3) ] to deeply equal [ 'Bearer box-token-box-a', …(3) ]
+
+- Expected
++ Received
+
+  [
+    "Bearer box-token-box-a",
+    "Bearer box-token-box-a",
+-   "Bearer box-token-box-b",
+-   "Bearer box-token-box-b",
++   "Bearer box-token-box-a",
++   "Bearer box-token-box-a",
+  ]
+
+ ❯ server/services/connectors/__tests__/connector-tenant-isolation.test.ts:97:50
+     95|     await Promise.all([search(1, 'box'), search(2, 'box'), search(1, '…
+     96|
+     97|     expect(h.requests.map((r) => r.auth).sort()).toEqual([
+       |                                                  ^
+     98|       'Bearer box-token-box-a',
+     99|       'Bearer box-token-box-a',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+   Start at  01:10:02
+   Duration  1.07s (transform 368ms, setup 89ms, import 461ms, tests 188ms, environment 0ms)
+

@@ -191,6 +191,8 @@ export interface Keys {
   sequenceId?: number;
   leafIds?: number[];
   transmittalId?: number;
+  /** A draft-only project the retention hop deleted (PF-13, PF-11). */
+  deletedProgramId?: string;
 }
 
 export interface World {
@@ -222,10 +224,26 @@ function prerequisites(): string {
     // Study designs (CDISC PRM): the project read lists them (PF-17), and the
     // Biostatistics → design → protocol chain starts at a project (PF-14).
     'cdisc_prm_studies',
+    // The integer project's documents: the legacy project delete cascades them (PF-08),
+    // and records the delete in audit_events.
+    'concept2cure_artifacts', 'audit_events',
+    // A draft that kept a signature or a lock snapshot is a record (PF-08).
+    'concept2cure_signatures', 'concept2cure_submission_snapshots',
   ]);
+  // extractTableDdl copies a table's body only. The cascade is what PF-08 is
+  // about, so the real key comes verbatim from the same file.
+  const artifactsCascade = cascadeKey('migrations/0000_sweet_joseph.sql', 'concept2cure_artifacts_project_id_projects_id_fk');
   // The package spine's table, only because submission_transmittals references it.
   const packageSpine = extractTableDdl('migrations/0002_phase15_submission_ops.sql', ['c2c_submission_packages']);
-  return `${baseline}\n${SUBMISSION_CORE_PGLITE_DDL}\n${LEAF_SOURCE_PGLITE_DDL}\n${VAULT_DDL}\n${packageSpine}`;
+  return `${baseline}\n${artifactsCascade}\n${SUBMISSION_CORE_PGLITE_DDL}\n${LEAF_SOURCE_PGLITE_DDL}\n${VAULT_DDL}\n${packageSpine}`;
+}
+
+/** One `ALTER TABLE … ADD CONSTRAINT <name> …;` statement, verbatim from a migration file. */
+function cascadeKey(file: string, constraint: string): string {
+  const text = fs.readFileSync(path.join(HERE, '..', '..', file), 'utf8');
+  const m = text.match(new RegExp(`ALTER TABLE "[^"]+" ADD CONSTRAINT "${constraint}"[^;]*;`));
+  if (!m) throw new Error(`cascadeKey: ${constraint} not found in ${file}`);
+  return m[0];
 }
 
 async function seed(jdb: JourneyDb): Promise<void> {
@@ -262,6 +280,7 @@ async function mountApp(jdb: JourneyDb): Promise<express.Express> {
   const { uploadHandler } = await import('../../server/routes/chat/upload');
   const { runWithTenantScope } = await import('../../server/db/tenantStore');
   const { default: authoringRouter } = await import('../../server/routes/authoring.router');
+  const { default: projectsManagementRouter } = await import('../../server/routes/projects-management');
 
   const app = express();
   app.use(express.json({ limit: '5mb' }));
@@ -283,6 +302,8 @@ async function mountApp(jdb: JourneyDb): Promise<express.Express> {
   app.use('/api/c2c/projects', c2cProjectsRouter);
   app.use('/api/c2c/actions', c2cActionsRouter);
   app.use('/api/submissions', submissionsRouter);
+  // The legacy integer-project routes, still served (register-project-routes.ts): their hard delete reaches the program's anchor row.
+  app.use('/api/projects', projectsManagementRouter);
   // server/routes/chat.ts:53-87 — the same memory-storage parser, then the same handler.
   app.post('/api/chat/upload', multer({ storage: multer.memoryStorage() }).single('file'), uploadHandler);
   // The authoring router verifies its own JWT and re-checks membership; the tenant scope is the request's.

@@ -192,6 +192,9 @@ const MIGRATIONS = [
   'migrations/20260529_phase9_backfill.sql',
   'migrations/20260804_phase9_rule_pack_outlines.sql',
   'migrations/20260814_projects_regulatory_program_anchor.sql',
+  // projects.therapeutic_area and .retrieval_mode: the legacy project routes select the whole row (PF-08).
+  'db/migrations/20260508_project_therapeutic_area.sql',
+  'migrations/20260603_project_retrieval_mode.sql',
   'migrations/20260925b_submissions_program_anchor.sql',
   'db/migrations/20260727_prm_program_link.sql',
   // The Data Room: the evidence spine and the upload ledger.
@@ -230,9 +233,21 @@ const MIGRATIONS = [
   // that names a project. After 20260727_prm_program_link, whose unchecked
   // backfill must never run with the key present.
   'migrations/20260926b_program_same_org_keys.sql',
+  // And the integer project key (PF-03) over concept2cure_artifacts and the package spine.
+  'migrations/20261001_integer_project_same_org_keys.sql',
 ] as const;
-/** pgvector's column, as TEXT: see the header. */
-const TEST_ONLY_SQL = 'ALTER TABLE coauthor_documents ADD COLUMN IF NOT EXISTS embedding TEXT;';
+/**
+ * Columns the walk's database cannot get from a migration file:
+ *   - pgvector's column, as TEXT: see the header;
+ *   - audit_events.updated_at, which shared/schema.ts declares and drizzle-kit
+ *     push lays down (install-fresh.mjs, step 2), and no migration file adds.
+ *     The legacy project delete writes it on every audit row (PF-08); on a
+ *     database built from migrations alone that write fails, and silently.
+ */
+const TEST_ONLY_SQL = [
+  'ALTER TABLE coauthor_documents ADD COLUMN IF NOT EXISTS embedding TEXT;',
+  'ALTER TABLE audit_events ADD COLUMN IF NOT EXISTS updated_at timestamp DEFAULT now();',
+].join('\n');
 
 let world: World;
 beforeAll(async () => {

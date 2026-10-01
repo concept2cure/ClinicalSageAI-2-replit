@@ -53,12 +53,19 @@ import { randomUUID } from 'node:crypto';
 import { pool } from '../../db';
 import { visibleOrgClause } from './evidence-spine.service';
 import type { Queryable } from './span-lineage.service';
+import { citesAcrossProjects, readCitationEnds } from './citation-ends';
 import type { CitationSource } from '@shared/authoring/citations';
 
 /** The `authoring_citations.source` discriminator for a canonical-source citation. */
 export const CRE_SOURCE_CITATION = 'cre_evidence_source';
 
-export class SourceUsageError extends Error {}
+export class SourceUsageError extends Error {
+  /** BAD_INPUT unless named; CROSS_PROJECT when the section and the source belong to different projects (PF-11). */
+  constructor(message: string, readonly code: 'BAD_INPUT' | 'CROSS_PROJECT' = 'BAD_INPUT') {
+    super(message);
+    this.name = 'SourceUsageError';
+  }
+}
 
 /**
  * The writers below take the caller's transaction client, so a citation write
@@ -231,24 +238,19 @@ export async function citeSource(
   if (!sourceId) throw new SourceUsageError('sourceId must be a positive integer');
   if (!p.sectionId) throw new SourceUsageError('sectionId is required');
 
-  const section = await executor.query(
-    `SELECT id FROM authoring_sections WHERE id = $1 AND tenant_id = $2 LIMIT 1`,
-    [p.sectionId, orgId],
-  );
-  if (section.rows.length === 0) {
-    throw new SourceUsageError('section not found in this organization');
+  /* Both ends, each with its project (PF-11): citation-ends.ts. Checked
+     before the existing citation is read, so a legacy cross-project citation
+     is not re-affirmed either. */
+  const ends = await readCitationEnds(executor, orgId, p.sectionId, sourceId);
+  if (!ends.section) throw new SourceUsageError('section not found in this organization');
+  if (!ends.source) throw new SourceUsageError('source not found in this organization');
+  if (citesAcrossProjects(ends)) {
+    throw new SourceUsageError(
+      "This source belongs to another project. A section cites only its own project's sources. Nothing was saved.",
+      'CROSS_PROJECT',
+    );
   }
-
-  const c = visibleOrgClause(orgId, 2);
-  const source = await executor.query<{ id: number; checksum: string | null }>(
-    `SELECT id, checksum FROM cre_evidence_sources
-      WHERE id = $1 AND ${c.sql} AND deleted_at IS NULL LIMIT 1`,
-    [sourceId, c.param],
-  );
-  if (source.rows.length === 0) {
-    throw new SourceUsageError('source not found in this organization');
-  }
-  const checksum = source.rows[0].checksum ?? null;
+  const checksum = ends.source.checksum;
 
   // Locked for the same reason as the re-read below: it is the before-image.
   const existing = await executor.query<CitationImage & { frozen_at: string | null }>(
@@ -507,9 +509,14 @@ export async function listChangedSourceUsages(
 ): Promise<ChangedSourceUsage[]> {
   const args: unknown[] = [orgId, CRE_SOURCE_CITATION];
   let scope = '';
+  /* Scoped by the CITING document's project (PF-11): this answers "which of the
+     project's documents cite a source that changed". It was scoped by the
+     source's project, so an organization-wide or global source cited by the
+     project's documents was never listed for the project, and a cross-project
+     citation was listed for the wrong one. */
   if (opts.programId) {
     args.push(opts.programId);
-    scope += ` AND src.client_program_id = $${args.length}`;
+    scope += ` AND doc.client_program_id = $${args.length}`;
   }
   const [only] = numericIds(opts.sourceId == null ? [] : [opts.sourceId]);
   if (only) {

@@ -109,14 +109,17 @@ const ICH_GUIDELINES: IchGuidelineItem[] = [
     code: 'Q12',
     title: 'Lifecycle Management',
     step: 'Step 4',
-    stepDate: '2023-01',
+    // Step 4 on 2019-11-20 (post-approval-knowledge.ts and
+    // standards-registry.ts already say 2019). This list said 2023-01.
+    stepDate: '2019-11',
     category: 'Q',
   },
   {
     code: 'Q14',
     title: 'Analytical Procedure Development',
     step: 'Step 4',
-    stepDate: '2024-01',
+    // Step 4 on 2023-11-01, with Q2(R2). This list said 2024-01.
+    stepDate: '2023-11',
     category: 'Q',
   },
   {
@@ -126,14 +129,10 @@ const ICH_GUIDELINES: IchGuidelineItem[] = [
     stepDate: '2021-10',
     category: 'E',
   },
-  {
-    code: 'M4(R4)',
-    title: 'Organisation of the Common Technical Document',
-    step: 'Step 2',
-    stepDate: '2025-06',
-    category: 'M',
-  },
 ];
+// An "M4(R4), Step 2, 2025-06" entry is removed (2026-10-01): M4(R4) is the 2016
+// CTD organisation revision, and nothing in the repository sources a 2025 Step 2
+// for it. A guideline not in this list is unverified, not absent.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // fetchFdaGuidanceList
@@ -236,71 +235,91 @@ type Identified =
   | { kind: 'fact'; fact: RegulatoryFact }
   | { kind: 'ich'; entry: IchGuidelineItem };
 
+/** The ICH codes a fact is keyed by ("E6(R3)", "M11"). */
+function factCodes(fact: RegulatoryFact): string[] {
+  return fact.keywords.map(asIchCode).filter((c): c is string => c !== null);
+}
+
+/** Does the title name the fact by an alias it is cited by? */
+function namedByAlias(title: string, fact: RegulatoryFact): boolean {
+  return (fact.aliases ?? []).some((alias) => containsWords(title, alias));
+}
+
+/**
+ * Of the facts keyed by one ICH code, the one the title singles out: the
+ * member with the most keywords no other member carries in the title ("Annex
+ * 2"), not counting its jurisdiction ("ICH" says nothing about which part).
+ * A tie goes to the first, the base entry.
+ */
+function pickFamilyMember(family: RegulatoryFact[], code: string, title: string): RegulatoryFact {
+  const score = (f: RegulatoryFact) =>
+    f.keywords.filter(
+      (k) =>
+        asIchCode(k) !== code &&
+        norm(k) !== norm(f.jurisdiction) &&
+        !family.some((o) => o !== f && o.keywords.some((ok) => norm(ok) === norm(k))) &&
+        containsWords(title, k),
+    ).length;
+  return family.reduce((best, f) => (score(f) > score(best) ? f : best), family[0]);
+}
+
+function identifyByCode(
+  title: string,
+  codes: string[],
+  inJurisdiction: (f: RegulatoryFact) => boolean,
+): Identified | null {
+  for (const code of codes) {
+    const successor = REGULATORY_FACTS.find(
+      (f) => f.supersedes !== undefined && asIchCode(f.supersedes) === code && inJurisdiction(f),
+    );
+    // A title that also names the successor ("E6(R3) … replaces E6(R2)") is
+    // about the successor, not a citation of what it replaced.
+    if (successor && !factCodes(successor).some((c) => codes.includes(c))) {
+      return { kind: 'superseded', code, successor };
+    }
+  }
+  for (const code of codes) {
+    const family = REGULATORY_FACTS.filter((f) => inJurisdiction(f) && factCodes(f).includes(code));
+    if (family.length > 0) return { kind: 'fact', fact: pickFamilyMember(family, code, title) };
+    const entry = ICH_GUIDELINES.find((g) => g.code === code);
+    if (entry) return { kind: 'ich', entry };
+  }
+  // A named ICH code the registries do not hold. Falling back to word
+  // matching is how E9(R1) used to be dated as E6(R3).
+  return null;
+}
+
 /**
  * Identify a cited guidance in the registries, or return null.
  *
- * Only an identifier counts: an ICH code, what a dated fact supersedes, or a
- * registry keyword, id or topic that the title names exactly. A shared word is
- * not an identifier: "ICH E9(R1)" is not E6(R3) because both say "ICH", and a
- * 510(k) guidance is not the eSTAR mandate because both say "510(k)". When two
- * facts fit equally, the citation is ambiguous and stays unverified.
+ * Only an identifier counts: an ICH code, what a dated fact supersedes, a name
+ * the fact is cited by (its `aliases`), or its id. A retrieval keyword is not
+ * an identifier: "ICH E9(R1)" is not E6(R3) because both say "ICH", "510(k)"
+ * is not the eSTAR mandate, and "IVD" is not the LDT rule. When two facts fit
+ * equally, the citation is ambiguous and stays unverified.
  */
 function identify(title: string, jurisdiction: string | undefined): Identified | null {
   const inJurisdiction = (f: RegulatoryFact) =>
     !jurisdiction || f.jurisdiction === 'ICH' || norm(f.jurisdiction) === norm(jurisdiction);
 
   const codes = ichCodesIn(title);
-  if (codes.length > 0) {
-    for (const code of codes) {
-      const successor = REGULATORY_FACTS.find(
-        (f) => f.supersedes !== undefined && asIchCode(f.supersedes) === code && inJurisdiction(f),
-      );
-      if (successor) return { kind: 'superseded', code, successor };
-    }
-    for (const code of codes) {
-      const family = REGULATORY_FACTS.filter(
-        (f) => inJurisdiction(f) && f.keywords.some((k) => asIchCode(k) === code),
-      );
-      if (family.length > 0) {
-        // Prefer the member the title singles out by a keyword no other member
-        // carries ("E6(R3) Annex 2"); otherwise the first, the base entry.
-        const pick =
-          family.find((f) =>
-            f.keywords.some(
-              (k) =>
-                asIchCode(k) !== code &&
-                !family.some((o) => o !== f && o.keywords.some((ok) => norm(ok) === norm(k))) &&
-                containsWords(title, k),
-            ),
-          ) ?? family[0];
-        return { kind: 'fact', fact: pick };
-      }
-      const entry = ICH_GUIDELINES.find((g) => g.code === code);
-      if (entry) return { kind: 'ich', entry };
-    }
-    // A named ICH code the registries do not hold. Falling back to word
-    // matching is how E9(R1) used to be dated as E6(R3).
-    return null;
-  }
+  if (codes.length > 0) return identifyByCode(title, codes, inJurisdiction);
 
-  const t = norm(title);
   const superseding = REGULATORY_FACTS.filter(
     (f) =>
       inJurisdiction(f) &&
       f.supersedes !== undefined &&
-      f.supersedes.split(' / ').some((alt) => containsWords(t, alt)),
+      f.supersedes.split(' / ').some((alt) => containsWords(title, alt)) &&
+      !namedByAlias(title, f),
   );
   if (superseding.length === 1) {
     return { kind: 'superseded', code: title.trim(), successor: superseding[0] };
   }
   if (superseding.length > 1) return null;
 
+  const t = norm(title);
   const named = REGULATORY_FACTS.filter(
-    (f) =>
-      inJurisdiction(f) &&
-      (norm(f.id) === t ||
-        f.keywords.some((k) => norm(k) === t) ||
-        containsWords(f.topic, t)),
+    (f) => inJurisdiction(f) && (norm(f.id) === t || namedByAlias(title, f)),
   );
   return named.length === 1 ? { kind: 'fact', fact: named[0] } : null;
 }
