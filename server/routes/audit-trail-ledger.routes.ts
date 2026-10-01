@@ -510,8 +510,20 @@ const AUDIT_EVENTS_SQL = `
  * verdict. audit_events has its own per-organisation chain and is not covered
  * here (`store` says so).
  */
-export interface AuditLedgerChainVerdict extends Omit<ChainVerificationResult, 'tenants'> {
+export interface AuditLedgerChainVerdict extends Omit<ChainVerificationResult, 'tenants' | 'ok'> {
   store: 'audit_logs';
+  /**
+   * true: the walk holds and the anchored head is not broken; false: a break;
+   * null: not verified, because the anchor could not be read (fix round DP-72,
+   * 2026-10-01). The entries are returned either way.
+   */
+  ok: boolean | null;
+  /**
+   * The chain head against the latest anchor, this organisation's only
+   * (tenant-chain-verdict.ts): verified, broken with its breaks, or a reason
+   * beginning "head not verified against the anchor" (fix round DP-71).
+   */
+  head?: TenantChainHead;
 }
 
 export interface AuditLedgerResponse {
@@ -536,8 +548,22 @@ export interface AuditLedgerResponse {
 export type { TenantChainVerifier } from '../services/audit/tenant-chain-verdict.js';
 import {
   verifyTenantChainOnAdminScope as verifyOnSuperAdminScope,
+  type TenantChainHead,
   type TenantChainVerifier,
 } from '../services/audit/tenant-chain-verdict.js';
+
+/** One verdict shape for the ledger and a record's history: the walk's counts, its break, and the head. */
+function chainVerdictOf(v: Awaited<ReturnType<TenantChainVerifier>>): AuditLedgerChainVerdict {
+  return {
+    store: 'audit_logs',
+    ok: v.ok,
+    rowsChecked: v.rowsChecked,
+    legacyRows: v.legacyRows,
+    sequencedRows: v.sequencedRows,
+    ...(v.brokenAt ? { brokenAt: v.brokenAt } : {}),
+    ...(v.head ? { head: v.head } : {}),
+  };
+}
 
 export async function readAuditLedger(
   client: Pick<PoolClient, 'query'>,
@@ -559,15 +585,7 @@ export async function readAuditLedger(
   const sources: Record<AuditLedgerSource, number> = { audit_logs: 0, audit_events: 0 };
   for (const e of merged) sources[e.source] += 1;
   // Whole chain (not the window), on a scope that can see cross-tenant legacy links.
-  const v = await verifyTenantChain(orgId);
-  const chain: AuditLedgerChainVerdict = {
-    store: 'audit_logs',
-    ok: v.ok,
-    rowsChecked: v.rowsChecked,
-    legacyRows: v.legacyRows,
-    sequencedRows: v.sequencedRows,
-    ...(v.brokenAt ? { brokenAt: v.brokenAt } : {}),
-  };
+  const chain = chainVerdictOf(await verifyTenantChain(orgId));
   return { success: true, data: merged, sources, meta: { chain } };
 }
 
@@ -628,20 +646,7 @@ export async function readRecordAuditHistory(
     ...withSignature(auditLogEntry(r), signatures.get(String(r.id))),
     prevHash: r.prev_hash == null ? '' : String(r.prev_hash),
   }));
-  const v = await verifyTenantChain(orgId);
-  return {
-    data,
-    meta: {
-      chain: {
-        store: 'audit_logs',
-        ok: v.ok,
-        rowsChecked: v.rowsChecked,
-        legacyRows: v.legacyRows,
-        sequencedRows: v.sequencedRows,
-        ...(v.brokenAt ? { brokenAt: v.brokenAt } : {}),
-      },
-    },
-  };
+  return { data, meta: { chain: chainVerdictOf(await verifyTenantChain(orgId)) } };
 }
 
 // ─── Router Factory ───────────────────────────────────────────────────────────

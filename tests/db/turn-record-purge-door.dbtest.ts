@@ -103,20 +103,23 @@ afterAll(async () => {
 });
 
 describe('P0-8: the runtime role can read and append to a record table, never rewrite it', () => {
-  it('holds SELECT and INSERT, and no UPDATE, DELETE or TRUNCATE, on every append-only table present', async () => {
+  it("holds SELECT and INSERT (INSERT only where the store's ceiling allows it), and no UPDATE, DELETE or TRUNCATE, on every append-only table present", async () => {
     expect(appUrl, 'APP_DATABASE_URL names the runtime role (CI sets it)').toBeTruthy();
     const role = new URL(appUrl!).username;
+    // A store with a `ceiling` (scripts/db/provision-app-role.mjs) is held to it:
+    // public.audit_log_archives is SELECT only, its one writer being the archive
+    // door (P0-8 anchor follow-up, 2026-10-01). Every other store is SELECT, INSERT.
     const { rows } = await owner.query(
-      `SELECT t.schema || '.' || t.name AS relation,
+      `SELECT t.schema || '.' || t.name AS relation, t.ceiling,
               has_table_privilege($1, c.oid, 'SELECT') AS s, has_table_privilege($1, c.oid, 'INSERT') AS i,
               has_table_privilege($1, c.oid, 'UPDATE') AS u, has_table_privilege($1, c.oid, 'DELETE') AS d,
               has_table_privilege($1, c.oid, 'TRUNCATE') AS t
-         FROM jsonb_to_recordset($2::jsonb) AS t(schema text, name text)
+         FROM jsonb_to_recordset($2::jsonb) AS t(schema text, name text, ceiling jsonb)
          JOIN pg_class c ON c.oid = to_regclass(format('%I.%I', t.schema, t.name))`,
       [role, JSON.stringify(APPEND_ONLY_TABLES)],
     );
     expect(rows.length, 'the record tables exist on a deployed database').toBe(APPEND_ONLY_TABLES.length);
-    const wrong = rows.filter((r) => !r.s || !r.i || r.u || r.d || r.t).map((r) => r.relation);
+    const wrong = rows.filter((r) => !r.s || r.i !== (r.ceiling ?? ['SELECT', 'INSERT']).includes('INSERT') || r.u || r.d || r.t).map((r) => r.relation);
     expect(wrong, 'relations the runtime role may rewrite or cannot append to').toEqual([]);
   });
 

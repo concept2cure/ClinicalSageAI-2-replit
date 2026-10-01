@@ -1,0 +1,15 @@
+# 2026-10-01T15:03:00Z. Mutant P of this change: with no anchor bucket the head reads verified.
+$ npx vitest run server/services/audit/__tests__/chain-head-on-demand.test.ts
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > GET /api/c2c/actions/verify-chain 15ms
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > GET /audit-trail/seal-integrity 6ms
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > the licensing history keeps the walk verdict and marks the head not verified 6ms
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > the tenant verdict 2ms
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > npm run ops:verify-audit-chain 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected { verified: true, …(5) } to match object { verified: false, …(1) }
+AssertionError: expected { verified: true, …(5) } to match object { verified: false, …(1) }
+AssertionError: expected { status: 'verified', …(4) } to match object { status: 'verified', …(2) }
+AssertionError: expected { verified: true, …(5) } to match object { verified: false, …(1) }
+AssertionError: expected { verified: true, …(5) } to match object { verified: false, …(1) }
+ Test Files  1 failed (1)
+      Tests  5 failed | 7 passed (12)

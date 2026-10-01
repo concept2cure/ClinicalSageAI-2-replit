@@ -26,6 +26,7 @@ import crypto from 'crypto';
 import { createPolicyGuard } from '../services/policy/opaMiddleware';
 import rbacService from '../services/roleBasedAccess';
 import { verifyAuditIntegrity } from '../services/audit/audit-integrity-service';
+import { verifyChainHead } from '../services/audit/chain-anchor';
 import { requestPgClient } from '../db/requestDb';
 import { clientEventRefusal, requireAuditRecorder } from '../services/audit/audit-api-authority';
 import { VerificationUnavailableError, describeFailure } from '../lib/verification-outcome';
@@ -1258,6 +1259,11 @@ router.get('/health', (_req: Request, res: Response) => {
  * (21 CFR Part 11 §11.10(e), §11.70). The audit_logs chain is system-wide, so
  * this is an admin/system integrity check (not tenant-scoped). Seal verification
  * is skipped (not failed) when AUDIT_HMAC_KEY is unset.
+ *
+ * The walk cannot see the newest rows removed (security plan P0-8), so `head`
+ * is the chain head against the latest anchor (chain-anchor.ts verifyChainHead):
+ * a missing or changed anchored head makes `ok` false; without an anchor bucket
+ * `head` says the verdict is the walk only. An unreadable anchor is a 500.
  */
 router.get('/audit-trail/seal-integrity', async (req: Request, res: Response) => {
   const user = (req as any).user;
@@ -1300,7 +1306,8 @@ router.get('/audit-trail/seal-integrity', async (req: Request, res: Response) =>
   }
   try {
     const result = await verifyAuditIntegrity(pool);
-    return res.json({ success: true, data: result });
+    const head = await verifyChainHead(pool);
+    return res.json({ success: true, data: { ...result, ok: result.ok && head.status !== 'broken', head } });
   } catch (error) {
     return serverError(res, log, 'verifying the audit seal chain', error);
   }

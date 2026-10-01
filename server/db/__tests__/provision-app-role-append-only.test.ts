@@ -22,7 +22,7 @@ import {
 } from '../../../scripts/db/provision-app-role.mjs';
 import { EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS } from '../../services/audit/audit-immutability-triggers';
 
-type Store = { schema: string; name: string; updatableColumns?: readonly string[] };
+type Store = { schema: string; name: string; updatableColumns?: readonly string[]; ceiling?: readonly string[] };
 const names = (stores: readonly Store[]) => stores.map((t) => `${t.schema}.${t.name}`);
 const SUPERSESSION = ['superseded_by', 'is_valid', 'verification_status', 'verification_date', 'updated_at'];
 
@@ -98,6 +98,19 @@ describe('APPEND_ONLY_TABLES', () => {
   });
 
   /**
+   * P0-8 follow-up (2026-10-01). The archive ledger is written by one door,
+   * audit_logs_archive_delete(), which runs as audit_archiver and holds INSERT
+   * itself. The runtime role's own INSERT there let it forge ledger rows that
+   * the anchor verifier had to defend against (DP-68). Its ceiling there is
+   * SELECT: the anchor verifier reads the ledger, nothing else of the
+   * runtime's writes it.
+   */
+  it('holds the archive ledger to SELECT: the door, not the runtime role, appends to it', () => {
+    const narrowed = APPEND_ONLY_TABLES.filter((t: Store) => t.ceiling);
+    expect(narrowed).toEqual([{ schema: 'public', name: 'audit_log_archives', ceiling: ['SELECT'] }]);
+  });
+
+  /**
    * The store list and the boot's trigger list (P0-9a) name the same stores, so
    * a store that gains an immutability trigger cannot keep the runtime role's
    * UPDATE/DELETE without a written reason here.
@@ -143,6 +156,20 @@ describe('the grant recipe withholds UPDATE, DELETE and TRUNCATE on each store',
     expect(statements.some((s) => /GRANT UPDATE \(.*ON TABLE audit_logs/.test(s))).toBe(false);
   });
 
+  it('withholds INSERT as well on a store whose ceiling is SELECT (the archive ledger)', async () => {
+    const { db, statements } = recipeDb([
+      { schema: 'public', name: 'audit_log_archives', ref: 'audit_log_archives', cols: [] },
+      { schema: 'public', name: 'audit_logs', ref: 'audit_logs', cols: [] },
+    ]);
+    await refreshRuntimeRoleGrants(db as never, { role: 'c2c' });
+    const lastBlanket = statements.map((s) => /ON ALL TABLES IN SCHEMA/.test(s)).lastIndexOf(true);
+    const revokeLedger = statements.indexOf('REVOKE UPDATE, DELETE, TRUNCATE, INSERT ON TABLE audit_log_archives FROM PUBLIC, "c2c"');
+    expect(revokeLedger).toBeGreaterThan(lastBlanket);
+    // audit_logs keeps its append: only the ledger's ceiling is narrower.
+    expect(statements).toContain('REVOKE UPDATE, DELETE, TRUNCATE ON TABLE audit_logs FROM PUBLIC, "c2c"');
+    expect(statements.some((s) => /GRANT .* ON TABLE audit_log_archives/.test(s))).toBe(false);
+  });
+
   it('asks for every store with its carve-out, and withholds nothing on a store this edition lacks', async () => {
     const { db, statements } = recipeDb([]);
     await refreshRuntimeRoleGrants(db as never, { role: 'c2c' });
@@ -168,6 +195,27 @@ describe('the grant audit holds each store to SELECT, INSERT', () => {
       { relation: 'public.audit_events', held: ['TRUNCATE'] },
     ]);
     expect(a.denied).toEqual([]);
+  });
+
+  it('INSERT on the archive ledger is EXCESS; SELECT alone is the recipe posture, not a denial', async () => {
+    const widened = await auditRuntimeRoleGrants(
+      auditDb([{ schema: 'public', name: 'audit_log_archives', held: ['SELECT', 'INSERT'] }]) as never,
+      'app_service',
+    );
+    expect(widened.excess).toEqual([{ relation: 'public.audit_log_archives', held: ['INSERT'] }]);
+    expect(widened.denied).toEqual([]);
+
+    const clean = await auditRuntimeRoleGrants(
+      auditDb([{ schema: 'public', name: 'audit_log_archives', held: ['SELECT'] }]) as never,
+      'app_service',
+    );
+    expect([clean.excess, clean.denied]).toEqual([[], []]);
+
+    const unreadable = await auditRuntimeRoleGrants(
+      auditDb([{ schema: 'public', name: 'audit_log_archives', held: [] }]) as never,
+      'app_service',
+    );
+    expect(unreadable.denied).toEqual([{ relation: 'public.audit_log_archives', missing: ['SELECT'] }]);
   });
 
   it('a store the role cannot append to is denied (from the grant-half commit 06152498)', async () => {

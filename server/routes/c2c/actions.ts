@@ -42,6 +42,10 @@ import {
   AuditChainPartialViewError,
   AuditChainSchemaMissingError,
 } from '../../services/audit/chain.js';
+import { verifyChainHead } from '../../services/audit/chain-anchor.js';
+import { verifyTenantChainOnAdminScope } from '../../services/audit/tenant-chain-verdict.js';
+import { breakForTenant } from '../../services/audit/audited-export.js';
+import { resolvePlatformAdmin } from '../../middleware/requirePlatformAdmin.js';
 import { withTenantConnection } from '../../db/withTenantConnection.js';
 import { setTenantContextTx } from '../../services/tenant/governed-tenant-context.js';
 import {
@@ -758,6 +762,23 @@ function makeHandler(command: Command) {
 // carries no tenant and would see no rows — a false pass — so the walk runs
 // on a super-admin-scoped connection (the pattern system jobs use), and the
 // verifier itself refuses a tenant-scoped view (AuditChainPartialViewError).
+//
+// The walk cannot see the newest rows removed: what is left still derives
+// (security plan P0-8). So the head is checked against the latest anchor in
+// the evidence bucket (chain-anchor.ts verifyChainHead); a missing or changed
+// anchored head is a break (409). Without an anchor bucket, `head` says the
+// verdict is the walk only. An anchor that cannot be read is an error, never ok.
+//
+// WHO SEES WHAT (fix round IAM-26, 2026-10-01). The router is mounted behind
+// authMiddleware only, so every signed-in user of every organisation reached
+// the estate-wide walk, its first break, and every organisation's broken
+// anchored head. Now only a platform administrator (requirePlatformAdmin.ts
+// resolvePlatformAdmin, the guard's own answer) gets the estate-wide verdict,
+// `scope: 'estate'`. Everyone else gets their own organisation's verdict, the
+// one the ledger states (tenant-chain-verdict.ts), `scope: 'organization'`:
+// the head scoped to that organisation, the walk's break redacted as every
+// export redacts it (audited-export.ts breakForTenant), and no estate tenant
+// count. Its anchor-unreadable case (`ok: null`) is a 503 here, not a verdict.
 
 router.get('/verify-chain', async (req: Request, res: Response) => {
   const userId = resolveUserId(req);
@@ -767,9 +788,31 @@ router.get('/verify-chain', async (req: Request, res: Response) => {
   }
 
   try {
+    if (!(await resolvePlatformAdmin(req))) {
+      const v = await verifyTenantChainOnAdminScope(orgId);
+      if (v.ok === null) {
+        return res.status(503).json({
+          error: 'AUDIT_ANCHOR_UNREADABLE',
+          detail: 'The audit chain could not be verified, so no result is given.',
+        });
+      }
+      return res.status(v.ok ? 200 : 409).json({
+        scope: 'organization',
+        ok: v.ok,
+        rowsChecked: v.rowsChecked,
+        legacyRows: v.legacyRows,
+        sequencedRows: v.sequencedRows,
+        ...(v.brokenAt ? { brokenAt: breakForTenant(orgId, v.brokenAt) } : {}),
+        head: v.head,
+      });
+    }
     const result = await withTenantConnection(
       { tenantId: '0', role: 'app_super_admin', source: 'request', caller: 'c2c/actions/verify-chain' },
-      (client) => verifyAuditChain(client),
+      async (client) => {
+        const walk = await verifyAuditChain(client);
+        const head = await verifyChainHead(client);
+        return { scope: 'estate' as const, ...walk, ok: walk.ok && head.status !== 'broken', head };
+      },
     );
     return res.status(result.ok ? 200 : 409).json(result);
   } catch (err: any) {

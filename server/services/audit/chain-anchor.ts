@@ -15,8 +15,24 @@
  * COMPLIANCE retention in production) under a dated key in anchors/audit-chain/.
  * Per organisation: its id, the head row's id, chain_seq and sha256_chain, the
  * number of chained rows at or before the head, and the head's time; plus the
- * time of the anchor. Object lock means no one can change or delete an anchor
- * for the retention period, the application included.
+ * time of the anchor.
+ *
+ * What holds an anchor once written, and what does not (corrected 2026-10-01:
+ * this header said object lock meant no one could change or delete one):
+ *   - Object lock keeps every VERSION of an anchor for the retention period.
+ *     Under COMPLIANCE no one, the account root included, can delete a version
+ *     or shorten its retention.
+ *   - Object lock does not refuse a new version on the same key, and the
+ *     verifier reads current versions. So the put is conditional
+ *     (If-None-Match: *, storage/s3-client.ts putS3ObjectOnce): S3 refuses it
+ *     with 412 when the key exists, and the bucket policy refuses any put
+ *     under anchors/ without that header, from every principal
+ *     (terraform/modules/compliance-evidence).
+ *   - A principal allowed s3:DeleteObject can hide an anchor's current version
+ *     behind a delete marker, and a conditional put to that key then succeeds.
+ *     The task role is denied DeleteObject. An account administrator is not,
+ *     and can rewrite the bucket policy. The hidden version stays readable by
+ *     its version id; this verifier does not read versions.
  *
  * The verifier compares the database against the LATEST anchor:
  *   head_missing   the anchored head row is gone (truncation of the head)
@@ -41,15 +57,21 @@
  * an anchor that does not parse THROWS: an error is never "nothing to verify".
  *
  * Not covered: the task role that writes anchors could write a newer, forged
- * one. It cannot change or remove an older one (object lock), and every write
- * is a CloudTrail data event on the evidence bucket.
+ * one under a new key, and only the latest is compared, so a forged anchor
+ * written after a truncation hides it (reproduced:
+ * docs/evidence/D6/2026-10-01-p0-8-forged-anchor-probe/). It cannot put over an
+ * existing key or delete an anchor, and every write is a CloudTrail data event
+ * on the evidence bucket.
+ *
+ * On demand (verify-chain, seal-integrity, the licensing history, the tenant
+ * verdict, ops:verify-audit-chain): verifyChainHead, below, gives each walk its
+ * head verdict, or says in words that the head was not verified.
  *
  * 21 CFR Part 11 §11.10(c)(e); EU GMP Annex 11 §7.1, §9.
  */
 
 import { randomBytes } from 'node:crypto';
-import { PutObjectCommand } from '@aws-sdk/client-s3';
-import { createS3Client, listS3Keys, readS3Object, type S3Sender } from '../storage/s3-client.js';
+import { createS3Client, listS3Keys, putS3ObjectOnce, readS3Object, type S3Sender } from '../storage/s3-client.js';
 import {
   AUDIT_CHAIN_HEAD_ORDER_SQL,
   AuditChainPartialViewError,
@@ -88,7 +110,7 @@ export interface AuditChainAnchor {
   heads: AnchoredChainHead[];
 }
 
-/** Where anchors live: put never overwrites in effect (object lock), latest is the newest key. */
+/** Where anchors live: put refuses a key that exists (If-None-Match: *); latest is the newest key. */
 export interface AuditAnchorStore {
   readonly location: string;
   put(key: string, body: string): Promise<void>;
@@ -361,6 +383,11 @@ function verdictOf(breaks: AnchorBreak[], archived: AnchorBreak[], key: string):
   return { status: 'ok', reason: `every anchored head is present and unchanged (${key})` };
 }
 
+export interface AnchorVerifyOptions {
+  /** Compare this organisation's anchored head only; omitted, every head the anchor names. */
+  organizationId?: number;
+}
+
 /**
  * The database against the latest anchor. Throws when the store or the anchor
  * cannot be read. `now` is the verifier's clock: the hot window is measured
@@ -370,6 +397,7 @@ export async function verifyAuditChainAnchor(
   client: PoolClient,
   store: AuditAnchorStore,
   now: Date = new Date(),
+  options: AnchorVerifyOptions = {},
 ): Promise<AnchorVerification> {
   await refusePartialView(client);
   const latest = await store.latest();
@@ -380,13 +408,91 @@ export async function verifyAuditChainAnchor(
     };
   }
   const anchor = parseAuditChainAnchor(latest.body, latest.key);
-  const base = { anchorKey: latest.key, anchoredAt: anchor.anchoredAt, organizations: anchor.heads.length };
-  if (anchor.heads.length === 0) {
-    return { ...base, status: 'unverifiable', breaks: [], archived: [], reason: `the latest anchor (${latest.key}) records no chain head` };
+  const org = options.organizationId;
+  const heads = org === undefined ? anchor.heads : anchor.heads.filter((h) => h.organizationId === org);
+  const base = { anchorKey: latest.key, anchoredAt: anchor.anchoredAt, organizations: heads.length };
+  if (heads.length === 0) {
+    const scope = org === undefined ? '' : ` for organisation ${org}`;
+    return { ...base, status: 'unverifiable', breaks: [], archived: [], reason: `the latest anchor (${latest.key}) records no chain head${scope}` };
   }
-  const found = await compareAnchoredHeads(client, anchor.heads);
-  const { breaks, archived } = splitByArchive(found, anchor.heads, await archiveAllowance(client, anchor.anchoredAt, now));
+  const found = await compareAnchoredHeads(client, heads);
+  const { breaks, archived } = splitByArchive(found, heads, await archiveAllowance(client, anchor.anchoredAt, now));
   return { ...base, ...verdictOf(breaks, archived, latest.key), breaks, archived };
+}
+
+// ── The head verdict every on-demand verifier gives ──────────────────────────
+
+/** How an on-demand verdict says it is a walk only: its head was not checked against an anchor. */
+export const HEAD_NOT_VERIFIED = 'head not verified against the anchor';
+
+export interface ChainHeadVerdict {
+  /** True only when the latest anchor was read and every head it names, in scope, is present and unchanged. */
+  verified: boolean;
+  /**
+   * verified        every anchored head in scope is present and unchanged
+   * broken          an anchored head is missing or different, or rows before it are missing or added
+   * not_configured  this deployment names no anchor store: the verdict is the walk only
+   * not_anchored    no anchor has been written yet: the walk only
+   * unverifiable    the anchor names no head in scope, or only shortfalls the archive door accounts for
+   */
+  status: 'verified' | 'broken' | 'not_configured' | 'not_anchored' | 'unverifiable';
+  anchorKey: string | null;
+  anchoredAt: string | null;
+  breaks: AnchorBreak[];
+  /** Plain words, safe for a response body: no bucket name, no configuration key. */
+  reason: string;
+}
+
+export interface ChainHeadOptions extends AnchorVerifyOptions {
+  /** Omitted: resolved from AUDIT_ANCHOR_BUCKET. null: not configured. */
+  store?: AuditAnchorStore | null;
+  now?: Date;
+}
+
+/**
+ * The chain head's verdict for an ON-DEMAND verifier (security plan P0-8
+ * follow-up, 2026-10-01). The walk those run cannot see the newest rows
+ * removed (chain-anchor.dbtest.ts case 1), and each answered ok for such a
+ * chain. This is verifyAuditChainAnchor against the latest anchor, scoped to
+ * one organisation where the caller is; where no anchor can be consulted, the
+ * verdict says so in words that begin with HEAD_NOT_VERIFIED. A store or an
+ * anchor that cannot be read throws, as verifyAuditChainAnchor does, so the
+ * caller's own error path answers: never ok, never "nothing to check".
+ *
+ * A caller folds it in as `ok: walk.ok && head.status !== 'broken'`, and
+ * carries `head` with its verdict.
+ */
+export async function verifyChainHead(client: PoolClient, options: ChainHeadOptions = {}): Promise<ChainHeadVerdict> {
+  const store = options.store !== undefined ? options.store : resolveAuditAnchorStore();
+  if (!store) {
+    return {
+      verified: false, status: 'not_configured', anchorKey: null, anchoredAt: null, breaks: [],
+      reason: `${HEAD_NOT_VERIFIED}: no anchor store is configured on this deployment, so this verdict is the chain walk only`,
+    };
+  }
+  const v = await verifyAuditChainAnchor(client, store, options.now, { organizationId: options.organizationId });
+  const at = { anchorKey: v.anchorKey, anchoredAt: v.anchoredAt };
+  switch (v.status) {
+    case 'ok':
+      return { verified: true, status: 'verified', ...at, breaks: [], reason: `head verified against the latest anchor (anchored ${v.anchoredAt})` };
+    case 'broken':
+      return {
+        verified: false, status: 'broken', ...at, breaks: v.breaks,
+        reason: `${v.breaks.length} anchored chain head(s) missing or different against the latest anchor (anchored ${v.anchoredAt})`,
+      };
+    case 'not_anchored':
+      return {
+        verified: false, status: 'not_anchored', ...at, breaks: [],
+        reason: `${HEAD_NOT_VERIFIED}: no anchor has been written yet, so this verdict is the chain walk only`,
+      };
+    default:
+      return {
+        verified: false, status: 'unverifiable', ...at, breaks: [],
+        reason: v.archived.length
+          ? `${HEAD_NOT_VERIFIED}: rows the archive door removed since the latest anchor cannot be attributed to one organisation`
+          : `${HEAD_NOT_VERIFIED}: the latest anchor records no chain head in this scope`,
+      };
+  }
 }
 
 // ── The store: the object-locked evidence bucket ─────────────────────────────
@@ -396,16 +502,9 @@ export function createS3AuditAnchorStore(bucket: string, client: S3Sender = crea
   return {
     location: `s3://${bucket}/${AUDIT_ANCHOR_KEY_PREFIX}`,
     async put(key, body) {
-      // The bucket's default SSE-KMS key and object-lock retention apply. A put
-      // under object lock needs an integrity checksum; the SDK computes it and
-      // S3 refuses a body that does not match.
-      await client.send(new PutObjectCommand({
-        Bucket: bucket,
-        Key: key,
-        Body: body,
-        ContentType: 'application/json',
-        ChecksumAlgorithm: 'SHA256',
-      }));
+      // Written once: a key that exists is refused (412), never replaced. The
+      // bucket's default SSE-KMS key and object-lock retention apply.
+      await putS3ObjectOnce(client, bucket, key, body, 'application/json');
     },
     async latest() {
       const keys = (await listS3Keys(client, bucket, AUDIT_ANCHOR_KEY_PREFIX)).filter((k) => k.endsWith('.json'));

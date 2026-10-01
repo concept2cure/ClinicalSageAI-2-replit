@@ -64,6 +64,9 @@
  * store to SELECT, INSERT. The one governed UPDATE, signature revocation, gets
  * exactly the columns its trigger admits. audit_logs' only deletion path stays
  * the archive door, audit_logs_archive_delete(), which runs as audit_archiver.
+ * A store's `ceiling` narrows that further (2026-10-01, P0-8 follow-up): the
+ * archive ledger, audit_log_archives, is SELECT only, because the door writes
+ * it as audit_archiver, which holds INSERT itself.
  *
  * ── Idempotency ───────────────────────────────────────────────────────────────
  * Safe to re-run. The role is created or aligned; grants and default privileges
@@ -178,6 +181,15 @@ export const DEFAULT_TABLE_PRIVILEGES = Object.freeze(['SELECT', 'INSERT', 'UPDA
  * persistGovernedSignatureRevocation), exactly what trg_electronic_signatures_immutable
  * admits. The runtime role gets UPDATE on those columns and on no other.
  *
+ * `ceiling` is a store's own ceiling where it is narrower than SELECT, INSERT
+ * (2026-10-01, P0-8 follow-up). audit_log_archives is SELECT only: the archive
+ * door, audit_logs_archive_delete(), appends its ledger row as audit_archiver,
+ * which holds INSERT itself, and the anchor verifier only reads it. With the
+ * runtime role's INSERT, one forged ledger row could make the verifier excuse
+ * a truncated head (finding DP-68; the verifier was hardened in the same fix
+ * round, and this removes the forger). The recipe withholds INSERT there too,
+ * and the audit reports it as excess.
+ *
  * Not here: P1-24's domain-history stores (workflow_history,
  * document_audit_logs, regulatory_audit_logs, c2c_ana_actions,
  * authoring_signatures) join once migrations/20261001_domain_history_append_only.sql
@@ -187,7 +199,7 @@ export const APPEND_ONLY_TABLES = Object.freeze(
   [
     { schema: 'audit', name: 'tamper_proof_log' },
     { schema: 'public', name: 'audit_logs' },
-    { schema: 'public', name: 'audit_log_archives' },
+    { schema: 'public', name: 'audit_log_archives', ceiling: Object.freeze(['SELECT']) },
     { schema: 'public', name: 'audit_events' },
     {
       schema: 'public',
@@ -203,11 +215,20 @@ export const APPEND_ONLY_TABLES = Object.freeze(
   ].map((t) => Object.freeze(t)),
 );
 
-/** The ceiling on an append-only store: read and append. */
+/** The ceiling on an append-only store: read and append. A store's own `ceiling` may narrow it. */
 export const APPEND_ONLY_PRIVILEGES = Object.freeze(['SELECT', 'INSERT']);
 
 /** What the recipe withholds on every append-only store, from PUBLIC and the runtime role. */
 export const WITHHELD_APPEND_ONLY_PRIVILEGES = Object.freeze(['UPDATE', 'DELETE', 'TRUNCATE']);
+
+/** One store's ceiling: its own `ceiling`, or SELECT, INSERT. */
+const storeCeiling = (store) => store.ceiling ?? APPEND_ONLY_PRIVILEGES;
+
+/** What the recipe withholds on one store: UPDATE, DELETE, TRUNCATE, and anything of SELECT, INSERT above its ceiling. */
+const withheldOn = (store) => [
+  ...WITHHELD_APPEND_ONLY_PRIVILEGES,
+  ...APPEND_ONLY_PRIVILEGES.filter((p) => !storeCeiling(store).includes(p)),
+];
 
 /** The table privileges the audit reads per relation. */
 const PROBED_TABLE_PRIVILEGES = Object.freeze(['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE']);
@@ -411,9 +432,10 @@ export async function revokeUnreviewedDefinerExecute(
 }
 
 /**
- * REVOKE UPDATE, DELETE and TRUNCATE on every append-only store present, from
- * PUBLIC and the runtime role, then GRANT back UPDATE on a store's
- * `updatableColumns` (the revocation carve-out) where it has them. Runs after
+ * REVOKE UPDATE, DELETE and TRUNCATE on every append-only store present, and
+ * INSERT where the store's `ceiling` is SELECT, from PUBLIC and the runtime
+ * role, then GRANT back UPDATE on a store's `updatableColumns` (the revocation
+ * carve-out) where it has them. Runs after
  * the blanket per-schema grants — `GRANT … ON ALL TABLES IN SCHEMA public` and
  * the default privileges hand every new table full DML — so each run of the
  * recipe, and so each deploy, withholds them again. A store this edition does
@@ -442,15 +464,17 @@ export async function withholdAppendOnlyPrivileges(
       ORDER BY t.ord`,
     [stores.map((s) => s.schema), stores.map((s) => s.name), stores.map((s) => (s.updatableColumns ?? []).join(','))],
   );
+  const byName = new Map(stores.map((st) => [qualified(st), st]));
   const withheld = [];
   for (const { schema, name, ref, cols } of rows) {
-    await db.query(`REVOKE ${WITHHELD_APPEND_ONLY_PRIVILEGES.join(', ')} ON TABLE ${ref} FROM PUBLIC, ${roleIdent}`);
+    const store = byName.get(`${schema}.${name}`) ?? { schema, name };
+    await db.query(`REVOKE ${withheldOn(store).join(', ')} ON TABLE ${ref} FROM PUBLIC, ${roleIdent}`);
     if (cols.length) await db.query(`GRANT UPDATE (${cols.join(', ')}) ON TABLE ${ref} TO ${roleIdent}`);
     withheld.push(`${schema}.${name}`);
   }
   log(
     `  ✓ ${WITHHELD_APPEND_ONLY_PRIVILEGES.join(', ')} withheld on ${withheld.length}/${stores.length} append-only ` +
-      `store(s) present${withheld.length ? `: ${withheld.join(', ')}` : ''}`,
+      `store(s) present${withheld.length ? `: ${withheld.join(', ')}` : ''}; INSERT too where a store's ceiling is SELECT`,
   );
   return withheld;
 }
@@ -721,7 +745,7 @@ function appendOnlyColumnFindings(store, columns, tableLevelUpdate) {
  * wherever it lives) that the role does not own — what it holds beyond it.
  */
 function auditRelation(r, store, columns) {
-  const ceiling = store ? APPEND_ONLY_PRIVILEGES : SCHEMA_PRIVILEGE_OVERRIDES[r.schema];
+  const ceiling = store ? storeCeiling(store) : SCHEMA_PRIVILEGE_OVERRIDES[r.schema];
   const required = ceiling || DEFAULT_TABLE_PRIVILEGES;
   const held = PROBED_TABLE_PRIVILEGES.filter((p) => r[`can_${p.toLowerCase()}`]);
   const missing = [...(r.schema_usage ? [] : ['USAGE']), ...required.filter((p) => !held.includes(p))];
@@ -741,12 +765,14 @@ function auditRelation(r, store, columns) {
  * table in every application schema:
  *   - `denied`  — the role lacks USAGE on the schema or a privilege the recipe
  *                 requires there (full DML, the schema's override, or — on an
- *                 append-only store — SELECT, INSERT and UPDATE on its
- *                 carve-out columns, as `UPDATE(col, …)`);
+ *                 append-only store — its ceiling, SELECT, INSERT unless the
+ *                 store's `ceiling` says SELECT, and UPDATE on its carve-out
+ *                 columns, as `UPDATE(col, …)`);
  *   - `excess`  — on a relation under a ceiling that the role does NOT own, it
  *                 holds a privilege beyond it: UPDATE/DELETE/TRUNCATE on an
  *                 audit-schema table or on an APPEND_ONLY_TABLES store wherever
- *                 it lives (audit_logs is in `public`), or UPDATE on a store
+ *                 it lives (audit_logs is in `public`), INSERT on a store whose
+ *                 ceiling is SELECT (the archive ledger), or UPDATE on a store
  *                 column outside its carve-out (`UPDATE(col)`). The recipe
  *                 withholds those; a PUBLIC grant or a hand GRANT gave them.
  *   - `ownedAppendOnly` — the role owns an APPEND_ONLY_TABLES relation, which

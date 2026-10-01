@@ -1,0 +1,7 @@
+# 2026-10-01T15:02:48Z. Mutant M of this change: a stale anchor blocks the next anchor, so staleness would never end.
+$ npx vitest run server/jobs/__tests__/auditChainIntegritySweep.test.ts
+ × server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > an anchor older than 48 hours is an incident: alerted, and a fresh anchor is still written to close the window 9ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected "vi.fn()" to be called once, but got 0 times
+ Test Files  1 failed (1)
+      Tests  1 failed | 31 passed (32)

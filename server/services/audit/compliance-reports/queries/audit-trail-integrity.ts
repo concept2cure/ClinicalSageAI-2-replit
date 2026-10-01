@@ -70,6 +70,19 @@ SELECT 'audit_events' AS store,
   FROM audit_events e
  WHERE e.organization_id = $1`;
 
+/**
+ * Where the chain broke. The walk's first break as JSON (its break already
+ * redacted by walkTenantChain); when the anchored head is what broke, the
+ * head's own words and its breaks, this organisation's only (fix round DP-71,
+ * 2026-10-01: a head break used to print "null").
+ */
+function brokenDetail(walk: TenantChainWalk): string {
+  const head = walk.head;
+  if (head?.status !== 'broken') return JSON.stringify(walk.brokenAt ?? null);
+  const headWords = `${head.reason}: ${JSON.stringify(head.breaks)}`;
+  return walk.brokenAt == null ? headWords : `${JSON.stringify(walk.brokenAt)}; ${headWords}`;
+}
+
 function chainVerdict(walk: TenantChainWalk | undefined): VerdictRow {
   const base = { check: 'audit_logs hash chain', store: 'audit_logs', rows_checked: walk?.rowsChecked ?? null };
   if (!walk) return { ...base, verdict: 'not verified', detail: 'The chain walk did not run.' };
@@ -78,10 +91,13 @@ function chainVerdict(walk: TenantChainWalk | undefined): VerdictRow {
     return { ...base, verdict: 'not verified', rows_checked: 0, detail: NO_CHAINED_ROWS_REASON };
   }
   if (walk.ok === true) {
-    return { ...base, verdict: 'intact', detail: 'Every chained row re-derives from its predecessor.' };
+    // What was done about the newest rows, which the walk cannot see removed:
+    // verified against the latest anchor, or "head not verified against the anchor".
+    const head = walk.head ? `; ${walk.head.reason}` : '';
+    return { ...base, verdict: 'intact', detail: `Every chained row re-derives from its predecessor${head}.` };
   }
   if (walk.ok === false) {
-    return { ...base, verdict: 'broken', detail: JSON.stringify(walk.brokenAt ?? null) };
+    return { ...base, verdict: 'broken', detail: brokenDetail(walk) };
   }
   return {
     ...base,

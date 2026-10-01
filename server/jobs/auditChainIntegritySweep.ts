@@ -48,9 +48,20 @@
  * written count, and no head inside the 24-month hot window is ever excused
  * (chain-anchor.ts archiveAllowance; finding DP-68, fix round 2026-10-01).
  *
+ * The anchor's age (P0-8 follow-up, 2026-10-01). Rows written after the latest
+ * anchor can be removed without any anchor showing it until the next one is
+ * written, so an old anchor is a wide undetectable window. Every run reports
+ * the latest anchor's age (`anchorAge`, and in the log line), and an anchor
+ * older than ANCHOR_STALE_AFTER_HOURS is `stale`: an incident, alerted like
+ * any other. Before this, a deployment whose anchor writes kept failing
+ * reported `ok` against an ever older anchor, and only the failed write's own
+ * error line said so. A stale anchor does not block the next anchor: the run
+ * verified every head it names, and writing today's anchor is what closes the
+ * window again. Another incident still blocks it.
+ *
  * Three outcomes per store, not two: `ok`, an incident (`broken`, `missing`,
- * `error`), or `unverifiable` — the store could not be positively verified
- * (no seal key, no hashed rows). An incident raises the alert path: an error
+ * `error`, `stale`), or `unverifiable` — the store could not be positively
+ * verified (no seal key, no hashed rows). An incident raises the alert path: an error
  * log line, `process.emitWarning`, and the `[SECURITY]` webhook
  * (security-alerts.ts) with counts and the first failing identifier, never row
  * content. Unverifiable is logged as a warning and is never reported as ok.
@@ -91,7 +102,11 @@ import { runScheduledOncePerWindow, windowKeyOf } from '../db/scheduledOnce';
 
 const logger = createScopedLogger('audit-chain-integrity');
 
-const DAY_MS = 24 * 60 * 60 * 1000;
+const HOUR_MS = 60 * 60 * 1000;
+const DAY_MS = 24 * HOUR_MS;
+
+/** Past this, the latest anchor is `stale`: an incident (P0-8 follow-up). The sweep runs daily. */
+export const ANCHOR_STALE_AFTER_HOURS = 48;
 
 export type AuditStoreName =
   | 'audit_logs.chain'
@@ -107,10 +122,13 @@ export type AuditStoreName =
  * broken        a re-derivation, link, seal or signature did not match
  * missing       the store, or a trigger protecting it, does not exist
  * error         the verifier threw — the store was NOT checked
+ * stale         the anchor verified, but it is older than
+ *               ANCHOR_STALE_AFTER_HOURS: rows written since it are covered by
+ *               no anchor (audit_logs.anchor only)
  * unverifiable  the store could not be positively verified (no key, no hashed
  *               rows); not an incident, never a pass
  */
-export type AuditStoreStatus = 'ok' | 'broken' | 'missing' | 'error' | 'unverifiable';
+export type AuditStoreStatus = 'ok' | 'broken' | 'missing' | 'error' | 'stale' | 'unverifiable';
 
 export interface AuditStoreVerdict {
   store: AuditStoreName;
@@ -119,6 +137,15 @@ export interface AuditStoreVerdict {
   /** The first failing identifier — a row id, a sequence number, an index, a trigger name. Never content. */
   firstFailure?: string;
   reason?: string;
+}
+
+/** How old the latest anchor was when this run verified against it. */
+export interface AnchorAge {
+  anchorKey: string;
+  anchoredAt: string;
+  /** Hours from anchoredAt to this run, to one decimal. */
+  hours: number;
+  staleAfterHours: number;
 }
 
 /** What the anchor step did after the stores were verified. */
@@ -145,6 +172,8 @@ export interface AuditChainCheckResult {
   unverifiable: AuditStoreName[];
   /** The chain-head anchor this run wrote, or why it wrote none. */
   anchorWrite?: AnchorWriteOutcome;
+  /** The latest anchor's age; null when there was none to read (not configured, not yet written, unreadable). */
+  anchorAge?: AnchorAge | null;
 }
 
 export interface AuditChainCheckOptions {
@@ -152,7 +181,7 @@ export interface AuditChainCheckOptions {
   anchorStore?: AuditAnchorStore | null;
 }
 
-const INCIDENT_STATUSES: ReadonlySet<AuditStoreStatus> = new Set(['broken', 'missing', 'error']);
+const INCIDENT_STATUSES: ReadonlySet<AuditStoreStatus> = new Set(['broken', 'missing', 'error', 'stale']);
 
 async function tableExists(client: PoolClient, qualified: string): Promise<boolean> {
   const r = await client.query('SELECT to_regclass($1) IS NOT NULL AS present', [qualified]);
@@ -345,24 +374,53 @@ function describeAnchorBreak(b: AnchorBreak): string {
   return `organization ${b.organizationId}: ${b.kind} (${b.anchoredRows} rows anchored at or before the head, ${now} now)`;
 }
 
-/** audit_logs against the latest chain-head anchor in the evidence bucket (P0-8, DP-04). */
-async function verifyAnchorStore(client: PoolClient, anchorStore: AuditAnchorStore | null): Promise<AuditStoreVerdict> {
+/** The latest anchor's age on this run's clock, or null when no anchor was read. */
+function anchorAgeOf(anchorKey: string | null, anchoredAt: string | null): AnchorAge | null {
+  const at = anchoredAt === null ? NaN : Date.parse(anchoredAt);
+  if (anchorKey === null || anchoredAt === null || Number.isNaN(at)) return null;
+  const hours = Math.round((Date.now() - at) / (HOUR_MS / 10)) / 10;
+  return { anchorKey, anchoredAt, hours, staleAfterHours: ANCHOR_STALE_AFTER_HOURS };
+}
+
+/** audit_logs against the latest chain-head anchor in the evidence bucket (P0-8, DP-04), and how old that anchor is. */
+async function verifyAnchorStore(
+  client: PoolClient,
+  anchorStore: AuditAnchorStore | null,
+): Promise<{ verdict: AuditStoreVerdict; age: AnchorAge | null }> {
   const store = 'audit_logs.anchor';
-  if (!anchorStore) return { store, status: 'unverifiable', reason: ANCHOR_NOT_CONFIGURED };
-  return guarded(store, async () => {
+  if (!anchorStore) return { verdict: { store, status: 'unverifiable', reason: ANCHOR_NOT_CONFIGURED }, age: null };
+  let age: AnchorAge | null = null;
+  const verdict = await guarded(store, async () => {
     const v = await verifyAuditChainAnchor(client, anchorStore);
+    age = anchorAgeOf(v.anchorKey, v.anchoredAt);
     if (v.status === 'broken') {
       return { store, status: 'broken', firstFailure: v.breaks[0]?.rowId, reason: v.breaks.map(describeAnchorBreak).join('; ') };
     }
-    if (v.status === 'ok') {
-      return { store, status: 'ok', reason: `verified against ${v.anchorKey} (${v.organizations} organisation(s), anchored ${v.anchoredAt})` };
-    }
+    if (v.status === 'not_anchored') return { store, status: 'unverifiable', reason: `not verified: ${v.reason}` };
     const archived = v.archived.length ? `: ${v.archived.map(describeAnchorBreak).join('; ')}` : '';
-    return { store, status: 'unverifiable', reason: v.status === 'not_anchored' ? `not verified: ${v.reason}` : `${v.reason}${archived}` };
+    const found = v.status === 'ok'
+      ? `verified against ${v.anchorKey} (${v.organizations} organisation(s), anchored ${v.anchoredAt}, ${age?.hours} hour(s) old)`
+      : `${v.reason}${archived}`;
+    // Strictly older than the limit: an anchor exactly 48 hours old is not yet stale.
+    if (age !== null && Date.now() - Date.parse(age.anchoredAt) > ANCHOR_STALE_AFTER_HOURS * HOUR_MS) {
+      return {
+        store,
+        status: 'stale',
+        reason:
+          `latest anchor is ${age.hours} hour(s) old, past the ${ANCHOR_STALE_AFTER_HOURS}-hour limit: rows written since ` +
+          `${age.anchoredAt} are covered by no anchor, so their removal would not be seen; ${found}`,
+      };
+    }
+    return { store, status: v.status === 'ok' ? 'ok' : 'unverifiable', reason: found };
   });
+  return { verdict, age };
 }
 
-/** Anchor every organisation's head, only over a run that found no incident. */
+/**
+ * Anchor every organisation's head, only over a run that found no incident.
+ * `blocking` is every incident but a stale anchor: today's anchor is what ends
+ * that one.
+ */
 async function writeAnchor(
   client: PoolClient,
   anchorStore: AuditAnchorStore | null,
@@ -412,7 +470,7 @@ function reportSweepOutcome(
   stores: AuditStoreVerdict[],
   failures: AuditStoreName[],
   unverifiable: AuditStoreName[],
-  anchorWrite: AnchorWriteOutcome,
+  { anchorWrite, anchorAge }: { anchorWrite: AnchorWriteOutcome; anchorAge: AnchorAge | null },
   verifiedSummary: string,
 ): void {
   const summary = stores.map(({ store, status, rowsChecked, firstFailure, reason }) => ({
@@ -427,7 +485,7 @@ function reportSweepOutcome(
     // A break is a data-integrity incident: surface loudly for alerting.
     logger.error(
       `AUDIT INTEGRITY FAILURE in ${failures.join(', ')} — investigate immediately`,
-      { failures, stores: summary, anchorWrite },
+      { failures, stores: summary, anchorWrite, anchorAge },
     );
     process.emitWarning(
       `Audit integrity sweep failed: ${failures.join(', ')}`,
@@ -441,10 +499,10 @@ function reportSweepOutcome(
   } else if (unverifiable.length > 0) {
     logger.warn(
       `Audit integrity sweep NOT fully verified: ${unverifiable.join(', ')} could not be checked`,
-      { unverifiable, stores: summary, anchorWrite },
+      { unverifiable, stores: summary, anchorWrite, anchorAge },
     );
   } else {
-    logger.info(`Every audit store verified (${verifiedSummary})`, { anchorWrite });
+    logger.info(`Every audit store verified (${verifiedSummary})`, { anchorWrite, anchorAge });
   }
 }
 
@@ -456,20 +514,21 @@ async function sweepOnce(client: PoolClient, anchorStore: AuditAnchorStore | nul
   const tamperProof = await verifyTamperProofStore(client);
   const triggers = await verifyImmutabilityTriggers(client);
 
-  const stores: AuditStoreVerdict[] = [...auditLogs.verdicts, anchor, ...auditEvents, tamperProof, triggers];
+  const stores: AuditStoreVerdict[] = [...auditLogs.verdicts, anchor.verdict, ...auditEvents, tamperProof, triggers];
   const failures = stores.filter((s) => INCIDENT_STATUSES.has(s.status)).map((s) => s.store);
   const unverifiable = stores.filter((s) => s.status === 'unverifiable').map((s) => s.store);
   const ok = failures.length === 0 && unverifiable.length === 0;
+  const blocking = stores.filter((s) => INCIDENT_STATUSES.has(s.status) && s.status !== 'stale').map((s) => s.store);
 
   // After every store is verified, never before: the anchor records a state
-  // this run found no incident in.
-  const anchorWrite = await writeAnchor(client, anchorStore, failures);
+  // this run found no incident in, a stale anchor aside.
+  const anchorWrite = await writeAnchor(client, anchorStore, blocking);
 
   reportSweepOutcome(
     stores,
     failures,
     unverifiable,
-    anchorWrite,
+    { anchorWrite, anchorAge: anchor.age },
     `audit_logs ${auditLogs.rowsChecked} rows, ` +
       `audit_events ${auditEvents[0].rowsChecked ?? 0} rows, ` +
       `tamper_proof_log ${tamperProof.rowsChecked ?? 0} rows, ` +
@@ -484,6 +543,7 @@ async function sweepOnce(client: PoolClient, anchorStore: AuditAnchorStore | nul
     failures,
     unverifiable,
     anchorWrite,
+    anchorAge: anchor.age,
   };
 }
 
