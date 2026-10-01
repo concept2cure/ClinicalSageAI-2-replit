@@ -10,7 +10,8 @@ import { eq, count, inArray } from 'drizzle-orm';
 import { authMiddleware } from '../auth';
 import { recordAuditRow } from '../services/audit/audit-write-outcome';
 import { staffCrossOrgScope } from '../middleware/staffCrossOrgScope';
-import { CONNECTOR_NOT_A_GENERAL_SETTING, namesClaudeConnector } from '../mcp/auth/connector-enablement';
+import { CONNECTOR_NOT_A_GENERAL_SETTING, ConnectorSettingRefusedError, namesClaudeConnector } from '../mcp/auth/connector-enablement';
+import { overlaySettings, writeTenantSettings, type Settings } from '../services/tenant/tenant-settings-writer';
 
 const router = Router();
 
@@ -501,72 +502,44 @@ router.patch('/:id/settings', validateOrgOwnership, requireOrgAdmin, staffAcross
     // The connector for Claude is the owner's setting, with its own door
     // (PUT /api/tenant-config/:id/claude-connector; P1-47, ADR-0014 §10).
     // requireOrgAdmin admits an administrator, so a body naming it is refused
-    // whole, before anything is written or recorded (P1-49 fix round,
-    // 2026-10-01). This door is still a second settings writer beside
-    // services/tenant/tenant-settings-writer.ts (DP-69).
+    // whole, before anything is read (P1-49 fix round); the writer below
+    // refuses any change to it from this door as well.
     if (namesClaudeConnector(settingsUpdate)) {
       return res.status(403).json({ success: false, error: CONNECTOR_NOT_A_GENERAL_SETTING });
     }
 
-    const [organization] = await db
-      .select()
-      .from(organizations)
-      .where(eq(organizations.id, parseInt(id)));
-
-    if (!organization) {
-      return res.status(404).json({
-        success: false,
-        error: 'Organization not found',
-      });
-    }
-
-    const currentSettings = organization.settings || {};
-    const updatedSettings = { ...currentSettings, ...settingsUpdate };
-
-    // Checked: this used to answer success without looking, so a write that
-    // matched nothing (the own-org write policy, for staff in their own scope)
-    // was reported and audited as a change (D3, 2026-09-26).
-    const written = await db
-      .update(organizations)
-      .set({
-        settings: updatedSettings,
-        updatedAt: new Date(),
-      })
-      .where(eq(organizations.id, parseInt(id)))
-      .returning({ id: organizations.id });
-    if (written.length === 0) {
+    // DP-73 (2026-10-01): through the one settings writer. The stored
+    // settings are read under a row lock, the update laid over them (a
+    // section the body names keeps the keys it does not name, DP-62), and the
+    // change's chained row, with its sections, changed fields and reason,
+    // written in the same transaction: a refused row means no change. This
+    // door used to replace whole sections and record section names after the
+    // change had committed (WO-16C's "the change stands"); the profile door,
+    // above, still does.
+    const stored = await writeTenantSettings(req, parseInt(id), {
+      action: 'tenant_settings_changed',
+      next: (current: Settings) => overlaySettings(current, settingsUpdate as Settings),
+      sections: () => Object.keys(settingsUpdate),
+      reason,
+    });
+    if (!stored) {
       return res.status(404).json({ success: false, error: 'Organization not found' });
     }
-
-    // Audit the changed section keys, not the values — settings sections can
-    // carry integration credentials that must not be duplicated into the log.
-    // WO-16C: the outcome is carried, not discarded (see the profile route).
-    const auditTrail = await recordAuditRow({
-      tenantId: parseInt(id),
-      userId: req.userId ?? (req as any).user?.id,
-      action: 'data_modify',
-      resourceType: 'organization_settings',
-      resourceId: parseInt(id),
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent'] as string,
-      details: {
-        orgAdminAction: 'organization.settings_update',
-        sections: Object.keys(settingsUpdate),
-        reason,
-      },
-    });
 
     res.json({
       success: true,
       message: 'Organization settings updated successfully',
       settings: settingsUpdate,
-      auditTrail,
+      auditTrail: { persisted: true, chained: true },
     });
   } catch (error) {
-    console.error('Error updating organization settings:', error);
+    if (error instanceof ConnectorSettingRefusedError) {
+      return res.status(403).json({ success: false, error: CONNECTOR_NOT_A_GENERAL_SETTING });
+    }
+    console.error('Error updating organization settings:', (error as Error)?.message);
     res.status(500).json({
       success: false,
-      error: 'Failed to update organization settings',
+      error: 'Failed to update organization settings. Nothing was changed.',
     });
   }
 });

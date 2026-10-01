@@ -2952,6 +2952,16 @@ export const C2C_MIGRATION_FILES = [
      the sweep gives it row security. No DROP. */
   'migrations/20261001_vault_document_relationships.sql',
 
+  // ── Which account an organisation's submissions go out under (2026-10-01,
+  //    D7, founder decision) ───────────────────────────────────────────────
+  // Per organisation, agency gateway and environment: the platform's gateway
+  // account or the client's own (credentials encrypted, never returned). Read
+  // by the guarded transmit, which records the mode and sender on every
+  // transmittal. One public table, organization_id INTEGER NOT NULL, so the
+  // sweep below gives it its tenant policy. IF NOT EXISTS only, no DROP.
+  // Evidence docs/evidence/D7/2026-10-01-gateway-account-choice/.
+  'migrations/20261001g_organization_gateway_accounts.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

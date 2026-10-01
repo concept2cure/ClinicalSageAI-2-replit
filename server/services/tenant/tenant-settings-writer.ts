@@ -84,6 +84,11 @@ export interface SettingsWrite {
   /** The sections this write names, given what was stored and what will be. */
   sections: (current: Settings, next: Settings) => string[];
   /**
+   * The reason the door was given for the change, recorded on the row's
+   * reason column (PATCH /api/organizations/:id/settings's governed form, DP-73).
+   */
+  reason?: string | null;
+  /**
    * Set by the connector for Claude's own door only
    * (PUT /api/tenant-config/:tenantId/claude-connector; P1-47, ADR-0014 §10).
    * Any other write that would change that setting is refused below.
@@ -142,6 +147,7 @@ export async function writeTenantSettings(req: Request, tenantId: number, change
       ipAddress: clientIpOf(req) ?? undefined,
       userAgent: req.get('user-agent'),
       details: settingsAuditDetails(current, stored, change.sections(current, stored)),
+      ...(change.reason ? { reason: change.reason } : {}),
     });
     await client.query('COMMIT');
     return stored;
