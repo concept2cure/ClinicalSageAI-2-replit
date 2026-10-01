@@ -214,7 +214,7 @@ async function settleSummaryComment({ api, run }, doc) {
   return `comment ${comment.id} ${created ? 'created and ' : ''}resolved`;
 }
 
-async function submitAndFreezeSummary({ api, run }, doc, reviewer) {
+async function submitAndFreezeSummary({ api, run }, doc, reviewer, signer) {
   const requested = await ensureReviewRequested({ api }, doc.id, reviewer);
   let workflow = 'existing';
   if (doc.status === 'DRAFT') {
@@ -223,24 +223,36 @@ async function submitAndFreezeSummary({ api, run }, doc, reviewer) {
   }
   const wf = must(await api('GET', `/api/authoring/docs/${doc.id}/workflow`), 200, 'read workflow');
   run.record('authoring.summaryReview', { reviewer: reviewer.email, requestedThisRun: requested, workflow, step: wf.steps?.[0] ? { role: wf.steps[0].role, status: wf.steps[0].status } : null });
+  return `review → ${reviewer.email} (${workflow}); ${await freezeSummary({ api, run }, doc, signer)}`;
+}
+
+/** A freeze is a signature (DP-35), so the second signer, the QA reviewer, seals v1.0 for approval as REVIEWER. */
+export async function freezeSummary({ api, run }, doc, signer) {
   let frozen = await api('GET', `/api/authoring/docs/${doc.id}/frozen`);
   let how = 'already frozen';
   if (!(frozen.status === 200 && frozen.json?.contentHash)) {
-    must(await api('POST', `/api/authoring/docs/${doc.id}/freeze`, {
+    if (!signer) {
+      run.note(`Authoring freeze: ${SIGNER_ABSENT}`);
+      run.record('authoring.summaryFrozen', { executed: false, note: SIGNER_ABSENT });
+      return `not frozen — ${SIGNER_ABSENT}`;
+    }
+    must(await signer.api('POST', `/api/authoring/docs/${doc.id}/freeze`, {
       reason: '510(k) Summary settled for regulatory review: reviewer comment resolved, sections 1-9 complete per 21 CFR 807.92.',
-      version: '1.0',
+      version: '1.0', meaning: 'REVIEWER', password: signer.password,
     }), 200, 'freeze document');
     frozen = await api('GET', `/api/authoring/docs/${doc.id}/frozen`);
-    how = 'frozen v1.0';
+    how = `frozen v1.0 by ${signer.email} (REVIEWER)`;
   }
   const f = must(frozen, 200, 'read frozen');
-  run.record('authoring.summaryFrozen', { version: f.version, contentHash: f.contentHash, frozenAt: f.frozenAt, frozenBy: f.frozenBy });
-  return `review → ${reviewer.email} (${workflow}); ${how} (${String(f.contentHash).slice(0, 12)}…)`;
+  run.record('authoring.summaryFrozen', { executed: true, version: f.version, contentHash: f.contentHash, frozenAt: f.frozenAt, frozenBy: f.frozenBy });
+  return `${how} (${String(f.contentHash).slice(0, 12)}…)`;
 }
 
-async function signSummary({ api, run }, docId, signer) {
+export async function signSummary({ api, run }, docId, signer) {
   const sigs = must(await api('GET', `/api/authoring/docs/${docId}/signatures`), 200, 'list signatures').signatures ?? [];
-  const already = signer ? sigs.find((s) => s.signer_email === signer.email) : null;
+  // The approval, not the signer's REVIEWER signature on the freeze.
+  const isApproval = (s) => s.signer_email === signer?.email && s.meaning === 'APPROVER';
+  const already = signer ? sigs.find(isApproval) : null;
   if (!signer || already) {
     if (!signer) run.note(`Authoring e-sign: ${SIGNER_ABSENT}`);
     run.record('authoring.summarySignature', signer
@@ -254,7 +266,7 @@ async function signSummary({ api, run }, docId, signer) {
     password: signer.password, meaning: 'APPROVER',
     intent: 'Approved: the 510(k) Summary v1.0 is accurate and complete per 21 CFR 807.92 and consistent with the dossier documents in the Vault.',
   }), 200, 'e-sign document');
-  const sig = (must(await api('GET', `/api/authoring/docs/${docId}/signatures`), 200, 'list signatures').signatures ?? []).find((s) => s.signer_email === signer.email);
+  const sig = (must(await api('GET', `/api/authoring/docs/${docId}/signatures`), 200, 'list signatures').signatures ?? []).find(isApproval);
   if (!sig) throw new Error('signature not listed after e-sign');
   run.record('authoring.summarySignature', { executed: true, existing: false, id: sig.id, meaning: sig.meaning, signer: sig.signer_email, method: sig.method, coveredFreezeVersion: sig.covered_freeze_version, coveredContentHash: sig.covered_content_hash });
   return `signed by ${sig.signer_email} as ${sig.meaning} over freeze v${sig.covered_freeze_version}`;
@@ -281,7 +293,7 @@ async function seedAuthoring(ctx, programId, signer) {
     return `${out.summary.id} (${out.summary.created ? 'created' : 'existing'}, ${out.summary.sections.length} sections)`;
   });
   await run.step('Authoring: reviewer comment on the 510(k) Summary, resolved', () => settleSummaryComment(ctx, out.summary));
-  await run.step('Authoring: request review, submit to workflow, freeze v1.0', () => submitAndFreezeSummary(ctx, out.summary, reviewer));
+  await run.step('Authoring: request review, submit to workflow, freeze v1.0', () => submitAndFreezeSummary(ctx, out.summary, reviewer, signer));
   await run.step('Authoring: e-sign the frozen 510(k) Summary as the second signer (APPROVER)', () => signSummary(ctx, out.summary.id, signer));
   await run.step('Authoring: Substantial Equivalence Discussion (draft with an open comment)', async () => {
     out.se = await ensureAuthoringDoc(ctx, AUTHORING.se, programId);
@@ -473,7 +485,7 @@ export async function seed(ctx) {
   // Cybersecurity Summary were created org-wide and unbound. Nothing is created
   // org-wide now; a second document in a program is created in it, and a
   // refusal is reported by createAuthoringDoc on the run that meets it.)
-  run.note('Purge coverage: QMS documents are retired and the change-control record deleted through the API; the program, vault documents, authoring documents, submission and sequence have no delete/archive endpoint in the launch API (see purge.retained).');
+  run.note('Purge coverage: QMS documents are retired and the change-control record deleted through the API; the program, vault documents, authoring documents, submission and sequence cannot be removed through the launch API (see purge.retained).');
 }
 
 export async function purge(ctx) {
@@ -500,7 +512,7 @@ export async function purge(ctx) {
     const program = findDemo(must(await api('GET', '/api/c2c/projects?limit=200'), 200, 'list programs').data ?? [], PACK, PROGRAM_NAME, 'title');
     run.record('purge.retained', {
       program: program?.id ?? null,
-      note: 'No API endpoint deletes or archives a program, a vault document, an authoring document (DELETE /api/authoring/docs/:id needs ADMIN_TOKEN and a UAT- product code), a submission or a non-draft sequence; these records stay, titled with the demo prefix.',
+      note: 'No API endpoint deletes or archives a program, a vault document, a submission or a non-draft sequence, and the governed DELETE /api/authoring/docs/:id (owner, admin or manager, with a reason) refuses with 409 a document with revision history, a signature or a seal, which every demo document has; these records stay, titled with the demo prefix.',
     });
     return 'recorded';
   });

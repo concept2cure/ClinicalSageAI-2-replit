@@ -1,0 +1,3 @@
+$ (as committed)
+[regulated-delete-audit] OK — every regulated-table delete has an audit call (or is operator-allow-listed).
+exit=0

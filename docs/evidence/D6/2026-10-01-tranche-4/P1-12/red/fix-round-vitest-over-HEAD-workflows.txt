@@ -1,0 +1,85 @@
+# Fixed suite over HEAD c1f2cb9c's committed workflows (before P1-12): git archive HEAD .github/workflows | tar -x -C <copy>
+# CI_CONTRACT_WORKFLOWS_DIR=<copy>/.github/workflows npx vitest run tests/ci/ci-honesty.contract.test.ts tests/ci/deploy-refuses-unproven-sha.contract.test.ts
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > a ci-verdict job, pinned github-script, with read access to Actions only 21ms
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > every job that builds, migrates, deploys or smoke-tests waits for it 12ms
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > passes when CI, Semgrep and CodeQL all passed on the trunk for this SHA 1ms
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > asks for each required workflow at this SHA, on the trunk, from push events 17ms
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > refuses a SHA whose CI run ended failure 1ms
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > refuses a SHA whose CI run ended cancelled 0ms
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > refuses a SHA whose CI run ended timed_out 0ms
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > refuses a SHA whose CI run ended skipped 0ms
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > refuses a SHA whose CI run ended action_required 1ms
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > refuses a red Semgrep at the SHA even when CI is green 13ms
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > reads the newest run: a red re-run after a green one is red 1ms
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > does not count a green run of another SHA, branch, event or repository 1ms
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > fails closed when the verdict cannot be read 1ms
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > refuses when CI has not finished by the deadline 1ms
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > refuses a SHA CI never ran on 14ms
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > waits for a run in progress and passes once it is green 1ms
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the built image is scanned before it is pushed > build, then trivy image, then push, as three steps 5ms
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the built image is scanned before it is pushed > the scan blocks on HIGH and CRITICAL, with the repository .trivyignore and no blanket exception 4ms
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the built image is scanned before it is pushed > scans the exact tag the build produced and the push sends 1ms
+ ✓ tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: a red verdict stops every job after it > no job in the deploy has continue-on-error (a failed job would not stop the ones after it) 1ms
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: a red verdict stops every job after it > no ci-verdict step has continue-on-error (a failed step would pass the job) 1ms
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: a red verdict stops every job after it > v* tag push: ci-verdict runs, and so does its verdict step 8ms
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: a red verdict stops every job after it > v* tag push: a failing verdict fails ci-verdict and no build, migrate or deploy job runs 0ms
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: a red verdict stops every job after it > v* tag push: with a green verdict the deploy jobs do run (so the check above can fail) 38ms
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: a red verdict stops every job after it > workflow_dispatch deploy_api=true deploy_frontend=true: ci-verdict runs, and so does its verdict step 1ms
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: a red verdict stops every job after it > workflow_dispatch deploy_api=true deploy_frontend=true: a failing verdict fails ci-verdict and no build, migrate or deploy job runs 0ms
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: a red verdict stops every job after it > workflow_dispatch deploy_api=true deploy_frontend=true: with a green verdict the deploy jobs do run (so the check above can fail) 1ms
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the image is pushed only after its scan ran and passed > build-push has a build, an image scan and a push step 42ms
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the image is pushed only after its scan ran and passed > v* tag push: a failed image scan stops the push and fails the job 1ms
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the image is pushed only after its scan ran and passed > v* tag push: a failed build stops the push 18ms
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the image is pushed only after its scan ran and passed > v* tag push: when every step passes, the scan and the push both run 16ms
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the image is pushed only after its scan ran and passed > workflow_dispatch deploy_api=true deploy_frontend=true: a failed image scan stops the push and fails the job 1ms
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the image is pushed only after its scan ran and passed > workflow_dispatch deploy_api=true deploy_frontend=true: a failed build stops the push 1ms
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the image is pushed only after its scan ran and passed > workflow_dispatch deploy_api=true deploy_frontend=true: when every step passes, the scan and the push both run 18ms
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the image is pushed only after its scan ran and passed > whenever the push runs, the scan ran too: no condition skips the scan alone 29ms
+ ✓ tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:server-error-leaks runs on a trunk push, and its failure fails the run 367ms
+ ✓ tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > check:compliance-claims runs on a trunk push, and its failure fails the run 68ms
+ ✓ tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:discarded-audit-write:self-test runs on a trunk push, and its failure fails the run 180ms
+ ✓ tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:discarded-audit-write runs on a trunk push, and its failure fails the run 150ms
+ ✓ tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:session-scoped-rls-bypass runs on a trunk push, and its failure fails the run 182ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:unauthenticated-fetch:selftest runs on a trunk push, and its failure fails the run 25ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:unauthenticated-fetch runs on a trunk push, and its failure fails the run 3ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:drizzle-tenant-scope:selftest runs on a trunk push, and its failure fails the run 1ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:drizzle-tenant-scope runs on a trunk push, and its failure fails the run 2ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:migration-drop-safety:selftest runs on a trunk push, and its failure fails the run 1ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:migration-drop-safety runs on a trunk push, and its failure fails the run 1ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:upload-guards:selftest runs on a trunk push, and its failure fails the run 1ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:upload-guards runs on a trunk push, and its failure fails the run 4ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > no npm gate in pr-checks.yml is pull-request-only 11ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > Semgrep p/ci runs on a trunk push, blocking, with --error 1ms
+ ✓ tests/ci/ci-honesty.contract.test.ts > INF-10: Semgrep runs, blocking, on every trunk push and every pull request > triggers on every push to the trunk: no paths or paths-ignore filter 1ms
+ ✓ tests/ci/ci-honesty.contract.test.ts > INF-10: Semgrep runs, blocking, on every trunk push and every pull request > triggers on every pull request to the trunk (it replaces the p/ci job deleted from pr-checks.yml) 0ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: Semgrep runs, blocking, on every trunk push and every pull request > "Resolve the baseline" runs on a push to concept2cure-v2, and its failure fails the job 1ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: Semgrep runs, blocking, on every trunk push and every pull request > "Blocking scan" runs on a push to concept2cure-v2, and its failure fails the job 1ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: Semgrep runs, blocking, on every trunk push and every pull request > "Resolve the baseline" runs on a pull request to concept2cure-v2, and its failure fails the job 1ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: Semgrep runs, blocking, on every trunk push and every pull request > "Blocking scan" runs on a pull request to concept2cure-v2, and its failure fails the job 1ms
+ ✓ tests/ci/ci-honesty.contract.test.ts > INF-10: Semgrep blocks > keeps the job name the release-evidence policy requires 1ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: Semgrep blocks > has no job-level continue-on-error, and its scan steps none either 1ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: Semgrep blocks > runs a pinned image: a version and a sha256 digest, never :latest 1ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: Semgrep blocks > scans p/default and p/ci in both scans, and the shell is sh -e 2ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: Semgrep blocks > checks out full history, so the baseline commit exists locally 6ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: Semgrep blocks > is the only Semgrep: no other workflow runs one 51ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: the blocking scan, run as written > passes when Semgrep reports nothing new over the baseline 2ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: the blocking scan, run as written > fails when Semgrep finds something the baseline did not have (exit 1) 1ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: the blocking scan, run as written > fails when Semgrep does not finish (exit 2, 7): an unfinished scan is not a pass 9ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: the blocking scan, run as written > fails without scanning when no baseline was resolved 3ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: the full scan for the Security tab fails when it does not finish > exit 0 passes; exit 2 fails 9ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: the full scan for the Security tab fails when it does not finish > runs after a red blocking scan, so the Security tab is still fed 1ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: the baseline is the newest commit whose Semgrep run passed > is a github-script step whose sha output the blocking scan reads 1ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: the baseline is the newest commit whose Semgrep run passed > skips a failed run, a pull-request run and a fork run to reach the last green trunk commit 1ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: the baseline is the newest commit whose Semgrep run passed > a pull request compares against its base 0ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: the baseline is the newest commit whose Semgrep run passed > fails closed when the run history cannot be read 9ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: the baseline is the newest commit whose Semgrep run passed > fails closed when no run ever passed 1ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-24: dependencies install from the lockfile (npm ci) > no workflow step installs the dependency tree with npm install 33ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-24: dependencies install from the lockfile (npm ci) > ci.yml › lint installs with npm ci 19ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-24: dependencies install from the lockfile (npm ci) > ci.yml › build installs with npm ci 20ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-24: dependencies install from the lockfile (npm ci) > ci.yml › security installs with npm ci 31ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-24: dependencies install from the lockfile (npm ci) > ci.yml › nightly-governance installs with npm ci 44ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-24: dependencies install from the lockfile (npm ci) > db-schema-validation.yml › schema-push installs with npm ci 3ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-24: dependencies install from the lockfile (npm ci) > neon-preview-db.yml › preview_db_test installs with npm ci 6ms
+ ✓ tests/ci/ci-honesty.contract.test.ts > INF-24: dependencies install from the lockfile (npm ci) > .npmrc carries legacy-peer-deps, which npm ci reads in place of the flag 0ms
+ Test Files  2 failed (2)
+      Tests  71 failed | 10 passed (81)

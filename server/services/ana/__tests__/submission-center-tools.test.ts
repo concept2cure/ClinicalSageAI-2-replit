@@ -600,8 +600,11 @@ describe('ingestion tools — tenant + input guards', () => {
     // 2026-09-28: a confirm-class call with no identified member is refused by the
     // registry wrapper (writeRoleRefusal) before the handler's tenant guard, and
     // before any role lookup.
-    expect(out.error).toMatch(/needs an identified member of the organization/);
-    expect(out.error).toMatch(/Nothing was changed/);
+    // 2026-10-01 (D5, NEW-P11-B-1a): classify proposes and changes nothing, so
+    // it is a read in the register and the wrapper's write-role refusal no
+    // longer applies; the handler's own tenant guard refuses, still before any
+    // role lookup and any model call.
+    expect(out.error).toMatch(/requires tenant context \(organizationId and userId\)/);
     expect(resolveSignerOrgRole).not.toHaveBeenCalled();
   });
 

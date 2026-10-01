@@ -1,0 +1,8 @@
+[ci:upload-guards] selftest caught: bare site is one site lacking all three
+[ci:upload-guards] selftest caught: guarded site lacks nothing
+[ci:upload-guards] selftest caught: comment is not a site; the real site lacks only fileFilter
+[ci:upload-guards] selftest caught: empty baseline: the two unguarded files fail
+[ci:upload-guards] selftest caught: a reasonless baseline entry fails even at its count
+[ci:upload-guards] selftest caught: a file above its baseline count fails
+[ci:upload-guards] selftest 6/6 caught
+exit=0

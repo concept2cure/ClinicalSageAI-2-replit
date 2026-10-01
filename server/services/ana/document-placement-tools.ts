@@ -36,6 +36,7 @@
 import type { ToolContext } from './AnaToolExecutor.js';
 import type { CommandContext } from '../ana-ri/command-executor.js';
 import { agentAuditDetails, type PolicyCheck } from '../ana-ri/mdx-tool-policy.js';
+import { documentScopeRefusal } from './catalog-scope.js';
 import {
   CHAT_UPLOAD_ID,
   requireCatalog,
@@ -217,6 +218,9 @@ async function handlePlaceProjectDocument(
 
   const doc = await svc.loadDocumentForOrg(parsed.documentId, orgId);
   if (!doc) return unknownDocumentRefusal(parsed.documentId, 'place_project_document');
+  // The open project's documents only (PF-10 S7), before anything is placed.
+  const outOfScope = await documentScopeRefusal(ctx, orgId, doc.programId);
+  if (outOfScope) return outOfScope;
 
   if (!parsed.unfile) {
     const refusal = comprehensionRefusal(doc);

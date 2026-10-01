@@ -27,6 +27,7 @@
 
 import type { ToolContext } from './AnaToolExecutor.js';
 import { requireCatalog, withCaughtErrors, type RegisterFn } from './document-tools-shared.js';
+import { catalogScope } from './catalog-scope.js';
 
 /**
  * What sits OUTSIDE this index no matter how complete the vault side is.
@@ -122,13 +123,17 @@ async function handleSearchDocumentPassages(
   const limit =
     typeof input.limit === 'number' && input.limit > 0 ? Math.min(25, Math.floor(input.limit)) : 8;
 
+  // The open project's documents only (PF-10 S7); the organization's with no project open.
+  const scope = await catalogScope(ctx, orgId, null, 'read');
+  if ('error' in scope) return JSON.stringify({ ok: false, error: scope.error, code: scope.code });
+
   const { searchDocumentPassages, PassageSearchUnavailableError } = await import(
     '../vault/document-passage-search.js'
   );
   try {
     const result = await searchDocumentPassages(
       { organizationId: orgId, organizationUuid: ctx?.organizationUuid, query },
-      { limit },
+      { limit, programId: scope.programId },
     );
     const note = coverageNote(result.coverage);
     return JSON.stringify({

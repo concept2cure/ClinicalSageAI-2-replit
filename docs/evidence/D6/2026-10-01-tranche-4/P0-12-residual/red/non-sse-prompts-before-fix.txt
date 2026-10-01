@@ -1,0 +1,164 @@
+# Working tree after the ana-action fix, before the non-SSE prompt and blocksOnlyAnswer fixes (pendingSignoffFromToolResult absent, send-message not lifting loop proposals)
+# NODE_OPTIONS=--max-old-space-size=3072 npx vitest run server/services/ana-ri/__tests__/chat-turn-proposals.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a platform-command proposal from the tool loop reaches the sign-off prompt > is lifted as the executor built it 5ms
+   → pendingSignoffFromToolResult is not a function
+ × server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a platform-command proposal from the tool loop reaches the sign-off prompt > a Part 11 signature demand is lifted too 1ms
+   → pendingSignoffFromToolResult is not a function
+ × server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a platform-command proposal from the tool loop reaches the sign-off prompt > a command that ran, or was refused, is not a prompt 1ms
+   → pendingSignoffFromToolResult is not a function
+ × server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a platform-command proposal from the tool loop reaches the sign-off prompt > a proposal without the command to retry is not a prompt (nothing to confirm) 0ms
+   → pendingSignoffFromToolResult is not a function
+ × server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a platform-command proposal from the tool loop reaches the sign-off prompt > a tool that writes on its own handler is not lifted: it is confirmable only from a held run 1ms
+   → pendingSignoffFromToolResult is not a function
+ × server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a platform-command proposal from the tool loop reaches the sign-off prompt > an unreadable result is not a prompt 0ms
+   → pendingSignoffFromToolResult is not a function
+ × server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > POST /api/chat returns the loop’s proposals beside the action-block proposals > collects them from the loop’s tool results 4ms
+   → onToolExecution reads each result: expected false to be true // Object.is equality
+ × server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > POST /api/chat returns the loop’s proposals beside the action-block proposals > puts them in executedCommands 1ms
+   → the loop proposals join the envelope: expected false to be true // Object.is equality
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a reply that was only blocks says what happened > a proposal: nothing has changed yet 1ms
+ × server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a reply that was only blocks says what happened > only refusals: it does not say anything was executed 1ms
+   → expected 'Action executed successfully.' not to match /executed successfully/i
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a reply that was only blocks says what happened > everything ran: it says so 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a platform-command proposal from the tool loop reaches the sign-off prompt > is lifted as the executor built it
+TypeError: pendingSignoffFromToolResult is not a function
+ ❯ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts:47:12
+     45|   it('is lifted as the executor built it', () => {
+     46|     const p = proposal('update_task');
+     47|     expect(pendingSignoffFromToolResult('execute_platform_command', pl…
+       |            ^
+     48|   });
+     49|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a platform-command proposal from the tool loop reaches the sign-off prompt > a Part 11 signature demand is lifted too
+TypeError: pendingSignoffFromToolResult is not a function
+ ❯ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts:52:12
+     50|   it('a Part 11 signature demand is lifted too', () => {
+     51|     const p = { ...proposal('place_in_dossier', 'esignature'), error: …
+     52|     expect(pendingSignoffFromToolResult('execute_platform_command', pl…
+       |            ^
+     53|   });
+     54|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a platform-command proposal from the tool loop reaches the sign-off prompt > a command that ran, or was refused, is not a prompt
+TypeError: pendingSignoffFromToolResult is not a function
+ ❯ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts:58:12
+     56|     const ran = { success: true, action: 'list_tasks', message: '3 tas…
+     57|     const denied = { success: false, action: 'update_task', error: 'RB…
+     58|     expect(pendingSignoffFromToolResult('execute_platform_command', pl…
+       |            ^
+     59|     expect(pendingSignoffFromToolResult('execute_platform_command', pl…
+     60|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a platform-command proposal from the tool loop reaches the sign-off prompt > a proposal without the command to retry is not a prompt (nothing to confirm)
+TypeError: pendingSignoffFromToolResult is not a function
+ ❯ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts:64:12
+     62|   it('a proposal without the command to retry is not a prompt (nothing…
+     63|     const p = { ...proposal('update_task'), data: { tier: 'confirm' } …
+     64|     expect(pendingSignoffFromToolResult('execute_platform_command', pl…
+       |            ^
+     65|   });
+     66|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a platform-command proposal from the tool loop reaches the sign-off prompt > a tool that writes on its own handler is not lifted: it is confirmable only from a held run
+TypeError: pendingSignoffFromToolResult is not a function
+ ❯ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts:70:12
+     68|     // registerToolHandler's wrapper answers with the same proposal sh…
+     69|     const p = proposal('save_document_to_vault');
+     70|     expect(pendingSignoffFromToolResult('save_document_to_vault', JSON…
+       |            ^
+     71|   });
+     72|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a platform-command proposal from the tool loop reaches the sign-off prompt > an unreadable result is not a prompt
+TypeError: pendingSignoffFromToolResult is not a function
+ ❯ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts:74:12
+     72|
+     73|   it('an unreadable result is not a prompt', () => {
+     74|     expect(pendingSignoffFromToolResult('execute_platform_command', 'n…
+       |            ^
+     75|     expect(pendingSignoffFromToolResult('execute_platform_command', JS…
+     76|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > POST /api/chat returns the loop’s proposals beside the action-block proposals > collects them from the loop’s tool results
+AssertionError: onToolExecution reads each result: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts:83:122
+     81|
+     82|   it('collects them from the loop’s tool results', () => {
+     83|     expect(/pendingSignoffFromToolResult\(\s*toolName\s*,\s*result\s*\…
+       |                                                                                                                          ^
+     84|   });
+     85|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > POST /api/chat returns the loop’s proposals beside the action-block proposals > puts them in executedCommands
+AssertionError: the loop proposals join the envelope: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts:88:79
+     86|   it('puts them in executedCommands', () => {
+     87|     expect(/executedCommands:\s*\w+\.length > 0/.test(src), 'the respo…
+     88|     expect(/loopProposals/.test(src), 'the loop proposals join the env…
+       |                                                                               ^
+     89|   });
+     90| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a reply that was only blocks says what happened > only refusals: it does not say anything was executed
+AssertionError: expected 'Action executed successfully.' not to match /executed successfully/i
+
+- Expected:
+/executed successfully/i
+
++ Received:
+"Action executed successfully."
+
+ ❯ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts:100:24
+     98|     const denied = { success: false, action: 'create_artifact', error:…
+     99|     const answer = blocksOnlyAnswer([denied]);
+    100|     expect(answer).not.toMatch(/executed successfully/i);
+       |                        ^
+    101|     expect(answer).toContain('Nothing was changed');
+    102|     expect(answer).toContain(denied.message);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed | 2 passed (11)
+   Start at  06:01:10
+   Duration  872ms (transform 148ms, setup 145ms, import 36ms, tests 20ms, environment 0ms)
+

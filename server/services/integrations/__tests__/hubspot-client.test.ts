@@ -11,6 +11,17 @@ import {
   searchHubSpotCrm,
 } from '../hubspot-client';
 
+/* 2026-10-01 (D6, decision P-8): the deployment's own account serves only the
+   organisation PLATFORM_INTEGRATIONS_ORGANIZATION_ID names. This suite tests
+   the client's own behaviour as that organisation;
+   platform-integration-owner.test.ts tests the rule, through this client, for
+   every other caller. */
+vi.mock('../platform-integration-owner', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  callerOwnsPlatformIntegrations: () => true,
+}));
+
+
 describe('hubspot-client', () => {
   const realFetch = global.fetch;
   afterEach(() => {

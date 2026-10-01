@@ -6,8 +6,26 @@
  * exists it returns 409, so it can only ever run once on an empty database.
  * This replaces the publicly-known demo admin (SEED_DEMO_USER=false) for real
  * private deployments — the operator creates their own admin on first boot.
+ *
+ * ── Who may run it (D1, 2026-10-01) ──────────────────────────────────────────
+ * The first account becomes the first administrator, with no e-mail
+ * verification and a session in the response. Open to anyone, a fresh
+ * deployment belonged to whoever reached it first, who could also register the
+ * owner's own address: the one PLATFORM_ADMIN_EMAILS and BUSINESS_CENTER_EMAILS
+ * name (terraform/stack), which admits that account to every organisation. So
+ * in production the route takes the deployment's own secret, SETUP_TOKEN (the
+ * stack generates it into Secrets Manager), in the X-Setup-Token header, and is
+ * closed without one. Holding that secret is the operator's proof of authority,
+ * which is why the address it names is not verified by mail. Elsewhere a
+ * configured token is required too; with none the route stays open for local
+ * installs.
+ *
+ * Two first calls at once both passed the user count and both created an
+ * organisation and an administrator. The create transaction now takes an
+ * advisory lock and counts again under it.
  */
-import { Router, type Request, type Response } from 'express';
+import crypto from 'node:crypto';
+import { Router, type NextFunction, type Request, type Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
@@ -43,6 +61,50 @@ const initializeSchema = z.object({
   organizationName: z.string().min(2),
 });
 
+/** The header that carries the deployment's setup token. */
+export const SETUP_TOKEN_HEADER = 'X-Setup-Token';
+/** Shorter than this is not a secret; a deployment configured with one is closed. */
+const SETUP_TOKEN_MIN_LENGTH = 32;
+
+type SetupGate = { ok: true } | { ok: false; status: 403; code: 'SETUP_CLOSED' | 'SETUP_TOKEN_INVALID'; message: string };
+
+/** Whether this request may run first-run setup (module header, "Who may run it"). */
+function setupTokenGate(req: Request): SetupGate {
+  const configured = process.env.SETUP_TOKEN ?? '';
+  const production = process.env.NODE_ENV === 'production';
+  if (!configured && !production) return { ok: true };
+  if (configured.length < SETUP_TOKEN_MIN_LENGTH) {
+    return {
+      ok: false,
+      status: 403,
+      code: 'SETUP_CLOSED',
+      message: 'First-run setup is closed on this deployment: it needs the setup token the deployment was created with (SETUP_TOKEN), and none is configured.',
+    };
+  }
+  const presented = req.get(SETUP_TOKEN_HEADER) ?? '';
+  const digest = (v: string) => crypto.createHash('sha256').update(v, 'utf8').digest();
+  if (!presented || !crypto.timingSafeEqual(digest(presented), digest(configured))) {
+    return {
+      ok: false,
+      status: 403,
+      code: 'SETUP_TOKEN_INVALID',
+      message: `The setup token in ${SETUP_TOKEN_HEADER} is missing or does not match this deployment's.`,
+    };
+  }
+  return { ok: true };
+}
+
+/** Middleware form of {@link setupTokenGate}: refuses before the body is read. */
+function requireSetupToken(req: Request, res: Response, next: NextFunction): void {
+  const gate = setupTokenGate(req);
+  if (gate.ok) return next();
+  logger.warn('First-run setup refused', { code: gate.code });
+  res.status(gate.status).json({ success: false, error: { code: gate.code, message: gate.message } });
+}
+
+/** Thrown inside the create transaction when another first call got there first. */
+class AlreadyInitializedError extends Error {}
+
 async function userCount(): Promise<number> {
   const [row] = await db!.select({ count: sql<number>`count(*)::int` }).from(users);
   return row?.count ?? 0;
@@ -59,7 +121,7 @@ router.get('/status', async (_req: Request, res: Response) => {
   }
 });
 
-router.post('/initialize', setupLimiter, async (req: Request, res: Response) => {
+router.post('/initialize', setupLimiter, requireSetupToken, async (req: Request, res: Response) => {
   if (!db) {
     return res
       .status(503)
@@ -109,6 +171,13 @@ router.post('/initialize', setupLimiter, async (req: Request, res: Response) => 
     await assertCanAdmitNewTenant();
 
     const result = await db.transaction(async tx => {
+      // One first call at a time, and the count again under the lock: two
+      // concurrent calls both passed the count above.
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext('c2c:first-run-setup'))`);
+      // tenant-isolation-safe: first-run setup counts every account on the install, before any tenant exists
+      const { rows } = await tx.execute(sql`SELECT count(*)::int AS count FROM users`);
+      if (Number((rows[0] as { count?: unknown } | undefined)?.count ?? 0) > 0) throw new AlreadyInitializedError();
+
       const [org] = await tx
         .insert(organizations)
         .values({ name: organizationName, slug, industryMode: 'biotech', tier })
@@ -170,6 +239,12 @@ router.post('/initialize', setupLimiter, async (req: Request, res: Response) => 
       user: { id: result.user.id, email: result.user.email, name: result.user.name },
     });
   } catch (error: any) {
+    if (error instanceof AlreadyInitializedError) {
+      return res.status(409).json({
+        success: false,
+        error: { code: 'ALREADY_INITIALIZED', message: 'Setup has already been completed' },
+      });
+    }
     logger.error('Setup initialize error', { err: error?.message ?? String(error) });
     return res
       .status(500)

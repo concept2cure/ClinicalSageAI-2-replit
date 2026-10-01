@@ -1,15 +1,15 @@
 {
   "documentId": "TM-001",
-  "generatedAt": "2026-10-01T08:41:02.467Z",
+  "generatedAt": "2026-10-01T16:34:06.653Z",
   "generator": "scripts/validation/build-traceability.mjs",
   "runDate": "2026-09-27",
   "summary": {
-    "requirements": 75,
+    "requirements": 80,
     "pass": 69,
     "partial": 2,
     "fail": 0,
     "open": 0,
-    "uncovered": 4
+    "uncovered": 9
   },
   "byApp": {
     "Projects": {
@@ -21,12 +21,12 @@
       "uncovered": 0
     },
     "Vault": {
-      "requirements": 14,
+      "requirements": 19,
       "pass": 10,
       "partial": 0,
       "fail": 0,
       "open": 0,
-      "uncovered": 4
+      "uncovered": 9
     },
     "Authoring": {
       "requirements": 15,
@@ -835,6 +835,86 @@
         "risk": "high: changed bytes filed under a capture's name, a source filed into the wrong project, or a partial batch read as done would put the wrong evidence in the Vault",
         "assurance": "scripted",
         "rationale": "OQ-VAULT-15. The byte-check, antivirus, cross-tenant, cross-project, superseded and viewer cases are in `tests/db/vault-data-room-file.dbtest.ts`, on PostgreSQL with RLS on"
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-VAULT-015",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "A person confirms the suggested filings in one folder together, with one reason for change that is required, and is recorded on each document's filing and in its own audit row. Each document is confirmed on its own. A document whose folder or status changed since the person loaded the list is refused, and not touched. The answer names each document, and the batch reports when not every filing was confirmed. The Vault shows how many suggested filings await confirmation, counted over the whole program.",
+      "part11": "§11.10(e)",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "Confirm suggested filings together with one required reason, each with its own audit row; a filing changed since the list was loaded is refused",
+        "risk": "high: a confirmation without a reason, or one that lands on a placement the person did not see, puts a machine's guess in the dossier under a person's name",
+        "assurance": "scripted",
+        "rationale": "OQ-VAULT-16. The reason, conflict, viewer and count cases are in `tests/db/vault-placement-batch.dbtest.ts`, on PostgreSQL with RLS on"
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-VAULT-016",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "Two versions of one document are compared: whether their bytes are the same (from the recorded SHA-256s), each recorded detail that differs, and the lines of their extracted text that changed, unchanged runs collapsed. A comparison that was capped says so. A version with no extracted text gets no text comparison and the answer names it. Versions of different documents are refused, and another organisation's document is not found.",
+      "part11": "none",
+      "risk": "medium",
+      "steps": [],
+      "ra": {
+        "intendedUse": "Compare two versions of one document: bytes, details and text",
+        "risk": "medium: a comparison that hides a change, or shows two documents as versions of one, misleads a reviewer, but changes no record",
+        "assurance": "scripted",
+        "rationale": "OQ-VAULT-17. The family, tenancy, missing-text and refusal cases are in `tests/db/vault-version-compare.dbtest.ts`; the caps and the edit budget in `server/services/vault/__tests__/vault-version-compare.test.ts`"
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-VAULT-017",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "A search across every project the organisation holds finds documents by title, file name and content, each named with its project, ranked, paginated with a real total, current versions unless earlier ones are asked for. Another organisation's documents are never among them. An empty query answers no results, and a failed search is reported as a failure, not as no matches. A project's own search still searches only that project.",
+      "part11": "§11.10(d)",
+      "risk": "medium",
+      "steps": [],
+      "ra": {
+        "intendedUse": "Search every project of the organisation at once",
+        "risk": "medium: the risk is disclosure across tenants, which RLS and the statement's own organisation predicate each prevent; a missed hit misleads but changes no record",
+        "assurance": "scripted",
+        "rationale": "OQ-VAULT-18. The cross-tenant, version and empty-query cases are in `tests/db/vault-library-search.dbtest.ts`, and the predicate itself in `server/services/vault/__tests__/vault-search.test.ts`"
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-VAULT-018",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "A person can re-prove every stored version of a program: each is re-read through the verifier downloads use and checked against the SHA-256 recorded at ingest. Each verdict (verified, altered, missing, unreadable, or unverifiable when no SHA-256 was recorded) is written to the audit chain against that version, naming the person. The answer gives the counts and names every version that was not verified, and says when the program has more versions than one check covers. A viewer is refused.",
+      "part11": "§11.10(c), §11.10(e)",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "Re-prove every stored version against its recorded SHA-256, each verdict chained",
+        "risk": "high: undetected alteration or loss of a stored record defeats ALCOA \"original\"; a check that called a changed file intact would be worse than none",
+        "assurance": "scripted",
+        "rationale": "OQ-VAULT-19 on an untampered installation. The altered and missing cases, with real files changed on disk, and the chained verdicts are in `tests/db/vault-fixity.dbtest.ts`; unreadable, unverifiable and the batch limit in `server/services/vault/__tests__/vault-fixity.test.ts`"
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-VAULT-019",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "A person can relate one Vault version to another version of the organisation, in any of its projects, as supported by, references or based on it, with an optional note. Both documents list the relationship, each in its own words, and a related version that has since been superseded says so. A document cannot be related to itself or to another version of itself, nor twice in the same way, nor to another organisation's document. Removing a relationship requires a reason for change and keeps the record; nothing changes or deletes a relationship otherwise. Each relate and removal is written to the audit chain against both documents, naming the person. A viewer is refused.",
+      "part11": "§11.10(c), §11.10(e)",
+      "risk": "medium",
+      "steps": [],
+      "ra": {
+        "intendedUse": "Relate one Vault version to another, remove a relationship with a reason, each change chained on both documents",
+        "risk": "medium: a relationship is context a reviewer follows, not the record itself, so a wrong one misleads but alters no document; a relationship that changed or vanished silently, or reached another organisation's document, would be a data-integrity and confidentiality failure",
+        "assurance": "scripted",
+        "rationale": "OQ-VAULT-20. The refusals (self, same document, duplicate, unknown kind, another organisation's document or project, a viewer), the table's refusal of every other change, DELETE and TRUNCATE for every role, row security, and the tenant purge are in `tests/db/vault-document-relationships.dbtest.ts`"
       },
       "verdict": "uncovered"
     },

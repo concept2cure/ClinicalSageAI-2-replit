@@ -77,7 +77,7 @@ import { AuthoringRevisionDiff } from '../surfaces/AuthoringRevisionDiff';
 import { AuthoringAiDraft, type AcceptedAttribution } from '../surfaces/AuthoringAiDraft';
 import { AuthoringExports } from '../surfaces/AuthoringExports';
 import { RichSectionEditor, type RichSectionEditorHandle } from './RichSectionEditor';
-import type { SuggestionDecision } from './suggestions';
+import type { SuggestionAuthor, SuggestionDecision } from './suggestions';
 import type { CommentAnchorPayload } from './commentAnchor';
 import { citedSourceIdsInHtml } from './citationNode';
 import { captionedObjectsInHtml } from './captionNumbering';
@@ -663,6 +663,19 @@ const STATUSES = ['all', 'draft', 'in_review', 'approved', 'frozen'];
 /** The document rows the host lists — the shape GET /api/authoring/docs returns. */
 export type { AuthDoc };
 
+/** What an embedding host may do with the open section (see `embedded.onEditorBridge`). */
+export interface EditorBridge {
+  docId: string;
+  sectionCode: string;
+  sectionTitle: string;
+  /** False while the document is sealed: open and readable, but nothing can be inserted. */
+  editable: boolean;
+  /** The document and section open, as this editor's own chat sends them; null with no project. */
+  authoringContext: AuthoringContextPack | null;
+  /** Insert text as an attributed tracked suggestion; false when the section cannot take it. */
+  insert: (text: string, author: SuggestionAuthor) => boolean;
+}
+
 export interface DocumentWorkbenchProps {
   onNav: (id: string) => void;
   liveDrive?: OwnedSurfaceViewProps['liveDrive'];
@@ -688,7 +701,16 @@ export interface DocumentWorkbenchProps {
    *  the document canvas's bar does — so this component does not draw a
    *  second one into its crumb trail. `onBack` is still the one callback the
    *  way back runs, whoever draws the control. */
-  embedded?: { onBack: () => void; backLabel?: string; hostShowsBack?: boolean } | null;
+  embedded?: {
+    onBack: () => void;
+    backLabel?: string;
+    hostShowsBack?: boolean;
+    /** The host is told which section is open and given its suggestion door,
+     *  or null with no section open. A sealed document is reported as not editable. */
+    onEditorBridge?: (bridge: EditorBridge | null) => void;
+    /** A section the host asks to show; each new nonce is one request. */
+    focusSection?: { id: string; nonce: number } | null;
+  } | null;
   /** Surface-action bus id to register under, or null to register nothing —
    *  the canvas must not claim the bus while ConversationThread is on. */
   surfaceActionId?: string | null;
@@ -1084,6 +1106,19 @@ export function DocumentWorkbench({
     [dirty, activeSectionId, activeDocId, applyNav]
   );
 
+  /* The host asking for a section (the conversation canvas: "Ask AnA to draft"
+     opens the editor at it). Through requestLeave, so unsaved text in the open
+     section is held for the author to decide. Each request is applied once,
+     when its section is in the list, and never again on a later reload. */
+  const focusSection = embedded?.focusSection ?? null;
+  const appliedFocusRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!focusSection || appliedFocusRef.current === focusSection.nonce) return;
+    if (!sections.some(s => s.id === focusSection.id)) return;
+    appliedFocusRef.current = focusSection.nonce;
+    requestLeave({ kind: 'section', id: focusSection.id });
+  }, [focusSection, sections, requestLeave]);
+
   /** Save through the editor's one save path, then move. A refused save keeps
    *  the author here with the text intact — the toast says why. */
   const saveAndLeave = useCallback(async () => {
@@ -1137,6 +1172,33 @@ export function DocumentWorkbench({
       activeSection?.title,
     ]
   );
+  /* Embedded in the conversation, this workbench draws no AnA rail of its
+     own, and that rail held the one control that put AnA's text into the
+     section ("Insert into … as tracked suggestion"). So it hands the host the
+     same door instead: the open section, and an insert through the editor's
+     `insertSuggestion`, which refuses honestly when the section cannot take
+     it (2026-10-01, the canvas → editor work). It hands over this editor's
+     own `authoringContext` too, so the host's turns name the document and
+     section the person has open, as this editor's own chat does. A sealed
+     document is still open, so it is still reported, as not editable. */
+  const onEditorBridge = embedded?.onEditorBridge;
+  useEffect(() => {
+    if (!onEditorBridge) return undefined;
+    if (!activeSection || !activeDocId) {
+      onEditorBridge(null);
+      return undefined;
+    }
+    onEditorBridge({
+      docId: activeDocId,
+      sectionCode: activeSection.code,
+      sectionTitle: activeSection.title,
+      editable: !docSealed,
+      authoringContext,
+      insert: (text, author) => editorRef.current?.insertSuggestion(text, author) ?? false,
+    });
+    return () => onEditorBridge(null);
+  }, [onEditorBridge, activeDocId, activeSection, docSealed, authoringContext]);
+
   /* With no project open there is no AuthoringContextPack to build (it requires
      a projectId), so the document/section identity still travels as module
      context rather than being dropped. */

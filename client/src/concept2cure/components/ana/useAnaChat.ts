@@ -808,7 +808,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       // wired to consume rich context but the client never sends any —
       // so AnA falls back to detecting project / submission type from the
       // user's message text alone.
-      const ac = options.authoringContext ?? null;
+      const ac = sendOpts?.authoringContext ?? options.authoringContext ?? null;
       const submissionTypeForContext = ac?.submissionType ?? options.submissionType ?? undefined;
       const projectContext =
         ac || options.projectName || submissionTypeForContext

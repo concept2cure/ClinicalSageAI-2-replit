@@ -1,0 +1,76 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":20,"time":"2026-10-01T06:46:52.153Z","pid":22423,"hostname":"vm","context":{"table":"purge_audit_probe_no_such_table"},"msg":"[tenant-offboarding] Purge skipped a table not present in this schema"}
+{"level":40,"time":"2026-10-01T06:46:52.177Z","pid":22423,"hostname":"vm","context":{"organizationId":90623,"purgedByUserId":4242,"retentionOverride":null,"finalExportDigest":"p123_22423_mup68kex-digest","deletedRows":{"purge_audit_probe_rows":2}},"msg":"[tenant-offboarding] Tenant purged"}
+{"level":30,"time":"2026-10-01T06:46:52.252Z","pid":22423,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+ × tests/db/tenant-purge-audit.dbtest.ts > a purge writes one chained audit row > on the purged organisation’s own chain: who, which organisation, when, the export it relied on, what it deleted 141ms
+   → sequenced on the tenant chain: expected null not to be null
+{"level":30,"time":"2026-10-01T06:46:52.253Z","pid":22423,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T06:46:52.253Z","pid":22423,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/tenant-purge-audit.dbtest.ts > a purge writes one chained audit row > outlives the full purge list, run the way the route runs it
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ × tests/db/tenant-purge-audit.dbtest.ts > a purge writes one chained audit row > outlives the full purge list, run the way the route runs it 357ms
+   → new row violates row-level security policy for table "audit_logs"
+ × tests/db/tenant-purge-audit.dbtest.ts > a purge whose audit row cannot be written does not happen > rolls back every delete and the status change, and rejects 30ms
+   → an unrecorded purge must destroy nothing: expected +0 to be 2 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/tenant-purge-audit.dbtest.ts > a purge writes one chained audit row > on the purged organisation’s own chain: who, which organisation, when, the export it relied on, what it deleted
+AssertionError: sequenced on the tenant chain: expected null not to be null
+ ❯ tests/db/tenant-purge-audit.dbtest.ts:148:64
+    146|     });
+    147|     expect(row.sha256_chain, 'the row is a link in the chain, not a lo…
+    148|     expect(row.chain_seq, 'sequenced on the tenant chain').not.toBeNul…
+       |                                                                ^
+    149|
+    150|     const details = row.new_values;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/db/tenant-purge-audit.dbtest.ts > a purge writes one chained audit row > outlives the full purge list, run the way the route runs it
+error: new row violates row-level security policy for table "audit_logs"
+ ❯ node_modules/pg/lib/client.js:652:17
+ ❯ writeChainedAuditRow server/services/auditService.ts:304:3
+    302|   // say writes exactly the row it always wrote.
+    303|   const reason = typeof entry.reason === 'string' && entry.reason.trim…
+    304|   await client.query(
+       |   ^
+    305|     `INSERT INTO audit_logs
+    306|        (id, tenant_id, user_id, action, table_name, record_id,
+ ❯ recordPurge server/services/tenant/tenant-purge-audit.ts:64:3
+ ❯ purgeInOneTransaction server/services/tenant/tenant-offboarding.ts:643:7
+ ❯ purgeTenant server/services/tenant/tenant-offboarding.ts:698:17
+ ❯ tests/db/tenant-purge-audit.dbtest.ts:172:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 133, severity: 'ERROR', code: '42501', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'execMain.c', routine: 'ExecWithCheckOptions' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/db/tenant-purge-audit.dbtest.ts > a purge whose audit row cannot be written does not happen > rolls back every delete and the status change, and rejects
+AssertionError: an unrecorded purge must destroy nothing: expected +0 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 0
+
+ ❯ tests/db/tenant-purge-audit.dbtest.ts:202:74
+    200|     ).rejects.toThrow(/audit store refused/);
+    201|
+    202|     expect(await rowsLeft(), 'an unrecorded purge must destroy nothing…
+       |                                                                          ^
+    203|     expect((await organization()).status).toBe('pending_deletion');
+    204|     expect(await purgeAuditRows()).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  06:46:48
+   Duration  4.53s (transform 2.11s, setup 130ms, import 3.02s, tests 941ms, environment 0ms)
+

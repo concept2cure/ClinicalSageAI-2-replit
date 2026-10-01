@@ -86,6 +86,7 @@ import {
   AUDIT_CHAIN_ORDER_ASC_SQL,
   type ChainVerificationResult,
 } from '../services/audit/chain.js';
+import { tenantChainVerdict } from '../services/audit/audited-export.js';
 
 const logger = createScopedLogger('audit-trail-ledger-routes');
 
@@ -510,9 +511,29 @@ const AUDIT_EVENTS_SQL = `
  * verdict. audit_events has its own per-organisation chain and is not covered
  * here (`store` says so).
  */
-export interface AuditLedgerChainVerdict extends Omit<ChainVerificationResult, 'tenants'> {
+/**
+ * The tenant chain's verdict as this organization may read it
+ * (services/audit/audited-export.ts tenantChainVerdict): `ok: null` with a
+ * `reason` when there was nothing to verify, and a break that names only this
+ * organization's own rows.
+ */
+export interface AuditLedgerChainVerdict {
   store: 'audit_logs';
+  ok: boolean | null;
+  rowsChecked: number;
+  legacyRows: number;
+  sequencedRows: number;
+  reason?: string;
+  brokenAt?: Record<string, unknown>;
 }
+
+/** The verifier's walk, stated for `orgId`. */
+const ledgerVerdict = (orgId: number, v: Omit<ChainVerificationResult, 'tenants'>): AuditLedgerChainVerdict => ({
+  store: 'audit_logs',
+  legacyRows: v.legacyRows,
+  sequencedRows: v.sequencedRows,
+  ...tenantChainVerdict(orgId, v),
+});
 
 export interface AuditLedgerResponse {
   success: true;
@@ -559,15 +580,7 @@ export async function readAuditLedger(
   const sources: Record<AuditLedgerSource, number> = { audit_logs: 0, audit_events: 0 };
   for (const e of merged) sources[e.source] += 1;
   // Whole chain (not the window), on a scope that can see cross-tenant legacy links.
-  const v = await verifyTenantChain(orgId);
-  const chain: AuditLedgerChainVerdict = {
-    store: 'audit_logs',
-    ok: v.ok,
-    rowsChecked: v.rowsChecked,
-    legacyRows: v.legacyRows,
-    sequencedRows: v.sequencedRows,
-    ...(v.brokenAt ? { brokenAt: v.brokenAt } : {}),
-  };
+  const chain = ledgerVerdict(orgId, await verifyTenantChain(orgId));
   return { success: true, data: merged, sources, meta: { chain } };
 }
 
@@ -628,20 +641,7 @@ export async function readRecordAuditHistory(
     ...withSignature(auditLogEntry(r), signatures.get(String(r.id))),
     prevHash: r.prev_hash == null ? '' : String(r.prev_hash),
   }));
-  const v = await verifyTenantChain(orgId);
-  return {
-    data,
-    meta: {
-      chain: {
-        store: 'audit_logs',
-        ok: v.ok,
-        rowsChecked: v.rowsChecked,
-        legacyRows: v.legacyRows,
-        sequencedRows: v.sequencedRows,
-        ...(v.brokenAt ? { brokenAt: v.brokenAt } : {}),
-      },
-    },
-  };
+  return { data, meta: { chain: ledgerVerdict(orgId, await verifyTenantChain(orgId)) } };
 }
 
 // ─── Router Factory ───────────────────────────────────────────────────────────

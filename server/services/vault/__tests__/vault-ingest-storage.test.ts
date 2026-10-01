@@ -339,4 +339,19 @@ describe('the retention clock starts at admission (P1-22)', () => {
     expect(insert!.params[12]).toBe('gxp-25y');
     expect(insert!.sql).toMatch(/retention_until = COALESCE\(vault\.documents\.retention_until, EXCLUDED\.retention_until\)/);
   });
+
+  it("dates from the organisation's own period, else the 25-year default, and never earlier than a named policy (ADR-0014 §6)", async () => {
+    const { client, calls } = txClient();
+    connect.mockResolvedValue(client);
+    await ingestVaultDocument(args());
+    const insert = calls.find(c => /INSERT INTO vault\.documents/.test(c.sql));
+    expect(insert, 'no INSERT ran').toBeTruthy();
+    // The organisation's row, keyed by the same parameter as organization_id ($27) …
+    expect(insert!.sql).toMatch(/SELECT s\.retention_years FROM organization_retention_settings s WHERE s\.organization_id = \$27/);
+    // … falling back to the default, bound as a parameter rather than written into the SQL …
+    expect(insert!.sql).toMatch(/COALESCE\([\s\S]*?\$30::integer\)/);
+    expect(insert!.params[29]).toBe(25);
+    // … and the LATER of that and the named policy's date.
+    expect(insert!.sql).toMatch(/GREATEST\(\s*\(CURRENT_DATE \+ make_interval\(years =>/);
+  });
 });

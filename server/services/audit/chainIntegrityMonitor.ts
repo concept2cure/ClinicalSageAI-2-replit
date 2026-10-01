@@ -28,6 +28,7 @@
 
 import { Pool } from 'pg';
 import { runWithSystemTenantScope } from '../../db/tenantStore';
+import { readLatestWindowResult, runScheduledOncePerWindow, windowKeyOf } from '../../db/scheduledOnce';
 import { createScopedLogger } from '../../utils/logger';
 import {
   recordBackgroundJobRun,
@@ -219,6 +220,7 @@ export function findBrokenChainLinks(
 const DEFAULT_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
 let _monitorTimer: ReturnType<typeof setInterval> | null = null;
+let _bootTimer: ReturnType<typeof setTimeout> | null = null;
 let _pool: Pool | null = null;
 let _checkInProgress = false;
 let _status: ChainMonitorStatus = {
@@ -229,6 +231,42 @@ let _status: ChainMonitorStatus = {
   details: [],
   intervalMs: DEFAULT_INTERVAL_MS,
 };
+
+/**
+ * Record a break in the audit trail of each organisation whose chain broke,
+ * naming only that organisation's links. Until 2026-10-01 one event went to
+ * organisation 1 (hard-coded) with every tenant's link details, and never to
+ * the organisation whose records were affected.
+ */
+async function recordChainFailureEvents(pool: Pool, brokenDetails: BrokenChainLink[]): Promise<void> {
+  const byOrg = new Map<number, BrokenChainLink[]>();
+  for (const link of brokenDetails) {
+    const list = byOrg.get(link.orgId) ?? [];
+    list.push(link);
+    byOrg.set(link.orgId, list);
+  }
+  for (const [orgId, links] of byOrg) {
+    try {
+      // entity_id is INTEGER per the schema. Use 0 as a sentinel for
+      // system-originated events (the entity is the chain itself, not a
+      // domain row). entity_type carries the human-readable scope.
+      await pool.query(
+        `INSERT INTO audit_events
+          (organization_id, event_type, entity_type, entity_id, user_id, user_name,
+           user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant)
+         VALUES ($1, 'audit.chain_integrity_failure', 'audit_chain.monitor', 0, 0, 'system',
+                 'system', '127.0.0.1', NOW(), $2, $3, true, true)`,
+        [
+          orgId,
+          `Chain integrity check failed: ${links.length} broken link(s) in this organisation's audit trail`,
+          JSON.stringify({ brokenLinks: links.slice(0, 20), brokenLinkCount: links.length }),
+        ]
+      );
+    } catch (logErr: any) {
+      logger.error('failed to log integrity failure event', { orgId, err: logErr?.message });
+    }
+  }
+}
 
 /**
  * Run a single integrity check.
@@ -320,25 +358,7 @@ async function runCheck(): Promise<ChainMonitorStatus> {
           sample: brokenDetails.slice(0, 5),
         });
 
-        // Record the integrity failure as its own audit event
-        try {
-          // entity_id is INTEGER per the schema. Use 0 as a sentinel for
-          // system-originated events (the entity is the chain itself, not a
-          // domain row). entity_type carries the human-readable scope.
-          await _pool!.query(
-            `INSERT INTO audit_events
-              (organization_id, event_type, entity_type, entity_id, user_id, user_name,
-               user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant)
-             VALUES (1, 'audit.chain_integrity_failure', 'audit_chain.monitor', 0, 0, 'system',
-                     'system', '127.0.0.1', NOW(), $1, $2, true, true)`,
-            [
-              `Chain integrity check failed: ${brokenDetails.length} broken links detected`,
-              JSON.stringify({ brokenLinks: brokenDetails.slice(0, 20), totalEntries: rows.length }),
-            ]
-          );
-        } catch (logErr: any) {
-          logger.error('failed to log integrity failure event', { err: logErr?.message });
-        }
+        await recordChainFailureEvents(_pool!, brokenDetails);
       } else if (isHealthy) {
         // The §11.10(e) continuous-monitoring evidence line. It may only be
         // written when every one of `entries` rows actually carried a hash and
@@ -397,20 +417,52 @@ export function startChainMonitor(pool: Pool, intervalMs: number = DEFAULT_INTER
   logger.info('starting audit chain integrity monitor', { intervalSeconds: intervalMs / 1000 });
 
   // Run first check after a short delay (let the server finish starting)
-  setTimeout(() => {
-    runCheck();
+  _bootTimer = setTimeout(() => {
+    _bootTimer = null;
+    void runScheduledCheck();
   }, 10_000);
 
   // Then run on interval
   _monitorTimer = setInterval(() => {
-    runCheck();
+    void runScheduledCheck();
   }, intervalMs);
+}
+
+/** The job's name in scheduled_job_claims, and the key its shared status is read by. */
+const MONITOR_JOB = 'audit-chain-monitor';
+
+/**
+ * One scheduled tick. Every server process (two API tasks and the worker)
+ * starts this monitor; one of them scans each interval window and records the
+ * status it found in the window's claim (U19). The others skip — the window is
+ * covered, so their heartbeat records a live tick — and serve the recorded
+ * status through getSharedChainMonitorStatus. Until 2026-10-01 each process
+ * scanned all of audit_events every five minutes and wrote its own failure
+ * event per break.
+ */
+export async function runScheduledCheck(): Promise<void> {
+  try {
+    const outcome = await runScheduledOncePerWindow(MONITOR_JOB, windowKeyOf(_status.intervalMs), () => runCheck(), {
+      storeResult: true,
+    });
+    if (!outcome.ran) recordBackgroundJobRun(BACKGROUND_JOB.AUDIT_CHAIN_MONITOR, { ok: true, processed: 0 });
+  } catch (err: any) {
+    // The claim itself could not be taken (the database is unreachable): the
+    // check did not run anywhere this process can vouch for.
+    logger.error('scheduled check could not claim its window', { err: err?.message });
+    _status = erroredStatus(_status, `chain integrity scan could not be scheduled: ${err?.message ?? String(err)}`);
+    recordBackgroundJobRun(BACKGROUND_JOB.AUDIT_CHAIN_MONITOR, { ok: false, error: err?.message });
+  }
 }
 
 /**
  * Stop the background monitor.
  */
 export function stopChainMonitor(): void {
+  if (_bootTimer) {
+    clearTimeout(_bootTimer);
+    _bootTimer = null;
+  }
   if (_monitorTimer) {
     clearInterval(_monitorTimer);
     _monitorTimer = null;
@@ -419,10 +471,30 @@ export function stopChainMonitor(): void {
 }
 
 /**
- * Get the current monitor status (for health endpoints).
+ * This process's own view: the last check IT ran (scheduled or on demand).
  */
 export function getChainMonitorStatus(): ChainMonitorStatus {
   return { ..._status };
+}
+
+/**
+ * The status to serve: the latest check any process ran, as that run recorded
+ * it, or this process's own when it is newer (an on-demand check here). A
+ * shared status that cannot be read is reported as an error — "could not
+ * tell" — never as this process's possibly idle or stale view.
+ */
+export async function getSharedChainMonitorStatus(): Promise<ChainMonitorStatus> {
+  let shared: { result: ChainMonitorStatus | null; finishedAt: string } | null;
+  try {
+    shared = await readLatestWindowResult<ChainMonitorStatus>(MONITOR_JOB);
+  } catch (err: any) {
+    return erroredStatus(_status, `could not read the shared monitor status: ${err?.message ?? String(err)}`);
+  }
+  const local = { ..._status };
+  const recorded = shared?.result;
+  if (!recorded?.lastCheckAt) return local;
+  if (local.lastCheckAt && local.lastCheckAt > recorded.lastCheckAt) return local;
+  return { ...recorded, intervalMs: local.intervalMs };
 }
 
 /**

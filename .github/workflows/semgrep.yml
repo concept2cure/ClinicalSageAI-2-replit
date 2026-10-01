@@ -24,40 +24,116 @@ concurrency:
 
 jobs:
   semgrep:
+    # The release-evidence policy names this job; keep the name.
     name: Analyze (Semgrep)
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    # Advisory, not blocking. This scan was previously dead (wrong branch
-    # filter + an invalid image tag + `--config=auto` with `--metrics=off`,
-    # which is a hard error). Now that it runs on the canonical branch, keep
-    # it non-blocking so pre-existing repo-wide findings surface in the
-    # Security tab without gating every PR. Ratchet to blocking once the
-    # backlog is triaged.
-    continue-on-error: true
+    timeout-minutes: 40
+    # Blocking (security audit 2026-09-24 INF-10, plan P1-12). This job used to
+    # be job-level continue-on-error, ran `semgrep/semgrep:latest`, passed no
+    # `--error` and ended its scan step with `exit 0`, so no finding could fail
+    # it. The p/ci scan in pr-checks.yml was no better: semgrep-action@v1 runs
+    # semgrep 1.36.0, which crashes on the registry's current rules ("invalid
+    # rule severity value: MEDIUM") and reports success. Both scans now run
+    # here, on every push, pull request and schedule.
+    #
+    # What blocks is what a commit ADDS. A full scan on 2026-10-01 reported 719
+    # p/default findings, and a ruleset change on the registry side can add more
+    # overnight, so `--error` over the whole tree would only ever be red. The
+    # blocking scan diffs against a baseline commit (semgrep --baseline-commit):
+    # the newest trunk commit whose run of THIS job passed. Not the previous
+    # push — then a red commit becomes the next push's baseline and its finding
+    # is waved through. A finding stays red until it is fixed, or marked inline
+    # as a reviewed false positive with `nosemgrep: <rule-id>` and a reason.
+    #
+    # Pinned by tests/ci/ci-honesty.contract.test.ts;
+    # evidence docs/evidence/D6/2026-10-01-tranche-4/P1-12/.
     container:
-      image: semgrep/semgrep:latest
+      # Version AND digest: the tag is mutable, the digest is what runs. This is
+      # the image `latest` resolved to when the 719-finding scan above ran.
+      # Change both together when upgrading.
+      image: semgrep/semgrep:1.177.0@sha256:acaac22ffc7b7cc5926de0751b223bce0b2491c33d18422fa72f632c78d81198
+    defaults:
+      run:
+        # The image is Alpine; say which shell runs the steps instead of
+        # depending on whether bash happens to be installed.
+        shell: sh
+    env:
+      SEMGREP_CONFIGS: --config=p/default --config=p/ci
     steps:
       - name: Checkout repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          # The baseline commit must exist locally for --baseline-commit.
+          fetch-depth: 0
 
-      - name: Run Semgrep
-        id: semgrep_scan
+      - name: Resolve the baseline (the newest trunk commit whose Semgrep run passed)
+        id: baseline
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            const TRUNK = 'concept2cure-v2';
+            if (context.eventName === 'pull_request') {
+              const base = context.payload.pull_request && context.payload.pull_request.base && context.payload.pull_request.base.sha;
+              if (!base) return core.setFailed('This pull request event names no base commit, so there is nothing to compare against; that is not a pass.');
+              core.info(`Baseline: the pull request base, ${base}.`);
+              return core.setOutput('sha', base);
+            }
+            const { owner, repo } = context.repo;
+            let runs;
+            try {
+              const res = await github.rest.actions.listWorkflowRuns({ owner, repo, workflow_id: 'semgrep.yml', branch: TRUNK, status: 'success', per_page: 50 });
+              runs = res.data.workflow_runs || [];
+            } catch (err) {
+              return core.setFailed(`Could not read Semgrep's run history (${err.status || err.message}). A scan with no baseline is not a pass.`);
+            }
+            const own = `${owner}/${repo}`;
+            const green = runs.find((r) => r.conclusion === 'success' && r.event !== 'pull_request' && r.head_branch === TRUNK
+              && r.head_repository && r.head_repository.full_name === own && /^[0-9a-f]{40}$/.test(r.head_sha));
+            if (!green) return core.setFailed(`No passing Semgrep run on ${TRUNK} to compare against. A scan with no baseline is not a pass.`);
+            core.info(`Baseline: ${green.head_sha}, the newest ${TRUNK} commit whose Semgrep run passed (run ${green.id}).`);
+            core.setOutput('sha', green.head_sha);
+
+      - name: Blocking scan — nothing the baseline commit did not already have
+        env:
+          BASELINE: ${{ steps.baseline.outputs.sha }}
         run: |
-          set +e
-          # A named ruleset (not `auto`) so it works with metrics disabled —
-          # `--config=auto` requires metrics to be on. Do not pass `--error`:
-          # findings are reported via SARIF, they do not fail the run.
-          semgrep scan \
-            --config=p/default \
-            --metrics=off \
-            --sarif \
-            --output=semgrep.sarif
-          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
-          # Guarantee a SARIF file exists so the upload steps never hard-fail.
-          if [ ! -f semgrep.sarif ]; then
-            echo '{"version":"2.1.0","$schema":"https://json.schemastore.org/sarif-2.1.0.json","runs":[]}' > semgrep.sarif
+          if [ -z "$BASELINE" ]; then
+            echo "::error::No baseline commit was resolved. A scan with nothing to compare against is not a pass."
+            exit 1
           fi
-          exit 0
+          # The checkout belongs to the runner user and this container runs as
+          # root; without this, git (and so --baseline-commit) refuses the tree.
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          echo "Findings this commit adds over $BASELINE:"
+          status=0
+          # SEMGREP_CONFIGS is a list of --config flags and is split on purpose.
+          # shellcheck disable=SC2086
+          semgrep scan $SEMGREP_CONFIGS --metrics=off --error \
+            --baseline-commit "$BASELINE" \
+            --sarif-output="$RUNNER_TEMP/semgrep-new.sarif" || status=$?
+          case "$status" in
+            0) echo "No Semgrep finding that $BASELINE did not already have." ;;
+            1)
+              echo "::error::Semgrep found what $BASELINE did not have (listed above). Fix it, or mark a reviewed false positive inline with 'nosemgrep: <rule-id>' and the reason."
+              exit 1 ;;
+            *)
+              echo "::error::Semgrep did not finish (exit $status). An unfinished scan is not a pass. Exit 2 also means the baseline commit is not in this checkout's history."
+              exit "$status" ;;
+          esac
+
+      - name: Full scan for the Security tab
+        # Runs after a red blocking scan too, so code scanning keeps the whole
+        # picture: a SARIF of only the NEW findings would close every existing
+        # alert. Reporting only; it fails if the scan does not finish.
+        if: ${{ !cancelled() }}
+        run: |
+          status=0
+          # shellcheck disable=SC2086
+          semgrep scan $SEMGREP_CONFIGS --metrics=off --sarif --output=semgrep.sarif || status=$?
+          if [ "$status" -ne 0 ]; then
+            echo "::error::The full Semgrep scan did not finish (exit $status)."
+            exit "$status"
+          fi
 
       - name: Upload Semgrep SARIF to code scanning
         if: always()

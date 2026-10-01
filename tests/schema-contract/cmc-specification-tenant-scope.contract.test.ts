@@ -103,7 +103,7 @@ vi.mock('../../server/services/cmc-write-through', () => ({
   // `.ok` off it, so `undefined` here 500s the route under test.
   writeThroughSpecification: async () => ({ ok: true }),
 }));
-const gov = vi.hoisted(() => ({ signatures: 0 }));
+const gov = vi.hoisted(() => ({ signatures: 0, signatureRows: 0 }));
 vi.mock('../../server/routes/c2c/actions', () => ({
   verifyReauth: async () => ({ ok: true }),
   recordGovernedAction: async () => {
@@ -111,6 +111,20 @@ vi.mock('../../server/routes/c2c/actions', () => ({
     return { actionId: 'a', sha256Chain: 'h' };
   },
 }));
+// The electronic_signatures row the approval writes beside its ledger sign
+// (P0-10b): counted, so a refused act is shown to have written neither.
+vi.mock('../../server/services/part11/signature-persistence', async (orig) => ({
+  ...(await orig<Record<string, unknown>>()),
+  persistGovernedActionSignature: async () => {
+    gov.signatureRows += 1;
+    return { id: 1, signedAt: new Date() };
+  },
+}));
+
+// The signer's role from the membership row (§11.10(g)): an admin here, so the
+// approvals below are decided by tenant scope alone. The refusal of a role
+// without authority is pinned in server/api/cmc/__tests__/cmc-sign-signature-row.test.ts.
+vi.mock('../../server/services/part11/resolve-signer-role', () => ({ resolveSignerOrgRole: async () => 'admin' }));
 
 import specificationRouter from '../../server/api/cmc/specificationRoutes';
 
@@ -151,6 +165,7 @@ beforeEach(async () => {
   h.holder.pg = pg;
   h.holder.afterQuery = null;
   gov.signatures = 0;
+  gov.signatureRows = 0;
   currentTenant = 1;
 
   const owned = await pg.query<{ id: string }>(
@@ -349,6 +364,7 @@ describe('approve fails closed when the record vanishes mid-transaction', () => 
     expect(res.body.success).toBe(false);
     // No e-signature may be attributed to a record that is not there.
     expect(gov.signatures, 'a governed signature was recorded for a nonexistent specification').toBe(0);
+    expect(gov.signatureRows).toBe(0);
   }, 60_000);
 
   it('writes no audit-log row attesting the phantom approval', async () => {
@@ -380,5 +396,56 @@ describe('approve fails closed when the record vanishes mid-transaction', () => 
     expect(res.status).toBe(200);
     expect((await specRow(ownedId)).approval_status).toBe('approved');
     expect(gov.signatures).toBe(1);
+    expect(gov.signatureRows).toBe(1);
+  }, 60_000);
+});
+
+/**
+ * A specification is created unsigned (P0-10b fix round, DP-02).
+ *
+ * The route's own comments said approval "can ONLY happen" at POST /:id/approve,
+ * and the PUT ignored approvalStatus, but the create did not: createSpecSchema
+ * took approvalStatus as any string and the INSERT wrote it, so
+ * `POST / { approvalStatus: 'approved' }` stored an approved specification with
+ * no re-authentication, no ledger sign, no signature row and an audit row that
+ * named 'system' as the actor; the write-through then carried 'approved' into
+ * the Module 3 source object. Create now takes only the two unsigned states the
+ * client sends (draft, review; client/src/concept2cure/v2/surfaces/cmcSpec.ts)
+ * and refuses anything else, and the audit row names the authenticated user.
+ */
+describe('a specification is created unsigned', () => {
+  const NEW_SPEC = { projectId: PROJECT, materialType: 'drug-substance', materialName: 'Created by the test' };
+  const createdRows = async () =>
+    (await h.holder.pg.query(`SELECT approval_status FROM quality_specifications WHERE material_name = $1`, [NEW_SPEC.materialName])).rows;
+
+  it("refuses approvalStatus 'approved' and stores nothing", async () => {
+    currentTenant = 1;
+    const res = await request(app).post('/api/cmc/specifications').send({ ...NEW_SPEC, approvalStatus: 'approved' });
+    expect(res.status, `create stored a specification as approved: ${JSON.stringify(res.body)}`).toBe(400);
+    expect(JSON.stringify(res.body)).toContain('/api/cmc/specifications/:id/approve');
+    expect(await createdRows()).toEqual([]);
+    expect(gov.signatures + gov.signatureRows).toBe(0);
+  }, 60_000);
+
+  it.each([
+    [undefined, 'draft'],
+    ['draft', 'draft'],
+    ['review', 'review'],
+  ])('creates with approvalStatus %s as %s', async (approvalStatus, stored) => {
+    currentTenant = 1;
+    const res = await request(app).post('/api/cmc/specifications').send({ ...NEW_SPEC, approvalStatus });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(await createdRows()).toEqual([{ approval_status: stored }]);
+  }, 60_000);
+
+  it("records the authenticated user as the creator, not 'system'", async () => {
+    currentTenant = 1;
+    const res = await request(app).post('/api/cmc/specifications').send(NEW_SPEC);
+    expect(res.status).toBe(201);
+    const log = await h.holder.pg.query(
+      `SELECT changed_by FROM specification_audit_log WHERE specification_id = $1 AND action = 'created'`,
+      [res.body.data.id],
+    );
+    expect(log.rows).toEqual([{ changed_by: '42' }]);
   }, 60_000);
 });

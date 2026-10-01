@@ -9,7 +9,7 @@
  * `insert` and no `execute`: a write moved out of the transaction fails here
  * instead of passing unobserved.
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 type Op =
   | { op: 'insert'; table: string; values: any; onConflictDoNothing: boolean }
@@ -21,6 +21,12 @@ const state = vi.hoisted(() => ({
   ops: [] as Op[],
   /** Table whose insert the fake rejects, as RLS refuses a write in production. */
   refuseInsertInto: null as string | null,
+  /**
+   * The transaction-scoped advisory lock, as PostgreSQL holds it: taken by
+   * `pg_advisory_xact_lock`, released when that transaction ends. A second
+   * transaction asking for it waits.
+   */
+  lockTail: Promise.resolve() as Promise<void>,
 }));
 
 vi.hoisted(() => {
@@ -49,10 +55,13 @@ vi.mock('../../db', async () => {
     const name = getTableName(table);
     const rec = { op: 'insert' as const, table: name, values: undefined as any, onConflictDoNothing: false };
     state.ops.push(rec);
-    const settle = () =>
-      state.refuseInsertInto === name
-        ? Promise.reject(new Error(`new row violates row-level security policy for table "${name}"`))
-        : Promise.resolve([rowFor(name)]);
+    const settle = () => {
+      if (state.refuseInsertInto === name) {
+        return Promise.reject(new Error(`new row violates row-level security policy for table "${name}"`));
+      }
+      if (name === 'users') state.userRows += 1;
+      return Promise.resolve([rowFor(name)]);
+    };
     const chain: any = {
       values: (v: unknown) => ((rec.values = v), chain),
       onConflictDoNothing: () => ((rec.onConflictDoNothing = true), chain),
@@ -68,17 +77,35 @@ vi.mock('../../db', async () => {
       return { where: () => Promise.resolve([]) };
     },
   });
-  const execute = async (query: any) => {
-    const { sql, params } = dialect.sqlToQuery(query);
-    state.ops.push({ op: 'execute', sql, params });
-    return { rows: [] };
-  };
   const db = {
     select: () => ({ from: () => Promise.resolve([{ count: state.userRows }]) }),
-    transaction: async (cb: any) => cb({ insert, select, execute }),
+    transaction: async (cb: any) => {
+      let release: () => void = () => {};
+      const execute = async (query: any) => {
+        const { sql, params } = dialect.sqlToQuery(query);
+        state.ops.push({ op: 'execute', sql, params });
+        if (/pg_advisory_xact_lock/.test(sql)) {
+          const held = state.lockTail;
+          state.lockTail = new Promise<void>((r) => (release = r));
+          await held;
+        }
+        if (/count\(\*\)/i.test(sql)) return { rows: [{ count: state.userRows }] };
+        return { rows: [] };
+      };
+      try {
+        return await cb({ insert, select, execute });
+      } finally {
+        release();
+      }
+    },
   };
   return { db, pool: {}, getPool: () => ({}), getDb: () => db };
 });
+
+// The route's limiter (10 calls per 15 minutes per address) is one store for
+// the whole file, and this file makes more calls than that from one address.
+// No case here is about the limiter.
+vi.mock('express-rate-limit', () => ({ default: () => (_req: unknown, _res: unknown, next: () => void) => next() }));
 
 // The session registry's Redis tier is away; the memory tier answers. The
 // bootstrap token must open its session through openSession like every other
@@ -121,6 +148,9 @@ describe('first-run setup — /api/setup', () => {
     state.userRows = 0;
     state.ops = [];
     state.refuseInsertInto = null;
+    state.lockTail = Promise.resolve();
+    delete process.env.SETUP_TOKEN;
+    process.env.NODE_ENV = 'test';
     vi.mocked(openSession).mockClear();
   });
 
@@ -177,6 +207,10 @@ describe('first-run setup — /api/setup', () => {
     expect(res.status).toBe(201);
 
     expect(trace()).toEqual([
+      // Serialised: the lock, then the count again under it (see the
+      // concurrent-first-calls case below).
+      `execute SELECT pg_advisory_xact_lock(hashtext('c2c:first-run-setup')) []`,
+      'execute SELECT count(*)::int AS count FROM users []',
       'insert organizations',
       'insert users',
       'insert organization_users',
@@ -212,5 +246,89 @@ describe('first-run setup — /api/setup', () => {
     expect(res.status).toBe(409);
     expect(res.body.error.code).toBe('ALREADY_INITIALIZED');
     expect(state.ops).toEqual([]);
+  });
+});
+
+/**
+ * The first account on a deployment is its first administrator, created with
+ * no e-mail verification and handed a session. With the route open to anyone
+ * in production, whoever reached a fresh deployment first owned it, and could
+ * register the owner's own address: the address PLATFORM_ADMIN_EMAILS and
+ * BUSINESS_CENTER_EMAILS name, which then admits that account to every
+ * organisation. In production the route takes the deployment's own secret.
+ */
+describe('first-run setup — needs the deployment\'s setup token in production', () => {
+  const TOKEN = `setup-${'k'.repeat(40)}`;
+  beforeEach(() => {
+    state.userRows = 0;
+    state.ops = [];
+    state.lockTail = Promise.resolve();
+    delete process.env.SETUP_TOKEN;
+  });
+  afterEach(() => {
+    process.env.NODE_ENV = 'test';
+    delete process.env.SETUP_TOKEN;
+  });
+
+  it('is closed in production when no setup token is configured — 403, nothing written', async () => {
+    process.env.NODE_ENV = 'production';
+    const res = await request(makeApp()).post('/api/setup/initialize').send(VALID);
+    expect(res.status).toBe(403);
+    expect(res.body.error.code).toBe('SETUP_CLOSED');
+    expect(res.body.token).toBeUndefined();
+    expect(state.ops).toEqual([]);
+  });
+
+  it('is closed in production when the configured token is too short to be a secret', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.SETUP_TOKEN = 'short';
+    const res = await request(makeApp()).post('/api/setup/initialize').set('X-Setup-Token', 'short').send(VALID);
+    expect(res.status).toBe(403);
+    expect(res.body.error.code).toBe('SETUP_CLOSED');
+    expect(state.ops).toEqual([]);
+  });
+
+  it('refuses a missing or wrong token — 403, nothing written', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.SETUP_TOKEN = TOKEN;
+    for (const header of [undefined, `${TOKEN}x`, TOKEN.slice(1)]) {
+      const req = request(makeApp()).post('/api/setup/initialize');
+      const res = await (header === undefined ? req : req.set('X-Setup-Token', header)).send(VALID);
+      expect(res.status).toBe(403);
+      expect(res.body.error.code).toBe('SETUP_TOKEN_INVALID');
+    }
+    expect(state.ops).toEqual([]);
+  });
+
+  it('admits the configured token, in any environment that configures one', async () => {
+    process.env.SETUP_TOKEN = TOKEN;
+    const refused = await request(makeApp()).post('/api/setup/initialize').send(VALID);
+    expect(refused.status).toBe(403);
+    const res = await request(makeApp()).post('/api/setup/initialize').set('X-Setup-Token', TOKEN).send(VALID);
+    expect(res.status).toBe(201);
+  });
+});
+
+describe('first-run setup — two first calls at once create one administrator', () => {
+  beforeEach(() => {
+    state.userRows = 0;
+    state.ops = [];
+    state.lockTail = Promise.resolve();
+  });
+
+  // Both pass the count before the transaction (no user yet). Without the lock
+  // and the count under it, both created an organisation and an administrator
+  // and both received a session.
+  it('admits one and refuses the other as already initialised', async () => {
+    const app = makeApp();
+    const [a, b] = await Promise.all([
+      request(app).post('/api/setup/initialize').send(VALID),
+      request(app).post('/api/setup/initialize').send({ ...VALID, email: 'second@acme.test' }),
+    ]);
+    expect([a.status, b.status].sort()).toEqual([201, 409]);
+    expect(state.ops.filter((o) => o.op === 'insert' && o.table === 'users')).toHaveLength(1);
+    const refused = a.status === 409 ? a : b;
+    expect(refused.body.error.code).toBe('ALREADY_INITIALIZED');
+    expect(refused.body.token).toBeUndefined();
   });
 });

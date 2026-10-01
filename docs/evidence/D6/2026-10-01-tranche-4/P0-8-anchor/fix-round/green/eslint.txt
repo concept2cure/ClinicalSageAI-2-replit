@@ -1,0 +1,4 @@
+# ESLint on this round's files (repo config)
+2026-10-01T08:45:34Z
+$ npx eslint server/services/audit/chain-anchor.ts server/jobs/auditChainIntegritySweep.ts server/services/audit/__tests__/chain-anchor.test.ts server/services/audit/__tests__/chain-anchor.dbtest.ts
+exit=0

@@ -1,0 +1,121 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts
+{
+  "timestamp": "2026-10-01T13:55:42.936Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T13:55:42.937Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts
+{
+  "timestamp": "2026-10-01T13:55:42.937Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > moving an artifact to review stays the reason tier > runs on a reason, with no password asked for 31ms
+ × server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > approving or locking an artifact is an electronic signature > approved on a reason alone: refused, nothing run 12ms
+   → {"success":true,"data":{"success":true,"message":"Signed."}}: expected 200 to be 400 // Object.is equality
+ × server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > approving or locking an artifact is an electronic signature > locked on a reason alone: refused, nothing run 4ms
+   → {"success":true,"data":{"success":true,"message":"Signed."}}: expected 200 to be 400 // Object.is equality
+ × server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > approving or locking an artifact is an electronic signature > approved declared as RELEASE: refused before the password is checked, nothing run 4ms
+   → {"success":true,"data":{"success":true,"message":"Signed."}}: expected 200 to be 400 // Object.is equality
+ × server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > approving or locking an artifact is an electronic signature > approved declared as AUTHOR: refused before the password is checked, nothing run 4ms
+   → {"success":true,"data":{"success":true,"message":"Signed."}}: expected 200 to be 400 // Object.is equality
+ × server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > approving or locking an artifact is an electronic signature > locked declared as APPROVER: refused before the password is checked, nothing run 3ms
+   → {"success":true,"data":{"success":true,"message":"Signed."}}: expected 200 to be 400 // Object.is equality
+ × server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > approving or locking an artifact is an electronic signature > locked declared as REVIEWER: refused before the password is checked, nothing run 4ms
+   → {"success":true,"data":{"success":true,"message":"Signed."}}: expected 200 to be 400 // Object.is equality
+ × server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > approving or locking an artifact is an electronic signature > approved declared as APPROVER and re-authenticated: runs with a verified signature meaning approval 5ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+ × server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > approving or locking an artifact is an electronic signature > locked declared as RELEASE and re-authenticated: runs with a verified signature meaning release 5ms
+   → expected "vi.fn()" to be called 1 times, but got 0 times
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > approving or locking an artifact is an electronic signature > approved on a reason alone: refused, nothing run
+ FAIL  server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > approving or locking an artifact is an electronic signature > locked on a reason alone: refused, nothing run
+AssertionError: {"success":true,"data":{"success":true,"message":"Signed."}}: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts:93:50
+     91|     const res = await post(status);
+     92|
+     93|     expect(res.status, JSON.stringify(res.body)).toBe(400);
+       |                                                  ^
+     94|     expect(res.body.error?.code ?? res.body.code).toMatch(/SIGNATURE_M…
+     95|     expect(executed).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > approving or locking an artifact is an electronic signature > approved declared as RELEASE: refused before the password is checked, nothing run
+ FAIL  server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > approving or locking an artifact is an electronic signature > approved declared as AUTHOR: refused before the password is checked, nothing run
+ FAIL  server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > approving or locking an artifact is an electronic signature > locked declared as APPROVER: refused before the password is checked, nothing run
+ FAIL  server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > approving or locking an artifact is an electronic signature > locked declared as REVIEWER: refused before the password is checked, nothing run
+AssertionError: {"success":true,"data":{"success":true,"message":"Signed."}}: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts:106:50
+    104|     const res = await post(status, { password: 'wrong' }, meaning);
+    105|
+    106|     expect(res.status, JSON.stringify(res.body)).toBe(400);
+       |                                                  ^
+    107|     expect(JSON.stringify(res.body)).toContain('SIGNATURE_MEANING_MISM…
+    108|     expect(reverify).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > approving or locking an artifact is an electronic signature > approved declared as APPROVER and re-authenticated: runs with a verified signature meaning approval
+ FAIL  server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts > approving or locking an artifact is an electronic signature > locked declared as RELEASE and re-authenticated: runs with a verified signature meaning release
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+ ❯ server/routes/ana-ri/__tests__/governedActionArtifactSignature.test.ts:119:22
+    117|
+    118|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    119|     expect(reverify).toHaveBeenCalledTimes(1);
+       |                      ^
+    120|     expect(executed[0].ctx.signoff).toMatchObject({ signatureVerified:…
+    121|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 1 passed (9)
+   Start at  13:55:40
+   Duration  5.59s (transform 3.58s, setup 108ms, import 154ms, tests 4.98s, environment 0ms)
+

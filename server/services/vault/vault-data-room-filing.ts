@@ -140,6 +140,7 @@ async function fileOne(input: DataRoomFileInput, src: SourceUpload): Promise<Dat
       // for one; recorded as OTHER, as a Vault upload without a choice is.
       documentType: 'OTHER',
       capturedChecksum: src.checksum,
+      dataRoomSourceId: src.id,
       ipAddress: input.ipAddress,
       userAgent: input.userAgent,
     });

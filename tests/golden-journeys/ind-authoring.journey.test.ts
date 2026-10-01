@@ -539,7 +539,8 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
     await R.step('freeze-document', async () => {
       const res = await asUser(AUTHOR)(
         request(app).post(`/api/authoring/docs/${docId}/freeze`),
-      ).send({ reason: 'Pre-signature freeze for IND submission' });
+        // DP-35 (2026-10-01): a freeze is signed — its meaning and the re-verified password.
+      ).send({ reason: 'Pre-signature freeze for IND submission', meaning: 'AUTHOR', password: AUTHOR_PASSWORD });
       expect(res.status).toBe(200);
       const frozen = await asUser(AUTHOR)(
         request(app).get(`/api/authoring/docs/${docId}/frozen`),
@@ -626,7 +627,9 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
         [docId],
       );
       const emails = sigs.rows.map((r) => (r as { signer_email: string }).signer_email);
-      expect(emails).toEqual([AUTHOR.email, APPROVER.email]);
+      // DP-35 (2026-10-01): the freeze is itself a signature, so the author signs
+      // twice — sealing it, then attesting authorship — before the approver.
+      expect(emails).toEqual([AUTHOR.email, AUTHOR.email, APPROVER.email]);
       return { signers: sigs.rows };
     });
 
@@ -641,7 +644,7 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
       );
       expect(res.status).toBe(200);
       const list = res.body.signatures as { signer_email: string; meaning: string; method: string }[];
-      expect(list).toHaveLength(2);
+      expect(list).toHaveLength(3); // the signed freeze, the author's e-sign, the approval
       expect(new Set(list.map((s) => s.meaning))).toEqual(new Set(['AUTHOR', 'APPROVER']));
       // What the ceremony verified: the password, no second factor enrolled.
       expect(list.every((s) => s.method === 'password')).toBe(true);
@@ -685,7 +688,7 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
         signature_digest: string; covered_freeze_version: string | null;
         covered_content_hash: string | null;
       }[];
-      expect(rows.length).toBe(2);
+      expect(rows.length).toBe(3); // the signed freeze (DP-35), the author's e-sign, the approval
 
       for (const r of rows) {
         // The link: each signature names the snapshot in force when it was made.

@@ -1,0 +1,14 @@
+# GREEN: terraform validate on the stack and both environment roots (init -backend=false), working tree after the change
+# 2026-10-01T07:03:49Z
+$ cd terraform/stack && terraform init -backend=false && terraform validate -no-color
+Success! The configuration is valid.
+
+exit=0
+$ cd terraform/environments/production && terraform init -backend=false && terraform validate -no-color
+Success! The configuration is valid.
+
+exit=0
+$ cd terraform/environments/staging && terraform init -backend=false && terraform validate -no-color
+Success! The configuration is valid.
+
+exit=0

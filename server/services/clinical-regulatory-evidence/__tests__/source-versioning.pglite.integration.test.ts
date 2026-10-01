@@ -45,6 +45,15 @@ vi.mock('../../../db', () => ({
   },
 }));
 
+// A data-room capture writes its chained audit row in the same transaction
+// (VR-16b). The chain itself is exercised on PostgreSQL
+// (tests/db/data-room-capture-provenance.dbtest.ts); here the writer is
+// captured, so the spine-only schema needs no audit_logs table.
+vi.mock('../../auditService', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../auditService')>()),
+  writeChainedAuditRow: async () => undefined,
+}));
+
 import * as spine from '../evidence-spine.service';
 import * as usage from '../source-usage.service';
 import { searchFindings } from '../index';

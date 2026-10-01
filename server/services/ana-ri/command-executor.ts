@@ -30,12 +30,7 @@ import {
   sha256OfContent,
   signGovernedCommand,
 } from './governed-command-signature.js';
-import { artifactApproval } from '../ectd/package-content-fingerprint';
-import {
-  approvalRecordedOnlyByGovernedAct,
-  GOVERNED_LOCK_ACTION,
-  lockRecordedOnlyByGovernedAct,
-} from '../artifact-approval-act';
+import { signArtifactStatusByAna } from './ana-signed-artifact-act';
 
 // Lazy pool access. Acquiring the pool at module load (`getPool()` at
 // top level) throws "Database connection not available" when this module
@@ -90,6 +85,7 @@ import {
   requiresPart11Signoff,
   requiresEsignature,
   validateSignoff,
+  normalizedArtifactStatus,
   buildSignatureRequiredResult,
   buildHumanConfirmationRequiredResult,
   loadPart11EnforceStrict,
@@ -98,6 +94,7 @@ import {
 import { authorizeCommand, isPrivacyAdmin, isProposeOnlyCommand } from './command-rbac';
 import { statedReasonOrNull } from '../../routes/governed-reason.js';
 import { recordCommentPosted } from '../../routes/c2c/review-comment-record.js';
+import { ANA_REVIEW_COMMENT_ROLE } from '../../../shared/constants/review-comment.js';
 import {
   explainAuditRow,
   EXPLAIN_AUDIT_ROW_METADATA,
@@ -564,8 +561,8 @@ export async function createArtifact(
       return {
         success: false,
         action: 'create_artifact',
-        message: `Governed persistence failed for "${params.title}"`,
-        error: execution.persistenceStatus,
+        message: execution.persistenceRefusal?.message ?? `Governed persistence failed for "${params.title}"`,
+        error: execution.persistenceRefusal?.code ?? execution.persistenceStatus,
       };
     }
 
@@ -709,6 +706,27 @@ export async function updateArtifactStatus(
   }
 ): Promise<CommandResult> {
   try {
+    // Approving and locking are electronic signatures (2026-10-01, D5): the
+    // status route's act, with its rules, through the governed-action sign-off
+    // (ana-signed-artifact-act.ts). They were the reason tier here, and wrote
+    // the status with no signature, no version and no snapshot.
+    const target = normalizedArtifactStatus(params.status);
+    if (target === 'approved' || target === 'locked') {
+      return await signArtifactStatusByAna(ctx, { ...params, status: target });
+    }
+    // Anything else unsigned is draft or review, by name. 'Approved' or 'LOCKED'
+    // used to be the reason tier and was written raw, where some readers took
+    // it as finalized (review of dacc2ff84).
+    if (target !== 'draft' && target !== 'review') {
+      return {
+        success: false,
+        action: 'update_artifact_status',
+        message:
+          `"${String(params.status)}" is not a status this command moves an artifact to: draft or review, ` +
+          'or approved and locked as an electronic signature. Nothing was changed.',
+      };
+    }
+
     // Load current artifact to validate transition
     const existing = await pool.query(
       `SELECT artifact_id, title, status, ctd_section,
@@ -728,7 +746,7 @@ export async function updateArtifactStatus(
 
     const current = existing.rows[0];
     const fromStatus = current.status;
-    const toStatus = params.status;
+    const toStatus = target;
 
     // Guard: locked documents cannot be status-changed without explicit unlock
     if (fromStatus === 'locked' && toStatus !== 'draft') {
@@ -740,88 +758,18 @@ export async function updateArtifactStatus(
       };
     }
 
-    // Guard: a controlled document cannot skip its review/approval gates. Locking
-    // (the freeze that precedes an e-signature) requires a prior APPROVED state,
-    // and approval requires a prior REVIEW — 21 CFR Part 11 §11.10. Blocking only
-    // the unambiguous early-state skips (draft/review → locked, draft → approved)
-    // keeps documents already past these gates (approved/effective/signed/final)
-    // unaffected. The lawful path is draft → review → approved → locked.
-    if (toStatus === 'locked' && (fromStatus === 'draft' || fromStatus === 'review')) {
-      return {
-        success: false,
-        action: 'update_artifact_status',
-        message: `"${current.title}" cannot be locked from "${fromStatus}". A document must be approved before it can be locked. Move it through review and approval first.`,
-        data: { artifactId: params.artifactId, currentStatus: fromStatus, requestedStatus: toStatus },
-      };
-    }
-    if (toStatus === 'approved' && fromStatus === 'draft') {
-      return {
-        success: false,
-        action: 'update_artifact_status',
-        message: `"${current.title}" cannot be approved directly from draft. It must be submitted for review first (draft → review → approved).`,
-        data: { artifactId: params.artifactId, currentStatus: fromStatus, requestedStatus: toStatus },
-      };
-    }
-
-    // Guard: a lock must cover the approval.
-    // 2026-09-23 (W5/D7, residual repair): an approved v1 edited to v2 (status
-    // stays 'approved') could be locked here over content no one reviewed. The
-    // verdict is the filing rule's own (artifactApproval, imported — not a
-    // second rule), as the status route (server/routes/c2c/artifacts.ts PUT
-    // …/status) and authoring-actions lock-artifact apply it: lockable only
-    // when filable as approved (version = approved_version_id); an approval
-    // that recorded no version fails closed.
-    if (toStatus === 'locked') {
-      const approval = artifactApproval({
-        status: fromStatus,
-        version: current.version,
-        approvedVersionId: current.approved_version_id,
-        publishedVersionId: current.published_version_id,
-      });
-      // 2026-09-23 (W5/D7, final pass, repair): the refusal gave the filing
-      // rule's status-route remedy ("approved → review, then review →
-      // approved, which records the version approved"); done through this
-      // command, which records no version, the next lock was refused with the
-      // same words. It names the governed act and says this command records
-      // none.
-      if (!approval.filable) {
-        return {
-          success: false,
-          action: 'update_artifact_status',
-          message:
-            `"${current.title}" cannot be locked: ${approval.problem}. ` +
-            `${approvalRecordedOnlyByGovernedAct('command')} Lock it after that through ${GOVERNED_LOCK_ACTION}, ` +
-            'which records the version locked; this command records none.',
-          data: {
-            artifactId: params.artifactId,
-            currentStatus: fromStatus,
-            requestedStatus: toStatus,
-            reason: approval.reason,
-          },
-        };
-      }
-    }
-
     // Guard: warn about approved → draft regression (but allow it)
     const isRegression =
       fromStatus === 'approved' && (toStatus === 'draft' || toStatus === 'review');
 
-    // 2026-09-23 (W5/D7, final pass): this command is not the approval act. It
-    // writes the status and records no approved or locked version (HEAD
-    // behaviour; the residual-repair rounds' recording here was reverted — it
-    // recorded approvals for roles the status route refuses and locks without
-    // the route's role check or attestation). Only the governed act (the
-    // status route's review → approved, authoring-actions approve-artifact)
-    // records one. Leaving approved/locked clears any recorded version in this
-    // same write (the trigger in
-    // migrations/20260923b_artifact_approval_follows_status.sql), so an
-    // approval revoked earlier is not resurrected here. RETURNING reads what
-    // was written, so the message below is judged on it.
-    const written = await pool.query(
+    // Draft and review only, here (approve and lock returned above). Leaving
+    // approved/locked clears any recorded version in this same write (the
+    // trigger in migrations/20260923b_artifact_approval_follows_status.sql), so
+    // an approval revoked earlier is not resurrected.
+    await pool.query(
       `UPDATE concept2cure_artifacts
        SET status = $4, updated_at = NOW()
-       WHERE artifact_id = $1 AND project_id = $2 AND organization_id = $3
-       RETURNING status, version, approved_version_id, published_version_id`,
+       WHERE artifact_id = $1 AND project_id = $2 AND organization_id = $3`,
       [params.artifactId, params.projectId, ctx.organizationId, toStatus]
     );
 
@@ -830,7 +778,6 @@ export async function updateArtifactStatus(
     const regressionWarning = isRegression
       ? ' ⚠ This reverses approval and will require re-review before the document can be approved again.'
       : '';
-    const filingNote = notFilableNote(toStatus, written.rows[0]);
 
     return {
       success: true,
@@ -842,7 +789,7 @@ export async function updateArtifactStatus(
         title: current.title,
         isRegression,
       },
-      message: `"${current.title}"${sectionLabel} status changed: ${transitionLabel}.${regressionWarning}${filingNote}`,
+      message: `"${current.title}"${sectionLabel} status changed: ${transitionLabel}.${regressionWarning}`,
     };
   } catch (err: unknown) {
     return {
@@ -854,35 +801,6 @@ export async function updateArtifactStatus(
       error: err instanceof Error ? err.message : String(err),
     };
   }
-}
-
-/**
- * The truthful filing note for a status this command wrote: empty unless the
- * row it wrote is approved/locked and the filing rule (artifactApproval) still
- * refuses it — in which case it says why and which governed act files it. 2026-09-23 (W5/D7,
- * final pass). A row that could not be read back is reported as not filable
- * (fail closed), never as filable.
- */
-function notFilableNote(
-  toStatus: string,
-  row: { status?: string; version?: number; approved_version_id?: number | null; published_version_id?: number | null } | undefined
-): string {
-  if (toStatus !== 'approved' && toStatus !== 'locked') return '';
-  if (!row) return ' It cannot be shown to be filable: the written row could not be read back.';
-  const approval = artifactApproval({
-    status: row.status ?? null,
-    version: row.version ?? null,
-    approvedVersionId: row.approved_version_id ?? null,
-    publishedVersionId: row.published_version_id ?? null,
-  });
-  if (approval.filable) return '';
-  // 2026-09-23 (W5/D7, final pass, repair): the remedy names the governed act
-  // and says this command records none (it said "approval through review" and,
-  // for a lock, the status route's transitions — neither records anything
-  // when done here).
-  return toStatus === 'approved'
-    ? ` It cannot be filed yet: ${approval.problem}. ${approvalRecordedOnlyByGovernedAct('command')}`
-    : ` It cannot be filed yet: ${approval.problem}. ${lockRecordedOnlyByGovernedAct('command')}`;
 }
 
 /**
@@ -2187,8 +2105,8 @@ export async function addReviewComment(
       const inserted = await client.query(
         `INSERT INTO concept2cure_thread_comments
            (comment_id, org_id, thread_id, artifact_id, author_id, author_name,
-            body, kind, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, 'comment', NOW(), NOW())
+            body, kind, author_role, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 'comment', $8, NOW(), NOW())
          RETURNING id, comment_id, version_id, parent_comment_id, author_role`,
         [
           commentId,
@@ -2198,6 +2116,7 @@ export async function addReviewComment(
           ctx.userId,
           ctx.userName || 'AnA RI',
           params.body,
+          ANA_REVIEW_COMMENT_ROLE,
         ]
       );
       const row = inserted.rows[0];
@@ -4807,7 +4726,9 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
   },
   {
     name: 'update_artifact_status',
-    description: 'Change artifact lifecycle status',
+    description:
+      'Change artifact lifecycle status. Approving (review → approved) and locking (approved → locked) are the ' +
+      "person's electronic signature, with the meaning 'approval' or 'release': propose them, and the person signs",
     parameters: 'projectId, artifactId, status (draft/review/approved/locked)',
     example: '"Move artifact 12 to review status"',
   },
@@ -5574,7 +5495,9 @@ export async function executeCommands(
       // this dispatch carries a valid sign-off. Tiered — reason-for-change
       // always; high-impact actions additionally require an e-signature. ──
       if (ctx.part11Enforce && requiresPart11Signoff(cmd.command)) {
-        const v = validateSignoff(ctx.signoff, { requireSignature: requiresEsignature(cmd.command) });
+        const v = validateSignoff(ctx.signoff, {
+          requireSignature: requiresEsignature(cmd.command, cmd.params as Record<string, unknown>),
+        });
         if (!v.ok) {
           const blocked = buildSignatureRequiredResult(cmd.command, v, cmd.params as Record<string, unknown>);
           results.push(blocked);

@@ -13,6 +13,7 @@
  */
 
 import { pool } from '../../db';
+import { captureActor, recordCapture, recordSupersession } from './data-room-capture-audit';
 import {
   SOURCE_TYPES, VISIBILITY_CLASSES, OUTCOME_TYPES, RELATIONSHIP_TYPES, ENTITY_TYPES,
   INGESTION_STATUSES, EXTRACTION_STATUSES,
@@ -96,6 +97,10 @@ export async function createSupersedingSource(
       );
     }
     const source = await createSource(orgId, { ...p, previousVersionId: predecessorId }, client);
+    // The retirement in the chain too (VR-16b), in this transaction.
+    if (p.sourceType === 'client_document') {
+      await recordSupersession(client, orgId, predecessorId, source, captureActor(p.createdBy, p.provenance));
+    }
     await client.query('COMMIT');
     return { source, supersededId: predecessorId };
   } catch (err) {
@@ -106,7 +111,40 @@ export async function createSupersedingSource(
   }
 }
 
-export async function createSource(orgId: number, p: {
+/** What createSource takes: one source's columns, as its writer states them. */
+export type CreateSourceParams = Parameters<typeof insertSource>[1];
+
+/**
+ * Record a source. A data-room capture (`client_document`) is a governed
+ * record (VR-16b): it carries who captured it (`created_by`), and its INSERT
+ * and its chained data_room.capture row commit together. On the caller's
+ * transaction when one is supplied (createSupersedingSource, the adopt);
+ * otherwise in a transaction of its own. Any other source is a single INSERT.
+ */
+export async function createSource(orgId: number, p: CreateSourceParams, exec?: SourceExecutor): Promise<EvidenceSource> {
+  if (p.sourceType !== 'client_document') return insertSource(orgId, p, exec ?? pool);
+  const actor = captureActor(p.createdBy, p.provenance);
+  const capture = async (q: SourceExecutor) => {
+    const source = await insertSource(orgId, { ...p, createdBy: actor }, q);
+    await recordCapture(q, orgId, source, { actorId: actor, provenance: p.provenance, supersedes: p.previousVersionId ?? null });
+    return source;
+  };
+  if (exec) return capture(exec);
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const source = await capture(client);
+    await client.query('COMMIT');
+    return source;
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+async function insertSource(orgId: number, p: {
   sourceType: SourceType; visibilityClass?: VisibilityClass; clientWorkspaceId?: number | null;
   /** regulatory_programs.id (UUID) — the project-management id-space. Set this
    *  OR clientWorkspaceId depending on which scope the caller actually has;
@@ -123,6 +161,9 @@ export async function createSource(orgId: number, p: {
   previousVersionId?: number | null;
   linkedCsrReportId?: number | null; linkedPrecedentId?: string | null;
   metadata?: Record<string, unknown> | null;
+  /** Who captured it (VR-16b). For a data-room capture createSource resolves it
+   *  (captureActor); null for a system write. Written once. */
+  createdBy?: number | null;
   /** Defaults to 'pending'. A source whose bytes are already stored and read is
    *  'ingested' at creation — leaving it 'pending' would misreport the corpus. */
   ingestionStatus?: IngestionStatus;
@@ -132,7 +173,7 @@ export async function createSource(orgId: number, p: {
 },
 /** Runs on the caller's transaction when one is supplied. createSupersedingSource
  *  needs the insert and the predecessor's retirement to land together. */
-exec: SourceExecutor = pool,
+exec: SourceExecutor,
 ): Promise<EvidenceSource> {
   assertOneOf(p.sourceType, SOURCE_TYPES, 'sourceType');
   const visibility = p.visibilityClass ?? 'tenant_private';
@@ -189,6 +230,14 @@ exec: SourceExecutor = pool,
   if (p.previousVersionId != null) {
     values.push(p.previousVersionId);
     columns.push('previous_version_id');
+    placeholders.push(`$${values.length}`);
+  }
+
+  // `created_by` (VR-16b, migrations/20261001_cre_evidence_sources_capture_immutability.sql):
+  // named only when known, for the same reason as the two columns above.
+  if (p.createdBy != null) {
+    values.push(p.createdBy);
+    columns.push('created_by');
     placeholders.push(`$${values.length}`);
   }
 

@@ -19,11 +19,11 @@ vi.mock('../../services/auditService', () => ({ default: { logAction: vi.fn(asyn
 
 import mdxQmsRouter from '../mdx-qms';
 
-function appWith(org: number | null, userId = 7) {
+function appWith(org: number | null, userId = 7, role = 'member') {
   const app = express();
   app.use(express.json());
   app.use((req: Request, _res: Response, next: NextFunction) => {
-    if (org !== null) (req as unknown as { user: unknown }).user = { organizationId: org, id: userId };
+    if (org !== null) (req as unknown as { user: unknown }).user = { organizationId: org, id: userId, role };
     next();
   });
   app.use('/api/mdx', mdxQmsRouter);
@@ -138,5 +138,35 @@ describe('POST /api/mdx/qms/changes/:id/links — cross-references', () => {
     const res = await request(appWith(9)).post('/api/mdx/qms/changes/1/links')
       .send({ linkType: 'nonsense', linkedRef: 'X' });
     expect(res.status).toBe(422);
+  });
+});
+
+
+/**
+ * DP-60 (2026-10-01): every change-control write carries the editor gate the
+ * document, supplier, audit and nonconformance writes carry (P1-31). A viewer
+ * could open, edit, move through its lifecycle and delete a change record, and
+ * add or remove its links; only the approve step, a signature, refused it.
+ */
+describe('change-control writes refuse a viewer (DP-60)', () => {
+  const WRITES: Array<[method: 'post' | 'patch' | 'delete', path: string, body?: Record<string, unknown>]> = [
+    ['post', '/api/mdx/qms/changes', { title: 'Supplier change', changeType: 'supplier' }],
+    ['patch', '/api/mdx/qms/changes/1', { title: 'x' }],
+    ['post', '/api/mdx/qms/changes/1/transition', { to: 'under_assessment' }],
+    ['delete', '/api/mdx/qms/changes/1', { reason: 'Raised in error by the viewer' }],
+    ['post', '/api/mdx/qms/changes/1/links', { linkedType: 'deviation', linkedRef: 'DEV-1' }],
+    ['delete', '/api/mdx/qms/changes/1/links/3'],
+  ];
+
+  it.each(WRITES)('a viewer %s %s: 403, nothing read or written', async (method, path, body) => {
+    const res = await request(appWith(9, 7, 'viewer'))[method](path).send(body ?? {});
+    expect(res.status).toBe(403);
+    expect(query).not.toHaveBeenCalled();
+  });
+
+  it('a viewer still reads the register', async () => {
+    query.mockResolvedValueOnce({ rows: [changeRow()] });
+    const res = await request(appWith(9, 7, 'viewer')).get('/api/mdx/qms/changes');
+    expect(res.status).toBe(200);
   });
 });

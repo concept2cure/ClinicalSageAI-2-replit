@@ -428,7 +428,8 @@ describe('refreshRuntimeRoleGrants / ensureRuntimeRole', () => {
     expect(statements.some((s) => /GRANT.*UPDATE.*ON ALL TABLES IN SCHEMA "audit"/.test(s))).toBe(false);
     expect(statements.some((s) => /ALTER DEFAULT PRIVILEGES IN SCHEMA "public" GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO "c2c"/.test(s))).toBe(true);
     expect(statements.some((s) => /ALTER DEFAULT PRIVILEGES IN SCHEMA "audit" GRANT SELECT, INSERT ON TABLES TO "c2c"/.test(s))).toBe(true);
-    // Never REVOKEs: the owner's own privileges on relations it happens to own stay.
+    // Never REVOKEs: the owner's own privileges on relations it happens to own stay. (This fake has no
+    // append-only store; withholding on one is pinned in provision-app-role-append-only.test.ts.)
     expect(statements.some((s) => /REVOKE/.test(s))).toBe(false);
   });
 
@@ -455,6 +456,12 @@ describe('refreshRuntimeRoleGrants / ensureRuntimeRole', () => {
     const r3 = await ensureRuntimeRole(single.db as never, { env: { DATABASE_URL: 'postgresql://postgres:pw@h/db' } });
     expect(r3).toMatchObject({ mode: 'single-role', role: null, owner: 'postgres', skipped: true });
     expect(single.statements.some((s) => /GRANT/.test(s))).toBe(false);
+  });
+});
+
+describe('APPEND_ONLY_TABLES', () => {
+  it('names the Part 11 store among the append-only stores (the full list: provision-app-role-append-only.test.ts)', () => {
+    expect([...APPEND_ONLY_TABLES]).toContainEqual({ schema: 'audit', name: 'tamper_proof_log' });
   });
 });
 
@@ -494,14 +501,13 @@ describe('auditRuntimeRoleGrants', () => {
             rowCount: rels.length,
           };
         }
+        // Column-level UPDATE on the append-only stores: none here (pinned in
+        // provision-app-role-append-only.test.ts).
+        if (sql.includes('has_column_privilege')) return { rows: [], rowCount: 0 };
         throw new Error(`unexpected query: ${sql.slice(0, 60)}`);
       },
     };
   }
-
-  it('names the append-only store (the full list: provision-app-role-append-only.test.ts)', () => {
-    expect(APPEND_ONLY_TABLES[0]).toEqual({ schema: 'audit', name: 'tamper_proof_log' });
-  });
 
   it('passes a recipe-shaped estate', async () => {
     const a = await auditRuntimeRoleGrants(

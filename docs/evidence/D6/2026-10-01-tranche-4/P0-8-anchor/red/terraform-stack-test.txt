@@ -1,0 +1,144 @@
+# RED — terraform test (stack): the FINAL test file against the UNFIXED stack and evidence module (HEAD 0e58e794 versions of terraform/stack/main.tf and terraform/modules/compliance-evidence/{main,variables}.tf, reconstructed in a scratch copy); terraform 1.9.8, AWS provider mocked
+# 2026-10-01T06:52:43Z
+$ cd <scratch copy>/terraform/stack && terraform test -no-color
+tests/boot_contract.tftest.hcl... in progress
+  run "renders_the_boot_contract"... pass
+  run "vault_documents_go_to_a_private_versioned_bucket_the_task_role_can_use"... pass
+  run "the_audit_chain_head_is_anchored_in_the_object_locked_evidence_bucket"... fail
+
+Error: Test assertion failed
+
+  on tests/boot_contract.tftest.hcl line 397, in run "the_audit_chain_head_is_anchored_in_the_object_locked_evidence_bucket":
+ 397:     condition = alltrue([
+ 398:       for c in [module.ecs.api_container, module.ecs.worker_container] :
+ 399:       contains([for e in c.environment : "${e.name}=${e.value}"], "AUDIT_ANCHOR_BUCKET=${module.evidence.evidence_bucket}")
+ 400:     ])
+    ├────────────────
+    │ module.ecs.api_container is object with 8 attributes
+    │ module.ecs.worker_container is object with 6 attributes
+    │ module.evidence.evidence_bucket is "pgu0ua24"
+
+Both containers must name the evidence bucket in AUDIT_ANCHOR_BUCKET; without
+it the sweep reports the anchor not configured.
+
+Error: Unsupported attribute
+
+  on tests/boot_contract.tftest.hcl line 404, in run "the_audit_chain_head_is_anchored_in_the_object_locked_evidence_bucket":
+ 404:     condition     = module.evidence.evidence_bucket == "c2c-prod-part11-evidence" && module.evidence.object_lock.mode == "COMPLIANCE" && module.evidence.object_lock.days >= 2555
+    ├────────────────
+    │ module.evidence is object with 6 attributes
+
+This object does not have an attribute named "object_lock".
+
+Error: Unsupported attribute
+
+  on tests/boot_contract.tftest.hcl line 404, in run "the_audit_chain_head_is_anchored_in_the_object_locked_evidence_bucket":
+ 404:     condition     = module.evidence.evidence_bucket == "c2c-prod-part11-evidence" && module.evidence.object_lock.mode == "COMPLIANCE" && module.evidence.object_lock.days >= 2555
+    ├────────────────
+    │ module.evidence is object with 6 attributes
+
+This object does not have an attribute named "object_lock".
+
+Error: Test assertion failed
+
+  on tests/boot_contract.tftest.hcl line 408, in run "the_audit_chain_head_is_anchored_in_the_object_locked_evidence_bucket":
+ 408:     condition = anytrue([
+ 409:       for st in jsondecode(module.evidence.bucket_policy).Statement :
+ 410:       st.Effect == "Allow" && try(st.Principal.AWS, "") == module.ecs.task_role_arn &&
+ 411:       st.Resource == "arn:aws:s3:::c2c-prod-part11-evidence/anchors/*" &&
+ 412:       length(setsubtract(toset(["s3:PutObject", "s3:GetObject"]), toset(flatten([st.Action])))) == 0
+ 413:     ])
+    ├────────────────
+    │ module.ecs.task_role_arn is "arn:aws:iam::123456789012:role/mock"
+    │ module.evidence.bucket_policy is "{\"Statement\":[{\"Action\":\"s3:GetBucketAcl\",\"Condition\":{\"StringEquals\":{\"aws:SourceArn\":\"arn:aws:cloudtrail:us-east-1:123456789012:trail/c2c-prod-part11-evidence\"}},\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"cloudtrail.amazonaws.com\"},\"Resource\":\"arn:aws:s3:::c2c-prod-part11-evidence\",\"Sid\":\"CloudTrailAclCheck\"},{\"Action\":\"s3:PutObject\",\"Condition\":{\"StringEquals\":{\"aws:SourceArn\":\"arn:aws:cloudtrail:us-east-1:123456789012:trail/c2c-prod-part11-evidence\",\"s3:x-amz-acl\":\"bucket-owner-full-control\"}},\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"cloudtrail.amazonaws.com\"},\"Resource\":\"arn:aws:s3:::c2c-prod-part11-evidence/AWSLogs/123456789012/*\",\"Sid\":\"CloudTrailWritesItsOwnPrefix\"},{\"Action\":\"s3:*\",\"Condition\":{\"Bool\":{\"aws:SecureTransport\":\"false\"}},\"Effect\":\"Deny\",\"Principal\":\"*\",\"Resource\":[\"arn:aws:s3:::c2c-prod-part11-evidence\",\"arn:aws:s3:::c2c-prod-part11-evidence/*\"],\"Sid\":\"DenyInsecureTransport\"}],\"Version\":\"2012-10-17\"}"
+
+The task role must put and get objects under anchors/ in the evidence bucket.
+
+Error: Test assertion failed
+
+  on tests/boot_contract.tftest.hcl line 417, in run "the_audit_chain_head_is_anchored_in_the_object_locked_evidence_bucket":
+ 417:     condition = anytrue([
+ 418:       for st in jsondecode(module.evidence.bucket_policy).Statement :
+ 419:       st.Effect == "Allow" && try(st.Principal.AWS, "") == module.ecs.task_role_arn &&
+ 420:       st.Resource == "arn:aws:s3:::c2c-prod-part11-evidence" && contains(flatten([st.Action]), "s3:ListBucket") &&
+ 421:       try(st.Condition.StringLike["s3:prefix"], "") == "anchors/*"
+ 422:     ])
+    ├────────────────
+    │ module.ecs.task_role_arn is "arn:aws:iam::123456789012:role/mock"
+    │ module.evidence.bucket_policy is "{\"Statement\":[{\"Action\":\"s3:GetBucketAcl\",\"Condition\":{\"StringEquals\":{\"aws:SourceArn\":\"arn:aws:cloudtrail:us-east-1:123456789012:trail/c2c-prod-part11-evidence\"}},\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"cloudtrail.amazonaws.com\"},\"Resource\":\"arn:aws:s3:::c2c-prod-part11-evidence\",\"Sid\":\"CloudTrailAclCheck\"},{\"Action\":\"s3:PutObject\",\"Condition\":{\"StringEquals\":{\"aws:SourceArn\":\"arn:aws:cloudtrail:us-east-1:123456789012:trail/c2c-prod-part11-evidence\",\"s3:x-amz-acl\":\"bucket-owner-full-control\"}},\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"cloudtrail.amazonaws.com\"},\"Resource\":\"arn:aws:s3:::c2c-prod-part11-evidence/AWSLogs/123456789012/*\",\"Sid\":\"CloudTrailWritesItsOwnPrefix\"},{\"Action\":\"s3:*\",\"Condition\":{\"Bool\":{\"aws:SecureTransport\":\"false\"}},\"Effect\":\"Deny\",\"Principal\":\"*\",\"Resource\":[\"arn:aws:s3:::c2c-prod-part11-evidence\",\"arn:aws:s3:::c2c-prod-part11-evidence/*\"],\"Sid\":\"DenyInsecureTransport\"}],\"Version\":\"2012-10-17\"}"
+
+The verifier must list the anchors/ prefix, and only it, to find the latest
+anchor.
+
+Error: Test assertion failed
+
+  on tests/boot_contract.tftest.hcl line 435, in run "the_audit_chain_head_is_anchored_in_the_object_locked_evidence_bucket":
+ 435:     condition = anytrue([
+ 436:       for st in jsondecode(module.evidence.bucket_policy).Statement :
+ 437:       st.Effect == "Deny" && try(st.Principal.AWS, "") == module.ecs.task_role_arn &&
+ 438:       length(setsubtract(toset(["s3:DeleteObject", "s3:DeleteObjectVersion", "s3:PutObjectRetention", "s3:BypassGovernanceRetention"]), toset(flatten([st.Action])))) == 0
+ 439:     ])
+    ├────────────────
+    │ module.ecs.task_role_arn is "arn:aws:iam::123456789012:role/mock"
+    │ module.evidence.bucket_policy is "{\"Statement\":[{\"Action\":\"s3:GetBucketAcl\",\"Condition\":{\"StringEquals\":{\"aws:SourceArn\":\"arn:aws:cloudtrail:us-east-1:123456789012:trail/c2c-prod-part11-evidence\"}},\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"cloudtrail.amazonaws.com\"},\"Resource\":\"arn:aws:s3:::c2c-prod-part11-evidence\",\"Sid\":\"CloudTrailAclCheck\"},{\"Action\":\"s3:PutObject\",\"Condition\":{\"StringEquals\":{\"aws:SourceArn\":\"arn:aws:cloudtrail:us-east-1:123456789012:trail/c2c-prod-part11-evidence\",\"s3:x-amz-acl\":\"bucket-owner-full-control\"}},\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"cloudtrail.amazonaws.com\"},\"Resource\":\"arn:aws:s3:::c2c-prod-part11-evidence/AWSLogs/123456789012/*\",\"Sid\":\"CloudTrailWritesItsOwnPrefix\"},{\"Action\":\"s3:*\",\"Condition\":{\"Bool\":{\"aws:SecureTransport\":\"false\"}},\"Effect\":\"Deny\",\"Principal\":\"*\",\"Resource\":[\"arn:aws:s3:::c2c-prod-part11-evidence\",\"arn:aws:s3:::c2c-prod-part11-evidence/*\"],\"Sid\":\"DenyInsecureTransport\"}],\"Version\":\"2012-10-17\"}"
+
+The bucket policy must deny the task role deleting or unlocking evidence,
+whatever IAM grants it later.
+
+Error: Test assertion failed
+
+  on tests/boot_contract.tftest.hcl line 446, in run "the_audit_chain_head_is_anchored_in_the_object_locked_evidence_bucket":
+ 446:     condition = alltrue([
+ 447:       for r in flatten([for st in jsondecode(module.ecs.task_s3_policy).Statement : st.Resource]) :
+ 448:       startswith(r, "${module.evidence.evidence_bucket_arn}/anchors/")
+ 449:     ])
+    ├────────────────
+    │ module.ecs.task_s3_policy is "{\"Statement\":[{\"Action\":[\"s3:GetObject\",\"s3:PutObject\",\"s3:ListBucket\"],\"Effect\":\"Allow\",\"Resource\":[\"bcsf8uju\"]}],\"Version\":\"2012-10-17\"}"
+    │ module.evidence.evidence_bucket_arn is "bcsf8uju"
+
+The task role's identity grant on the evidence bucket must be anchors/ only.
+
+Error: Test assertion failed
+
+  on tests/boot_contract.tftest.hcl line 453, in run "the_audit_chain_head_is_anchored_in_the_object_locked_evidence_bucket":
+ 453:     condition = anytrue([
+ 454:       for st in jsondecode(module.evidence.key_policy).Statement :
+ 455:       try(st.Principal.AWS, "") == module.ecs.task_role_arn &&
+ 456:       length(setsubtract(toset(["kms:GenerateDataKey", "kms:Decrypt"]), toset(flatten([st.Action])))) == 0 &&
+ 457:       try(st.Condition.StringEquals["kms:ViaService"], "") == "s3.${var.region}.amazonaws.com"
+ 458:     ])
+    ├────────────────
+    │ module.ecs.task_role_arn is "arn:aws:iam::123456789012:role/mock"
+    │ module.evidence.key_policy is "{\"Statement\":[{\"Action\":\"kms:*\",\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::123456789012:root\"},\"Resource\":\"*\",\"Sid\":\"AccountAdministersThroughIam\"},{\"Action\":\"kms:GenerateDataKey*\",\"Condition\":{\"StringEquals\":{\"aws:SourceArn\":\"arn:aws:cloudtrail:us-east-1:123456789012:trail/c2c-prod-part11-evidence\"},\"StringLike\":{\"kms:EncryptionContext:aws:cloudtrail:arn\":\"arn:aws:cloudtrail:*:123456789012:trail/*\"}},\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"cloudtrail.amazonaws.com\"},\"Resource\":\"*\",\"Sid\":\"CloudTrailEncryptsThisTrailOnly\"},{\"Action\":\"kms:DescribeKey\",\"Condition\":{\"StringEquals\":{\"aws:SourceArn\":\"arn:aws:cloudtrail:us-east-1:123456789012:trail/c2c-prod-part11-evidence\"}},\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"cloudtrail.amazonaws.com\"},\"Resource\":\"*\",\"Sid\":\"CloudTrailDescribesTheKey\"},{\"Action\":[\"kms:Encrypt*\",\"kms:Decrypt*\",\"kms:ReEncrypt*\",\"kms:GenerateDataKey*\",\"kms:Describe*\"],\"Condition\":{\"ArnEquals\":{\"kms:EncryptionContext:aws:logs:arn\":\"arn:aws:logs:us-east-1:123456789012:log-group:/aws/cloudtrail/c2c-prod-part11-evidence\"}},\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"logs.us-east-1.amazonaws.com\"},\"Resource\":\"*\",\"Sid\":\"CloudWatchLogsEncryptsThisLogGroupOnly\"}],\"Version\":\"2012-10-17\"}"
+    │ var.region is "us-east-1"
+
+The task role must use the evidence key through S3 only, to write and read an
+anchor (the bucket encrypts under it).
+  run "the_site_is_served_with_security_headers"... skip
+  run "production_names_are_the_ones_the_deploy_workflow_targets"... skip
+  run "staging_carries_every_name_the_deploy_preflight_requires"... skip
+  run "staging_is_distinct_from_production"... skip
+  run "provision_workflow_names_are_the_ones_terraform_creates"... skip
+  run "refuses_a_refresh_secret_equal_to_the_jwt_secret"... skip
+  run "refuses_a_short_audit_chain_secret"... skip
+  run "refuses_placement_approvals_that_are_not_a_json_object"... skip
+  run "refuses_equal_audit_seal_and_chain_keys"... skip
+  run "refuses_a_short_audit_export_key"... skip
+  run "refuses_an_audit_export_key_equal_to_the_jwt_secret"... skip
+  run "refuses_an_audit_export_key_equal_to_an_audit_seal_key"... skip
+  run "refuses_phi_approval_without_zero_retention"... skip
+  run "refuses_an_unknown_data_class"... skip
+  run "refuses_a_non_boolean_zero_retention_flag"... skip
+  run "refuses_a_non_string_intended_use"... skip
+  run "refuses_a_missing_region"... skip
+  run "accepts_the_fail_closed_interim_approvals"... skip
+  run "refuses_an_uppercase_domain_alias"... skip
+  run "refuses_a_domain_alias_with_a_scheme"... skip
+  run "refuses_a_domain_alias_with_a_trailing_dot"... skip
+  run "every_container_can_send_login_codes"... skip
+  run "refuses_an_smtp_port_without_required_tls"... skip
+tests/boot_contract.tftest.hcl... tearing down
+tests/boot_contract.tftest.hcl... fail
+
+Failure! 2 passed, 1 failed, 23 skipped.
+exit=1

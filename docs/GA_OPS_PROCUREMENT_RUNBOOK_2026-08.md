@@ -1,7 +1,39 @@
 # GA ops / procurement runbook — 2026-08
 
-**Branch:** `claude/medical-device-regulatory-modules-lfpw5m` · **Written:** 2026-08-14 ·
+**Branch:** `concept2cure-v2` (the only branch; `CLAUDE.md` Rule 0) · **Written:** 2026-08-14 ·
 **Machine-checkable companion:** `node scripts/ops/ga-readiness-report.mjs`
+
+> **Status as of 2026-10-01: what changed since this was written.** The rows below
+> are the August observation. `node scripts/ops/ga-readiness-report.mjs` is the live
+> state, and wins where they disagree. For the full list of outside accounts,
+> licences, keys and hosting, see the founder's external-requirements inventory
+> (`docs/evidence/W2/2026-10-01-inventory-gaps/`).
+>
+> - **B1 eSTAR templates.** `eSTAR-510k-non-ivd.pdf` and `eSTAR-510k-ivd.pdf`
+>   (v7.0) are vendored and checksummed. They cover 6 of the 9 manifest
+>   descriptors: 510(k), De Novo and PMA, for non-IVD and IVD. The three
+>   PreSTAR templates are still absent.
+> - **B2 field maps.** 6 of 9 descriptor maps are populated. The three PreSTAR
+>   maps are empty.
+> - **B7 ICSR.** The transport client is implemented (W5, 2026-09-20). The
+>   "credentials buy nothing" note below no longer holds: the gateway
+>   credentials are now the whole blocker.
+> - **B13 Sentry.** The production stack takes it as `sentry_dsn` in Terraform
+>   (optional).
+> - **B15 PDF/A tools.** Ghostscript and veraPDF are in `Dockerfile.optimized`
+>   (`cd02466a4`). `ECTD_REQUIRE_PDFA` stays off for a different reason: the
+>   gate refuses any unconverted leaf, while FDA and EMA accept plain PDF
+>   1.4–1.7. See the 2026-10-01 note in
+>   `docs/reports/ectd-gate-posture-2026-09-08.md`. Ghostscript is AGPL-3.0,
+>   and SaaS use needs counsel's view or an Artifex commercial licence
+>   (`docs/audits/ANA_DOCUMENT_STACK_DEPENDENCY_LICENSE_INVENTORY.md`).
+> - **B17 and B18, the audit HMAC and MFA keys.** Terraform requires both, and
+>   so do the deploy preflight and both Compose stacks
+>   (`ci:compose-boot-contract`). So does `AUDIT_ATTESTATION_KEY`, which no deploy
+>   path provided before 2026-10-01.
+> - **B20 ordering hazard.** It still holds, and the flags are deliberately not
+>   set in production Terraform. `submission-gate-posture.test.ts` fails when a
+>   flag's precondition is met, so the flag is re-decided rather than left off.
 
 ## What this document is
 

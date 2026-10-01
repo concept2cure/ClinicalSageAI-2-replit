@@ -1,0 +1,8 @@
+ ✓ client/src/utils/__tests__/sentry-init.test.ts > utils/sentry — how the browser client is initialised > never sends default PII, and every event and breadcrumb passes the scrubber 4ms
+ ✓ client/src/utils/__tests__/sentry-init.test.ts > utils/sentry — how the browser client is initialised > records no session replay: no replay integration and no replay sample rate 3ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  03:12:44
+   Duration  610ms (transform 145ms, setup 107ms, import 33ms, tests 45ms, environment 0ms)
+

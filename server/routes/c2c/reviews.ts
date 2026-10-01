@@ -50,6 +50,8 @@ import { verifyProjectAccess } from './project-access';
 import { createNotification, upsertProjectWorkItem } from './notifications';
 import { clientIpKey } from '../../utils/client-ip';
 import { postRecordedComment, retractRecordedComment } from './review-comment-record';
+import { exportReviewRecord } from './review-record-export';
+import { canReadAuditTrail, requireAuditReader } from '../../services/audit/audit-api-authority';
 
 const logger = createScopedLogger('concept2cure-reviews');
 const router = Router();
@@ -68,19 +70,55 @@ router.use(requireOrganizationContext);
 
 type ThreadPermission = 'read' | 'comment' | 'request_changes' | 'resolve' | 'assign';
 
+const LEAD: readonly ThreadPermission[] = ['read', 'comment', 'request_changes', 'resolve', 'assign'];
+const REVIEW: readonly ThreadPermission[] = ['read', 'comment', 'request_changes', 'resolve'];
+
+/**
+ * What a role may do on a review thread. The roles are the organisation's own
+ * (organization_users.role, resolved live per request: owner, admin, manager,
+ * member, the legacy editor, viewer), the vocabulary ORG_ROLE_FUNCTIONAL_GRANTS
+ * in middleware/auth.ts maps. Whoever does the regulatory work there takes part
+ * in its review; assigning review work stays with those who lead it.
+ *
+ * Until 2026-10-01 this named document roles no membership carries (approver,
+ * reviewer, author, user), so every organisation role but admin was read-only:
+ * a manager could not comment on a review, and neither could a member doing
+ * the work. Those names are kept for tokens that still carry them.
+ */
+const THREAD_PERMISSIONS_BY_ROLE: ReadonlyMap<string, readonly ThreadPermission[]> = new Map([
+  ['owner', LEAD],
+  ['admin', LEAD],
+  ['manager', LEAD],
+  ['member', REVIEW],
+  ['editor', REVIEW],
+  ['approver', LEAD],
+  ['reviewer', REVIEW],
+  ['author', ['read', 'comment']],
+  ['user', ['read', 'comment']],
+]);
+
 function getThreadPermissions(role: string): Set<ThreadPermission> {
-  const r = role.toLowerCase();
-  if (['admin', 'approver'].includes(r)) {
-    return new Set(['read', 'comment', 'request_changes', 'resolve', 'assign']);
-  }
-  if (r === 'reviewer') {
-    return new Set(['read', 'comment', 'request_changes', 'resolve']);
-  }
-  if (r === 'author' || r === 'user') {
-    return new Set(['read', 'comment']);
-  }
-  // viewer
-  return new Set(['read']);
+  // viewer, and any role this map does not name: read only.
+  return new Set(THREAD_PERMISSIONS_BY_ROLE.get(role.toLowerCase()) ?? ['read']);
+}
+
+/**
+ * What the caller may actually do, for the client, so it stops rendering
+ * governed actions the server will refuse. Resolve and request-changes are
+ * role-gated (getThreadPermissions), and my-queue deliberately contains threads
+ * ASSIGNED to the caller: an admin can assign a thread to an author, who would
+ * then see a Resolve button that 403s every time. Each flag comes from the same
+ * check its route enforces, so the button and the guard cannot drift apart;
+ * canExportRecord is the review record export's gate (DP-18 audit readers).
+ */
+function queuePermissions(req: Request) {
+  const perms = getThreadPermissions(String((req as any).userRole || ''));
+  return {
+    canComment: perms.has('comment'),
+    canRequestChanges: perms.has('request_changes'),
+    canResolve: perms.has('resolve'),
+    canExportRecord: canReadAuditTrail(req),
+  };
 }
 
 // ── Auto-propagation: Document events → Project Management signals ───────────
@@ -1057,6 +1095,40 @@ router.delete('/review-comments/:commentId', async (req: Request, res: Response)
   }
 });
 
+/**
+ * GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-record/export
+ * The artifact's whole review record for an inspector (§11.10(b)): every thread
+ * and comment, retractions with who and why, each comment checked against its
+ * chained rows, the tenant chain walked. Read by the audit readers (DP-18),
+ * recorded on the chain before it leaves (review-record-export.ts).
+ */
+router.get('/projects/:projectId/artifacts/:artifactId/review-record/export', async (req: Request, res: Response) => {
+  if (!requireAuditReader(req, res)) return;
+  try {
+    const organizationId = getOrganizationId(req);
+    if (!(await verifyProjectAccess(req, req.params.projectId))) return sendError(res, 404, 'Project not found');
+    const [artifact] = await db
+      .select()
+      .from(concept2cureArtifacts)
+      .where(
+        and(
+          eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
+          eq(concept2cureArtifacts.organizationId, organizationId)
+        )
+      )
+      .limit(1);
+    if (!artifact) return sendError(res, 404, 'Artifact not found');
+    return await exportReviewRecord(req, res, {
+      orgId: organizationId,
+      userId: getUserId(req),
+      artifact: { id: artifact.id, artifactId: artifact.artifactId, title: artifact.title, type: artifact.type, projectId: artifact.projectId },
+    });
+  } catch (error: any) {
+    logConcept2cureError('export review record', error, { artifactId: req.params.artifactId });
+    return sendError(res, 500, 'The review record could not be exported');
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // REVIEW TASKS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1737,15 +1809,6 @@ router.get('/reviews/my-queue', async (req: Request, res: Response) => {
     const changeRequestTasks = myTasks.filter(t => t.taskType === 'change_request');
     const approvalTasks = myTasks.filter(t => t.taskType === 'approval_task');
 
-    // Tell the client what this caller may actually do, so it can stop
-    // rendering governed actions that the server will refuse. Resolve and
-    // request-changes are role-gated (getThreadPermissions), and my-queue
-    // deliberately contains threads ASSIGNED to the caller — an admin can
-    // assign a thread to an author, who would then see a Resolve button that
-    // 403s every time. Deriving this from the same function the enforcement
-    // uses means the button and the guard cannot drift apart.
-    const perms = getThreadPermissions(String((req as any).userRole || ''));
-
     return sendSuccess(res, {
       threads: myThreads,
       tasks: myTasks,
@@ -1756,11 +1819,7 @@ router.get('/reviews/my-queue', async (req: Request, res: Response) => {
       dueSoonTasks: dueSoonTasks.length,
       changeRequests: changeRequestTasks.length,
       approvalsNeeded: approvalTasks.length,
-      permissions: {
-        canComment: perms.has('comment'),
-        canRequestChanges: perms.has('request_changes'),
-        canResolve: perms.has('resolve'),
-      },
+      permissions: queuePermissions(req),
     });
   } catch (error: any) {
     logConcept2cureError('my review queue', error);

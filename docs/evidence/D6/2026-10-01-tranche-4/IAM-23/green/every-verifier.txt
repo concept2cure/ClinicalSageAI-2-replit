@@ -1,0 +1,7 @@
+      Tests  1 passed (1)
+stderr | server/middleware/__tests__/moduleEntitlementGate.test.ts > the gate > FAILS OPEN when entitlement resolution throws
+ ✓ server/middleware/__tests__/moduleEntitlementGate.test.ts > the gate > FAILS OPEN when entitlement resolution throws 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/__tests__/routes/cortex-threads.runtime.test.ts > cortex threads runtime contract > GET /threads returns 401 when JWT is missing
+ FAIL  server/__tests__/routes/smoke.test.ts > Rescue Cut: Core Workflow API Integration > rejects invalid JWT on POST /api/cortex/chat
+ Test Files  2 failed | 18 passed (20)

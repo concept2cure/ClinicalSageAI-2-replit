@@ -1,0 +1,176 @@
+=== npm run ci:server-error-leaks
+[ci:server-error-leaks] OK — 90 baselined site(s) across 56 file(s); no file gained one.
+[ci:server-error-leaks] 6 site(s) fixed since the baseline — shrink it with --write-baseline.
+exit=0
+=== npm run ci:regulated-delete-audit
+[regulated-delete-audit] FAIL — 1 unaudited regulated delete(s):
+
+  server/routes/authoring.router.ts:5507
+    await client.query('DELETE FROM authoring_documents WHERE id = $1 AND tenant_id = $2', [docId, tenantId]);
+
+21 CFR Part 11 §11.10(e): a delete of a regulated record must write an audit-trail entry.
+Add an audit call (writeMutation / logAuditEntry / recordGovernedAction) before the delete,
+or, if intentional, allow-list it with a justification in this script.
+exit=1
+=== npm run ci:drizzle-tenant-scope
+[ci:drizzle-tenant-scope] OK — 123 site(s), all baselined; 28 fixed since the baseline was written.
+[ci:drizzle-tenant-scope] Re-run with --write-baseline to bank the 28 fix(es).
+exit=0
+=== npm run ci:client-ip-single-source
+✓ client-ip-single-source: no forwarding-header reads and no stray trust proxy in server/ or shared/
+exit=0
+=== npm run ci:org-path-param-guards
+[ci:org-path-param-guards] 43 route(s) take an org/tenant id from the path; 43 guarded, 0 not (baseline 0).
+[ci:org-path-param-guards] OK — every org path param is checked against the caller.
+exit=0
+=== npm run ci:tenant-entry-points
+[ci:tenant-entry-points] 14 entry point(s); 5 consider tenant entitlement, 9 do not (baseline 9)
+[ci:tenant-entry-points] OK — no unclassified tenant entry points.
+exit=0
+=== npm run ci:fabricated-identity
+node:fs:440
+    return binding.readFileUtf8(path, stringToFlags(options.flag));
+                   ^
+
+Error: ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/server/routes/qms.ts'
+    at readFileSync (node:fs:440:20)
+    at findings (file:///home/user/ClinicalSageAI-2-replit/scripts/ci/check-fabricated-identity.mjs:129:32)
+    at file:///home/user/ClinicalSageAI-2-replit/scripts/ci/check-fabricated-identity.mjs:141:14
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:665:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/home/user/ClinicalSageAI-2-replit/server/routes/qms.ts'
+}
+
+Node.js v22.22.2
+exit=1
+=== npm run ci:no-mock-in-prod-routes
+✅ no-mock-in-prod-routes check passed (current=0, baseline=0, new=0)
+exit=0
+=== npm run ci:audit-logs-fixture
+[ci:audit-logs-fixture] audit_logs fixtures vs writeChainedAuditRow
+  columns the writer writes : 17
+  fixtures found            : 16
+
+✅ every audit_logs fixture accepts the writer's full column list.
+exit=0
+=== npm run ci:tenant-isolation:no-regression
+[ci:tenant-isolation] WARN — 9 candidate violation(s) (29 query(ies) inline-suppressed with justifications — grep 'tenant-isolation-safe:' to audit):
+
+  server/routes/module-access-requests.ts  (1)
+    L290  tables=[]
+      `${SELECT_REQUEST}
+
+  server/services/advancedRAGPipeline.ts  (1)
+    L869  tables=[rag_chunks,rag_documents]
+      `SELECT rc.content FROM rag_chunks rc
+
+  server/services/c2c/project-retention.ts  (1)
+    L66  tables=[projects]
+      `WITH doomed AS (
+
+  server/services/deep-research-orchestrator.ts  (1)
+    L419  tables=[deep_research_jobs]
+      `SELECT id, uuid, organization_id, project_id, user_id, status, query, progress,
+
+  server/services/kernel-adaptive-policy.ts  (1)
+    L85  tables=[]
+      `SELECT strategy, AVG(quality_score)::float AS avg_quality, COUNT(*)::int AS samples
+
+  server/services/kernel-observability.ts  (4)
+    L53  tables=[]
+      `SELECT
+    L63  tables=[]
+      `SELECT
+    L72  tables=[]
+      `SELECT
+    … 1 more
+
+Total: 9 candidate(s). These are RAW SQL queries against known tenant-scoped tables that don't reference an org_id / tenant_id / workspace_id in the same statement. Each one is either a real tenant-isolation bug, needs a `// tenant-isolation-safe: <reason>` marker at the call site, or belongs in the file allowlist with a one-line justification (admin tool / schema migration / pre-tenant-resolution auth).
+[ci:tenant-isolation] FAIL — 1 NEW finding(s) above baseline of 8:
+  server/services/c2c/project-retention.ts#e2e74cbd75f0:projects
+exit=1
+=== npm run ci:audit-route-mounts:no-regression
+Route mount audit target: server/index.ts,server/bootstrap/register-*.ts,server/startup/routes.ts,server/startup/inline-endpoints.ts,server/startup/middleware.ts
+Scanned files (19): server/index.ts, server/bootstrap/register-admin-routes.ts, server/bootstrap/register-advanced-platform-routes.ts, server/bootstrap/register-ai-routes.ts, server/bootstrap/register-clinical-intel-routes.ts, server/bootstrap/register-concept2cure-routes.ts, server/bootstrap/register-core-routes.ts, server/bootstrap/register-document-routes.ts, server/bootstrap/register-entitlement-gate.ts, server/bootstrap/register-governance-routes.ts, server/bootstrap/register-ind-lifecycle-routes.ts, server/bootstrap/register-inline-routes.ts, server/bootstrap/register-platform-routes.ts, server/bootstrap/register-project-routes.ts, server/bootstrap/register-regulatory-routes.ts, server/bootstrap/register-tenant-routes.ts, server/startup/routes.ts, server/startup/inline-endpoints.ts, server/startup/middleware.ts
+Total captured mounts: 333
+Errors: 0
+Warnings: 8
+
+Warnings:
+- Prefix "/api/ai" mounted via app.use 4 times
+  owner: AI Platform (server/services/ai-gateway/)
+  • server/bootstrap/register-ai-routes.ts:102 app.use('/api/ai') [module-top]
+  • server/bootstrap/register-core-routes.ts:45 app.use('/api/ai') [module-top]
+  • server/bootstrap/register-core-routes.ts:46 app.use('/api/ai') [module-top]
+  • server/bootstrap/register-core-routes.ts:131 app.use('/api/ai') [module-top]
+- Prefix "/api/concept2cure" mounted via app.use 19 times
+  owner: Platform Kernel (server/routes/concept2cure.ts)
+  • server/bootstrap/register-concept2cure-routes.ts:30 app.use('/api/concept2cure') [module-top]
+  • server/bootstrap/register-concept2cure-routes.ts:31 app.use('/api/concept2cure') [module-top]
+  • server/bootstrap/register-concept2cure-routes.ts:32 app.use('/api/concept2cure') [module-top]
+  • server/bootstrap/register-concept2cure-routes.ts:33 app.use('/api/concept2cure') [module-top]
+  • ...and 15 more
+- Prefix "/api/cmc" mounted via app.use 3 times
+  owner: CMC Platform (server/routes/cmc*.ts)
+  • server/bootstrap/register-core-routes.ts:68 app.use('/api/cmc') [module-top]
+  • server/bootstrap/register-core-routes.ts:69 app.use('/api/cmc') [module-top]
+  • server/bootstrap/register-core-routes.ts:70 app.use('/api/cmc') [module-top]
+- Prefix "/api/cmc/module3-os" mounted via app.use 3 times
+  owner: CMC Platform (server/routes/cmc*.ts)
+  • server/bootstrap/register-core-routes.ts:83 app.use('/api/cmc/module3-os') [module-top]
+  • server/bootstrap/register-core-routes.ts:84 app.use('/api/cmc/module3-os') [module-top]
+  • server/bootstrap/register-core-routes.ts:85 app.use('/api/cmc/module3-os') [module-top]
+- Prefix "/api/ectd" mounted via app.use 2 times
+  owner: Platform API Gateway (server/index.ts)
+  • server/bootstrap/register-document-routes.ts:126 app.use('/api/ectd') [module-top]
+  • server/bootstrap/register-document-routes.ts:139 app.use('/api/ectd') [module-top]
+- Prefix "/api/submissions" mounted via app.use 2 times
+  owner: Platform API Gateway (server/index.ts)
+  • server/bootstrap/register-document-routes.ts:187 app.use('/api/submissions') [module-top]
+  • server/bootstrap/register-governance-routes.ts:65 app.use('/api/submissions') [module-top]
+- Prefix "/api/v1" mounted via app.use 2 times
+  owner: Platform API Gateway (server/index.ts)
+  • server/bootstrap/register-document-routes.ts:413 app.use('/api/v1') [module-top]
+  • server/bootstrap/register-regulatory-routes.ts:469 app.use('/api/v1') [module-top]
+- Prefix "/api/mdx" mounted via app.use 32 times
+  owner: Platform API Gateway (server/index.ts)
+  • server/bootstrap/register-inline-routes.ts:1182 app.use('/api/mdx') [module-top]
+  • server/bootstrap/register-inline-routes.ts:1194 app.use('/api/mdx') [module-top]
+  • server/bootstrap/register-inline-routes.ts:1203 app.use('/api/mdx') [module-top]
+  • server/bootstrap/register-inline-routes.ts:1204 app.use('/api/mdx') [module-top]
+  • ...and 28 more
+
+Owner summary (warning/error counts):
+- Platform API Gateway (server/index.ts): 0 errors, 4 warnings
+- CMC Platform (server/routes/cmc*.ts): 0 errors, 2 warnings
+- AI Platform (server/services/ai-gateway/): 0 errors, 1 warnings
+- Platform Kernel (server/routes/concept2cure.ts): 0 errors, 1 warnings
+
+Baseline delta: +0 new errors, +0 new warnings (baseline: docs/reports/route-mount-audit-baseline.json)
+exit=0
+=== npm run ci:internals-in-copy
+
+❌ Internal identifiers in user-visible copy.
+
+   client/src/concept2cure/v2/surfaces/ComplianceReportResult.tsx:181  [source file]
+     Saved .csv and .manifest.json. Download CSV ran the report again: export
+
+   The reader of these surfaces is a regulatory director. A route name tells
+   them nothing they can act on, and the internal shape of a governed system is
+   an information-disclosure finding in a regulated product, not a cosmetic one.
+   (BIOPHARMA_WORK_ORDER.md guardrail 3; BP-W0-5.)
+
+   Name the CAPABILITY, not the endpoint:
+     "GET /api/cmc/stability-studies didn't respond."
+     → "The stability register didn't respond."
+
+exit=1
+=== npm run ci:internals-in-copy:list
+client/src/concept2cure/v2/surfaces/ComplianceReportResult.tsx:181  [source file]  Saved .csv and .manifest.json. Download CSV ran the report again: export
+
+1 occurrence(s) across 1 file(s).
+exit=0

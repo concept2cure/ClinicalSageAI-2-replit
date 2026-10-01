@@ -1,0 +1,8 @@
+$ npx vitest run client/src/concept2cure/v2/__tests__/reviewRecordExport.test.tsx client/src/concept2cure/v2/__tests__/reviewCommentByline.test.tsx
+ ✓ client/src/concept2cure/v2/__tests__/reviewCommentByline.test.tsx > CommentByline > shows a comment AnA wrote as AnA’s, on the person’s behalf 35ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewCommentByline.test.tsx > CommentByline > shows a person’s own comment under their name and role 5ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRecordExport.test.tsx > Export review record > downloads what the server sent, from the artifact’s export, and says it is recorded 193ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRecordExport.test.tsx > Export review record > a refusal is reported in the server’s words, and nothing is downloaded 31ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRecordExport.test.tsx > Export review record > a thread without its document is offered no export 3ms
+ Test Files  2 passed (2)
+      Tests  5 passed (5)

@@ -1,0 +1,1984 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T06:00:16.398Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/coauthorSnapshotSeal.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/coauthorSnapshotSeal.test.ts
+{
+  "timestamp": "2026-10-01T06:00:18.093Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+✅ Template tables initialized
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T06:00:19.953Z",
+  "level": "warn",
+  "message": "[authoring-documents] Governed-document binding unavailable; creating unbound document",
+  "context": {
+    "error": "column \"program_type\" does not exist",
+    "clientProgramId": "a0000000-0000-4000-8000-00000000000a"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T06:00:19.994Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "99d68eec-f55e-4d9b-bd31-c8e6c30899bf",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T06:00:20.100Z",
+  "level": "warn",
+  "message": "[authoring-documents] Governed-document binding unavailable; creating unbound document",
+  "context": {
+    "error": "column \"program_type\" does not exist",
+    "clientProgramId": "b0000000-0000-4000-8000-00000000000b"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T06:00:20.104Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "5fea56fc-8d43-4b46-bcdc-db064402d384",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T06:00:20.118Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 8edafbad-752e-4245-b5cf-a2d1da1d770c by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T06:00:20.190Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 8edafbad-752e-4245-b5cf-a2d1da1d770c by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T06:00:20.195Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 99d68eec-f55e-4d9b-bd31-c8e6c30899bf by a***@f6.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:00:20.197Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.CREATE authoring_section",
+  "context": {
+    "userId": "5a1c2a10-0000-4000-8000-000000000001",
+    "tenantId": 1,
+    "resourceId": "4112f271-e699-4acb-8aa5-c2297484126d"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stdout | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T06:00:20.253Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 8edafbad-752e-4245-b5cf-a2d1da1d770c by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T06:00:20.264Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+stdout | server/routes/__tests__/coauthorSnapshotSeal.test.ts
+✅ Template tables initialized
+
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > before any request: the board is an honest empty queue, not an error 50ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > the creator (OWNER + AUTHOR grants, org role member) may file and assign, and may neither freeze nor sign 128ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a member with only a Reviewer grant and a viewer org role is told, per act, why not 80ms
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial
+{
+  "timestamp": "2026-10-01T06:00:20.635Z",
+  "level": "warn",
+  "message": "[authoring-router] Document access could not be determined; reported as unknown",
+  "context": {
+    "what": "approve",
+    "docId": "8edafbad-752e-4245-b5cf-a2d1da1d770c",
+    "error": "relation \"doc_permissions\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial
+{
+  "timestamp": "2026-10-01T06:00:20.637Z",
+  "level": "warn",
+  "message": "[authoring-router] Document access could not be determined; reported as unknown",
+  "context": {
+    "what": "export",
+    "docId": "8edafbad-752e-4245-b5cf-a2d1da1d770c",
+    "error": "relation \"doc_permissions\" does not exist"
+  }
+}
+
+stderr | server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > reads the seal the router writes: a frozen document places as finalized with its text
+Signer name lookup failed: error: relation "users" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 104,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '18',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1469',
+  routine: 'parserOpenTable',
+  query: 'SELECT name FROM users WHERE lower(email) = lower($1) LIMIT 1',
+  params: [ 'member@org.test' ],
+  queryOptions: undefined
+}
+
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a FROZEN document can still be filed to the vault — the sealed record is what filing is for 54ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial 50ms
+stdout | server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > reads the seal the router writes: a frozen document places as finalized with its text
+{
+  "timestamp": "2026-10-01T06:00:20.675Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc 0c000000-0000-4000-8000-0000000000e1 by m***@org.test",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > reads the seal the router writes: a frozen document places as finalized with its text
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > the passage under review is the document’s own first section, and the thread is its comments
+{
+  "timestamp": "2026-10-01T06:00:20.836Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: comment_added on doc 99d68eec-f55e-4d9b-bd31-c8e6c30899bf by r***@f6.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > apply-template refuses a FROZEN document (403 DOCUMENT_FROZEN), writes nothing, and the document still files
+Signer name lookup failed: error: relation "users" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 104,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '18',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1469',
+  routine: 'parserOpenTable',
+  query: 'SELECT name FROM users WHERE lower(email) = lower($1) LIMIT 1',
+  params: [ 'member@org.test' ],
+  queryOptions: undefined
+}
+
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > POST /documents/:id/request-review → the reviewer sees it (scope=mine) and the requester sees it (scope=requested) 355ms
+stdout | server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > apply-template refuses a FROZEN document (403 DOCUMENT_FROZEN), writes nothing, and the document still files
+{
+  "timestamp": "2026-10-01T06:00:20.858Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc 0c000000-0000-4000-8000-0000000000f1 by m***@org.test",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > reads the seal the router writes: a frozen document places as finalized with its text 481ms
+stderr | server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > apply-template refuses an APPROVED document too, in merge mode, and adds no section
+Signer name lookup failed: error: relation "users" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 104,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '18',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1469',
+  routine: 'parserOpenTable',
+  query: 'SELECT name FROM users WHERE lower(email) = lower($1) LIMIT 1',
+  params: [ 'member@org.test' ],
+  queryOptions: undefined
+}
+
+stdout | server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > apply-template refuses an APPROVED document too, in merge mode, and adds no section
+{
+  "timestamp": "2026-10-01T06:00:20.956Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc 0c000000-0000-4000-8000-0000000000a1 by m***@org.test",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > the passage under review is the document’s own first section, and the thread is its comments 209ms
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > another tenant never sees it 14ms
+ ✓ server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > apply-template refuses a FROZEN document (403 DOCUMENT_FROZEN), writes nothing, and the document still files 167ms
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a decision on the board is the authoring workflow’s own transition > POST /documents/:id/review {changes_requested} → the board row changes state, and the act is in the authoring audit trail
+{
+  "timestamp": "2026-10-01T06:00:21.073Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 99d68eec-f55e-4d9b-bd31-c8e6c30899bf by r***@f6.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:00:21.074Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.document_reviewed authoring_document",
+  "context": {
+    "userId": "5a1c2a10-0000-4000-8000-000000000002",
+    "tenantId": 1,
+    "resourceId": "99d68eec-f55e-4d9b-bd31-c8e6c30899bf"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a decision on the board is the authoring workflow’s own transition > POST /documents/:id/review {changes_requested} → the board row changes state, and the act is in the authoring audit trail
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a decision on the board is the authoring workflow’s own transition > POST /documents/:id/review {changes_requested} → the board row changes state, and the act is in the authoring audit trail
+{
+  "timestamp": "2026-10-01T06:00:21.092Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+stderr | server/routes/__tests__/coauthorSnapshotSeal.test.ts > sections sharing an order_index: editor, seal and filing agree > the real freeze seals, and the copy files, the editor's order — and re-placing it writes nothing
+Signer name lookup failed: error: relation "users" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 104,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '18',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1469',
+  routine: 'parserOpenTable',
+  query: 'SELECT name FROM users WHERE lower(email) = lower($1) LIMIT 1',
+  params: [ 'member@org.test' ],
+  queryOptions: undefined
+}
+
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a review requested in Authoring reaches the Review board > filters by program, and refuses a program id that is not one 166ms
+stdout | server/routes/__tests__/coauthorSnapshotSeal.test.ts > sections sharing an order_index: editor, seal and filing agree > the real freeze seals, and the copy files, the editor's order — and re-placing it writes nothing
+{
+  "timestamp": "2026-10-01T06:00:21.178Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc 0c000000-0000-4000-8000-0000000000c1 by m***@org.test",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > apply-template refuses an APPROVED document too, in merge mode, and adds no section 129ms
+ ✓ server/routes/__tests__/coauthorSnapshotSeal.test.ts > a document sealed by the real freeze files as exactly its sealed text > a DRAFT document still takes a template (the lock is the refusal, not the route) 41ms
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a decision on the board is the authoring workflow’s own transition > re-requesting after changes puts it back on the reviewer’s queue; approving takes it off
+{
+  "timestamp": "2026-10-01T06:00:21.281Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 99d68eec-f55e-4d9b-bd31-c8e6c30899bf by r***@f6.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:00:21.282Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.document_reviewed authoring_document",
+  "context": {
+    "userId": "5a1c2a10-0000-4000-8000-000000000002",
+    "tenantId": 1,
+    "resourceId": "99d68eec-f55e-4d9b-bd31-c8e6c30899bf"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a decision on the board is the authoring workflow’s own transition > re-requesting after changes puts it back on the reviewer’s queue; approving takes it off
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a decision on the board is the authoring workflow’s own transition > re-requesting after changes puts it back on the reviewer’s queue; approving takes it off
+{
+  "timestamp": "2026-10-01T06:00:21.309Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a decision on the board is the authoring workflow’s own transition > POST /documents/:id/review {changes_requested} → the board row changes state, and the act is in the authoring audit trail 103ms
+stderr | server/routes/__tests__/coauthorSnapshotSeal.test.ts > sections sharing an order_index: editor, seal and filing agree > tied sections created inside one millisecond: the real freeze seals them and the copy files (201)
+Signer name lookup failed: error: relation "users" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 104,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '18',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1469',
+  routine: 'parserOpenTable',
+  query: 'SELECT name FROM users WHERE lower(email) = lower($1) LIMIT 1',
+  params: [ 'member@org.test' ],
+  queryOptions: undefined
+}
+
+stdout | server/routes/__tests__/coauthorSnapshotSeal.test.ts > sections sharing an order_index: editor, seal and filing agree > tied sections created inside one millisecond: the real freeze seals them and the copy files (201)
+{
+  "timestamp": "2026-10-01T06:00:21.381Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc 0c000000-0000-4000-8000-0000000000d1 by m***@org.test",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/coauthorSnapshotSeal.test.ts > sections sharing an order_index: editor, seal and filing agree > the real freeze seals, and the copy files, the editor's order — and re-placing it writes nothing 206ms
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > the approval chain (authoring_workflow_steps) is shown, owned, and never signed from the board > POST /docs/:id/submit → the step is the board’s workflow, current and at the approver’s sign-off
+{
+  "timestamp": "2026-10-01T06:00:21.427Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: SUBMIT on doc 5fea56fc-8d43-4b46-bcdc-db064402d384 by a***@f6.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:00:21.431Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.SUBMIT authoring_document",
+  "context": {
+    "userId": "5a1c2a10-0000-4000-8000-000000000001",
+    "tenantId": 1,
+    "resourceId": "5fea56fc-8d43-4b46-bcdc-db064402d384"
+  }
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > the approval chain (authoring_workflow_steps) is shown, owned, and never signed from the board > POST /docs/:id/submit → the step is the board’s workflow, current and at the approver’s sign-off
+[AuditLog] Failed to write audit entry: error: relation "audit.tamper_proof_log" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 121,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '41',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1448',
+  routine: 'parserOpenTable',
+  query: 'SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n' +
+    '         ORDER BY sequence_number DESC LIMIT 1',
+  params: [],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > the approval chain (authoring_workflow_steps) is shown, owned, and never signed from the board > POST /docs/:id/submit → the step is the board’s workflow, current and at the approver’s sign-off
+{
+  "timestamp": "2026-10-01T06:00:21.446Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {
+    "length": 121,
+    "name": "error",
+    "severity": "ERROR",
+    "code": "42P01",
+    "position": "41",
+    "file": "parse_relation.c",
+    "line": "1448",
+    "routine": "parserOpenTable",
+    "query": "SELECT chain_hash, sequence_number FROM audit.tamper_proof_log\n         ORDER BY sequence_number DESC LIMIT 1",
+    "params": []
+  }
+}
+
+stdout | server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > the approval chain (authoring_workflow_steps) is shown, owned, and never signed from the board > POST /docs/:id/submit → the step is the board’s workflow, current and at the approver’s sign-off
+{
+  "timestamp": "2026-10-01T06:00:21.452Z",
+  "level": "info",
+  "message": "[authoring-router] authoring→canonical bridge skipped on submit",
+  "context": {
+    "docId": "5fea56fc-8d43-4b46-bcdc-db064402d384",
+    "reason": "no project context — authoring document is not project-scoped"
+  }
+}
+
+ ✓ server/routes/__tests__/coauthorSnapshotSeal.test.ts > sections sharing an order_index: editor, seal and filing agree > tied sections created inside one millisecond: the real freeze seals them and the copy files (201) 113ms
+ ✓ server/routes/__tests__/coauthorSnapshotSeal.test.ts > sections sharing an order_index: editor, seal and filing agree > the same document with its two sections swapped after the seal is still refused (409, nothing written) 32ms
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > a decision on the board is the authoring workflow’s own transition > re-requesting after changes puts it back on the reviewer’s queue; approving takes it off 250ms
+ ✓ server/routes/__tests__/review-board-authoring-store.pglite.integration.test.ts > the approval chain (authoring_workflow_steps) is shown, owned, and never signed from the board > POST /docs/:id/submit → the step is the board’s workflow, current and at the approver’s sign-off 114ms
+stderr | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } }
+{
+  "timestamp": "2026-10-01T06:00:33.837Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc aa32841b-908d-4ab1-a4f1-cf40dca44c2b by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } }
+{
+  "timestamp": "2026-10-01T06:00:33.888Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc aa32841b-908d-4ab1-a4f1-cf40dca44c2b by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } }
+{
+  "timestamp": "2026-10-01T06:00:33.936Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc aa32841b-908d-4ab1-a4f1-cf40dca44c2b by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > sanitizes the content: a <script> tag and an onerror handler never reach the store
+{
+  "timestamp": "2026-10-01T06:00:34.228Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 92737214-a6d3-461f-a917-f05fb3490687 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } } 509ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > sanitizes the content: a <script> tag and an onerror handler never reach the store 110ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 on an empty section list — nothing written 29ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > an APPROVED source files its own saved text and title — a forged body is not what gets approved 162ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > a FROZEN source likewise files its sealed text as finalized 47ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > refuses a source with no saved sections — there is nothing to file — and creates nothing 12ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > still refuses another organization's source with 404 8ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > POST /api/coauthor/documents takes the text from the source, not the request > leaves an unsourced POST as it was: the body is the text, and it is a draft 8ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > follows FINALIZED_DOCUMENT_READ_ONLY end to end: place, refused edit, place again 58ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a source that has moved on (draft, then approved) re-takes its copy with the approved text 45ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 without a programId 62ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a copy whose text drifted from its approved source is restored to the source by placing again 30ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > a deleted copy can be placed again, under the identity the alias map still records 55ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 404 a project of another organization — nothing written (PF-02: the draft route checked the id's shape only) 137ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 on a provenance source it does not know 7ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 403 without a tenant 12ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > the root cause, demonstrated: the alias map admits ONE canonical document per filing 15ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > placing the same source again re-takes the same copy — the path the 409 names > placing an unchanged source again writes nothing 55ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a first placement after the approved sections were rewritten, and creates nothing 12ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a re-placement over an existing approved copy, and leaves the copy exactly as it was 54ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a section added after the seal (apply-template merge mode) 25ms
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId=
+{
+  "timestamp": "2026-10-01T06:00:34.766Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 8c4e57cf-c8fb-49a7-9649-f0ade52da0ff by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a document renamed after its seal: the copy would carry a title nobody approved 30ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses an APPROVED source with no sealed record: what was approved cannot be established 31ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a source whose only seal is the old approval stub, which holds no sections 49ms
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId=
+{
+  "timestamp": "2026-10-01T06:00:34.813Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 8c4e57cf-c8fb-49a7-9649-f0ade52da0ff by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId=
+{
+  "timestamp": "2026-10-01T06:00:34.852Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 8c4e57cf-c8fb-49a7-9649-f0ade52da0ff by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > refuses a seal whose bytes no longer match its own hash 43ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > holds the copy to the LATEST seal (approval after freeze) 55ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > an approved or frozen source is filed only as the text its seal recorded > a draft source is not held to a seal (it has none), and still files as a draft 23ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId= 376ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the server holds a source to the same "has saved content" rule as the placement dialog > refuses a source whose sections are headings with no text — the body would be empty 20ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the server holds a source to the same "has saved content" rule as the placement dialog > refuses whitespace-only sections the same way 13ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the two refusals round 3 never showed failing > SOURCE_CHANGED: a source approved between the first read and the lock is refused, and nothing is written 12ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the two refusals round 3 never showed failing > DOCUMENT_ALIAS_CONFLICT: an alias naming another organization's row is refused, and neither row nor alias changes 29ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > a re-take that changes the copy writes one audit event with the text it replaced — even saved co-author edits 84ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > an unchanged re-take writes no audit event (and nothing else) 137ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > re-creating a deleted copy is recorded against the same id 53ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > re-taking an existing copy is recorded > both events carry their reason and are flagged regulatory-significant and GxP-relevant 91ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (a) a section heading renamed after the seal, same text: 409, nothing written 47ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (b) a section code changed after the seal: 409, nothing written 29ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (c) two sections swapped in order after the seal, texts unchanged: 409, nothing written 45ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > (d) another tenant's seal of the same document id does not seal this tenant's document: 409, nothing written 25ms
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts
+✅ Template tables initialized
+
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the seal compare is of what is filed: heading, code, text and order — in this tenant > a seal without section ids (the shape seed 99 wrote) whose filed text matches is not reported as altered 319ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > files the editor order 16ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > a seal the router wrote before it ordered ties (storage order) is read in the editor order, not refused 37ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > a legacy seal with two ties inside one millisecond files them in the order sealed (201) 59ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > refuses, as not found, a citation on another document that is FROZEN and not granted to the caller; nothing is written 169ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > refuses a citation on another section of the same document 75ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > the same legacy seal, with those two swapped after it, is refused (409, nothing written) 156ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > sections created in one transaction under a legacy seal are filed, not refused as altered 55ms
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > re-reads the section's own citation and records the prior checksum in the same transaction
+{
+  "timestamp": "2026-10-01T06:00:36.160Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_REFRESHED on doc b5b29e58-c999-49e1-ad8b-aac71d723355 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > the same document with the two sections' texts exchanged after the seal is refused (409, nothing written) 48ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > a section created later but placed first files where the seal placed it (order_index before created_at) 51ms
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > cite-source: CITATION_ADDED under the document the section belongs to, in the same transaction
+{
+  "timestamp": "2026-10-01T06:00:36.321Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_ADDED on doc e4a19ab2-4725-4eeb-a706-12c4a82df30b by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > re-reads the section's own citation and records the prior checksum in the same transaction 131ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > a re-read that finds the content unchanged writes nothing 48ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > sections sharing an order_index file in the editor order > re-placing an unchanged approved source over the copy the pre-fix client filed writes nothing 58ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > the filed text is the text the seal check read > a section changed before the read and restored after it is refused, not filed 36ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > ["0a000000-0000-4000-8000-000000000001"] is refused 400 and nothing is written 14ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > {"id":"0a000000-0000-4000-8000-000000000001"} is refused 400 and nothing is written 14ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > 42 is refused 400 and nothing is written 8ms
+ ✓ server/routes/__tests__/coauthorSnapshotFromSource.test.ts > a sourceAuthoringDocId that is not a string > true is refused 400 and nothing is written 14ms
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > re-citing an already-cited source keeps the checksum recorded at cite time and writes nothing
+{
+  "timestamp": "2026-10-01T06:00:36.387Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_ADDED on doc 9a868b1f-85d6-4827-a96b-dc3bfb12dedb by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > cite-source: CITATION_ADDED under the document the section belongs to, in the same transaction 75ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > re-citing an already-cited source keeps the checksum recorded at cite time and writes nothing 89ms
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > re-citing with new citation text records the prior text, and leaves the checksum alone
+{
+  "timestamp": "2026-10-01T06:00:36.469Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_ADDED on doc 300eac53-7dfe-4a0a-9592-e45f4735a707 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > re-citing with new citation text records the prior text, and leaves the checksum alone
+{
+  "timestamp": "2026-10-01T06:00:36.524Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_UPDATED on doc 300eac53-7dfe-4a0a-9592-e45f4735a707 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > uncite: CITATION_REMOVED keeps the deleted row, cite-time checksum included, as its before-image
+{
+  "timestamp": "2026-10-01T06:00:36.582Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_ADDED on doc 35f1b1de-1515-480f-b8e3-dda00aa2ae5f by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > uncite: CITATION_REMOVED keeps the deleted row, cite-time checksum included, as its before-image
+{
+  "timestamp": "2026-10-01T06:00:36.621Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_REMOVED on doc 35f1b1de-1515-480f-b8e3-dda00aa2ae5f by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > re-citing with new citation text records the prior text, and leaves the checksum alone 113ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > uncite: CITATION_REMOVED keeps the deleted row, cite-time checksum included, as its before-image 97ms
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > the free-text cite: CITATION_ADDED in the same transaction
+{
+  "timestamp": "2026-10-01T06:00:36.688Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_ADDED on doc 79b89b10-a5cb-4811-b592-981e89a8a3f6 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 — "Re-read all" records each checksum it moves, and refuses a sealed document > refresh-all: one CITATION_REFRESHED per citation whose checksum moved, under its own section
+{
+  "timestamp": "2026-10-01T06:00:36.738Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CITATION_REFRESHED on doc 45cc1bea-a786-4b5c-96a3-30575c3d22c3 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > the free-text cite: CITATION_ADDED in the same transaction 63ms
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > cite-source
+CRITICAL: Failed to create audit trail: error: test: audit row refused for CITATION_ADDED
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 159,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function test_refuse_audit() line 4 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    'a7ace7c3-ad41-4294-bf22-eaf2fe08b18c',
+    'ef176214-e682-4e0d-bc55-245cb7a57545',
+    'CITATION_ADDED',
+    'author@canvas.example',
+    'unknown',
+    null,
+    '{"id":"2928d1a3-5842-480d-ab65-a85021e6eb63","section_id":"ef176214-e682-4e0d-bc55-245cb7a57545","source":"cre_evidence_source","reference_id":"12","citation_text":null,"payload_sha256":"sha-fc-add"}',
+    null,
+    '9b69c86f46dcb4d87ffa1a1ede608d8aa3ab692ba242a81a20ef055b9d2f184d',
+    'Source cited',
+    {
+      citation_id: '2928d1a3-5842-480d-ab65-a85021e6eb63',
+      source: 'cre_evidence_source',
+      reference_id: '12',
+      previous_sha256: null,
+      sha256: 'sha-fc-add'
+    },
+    '127.0.0.1',
+    'unknown',
+    'b38b6578-da26-4944-bd37-b66818a8d9ec',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > cite-source
+POST /sections/:sectionId/cite-source error: test: audit row refused for CITATION_ADDED
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 159,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function test_refuse_audit() line 4 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    'a7ace7c3-ad41-4294-bf22-eaf2fe08b18c',
+    'ef176214-e682-4e0d-bc55-245cb7a57545',
+    'CITATION_ADDED',
+    'author@canvas.example',
+    'unknown',
+    null,
+    '{"id":"2928d1a3-5842-480d-ab65-a85021e6eb63","section_id":"ef176214-e682-4e0d-bc55-245cb7a57545","source":"cre_evidence_source","reference_id":"12","citation_text":null,"payload_sha256":"sha-fc-add"}',
+    null,
+    '9b69c86f46dcb4d87ffa1a1ede608d8aa3ab692ba242a81a20ef055b9d2f184d',
+    'Source cited',
+    {
+      citation_id: '2928d1a3-5842-480d-ab65-a85021e6eb63',
+      source: 'cre_evidence_source',
+      reference_id: '12',
+      previous_sha256: null,
+      sha256: 'sha-fc-add'
+    },
+    '127.0.0.1',
+    'unknown',
+    'b38b6578-da26-4944-bd37-b66818a8d9ec',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > uncite
+CRITICAL: Failed to create audit trail: error: test: audit row refused for CITATION_REMOVED
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 161,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function test_refuse_audit() line 4 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    '5cf3505b-0d0d-43b5-9612-bf0186b2d603',
+    '63d1d2a6-4505-42ff-8b92-07963b0c4306',
+    'CITATION_REMOVED',
+    'author@canvas.example',
+    'unknown',
+    '{"id":"0dd13ff8-6d24-4271-b5a1-1ee44a9d3d08","section_id":"63d1d2a6-4505-42ff-8b92-07963b0c4306","source":"cre_evidence_source","reference_id":"13","citation_text":"as cited","payload_sha256":"sha-fc-del","anchor":null,"created_by":"9","created_at":"2026-10-01T06:00:36.829Z"}',
+    null,
+    '92807271422a4a515b80a6c75100fe92dd2151b4b5746c26955285e7710c607f',
+    null,
+    'Citation removed',
+    {
+      citation_id: '0dd13ff8-6d24-4271-b5a1-1ee44a9d3d08',
+      source: 'cre_evidence_source',
+      reference_id: '13',
+      previous_sha256: 'sha-fc-del',
+      sha256: null
+    },
+    '127.0.0.1',
+    'unknown',
+    '788fc268-a7ed-492b-ae99-f42e51990fb1',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > uncite
+DELETE /sections/:sectionId/cite-source/:sourceId error: test: audit row refused for CITATION_REMOVED
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 161,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function test_refuse_audit() line 4 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    '5cf3505b-0d0d-43b5-9612-bf0186b2d603',
+    '63d1d2a6-4505-42ff-8b92-07963b0c4306',
+    'CITATION_REMOVED',
+    'author@canvas.example',
+    'unknown',
+    '{"id":"0dd13ff8-6d24-4271-b5a1-1ee44a9d3d08","section_id":"63d1d2a6-4505-42ff-8b92-07963b0c4306","source":"cre_evidence_source","reference_id":"13","citation_text":"as cited","payload_sha256":"sha-fc-del","anchor":null,"created_by":"9","created_at":"2026-10-01T06:00:36.829Z"}',
+    null,
+    '92807271422a4a515b80a6c75100fe92dd2151b4b5746c26955285e7710c607f',
+    null,
+    'Citation removed',
+    {
+      citation_id: '0dd13ff8-6d24-4271-b5a1-1ee44a9d3d08',
+      source: 'cre_evidence_source',
+      reference_id: '13',
+      previous_sha256: 'sha-fc-del',
+      sha256: null
+    },
+    '127.0.0.1',
+    'unknown',
+    '788fc268-a7ed-492b-ae99-f42e51990fb1',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 — "Re-read all" records each checksum it moves, and refuses a sealed document > refresh-all: one CITATION_REFRESHED per citation whose checksum moved, under its own section 48ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 — "Re-read all" records each checksum it moves, and refuses a sealed document > refresh-all refuses a FROZEN document and re-reads nothing 11ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > cite-source 62ms
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > refresh-token
+CRITICAL: Failed to create audit trail: error: test: audit row refused for CITATION_REFRESHED
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 163,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function test_refuse_audit() line 4 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    '561bebe2-abb8-4b18-a10a-3eeff9e2a534',
+    '4b2e3289-c3bd-480a-8053-aafe5e07cade',
+    'CITATION_REFRESHED',
+    'author@canvas.example',
+    'unknown',
+    '{"id":"6f96dd4d-f08b-4702-901e-4b37e04f1a42","section_id":"4b2e3289-c3bd-480a-8053-aafe5e07cade","source":"cre_evidence_source","reference_id":"14","citation_text":"as cited","payload_sha256":"sha-fc-rr-1"}',
+    '{"id":"6f96dd4d-f08b-4702-901e-4b37e04f1a42","section_id":"4b2e3289-c3bd-480a-8053-aafe5e07cade","source":"cre_evidence_source","reference_id":"14","citation_text":"as cited","payload_sha256":"sha-fc-rr-2"}',
+    '69d5a6767d6e95e49bcfdb4ce05b37eec29ea8460d7f088cd70bbda1aace8e8c',
+    'f7365e72eae251ff80ada46edf25f389cd368ef8cd6fcb8b8692b0ad2842b367',
+    'Source re-read: its checksum changed since the citation was recorded',
+    {
+      citation_id: '6f96dd4d-f08b-4702-901e-4b37e04f1a42',
+      source: 'cre_evidence_source',
+      reference_id: '14',
+      previous_sha256: 'sha-fc-rr-1',
+      sha256: 'sha-fc-rr-2'
+    },
+    '127.0.0.1',
+    'unknown',
+    'a69bd42d-ca07-4da4-83ea-01b47d9c88a6',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > refresh-token
+Error refreshing token: error: test: audit row refused for CITATION_REFRESHED
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 163,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function test_refuse_audit() line 4 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    '561bebe2-abb8-4b18-a10a-3eeff9e2a534',
+    '4b2e3289-c3bd-480a-8053-aafe5e07cade',
+    'CITATION_REFRESHED',
+    'author@canvas.example',
+    'unknown',
+    '{"id":"6f96dd4d-f08b-4702-901e-4b37e04f1a42","section_id":"4b2e3289-c3bd-480a-8053-aafe5e07cade","source":"cre_evidence_source","reference_id":"14","citation_text":"as cited","payload_sha256":"sha-fc-rr-1"}',
+    '{"id":"6f96dd4d-f08b-4702-901e-4b37e04f1a42","section_id":"4b2e3289-c3bd-480a-8053-aafe5e07cade","source":"cre_evidence_source","reference_id":"14","citation_text":"as cited","payload_sha256":"sha-fc-rr-2"}',
+    '69d5a6767d6e95e49bcfdb4ce05b37eec29ea8460d7f088cd70bbda1aace8e8c',
+    'f7365e72eae251ff80ada46edf25f389cd368ef8cd6fcb8b8692b0ad2842b367',
+    'Source re-read: its checksum changed since the citation was recorded',
+    {
+      citation_id: '6f96dd4d-f08b-4702-901e-4b37e04f1a42',
+      source: 'cre_evidence_source',
+      reference_id: '14',
+      previous_sha256: 'sha-fc-rr-1',
+      sha256: 'sha-fc-rr-2'
+    },
+    '127.0.0.1',
+    'unknown',
+    'a69bd42d-ca07-4da4-83ea-01b47d9c88a6',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+{
+  "timestamp": "2026-10-01T06:00:36.873Z",
+  "level": "error",
+  "message": "[authoring-router] saving refresh token failed",
+  "context": {
+    "err": "test: audit row refused for CITATION_REFRESHED",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > refresh-all — the whole batch, not the citations before the failure
+CRITICAL: Failed to create audit trail: error: test: audit row refused for CITATION_REFRESHED
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 163,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function test_refuse_audit() line 4 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    'acf638cd-025c-414b-a953-6b308597f347',
+    'df8261ee-e5f8-421d-a304-8a7325af3f2f',
+    'CITATION_REFRESHED',
+    'author@canvas.example',
+    'unknown',
+    '{"id":"67ed22fa-7302-47ce-a8eb-3c0c55b7b725","section_id":"df8261ee-e5f8-421d-a304-8a7325af3f2f","source":"cre_evidence_source","reference_id":"15","citation_text":"as cited","payload_sha256":"sha-fc-all-a1"}',
+    '{"id":"67ed22fa-7302-47ce-a8eb-3c0c55b7b725","section_id":"df8261ee-e5f8-421d-a304-8a7325af3f2f","source":"cre_evidence_source","reference_id":"15","citation_text":"as cited","payload_sha256":"sha-fc-all-a2"}',
+    '284e33edde7c84330ca31eeb2d74372e41e24d6f243701d55fcf480f8a8d49e3',
+    'cd880003fbf24cda6c018ac06c296a0c031be5bbf76cec0c93aada7d81cb115c',
+    'Source re-read: its checksum changed since the citation was recorded',
+    {
+      citation_id: '67ed22fa-7302-47ce-a8eb-3c0c55b7b725',
+      source: 'cre_evidence_source',
+      reference_id: '15',
+      previous_sha256: 'sha-fc-all-a1',
+      sha256: 'sha-fc-all-a2'
+    },
+    '127.0.0.1',
+    'unknown',
+    'd758283b-0213-44ab-976c-e433cc17d49b',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > refresh-all — the whole batch, not the citations before the failure
+POST /docs/:id/refresh-all error: test: audit row refused for CITATION_REFRESHED
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 163,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function test_refuse_audit() line 4 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    'acf638cd-025c-414b-a953-6b308597f347',
+    'df8261ee-e5f8-421d-a304-8a7325af3f2f',
+    'CITATION_REFRESHED',
+    'author@canvas.example',
+    'unknown',
+    '{"id":"67ed22fa-7302-47ce-a8eb-3c0c55b7b725","section_id":"df8261ee-e5f8-421d-a304-8a7325af3f2f","source":"cre_evidence_source","reference_id":"15","citation_text":"as cited","payload_sha256":"sha-fc-all-a1"}',
+    '{"id":"67ed22fa-7302-47ce-a8eb-3c0c55b7b725","section_id":"df8261ee-e5f8-421d-a304-8a7325af3f2f","source":"cre_evidence_source","reference_id":"15","citation_text":"as cited","payload_sha256":"sha-fc-all-a2"}',
+    '284e33edde7c84330ca31eeb2d74372e41e24d6f243701d55fcf480f8a8d49e3',
+    'cd880003fbf24cda6c018ac06c296a0c031be5bbf76cec0c93aada7d81cb115c',
+    'Source re-read: its checksum changed since the citation was recorded',
+    {
+      citation_id: '67ed22fa-7302-47ce-a8eb-3c0c55b7b725',
+      source: 'cre_evidence_source',
+      reference_id: '15',
+      previous_sha256: 'sha-fc-all-a1',
+      sha256: 'sha-fc-all-a2'
+    },
+    '127.0.0.1',
+    'unknown',
+    'd758283b-0213-44ab-976c-e433cc17d49b',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > files the comment, and its audit row, under the section's document in one transaction
+{
+  "timestamp": "2026-10-01T06:00:36.944Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: comment_added on doc f006fb65-d3e6-45ee-8eed-07adb4b6a897 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > uncite 30ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > refresh-token 20ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > refresh-all — the whole batch, not the citations before the failure 22ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > refuses (400) a body doc_id naming another document, and writes nothing 22ms
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > refuses (400) a parent comment on another section, and writes nothing
+{
+  "timestamp": "2026-10-01T06:00:37.013Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: comment_added on doc 03d03f17-02db-4c05-a60b-14bff3d8fbc9 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > threads a reply to a parent on the same section
+{
+  "timestamp": "2026-10-01T06:00:37.085Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: comment_added on doc c3793324-5474-46fc-b79e-58dac1125fcf by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > files the comment, and its audit row, under the section's document in one transaction 55ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > refuses (400) a parent comment on another section, and writes nothing 76ms
+stdout | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > threads a reply to a parent on the same section
+{
+  "timestamp": "2026-10-01T06:00:37.136Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: reply_added on doc c3793324-5474-46fc-b79e-58dac1125fcf by a***@canvas.example",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > fail closed: a comment whose audit row cannot be written is not saved
+CRITICAL: Failed to create audit trail: error: test: audit row refused for comment_added
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 158,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function test_refuse_audit() line 4 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    '72ea9616-284d-4ff2-97b9-d643e42ba78f',
+    'd65ed313-0d26-4288-a488-f59323321942',
+    'comment_added',
+    'author@canvas.example',
+    'unknown',
+    null,
+    'Unrecorded',
+    null,
+    '8526102b84851637a9b6eecf62b2a9e95c096f45d654d667c6473cf7481bc0c4',
+    null,
+    {
+      comment_id: '4e0e7184-a18e-4aa4-a076-90666877cc54',
+      section_id: 'd65ed313-0d26-4288-a488-f59323321942',
+      parent_comment_id: null,
+      anchor: null,
+      quote: null,
+      quoteSha256: null,
+      sectionContentSha256: 'bda1ead50954efed8dc2c731404edc3e5a733657cd7edc14acf56667eb110391'
+    },
+    '127.0.0.1',
+    'unknown',
+    'f2050137-66cd-470b-9132-efa2d3070b7c',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+
+stderr | server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > fail closed: a comment whose audit row cannot be written is not saved
+Error adding comment: error: test: audit row refused for comment_added
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 158,
+  severity: 'ERROR',
+  code: 'P0001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: 'PL/pgSQL function test_refuse_audit() line 4 at RAISE',
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'pl_exec.c',
+  line: '3923',
+  routine: 'exec_stmt_raise',
+  query: 'INSERT INTO authoring_audit_trail\n' +
+    '       (doc_id, section_id, operation_type, actor_email, actor_role,\n' +
+    '        before_content, after_content, content_hash_before, content_hash_after,\n' +
+    '        change_reason, metadata, ip_address, user_agent, session_id, tenant_id, actor_id)\n' +
+    '       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)\n' +
+    '       RETURNING id',
+  params: [
+    '72ea9616-284d-4ff2-97b9-d643e42ba78f',
+    'd65ed313-0d26-4288-a488-f59323321942',
+    'comment_added',
+    'author@canvas.example',
+    'unknown',
+    null,
+    'Unrecorded',
+    null,
+    '8526102b84851637a9b6eecf62b2a9e95c096f45d654d667c6473cf7481bc0c4',
+    null,
+    {
+      comment_id: '4e0e7184-a18e-4aa4-a076-90666877cc54',
+      section_id: 'd65ed313-0d26-4288-a488-f59323321942',
+      parent_comment_id: null,
+      anchor: null,
+      quote: null,
+      quoteSha256: null,
+      sectionContentSha256: 'bda1ead50954efed8dc2c731404edc3e5a733657cd7edc14acf56667eb110391'
+    },
+    '127.0.0.1',
+    'unknown',
+    'f2050137-66cd-470b-9132-efa2d3070b7c',
+    1,
+    '3'
+  ],
+  queryOptions: undefined
+}
+{
+  "timestamp": "2026-10-01T06:00:37.209Z",
+  "level": "error",
+  "message": "[authoring-router] saving comment failed",
+  "context": {
+    "err": "test: audit row refused for comment_added",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > threads a reply to a parent on the same section 104ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > fail closed: a comment whose audit row cannot be written is not saved 71ms
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts
+✅ Template tables initialized
+
+stderr | server/routes/__tests__/authoring-signing-authority.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoring-signing-authority.test.ts
+{
+  "timestamp": "2026-10-01T06:00:39.658Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > brackets the revision, section update and audit in one BEGIN…COMMIT
+{
+  "timestamp": "2026-10-01T06:00:40.841Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > dot segments: 400, names the image, writes nothing 1103ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > percent-encoded dot segments: 400, names the image, writes nothing 23ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > backslash segments: 400, names the image, writes nothing 16ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > a query: 400, names the image, writes nothing 30ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > another API route: 400, names the image, writes nothing 27ms
+stderr | server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > ROLLBACK + 500 when the section update fails mid-transaction
+{
+  "timestamp": "2026-10-01T06:00:40.861Z",
+  "level": "error",
+  "message": "[authoring-router] Section save refused — content and lineage rolled back together",
+  "context": {
+    "sectionId": "S1",
+    "tenantId": 7,
+    "err": "injected mid-transaction failure"
+  }
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > saves a governed reference and an inline PNG, exactly as sent
+{
+  "timestamp": "2026-10-01T06:00:40.953Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > leaves a metadata-only save alone
+{
+  "timestamp": "2026-10-01T06:00:40.959Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: RENAME on doc D1 by a***@test.co",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > an external address: 400, names the image, writes nothing 21ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > a protocol-relative address: 400, names the image, writes nothing 7ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > an inline SVG: 400, names the image, writes nothing 12ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > an inline WebP: 400, names the image, writes nothing 25ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > names only the images that are not figures, by their position in the section 9ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > returns a long refused src shortened, so a megabyte data: URI is not echoed back 16ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > saves a governed reference and an inline PNG, exactly as sent 11ms
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-10-01T06:00:40.990Z",
+  "level": "info",
+  "message": "[ana-uploaded-files] derived upload saved",
+  "context": {
+    "fileId": "file_1790834440990_4fzzzx",
+    "bytes": 9
+  }
+}
+
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/freeze — snapshot + status flip + audit are atomic > brackets the snapshot, status update and audit in one BEGIN…COMMIT
+{
+  "timestamp": "2026-10-01T06:00:41.012Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: FREEZE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > brackets the revision, section update and audit in one BEGIN…COMMIT 75ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > ROLLBACK + 500 when the section update fails mid-transaction 14ms
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-10-01T06:00:41.019Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-10-01T06:00:41.021Z",
+  "level": "info",
+  "message": "[ana-uploaded-files] derived upload saved",
+  "context": {
+    "fileId": "file_1790834441021_i",
+    "bytes": 9
+  }
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-10-01T06:00:41.033Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-10-01T06:00:41.035Z",
+  "level": "info",
+  "message": "[ana-uploaded-files] derived upload saved",
+  "context": {
+    "fileId": "file_1790834441035_9",
+    "bytes": 9
+  }
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-10-01T06:00:41.044Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-10-01T06:00:41.061Z",
+  "level": "info",
+  "message": "[ana-uploaded-files] derived upload saved",
+  "context": {
+    "fileId": "file_1790834441061_",
+    "bytes": 9
+  }
+}
+
+stderr | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/freeze — snapshot + status flip + audit are atomic > ROLLBACK + 500 when the status update fails mid-transaction
+Error freezing document: Error: injected mid-transaction failure
+    at Object.<anonymous> (/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/authoring-atomic-mutations.test.ts:145:41)
+    at Object.Mock [as query] (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/spy/dist/index.js:332:34)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:4354:20
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stdout | server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload)
+{
+  "timestamp": "2026-10-01T06:00:41.087Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > leaves a metadata-only save alone 6ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload) 133ms
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/sign — signature + workflow approval + audit are atomic > brackets the signature, workflow step, document approval and audit in one BEGIN…COMMIT
+{
+  "timestamp": "2026-10-01T06:00:41.111Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: SIGN on doc D1 by a***@test.co",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/freeze — snapshot + status flip + audit are atomic > brackets the snapshot, status update and audit in one BEGIN…COMMIT 151ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/freeze — snapshot + status flip + audit are atomic > ROLLBACK + 500 when the status update fails mid-transaction 73ms
+stderr | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/sign — signature + workflow approval + audit are atomic > ROLLBACK + 500 when the signature insert fails mid-transaction
+Sign error: Error: injected mid-transaction failure
+    at Object.<anonymous> (/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/authoring-atomic-mutations.test.ts:145:41)
+    at Object.Mock [as query] (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/spy/dist/index.js:332:34)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:6278:20
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+{
+  "timestamp": "2026-10-01T06:00:41.135Z",
+  "level": "error",
+  "message": "[authoring-router] signing docs failed",
+  "context": {
+    "err": "injected mid-transaction failure",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stdout | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /sections/:id/revert — update + revision + filing + audit are atomic > writes its audit record inside the same BEGIN…COMMIT, not on the pool after it
+{
+  "timestamp": "2026-10-01T06:00:41.157Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: REVERT on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /sections/:id/revert — update + revision + filing + audit are atomic > a failed audit write rolls the revert back and reports 500
+CRITICAL: Failed to create audit trail: Error: injected mid-transaction failure
+    at Object.<anonymous> (/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/authoring-atomic-mutations.test.ts:145:41)
+    at Object.Mock [as query] (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/spy/dist/index.js:332:34)
+    at writeAuthoringAuditTrail (/home/user/ClinicalSageAI-2-replit/server/services/authoring/authoring-evidence.ts:240:37)
+    at createAuditTrail (/home/user/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:707:9)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:2391:13
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stderr | server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /sections/:id/revert — update + revision + filing + audit are atomic > a failed audit write rolls the revert back and reports 500
+Error reverting section: Error: injected mid-transaction failure
+    at Object.<anonymous> (/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/authoring-atomic-mutations.test.ts:145:41)
+    at Object.Mock [as query] (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/spy/dist/index.js:332:34)
+    at writeAuthoringAuditTrail (/home/user/ClinicalSageAI-2-replit/server/services/authoring/authoring-evidence.ts:240:37)
+    at createAuditTrail (/home/user/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:707:9)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:2391:13
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+{
+  "timestamp": "2026-10-01T06:00:41.175Z",
+  "level": "error",
+  "message": "[authoring-router] saving revert failed",
+  "context": {
+    "err": "injected mid-transaction failure",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stdout | server/routes/__tests__/authoring-signing-authority.test.ts
+✅ Template tables initialized
+
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/sign — signature + workflow approval + audit are atomic > brackets the signature, workflow step, document approval and audit in one BEGIN…COMMIT 26ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/sign — signature + workflow approval + audit are atomic > ROLLBACK + 500 when the signature insert fails mid-transaction 34ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /sections/:id/revert — update + revision + filing + audit are atomic > writes its audit record inside the same BEGIN…COMMIT, not on the pool after it 10ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /sections/:id/revert — update + revision + filing + audit are atomic > a failed audit write rolls the revert back and reports 500 20ms
+ ✓ server/routes/__tests__/authoring-signing-authority.test.ts > §11.10(g) — authoring e-signature requires signing authority > /e-sign: a role outside the allowlist is refused 157ms
+ ✓ server/routes/__tests__/authoring-signing-authority.test.ts > §11.10(g) — authoring e-signature requires signing authority > /e-sign: no membership row at all is refused (fails closed) 17ms
+ ✓ server/routes/__tests__/authoring-signing-authority.test.ts > §11.10(g) — authoring e-signature requires signing authority > /e-sign: rejects an unauthorized role BEFORE verifying the password 15ms
+ ✓ server/routes/__tests__/authoring-signing-authority.test.ts > §11.10(g) — authoring e-signature requires signing authority > /e-sign: an authorized role passes the gate and proceeds 10ms
+ ✓ server/routes/__tests__/authoring-signing-authority.test.ts > §11.10(g) — authoring e-signature requires signing authority > /sign: a role outside the allowlist is refused 10ms
+ ✓ server/routes/__tests__/authoring-signing-authority.test.ts > §11.10(g) — authoring e-signature requires signing authority > /sign: no membership row at all is refused (fails closed) 30ms
+ ✓ server/routes/__tests__/authoring-signing-authority.test.ts > §11.10(g) — authoring e-signature requires signing authority > /sign: rejects an unauthorized role BEFORE verifying the password 16ms
+ ✓ server/routes/__tests__/authoring-signing-authority.test.ts > §11.10(g) — authoring e-signature requires signing authority > /sign: an authorized role passes the gate and proceeds 4ms
+ ✓ server/routes/__tests__/authoring-signing-authority.test.ts > §11.70 — a signature must be linked to a real record > e-sign refuses an unknown document rather than binding to sha256("") 11ms
+stderr | server/routes/__tests__/authoringApprovalNoWorkflow.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoringApprovalNoWorkflow.test.ts
+{
+  "timestamp": "2026-10-01T06:00:43.237Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-sign-ceremony.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > signs with the account password and the enrolled code, and records that
+{
+  "timestamp": "2026-10-01T06:00:45.684Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: E_SIGN on doc D1 by s***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > signs with the password when no authenticator is enrolled, and records that
+{
+  "timestamp": "2026-10-01T06:00:45.721Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: E_SIGN on doc D1 by s***@test.co",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > a signing PIN alone signs nothing 94ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > signs with the account password and the enrolled code, and records that 12ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > refuses the password alone when an authenticator is enrolled 6ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > refuses a wrong code, counts it against the account, and writes nothing 18ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > signs with the password when no authenticator is enrolled, and records that 18ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > refuses a wrong password and writes nothing 34ms
+stdout | server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > signs with the account password and the enrolled code, and records that
+{
+  "timestamp": "2026-10-01T06:00:45.798Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: SIGN on doc D1 by s***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > signs with the password when no authenticator is enrolled, and records that
+{
+  "timestamp": "2026-10-01T06:00:45.856Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: SIGN on doc D1 by s***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts
+✅ Template tables initialized
+
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > a signing PIN alone signs nothing 15ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > signs with the account password and the enrolled code, and records that 21ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > refuses the password alone when an authenticator is enrolled 33ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > refuses a wrong code, counts it against the account, and writes nothing 17ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > signs with the password when no authenticator is enrolled, and records that 14ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > refuses a wrong password and writes nothing 6ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > the PIN store > has no route that sets a PIN: POST /users/pin is gone 17ms
+stdout | server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F2 — POST /docs/:id/sign auto-freezes when the final step approves the document > writes a frozen_documents row on the transaction client, between BEGIN and COMMIT
+{
+  "timestamp": "2026-10-01T06:00:45.969Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: SIGN on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringApprovalNoWorkflow.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F3 — POST /docs/:id/export gates on the record being sealed > ALLOWS an APPROVED document and records the DELIVERED artifact-bytes hash
+{
+  "timestamp": "2026-10-01T06:00:46.051Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: EXPORT on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F3 — POST /docs/:id/export gates on the record being sealed > ALLOWS an APPROVED document and records the DELIVERED artifact-bytes hash
+{
+  "timestamp": "2026-10-01T06:00:46.056Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.EXPORT",
+    "resourceType": "authoring_document",
+    "resourceId": "D1",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F3 — POST /docs/:id/export gates on the record being sealed > ALLOWS an APPROVED document and records the DELIVERED artifact-bytes hash
+[authoring] audit_logs index entry NOT written for authoring.section.EXPORT on authoring_document D1; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+stdout | server/routes/__tests__/authoringApprovalNoWorkflow.test.ts > POST /docs/:docId/sign on a document with NO approval workflow > does not flip the document to APPROVED
+{
+  "timestamp": "2026-10-01T06:00:46.058Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: SIGN on doc D1 by q***@test.co",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoringApprovalNoWorkflow.test.ts > POST /docs/:docId/sign on a document with NO approval workflow > does not flip the document to APPROVED
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stdout | server/routes/__tests__/authoringApprovalNoWorkflow.test.ts > POST /docs/:docId/sign on a document with NO approval workflow > still records the signature — only the APPROVAL is withheld
+{
+  "timestamp": "2026-10-01T06:00:46.096Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: SIGN on doc D1 by q***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringApprovalNoWorkflow.test.ts > POST /docs/:docId/sign on a document with NO approval workflow > does not seal the document into frozen_documents either
+{
+  "timestamp": "2026-10-01T06:00:46.114Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: SIGN on doc D1 by q***@test.co",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringApprovalNoWorkflow.test.ts > POST /docs/:docId/sign on a document with NO approval workflow > does not flip the document to APPROVED 56ms
+ ✓ server/routes/__tests__/authoringApprovalNoWorkflow.test.ts > POST /docs/:docId/sign on a document with NO approval workflow > still records the signature — only the APPROVAL is withheld 26ms
+stdout | server/routes/__tests__/authoringApprovalNoWorkflow.test.ts > POST /docs/:docId/sign where an approval workflow DID exist > still flips to APPROVED once every step is approved
+{
+  "timestamp": "2026-10-01T06:00:46.127Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: SIGN on doc D1 by q***@test.co",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringApprovalNoWorkflow.test.ts > POST /docs/:docId/sign where an approval workflow DID exist > does NOT approve while a step is still pending
+{
+  "timestamp": "2026-10-01T06:00:46.142Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: SIGN on doc D1 by q***@test.co",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F2 — POST /docs/:id/sign auto-freezes when the final step approves the document > writes a frozen_documents row on the transaction client, between BEGIN and COMMIT 107ms
+ ✓ server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F3 — POST /docs/:id/export gates on the record being sealed > REFUSES with 409 when the document is a DRAFT — no unapproved artifact, no manifest 55ms
+ ✓ server/routes/__tests__/authoringApprovalNoWorkflow.test.ts > POST /docs/:docId/sign on a document with NO approval workflow > does not seal the document into frozen_documents either 16ms
+ ✓ server/routes/__tests__/authoringApprovalNoWorkflow.test.ts > POST /docs/:docId/sign where an approval workflow DID exist > still flips to APPROVED once every step is approved 16ms
+ ✓ server/routes/__tests__/authoringApprovalNoWorkflow.test.ts > POST /docs/:docId/sign where an approval workflow DID exist > does NOT approve while a step is still pending 17ms
+ ✓ server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F3 — POST /docs/:id/export gates on the record being sealed > ALLOWS an APPROVED document and records the DELIVERED artifact-bytes hash 133ms
+ ✓ server/routes/__tests__/authoringSignerPrintedName.test.ts > §11.50(a)(1) — the signer name is a printed name, not an address > neither signing path reads a name off req.user 2ms
+ ✓ server/routes/__tests__/authoringSignerPrintedName.test.ts > §11.50(a)(1) — the signer name is a printed name, not an address > req.user genuinely carries no name, so the old fallback could never lose 1ms
+ ✓ server/routes/__tests__/authoringSignerPrintedName.test.ts > §11.50(a)(1) — the signer name is a printed name, not an address > every signing path resolves the name from the user record 1ms
+ ✓ server/routes/__tests__/authoringSignerPrintedName.test.ts > §11.50(a)(1) — the signer name is a printed name, not an address > the resolver reads users.name and returns NULL rather than the email 1ms
+ ✓ server/routes/__tests__/authoringSignerPrintedName.test.ts > §11.50(a)(3) — the meaning is a closed set on BOTH paths > declares the meanings once 1ms
+ ✓ server/routes/__tests__/authoringSignerPrintedName.test.ts > §11.50(a)(3) — the meaning is a closed set on BOTH paths > validates the meaning on both paths, not just /e-sign 0ms
+ ✓ server/routes/__tests__/authoringSignerPrintedName.test.ts > §11.70 — the signature-to-record link is readable > the signatures read returns which frozen snapshot the signature covers 0ms
+ ✓ tests/regulatory-honesty.contract.test.ts > eCTD submission agent does not claim to have transmitted > locates submitToGateway (guards against the anchor moving) 2ms
+ ✓ tests/regulatory-honesty.contract.test.ts > eCTD submission agent does not claim to have transmitted > never sets status to submitted 1ms
+ ✓ tests/regulatory-honesty.contract.test.ts > eCTD submission agent does not claim to have transmitted > does not write a history reason claiming it reached the gateway 0ms
+ ✓ tests/regulatory-honesty.contract.test.ts > eCTD submission agent does not claim to have transmitted > states plainly that nothing was transmitted 0ms
+ ✓ tests/regulatory-honesty.contract.test.ts > eCTD submission agent does not claim to have transmitted > uses a status the CHECK constraint actually permits 1ms
+ ✓ tests/regulatory-honesty.contract.test.ts > eCTD submission agent does not claim to have transmitted > still refuses to proceed on validation errors 0ms
+ ✓ tests/regulatory-honesty.contract.test.ts > the review surface does not fabricate an electronic signature > does not attribute a signature to a hardcoded fixture identity 0ms
+ ✓ tests/regulatory-honesty.contract.test.ts > the review surface does not fabricate an electronic signature > does not write the phantom C2C_SIGNED global 0ms
+ ✓ tests/regulatory-honesty.contract.test.ts > the review surface does not fabricate an electronic signature > does not collect credentials it discards 0ms
+ ✓ tests/regulatory-honesty.contract.test.ts > the review surface does not fabricate an electronic signature > never claims a §11.50 manifestation was recorded 0ms
+ ✓ tests/regulatory-honesty.contract.test.ts > the review surface does not fabricate an electronic signature > says explicitly that a recorded decision is not an electronic signature 0ms
+ ✓ tests/regulatory-honesty.contract.test.ts > the review surface does not fabricate an electronic signature > records the decision on the server and claims only what came back 1ms
+ ✓ tests/regulatory-honesty.contract.test.ts > the review surface does not fabricate an electronic signature > points at the path that does perform a binding signature, and says truly how it verifies the signer 1ms
+ ✓ tests/regulatory-honesty.contract.test.ts > the review surface does not fabricate an electronic signature > no longer labels the action as signing or sealing 0ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > the parser keeps figures > an <img> becomes an image block instead of vanishing (the old failure) 9ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > the parser keeps figures > image-only content is not dropped by the whitespace filter (the trap) 5ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > collectImageSrcs > finds and deduplicates refs across sections 1ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > sniffImageDimensions > reads PNG, GIF and JPEG headers; refuses garbage 1ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > PDF print HTML > embeds the resolved figure as a data URI with its caption 1ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > PDF print HTML > states an unresolved figure instead of dropping it 1ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > DOCX > the figure is REALLY in the filed .docx — a drawing plus its media part 71ms
+ ✓ server/export/__tests__/authoring-image-export.test.ts > DOCX > an unresolved figure files a stated placeholder, never silence 18ms
+
+ Test Files  15 passed (15)
+      Tests  174 passed (174)
+   Start at  05:59:58
+   Duration  48.45s (transform 9.08s, setup 902ms, import 42.23s, tests 95.15s, environment 2ms)
+

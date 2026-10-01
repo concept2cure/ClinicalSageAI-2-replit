@@ -1,0 +1,6 @@
+# trunk Vault.tsx with client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx
+ × client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > lists hits from every project, each with its project, and downloads through that project 5079ms
+ × client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > a failed library search says nothing was searched 5019ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > a page short of the total says how many are shown 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 1 passed (3)

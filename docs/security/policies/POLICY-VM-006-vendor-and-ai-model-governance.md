@@ -7,7 +7,9 @@
 |---|---|---|---|
 | Amazon Web Services | hosting, RDS, S3, KMS, Secrets Manager, CloudTrail | all tenant data at rest | **Planned** — account/BAA not yet in place (row D1) |
 | Anthropic | Claude models via the AI gateway | prompts and retrieved context for governed drafting | **Planned** — BAA not signed; ZDR not requested (see POLICY-DR-007) |
-| OpenAI, Moonshot, Google Vertex, Azure OpenAI, AWS Bedrock | alternate generation lanes | only under placement approvals | **Planned** — no contracts; lanes disabled by default |
+| OpenAI, Google Vertex, Azure OpenAI | alternate generation lanes; OpenAI also embeddings | a tenant's content only when its placement policy names the vendor (Order Form election); enforced in production (`server/services/ai-gateway/providers/org-placement.ts` `providerElectionRefusal`, P1-45) | **Planned** — no contracts; never reached without an election |
+| AWS Bedrock | private-cloud Claude lane | any tenant once deployed (AWS is already a sub-processor) | **Planned** — not deployed |
+| Moonshot (Kimi) | none | never in production: boot refuses `KIMI_API_KEY` / `MOONSHOT_API_KEY` and the gateway drops the lane (ADR-0014 §1) | **Excluded** |
 | GitHub | source control, CI | source code, no tenant data | in use |
 | Neon (preview databases) | CI/preview only | synthetic data | in use, non-production |
 | Stripe, SendGrid, Redis | billing, e-mail, cache | account e-mail, payment tokens | optional; not in launch scope |

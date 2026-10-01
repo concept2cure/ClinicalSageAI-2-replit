@@ -129,7 +129,7 @@ interface Continuity {
   baseline?: { snapshotAt: string; readinessScore: number } | null;
   /* Start of the "what changed" window (the baseline's time, else 7 days ago). */
   changesSince?: string;
-  metrics: { readinessScore: number; documentCount: number; validatedCount: number; blockerCount: number; taskCompletionPercent: number };
+  metrics: { readinessScore: number; documentCount: number; validatedCount: number; blockerCount: number; taskCompletionPercent: number | null };
   changes: ContinuityChange[];
   newlyReady: ContinuityReady[];
   needsAttention: ContinuityAttention[];
@@ -679,7 +679,8 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                       ['Documents', cont.metrics && cont.metrics.documentCount],
                       ['Validated', cont.metrics && cont.metrics.validatedCount],
                       ['Blockers', cont.metrics && cont.metrics.blockerCount],
-                      ['Tasks done', cont.metrics && cont.metrics.taskCompletionPercent + '%'],
+                      // No figure when there are no tasks or a task store went unread (the server sends null).
+                      ['Tasks done', cont.metrics && (cont.metrics.taskCompletionPercent == null ? '—' : cont.metrics.taskCompletionPercent + '%')],
                     ] as [string, string | number | undefined][]).map(([k, v], i) => (
                       <div key={i} className="ac-metric"><span className="ac-metric-v">{v}</span><span className="ac-metric-k">{k}</span></div>
                     ))}
