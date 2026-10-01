@@ -233,7 +233,10 @@ describe('activity feeds and the MDx audit list name people who left (D3)', () =
   });
 
   it("the MDx audit list names the leaver's audit entries", async () => {
-    const res = await request(app).get('/api/mdx/audit?resource=project_section').set(asA());
+    // The audit trail is read by organisation administrators and managers
+    // (4f74b0f18, DP-18). What is measured here is the leaver's name, so the
+    // reader is the org's admin, as in the admin-band case below.
+    const res = await request(app).get('/api/mdx/audit?resource=project_section').set(auth(accessToken(adminA, ORG_A, 'admin')));
     expect(res.status, JSON.stringify(res.body).slice(0, 200)).toBe(200);
     const rows = (res.body.data?.events ?? res.body.events) as Array<{ actor: string; actorName: string }>;
     const mine = rows.filter(r => r.actor === `u-${leaver}`);
