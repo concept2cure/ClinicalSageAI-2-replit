@@ -100,6 +100,15 @@ describe('exporting the audit trail', () => {
     expect(pool.connect).not.toHaveBeenCalled();
   });
 
+  it('a session whose organisation is 0 is refused before any read: 0 is not a tenant (SECURITY-9)', async () => {
+    for (const path of ['/api/audit/export?format=json', '/api/audit/export/signed?format=json', '/api/audit/logs']) {
+      const r = await request(app('admin', { organizationId: 0 })).get(path);
+      expect(r.status, path).toBe(403);
+    }
+    expect(pool.connect).not.toHaveBeenCalled();
+    expect(pool.query).not.toHaveBeenCalled();
+  });
+
   it('an admin gets past the gate to the export itself', async () => {
     const r = await request(app('admin')).get('/api/audit/export/signed?format=json');
     expect(r.status).not.toBe(403);
