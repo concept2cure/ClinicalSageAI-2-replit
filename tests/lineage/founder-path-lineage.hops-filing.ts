@@ -91,6 +91,8 @@ function configureStubEsg(w: World): void {
   const env: Record<string, string> = {
     FDA_ESG_STAGING_URL: 'https://esg-staging.fda.example/as2',
     FDA_ESG_STAGING_AS2_FROM: 'C2C-SPONSOR',
+    // FDA's AS2 identifier has no default (2026-10-01, W5/D7, sweep F16).
+    FDA_ESG_STAGING_AS2_TO: 'FDA-AS2-ID-TEST',
     FDA_ESG_STAGING_CERT_PATH: path.join(creds, 'cert.pem'),
     FDA_ESG_STAGING_KEY_PATH: path.join(creds, 'key.pem'),
     FDA_ESG_STAGING_FDA_CERT_PATH: path.join(creds, 'fda.pem'),

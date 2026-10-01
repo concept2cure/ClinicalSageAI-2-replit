@@ -1,0 +1,15 @@
+  run "refuses_placement_approvals_that_omit_the_drafting_provider"... pass
+  run "refuses_a_pinned_rds_minor_version"... fail
+╷
+│ Error: Missing expected failure
+│ 
+│   on tests/boot_contract.tftest.hcl line 692, in run "refuses_a_pinned_rds_minor_version":
+│  692:   expect_failures = [var.rds_engine_version]
+│ 
+│ The checkable object, var.rds_engine_version, was expected to report an
+│ error but did not.
+╵
+tests/boot_contract.tftest.hcl... tearing down
+tests/boot_contract.tftest.hcl... fail
+
+Failure! 28 passed, 1 failed.

@@ -61,12 +61,19 @@ export interface EctdLeaf {
   stfFileTag?: string;
 }
 
-/** One applicant contact rendered into the FDA us-regional admin block. */
+/**
+ * One applicant contact rendered into the FDA us-regional admin block as
+ * `<applicant-contact>`: `<applicant-contact-name>`, then `<telephones>`, then
+ * `<emails>`, each wrapper only when the value is present.
+ */
 export interface FdaApplicantContact {
   /** Contact role — resolved to `fdaactN` (regulatory/technical/us-agent). */
   type: string;
   name: string;
+  /** Written as `<emails><email>`. */
   email?: string;
+  /** Written as `<telephones><telephone>`, with no telephone-number-type: FDA's
+   *  code list for it is not vendored (2026-10-01), so the bundle reports the gap. */
   phone?: string;
 }
 
@@ -78,11 +85,18 @@ export interface FdaFormLeaf {
 }
 
 /**
- * FDA us-regional admin metadata. When present, the FDA backbone emits the
- * spec-conformant `<admin>` block (applicant-contacts + application-set with
- * application-type / submission-type / submission-sub-type coded attributes +
- * transmittal form). When absent, sensible values are derived from the
- * top-level PackagerInput so existing callers keep working.
+ * FDA us-regional admin metadata for the `<admin>` block: `<applicant-info>`
+ * (`<id>` and `<company-name>` from PackagerInput.sponsorId / sponsorName, then
+ * `<applicant-contacts>` when `contacts` is non-empty) and the application-set
+ * (application-type / submission-type / submission-sub-type coded attributes +
+ * transmittal forms). Values that can be derived from the top-level
+ * PackagerInput are; a filing identity that cannot be is refused, never guessed.
+ *
+ * Nothing here is invented when absent: with no `contacts` no
+ * `<applicant-contacts>` is written. What the backbone therefore cannot stand
+ * behind (no contacts, an undeclared 1.1 form, a heading whose parent element
+ * name is not recorded) is stated on the bundle's `regionalBackbone`, which is
+ * not region-conformant while any of it remains (2026-10-01, sweep F06/F07).
  */
 export interface FdaRegionalAdmin {
   /** Application-type: `fdaatN` code or canonical string ('nda','ind',…). */
@@ -93,9 +107,12 @@ export interface FdaRegionalAdmin {
   submissionSubType?: string;
   /** submission-id value (defaults to the sequence number). */
   submissionId?: string;
-  /** Applicant contacts (regulatory/technical/US agent). */
+  /** Applicant contacts (regulatory/technical/US agent), written inside
+   *  `<applicant-info>` after `<id>` and `<company-name>`. Absent or empty: no
+   *  `<applicant-contacts>` element and no placeholder contact. */
   contacts?: FdaApplicantContact[];
-  /** Transmittal forms (356h/1571/…) nested under `<form>`. */
+  /** Transmittal forms (356h/1571/…) nested under `<form>`. A 1.1 leaf counts as
+   *  declared only when its form's `leaf` is the SAME object as the package leaf. */
   forms?: FdaFormLeaf[];
 }
 
