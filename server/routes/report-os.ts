@@ -58,6 +58,9 @@ import {
   signerIpAddress,
   type CeremonySignMeaning,
 } from '../services/part11/governed-signature-ceremony';
+import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role';
+import { isSigningAuthorized } from '../services/part11/signing-authority';
+import { GOVERNED_REVOCATION_SIGNATURE_TYPE, isSignatureWithdrawn } from '../services/part11/signature-persistence';
 import { requireGovernedReason } from './governed-reason';
 import { projectsInOrg, submissionInProject } from '../services/report-os/ownership';
 import { PREDICTION_NOT_A_RUN, isPredictionFamily } from '../services/report-os/prediction/report-types';
@@ -196,6 +199,8 @@ type DeliveryRecord = {
   requestedBy?: number;
   createdAt: string;
   correspondenceId?: string;
+  /** The finalize signatures an external send of final reports relied on (P1-44b). */
+  signatureIds?: number[];
 };
 
 const REPORT_OS_RECORD_SOURCE = 'report_os_state';
@@ -243,6 +248,7 @@ const reportDeliveryRecordSchema = z.object({
   requestedBy: z.number().int().positive().optional(),
   createdAt: z.string(),
   correspondenceId: z.string().uuid().optional(),
+  signatureIds: z.array(z.number().int().positive()).optional(),
 });
 
 function parseKeywordIssues(text: string) {
@@ -478,23 +484,25 @@ function refuseAlreadyFinal(res: Response, runId: number) {
   });
 }
 
-type FinalizeOutcome = 'already-final' | 'not-found' | 'not-recorded';
+type FinalizeStop = 'already-final' | 'not-found' | 'no-snapshot';
+type FinalizeOutcome = FinalizeStop | 'not-recorded';
 
 /** Ends the finalize transaction without a write; rolled back, never committed. */
 class FinalizeStopped extends Error {
-  constructor(readonly outcome: 'already-final' | 'not-found') {
+  constructor(readonly outcome: FinalizeStop) {
     super(outcome);
   }
 }
 
-/** The run's status, the seal on its latest snapshot: the two writes of a finalize, on `client`. */
+/**
+ * The run's status, the seal on its latest snapshot: the two writes of a
+ * finalize, on `client`. The snapshot is read (and locked) first: a run with
+ * none has nowhere to keep its seal, so it is not finalized (P1-44b). It used
+ * to be made final with the seal dropped, and its signature then named a seal
+ * the run did not carry.
+ */
 async function writeFinalize(client: PoolClient, run: typeof reportRuns.$inferSelect, seal: SealedRecord) {
   const at = new Date().toISOString();
-  await client.query(
-    `UPDATE report_runs SET status = 'final', completed_at = $3, updated_at = $3
-      WHERE id = $1 AND organization_id = $2`,
-    [run.id, run.organizationId, at]
-  );
   const snapshot = await client.query(
     `SELECT id, snapshot_metadata FROM report_snapshots
       WHERE run_id = $1 AND organization_id = $2 AND is_latest = true
@@ -502,13 +510,17 @@ async function writeFinalize(client: PoolClient, run: typeof reportRuns.$inferSe
     [run.id, run.organizationId]
   );
   const latest = snapshot.rows[0] as { id: number; snapshot_metadata: Record<string, unknown> | null } | undefined;
-  if (latest) {
-    const merged = { ...(latest.snapshot_metadata ?? {}), seal, finalizedAt: at };
-    await client.query('UPDATE report_snapshots SET snapshot_metadata = $2::json WHERE id = $1', [
-      latest.id,
-      JSON.stringify(merged),
-    ]);
-  }
+  if (!latest) throw new FinalizeStopped('no-snapshot');
+  await client.query(
+    `UPDATE report_runs SET status = 'final', completed_at = $3, updated_at = $3
+      WHERE id = $1 AND organization_id = $2`,
+    [run.id, run.organizationId, at]
+  );
+  const merged = { ...(latest.snapshot_metadata ?? {}), seal, finalizedAt: at };
+  await client.query('UPDATE report_snapshots SET snapshot_metadata = $2::json WHERE id = $1', [
+    latest.id,
+    JSON.stringify(merged),
+  ]);
 }
 
 /** The meanings a report finalize can carry: its requester issues it as author; anyone else approves it or takes responsibility. */
@@ -1881,6 +1893,19 @@ router.get('/runs/:id/rendered', async (req: Request, res: Response) => {
  * re-authentication. The body now carries `reason` (at least 8 characters,
  * requireGovernedReason), `meaning` and `reauth` ({ password, totp? }); the
  * ceremony in finalizeOnChain verifies them before anything is written.
+ *
+ * P1-44b (2026-10-01, product owner): the finalize IS the run's signed act, and
+ * the only way a run becomes final. Two things it lacked:
+ *   - signing authority (§11.10(g)). Finalize's tier (owner, admin, manager)
+ *     is who may finalize; the platform's signing policy
+ *     (services/part11/signing-authority.ts) is who may sign, and a finalize
+ *     is both. The role is the membership row's (resolveSignerOrgRole), read
+ *     before the run or a password, as every other signing route reads it.
+ *   - a kept seal. A run with no snapshot was made final with its seal
+ *     dropped; it is now refused (409 RUN_HAS_NO_SNAPSHOT), nothing signed.
+ * The signature it writes names the seal (its manifest's act.sealHash), and
+ * POST /deliveries reads it back: a signed final report is exported with no
+ * second ceremony.
  */
 /** A finalize's tenant, run, signer and reason, or null having sent the refusal. Nothing is read before these hold. */
 function finalizeRequest(
@@ -1905,6 +1930,26 @@ function finalizeRequest(
   return null;
 }
 
+/**
+ * Step 3a of the platform's signing ceremonies (§11.10(g)): the signer's role,
+ * from the membership row, must carry signing authority under the one policy.
+ * True when it does; otherwise the 403 is sent and nothing has been read or
+ * compared. An unreadable membership throws to the route's 500.
+ */
+async function hasSigningAuthority(res: Response, userId: number, organizationId: number): Promise<boolean> {
+  if (isSigningAuthorized(await resolveSignerOrgRole(userId, organizationId))) return true;
+  res.status(403).json({
+    success: false,
+    error: {
+      code: 'ESIGNATURE_NO_AUTHORITY',
+      message:
+        'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)), and finalizing a report ' +
+        'signs it. Nothing was finalized.',
+    },
+  });
+  return false;
+}
+
 /** The answer for a finalize that reached the ceremony. */
 function sendFinalizeOutcome(
   res: Response,
@@ -1914,6 +1959,16 @@ function sendFinalizeOutcome(
 ) {
   if (outcome === 'not-found') return res.status(404).json({ error: 'Run not found' });
   if (outcome === 'already-final') return refuseAlreadyFinal(res, runId);
+  if (outcome === 'no-snapshot') {
+    return res.status(409).json({
+      success: false,
+      error: {
+        code: 'RUN_HAS_NO_SNAPSHOT',
+        message: 'This run has no snapshot to keep its seal, so it was not finalized. Run the report again and finalize the new run. Nothing was signed.',
+      },
+      data: { runId },
+    });
+  }
   if (outcome === 'not-recorded') {
     return refuseUnrecorded(
       res,
@@ -1939,6 +1994,7 @@ router.post('/runs/:id/finalize', requireRole(...REPORT_FINALIZE_ROLES), finaliz
     const asked = finalizeRequest(req, res);
     if (!asked) return;
     const { runId, organizationId, userId } = asked;
+    if (!(await hasSigningAuthority(res, userId, organizationId))) return;
 
     const [run] = await db
       .select()
@@ -2238,10 +2294,17 @@ router.get('/deliveries', async (req: Request, res: Response) => {
  * target is resolved and checked first, then the letter (platform_send), the
  * delivery record, the learning memory and the chained row are ONE
  * tenant-stamped transaction, and 'sent' is answered only after it commits.
+ *
+ * P1-44b: an external send of a final report goes out under the signature
+ * the report was finalized with, read back from electronic_signatures
+ * (finalizeSignatures), with no second ceremony; the record and the chained
+ * row name it. DP-67 (b): a failed delivery logs ids and codes, never the letter.
  */
 type DeliveryPayload = z.infer<typeof createDeliverySchema>;
 type DeliveryRefusal = { refusal: { status: number; body: Record<string, unknown> } };
-type DeliveryReports = { projectId?: number; statuses: string[] };
+type DeliveryRun = { id: number; status: string };
+type DeliveryReports = { projectId?: number; runs: DeliveryRun[] };
+type DeliveryTarget = { projectId: number; signatureIds: number[] };
 
 function refuseDelivery(status: number, body: Record<string, unknown>): DeliveryRefusal {
   return { refusal: { status, body } };
@@ -2256,7 +2319,7 @@ async function loadDeliveryReports(
   organizationId: number,
   payload: DeliveryPayload
 ): Promise<DeliveryReports | DeliveryRefusal> {
-  const found: DeliveryReports = { statuses: [] };
+  const found: DeliveryReports = { runs: [] };
   if (payload.runId) {
     const [run] = await db
       .select()
@@ -2265,7 +2328,7 @@ async function loadDeliveryReports(
       .limit(1);
     if (!run) return refuseDelivery(404, { error: 'Run not found' });
     found.projectId = resolveProjectIdForRun(run);
-    found.statuses.push(run.status);
+    found.runs.push({ id: run.id, status: run.status });
   }
   if (payload.bundleId) {
     const bundle = await loadBundleById(organizationId, payload.bundleId);
@@ -2278,40 +2341,104 @@ async function loadDeliveryReports(
       : [];
     const first = runs.find(run => run.id === bundle.items[0]?.runId);
     if (!found.projectId && first) found.projectId = resolveProjectIdForRun(first);
-    found.statuses.push(...runs.map(run => run.status));
+    found.runs.push(...runs.map(run => ({ id: run.id, status: run.status })));
   }
   return found;
+}
+
+/** One row of the seal-and-signature read: a run's kept seal, and one signature on report-run:<id> (or none). */
+type SealSignatureRow = {
+  run_id: number;
+  seal_hash: string | null;
+  signature_id: number | null;
+  signed_seal_hash: string | null;
+  is_valid: boolean | null;
+  superseded_by: number | null;
+  verification_status: string | null;
+};
+
+/**
+ * P1-44b: the signature each run was finalized under, by run id, when it still
+ * stands over the seal the run keeps now. Finalize (finalizeOnChain) signs
+ * `report-run:<id>` and puts the seal's hash in the signature's manifest, which
+ * the §11.200 attribution hash covers; the seal itself is kept on the run's
+ * latest snapshot. A signature counts when it is not withdrawn
+ * (isSignatureWithdrawn: revoked, superseded or invalid) and names that seal.
+ * A run with no such signature is absent from the map. One read, scoped to the
+ * session's organization; the newest standing signature wins.
+ */
+async function finalizeSignatures(organizationId: number, runIds: number[]): Promise<Map<number, number>> {
+  const { rows } = await getPool().query(
+    `SELECT r.id AS run_id,
+            s.snapshot_metadata::jsonb -> 'seal' ->> 'contentHash' AS seal_hash,
+            es.id AS signature_id,
+            es.signature_manifest::jsonb -> 'act' ->> 'sealHash' AS signed_seal_hash,
+            es.is_valid, es.superseded_by, es.verification_status
+       FROM report_runs r
+       LEFT JOIN report_snapshots s
+         ON s.run_id = r.id AND s.organization_id = r.organization_id AND s.is_latest = true
+       LEFT JOIN electronic_signatures es
+         ON es.organization_id = r.organization_id
+        AND es.signed_target = 'report-run:' || r.id
+        AND es.signature_type <> $3
+      WHERE r.organization_id = $1 AND r.id = ANY($2::int[])
+      ORDER BY r.id, es.id DESC`,
+    [organizationId, runIds, GOVERNED_REVOCATION_SIGNATURE_TYPE]
+  );
+  const signed = new Map<number, number>();
+  for (const row of rows as SealSignatureRow[]) {
+    const runId = Number(row.run_id);
+    const standing =
+      row.signature_id != null && !isSignatureWithdrawn(row) && !!row.seal_hash && row.signed_seal_hash === row.seal_hash;
+    if (standing && !signed.has(runId)) signed.set(runId, Number(row.signature_id));
+  }
+  return signed;
 }
 
 /**
  * The e-signature rule of services/report-os/scheduling/delivery.ts, over every
  * report the delivery carries: a final report delivered on the external
- * channel needs one. A report run has no signing ceremony yet, so the
- * requirement cannot be met and the delivery is refused — fail closed, rather
- * than recorded as sent unsigned.
+ * channel goes out with the signature it was finalized under, and is refused
+ * without one — fail closed, rather than recorded as sent unsigned. Returns the
+ * signatures the delivery relies on, or the refusal naming the runs that carry
+ * none (a run finalized before finalizing was signed, or whose signature was
+ * revoked).
  */
-function signatureRefusal(payload: DeliveryPayload, statuses: string[]): DeliveryRefusal | null {
+async function signatureDecision(
+  organizationId: number,
+  payload: DeliveryPayload,
+  runs: DeliveryRun[]
+): Promise<{ signatureIds: number[] } | DeliveryRefusal> {
   const channel = payload.channel === 'external_pdf_export' ? 'external' : 'platform';
-  const unsigned = statuses.some(
-    status => decideDelivery({ status: status as ReportRunStatus }, channel).requiresESignature
-  );
-  if (!unsigned) return null;
+  const needing = runs.filter(run => decideDelivery({ status: run.status as ReportRunStatus }, channel).requiresESignature);
+  if (needing.length === 0) return { signatureIds: [] };
+  const signed = await finalizeSignatures(organizationId, [...new Set(needing.map(run => run.id))]);
+  const signatureIds = new Set<number>();
+  const unsigned = new Set<number>();
+  for (const run of needing) {
+    const decision = decideDelivery({ status: run.status as ReportRunStatus, signatureId: signed.get(run.id) }, channel);
+    if (decision.allowed && decision.signatureId != null) signatureIds.add(decision.signatureId);
+    else unsigned.add(run.id);
+  }
+  if (unsigned.size === 0) return { signatureIds: [...signatureIds] };
+  const named = [...unsigned].join(', ');
   return refuseDelivery(409, {
     success: false,
     error: {
       code: 'E_SIGNATURE_REQUIRED',
       message:
-        'A final report delivered outside the platform requires an e-signature, and report runs ' +
-        'cannot be e-signed yet. The delivery was refused. Nothing was recorded.',
+        'A final report sent outside the platform must carry the signature it was finalized under. ' +
+        `Report ${unsigned.size === 1 ? 'run' : 'runs'} ${named} ${unsigned.size === 1 ? 'has' : 'have'} no standing signature over ` +
+        `${unsigned.size === 1 ? 'its' : 'their'} seal, so the delivery was refused. Nothing was recorded.`,
     },
   });
 }
 
-/** Where the delivery is recorded, checked against the session's organization, or the refusal. */
+/** Where the delivery is recorded, checked against the session's organization, and the signatures it relies on; or the refusal. */
 async function resolveDeliveryTarget(
   organizationId: number,
   payload: DeliveryPayload
-): Promise<{ projectId: number } | DeliveryRefusal> {
+): Promise<DeliveryTarget | DeliveryRefusal> {
   const reports = await loadDeliveryReports(organizationId, payload);
   if ('refusal' in reports) return reports;
   // Whether it came from the body or from a run's scope, the project the
@@ -2332,19 +2459,21 @@ async function resolveDeliveryTarget(
   ) {
     return refuseDelivery(404, { error: 'Submission not found' });
   }
-  return signatureRefusal(payload, reports.statuses) ?? { projectId };
+  const signing = await signatureDecision(organizationId, payload, reports.runs);
+  if ('refusal' in signing) return signing;
+  return { projectId, signatureIds: signing.signatureIds };
 }
 
 function newDeliveryRecord(
   organizationId: number,
-  projectId: number,
+  target: DeliveryTarget,
   payload: DeliveryPayload,
   requestedBy: number | undefined
 ): DeliveryRecord & { projectId: number } {
   return {
     deliveryId: randomUUID(),
     organizationId,
-    projectId,
+    projectId: target.projectId,
     runId: payload.runId,
     bundleId: payload.bundleId,
     submissionId: payload.submissionId,
@@ -2356,6 +2485,7 @@ function newDeliveryRecord(
     status: payload.channel === 'platform_send' ? 'sent' : 'exported',
     requestedBy,
     createdAt: new Date().toISOString(),
+    ...(target.signatureIds.length > 0 ? { signatureIds: target.signatureIds } : {}),
   };
 }
 
@@ -2378,7 +2508,11 @@ function deliveryLearningMemory(delivery: DeliveryRecord & { projectId: number }
   };
 }
 
-/** The delivery's chained row. Recipients are counted, not copied: the record holds them. */
+/**
+ * The delivery's chained row. Recipients are counted, not copied: the record
+ * holds them. An external send of final reports names the signatures it went
+ * out under (P1-44b).
+ */
 function deliveryEvent(delivery: DeliveryRecord): ReportAuditEvent {
   return {
     organizationId: delivery.organizationId,
@@ -2396,8 +2530,31 @@ function deliveryEvent(delivery: DeliveryRecord): ReportAuditEvent {
       correspondenceType: delivery.correspondenceType,
       subject: delivery.subject,
       recipientCount: delivery.recipients.length,
+      signatureIds: delivery.signatureIds,
     },
   };
+}
+
+/**
+ * DP-67 (b), GDPR Art. 5(1)(c): what a delivery failure may put in a log line
+ * is its code, never its text. A query error's message can quote what was
+ * being written: drizzle's DrizzleQueryError is the statement and every
+ * parameter, so a refused delivery record logged its subject, letter and
+ * recipients (and the logger's masking scans no string over 2048 characters).
+ * The code is the error's own or, for a wrapped query error, its cause's: the
+ * PostgreSQL SQLSTATE.
+ */
+function failureCode(error: unknown): string | null {
+  const own = (error as { code?: unknown } | null)?.code;
+  if (typeof own === 'string') return own;
+  const cause = (error as { cause?: { code?: unknown } } | null)?.cause?.code;
+  return typeof cause === 'string' ? cause : null;
+}
+
+/** The error a delivery hands serverError: its code and no text, so the line serverError logs cannot quote the letter. */
+function textlessFailure(error: unknown): Error & { code?: string } {
+  const code = failureCode(error);
+  return Object.assign(new Error(code ? `failed with code ${code}` : 'failed with no code'), code ? { code } : {});
 }
 
 /**
@@ -2439,10 +2596,11 @@ async function recordDelivery(
       return recorded;
     });
   } catch (error) {
+    // Ids and the code only (DP-67 (b)): the message can quote the letter.
     logger.error('report delivery not recorded; rolled back', {
       deliveryId: delivery.deliveryId,
       channel: delivery.channel,
-      error: (error as Error)?.message,
+      code: failureCode(error),
     });
     return null;
   }
@@ -2459,11 +2617,7 @@ router.post('/deliveries', requireRole('owner', 'admin', 'manager'), async (req:
     const payload = parsed.data;
     const target = await resolveDeliveryTarget(organizationId, payload);
     if ('refusal' in target) return res.status(target.refusal.status).json(target.refusal.body);
-    const recorded = await recordDelivery(
-      req,
-      payload,
-      newDeliveryRecord(organizationId, target.projectId, payload, getUserId(req))
-    );
+    const recorded = await recordDelivery(req, payload, newDeliveryRecord(organizationId, target, payload, getUserId(req)));
     if (!recorded) {
       return refuseUnrecorded(
         res,
@@ -2472,8 +2626,9 @@ router.post('/deliveries', requireRole('owner', 'admin', 'manager'), async (req:
       );
     }
     return res.status(201).json({ data: recorded });
-  } catch (error: any) {
-    return serverError(res, logger, 'saving deliveries', error);
+  } catch (error: unknown) {
+    // DP-67 (b): logged by its code; its text could quote the letter.
+    return serverError(res, logger, 'saving deliveries', textlessFailure(error));
   }
 });
 

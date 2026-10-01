@@ -72,6 +72,8 @@ const h = vi.hoisted(() => {
     queued, reads, db, pool, statements, respond,
     audit: vi.fn(), gate: vi.fn(), compute: vi.fn(),
     reauth: vi.fn(), ledger: vi.fn(), signature: vi.fn(),
+    /** The signer's role as the membership row holds it (resolveSignerOrgRole). */
+    memberRole: vi.fn(),
     limiterScopes: [] as string[],
   };
 });
@@ -106,6 +108,9 @@ vi.mock('../../services/part11/signature-persistence', async (importOriginal) =>
   ...(await importOriginal<typeof import('../../services/part11/signature-persistence')>()),
   persistGovernedSignSignature: h.signature,
 }));
+/* The membership lookup reads organization_users; the policy it feeds
+   (services/part11/signing-authority.ts) is real. */
+vi.mock('../../services/part11/resolve-signer-role', () => ({ resolveSignerOrgRole: h.memberRole }));
 vi.mock('../../services/auditService', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../services/auditService')>()),
   writeChainedAuditRow: h.audit,
@@ -176,6 +181,8 @@ beforeEach(() => {
     h.statements.push('<signature row>');
     return { id: 'sig_1', signedAt: new Date('2026-10-01T09:00:00Z') };
   });
+  h.memberRole.mockReset().mockResolvedValue('admin');
+  delete process.env.ESIGNATURE_SIGNING_ROLES;
 });
 
 describe('POST /runs never computes a prediction (reporting review 2026-10-01)', () => {
@@ -258,14 +265,25 @@ describe('POST /runs/:id/finalize (DP-47)', () => {
     expect(h.audit).not.toHaveBeenCalled();
   });
 
-  it.each(['owner', 'admin', 'manager'])('lets the %s finalize: status, seal, chain row and signature commit together', async (role) => {
+  it.each(['owner', 'admin', 'manager'])('lets the %s finalize where the signing policy admits the role: status, seal, chain row and signature commit together', async (role) => {
+    // The deployment's policy (ESIGNATURE_SIGNING_ROLES) admits the whole tier;
+    // the default policy's refusal of an owner or a manager is pinned below.
+    process.env.ESIGNATURE_SIGNING_ROLES = 'owner,admin,manager';
+    h.memberRole.mockResolvedValue(role);
     eligible();
     lockedAs('completed');
     const res = await finalize(role);
     expect(res.status).toBe(200);
+    expect(h.memberRole).toHaveBeenCalledWith(5, 7);
     const seal = res.body.data.seal;
     expect(seal.contentHash).toMatch(/^[0-9a-f]{64}$/);
     expect(res.body.data.signature).toEqual({ signatureId: 'sig_1', signedAt: '2026-10-01T09:00:00.000Z', meaning: 'authorship' });
+    // The signature row is over report-run:41 and its manifest names the seal
+    // it signed (the manifest is what the §11.200 attribution hash covers).
+    expect(h.signature.mock.calls[0][1]).toMatchObject({
+      target: 'report-run:41',
+      extraManifest: { act: { finalized: true, sealHash: seal.contentHash, algorithm: 'sha256' } },
+    });
     expect(auditEntry()).toMatchObject({
       tenantId: 7,
       userId: 5,
@@ -337,6 +355,76 @@ describe('POST /runs/:id/finalize is an electronic signature (reporting review 2
     nothingWritten();
   });
 
+});
+
+/*
+ * P1-44b (2026-10-01). Finalizing is the run's signature, so the signer needs
+ * the authority to sign (§11.10(g)) as well as finalize's tier: every other
+ * signing route asks (governed-signed-act.ts step 3a, the QMS approval, the
+ * submission release); this one did not. The role is the membership row's,
+ * never the token's or the body's, and the refusal comes before the run is
+ * read or a password is compared, so it spends no guess and writes nothing.
+ */
+describe('POST /runs/:id/finalize needs signing authority (P1-44b, 21 CFR 11.10(g))', () => {
+  it.each(['owner', 'manager'])(
+    'refuses the role %s, which the default signing policy does not admit: 403, before anything is read',
+    async (role) => {
+      h.memberRole.mockResolvedValue(role);
+      eligible();
+      lockedAs('completed');
+      const res = await finalize(role);
+      expect(res.status).toBe(403);
+      expect(res.body).toMatchObject({ success: false, error: { code: 'ESIGNATURE_NO_AUTHORITY' } });
+      expect(res.body.error.message).toMatch(/Nothing was finalized/);
+      expect(h.memberRole).toHaveBeenCalledWith(5, 7);
+      expect(h.reads.select, 'the run is not read').toBe(0);
+      expect(h.reauth, 'no password is compared').not.toHaveBeenCalled();
+      expect(h.statements).toEqual([]);
+      nothingWritten();
+    },
+  );
+
+  it.each([
+    ['a viewer membership under a token saying admin (the role is the membership\'s)', 'viewer'],
+    ['no membership in the organization', null],
+  ])('refuses %s', async (_label, member) => {
+    h.memberRole.mockResolvedValue(member);
+    eligible();
+    const res = await finalize('admin');
+    expect(res.status).toBe(403);
+    expect(res.body.error.code).toBe('ESIGNATURE_NO_AUTHORITY');
+    nothingWritten();
+  });
+
+  it('a membership that cannot be read is a 500 with no detail, and nothing is written', async () => {
+    h.memberRole.mockRejectedValue(new Error('organization_users unreadable: secret-detail'));
+    eligible();
+    const res = await finalize('admin');
+    expect(res.status).toBe(500);
+    expect(JSON.stringify(res.body)).not.toContain('secret-detail');
+    expect(h.reauth).not.toHaveBeenCalled();
+    nothingWritten();
+  });
+});
+
+/*
+ * P1-44b: a final report is a signed record bound to its seal, and the seal is
+ * kept on the run's latest snapshot. A run with no snapshot had its status set
+ * final and its seal dropped: the signature then named a seal the run no
+ * longer carried, and nothing could be checked against it later.
+ */
+describe('POST /runs/:id/finalize keeps the seal it signs (P1-44b)', () => {
+  it('refuses a run with no snapshot to carry the seal: 409, rolled back, nothing signed or recorded', async () => {
+    eligible();
+    h.respond.fn = (sql) => (/FROM report_runs/.test(sql) ? [{ status: 'completed', requested_by: 5 }] : []);
+    const res = await finalize();
+    expect(res.status).toBe(409);
+    expect(res.body).toMatchObject({ success: false, error: { code: 'RUN_HAS_NO_SNAPSHOT' }, data: { runId: 41 } });
+    expect(res.body.error.message).toMatch(/Nothing was signed/);
+    expect(h.statements.filter((x) => /^UPDATE/.test(x))).toEqual([]);
+    expect(h.statements.slice(-2)).toEqual(['ROLLBACK', '<released>']);
+    nothingWritten();
+  });
 });
 
 describe('POST /runs/:id/finalize: separation of duties and the signature row', () => {

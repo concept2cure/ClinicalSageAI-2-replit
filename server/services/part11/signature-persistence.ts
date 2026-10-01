@@ -157,6 +157,15 @@ export const BINDING_BASIS = {
    */
   VAULT_DOCUMENT_VERSION: 'vault-document-version-sha256',
   /**
+   * sha256 content hash of a Report OS run's seal (buildSealedRecord,
+   * services/report-os/sealing/seal.ts: the rendered report's canonical blocks
+   * and provenance atoms), read from the run's latest snapshot in the signing
+   * transaction, where the finalize has just written it. Added 2026-10-01 with
+   * P1-44b: a final report's signature binds what it sealed. binding_basis is
+   * free TEXT (migrations/20260813d, no CHECK), so no migration is needed.
+   */
+  REPORT_RUN_SEAL: 'report-run-seal-sha256',
+  /**
    * No content digest is derivable for this target type. The digest column
    * carries the governed action's audit sha256 chain hash instead — a
    * tamper-evident link to the ledger row that records the signed act (target
@@ -567,6 +576,30 @@ export async function deriveGovernedTargetBinding(
           digest: sha256Hex(payload),
           basis: BINDING_BASIS.C2C_DOCUMENT_SECTION,
           note: 'sha256 over the section content + version at signing time.',
+        };
+      }
+      case 'report-run': {
+        // The seal the finalize wrote on this client a moment ago (P1-44b);
+        // the run's own content, so no status or timestamp is bound.
+        if (!/^\d+$/.test(rest)) return ledgerFallback('malformed report run pointer');
+        const sealed = await client.query(
+          `SELECT s.snapshot_metadata::jsonb -> 'seal' ->> 'contentHash' AS seal_hash
+             FROM report_runs r
+             JOIN report_snapshots s
+               ON s.run_id = r.id AND s.organization_id = r.organization_id AND s.is_latest = true
+            WHERE r.id = $1::int AND r.organization_id = $2
+            ORDER BY s.id DESC
+            LIMIT 1`,
+          [rest, orgId],
+        );
+        const sealHash = sealed.rows[0]?.seal_hash;
+        if (typeof sealHash !== 'string' || !/^[0-9a-f]{64}$/.test(sealHash)) {
+          return ledgerFallback('the run carries no seal at signing time');
+        }
+        return {
+          digest: sealHash,
+          basis: BINDING_BASIS.REPORT_RUN_SEAL,
+          note: "The run's seal content hash (sha256 over the rendered report and its provenance atoms), as the finalize wrote it on the run's latest snapshot in this transaction.",
         };
       }
       case 'protocol-document':

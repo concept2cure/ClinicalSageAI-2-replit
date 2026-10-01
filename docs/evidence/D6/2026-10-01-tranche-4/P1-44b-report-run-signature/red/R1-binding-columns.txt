@@ -1,0 +1,59 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T14:03:32.391Z","pid":16062,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T14:03:32.392Z","pid":16062,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T14:03:32.392Z","pid":16062,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/report-os-registry-seed.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T14:03:32.579Z', poolSize: 1 }
+
+stdout | tests/db/report-os-registry-seed.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/report-os-registry-seed.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ↓ tests/db/report-os-registry-seed.dbtest.ts > report type registry seed (D2) > applies to the provisioned database and registers every in-code type, column for column
+ ↓ tests/db/report-os-registry-seed.dbtest.ts > report type registry seed (D2) > re-applies idempotently: the code's values return, an operator's disable survives
+ ↓ tests/db/report-os-registry-seed.dbtest.ts > report type registry seed (D2) > as app_service under RLS, POST /runs for a seeded type creates the run and records it
+ ↓ tests/db/report-os-registry-seed.dbtest.ts > finalize on the record (review round 1, DP-47) > refuses a member: nothing is sealed and nothing is recorded
+ ↓ tests/db/report-os-registry-seed.dbtest.ts > finalize on the record (review round 1, DP-47) > refuses a manager whose role carries no signing authority, with the right password: nothing sealed, signed or recorded
+ ↓ tests/db/report-os-registry-seed.dbtest.ts > finalize on the record (review round 1, DP-47) > refuses a password that is not the signer's: nothing is sealed, signed or recorded
+ ↓ tests/db/report-os-registry-seed.dbtest.ts > finalize on the record (review round 1, DP-47) > when the chain row is refused, the status and the seal roll back with it (503, nothing changed)
+ × tests/db/report-os-registry-seed.dbtest.ts > finalize on the record (review round 1, DP-47) > an admin finalizes: status, seal, one chained row and the signature, together 150ms
+   → seal 5efc1e835150db04d1e87f1af97feb2e2280af45db197ca145857a3c05f9d910: expected { …(2) } to deeply equal { …(2) }
+ ↓ tests/db/report-os-registry-seed.dbtest.ts > finalize on the record (review round 1, DP-47) > a second finalize is refused: the seal stands and nothing more is recorded
+ ↓ tests/db/report-os-registry-seed.dbtest.ts > finalize on the record (review round 1, DP-47) > the signed final report is exported with no second ceremony, and the chain row names its signature
+ ↓ tests/db/report-os-registry-seed.dbtest.ts > a bundle export on the record (review round 1, DP-50) > a bundle export is recorded on the chain with the hash of the bytes sent
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/report-os-registry-seed.dbtest.ts > finalize on the record (review round 1, DP-47) > an admin finalizes: status, seal, one chained row and the signature, together
+AssertionError: seal 5efc1e835150db04d1e87f1af97feb2e2280af45db197ca145857a3c05f9d910: expected { …(2) } to deeply equal { …(2) }
+
+- Expected
++ Received
+
+  {
+-   "binding_basis": "report-run-seal-sha256",
+-   "bound_payload_digest": "5efc1e835150db04d1e87f1af97feb2e2280af45db197ca145857a3c05f9d910",
++   "binding_basis": "governed-action-sha256-chain",
++   "bound_payload_digest": "ed10301ceff40cd83d3608dfccb9917299233d0264d2aa419c792678d5453ee9",
+  }
+
+ ❯ tests/db/report-os-registry-seed.dbtest.ts:358:47
+    356|       [ORG_B, `report-run:${runId}`]
+    357|     );
+    358|     expect(bound.rows[0], `seal ${sealHash}`).toEqual({ binding_basis:…
+       |                                               ^
+    359|   });
+    360|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 skipped (11)
+   Start at  14:03:30
+   Duration  4.05s (transform 1.86s, setup 79ms, import 3.16s, tests 535ms, environment 0ms)
+
