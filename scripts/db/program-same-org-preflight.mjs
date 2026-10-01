@@ -150,6 +150,21 @@ export const PROGRAM_SAME_ORG_CHECKS = Object.freeze([
            ORDER BY c.id`,
   },
   {
+    // PF-10 S1 (20261001c): the project a conversation was held in. The column
+    // is new and written only after an organization check, so this is a guard
+    // on the guard; a backfilled thread is same-organization by construction.
+    relation: 'public.chat_threads',
+    keyColumn: 'program_id',
+    keyedBy: 'chat_threads_program_same_org_fk',
+    sql: `SELECT t.id, t.organization_id AS org, t.program_id,
+                 rp.organization_id AS program_org, (rp.id IS NULL) AS program_missing
+            FROM public.chat_threads t
+            LEFT JOIN public.regulatory_programs rp ON rp.id = t.program_id
+           WHERE t.program_id IS NOT NULL
+             AND (rp.id IS NULL OR t.organization_id IS NULL OR rp.organization_id <> t.organization_id)
+           ORDER BY t.id`,
+  },
+  {
     relation: 'vault.documents',
     keyColumn: 'program_id',
     keyedBy: null,

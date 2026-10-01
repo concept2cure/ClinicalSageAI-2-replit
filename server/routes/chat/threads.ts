@@ -35,22 +35,23 @@ export async function listThreads(req: Request, res: Response) {
     let params: unknown[];
 
     if (programId !== undefined) {
-      // The shell's project key (regulatory_programs UUID). Threads carry it in
-      // metadata.programId from the moment they are minted (chat-thread-helpers
-      // programIdForThread), so this is what "resume a project chat" lists.
-      // Org scope is required — the same rule as the global recents.
+      // The shell's project key (regulatory_programs UUID). A thread carries it
+      // in chat_threads.program_id from the moment it is minted, bound only to
+      // a program of its own organization (chat-thread-helpers getOrCreateThread,
+      // PF-10 S2), so this is what "resume a project chat" lists. Org scope is
+      // required — the same rule as the global recents.
       if (!orgId) return res.json({ threads: [] });
       const program = programIdForThread(programId);
       if (!program) {
         return res.status(400).json({ error: 'program_id must be a UUID', code: 'THREAD_PROGRAM_INVALID' });
       }
       const result = await pool.query(
-        `SELECT t.id, t.created_at, t.updated_at, t.metadata->>'programId' AS program_id,
+        `SELECT t.id, t.created_at, t.updated_at, t.program_id,
           (SELECT content FROM chat_messages
             WHERE thread_id = t.id AND role = 'user'
             ORDER BY created_at ASC LIMIT 1) AS title
         FROM chat_threads t
-        WHERE t.organization_id = $1 AND t.metadata->>'programId' = $2
+        WHERE t.organization_id = $1 AND t.program_id = $2
         ORDER BY COALESCE(t.updated_at, t.created_at) DESC
         LIMIT $3`,
         [orgId, program, limit]
@@ -271,8 +272,9 @@ export async function patchThread(req: Request, res: Response) {
 
     /* `chat_threads.project_id` is INTEGER and `ai_threads.project_id` is TEXT.
        Passing the shell's program UUID at the integer column threw 22P02 and
-       surfaced as a 500; the program key belongs in `metadata.programId`, which
-       is where getOrCreateThread writes it. Refuse it plainly instead. */
+       surfaced as a 500; the program key belongs in `chat_threads.program_id`,
+       which getOrCreateThread binds when the thread is created (PF-10). Refuse
+       it plainly instead. */
     if (store === 'chat' && project_id !== undefined && project_id !== null && project_id !== '') {
       /* Number(), not parseInt(): parseInt('0f3c1a2b-…') is 0, so a UUID would
          pass the guard and then be written as project 0. */
