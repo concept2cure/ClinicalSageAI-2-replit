@@ -22,12 +22,11 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
-import { eq, and } from 'drizzle-orm';
-import { db } from '../db.js';
+import { pool } from '../db.js';
 import { setRequestQuery } from '../utils/expressQuery.js';
-import { regulatoryPrograms } from '../../shared/schema/programs.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { recordAuditRow, type AuditRowOutcome, setAuditRowHeaders } from '../services/audit/audit-write-outcome.js';
+import { programInOrganization } from '../services/c2c/program-access';
 
 /**
  * Record the §11.10(e) row for a successful upstream mutation, and report what
@@ -130,15 +129,7 @@ async function requireProgramAccess(req: Request, res: Response, next: NextFunct
       return res.status(403).json({ error: 'Invalid organization context' });
     }
 
-    const [program] = await db
-      .select({ id: regulatoryPrograms.id })
-      .from(regulatoryPrograms)
-      .where(
-        and(eq(regulatoryPrograms.id, programId), eq(regulatoryPrograms.organizationId, orgId))
-      )
-      .limit(1);
-
-    if (!program) {
+        if (!(await programInOrganization(pool, programId, orgId))) {
       console.warn(`[predicate-intel] IDOR blocked: org=${orgId} tried program=${programId}`);
       return res.status(403).json({
         error: 'Access denied',

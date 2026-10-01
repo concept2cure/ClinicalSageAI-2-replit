@@ -60,6 +60,9 @@ vi.mock('../../db.js', () => ({
       }),
     }),
   },
+  // The program check (programInOrganization) reads on the pool; it answers
+  // from the same fixture.
+  pool: { query: async () => ({ rows: await dbMockResult.value }) },
 }));
 
 // ═══════════════════════════════════════════════════════════════════════════════

@@ -7,7 +7,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const ownership = vi.hoisted(() => ({ check: vi.fn(async () => true) }));
+const ownership = vi.hoisted(() => ({ check: vi.fn(async (_programId: string, _orgId: number) => true) }));
 const { svc, audit } = vi.hoisted(() => ({
   svc: {
     upsertMapping: vi.fn(),
@@ -55,7 +55,15 @@ vi.mock('../../auditService', () => ({ default: audit }));
 // The tool proves program ownership through the canonical guard (ledger L195);
 // these tests exercise what happens after it answers, so it answers yes unless a
 // case says otherwise.
-vi.mock('../../../routes/innovation-routes', () => ({ programBelongsToOrg: ownership.check }));
+// The one program check (server/services/c2c/program-access.ts), answered by the test.
+vi.mock('../../c2c/program-access', async importOriginal => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  programInOrganization: (_db: unknown, programId: string, orgId: number) => ownership.check(programId, orgId),
+}));
+vi.mock('../../c2c/program-access.js', async importOriginal => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  programInOrganization: (_db: unknown, programId: string, orgId: number) => ownership.check(programId, orgId),
+}));
 
 
 import {
@@ -97,7 +105,7 @@ describe('gspr.mapping.upsert', () => {
 
   it('says so when ownership could not be checked, and writes nothing', async () => {
     ownership.check.mockRejectedValueOnce(
-      Object.assign(new Error('ownership check could not be completed'), { name: 'GuardUnavailableError' })
+      Object.assign(new Error('program ownership check could not be run'), { name: 'VerificationUnavailableError' })
     );
     const r = await gsprMappingUpsert(CTX, {
       ...goodGate,

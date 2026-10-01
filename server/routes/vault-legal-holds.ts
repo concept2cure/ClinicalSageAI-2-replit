@@ -23,6 +23,7 @@ import { AUDIT_READER_ROLES } from '../services/audit/audit-api-authority';
 import { writeChainedAuditRow } from '../services/auditService';
 import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger';
+import { programInOrganization } from '../services/c2c/program-access';
 
 const log = createScopedLogger('vault-legal-holds');
 
@@ -107,8 +108,9 @@ function holdAuthority(req: Request, res: Response): { orgId: number; actorId: n
 async function targetOwned(client: RequestSqlClient, orgId: number, body: z.infer<typeof placeSchema>): Promise<boolean> {
   if (body.scope === 'program') {
     // tenant-isolation-safe: the program is read with the session's organisation as a predicate.
-    const r = await client.query('SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1', [body.programId, orgId]);
-    return r.rows.length === 1;
+    // A hold preserves records whatever state their project is in, so a
+    // deleted project of this organisation is still one a hold may reach.
+    return programInOrganization(client, body.programId, orgId, { includeDeleted: true });
   }
   // tenant-isolation-safe: the document's program must belong to the session's organisation.
   const r = await client.query(
