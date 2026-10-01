@@ -122,6 +122,12 @@ variable "openai_api_key" {
   sensitive = true
 }
 
+# Regulatory drafting's provider; validated in terraform/stack.
+variable "anthropic_api_key" {
+  type      = string
+  sensitive = true
+}
+
 # Login OTP delivery (SMTP); validated in terraform/stack. Port is fixed at 465.
 variable "smtp_host" {
   type = string
