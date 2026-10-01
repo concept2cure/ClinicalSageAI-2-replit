@@ -1,15 +1,15 @@
 {
   "documentId": "TM-001",
-  "generatedAt": "2026-10-01T12:56:25.482Z",
+  "generatedAt": "2026-10-01T14:02:32.108Z",
   "generator": "scripts/validation/build-traceability.mjs",
   "runDate": "2026-09-27",
   "summary": {
-    "requirements": 76,
+    "requirements": 77,
     "pass": 69,
     "partial": 2,
     "fail": 0,
     "open": 0,
-    "uncovered": 5
+    "uncovered": 6
   },
   "byApp": {
     "Projects": {
@@ -21,12 +21,12 @@
       "uncovered": 0
     },
     "Vault": {
-      "requirements": 15,
+      "requirements": 16,
       "pass": 10,
       "partial": 0,
       "fail": 0,
       "open": 0,
-      "uncovered": 5
+      "uncovered": 6
     },
     "Authoring": {
       "requirements": 15,
@@ -851,6 +851,22 @@
         "risk": "high: a confirmation without a reason, or one that lands on a placement the person did not see, puts a machine's guess in the dossier under a person's name",
         "assurance": "scripted",
         "rationale": "OQ-VAULT-16. The reason, conflict, viewer and count cases are in `tests/db/vault-placement-batch.dbtest.ts`, on PostgreSQL with RLS on"
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-VAULT-016",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "Two versions of one document are compared: whether their bytes are the same (from the recorded SHA-256s), each recorded detail that differs, and the lines of their extracted text that changed, unchanged runs collapsed. A comparison that was capped says so. A version with no extracted text gets no text comparison and the answer names it. Versions of different documents are refused, and another organisation's document is not found.",
+      "part11": "none",
+      "risk": "medium",
+      "steps": [],
+      "ra": {
+        "intendedUse": "Compare two versions of one document: bytes, details and text",
+        "risk": "medium: a comparison that hides a change, or shows two documents as versions of one, misleads a reviewer, but changes no record",
+        "assurance": "scripted",
+        "rationale": "OQ-VAULT-17. The family, tenancy, missing-text and refusal cases are in `tests/db/vault-version-compare.dbtest.ts`; the caps and the edit budget in `server/services/vault/__tests__/vault-version-compare.test.ts`"
       },
       "verdict": "uncovered"
     },

@@ -1,0 +1,22 @@
+# npm run test:db, this change, RLS_ENFORCE=on, app_service runtime role, 2026-10-01T14:23:22Z
+# The 4 failures fail on trunk's code alone and are handed on in docs/work-orders/README.md: actor-displays (order-dependent activity feed; see the 4f74b0f18 note), project-scope-boundary x2 (9fbc9aa8f), tenant-purge-artifact-records (2ab30c93e).
+ × tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the project activity feed answers 29ms
+stdout | tests/db/vault-version-compare.dbtest.ts
+stdout | tests/db/vault-version-compare.dbtest.ts
+stderr | tests/db/vault-version-compare.dbtest.ts
+stdout | tests/db/vault-version-compare.dbtest.ts
+stdout | tests/db/vault-version-compare.dbtest.ts
+stdout | tests/db/vault-version-compare.dbtest.ts
+stdout | tests/db/vault-version-compare.dbtest.ts
+stdout | tests/db/vault-version-compare.dbtest.ts
+stdout | tests/db/vault-version-compare.dbtest.ts
+ ✓ tests/db/vault-version-compare.dbtest.ts > compare two versions of a Vault document > names both sides and returns the changed lines and details, unchanged runs collapsed 42ms
+ ✓ tests/db/vault-version-compare.dbtest.ts > compare two versions of a Vault document > the earlier version is always the one compared from 12ms
+ ✓ tests/db/vault-version-compare.dbtest.ts > compare two versions of a Vault document > refuses a version of another document, and another organisation's document reads as not found 14ms
+ ✓ tests/db/vault-version-compare.dbtest.ts > compare two versions of a Vault document > a version with no extracted text gets no text comparison, and the answer says which 19ms
+ × tests/db/tenant-purge-artifact-records.dbtest.ts > a tenant that signed and locked an artifact > is purged: its signatures, lock snapshots and artifacts are erased, and each signing’s ledger row stays 170ms
+ × tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > AnA's project update cannot hang a project from another tenant's project or workspace 16ms
+ × tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > AnA's project update cannot move a project to another tenant 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed | 117 passed (120)
+      Tests  4 failed | 1273 passed (1277)

@@ -528,5 +528,40 @@ await step(
   },
 );
 
+await step(
+  {
+    id: 'OQ-VAULT-17',
+    urs: ['URS-VAULT-016'],
+    title: 'Two versions of a document are compared: bytes, recorded details and text; another document is refused',
+    action:
+      'GET /api/c2c/project-vault/:id/documents/<v2.0>/compare?against=<v1.0> (the OQ-VAULT-11 family); ingest an unrelated PDF; ' +
+      'GET …/documents/<v2.0>/compare?against=<that document>',
+    expected:
+      'The first answers 200 with from v1.0 and to v2.0, sameBytes false (the recorded SHA-256s differ), and either a text comparison with at least one ' +
+      'changed line or, when a version has no extracted text, no text comparison and a reason naming that version. The second answers 422 NOT_SAME_DOCUMENT.',
+    dependsOn: ['OQ-VAULT-11'],
+  },
+  async ({ api, expect, attach }) => {
+    const base = `/api/c2c/project-vault/${state.programId}/documents/${state.v2.id}/compare`;
+    const r = await api('GET', `${base}?against=${state.doc.id}`);
+    expect(r.status === 200, `compare: expected 200, got ${r.status}`, r.json);
+    const d = r.json.data;
+    attach('compare.json', d);
+    expect(d.from.version === '1.0' && d.to.version === '2.0', 'the comparison does not run from v1.0 to v2.0', [d.from, d.to]);
+    expect(d.sameBytes === false, 'two different files were reported as the same bytes', d);
+    const text = d.text;
+    const honest = text.available
+      ? (text.counts.added + text.counts.removed) > 0
+      : /No text was read from v[12]\.0/.test(text.reason);
+    expect(honest, 'the text comparison neither shows a change nor says which version has no text', text);
+    const unrelated = await ingestPdf(api, expect, { programId: state.programId, title: `OQ-002 Unrelated ${stamp}` });
+    const wrong = await api('GET', `${base}?against=${unrelated.document.id}`);
+    expect(wrong.status === 422 && wrong.json?.error === 'NOT_SAME_DOCUMENT', `another document: expected 422 NOT_SAME_DOCUMENT, got ${wrong.status}`, wrong.json);
+    return text.available
+      ? `v1.0 → v2.0: ${text.counts.added} added, ${text.counts.removed} removed; another document refused`
+      : `v1.0 → v2.0: different bytes; ${text.reason}; another document refused`;
+  },
+);
+
 const result = await run.finish();
 process.exit(result.counts.fail > 0 ? 1 : 0);
