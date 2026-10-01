@@ -2905,6 +2905,17 @@ export const C2C_MIGRATION_FILES = [
   // docs/evidence/W2/2026-09-24-multi-task/u19-scheduler-windows.md.
   'migrations/20261001d_scheduled_job_claims.sql',
 
+  // ── Sign-in sessions shared by every server process (2026-10-01, D1, audit
+  //    W2 fix unit U20) ─────────────────────────────────────────────────────
+  // Production runs no Redis (decision B6); session activity, the session
+  // registry and superseded markers lived in each process's memory, so every
+  // deploy signed out everyone signed in longer than the idle window. One row
+  // per session, in public with organization_id INTEGER NOT NULL (always 0,
+  // system scope only) so the sweep below gives it its tenant policy. IF NOT
+  // EXISTS only, no DROP. Evidence
+  // docs/evidence/W2/2026-09-24-multi-task/u20-sessions-across-tasks.md.
+  'migrations/20261001e_session_activity.sql',
+
   // ── A review comment is fixed once posted (2026-10-01, D5) ────────────────
   // concept2cure_thread_comments (the Review surface's threads) could be
   // rewritten in place, soft-deleted and overwritten by the GDPR erasure, with
