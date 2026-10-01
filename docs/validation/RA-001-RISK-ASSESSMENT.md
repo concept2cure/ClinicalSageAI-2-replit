@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | RA-001 |
-| Version | 0.16 |
+| Version | 0.17 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 §3 |
 | Method | FDA CSA (Sept 2025 final; Feb 2026 update): identify intended use → determine risk (process risk and whether the feature can cause a quality/patient/data-integrity failure) → choose the least-burdensome assurance activity that gives confidence → record the result. Risk levels and activities are defined in VMP-001 §3.1. |
@@ -28,6 +28,7 @@
 | 0.14 | 2026-10-01 | `…01DiJJAk` (critique 15) | URS-VAULT-016 (version compare) assessed: medium, scripted. |
 | 0.15 | 2026-10-01 | `…01DiJJAk` (critique 15) | URS-VAULT-017 (library search across projects) assessed: medium, scripted. |
 | 0.16 | 2026-10-01 | `…01DiJJAk` (critique 15) | URS-VAULT-018 (re-proving stored versions) assessed: high, scripted. |
+| 0.17 | 2026-10-01 | `…01DiJJAk` (critique 15) | URS-VAULT-019 (document relationships) assessed: medium, scripted. |
 
 ## 1. Risk model
 
@@ -72,6 +73,7 @@ The columns below are parsed by `scripts/validation/build-traceability.mjs`; kee
 | URS-VAULT-016 | Compare two versions of one document: bytes, details and text | medium: a comparison that hides a change, or shows two documents as versions of one, misleads a reviewer, but changes no record | scripted | OQ-VAULT-17. The family, tenancy, missing-text and refusal cases are in `tests/db/vault-version-compare.dbtest.ts`; the caps and the edit budget in `server/services/vault/__tests__/vault-version-compare.test.ts` |
 | URS-VAULT-017 | Search every project of the organisation at once | medium: the risk is disclosure across tenants, which RLS and the statement's own organisation predicate each prevent; a missed hit misleads but changes no record | scripted | OQ-VAULT-18. The cross-tenant, version and empty-query cases are in `tests/db/vault-library-search.dbtest.ts`, and the predicate itself in `server/services/vault/__tests__/vault-search.test.ts` |
 | URS-VAULT-018 | Re-prove every stored version against its recorded SHA-256, each verdict chained | high: undetected alteration or loss of a stored record defeats ALCOA "original"; a check that called a changed file intact would be worse than none | scripted | OQ-VAULT-19 on an untampered installation. The altered and missing cases, with real files changed on disk, and the chained verdicts are in `tests/db/vault-fixity.dbtest.ts`; unreadable, unverifiable and the batch limit in `server/services/vault/__tests__/vault-fixity.test.ts` |
+| URS-VAULT-019 | Relate one Vault version to another, remove a relationship with a reason, each change chained on both documents | medium: a relationship is context a reviewer follows, not the record itself, so a wrong one misleads but alters no document; a relationship that changed or vanished silently, or reached another organisation's document, would be a data-integrity and confidentiality failure | scripted | OQ-VAULT-20. The refusals (self, same document, duplicate, unknown kind, another organisation's document or project, a viewer), the table's refusal of every other change, DELETE and TRUNCATE for every role, row security, and the tenant purge are in `tests/db/vault-document-relationships.dbtest.ts` |
 | URS-AUTH-001 | Gate authoring; identity from JWT only | high | scripted | anonymous negative; identity rule is code-reviewed and exercised implicitly by every write |
 | URS-AUTH-002 | Create a document with validated inputs | medium | scripted | one negative, one positive |
 | URS-AUTH-003 | Sections in filing order | medium — wrong order assembles a wrong dossier, visible at review | scripted | order and structure issues read back |

@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | TM-001 |
-| Version | generated 2026-10-01T15:35:08.184Z |
+| Version | generated 2026-10-01T16:34:06.653Z |
 | Status | DRAFT — UNSIGNED — GENERATED, DO NOT EDIT |
 | Generator | `scripts/validation/build-traceability.mjs` (`npm run validation:traceability`) |
 | Sources | URS-001…006 requirement tables · RA-001 rows · docs/evidence/W3/2026-09-27/OQ-*/result.json · IQ/iq-results.json |
@@ -12,14 +12,14 @@
 
 ## Summary
 
-- Requirements: **79** — pass 69 · partial 2 · fail 0 · open 0 · uncovered 8
+- Requirements: **80** — pass 69 · partial 2 · fail 0 · open 0 · uncovered 9
 - OQ steps executed: **103** — pass 101 · fail 0 · deviation 2 · not-executed 0
 - IQ-001: 12 pass · 0 fail · 3 deviation (executed 2026-09-28T01:18:32.421Z)
 
 | App | Requirements | Pass | Partial | Fail | Open | Uncovered |
 |---|---|---|---|---|---|---|
 | Projects | 13 | 13 | 0 | 0 | 0 | 0 |
-| Vault | 18 | 10 | 0 | 0 | 0 | 8 |
+| Vault | 19 | 10 | 0 | 0 | 0 | 9 |
 | Authoring | 15 | 14 | 1 | 0 | 0 | 0 |
 | Submission Center | 12 | 12 | 0 | 0 | 0 | 0 |
 | Submission Readiness | 8 | 7 | 1 | 0 | 0 | 0 |
@@ -71,6 +71,7 @@
 | URS-VAULT-016 | Two versions of one document are compared: whether their bytes are the same (from the recorded SHA-256s), each recorded detail that differs, and the lines of their extracted text that changed, unchanged runs collapsed. A comparison that was capped says so. A version with no extracted text gets no text comparison and the answer names it. Versions of different documents are refused, and another organisation's document is not found. | none | medium | scripted | — | **uncovered** |
 | URS-VAULT-017 | A search across every project the organisation holds finds documents by title, file name and content, each named with its project, ranked, paginated with a real total, current versions unless earlier ones are asked for. Another organisation's documents are never among them. An empty query answers no results, and a failed search is reported as a failure, not as no matches. A project's own search still searches only that project. | §11.10(d) | medium | scripted | — | **uncovered** |
 | URS-VAULT-018 | A person can re-prove every stored version of a program: each is re-read through the verifier downloads use and checked against the SHA-256 recorded at ingest. Each verdict (verified, altered, missing, unreadable, or unverifiable when no SHA-256 was recorded) is written to the audit chain against that version, naming the person. The answer gives the counts and names every version that was not verified, and says when the program has more versions than one check covers. A viewer is refused. | §11.10(c), §11.10(e) | high | scripted | — | **uncovered** |
+| URS-VAULT-019 | A person can relate one Vault version to another version of the organisation, in any of its projects, as supported by, references or based on it, with an optional note. Both documents list the relationship, each in its own words, and a related version that has since been superseded says so. A document cannot be related to itself or to another version of itself, nor twice in the same way, nor to another organisation's document. Removing a relationship requires a reason for change and keeps the record; nothing changes or deletes a relationship otherwise. Each relate and removal is written to the audit chain against both documents, naming the person. A viewer is refused. | §11.10(c), §11.10(e) | medium | scripted | — | **uncovered** |
 | URS-AUTH-001 | Authoring endpoints require an authenticated actor; identity for every write comes from the verified JWT, never from a header or the body. | §11.10(d) | high | scripted | OQ-AUTH-01 (pass) | **pass** |
 | URS-AUTH-002 | A document is created with a title (required, 400 otherwise), a module and an optional program binding (`client_program_id`, validated as UUID); a template that cannot be honoured refuses before anything is written. | none | medium | scripted | OQ-AUTH-02 (pass)<br>OQ-AUTH-03 (pass) | **pass** |
 | URS-AUTH-003 | Sections are created under a document with a CTD code and title and are read back in filing order; duplicate codes and order ties are reported as structure issues. | none | medium | scripted | OQ-AUTH-04 (pass) | **pass** |

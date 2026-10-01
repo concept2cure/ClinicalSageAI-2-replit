@@ -1,15 +1,15 @@
 {
   "documentId": "TM-001",
-  "generatedAt": "2026-10-01T15:35:08.184Z",
+  "generatedAt": "2026-10-01T16:34:06.653Z",
   "generator": "scripts/validation/build-traceability.mjs",
   "runDate": "2026-09-27",
   "summary": {
-    "requirements": 79,
+    "requirements": 80,
     "pass": 69,
     "partial": 2,
     "fail": 0,
     "open": 0,
-    "uncovered": 8
+    "uncovered": 9
   },
   "byApp": {
     "Projects": {
@@ -21,12 +21,12 @@
       "uncovered": 0
     },
     "Vault": {
-      "requirements": 18,
+      "requirements": 19,
       "pass": 10,
       "partial": 0,
       "fail": 0,
       "open": 0,
-      "uncovered": 8
+      "uncovered": 9
     },
     "Authoring": {
       "requirements": 15,
@@ -899,6 +899,22 @@
         "risk": "high: undetected alteration or loss of a stored record defeats ALCOA \"original\"; a check that called a changed file intact would be worse than none",
         "assurance": "scripted",
         "rationale": "OQ-VAULT-19 on an untampered installation. The altered and missing cases, with real files changed on disk, and the chained verdicts are in `tests/db/vault-fixity.dbtest.ts`; unreadable, unverifiable and the batch limit in `server/services/vault/__tests__/vault-fixity.test.ts`"
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-VAULT-019",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "A person can relate one Vault version to another version of the organisation, in any of its projects, as supported by, references or based on it, with an optional note. Both documents list the relationship, each in its own words, and a related version that has since been superseded says so. A document cannot be related to itself or to another version of itself, nor twice in the same way, nor to another organisation's document. Removing a relationship requires a reason for change and keeps the record; nothing changes or deletes a relationship otherwise. Each relate and removal is written to the audit chain against both documents, naming the person. A viewer is refused.",
+      "part11": "§11.10(c), §11.10(e)",
+      "risk": "medium",
+      "steps": [],
+      "ra": {
+        "intendedUse": "Relate one Vault version to another, remove a relationship with a reason, each change chained on both documents",
+        "risk": "medium: a relationship is context a reviewer follows, not the record itself, so a wrong one misleads but alters no document; a relationship that changed or vanished silently, or reached another organisation's document, would be a data-integrity and confidentiality failure",
+        "assurance": "scripted",
+        "rationale": "OQ-VAULT-20. The refusals (self, same document, duplicate, unknown kind, another organisation's document or project, a viewer), the table's refusal of every other change, DELETE and TRUNCATE for every role, row security, and the tenant purge are in `tests/db/vault-document-relationships.dbtest.ts`"
       },
       "verdict": "uncovered"
     },
