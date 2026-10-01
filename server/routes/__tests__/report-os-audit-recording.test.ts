@@ -86,7 +86,11 @@ import reportOsRouter from '../report-os';
 const app = express();
 app.use(express.json());
 app.use((req, _res, next) => {
-  (req as unknown as { user: { id: number; role: string } }).user = { id: 5, role: req.get('x-test-role') ?? 'manager' };
+  /* organizationId is what the real auth middleware sets; the router's write
+     gate (requireEditorAccessForWrites) reads it. */
+  (req as unknown as { user: { id: number; role: string; organizationId: number } }).user = {
+    id: 5, role: req.get('x-test-role') ?? 'manager', organizationId: 7,
+  };
   next();
 });
 app.use('/api/report-os', reportOsRouter);
