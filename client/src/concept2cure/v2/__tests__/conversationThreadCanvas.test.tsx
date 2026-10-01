@@ -187,12 +187,19 @@ describe('ConversationThread — the editor opens beside the conversation (2026-
     expect(card.hidden).toBe(false);
     expect(within(card).getByTestId('dc-open-editor').getAttribute('aria-expanded')).toBe('true');
     expect(screen.getByLabelText('Reply to AnA')).toBeTruthy();
+    /* The card collapses to its head while the document is open beside it:
+       the outline and the section preview are in the editor next to it, and
+       repeating them pushed AnA's later answers down the column. */
+    expect((card.querySelector('.dcv-body') as HTMLElement).hidden).toBe(true);
+    expect(card.querySelector('.dcv-title')?.textContent).toBe('Module 2.5 Clinical Overview — C2C-101');
 
     // Back closes the pane; the workbench stays mounted in it, hidden.
     screen.getByTestId('dc-back').click();
     await vi.waitFor(() => expect(document.querySelector('.ct-main')?.getAttribute('data-canvas-open')).toBeNull());
     expect(pane!.hidden).toBe(true);
     expect(pane!.querySelector('.dcv-workbench .ed')).not.toBeNull();
+    // Closed, the card is whole again.
+    expect((card.querySelector('.dcv-body') as HTMLElement).hidden).toBe(false);
   });
 });
 

@@ -1369,6 +1369,9 @@
     display: grid;
     gap: 14px;
   }
+  .dcv-body[hidden] {
+    display: none;
+  }
   .dcv-sec {
     display: grid;
     gap: 2px;
