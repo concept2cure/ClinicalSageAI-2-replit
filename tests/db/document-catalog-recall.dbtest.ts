@@ -336,18 +336,21 @@ describe('semantic search over the catalog', () => {
 
     const found = await callTool('search_project_documents', { query: 'repeat-dose toxicology NOAEL' });
     expect(found.ok).toBe(true);
-    expect(found.hits.map((h: { documentId: string }) => h.documentId)).toContain(docId);
-    expect(found.searchedCount).toBe(1);
-    expect(found.unsearchableCount).toBeGreaterThanOrEqual(1);
-    expect(found.message).toContain('not searchable');
+    const hit = found.hits.find((h: { documentId: string }) => h.documentId === docId);
+    expect(hit, JSON.stringify(found)).toBeTruthy();
+    expect(hit.matchedBy).toContain('meaning'); // D2: text always runs; the catalog adds meaning
+    expect(hit.keyData).toMatchObject({ study: 'TOX-77-A' });
+    expect(found.semantic).toMatchObject({ available: true, searchedCount: 1 });
+    expect(found.semantic.unsearchableCount).toBeGreaterThanOrEqual(1);
   });
 
-  it('an embedding-provider failure is said as unavailability — never an empty result', async () => {
-    const out = await callTool('search_project_documents', { query: 'FAIL_EMBEDDING anything' });
-    expect(out.ok).toBe(false);
-    expect(out.unavailable).toBe(true);
-    expect(out.error).toMatch(/unavailable/i);
-    expect(out.hits).toBeUndefined();
+  it('an embedding-provider failure narrows the search to text and says so — never an empty result passed off', async () => {
+    // D2 (2026-10-01): no key needed, so text answers and `semantic` states the gap.
+    const out = await callTool('search_project_documents', { query: 'FAIL_EMBEDDING TOX-77-A study report' });
+    expect(out.ok).toBe(true);
+    expect(out.semantic).toMatchObject({ available: false, reason: 'no_embedding_provider' });
+    expect(out.hits.map((h: { documentId: string }) => h.documentId)).toContain(docId);
+    expect(out.unavailable).toBeUndefined();
   });
 });
 
