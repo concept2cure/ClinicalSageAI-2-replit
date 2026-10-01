@@ -102,6 +102,25 @@ function getThreadPermissions(role: string): Set<ThreadPermission> {
   return new Set(THREAD_PERMISSIONS_BY_ROLE.get(role.toLowerCase()) ?? ['read']);
 }
 
+/**
+ * What the caller may actually do, for the client, so it stops rendering
+ * governed actions the server will refuse. Resolve and request-changes are
+ * role-gated (getThreadPermissions), and my-queue deliberately contains threads
+ * ASSIGNED to the caller: an admin can assign a thread to an author, who would
+ * then see a Resolve button that 403s every time. Each flag comes from the same
+ * check its route enforces, so the button and the guard cannot drift apart;
+ * canExportRecord is the review record export's gate (DP-18 audit readers).
+ */
+function queuePermissions(req: Request) {
+  const perms = getThreadPermissions(String((req as any).userRole || ''));
+  return {
+    canComment: perms.has('comment'),
+    canRequestChanges: perms.has('request_changes'),
+    canResolve: perms.has('resolve'),
+    canExportRecord: canReadAuditTrail(req),
+  };
+}
+
 // ── Auto-propagation: Document events → Project Management signals ───────────
 
 /**
@@ -1790,15 +1809,6 @@ router.get('/reviews/my-queue', async (req: Request, res: Response) => {
     const changeRequestTasks = myTasks.filter(t => t.taskType === 'change_request');
     const approvalTasks = myTasks.filter(t => t.taskType === 'approval_task');
 
-    // Tell the client what this caller may actually do, so it can stop
-    // rendering governed actions that the server will refuse. Resolve and
-    // request-changes are role-gated (getThreadPermissions), and my-queue
-    // deliberately contains threads ASSIGNED to the caller — an admin can
-    // assign a thread to an author, who would then see a Resolve button that
-    // 403s every time. Deriving this from the same function the enforcement
-    // uses means the button and the guard cannot drift apart.
-    const perms = getThreadPermissions(String((req as any).userRole || ''));
-
     return sendSuccess(res, {
       threads: myThreads,
       tasks: myTasks,
@@ -1809,14 +1819,7 @@ router.get('/reviews/my-queue', async (req: Request, res: Response) => {
       dueSoonTasks: dueSoonTasks.length,
       changeRequests: changeRequestTasks.length,
       approvalsNeeded: approvalTasks.length,
-      permissions: {
-        canComment: perms.has('comment'),
-        canRequestChanges: perms.has('request_changes'),
-        canResolve: perms.has('resolve'),
-        // The review record export's own gate (DP-18 audit readers), so the
-        // control is offered exactly to those the route will serve.
-        canExportRecord: canReadAuditTrail(req),
-      },
+      permissions: queuePermissions(req),
     });
   } catch (error: any) {
     logConcept2cureError('my review queue', error);
