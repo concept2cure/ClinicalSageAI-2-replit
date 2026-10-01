@@ -28,6 +28,15 @@
  *     (server/services/storage/storage-posture.ts), which is required instead.
  *   - The preflight's refusal of *_ACCEPT_* overrides. They exist for these
  *     stacks.
+ *   - COMPOSE_EXCUSED below: names the hosted task must carry that are not
+ *     part of the server's boot contract. The preflight list grew past the boot
+ *     contract on 2026-10-01 (DB_AUDIT_REQUIRED in 385e6fc58, the connector's
+ *     three names in 42842480f), and requiring them here would have made every
+ *     self-hosted install either fail its migrate or publish a connector it did
+ *     not ask for. Each excusal says why. An excusal for a name the preflight no
+ *     longer requires is itself a failure, so the list can only shrink with it.
+ *     A stack that turns the connector on must carry its allowlist: production
+ *     refuses every registration without one (decision P-2).
  *
  * For each required name, the service's environment must give it:
  *   - a literal value;
@@ -62,6 +71,23 @@ const PINNED = {
   AUDIT_REQUIRE_ENFORCE: 'true',
 };
 const COMPOSE_ADDED = ['ALLOWED_ORIGINS'];
+
+/** Required by the AWS preflight, not by the server's boot; why Compose does not require each. */
+export const COMPOSE_EXCUSED = {
+  DB_AUDIT_REQUIRED:
+    'read by deploy-migrate (scripts/db/database-audit.mjs), never by the server; the Compose database ' +
+    'image (pgvector/pgvector:pg15) has no pgaudit, so its one enforcing value would fail every install',
+  MCP_ENABLED:
+    'the Claude connector is optional at boot (server/index.ts mounts it only when "true"); decision P-2 ' +
+    'turns it on for the hosted deployment, and a self-hosted install opts in',
+  MCP_PUBLIC_URL: 'falls back to APP_URL (server/mcp/config.ts), which is required',
+  MCP_CLIENT_REDIRECT_ALLOWLIST: 'required when the stack turns the connector on (checkService)',
+};
+
+/** Excusals whose name the preflight no longer requires: each must be deleted. */
+export function staleExcusals(required) {
+  return Object.keys(COMPOSE_EXCUSED).filter(n => !required.includes(n));
+}
 
 /** The names deploy-aws.yml's preflight requires on the API task. */
 export function preflightRequiredNames(workflowText) {
@@ -122,6 +148,8 @@ export function checkService(env, required) {
   };
   const storage = effective('STORAGE_PROVIDER');
   const names = new Set([...required, ...COMPOSE_ADDED]);
+  for (const name of Object.keys(COMPOSE_EXCUSED)) names.delete(name);
+  if (effective('MCP_ENABLED') === 'true') names.add('MCP_CLIENT_REDIRECT_ALLOWLIST');
   if (storage !== undefined && storage !== 's3') {
     names.delete('AWS_S3_BUCKET');
     names.add('STORAGE_ACCEPT_LOCAL_DISK');
@@ -191,6 +219,7 @@ function selfTest(required) {
   };
   for (const n of required) if (!(n in base)) base[n] = `\${${n}:?x}`;
   delete base.AWS_S3_BUCKET;
+  for (const n of Object.keys(COMPOSE_EXCUSED)) delete base[n];
   const cases = [
     ['a complete stack passes', base, []],
     ['SMTP_HOST absent', { ...base, SMTP_HOST: undefined }, ['SMTP_HOST is not passed']],
@@ -220,6 +249,16 @@ function selfTest(required) {
       { ...base, ALLOWED_ORIGINS: undefined },
       ['ALLOWED_ORIGINS is not passed'],
     ],
+    [
+      'the connector turned on with no allowlist',
+      { ...base, MCP_ENABLED: 'true' },
+      ['MCP_CLIENT_REDIRECT_ALLOWLIST is not passed'],
+    ],
+    [
+      'the connector turned on with an allowlist',
+      { ...base, MCP_ENABLED: '${MCP_ENABLED:-true}', MCP_CLIENT_REDIRECT_ALLOWLIST: '${MCP_CLIENT_REDIRECT_ALLOWLIST:?x}' },
+      [],
+    ],
   ];
   let failed = 0;
   for (const [label, env, expect] of cases) {
@@ -241,6 +280,10 @@ function selfTest(required) {
   const yamlOk = yamlCase.some(p => p.includes('JWT_SECRET is not passed'));
   if (!yamlOk) failed++;
   console.log(`${yamlOk ? 'ok  ' : 'FAIL'} list-form environment is read`);
+  const stale = staleExcusals(required.filter(n => n !== 'DB_AUDIT_REQUIRED'));
+  const staleOk = stale.length === 1 && stale[0] === 'DB_AUDIT_REQUIRED';
+  if (!staleOk) failed++;
+  console.log(`${staleOk ? 'ok  ' : 'FAIL'} an excusal the preflight no longer needs is reported`);
   if (failed) {
     console.error(`[ci:compose-boot-contract] self-test: ${failed} case(s) failed`);
     process.exit(1);
@@ -253,6 +296,10 @@ function main() {
   if (process.argv.includes('--self-test')) return selfTest(required);
   const files = composeFiles();
   let total = 0;
+  for (const n of staleExcusals(required)) {
+    total++;
+    console.error(`${PREFLIGHT_FILE}: no longer requires ${n}; delete its COMPOSE_EXCUSED entry`);
+  }
   let stacks = 0;
   for (const f of files) {
     const text = readFileSync(resolve(ROOT, f), 'utf8');
@@ -269,12 +316,14 @@ function main() {
   if (total) {
     console.error(
       `[ci:compose-boot-contract] ${total} problem(s). The server refuses to boot, or boots and signs no one in, ` +
-        `without these; the list is deploy-aws.yml's preflight (${required.length} names) plus ALLOWED_ORIGINS.`
+        `without these; the list is deploy-aws.yml's preflight (${required.length} names, ` +
+        `${Object.keys(COMPOSE_EXCUSED).length} excused for Compose) plus ALLOWED_ORIGINS.`
     );
     process.exit(1);
   }
   console.log(
-    `[ci:compose-boot-contract] OK — ${stacks} production Compose stack(s) carry the boot contract (${required.length} preflight names + ALLOWED_ORIGINS).`
+    `[ci:compose-boot-contract] OK — ${stacks} production Compose stack(s) carry the boot contract (${required.length} preflight names, ` +
+      `${Object.keys(COMPOSE_EXCUSED).length} excused for Compose, + ALLOWED_ORIGINS).`
   );
 }
 
