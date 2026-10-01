@@ -123,11 +123,12 @@ export interface DocumentCanvasProps {
    */
   refreshKey?: number;
   /**
-   * Told which section of this document is open, and given its suggestion
-   * door, while the editor is expanded; null otherwise. The thread uses it to
-   * put AnA's answers into the document being built.
+   * Told which section of this document's editor is open, and given its
+   * suggestion door, with whether the editor is on screen (`open`); null once
+   * there is no editor. The thread uses it to put AnA's answers into the
+   * document being built, and to name it on turns while it is open.
    */
-  onEditorBridge?: (docId: string, bridge: EditorBridge | null) => void;
+  onEditorBridge?: (docId: string, bridge: EditorBridge | null, open: boolean) => void;
 }
 
 /** The stored document type (`product_code`), in words: `clinical_overview` → "Clinical overview". */
@@ -382,9 +383,6 @@ export function DocumentCanvas({
     await load();
   }, [load]);
 
-  /* The workbench reports its open section whether or not this canvas is
-     expanded (it stays mounted, hidden). Only an expanded editor is one the
-     person can see the suggestion land in, so only then is it passed on. */
   const [bridge, setBridge] = useState<EditorBridge | null>(null);
 
   /* A section not yet drafted is one ask away (2026-10-01). The ask opens
@@ -398,10 +396,14 @@ export function DocumentCanvas({
     onExpandedChange(true);
     onAsk(`Draft the text for section ${sec.code} ${sec.title} of “${title}” here in the conversation, so I can insert it into the document.`);
   };
+  /* The workbench reports its open section whether or not this canvas is
+     expanded (it stays mounted, hidden), and so does this, saying which. An
+     insert lands only where the person can see it, so the thread reopens a
+     closed editor before inserting; and only an open one is named on turns. */
   useEffect(() => {
     if (!onEditorBridge) return undefined;
-    onEditorBridge(docId, expanded ? bridge : null);
-    return () => onEditorBridge(docId, null);
+    onEditorBridge(docId, bridge, expanded);
+    return () => onEditorBridge(docId, null, false);
   }, [onEditorBridge, docId, expanded, bridge]);
 
   return (
