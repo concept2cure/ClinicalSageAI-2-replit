@@ -14,8 +14,10 @@ ICH/FDA specifications that this sandbox cannot fetch (agency hosts are refused)
 
 Also in this folder: [`VERDICTS.md`](VERDICTS.md), every skeptic's return verbatim
 (probe output, the requirement and its confidence, scope, smallest fix, blast
-radius), and [`PLANS.md`](PLANS.md), the two planning passes the open work is
-built from (F19's agency-rejection action; F04, F05, F07, F08).
+radius); [`PLANS.md`](PLANS.md), the two planning passes the open work was
+built from (F19's agency-rejection action; F04, F05, F07, F08); and
+[`METHOD.md`](METHOD.md), the verifier and the still-owed lenses as runnable
+scripts.
 
 ## How the sweep ran
 

@@ -66,6 +66,7 @@ export const LAUNCH_PLATFORM_API: Readonly<Record<string, string>> = {
   '/api/user': 'identity: the users router mounted a second time (register-platform-routes.ts), beside /api/users, which NEVER_GATED already passes',
   '/api/mdx/industry-profile': "the organisation's industry profile (useIndustryProfile.ts), read by the shell's surfaces and written by Setup and onboarding",
   '/api/mdx/notifications': "the shell's task tray (TaskTray.tsx): the list, the unread count, mark read",
+  '/api/gateway-accounts': "the agency gateway account choice (GatewayAccountsSetting.tsx): admin Setup, the onboarding wizard's Agency accounts step every organisation passes, and each transmittal (D7); bound to no one surface's module so an organisation is never refused it at onboarding",
 };
 
 /**

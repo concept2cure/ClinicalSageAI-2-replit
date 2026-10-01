@@ -1,0 +1,103 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/w2
+
+stderr | server/routes/__tests__/deep-research-retrieval-status.test.ts > deep research reports its retrieval outcome > an outage is failed — for the document and every section — without its error text
+[DeepResearch] Data Room retrieval failed (non-fatal): connect ECONNREFUSED 10.0.0.12:443
+
+stderr | server/routes/__tests__/deep-research-retrieval-status.test.ts > deep research reports its retrieval outcome > one failing section does not end retrieval for the rest, and the document says failed
+[DeepResearch] Data Room retrieval failed (non-fatal): timeout
+
+ × server/routes/__tests__/deep-research-retrieval-status.test.ts > deep research reports its retrieval outcome > an outage is failed — for the document and every section — without its error text 62ms
+   → expected undefined to be 'failed' // Object.is equality
+ × server/routes/__tests__/deep-research-retrieval-status.test.ts > deep research reports its retrieval outcome > one failing section does not end retrieval for the rest, and the document says failed 9ms
+   → expected undefined to be 'failed' // Object.is equality
+ × server/routes/__tests__/deep-research-retrieval-status.test.ts > deep research reports its retrieval outcome > nothing above the floor is empty, not failed 7ms
+   → expected undefined to be 'empty' // Object.is equality
+ × server/routes/__tests__/deep-research-retrieval-status.test.ts > deep research reports its retrieval outcome > evidence found is ok (positive control) 9ms
+   → expected undefined to be 'ok' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/deep-research-retrieval-status.test.ts > deep research reports its retrieval outcome > an outage is failed — for the document and every section — without its error text
+AssertionError: expected undefined to be 'failed' // Object.is equality
+
+- Expected:
+"failed"
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/deep-research-retrieval-status.test.ts:63:38
+     61|     const res = await generate();
+     62|     expect(res.status).toBe(200);
+     63|     expect(res.body.retrievalStatus).toBe('failed');
+       |                                      ^
+     64|     expect(res.body.retrievalMessage).toMatch(/not grounded/i);
+     65|     expect(res.body.sections.every((s: any) => s.retrievalStatus === '…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/routes/__tests__/deep-research-retrieval-status.test.ts > deep research reports its retrieval outcome > one failing section does not end retrieval for the rest, and the document says failed
+AssertionError: expected undefined to be 'failed' // Object.is equality
+
+- Expected:
+"failed"
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/deep-research-retrieval-status.test.ts:73:19
+     71|     const res = await generate();
+     72|     const st = res.body.sections.map((s: any) => s.retrievalStatus);
+     73|     expect(st[0]).toBe('failed');
+       |                   ^
+     74|     expect(st.slice(1).every((x: string) => x === 'ok')).toBe(true);
+     75|     expect(res.body.retrievalStatus).toBe('failed');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/routes/__tests__/deep-research-retrieval-status.test.ts > deep research reports its retrieval outcome > nothing above the floor is empty, not failed
+AssertionError: expected undefined to be 'empty' // Object.is equality
+
+- Expected:
+"empty"
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/deep-research-retrieval-status.test.ts:82:38
+     80|     searchHybrid.mockResolvedValue([]);
+     81|     const res = await generate();
+     82|     expect(res.body.retrievalStatus).toBe('empty');
+       |                                      ^
+     83|   });
+     84|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/routes/__tests__/deep-research-retrieval-status.test.ts > deep research reports its retrieval outcome > evidence found is ok (positive control)
+AssertionError: expected undefined to be 'ok' // Object.is equality
+
+- Expected:
+"ok"
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/deep-research-retrieval-status.test.ts:88:38
+     86|     searchHybrid.mockResolvedValue([HIT]);
+     87|     const res = await generate();
+     88|     expect(res.body.retrievalStatus).toBe('ok');
+       |                                      ^
+     89|     expect(res.body.metrics.sectionsWithSources).toBe(res.body.section…
+     90|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  20:15:51
+   Duration  1.46s (transform 586ms, setup 140ms, import 842ms, tests 94ms, environment 0ms)
+

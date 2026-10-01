@@ -400,3 +400,22 @@ name their actor.
 out of the actor pattern, the selftest fails 1 of 23 (`userId: undefined` passes as an actor).
 
 ESLint: both scripts 1 warning, as at head.
+
+### Hardening (2026-10-01, late evening): the review of the actor rule
+
+The security-auditor review found the actor rule to be a keyword test: a real unattributed call passed when the actor
+key appeared only in a nested object (`details: { userId }`, the record's subject), in a string or a comment, as
+`userId: 'system'` or `userId: (null)`, or when the only `auditService` call was a read. The gate now reads only the
+call's positional arguments and the top-level keys of an object argument, with comments dropped and string literals
+masked; a string or parenthesised `null` is no actor; and `auditService.logAction` is the only `auditService` call
+that counts.
+
+- Red (`actor-gate/red/selftest-hardening-at-head-gate.txt`): six new selftest cases, run against the gate as it
+  stood, 6 of 29 failed.
+- Green (`actor-gate/green/selftest-hardened.txt`): 29 passed; the real tree's six sites still pass
+  (`actor-gate/green/gate-on-tree-hardened.txt`).
+- The scan is load-bearing (`actor-gate/red/mutant-raw-call-text.txt`): reading the raw call text instead, 4 of 29 fail.
+
+What the gate still cannot see is written in the selftest header: a neighbouring handler's attributable call within
+the window covers a delete with none of its own, and an actor whose value may be undefined at run time counts. Both
+are limits of a static check, stated rather than claimed.

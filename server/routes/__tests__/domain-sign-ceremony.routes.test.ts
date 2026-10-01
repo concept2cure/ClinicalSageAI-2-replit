@@ -25,6 +25,8 @@ import request from 'supertest';
 
 const GOOD = 'correct horse battery staple';
 const REASON = 'Committee determination recorded after review';
+/** A BLA assessment's id is a uuid (migrations/20260604_bla_workbench.sql). */
+const BLA_ID = '5e1f0c2a-7b3d-4e8f-9a1b-2c3d4e5f6a7b';
 
 const h = vi.hoisted(() => {
   const state = { log: [] as string[], sigFail: null as unknown };
@@ -186,7 +188,7 @@ const ROUTES: SignRoute[] = [
   },
   {
     name: 'BLA assessment sign-off', mount: '/api/biopharma/bla', router: blaRouter,
-    path: '/api/biopharma/bla/assessments/5/sign', act: { reason: REASON }, target: 'bla_assessment:5',
+    path: `/api/biopharma/bla/assessments/${BLA_ID}/sign`, act: { reason: REASON }, target: `bla_assessment:${BLA_ID}`,
   },
 ];
 
@@ -295,6 +297,32 @@ describe.each(ROUTES)('$name is a signature, so it runs the ceremony', (route) =
       expect(persistGovernedSignSignature).not.toHaveBeenCalled();
     });
   }
+});
+
+/*
+ * P1-51 follow-up (security review 2026-10-01): a BLA assessment's id is a uuid,
+ * which PostgreSQL reads from many spellings. The ceremony locks, and the
+ * signature names, the canonical one, so every spelling of one assessment is one
+ * lock and one signed target; anything that is not a uuid is not an assessment.
+ */
+describe('BLA assessment sign-off: one spelling of the assessment', () => {
+  const bla = ROUTES.find((r) => r.name === 'BLA assessment sign-off')!;
+  const sign = (id: string) =>
+    request(appFor(bla)).post(`/api/biopharma/bla/assessments/${id}/sign`).send({ reason: REASON, meaning: 'approval', password: GOOD });
+
+  it('an upper-case spelling signs under the lower-case target', async () => {
+    const res = await sign(BLA_ID.toUpperCase());
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(h.log).toEqual(['BEGIN', 'DOMAIN', `LEDGER:sign:bla_assessment:${BLA_ID}`, `SIGNATURE:bla_assessment:${BLA_ID}`, 'COMMIT']);
+  });
+
+  it('an id that is not a uuid is not an assessment: 404 before the ceremony, nothing written', async () => {
+    const res = await sign('5');
+    expect(res.status).toBe(404);
+    expect(codeOf(res.body)).toBe('NOT_FOUND');
+    expect(reverifySigner).not.toHaveBeenCalled();
+    expect(NOTHING_WRITTEN(h.log)).toEqual([]);
+  });
 });
 
 /*

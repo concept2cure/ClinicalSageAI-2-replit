@@ -1,0 +1,8 @@
+$ terraform plan -input=false   (production, platform-owners.auto.tfvars removed)
+
+  on variables.tf line 186:
+ 186: variable "platform_owner_emails" {
+
+The root module input variable "platform_owner_emails" is not set, and has no
+default value. Use a -var or -var-file command line argument to provide a
+value for this variable.

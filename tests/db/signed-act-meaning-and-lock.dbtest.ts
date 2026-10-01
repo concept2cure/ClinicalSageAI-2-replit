@@ -177,11 +177,19 @@ describe('a signed act carries a meaning true of the act (DP-64)', () => {
     expect(await signaturesOf(id)).toEqual([]);
   });
 
-  it('control: the author finalizes "as authorship", and the signature row says so', async () => {
+  it('refuses "authorship": nothing checks that the signer wrote the biosketch (DP-76)', async () => {
     const id = await draftBiosketch();
     const res = await finalize(id, 'authorship');
+    expect(res.status, `a finalize signed as authorship: ${JSON.stringify(res.body)}`).toBe(400);
+    expect(res.body.error?.code).toBe('MEANING_NOT_ALLOWED');
+    expect(await signaturesOf(id)).toEqual([]);
+  });
+
+  it('control: the investigator finalizes "as responsibility", and the signature row says so', async () => {
+    const id = await draftBiosketch();
+    const res = await finalize(id, 'responsibility');
     expect(res.status, JSON.stringify(res.body)).toBe(201);
-    expect(await signaturesOf(id)).toEqual([{ signer_id: signer.id, signature_meaning: 'authorship' }]);
+    expect(await signaturesOf(id)).toEqual([{ signer_id: signer.id, signature_meaning: 'responsibility' }]);
     expect(await statusOf(id)).toBe('final');
   });
 });
@@ -196,7 +204,7 @@ describe('one record is signed once (DP-65)', () => {
       await holder.query('SELECT id FROM biosketches WHERE id = $1 FOR UPDATE', [id]);
       const holderPid = Number((await holder.query('SELECT pg_backend_pid() AS pid')).rows[0].pid);
 
-      const both = Promise.all([finalize(id, 'authorship'), finalize(id, 'approval')]);
+      const both = Promise.all([finalize(id, 'responsibility'), finalize(id, 'approval')]);
       // Let go once both requests are waiting on a lock, or after 15 s.
       const deadline = Date.now() + 15_000;
       while (Date.now() < deadline && (await lockWaiters(holderPid)) < 2) await new Promise((r) => setTimeout(r, 50));
