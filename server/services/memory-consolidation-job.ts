@@ -523,7 +523,10 @@ export function initMemoryConsolidationScheduler(): void {
     return;
   }
 
-  cron.schedule(CONSOLIDATION_SCHEDULE, () => runScheduledConsolidation());
+  // node-cron wants void; the outcome is logged inside runScheduledConsolidation.
+  cron.schedule(CONSOLIDATION_SCHEDULE, () => {
+    void runScheduledConsolidation();
+  });
 
   schedulerActive = true;
   logger.info(`Memory consolidation scheduler initialized (${CONSOLIDATION_SCHEDULE})`);
