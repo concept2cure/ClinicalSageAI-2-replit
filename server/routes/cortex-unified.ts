@@ -30,6 +30,7 @@ import {
 } from '../services/chat-thread-helpers.js';
 import { pool } from '../db.js';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
+import { requireAccessTokenReason } from '../middleware/tokenType';
 import { getTool, toOpenAITools, fromOpenAIName, logToolRun } from '../services/toolRegistry';
 import '../services/tools/index'; // ensure tools are registered
 import { ai } from '../lib/unified-ai-client';
@@ -1216,6 +1217,8 @@ function extractUserId(req: Request): number | null {
     const token = (req.headers.authorization || '').replace('Bearer ', '');
     if (!token) return null;
     const decoded = verifyJwtWithRotation(token) as any;
+    // IAM-23: only an access token names the thread's owner.
+    if (requireAccessTokenReason(decoded)) return null;
     return decoded?.userId ? Number(decoded.userId) : null;
   } catch {
     return null;
