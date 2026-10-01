@@ -185,7 +185,10 @@ jobs:
           # vendored skill's own CI image, never built, published or deployed
           # here (Dockerfile.optimized runs as appuser). Every other Dockerfile
           # is checked. .trivyignore could only drop DS002 for the whole tree.
-          skip-files: .claude/skills/gstack/.github/docker/Dockerfile.ci
+          # Also the D1 document-runtime evidence record (2eda0ed0f): a verbatim
+          # copy of a build that ran, never built, published or deployed, and not
+          # to be edited (it is evidence). CI run 12734: DS-0002 on it.
+          skip-files: .claude/skills/gstack/.github/docker/Dockerfile.ci,docs/evidence/D1/2026-10-01-image-document-runtime/green/Dockerfile.green
 
   # ── Build & Push container images ─────────────────────────────────────────
   build-push:
