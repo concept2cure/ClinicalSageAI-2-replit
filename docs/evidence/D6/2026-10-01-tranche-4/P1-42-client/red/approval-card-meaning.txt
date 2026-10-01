@@ -1,0 +1,35 @@
+
+ × client/src/concept2cure/mdx/surfaces/__tests__/ApprovalCard.meaning.test.tsx > ApprovalCard — the meaning of a signature is chosen, not typed > offers exactly the governed meanings, and sends the selected id 333ms
+   → Unable to find an accessible element with the role "combobox" and name `/Meaning of signature/`
+
+Here are the accessible roles:
+
+  textbox:
+
+  Name "":
+--
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/ApprovalCard.meaning.test.tsx > ApprovalCard — the meaning of a signature is chosen, not typed > offers exactly the governed meanings, and sends the selected id
+...
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/ApprovalCard.meaning.test.tsx:43:27
+     41|     fireEvent.click(screen.getByRole('button', { name: /E-sign/ }));
+     42|
+     43|     const select = screen.getByRole('combobox', { name: /Meaning of si…
+       |                           ^
+     44|     const offered = Array.from(select.options).map((o) => o.value);
+     45|     expect(offered).toEqual(['authorship', 'review', 'approval', 'resp…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  03:21:39
+   Duration  2.35s (transform 878ms, setup 168ms, import 1.21s, tests 289ms, environment 509ms)
+

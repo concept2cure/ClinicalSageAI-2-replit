@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | OQ-002 |
-| Version | 0.7 |
+| Version | 0.8 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 §5; requirements URS-002 |
 | Runner (the executable protocol) | `tests/validation/oq/vault/run.mjs` — `npm run validation:oq -- vault` |
@@ -20,6 +20,7 @@
 | 0.5 | 2026-10-01 | `…01DiJJAk` (VR-09) | OQ-VAULT-12 added (URS-VAULT-012, a document's versions), with its runner step; OQ-VAULT-11 now keeps the version it creates for it. Not yet executed (→ W3). No other step changed. |
 | 0.6 | 2026-10-01 | `…01DiJJAk` (VR-13) | OQ-VAULT-13 and OQ-VAULT-14 added (URS-VAULT-013, review and approval), with their runner steps. OQ-VAULT-14 needs a third identity, `OQ_APPROVER_*`, because the uploader and the reviewer may not approve. Not yet executed (→ W3). No other step changed. |
 | 0.7 | 2026-10-01 | `…01DiJJAk` (VR-11) | OQ-VAULT-15 added (URS-VAULT-014, filing from the data room), with its runner step. Not yet executed (→ W3). No other step changed. |
+| 0.8 | 2026-10-01 | `…01DiJJAk` (VR-11b) | OQ-VAULT-16 added (URS-VAULT-015, confirming suggested filings together), with its runner step. Not yet executed (→ W3). No other step changed. |
 
 ## 1. Method
 
@@ -50,6 +51,7 @@ IQ-001 executed; the test identity can create programs (OQ-VAULT-00 creates one 
 | OQ-VAULT-13 | URS-VAULT-013 | credentialed | Start the OQ-VAULT-11 version's lifecycle twice and send it for review. Sign the review as the run identity (the uploader), then as OQ_SIGNER. Try to approve as OQ_SIGNER. Read the versions | One record (`created:false` on the second start), in review. The uploader's review is 403 `SELF_APPROVAL`. The signer's review is 200, bound to the version's SHA-256. The signer's approval is 403 `SELF_APPROVAL`. The version shows In review with the review's printed name |
 | OQ-VAULT-14 | URS-VAULT-013 | credentialed | Ingest a new document. Review it (OQ_SIGNER) and approve it (OQ_APPROVER). Check in v2.0, then review and approve it the same way. Read the versions, then edit v2.0's details | Each approval is 200. v2.0's approval answers `superseded` with v1.0's record. v2.0 shows Approved, with the approver's printed name, and v1.0 shows Superseded. The edit is 409 `APPROVED_VERSION_IMMUTABLE` |
 | OQ-VAULT-15 | URS-VAULT-014 | scripted | Capture a PDF into the program's data room (chat upload with `projectId`). File it from the room together with an unknown source id. File it again. Read the Vault | The capture records a data-room source. The filing answers 200 `complete:false`: the source `filed`, suggested or unfiled, and the unknown id `refused` `NOT_FOUND`. The second filing answers `complete:true`, `already_filed`, with the same document. The data room shows the source filed as version 1.0 |
+| OQ-VAULT-16 | URS-VAULT-015 | scripted | Ingest two PDFs and read the Vault. Confirm both, in the folder they were suggested for, without a note and then with one. Confirm them again. Read the Vault | Both ingests are suggested in one folder and counted in `awaitingConfirmationCount`. Without a note: 422 `REASON_REQUIRED`. With one: 200 `complete:true`, both `confirmed`. The repeat: 200 `complete:false`, both refused `CONFLICT`. The count is two lower |
 
 ## 4. Acceptance
 

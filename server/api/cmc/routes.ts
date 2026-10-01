@@ -57,6 +57,9 @@ import type { AnyPgColumn } from 'drizzle-orm/pg-core';
    so there is exactly one copy of them. */
 import { assessRecordedPoolability } from '../../services/cmc/recorded-stability';
 import { recordGovernedAction, verifyReauth } from '../../routes/c2c/actions';
+import { BINDING_BASIS, persistGovernedActionSignature } from '../../services/part11/signature-persistence';
+import { clientIpOf } from '../../utils/client-ip';
+import { refusedWithoutSigningAuthority, verifiedReauthFactors } from './cmc-signer';
 import { governedSignatureSchema, resolveActorUserId } from './governance';
 import { createScopedLogger } from '../../utils/logger';
 import * as metricsModule from '../../metrics.js';
@@ -777,7 +780,8 @@ function refusesUngovernedQualification(
 
 /**
  * The governed qualification of a register record, on the same primitives as
- * the specification approval and the batch release: re-auth first, the state
+ * the specification approval and the batch release: the signer's authority
+ * (refusedWithoutSigningAuthority) and re-authentication first, the state
  * change and the signature in ONE transaction, then the canonical write-through.
  *
  * `table` is a literal from a closed set, never caller input.
@@ -851,6 +855,10 @@ async function qualifyRegisterRecord(
   const userId = resolveActorUserId(req);
   if (!userId) return res.status(401).json({ success: false, error: 'AUTH_REQUIRED' });
 
+  // Signing authority (§11.10(g)), then the re-auth gate, before any write.
+  // Until the P0-10b fix round only the password was checked, so a viewer
+  // could qualify a record.
+  if (await refusedWithoutSigningAuthority(res, { userId, orgId })) return res;
   const reauthResult = await verifyReauth(userId, reauth);
   if (!reauthResult.ok) {
     res.setHeader('WWW-Authenticate', 'ReAuth required');
@@ -907,6 +915,18 @@ async function qualifyRegisterRecord(
       domain: 'biopharma',
       surface: spec.surface,
       idempotencyKey: idempotencyKey ?? null,
+    });
+    // 21 CFR Part 11 signature row, same transaction as the ledger pair; none
+    // was written until 2026-10-01 (P0-10b, DP-02). Factors as verified above.
+    await persistGovernedActionSignature(client, {
+      orgId, userId, target: `${spec.target}:${id}`, reason, payload: { meaning },
+      actionId: governance.actionId, auditId: governance.auditId, sha256Chain: governance.sha256Chain,
+      ...verifiedReauthFactors(reauth),
+      ipAddress: clientIpOf(req),
+      occurredAt: new Date(),
+      binding: { digest: null, basis: BINDING_BASIS.GOVERNED_ACTION_LEDGER, note: `No content digest is registered for a ${spec.subject}, so none is claimed: bound_payload_digest is the governed action audit sha256 chain hash (target, payload hash, actor, time), not a content hash.` },
+      extraManifest: { act: { [signing.statusColumn]: signing.signedValue } },
+      complianceStatement: `${spec.subject} ${signing.signedValue === 'validated' ? 'validation' : 'qualification'} applied under 21 CFR Part 11 §11.50/§11.70/§11.200; ledger-chained to the audit_logs sha256 chain.`,
     });
     await client.query('COMMIT');
 

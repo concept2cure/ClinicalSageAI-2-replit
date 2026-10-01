@@ -238,3 +238,34 @@ export function assertDeterministicModePostureForProduction(
   });
   return 'deterministic-accepted';
 }
+
+// ── Provider election (ADR-0014 §1.3, P1-45, 2026-10-01) ─────────────────────
+//
+// Moonshot (Kimi) is not a production lane for any organization under any
+// election: GDPR Chapter V (no adequacy decision for China), APPI Art. 28,
+// 28 CFR Part 202, and supplier qualification. Until 2026-10-01 production
+// booted with KIMI_API_KEY or MOONSHOT_API_KEY set and the gateway enabled the
+// lane; only Terraform's not provisioning a key kept tenant content off it.
+// There is no acceptance flag: the decision is the product's, not the
+// operator's. The gateway drops the lane in production as well
+// (gateway.ts::withoutExcludedProviders), in case a key reaches a process this
+// gate did not run in. No-op outside production, where the lane remains.
+
+/** The environment variables that carry a Moonshot key. */
+export const MOONSHOT_KEY_VARS = ['KIMI_API_KEY', 'MOONSHOT_API_KEY'] as const;
+
+/**
+ * Production boot gate for the provider election. Refuses a set Moonshot key.
+ *
+ * @throws in production when KIMI_API_KEY or MOONSHOT_API_KEY is non-empty.
+ */
+export function assertAiProviderElectionPostureForProduction(env: NodeJS.ProcessEnv = process.env): void {
+  if (!isProductionEnv(env)) return;
+  const set = MOONSHOT_KEY_VARS.filter(name => (env[name] ?? '') !== '');
+  if (set.length === 0) return;
+  throw new Error(
+    `[ai-governance-posture] REFUSING TO BOOT: ${set.join(' and ')} ${set.length > 1 ? 'are' : 'is'} set in ` +
+      'production. Moonshot (Kimi) is not a production AI service for any organization, under any election ' +
+      `(ADR-0014 §1). Unset ${set.join(' and ')}; the lane remains for development only.`,
+  );
+}

@@ -1,0 +1,187 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/vault-legal-holds-launch-scope.test.ts > Vault legal-hold routes under the production API gate > reads every route the router declares, the retention period included 3ms
+ × server/routes/__tests__/vault-legal-holds-launch-scope.test.ts > Vault legal-hold routes under the production API gate > GET /api/vault/legal-holds reaches its route, not 403 LAUNCH_SCOPE 12ms
+   → GET /api/vault/legal-holds was refused: expected { status: 403, refusal: { …(1) } } to deeply equal { status: +0, refusal: null }
+ × server/routes/__tests__/vault-legal-holds-launch-scope.test.ts > Vault legal-hold routes under the production API gate > POST /api/vault/legal-holds reaches its route, not 403 LAUNCH_SCOPE 4ms
+   → POST /api/vault/legal-holds was refused: expected { status: 403, refusal: { …(1) } } to deeply equal { status: +0, refusal: null }
+ × server/routes/__tests__/vault-legal-holds-launch-scope.test.ts > Vault legal-hold routes under the production API gate > POST /api/vault/legal-holds/0b7c6a52-3f7e-4d4b-9a51-2c5e8f1d9a10/lift reaches its route, not 403 LAUNCH_SCOPE 3ms
+   → POST /api/vault/legal-holds/0b7c6a52-3f7e-4d4b-9a51-2c5e8f1d9a10/lift was refused: expected { status: 403, refusal: { …(1) } } to deeply equal { status: +0, refusal: null }
+ × server/routes/__tests__/vault-legal-holds-launch-scope.test.ts > Vault legal-hold routes under the production API gate > GET /api/vault/legal-holds/retention reaches its route, not 403 LAUNCH_SCOPE 4ms
+   → GET /api/vault/legal-holds/retention was refused: expected { status: 403, refusal: { …(1) } } to deeply equal { status: +0, refusal: null }
+ × server/routes/__tests__/vault-legal-holds-launch-scope.test.ts > Vault legal-hold routes under the production API gate > PUT /api/vault/legal-holds/retention reaches its route, not 403 LAUNCH_SCOPE 2ms
+   → PUT /api/vault/legal-holds/retention was refused: expected { status: 403, refusal: { …(1) } } to deeply equal { status: +0, refusal: null }
+ × server/routes/__tests__/vault-legal-holds-launch-scope.test.ts > Vault legal-hold routes under the production API gate > attributes the retention period to Setup, which calls it, and the rest of the family to the Vault 2ms
+   → expected [] to deeply equal [ 'setup' ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/vault-legal-holds-launch-scope.test.ts > Vault legal-hold routes under the production API gate > GET /api/vault/legal-holds reaches its route, not 403 LAUNCH_SCOPE
+AssertionError: GET /api/vault/legal-holds was refused: expected { status: 403, refusal: { …(1) } } to deeply equal { status: +0, refusal: null }
+
+- Expected
++ Received
+
+  {
+-   "refusal": null,
+-   "status": 0,
++   "refusal": {
++     "error": {
++       "code": "LAUNCH_SCOPE",
++       "message": "This part of the product is not in this release.",
++     },
++   },
++   "status": 403,
+  }
+
+ ❯ server/routes/__tests__/vault-legal-holds-launch-scope.test.ts:120:100
+    118|   it.each(ROUTES.map((r) => [`${r.method} ${r.path}`, r] as const))('%…
+    119|     const out = await send(route);
+    120|     expect({ status: out.status, refusal: out.body }, `${route.method}…
+       |                                                                                                    ^
+    121|     expect(out.reached).toBe(true);
+    122|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/routes/__tests__/vault-legal-holds-launch-scope.test.ts > Vault legal-hold routes under the production API gate > POST /api/vault/legal-holds reaches its route, not 403 LAUNCH_SCOPE
+AssertionError: POST /api/vault/legal-holds was refused: expected { status: 403, refusal: { …(1) } } to deeply equal { status: +0, refusal: null }
+
+- Expected
++ Received
+
+  {
+-   "refusal": null,
+-   "status": 0,
++   "refusal": {
++     "error": {
++       "code": "LAUNCH_SCOPE",
++       "message": "This part of the product is not in this release.",
++     },
++   },
++   "status": 403,
+  }
+
+ ❯ server/routes/__tests__/vault-legal-holds-launch-scope.test.ts:120:100
+    118|   it.each(ROUTES.map((r) => [`${r.method} ${r.path}`, r] as const))('%…
+    119|     const out = await send(route);
+    120|     expect({ status: out.status, refusal: out.body }, `${route.method}…
+       |                                                                                                    ^
+    121|     expect(out.reached).toBe(true);
+    122|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/routes/__tests__/vault-legal-holds-launch-scope.test.ts > Vault legal-hold routes under the production API gate > POST /api/vault/legal-holds/0b7c6a52-3f7e-4d4b-9a51-2c5e8f1d9a10/lift reaches its route, not 403 LAUNCH_SCOPE
+AssertionError: POST /api/vault/legal-holds/0b7c6a52-3f7e-4d4b-9a51-2c5e8f1d9a10/lift was refused: expected { status: 403, refusal: { …(1) } } to deeply equal { status: +0, refusal: null }
+
+- Expected
++ Received
+
+  {
+-   "refusal": null,
+-   "status": 0,
++   "refusal": {
++     "error": {
++       "code": "LAUNCH_SCOPE",
++       "message": "This part of the product is not in this release.",
++     },
++   },
++   "status": 403,
+  }
+
+ ❯ server/routes/__tests__/vault-legal-holds-launch-scope.test.ts:120:100
+    118|   it.each(ROUTES.map((r) => [`${r.method} ${r.path}`, r] as const))('%…
+    119|     const out = await send(route);
+    120|     expect({ status: out.status, refusal: out.body }, `${route.method}…
+       |                                                                                                    ^
+    121|     expect(out.reached).toBe(true);
+    122|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/routes/__tests__/vault-legal-holds-launch-scope.test.ts > Vault legal-hold routes under the production API gate > GET /api/vault/legal-holds/retention reaches its route, not 403 LAUNCH_SCOPE
+AssertionError: GET /api/vault/legal-holds/retention was refused: expected { status: 403, refusal: { …(1) } } to deeply equal { status: +0, refusal: null }
+
+- Expected
++ Received
+
+  {
+-   "refusal": null,
+-   "status": 0,
++   "refusal": {
++     "error": {
++       "code": "LAUNCH_SCOPE",
++       "message": "This part of the product is not in this release.",
++     },
++   },
++   "status": 403,
+  }
+
+ ❯ server/routes/__tests__/vault-legal-holds-launch-scope.test.ts:120:100
+    118|   it.each(ROUTES.map((r) => [`${r.method} ${r.path}`, r] as const))('%…
+    119|     const out = await send(route);
+    120|     expect({ status: out.status, refusal: out.body }, `${route.method}…
+       |                                                                                                    ^
+    121|     expect(out.reached).toBe(true);
+    122|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/routes/__tests__/vault-legal-holds-launch-scope.test.ts > Vault legal-hold routes under the production API gate > PUT /api/vault/legal-holds/retention reaches its route, not 403 LAUNCH_SCOPE
+AssertionError: PUT /api/vault/legal-holds/retention was refused: expected { status: 403, refusal: { …(1) } } to deeply equal { status: +0, refusal: null }
+
+- Expected
++ Received
+
+  {
+-   "refusal": null,
+-   "status": 0,
++   "refusal": {
++     "error": {
++       "code": "LAUNCH_SCOPE",
++       "message": "This part of the product is not in this release.",
++     },
++   },
++   "status": 403,
+  }
+
+ ❯ server/routes/__tests__/vault-legal-holds-launch-scope.test.ts:120:100
+    118|   it.each(ROUTES.map((r) => [`${r.method} ${r.path}`, r] as const))('%…
+    119|     const out = await send(route);
+    120|     expect({ status: out.status, refusal: out.body }, `${route.method}…
+       |                                                                                                    ^
+    121|     expect(out.reached).toBe(true);
+    122|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/routes/__tests__/vault-legal-holds-launch-scope.test.ts > Vault legal-hold routes under the production API gate > attributes the retention period to Setup, which calls it, and the rest of the family to the Vault
+AssertionError: expected [] to deeply equal [ 'setup' ]
+
+- Expected
++ Received
+
+- [
+-   "setup",
+- ]
++ []
+
+ ❯ server/routes/__tests__/vault-legal-holds-launch-scope.test.ts:127:56
+    125|     const map = buildPrefixMap();
+    126|     const owners = (p: string) => [...(modulesForPath(p, map) ?? [])];
+    127|     expect(owners('/api/vault/legal-holds/retention')).toEqual(['setup…
+       |                                                        ^
+    128|     for (const r of ROUTES.filter((x) => !x.path.endsWith('/retention'…
+    129|       expect(owners(r.path), r.path).toEqual(['vault']);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 1 passed (7)
+   Start at  07:13:50
+   Duration  1.63s (transform 653ms, setup 190ms, import 575ms, tests 36ms, environment 0ms)
+

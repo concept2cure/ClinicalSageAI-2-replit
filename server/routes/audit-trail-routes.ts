@@ -766,8 +766,10 @@ export function createAuditTrailRoutes(pool: Pool): Router {
       return res.status(403).json({ error: 'PLATFORM_ADMIN_REQUIRED', message: 'The chain-integrity monitor is a platform administrator surface.' });
     }
     try {
-      const { getChainMonitorStatus } = await import('../services/audit/chainIntegrityMonitor.js');
-      const status = getChainMonitorStatus();
+      // The status of the latest check any process ran (U19): each of the
+      // three processes used to answer with its own last check.
+      const { getSharedChainMonitorStatus } = await import('../services/audit/chainIntegrityMonitor.js');
+      const status = await getSharedChainMonitorStatus();
       res.json({ success: true, data: status });
     } catch (error) {
       // §11.10(e): the chain-integrity monitor's status IS compliance evidence.

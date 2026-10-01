@@ -260,7 +260,10 @@ export async function hopEditSave(w: World): Promise<void> {
 export async function hopSeal(w: World): Promise<void> {
   const { k, q } = w;
   const hop = new Hop('seal');
-  const fr = await w.asAuthor(request(w.app).post(`/api/authoring/docs/${k.docId}/freeze`)).send({ reason: 'Sealed for the C2C-101 IND original sequence.' });
+  // DP-35 (2026-10-01): the freeze is signed — its meaning and the author's re-verified password.
+  const fr = await w.asAuthor(request(w.app).post(`/api/authoring/docs/${k.docId}/freeze`)).send({
+    reason: 'Sealed for the C2C-101 IND original sequence.', meaning: 'AUTHOR', password: PASSWORD,
+  });
   expect(fr.status, JSON.stringify(fr.body)).toBe(200);
   k.freezeHash = String(fr.body.contentHash);
   const es = await w.asApprover(request(w.app).post(`/api/authoring/docs/${k.docId}/e-sign`)).send({

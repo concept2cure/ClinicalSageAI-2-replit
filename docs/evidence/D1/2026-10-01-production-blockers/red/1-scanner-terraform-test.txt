@@ -1,0 +1,91 @@
+# terraform test, terraform/stack — the new scanner assertions against trunk's module (2625137d + the output and assertions only)
+# 2026-10-01T08:54:45Z, terraform 1.9.8, hashicorp/aws 5.70.0 (mocked)
+Success! The configuration is valid.
+
+tests/boot_contract.tftest.hcl... in progress
+  run "renders_the_boot_contract"... fail
+
+Error: Test assertion failed
+
+  on tests/boot_contract.tftest.hcl line 170, in run "renders_the_boot_contract":
+ 170:     condition = (
+ 171:       one([for e in module.ecs.api_container.environment : e.value if e.name == "CLAMAV_HOST"]) == "127.0.0.1" &&
+ 172:       one([for e in module.ecs.api_container.environment : e.value if e.name == "CLAMAV_PORT"]) == "3310"
+ 173:     )
+    ├────────────────
+    │ module.ecs.api_container.environment is tuple with 19 elements
+
+The API container must reach clamd at CLAMAV_HOST=127.0.0.1,
+CLAMAV_PORT=3310: the scanner in its own task.
+
+Error: Test assertion failed
+
+  on tests/boot_contract.tftest.hcl line 181, in run "renders_the_boot_contract":
+ 181:     condition = length([
+ 182:       for c in module.ecs.api_task_containers : c.name
+ 183:       if c.name != "api" && c.essential && try(c.healthCheck.command, null) != null &&
+ 184:       can(regex("@sha256:[0-9a-f]{64}$", c.image)) &&
+ 185:       contains([for d in try(module.ecs.api_container.dependsOn, []) : d.containerName if d.condition == "HEALTHY"], c.name)
+ 186:     ]) == 1
+    ├────────────────
+    │ module.ecs.api_container is object with 8 attributes
+    │ module.ecs.api_task_containers is tuple with 1 element
+
+The API task must carry one essential, health-checked, digest-pinned scanner
+container that the API container waits on (dependsOn HEALTHY).
+
+Error: Test assertion failed
+
+  on tests/boot_contract.tftest.hcl line 194, in run "renders_the_boot_contract":
+ 194:     condition = one(flatten([
+ 195:       for c in module.ecs.api_task_containers : [
+ 196:         for e in try(c.environment, []) : e.value if e.name == "CLAMD_CONF_StreamMaxLength"
+ 197:       ] if c.name != "api"
+ 198:     ])) == "${one(regex("maxUploadBytes: ([0-9]+) \\* 1024 \\* 1024", file("../../server/config/platform-limits.ts")))}M"
+    ├────────────────
+    │ module.ecs.api_task_containers is tuple with 1 element
+
+The scanner's StreamMaxLength must equal FILE_LIMITS.maxUploadBytes
+(server/config/platform-limits.ts).
+
+Error: Test assertion failed
+
+  on tests/boot_contract.tftest.hcl line 205, in run "renders_the_boot_contract":
+ 205:     condition = one(flatten([
+ 206:       for c in module.ecs.api_task_containers : [
+ 207:         for e in try(c.environment, []) : e.value if e.name == "CLAMD_CONF_AlertExceedsMax"
+ 208:       ] if c.name != "api"
+ 209:     ])) == "yes"
+    ├────────────────
+    │ module.ecs.api_task_containers is tuple with 1 element
+
+The scanner must report a file it could not scan whole (AlertExceedsMax yes),
+not answer OK for it.
+  run "vault_documents_go_to_a_private_versioned_bucket_the_task_role_can_use"... pass
+  run "the_site_is_served_with_security_headers"... pass
+  run "production_names_are_the_ones_the_deploy_workflow_targets"... pass
+  run "staging_carries_every_name_the_deploy_preflight_requires"... pass
+  run "staging_is_distinct_from_production"... pass
+  run "provision_workflow_names_are_the_ones_terraform_creates"... pass
+  run "refuses_a_refresh_secret_equal_to_the_jwt_secret"... pass
+  run "refuses_a_short_audit_chain_secret"... pass
+  run "refuses_placement_approvals_that_are_not_a_json_object"... pass
+  run "refuses_equal_audit_seal_and_chain_keys"... pass
+  run "refuses_a_short_audit_export_key"... pass
+  run "refuses_an_audit_export_key_equal_to_the_jwt_secret"... pass
+  run "refuses_an_audit_export_key_equal_to_an_audit_seal_key"... pass
+  run "refuses_phi_approval_without_zero_retention"... pass
+  run "refuses_an_unknown_data_class"... pass
+  run "refuses_a_non_boolean_zero_retention_flag"... pass
+  run "refuses_a_non_string_intended_use"... pass
+  run "refuses_a_missing_region"... pass
+  run "accepts_the_fail_closed_interim_approvals"... pass
+  run "refuses_an_uppercase_domain_alias"... pass
+  run "refuses_a_domain_alias_with_a_scheme"... pass
+  run "refuses_a_domain_alias_with_a_trailing_dot"... pass
+  run "every_container_can_send_login_codes"... pass
+  run "refuses_an_smtp_port_without_required_tls"... pass
+tests/boot_contract.tftest.hcl... tearing down
+tests/boot_contract.tftest.hcl... fail
+
+Failure! 24 passed, 1 failed.

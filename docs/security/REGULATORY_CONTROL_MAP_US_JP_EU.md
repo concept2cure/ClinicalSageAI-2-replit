@@ -193,7 +193,7 @@ on its behalf. Pharmaceutical sponsors' regulatory content is normally outside i
 | 28(1)(3) | Processor guarantees; contract terms; sub-processor authorisation and flow-down | DPA drafted; lists disagree; OpenAI reachable by default; Moonshot listed | partial | INF-21, DP-07 | P1-14, P0-17 |
 | 30(2) | Processor's records of processing activities | None | absent | — | P2-2 |
 | 32 | Security of processing appropriate to the risk | The audit as a whole | partial | all | P0, P1 |
-| 33(2) | Processor notifies the controller without undue delay after becoming aware | DPA says [48] h; IR-004 says 72 h to tenants | partial | INF-07 | P1-13 |
+| 33(2) | Processor notifies the controller without undue delay after becoming aware | 48 h to tenants in the DPA §7.1, IR-004 §3 and §3a and SIG-Lite G.4 (ADR-0014 §5, 2026-10-01) | verified (documents agree) | INF-07 | P1-13 |
 | 34 | Communication to data subjects (controller's duty; processor assists) | Assistance clause in DPA §3.3 | drafted | — | counsel |
 | 35 | DPIA (processor assists; a DPIA of the AI drafting flow is prudent for the provider's own risk record) | None | absent | — | P2-2 |
 | 44–46, 49 | Transfers: SCCs (Module 2/3) + transfer impact assessment, or an adequacy mechanism (EU-US DPF) | Placeholders in DPA Annex IV; no TIA | absent | INF-21 | P2-2 |
@@ -224,7 +224,7 @@ on its behalf. Pharmaceutical sponsors' regulatory content is normally outside i
 | Audit trail | 11.10(e) generated, secure, time-stamped | 真正性 + 保存性 with the record | Annex 11 §9 **regularly reviewed** | no review workflow; monitor off; deletable by a setting | P1-25, P0-16, P0-15 |
 | Electronic signature | 11.50/11.70/11.200 | signatory identity confirmed before issuance | Annex 11 §14; eIDAS levels optional | 23 writers skip the ceremony; revocation broken; no proofing | P0-19, P0-14, P1-21 |
 | Session control | 11.10(d); HIPAA automatic logoff | 真正性 access control | Annex 11 §12.4 | idle logoff and 12-hour lifetime server-enforced (P1-1, 2026-09-26); refresh outlives revocation closed (P0-4) | P1-1, P0-4 |
-| Breach notification | HIPAA §164.410 (≤60 days, BA→CE) | APPI Art. 26 (prompt + ≤30/60 days, PPC + subjects) | GDPR 33/34 (processor→controller without undue delay; 72 h to the SA) | three documents, two numbers, no regulator rows | P1-13 |
+| Breach notification | HIPAA §164.410 (≤60 days, BA→CE) | APPI Art. 26 (prompt + ≤30/60 days, PPC + subjects) | GDPR 33/34 (processor→controller without undue delay; 72 h to the SA) | one figure, 48 h to tenants, in the DPA, IR-004 and SIG-Lite (ADR-0014 §5); IR-004 §3a holds the regulator clocks; no tabletop yet | P1-13 |
 | Cross-border transfer | — | APPI Art. 28 (consent with country information, or equivalent measures) | GDPR 44–49 (SCCs + TIA, or DPF) | US-only hosting; blank annexes | P2-1, P2-2, P2-3 |
 | Sub-processors | HIPAA BAAs | APPI Art. 25 trustee supervision | GDPR 28(2)(4) | lists disagree; OpenAI default for embeddings; no BAAs | P1-14, P0-17, P2-7 |
 | Retention and erasure | 11.10(c); predicate rules | 保存性 | Annex 11 §17; GDPR 5(1)(e), 17 | retention engine inert; no hold API; DSAR partial | P1-22, P2-9 |

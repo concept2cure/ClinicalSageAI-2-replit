@@ -113,3 +113,11 @@ output "github_deploy_policies" {
     build  = module.github_deploy.build_policy
   }
 }
+
+output "first_run_setup" {
+  description = "How the deployment's first administrator is created (server/routes/setup.ts)."
+  value = {
+    setup_token_secret_arn = module.secrets.secret_arns["setup_token"]
+    instructions           = "Once the API is up: read the token (aws secretsmanager get-secret-value --secret-id <setup_token_secret_arn> --query SecretString --output text) and POST /api/setup/initialize with header X-Setup-Token: <token> and JSON {email, password, organizationName}. Use the address named in platform_owner_emails. The route closes itself once any account exists."
+  }
+}

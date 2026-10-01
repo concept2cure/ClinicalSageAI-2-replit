@@ -5514,8 +5514,10 @@ registerToolHandler('load_nonclinical_program', async (input: Record<string, unk
 // Bridges the agentic tool loop into the governed ana-ri command executor so the
 // conversational ANA can discover and invoke every platform command (project /
 // artifact / task / dossier / Module 3 / CMC / MDX / PDEV / …). Reads are open;
-// governed mutations still require confirm + reason and are audit-logged. Tenant
-// and user come from the session context, never from model input.
+// a write comes back as a proposal (executeCommands' propose-only gate, which
+// reads only the confirmation POST /api/ana-ri/governed-action stamps — never a
+// flag in params) and runs only when a person confirms it. Tenant and user come
+// from the session context, never from model input.
 
 registerToolHandler('list_platform_commands', async (input: Record<string, unknown>) => {
   try {
@@ -5529,7 +5531,7 @@ registerToolHandler('list_platform_commands', async (input: Record<string, unkno
       count: list.length,
       commands: list.map(c => ({ command: c.name, description: c.description, parameters: c.parameters })),
       instruction:
-        "Invoke any of these with execute_platform_command { command, params }. This is ANA's full platform command surface beyond the typed tools; governed mutations need params.confirm=true and params.reason.",
+        "Invoke any of these with execute_platform_command { command, params }, passing the parameters each command lists. This is ANA's full platform command surface beyond the typed tools. Reads run. A write never runs on your call: it comes back as a proposal (HUMAN_CONFIRMATION_REQUIRED or PART11_SIGNATURE_REQUIRED) that only the person's confirmation in the platform runs.",
     });
   } catch (err: any) {
     return JSON.stringify({ error: `Listing platform commands failed: ${err?.message || 'unknown error'}` });
@@ -5568,7 +5570,7 @@ registerToolHandler('execute_platform_command', async (input: Record<string, unk
       command,
       result,
       instruction:
-        'Governed mutations require confirm + reason in params. If the result indicates confirmation is required, re-issue with params.confirm=true and params.reason set. Report the result message verbatim.',
+        "If the result's error is HUMAN_CONFIRMATION_REQUIRED or PART11_SIGNATURE_REQUIRED, nothing ran: it is a proposal, and only the person's confirmation in the platform runs it. Tell the person what you proposed and that it has not been done. Do not re-issue it: calling again, with any params, only proposes it again. Report the result message verbatim.",
     });
   } catch (err: any) {
     return JSON.stringify({ error: `Platform command failed: ${err?.message || 'unknown error'}` });

@@ -1,0 +1,99 @@
+# HEAD c6f2028b; server/services/auditService.ts unchanged (test file rewritten to the new contract)
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/__tests__/auditService-tenant-scope-fallback.contract.test.ts > getAuditLog’s fallback answers a tenant-scoped read with that tenant’s rows > passes the tenant to the store as the filter 12ms
+   → AUDIT_LOG_TENANT_SCOPE_UNAVAILABLE
+ × server/services/__tests__/auditService-tenant-scope-fallback.contract.test.ts > getAuditLog’s fallback answers a tenant-scoped read with that tenant’s rows > treats organizationId as the same scope request as tenantId 1ms
+   → AUDIT_LOG_TENANT_SCOPE_UNAVAILABLE
+ ✓ server/services/__tests__/auditService-tenant-scope-fallback.contract.test.ts > getAuditLog’s fallback answers a tenant-scoped read with that tenant’s rows > an UNSCOPED read names no tenant — the store applies the caller’s scope itself 2ms
+ × server/services/__tests__/auditService-tenant-scope-fallback.contract.test.ts > getAuditLog’s fallback answers a tenant-scoped read with that tenant’s rows > a store failure is an error, not an empty audit trail 6ms
+   → promise resolved "[]" instead of rejecting
+ × server/services/__tests__/auditService-tenant-scope-fallback.contract.test.ts > logAction names the tenant on the tamper-proof row > writes the entry’s tenant as the row’s organisation 7ms
+   → expected { userId: '7', …(4) } to match object { organizationId: 5 }
+(5 matching properties omitted from actual)
+ ✓ server/services/__tests__/auditService-tenant-scope-fallback.contract.test.ts > logAction names the tenant on the tamper-proof row > a non-numeric or missing tenant is left to the store to resolve from the session 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/auditService-tenant-scope-fallback.contract.test.ts > getAuditLog’s fallback answers a tenant-scoped read with that tenant’s rows > passes the tenant to the store as the filter
+Error: AUDIT_LOG_TENANT_SCOPE_UNAVAILABLE
+ ❯ AuditService.getAuditLog server/services/auditService.ts:606:13
+    604|         { tenantId: scopeRequested },
+    605|       );
+    606|       throw new Error('AUDIT_LOG_TENANT_SCOPE_UNAVAILABLE');
+       |             ^
+    607|     }
+    608|
+ ❯ server/services/__tests__/auditService-tenant-scope-fallback.contract.test.ts:83:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/__tests__/auditService-tenant-scope-fallback.contract.test.ts > getAuditLog’s fallback answers a tenant-scoped read with that tenant’s rows > treats organizationId as the same scope request as tenantId
+Error: AUDIT_LOG_TENANT_SCOPE_UNAVAILABLE
+ ❯ AuditService.getAuditLog server/services/auditService.ts:606:13
+    604|         { tenantId: scopeRequested },
+    605|       );
+    606|       throw new Error('AUDIT_LOG_TENANT_SCOPE_UNAVAILABLE');
+       |             ^
+    607|     }
+    608|
+ ❯ server/services/__tests__/auditService-tenant-scope-fallback.contract.test.ts:93:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/__tests__/auditService-tenant-scope-fallback.contract.test.ts > getAuditLog’s fallback answers a tenant-scoped read with that tenant’s rows > a store failure is an error, not an empty audit trail
+AssertionError: promise resolved "[]" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+[]
+
+ ❯ server/services/__tests__/auditService-tenant-scope-fallback.contract.test.ts:110:65
+    108|     // the store could not be read at all.
+    109|     searchSpy.mockRejectedValueOnce(new Error('store down'));
+    110|     await expect(auditService.getAuditLog({ resourceType: 'x' })).reje…
+       |                                                                 ^
+    111|   });
+    112| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/__tests__/auditService-tenant-scope-fallback.contract.test.ts > logAction names the tenant on the tamper-proof row > writes the entry’s tenant as the row’s organisation
+AssertionError: expected { userId: '7', …(4) } to match object { organizationId: 5 }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "organizationId": 5,
++   "ipAddress": undefined,
++   "resourceId": "1",
++   "resourceType": "ind_application",
++   "userAgent": undefined,
++   "userId": "7",
+  }
+
+ ❯ server/services/__tests__/auditService-tenant-scope-fallback.contract.test.ts:124:37
+    122|     });
+    123|     expect(out.tamperProof).toBe(true);
+    124|     expect(logSpy.mock.calls[0][3]).toMatchObject({ organizationId: 5 …
+       |                                     ^
+    125|   });
+    126|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 2 passed (6)
+   Start at  06:14:12
+   Duration  2.57s (transform 1.24s, setup 121ms, import 1.94s, tests 37ms, environment 0ms)
+
+exit=1

@@ -22,9 +22,12 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import express from 'express';
 import request from 'supertest';
+import type { Pool, PoolClient } from 'pg';
 
 import { createAuthBoundary } from '../../server/middleware/authBoundary';
 import { createComplianceReportRoutes } from '../../server/routes/audit-compliance-reports';
+import tenantUsers from '../../server/routes/tenant-users';
+import tenantConfig from '../../server/routes/tenant-config';
 import { getPool } from '../../server/db/runtime';
 import { verifySignedAuditExport } from '../../server/services/audit/signedAuditExport';
 import { runWithTenantScope } from '../../server/db/tenantStore';
@@ -43,6 +46,7 @@ import {
   owner,
   provisionMember,
   signerA,
+  signerB,
   provisionTwoTenantFixture,
   teardownTwoTenantFixture,
   tokenA,
@@ -112,12 +116,7 @@ async function seed(side: 'A' | 'B', org: number, member: number, admin: number)
     [org, `${TAG}-hold-${side}`, program, admin],
   );
   s.hold = hold.rows[0].id;
-  const doc = await owner.query(
-    `INSERT INTO qms_documents (organization_id, doc_number, title, doc_type, version, status, author_id)
-     VALUES ($1,$2,$3,'SOP','1.0','effective',$4) RETURNING id::text`,
-    [org, `${TAG}-QMS-${side}`, `${TAG} controlled document ${side}`, admin],
-  );
-  s.qms = doc.rows[0].id;
+  Object.assign(s, await effectiveQmsDocument(side, org, admin));
   // Closed two days ago: on today's register (raised by the date), though no longer open.
   const change = await owner.query(
     `INSERT INTO qms_change_controls (organization_id, change_number, title, description, reason, status, created_at, closed_at)
@@ -128,19 +127,54 @@ async function seed(side: 'A' | 'B', org: number, member: number, admin: number)
   s.change = change.rows[0].id;
 }
 
-/** An approval signature on A's QMS document, written as the approval writer anchors one; removed in afterAll. */
-async function approvalSignature(docId: string, label: string, ago: string, revoked: boolean): Promise<string> {
-  const r = await owner.query(
+/** An approval signature on a side's QMS document, written as the approval writer anchors one; removed in afterAll. */
+async function approvalSignature(
+  db: Pool | PoolClient,
+  { side, docId, label, ago, revoked }: { side: 'A' | 'B'; docId: string; label: string; ago: string; revoked: boolean },
+): Promise<string> {
+  const r = await db.query(
     `INSERT INTO electronic_signatures
        (organization_id, signed_target, signature_type, signature_purpose, signature_meaning, signer_id, signer_name,
         signer_email, authentication_method, authentication_timestamp, signature_hash, signature_manifest, is_valid,
         verification_status, signed_at)
-     VALUES ($1, $2, 'qms-document-approval', 'Approve the probe SOP', 'APPROVED', $3, 'WO03 signer A',
-             'wo03-fixture-signer-a@example.invalid', 'password', now(), $4, $5::json, $6, $7, now() - $8::interval)
+     VALUES ($1, $2, 'qms-document-approval', 'Approve the probe SOP', 'APPROVED', $3, $4,
+             $5, 'password', now(), $6, $7::json, $8, $9, now() - $10::interval)
      RETURNING id::text`,
-    [ORG_A, `qms-document:${docId}`, signerA, `${TAG}-${label}`, JSON.stringify({ version: '1.0' }), !revoked, revoked ? 'revoked' : null, ago],
+    [
+      side === 'A' ? ORG_A : ORG_B, `qms-document:${docId}`, side === 'A' ? signerA : signerB, `WO03 signer ${side}`,
+      `wo03-fixture-signer-${side.toLowerCase()}@example.invalid`, `${TAG}-${label}`, JSON.stringify({ version: '1.0' }),
+      !revoked, revoked ? 'revoked' : null, ago,
+    ],
   );
   return r.rows[0].id;
+}
+
+/**
+ * A controlled document made effective the way the approval writer makes one: the status and its
+ * approval signature on ONE transaction. The database refuses an effective document without that
+ * (P0-18, migrations/20261001_qms_document_signature_required.sql), so the fixture signs it.
+ */
+async function effectiveQmsDocument(side: 'A' | 'B', org: number, author: number): Promise<{ qms: string; approval: string }> {
+  const c = await owner.connect();
+  try {
+    await c.query('BEGIN');
+    const doc = await c.query(
+      `INSERT INTO qms_documents (organization_id, doc_number, title, doc_type, version, status, author_id)
+       VALUES ($1,$2,$3,'SOP','1.0','draft',$4) RETURNING id::text`,
+      [org, `${TAG}-QMS-${side}`, `${TAG} controlled document ${side}`, author],
+    );
+    const qms = doc.rows[0].id as string;
+    const label = side === 'A' ? 'approval-valid' : 'approval-valid-B';
+    const approval = await approvalSignature(c, { side, docId: qms, label, ago: '2 hours', revoked: false });
+    await c.query(`UPDATE qms_documents SET status = 'effective' WHERE id = $1`, [qms]);
+    await c.query('COMMIT');
+    return { qms, approval };
+  } catch (err) {
+    await c.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    c.release();
+  }
 }
 
 /** The production stack, built per request: each run here gets a fresh rate-limit allowance (run-limits.ts). */
@@ -177,9 +211,11 @@ beforeAll(async () => {
   tokenAdminA = accessToken(adminA, ORG_A, 'admin');
   await seed('A', ORG_A, userA, adminA);
   await seed('B', ORG_B, userB, adminB);
-  // The later signature is revoked: the register must show the earlier, valid one.
-  seeded.A.approval = await approvalSignature(seeded.A.qms, 'approval-valid', '2 hours', false);
-  seeded.A.approvalRevoked = await approvalSignature(seeded.A.qms, 'approval-revoked', '1 hour', true);
+  // seed() signed each document effective (seeded.X.approval). The later signature is revoked:
+  // the register must show the earlier, valid one.
+  seeded.A.approvalRevoked = await approvalSignature(owner, {
+    side: 'A', docId: seeded.A.qms, label: 'approval-revoked', ago: '1 hour', revoked: true,
+  });
   // The fixture signature is permanent (§11.70) and reused for the life of the database:
   // the period starts on the day it was written, within the 366-day limit.
   const sig = await owner.query(
@@ -217,6 +253,11 @@ afterAll(async () => {
       await c.query(
         "DELETE FROM audit_logs WHERE tenant_id = ANY($1::int[]) AND action = 'compliance.report_run'",
         [FIXTURE_ORGS],
+      );
+      // The administrator changes this run made through the real writers (P1-41).
+      await c.query(
+        'DELETE FROM audit_logs WHERE tenant_id = ANY($1::int[]) AND action = ANY($2::text[]) AND actor_id = $3',
+        [FIXTURE_ORGS, ['member_role_changed', 'member_removed', 'tenant_settings_changed'], adminA],
       );
       await c.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
       await c.query('COMMIT');
@@ -355,6 +396,58 @@ describe('each report as organisation A, section by section', () => {
     expect(changes[0].closed_at).toMatch(ISO_UTC);
   });
 
+});
+
+describe('administrator changes, as their writers record them, appear in the administrative changes report (P1-41)', () => {
+  /** The routes an administrator changes access and configuration through, mounted as production mounts them. */
+  function adminStack(): express.Express {
+    const a = express();
+    a.use(express.json());
+    a.use('/api', createAuthBoundary());
+    a.use('/api/tenant-users', tenantUsers);
+    a.use('/api/tenant-config', tenantConfig);
+    return a;
+  }
+
+  it('a role change, a removal and a security settings change each appear, with what changed and why', async () => {
+    const member = await provisionMember(ORG_A, 'member', 'cr-rerole');
+    const saved = (await owner.query('SELECT settings FROM organizations WHERE id = $1', [ORG_A])).rows[0]?.settings;
+    const reason = `${TAG} periodic access review`;
+    try {
+      const admin = adminStack();
+      const reroled = await request(admin)
+        .patch(`/api/tenant-users/${ORG_A}/${member}`)
+        .set(auth(tokenAdminA))
+        .send({ role: 'viewer', reason });
+      expect(reroled.status, JSON.stringify(reroled.body)).toBe(200);
+      const removed = await request(admin).delete(`/api/tenant-users/${ORG_A}/${member}`).set(auth(tokenAdminA)).send({ reason });
+      expect(removed.status, JSON.stringify(removed.body)).toBe(200);
+      const configured = await request(admin)
+        .patch(`/api/tenant-config/${ORG_A}/settings/security`)
+        .set(auth(tokenAdminA))
+        .send({ sessionTimeoutMinutes: 25 });
+      expect(configured.status, JSON.stringify(configured.body)).toBe(200);
+
+      const data = JSON.parse((await run('administrative-changes', `?from=${today}&to=${today}`)).body.export.data) as Report;
+      const mine = section(data, 'changes').rows.filter((r) => r.actor_user_id === adminA);
+      const role = mine.find((r) => r.action === 'member_role_changed' && r.target_id === String(member));
+      expect(role, 'the role change is in the report').toMatchObject({ target_type: 'organization_users', reason });
+      expect(JSON.parse(String(role!.detail))).toMatchObject({ targetUserId: member, previousRole: 'member', newRole: 'viewer' });
+      const removal = mine.find((r) => r.action === 'member_removed' && r.target_id === String(member));
+      expect(removal, 'the removal is in the report').toMatchObject({ reason });
+      expect(JSON.parse(String(removal!.detail))).toMatchObject({ previousRole: 'viewer', newRole: null });
+      const settings = mine.find((r) => r.action === 'tenant_settings_changed');
+      expect(settings, 'the settings change is in the report').toMatchObject({ target_id: String(ORG_A) });
+      expect(JSON.parse(String(settings!.detail))).toMatchObject({
+        sections: ['security'],
+        values: { security: { after: { sessionTimeoutMinutes: 25 } } },
+      });
+      for (const r of mine) expect(r.occurred_at).toMatch(ISO_UTC);
+    } finally {
+      await owner.query('UPDATE organizations SET settings = $2 WHERE id = $1', [ORG_A, saved == null ? null : JSON.stringify(saved)]);
+      await owner.query('DELETE FROM organization_users WHERE user_id = $1', [member]);
+    }
+  });
 });
 
 describe('the integrity attestation and the record of a run', () => {

@@ -8,6 +8,10 @@ import { writeThroughBatchRecord } from '../../services/cmc-write-through';
    request body's, so no request is handed to it here. */
 import { linkToModule3 } from '../../services/cmc/link-to-module3';
 import { recordGovernedAction, verifyReauth } from '../../routes/c2c/actions';
+import { BINDING_BASIS, persistGovernedActionSignature } from '../../services/part11/signature-persistence';
+import { signMeaningRefusal, type GovernedSignMeaning } from '../../services/part11/signature-meanings';
+import { refusedWithoutSigningAuthority, verifiedReauthFactors } from './cmc-signer';
+import { clientIpOf } from '../../utils/client-ip';
 import { resolveActorUserId } from './governance';
 /* The CANONICAL org resolver. This module defined its own, reading two of the
    four places the canonical one reads, in its own order — and a second answer
@@ -77,6 +81,8 @@ const releaseSchema = z.object({
   decision: z.enum(['approved', 'rejected', 'conditional']),
   comments: z.string().optional(),
   reason: z.string().min(8, 'A reason of at least 8 characters is required.'),
+  /** Optional: when declared it must be the disposition's own meaning (releaseMeaning). */
+  meaning: z.string().optional(),
   reauth: z
     .object({
       password: z.string().optional(),
@@ -85,6 +91,71 @@ const releaseSchema = z.object({
     .optional(),
   idempotencyKey: z.string().optional(),
 });
+
+type ReleaseStatus = 'released' | 'conditional-release' | 'rejected' | 'pending-review';
+
+/**
+ * The release evaluation: each submitted test's verdict and the status the
+ * disposition lands in. Pure (it reads only the request), so it runs before
+ * the signer is asked for anything and the signature's meaning can follow it.
+ */
+function evaluateRelease(data: { releaseTesting?: unknown; decision: 'approved' | 'rejected' | 'conditional' }) {
+  const releaseTestingData = data.releaseTesting || {};
+  const testResults: Array<{ test: string; result: unknown; passed: boolean; evaluatedAt: string }> = [];
+  let allPassed = true;
+  if (typeof releaseTestingData === 'object') {
+    for (const [testName, testValue] of Object.entries(releaseTestingData)) {
+      const passed = testValue !== null && testValue !== undefined && testValue !== 'fail';
+      testResults.push({ test: testName, result: testValue, passed, evaluatedAt: new Date().toISOString() });
+      if (!passed) allPassed = false;
+    }
+  }
+  let releaseStatus: ReleaseStatus;
+  if (data.decision === 'rejected') releaseStatus = 'rejected';
+  else if (data.decision === 'conditional') releaseStatus = 'conditional-release';
+  else releaseStatus = allPassed ? 'released' : 'pending-review';
+  return { testResults, allPassed, releaseStatus };
+}
+
+/*
+ * What a batch disposition signature means (21 CFR 11.50(a)(3)). The release
+ * route stored 'release' for every disposition, so a rejected batch carried a
+ * signature that said it was released (P0-10b fix round, DP-58). The meaning
+ * now follows the status the disposition lands in: 'release' only for a batch
+ * this act releases, and 'responsibility' (the quality unit's, for the
+ * disposition, 21 CFR 211.22(a)) for a conditional release, a rejection, or an
+ * approval the release tests hold at pending-review. The disposition and the
+ * status are on the signature manifest's `act`. The release form offers the
+ * disposition and no separate meaning, so the disposition is what the signer
+ * declared. A signer who also declares a meaning must declare this one: one
+ * that contradicts the disposition is refused, never substituted.
+ */
+function releaseMeaning(releaseStatus: ReleaseStatus): GovernedSignMeaning {
+  return releaseStatus === 'released' ? 'release' : 'responsibility';
+}
+
+/** The disposition's meaning, or the 400 body when the declared meaning is unknown or contradicts it. */
+function dispositionMeaning(
+  releaseStatus: ReleaseStatus,
+  declared: string | undefined,
+): { meaning: GovernedSignMeaning } | { refusal: { success: false; error: string; message: string } } {
+  const meaning = releaseMeaning(releaseStatus);
+  if (declared === undefined) return { meaning };
+  const unknown = signMeaningRefusal(declared);
+  if (unknown) {
+    return { refusal: { success: false, error: unknown.error, message: `The signature meaning is not one the platform records. ${unknown.detail} Nothing was signed.` } };
+  }
+  if (declared !== meaning) {
+    return {
+      refusal: {
+        success: false,
+        error: 'SIGNATURE_MEANING_CONFLICT',
+        message: `A disposition that leaves the batch '${releaseStatus}' is signed with the meaning '${meaning}', not '${declared}'. Nothing was signed.`,
+      },
+    };
+  }
+  return { meaning };
+}
 
 // GET /api/cmc/batch-records/:projectId - List batch records
 router.get('/:projectId', async (req, res) => {
@@ -304,9 +375,12 @@ router.put('/:id', async (req, res) => {
 });
 
 // POST /api/cmc/batch-records/:id/release - Release testing and batch disposition.
-// High-risk governed sign: re-auth gate, then UPDATE + ledger write in one
-// transaction (audit_logs + c2c_ana_actions). The governed ledger is the
-// signature of record for batch release (no document-scoped electronic_signatures).
+// High-risk governed sign: the disposition's meaning, the signer's authority and
+// re-authentication, then UPDATE + ledger write + the
+// electronic_signatures row in one transaction. Until 2026-10-01 the ledger was
+// the only record, so an inspector querying electronic_signatures found no
+// release signature at all (P0-10b, DP-02), and any member who knew their own
+// password could sign it (P0-10b fix round).
 router.post('/:id/release', async (req, res) => {
   const { id } = req.params;
   const validationResult = releaseSchema.safeParse(req.body);
@@ -320,6 +394,10 @@ router.post('/:id/release', async (req, res) => {
   }
 
   const data = validationResult.data;
+  const { testResults, allPassed, releaseStatus } = evaluateRelease(data);
+  const declared = dispositionMeaning(releaseStatus, data.meaning);
+  if ('refusal' in declared) return res.status(400).json(declared.refusal);
+  const { meaning } = declared;
   const pool = getPool();
   const orgId = resolveOrgId(req);
   if (orgId === null) {
@@ -330,7 +408,8 @@ router.post('/:id/release', async (req, res) => {
     return res.status(401).json({ error: 'AUTH_REQUIRED' });
   }
 
-  // Re-auth gate FIRST (high-risk).
+  // Signing authority (§11.10(g)), then the re-auth gate, before any write.
+  if (await refusedWithoutSigningAuthority(res, { userId, orgId })) return;
   const reauthResult = await verifyReauth(userId, data.reauth);
   if (!reauthResult.ok) {
     res.setHeader('WWW-Authenticate', 'ReAuth required');
@@ -353,37 +432,8 @@ router.post('/:id/release', async (req, res) => {
 
     const batch = existing.rows[0];
 
-    // Perform release testing evaluation
-    const releaseTestingData = data.releaseTesting || {};
-    const testResults: any[] = [];
-    let allPassed = true;
-
-    // Evaluate each test parameter against specifications
-    if (typeof releaseTestingData === 'object') {
-      for (const [testName, testValue] of Object.entries(releaseTestingData)) {
-        const passed = testValue !== null && testValue !== undefined && testValue !== 'fail';
-        testResults.push({
-          test: testName,
-          result: testValue,
-          passed,
-          evaluatedAt: new Date().toISOString(),
-        });
-        if (!passed) allPassed = false;
-      }
-    }
-
-    // Determine release status
-    let releaseStatus: string;
-    if (data.decision === 'rejected') {
-      releaseStatus = 'rejected';
-    } else if (data.decision === 'conditional') {
-      releaseStatus = 'conditional-release';
-    } else if (allPassed) {
-      releaseStatus = 'released';
-    } else {
-      releaseStatus = 'pending-review';
-    }
-
+    // The release evaluation (evaluateRelease) ran before the signer was asked
+    // for anything, so the signature's meaning could follow its status.
     const releaseRecord = {
       decision: data.decision,
       releasedBy: data.releasedBy,
@@ -434,10 +484,30 @@ router.post('/:id/release', async (req, res) => {
       command: 'sign',
       target: `batch:${id}`,
       reason: data.reason,
-      payload: { meaning: 'release', decision: data.decision, releaseStatus },
+      payload: { meaning, decision: data.decision, releaseStatus },
       domain: 'biopharma',
       surface: 'cmc-batch',
       idempotencyKey: data.idempotencyKey ?? null,
+    });
+
+    // 21 CFR Part 11 signature row, same transaction as the ledger pair: the
+    // signer's printed name, time and meaning (11.50) bound to the act (11.70).
+    // The factors are the ones verifyReauth verified above.
+    await persistGovernedActionSignature(client, {
+      orgId,
+      userId,
+      target: `batch:${id}`,
+      reason: data.reason,
+      payload: { meaning },
+      actionId: governance.actionId,
+      auditId: governance.auditId,
+      sha256Chain: governance.sha256Chain,
+      ...verifiedReauthFactors(data.reauth),
+      ipAddress: clientIpOf(req),
+      occurredAt: new Date(),
+      binding: { digest: null, basis: BINDING_BASIS.GOVERNED_ACTION_LEDGER, note: 'No content digest is registered for a batch record, so none is claimed: bound_payload_digest is the governed action audit sha256 chain hash (target, payload hash, actor, time), not a content hash.' },
+      extraManifest: { act: { decision: data.decision, releaseStatus } },
+      complianceStatement: 'Batch release disposition applied under 21 CFR Part 11 §11.50/§11.70/§11.200; ledger-chained to the audit_logs sha256 chain.',
     });
 
     await client.query('COMMIT');

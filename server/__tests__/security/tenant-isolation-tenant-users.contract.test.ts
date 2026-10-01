@@ -125,6 +125,20 @@ async function fakeQuery(sql: string, params: unknown[] = []) {
   return { rows: [] };
 }
 
+/** server/db/runtime.ts transaction(): BEGIN, the callback, COMMIT (ROLLBACK on throw), recorded. */
+async function fakeTransaction(cb: (client: unknown) => Promise<unknown>) {
+  const client = { query: vi.fn(fakeQuery), release: vi.fn() };
+  await client.query('BEGIN');
+  try {
+    const out = await cb(client);
+    await client.query('COMMIT');
+    return out;
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  }
+}
+
 vi.mock('../../services/emailService', () => ({
   isEmailConfigured: () => emailState.configured,
   sendInvitationEmail: vi.fn(async (...args: unknown[]) => {
@@ -135,6 +149,8 @@ vi.mock('../../services/emailService', () => ({
 
 vi.mock('../../services/auditService', () => ({
   default: { logAction: vi.fn(async () => ({ persisted: true })) },
+  // A role change or removal writes its chained row on the change's transaction (P1-41).
+  writeChainedAuditRow: vi.fn(async () => undefined),
 }));
 
 vi.mock('../../db', () => ({
@@ -145,9 +161,10 @@ vi.mock('../../db', () => ({
       release: vi.fn(),
     })),
   },
+  transaction: vi.fn(fakeTransaction),
 }));
 
-// atomicQuotaService.js imports the pool via '../db.js'
+// atomicQuotaService.js imports the pool via '../db.js' (the same module as '../db')
 vi.mock('../../db.js', () => ({
   pool: {
     query: vi.fn(fakeQuery),
@@ -156,6 +173,7 @@ vi.mock('../../db.js', () => ({
       release: vi.fn(),
     })),
   },
+  transaction: vi.fn(fakeTransaction),
 }));
 
 let app: express.Express;
@@ -502,7 +520,8 @@ describe('Tenant-users self-modification (#973 port)', () => {
 
   it('an admin acting on ANOTHER user still reaches the write', async () => {
     authState.membershipRole = 'admin';
-    await request(app).delete('/api/tenant-users/999/42');
+    // A removal states its reason (P1-41); without one it is refused before the write.
+    await request(app).delete('/api/tenant-users/999/42').send({ reason: 'Left the company' });
     expect(executedMatching(/DELETE FROM organization_users/i).length).toBe(1);
   });
 });

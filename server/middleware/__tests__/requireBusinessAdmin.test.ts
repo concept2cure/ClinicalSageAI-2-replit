@@ -101,3 +101,44 @@ describe('requireBusinessAdmin', () => {
     expect(next).toHaveBeenCalledOnce();
   });
 });
+
+/**
+ * The e-mail allowlist names the platform owner's OWN (password) sign-in, as
+ * PLATFORM_ADMIN_EMAILS does (requirePlatformAdmin, audit IAM-03). A federated
+ * sign-in asserts whatever e-mail its identity provider says, so a tenant's
+ * IdP claiming the owner's address reached cost and margin data for every
+ * client. Dormant while nothing set BUSINESS_CENTER_EMAILS; the stack sets it
+ * to the owner from 2026-10-01 (terraform/stack, platform_owner_emails).
+ */
+describe('BUSINESS_CENTER_EMAILS does not apply to a federated (SAML) identity', () => {
+  const OWNER = 'owner@concept2cure.ai';
+  const saved = process.env.BUSINESS_CENTER_EMAILS;
+  beforeEach(() => {
+    process.env.BUSINESS_CENTER_EMAILS = OWNER;
+  });
+  afterEach(() => {
+    if (saved === undefined) delete process.env.BUSINESS_CENTER_EMAILS;
+    else process.env.BUSINESS_CENTER_EMAILS = saved;
+  });
+
+  it('refuses the owner\'s address asserted by an IdP — 403, grants consulted', async () => {
+    const req = mkReq({
+      userId: 7,
+      userRole: 'member',
+      userEmail: OWNER,
+      user: { id: 7, email: OWNER, role: 'member' },
+      identity: { provider: 'saml', email: OWNER },
+    });
+    expect(isBusinessAdmin(req)).toBe(false);
+    const res = mkRes();
+    const next = vi.fn();
+    await requireBusinessAdmin(req, res, next);
+    expect(res.statusCode).toBe(403);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('still admits the same address on the owner\'s own password sign-in', () => {
+    expect(isBusinessAdmin(mkReq({ userRole: 'member', userEmail: OWNER, identity: { provider: 'local-jwt' } }))).toBe(true);
+    expect(isBusinessAdmin(mkReq({ userRole: 'member', userEmail: OWNER, user: { id: 7, provider: 'saml' } }))).toBe(false);
+  });
+});
