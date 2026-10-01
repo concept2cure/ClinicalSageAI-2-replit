@@ -61,8 +61,6 @@ describe('Report OS takes the tenant from the session, never the request (L184, 
   let runA: number;
   let runB: number;
   let groupA: number;
-  let submissionA: string;
-  let submissionB: string;
 
   const count = async (table: string, org: number) =>
     Number(
@@ -96,18 +94,8 @@ describe('Report OS takes the tenant from the session, never the request (L184, 
          VALUES ($1,'project',$2,$3,'completed',$4::json) RETURNING id`,
         [org, ids[side].projects, TYPE_ID, JSON.stringify({ summary: { fixture: `fixture-body-${side}` } })]
       );
-      const submission = await owner.query(
-        `INSERT INTO c2c_submissions (organization_id,project_id,submission_type,regulator,lifecycle_state)
-         VALUES ($1,$2,'NDA','FDA','drafting') RETURNING id::text AS id`,
-        [org, ids[side].projects]
-      );
-      if (side === 'A') {
-        runA = run.rows[0].id;
-        submissionA = submission.rows[0].id;
-      } else {
-        runB = run.rows[0].id;
-        submissionB = submission.rows[0].id;
-      }
+      if (side === 'A') runA = run.rows[0].id;
+      else runB = run.rows[0].id;
     }
     const group = await owner.query(
       `INSERT INTO report_program_groups (organization_id,name) VALUES ($1,$2) RETURNING id`,
