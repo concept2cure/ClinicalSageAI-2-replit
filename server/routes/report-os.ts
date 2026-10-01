@@ -38,6 +38,7 @@ import type { RenderedReport } from '../services/report-os/render/types';
 import { buildSealedRecord } from '../services/report-os/sealing/seal';
 import { readRunSeal, readSealForExport, readVerifiedSealedDocument } from '../services/report-os/sealing/run-seal';
 import { buildRunPdf } from '../services/report-os/pdf/run-pdf';
+import { buildBundlePdf } from '../services/report-os/pdf/bundle-pdf';
 import type { SealedRecord } from '../services/report-os/sealing/types';
 import { decideDelivery } from '../services/report-os/scheduling/delivery';
 import {
@@ -46,7 +47,6 @@ import {
   type ReportRunStatus,
 } from '../services/report-os/truthfulness';
 import { authMiddleware } from '../auth';
-import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
 import { writeChainedAuditRow } from '../services/auditService';
@@ -277,10 +277,6 @@ function parseKeywordIssues(text: string) {
     matches.push({ category: 'other_unclassified', severity: 'low', blocker: false });
   }
   return matches;
-}
-
-function sanitizePdfText(text: string): string {
-  return text.replace(/[^\x09\x0A\x0D\x20-\x7E]/g, ' ').slice(0, 1000);
 }
 
 function safeIso(value: unknown): string {
@@ -775,53 +771,6 @@ async function getReportTypeLabelMap(typeIds: string[]) {
   const map = new Map<string, string>();
   for (const row of rows) map.set(row.typeId, row.label);
   return map;
-}
-
-async function createBundlePdf(bundle: ReportBundleRecord): Promise<Buffer> {
-  const pdf = await PDFDocument.create();
-  const page = pdf.addPage([612, 792]);
-  const regular = await pdf.embedFont(StandardFonts.Helvetica);
-  const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
-  const left = 50;
-  let y = 750;
-
-  page.drawText('Concept2Cure Report Bundle', { x: left, y, size: 18, font: bold });
-  y -= 22;
-  page.drawText(sanitizePdfText(bundle.name), { x: left, y, size: 12, font: regular });
-  y -= 18;
-  page.drawText(`Bundle ID: ${bundle.bundleId}`, {
-    x: left,
-    y,
-    size: 9,
-    font: regular,
-    color: rgb(0.35, 0.35, 0.35),
-  });
-  y -= 16;
-  page.drawText(`Generated: ${bundle.createdAt}`, {
-    x: left,
-    y,
-    size: 9,
-    font: regular,
-    color: rgb(0.35, 0.35, 0.35),
-  });
-  y -= 20;
-
-  if (bundle.description) {
-    page.drawText(sanitizePdfText(bundle.description), { x: left, y, size: 10, font: regular });
-    y -= 20;
-  }
-
-  page.drawText('Included Reports', { x: left, y, size: 11, font: bold });
-  y -= 16;
-  for (const item of bundle.items) {
-    const line = `#${item.runId} ${item.reportTypeLabel} — ${item.scopeType}:${item.scopeId} — ${item.status} (confidence ${item.confidence ?? 'N/A'})`;
-    page.drawText(sanitizePdfText(line), { x: left + 6, y, size: 9, font: regular });
-    y -= 13;
-    if (y < 70) break;
-  }
-
-  const bytes = await pdf.save();
-  return Buffer.from(bytes);
 }
 
 function decodeRecordPayload<T>(input: string, key: string, schema: z.ZodType<T>): T | null {
@@ -2233,6 +2182,46 @@ router.get('/bundles', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * The bundle's governed PDF (services/report-os/pdf/bundle-pdf.ts), recorded
+ * before it is sent. Each report's status is read at export, beside the status
+ * it was bundled at; the bundler's name and the statuses come from one
+ * tenant-stamped read. The export id and time are printed on every page and
+ * recorded on the chain row with how many reports were final.
+ */
+async function sendBundlePdf(req: Request, res: Response, bundle: ReportBundleRecord) {
+  const { now, bundledBy } = await inTenantTransaction(bundle.organizationId, async (client) => {
+    const { rows } = await client.query('SELECT id, status FROM report_runs WHERE organization_id = $1 AND id = ANY($2::int[])', [
+      bundle.organizationId,
+      bundle.runIds,
+    ]);
+    const statuses = new Map((rows as Array<{ id: unknown; status: unknown }>).map((r) => [Number(r.id), String(r.status)]));
+    return { now: statuses, bundledBy: await actorName(client, bundle.createdBy ?? null) };
+  });
+  const items = bundle.items.map((i) => ({
+    runId: i.runId, label: i.reportTypeLabel, scopeType: i.scopeType, scopeId: i.scopeId,
+    bundledStatus: i.status, currentStatus: now.get(i.runId) ?? null, confidence: i.confidence,
+  }));
+  const exportId = randomUUID();
+  const exportedAt = new Date().toISOString();
+  const pdf = await buildBundlePdf({ bundle, bundledBy, items, exportId, exportedAt });
+  return sendRecordedPdf(
+    req,
+    res,
+    {
+      organizationId: bundle.organizationId,
+      action: 'report_os.bundle_exported',
+      resourceType: 'report_bundle',
+      resourceId: bundle.bundleId,
+      details: {
+        bundleId: bundle.bundleId, runIds: bundle.runIds, reportTypeIds: [...new Set(bundle.items.map((i) => i.reportTypeId))],
+        exportId, exportedAt, pages: pdf.pages, finalAtExport: items.filter((i) => i.currentStatus === 'final').length,
+      },
+    },
+    { filename: `report-bundle-${bundle.bundleId.slice(0, 8)}.pdf`, buffer: pdf.bytes }
+  );
+}
+
 router.get('/bundles/:bundleId/export.pdf', async (req: Request, res: Response) => {
   try {
     // SECURITY: JWT-bound; the legacy ?organizationId= query param is
@@ -2261,19 +2250,7 @@ router.get('/bundles/:bundleId/export.pdf', async (req: Request, res: Response) 
         tier: refusal.tier,
       });
     }
-    const buffer = await createBundlePdf(bundle);
-    return sendRecordedPdf(
-      req,
-      res,
-      {
-        organizationId,
-        action: 'report_os.bundle_exported',
-        resourceType: 'report_bundle',
-        resourceId: bundle.bundleId,
-        details: { bundleId: bundle.bundleId, runIds: bundle.runIds, reportTypeIds: [...new Set(bundle.items.map(i => i.reportTypeId))] },
-      },
-      { filename: `report-bundle-${bundle.bundleId.slice(0, 8)}.pdf`, buffer }
-    );
+    return await sendBundlePdf(req, res, bundle);
   } catch (error: any) {
     return serverError(res, logger, 'loading export.pdf', error);
   }
