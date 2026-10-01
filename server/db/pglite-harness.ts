@@ -37,6 +37,7 @@ const CANONICAL_DOCUMENTS_GUARD = new URL(
 const PROGRAM_SAME_ORG_KEYS = new URL('../../migrations/20260926b_program_same_org_keys.sql', import.meta.url);
 /* The integer project key (PF-03), applied after it for the same reason. */
 const INTEGER_PROJECT_SAME_ORG_KEYS = new URL('../../migrations/20261001_integer_project_same_org_keys.sql', import.meta.url);
+const ONE_ANCHOR_PER_PROGRAM = new URL('../../migrations/20261001b_projects_one_anchor_per_program.sql', import.meta.url);
 /** CREATE TABLE statements for the IND tables (mirrors the migrations). */
 export const IND_PGLITE_DDL = `
 CREATE TABLE IF NOT EXISTS ind_sponsors (
@@ -706,6 +707,7 @@ export async function createIndPgliteDb(
   // tables that name it, and each skips itself when either is absent.
   await pglite.exec(readFileSync(PROGRAM_SAME_ORG_KEYS, 'utf8'));
   await pglite.exec(readFileSync(INTEGER_PROJECT_SAME_ORG_KEYS, 'utf8'));
+  await pglite.exec(readFileSync(ONE_ANCHOR_PER_PROGRAM, 'utf8'));
   const guard = await pglite.query<{ table_present: boolean; triggers: number }>(
     `SELECT to_regclass('public.canonical_documents') IS NOT NULL AS table_present,
             (SELECT COUNT(*)::int FROM pg_trigger
