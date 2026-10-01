@@ -1668,6 +1668,41 @@ export default function createProjectVaultRoutes(): Router {
     }
   });
 
+  /* ── GET /:id/documents/:documentId/compare?against=<versionId> ──────────
+     What changed between two versions of one document (plan critique 15):
+     the changed lines of their extracted text, unchanged runs collapsed, and
+     the recorded details that differ (vault-version-compare.ts). Both must be
+     in the same family; another document's version is refused, another
+     organisation's document reads as not found. */
+  router.get('/:id/documents/:documentId/compare', async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const id = String(req.params.id ?? '');
+    const documentId = String(req.params.documentId ?? '');
+    const against = typeof req.query.against === 'string' ? req.query.against : '';
+    if (!UUID_RE.test(id) || !UUID_RE.test(documentId)) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+    if (!UUID_RE.test(against)) {
+      return res.status(400).json({ success: false, error: 'AGAINST_REQUIRED', message: 'Name the version to compare with (?against=<version id>).' });
+    }
+    try {
+      const { compareVaultVersions } = await import('../../services/vault/vault-version-compare.js');
+      const out = await compareVaultVersions(pool, { programId: id, organizationId: orgId, documentId, againstId: against });
+      if (!out.ok) return res.status(out.status).json({ success: false, error: out.code, message: out.message });
+      return res.json({
+        success: true,
+        data: { from: out.from, to: out.to, sameBytes: out.sameBytes, details: out.details, text: out.text },
+      });
+    } catch (err) {
+      if (isMissingStore(err)) {
+        return res.status(503).json({ success: false, error: 'STORE_UNAVAILABLE',
+          message: 'The vault uploads store is not provisioned in this environment.' });
+      }
+      logger.error('vault version compare failed', { documentId, err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({ success: false, error: 'COMPARE_UNAVAILABLE',
+        message: 'The two versions could not be compared. Nothing is shown rather than a partial comparison.' });
+    }
+  });
+
   /* ── GET /:id/documents/:documentId/history ──────────────────────────────
      The document's own audit trail (VR-01, docs/design/VAULT_VEEVA_PARITY_PLAN_2026-09-24.md):
      every chained audit_logs row recorded against it — ingest, filing

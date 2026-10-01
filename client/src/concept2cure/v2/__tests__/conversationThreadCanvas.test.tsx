@@ -266,6 +266,118 @@ describe('ConversationThread — AnA\u2019s answers go into the open document (2
   });
 });
 
+describe('ConversationThread — every AnA draft opens as a document (2026-10-01)', () => {
+  /* Only draft_authoring_document wrote the editor's store. A draft from any
+     other tool (a plan, a briefing book, a statistical document) was a
+     side-panel card whose Edit went to the authoring workspace with no
+     document, so most document types never reached the canvas or the editor.
+     The card now opens the draft as an authoring document, through the one
+     from-draft door, and once per turn. */
+  const NEW_DOC = 'bbbbbbbb-0000-4000-8000-000000000003';
+  const SAP_TITLE = 'Statistical Analysis Plan — C2C-101';
+  const SAP: AnaChatMessage = {
+    id: 'm6',
+    role: 'assistant',
+    text: 'Here is the statistical analysis plan.',
+    turnRecord: { status: 'recorded', id: 'rec-9', sha256: 'b'.repeat(64) },
+    generatedDraft: {
+      title: SAP_TITLE,
+      content: `# ${SAP_TITLE}\n\nScope of this plan.\n\n## 1. Objectives\n\nPrimary objective.\n\n## 2. Endpoints\n\nPrimary endpoint.`,
+      documentType: 'sap',
+      artifactId: 'art-1',
+      version: 1,
+    },
+  } as unknown as AnaChatMessage;
+
+  let posted: unknown[] = [];
+  let listed: unknown[] = [];
+  let listStatus = 200;
+  beforeEach(() => {
+    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'C2C-101' };
+    posted = [];
+    listed = [];
+    listStatus = 200;
+    const base = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method === 'GET' && url === `/api/authoring/docs?programId=${PID}`) return ok({ success: listStatus < 400, documents: listed }, listStatus);
+      if (method === 'POST' && url === '/api/authoring/docs/from-draft') {
+        posted.push(body);
+        return ok({ success: true, data: { doc: { id: NEW_DOC } } }, 201);
+      }
+      if (method === 'GET' && url === `/api/authoring/docs/${NEW_DOC}`) {
+        return ok({ success: true, document: { id: NEW_DOC, title: SAP_TITLE, module: 'M2', product_code: 'sap', status: 'DRAFT', updated_at: null, provenance: { source: 'ana', conversationId: 'thread-1', turnId: 'rec-9' } } });
+      }
+      if (method === 'GET' && url === `/api/authoring/docs/${NEW_DOC}/sections`) {
+        return ok({ success: true, sections: [
+          { id: 'N0', doc_id: NEW_DOC, code: '0', title: SAP_TITLE, content: '<p>Scope of this plan.</p>', order_index: 0 },
+          { id: 'N1', doc_id: NEW_DOC, code: '1', title: 'Objectives', content: '<p>Primary objective.</p>', order_index: 1 },
+          { id: 'N2', doc_id: NEW_DOC, code: '2', title: 'Endpoints', content: '<p>Primary endpoint.</p>', order_index: 2 },
+        ] });
+      }
+      return base(method, url, body);
+    });
+  });
+  afterEach(() => {
+    delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
+  });
+
+  async function openFromCard() {
+    render(<ConversationThread {...OWNED_PROPS} />);
+    const head = (await screen.findByText(SAP_TITLE)).closest('button')!;
+    head.click();
+    (await screen.findByRole('button', { name: `Open ${SAP_TITLE} as a document in the editor` })).click();
+  }
+
+  it('creates the document from the draft, split at its headings, and opens it beside the conversation', async () => {
+    chatMessages.current = [USER, SAP];
+    await openFromCard();
+
+    const canvas = await vi.waitFor(() => {
+      const el = document.querySelector(`[data-testid="document-canvas"][data-doc-id="${NEW_DOC}"]`);
+      if (!el) throw new Error('no canvas for the new document');
+      return el;
+    });
+    expect(canvas).toBeTruthy();
+    expect(posted).toHaveLength(1);
+    expect(posted[0]).toMatchObject({
+      programId: PID,
+      title: SAP_TITLE,
+      documentType: 'sap',
+      sections: [
+        { code: '0', title: SAP_TITLE },
+        { code: '1', title: 'Objectives' },
+        { code: '2', title: 'Endpoints' },
+      ],
+      provenance: { source: 'ana', conversationId: 'thread-1', turnId: 'rec-9' },
+    });
+    expect((posted[0] as { sections: { content: string }[] }).sections[1].content).toContain('Primary objective.');
+    // Open, beside the conversation, and no longer a side-panel card.
+    await vi.waitFor(() => expect(document.querySelector('.ct-canvas-pane [data-testid="dc-expanded"]')).toBeTruthy());
+    expect(document.querySelector('.ct-art')).toBeNull();
+  });
+
+  it('opens the document already made from that turn instead of creating a second copy', async () => {
+    chatMessages.current = [USER, SAP];
+    listed = [{ id: 'cccccccc-0000-4000-8000-000000000004', title: SAP_TITLE }, { id: NEW_DOC, title: SAP_TITLE }];
+    await openFromCard();
+
+    await vi.waitFor(() => {
+      if (!document.querySelector(`[data-testid="document-canvas"][data-doc-id="${NEW_DOC}"]`)) throw new Error('not opened');
+    });
+    expect(posted).toHaveLength(0);
+  });
+
+  it('creates nothing when it cannot check for an earlier copy, and says so', async () => {
+    chatMessages.current = [USER, SAP];
+    listStatus = 500;
+    await openFromCard();
+
+    await screen.findByText(/Couldn’t check whether this draft is already a document/);
+    expect(posted).toHaveLength(0);
+    expect(document.querySelector('[data-testid="document-canvas"]')).toBeNull();
+  });
+});
+
 describe('ConversationThread — the answer as prose', () => {
   it('renders a heading, bold and a list as elements, not symbols; user text stays as typed', async () => {
     chatMessages.current = [USER, DRAFTED];
