@@ -160,7 +160,9 @@ export async function getConnectorCatalog(
 
   return CONNECTOR_CATALOG.map(entry => ({
     ...entry,
-    configured: !entry.requiresCredentials || credMap.has(entry.id),
+    // An unavailable connector has nothing behind it, so it is never
+    // "configured": a credential-free entry used to read as connected.
+    configured: entry.available !== false && (!entry.requiresCredentials || credMap.has(entry.id)),
     healthy: credMap.get(entry.id) !== false,
   }));
 }

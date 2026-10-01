@@ -10,10 +10,16 @@
  * to search by hand, and the caller reports it as skipped, not as a result.
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
+
+const { query } = vi.hoisted(() => ({ query: vi.fn(async () => ({ rows: [] })) }));
+vi.mock('../../../db.js', () => ({ pool: { query }, getPool: () => ({ query }) }));
+vi.mock('../../../db', () => ({ pool: { query }, getPool: () => ({ query }) }));
+
 import { PMDAConnector } from '../pmda-reviews.js';
 import { NMPACDEConnector } from '../nmpa-cde.js';
 import { CONNECTOR_CATALOG } from '../connector-interface.js';
 import { searchConnectedRepositories } from '../../integrations/connector-search.js';
+import { getConnectorCatalog } from '../connector-registry.js';
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -42,6 +48,18 @@ describe.each([
     const text = JSON.stringify(entry);
     expect(text).not.toMatch(/machine translation|machine-translated|is scraped|Search by (INN|product)/i);
     expect(entry.description).toMatch(/not connected/i);
+  });
+
+  it('is not offered as connected: the catalog says unavailable, so nothing preselects or lists it', async () => {
+    expect(CONNECTOR_CATALOG.find((c) => c.id === id)?.available).toBe(false);
+    const entry = (await getConnectorCatalog(7)).find((c) => c.id === id)!;
+    expect(entry).toMatchObject({ configured: false, available: false });
+  });
+
+  it('is skipped by the repository search as not connected, and never listed as searched', async () => {
+    const out = await searchConnectedRepositories(7, { query: 'pembrolizumab', connectors: [id] });
+    expect(out.searched).toEqual([]);
+    expect(out.skipped).toEqual([{ connector: id, reason: expect.stringMatching(/no search is connected/i) }]);
   });
 
   it('is reported as skipped by the repository search, never as a document', async () => {

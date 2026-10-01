@@ -999,7 +999,7 @@ export const IND_GET_STATUS: AnaTool = {
 export const RASTERIZE_PAGE: AnaTool = {
   name: 'rasterize_page',
   description:
-    "Render one page of a PDF or DOCX in the organization's document workspace to a PNG file, for visual inspection. Returns the PNG's path, page count, pixel size and SHA-256 — or an error naming why no page was rendered. A DOCX is converted to PDF first.",
+    "Render one page of a PDF or DOCX in the organization's document workspace (an upload included) to a PNG file. Returns the PNG's path, page count, pixel size, dpi and SHA-256 — or an error naming why no page was rendered. A DOCX is converted to PDF first; a very large page is rendered at a lower dpi. The PNG is a file on the server: it is not shown to the user or to you.",
   input_schema: {
     type: 'object',
     properties: {
@@ -1020,7 +1020,7 @@ export const RASTERIZE_PAGE: AnaTool = {
   },
 };
 
-/** Overlay content onto a PDF template (forms, headers, signatures, stamps) */
+/** PDF overlay — unavailable: no overlay engine is connected, so the handler applies nothing. */
 export const PDF_OVERLAY: AnaTool = {
   name: 'pdf_overlay',
   description:
@@ -1051,7 +1051,7 @@ export const PDF_OVERLAY: AnaTool = {
       },
       output_path: {
         type: 'string',
-        description: 'Path for the finalized output PDF',
+        description: 'Where an overlaid PDF would be written; nothing is written while this is unavailable',
       },
     },
     required: ['base_pdf_path', 'overlays'],

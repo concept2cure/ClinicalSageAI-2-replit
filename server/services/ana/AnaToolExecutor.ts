@@ -6943,7 +6943,10 @@ registerToolHandler('rasterize_page', async (input, ctx) => {
   }
   const confined = workspacePathOrRefusal(input.document_path, 'document_path', ctx.organizationId);
   if (!confined.ok) return confined.refusal;
-  const page = Number.isInteger(input.page_number) && (input.page_number as number) >= 1 ? (input.page_number as number) : 1;
+  const page = input.page_number === undefined || input.page_number === null ? 1 : Number(input.page_number);
+  if (!Number.isInteger(page) || page < 1) {
+    return JSON.stringify({ success: false, error: 'page_number must be a whole number of 1 or more.' });
+  }
   const dpi = Math.min(300, Math.max(36, Math.round(Number(input.dpi) || 150)));
   try {
     const { renderDocumentPage } = await import('./page-render.js');
@@ -6953,10 +6956,14 @@ registerToolHandler('rasterize_page', async (input, ctx) => {
       dpi,
       outputDir: anaScratchDir(ctx.organizationId, 'docbuilder'),
     });
+    const lowered = rendered.dpi < dpi ? ` (lowered from ${dpi} dpi to stay within the page pixel limit)` : '';
     return JSON.stringify({
       success: true,
       ...rendered,
-      message: `Rendered page ${page} of ${rendered.pageCount} at ${dpi} dpi to ${rendered.pngPath} (${rendered.widthPx}×${rendered.heightPx} px).`,
+      displayed: false,
+      message:
+        `Rendered page ${page} of ${rendered.pageCount} at ${rendered.dpi} dpi${lowered} to ${rendered.pngPath} ` +
+        `(${rendered.widthPx}×${rendered.heightPx} px). The image is a file on the server; it is not shown to you or the user.`,
     });
   } catch (err) {
     return JSON.stringify({ success: false, error: err instanceof Error ? err.message : String(err) });

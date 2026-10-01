@@ -123,6 +123,11 @@ export interface ConnectorCatalogEntry {
   icon?: string;
   category: 'regulatory' | 'literature' | 'clinical_data' | 'dms' | 'ehr' | 'funding' | 'compliance' | 'sor';
   setupGuide?: ConnectorSetupGuide;
+  /**
+   * false: listed so a user can see it is planned, but nothing searches it —
+   * never configured, never preselected, skipped by repository search.
+   */
+  available?: false;
 }
 
 export const CONNECTOR_CATALOG: ConnectorCatalogEntry[] = [
@@ -277,6 +282,7 @@ export const CONNECTOR_CATALOG: ConnectorCatalogEntry[] = [
     description:
       'Japanese Pharmaceuticals and Medical Devices Agency review reports. Not connected: no search runs, so it returns no results.',
     requiredTier: 'professional',
+    available: false,
     requiresCredentials: false,
     icon: 'scroll',
     setupGuide: {
@@ -303,6 +309,7 @@ export const CONNECTOR_CATALOG: ConnectorCatalogEntry[] = [
     description:
       'China National Medical Products Administration and Center for Drug Evaluation approval data. Not connected: no search runs, so it returns no results.',
     requiredTier: 'professional',
+    available: false,
     requiresCredentials: false,
     icon: 'scroll',
     setupGuide: {

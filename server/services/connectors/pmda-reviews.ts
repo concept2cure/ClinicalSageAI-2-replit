@@ -14,6 +14,7 @@
 import {
   DataConnector,
   ConnectorHealth,
+  ConnectorQuery,
   ConnectorResult,
   ConnectorDocument,
   ConnectorCredentials,
@@ -33,11 +34,11 @@ export class PMDAConnector implements DataConnector {
     return { status: 'unavailable', lastChecked: new Date(), message: NOT_CONNECTED };
   }
 
-  async search(): Promise<ConnectorResult[]> {
+  async search(_query: ConnectorQuery): Promise<ConnectorResult[]> {
     throw new Error(NOT_CONNECTED);
   }
 
-  async fetch(): Promise<ConnectorDocument> {
+  async fetch(_resourceId: string): Promise<ConnectorDocument> {
     throw new Error(NOT_CONNECTED);
   }
 

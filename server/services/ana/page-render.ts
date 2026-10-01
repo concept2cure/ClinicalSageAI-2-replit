@@ -23,7 +23,9 @@ export interface RenderedPage {
   pngPath: string;
   page: number;
   pageCount: number;
+  /** The dpi rendered at: dpiRequested, or lower where the page would exceed maxPixels. */
   dpi: number;
+  dpiRequested: number;
   widthPx: number;
   heightPx: number;
   bytes: number;
@@ -37,6 +39,30 @@ function pngSize(png: Buffer): { widthPx: number; heightPx: number } {
   return { widthPx: png.readUInt32BE(16), heightPx: png.readUInt32BE(20) };
 }
 
+/** Pixels one rendered page may have: 40 Mpx, about 160 MB of canvas. */
+export const MAX_PAGE_PIXELS = 40_000_000;
+
+/**
+ * What the file is: by its extension, or — for an upload, which is stored
+ * without one (uploads/org-<id>/file_<ts>_<rand>) — by its first bytes.
+ */
+async function documentKind(documentPath: string): Promise<'pdf' | 'docx' | null> {
+  const ext = path.extname(documentPath).toLowerCase();
+  if (ext === '.pdf') return 'pdf';
+  if (ext === '.docx') return 'docx';
+  if (ext !== '') return null;
+  const handle = await fs.open(documentPath, 'r');
+  try {
+    const head = Buffer.alloc(5);
+    await handle.read(head, 0, 5, 0);
+    if (head.toString('latin1') === '%PDF-') return 'pdf';
+    if (head.subarray(0, 4).equals(Buffer.from([0x50, 0x4b, 0x03, 0x04]))) return 'docx';
+    return null;
+  } finally {
+    await handle.close();
+  }
+}
+
 export async function renderDocumentPage(params: {
   /** Already confined to the tenant's workspace by the caller. */
   documentPath: string;
@@ -44,21 +70,26 @@ export async function renderDocumentPage(params: {
   dpi: number;
   /** A scratch directory in the tenant's area; created here. */
   outputDir: string;
+  maxPixels?: number;
 }): Promise<RenderedPage> {
   const { documentPath, page, dpi, outputDir } = params;
-  const ext = path.extname(documentPath).toLowerCase();
-  if (ext !== '.pdf' && ext !== '.docx') {
-    throw new Error('rasterize_page renders .pdf and .docx files only.');
-  }
+  const kind = await documentKind(documentPath);
+  if (!kind) throw new Error('rasterize_page renders PDF and DOCX files only.');
   await fs.mkdir(outputDir, { recursive: true });
-  const stem = workspaceFileName(path.basename(documentPath, ext), 'document');
+  const stem = workspaceFileName(path.basename(documentPath, path.extname(documentPath)), 'document');
 
   let pdfPath = documentPath;
   let convertedPdf: string | undefined;
-  if (ext === '.docx') {
+  if (kind === 'docx') {
+    // The converter keys on the extension, which an upload does not have.
+    let docxPath = documentPath;
+    if (path.extname(documentPath).toLowerCase() !== '.docx') {
+      docxPath = path.join(outputDir, `${stem}.docx`);
+      await fs.copyFile(documentPath, docxPath);
+    }
     const { runDocxPdfPipeline } = await import('../docx-pdf-pipeline.js');
     const result = await runDocxPdfPipeline({
-      inputDocxPath: documentPath,
+      inputDocxPath: docxPath,
       outputPdfPath: path.join(outputDir, `${stem}.pdf`),
     });
     pdfPath = result.finalPdf;
@@ -71,17 +102,23 @@ export async function renderDocumentPage(params: {
   if (page > pageCount) {
     throw new Error(`Page ${page} does not exist: the document has ${pageCount} page${pageCount === 1 ? '' : 's'}.`);
   }
-  const [rendered] = await rasterizePdfPages(pdf, { pages: [page], dpi });
+  const [rendered] = await rasterizePdfPages(pdf, {
+    pages: [page],
+    dpi,
+    maxPixels: params.maxPixels ?? MAX_PAGE_PIXELS,
+  });
   if (!rendered) throw new Error(`Page ${page} could not be rendered.`);
+  const dpiUsed = Math.round(rendered.dpi);
 
-  const pngPath = path.join(outputDir, `${stem}-p${page}-${dpi}dpi.png`);
+  const pngPath = path.join(outputDir, `${stem}-p${page}-${dpiUsed}dpi.png`);
   await fs.writeFile(pngPath, rendered.png);
   const written = await fs.readFile(pngPath);
   return {
     pngPath,
     page,
     pageCount,
-    dpi,
+    dpi: dpiUsed,
+    dpiRequested: dpi,
     ...pngSize(written),
     bytes: written.length,
     sha256: createHash('sha256').update(written).digest('hex'),

@@ -2840,7 +2840,7 @@
   },
   "rasterize_page": {
    "class": "self",
-   "writes": "scratch .png under tmp/docbuilder, not filed",
+   "writes": "scratch .png (and, for a DOCX, its converted .pdf) under tmp/docbuilder, not filed",
    "site": "AnaToolExecutor.ts:6575"
   },
   "read_governed_document": {

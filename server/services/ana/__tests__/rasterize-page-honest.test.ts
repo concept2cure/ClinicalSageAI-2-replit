@@ -18,6 +18,7 @@ vi.mock('../../docx-pdf-pipeline', () => ({ runDocxPdfPipeline }));
 vi.mock('../../docx-pdf-pipeline.js', () => ({ runDocxPdfPipeline }));
 
 import { getToolHandler } from '../AnaToolExecutor.js';
+import { renderDocumentPage } from '../page-render.js';
 import { ALL_ANA_TOOLS } from '../AnaToolDefinitions.js';
 
 const ORG = 424242;
@@ -96,6 +97,45 @@ describe('rasterize_page', () => {
   });
 });
 
+describe('rasterize_page — limits and inputs', () => {
+  it('caps the pixels it renders, lowering the dpi and saying so, instead of exhausting memory', async () => {
+    const out = await renderDocumentPage({
+      documentPath: pdfPath, page: 1, dpi: 300, outputDir: path.join(dir, 'capped'), maxPixels: 100_000,
+    });
+    expect(out.widthPx * out.heightPx).toBeLessThanOrEqual(100_000);
+    expect(out.dpi).toBeLessThan(300);
+    expect(out.dpiRequested).toBe(300);
+  });
+
+  it('renders an upload stored without an extension, by what its bytes are', async () => {
+    const uploads = path.resolve(process.cwd(), 'uploads', `org-${ORG}`);
+    await fs.mkdir(uploads, { recursive: true });
+    const upload = path.join(uploads, 'file_1759276800000_abc123');
+    await fs.writeFile(upload, await threePagePdf());
+    try {
+      const out = await run('rasterize_page', { document_path: upload, page_number: 3, dpi: 72 });
+      expect(out).toMatchObject({ success: true, page: 3, pageCount: 3 });
+    } finally {
+      await fs.rm(uploads, { recursive: true, force: true });
+    }
+  });
+
+  it('reads a page number given as a numeral string, and refuses one that is not a page', async () => {
+    expect(await run('rasterize_page', { document_path: pdfPath, page_number: '3', dpi: 72 })).toMatchObject({ success: true, page: 3 });
+    for (const page_number of [0, 2.5, 'two']) {
+      const out = await run('rasterize_page', { document_path: pdfPath, page_number });
+      expect(out.success, String(page_number)).toBe(false);
+      expect(out.error).toMatch(/page_number/);
+    }
+  });
+
+  it('says the image is a server file that nobody is shown', async () => {
+    const out = await run('rasterize_page', { document_path: pdfPath, page_number: 1, dpi: 72 });
+    expect(out.displayed).toBe(false);
+    expect(out.message).toMatch(/not shown/i);
+  });
+});
+
 describe('pdf_overlay', () => {
   it('says it is unavailable and writes nothing, instead of reporting overlays queued', async () => {
     const before = await fs.readdir(dir);
@@ -109,6 +149,16 @@ describe('pdf_overlay', () => {
     expect(out.status).toBe('unavailable');
     expect(JSON.stringify(out)).not.toMatch(/queued|will be applied/);
     expect(await fs.readdir(dir)).toEqual(before);
+  });
+
+  it('answers unavailable to an unapproved model too, rather than inviting a retry that cannot succeed', async () => {
+    const out = await run(
+      'pdf_overlay',
+      { base_pdf_path: pdfPath, overlays: [{ page: 1, type: 'text', x: 1, y: 1, content: 'x' }] },
+      { organizationId: ORG, servingModel: { provider: 'openai', model: 'gpt-4o' } },
+    );
+    expect(out.status).toBe('unavailable');
+    expect(JSON.stringify(out)).not.toMatch(/Thorough|approved model/i);
   });
 
   it('does not offer signatures or approval stamps in its definition', () => {
