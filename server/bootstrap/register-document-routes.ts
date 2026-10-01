@@ -37,7 +37,6 @@ import postMarket from '../routes/post-market.js';
 import evidenceSufficiency from '../routes/evidence-sufficiency.js';
 import qSub from '../routes/q-sub.js';
 import capaMdr from '../routes/capa-mdr.js';
-import qms from '../routes/qms.js';
 import ivdLifecycle from '../routes/ivd-lifecycle.js';
 import ivdKnowledge from '../routes/ivd-knowledge.js';
 import ivdAssessments from '../routes/ivd-assessments.js';
@@ -268,7 +267,15 @@ export async function registerDocumentRoutes({
     { path: '/api/evidence-sufficiency', router: evidenceSufficiency, name: 'Evidence Sufficiency' },
     { path: '/api/q-sub', router: qSub, name: 'Q-Submissions (Pre-Sub / SIR / SRD)' },
     { path: '/api/capa-mdr', router: capaMdr, name: 'CAPA + complaint + MDR / vigilance triage' },
-    { path: '/api/qms', router: qms, name: 'Quality Management System (document control, training, suppliers, audits)' },
+    // Removed 2026-10-01 (P1-31 / DP-34): /api/qms (routes/qms.ts over
+    // services/qms/qms.service.ts). A second QMS write API behind
+    // authenticateToken alone: a viewer could supersede an effective document,
+    // requalify a supplier and disposition nonconforming product, the last two
+    // with no audit row. No client called it. The one QMS API is /api/mdx/qms
+    // (server/routes/mdx-qms.ts, mounted in register-inline-routes.ts), whose
+    // writes are editor-gated and audited and whose approve/retire are
+    // electronic signatures; qms-legacy-api-retired.test.ts pins both halves.
+    // Do not remount a second QMS router.
     { path: '/api/ivd-lifecycle', router: ivdLifecycle, name: 'IVD lifecycle calculators (analytical, software, change, registration)' },
     { path: '/api/ivd-knowledge', router: ivdKnowledge, name: 'IVD knowledge base (scientific / legal / regulatory intelligence corpus)' },
     { path: '/api/ivd-assessments', router: ivdAssessments, name: 'IVD assessment persistence (saved calculator results + generated documents)' },

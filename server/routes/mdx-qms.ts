@@ -854,6 +854,15 @@ router.get('/qms/training/compliance', async (req: Request, res: Response) => {
 
 /* ─── Suppliers ─────────────────────────────────────────────── */
 
+/* P1-31 / DP-34 (2026-10-01). The supplier, internal-audit, management-review
+   and nonconforming-product writes below carry `requireEditorAccess`, as the
+   document writes above have since 6582e3a3. They carried no role gate, so a
+   viewer could qualify, requalify or revoke a supplier and disposition
+   nonconforming product here; the deleted second QMS API (/api/qms) let it do
+   the same with no audit row. Training acknowledgment stays open to every
+   member: it records the caller's own read-and-understood, not a governed
+   change. Pinned by qms-legacy-api-retired.test.ts. */
+
 const supplierCreate = z.object({
   supplierName:        z.string().min(1).max(300),
   supplierCode:        z.string().max(60).optional().nullable(),
@@ -887,7 +896,7 @@ router.get('/qms/suppliers', async (req: Request, res: Response) => {
   } catch (err) { return serverError(res, log, 'supp-list', err); }
 });
 
-router.post('/qms/suppliers', async (req: Request, res: Response) => {
+router.post('/qms/suppliers', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const parsed = supplierCreate.safeParse(req.body ?? {});
@@ -922,7 +931,7 @@ router.post('/qms/suppliers', async (req: Request, res: Response) => {
   } catch (err) { return serverError(res, log, 'supp-create', err); }
 });
 
-router.patch('/qms/suppliers/:id', async (req: Request, res: Response) => {
+router.patch('/qms/suppliers/:id', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);
@@ -1000,7 +1009,7 @@ router.get('/qms/internal-audits', async (req: Request, res: Response) => {
   } catch (err) { return serverError(res, log, 'audit-list', err); }
 });
 
-router.post('/qms/internal-audits', async (req: Request, res: Response) => {
+router.post('/qms/internal-audits', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const parsed = auditCreate.safeParse(req.body ?? {});
@@ -1032,7 +1041,7 @@ router.post('/qms/internal-audits', async (req: Request, res: Response) => {
   } catch (err) { return serverError(res, log, 'audit-create', err); }
 });
 
-router.patch('/qms/internal-audits/:id', async (req: Request, res: Response) => {
+router.patch('/qms/internal-audits/:id', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);
@@ -1101,7 +1110,7 @@ router.get('/qms/management-reviews', async (req: Request, res: Response) => {
   } catch (err) { return serverError(res, log, 'mr-list', err); }
 });
 
-router.post('/qms/management-reviews', async (req: Request, res: Response) => {
+router.post('/qms/management-reviews', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const parsed = mrCreate.safeParse(req.body ?? {});
@@ -1163,7 +1172,7 @@ router.get('/qms/nonconforming', async (req: Request, res: Response) => {
   } catch (err) { return serverError(res, log, 'nc-list', err); }
 });
 
-router.post('/qms/nonconforming', async (req: Request, res: Response) => {
+router.post('/qms/nonconforming', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const parsed = ncCreate.safeParse(req.body ?? {});
@@ -1197,7 +1206,7 @@ router.post('/qms/nonconforming', async (req: Request, res: Response) => {
   } catch (err) { return serverError(res, log, 'nc-create', err); }
 });
 
-router.patch('/qms/nonconforming/:id/disposition', async (req: Request, res: Response) => {
+router.patch('/qms/nonconforming/:id/disposition', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);
