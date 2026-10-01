@@ -38,8 +38,11 @@ const VALUE_AUDITED: Readonly<Record<string, readonly string[]>> = {
   security: ['mfaRequired', 'passwordPolicy', 'sessionTimeoutMinutes', 'ipRestrictions'],
   qmp: ['auditTrailRetentionDays'],
   // Whether the organisation's members may use the connector for Claude, set by
-  // its owner (P1-47, ADR-0014 §10; mcp/auth/connector-enablement.ts).
+  // its owner or administrator (P1-47, ADR-0014 §10; mcp/auth/connector-enablement.ts).
   claudeConnector: ['enabled'],
+  // The AnA tools the organisation allows or switches off (routes/ana-tool-policy.ts):
+  // the row carries the policy before and after, as that door's own row did.
+  anaToolPolicy: ['allow', 'deny'],
 };
 
 function pick(section: Settings, keys: readonly string[]): Settings {
@@ -74,7 +77,8 @@ function settingsAuditDetails(before: Settings, after: Settings, sections: strin
 }
 
 export interface SettingsWrite {
-  action: 'tenant_settings_changed' | 'tenant_settings_reset';
+  /** 'ana_tool_policy.update' is the tool-policy door's (routes/ana-tool-policy.ts), the name audit.explain reads. */
+  action: 'tenant_settings_changed' | 'tenant_settings_reset' | 'ana_tool_policy.update';
   /** The settings to store, from those stored now and the tenant's tier. */
   next: (current: Settings, tier: string) => Settings;
   /** The sections this write names, given what was stored and what will be. */
