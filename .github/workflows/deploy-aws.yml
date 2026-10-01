@@ -608,6 +608,30 @@ jobs:
             echo "::error::The task definition carries ${DETERMINISTIC_FLAGS% }: AnA would serve fixed responses in place of model output. Remove it from terraform/stack."
             FAIL=1
           fi
+          # Launch scope is the release boundary (CLAUDE.md RULE 2): with
+          # LAUNCH_SCOPE_ENFORCE=off every router outside the seven launch apps
+          # answers any authenticated member, and the server honours an explicit
+          # `off` in production (launch-scope.ts; unset means on). This stack
+          # ships the launch catalog, so the variable is absent or exactly `on`.
+          # A secret cannot be read here, and a release boundary is not a
+          # secret: its presence there is refused too (reporting review
+          # 2026-10-01, SECURITY-6 / INF-17).
+          LAUNCH_SCOPE_VALUE=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
+            .containerDefinitions[] | select(.name == $c)
+            | (.environment // []) | map(select(.name == "LAUNCH_SCOPE_ENFORCE")) | .[0].value // ""
+          ' /tmp/api-td-preflight.json | tr -d '[:space:]')
+          LAUNCH_SCOPE_SECRET=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
+            .containerDefinitions[] | select(.name == $c)
+            | (.secrets // []) | map(select(.name == "LAUNCH_SCOPE_ENFORCE")) | length
+          ' /tmp/api-td-preflight.json)
+          if [[ -n "$LAUNCH_SCOPE_VALUE" && "${LAUNCH_SCOPE_VALUE,,}" != "on" ]]; then
+            echo "::error::LAUNCH_SCOPE_ENFORCE must be absent or exactly 'on' in production; got '$LAUNCH_SCOPE_VALUE'. Off serves every surface outside the launch catalog."
+            FAIL=1
+          fi
+          if [[ "$LAUNCH_SCOPE_SECRET" != "0" ]]; then
+            echo "::error::LAUNCH_SCOPE_ENFORCE is set from a secret, which this check cannot read. Set it as a plain value ('on') or leave it unset."
+            FAIL=1
+          fi
           # APP_URL is the only origin emailed reset and invitation links are
           # built on in production (server/services/password-setup-token.ts).
           # Without it those flows refuse every request rather than put the
