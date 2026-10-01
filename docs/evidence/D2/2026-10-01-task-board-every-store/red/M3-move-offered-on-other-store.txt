@@ -1,0 +1,4 @@
+ × client/src/concept2cure/v2/__tests__/taskBoardEveryStore.test.tsx > TaskBoard — every store's work > labels another store's card with its store and offers no move; the board's own card keeps its controls 265ms
+   → expected <button title="Advance" …(1)>…(1)</button> to be null
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 4 passed (5)
