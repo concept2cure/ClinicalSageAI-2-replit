@@ -16,7 +16,7 @@ import { z } from 'zod';
 import { pool } from '../db';
 import { recordGovernedAction } from './c2c/actions';
 import { signedActAttempts, signGovernedAct } from './governed-signed-act';
-import { AUTHORED_RECORD_ACT_MEANINGS } from '../services/part11/signature-meanings';
+import { DECISION_ACT_MEANINGS } from '../services/part11/signature-meanings';
 import {
   createBiosketchTx,
   updateSectionTx,
@@ -161,7 +161,7 @@ router.post('/biosketches/:id/finalize', signedActAttempts, async (req, res) => 
   await signGovernedAct(req, res, {
     domain: 'protocol_development',
     target: `biosketch:${id}`,
-    meanings: AUTHORED_RECORD_ACT_MEANINGS,
+    meanings: DECISION_ACT_MEANINGS,
     codeStatus: CODE_STATUS,
     run: async (client, orgId, userId) => {
       const result = await finalizeBiosketchTx(client, orgId, userId, id);

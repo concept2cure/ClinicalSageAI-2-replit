@@ -30,7 +30,7 @@ named for what the signer does:
 | Set | Meanings | Acts |
 |---|---|---|
 | `DECISION_ACT_MEANINGS` | approval, responsibility | grant closeout, subaward execution, NCE approval, research-agreement execution, export-control determination, committee determination, coverage-analysis finalization, effort certification, Other Support certification, consent-form approval, IRB / IACUC / IBC approval, RIM label approval |
-| `AUTHORED_RECORD_ACT_MEANINGS` | authorship, approval, responsibility | biosketch and data-management-plan finalization (the signer may be the author) |
+| ~~`AUTHORED_RECORD_ACT_MEANINGS`~~ | ~~authorship, approval, responsibility~~ | removed in the follow-up below (DP-76): biosketch and data-management-plan finalization take `DECISION_ACT_MEANINGS` |
 | `SIGN_OFF_ACT_MEANINGS` | review, approval, responsibility | BLA assessment sign-off, deviation closure |
 | `REVIEW_ACT_MEANINGS` | review | audit-trail and access review records |
 
@@ -79,3 +79,38 @@ of head's `export-control.ts` in the tree failed the typecheck with TS2345 ("not
   re-checked for DP-65 here. Merging the two ceremonies is the zero-duplication fix and is recorded as a residual.
 - The CMC signatures (`server/api/cmc/*`) take their meaning from CMC's own list and do not run through either
   ceremony; not re-checked here.
+
+## Follow-up (2026-10-01, late evening): two findings of the security review on this change
+
+The security-auditor review of this evening's commits found two defects in this change, both reproduced before they
+were fixed (`follow-up/`).
+
+**DP-76 (Low): "authorship" with no check that the signer wrote the record.** Biosketch and data-management-plan
+finalization admitted `authorship`, but nothing checked that the signer was the author (`biosketches.created_by` and
+`dms_plans.created_by` are recorded and never read here). An approver who never wrote a biosketch could finalize it
+"as authorship" and the signature row would say so: the false meaning DP-64 exists to stop. The sibling ceremony
+(`governed-signature-ceremony.ts`) refuses `authorship` from a non-author (403 `NOT_AN_AUTHOR`).
+*Decision:* no act of this ceremony carries `authorship`; biosketch and DMSP finalization take
+`DECISION_ACT_MEANINGS` (approval, responsibility). "Responsibility" is true of the investigator who finalizes their
+own biosketch, and of anyone else who does. `AUTHORED_RECORD_ACT_MEANINGS` is removed. Red at head
+(`follow-up/red/signed-act-meaning-and-lock.dbtest.txt`): "authorship" signed, 1 failed; green 6/6.
+
+**The BLA assessment's signed target took the client's spelling of a uuid.** `c2c_bla_assessments.id` is a uuid and
+PostgreSQL reads one uuid from several spellings, so each spelling got its own lock key and its own `signed_target`
+(double signing stayed impossible: the domain write locks the row). The route now accepts only the hyphenated form
+(`isUuid`, `server/middleware/uuidParam.ts`), lower-cases it, and uses that one spelling for the lock, the queries, the
+target and the answer; anything else is 404 before the ceremony. Red at head
+(`follow-up/red/domain-sign-ceremony.routes.txt`): 2 failed (an upper-case spelling signed under itself; `5` reached
+the ceremony); green 64/64.
+
+**Scope of DP-65, stated exactly.** The lock orders two signs of one target; a second sign is refused only where the
+act's domain write refuses a record already in its final state. That holds for the finalizations, certifications,
+executions, the NCE approval, consent-form approval, deviation closure, the BLA sign-off and the review records. It
+does not hold for IRB, IACUC and IBC approvals, which have no state precondition because a submission is approved
+again at each continuing review: two approvals sent together become two reviews, one after the other. RIM label
+approval creates a new label each time. No client calls those four endpoints today; when one does, it needs an
+idempotency key on the request.
+
+Green, on the follow-up: `follow-up/green/domain-sign-ceremony.routes.txt` 64 passed;
+`follow-up/green/dbtests.txt` (`signed-act-meaning-and-lock`, `research-admin-sign-ceremony`, `domain-sign-ceremony`)
+97 passed; four neighbouring unit suites 58 passed. Typecheck 0; ESLint per file unchanged.
