@@ -16,11 +16,13 @@ could carry traffic.
 - **The S3 gateway endpoint was associated with no route table.** A gateway
   endpoint works only through the route tables it is attached to. So every S3
   request from the private subnets went out through the NAT gateway:
+
   - Vault document bytes;
   - the Part 11 evidence bucket;
   - the frontend publish.
 
   AWS bills NAT data processing per GB. The S3 gateway endpoint itself is free.
+
 - **The KMS interface endpoint admitted nothing, and private DNS was off.** Its
   security group had no ingress rule. Without private DNS,
   `kms.us-east-1.amazonaws.com` resolves to the public KMS endpoint. So every
@@ -54,11 +56,11 @@ could carry traffic.
 provider, so it needs no account. It was added to the `terraform-tests.yml`
 matrix, so CI runs it on every change under `terraform/`.
 
-| File                               | Shows                                                                                                                                                                                                         |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `red/before-fix.txt`               | The test against the unchanged module: **0 of 2 runs pass**. The S3 endpoint is on no route table; `private_dns_enabled` is false; the endpoint security group's ingress is an empty set.                    |
-| `green/after-fix.txt`              | `terraform validate` and the test after the change: **2 of 2**.                                                                                                                                              |
-| `green/stack-preflight-proof.txt`  | `scripts/ops/terraform-preflight-proof.mjs` on the whole stack with the change: `terraform test` **28 of 28**, and deploy-aws.yml's preflight accepts the rendered task definition ("every check holds"). |
+| File                              | Shows                                                                                                                                                                                                     |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `red/before-fix.txt`              | The test against the unchanged module: **0 of 2 runs pass**. The S3 endpoint is on no route table; `private_dns_enabled` is false; the endpoint security group's ingress is an empty set.                 |
+| `green/after-fix.txt`             | `terraform validate` and the test after the change: **2 of 2**.                                                                                                                                           |
+| `green/stack-preflight-proof.txt` | `scripts/ops/terraform-preflight-proof.mjs` on the whole stack with the change: `terraform test` **28 of 28**, and deploy-aws.yml's preflight accepts the rendered task definition ("every check holds"). |
 
 Terraform 1.9.8, the version CI pins. The provider came from a local filesystem
 mirror (aws 5.70.0), because `registry.terraform.io` is refused from this

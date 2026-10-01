@@ -13,6 +13,10 @@
       "count": 1,
       "reason": "DEFECT, outside the launch catalog (CMC). Specification approval re-authenticates but writes no electronic_signatures row. Same fix as batchRecordRoutes.ts."
     },
+    "server/routes/authoring.router.ts": {
+      "count": 1,
+      "reason": "Approval stamp (2026-10-01): approveAndFreezeDocument sets authoring_documents.approved_at. Its only caller is POST /docs/:docId/sign, which re-verifies the signer through reverifyAuthoringSigner and writes the authoring_signatures row in the same transaction. The proof is one function boundary away, which this scanner cannot follow."
+    },
     "server/routes/biopharma/bla-workbench.ts": {
       "count": 1,
       "reason": "DEFECT, outside the launch catalog. BLA assessment sign-off (called only from NdaCockpit, not a launch surface) writes a sign ledger row and sets signed_by with no re-authentication and no signature row."
@@ -57,6 +61,18 @@
       "count": 1,
       "reason": "DEFECT, outside the launch catalog (IRB). Recording an 'approved' IRB review writes a sign ledger row (governed(req, res, outcome === 'approved' ? 'sign' : 'resolve', \u2026)) with no re-authentication and no electronic_signatures row. Found 2026-09-23 when the gate learned ternary commands. Fix: run the approval through the ceremony (protocol-signature.ts is the pattern), or record it under a command that does not claim a signature."
     },
+    "server/routes/ivdr-binder-routes.ts": {
+      "count": 1,
+      "reason": "Approval stamp (2026-10-01): IVDR binder approval. Outside the launch catalog (shared/constants/launch-scope.ts); RULE 2 gives it no session. Recorded so it cannot grow, not reviewed."
+    },
+    "server/routes/mdx-imports.ts": {
+      "count": 2,
+      "reason": "Approval stamp (2026-10-01): import_jobs.approved_by/approved_at record who released a bulk import of uploaded files (POST /imports/:id/approve, requireEditorAccess). The import creates DRAFT artifacts; no regulated content is approved, so no signature is due. The stamp names an operator, not a signatory."
+    },
+    "server/routes/mdx-labeling.ts": {
+      "count": 1,
+      "reason": "Approval stamp (2026-10-01): MDX labeling approval. Outside the launch catalog (shared/constants/launch-scope.ts); RULE 2 gives it no session. Recorded so it cannot grow, not reviewed."
+    },
     "server/routes/other-support.ts": {
       "count": 1,
       "reason": "DEFECT, outside the launch catalog (research administration). Other Support certification: sign ledger row, no re-authentication, no signature row. Same remedy as biosketch.ts."
@@ -81,9 +97,37 @@
       "count": 1,
       "reason": "PROOF ACROSS A BOUNDARY, verified 2026-09-28. signGovernedCommand writes the ledger pair AND the electronic_signatures row (persistGovernedActionSignature) on the caller's transaction client, and throws before any query unless ctx.signoff.signatureVerified === true with a declared meaning and a verifiedAt Date. ctx.signoff is stamped only by POST /api/ana-ri/governed-action (server/routes/ana-ri/utility.ts), from verifyGovernedESignature (server/routes/ana-ri/governed-esignature.ts), which calls reverifySigner; the password never reaches the handler, so re-verifying here is impossible and would spend a second credential attempt. Same route and shape as the governed-transmit entry. Behaviour pinned by server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts (no verified sign-off => nothing written)."
     },
+    "server/services/ana/AnaToolExecutor.ts": {
+      "count": 1,
+      "reason": "Approval stamp (2026-10-01): approve_import, the AnA twin of POST /imports/:id/approve. It records who released a bulk import that creates DRAFT artifacts; it approves no regulated content. Same reason as mdx-imports.ts. (The file's sign sites are all refusals or ceremonies and are not counted here.)"
+    },
+    "server/services/ana/authoring-plan-generator.ts": {
+      "count": 2,
+      "reason": "Approval stamp (2026-10-01): authoring_plans.approved_at/approved_by. An authoring plan is a pre-drafting worksheet (sources, cross-references, risks, an outline) and its approval releases it for drafting. It is not a signature over a regulated record. PATCH /api/ana/authoring-plan/:planId/approve has no client caller at this head. Noted, not fixed here: that route has no role gate and can stamp a null approver."
+    },
+    "server/services/cognitive-ecosystem/global-dossier.service.ts": {
+      "count": 2,
+      "reason": "Approval stamp (2026-10-01): global dossier approvals in the cognitive ecosystem. Outside the launch catalog; RULE 2 names these engines as getting no sessions. Recorded so it cannot grow, not reviewed."
+    },
+    "server/services/decision-record-service.ts": {
+      "count": 1,
+      "reason": "Approval stamp (2026-10-01): transition() stamps approved_at when action_state becomes 'approved'. At this head no caller reaches that state: the governed acts advance their decisions to confirmed/executed, and approveDecision (governed-decision-repository) has no caller. Unreachable, not unsigned. Revisit if anything starts approving decisions."
+    },
+    "server/services/grants/grants-service.ts": {
+      "count": 1,
+      "reason": "Approval stamp (2026-10-01): approveNceTx, the no-cost-extension approval. Grants are outside the launch catalog. The AnA door already refuses (35794a160, 'AnA cannot sign'); the HTTP door is the grants module's own and has no ceremony. Recorded so it cannot grow."
+    },
     "server/services/pathway-engines/estar/estar-submission-service.ts": {
       "count": 1,
       "reason": "PROOF ACROSS A BOUNDARY, verified 2026-09-23. applySignedFiling writes the ledger pair and the signature row on the caller's client; the route that calls it (server/routes/510k-estar-routes.ts ~2031) runs verifyReauth first. The gate measures one top-level function and cannot see the route's check."
+    },
+    "server/services/qms/document-approval-signature.ts": {
+      "count": 2,
+      "reason": "Approval stamp (2026-10-01): applyApproval writes approver_id/approved_at. Its only caller is approveQmsDocumentSigned, which writes the ledger pair and the electronic_signatures row (persistGovernedActionSignature) on the same transaction, after the route ran reverifySigner. Helper split, not a missing ceremony."
+    },
+    "server/services/rbm/rbm-actuator.ts": {
+      "count": 2,
+      "reason": "Approval stamp (2026-10-01): approveAssessment / approvePlan. The mdx-rbm approve routes re-verify the signer (reverifySigner) and refuse the author, but NO electronic_signatures row is written, so a re-authenticated RBM approval leaves no signature record. A real gap, found by this widening. RBM is outside the launch catalog (RULE 2), so it is recorded here, not fixed."
     },
     "server/services/submission-gateways/governed-transmit.ts": {
       "count": 1,
