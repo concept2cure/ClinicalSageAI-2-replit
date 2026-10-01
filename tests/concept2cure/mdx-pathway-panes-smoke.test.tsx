@@ -11,7 +11,7 @@
  * runtime issues tsc can't see (hook-order violations, data-shape mismatches,
  * missing icon refs) fail the build.
  *
- * Everything here is in-memory (PATHWAY_TABS_DATA + the dossierStore); fetch
+ * Everything here is in-memory (the dossierStore); fetch
  * is mocked to 404 only as a safety net, and per case where a pane needs a live
  * read (the drafter reads its letter from the correspondence route). Since the
  * data-honesty pass, fixtures are reachable ONLY in explicit sample mode —
@@ -27,7 +27,6 @@ import * as React from 'react';
 
 import { PathwayPanes } from '../../client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes';
 import { AnaDrafter } from '../../client/src/concept2cure/mdx/components/AnaDrafter';
-import { PATHWAY_TABS_DATA } from '../../client/src/concept2cure/mdx/data/pathwayTabs';
 import { DossierStore } from '../../client/src/concept2cure/mdx/store/dossierStore';
 import { setSampleMode } from '../../client/src/concept2cure/mdx/lib/sampleMode';
 import type { PathwayKey } from '../../client/src/concept2cure/mdx/types';
