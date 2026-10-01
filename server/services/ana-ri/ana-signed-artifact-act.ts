@@ -166,7 +166,10 @@ async function commitAct(
         attestationText: GOVERNED_SIGNATURE_ATTESTATION,
         reason,
         secondFactorVerified: ctx.signoff?.secondFactorVerified === true,
+        // The command context carries no client address; recorded as unknown, not invented.
         ipAddress: null,
+        surface: 'ana-governed-action',
+        authenticatedAt: ctx.signoff?.verifiedAt instanceof Date ? ctx.signoff.verifiedAt : undefined,
       });
       await tx.insert(concept2cureProvenanceEvents).values({
         organizationId: ctx.organizationId,

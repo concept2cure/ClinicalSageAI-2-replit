@@ -85,6 +85,7 @@ import {
   requiresPart11Signoff,
   requiresEsignature,
   validateSignoff,
+  normalizedArtifactStatus,
   buildSignatureRequiredResult,
   buildHumanConfirmationRequiredResult,
   loadPart11EnforceStrict,
@@ -560,8 +561,8 @@ export async function createArtifact(
       return {
         success: false,
         action: 'create_artifact',
-        message: `Governed persistence failed for "${params.title}"`,
-        error: execution.persistenceStatus,
+        message: execution.persistenceRefusal?.message ?? `Governed persistence failed for "${params.title}"`,
+        error: execution.persistenceRefusal?.code ?? execution.persistenceStatus,
       };
     }
 
@@ -709,8 +710,21 @@ export async function updateArtifactStatus(
     // status route's act, with its rules, through the governed-action sign-off
     // (ana-signed-artifact-act.ts). They were the reason tier here, and wrote
     // the status with no signature, no version and no snapshot.
-    if (params.status === 'approved' || params.status === 'locked') {
-      return await signArtifactStatusByAna(ctx, { ...params, status: params.status });
+    const target = normalizedArtifactStatus(params.status);
+    if (target === 'approved' || target === 'locked') {
+      return await signArtifactStatusByAna(ctx, { ...params, status: target });
+    }
+    // Anything else unsigned is draft or review, by name. 'Approved' or 'LOCKED'
+    // used to be the reason tier and was written raw, where some readers took
+    // it as finalized (review of dacc2ff84).
+    if (target !== 'draft' && target !== 'review') {
+      return {
+        success: false,
+        action: 'update_artifact_status',
+        message:
+          `"${String(params.status)}" is not a status this command moves an artifact to: draft or review, ` +
+          'or approved and locked as an electronic signature. Nothing was changed.',
+      };
     }
 
     // Load current artifact to validate transition
@@ -732,7 +746,7 @@ export async function updateArtifactStatus(
 
     const current = existing.rows[0];
     const fromStatus = current.status;
-    const toStatus = params.status;
+    const toStatus = target;
 
     // Guard: locked documents cannot be status-changed without explicit unlock
     if (fromStatus === 'locked' && toStatus !== 'draft') {

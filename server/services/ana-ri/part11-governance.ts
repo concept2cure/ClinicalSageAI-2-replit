@@ -181,10 +181,19 @@ export type GovernedTier = 'confirm' | 'reason' | 'esignature';
  */
 const SIGNED_ACTS: Readonly<Record<string, (params: Record<string, unknown> | undefined) => GovernedSignMeaning | null>> = {
   update_artifact_status: (params) => {
-    const status = params?.status;
+    // Normalised: 'Approved' or ' locked' is the same act, and the handler
+    // reads it the same way (command-executor.ts updateArtifactStatus). Read
+    // exactly, they were the reason tier and were written raw (review of
+    // dacc2ff84, 2026-10-01).
+    const status = normalizedArtifactStatus(params?.status);
     return status === 'approved' || status === 'locked' ? ARTIFACT_ACT_MEANING[status] : null;
   },
 };
+
+/** An artifact status as the platform spells it: trimmed, lower case; '' for anything not a string. */
+export function normalizedArtifactStatus(value: unknown): string {
+  return typeof value === 'string' ? value.trim().toLowerCase() : '';
+}
 
 /** The meaning this call's e-signature must carry, when the act fixes one; otherwise null. */
 export function requiredSignatureMeaning(
