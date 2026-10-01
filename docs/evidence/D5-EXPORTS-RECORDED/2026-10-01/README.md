@@ -61,11 +61,25 @@ handler that sends a file. Results:
   (`server/routes/report-os.ts`, `REPORT_EXPORT_NOT_RECORDED`).
 - **Already-stored documents:** the project-vault download, and the gateway
   transmittal acknowledgement.
-- **Open, handed off:** `GET /api/artifacts-center/:artifactId/export`
+- **Closed the same day:** `GET /api/artifacts-center/:artifactId/export`
   (`server/routes/artifacts-center-routes.ts`). It renders approved or signed
   regulatory content as DOCX/TXT, and the Artifacts Center's Export button calls
-  it. It records nothing. This is the most important export of the set, because
-  it is governed content leaving the system. The file is inside another lane's
-  window (`1ec8ea494`, `…01KnUGoX`, until 2026-10-02 00:22 UTC). The fix is the
-  same `sendAuditedDownload` call; this lane takes it when the window closes
-  unless its owner does first.
+  it. Before this change it recorded nothing, which made it the most important
+  gap in the set: governed content leaving the system unrecorded. Both formats
+  now deliver through `sendAuditedDownload`. The record is `resourceType`
+  `artifacts_center_export`, with the artifact version and the review or
+  signature that authorised the export in its metadata. An identified user is
+  required, and the response is 503 `UNAUDITED_EXPORT_REFUSED` with no file when
+  the row does not persist. The review gate and the `X-Concept2Cure-*` headers
+  are unchanged. Proof: `artifacts-center-export-governance.test.ts` 4 of 9
+  failed (`artifacts-center-red.txt`), then 9/9
+  (`artifacts-center-green.txt`). The Admin surface's alert no longer doubles
+  the full stop on a server message that ends in one.
+  `ExportSourceType` gains `export_txt`.
+
+  **Disclosed edits inside other lanes' 24-hour windows,** under the founder's
+  instruction of 2026-10-01 to stop deferring:
+  `server/routes/artifacts-center-routes.ts` (`1ec8ea494`, `…01KnUGoX`, 00:22
+  UTC; that change was to other handlers, and only the export handler is
+  touched here) and `client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx`
+  (`0224f43a0`, `…0194UQPx`, 02:11 UTC; one line in `downloadArtifact`).
