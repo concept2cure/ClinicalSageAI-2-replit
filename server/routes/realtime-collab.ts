@@ -49,6 +49,7 @@ import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { parseFiniteInt } from '../middleware/orgMembership';
 import { authorizeResource } from '../services/collab/collab-authorization';
+import { statedReasonOrNull } from './governed-reason';
 
 // ---------------------------------------------------------------------------
 // LAZY INFRASTRUCTURE
@@ -1077,16 +1078,10 @@ function auditLockEvent(params: {
       userId,
       command: params.command,
       target: `document:${params.documentId}${params.sectionId ? `:${params.sectionId}` : ''}`,
-      // The ledger requires a reason string; supply the command's default when
-      // the caller gave none (mirrors task-audit's defaultReason pattern).
-      reason:
-        params.reason && params.reason.trim()
-          ? params.reason.trim()
-          : params.command === 'collab.lock_takeover'
-            ? 'Section lock takeover via realtime-collab API'
-            : params.command === 'collab.lock_release'
-              ? 'Section lock released via realtime-collab API'
-              : 'Section lock acquired via realtime-collab API',
+      // The reason the person gave (a takeover requires one), or null. Until
+      // 2026-10-01 a lock event with none recorded "Section lock acquired via
+      // realtime-collab API"; the command already says what happened (D5).
+      reason: statedReasonOrNull(params.reason),
       payload: params.payload ?? {},
       domain: 'collab',
       surface: 'realtime-collab-api',
