@@ -26,7 +26,6 @@ import { DossierStore, useSection } from '../../store/dossierStore';
 import { DataGate } from '../../components/DataGate';
 import { FilesTreePane } from './FilesTreePane';
 import { AnaDrafter } from '../../components/AnaDrafter';
-import { CORRESP_DETAIL } from '../../data/correspondenceDetail';
 import { usePathwayTabsData } from '../../hooks/usePathwayTabsData';
 import { useDossierHydration } from '../../hooks/useDossier';
 import { useSectionSave, type SaveState } from '../../hooks/useSectionSave';
@@ -1187,6 +1186,7 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
         pathway={pathway}
         onClose={() => setDrafterCorr(null)}
         onOpenSection={(t) => { setDrafterCorr(null); setDrawerTarget(t); }}
+        onAskAna={onAskAna}
       />
     );
   }
@@ -1212,17 +1212,15 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
             state={data.states.correspondence}
             label="correspondence"
             onRetry={data.refresh.correspondence}
-            sample={fixtures.correspondence}
             emptyHint="Agency and notified-body letters appear here once received for this program."
           >
             {(items) => {
-              /* Only hand a letter to AnaDrafter when a structured decomposition
-                 of it actually exists. Passing this unconditionally shadowed
-                 CorrDetail's real-AnA fallback, so on live correspondence the
-                 primary action opened a workspace that could only say "No
-                 structured letter on file" — a dead button on the one screen
-                 where a response to an agency is written. Live letters now
-                 reach AnA. */
+              /* Every live letter opens the drafter now. It used to open only
+                 for the ids of four invented letters (CORRESP_DETAIL), which a
+                 live letter never matched — so live letters fell through to a
+                 bare AnA prompt, and the drafter only ever showed fiction. It
+                 reads the letter's own record and parsed issues, and hands
+                 drafting to AnA with that real content. */
               return (
               <CorrespondencePane
                 pathway={pathway}
@@ -1230,7 +1228,6 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
                 onOpenSection={openSection}
                 onAskAna={onAskAna}
                 onDraftResponse={c => {
-                  if (!CORRESP_DETAIL[c.id]) return false;
                   setDrafterCorr(c);
                   return true;
                 }}

@@ -73,7 +73,8 @@ import type { FdaApplicantContact } from '../services/submission-gateways/ectd-p
 import { recordGovernedAction } from './c2c/actions';
 import { mapSectionToECTDPath } from '../services/documentExportService';
 import { buildLeafPdf } from '../services/ectd/leaf-pdf';
-import { resolveApplicationTypeCode, resolveSubmissionTypeCode, submissionTypeTerms } from '../services/ectd/controlled-vocab';
+import { resolveApplicationTypeCode, resolveSubmissionTypeStrict, submissionTypeTerms } from '../services/ectd/controlled-vocab';
+import { resolveFdaSequenceIdentity, type FdaSequenceIdentity } from '../services/ectd/fda-sequence-identity';
 import {
   isBundleStorageEnabled,
   bundleStorageBucket,
@@ -2001,6 +2002,15 @@ const assembleBody = z.object({
    */
   submissionType: z.string().trim().min(1).max(120).optional(),
   /**
+   * FDA only (sweep F04, 2026-10-01): what this sequence is within its
+   * regulatory activity — Original, Amendment, Report… — and that activity's
+   * first sequence (the us-regional submission-id). Every follow-up was
+   * declared the Original of a new activity because neither could be said.
+   * Required of an FDA follow-up; judged by resolveFdaSequenceIdentity.
+   */
+  submissionSubType: z.string().trim().min(1).max(40).optional(),
+  submissionId: z.string().regex(/^\d{4}$/, 'submissionId must be a four-digit sequence number').optional(),
+  /**
    * Documents to WITHDRAW from the application in this sequence, each named as
    * the filed history records it. Withdrawal is EXPLICIT and can only be: a
    * leaf missing from an assembly is unchanged and still on file, because
@@ -2407,6 +2417,15 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
     const isEctdFormat = format === 'ectd' || format === 'pmda_ectd';
     // Placement is region-aware: Module 1 headings are published per agency.
     const packagerRegion = region === 'EMA' ? 'ema' : region === 'PMDA' ? 'pmda' : region === 'CA' ? 'ca' : 'fda';
+    // A sub-type and submission-id are FDA us-regional fields (sweep F04); no
+    // other region's backbone has a place for them, so they are refused rather
+    // than dropped without a word.
+    if (packagerRegion !== 'fda' && (parsed.data.submissionSubType || parsed.data.submissionId)) {
+      return res.status(400).json({
+        error: 'submissionSubType and submissionId are FDA us-regional fields; this package is assembled for another region, whose backbone has no place for them. Omit them.',
+        code: 'FIELD_NOT_FOR_REGION',
+      });
+    }
     const seenPaths = new Set<string>();
     const leafs: { path: string; mediaType: string; content: Buffer }[] = [];
     const emptyLeafPaths: string[] = [];
@@ -2707,19 +2726,23 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
     // this package actually TRANSMITTED (a bundle assembled and never sent is
     // not on file) folded into what is currently on file.
     let lifecycle: SequencePlan | null = null;
+    let fdaIdentity: FdaSequenceIdentity | null = null;
     if (isEctdFormat) {
       try {
         // The region's own vocabulary, so an unfilable submission type is
         // refused here — with the terms that would work — rather than throwing
         // out of the packager once the leaves are already rendered.
+        // Matched EXACTLY (sweep F08): the loose resolver filed 'IND' as IND
+        // Safety Reports and 'supplement' as Efficacy Supplement.
         const terms = submissionTypeTerms(packagerRegion);
+        const filed = readFiledSequences(existingMetadata);
         lifecycle = planSequence({
           sequence,
           submissionType: parsed.data.submissionType,
           submissionTypeVocabulary: terms
-            ? { terms, accepts: (v: string) => resolveSubmissionTypeCode(v) !== null }
+            ? { terms, accepts: (v: string) => resolveSubmissionTypeStrict(v) !== null }
             : null,
-          filed: readFiledSequences(existingMetadata),
+          filed,
           withdraw: parsed.data.withdraw,
           // FDA: each submission carries its own cover letter and forms (sweep F13).
           ...(packagerRegion === 'fda' ? { perSubmission: isFdaPerSubmissionSection } : {}),
@@ -2731,6 +2754,17 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
             title: l.title,
           })),
         });
+        // What the FDA backbone declares this sequence to be (sweep F04).
+        if (packagerRegion === 'fda') {
+          fdaIdentity = resolveFdaSequenceIdentity({
+            sequence,
+            applicationTypeCode: resolveApplicationTypeCode(pkg.packageFamily),
+            submissionType: parsed.data.submissionType,
+            submissionSubType: parsed.data.submissionSubType,
+            submissionId: parsed.data.submissionId,
+            filed,
+          });
+        }
       } catch (e) {
         if (!(e instanceof SequenceLifecycleRefusal)) throw e;
         return res.status(409).json({
@@ -2740,6 +2774,7 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
           // The list travels as data too, so a surface can offer the terms
           // instead of asking the operator to read them out of a sentence.
           ...(e.acceptedSubmissionTypes ? { acceptedSubmissionTypes: e.acceptedSubmissionTypes } : {}),
+          ...(e.details ?? {}),
         });
       }
       // What this sequence leaves current at the agency although the package no
@@ -2920,7 +2955,15 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
              rather than mislabelling them. */
           fda: {
             applicationType: pkg.packageFamily,
-            ...(parsed.data.submissionType ? { submissionType: parsed.data.submissionType } : {}),
+            // The identity resolved above, as codes (sweep F04, F08); outside
+            // FDA the caller's term, as before.
+            ...(fdaIdentity
+              ? {
+                  submissionType: fdaIdentity.submissionTypeCode,
+                  submissionSubType: fdaIdentity.submissionSubTypeCode,
+                  submissionId: fdaIdentity.submissionId,
+                }
+              : parsed.data.submissionType ? { submissionType: parsed.data.submissionType } : {}),
             // The us-regional applicant contact (sweep F07b); none is invented
             // when the package records none — the finding above says so.
             ...(fdaContacts.length > 0 ? { contacts: fdaContacts } : {}),
@@ -3069,7 +3112,18 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
       // the package's filed history when the bytes are accepted, and the next
       // sequence diffs against that.
       sequence,
-      submissionType: parsed.data.submissionType ?? (sequence === '0000' ? 'original' : null),
+      // For FDA, the canonical term and codes the backbone declares (sweep F04,
+      // F08): the record kept the operator's word while the backbone carried
+      // whatever code the loose resolver guessed.
+      submissionType: fdaIdentity?.submissionType ?? parsed.data.submissionType ?? (sequence === '0000' ? 'original' : null),
+      ...(fdaIdentity
+        ? {
+            submissionTypeCode: fdaIdentity.submissionTypeCode,
+            submissionSubType: fdaIdentity.submissionSubType,
+            submissionSubTypeCode: fdaIdentity.submissionSubTypeCode,
+            submissionId: fdaIdentity.submissionId,
+          }
+        : {}),
       lifecycle: lifecycle
         ? { summary: lifecycle.summary, omittedCount: lifecycle.omitted.length }
         : undefined,

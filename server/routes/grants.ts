@@ -17,6 +17,7 @@ import { z } from 'zod';
 import { pool } from '../db';
 import { recordGovernedAction } from './c2c/actions';
 import { signedActAttempts, signGovernedAct } from './governed-signed-act';
+import { DECISION_ACT_MEANINGS } from '../services/part11/signature-meanings';
 import {
   createOpportunityTx,
   createProposalTx,
@@ -290,6 +291,8 @@ router.post('/awards/:id/closeout/finalize', signedActAttempts, async (req, res)
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   await signGovernedAct(req, res, {
     domain: 'grants',
+    target: `grant-award:${id}`,
+    meanings: DECISION_ACT_MEANINGS,
     codeStatus: CODE_STATUS,
     run: async (client, orgId, userId) => {
       const { closedAward } = await finalizeCloseoutTx(client, orgId, userId, id);
@@ -406,6 +409,8 @@ router.post('/subawards/:id/execute', signedActAttempts, async (req, res) => {
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   await signGovernedAct(req, res, {
     domain: 'grants',
+    target: `grant-subaward:${id}`,
+    meanings: DECISION_ACT_MEANINGS,
     codeStatus: CODE_STATUS,
     run: async (client, orgId, userId) => {
       await executeSubawardTx(client, orgId, userId, id);
@@ -514,6 +519,8 @@ router.post('/nce/:id/approve', signedActAttempts, async (req, res) => {
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
   await signGovernedAct(req, res, {
     domain: 'grants',
+    target: `grant-nce:${id}`,
+    meanings: DECISION_ACT_MEANINGS,
     codeStatus: CODE_STATUS,
     run: async (client, orgId, userId) => {
       const { newEndDate } = await approveNceTx(client, orgId, userId, id, parsed.data.authority);

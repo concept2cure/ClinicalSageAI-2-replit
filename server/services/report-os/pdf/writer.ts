@@ -99,6 +99,27 @@ export class Writer {
   }
 }
 
+/**
+ * The PDF's metadata states the export it belongs to: created and modified at
+ * the export time printed on its pages, the export id as its subject, the
+ * platform as its producer. pdf-lib otherwise stamps the wall clock and its own
+ * name at PDFDocument.create(), so the metadata named a time no page printed and
+ * two renders of one export differed. With this the bytes are a function of the
+ * recorded export, so the sha256 the route records on the audit chain can be
+ * re-verified by rendering again. An export time that is not a time refuses:
+ * nothing is rendered under a date that was never recorded.
+ */
+export function stampExportIdentity(pdf: PDFDocument, id: { title: string; exportId: string; exportedAt: string }) {
+  const at = new Date(id.exportedAt);
+  if (Number.isNaN(at.getTime())) throw new Error('The export time is not a valid time; the PDF was not rendered.');
+  pdf.setTitle(id.title);
+  pdf.setSubject(`Export ${id.exportId}`);
+  pdf.setProducer('Concept2Cure Reporting');
+  pdf.setCreator('Concept2Cure');
+  pdf.setCreationDate(at);
+  pdf.setModificationDate(at);
+}
+
 /** The footer on every page, "page n of N" included by the caller's text. */
 export function stampFooters(w: Writer, font: PDFFont, footer: (page: number, total: number) => string) {
   const total = w.pages.length;

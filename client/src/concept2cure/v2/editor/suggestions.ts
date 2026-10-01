@@ -36,6 +36,19 @@
  * recognise falls back to the original paragraph behaviour: text is never
  * dropped, only ever left as-is.
  *
+ * `proposeReplacement` is the door AnA's ANCHORED proposals come through: a
+ * quoted passage of the section, and what AnA would put in its place. It finds
+ * the quote, requires that it names exactly one place, and redlines it — the
+ * quote struck, the replacement inserted after it, both under the same
+ * attribution. It refuses, with a reason the person is shown, anything it
+ * cannot place honestly (see ProposeRefusal).
+ *
+ * Both doors keep one contract: Reject all leaves the section exactly as it
+ * was, Accept all leaves exactly what was proposed. Drafted blocks therefore
+ * never split a paragraph, and a paragraph a suggestion made (or wholly
+ * replaced) goes with it when that suggestion is decided away — see
+ * "Placing drafted content" and `ownsBlock`.
+ *
  * KNOWN v1 LIMITS (deliberate, documented rather than hidden):
  *   - Only same-textblock deletions are reinterpreted as suggestions.
  *     Structural edits (joining/splitting paragraphs, deleting across block
@@ -50,12 +63,14 @@
  *     verbatim as paragraph text rather than being reinterpreted or dropped.
  */
 
-import { Extension, Mark, type CommandProps } from '@tiptap/core';
-import { Plugin, PluginKey, TextSelection } from '@tiptap/pm/state';
+import { Extension, Mark, type CommandProps, type Editor } from '@tiptap/core';
+import { Plugin, PluginKey, Selection, TextSelection } from '@tiptap/pm/state';
 import type { Transaction } from '@tiptap/pm/state';
 import { ReplaceStep, Transform } from '@tiptap/pm/transform';
 import { Fragment, Slice } from '@tiptap/pm/model';
-import type { Node as PMNode, Mark as PMMark, Schema } from '@tiptap/pm/model';
+import type { Node as PMNode, Mark as PMMark, MarkType, ResolvedPos, Schema } from '@tiptap/pm/model';
+
+import type { FindMatch } from './findReplace';
 
 /* ── Attribution ──────────────────────────────────────────────── */
 
@@ -79,6 +94,21 @@ function minuteBucket(now = new Date()): string {
   const iso = now.toISOString();
   return iso.slice(0, 16) + ':00Z'; // YYYY-MM-DDTHH:MM:00Z
 }
+
+/** The attributes a suggestion mark carries. A struck quote and AnA's
+ *  replacement are one suggestion from one author and one turn, so both are
+ *  made from the same call; a selection the person struck for a draft is
+ *  theirs, made from their author at the same minute. */
+function suggestionMarkAttrs(author: SuggestionAuthor, at: string) {
+  return {
+    authorId: author.id,
+    authorName: author.name,
+    at,
+    sourceRecord: author.sourceRecord ?? null,
+  };
+}
+
+type SuggestionMarkAttrs = ReturnType<typeof suggestionMarkAttrs>;
 
 /* Transactions carrying this meta are the editor's own suggestion machinery
    (accept/reject/AI-insert) and must not be reinterpreted by the plugin. */
@@ -111,6 +141,30 @@ const suggestionAttrs = {
   },
 };
 
+/**
+ * `ownsBlock`: this suggestion is the whole reason its paragraph exists (an
+ * insertion), or the whole of what the paragraph said (a deletion), so the
+ * decision that takes its text away takes the paragraph too — rejecting a
+ * drafted paragraph, accepting the strike of a replaced one. Without it the
+ * decision left an empty paragraph standing where the draft had been, and a
+ * rejected redline was not the section as it was (2026-10-01, 2-fixes.txt
+ * finding 1). Set only by the doors that create or replace whole blocks
+ * (insertSuggestedContent, proposeReplacement), never by typing: an empty
+ * paragraph a person typed into was there before them, and stays.
+ *
+ * Carried in the saved HTML as `data-owns-block`, because a redline is
+ * decided after a reload as often as before one. Removing the paragraph is
+ * still conditional at decision time — see deleteDecided.
+ */
+const ownsBlockAttr = {
+  ownsBlock: {
+    default: false,
+    parseHTML: (el: HTMLElement) => el.getAttribute('data-owns-block') === 'true',
+    renderHTML: (attrs: Record<string, unknown>) =>
+      attrs.ownsBlock ? { 'data-owns-block': 'true' } : {},
+  },
+};
+
 /* ── The two suggestion marks ─────────────────────────────────── */
 
 export const InsertionMark = Mark.create({
@@ -123,7 +177,7 @@ export const InsertionMark = Mark.create({
   // Above StarterKit marks so nothing else claims <ins> first.
   priority: 1000,
   addAttributes() {
-    return suggestionAttrs;
+    return { ...suggestionAttrs, ...ownsBlockAttr };
   },
   parseHTML() {
     return [{ tag: 'ins' }];
@@ -142,7 +196,7 @@ export const DeletionMark = Mark.create({
   // Typing at the edge of struck text must not extend the strike.
   inclusive: false,
   addAttributes() {
-    return suggestionAttrs;
+    return { ...suggestionAttrs, ...ownsBlockAttr };
   },
   parseHTML() {
     return [{ tag: 'del' }];
@@ -236,6 +290,139 @@ function markFragmentDeleted(
     nodes.push(hasDel ? node : node.mark(delMark.addToSet(node.marks)));
   });
   return Fragment.from(nodes);
+}
+
+/**
+ * Strike `ranges` in `t` as a pending deletion under `attrs`, and return
+ * where the last of them now ends. (Ranges, not one range: a table cell
+ * selection is one range per cell, and the text between the cells it names is
+ * not selected.)
+ *
+ * The rule is markFragmentDeleted's, the one a hand deletion gets from the
+ * tracking plugin: a pending insertion inside the range really goes (the
+ * person selected it to be replaced, and withdrawing a proposal is not a
+ * change to the record), text already struck keeps its original attribution,
+ * everything else gains this deletion mark. Only inline content is struck, so
+ * a selection that spans paragraphs leaves the paragraphs standing with their
+ * text struck, rather than joining them untracked.
+ *
+ * Text struck as the WHOLE of its paragraph is marked as owning it
+ * (ownsBlockAttr): it was everything the paragraph said, so accepting the
+ * strike takes the emptied paragraph too, as accepting a replacement should.
+ *
+ * Returns null, with `t` untouched, when any of the text to strike cannot
+ * carry the deletion mark: inline code (its mark excludes every other) or a
+ * code block (it allows no marks at all). addMark skipped that text without a
+ * word, so the proposal reported success with the quote standing unstruck, and
+ * Accept all kept words nobody proposed to keep beside the replacement
+ * (2026-10-01, 2-fixes-round2.txt D1). All of it is checked before anything is
+ * marked, so a range that is half code changes nothing either.
+ */
+function strikeRanges(
+  t: Transform,
+  ranges: readonly FindMatch[],
+  deletionType: MarkType,
+  attrs: SuggestionMarkAttrs,
+): number | null {
+  const { insertion, deletion } = t.doc.type.schema.marks;
+  const firstStep = t.steps.length;
+  const strike: Array<FindMatch & { whole: boolean }> = [];
+  const withdraw: FindMatch[] = [];
+  let unmarkable = false;
+  for (const { from, to } of ranges) {
+    t.doc.nodesBetween(from, to, (node, pos, parent) => {
+      if (!node.isInline) return true;
+      const a = Math.max(from, pos);
+      const b = Math.min(to, pos + node.nodeSize);
+      if (b <= a) return false;
+      if (insertion.isInSet(node.marks)) withdraw.push({ from: a, to: b });
+      else if (!deletion.isInSet(node.marks)) {
+        if (!canCarry(parent, node, deletionType)) unmarkable = true;
+        const $a = t.doc.resolve(a);
+        const whole = $a.parent.type.name === 'paragraph' && from <= $a.start() && to >= $a.end();
+        strike.push({ from: a, to: b, whole });
+      }
+      return false;
+    });
+  }
+  if (unmarkable) return null;
+  // Marks first: adding one moves nothing, so the recorded ranges stay valid.
+  for (const r of strike) t.addMark(r.from, r.to, deletionType.create({ ...attrs, ownsBlock: r.whole }));
+  // Then the withdrawals, last first, so earlier positions survive.
+  withdraw.sort((x, y) => y.from - x.from);
+  for (const r of withdraw) t.delete(r.from, r.to);
+  const end = Math.max(...ranges.map((r) => r.to));
+  return t.mapping.slice(firstStep).map(end, -1);
+}
+
+/** Whether `node`, inside `parent`, can take a mark of `type` — what addMark
+ *  would silently skip otherwise. */
+function canCarry(parent: PMNode | null, node: PMNode, type: MarkType): boolean {
+  if (parent && !parent.type.allowsMarkType(type)) return false;
+  const mark = type.create();
+  return Boolean(mark.isInSet(mark.addToSet(node.marks)));
+}
+
+/**
+ * Remove the text of a decided suggestion — a rejected insertion, an accepted
+ * deletion — and, when that text is the whole of a paragraph it owns
+ * (ownsBlockAttr), the paragraph with it.
+ *
+ * Checked now, at the decision, not when the mark was made: a paragraph keeps
+ * standing if anything else is in it by then (a person typed into the draft),
+ * if any of its text is not owned (the empty paragraph a draft was poured
+ * into, which was there before it), or if its container needs it (the only
+ * paragraph of a table cell — the emptied table goes as a whole in
+ * pruneEmptiedContainers instead).
+ *
+ * A list item is the exception to "its container needs it": an item whose
+ * only content is that paragraph was nothing but those words, so the item
+ * goes with them — accepting the strike of a whole item left an empty bullet
+ * where the item had been, and rejecting AnA's drafted items left one bullet
+ * per item (2026-10-01, 2-fixes-round2.txt D3). Unless it is the list's last
+ * item: then the list goes as a whole in pruneEmptiedContainers.
+ */
+function deleteDecided(tr: Transform, from: number, to: number, type: MarkType): void {
+  const $from = tr.doc.resolve(from);
+  const block = $from.parent;
+  if (
+    block.type.name === 'paragraph' &&
+    $from.depth > 0 &&
+    from === $from.start() &&
+    to === $from.end() &&
+    ownedThroughout(block, type)
+  ) {
+    const container = $from.node($from.depth - 1);
+    const index = $from.index($from.depth - 1);
+    if (container.canReplace(index, index + 1)) {
+      tr.delete($from.before(), $from.after());
+      return;
+    }
+    if (LIST_ITEMS.has(container.type.name) && container.childCount === 1 && $from.depth > 1) {
+      const list = $from.node($from.depth - 2);
+      const item = $from.index($from.depth - 2);
+      if (list.canReplace(item, item + 1)) {
+        tr.delete($from.before($from.depth - 1), $from.after($from.depth - 1));
+        return;
+      }
+    }
+  }
+  tr.delete(from, to);
+}
+
+/** The nodes that are one item of a list. */
+const LIST_ITEMS = new Set(['listItem', 'taskItem']);
+const LISTS = new Set(['bulletList', 'orderedList', 'taskList']);
+
+/** Whether every inline node of `block` carries `type` as owning the block. */
+function ownedThroughout(block: PMNode, type: MarkType): boolean {
+  if (block.childCount === 0) return false;
+  let owned = true;
+  block.forEach((child) => {
+    const mark = type.isInSet(child.marks);
+    if (!mark || !mark.attrs.ownsBlock) owned = false;
+  });
+  return owned;
 }
 
 /* ── Emptied-structure cleanup ────────────────────────────────── */
@@ -584,6 +771,302 @@ function structuredNodes(schema: Schema, clean: string, mark: PMMark): PMNode[] 
   return out;
 }
 
+/**
+ * Proposed text → nodes carrying the pending `mark`: the markdown subset where
+ * it converts soundly, flat paragraphs — the behaviour that shipped — the
+ * moment anything about that conversion is not. Text is never dropped either
+ * way. Shared by insertSuggestedContent and proposeReplacement so the two
+ * doors read AnA's text identically.
+ */
+function draftNodes(schema: Schema, clean: string, mark: PMMark): PMNode[] {
+  let nodes: PMNode[];
+  try {
+    nodes = structuredNodes(schema, clean, mark);
+  } catch {
+    nodes = [];
+  }
+  return nodes.length ? nodes : plainParagraphNodes(schema, clean, mark);
+}
+
+/* ── Placing drafted content so a decision can take it back out ── */
+
+/*
+ * The contract every door below keeps (2026-10-01, 2-fixes.txt finding 1):
+ * Reject all leaves the section exactly as it was, and Accept all leaves
+ * exactly what was proposed. It did not: content was put in with ProseMirror's
+ * fitting, which splits the paragraph at the caret to make room for a block —
+ * a split that is structure, so no mark recorded it and no decision undid it.
+ * Rejecting a two-paragraph replacement in mid-sentence left the sentence in
+ * two halves with empty paragraphs between them.
+ *
+ * So drafted blocks never split a paragraph. They go BETWEEN blocks — after
+ * the paragraph, or before it when the caret is at its start — and every text
+ * node in them owns its paragraph (ownsBlockAttr), so rejecting the draft
+ * removes the paragraphs it made rather than emptying them. Where the draft
+ * continues text that is already there (a replacement after its struck
+ * quote, a draft poured into an empty paragraph), its first paragraph goes
+ * inline into that paragraph, not owning it, and the rest follow as blocks.
+ *
+ * Two more rules keep the saved HTML able to say what the live editor says:
+ *
+ *   - An inline edit's edge space is dropped where the document already has
+ *     a space at that edge (or a paragraph boundary). HTML collapses the two
+ *     into one when the section is reloaded, and the one it kept was inside
+ *     <ins>: '25 C' → '30 C ' before ' for use.' reloaded as
+ *     `<ins>30 C </ins>for use.`, so Reject all gave "25 Cfor use."
+ *     (2026-10-01, 2-fixes-round2.txt D2). See fitEdges.
+ *   - Blocks replacing the whole of a list item cannot go inside the item:
+ *     accepting would leave its emptied first paragraph (an item must start
+ *     with one) and the draft nested under a blank bullet. A list goes in as
+ *     sibling items after the struck one; paragraphs stay in the item, the
+ *     first continuing it; anything else is refused (D3). See wholeListItem.
+ *
+ * KNOWN LIMIT (StarterKit's TrailingNode, not this module): ANY transaction —
+ * a proposal anywhere in the section, a decision, a keystroke, even a click —
+ * on a section whose last top-level block is not a paragraph (a list, a table,
+ * a heading, a code block) appends an empty paragraph after it. That paragraph
+ * is the editor's, carries no mark and no decision removes it, so a section
+ * loaded ending in a list or table reads one empty paragraph longer after
+ * Reject all than it was loaded. It is empty, and indistinguishable from an
+ * empty last paragraph the author kept.
+ */
+
+type Draft =
+  | { kind: 'none' }
+  | { kind: 'inline'; content: Fragment }
+  | { kind: 'blocks'; nodes: PMNode[] };
+
+/** Strip blank lines at either end and nothing else: the spaces at the edges
+ *  of an inline edit are part of the edit ('25 C ' → '30 C '), and trimming
+ *  them took a word's separating space out of the record with no mark. */
+function withoutBlankEdges(text: string): string {
+  return text.replace(/^(?:[ \t]*\r?\n)+/, '').replace(/(?:\r?\n[ \t]*)+$/, '');
+}
+
+/** `content` with its insertion marks set to own, or not own, their block. */
+function withOwnership(content: Fragment, type: MarkType, owns: boolean): Fragment {
+  const nodes: PMNode[] = [];
+  content.forEach((node) => {
+    nodes.push(
+      node.mark(node.marks.map((m) => (m.type === type ? type.create({ ...m.attrs, ownsBlock: owns }) : m))),
+    );
+  });
+  return Fragment.fromArray(nodes);
+}
+
+/** Drafted text as blocks (the markdown subset), every text node owning its block. */
+function draftBlocks(schema: Schema, text: string, attrs: SuggestionMarkAttrs): Draft {
+  const clean = text.trim();
+  if (!clean) return { kind: 'none' };
+  const nodes = draftNodes(schema, clean, schema.marks.insertion.create({ ...attrs, ownsBlock: true }));
+  return { kind: 'blocks', nodes };
+}
+
+/** A replacement: one plain paragraph is an INLINE edit, its whitespace kept;
+ *  anything else is blocks. */
+function replacementDraft(schema: Schema, text: string, attrs: SuggestionMarkAttrs): Draft {
+  const body = withoutBlankEdges(text ?? '');
+  if (!body) return { kind: 'none' };
+  const one = draftNodes(schema, body, schema.marks.insertion.create(attrs));
+  if (one.length === 1 && one[0].type === schema.nodes.paragraph) {
+    return one[0].content.size ? { kind: 'inline', content: one[0].content } : { kind: 'none' };
+  }
+  return draftBlocks(schema, body, attrs);
+}
+
+/**
+ * How a draft relates to the place it goes:
+ *   - caret: new content at a collapsed caret — its own paragraphs;
+ *   - selection: replacing text the person selected and struck;
+ *   - quote: replacing a passage AnA quoted and struck.
+ * The two replacements differ in one case only: blocks for words in the
+ * middle of a sentence. The person chose that selection and asked for the
+ * draft, so it goes after the paragraph; AnA's quote is refused (`structural`)
+ * rather than redlined somewhere it did not name.
+ */
+type Placing = 'caret' | 'selection' | 'quote';
+
+/**
+ * Put `text` into `t` at `at` as a pending insertion under `attrs`, by the
+ * rules above. Returns where the inserted content ends, or null — with `t`
+ * untouched — when it cannot go there reversibly.
+ */
+function placeDraft(
+  t: Transform,
+  at: number,
+  text: string,
+  attrs: SuggestionMarkAttrs,
+  placing: Placing,
+): number | null {
+  const schema = t.doc.type.schema;
+  const insertion = schema.marks.insertion;
+  const draft = placing === 'caret' ? draftBlocks(schema, text, attrs) : replacementDraft(schema, text, attrs);
+  if (draft.kind === 'none') return at;
+  const $at = t.doc.resolve(at);
+
+  // Between blocks (the end of a table-cell selection, a gap cursor): only
+  // blocks can go here, and an inline replacement becomes its own paragraph,
+  // whose edges are paragraph boundaries (fitEdges).
+  if (!$at.parent.isTextblock) {
+    const nodes =
+      draft.kind === 'blocks'
+        ? draft.nodes
+        : [schema.nodes.paragraph.create(null, withOwnership(trimEdges(draft.content, true, true), insertion, true))];
+    return insertBetween(t, at, null, at, nodes) ?? insertBetween(t, at, null, at, plainOwned(schema, text, attrs));
+  }
+
+  if (draft.kind === 'inline') {
+    const content = fitEdges(draft.content, $at);
+    if (!content.size) return at;
+    if (!$at.parent.canReplace($at.index(), $at.index(), content)) return null;
+    t.step(new ReplaceStep(at, at, new Slice(content, 0, 0)));
+    return at + content.size;
+  }
+
+  const empty = $at.parent.content.size === 0;
+  const atEnd = at === $at.end();
+  const atStart = at === $at.start();
+
+  // Replacing the whole of a list item: its own rule (wholeListItem), and no
+  // falling back to flat paragraphs — '## Heading' kept as literal text in the
+  // item is not what was proposed either.
+  if (placing !== 'caret' && wholeListItem($at)) {
+    const nodes = draft.nodes;
+    if (nodes.every((n) => LISTS.has(n.type.name))) {
+      const items: PMNode[] = [];
+      for (const list of nodes) list.forEach((item) => items.push(item));
+      return insertBetween(t, $at.after($at.depth - 1), null, at, items);
+    }
+    if (nodes[0].type !== schema.nodes.paragraph) return null;
+  }
+
+  const attempt = (nodes: PMNode[]): number | null => {
+    if (!nodes.length) return at;
+    // A quote ending mid-sentence has no block boundary to put blocks at.
+    if (placing === 'quote' && !atEnd) return null;
+    // Whether the first paragraph continues the textblock `at` is in: the
+    // text after a struck quote or selection that ends its paragraph, or a
+    // caret's empty paragraph.
+    const continues =
+      nodes[0].type === schema.nodes.paragraph && (placing === 'caret' ? empty : atEnd);
+    // New paragraphs before the caret's paragraph when the caret is at its
+    // start (or it is empty and the draft does not open with a paragraph,
+    // keeping that empty paragraph after the draft, where the caret was);
+    // after it otherwise.
+    const before = placing === 'caret' && !continues && (empty || atStart);
+    const boundary = before ? $at.before() : $at.after();
+    const rest = continues ? nodes.slice(1) : nodes;
+    const lead = continues ? leadOf(nodes[0], insertion, $at) : null;
+    if (!lead && !rest.length) return at;
+    return insertBetween(t, boundary, lead, at, rest);
+  };
+  return attempt(draft.nodes) ?? attempt(plainOwned(schema, text, attrs));
+}
+
+/** A draft's first paragraph continuing the textblock at `$at`: inline
+ *  content not owning that block, ending at a paragraph boundary, so the same
+ *  edge rule as an inline edit applies (fitEdges). Null when nothing is left. */
+function leadOf(paragraph: PMNode, insertion: MarkType, $at: ResolvedPos): Fragment | null {
+  const lead = fitEdges(withOwnership(paragraph.content, insertion, false), $at);
+  return lead.size ? lead : null;
+}
+
+/**
+ * Whether `$at` ends a paragraph that is the whole of a list item and is
+ * struck throughout as owning it — the item a replacement is replacing. Its
+ * strike, accepted, takes the item (deleteDecided); what replaces it has to be
+ * able to stand where the item stood.
+ */
+function wholeListItem($at: ResolvedPos): boolean {
+  if ($at.depth < 2 || $at.parent.type.name !== 'paragraph' || $at.pos !== $at.end()) return false;
+  const item = $at.node($at.depth - 1);
+  return (
+    LIST_ITEMS.has(item.type.name) &&
+    item.childCount === 1 &&
+    ownedThroughout($at.parent, $at.doc.type.schema.marks.deletion)
+  );
+}
+
+/**
+ * `content`, an inline edit going in at `$at`, without an edge space the
+ * document already has there.
+ *
+ * HTML collapses a run of spaces across the <ins> boundary, and drops a space
+ * at the start or end of a paragraph, when the section is loaded again. So a
+ * space on the edge of an insertion next to the document's own space (or a
+ * paragraph boundary, or a line break before it) does not survive a save: one
+ * of the two is gone after the reload, and when the one kept is the
+ * insertion's, Reject all takes the document's space out with it. Dropping
+ * the insertion's copy means no space is ever owned only by a suggestion where
+ * the document already has one (2026-10-01, 2-fixes-round2.txt D2). A space
+ * the document does not have is part of the edit, and stays.
+ */
+function fitEdges(content: Fragment, $at: ResolvedPos): Fragment {
+  const before = $at.nodeBefore;
+  const after = $at.nodeAfter;
+  const spaceBefore =
+    !before || before.type.name === 'hardBreak' || (before.isText && /\s$/.test(before.text ?? ''));
+  const spaceAfter = !after || (after.isText && /^\s/.test(after.text ?? ''));
+  return trimEdges(content, spaceBefore, spaceAfter);
+}
+
+/** `content` with the whitespace at its start and/or end removed. */
+function trimEdges(content: Fragment, start: boolean, end: boolean): Fragment {
+  const nodes: PMNode[] = [];
+  content.forEach((node) => nodes.push(node));
+  // Several text nodes can make up an edge (a bold word, then a space), and
+  // one that was nothing but whitespace goes entirely.
+  while (start && nodes.length && nodes[0].isText) {
+    const text = (nodes[0].text ?? '').replace(/^\s+/, '');
+    if (text) {
+      nodes[0] = nodes[0].type.schema.text(text, nodes[0].marks);
+      break;
+    }
+    nodes.shift();
+  }
+  while (end && nodes.length && nodes[nodes.length - 1].isText) {
+    const last = nodes[nodes.length - 1];
+    const text = (last.text ?? '').replace(/\s+$/, '');
+    if (text) {
+      nodes[nodes.length - 1] = last.type.schema.text(text, last.marks);
+      break;
+    }
+    nodes.pop();
+  }
+  return Fragment.fromArray(nodes);
+}
+
+/** The floor every structured draft falls back to: flat paragraphs, owned. */
+function plainOwned(schema: Schema, text: string, attrs: SuggestionMarkAttrs): PMNode[] {
+  const clean = text.trim();
+  return clean ? plainParagraphNodes(schema, clean, schema.marks.insertion.create({ ...attrs, ownsBlock: true })) : [];
+}
+
+/**
+ * Insert `blocks` at the block boundary `boundary` and, when given, `lead` as
+ * inline content at `at` (which is before the boundary), all or nothing.
+ * Returns where the last inserted content ends, or null with `t` untouched.
+ */
+function insertBetween(
+  t: Transform,
+  boundary: number,
+  lead: Fragment | null,
+  at: number,
+  blocks: PMNode[],
+): number | null {
+  const frag = Fragment.fromArray(blocks);
+  const $b = t.doc.resolve(boundary);
+  if (frag.size && !$b.parent.canReplace($b.index(), $b.index(), frag)) return null;
+  const $at = t.doc.resolve(at);
+  if (lead && !$at.parent.canReplace($at.index(), $at.index(), lead)) return null;
+  if (!frag.size && !lead) return null;
+  // The boundary first: it is after `at`, so the lead's position still holds.
+  if (frag.size) t.step(new ReplaceStep(boundary, boundary, new Slice(frag, 0, 0)));
+  if (lead) t.step(new ReplaceStep(at, at, new Slice(lead, 0, 0)));
+  const leadSize = lead ? lead.size : 0;
+  return frag.size ? boundary + frag.size + leadSize : at + leadSize;
+}
+
 /* ── The tracking plugin ──────────────────────────────────────── */
 
 interface TrackChangesStorage {
@@ -647,6 +1130,8 @@ declare module '@tiptap/core' {
        * `text` is read as the markdown subset documented above: tables,
        * headings and lists become real nodes, anything else becomes
        * paragraphs, and every node carries the pending `insertion` mark.
+       * Selected text is not removed: it is struck as a pending deletion by
+       * the same author, and the content goes in after it.
        */
       insertSuggestedContent: (text: string, author: SuggestionAuthor) => ReturnType;
       /**
@@ -912,7 +1397,7 @@ export const TrackChanges = Extension.create<
           if (keepText) {
             tr.removeMark(range.from, range.to, range.kind === 'insertion' ? insertion : deletion);
           } else {
-            tr.delete(range.from, range.to);
+            deleteDecided(tr, range.from, range.to, range.kind === 'insertion' ? insertion : deletion);
             pruneEmptiedContainers(tr, [range.from]);
           }
           tr.setMeta(SUGGESTION_ACTION_META, true);
@@ -942,7 +1427,7 @@ export const TrackChanges = Extension.create<
             if (keepText) {
               tr.removeMark(r.from, r.to, r.kind === 'insertion' ? insertion : deletion);
             } else {
-              tr.delete(r.from, r.to);
+              deleteDecided(tr, r.from, r.to, r.kind === 'insertion' ? insertion : deletion);
               removedAt.push(r.from);
             }
           }
@@ -956,44 +1441,44 @@ export const TrackChanges = Extension.create<
       insertSuggestedContent:
         (text: string, author: SuggestionAuthor) =>
         ({ state, tr, dispatch }) => {
-          const clean = (text ?? '').trim();
-          if (!clean) return false;
-          const { insertion } = state.schema.marks;
-          const mark = insertion.create({
-            authorId: author.id,
-            authorName: author.name,
-            at: minuteBucket(),
-            sourceRecord: author.sourceRecord ?? null,
-          });
-          // AnA answers in markdown; a Module 3 answer IS a table. Convert the
-          // subset we understand into real nodes, and fall back to flat
-          // paragraphs — the behaviour that shipped — the moment anything about
-          // that conversion is not sound. Text is never dropped either way.
-          let nodes: PMNode[];
-          try {
-            nodes = structuredNodes(state.schema, clean, mark);
-          } catch {
-            nodes = [];
+          if (!(text ?? '').trim()) return false;
+          const bucket = minuteBucket();
+          const drafted = suggestionMarkAttrs(author, bucket);
+          // Built on a scratch Transform and copied over only once it is
+          // whole: inside a chain `tr` is the chain's transaction, which is
+          // dispatched even when this command returns false, so a half-built
+          // draft must never be written into it.
+          const t = new Transform(tr.doc);
+          let end: number | null;
+          if (!tr.selection.empty) {
+            /* A selection is text the draft REPLACES, and replacing is a
+               deletion. This ran `replaceSelection` straight over it under
+               SUGGESTION_ACTION_META — the meta that tells the tracking plugin
+               to leave the transaction alone — so the selected words left the
+               record with no mark, no author and nothing to reject. They are
+               struck now, and the draft goes in after them, by position — the
+               selection still covers the struck text — exactly as
+               proposeReplacement puts a replacement after its quote
+               (2026-10-01, D2 step 4).
+               The strike is the PERSON's: their selection chose what goes,
+               so it carries their name (this editor's author), not AnA's and
+               not AnA's turn record; the words that come in are AnA's
+               (2026-10-01, 2-fixes.txt finding 2). */
+            const ranges = tr.selection.ranges.map((r) => ({ from: r.$from.pos, to: r.$to.pos }));
+            const person = suggestionMarkAttrs(this.storage.author, bucket);
+            const at = strikeRanges(t, ranges, state.schema.marks.deletion, person);
+            // Text that cannot be struck (code): nothing changes, rather than
+            // a draft beside words that silently stay (2-fixes-round2.txt D1).
+            end = at == null ? null : placeDraft(t, at, text, drafted, 'selection');
+          } else {
+            // AnA answers in markdown; a Module 3 answer IS a table. Convert
+            // the subset we understand into real nodes (draftNodes), placed
+            // between blocks, never splitting the caret's paragraph.
+            end = placeDraft(t, tr.selection.from, text, drafted, 'caret');
           }
-          if (!nodes.length) nodes = plainParagraphNodes(state.schema, clean, mark);
-
-          let slice = new Slice(Fragment.fromArray(nodes), 0, 0);
-          try {
-            // Probe on a scratch Transform — NOT on `state.tr`, which inside a
-            // command IS this very transaction (tiptap's chainable state), so
-            // probing there would apply the draft twice. If this geometry
-            // cannot be fitted at the selection (a table inside a table cell,
-            // say), the real transaction must not be left half-applied.
-            const { from, to } = state.selection;
-            new Transform(state.doc).replaceRange(from, to, slice);
-          } catch {
-            slice = new Slice(
-              Fragment.fromArray(plainParagraphNodes(state.schema, clean, mark)),
-              0,
-              0,
-            );
-          }
-          tr.replaceSelection(slice);
+          if (end == null) return false;
+          for (const step of t.steps) tr.step(step);
+          tr.setSelection(Selection.near(tr.doc.resolve(end), -1));
           tr.setMeta(SUGGESTION_ACTION_META, true);
           /* Out of history as well, or it is the entry ⌘Z finds once the
              decision on it is not: undo after accepting a fresh draft deleted
@@ -1136,3 +1621,274 @@ export const TrackChanges = Extension.create<
     ];
   },
 });
+
+/* ── Anchored proposals (AnA's "replace this passage") ────────── */
+
+/**
+ * A passage of the section and what to put in its place, written the way the
+ * section reader (server/services/authoring/authoring-read.ts) showed AnA the
+ * section — so it is matched the way that reader writes it:
+ *   - `quote` is the words, case and all, not a guess at them; but every run
+ *     of whitespace, a non-breaking space included, is one space on both
+ *     sides, because the reader collapses what the editor keeps;
+ *   - `prefix`/`suffix` are the text just before and after it. When given,
+ *     they must fit the occurrence chosen — they are an anchor, not a hint.
+ *     The reader's block markers (`#` headings, `-` and `1.` list items, the
+ *     ` | ` between table cells) are not in the editor's text and are read
+ *     past; a paragraph break is whitespace.
+ * An empty `replacement` proposes a deletion and nothing else. A replacement
+ * that is one paragraph is an inline edit and keeps its whitespace; one that
+ * is several blocks goes in as blocks (see placeDraft).
+ */
+export interface ReplacementProposal {
+  quote: string;
+  replacement: string;
+  prefix?: string;
+  suffix?: string;
+}
+
+/**
+ * Why a proposal was not applied. Shown to the person, so each one says what
+ * is actually the case:
+ *   - not-found: the quote is not in the section as it stands, or its
+ *     prefix/suffix fit no occurrence of it. A quote that runs across a
+ *     paragraph, list item or table cell boundary is not found either: it
+ *     names no one run of text to strike, and is refused rather than guessed;
+ *   - ambiguous: it is there more than once, and the context did not single
+ *     one occurrence out — guessing would redline a place AnA did not mean;
+ *   - not-editable: the section cannot take suggestions (frozen, read-only,
+ *     source mode, or an editor without track changes);
+ *   - overlaps-suggestion: the quote is only found where it runs into text
+ *     that is already a pending suggestion. Striking someone's pending
+ *     insertion would turn their proposal into AnA's deletion of it, and
+ *     restriking struck text would take its attribution; that is for the
+ *     person to decide first;
+ *   - structural: the replacement is several paragraphs, a list or a table,
+ *     and the quote ends inside a sentence. Blocks there would split the
+ *     paragraph, a change no mark records and no rejection undoes. Likewise
+ *     blocks a list item cannot hold (a heading, a table) replacing the whole
+ *     of a list item;
+ *   - unsupported-content: the quote is, or runs through, text that cannot
+ *     carry a suggestion — inline code, a code block. It cannot be struck, so
+ *     a redline there would leave it standing beside the replacement.
+ */
+export type ProposeRefusal =
+  | 'not-found'
+  | 'ambiguous'
+  | 'not-editable'
+  | 'overlaps-suggestion'
+  | 'structural'
+  | 'unsupported-content';
+
+export type ProposeResult = { ok: true } | { ok: false; reason: ProposeRefusal };
+
+/** Whitespace as the reader writes it: any run, NBSP included, is one space.
+ *  A pipe is whitespace too, on both sides: the reader joins table cells with
+ *  ` | `, and a literal pipe in the text compares equal either way. */
+const comparable = (s: string): string => s.replace(/\|/g, ' ').replace(/\s+/g, ' ');
+
+/** A line start's reader marker: a heading's hashes, a list item's bullet or
+ *  number (indented when nested), a table caption's label. */
+const READER_MARKER = /^\s*(?:#{1,6}\s+|[-*+]\s+|\d{1,9}[.)]\s+|Table:\s+)/;
+
+/**
+ * Context as the editor's text would read it: the reader's line-start
+ * markers dropped. In a suffix the first line continues the quote's own
+ * line — its start is content, not a marker — so it is kept as written. (In a
+ * prefix the first line may be partial too; dropping what looks like a marker
+ * there only shortens what has to match, never adds to it.)
+ */
+function withoutReaderMarkers(text: string, firstLineIsContent: boolean): string {
+  return text
+    .split(/\r?\n/)
+    .map((line, i) => (i === 0 && firstLineIsContent ? line : line.replace(READER_MARKER, '')))
+    .join('\n');
+}
+
+/** Whether the text around `m` carries the given prefix and suffix. Text
+ *  inside pending suggestions is compared as plain text, where the reader
+ *  labels it; context running through one does not fit, and is refused. */
+function contextFits(doc: PMNode, m: FindMatch, prefix?: string, suffix?: string): boolean {
+  // Each read both ways — markers read past, and as written — because a
+  // paragraph's REAL text can start with what looks like one ('- 5 mg daily.',
+  // '1. high'), and stripping it then made context that is literally there
+  // fail to fit (2026-10-01, 2-fixes-round2.txt D5). Either reading fitting is
+  // the text being there; neither fitting is still a refusal.
+  if (prefix && prefix.trim()) {
+    // Block boundaries and inline atoms read as whitespace, as they do in the
+    // section text a reader is given.
+    const before = comparable(doc.textBetween(0, m.from, ' ', ' ')).trimEnd();
+    const fits = (p: string) => before.endsWith(comparable(p).trimEnd());
+    if (!fits(withoutReaderMarkers(prefix, false)) && !fits(prefix)) return false;
+  }
+  if (suffix && suffix.trim()) {
+    const after = comparable(doc.textBetween(m.to, doc.content.size, ' ', ' ')).trimStart();
+    const fits = (s: string) => after.startsWith(comparable(s).trimStart());
+    if (!fits(withoutReaderMarkers(suffix, true)) && !fits(suffix)) return false;
+  }
+  return true;
+}
+
+/** Whether any inline content in `m` is already a pending suggestion. */
+function touchesSuggestion(doc: PMNode, m: FindMatch): boolean {
+  const { insertion, deletion } = doc.type.schema.marks;
+  let hit = false;
+  doc.nodesBetween(m.from, m.to, (node) => {
+    if (hit) return false;
+    if (!node.isInline) return true;
+    if (insertion.isInSet(node.marks) || deletion.isInSet(node.marks)) hit = true;
+    return false;
+  });
+  return hit;
+}
+
+/** Stands in for a non-text inline node (a hard break, an inline atom): no
+ *  quote contains it, so no match crosses one. */
+const INLINE_ATOM = '\u0000';
+
+/**
+ * Every occurrence of `quote` in `doc`, overlapping ones included (for
+ * counting, "aa" is in "aaa" twice). Matching is per textblock, over its text
+ * with each whitespace run read as one space; each character keeps the
+ * document range it stands for, so a match strikes exactly the characters —
+ * the whole run of spaces — it read.
+ */
+function quoteMatches(doc: PMNode, quote: string): FindMatch[] {
+  // Pipes stay pipes here: a quote is the words of one textblock, where a
+  // pipe is content, never the reader's cell separator.
+  const needle = quote.replace(/\s+/g, ' ');
+  const out: FindMatch[] = [];
+  doc.descendants((node, pos) => {
+    if (!node.isTextblock) return true;
+    let text = '';
+    const from: number[] = [];
+    const to: number[] = [];
+    let inSpace = false;
+    node.forEach((child, offset) => {
+      const start = pos + 1 + offset;
+      if (!child.isText) {
+        text += INLINE_ATOM;
+        from.push(start);
+        to.push(start + child.nodeSize);
+        inSpace = false;
+        return;
+      }
+      const chars = child.text ?? '';
+      for (let i = 0; i < chars.length; i++) {
+        const space = /\s/.test(chars[i]);
+        if (space && inSpace) {
+          to[to.length - 1] = start + i + 1;
+          continue;
+        }
+        text += space ? ' ' : chars[i];
+        from.push(start + i);
+        to.push(start + i + 1);
+        inSpace = space;
+      }
+    });
+    for (let at = text.indexOf(needle); at !== -1; at = text.indexOf(needle, at + 1)) {
+      out.push({ from: from[at], to: to[at + needle.length - 1] });
+    }
+    return false;
+  });
+  return out;
+}
+
+/**
+ * The one place `proposal` names, or why there is not exactly one.
+ *
+ * Occurrences that run into a pending suggestion are not counted: they cannot
+ * be redlined (see overlaps-suggestion), so they cannot make a live occurrence
+ * ambiguous either; when they are the only ones, that is the refusal. Given
+ * context must fit: the one occurrence a contradicting prefix or suffix
+ * "describes" is not the passage AnA read.
+ */
+function locateProposal(
+  doc: PMNode,
+  proposal: ReplacementProposal,
+): FindMatch | 'not-found' | 'ambiguous' | 'overlaps-suggestion' {
+  const quote = proposal.quote ?? '';
+  if (!quote.trim()) return 'not-found';
+  const matches = quoteMatches(doc, quote);
+  if (matches.length === 0) return 'not-found';
+  const live = matches.filter((m) => !touchesSuggestion(doc, m));
+  if (live.length === 0) return 'overlaps-suggestion';
+  const anchored = Boolean(proposal.prefix?.trim() || proposal.suffix?.trim());
+  const fitting = anchored ? live.filter((m) => contextFits(doc, m, proposal.prefix, proposal.suffix)) : live;
+  if (fitting.length === 0) return 'not-found';
+  return fitting.length === 1 ? fitting[0] : 'ambiguous';
+}
+
+/**
+ * Redline the one passage `proposal.quote` names: strike it as a pending
+ * deletion by `author` and insert `replacement` (the markdown subset, as
+ * insertSuggestedContent reads it) as a pending insertion by `author` right
+ * after it. Both carry the same author, minute and turn record.
+ *
+ * Nothing changes unless the result is `{ ok: true }`. The transaction is the
+ * editor's own suggestion machinery (SUGGESTION_ACTION_META, so the tracking
+ * plugin does not re-attribute it to the person whose editor it is) and is not
+ * an undo entry — the same rule, for the same reason, as insertSuggestedContent:
+ * a proposal is withdrawn by rejecting it, which is recorded.
+ *
+ * The person's caret and scroll stay where they were. A proposal arrives from
+ * the conversation while someone may be typing in the section; it used to
+ * move their caret to the end of the redline and scroll there, so the next
+ * keystroke landed inside AnA's proposal. The selection is mapped through the
+ * change instead — the same words stay selected — and nothing scrolls (see
+ * keptSelection for the one position that needed more than mapping).
+ */
+export function proposeReplacement(
+  editor: Editor,
+  proposal: ReplacementProposal & { author: SuggestionAuthor },
+): ProposeResult {
+  if (editor.isDestroyed || !editor.isEditable) return { ok: false, reason: 'not-editable' };
+  const { state } = editor;
+  const { insertion, deletion } = state.schema.marks;
+  if (!insertion || !deletion) return { ok: false, reason: 'not-editable' };
+
+  const target = locateProposal(state.doc, proposal);
+  if (typeof target === 'string') return { ok: false, reason: target };
+
+  const attrs = suggestionMarkAttrs(proposal.author, minuteBucket());
+  const t = new Transform(state.doc);
+  // The range holds no suggestion (locateProposal), so this is a plain strike
+  // — of text that can take one, or of nothing.
+  const at = strikeRanges(t, [target], deletion, attrs);
+  if (at == null) return { ok: false, reason: 'unsupported-content' };
+  if (placeDraft(t, at, proposal.replacement ?? '', attrs, 'quote') == null) {
+    // A textblock that takes no marks takes no insertion either; anything
+    // else that cannot go there is a question of structure.
+    const placeable = t.doc.resolve(at).parent.type.allowsMarkType(insertion);
+    return { ok: false, reason: placeable ? 'structural' : 'unsupported-content' };
+  }
+  const tr = state.tr;
+  for (const step of t.steps) tr.step(step);
+  const kept = keptSelection(state.selection, tr);
+  if (kept) tr.setSelection(kept);
+  tr.setMeta(SUGGESTION_ACTION_META, true);
+  tr.setMeta('addToHistory', false);
+  editor.view.dispatch(tr);
+  return { ok: true };
+}
+
+/**
+ * The person's text selection carried through a proposal without growing.
+ *
+ * Plain mapping puts a position that sits exactly where AnA's words go in
+ * AFTER them, so a selection of the quote — or ending at it — came back
+ * covering the insertion too, and a caret at the end of the quote jumped past
+ * it (2026-10-01, 2-fixes-round2.txt D4). So the end of a selection, and a
+ * caret, stay before an insertion at their position, and the start of a
+ * selection stays after one: the person keeps the same words, no more. Null
+ * when plain mapping already says that, or for a selection that is not text.
+ */
+function keptSelection(selection: Selection, tr: Transaction): TextSelection | null {
+  if (!(selection instanceof TextSelection)) return null;
+  const { anchor, head, empty } = selection;
+  const startIsAnchor = anchor <= head;
+  const from = tr.mapping.map(Math.min(anchor, head), empty ? -1 : 1);
+  const to = tr.mapping.map(Math.max(anchor, head), -1);
+  const kept = startIsAnchor ? TextSelection.create(tr.doc, from, to) : TextSelection.create(tr.doc, to, from);
+  return kept.eq(tr.selection) ? null : kept;
+}

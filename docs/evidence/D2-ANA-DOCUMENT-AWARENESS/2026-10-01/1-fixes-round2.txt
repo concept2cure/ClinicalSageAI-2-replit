@@ -1,0 +1,185 @@
+# D2 AnA read tools over the authoring store — fixes from the second verifier round, 2026-10-01
+# D1 window walk stalls on astral characters in a proposal; D2 table captions unlabelled / nested caption used;
+# D3 figure proposal state shifted by images the parser skipped; D4 window shrink collapses on escape-heavy text;
+# D5 search snippets miss matches that SQL found across tags/blocks; D6 titles carry the label delimiters.
+# RED: the new tests run against the code as it stood before the fixes (each test runs on the SQL-aware fake and on PGlite).
+# Command: npx vitest run server/services/authoring/__tests__/authoring-read.test.ts server/services/ana/__tests__/authoring-read-tools.test.ts
+
+## RED 2026-10-01T21:00:29Z
+ FAIL  server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > read_authoring_section results > read_authoring_section walks a 16k control-character section in a few calls, each window near the budget
+AssertionError: call 0: expected 410 to be greater than or equal to 4980
+ FAIL  server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > read_authoring_section results > read_authoring_section gives quote- and backslash-heavy text windows at the largest size that fits
+AssertionError: call 0: expected 1601 to be greater than or equal to 4990
+ FAIL  server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > titles > no tool result carries the label delimiters in a document or section title
+AssertionError: expected '{"nextCursor":null,"totalSections":1,…' not to match /[\u27E6\u27E7]/
+ FAIL  server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > read_authoring_section results > read_authoring_section walks a 16k control-character section in a few calls, each window near the budget
+AssertionError: call 0: expected 410 to be greater than or equal to 4980
+ FAIL  server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > read_authoring_section results > read_authoring_section gives quote- and backslash-heavy text windows at the largest size that fits
+AssertionError: call 0: expected 1601 to be greater than or equal to 4990
+ FAIL  server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > titles > no tool result carries the label delimiters in a document or section title
+AssertionError: expected '{"nextCursor":null,"totalSections":1,…' not to match /[\u27E6\u27E7]/
+ FAIL  server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > a walk at every window size from 1 up advances on every call, never splits a surrogate pair, and delivers every character once
+AssertionError: <p>a <ins data-author-name="A">x😀y z</ins> b</p> size 1 offset 29: expected 29 to be greater than 29
+ FAIL  server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > labels proposed text in a table caption, and reads only the table's own caption, never a nested table's
+AssertionError: <table><caption>Assay <ins data-author-name="Ann">zeta limits</ins></caption><tr><td>Row</td></tr></table>: expected 'Table: Assay zeta limits\nRow' to be 'Table: Assay ⟦proposed insertion by A…' // Object.is equality
+ FAIL  server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection > a figure the parser skipped never shifts a later copy's proposal state, in either order
+AssertionError: <table><caption><img src="/f.png"></caption><tr><td>Cell</td></tr></table><ins data-author-name="Ann"><img src="/f.png" alt="Zeta figure"></ins>: expected 'Cell\n\n[figure: Zeta figure]' to contain '⟦proposed insertion by Ann: [figure: …'
+ FAIL  server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > a snippet shows the matched text when the match runs across a tag, list items, table cells or blocks
+AssertionError: expected 'Filler sentence here. Filler sentence…' to contain 'The dose is⟦proposed insertion by AnA…'
+Expected: "The dose is⟦proposed insertion by AnA: zeta-raised to 50 mg⟧."
+Received: "Filler sentence here. Filler sentence here. Filler sentence here. Filler sentence here. Filler sentence here. Filler sentence here. Filler sentence here. Filler sentence here. Filler sentence here. Fi…"
+ FAIL  server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > a walk at every window size from 1 up advances on every call, never splits a surrogate pair, and delivers every character once
+AssertionError: <p>a <ins data-author-name="A">x😀y z</ins> b</p> size 1 offset 29: expected 29 to be greater than 29
+ FAIL  server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > labels proposed text in a table caption, and reads only the table's own caption, never a nested table's
+AssertionError: <table><caption>Assay <ins data-author-name="Ann">zeta limits</ins></caption><tr><td>Row</td></tr></table>: expected 'Table: Assay zeta limits\nRow' to be 'Table: Assay ⟦proposed insertion by A…' // Object.is equality
+ FAIL  server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection > a figure the parser skipped never shifts a later copy's proposal state, in either order
+AssertionError: <table><caption><img src="/f.png"></caption><tr><td>Cell</td></tr></table><ins data-author-name="Ann"><img src="/f.png" alt="Zeta figure"></ins>: expected 'Cell\n\n[figure: Zeta figure]' to contain '⟦proposed insertion by Ann: [figure: …'
+ FAIL  server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > a snippet shows the matched text when the match runs across a tag, list items, table cells or blocks
+AssertionError: expected 'Filler sentence here. Filler sentence…' to contain 'The dose is⟦proposed insertion by AnA…'
+Expected: "The dose is⟦proposed insertion by AnA: zeta-raised to 50 mg⟧."
+Received: "Filler sentence here. Filler sentence here. Filler sentence here. Filler sentence here. Filler sentence here. Filler sentence here. Filler sentence here. Filler sentence here. Filler sentence here. Fi…"
+
+ Test Files  2 failed (2)
+      Tests  14 failed | 117 passed (131)
+
+## RED probes (verifier's scripts, scratchpad/v2a/*.mts, run with npx tsx) before the fixes
+### stuck.mts
+"ab 😀 cd" [] 
+  0-1:"a" 1-2:"b" 2-3:" " 3-4:"\ud83d" 4-5:"\ude00" 5-6:" " 6-7:"c" 7-8:"d"
+"ab ⟦proposed insertion by A: x😀y⟧ cd" [
+] 
+  0-1:"a" 1-2:"b" 2-3:" " 3-30:"⟦proposed insertion by A: x…(continues)⟧" 30-30:"⟦(continued) proposed insertion by A: …(continues)⟧" STUCK
+"ab ⟦proposed insertion by A: 😀⟧ cd" [
+] 
+  0-1:"a" 1-2:"b" 2-3:" " 3-32:"⟦proposed insertion by A: 😀⟧" 32-33:" " 33-34:"c" 34-35:"d"
+### shapes2.mts
+skipped caption img then proposed "S1\n\n[figure: P1 proposed figure]"
+skipped citation-anchor img then proposed "S1\n\n[figure]\n\n⟦proposed insertion by A: [figure: P1 proposed figure]⟧"
+tr-level img then proposed "S1\n\n[figure: P1 proposed figure]"
+### shrink.mts
+quotes+backslashes (w=2) | delivered 621 chars in 1619 bytes; largest that fits 2310
+quoted spec table | delivered 3888 chars in 4980 bytes; largest that fits 3904
+tabs/newlines list | delivered 3253 chars in 4751 bytes; largest that fits 3439
+### snip.mts
+dose is raised => ["Filler sentence here. Filler sentence here. Filler sentence here. Filler sentence here. Filler sentence here. Filler sen"]
+beta gamma => ["- Filler sentence here. Filler sentence here. Filler sentence here. Filler sentence here. Filler sentence here. Filler s"]
+### shapes.mts (FAIL lines only; 'author bracket' is the probe reading S9 inside an author name in a label, not a defect)
+FAIL caption ins P1@unlabelled "Table: S1 P1\nS2"
+FAIL whole table ins P1@unlabelled "Table: P1\n⟦proposed insertion by A: P2⟧"
+FAIL caption del P1@unlabelled "Table: S1 P1\nS2"
+FAIL img inside table outside cell S2@inside "S1\n\n⟦proposed insertion by an unnamed author: [figure: S2]⟧"
+FAIL img in caption S2@inside "S1\n\n⟦proposed insertion by an unnamed author: [figure: S2]⟧"
+FAIL author bracket S9@inside "S1 ⟦proposed insertion by X] S9: P1⟧ S2"
+ok   nested table caption  "Table: S5\nS5 S6"
+
+## GREEN 2026-10-01T21:21:44Z — after the fixes (authoring-read.ts, authoring-read-tools.ts)
+# Same command. The fourteen tests that were red:
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection rendering > a walk at every window size from 1 up advances on every call, never splits a surrogate pair, and delivers every character once
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection rendering > labels proposed text in a table caption, and reads only the table's own caption, never a nested table's
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > readSection rendering > a figure the parser skipped never shifts a later copy's proposal state, in either order
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'the SQL-aware fake' > searchSections > a snippet shows the matched text when the match runs across a tag, list items, table cells or blocks
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > read_authoring_section results > read_authoring_section walks a 16k control-character section in a few calls, each window near the budget
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > read_authoring_section results > read_authoring_section gives quote- and backslash-heavy text windows at the largest size that fits
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'the SQL-aware fake' > titles > no tool result carries the label delimiters in a document or section title
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > read_authoring_section results > read_authoring_section walks a 16k control-character section in a few calls, each window near the budget
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > read_authoring_section results > read_authoring_section gives quote- and backslash-heavy text windows at the largest size that fits
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection rendering > a walk at every window size from 1 up advances on every call, never splits a surrogate pair, and delivers every character once
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection rendering > labels proposed text in a table caption, and reads only the table's own caption, never a nested table's
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > readSection rendering > a figure the parser skipped never shifts a later copy's proposal state, in either order
+ ✓ server/services/authoring/__tests__/authoring-read.test.ts > authoring-read over 'PGlite' > searchSections > a snippet shows the matched text when the match runs across a tag, list items, table cells or blocks
+ ✓ server/services/ana/__tests__/authoring-read-tools.test.ts > authoring read tools over 'PGlite' > titles > no tool result carries the label delimiters in a document or section title
+
+ Test Files  2 passed (2)
+      Tests  131 passed (131)
+
+# The full set: npx vitest run server/services/authoring/__tests__ server/services/ana/__tests__/authoring-read-tools.test.ts \
+#   server/services/ana/__tests__/authoring-read-registration.test.ts server/services/ana/__tests__/governed-reason-not-invented.test.ts \
+#   server/services/ana/__tests__/tool-authorization.test.ts server/services/ana/__tests__/governed-write-gate.test.ts
+ Test Files  24 passed (24)
+      Tests  470 passed (470)
+
+## GREEN probes after the fixes
+### stuck.mts
+"ab 😀 cd" [] 
+  0-1:"a" 1-2:"b" 2-3:" " 3-5:"😀" 5-6:" " 6-7:"c" 7-8:"d"
+"ab ⟦proposed insertion by A: x😀y⟧ cd" [
+] 
+  0-1:"a" 1-2:"b" 2-3:" " 3-30:"⟦proposed insertion by A: x…(continues)⟧" 30-32:"⟦(continued) proposed insertion by A: 😀…(continues)⟧" 32-34:"⟦(continued) proposed insertion by A: y⟧" 34-35:" " 35-36:"c" 36-37:"d"
+"ab ⟦proposed insertion by A: 😀⟧ cd" [
+] 
+  0-1:"a" 1-2:"b" 2-3:" " 3-32:"⟦proposed insertion by A: 😀⟧" 32-33:" " 33-34:"c" 34-35:"d"
+### shapes2.mts
+skipped caption img then proposed "S1\n\n⟦proposed insertion by A: [figure: P1 proposed figure]⟧"
+skipped citation-anchor img then proposed "S1\n\n[figure]\n\n⟦proposed insertion by A: [figure: P1 proposed figure]⟧"
+tr-level img then proposed "S1\n\n⟦proposed insertion by A: [figure: P1 proposed figure]⟧"
+### snip.mts
+dose is raised => ["…nce here. Filler sentence here. Filler sentence here. Filler sentence here. The dose is⟦proposed insertion by A: raised"]
+beta gamma => ["…ller sentence here. Filler sentence here. Filler sentence here. Filler sentence here. - alpha beta - gamma delta"]
+### fuzz.mts
+fails 0
+### shapes.mts (the lines that were FAIL; 'author bracket' remains the probe's own misreading of an author name)
+ok   caption ins  "Table: S1 ⟦proposed insertion by A: P1⟧\nS2"
+ok   whole table ins  "Table: ⟦proposed insertion by A: P1⟧\n⟦proposed insertion by A: P2⟧"
+ok   caption del  "Table: S1 ⟦proposed deletion by A: P1⟧\nS2"
+ok   img inside table outside cell  "S1\n\n[figure: S2]"
+ok   img in caption  "S1\n\n[figure: S2]"
+FAIL author bracket S9@inside "S1 ⟦proposed insertion by X] S9: P1⟧ S2"
+ok   nested table caption  "S5 S6"
+### shrink-tool.mts (scratchpad: the real read_authoring_section handler; shrink.mts replicates the OLD loop and so cannot show the fix)
+quotes+backslashes | delivered 2307 chars in 5000 bytes; largest asked size delivered unshrunk 2307; full walk 5 calls over 10000 chars
+quoted spec table | delivered 3898 chars in 5000 bytes; largest asked size delivered unshrunk 3898; full walk 3 calls over 11089 chars
+quoted list | delivered 3434 chars in 4999 bytes; largest asked size delivered unshrunk 3434; full walk 3 calls over 7089 chars
+control chars 16k | delivered 769 chars in 4998 bytes; largest asked size delivered unshrunk 769; full walk 21 calls over 16000 chars
+
+## Static checks 2026-10-01T21:26:44Z
+### npx eslint <the five changed source and test files>
+
+server/services/authoring/authoring-read.ts
+  826:1  warning  File has too many lines (623). Maximum allowed is 500  max-lines
+
+✖ 1 problem (0 errors, 1 warning)
+
+eslint exit 0
+### node scripts/ci/check-eslint-warning-ratchet.mjs --since HEAD --gate
+[ci:eslint-warning-ratchet] --since HEAD (9ef62f9b9) -- 8 lintable file(s) changed; linting both versions of each...
+
+    +1  server/services/authoring/authoring-read.ts  (0 -> 1)
+         server/services/authoring/authoring-read.ts:826:1  max-lines  File has too many lines (623). Maximum allowed is 500.
+
+[ci:eslint-warning-ratchet] net +1 warning(s) across the files changed since HEAD.
+  Those lines are what the ratchet is refusing. Fix them -- do not regenerate
+  the baseline to make room.
+
+[ci:eslint-warning-ratchet] FAIL -- the changed files gained 1 warning(s) (listed above).
+ratchet exit 1
+### NODE_OPTIONS=--max-old-space-size=12288 npx tsc --noEmit -p tsconfig.json
+exit 0, no diagnostics (third attempt; the first two were OOM-killed while other sessions held ~5-8 GB)
+
+## NOT FIXED: the max-lines warning on authoring-read.ts
+# HEAD counted 491 lines (eslint max-lines, blank and comment lines skipped); the fixes bring it to 623.
+# Getting under 500 means moving the rendering, windowing and snippet code (~300 lines) into its own module,
+# e.g. server/services/authoring/authoring-read-render.ts. That is a new file outside this task's allowed edit
+# set, so it is left for the orchestrator; until then the ratchet refuses this file's +1 warning.
+# Test-file warnings the new tests first raised (readCases over 100 lines, the test file over 500) were fixed:
+# the new cases are their own describe block, and their HTML lives in authoring-read-fixture.ts.
+
+## SPLIT (approved by the orchestrator) 2026-10-01T21:33:03Z — resolves the NOT FIXED item above
+# Pure move, no behaviour change: the rendering (pieces, labels, emittedObjects, captions, layout, renderSection),
+# windowing (windowOf, windowStart, windowEnd) and snippet code (searchable, locate, wordsInOrder, snippetOf)
+# moved from authoring-read.ts into the new server/services/authoring/authoring-read-render.ts. authoring-read.ts
+# re-exports PROPOSAL_OPEN/CLOSE, renderSection, sectionReadableText, windowOf and the two types, so no importer
+# changed. register('…') calls stay at authoring-read-tools.ts:346-348 (register.json unchanged by the split).
+# eslint max-lines counts (blank and comment lines skipped): authoring-read.ts 289, authoring-read-render.ts 342.
+### npx eslint authoring-read.ts authoring-read-render.ts authoring-read-tools.ts and the three test/fixture files
+(no output) exit 0 — 0 errors, 0 warnings
+### node scripts/ci/check-eslint-warning-ratchet.mjs --since HEAD --gate
+[ci:eslint-warning-ratchet] --since HEAD (9ef62f9b9) -- 8 lintable file(s) changed; linting both versions of each...
+[ci:eslint-warning-ratchet] no file changed its warning count since HEAD.
+ratchet exit 0
+# (the ratchet diffs tracked files; the new untracked authoring-read-render.ts is covered by the eslint run above: 0 warnings)
+### npx vitest run server/services/authoring/__tests__ authoring-read-tools authoring-read-registration governed-reason-not-invented tool-authorization governed-write-gate
+ Test Files  24 passed (24)
+      Tests  470 passed (470)
+vitest exit 0
+### NODE_OPTIONS=--max-old-space-size=12288 npx tsc --noEmit -p tsconfig.json
+tsc exit 0, no diagnostics

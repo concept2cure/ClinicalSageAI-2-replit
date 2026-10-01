@@ -11,8 +11,12 @@
  *
  * An audit call counts only when its own argument list names an actor
  * (userId, actorId, actor, …), or for a raw INSERT INTO audit_events, when its
- * column list carries user_id; an actor written as null or undefined is no
- * actor. 2026-10-01 (D6, plan P1-30 second half, DP-33): the UAT clean-up
+ * column list carries user_id; an actor written as null, undefined or a string
+ * literal is no actor. Only the call's positional arguments and the top-level
+ * keys of an object argument are read, without strings or comments: an actor
+ * named only in a nested object (`details: { userId }`, the record's subject),
+ * a string or a comment is not the operator (review, 2026-10-01). Of
+ * auditService, only logAction writes. 2026-10-01 (D6, plan P1-30 second half, DP-33): the UAT clean-up
  * delete on authoring_documents logged through auditService.logAction with no
  * user, and this gate accepted the row, which no inspector could attribute
  * (21 CFR 11.10(e) records the operator's identity). A delete inside a
@@ -83,8 +87,40 @@ const AUDIT_RE =
    call's argument list, or an audit_events INSERT's column list (to VALUES or
    SELECT). auditService. with no call after it is not a call. */
 const AUDIT_CALL_RE =
-  /\b(?:writeMutation|logAuditEntry|recordGovernedAction|logAuditEvent|recordGovernedDecision|logRegulatedDeletion|recordCoauthorDocumentEvent|writeChainedAuditRow|auditService\.\w+)\s*\(|INSERT\s+INTO\s+audit_events\b/gi;
-const ACTOR_RE = /\b(?:userId|user_id|actorId|actor_id|actorUserId|actor|performedBy|performed_by)\b(?!\s*:\s*(?:null|undefined)\b)/;
+  /\b(?:writeMutation|logAuditEntry|recordGovernedAction|logAuditEvent|recordGovernedDecision|logRegulatedDeletion|recordCoauthorDocumentEvent|writeChainedAuditRow|auditService\.logAction)\s*\(|INSERT\s+INTO\s+audit_events\b/gi;
+/* An actor key, unless its value is null, undefined or a string literal
+   (`userId: 'system'` names no person), parenthesised or not. */
+const ACTOR_RE = /\b(?:userId|user_id|actorId|actor_id|actorUserId|actor|performedBy|performed_by)\b(?!\s*:\s*(?:\(\s*)*(?:null|undefined|__STR__)\b)/;
+
+/**
+ * The part of a call's arguments that can name its operator: the positional
+ * arguments and the top-level keys of an object argument, with comments
+ * dropped and every string literal replaced by __STR__. An actor written only
+ * in a nested object (`details: { userId }` is the record's subject, not who
+ * acted), in a string or in a comment is not the operator (review of the
+ * actor rule, 2026-10-01). Parentheses do not nest here, so `(null)` stays
+ * visible to ACTOR_RE; braces and brackets do.
+ */
+function argumentText(src, open, end) {
+  let out = '';
+  let depth = 0;
+  for (let j = open + 1; j < end - 1; j++) {
+    const ch = src[j];
+    if (ch === '/' && src[j + 1] === '/') { const nl = src.indexOf('\n', j); j = nl === -1 ? end : nl; continue; }
+    if (ch === '/' && src[j + 1] === '*') { const e = src.indexOf('*/', j + 2); j = e === -1 ? end : e + 1; continue; }
+    if (ch === '"' || ch === "'" || ch === '`') {
+      let k = j + 1;
+      while (k < end && src[k] !== ch) k += src[k] === '\\' ? 2 : 1;
+      j = k;
+      if (depth <= 1) out += ' __STR__ ';
+      continue;
+    }
+    if (ch === '{' || ch === '[') depth++;
+    if (depth <= 1) out += ch;
+    if (ch === '}' || ch === ']') depth--;
+  }
+  return out;
+}
 
 /** [start, end, attributable] of every audit call in `src`. */
 function auditCalls(src) {
@@ -92,15 +128,16 @@ function auditCalls(src) {
   let m;
   AUDIT_CALL_RE.lastIndex = 0;
   while ((m = AUDIT_CALL_RE.exec(src))) {
-    let end;
     if (m[0].endsWith('(')) {
-      end = callEnd(src, m.index + m[0].length - 1);
+      const open = m.index + m[0].length - 1;
+      const end = callEnd(src, open);
+      calls.push([m.index, end, ACTOR_RE.test(argumentText(src, open, end))]);
     } else {
+      // A raw INSERT: its column list, up to VALUES or SELECT, names user_id or not.
       const tail = /\b(?:VALUES|SELECT)\b/i.exec(src.slice(m.index));
-      end = tail ? m.index + tail.index : src.length;
+      const end = tail ? m.index + tail.index : src.length;
+      calls.push([m.index, end, ACTOR_RE.test(src.slice(m.index + m[0].length, end))]);
     }
-    // The name itself is not the actor ("auditService.logAction" names none).
-    calls.push([m.index, end, ACTOR_RE.test(src.slice(m.index + m[0].length, end))]);
   }
   return calls;
 }

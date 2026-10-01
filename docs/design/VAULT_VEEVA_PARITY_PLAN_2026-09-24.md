@@ -351,8 +351,9 @@ duplication); no slice adds a parallel store. A version is a `vault.documents` r
   - The dialog pre-fills ctd_section, and a draft shows the non-transmittable warning. Red at :185.
   - vault-versions.test.ts: each version lists its submission_leaves placements for this org only.
 - **Ownership:** leaf-source-resolver.ts belongs to the D7 lanes: …01LjrcEe (package spine, claimed) and …01TtwRHm (IND eCTD, claimed). It was touched today by 7fd5d6af. Hand them the resolver hunk with its red test, or take it by recorded consent. Their fixtures that place vault leaves will need an approved version. The dialog, project-vault.ts and Vault.tsx belong to this lane.
-- **Founder decision:** FD5: grandfathering of vault leaves in open, untransmitted sequences, and whether a sealed Authoring export carries its approval to the vault copy. The slice refuses both until decided.
+- **Founder decision:** FD5: grandfathering of vault leaves in open, untransmitted sequences, and whether a sealed Authoring export carries its approval to the vault copy. **Decided (c), 2026-10-01** (see the decision table): no grandfathering; an Authoring approval carries when bound to the exported bytes.
 - **Depends on:** VR-13
+- *Server half done 2026-10-01 (`1b7c179e3`, `…01471vSKg1KXj3ijXDiyvXGX`):* a vault leaf is finalized only when its version is approved, current, and approved for the staged bytes. Evidence: `docs/evidence/W5/2026-10-01-vault-leaf-finalized/`. *FD5 (c) done the same day:* an Authoring approval carries to the filed rendition's Vault version. Evidence: `docs/evidence/D5-VAULT-APPROVAL/2026-10-01-authoring-carryover/`.
 - *'Placed in' done 2026-10-01 as VR-14a (`…01DiJJAk`):* each version lists the live submission leaves that carry it (submission, sequence and status, section, operation), from an organisation-filtered read of `submission_leaves.document_uuid`. The transmit gate, the finalization rule and the dialog's pre-fill are still owed and still wait on FD5. Evidence: `docs/evidence/D2-VAULT-WHERE-USED/2026-10-01/`.
 
 ### VR-15 — A numbered data-room index, and required-section coverage from the one resolver  `[M]`
@@ -533,7 +534,13 @@ No session decides these. Each lists the slices it blocks and the plan's recomme
 | **FD8 / FD10** | **(b)+(c): the seal and the closing archive are scheduled now as D5/D6 work,** and the archive is the byte carrier for the tenant data return. Facets (VR-18) stay deferred. | VR-19 and VR-20 follow the immutability slices; VR-20's builder is also called by the tenant data return. |
 | **FD9** | Implied by FD8's wording ("frozen under an e-signature"): **sealing is an e-signed act** (`reverifySigner` + an `electronic_signatures` row, meaning 'sealed', bound to the manifest SHA-256). Which role seals is still open; the plan's default is admin or manager. | VR-19. |
 
-Still open: FD2, FD3, FD5, FD6, FD7, FD11, FD13, and the sealing role in FD9. The plan's recommendation is the
+**Decided by the founder, 2026-10-01** (session `…01471vSKg1KXj3ijXDiyvXGX`): *"we want to carry the Authoring approval over automatically"*.
+
+| | Decision | Consequence |
+|---|---|---|
+| **FD5** | **(c): nothing is grandfathered, and a sealed Authoring export's approval carries to its Vault copy when it is bound to the exported bytes' SHA-256.** | Built 2026-10-01 (`server/services/regulatory/authoring-approval-carryover.ts`, evidence `docs/evidence/D5-VAULT-APPROVAL/2026-10-01-authoring-carryover/`). The binding is made at the filing: the sections rendered digest to the content the Authoring signatures cover, and the Vault version holds the rendered bytes. The Vault version is approved through the one lifecycle gate, its sign-offs naming the Authoring signatures (never copied). FD4's policy applies to what carries: an APPROVED document, an independent REVIEWER signature before the approval, and neither signer the author. Anything short of that files unapproved and says why. |
+
+Still open: FD2, FD3, FD6, FD7, FD11, FD13, and the sealing role in FD9. The plan's recommendation is the
 shipped default for each until the founder rules otherwise.
 
 ### FD1. What version numbering does a checked-in Vault upload get?

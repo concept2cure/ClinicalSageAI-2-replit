@@ -21,6 +21,10 @@
  * sent the version for review, the reviewer (for approval), and a role without
  * authoring rights. The server refuses all of them anyway (FD4's strict
  * default); this spares a credential check.
+ *
+ * A version filed from Authoring whose approval carried (FD5 (c)) shows its
+ * sign-offs as signed in Authoring: they are the Authoring signatures, named,
+ * not new ones.
  */
 import React, { useRef, useState } from 'react';
 import { ApiRequestError, apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
@@ -34,6 +38,8 @@ export interface VaultSignOff {
   signedAt: string;
   signatureRef: string;
   signerId?: number | null;
+  /** 'authoring' when the sign-off is the Authoring signature this file renders the content of (FD5 (c)). */
+  carriedFrom?: 'authoring';
 }
 
 export interface VaultVersionLifecycle {
@@ -71,7 +77,7 @@ function utc(iso: string): string {
 
 function signOffLine(kind: 'Review' | 'Approval', s: VaultSignOff, retired: boolean): string {
   return (
-    `${kind} signed by ${s.printedName ?? 'printed name not recorded'} · meaning: ${s.meaning.toLowerCase()} · ${utc(s.signedAt)}` +
+    `${kind} signed${s.carriedFrom === 'authoring' ? ' in Authoring' : ''} by ${s.printedName ?? 'printed name not recorded'} · meaning: ${s.meaning.toLowerCase()} · ${utc(s.signedAt)}` +
     (retired ? ' · no longer current' : '')
   );
 }

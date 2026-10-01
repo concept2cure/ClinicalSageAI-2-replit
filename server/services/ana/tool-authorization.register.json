@@ -2415,6 +2415,11 @@
    "writes": "none",
    "site": "AnaToolExecutor.ts:16926"
   },
+  "list_authoring_outline": {
+   "class": "read",
+   "writes": "none",
+   "site": "authoring-read-tools.ts:346"
+  },
   "list_cmc_registers": {
    "class": "read",
    "writes": "none",
@@ -2842,6 +2847,11 @@
    "class": "self",
    "writes": "scratch .png (and, for a DOCX, its converted .pdf) under tmp/docbuilder, not filed",
    "site": "AnaToolExecutor.ts:6575"
+  },
+  "read_authoring_section": {
+   "class": "read",
+   "writes": "none",
+   "site": "authoring-read-tools.ts:347"
   },
   "read_governed_document": {
    "class": "read",
@@ -3449,6 +3459,11 @@
    "class": "read",
    "writes": "none",
    "site": "AnaToolExecutor.ts:20015"
+  },
+  "search_authoring_sections": {
+   "class": "read",
+   "writes": "none",
+   "site": "authoring-read-tools.ts:348"
   },
   "search_chembl_compound": {
    "class": "read",

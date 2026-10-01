@@ -1,0 +1,4 @@
+ × tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > keeps the board's own tasks editable, and shows a task AnA created once, as its editable board card 37ms
+   → expected [ 'TASK-PT-91910-30', 'schedule:30' ] to deeply equal [ 'TASK-PT-91910-30' ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 5 passed (6)

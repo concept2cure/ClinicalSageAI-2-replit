@@ -99,6 +99,31 @@ describe('DocumentWorkbench — File to vault', () => {
     expect(within(dlg).queryByTestId('ftv-submit')).toBeNull();
   });
 
+  it('says the Authoring approval carried, naming who reviewed and approved, as the server reported it (FD5 (c))', async () => {
+    fileToVault = () => ok({ ...FILED, data: { ...FILED.data, sealed: true, approval: { carried: true, reviewedBy: 'Rae Reviewer', approvedBy: 'Abe Approver', canonicalId: 'x' } } }, 201);
+    const dlg = await openDialog();
+    fireEvent.click(within(dlg).getByTestId('ftv-submit'));
+    const line = await within(dlg).findByTestId('ftv-approval');
+    expect(line.textContent).toBe('The Authoring approval carried to this file (reviewed by Rae Reviewer, approved by Abe Approver). The Vault shows the version as approved.');
+  });
+
+  it('says the approval did not carry, with the server’s reason and what to do next', async () => {
+    fileToVault = () => ok({ ...FILED, data: { ...FILED.data, approval: { carried: false, reason: 'It is not approved in Authoring (status: draft).' } } }, 201);
+    const dlg = await openDialog();
+    fireEvent.click(within(dlg).getByTestId('ftv-submit'));
+    const line = await within(dlg).findByTestId('ftv-approval');
+    expect(line.textContent).toBe('Not approved in the Vault: It is not approved in Authoring (status: draft). Review and approve this version in the Vault before it is transmitted.');
+    expect(line.className).toBe('de-err');
+  });
+
+  it('claims no approval when the server reported none', async () => {
+    const dlg = await openDialog();
+    fireEvent.click(within(dlg).getByTestId('ftv-submit'));
+    const line = await within(dlg).findByTestId('ftv-approval');
+    expect(line.textContent).toContain('did not report whether the approval carried');
+    expect(line.textContent).not.toContain('carried to this file');
+  });
+
   it('renders the server’s refusal as a refusal, with nothing claimed', async () => {
     fileToVault = () => {
       throw new ApiRequestError('This document is mid-freeze; it cannot be filed until the freeze completes.', 409, { success: false, error: { code: 'DOCUMENT_MID_FREEZE' } }, 'DOCUMENT_MID_FREEZE');

@@ -16,6 +16,7 @@ import { z } from 'zod';
 import { pool } from '../db';
 import { recordGovernedAction } from './c2c/actions';
 import { signedActAttempts, signGovernedAct } from './governed-signed-act';
+import { DECISION_ACT_MEANINGS } from '../services/part11/signature-meanings';
 import {
   createBiosketchTx,
   updateSectionTx,
@@ -159,6 +160,8 @@ router.post('/biosketches/:id/finalize', signedActAttempts, async (req, res) => 
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   await signGovernedAct(req, res, {
     domain: 'protocol_development',
+    target: `biosketch:${id}`,
+    meanings: DECISION_ACT_MEANINGS,
     codeStatus: CODE_STATUS,
     run: async (client, orgId, userId) => {
       const result = await finalizeBiosketchTx(client, orgId, userId, id);

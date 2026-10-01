@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { pool } from '../db';
 import { recordGovernedAction } from './c2c/actions';
 import { signedActAttempts, signGovernedAct } from './governed-signed-act';
+import { DECISION_ACT_MEANINGS } from '../services/part11/signature-meanings';
 import { createCertificationTx, addLineTx, certifyTx, loadStatement, listCertifications } from '../services/effort-certification/effort-service';
 import { validateEffort } from '../services/effort-certification/effort-logic';
 import { recordEffortStatementCreated, recordEffortLineAdded, recordEffortCertified } from '../services/effort-metrics';
@@ -43,6 +44,8 @@ router.post('/:id/certify', signedActAttempts, async (req, res) => {
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   await signGovernedAct(req, res, {
     domain: 'effort_certification',
+    target: `effort-certification:${id}`,
+    meanings: DECISION_ACT_MEANINGS,
     codeStatus: CODE,
     run: async (c, o, u) => {
       const { contentHash, needsRecertification } = await certifyTx(c, o, u, id);
