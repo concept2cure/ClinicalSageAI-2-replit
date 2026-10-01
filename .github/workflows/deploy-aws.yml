@@ -341,6 +341,9 @@ jobs:
         #   MFA_ENCRYPTION_KEY       server/config/environment.ts (>=32 chars).
         #   AUDIT_HMAC_KEY           server/services/audit/auditSealPosture.ts.
         #   AUDIT_HMAC_SECRET        server/lib/tamper-proof-audit.ts.
+        #   AUDIT_EXPORT_SIGNING_KEY server/services/audit/auditExportKeyPosture.ts —
+        #                            seals the inspector's signed audit export;
+        #                            >=32, never the JWT secret, no accept flag.
         #   AUDIT_TRAIL_ENABLED      server/startup/audit-enforcement.ts — the
         #   AUDIT_REQUIRE_ENFORCE    tamper-proof trail and its integrity monitor
         #                            run only when the first is `true`; the second
@@ -373,7 +376,7 @@ jobs:
           MISSING=""
           for VAR in RLS_ENFORCE DATABASE_URL APP_DATABASE_URL JWT_SECRET \
                      REFRESH_TOKEN_SECRET MFA_ENCRYPTION_KEY AUDIT_HMAC_KEY \
-                     AUDIT_HMAC_SECRET CONNECTOR_ENCRYPTION_KEY \
+                     AUDIT_HMAC_SECRET AUDIT_EXPORT_SIGNING_KEY CONNECTOR_ENCRYPTION_KEY \
                      AI_SENSITIVE_DATA_POLICY_MODE AI_PROVIDER_PLACEMENT_APPROVALS \
                      CONCEPT2CURE_SIGNER_MODE STORAGE_PROVIDER AWS_S3_BUCKET \
                      SMTP_HOST SMTP_USER SMTP_PASS \

@@ -33,13 +33,16 @@ import {
 } from '../gspr-postmarket/gspr.service';
 import {
   approveDocument,
-  createDocument,
   supersedeDocument,
   updateDocument,
   validateDocument,
   getDocument,
   type ApproveArgs,
 } from '../gspr-postmarket/post-market.service';
+import {
+  authorPostMarketDocument,
+  AUTHORABLE_DOCUMENT_TYPES,
+} from '../gspr-postmarket/post-market-authoring';
 import {
   assessSufficiency,
   type DeviceProfileFlags,
@@ -51,6 +54,40 @@ import { requireGovernedToolGate, mapServiceError, agentAuditDetails } from './m
 // ─── Local helpers ──────────────────────────────────────────────────────────
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * A program id a model supplies must be proven to be the caller's before it is
+ * written against, as the HTTP route proves it (requireProgramAccess). The
+ * handlers here checked only that it was a UUID (ledger L195). The canonical
+ * check, shared with AnaToolExecutor, imported lazily. Returns the refusal to
+ * hand back, or null when the program is the caller's.
+ */
+async function refuseUnownedProgram(
+  action: string,
+  programId: string,
+  ctx: CommandContext,
+): Promise<CommandResult | null> {
+  const { programBelongsToOrg } = await import('../../routes/innovation-routes.js');
+  let ownsProgram: boolean;
+  try {
+    ownsProgram = await programBelongsToOrg(programId, ctx.organizationId);
+  } catch (err: unknown) {
+    if ((err as { name?: string } | null)?.name !== 'GuardUnavailableError') throw err;
+    // The check could not run: neither "yours" nor "not yours". Nothing is
+    // written, and the model is told which, as AnaToolExecutor's tools tell it.
+    return {
+      success: false,
+      action,
+      message:
+        'Program ownership could not be verified, so nothing was written. Do not tell the user the program does not exist; retry, and report it if it persists.',
+      error: 'OWNERSHIP_UNVERIFIABLE',
+    };
+  }
+  if (!ownsProgram) {
+    return { success: false, action, message: 'Program not found.', error: 'NOT_FOUND' };
+  }
+  return null;
+}
 
 /**
  * The clause a handler appends to its own message when the 21 CFR Part 11
@@ -125,29 +162,8 @@ export async function gsprMappingUpsert(
     return { success: false, action, message: 'applicability is required.', error: 'INVALID_INPUT' };
   }
 
-  // A program id a model supplies must be proven to be the caller's before it is
-  // written against, as the HTTP route proves it (requireProgramAccess). This
-  // tool checked only that it was a UUID (ledger L195). The canonical check,
-  // shared with AnaToolExecutor, and imported lazily for the same reason.
-  const { programBelongsToOrg } = await import('../../routes/innovation-routes.js');
-  let ownsProgram: boolean;
-  try {
-    ownsProgram = await programBelongsToOrg(programId, ctx.organizationId);
-  } catch (err: unknown) {
-    if ((err as { name?: string } | null)?.name !== 'GuardUnavailableError') throw err;
-    // The check could not run: neither "yours" nor "not yours". Nothing is
-    // written, and the model is told which, as AnaToolExecutor's tools tell it.
-    return {
-      success: false,
-      action,
-      message:
-        'Program ownership could not be verified, so nothing was written. Do not tell the user the program does not exist; retry, and report it if it persists.',
-      error: 'OWNERSHIP_UNVERIFIABLE',
-    };
-  }
-  if (!ownsProgram) {
-    return { success: false, action, message: 'Program not found.', error: 'NOT_FOUND' };
-  }
+  const notOwned = await refuseUnownedProgram(action, programId, ctx);
+  if (notOwned) return notOwned;
 
   try {
     const row = await upsertMapping({
@@ -192,6 +208,17 @@ export async function gsprMappingUpsert(
 
 // ─── Post-market document mutations ─────────────────────────────────────────
 
+/**
+ * Author a DRAFT post-market document through the canonical engine.
+ *
+ * PR #1315 would have added a second AnA path — an `author_post_market_document`
+ * tool beside this command — calling gspr-postmarket/post-market-authoring. Not
+ * ported as a second path: this command is the one AnA already has, so it now
+ * calls that engine (as the REST /documents/generate route does) instead of a
+ * bare `createDocument` that INSERTed an empty shell with a model-chosen code,
+ * no version, no scaffold, no validation, and any `documentType` string cast
+ * through `as any` — a row no validator had an entry for.
+ */
 export async function postMarketDocumentCreate(
   ctx: CommandContext,
   params: Record<string, unknown>,
@@ -204,55 +231,105 @@ export async function postMarketDocumentCreate(
   if (!UUID_RE.test(programId)) {
     return { success: false, action, message: 'programId must be a UUID.', error: 'INVALID_INPUT' };
   }
-  const documentType = typeof params.documentType === 'string' ? params.documentType : '';
-  const code = typeof params.code === 'string' ? params.code : '';
-  const title = typeof params.title === 'string' ? params.title : '';
-  if (!documentType || !code || !title) {
+  const documentType = typeof params.documentType === 'string' ? params.documentType.trim() : '';
+  if (!(AUTHORABLE_DOCUMENT_TYPES as readonly string[]).includes(documentType)) {
     return {
       success: false,
       action,
-      message: 'documentType, code, and title are required.',
+      message: `documentType must be one of: ${AUTHORABLE_DOCUMENT_TYPES.join(', ')}.`,
       error: 'INVALID_INPUT',
     };
   }
+  const deviceName = typeof params.deviceName === 'string' ? params.deviceName.trim() : '';
+  const relatedCerReportId =
+    typeof params.relatedCerReportId === 'number' && Number.isInteger(params.relatedCerReportId)
+      ? params.relatedCerReportId
+      : undefined;
+  if (!deviceName && relatedCerReportId == null) {
+    return {
+      success: false,
+      action,
+      message: 'deviceName or relatedCerReportId (an integer) is required to scaffold the document.',
+      error: 'INVALID_INPUT',
+    };
+  }
+  if (params.regulation != null && params.regulation !== 'MDR' && params.regulation !== 'IVDR') {
+    return { success: false, action, message: 'regulation must be MDR or IVDR.', error: 'INVALID_INPUT' };
+  }
+
+  const notOwned = await refuseUnownedProgram(action, programId, ctx);
+  if (notOwned) return notOwned;
+
+  // Dates are optional: the engine substitutes a flagged DRAFT trailing-12-month
+  // period for report-style types, so an unparseable value must not silently
+  // become "now" — leave it undefined and let the engine flag it.
+  const parseDate = (v: unknown): Date | undefined => {
+    if (typeof v !== 'string' || !v.trim()) return undefined;
+    const d = new Date(v);
+    return Number.isNaN(d.getTime()) ? undefined : d;
+  };
 
   try {
-    const doc = await createDocument({
+    const { document, validation } = await authorPostMarketDocument({
       organizationId: ctx.organizationId,
       programId,
-      documentType: documentType as any,
-      code,
-      title,
       createdBy: `ana:${ctx.userId}`,
-      updatedBy: `ana:${ctx.userId}`,
+      documentType: documentType as (typeof AUTHORABLE_DOCUMENT_TYPES)[number],
+      deviceName: deviceName || undefined,
+      deviceClass: typeof params.deviceClass === 'string' ? params.deviceClass : undefined,
+      regulation: params.regulation === 'MDR' || params.regulation === 'IVDR' ? params.regulation : undefined,
+      relatedCerReportId,
+      title: typeof params.title === 'string' ? params.title : undefined,
+      reportingPeriodStart: parseDate(params.reportingPeriodStart),
+      reportingPeriodEnd: parseDate(params.reportingPeriodEnd),
     });
 
-    // WO-16C #133: was `void auditService.logAction({…})`. The document row is
-    // already INSERTed by `createDocument` above, so this is a log beside a
-    // committed mutation: the draft stands and the outcome of its §11.10(e) row
-    // now reaches the caller instead of only the server log.
+    // WO-16C #133: the document row is already INSERTed by the engine above,
+    // so this is a log beside a committed mutation: the draft stands and the
+    // outcome of its §11.10(e) row reaches the caller instead of only the
+    // server log.
     const agentAuditTrail = await recordAuditRow({
       tenantId: ctx.organizationId,
       userId: ctx.userId,
       action: 'agent.ana.post_market.document.create',
       resourceType: 'post_market_document',
-      resourceId: String((doc as any)?.id ?? code),
+      resourceId: String(document.id),
       details: {
         ...agentAuditDetails(ctx, gate),
         programId,
         documentType,
-        code,
-        title,
+        documentId: document.id,
+        code: document.code,
+        version: document.version,
+        relatedCerReportId: relatedCerReportId ?? null,
       },
     });
 
     return {
       success: true,
       action,
-      data: { ...(doc as Record<string, unknown>), agentAuditTrail },
-      message: `Created post-market document ${code} (${documentType}).${auditNote(agentAuditTrail)}`,
+      data: {
+        document,
+        validation: {
+          passesGate: validation.passesGate,
+          criticalCount: validation.criticalCount,
+          warningCount: validation.warningCount,
+          findings: validation.findings,
+        },
+        agentAuditTrail,
+      },
+      message:
+        `DRAFT ${document.documentType} ${document.code} v${document.version} created on program ${programId}. ` +
+        (validation.passesGate
+          ? 'Passes the compliance gate; still requires sponsor specialisation before approval.'
+          : `Does NOT pass the compliance gate (${validation.criticalCount} critical, ${validation.warningCount} warning) — relay the findings.`) +
+        auditNote(agentAuditTrail),
     };
   } catch (err) {
+    const code = (err as { code?: string } | null)?.code;
+    if (code === 'PM_NO_DEVICE' || code === 'PM_BAD_TYPE') {
+      return { success: false, action, message: (err as Error).message, error: 'INVALID_INPUT' };
+    }
     return mapServiceError(action, err);
   }
 }
@@ -658,10 +735,18 @@ export const MDX_COMMAND_METADATA_PHASE2 = [
   {
     name: 'post_market.document.create',
     description:
-      'Create a draft post-market document (PMS plan, PMCF, complaint log, ' +
-      'KPI report). Requires confirm + reason.',
-    parameters: 'programId (UUID), documentType, code, title, confirm="yes", reason',
-    example: '"Create a PMCF plan PMCF-2025-Q3 on program OR-801."',
+      'Author and persist a DRAFT EU MDR/IVDR post-market document, scaffolded ' +
+      'from the device data (and a linked CER): PMS Plan (Art. 84), PMS Report ' +
+      '(Art. 85), PMCF Plan / Evaluation (Annex XIV Part B), PSUR (Art. 86) or ' +
+      'SSCP (Art. 32). Code and version are assigned per program; returns the ' +
+      'compliance-gate validation — relay its findings. Report-style types take a ' +
+      'reporting period; omitted, a DRAFT trailing-12-month period is set and ' +
+      'flagged. Does not invent clinical conclusions. Requires confirm + reason.',
+    parameters:
+      'programId (UUID), documentType (pms_plan|pms_report|pmcf_plan|pmcf_evaluation|psur|sscp), ' +
+      'deviceName or relatedCerReportId, deviceClass?, regulation? (MDR|IVDR), title?, ' +
+      'reportingPeriodStart? (ISO date), reportingPeriodEnd? (ISO date), confirm="yes", reason',
+    example: '"Draft the SSCP for the Acme Stent (Class III) on program OR-801."',
   },
   {
     name: 'post_market.document.approve',

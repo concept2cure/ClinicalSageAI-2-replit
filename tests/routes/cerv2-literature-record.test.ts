@@ -8,8 +8,9 @@
  *     the requestDb migration of 510k-device-routes — both server/db and
  *     server/db/requestDb are mocked, per that suite's pattern;
  *   - programId is validated as org-visible (404 outside the org, no leak);
- *   - honest failure: a service error answers 500 with recorded:false and the
- *     reason, never a fake success.
+ *   - honest failure: a service error answers 500 through serverError() — the
+ *     INTERNAL_ERROR envelope with the request id, never a fake success and
+ *     never the driver's text (D6 / IAM-18, P1-17 paydown 2).
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createMockRequest, createMockResponse } from '../setup';
@@ -164,16 +165,23 @@ describe('POST /api/cerv2/literature/record', () => {
     expect(res.json.mock.calls[0][0].recorded).toBe(true);
   });
 
-  it('answers 500 with recorded:false and the reason when the write fails', async () => {
+  /* This case used to PIN the leak: it asserted the relation name was in the
+     body. The body now carries the envelope and the request id; the relation
+     name is in the log. */
+  it('answers 500 with the envelope, never the relation name, when the write fails', async () => {
     mockRecord.mockRejectedValueOnce(new Error('relation "literature_entries" does not exist'));
     const req = makeReq({ entries: [ENTRY] });
     const res = createMockResponse() as any;
+    res.getHeader = vi.fn((name: string) => (name === 'X-Request-Id' ? 'req-p1-17-2' : undefined));
 
     await getHandler('/literature/record', 'post')(req, res);
 
     expect(res.status).toHaveBeenCalledWith(500);
     const payload = res.json.mock.calls[0][0];
-    expect(payload.recorded).toBe(false);
-    expect(payload.error).toMatch(/literature_entries/);
+    expect(payload.error).toBe('INTERNAL_ERROR');
+    expect(payload.correlationId).toBe('req-p1-17-2');
+    const body = JSON.stringify(payload);
+    expect(body).not.toContain('literature_entries');
+    expect(body).not.toMatch(/relation |does not exist/i);
   });
 });

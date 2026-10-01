@@ -632,6 +632,8 @@ describe('the person is asked why before they are asked to confirm', () => {
       ),
     );
     expect(out.error).toBe('HUMAN_CONFIRMATION_REQUIRED');
+    // At the reason tier: the person states or adopts the reason at confirmation.
+    expect(out.data).toMatchObject({ tier: 'reason', reasonRequired: true });
     expect(recordGovernedAction).not.toHaveBeenCalled();
   });
 

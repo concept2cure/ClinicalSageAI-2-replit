@@ -194,6 +194,15 @@ variable "audit_hmac_secret" {
   }
 }
 
+variable "audit_export_signing_key" {
+  type      = string
+  sensitive = true
+  validation {
+    condition     = length(var.audit_export_signing_key) >= 32
+    error_message = "audit_export_signing_key must be at least 32 characters (server/services/audit/auditExportKeyPosture.ts)."
+  }
+}
+
 variable "connector_encryption_key" {
   type      = string
   sensitive = true

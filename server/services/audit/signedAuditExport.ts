@@ -4,7 +4,9 @@
  * Provides tamper-evident audit trail exports for regulatory inspection.
  * Every export includes:
  *   1. An integrity manifest with SHA-256 hashes of all content
- *   2. An HMAC-SHA256 signature over the manifest (server-side key)
+ *   2. An HMAC-SHA256 signature over the manifest, under a key the manifest
+ *      names by id (`signingKeyId`; auditExportKeyPosture.ts), so a rotation
+ *      can be verified afterwards and a fallback-signed export is visible
  *   3. Export metadata (who exported, when, query filters used)
  *   4. Chain integrity verification result at time of export
  *
@@ -20,6 +22,11 @@ import { Pool } from 'pg';
 import type { ChainVerificationResult } from './chain.js';
 
 import { stableStringify } from '../../../shared/canonical-json.js';
+import {
+  configuredExportKeyIds,
+  resolveExportSigningKey,
+  resolveLegacyExportSigningKey,
+} from './auditExportKeyPosture.js';
 import {
   VerificationUnavailableError,
   describeFailure,
@@ -78,6 +85,16 @@ export interface ExportManifest {
    * than a version bump.
    */
   manifestVersion?: 1 | 2;
+  /**
+   * The id of the HMAC key that sealed this manifest (AUDIT_EXPORT_SIGNING_KEY_ID,
+   * 'k1' by default), or 'jwt-secret-fallback' when no dedicated key was
+   * configured — reachable outside production only. The verifier resolves the
+   * key BY THIS ID (current or `_PREV`) and refuses an id nothing is configured
+   * under. Absent on exports issued before P1-19b; those verify under the
+   * legacy resolution, unchanged, the same way `manifestVersion` absent means
+   * version 1. Covered by the version-2 signature like every other field.
+   */
+  signingKeyId?: string;
   /**
    * Linkage verification at export time. Four states (WO-16B finding 25):
    *   intact       every hashed row's previous_hash matched its predecessor
@@ -138,24 +155,22 @@ export interface ExportManifest {
 // SIGNING KEY
 // ---------------------------------------------------------------------------
 
-function getSigningKey(): string {
-  const key = process.env.AUDIT_EXPORT_SIGNING_KEY
-    || process.env.JWT_SECRET_PROD
-    || process.env.JWT_SECRET;
-  if (!key) {
-    throw new Error(
-      'No signing key configured. Set AUDIT_EXPORT_SIGNING_KEY, JWT_SECRET_PROD, or JWT_SECRET. ' +
-      'Refusing to sign with a default key per 21 CFR Part 11 §11.10(e).'
-    );
-  }
-  return key;
-}
+// The key itself — current id, `_PREV` slot, the frozen legacy chain and the
+// production posture — is resolved in auditExportKeyPosture.ts; this module
+// only signs with what it is handed.
 
-function hmacSign(data: string): string {
+function hmacSign(data: string, key: string): string {
   return crypto
-    .createHmac('sha256', getSigningKey())
+    .createHmac('sha256', key)
     .update(data, 'utf8')
     .digest('hex');
+}
+
+/** Constant-time comparison of two hex signatures; unequal lengths are simply unequal. */
+function signaturesEqual(given: unknown, expected: string): boolean {
+  const a = Buffer.from(String(given), 'utf8');
+  const b = Buffer.from(expected, 'utf8');
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
 /**
@@ -517,8 +532,9 @@ export async function generateSignedAuditExport(
   //    `audit_events.entity_id integer NOT NULL`, fail 22P02 on every call,
   //    and be swallowed — so no export was ever recorded and every manifest
   //    was sealed as if it had been. The signing key is resolved first so the
-  //    only step after the row lands is deterministic.
-  getSigningKey();
+  //    only step after the row lands is deterministic — and so a production
+  //    deployment without its dedicated key refuses here, before any row.
+  const signingKey = resolveExportSigningKey();
   const exportId = `AUDIT-EXPORT-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
   if (request.organizationId == null || !Number.isFinite(Number(request.organizationId))) {
     throw new VerificationUnavailableError(
@@ -580,6 +596,7 @@ export async function generateSignedAuditExport(
     dataHash,
     hashAlgorithm: 'SHA-256',
     manifestVersion: 2,
+    signingKeyId: signingKey.keyId,
     chainIntegrity,
     auditLogsChain,
     sources,
@@ -591,9 +608,10 @@ export async function generateSignedAuditExport(
     },
   };
 
-  // 6. Sign manifest — every field, at every depth (L55), the export record included.
+  // 6. Sign manifest — every field, at every depth (L55), the export record
+  //    and the key id included.
   const canonicalManifest = canonicalizeManifest(manifest);
-  const signature = hmacSign(canonicalManifest);
+  const signature = hmacSign(canonicalManifest, signingKey.key);
 
   // 7. Build filename
   const ts = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
@@ -608,17 +626,28 @@ export async function generateSignedAuditExport(
   };
 }
 
+export interface ExportVerification {
+  valid: boolean;
+  errors: string[];
+  /** The key id the manifest named and the signature was checked against; null for a manifest issued before key ids. */
+  signingKeyId: string | null;
+}
+
 /**
  * Verify the integrity of a previously exported audit package.
  *
  * Given the raw data and its manifest+signature, re-computes the data hash
- * and verifies the HMAC signature to confirm nothing has been altered.
+ * and verifies the HMAC signature to confirm nothing has been altered. The key
+ * is the one the manifest NAMES (`signingKeyId`: current or `_PREV`), never
+ * "whatever is configured now" — an id nothing is configured under is a
+ * refusal that says so. A manifest with no key id was issued before P1-19b and
+ * verifies under the legacy resolution, unchanged.
  */
 export function verifySignedAuditExport(
   data: string,
   manifest: ExportManifest,
   signature: string
-): { valid: boolean; errors: string[] } {
+): ExportVerification {
   const errors: string[] = [];
 
   // 1. Verify data hash
@@ -627,12 +656,32 @@ export function verifySignedAuditExport(
     errors.push('Data hash mismatch — export data has been modified');
   }
 
-  // 2. Verify manifest signature, using the serializer that sealed it.
-  const canonicalManifest = canonicalizeManifest(manifest);
-  const expectedSignature = hmacSign(canonicalManifest);
-  if (signature !== expectedSignature) {
-    errors.push('Manifest signature invalid — manifest or signing key has been altered');
+  // 2. Resolve the key the manifest names. A manifest posted for verification
+  //    is parsed JSON, so "no key id" may arrive as null as well as absent.
+  const namedKeyId = typeof manifest.signingKeyId === 'string' ? manifest.signingKeyId : null;
+  let key: string | undefined;
+  if (namedKeyId === null) {
+    key = resolveLegacyExportSigningKey();
+  } else {
+    const resolved = resolveExportSigningKey(namedKeyId);
+    if (resolved) {
+      key = resolved.key;
+    } else {
+      const ids = configuredExportKeyIds();
+      errors.push(
+        `Manifest names signing key '${namedKeyId}' but no key is configured under that id ` +
+          `(current: ${ids.current ? `'${ids.current}'` : 'none'}, previous: ${ids.previous ? `'${ids.previous}'` : 'none'})`,
+      );
+    }
   }
 
-  return { valid: errors.length === 0, errors };
+  // 3. Verify manifest signature, using the serializer that sealed it.
+  if (key !== undefined) {
+    const expectedSignature = hmacSign(canonicalizeManifest(manifest), key);
+    if (!signaturesEqual(signature, expectedSignature)) {
+      errors.push('Manifest signature invalid — manifest or signing key has been altered');
+    }
+  }
+
+  return { valid: errors.length === 0, errors, signingKeyId: namedKeyId };
 }

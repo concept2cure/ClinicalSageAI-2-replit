@@ -1,0 +1,9 @@
+# Fabricated rows: the RFP brief's '/api/enterprise/auth' spelling at the enterprise mount line, and a citation to a file that does not exist.
+MOUNT NOT AT CITED LINE  '/api/qms'  server/bootstrap/register-document-routes.ts:270
+MOUNT NOT AT CITED LINE  '/register'  server/mcp/index.ts:63-65
+MOUNT NOT AT CITED LINE  '/oauth/consent'  server/mcp/index.ts:96-101
+MOUNT NOT AT CITED LINE  "/socket.io/*"  terraform/modules/cloudfront/main.tf:8-23
+MOUNT NOT AT CITED LINE  '/api/enterprise/auth'  server/bootstrap/register-platform-routes.ts:157
+MOUNT FILE MISSING     '/api/auth'  server/bootstrap/register-nonexistent-routes.ts
+citations checked: 43  mounts checked: 101  failures: 6
+exit=1

@@ -27,11 +27,10 @@ import {
   type VaultFile,
   type VaultVersion,
 } from '../data/vault';
-import { useVault, useVaultVersions } from '../hooks/useVault';
+import { useVault, useVaultAuditTrail, useVaultVersions } from '../hooks/useVault';
 import { useVaultUpload } from '../../v2/useVaultUpload';
 import { ErrorState } from '../../v2/dataConnect';
 import type { Program } from '../data/programs';
-import { useAuditTrail } from '../../hooks/useProgramTabs';
 
 export interface VaultSurfaceProps {
   program: Program | null;
@@ -165,8 +164,9 @@ export function VaultSurface({ program, onAskAna, onOpenEditor }: VaultSurfacePr
       ? liveVersionsQuery.versions
       : null;
   const versions: VaultVersion[] = liveVersions ?? NO_VERSIONS;
-  /* The selected artifact's own audit trail, from audit_logs by record id. */
-  const selAudit = useAuditTrail({ filters: { record: sel?.id, limit: 5 } });
+  /* The selected artifact's own audit trail, from audit_logs by record id,
+     under the Vault's own route (production refuses /api/mdx/audit). */
+  const selAudit = useVaultAuditTrail(liveFiles && sel ? sel.id : null);
 
   return (
     <>
@@ -410,18 +410,18 @@ export function VaultSurface({ program, onAskAna, onOpenEditor }: VaultSurfacePr
                 surface subtitled "21 CFR Part 11 audit trail". The rows now come
                 from audit_logs for this record id, or the block says why not. */}
             <div className="drawer-section-lbl">Recent audit</div>
-            {selAudit.isError ? (
+            {selAudit.error ? (
               <div className="version-note" data-testid="vault-audit-error">
                 The audit trail for this artifact could not be loaded.
               </div>
-            ) : selAudit.isLoading ? (
+            ) : selAudit.loading || selAudit.events === null ? (
               <div className="version-note">Loading audit trail…</div>
-            ) : (selAudit.data?.events.length ?? 0) === 0 ? (
+            ) : selAudit.events.length === 0 ? (
               <div className="version-note" data-testid="vault-audit-empty">
                 No audit events recorded for this artifact.
               </div>
             ) : (
-              selAudit.data!.events.map((e) => (
+              selAudit.events.map((e) => (
                 <div key={e.id} className="audit-row">
                   <span className="mono">{e.id}</span>
                   <span>

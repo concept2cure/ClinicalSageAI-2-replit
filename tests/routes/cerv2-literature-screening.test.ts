@@ -18,7 +18,9 @@
  *   - the decision is audited through the canonical `auditService` path, with
  *     the SUPERSEDED decision in the payload — never a hand-rolled INSERT;
  *   - a refusal answers 422 with the service's real reason; a genuine failure
- *     answers 500 with screened:false — never a fake success.
+ *     answers 500 through serverError() — the INTERNAL_ERROR envelope with the
+ *     request id, never a fake success and never the driver's text (D6 /
+ *     IAM-18, P1-17 paydown 2).
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createMockRequest, createMockResponse } from '../setup';
@@ -298,17 +300,22 @@ describe('POST /api/cerv2/literature/screen', () => {
     expect(mockLogAction).not.toHaveBeenCalled();
   });
 
-  it('500s with screened:false and the reason when the write genuinely fails', async () => {
+  /* This case used to PIN the leak: it asserted the driver's text was in the
+     body. The 422 refusal above keeps its real reason; a genuine failure now
+     carries the envelope and the request id, and the text is in the log. */
+  it('500s with the envelope, never the driver text, when the write genuinely fails', async () => {
     mockScreen.mockRejectedValueOnce(new Error('deadlock detected'));
     const req = makeReq({ body: BODY });
     const res = createMockResponse() as any;
+    res.getHeader = vi.fn((name: string) => (name === 'X-Request-Id' ? 'req-p1-17-2' : undefined));
 
     await getHandler('/literature/screen', 'post')(req, res);
 
     expect(res.status).toHaveBeenCalledWith(500);
     const payload = res.json.mock.calls[0][0];
-    expect(payload.screened).toBe(false);
-    expect(payload.error).toMatch(/deadlock detected/);
+    expect(payload.error).toBe('INTERNAL_ERROR');
+    expect(payload.correlationId).toBe('req-p1-17-2');
+    expect(JSON.stringify(payload)).not.toMatch(/deadlock/i);
     expect(mockLogAction).not.toHaveBeenCalled();
   });
 });
@@ -375,16 +382,21 @@ describe('GET /api/cerv2/literature/screening', () => {
     expect(payload.decisions).toEqual([]);
   });
 
-  it('500s with available:false rather than an empty trail on a genuine failure', async () => {
+  /* Same paydown: a genuine failure is still a 500, never an empty trail
+     presented as "nothing screened" — and no longer the driver's text either. */
+  it('500s with the envelope, never the driver text, rather than an empty trail on a genuine failure', async () => {
     mockRead.mockRejectedValueOnce(new Error('connection terminated'));
     const req = makeReq({ query: {} });
     const res = createMockResponse() as any;
+    res.getHeader = vi.fn((name: string) => (name === 'X-Request-Id' ? 'req-p1-17-2' : undefined));
 
     await getHandler('/literature/screening', 'get')(req, res);
 
     expect(res.status).toHaveBeenCalledWith(500);
     const payload = res.json.mock.calls[0][0];
-    expect(payload.available).toBe(false);
-    expect(payload.error).toMatch(/connection terminated/);
+    expect(payload.error).toBe('INTERNAL_ERROR');
+    expect(payload.correlationId).toBe('req-p1-17-2');
+    expect(payload.decisions).toBeUndefined();
+    expect(JSON.stringify(payload)).not.toMatch(/connection terminated/i);
   });
 });

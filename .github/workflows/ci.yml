@@ -1876,6 +1876,7 @@ jobs:
           REFRESH_TOKEN_SECRET: ci-boot-smoke-refresh-secret-min-32-chars-ccc
           AUDIT_HMAC_SECRET: ci-boot-smoke-audit-hmac-secret-min-32-chars-ddd
           AUDIT_HMAC_KEY: ci-boot-smoke-audit-hmac-key-min-32-chars-eee
+          AUDIT_EXPORT_SIGNING_KEY: ci-boot-smoke-audit-export-key-min-32-chars-hhh
           MFA_ENCRYPTION_KEY: ci-boot-smoke-mfa-encryption-key-min-32-chars-fff
           CONNECTOR_ENCRYPTION_KEY: ci-boot-smoke-connector-encryption-key-32-ggg
           # server/services/signature/signer-mode.ts refuses to boot production

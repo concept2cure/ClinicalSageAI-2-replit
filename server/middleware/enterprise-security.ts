@@ -522,10 +522,17 @@ export function sanitizeInput(req: Request, res: Response, next: NextFunction) {
     if (req.body && typeof req.body === 'object') {
       req.body = sanitizeObject(req.body);
     }
-    // req.query / req.params are getter-backed in Express 5 — scrub in place.
-    if (req.query && typeof req.query === 'object') {
-      scrubObjectInPlace(req.query);
+    // req.query is getter-backed in Express 5 and RE-PARSES the URL on every
+    // access, so scrubbing the object it returns in place was discarded: the
+    // handler's next `req.query` read got a fresh, unscrubbed parse
+    // (found by server/middleware/__tests__/sanitizeInputOrdering.test.ts).
+    // Scrub one parse and pin it as an own property that shadows the getter.
+    const query = req.query;
+    if (query && typeof query === 'object') {
+      scrubObjectInPlace(query);
+      Object.defineProperty(req, 'query', { value: query, writable: true, configurable: true, enumerable: true });
     }
+    // req.params is a plain own property set by the router — in place is enough.
     if (req.params && typeof req.params === 'object') {
       scrubObjectInPlace(req.params);
     }

@@ -14,6 +14,7 @@ exists and was superseded on 2026-09-24.
 | `REMEDIATION_AND_ENHANCEMENT_PLAN_2026-09-24.md` | The staged plan (P0 before any production tenant; P1 for D6 green; P2 for EU/Japan/HIPAA market entry; P3 continuous assurance), each item with an owner, an effort, a failing-first acceptance test, the launch row it moves and the clauses it satisfies; the founder decisions it waits on. |
 | `docs/evidence/D6/2026-09-24-security-audit/` | Gate outputs, test runs, the citation check and the reproductions behind the audit. |
 | `../evidence/reviews/<date>/security.md` | The weekly security lens produced by `.claude/agents/security-auditor.md` (first run 2026-09-24). |
+| `PEN_TEST_SCOPE_2026-09-26.md` | The GA penetration-test scope for the launch catalog (P1-15, D6): surfaces by mount, the retest list of every closed audit id, the known-open list, rules of engagement, deliverables and acceptance. Supersedes `../beta/security/PEN_TEST_SCOPE_2026-05-01.md`. |
 
 ## Governance set (all DRAFT until the founder signs)
 

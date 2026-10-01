@@ -134,3 +134,30 @@ The mocked suites now give `transaction` their own pool, as the real one hands
 its client to the callback. One suite's query mock read only string SQL; a pg
 client also takes the `{ text, values }` form Drizzle sends, and the mock now
 reads both. Correspondence suites: 6 files, 142 tests pass.
+
+## Follow-up, 2026-09-30: 25 of the 29 newly visible leaks are fixed
+
+The sites the widened gate uncovered in files no other lane owns now go through
+`serverError`. The cause is logged against the request id, and the client gets
+a code and a sentence:
+
+| File | Sites |
+|---|---|
+| `server/routes/billing-dashboard.ts` | 9 |
+| `server/routes/orchestration.ts` | 12 |
+| `server/routes/deep-research.ts` | 1 |
+| `server/routes/capa-mdr.ts` (the shared `err` helper) | 1 |
+| `server/api/cmc/module3OperatingSystemRoutes.ts` | 1 |
+| `server/routes/ai-assistance.ts` | 1 (the error text is replaced with a sentence; `logAIRequest` already logs it) |
+
+`scripts/ci/server-error-leaks-baseline.json` goes from 146 sites in 83 files
+to **121 sites in 77 files**. Still baselined, for the reasons above:
+`qms.ts` (founder, DP-34) and `tenant-export.ts` ×3 (D6 offboarding lane).
+The 11 suites that load these routes pass: 109 tests.
+
+**Found, not changed:** on a 500, `POST /api/ai-assistance/assist` still returns
+a canned `recommendation` (`getFallbackSuggestion`), and its success path does
+the same whenever no model answered. Both are labelled (`fallback: true`,
+`isRealAI: false`, and a note in the text). The route is mounted, but nothing in
+`client/src` calls it. Whether to remove the templates or the route is for the
+AI-gateway lane.

@@ -126,6 +126,11 @@ const IngestBodySchema = z.object({
   folderId: z.string().min(1).optional(),
   evidenceKind: z.string().min(1).optional(),
   ctdSection: z.string().min(1).optional(),
+  /* Add this file as the next version of an existing document (VR-08): the id
+     of one of its versions. The server assigns the version, keeps the
+     document's code and filing, and records the link; the database refuses a
+     link outside the document's own program, code and organization. */
+  supersedesDocumentId: z.string().uuid('supersedesDocumentId must be a version id').optional(),
 });
 
 export default function createVaultIngestRoutes(): Router {
@@ -159,7 +164,9 @@ export default function createVaultIngestRoutes(): Router {
     /* Lineage is not set by an upload (VR-05). The body took any UUID here and
        wrote it as the new version's parent or predecessor, unchecked against
        program or organization; no client sends either. Refused, not dropped:
-       a caller that sent lineage is told it was not recorded. */
+       a caller that sent lineage is told it was not recorded. A new version
+       names its document with supersedesDocumentId (VR-08), and the server
+       derives and checks the link. */
     const lineage = ['parentDocumentId', 'supersedesId'].filter((k) => req.body?.[k] !== undefined);
     if (lineage.length > 0) {
       return res.status(400).json({
@@ -243,6 +250,7 @@ export default function createVaultIngestRoutes(): Router {
         folderId: data.folderId,
         evidenceKind: data.evidenceKind,
         ctdSection: data.ctdSection,
+        supersedesDocumentId: data.supersedesDocumentId,
         fileBuffer,
         fileName: (req as any).file?.originalname || 'document',
         mimeType: (req as any).file?.mimetype || 'application/octet-stream',

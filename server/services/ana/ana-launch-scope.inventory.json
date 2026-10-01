@@ -647,6 +647,8 @@
    "create_protocol_document",
    "create_protocol_template",
    "create_qms_document",
+   "critique_document",
+   "critique_draft",
    "cross_region_gap_analysis",
    "define_estimand",
    "derive_ctq_factors",
@@ -1017,7 +1019,8 @@
    "validate_udi",
    "value_dossier_guidance",
    "verify_docx_against_source",
-   "verify_memory_atom"
+   "verify_memory_atom",
+   "verify_revision"
   ]
  },
  "commands": {
