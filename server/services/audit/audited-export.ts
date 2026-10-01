@@ -58,14 +58,28 @@ export function breakForTenant(orgId: number, b: ChainBreak): Record<string, unk
 export const NO_CHAINED_ROWS_REASON = 'No chained rows exist for this organisation, so there is no chain to verify.';
 
 /**
+ * A walk's verdict as this organization may read it: the break redacted to
+ * what is its own (breakForTenant), and a walk over no chained rows stated as
+ * not verified. The one statement of it for every reader of the tenant chain:
+ * the exports and reports here, and the ledger and record-history reads
+ * (routes/audit-trail-ledger.routes.ts; reporting review 2026-10-01,
+ * SECURITY-8: they returned the raw break and ok:true over nothing).
+ */
+export function tenantChainVerdict(
+  orgId: number,
+  walk: { ok: boolean; rowsChecked: number; brokenAt?: ChainBreak },
+): { ok: boolean | null; rowsChecked: number; reason?: string; brokenAt?: Record<string, unknown> } {
+  if (walk.ok && walk.rowsChecked === 0) return { ok: null, rowsChecked: 0, reason: NO_CHAINED_ROWS_REASON };
+  return { ok: walk.ok, rowsChecked: walk.rowsChecked, ...(walk.brokenAt ? { brokenAt: breakForTenant(orgId, walk.brokenAt) } : {}) };
+}
+
+/**
  * The tenant's whole audit chain, walked now; `ok: null` when the walk could
  * not run, and when there was nothing to walk.
  */
 export async function walkTenantChain(orgId: number): Promise<TenantChainVerdict> {
   try {
-    const walk = await verifyTenantChainOnAdminScope(orgId);
-    if (walk.ok && walk.rowsChecked === 0) return { ok: null, rowsChecked: 0, reason: NO_CHAINED_ROWS_REASON };
-    return { ok: walk.ok, rowsChecked: walk.rowsChecked, ...(walk.brokenAt ? { brokenAt: breakForTenant(orgId, walk.brokenAt) } : {}) };
+    return tenantChainVerdict(orgId, await verifyTenantChainOnAdminScope(orgId));
   } catch (err) {
     console.error('[audited-export] tenant chain walk failed:', (err as Error)?.message);
     return { ok: null, reason: 'The audit chain could not be walked at export time.' };
