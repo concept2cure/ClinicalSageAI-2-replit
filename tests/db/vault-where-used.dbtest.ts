@@ -12,7 +12,11 @@
  *   - a removed leaf, and a leaf in a removed sequence, are not placements;
  *   - another organisation's leaf naming this version is not listed, by the
  *     read's own filter as well as by row security, and another organisation
- *     reads none of it.
+ *     reads none of it;
+ *   - an official eSTAR export whose record names a version as an attachment
+ *     source is listed (VR-14c), whether the record went to the artifact
+ *     registry or to the audit row of an unplaced export; a record that names
+ *     no source, or another organisation's, is not.
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import express from 'express';
@@ -124,6 +128,12 @@ async function cleanup(): Promise<void> {
   } finally {
     client.release();
   }
+  await owner.query(`DELETE FROM concept2cure_provenance_events WHERE organization_id IN ${orgs}`).catch(() => {});
+  await owner.query(`DELETE FROM concept2cure_artifact_versions WHERE organization_id IN ${orgs}`).catch(() => {});
+  await owner.query(`DELETE FROM concept2cure_artifacts WHERE organization_id IN ${orgs}`).catch(() => {});
+  await owner.query(`DELETE FROM regulatory_audit_logs WHERE organization_id IN ${orgs}`).catch(() => {});
+  await owner.query(`DELETE FROM projects WHERE organization_id IN ${orgs}`).catch(() => {});
+  await owner.query(`DELETE FROM client_workspaces WHERE organization_id IN ${orgs}`).catch(() => {});
   await owner.query(`DELETE FROM submission_leaves WHERE organization_id IN ${orgs}`);
   await owner.query(`DELETE FROM ectd_sequences WHERE organization_id IN ${orgs}`);
   await owner.query(`DELETE FROM submissions WHERE organization_id IN ${orgs}`);
@@ -210,5 +220,81 @@ describe('where a Vault version is placed (VR-14a)', () => {
     const { readVaultPlacements } = await import('../../server/services/vault/vault-where-used');
     const found = await readVaultPlacements(owner, mine.orgId, [ids.v1]);
     expect(found.get(ids.v1)?.map((p) => p.sequenceId)).toEqual([seq.first]);
+  });
+});
+
+/** An attachment as an official eSTAR export records it (estar-fill.ts toRecord). */
+const attachment = (documentId: string | null) => ({
+  slot: 'root.CoverLetter', field: 'CLAddAttachment110', chapter: '/CHAPTER 1/CH1.01/', fileName: 'Cover Letter.pdf',
+  dataObjectName: '2026-10-01T18:00:00', description: null, mimeType: 'application/pdf', byteLength: 11,
+  sha256: 'a'.repeat(64), token: '<<Cover Letter.pdf|/CHAPTER 1/CH1.01/>>',
+  ...(documentId ? { source: { kind: 'vault_document', documentId } } : {}),
+});
+const retention = { retained: true, documentId: '', documentCode: 'eSTAR-510k-device', version: '1.0', contentHash: 'b'.repeat(64) };
+
+/** An export through one of the two real writers, in the organisation's scope. */
+async function exportEstar(t: Tenant, how: 'unplaced' | 'placed', attachments: unknown[], projectId?: number): Promise<void> {
+  const { runWithTenantScope } = await import('../../server/db/tenantStore');
+  const writers = await import('../../server/services/export/governedExportConsequence');
+  const metadata = { attachments, retention: { ...retention, documentId: ids.other } };
+  const common = { organizationId: t.orgId, userId, backendRoute: 'POST /api/510k/estar/official', filename: 'k123_eSTAR.pdf', mimeType: 'application/pdf' };
+  await runWithTenantScope(
+    { tenantId: String(t.orgId), orgUuid: t.orgUuid, role: 'admin', source: 'request', caller: 'tests/db/vault-where-used.dbtest.ts' },
+    async () => {
+      if (how === 'unplaced') {
+        await writers.createAuditedUnplacedExport({
+          ...common, sourceType: 'export_estar_pdf', resourceType: 'estar_official_pdf', resourceId: t.programId,
+          programUuid: t.programId, buffer: Buffer.from('%PDF-1.7 eSTAR'), metadata,
+        });
+      } else {
+        await writers.createGovernedExportConsequence({
+          ...common, projectId: projectId!, title: 'k123 official FDA eSTAR', contentForArtifact: '{}',
+          sourceType: 'export_estar_pdf', ctdSection: 'm1.5', binaryOutput: Buffer.from('%PDF-1.7 eSTAR'), metadata,
+        });
+      }
+    },
+  );
+}
+
+async function pmProject(t: Tenant): Promise<number> {
+  const ws = await owner.query(
+    `INSERT INTO client_workspaces (organization_id, name, slug) VALUES ($1, 'where-used', $2) RETURNING id`,
+    [t.orgId, `dbtest-vwhere-ws-${t.orgId}`],
+  );
+  const p = await owner.query(
+    `INSERT INTO projects (organization_id, client_workspace_id, name, type) VALUES ($1, $2, $3, 'ind') RETURNING id`,
+    [t.orgId, ws.rows[0].id, `${PROBE}pm project`],
+  );
+  return Number(p.rows[0].id);
+}
+
+describe('official eSTAR exports that attached a version (VR-14c)', () => {
+  beforeAll(async () => {
+    await exportEstar(mine, 'unplaced', [attachment(ids.v1)]);
+    await exportEstar(mine, 'placed', [attachment(ids.v2)], await pmProject(mine));
+    // Not uses: a record that names no source (as every export before
+    // 2026-10-01 does), and another organisation's record naming this version.
+    await exportEstar(mine, 'unplaced', [attachment(null)]);
+    await exportEstar(theirs, 'unplaced', [attachment(ids.v1)]);
+  }, 60_000);
+
+  it('lists each export whose record names the version, from either store', async () => {
+    const res = await versions(mine, ids.v2);
+    expect(res.status, JSON.stringify(res.body).slice(0, 300)).toBe(200);
+    const byId = new Map(res.body.data.versions.map((v: { id: string }) => [v.id, v]));
+    const retainedAs = { documentId: ids.other, documentCode: 'eSTAR-510k-device', version: '1.0' };
+    expect((byId.get(ids.v1) as any).estarUses).toEqual([expect.objectContaining({
+      record: 'audit', slot: 'root.CoverLetter', chapter: '/CHAPTER 1/CH1.01/', fileName: 'Cover Letter.pdf', retainedAs,
+    })]);
+    expect((byId.get(ids.v2) as any).estarUses).toEqual([expect.objectContaining({ record: 'artifact', retainedAs })]);
+  });
+
+  it("a record that names no source is not inferred, and another organisation's is not listed", async () => {
+    const { readVaultEstarUses } = await import('../../server/services/vault/vault-where-used');
+    // As the owner, so only the read's own organisation filter applies.
+    const found = await readVaultEstarUses(owner, mine.orgId, [ids.v1, ids.v2, ids.other]);
+    expect(found.get(ids.v1)).toHaveLength(1);
+    expect(found.get(ids.v2)).toHaveLength(1);
+    expect(found.has(ids.other)).toBe(false);
   });
 });
