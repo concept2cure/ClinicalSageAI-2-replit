@@ -17,16 +17,19 @@
  * count, and the four actions — Open full editor, File to vault, Assign
  * review, Place into filing.
  *
- * Expanded, it "converts into a full editor": the card grows to the
- * conversation's full width and mounts `DocumentWorkbench` PINNED to this
- * document — the same component the Authoring surface renders, over the same
- * store, with the same rails (comments, history, sources, audit, signatures,
- * exports, project files, tasks) and the same one save path. No navigation,
- * no reload. "Back to conversation" and Escape collapse it; the workbench
- * stays mounted underneath (hidden) so its state — open section, rail,
- * unsaved text — survives collapsing and re-expanding. The thread's composer
- * stays below, so the person keeps talking to AnA about the document she is
- * looking at; every ask from inside the workbench lands in that composer.
+ * Expanded, it "converts into a full editor": it mounts `DocumentWorkbench`
+ * PINNED to this document — the same component the Authoring surface renders,
+ * over the same store, with the same rails (comments, history, sources, audit,
+ * signatures, exports, project files, tasks) and the same one save path. No
+ * navigation, no reload. In the thread (2026-10-01) the editor opens BESIDE the
+ * conversation: the thread passes `paneEl`, the expanded region is portalled
+ * there, and the card stays in the conversation marked as the open document,
+ * so the person edits with AnA's answers and the composer in view, as one
+ * builds a document with Claude. Without a pane it expands in place, as
+ * before. "Back to conversation" and Escape collapse it; the workbench stays
+ * mounted (hidden) so its state — open section, rail, unsaved text — survives
+ * collapsing and re-expanding. Every ask from inside the workbench lands in
+ * the thread's composer.
  *
  * ── Why the previous five were deleted, and why this is not a sixth ──────────
  * CLAUDE.md, "Deleting a user-facing capability": each earlier canvas or
@@ -45,6 +48,7 @@
  * in this conversation — and nothing more.
  */
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
@@ -104,6 +108,13 @@ export interface DocumentCanvasProps {
   onAsk: (text: string) => void;
   fireToast: FireToast;
   liveDrive?: OwnedSurfaceViewProps['liveDrive'];
+  /**
+   * Where the expanded editor renders. The thread passes a pane BESIDE its
+   * conversation column, so the person edits with AnA's answers and the
+   * composer in view, as one builds a document with Claude. Without it (the
+   * Authoring surface, tests of the card alone) the editor expands in place.
+   */
+  paneEl?: HTMLElement | null;
 }
 
 /* `escapeBelongsToInner` — true when the keydown should NOT collapse the
@@ -124,7 +135,11 @@ export function DocumentCanvas({
   onAsk,
   fireToast,
   liveDrive,
+  paneEl = null,
 }: DocumentCanvasProps) {
+  /* Beside the conversation the card stays in the thread, marked as the
+     document that is open; in place it gives way to the editor. */
+  const beside = paneEl !== null;
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [error, setError] = useState<string | null>(null);
   const [doc, setDoc] = useState<DocRow | null>(null);
@@ -143,6 +158,10 @@ export function DocumentCanvas({
   const [workbenchMounted, setWorkbenchMounted] = useState(false);
   const { program, state: programState } = useProgramRead(programId);
   const rootRef = useRef<HTMLElement>(null);
+  /* The expanded region. Beside the conversation it is portalled into the
+     pane, outside rootRef, so anything that asks about the open editor asks
+     this element rather than the card. */
+  const expandedRef = useRef<HTMLDivElement>(null);
   const expandBtnRef = useRef<HTMLButtonElement>(null);
   const backBtnRef = useRef<HTMLButtonElement>(null);
   const titleId = useId();
@@ -208,7 +227,7 @@ export function DocumentCanvas({
          they run in is not something to rely on — the canvas yields here,
          for the Escapes the workbench takes: from inside it, or from the
          body. One from the canvas's own bar is still the canvas's. */
-      const railOpen = rootRef.current?.querySelector('.ed[data-rail]:not([data-rail="ana"])');
+      const railOpen = (expandedRef.current ?? rootRef.current)?.querySelector('.ed[data-rail]:not([data-rail="ana"])');
       const t = e.target;
       if (railOpen && (t === document.body || (t instanceof Node && railOpen.contains(t)))) return;
       /* An open modal owns Escape wherever focus happens to be — closing the
@@ -290,7 +309,7 @@ export function DocumentCanvas({
       data-doc-id={docId}
     >
       {/* ── The card ── */}
-      <div className="dcv-card" hidden={expanded}>
+      <div className="dcv-card" hidden={expanded && !beside} data-open-beside={(expanded && beside) || undefined}>
         <div className="dcv-head">
           <div className="dcv-kind">
             {I.fileText} Document{doc?.module ? ` · ${doc.module}` : ''}{doc?.status ? ` · ${String(doc.status).replace(/_/g, ' ').toLowerCase()}` : ''}
@@ -357,14 +376,17 @@ export function DocumentCanvas({
             ref={expandBtnRef}
             type="button"
             className="btn primary"
-            onClick={() => onExpandedChange(true)}
+            onClick={() => onExpandedChange(beside ? !expanded : true)}
             disabled={state !== 'ready'}
             aria-expanded={expanded}
             aria-controls={expandedId}
             data-testid="dc-open-editor"
           >
-            {I.maximize} Open full editor
+            {expanded && beside ? <>{I.close} Close the editor</> : <>{I.maximize} Open full editor</>}
           </button>
+          {expanded && beside && (
+            <span className="dcv-open-note" role="status">Open in the editor beside this conversation</span>
+          )}
           {/* GE-P-3: a refused act is disabled with the server's reason beside it. */}
           <button
             type="button"
@@ -412,9 +434,10 @@ export function DocumentCanvas({
         </div>
       </div>
 
-      {/* ── The editor, in place ── */}
-      {workbenchMounted && doc && (
-        <div className="dcv-expanded" id={expandedId} hidden={!expanded} data-testid="dc-expanded">
+      {/* ── The editor: beside the conversation when the thread gives a pane, else in place ── */}
+      {workbenchMounted && doc && (() => {
+        const region = (
+        <div ref={expandedRef} className="dcv-expanded" id={expandedId} hidden={!expanded} data-testid="dc-expanded" data-beside={beside || undefined}>
           <div className="dcv-bar">
             <button ref={backBtnRef} type="button" className="ed-back" onClick={() => onExpandedChange(false)} data-testid="dc-back">
               {I.left} Back to conversation
@@ -444,7 +467,9 @@ export function DocumentCanvas({
             />
           </div>
         </div>
-      )}
+        );
+        return beside && paneEl ? createPortal(region, paneEl) : region;
+      })()}
 
       {fileToVaultOpen && doc && (
         <FileToVaultDialog
