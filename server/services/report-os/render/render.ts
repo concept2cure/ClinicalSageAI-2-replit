@@ -59,6 +59,47 @@ export function gapsWereEvaluated(summary: Record<string, unknown> | null | unde
   return Array.isArray(regulatory?.missingArtifacts);
 }
 
+/**
+ * The gaps section: the evaluation's gaps, "no gaps" when an evaluation ran and
+ * found none, or "not evaluated" when none ran.
+ */
+function gapsSectionFor(summary: Record<string, unknown>, generatedAt: string): ReportSection {
+  const missingArtifacts = asRecord(summary.regulatory)?.missingArtifacts;
+  if (Array.isArray(missingArtifacts) && missingArtifacts.length > 0) {
+    return {
+      id: 'gaps',
+      title: 'Gaps',
+      blocks: [
+        {
+          kind: 'gap-list',
+          items: missingArtifacts.map(artifact => ({
+            title: String(artifact),
+            severity: 'high',
+          })),
+        },
+      ],
+    };
+  }
+  if (gapsWereEvaluated(summary)) {
+    return {
+      id: 'gaps',
+      title: 'Gaps',
+      blocks: [
+        { kind: 'gap-list', items: [] },
+        { kind: 'summary', text: `No gaps detected as of ${generatedAt}.` },
+      ],
+    };
+  }
+  /* "No gaps detected" printed for every scope no gap evaluation covers (every
+     program-scoped canvas report among them), and sealed in final records
+     (reporting review 2026-10-01). Nothing was checked; say so. */
+  return {
+    id: 'gaps',
+    title: 'Gaps',
+    blocks: [{ kind: 'summary', text: 'Gaps were not evaluated for this scope.' }],
+  };
+}
+
 export function renderReport(input: RenderInput): RenderedReport {
   const generatedAt = input.generatedAt ?? new Date().toISOString();
   const sections: ReportSection[] = [];
@@ -131,40 +172,7 @@ export function renderReport(input: RenderInput): RenderedReport {
   }
 
   // 4. Gaps (always present; supports requireExplicitGaps).
-  const missingArtifacts = regulatory?.missingArtifacts;
-  if (Array.isArray(missingArtifacts) && missingArtifacts.length > 0) {
-    sections.push({
-      id: 'gaps',
-      title: 'Gaps',
-      blocks: [
-        {
-          kind: 'gap-list',
-          items: missingArtifacts.map(artifact => ({
-            title: String(artifact),
-            severity: 'high',
-          })),
-        },
-      ],
-    });
-  } else if (gapsWereEvaluated(input.summary)) {
-    sections.push({
-      id: 'gaps',
-      title: 'Gaps',
-      blocks: [
-        { kind: 'gap-list', items: [] },
-        { kind: 'summary', text: `No gaps detected as of ${generatedAt}.` },
-      ],
-    });
-  } else {
-    /* "No gaps detected" printed for every scope no gap evaluation covers
-       (every program-scoped canvas report among them), and sealed in final
-       records (reporting review 2026-10-01). Nothing was checked; say so. */
-    sections.push({
-      id: 'gaps',
-      title: 'Gaps',
-      blocks: [{ kind: 'summary', text: 'Gaps were not evaluated for this scope.' }],
-    });
-  }
+  sections.push(gapsSectionFor(input.summary, generatedAt));
 
   const report: RenderedReport = {
     reportTypeId: input.reportTypeId,
