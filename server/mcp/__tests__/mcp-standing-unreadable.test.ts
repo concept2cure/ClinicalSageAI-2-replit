@@ -42,17 +42,25 @@ vi.mock('../../services/account-standing', async (importOriginal) => {
 vi.mock('../auth/store', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../auth/store')>();
   const membership = { membershipId: 11, organizationId: 7, userId: 3, role: 'admin', organizationUuid: null, email: null };
-  const grant = { clientId: 'client-1', organizationId: 7, userId: 3, membershipId: 11, scopes: ['c2c:read'], resource: null };
+  const grant = {
+    clientId: 'client-1',
+    organizationId: 7,
+    userId: 3,
+    membershipId: 11,
+    scopes: ['c2c:read'],
+    resource: null,
+  };
   return {
     ...actual,
     findMembership: vi.fn(async () => membership),
-    readRefreshToken: vi.fn(async () => ({ ...grant, expired: false, revoked: false })),
+    readRefreshToken: vi.fn(async () => ({ ...grant, expired: false, revoked: false, issuedAt: new Date() })),
     readAuthorizationCode: vi.fn(async () => ({
       ...grant,
       codeChallenge: 'x',
       redirectUri: 'http://localhost:5300/cb',
       expired: false,
       redeemed: false,
+      issuedAt: new Date(),
     })),
     ...grants,
   };
