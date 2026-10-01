@@ -52,7 +52,7 @@ module "stack" {
 
   # Production: Multi-AZ, 35-day backups, protected from deletion, Part 11
   # evidence under COMPLIANCE object lock for seven years.
-  rds_engine_version        = "15.4"
+  rds_engine_version        = "15" # major only; RDS patches the minor (B10)
   rds_allocated_storage     = 50
   rds_max_allocated_storage = 500
   rds_multi_az              = true
@@ -83,6 +83,8 @@ module "stack" {
   audit_hmac_key           = var.audit_hmac_key
   audit_hmac_secret        = var.audit_hmac_secret
   audit_export_signing_key = var.audit_export_signing_key
+  audit_attestation_key    = var.audit_attestation_key
+  sentry_dsn               = var.sentry_dsn
   connector_encryption_key = var.connector_encryption_key
   openai_api_key           = var.openai_api_key
   anthropic_api_key        = var.anthropic_api_key

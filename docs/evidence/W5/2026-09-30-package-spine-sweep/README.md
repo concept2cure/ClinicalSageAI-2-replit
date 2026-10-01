@@ -26,14 +26,14 @@ both finders, and every verifier, were cut off by account usage limits
 
 | ID | Lens | Claimed | Finding | Status |
 |---|---|---|---|---|
-| F00 | backbone | high | The ICH heading tree stops 1–3 levels short of v3.2.2 (e.g. `m3-2-s-4-1-specification`, `m5-3-5-1-…` are never emitted), so deep Module 2–5 leaves file under their parent heading; a non-existent code such as `3.2.S.4.9` is accepted and filed under 3.2.S with 0 errors. | unverified |
+| F00 | backbone | high | The ICH heading tree stops 1–3 levels short of v3.2.2 (e.g. `m3-2-s-4-1-specification`, `m5-3-5-1-…` are never emitted), so deep Module 2–5 leaves file under their parent heading; a non-existent code such as `3.2.S.4.9` is accepted and filed under 3.2.S with 0 errors. | **confirmed** 2026-10-01 (high; misfiling made permanent by lifecycle, not a validation error) |
 | F01 | backbone | high | `index.xml` and `us-regional.xml` declare `xmlns:xlink="http://www.w3.org/1999/xlink"`; the ICH 3.2 and FDA 3.3 DTDs fix it (`#FIXED`) to `http://www.w3c.org/1999/xlink` — every backbone would be DTD-invalid. The repo's own `docs/ectd/SPEC_DIGEST.md` shows the w3c.org value. | **confirmed** 2026-10-01 (high); **fixed** — see "Fixed after verification" |
-| F02 | backbone | high | `m3-2-s-drug-substance`, `m3-2-p-drug-product`, `m5-3-5-…` (and the 2.3.S/2.3.P/2.7.3 counterparts) are emitted without the attributes the DTD requires (substance, manufacturer, dosageform, indication); multiple substances/products/indications merge under one heading. | unverified |
-| F03 | backbone | medium | This spine can never produce a Study Tagging File: `LeafBytes` has no study fields, so 4.2.x / 5.3.x study reports ship untagged. | unverified |
+| F02 | backbone | high | `m3-2-s-drug-substance`, `m3-2-p-drug-product`, `m5-3-5-…` (and the 2.3.S/2.3.P/2.7.3 counterparts) are emitted without the attributes the DTD requires (substance, manufacturer, dosageform, indication); multiple substances/products/indications merge under one heading. | **partially confirmed** 2026-10-01 (high): Module 3/5 headings lack #REQUIRED attributes; the Module 2 ones are never emitted (F00); `product-name` is optional |
+| F03 | backbone | medium | This spine can never produce a Study Tagging File: `LeafBytes` has no study fields, so 4.2.x / 5.3.x study reports ship untagged. | **confirmed** 2026-10-01 (medium); the in-repo STF generator is not ICH STF 2.2 either |
 | F04 | m1-regional + lifecycle | high | Every follow-up is declared the Original of a new regulatory activity: `submission-id` is always the sequence's own number and sub-type always `fdasst1`; the assemble body has no field to say otherwise, and nothing checks submission type against application type (an IND accepts "Efficacy Supplement"). | **confirmed** 2026-10-01 (high) |
 | F05 | m1-regional | high | `<application-number>` is written exactly as entered; the product's own example is `IND123456`, while FDA application numbers are six digits. | **confirmed** 2026-10-01 (high; FDA reaction at medium confidence) |
-| F06 | m1-regional | high | Module 1 headings are written flat under `<m1-regional>` in package order (no parent headings, not in section order), Form 1571 ships as a bare leaf with no `form-type`, and FDA is marked `regionConformant: true` by region alone. | unverified |
-| F07 | m1-regional | high | `<applicant-info/>` is always empty on this spine although the recorded applicant id and name are required and described as carried by the backbone; `application-containing-files` is also absent. | **confirmed** 2026-10-01 (high); even the contacts path is non-conformant |
+| F06 | m1-regional | high | Module 1 headings are written flat under `<m1-regional>` in package order (no parent headings, not in section order), Form 1571 ships as a bare leaf with no `form-type`, and FDA is marked `regionConformant: true` by region alone. | **confirmed** 2026-10-01 (high); **partly fixed** (order, honest `regionConformant`); nesting blocked on the us-regional DTD |
+| F07 | m1-regional | high | `<applicant-info/>` is always empty on this spine although the recorded applicant id and name are required and described as carried by the backbone; `application-containing-files` is also absent. | **confirmed** 2026-10-01 (high); **markup fixed**; the contact itself is not yet recorded |
 | F08 | m1-regional | medium | Submission-type words are matched by loose substring, so `IND` files as IND Safety Reports (fdast9), `report` as Annual Report, `supplement` as Efficacy Supplement, instead of being refused. | **confirmed** 2026-10-01 (medium) |
 | F09 | lifecycle | high | `modified-file` names a content file, not a leaf (`../0000/index.xml#<leafId>`). | **fixed upstream** in `09c4c15d` (IND lane, 2026-09-29) |
 | F10 | lifecycle | high | A filed withdrawal never leaves the filed state: the delete entry carries no `leafKey`, so the fold keyed on `leafKey` drops nothing; the document can be withdrawn twice, replaced after withdrawal, and is refused ("already on file") when re-filed. | **confirmed** 2026-10-01; **fixed** — see "Fixed after verification" |
@@ -41,10 +41,10 @@ both finders, and every verifier, were cut off by account usage limits
 | F12 | lifecycle | medium | A document moved to another CTD section is filed `new` there while the filed copy stays current at the old section, with no finding. | **confirmed** 2026-10-01 (medium: a missing operator finding and a stale current copy, not a validation error) |
 | F13 | lifecycle | medium | Cover letters and forms are diffed like dossier content: an unchanged cover letter is left out of a follow-up, and an edited one replaces sequence 0000's. | **confirmed** 2026-10-01 (medium; the IND 1571 half is firm, the cover-letter half is an FDA "should") |
 | F14 | transmit | high | A send to FDA's ESG **test** environment (`staging`) is recorded as the package's real filed sequence. | **confirmed** 2026-10-01 (high); **fixed** — see "Fixed after verification" |
-| F15 | transmit | high | The duplicate-send lock is keyed on the bundle's bytes, not its sequence; re-assembling while an earlier send of 0000 is unconfirmed sends 0000 a second time. | unverified |
-| F16 | transmit | medium | The AS2 message: `AS2-To` defaults to `FDA-CESUB`, no Center/submission-type routing, no S/MIME signing or encryption (a signature is computed and dropped), and the MDN is not verified. | unverified |
-| F17 | transmit | medium | The uploaded archive has no sequence folder: `index.xml` sits at the zip root and the payload is always `ectd.zip`. | unverified |
-| F18 | transmit | low | Bundles over 1 GiB go to an SFTP path built from caller-typed sequence and application number, and a bare deposit is recorded as filed. | unverified |
+| F15 | transmit | high | The duplicate-send lock is keyed on the bundle's bytes, not its sequence; re-assembling while an earlier send of 0000 is unconfirmed sends 0000 a second time. | **partially confirmed** 2026-10-01 (medium); **fixed** (sequence lock) |
+| F16 | transmit | medium | The AS2 message: `AS2-To` defaults to `FDA-CESUB`, no Center/submission-type routing, no S/MIME signing or encryption (a signature is computed and dropped), and the MDN is not verified. | **confirmed** 2026-10-01 (medium); **`FDA-CESUB` default removed**; S/MIME, routing and MDN verification open |
+| F17 | transmit | medium | The uploaded archive has no sequence folder: `index.xml` sits at the zip root and the payload is always `ectd.zip`. | **partially confirmed** 2026-10-01 (medium): no sequence folder; `ectd.zip` is not a defect |
+| F18 | transmit | low | Bundles over 1 GiB go to an SFTP path built from caller-typed sequence and application number, and a bare deposit is recorded as filed. | **partially confirmed** 2026-10-01 (low); **fixed** (identifier rule, descriptor-authoritative metadata) |
 | F19 | transmit + lifecycle | critical | A sequence is recorded FILED on the ESG's MDN (Ack1) or a bare SFTP deposit, and nothing un-files it when FDA rejects it at Ack3 or it is rolled back; a second bundle with the same sequence number also reports "recorded". | **partially confirmed** 2026-10-01: high, not critical — see "Verification round 1" |
 | F20 | m1-regional | medium | The us-regional 3.3 admin block never carries `<form form-type="fdaft…">`; Form FDA 1571 ships only as an `m1-1-forms` leaf, sequence 0000 included (raised by the F13 skeptic). | unverified |
 
@@ -125,6 +125,50 @@ Same method; all six reproduced at HEAD. What the skeptics added:
   spine never emits the us-regional 3.3 admin `<form form-type="fdaft…">`; the 1571
   ships only as an `m1-1-forms` leaf, sequence 0000 included. Unverified.
 
+## Verification round 3 — 2026-10-01 (F00, F02, F03, F06, F15, F16, F17, F18)
+
+All eight reproduced. What the skeptics corrected or added:
+
+- **F00:** the gap is 1–2 heading levels, not 1–3, and the backbone stays
+  DTD-valid (every heading admits `leaf*`), so this is misfiling, not rejection;
+  but lifecycle cannot move a filed leaf with `replace`, so each filed sequence
+  makes it permanent. The repo's validator flags the real ICH elements
+  (`m3-2-s-4-control-of-drug-substance`, `m3-2-s-4-1-specification`) as
+  `DTD_UNKNOWN_ELEMENT`, because `ich-headings.ts:56-59` says the DTD has no
+  `m3-2-s-4` element — it does. The fix needs the full ICH tree copied from the
+  DTD (not from memory), so it waits on vendoring it; F00 and F02 land together.
+- **F02:** `m3-2-s-drug-substance` (substance, manufacturer),
+  `m3-2-p-drug-product` (dosageform, manufacturer) and
+  `m5-3-5-reports-of-efficacy-and-safety-studies` (indication) are written bare;
+  `product-name` is optional. Nearly every IND with CMC content is affected. The
+  packager has no field to carry the values — a data-model change, shared with
+  the IND lane.
+- **F03:** an FDA requirement for Modules 4 and 5; the generator in the repo
+  (`stf-generator.ts`) does not emit the ICH STF 2.2 structure either, so wiring it
+  in would trade "no STF" for "a malformed STF".
+- **F06:** no element names for the Module 1 parent headings (1.3, 1.4–1.17, …)
+  are recorded in the repo, so nesting cannot be built without inventing them.
+- **F15:** the normal path is already guarded (an MDN files the sequence, so
+  re-assembly is refused `SEQUENCE_ALREADY_FILED`); the double send is real when
+  the first send is still in flight or was delivered but unconfirmed. Medium.
+- **F16:** S/MIME and MDN verification were known, documented gaps; the
+  `FDA-CESUB` default and the missing `X-Cyclone-Metadata-FDACenter` /
+  `FDASubmissionType` routing attributes were not, and the UAT runbook endorsed
+  the default. `FDA_ESG_FDA_CERT_PATH` is documented as FDA's AS2 encryption
+  certificate but used only as the TLS trust anchor.
+- **F17:** FDA most likely expects `<application folder>/<NNNN>/…`; the exact
+  application-folder name must be confirmed from FDA's guidance before the
+  shared packager changes (22 test files read the zip at its root). The payload
+  name `ectd.zip` breaks no rule.
+- **F18:** the >1 GiB SFTP path is latent (`ssh2-sftp-client` is absent, so it
+  refuses honestly before any connection); the sequence cannot carry unexpected
+  characters (`requiredAgencyMetadata` enforces `^\d{4}$`); the application id
+  could.
+- **D1 hand-off:** none of `20260509_submission_gateways.sql`,
+  `20260629_*_active_lock.sql`, `20260629_*_mdn_raw.sql` is in
+  `C2C_MIGRATION_FILES`; a database built only by `deploy-migrate` may lack the
+  transmittals table and its lock index.
+
 ## Fixed after verification
 
 **F10 — a filed withdrawal never left the filed state.** The assemble route filed
@@ -195,6 +239,65 @@ WITHOUT the fix: 1 failed | 26 passed (27)
    production behaviour is unchanged)
 WITH the fix: 27 passed (27); gateway routes 40/40, AnA command handlers 43/43,
   all transmit/gateway suites 496 tests passed
+```
+
+**F15 — the duplicate-send lock was keyed on bytes, not the sequence.** A package
+bundle's transmittal row now records the sequence from the stored descriptor,
+and `findActiveTransmittal` also holds an active row of the same package,
+sequence and environment, whatever its bytes; a staging send never holds
+production, nor the reverse. Checked in code, not by an index: two simultaneous
+sends can still both pass (a migration-backed index is the follow-up). Verified
+against the real migration DDL on PGlite
+(`active-transmittal-sequence-lock.pglite.test.ts`), and by mutation: dropping
+the environment condition, the status filter, or the environment the transmit
+passes each made a test fail.
+
+**F18 — caller-typed values reached the SFTP path and the transmittal record.**
+`sftpApplicationId` now applies the repo's one identifier rule
+(`usableIdentifier`), and for a package bundle the sequence and application
+number are the stored descriptor's and the package record's: a caller value that
+disagrees is refused `422 METADATA_DESCRIPTOR_MISMATCH`, never silently replaced.
+The refusal checks moved, with the refusal classes, into
+`governed-transmit-checks.ts` (re-exported unchanged).
+
+**F16, first part — AS2-To defaulted to `FDA-CESUB`.** The default is gone; an
+unset `FDA_ESG[_STAGING]_AS2_TO` is a `CredentialError` before any connection,
+as the ICSR transport already does. The runbooks describe the value as FDA's AS2
+identifier issued at ESG registration; no identifier is invented.
+
+```
+WITHOUT the fixes: 21 failed (3 CredentialError, 5 unsafe SFTP ids,
+  4 PGlite lock, 4 route lock, 5 descriptor mismatch)
+WITH the fixes: all pass
+```
+
+**F07, the markup — `<applicant-info/>` was always empty.** The FDA backbone now
+writes `<applicant-info><id>` (the DUNS, as text) and `<company-name>` from the
+recorded identity, then `<applicant-contacts>` only when contacts are supplied,
+each contact as name → `<telephones><telephone>` → `<emails><email>`; and
+`<application application-containing-files="true">`. No placeholder contact is
+written and no `telephone-number-type` code is guessed (FDA's list is not
+vendored). Recording the regulatory contact on the package, and the FDA format
+rules for the number and the DUNS, are the next step (F05, F07b).
+
+**F06, in part — Module 1 order and an honest `regionConformant`.** Module 1
+headings are written in section order whatever the package order, and
+`regionConformant` is no longer true for FDA by region alone: it is true only
+when the builder reports nothing it cannot stand behind (`fdaBackboneGaps`: a
+missing contact, a phone with no number type, an undeclared 1.1 form, a form
+leaf written twice under one ID, a heading that belongs inside a parent whose
+element name is not recorded). Today every FDA bundle on both spines reports
+false with its gaps named. This blocks a transmit only where
+`ECTD_REQUIRE_REGIONAL_BACKBONE=true` in production, which nothing sets.
+Nesting is blocked on vendoring `us-regional-v3-3.dtd`.
+
+```
+WITHOUT the fixes: 14 new tests failed (e.g. expected [] to deeply equal
+  ['id','company-name']; expected null to be 'true'; headings in package order;
+  expected true to be false)
+Mutation: restoring "FDA is conformant because it is FDA" fails 10 tests.
+WITH the fixes: server/services/submission-gateways + server/services/ectd and
+  the route, transmit, AnA and ectd-compile suites: 132 files, 1732 tests passed
 ```
 
 ## What this sweep produced that is already fixed

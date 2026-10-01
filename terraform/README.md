@@ -33,7 +33,7 @@ terraform apply
 
 ```bash
 cd terraform/environments/staging
-cp ../../terraform.tfvars.example terraform.tfvars  # Edit values
+cp terraform.tfvars.example terraform.tfvars  # Edit values; it lists every TF_VAR_ secret to export
 terraform init
 terraform plan
 terraform apply
@@ -47,7 +47,7 @@ cp terraform.tfvars.example terraform.tfvars  # Edit values, including domain_al
 terraform init
 export TF_VAR_cloudfront_origin_secret="$(openssl rand -hex 32)"  # keep it: CloudFront and the ALB share it
 terraform plan
-terraform apply -var="jwt_secret=..." -var="openai_api_key=..." -var="anthropic_api_key=..."
+terraform apply  # with every TF_VAR_ secret terraform.tfvars.example lists exported
 ```
 
 Production needs a custom domain (`domain_aliases`), and both certificates

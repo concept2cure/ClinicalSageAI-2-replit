@@ -528,45 +528,74 @@ async function purgeVaultVersions(
   return { deleted: rows.length, stored };
 }
 
-/** The two AnA record tables, erased together by one door. */
-const TURN_RECORD_TABLES: ReadonlySet<string> = new Set(['ana_turn_records', 'ana_record_blobs']);
-
 /** What the purge erased of the tenant's AnA turn records. */
 export interface TurnRecordErasure {
   records: number;
   blobs: number;
 }
 
+/** What the purge erased of the tenant's artifact signatures and lock snapshots. */
+export interface ArtifactRecordErasure {
+  signatures: number;
+  snapshots: number;
+}
+
 /**
- * Erase the tenant's AnA turn records and the texts they reference through
- * public.purge_tenant_turn_records (migrations/20260926_ana_turn_records.sql,
- * amended 2026-10-01). Both tables refuse a plain DELETE from every role. The
- * door restates this purge's preconditions at the database and deletes as
- * ana_record_purger, the one role the append-only trigger lets through.
+ * Tables that refuse a plain DELETE from every role, each group erased by one
+ * SECURITY DEFINER door that restates this purge's preconditions at the
+ * database (the platform scope, pending_deletion, no active legal hold) and
+ * deletes as the one NOLOGIN role its append-only trigger lets through.
  *
- * What it erases is Customer Data, returned in the tenant export the purge
- * requires. Each turn's chained audit_logs row is the audit-trail record, and
- * the purge keeps it (MSA §10.2), so an exported record stays verifiable.
+ * What a door erases is Customer Data, returned in the tenant export the purge
+ * requires. Its audit-trail record is a chained audit_logs row, which the
+ * purge keeps (MSA §10.2), so the exported copy stays verifiable.
  *
- * A deployment without the tables has nothing to erase. One with the tables
- * but not the door is refused: its records would survive.
+ *   - AnA turn records: public.purge_tenant_turn_records, as ana_record_purger
+ *     (migrations/20260926_ana_turn_records.sql, amended 2026-10-01).
+ *   - An artifact's signatures and lock snapshots:
+ *     public.purge_tenant_artifact_records, as artifact_record_purger
+ *     (migrations/20260929_concept2cure_signatures_append_only.sql, amended
+ *     2026-10-01). It runs before `projects`, whose cascade to the artifacts
+ *     those triggers refuse.
+ *
+ * A deployment without a door's tables has nothing to erase. One with the
+ * tables but not the door is refused: their records would survive.
  */
-async function purgeTurnRecords(client: PoolClient, organizationId: number): Promise<TurnRecordErasure> {
+const PURGE_DOORS = Object.freeze([
+  {
+    tables: ['ana_turn_records', 'ana_record_blobs'],
+    fn: 'purge_tenant_turn_records',
+    columns: ['records', 'blobs'],
+    erasure: 'turnRecordErasure',
+    unavailable: 'TURN_RECORD_PURGE_UNAVAILABLE',
+  },
+  {
+    tables: ['concept2cure_signatures', 'concept2cure_submission_snapshots'],
+    fn: 'purge_tenant_artifact_records',
+    columns: ['signatures', 'snapshots'],
+    erasure: 'artifactRecordErasure',
+    unavailable: 'ARTIFACT_RECORD_PURGE_UNAVAILABLE',
+  },
+] as const);
+type PurgeDoor = (typeof PURGE_DOORS)[number];
+
+/** Erase a door's tables for the tenant; the counts it returns, by column. */
+async function eraseThroughDoor(client: PoolClient, door: PurgeDoor, organizationId: number): Promise<Record<string, number>> {
+  const zero = Object.fromEntries(door.columns.map((c) => [c, 0]));
   const present = await client.query(
-    `SELECT to_regclass('public.ana_turn_records') IS NOT NULL AS present,
-            to_regprocedure('public.purge_tenant_turn_records(integer)') IS NOT NULL AS door`
+    'SELECT to_regclass($1) IS NOT NULL AS present, to_regprocedure($2) IS NOT NULL AS door',
+    [`public.${door.tables[0]}`, `public.${door.fn}(integer)`]
   );
-  if (!present.rows[0]?.present) return { records: 0, blobs: 0 };
+  if (!present.rows[0]?.present) return zero;
   if (!present.rows[0]?.door) {
     throw new OffboardingStateError(
-      'TURN_RECORD_PURGE_UNAVAILABLE',
-      'This database has AnA turn records but not public.purge_tenant_turn_records; run node scripts/db/deploy-migrate.mjs. Nothing was purged.'
+      door.unavailable,
+      `This database has ${door.tables.join(' and ')} but not public.${door.fn}; run node scripts/db/deploy-migrate.mjs. Nothing was purged.`
     );
   }
-  const { rows } = await client.query('SELECT records, blobs FROM public.purge_tenant_turn_records($1)', [
-    organizationId,
-  ]);
-  return { records: Number(rows[0]?.records ?? 0), blobs: Number(rows[0]?.blobs ?? 0) };
+  // Identifiers from the frozen list above, never from input.
+  const { rows } = await client.query(`SELECT ${door.columns.join(', ')} FROM public.${door.fn}($1)`, [organizationId]);
+  return Object.fromEntries(door.columns.map((c) => [c, Number(rows[0]?.[c] ?? 0)]));
 }
 
 /**
@@ -596,8 +625,9 @@ interface PurgeTally {
   tablesAbsent: string[];
   /** The deleted vault versions' stored bytes, erased after COMMIT. */
   storedObjects: StoredObject[];
-  /** The tenant's AnA turn records, erased through their door (purgeTurnRecords). */
+  /** What each door erased (PURGE_DOORS): AnA turn records; artifact signatures and lock snapshots. */
   turnRecordErasure: TurnRecordErasure;
+  artifactRecordErasure: ArtifactRecordErasure;
 }
 
 /** Run every listed table's delete on the transaction client, counting as it goes. */
@@ -611,17 +641,21 @@ async function deleteTenantRows(
     tablesAbsent: [],
     storedObjects: [],
     turnRecordErasure: { records: 0, blobs: 0 },
+    artifactRecordErasure: { signatures: 0, snapshots: 0 },
   };
-  let turnRecordsErased = false;
+  const opened = new Set<string>();
   for (const table of childTables) {
-    // The two AnA record tables refuse a plain DELETE from every role; one
-    // door erases both, once, and its counts are the tables' counts.
-    if (TURN_RECORD_TABLES.has(table)) {
-      if (!turnRecordsErased) {
-        tally.turnRecordErasure = await purgeTurnRecords(client, organizationId);
-        tally.deletedRows.ana_turn_records = tally.turnRecordErasure.records;
-        tally.deletedRows.ana_record_blobs = tally.turnRecordErasure.blobs;
-        turnRecordsErased = true;
+    // Tables that refuse a plain DELETE from every role go through their door,
+    // once per door; the door's counts are its tables' counts.
+    const door = PURGE_DOORS.find((d) => (d.tables as readonly string[]).includes(table));
+    if (door) {
+      if (!opened.has(door.fn)) {
+        opened.add(door.fn);
+        const counts = await eraseThroughDoor(client, door, organizationId);
+        Object.assign(tally, { [door.erasure]: counts });
+        door.tables.forEach((t, k) => {
+          tally.deletedRows[t] = counts[door.columns[k]] ?? 0;
+        });
       }
       continue;
     }
@@ -755,6 +789,7 @@ export async function purgeTenant(
     storageErasure: StorageErasure;
     deletedRows: Record<string, number>;
     turnRecordErasure: TurnRecordErasure;
+    artifactRecordErasure: ArtifactRecordErasure;
   }
 > {
   const { organizationId, purgedByUserId, preconditions } = params;
@@ -788,6 +823,7 @@ export async function purgeTenant(
     finalExportDigest: receipt.digest,
     deletedRows: tally.deletedRows,
     turnRecordErasure: tally.turnRecordErasure,
+    artifactRecordErasure: tally.artifactRecordErasure,
   });
 
   const after = await readOrganization(pool, organizationId);
@@ -798,6 +834,7 @@ export async function purgeTenant(
     storageErasure,
     deletedRows: tally.deletedRows,
     turnRecordErasure: tally.turnRecordErasure,
+    artifactRecordErasure: tally.artifactRecordErasure,
   };
 }
 
@@ -826,8 +863,20 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
   // safely skipped by purgeChildTable.
   'project_workflows',
   'organization_users',
-  'client_workspaces',
+  /* An artifact's signatures and lock snapshots, through their door, BEFORE
+     `projects`: they refuse the cascade from deleting an artifact
+     (20260929_concept2cure_signatures_append_only.sql), so until 2026-10-01 the
+     purge of any tenant that had approved or locked an artifact failed here.
+     Each signing's chained ledger row is its audit-trail record and stays. */
+  'concept2cure_signatures',
+  'concept2cure_submission_snapshots',
+  /* `projects` BEFORE `client_workspaces` (fixed 2026-10-01): a project
+     references its workspace with no cascade, so deleting the workspaces first
+     failed with 23503 for every tenant that had a project, which is every real
+     tenant. The suites that purge passed narrowed lists, so the real order had
+     not run against a tenant with a workspace and a project. */
   'projects',
+  'client_workspaces',
   'documents',
   /* SCHEMA-QUALIFIED, and chunks BEFORE documents.
      These were `vault_documents` and `document_chunks` — names that resolve to

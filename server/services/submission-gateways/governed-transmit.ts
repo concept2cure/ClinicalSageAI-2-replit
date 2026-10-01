@@ -49,10 +49,16 @@ import { pool } from '../../db';
 import { getGateway } from './index';
 import { preTransmitFindings } from './pre-transmit-findings';
 import type { GatewayName, GatewayTransmitResult, Region, SubmissionBundle } from './types';
-import { findActiveTransmittal } from './fda-esg';
+import {
+  GovernedTransmitInternalError,
+  GovernedTransmitRefusal,
+  agencyMetadata,
+  assertNoActiveTransmittal,
+} from './governed-transmit-checks';
 import { getBundle } from '../submission-bundle-storage';
 import { recordFiledSequence } from '../ectd/package-content-change';
 import { isFiledLeaf } from '../ectd/package-sequence-lifecycle';
+import { usableIdentifier } from '../ectd/regulatory-identifiers';
 import {
   assessPackageContent,
   isContentFingerprintOfAnyScheme,
@@ -69,49 +75,10 @@ import {
 
 /* ─── Refusal vocabulary ─────────────────────────────────────────── */
 
-/**
- * Why a governed transmit was refused BEFORE any bytes left the platform.
- *
- * Every one of these is an honest "no", not a failure: the caller asked for a
- * transmission the platform is not willing to make, and no transmittal row,
- * acknowledgement or agency identifier is produced.
- */
-export type GovernedTransmitRefusalCode =
-  | 'CLIENT_DESCRIPTOR_REFUSED'
-  | 'BUNDLE_NOT_ASSEMBLED'
-  | 'BUNDLE_PATH_UNSAFE'
-  | 'BUNDLE_VALIDATION_UNKNOWN'
-  | 'BUNDLE_OUTSIDE_NAMESPACE'
-  | 'BUNDLE_STORAGE_KEY_OUTSIDE_NAMESPACE'
-  | 'BUNDLE_VALIDATION_ERRORS'
-  | 'BUNDLE_CONTENT_DRIFT'
-  | 'BUNDLE_CONTENT_UNPROVEN'
-  | 'ACTIVE_TRANSMITTAL';
-
-/** A refusal the caller should surface verbatim to the operator. */
-export class GovernedTransmitRefusal extends Error {
-  readonly name = 'GovernedTransmitRefusal';
-  constructor(
-    readonly code: GovernedTransmitRefusalCode,
-    message: string,
-    /** HTTP status the pre-existing route used for this refusal. */
-    readonly httpStatus: 409 | 422,
-    readonly details?: Record<string, unknown>,
-  ) {
-    super(message);
-  }
-}
-
-/**
- * An internal failure (DB read, durable-storage fetch) rather than a refusal.
- * Carries the log label the HTTP route used so its 500 telemetry is unchanged.
- */
-export class GovernedTransmitInternalError extends Error {
-  readonly name = 'GovernedTransmitInternalError';
-  constructor(readonly stage: string, readonly cause: unknown) {
-    super(`governed transmit failed at stage '${stage}'`);
-  }
-}
+// Defined beside the pre-transmit checks that raise them (./governed-transmit-checks);
+// re-exported so every caller keeps importing them from here.
+export { GovernedTransmitInternalError, GovernedTransmitRefusal } from './governed-transmit-checks';
+export type { GovernedTransmitRefusalCode } from './governed-transmit-checks';
 
 /* ─── Bundle descriptors ─────────────────────────────────────────── */
 
@@ -155,6 +122,10 @@ export interface ResolvedBundle {
   sequence?: string;
   submissionType?: string;
   leafManifest?: Array<{ ctdSection: string; fileName: string; href: string; md5: string; operation?: string; title?: string }>;
+  /** The agency application number the package records
+   *  (metadata.regulatory.applicationNumber) under the one identifier rule;
+   *  null when it records none usable. Stored descriptors only. */
+  applicationNumber?: string | null;
 }
 
 /* Shape guards for the stored evidence blocks (see ResolvedBundle). Each
@@ -281,6 +252,9 @@ async function loadStoredBundle(
       Array.isArray(stored.leafManifest) && stored.leafManifest.every(isFiledLeaf)
         ? (stored.leafManifest as ResolvedBundle['leafManifest'])
         : undefined,
+    // From the same row: the number the agency metadata is sent under
+    // (see agencyMetadata), so the deposit and the filed history agree.
+    applicationNumber: usableIdentifier('applicationNumber', rows[0]?.metadata?.regulatory?.applicationNumber),
   };
 }
 
@@ -617,33 +591,11 @@ export async function executeGovernedTransmit(
     throw new GovernedTransmitInternalError('transmit-rematerialize-bundle', err);
   }
 
-  // Per-package transmit lock. Refuse a second transmit against the same
-  // (org, package_id, bundle_sha256) while a prior attempt is still active
-  // (pending|in_transit|received). Terminal states (rejected, rolled_back,
-  // completed) are excluded by findActiveTransmittal so a rolled-back package
-  // CAN be intentionally re-transmitted. The DB-level partial unique index
-  // (sub_trans_active_lock_idx) is the backstop for races between this check
-  // and the gateway's INSERT. Cross-tenant double-transmit is allowed by design
-  // (CMO scenario).
-  let active: { id: number; status: string } | null;
-  try {
-    active = await findActiveTransmittal({
-      organizationId,
-      packageId: input.packageId ?? null,
-      bundleSha256: bundle.sha256,
-    });
-  } catch (err) {
-    throw new GovernedTransmitInternalError('transmit-active-lock-check', err);
-  }
-  if (active) {
-    throw new GovernedTransmitRefusal(
-      'ACTIVE_TRANSMITTAL',
-      `An active transmittal already exists for this package (id=${active.id}, status=${active.status}). ` +
-        `Roll it back via POST /api/mdx/gateways/transmittals/${active.id}/rollback before re-transmitting.`,
-      409,
-      { transmittalId: active.id, status: active.status },
-    );
-  }
+  // What the agency is told this bundle files (refused when the caller's
+  // metadata disagrees with the descriptor), then the per-package lock on its
+  // bytes and on that sequence — see agencyMetadata / assertNoActiveTransmittal.
+  const metadata = agencyMetadata(input, bundle);
+  await assertNoActiveTransmittal(input, bundle);
 
   const gw = getGateway(region, gateway);
   const result = await gw.transmit({
@@ -675,7 +627,7 @@ export async function executeGovernedTransmit(
     },
     environment,
     submissionType: input.submissionType,
-    metadata: { ...(input.metadata ?? {}), environment },
+    metadata,
     // The caller verified a human for THIS transmit and hands the proof in; the
     // gateway layer refuses any transmit that cannot name a human gate — see
     // TransmitAuthorization in ./types.ts.
