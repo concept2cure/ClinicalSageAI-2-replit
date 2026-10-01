@@ -1,0 +1,19 @@
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > the run PDF > renders the same bytes from the same recorded export, whenever it is rendered 73ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > the run PDF > states the export in its metadata: the printed export time, the export id, the platform as producer 30ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > the bundle PDF > renders the same bytes from the same recorded export, whenever it is rendered 40ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > the bundle PDF > states the export in its metadata: the printed export time, the export id, the platform as producer 5ms
+ ✓ server/services/report-os/pdf/__tests__/export-identity.test.ts > renders nothing under an export time that is not a time 2ms
+ ✓ server/services/report-os/pdf/__tests__/bundle-pdf.test.ts > buildBundlePdf > states each report's status now beside what it was bundled at, and how many are final 343ms
+ ✓ server/services/report-os/pdf/__tests__/bundle-pdf.test.ts > buildBundlePdf > labels the bundle's time as when it was bundled, never as generated, and names who bundled it 40ms
+ ✓ server/services/report-os/pdf/__tests__/bundle-pdf.test.ts > buildBundlePdf > lists every report, onto further pages, with the export on every page 133ms
+ ✓ server/services/report-os/pdf/__tests__/bundle-pdf.test.ts > buildBundlePdf > a report that can no longer be read says so 9ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > prints every section and block of the report, with the run facts and who ran it 424ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > marks a run that is not final on every page, and states the export on every page 129ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > cuts nothing: a long body runs onto further pages, every line present, a long word broken not lost 75ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > prints the signature, reason, prior status, seal and verdict of a final run, and no NOT FINAL mark 7ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > says so when the seal does not verify, with the failing check 8ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > keeps Latin-1 characters, prints the rest as "?" and says how many 6ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > prints a missing time as not recorded, never the moment of export 6ms
+ ✓ server/services/report-os/pdf/__tests__/run-pdf.test.ts > buildRunPdf > prints a disclosure in full and names a chart it does not draw 5ms
+ Test Files  3 passed (3)
+      Tests  17 passed (17)
