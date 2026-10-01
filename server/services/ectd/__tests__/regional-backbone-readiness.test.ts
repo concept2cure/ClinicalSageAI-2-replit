@@ -191,10 +191,27 @@ describe('directChildrenOf — the reader fails closed, and sees past the first 
 });
 
 describe('classifyRegionalBackbone', () => {
-  it('only FDA is region-conformant (built to the published FDA Module 1 heading table)', () => {
-    expect(classifyRegionalBackbone('fda', 'm1/us/us-regional.xml')).toEqual({
+  /* This used to read "only FDA is region-conformant", asserting
+     classifyRegionalBackbone('fda', file) → conformant: the region alone made
+     the claim. That pinned the defect (package-spine sweep F06, 2026-10-01).
+     FDA's claim now rests on its builder's report for the backbone it wrote. */
+  it('FDA is NOT conformant by region alone: with no build report it says so', () => {
+    const s = classifyRegionalBackbone('fda', 'm1/us/us-regional.xml');
+    expect(s.regionConformant).toBe(false);
+    expect(s.placeholderOf).toBeUndefined();
+    expect(s.conformanceGap).toMatch(/cannot be claimed for the region alone/);
+  });
+  it('FDA is conformant when its builder reports nothing it cannot stand behind', () => {
+    expect(classifyRegionalBackbone('fda', 'm1/us/us-regional.xml', [])).toEqual({
       region: 'fda', file: 'm1/us/us-regional.xml', regionConformant: true,
     });
+  });
+  it('FDA with reported gaps is not conformant, and the gaps are the stated reason: the first four, then a count', () => {
+    const gaps = ['g1', 'g2', 'g3', 'g4', 'g5', 'g6'];
+    const s = classifyRegionalBackbone('fda', 'm1/us/us-regional.xml', gaps);
+    expect(s.regionConformant).toBe(false);
+    expect(s.conformanceGap).toBe('g1; g2; g3; g4; and 2 more');
+    expect(classifyRegionalBackbone('fda', 'm1/us/us-regional.xml', ['only']).conformanceGap).toBe('only');
   });
   it('EMA / PMDA / Health Canada are NOT conformant: own root element, but Module 1 is flat — with the gap stated', () => {
     for (const r of ['ema', 'pmda', 'ca'] as Region[]) {
@@ -203,6 +220,8 @@ describe('classifyRegionalBackbone', () => {
       expect(s.placeholderOf, r).toBeUndefined();
       expect(s.conformanceGap, r).toMatch(/filed flat under/);
       expect(s.conformanceGap, r).toMatch(/DTD structure/);
+      // An empty report cannot make a flat builder conformant.
+      expect(classifyRegionalBackbone(r, `m1/x/${r}-regional.xml`, []).regionConformant, r).toBe(false);
     }
   });
   it('the eight widened regions are EMA-structure placeholders, never conformant', () => {
@@ -216,9 +235,22 @@ describe('classifyRegionalBackbone', () => {
 });
 
 describe('the packager stamps the status on the bundle, and the bytes bear the claim out', () => {
-  it('fda: conformant, and EVERY Module 1 leaf sits under a published heading element — none directly under the container', async () => {
+  it('fda: EVERY Module 1 leaf sits under a published heading element — and the status names what the builder cannot stand behind', async () => {
     const { bundle, zip } = await packageFor('fda');
-    expect(bundle.regionalBackbone).toEqual({ region: 'fda', file: 'm1/us/us-regional.xml', regionConformant: true });
+    /* This asserted regionConformant: true for this fixture, which pinned the
+       defect (sweep F06, 2026-10-01): 1.3.4 and 1.6.1 are written directly
+       under <m1-regional>, not inside 1.3 / 1.6 (whose element names this
+       repository does not record), the two forms leaves declare no form type,
+       and no applicant contact is supplied. The grouping below still holds;
+       the claim no longer outruns it. */
+    expect(bundle.regionalBackbone?.regionConformant).toBe(false);
+    expect(bundle.regionalBackbone?.conformanceGap).toBe(
+      '<applicant-info> has no <applicant-contacts>: no applicant contact was supplied; ' +
+        'Module 1 forms leaf form1571.pdf (1.1) has no declared form type; ' +
+        'Module 1 forms leaf form3674.pdf (1.1.1) has no declared form type; ' +
+        '1.3.4 is written directly under <m1-regional>, not inside its parent heading 1.3: ' +
+        'no element name this code can stand behind is recorded for 1.3; and 1 more',
+    );
     const us = await zip.file('m1/us/us-regional.xml')!.async('string');
     // The heading names the conformance report's FDA row lists, read out of the bytes.
     const { children, inner } = directChildrenOf(us, 'm1-regional');
@@ -352,6 +384,12 @@ describe('evaluateRegionalBackboneGate', () => {
  *   root element    every region's root element is read from the bytes and
  *                   compared with the row the conformance report records.
  *
+ * 2026-10-01 (sweep F06): FDA is no longer conformant by region. It is the one
+ * builder that GROUPS (asserted from its bytes whatever it claims), and it is
+ * conformant only when its builder reports no gap; for this fixture it reports
+ * several, so the claim set is empty and FDA is a third class: grouped, with
+ * its gaps stated (fda-module1-headings.test.ts pins those gaps one by one).
+ *
  * Grounded in the packager's real output, not in a restatement of the map.
  *
  * WHAT THIS BLOCK USED TO ASSERT, AND WHY THAT WAS NOT ENOUGH. Both directions
@@ -409,9 +447,15 @@ describe('every region: the claim and the bytes agree', () => {
     }
   }, 60_000);
 
-  it('exactly ONE region claims conformance today, and it is FDA', () => {
+  /* This was "exactly ONE region claims conformance today, and it is FDA" —
+     true of every FDA package by region alone, which was the defect (sweep F06,
+     2026-10-01). FDA still builds the only grouped Module 1 (asserted from the
+     bytes below), but for this fixture its builder reports what it cannot stand
+     behind, so no region claims conformance, and FDA says why. */
+  it('NO region claims conformance for this fixture, and FDA — the one grouped builder — names its gaps', () => {
     const claiming = ALL_REGIONS.filter((r) => built.get(r)!.status.regionConformant);
-    expect(claiming).toEqual(['fda']);
+    expect(claiming).toEqual([]);
+    expect(built.get('fda')!.status.conformanceGap).toMatch(/1\.3\.4 is written directly under <m1-regional>/);
   });
 
   it.each(ALL_REGIONS)(
@@ -427,7 +471,7 @@ describe('every region: the claim and the bytes agree', () => {
   );
 
   it.each(['fda'] as Region[])(
-    '%s claims conformance — so NO <leaf> is a direct child of its Module 1 container, wherever in the container it sits',
+    '%s groups its Module 1 — NO <leaf> is a direct child of its Module 1 container, wherever in the container it sits',
     (region) => {
       const { xml } = built.get(region)!;
       const container = containerOf(xml);
