@@ -39,3 +39,45 @@ and the person edited with the conversation out of sight.
 - `ci:canvas-path`: wired (thread → canvas → workbench).
 - `ci:check-phantom-tokens`, `ci:undefined-css-classes`: OK.
 - ESLint ratchet: unchanged.
+
+## 2. The card says what the document is and how far along, and keeps up with AnA
+
+**Before.**
+- The card named the CTD module and status, rendered the first section, and
+  offered "Show all".
+- It read the store once, when it mounted. It did not say what kind of
+  document it was or which sections were still empty.
+- It did not reflect anything AnA changed in a later turn. Reopening the
+  thread was the only way to see a revision.
+
+**Now.**
+- **Type line:** names the document type, from the stored product code in
+  words: `clinical_overview` → "Clinical overview".
+- **Outline:** lists every section with drafted / not drafted, and the meta
+  line says "2 of 3 sections drafted". Choosing a section shows it in the card.
+- **Refresh:** the thread counts AnA turns as they settle and passes the count
+  as `refreshKey`, and each canvas re-reads its record quietly on a new value.
+  - Sections whose stored text changed are marked "Updated" in the outline, and
+    the card says "Updated after AnA's last turn: 2.5.3".
+  - A refresh that fails keeps the record already read on screen and says so,
+    with a retry. It never shows an empty document.
+
+**Failing first.**
+- `2-live-red.txt`: all five cases of the new `documentCanvasLive.test.tsx`
+  failed against the unchanged canvas.
+- With the thread change removed, the thread case read the document once and
+  never again.
+- Three assertions in `documentCanvas.test.tsx` were updated for the richer
+  card, each keeping what it checked: only the first section's body shows
+  until asked (now scoped to the section's article, since the outline names
+  every section), the drafted count, and the type line.
+
+**Green:** `2-live-green.txt`, 91/91.
+
+**Also run.**
+- `tsc`: clean.
+- `ci:canvas-path`, `ci:check-phantom-tokens`, `ci:undefined-css-classes`: OK.
+- The new pre-push warnings gate first refused two complexity warnings this
+  change had added. The fetch-and-parse moved into one `readDocumentRecord`,
+  and two `??` defaults went, because `DocumentCanvas` already defaults both
+  props. The ESLint ratchet is unchanged.

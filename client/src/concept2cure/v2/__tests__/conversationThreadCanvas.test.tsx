@@ -37,10 +37,11 @@ vi.mock('../surfaces/AuthoringPlaceIntoFiling', () => ({
 }));
 
 const chatMessages: { current: AnaChatMessage[] } = { current: [] };
+const chatStreaming = { current: false };
 vi.mock('../../components/ana/useAnaChat', () => ({
   useAnaChat: () => ({
     messages: chatMessages.current,
-    isStreaming: false,
+    isStreaming: chatStreaming.current,
     isLoadingThread: false,
     loadThread: vi.fn().mockResolvedValue(undefined),
     send: vi.fn(),
@@ -191,6 +192,22 @@ describe('ConversationThread — the editor opens beside the conversation (2026-
     await vi.waitFor(() => expect(document.querySelector('.ct-main')?.getAttribute('data-canvas-open')).toBeNull());
     expect(pane!.hidden).toBe(true);
     expect(pane!.querySelector('.dcv-workbench .ed')).not.toBeNull();
+  });
+});
+
+describe('ConversationThread — the canvas keeps up with AnA (2026-10-01)', () => {
+  it('re-reads the document when AnA\u2019s turn ends', async () => {
+    chatMessages.current = [USER, DRAFTED];
+    chatStreaming.current = true;
+    const { rerender } = render(<ConversationThread {...OWNED_PROPS} />);
+    await screen.findByTestId('document-canvas');
+    const reads = () => apiRequest.mock.calls.filter(c => c[1] === `/api/authoring/docs/${DOC}/sections`).length;
+    await vi.waitFor(() => expect(reads()).toBe(1));
+
+    chatStreaming.current = false; // the turn settles
+    rerender(<ConversationThread {...OWNED_PROPS} />);
+    await vi.waitFor(() => expect(reads()).toBe(2));
+    chatStreaming.current = false;
   });
 });
 
