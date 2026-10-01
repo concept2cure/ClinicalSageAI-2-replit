@@ -304,7 +304,9 @@ async function search(pool: AuthoringReadQueryable, scope: ProgramScope, input: 
 type Body = (pool: AuthoringReadQueryable, scope: ProgramScope, input: Record<string, unknown>) => Promise<string>;
 
 /** The shared preamble: tenant, open program, then the body; a failure never reaches the model as driver text. */
-function scoped(name: string, body: Body, poolOf: PoolSource) {
+// The body is the LAST argument on purpose: governed-reason-not-invented.test.ts
+// reads a wrapped registration's handler from its last argument.
+function scoped(name: string, poolOf: PoolSource, body: Body) {
   return async (input: Record<string, unknown>, ctx?: ToolContext): Promise<string> => {
     if (!ctx?.organizationId) return JSON.stringify({ error: `${name} requires an organization context.` });
     try {
@@ -326,7 +328,7 @@ function scoped(name: string, body: Body, poolOf: PoolSource) {
 /** Register the three handlers on the executor's registry (or a test's). */
 export function registerAuthoringReadHandlers(register: RegisterFn, options: { pool?: PoolSource } = {}): void {
   const poolOf = options.pool ?? appPool;
-  register('list_authoring_outline', scoped('list_authoring_outline', listOutline, poolOf));
-  register('read_authoring_section', scoped('read_authoring_section', readOne, poolOf));
-  register('search_authoring_sections', scoped('search_authoring_sections', search, poolOf));
+  register('list_authoring_outline', scoped('list_authoring_outline', poolOf, listOutline));
+  register('read_authoring_section', scoped('read_authoring_section', poolOf, readOne));
+  register('search_authoring_sections', scoped('search_authoring_sections', poolOf, search));
 }
