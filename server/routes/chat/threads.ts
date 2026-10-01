@@ -266,9 +266,13 @@ export async function getThread(req: Request, res: Response) {
  * to one project, and that switching project forks it, with the old one
  * staying bound to its own project. A re-home is the opposite of that rule,
  * and nothing in the client calls it (no `chat/thread/` request in client/).
- * So a project change is refused 409 THREAD_PROJECT_FIXED on both stores, and
- * the rename that remains acts only on the caller's own conversation, scoped
- * to the organization.
+ * So a project change is refused 409 THREAD_PROJECT_FIXED on both stores. The
+ * rename that remains is scoped to the organization and, on the AnA store
+ * (chat_threads), to the caller's own conversation. ai_threads (submission
+ * chat, project onboarding) has no owner model anywhere: every member of the
+ * organization already lists, reads and appends to it, so its rename stays
+ * organization-wide here. An owner model for that store is D3's (review
+ * wf_3b9a0148-a31).
  */
 export async function patchThread(req: Request, res: Response) {
   try {

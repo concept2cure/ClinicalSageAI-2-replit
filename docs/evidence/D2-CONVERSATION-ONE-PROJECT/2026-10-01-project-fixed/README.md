@@ -19,6 +19,17 @@ Founder decision, 2026-09-26: a conversation belongs to one project. Switching p
   - On the AnA store it runs `resolveAccessibleThread`, the owner rule the stream applies before it appends to a thread. A colleague's conversation gets 403 `THREAD_FORBIDDEN`.
   - The UPDATE is `WHERE id = $n AND organization_id = $m`.
 
+## Review
+
+The review was `wf_3b9a0148-a31`, with one finding and a split vote. It was upheld as a wording defect and fixed in the following commit.
+
+The `patchThread` docstring said every rename acts only on the caller's own conversation, but the owner check runs on the AnA store only. `ai_threads` (submission chat, project onboarding) has no owner model anywhere:
+- the project list shows its threads to the whole organization;
+- the message read serves them to any member;
+- submission chat appends to any thread id it is sent.
+
+Its rename therefore stays organization-wide, and the docstring now says so. An owner model for that store is a new access rule, not part of this slice; it is handed to D3 alongside the open reader no-sharing items (PF-10 scout, "Optional, adjacent").
+
 ## The capability removed, and what replaces it
 
 The capability removed is "move a conversation to another project".
