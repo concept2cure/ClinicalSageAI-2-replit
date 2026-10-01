@@ -208,3 +208,23 @@ processes:
 written into organisation 1's audit trail (`organization_id` 1 is hard-coded).
 That event belongs to the platform, not to any tenant. It is now written once
 per window instead of three times.
+
+## Follow-up: a broken chain is recorded in the affected organisation's trail
+
+When the monitor found a break, it wrote one `audit.chain_integrity_failure`
+event with `organization_id` hard-coded to 1:
+
+- every tenant's break was reported in organisation 1's audit trail;
+- that event's metadata included other organisations' link details;
+- the organisation whose records were affected never saw it.
+
+It now writes one event per affected organisation, into that organisation's
+own chain, naming only its own links (up to 20, plus a total count).
+
+**Test: `chainIntegrityMonitor.failure-event-org.test.ts`.** Organisations 7
+and 12 have broken chains; organisation 9's is intact.
+
+- Before the fix, it failed: one event, in organisation 1.
+- After the fix, it passes: one event each for 7 and 12, none for 9, and each
+  event names only its own organisation's links. The audit and route suites
+  pass 232/232.
