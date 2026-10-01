@@ -70,6 +70,23 @@ An answer of "the founder has not decided" is an answer of "no".
    is deployed, an unelected tenant's embedding fails closed with an error that says so, never "no sources found"
    (P1-54).
 
+   **Amended 2026-10-01 (product owner), from the P1-54 build and its review:**
+   - *One lane for every tenant.* Embeddings run on the self-hosted lane for every organisation, whatever it
+     elected for generation. An OpenAI election covers generation and fallback, not embeddings: a corpus searched
+     with one model must be written with that model, and one process-wide lane keeps every corpus one vector space.
+   - *Width.* `bge-m3` emits 1024 dimensions; the corpora are `vector(1536)` (and `document_vectors` 3072). The
+     embedding seam requests the model's native width and zero-pads to the corpus width. Zero-padding leaves cosine
+     and L2 distances between padded vectors exactly unchanged, so no schema change is needed. It is valid only if
+     every vector in a column comes from one model, so the corpus policy names the model actually written
+     (`bge-m3`, native 1024) and a corpus holding vectors from another model is re-embedded before it is served.
+     No tenant has data yet; dedicated 1024-wide columns remain the cleaner design when a second embedding model
+     is introduced.
+   - *Readiness tells the truth.* The deployment is not ready for search until the lane has embedded one text at
+     the corpus width; configuration alone is not a verdict.
+   - *Placement.* The in-VPC lane is approved for PII and PHI with zero retention and intended use `embedding`
+     (`ai_provider_placement_approvals.local`): no third party receives the text. A self-hosted placement satisfies
+     any tenant residency, which is enforced by the region the service runs in.
+
 ### 2. Redis is part of the production stack
 
 Production requires a managed Redis (ElastiCache: TLS in transit, an AUTH token, encryption at rest
@@ -162,7 +179,11 @@ known-compromised values; it does not require that comparison to be made online.
 The connector stays in the launch catalog. **An organization's owner enables it for that
 organization**; until then consent and token use are refused for its members (P1-47). A connector is
 a new path for tenant content to leave the platform to a client the customer controls, and the
-customer, not the vendor, decides to open it.
+customer, not the vendor, decides to open it. The two switches compose: product decision P-2
+(`docs/LAUNCH_DEFINITION_OF_DONE.md`) turns the connector on for the deployment, with
+`MCP_ENABLED=true` and Claude's origins as the only registration origins, and each organization stays
+closed until its owner turns it on at `PUT /api/tenant-config/:id/claude-connector`, a change that is
+audited and is read on every request, so turning it off also refuses tokens already issued.
 
 ## Consequences
 
