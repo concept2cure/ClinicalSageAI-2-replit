@@ -1,0 +1,21 @@
+# working tree (fixed recipe applied by deploy step 4), 2026-10-01T06:14:21Z, as postgres -> SET ROLE app_service, replica mode
+Pager usage is off.
+BEGIN
+SET
+SET
+SET
+SET
+SET
+  acting_as  | replication_role 
+-------------+------------------
+ app_service | replica
+(1 row)
+
+INSERT 0 1
+SAVEPOINT
+psql:probe-trigger-out-of-the-way.sql:20: ERROR:  42501: permission denied for table audit_logs
+LOCATION:  aclcheck_error, aclchk.c:2812
+ROLLBACK
+psql:probe-trigger-out-of-the-way.sql:22: ERROR:  42501: permission denied for table audit_logs
+LOCATION:  aclcheck_error, aclchk.c:2812
+ROLLBACK

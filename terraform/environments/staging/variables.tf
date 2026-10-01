@@ -125,9 +125,17 @@ variable "connector_encryption_key" {
   sensitive = true
 }
 
+# OpenAI only when a tenant's Order Form elects it (ADR-0014 §1); validated in
+# terraform/stack.
+variable "openai_enabled" {
+  type    = bool
+  default = false
+}
+
 variable "openai_api_key" {
   type      = string
   sensitive = true
+  default   = ""
 }
 
 # Regulatory drafting's provider; validated in terraform/stack.

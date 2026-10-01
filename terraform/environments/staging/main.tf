@@ -89,6 +89,7 @@ module "stack" {
   audit_attestation_key    = var.audit_attestation_key
   sentry_dsn               = var.sentry_dsn
   connector_encryption_key = var.connector_encryption_key
+  openai_enabled           = var.openai_enabled
   openai_api_key           = var.openai_api_key
   anthropic_api_key        = var.anthropic_api_key
 

@@ -1,0 +1,49 @@
+# RED (the two runs the first red file skipped): the same mock provider and variables, and only these two runs, against the UNFIXED stack.
+# tests/p011_red_skipped.tftest.hcl is a red-only copy made for this run (not committed): the header of boot_contract.tftest.hcl + the two runs verbatim.
+# 2026-10-01T06:58:13Z
+$ terraform test -no-color -filter=tests/p011_red_skipped.tftest.hcl -var openai_api_key=test-openai-key
+tests/p011_red_skipped.tftest.hcl... in progress
+  run "refuses_an_openai_key_no_tenant_ordered"... fail
+
+Error: Missing expected failure
+
+  on tests/p011_red_skipped.tftest.hcl line 127, in run "refuses_an_openai_key_no_tenant_ordered":
+ 127:   expect_failures = [terraform_data.boot_contract]
+
+The checkable object, terraform_data.boot_contract, was expected to report an
+error but did not.
+  run "refuses_a_missing_anthropic_key"... skip
+tests/p011_red_skipped.tftest.hcl... tearing down
+tests/p011_red_skipped.tftest.hcl... fail
+
+Failure! 0 passed, 1 failed, 1 skipped.
+exit=1
+
+# ---- and the last run on its own (it was skipped above after the missing expected failure) ----
+# tests/p011_red_last.tftest.hcl: the same header + run "refuses_a_missing_anthropic_key" verbatim (red-only, not committed).
+# 2026-10-01T06:58:28Z
+$ terraform test -no-color -filter=tests/p011_red_last.tftest.hcl -var openai_api_key=test-openai-key
+tests/p011_red_last.tftest.hcl... in progress
+  run "refuses_a_missing_anthropic_key"... fail
+
+Warning: Value for undeclared variable
+
+  on tests/p011_red_last.tftest.hcl line 125, in run "refuses_a_missing_anthropic_key":
+ 125:     anthropic_api_key = ""
+
+The module under test does not declare a variable named "anthropic_api_key",
+but it is declared in run block "refuses_a_missing_anthropic_key".
+
+Error: Missing expected failure
+
+  on tests/p011_red_last.tftest.hcl line 127, in run "refuses_a_missing_anthropic_key":
+ 127:   expect_failures = [var.anthropic_api_key]
+
+The checkable object, var.anthropic_api_key, was expected to report an error
+but did not.
+
+tests/p011_red_last.tftest.hcl... tearing down
+tests/p011_red_last.tftest.hcl... fail
+
+Failure! 0 passed, 1 failed.
+exit=1
