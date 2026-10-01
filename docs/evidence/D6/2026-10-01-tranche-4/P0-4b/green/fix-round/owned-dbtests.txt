@@ -1,0 +1,219 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T15:38:38.602Z","pid":31419,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T15:38:38.604Z","pid":31419,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T15:38:38.604Z","pid":31419,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-10-01T15:38:39.033Z","pid":31419,"hostname":"vm","context":{"resource":"http://localhost:42909/mcp","issuer":"http://localhost:42909/","resourceMetadataUrl":"http://localhost:42909/.well-known/oauth-protected-resource/mcp"},"msg":"[mcp] Concept2Cure MCP connector mounted"}
+stdout | server/mcp/__tests__/mcp-account-standing.dbtest.ts
+[database] Database connection successful
+
+stdout | server/mcp/__tests__/mcp-account-standing.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T15:38:39.349Z', poolSize: 1 }
+
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 6ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > the posture is the one production runs in > the accounts are in the states the admin route and SCIM leave them in 3ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > its session opens /mcp, authorises a client, and the grant opens /mcp and refreshes 209ms
+{"level":30,"time":"2026-10-01T15:38:40.098Z","pid":31419,"hostname":"vm","context":{"userId":3177,"tenantId":425,"resourceId":"c2c_list_projects"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+stderr | server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > the grant runs a tool as the runtime role, not only the handshake
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > the grant runs a tool as the runtime role, not only the handshake 550ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session no longer opens /mcp, and says why 10ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session cannot authorise a new client at the consent page, and is told why 14ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session no longer opens /mcp, and says why 8ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session cannot authorise a new client at the consent page, and is told why 13ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session its holder signed out > no longer opens /mcp 5ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session its holder signed out > cannot authorise a new client at the consent page 10ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is suspended: the access token, the refresh token and an unredeemed code, and stays ended once it is back in use 2416ms
+{"level":30,"time":"2026-10-01T15:38:44.988Z","pid":31419,"hostname":"vm","context":{"account":"connector:3180","limit":5,"ended":1},"msg":"[session-inactivity] Sessions ended by a sign-in beyond the account limit"}
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is deprovisioned: the access token, the refresh token and an unredeemed code, and stays ended once it is back in use 2393ms
+{"level":30,"time":"2026-10-01T15:38:46.140Z","pid":31419,"hostname":"vm","context":{"account":"connector:3180","limit":5,"ended":1},"msg":"[session-inactivity] Sessions ended by a sign-in beyond the account limit"}
+{"level":30,"time":"2026-10-01T15:38:47.362Z","pid":31419,"hostname":"vm","context":{"account":"connector:3180","limit":5,"ended":1},"msg":"[session-inactivity] Sessions ended by a sign-in beyond the account limit"}
+{"level":30,"time":"2026-10-01T15:38:47.391Z","pid":31419,"hostname":"vm","context":{"account":"connector:3180","limit":5,"ended":1},"msg":"[session-inactivity] Sessions ended by a sign-in beyond the account limit"}
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a password change ends the connector grants authorised before it > refuses the access token, the refresh token and an unredeemed code, says why, and a fresh sign-in connects again 2401ms
+{"level":30,"time":"2026-10-01T15:38:48.543Z","pid":31419,"hostname":"vm","context":{"account":"connector:3180","limit":5,"ended":1},"msg":"[session-inactivity] Sessions ended by a sign-in beyond the account limit"}
+{"level":30,"time":"2026-10-01T15:38:49.786Z","pid":31419,"hostname":"vm","context":{"account":"connector:3180","limit":5,"ended":1},"msg":"[session-inactivity] Sessions ended by a sign-in beyond the account limit"}
+{"level":30,"time":"2026-10-01T15:38:49.825Z","pid":31419,"hostname":"vm","context":{"account":"connector:3180","limit":5,"ended":1},"msg":"[session-inactivity] Sessions ended by a sign-in beyond the account limit"}
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a sign-out of every session ends the connector grants authorised before it (R2) > refuses the access token, the refresh token and an unredeemed code, says why, and a fresh sign-in connects again 2435ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector token is not a platform session (IAM-02, P0-2 part a) > the first-party session opens both /api authenticators (control) 29ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector token is not a platform session (IAM-02, P0-2 part a) > a token the connector issued for c2c:read opens neither 52ms
+{"level":30,"time":"2026-10-01T15:38:52.113Z","pid":31621,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T15:38:52.115Z","pid":31621,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T15:38:52.116Z","pid":31621,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/session-termination.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T15:38:52.283Z', poolSize: 1 }
+
+stdout | tests/db/session-termination.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/session-termination.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/session-termination.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/session-termination.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 3182
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 3183
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 3184
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 3185
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 3186
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 3187
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 3188
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 3189
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 3190
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 3191
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 3192
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 3193
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 3194
+
+{"level":30,"time":"2026-10-01T14:39:05.000Z","pid":31621,"hostname":"vm","context":{"userId":3182,"tenantId":93330,"resourceId":"3182"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+ ✓ tests/db/session-termination.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 4ms
+{"level":30,"time":"2026-10-01T14:39:05.000Z","pid":31621,"hostname":"vm","context":{"userId":3182,"tenantId":"93330","resourceId":"3182"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T14:39:35.000Z","pid":31621,"hostname":"vm","context":{"userId":3182,"tenantId":93330,"resourceId":"3182"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T14:39:35.000Z","pid":31621,"hostname":"vm","context":{"userId":3182,"tenantId":"93330","resourceId":"3182"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T14:40:05.000Z","pid":31621,"hostname":"vm","context":{"userId":3182,"tenantId":93330,"resourceId":"3182"},"msg":"[audit-service] [AUDIT] user_password_changed user"}
+stdout | tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a change from one session ends the other, access and refresh, at every door including the enterprise one
+[database] Database connection successful { timestamp: '2026-10-01T14:40:05.000Z', poolSize: 2 }
+
+{"level":30,"time":"2026-10-01T14:40:35.000Z","pid":31621,"hostname":"vm","context":{"userId":3182,"tenantId":93330,"resourceId":"3182"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T14:40:35.000Z","pid":31621,"hostname":"vm","context":{"userId":3182,"tenantId":"93330","resourceId":"3182"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a change from one session ends the other, access and refresh, at every door including the enterprise one 2067ms
+{"level":30,"time":"2026-10-01T14:41:05.000Z","pid":31621,"hostname":"vm","context":{"userId":3183,"tenantId":93330,"resourceId":"3183"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T14:41:05.000Z","pid":31621,"hostname":"vm","context":{"userId":3183,"tenantId":"93330","resourceId":"3183"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T14:41:35.000Z","pid":31621,"hostname":"vm","context":{"userId":3183,"tenantId":93330,"resourceId":"3183"},"msg":"[audit-service] [AUDIT] user_password_changed user"}
+stdout | tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a reset by emailed token ends the sessions the account held
+{
+  "timestamp": "2026-10-01T14:41:35.000Z",
+  "level": "info",
+  "message": "[auth] Password reset completed",
+  "context": {
+    "userId": 3183
+  }
+}
+
+ ✓ tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a reset by emailed token ends the sessions the account held 1489ms
+{"level":30,"time":"2026-10-01T14:42:05.000Z","pid":31621,"hostname":"vm","context":{"userId":3184,"tenantId":93330,"resourceId":"3184"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T14:42:05.000Z","pid":31621,"hostname":"vm","context":{"userId":3184,"tenantId":"93330","resourceId":"3184"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T14:42:35.000Z","pid":31621,"hostname":"vm","context":{"userId":3184,"tenantId":93330,"resourceId":"3184"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T14:42:35.000Z","pid":31621,"hostname":"vm","context":{"userId":3184,"tenantId":"93330","resourceId":"3184"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T14:43:05.700Z","pid":31621,"hostname":"vm","context":{"userId":3184,"tenantId":93330,"resourceId":"3184"},"msg":"[audit-service] [AUDIT] user_password_changed user"}
+ ✓ tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a refresh token minted in the same second as the change, before it, mints nothing after it 858ms
+{"level":30,"time":"2026-10-01T14:43:35.000Z","pid":31621,"hostname":"vm","context":{"userId":3185,"tenantId":93330,"resourceId":"3185"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T14:43:35.000Z","pid":31621,"hostname":"vm","context":{"userId":3185,"tenantId":"93330","resourceId":"3185"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T14:44:05.000Z","pid":31621,"hostname":"vm","context":{"userId":3185,"tenantId":93330,"resourceId":"3185"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T14:44:05.000Z","pid":31621,"hostname":"vm","context":{"userId":3185,"tenantId":"93330","resourceId":"3185"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T14:44:35.000Z","pid":31621,"hostname":"vm","context":{"userId":3185,"tenantId":"93330","resourceId":"3185"},"msg":"[audit-service] [AUDIT] user_logout user"}
+{"level":30,"time":"2026-10-01T14:45:05.000Z","pid":31621,"hostname":"vm","context":{"userId":3185,"tenantId":93330,"resourceId":"3185"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T14:45:05.000Z","pid":31621,"hostname":"vm","context":{"userId":3185,"tenantId":"93330","resourceId":"3185"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/session-termination.dbtest.ts > (2) signing out everywhere ends every session of the account > logout with terminateAllSessions ends the other sessions, access and refresh, at every door 1290ms
+{"level":30,"time":"2026-10-01T14:45:35.000Z","pid":31621,"hostname":"vm","context":{"userId":3186,"tenantId":93330,"resourceId":"3186"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T14:45:35.000Z","pid":31621,"hostname":"vm","context":{"userId":3186,"tenantId":"93330","resourceId":"3186"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T14:46:05.000Z","pid":31621,"hostname":"vm","context":{"userId":3186,"tenantId":93330,"resourceId":"3186"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T14:46:05.000Z","pid":31621,"hostname":"vm","context":{"userId":3186,"tenantId":"93330","resourceId":"3186"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T14:46:35.000Z","pid":31621,"hostname":"vm","context":{"userId":"3186","tenantId":"93330","resourceId":"3186"},"msg":"[audit-service] [AUDIT] user_logout user"}
+ ✓ tests/db/session-termination.dbtest.ts > (2) signing out everywhere ends every session of the account > a sign-out everywhere from a session that has already ended ends nothing, and says so 170ms
+{"level":30,"time":"2026-10-01T14:47:05.000Z","pid":31621,"hostname":"vm","context":{"userId":3187,"tenantId":93330,"resourceId":"3187"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T14:47:05.000Z","pid":31621,"hostname":"vm","context":{"userId":3187,"tenantId":"93330","resourceId":"3187"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a session suspended and then reactivated stays ended 133ms
+{"level":30,"time":"2026-10-01T14:47:35.000Z","pid":31621,"hostname":"vm","context":{"userId":3188,"tenantId":93330,"resourceId":"3188"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T14:47:35.000Z","pid":31621,"hostname":"vm","context":{"userId":3188,"tenantId":"93330","resourceId":"3188"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T15:49:35.000Z","pid":31621,"hostname":"vm","context":{"userId":3187,"tenantId":93330,"resourceId":"3187"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T15:49:35.000Z","pid":31621,"hostname":"vm","context":{"userId":3187,"tenantId":"93330","resourceId":"3187"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T15:50:05.000Z","pid":31621,"hostname":"vm","context":{"userId":3189,"tenantId":93330,"resourceId":"3189"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+ ✓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a session deprovisioned by the identity provider and then reactivated stays ended 112ms
+ ✓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a reactivated account signs in afresh 74ms
+{"level":30,"time":"2026-10-01T15:50:05.000Z","pid":31621,"hostname":"vm","context":{"userId":3189,"tenantId":"93330","resourceId":"3189"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":40,"time":"2026-10-01T15:50:05.000Z","pid":31621,"hostname":"vm","context":{"userId":3189,"organizationId":93330},"msg":"[auth-middleware] Org membership revoked — rejecting authenticated request (fail-closed)"}
+{"level":30,"time":"2026-10-01T15:50:35.000Z","pid":31621,"hostname":"vm","context":{"userId":3191,"tenantId":93330,"resourceId":"3191"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T15:50:35.000Z","pid":31621,"hostname":"vm","context":{"userId":3191,"tenantId":"93330","resourceId":"3191"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a member removed from the organisation is refused at the next request and mints nothing 108ms
+{"level":30,"time":"2026-10-01T15:51:35.000Z","pid":31621,"hostname":"vm","context":{"userId":3191,"tenantId":93330,"resourceId":"3191"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T15:51:35.000Z","pid":31621,"hostname":"vm","context":{"userId":3191,"tenantId":"93330","resourceId":"3191"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a member removed and re-added holds nothing from before: the session is over at every door, and they sign in again (R1) 202ms
+{"level":30,"time":"2026-10-01T15:52:05.000Z","pid":31621,"hostname":"vm","context":{"userId":3190,"tenantId":93330,"resourceId":"3190"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T15:52:05.000Z","pid":31621,"hostname":"vm","context":{"userId":3190,"tenantId":"93330","resourceId":"3190"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/session-termination.dbtest.ts > (4) a role change is read on the next request > a demotion is the role the global gate, a router gate behind it, and every successor token carry 148ms
+{"level":30,"time":"2026-10-01T15:52:35.000Z","pid":31621,"hostname":"vm","context":{"userId":3192,"tenantId":93330,"resourceId":"3192"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T15:52:35.000Z","pid":31621,"hostname":"vm","context":{"userId":3192,"tenantId":"93330","resourceId":"3192"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T15:53:05.100Z","pid":31621,"hostname":"vm","context":{"userId":3192,"tenantId":93330,"resourceId":"3192"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T15:53:05.100Z","pid":31621,"hostname":"vm","context":{"userId":3192,"tenantId":"93330","resourceId":"3192"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T15:53:05.600Z","pid":31621,"hostname":"vm","context":{"userId":3192,"tenantId":93330,"resourceId":"3192"},"msg":"[audit-service] [AUDIT] user_password_changed user"}
+ ✓ tests/db/session-termination.dbtest.ts > (6) the second a password change lands in (R3) > a session begun in the same second as the change, before it, is over at every door 901ms
+{"level":30,"time":"2026-10-01T15:53:35.000Z","pid":31621,"hostname":"vm","context":{"userId":3193,"tenantId":93330,"resourceId":"3193"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T15:53:35.000Z","pid":31621,"hostname":"vm","context":{"userId":3193,"tenantId":"93330","resourceId":"3193"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T15:54:05.000Z","pid":31621,"hostname":"vm","context":{"userId":3193,"tenantId":93330,"resourceId":"3193"},"msg":"[audit-service] [AUDIT] user_password_changed user"}
+{"level":30,"time":"2026-10-01T15:54:06.340Z","pid":31621,"hostname":"vm","context":{"userId":3193,"tenantId":93330,"resourceId":"3193"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T15:54:06.340Z","pid":31621,"hostname":"vm","context":{"userId":3193,"tenantId":"93330","resourceId":"3193"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/session-termination.dbtest.ts > (6) the second a password change lands in (R3) > the sign-in that follows the change is current: the change stamps the first whole second after it, and answers once that second has begun 1820ms
+{"level":30,"time":"2026-10-01T15:54:35.000Z","pid":31621,"hostname":"vm","context":{"userId":3194,"tenantId":93330,"resourceId":"3194"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T15:54:35.000Z","pid":31621,"hostname":"vm","context":{"userId":3194,"tenantId":"93330","resourceId":"3194"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T15:55:05.100Z","pid":31621,"hostname":"vm","context":{"userId":3194,"tenantId":93330,"resourceId":"3194"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T15:55:05.600Z","pid":31621,"hostname":"vm","context":{"userId":3194,"tenantId":93330,"resourceId":"3194"},"msg":"[audit-service] [AUDIT] user_password_changed user"}
+{"level":30,"time":"2026-10-01T15:55:35.000Z","pid":31621,"hostname":"vm","context":{"userId":3194,"tenantId":"93330","resourceId":"3194"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/session-termination.dbtest.ts > (6) the second a password change lands in (R3) > a sign-in begun with the old password before the change and completed after it opens nothing 818ms
+ ✓ tests/db/session-termination.dbtest.ts > (5) the stamp itself (migrations/20261001_users_sessions_ended_at.sql, endEverySessionOf) > a confirmed sign-up ends nothing, leaving active stamps it, and no writer moves it backwards 14ms
+{"level":30,"time":"2026-10-01T15:39:05.872Z","pid":31931,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T15:39:05.873Z","pid":31931,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T15:39:05.873Z","pid":31931,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under Etc/UTC: a session begun after the membership is current, one begun before it is over
+[database] Database connection successful
+
+stdout | tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under Etc/UTC: a session begun after the membership is current, one begun before it is over
+[database] Database connection successful { timestamp: '2026-10-01T15:39:05.936Z', poolSize: 1 }
+
+ ✓ tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under Etc/UTC: a session begun after the membership is current, one begun before it is over 927ms
+{"level":30,"time":"2026-10-01T15:39:06.087Z","pid":31931,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T15:39:06.087Z","pid":31931,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T15:39:06.087Z","pid":31931,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under Asia/Tokyo: a session begun after the membership is current, one begun before it is over
+[database] Database connection successful
+
+stdout | tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under Asia/Tokyo: a session begun after the membership is current, one begun before it is over
+[database] Database connection successful { timestamp: '2026-10-01T15:39:06.111Z', poolSize: 1 }
+
+{"level":30,"time":"2026-10-01T15:39:06.236Z","pid":31931,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+ ✓ tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under Asia/Tokyo: a session begun after the membership is current, one begun before it is over 172ms
+{"level":30,"time":"2026-10-01T15:39:06.237Z","pid":31931,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T15:39:06.237Z","pid":31931,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under America/Los_Angeles: a session begun after the membership is current, one begun before it is over
+[database] Database connection successful
+
+stdout | tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under America/Los_Angeles: a session begun after the membership is current, one begun before it is over
+[database] Database connection successful { timestamp: '2026-10-01T15:39:06.265Z', poolSize: 1 }
+
+ ✓ tests/db/account-standing-time-zone.dbtest.ts > R1: a membership begun under any database time zone is read at the moment it began > under America/Los_Angeles: a session begun after the membership is current, one begun before it is over 154ms
+
+ Test Files  3 passed (3)
+      Tests  35 passed (35)
+   Start at  15:38:35
+   Duration  30.94s (transform 2.67s, setup 145ms, import 447ms, tests 29.64s, environment 0ms)
+

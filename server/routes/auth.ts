@@ -37,12 +37,15 @@ import {
   ACCOUNT_INACTIVE_MESSAGE,
   ACCOUNT_STATUS_ACTIVE,
   ACCOUNT_STATUS_PENDING_VERIFICATION,
-  isAccountActive,
   isActiveAccountStatus,
   isPendingVerificationStatus,
-  issuedAtOfClaims,
-  passwordChangedAtSecondsOf,
-  sessionPredatesPasswordChange,
+  accountIdOfClaims,
+  endEverySessionOf,
+  endingStampOf,
+  organizationIdOfClaims,
+  readAccountStanding,
+  sessionEndedByStanding,
+  untilStampHasBegun,
 } from '../services/account-standing';
 import {
   EMAIL_UNVERIFIED_MESSAGE,
@@ -1255,12 +1258,77 @@ router.post('/resend-verification', verificationLimiter, async (req: Request, re
   return res.status(202).json({ success: true });
 });
 
+/** What verifyLiveToken throws for a token that opens nothing: a 401, never a 5xx. */
+const TOKEN_REFUSAL_NAMES = new Set(['JsonWebTokenError', 'TokenExpiredError', 'NotBeforeError', 'SessionEndedError']);
+const isTokenRefusal = (error: unknown): boolean =>
+  error instanceof Error && TOKEN_REFUSAL_NAMES.has(error.name);
+
+/**
+ * POST /api/auth/logout with `terminateAllSessions: true` — sign out of every
+ * session the account holds (security audit 2026-09-24, IAM-04 (b); plan
+ * P0-4b; 21 CFR 11.300(c)). The client sends the flag
+ * (client/src/services/portal/authService.tsx logout(true)); until 2026-10-01
+ * nothing read it, the route revoked the pair it was handed, answered "Tokens
+ * invalidated.", and every other session of the account carried on.
+ *
+ * Only a live access token may end the account's sessions: verified as every
+ * authenticator verifies (verifyLiveToken), so a token already signed out,
+ * idle, superseded or ended answers 401 and ends nothing, rather than a
+ * success it did not earn. The account's users.sessions_ended_at is stamped
+ * (endEverySessionOf), and every session that began before it is refused at
+ * its next request by the gates, verifyLiveToken and the refresh
+ * (sessionEndedByStanding). The presented pair is also revoked and its slot
+ * freed, as a plain logout does. The stamp is the first whole second after the
+ * request (endingStampOf), and the answer waits for that second (at most one),
+ * so every session begun before the sign-out is ended and the sign-in that
+ * follows it is not (plan P0-4b R3).
+ */
+async function signOutEverywhere(req: Request, res: Response): Promise<void> {
+  const { revokeToken } = await import('../services/token-revocation.js');
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  const refuse = (): void => {
+    res.status(401).json({ success: false, error: { code: 'AUTH_006', message: 'This session has ended. Sign in again.' } });
+  };
+  if (!token) return refuse();
+  let claims: Record<string, unknown>;
+  try {
+    claims = await verifyLiveToken<Record<string, unknown>>(token, undefined, { activity: false });
+  } catch (error) {
+    if (isTokenRefusal(error)) return refuse();
+    throw error;
+  }
+  const accountId = accountIdOfClaims(claims);
+  if (requireAccessTokenReason(claims) || accountId === null) return refuse();
+  const endedAt = new Date();
+  if (!(await endEverySessionOf(accountId, endedAt))) return refuse();
+  await unregisterSession(accountId, claims.sid);
+  await revokeToken(token);
+  if (req.body?.refreshToken) await revokeToken(req.body.refreshToken);
+  await recordAuthEvent({
+    action: 'user_logout',
+    userId: accountId,
+    tenantId: claims.organizationId as string | undefined,
+    email: claims.email as string | undefined,
+    outcome: 'success',
+    reason: 'signed out of every session',
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent'],
+  });
+  // The stamp is the first whole second after now (R3); answered once it has
+  // begun, so a sign-in that follows this answer is not one it ended.
+  await untilStampHasBegun(endingStampOf(endedAt.getTime()));
+  res.json({ success: true, message: 'Signed out of every session.' });
+}
+
 /**
  * POST /api/auth/logout
- * Logout and invalidate tokens
+ * Logout and invalidate tokens. With `terminateAllSessions: true`, every
+ * session of the account (signOutEverywhere).
  */
 router.post('/logout', async (req: Request, res: Response) => {
   try {
+    if (req.body?.terminateAllSessions === true) return await signOutEverywhere(req, res);
     const { revokeToken } = await import('../services/token-revocation.js');
 
     // Extract token from Authorization header and revoke it. The logout audit
@@ -1382,25 +1450,42 @@ router.post('/refresh', async (req: Request, res: Response) => {
     }
 
     const refreshUserData = refreshUser[0];
+    // The organisation the new pair is for: the account's default, else its
+    // first membership. Chosen before the standing is read, so the standing
+    // carries when that membership began (plan P0-4b R1).
+    const refreshMemberships = await db
+      .select({ organizationId: organizationUsers.organizationId, role: organizationUsers.role })
+      .from(organizationUsers)
+      .where(eq(organizationUsers.userId, refreshUserData.id))
+      .limit(25);
+
+    let refreshOrgId = refreshUserData.defaultOrganizationId;
+    if (!refreshOrgId || !refreshMemberships.some(m => m.organizationId === refreshOrgId)) {
+      refreshOrgId = refreshMemberships[0]?.organizationId || null;
+    }
+    // The account's standing, read as every authenticator reads it
+    // (account-standing.ts): one statement, so the refresh and the gate cannot
+    // disagree about whether this session is over. Until 2026-10-01 the refresh
+    // compared this row's own status and password_changed_at, a second reading
+    // that knew nothing of a sign-out everywhere (plan P0-4b), and nothing here
+    // knew a membership removed and added back since the session began (R1).
+    const refreshStanding = await readAccountStanding(refreshUserData.id, refreshOrgId ?? null);
     // A refresh token outlives the access token it came with; an account taken
     // out of use gets no new session from it (VSR-001 F-29).
-    if (!isActiveAccountStatus(refreshUserData.status)) {
+    if (!refreshStanding.active) {
       return res.status(403).json({
         success: false,
         error: { code: 'AUTH_ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE },
       });
     }
-    // Security audit 2026-09-24, IAM-04: a refresh token issued before the
-    // account's last password change mints nothing. The gate refuses the access
+    // Security audit 2026-09-24, IAM-04: a refresh token whose session began
+    // before the account's last password change, sign-out everywhere,
+    // suspension or deprovisioning, or before its membership in the organisation
+    // it would mint for (R1), mints nothing. The gate refuses the access
     // tokens it minted for the same reason (middleware/auth.ts, verifyLiveToken);
     // without this the client's next 401 would refresh and carry on, and the
     // change would have ended no session at all.
-    if (
-      sessionPredatesPasswordChange(
-        issuedAtOfClaims(decoded),
-        passwordChangedAtSecondsOf(refreshUserData.passwordChangedAt),
-      )
-    ) {
+    if (sessionEndedByStanding(decoded, refreshStanding)) {
       return res.status(401).json({
         success: false,
         error: { code: 'AUTH_006', message: 'This session has ended. Sign in again.' },
@@ -1421,16 +1506,6 @@ router.post('/refresh', async (req: Request, res: Response) => {
     }
     // The session continues: its id, start and window travel into the new pair.
     const session = continuedSessionClaims(decoded);
-    const refreshMemberships = await db
-      .select({ organizationId: organizationUsers.organizationId, role: organizationUsers.role })
-      .from(organizationUsers)
-      .where(eq(organizationUsers.userId, refreshUserData.id))
-      .limit(25);
-
-    let refreshOrgId = refreshUserData.defaultOrganizationId;
-    if (!refreshOrgId || !refreshMemberships.some(m => m.organizationId === refreshOrgId)) {
-      refreshOrgId = refreshMemberships[0]?.organizationId || null;
-    }
 
     if (!refreshOrgId) {
       return res.status(403).json({
@@ -1618,9 +1693,29 @@ type MfaChallenge = NonNullable<ReturnType<typeof mfaService.verifyMfaChallengeT
  * A challenge issued before the account was suspended or deprovisioned (VSR-001
  * F-29), or locked, does not become a session after it. Checked before the code,
  * so neither spends one. Answers whether it refused.
+ *
+ * Nor does a sign-in begun before the account's sessions were ended (plan
+ * P0-4b R3): the first factor was shown at the challenge's issue, so a
+ * challenge from before a password change, a sign-out everywhere or a removal
+ * from the organisation is a session begun before it, and is asked the one
+ * question every door asks (sessionEndedByStanding). Until 2026-10-01 a
+ * challenge won with the old password became a session for five minutes after
+ * the change.
  */
-async function refuseAccountAtSecondFactor(req: Request, res: Response, challenge: MfaChallenge, userId: number) {
-  const inactive = !(await isAccountActive(userId));
+async function refuseAccountAtSecondFactor(
+  req: Request,
+  res: Response,
+  challenge: MfaChallenge,
+  userId: number,
+  challengeId: string,
+) {
+  const standing = await readAccountStanding(userId, organizationIdOfClaims(challenge));
+  const inactive = !standing.active;
+  if (!inactive && sessionEndedByStanding(jwt.decode(challengeId), standing)) {
+    await recordAuthEvent({ action: 'user_login', userId, tenantId: challenge.organizationId, email: challenge.email, outcome: 'failure', reason: 'sign_in_begun_before_sessions_ended', ipAddress: req.ip, userAgent: req.headers['user-agent'] });
+    res.status(401).json({ success: false, error: { code: 'MFA_002', message: 'This sign-in has ended. Sign in again.' } });
+    return true;
+  }
   if (!inactive && !(await isAccountLocked(userId)).locked) return false;
   const reason = inactive ? 'account_inactive' : 'account_locked';
   await recordAuthEvent({ action: 'user_login', userId, tenantId: challenge.organizationId, email: challenge.email, outcome: 'failure', reason, ipAddress: req.ip, userAgent: req.headers['user-agent'] });
@@ -1681,7 +1776,7 @@ router.post('/mfa/verify', signInLimits.secondFactor, async (req: Request, res: 
     }
 
     const userId = parseInt(challenge.userId);
-    if (await refuseAccountAtSecondFactor(req, res, challenge, userId)) return;
+    if (await refuseAccountAtSecondFactor(req, res, challenge, userId, challengeId)) return;
 
     // The factor this account signs in with (mfa-enrolment.ts). An account with
     // an authenticator never completes sign-in with an emailed code: the emailed
@@ -2387,13 +2482,17 @@ async function handleResetPassword(req: Request, res: Response) {
     // requests carrying one token — both past the read during the bcrypt hash —
     // both reported success and the later password silently won (D6, the class
     // of VSR-001 §13.3 item 1).
+    // The first whole second after the reset (R3, account-standing.ts
+    // endingStampOf): every session begun before it, in its own second too, is
+    // over; the answer waits for that second, so the sign-in that follows is not.
+    const resetStamp = endingStampOf();
     const reset = await db
       .update(users)
       .set({
         passwordHash,
         resetToken: null,
         resetTokenExpiresAt: null,
-        passwordChangedAt: new Date(),
+        passwordChangedAt: resetStamp,
         mustChangePassword: false,
       })
       .where(
@@ -2443,6 +2542,7 @@ async function handleResetPassword(req: Request, res: Response) {
 
     logger.info('Password reset completed', { userId: userData.id });
 
+    await untilStampHasBegun(resetStamp);
     return res.json({
       success: true,
       message: 'Password reset successfully',
@@ -2501,7 +2601,12 @@ router.post('/password/change', async (req: Request, res: Response) => {
       });
     }
 
-    const { currentPassword, newPassword, terminateOtherSessions } = req.body;
+    // `terminateOtherSessions` is not read, and is not an opt-out: a password
+    // change ends every session that began before it, this one included, at
+    // its next request (sessionEndedByStanding). A holder who changed the
+    // password because it was stolen must not be able to leave the thief's
+    // session running (IAM-04).
+    const { currentPassword, newPassword } = req.body;
 
     if (!currentPassword || !newPassword) {
       return res.status(400).json({
@@ -2584,11 +2689,15 @@ router.post('/password/change', async (req: Request, res: Response) => {
     const history = ((userData.passwordHistory as string[]) || []).slice(0, 4);
     history.unshift(userData.passwordHash);
 
+    // The first whole second after the change (R3, account-standing.ts
+    // endingStampOf): every session begun before it, in its own second too, is
+    // over; the answer waits for that second, so the sign-in that follows is not.
+    const changeStamp = endingStampOf();
     await db
       .update(users)
       .set({
         passwordHash: newHash,
-        passwordChangedAt: new Date(),
+        passwordChangedAt: changeStamp,
         passwordHistory: history,
         mustChangePassword: false,
       })
@@ -2608,6 +2717,7 @@ router.post('/password/change', async (req: Request, res: Response) => {
       userAgent: req.headers['user-agent'],
     });
 
+    await untilStampHasBegun(changeStamp);
     return res.json({
       success: true,
       message: 'Password changed successfully',
