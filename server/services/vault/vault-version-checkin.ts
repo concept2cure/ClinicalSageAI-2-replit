@@ -33,6 +33,7 @@ export interface CheckInQueryable {
 export interface CheckInHead {
   id: string;
   document_code: string;
+  document_type: string | null;
   version: string;
   folder_id: string | null;
   evidence_kind: string | null;
@@ -81,7 +82,7 @@ export async function planCheckIn(
   if (!UUID_RE.test(p.headId)) return notFound;
 
   const { rows } = await q.query(
-    `SELECT d.id::text AS id, d.document_code, d.version, d.folder_id, d.evidence_kind, d.ctd_section,
+    `SELECT d.id::text AS id, d.document_code, d.document_type, d.version, d.folder_id, d.evidence_kind, d.ctd_section,
             d.placement_status, d.placement_confidence, d.placement_rationale, d.placed_by,
             d.classification, d.retention_policy
        FROM vault.documents d
@@ -92,18 +93,23 @@ export async function planCheckIn(
   const head = rows[0] as CheckInHead | undefined;
   if (!head) return notFound;
 
-  // The current version is the end of the successor chain from the one named.
+  /* The current version is the end of the successor chain from the one named,
+     under the rule the database admits a link by (same program, organization
+     and document code), so this agrees with the Vault tree about which version
+     is current (vault-version-family.ts). */
   const later = await q.query(
     `WITH RECURSIVE chain AS (
        SELECT s.id, s.version, 1 AS depth FROM vault.documents s
         WHERE s.supersedes_id = $1::uuid AND s.deleted_at IS NULL
+          AND s.program_id = $2::uuid AND s.organization_id = $3 AND s.document_code IS NOT DISTINCT FROM $4
        UNION ALL
        SELECT s.id, s.version, c.depth + 1 FROM vault.documents s
          JOIN chain c ON s.supersedes_id = c.id
         WHERE s.deleted_at IS NULL AND c.depth < 1000
+          AND s.program_id = $2::uuid AND s.organization_id = $3 AND s.document_code IS NOT DISTINCT FROM $4
      )
      SELECT id::text AS id, version FROM chain ORDER BY depth DESC LIMIT 1`,
-    [head.id],
+    [head.id, p.programId, p.organizationId, head.document_code],
   );
   const current = later.rows[0] as { id: string; version: string } | undefined;
   if (current) {
@@ -114,6 +120,26 @@ export async function planCheckIn(
       message:
         `Version ${head.version} of this document already has a newer version; the current one is ${current.version}. ` +
         `Add the new version to ${current.version}. ${NOTHING}`,
+    };
+  }
+
+  /* A row written before the lineage rule can name this version although it is
+     not a version of this document. The database still refuses a second
+     successor (the lineage trigger), so say why here instead of failing at the
+     insert, and name nothing about that row. */
+  const named = await q.query(
+    // tenant-isolation-safe: an existence test that mirrors the lineage trigger's second-successor check, which spans every tenant; no column of the row found is returned or shown.
+    `SELECT 1 FROM vault.documents WHERE supersedes_id = $1::uuid AND deleted_at IS NULL LIMIT 1`,
+    [head.id],
+  );
+  if (named.rows[0]) {
+    return {
+      ok: false,
+      status: 409,
+      code: 'VERSION_LINK_CONFLICT',
+      message:
+        `Another record already names version ${head.version} as the one it replaces, and it is not a version of this ` +
+        `document, so no version can be added here until an administrator resolves that record. ${NOTHING}`,
     };
   }
 
@@ -129,9 +155,9 @@ export async function planCheckIn(
 
   const same = await q.query(
     `SELECT version FROM vault.documents
-      WHERE program_id = $1::uuid AND document_code = $2 AND content_hash = $3
+      WHERE program_id = $1::uuid AND organization_id = $2 AND document_code = $3 AND content_hash = $4
       ORDER BY created_at LIMIT 1`,
-    [p.programId, head.document_code, p.contentHash],
+    [p.programId, p.organizationId, head.document_code, p.contentHash],
   );
   if (same.rows[0]) {
     return {

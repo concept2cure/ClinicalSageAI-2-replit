@@ -279,12 +279,71 @@ await step(
     expect(next.status === 201, `expected 201, got ${next.status}`, next.json);
     expect(next.json.document.version === '2.0', `version ${next.json.document.version}, expected 2.0`, next.json.document);
     expect(next.json.document.documentCode === state.doc.documentCode, 'document code changed', next.json.document);
+    state.v2 = next.json.document;
     const again = await send(next.json.document.id, `${state.docTitle} revision 2`);
     expect(again.status === 409 && again.json?.error?.code === 'CONTENT_ALREADY_A_VERSION', `expected 409 CONTENT_ALREADY_A_VERSION, got ${again.status}`, again.json);
     const stale = await send(state.doc.id, `${state.docTitle} revision 3`);
     expect(stale.status === 409 && stale.json?.error?.code === 'VERSION_NOT_CURRENT', `expected 409 VERSION_NOT_CURRENT, got ${stale.status}`, stale.json);
     expect(/2\.0/.test(stale.json.error.message ?? ''), 'the refusal does not name the current version', stale.json);
     return `version ${next.json.document.version} (${next.json.document.id}) of ${next.json.document.documentCode}; known bytes refused; stale head refused`;
+  },
+);
+
+await step(
+  {
+    id: 'OQ-VAULT-12',
+    urs: ['URS-VAULT-012'],
+    title: 'A document is listed once, and every version of it is listed, downloadable and in its history',
+    action:
+      'GET /api/c2c/project-vault/:programId; GET …/documents/<OQ-VAULT-03 id>/versions; GET …/documents/<OQ-VAULT-03 id>/download; ' +
+      'GET …/documents/<version 2.0 id>/history; GET …/search?q=<title> without and with includeSuperseded=true',
+    expected:
+      'The tree has one leaf for the document, version 2.0, with versionCount 2, and no leaf for 1.0; the versions list is ' +
+      '[2.0 current, 1.0 earlier] with the OQ-VAULT-03 SHA-256 on 1.0; version 1.0 downloads with that SHA-256; the history ' +
+      'carries entries for both versions; search returns 2.0 and not 1.0 unless includeSuperseded=true',
+    dependsOn: ['OQ-VAULT-11'],
+  },
+  async ({ api, baseUrl, auth, expect, attach }) => {
+    const v1 = state.doc.id;
+    const v2 = state.v2.id;
+    const tree = await api('GET', `/api/c2c/project-vault/${state.programId}`);
+    expect(tree.status === 200, `tree: expected 200, got ${tree.status}`, tree.json);
+    const leaves = [];
+    const walk = (n) => {
+      if (Array.isArray(n)) return n.forEach(walk);
+      if (n && typeof n === 'object') { if (n.src === 'upload') leaves.push(n); if (n.children) walk(n.children); }
+    };
+    walk(tree.json.data.tree);
+    const family = leaves.filter((l) => l.docId === v1 || l.docId === v2);
+    expect(family.length === 1 && family[0].docId === v2 && family[0].versionCount === 2,
+      'the tree does not list the document once, at 2.0 with 2 versions', family);
+
+    const vs = await api('GET', `/api/c2c/project-vault/${state.programId}/documents/${v1}/versions`);
+    expect(vs.status === 200, `versions: expected 200, got ${vs.status}`, vs.json);
+    const list = vs.json.data.versions;
+    attach('versions.json', list);
+    expect(list.length === 2 && list[0].id === v2 && list[0].current === true && list[1].id === v1 && list[1].current === false,
+      'the versions list is not [2.0 current, 1.0 earlier]', list);
+    expect(list[1].contentHash === state.bytesSha, 'version 1.0 does not carry the OQ-VAULT-03 SHA-256', list[1]);
+
+    const res = await fetch(`${baseUrl}/api/c2c/project-vault/${state.programId}/documents/${v1}/download`, {
+      headers: { Authorization: `Bearer ${auth.accessToken}`, Origin: baseUrl },
+    });
+    const got = sha256(Buffer.from(await res.arrayBuffer()));
+    expect(res.status === 200 && got === state.bytesSha, `version 1.0 download: HTTP ${res.status}, sha256 ${got}`);
+
+    const h = await api('GET', `/api/c2c/project-vault/${state.programId}/documents/${v2}/history`);
+    expect(h.status === 200, `history: expected 200, got ${h.status}`, h.json);
+    const seen = new Set((h.json.data.entries ?? []).map((e) => e.version));
+    expect(seen.has('1.0') && seen.has('2.0'), 'the history does not span both versions', [...seen]);
+
+    const q = encodeURIComponent(state.docTitle);
+    const plain = await api('GET', `/api/c2c/project-vault/${state.programId}/search?q=${q}`);
+    const all = await api('GET', `/api/c2c/project-vault/${state.programId}/search?q=${q}&includeSuperseded=true`);
+    const ids = (r) => (r.json?.data?.results ?? []).map((x) => x.id);
+    expect(ids(plain).includes(v2) && !ids(plain).includes(v1), 'search does not list the current version alone', ids(plain));
+    expect(ids(all).includes(v1) && ids(all).includes(v2), 'search with includeSuperseded does not list both versions', ids(all));
+    return `one leaf (2.0, 2 versions); versions [2.0, 1.0]; 1.0 downloads with sha256 ${got.slice(0, 12)}…; history spans ${[...seen].join(', ')}; search 1 / ${ids(all).length}`;
   },
 );
 

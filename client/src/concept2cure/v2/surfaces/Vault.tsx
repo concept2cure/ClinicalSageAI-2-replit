@@ -5,6 +5,7 @@ import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceAc
 import { I } from '../icons';
 import { VaultPlaceIntoSubmission } from './VaultPlaceIntoSubmission';
 import { VaultEditDetails } from './VaultEditDetails';
+import { VaultVersions } from './VaultVersions';
 import { VaultCoverage, type VaultCoverageShape, type CoverageDocument } from './VaultCoverage';
 import { useLiveData, EmptyState, type ShapeGuard } from '../dataConnect';
 import { useVaultUpload } from '../useVaultUpload';
@@ -289,6 +290,8 @@ function VaultTree({ nodes, depth, activeFolder, onPick, expanded, toggle }: Vau
 interface HistoryEntry {
   id: string;
   event: string;
+  /** The version the event was recorded against, across the document's versions (VR-09). */
+  version?: string | null;
   actor: string;
   at: string;
   when: string;
@@ -347,7 +350,10 @@ function DocumentHistory({ projectId, documentUuid }: { projectId: string; docum
         <div className="vd-vers">
           {st.data.entries.map((e) => (
             <div key={e.id} className="vd-ver">
-              <span className="vd-ver-v">{e.event}</span>
+              <span className="vd-ver-v">
+                {e.version ? `v${e.version} · ` : ''}
+                {e.event}
+              </span>
               <span className="vd-ver-m">
                 {e.when || e.at} · {e.actor} · <span className="mono" title={e.hash}>{e.hash.slice(0, 12)}</span>
               </span>
@@ -576,9 +582,13 @@ interface VaultSearchHit {
   placementStatus: string | null;
   /** A body excerpt when the match was in the content; null when it was not. */
   snippet: string | null;
+  /** The version, and whether it is the document's current one (VR-09). */
+  version?: string | null;
+  current?: boolean;
 }
 interface VaultSearchShape {
   query: string;
+  includeSuperseded?: boolean;
   total: number;
   limit: number;
   offset: number;
@@ -603,8 +613,10 @@ function searchHitToDoc(h: VaultSearchHit): VaultDoc {
     status: h.placementStatus || 'unfiled',
     pct: null,
     owner: '',
-    ver: '',
+    ver: h.version ? `v${h.version}` : '',
     updated: '',
+    // Only listed when the search asked for earlier versions (VR-09).
+    earlierVersion: h.current === false,
     /* The server's ts_headline excerpt, with its <b> markers stripped: this is
        rendered as text, and a highlight that arrives as literal markup would
        read as corruption. */
@@ -670,11 +682,38 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
   /* What the user says the file is; travels with every file in the batch. */
   const [docType, setDocType] = useState<VaultIngestDocumentType>('OTHER');
 
+  /* A file refused because a different file is recorded at that name (409
+     VERSION_CONTENT_CONFLICT) is offered as the next version of that document
+     (VR-09), rather than left at a dead end. The document is the tree's leaf
+     with that code, which is its current version. */
+  const [checkInOffers, setCheckInOffers] = useState<Array<{ file: File; doc: VaultDoc }>>([]);
   const uploadFiles = async (files: FileList | null) => {
     const outcome = await upload(files, { documentType: docType });
+    setCheckInOffers(
+      outcome.conflicts.flatMap(({ name, file }) => {
+        const doc = allDocs.find((d) => d.src === 'upload' && d.docId && d.documentCode === name);
+        return doc ? [{ file, doc }] : [];
+      }),
+    );
     // Re-read the tree so what is shown is what the server stored.
     if (outcome.succeeded.length) setVaultEpoch((n) => n + 1);
     if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+  /** Add `file` as the next version of `doc`: the server numbers it and keeps the code and filing. */
+  const uploadNewVersion = async (file: File, doc: VaultDoc, currentId?: string) => {
+    if (!doc.docId) return;
+    const recordedType = doc.details?.documentType;
+    const outcome = await upload([file], {
+      documentType: (VAULT_INGEST_DOCUMENT_TYPES as readonly string[]).includes(recordedType ?? '')
+        ? (recordedType as VaultIngestDocumentType)
+        : docType,
+      newVersionOf: { documentId: currentId ?? doc.docId, title: doc.details?.documentTitle || doc.title },
+    });
+    // The offer stays until the version is recorded: a dropped connection must not lose the file.
+    if (outcome.succeeded.includes(file.name)) {
+      setCheckInOffers((offers) => offers.filter((o) => o.file !== file));
+      setVaultEpoch((n) => n + 1);
+    }
   };
 
   /* ── Filing decisions (confirm / move / unfile) ────────────────────────────
@@ -954,9 +993,13 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
      GET /:id/search is ranked full text over title, file name and extracted
      body. The tree stays the browse view; this is the find view. */
   const trimmedQ = q.trim();
+  /* Current versions only unless asked (VR-09): an earlier version is the same
+     document, and listing it beside its successor reads as two. */
+  const [includeEarlier, setIncludeEarlier] = useState(false);
   const searchPath =
     projectId && trimmedQ ? '/api/c2c/project-vault/' + encodeURIComponent(projectId) +
-      '/search?q=' + encodeURIComponent(trimmedQ) + '&limit=100' : null;
+      '/search?q=' + encodeURIComponent(trimmedQ) + '&limit=100' +
+      (includeEarlier ? '&includeSuperseded=true' : '') : null;
   const searchState = useLiveData<VaultSearchShape>(searchPath, [searchPath]);
 
   const results = searching
@@ -1235,6 +1278,16 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
           {(downloadNote ?? uploadNote)!.text}
         </div>
       )}
+      {checkInOffers.map(({ file, doc }) => (
+        <div key={`${file.name}-${doc.docId}`} className="scaf-note" role="status" style={{ margin: '0 0 12px' }}>
+          {file.name} was not uploaded: a different file is already recorded under this name as “{doc.title}”
+          ({doc.ver}). Added as a new version, it is numbered by the server, keeps the document's filing, and the
+          earlier versions stay in the Vault.{' '}
+          <button className="sp-ask" disabled={uploading} onClick={() => void uploadNewVersion(file, doc)}>
+            Upload as a new version of {doc.title}
+          </button>
+        </div>
+      ))}
 
       {filingIntoSubmission && (
         <VaultPlaceIntoSubmission
@@ -1360,8 +1413,8 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                 title="No documents in this project's vault yet"
                 hint={
                   vault?.pendingStore
-                    ? "The governed document store isn't provisioned for this environment yet. Documents built here organize by build type into the CTD / eSTAR / IVDR / TMF spine, each classified and version-tracked."
-                    : "Nothing has been filed into this project's vault yet. Upload a file — it is classified and auto-filed to a suggested dossier folder — or start a document build; both organize into the submission spine, version-tracked."
+                    ? "The governed document store isn't provisioned for this environment yet. Documents built here organize by build type into the CTD / eSTAR / IVDR / TMF spine, each classified."
+                    : "Nothing has been filed into this project's vault yet. Upload a file — it is classified and auto-filed to a suggested dossier folder — or start a document build; both organize into the submission spine. A changed file uploaded under an existing document's name is offered as a new version of that document."
                 }
               />
             </div>
@@ -1428,6 +1481,14 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                   aria-label="Search this vault"
                 />
               </label>
+              <label className="vd-search">
+                <input
+                  type="checkbox"
+                  checked={includeEarlier}
+                  onChange={(e) => setIncludeEarlier(e.target.checked)}
+                />{' '}
+                Include earlier versions
+              </label>
             </div>
             {searching && searchState.error && (
               /* An error is not an empty result. Without this the screen reads
@@ -1472,7 +1533,11 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                       </span>
                     )}
                   </span>
-                  <span className="vd-col-type">{d.type}</span>
+                  <span className="vd-col-type">
+                    {d.type}
+                    {(d.versionCount ?? 1) > 1 ? ` · ${d.ver}, ${d.versionCount} versions` : ''}
+                    {d.earlierVersion ? ` · ${d.ver}, earlier version` : ''}
+                  </span>
                   <span className="vd-col-owner">{d.owner}</span>
                   <span className="vd-col-mod">{d.updated}</span>
                   <span className="vd-col-status">
@@ -1499,7 +1564,11 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                     {st(sel.status).label}
                   </span>
                   {sel.ver && sel.ver !== '—' && (
-                    <span className="vd-d-ver">{sel.ver}</span>
+                    <span className="vd-d-ver">
+                      {sel.ver}
+                      {(sel.versionCount ?? 1) > 1 ? ` · ${sel.versionCount} versions` : ''}
+                      {sel.earlierVersion ? ' · earlier version' : ''}
+                    </span>
                   )}
                 </div>
                 <div className="vd-d-title">
@@ -1678,10 +1747,6 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                           <span className="v">{sel.sizeLabel}</span>
                         </div>
                       )}
-                      <div className="vd-d-filing-row">
-                        <span className="k">Version</span>
-                        <span className="v mono">{sel.ver && sel.ver !== '—' ? sel.ver : '—'}</span>
-                      </div>
                       {sel.hash && (
                         <div className="vd-d-filing-row">
                           <span className="k">SHA-256</span>
@@ -1692,8 +1757,42 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                       )}
                     </div>
                     {projectId && sel.docId ? (
+                      <VaultVersions
+                        key={`versions-${sel.docId}-${vaultEpoch}`}
+                        projectId={projectId}
+                        documentId={sel.docId}
+                        title={sel.title}
+                        onDownload={(docId, title) => void downloadVaultDoc(docId, title)}
+                        downloadingId={downloading}
+                        onUploadNewVersion={(file, currentId) => void uploadNewVersion(file, sel, currentId)}
+                        uploading={uploading}
+                      />
+                    ) : null}
+                    {projectId && sel.docId ? (
                       <DocumentHistory key={`${sel.docId}-${vaultEpoch}`} projectId={projectId} documentUuid={sel.docId} />
                     ) : null}
+                  </>
+                ) : sel.src === 'upload' && sel.docId && projectId ? (
+                  /* A search hit the tree does not list: an earlier version, or a
+                     document outside the loaded window. Its versions and history
+                     are read as for any upload; the filing is the current version's. */
+                  <>
+                    {sel.earlierVersion && (
+                      <div className="vd-d-idx">
+                        An earlier version. The tree lists the current one, which carries the document's filing.
+                      </div>
+                    )}
+                    <VaultVersions
+                      key={`versions-${sel.docId}-${vaultEpoch}`}
+                      projectId={projectId}
+                      documentId={sel.docId}
+                      title={sel.title}
+                      onDownload={(docId, title) => void downloadVaultDoc(docId, title)}
+                      downloadingId={downloading}
+                      onUploadNewVersion={(file, currentId) => void uploadNewVersion(file, sel, currentId)}
+                      uploading={uploading}
+                    />
+                    <DocumentHistory key={`${sel.docId}-${vaultEpoch}`} projectId={projectId} documentUuid={sel.docId} />
                   </>
                 ) : (
                   <>
@@ -1708,10 +1807,10 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                       <span>Indexing status isn't reported for this document yet.</span>
                     </div>
 
-                    {/* No version-history endpoint backs this surface: the read model
-                        returns each section's CURRENT version only, not a history
-                        list. Show the real current version honestly — don't
-                        synthesize a "history". */}
+                    {/* An authored section: the read model returns each section's
+                        CURRENT version only, not a history list. Show the real
+                        current version honestly — don't synthesize a "history".
+                        (Uploaded documents list every version: VaultVersions.) */}
                     <div className="vd-d-seclbl">Version</div>
                     <div className="vd-vers">
                       <div className="vd-ver">

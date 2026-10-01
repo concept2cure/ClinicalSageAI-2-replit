@@ -1,0 +1,22 @@
+ × tests/db/vault-versions.dbtest.ts > the Vault lists a document once, at its current version (VR-09) > one leaf for the family, the current version, with its version count 41ms
+   → expected [ { …(17) }, { …(17) } ] to have a length of 1 but got 2
+ × tests/db/vault-versions.dbtest.ts > the Vault lists a document once, at its current version (VR-09) > counts documents, not versions 20ms
+   → expected 4 to be 3 // Object.is equality
+ × tests/db/vault-versions.dbtest.ts > GET …/documents/:documentId/versions (VR-09) > lists the family newest first from any member, with hash, size and uploader 6ms
+   → {}: expected 404 to be 200 // Object.is equality
+ × tests/db/vault-versions.dbtest.ts > GET …/documents/:documentId/versions (VR-09) > shows a link the lineage rules refuse as unverified, never as lineage 4ms
+   → expected 404 to be 200 // Object.is equality
+ ✓ tests/db/vault-versions.dbtest.ts > GET …/documents/:documentId/versions (VR-09) > 404s another organization's document, from either side 6ms
+ × tests/db/vault-versions.dbtest.ts > search and history across versions (VR-09) > search hides a superseded version unless asked, and counts the same set 11ms
+   → expected [ …(2) ] to not include '9f77c74b-719e-406d-b30d-e18499335a50'
+ × tests/db/vault-versions.dbtest.ts > search and history across versions (VR-09) > a document's history spans every version 40ms
+   → expected 'vault_document:76fe9c75-8bc9-433f-972…' to contain '9f77c74b-719e-406d-b30d-e18499335a50'
+ ✓ tests/db/vault-versions.dbtest.ts > search and history across versions (VR-09) > downloads an earlier version, hash-verified (control) 12ms
+AssertionError: expected [ { …(17) }, { …(17) } ] to have a length of 1 but got 2
+AssertionError: expected 4 to be 3 // Object.is equality
+AssertionError: {}: expected 404 to be 200 // Object.is equality
+AssertionError: expected 404 to be 200 // Object.is equality
+AssertionError: expected [ …(2) ] to not include '9f77c74b-719e-406d-b30d-e18499335a50'
+AssertionError: expected 'vault_document:76fe9c75-8bc9-433f-972…' to contain '9f77c74b-719e-406d-b30d-e18499335a50'
+ Test Files  1 failed (1)
+      Tests  6 failed | 2 passed (8)

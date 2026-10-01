@@ -1,15 +1,15 @@
 {
   "documentId": "TM-001",
-  "generatedAt": "2026-10-01T00:03:42.894Z",
+  "generatedAt": "2026-10-01T01:40:49.333Z",
   "generator": "scripts/validation/build-traceability.mjs",
   "runDate": "2026-09-27",
   "summary": {
-    "requirements": 72,
+    "requirements": 73,
     "pass": 69,
     "partial": 2,
     "fail": 0,
     "open": 0,
-    "uncovered": 1
+    "uncovered": 2
   },
   "byApp": {
     "Projects": {
@@ -21,12 +21,12 @@
       "uncovered": 0
     },
     "Vault": {
-      "requirements": 11,
+      "requirements": 12,
       "pass": 10,
       "partial": 0,
       "fail": 0,
       "open": 0,
-      "uncovered": 1
+      "uncovered": 2
     },
     "Authoring": {
       "requirements": 15,
@@ -603,7 +603,7 @@
       "id": "URS-VAULT-004",
       "app": "Vault",
       "doc": "URS-002-VAULT.md",
-      "requirement": "The program's vault read model lists every stored document under its folder tree with an honest `documentCount`; every field is derived from a stored column (no fabricated folders or counts).",
+      "requirement": "The program's vault read model lists every stored document under its folder tree with an honest `documentCount` (a document's versions are one document: URS-VAULT-012); every field is derived from a stored column (no fabricated folders or counts).",
       "part11": "none",
       "risk": "medium",
       "steps": [
@@ -787,6 +787,22 @@
         "risk": "high — a wrong link or number misstates which bytes a filing used",
         "assurance": "scripted",
         "rationale": "positive check-in, known-bytes and stale-head negatives; database refusals in `tests/db/vault-version-checkin.dbtest.ts`"
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-VAULT-012",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "A document is listed once, at its current version, with how many versions it has. Every version of a document is listed newest first with its version, SHA-256, size, uploader and date, and each downloads hash-verified. The document's history carries the events of every version, each naming its version. Search lists current versions unless earlier ones are asked for. A predecessor link the lineage rule would refuse is shown as not linked, never as lineage.",
+      "part11": "§11.10(e)",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "One entry per document at its current version; every version listed, hash-verified on download, and in the document's history; search shows current versions unless asked",
+        "risk": "high — a superseded version shown as current, or a version missing from the list or history, puts the wrong bytes in a filing or hides who changed what",
+        "assurance": "scripted",
+        "rationale": "tree, versions, download, history and search checks; the legacy-link, cross-tenant and check-in agreement cases in `tests/db/vault-versions.dbtest.ts`"
       },
       "verdict": "uncovered"
     },
