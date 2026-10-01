@@ -40,6 +40,12 @@ import {
   type CanonicalStoreDb,
 } from '../services/regulatory/canonicalDocumentStore';
 import {
+  startVaultLifecycleRecord,
+  supersedeOnVaultApproval,
+  SupersessionRefused,
+  vaultApprovalRefusal,
+} from '../services/regulatory/vault-lifecycle-record';
+import {
   buildLifecycleBindings,
   type LifecycleBindingDeps,
 } from '../services/regulatory/lifecycleBindings';
@@ -49,7 +55,6 @@ import {
   LIFECYCLE_SIGNATURE_TYPE,
   lifecycleTarget,
   LifecycleSignatureRefusal,
-  readVaultSource,
   vaultSourceId,
   type LifecycleBinding,
   type LifecycleSigner,
@@ -60,6 +65,7 @@ import {
   type SignatureDbClient,
 } from '../services/part11/signature-persistence';
 import { recordGovernedAction } from './c2c/actions';
+import { requireGovernedReason } from './governed-reason';
 import {
   assertSignerIsNotAuthor,
   SeparationOfDutiesAuthorUnresolvedError,
@@ -102,6 +108,16 @@ const AUTHOR = 'regulatory-author';
 const isStage = (v: unknown): v is DocumentStage =>
   typeof v === 'string' &&
   ['authoring', 'in_review', 'approved', 'placed', 'packaged', 'submitted', 'superseded', 'withdrawn'].includes(v);
+
+/**
+ * A sign-off carries the signer's own reason (VR-13): the 400 to answer when it
+ * does not, else null. Asked before the ceremony; a reason is never written for
+ * the signer.
+ */
+function reasonRefusal(value: unknown): { ok: false; error: 'REASON_REQUIRED'; message: string } | null {
+  const reason = requireGovernedReason(value);
+  return reason.ok ? null : { ok: false, error: 'REASON_REQUIRED', message: `${reason.error} Nothing was signed.` };
+}
 
 export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptions = {}): Router {
   const router = express.Router();
@@ -245,16 +261,15 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
       meaning: 'reviewed' | 'approved';
       signer: LifecycleSigner;
       binding: LifecycleBinding;
-      reason?: string;
+      /** The signer's own reason, required and validated by the route (never written for them). */
+      reason: string;
       occurredAt: Date;
     },
   ): Promise<ApprovalSignature> {
     const { doc, signer, binding, occurredAt } = params;
     const target = lifecycleTarget(doc.canonicalId);
     const meaning = LIFECYCLE_DECLARED_MEANING[params.meaning];
-    const reason =
-      params.reason?.trim() ||
-      `${params.meaning === 'reviewed' ? 'Review' : 'Approval'} of "${doc.title}", version ${doc.version}`;
+    const reason = params.reason;
 
     const gov = await recordGovernedAction(client, {
       orgId: doc.organizationId,
@@ -325,6 +340,8 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
     if (!gate.allowed) {
       return { status: 409, body: { ok: false, from: state.stage, to: 'approved', blockedBy: gate.blockedBy } };
     }
+    const refusal = await vaultApprovalRefusal(client, input, resolveUserId(req));
+    if (refusal) return refusal;
     const pre = await signingPrecheck(req, client, input, 'APPROVED');
     if (!('binding' in pre)) return pre;
     const signer = await reverifiedSigner(req, res);
@@ -337,7 +354,8 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
           meaning,
           signer: { ...signer, ipAddress: req.ip ?? null },
           binding: pre.binding,
-          reason: signCtx.reason,
+          // Validated by the advance route before anything ran; never written for the signer.
+          reason: signCtx.reason ?? '',
           occurredAt: new Date(signCtx.at),
         });
       },
@@ -357,28 +375,16 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
     if (createdBy === null) return res.status(401).json({ ok: false, error: 'AUTH_REQUIRED' });
 
     // A body `contentHash` is not read (VR-12): the hash a signature binds is
-    // the server's reading. A document made from a Vault version takes that
-    // version's hash, from this organization's row; one naming no source the
-    // server can read has none ('').
+    // the server's reading. A document made from a Vault version is that
+    // version's record (VR-13): see startVaultLifecycle.
     const { title, documentType, projectId, hasContent, sources } = req.body ?? {};
-    if (typeof title !== 'string' || !title.trim() || typeof documentType !== 'string' || !documentType.trim()) {
-      return res.status(400).json({ ok: false, error: 'title_and_document_type_required' });
-    }
-    let contentHash = '';
-    let contentPresent = Boolean(hasContent);
     const vaultId = vaultSourceId(sources);
     if (vaultId !== null) {
-      const source =
-        vaultId === 'invalid' ? null : await readVaultSource(drizzleSignatureClient(getDb()), organizationId, vaultId);
-      if (!source) {
-        return res.status(422).json({
-          ok: false,
-          error: 'VAULT_SOURCE_NOT_FOUND',
-          message: 'The Vault version named as this document\'s source is not in this organization. Nothing was created.',
-        });
-      }
-      contentHash = source.contentHash;
-      contentPresent = true;
+      const started = await startVaultLifecycleRecord(getDb(), { organizationId, createdBy, vaultId });
+      return res.status(started.status).json(started.body);
+    }
+    if (typeof title !== 'string' || !title.trim() || typeof documentType !== 'string' || !documentType.trim()) {
+      return res.status(400).json({ ok: false, error: 'title_and_document_type_required' });
     }
 
     const canonicalId = await createCanonicalDocument(getDb(), {
@@ -387,8 +393,8 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
       title: title.trim(),
       documentType: documentType.trim(),
       projectId: typeof projectId === 'string' ? projectId : undefined,
-      hasContent: contentPresent,
-      contentHash,
+      hasContent: Boolean(hasContent),
+      contentHash: '',
       sources,
     });
     // Report how many blueprint sections were instantiated as the outline.
@@ -427,6 +433,10 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
     if (meaning !== 'reviewed' && meaning !== 'approved') {
       return res.status(400).json({ ok: false, error: 'meaning_must_be_reviewed_or_approved' });
     }
+    // A sign-off carries the signer's own reason; none is written for them.
+    const noReason = reasonRefusal(req.body?.reason);
+    if (noReason) return res.status(400).json(noReason);
+    const reason = String(req.body.reason).trim();
     const id = String(req.params.id);
 
     let outcome: Outcome;
@@ -464,7 +474,7 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
           meaning: 'reviewed',
           signer: { ...signer, ipAddress: req.ip ?? null },
           binding: pre.binding,
-          reason: typeof req.body?.reason === 'string' ? req.body.reason : undefined,
+          reason,
           occurredAt: new Date(),
         });
         const event = await recordReviewSignature(tx, id, organizationId, signature);
@@ -496,6 +506,9 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
 
     const to = req.body?.to;
     if (!isStage(to)) return res.status(400).json({ ok: false, error: 'invalid_target_stage' });
+    // Approving signs, so it carries the signer's own reason (as /:id/sign does).
+    const noReason = to === 'approved' ? reasonRefusal(req.body?.reason) : null;
+    if (noReason) return res.status(400).json(noReason);
     const id = String(req.params.id);
 
     let outcome: Outcome;
@@ -610,13 +623,22 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
         }
 
         const sealed = await persistState(tx, id, organizationId, result.state, result.auditEvent!, exportFacet);
+        // Approving a Vault version supersedes the version it replaces, on this
+        // transaction (VR-13). A failure rolls the approval back with it.
+        const superseded =
+          to === 'approved' && projected.state.stage === 'in_review'
+            ? await supersedeOnVaultApproval(tx, client, input, bindings, ctx)
+            : [];
         return {
           status: 200,
-          body: { ok: true, from: result.from, to: result.to, stage: result.state.stage, auditEvent: sealed },
+          body: { ok: true, from: result.from, to: result.to, stage: result.state.stage, auditEvent: sealed, superseded },
         };
       });
     } catch (err) {
       if (err instanceof LifecycleRecordRefusal) return res.status(409).json(refusalBody(err));
+      if (err instanceof SupersessionRefused) {
+        return res.status(409).json({ ok: false, error: err.code, message: `${err.message} Nothing was approved.` });
+      }
       throw err;
     }
     return send(res, outcome);

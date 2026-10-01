@@ -18,10 +18,10 @@
  * dozen times and skipped in more. It is checked here once, in the registry
  * wrapper every handler is registered through, so every path (the stream, the
  * agentic loop, MCP, a tool calling a tool) and every tool added later is
- * covered. The question itself is answered by `programBelongsToOrg`
- * (server/routes/innovation-routes.ts), which consults every program registry
- * (`programs`, `core.programs`, `regulatory_programs`) and throws rather than
- * inventing a verdict when none of them could be read.
+ * covered. The question itself is answered by `programInOrganization`
+ * (server/services/c2c/program-access.ts), the one program check: a live
+ * project of this organization in `regulatory_programs`. It throws rather than
+ * inventing a verdict when it could not be read.
  *
  * @module server/services/ana/tool-record-scope
  */
@@ -37,8 +37,11 @@ export interface ScopeRefusal {
 type ProgramCheck = (programId: string, organizationId: number) => Promise<boolean>;
 
 async function defaultProgramCheck(programId: string, organizationId: number): Promise<boolean> {
-  const { programBelongsToOrg } = await import('../../routes/innovation-routes.js');
-  return programBelongsToOrg(programId, organizationId);
+  const [{ programInOrganization }, { getPool }] = await Promise.all([
+    import('../c2c/program-access.js'),
+    import('../../db.js'),
+  ]);
+  return programInOrganization(getPool, programId, organizationId);
 }
 
 /** In the shape the handlers answer with: the reason in `error`, the code beside it. */

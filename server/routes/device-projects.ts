@@ -380,6 +380,18 @@ router.delete('/:id', requireEditorAccess, async (req: Request, res: Response) =
        transaction, and only this router's own device projects: it filtered
        by id and organization alone, so it could delete any project. */
     const outcome = await db.transaction(async (tx) => {
+      /* Ownership first, as the two sibling deletes already do. The holds read
+         judges every row the cascade would remove, whatever its organization,
+         and its 409 names the anchored programs. Asked first about another
+         organization's project id, it could answer with that organization's
+         program ids before the org-scoped delete below said 404 (RLS hides
+         those rows when enforced; this does not depend on it). */
+      const [own] = await tx
+        .select({ id: projects.id })
+        .from(projects)
+        .where(and(eq(projects.id, projectId), eq(projects.organizationId, organization_id), eq(projects.type, 'medical-device')))
+        .limit(1);
+      if (!own) return { deleted: undefined } as const;
       const refused = projectDeletionRefusal(
         await projectDeletionHolds(queryableFromDrizzle(tx), { projectIds: [projectId] }),
         'project',

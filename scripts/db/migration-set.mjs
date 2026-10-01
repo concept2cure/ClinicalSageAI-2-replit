@@ -1445,6 +1445,11 @@ export const C2C_MIGRATION_FILES = [
   // superseded which, and inferring it would manufacture a lineage the system
   // never observed.
   'migrations/20260829_cre_source_versioning.sql',
+  // VR-16 (D2/D5): the data room's capture record is append-only. Triggers on
+  // cre_evidence_sources (checksum and lineage write-once, retirement one-way,
+  // no TRUNCATE, DELETE only by the owner). After the file that adds its
+  // versioning columns; no table, no column, no DROP.
+  'migrations/20261001_cre_evidence_sources_capture_immutability.sql',
 
   // Constraint repair only: no table, no column, no data. 0001_phase13_full
   // meant to widen concept2cure_review_tasks.task_type to include
@@ -2320,6 +2325,10 @@ export const C2C_MIGRATION_FILES = [
   // VR-03 (D5): the lifecycle trail only grows, signatures are written once,
   // nothing is deleted. Triggers only, created when absent; no table, no DROP.
   'migrations/20260925_canonical_documents_append_only.sql',
+  // VR-13 (D5): one lifecycle record per Vault version. A unique index on the
+  // version a record names, created only when no version already has two
+  // (NOTICE otherwise). After the table's own file; no table, no column, no DROP.
+  'migrations/20261001_canonical_documents_vault_version.sql',
 
   // The three IVDR append-only history tables carry no tenant column of their
   // own — their tenant is their parent's, reached by foreign key — so BOTH
@@ -2805,6 +2814,14 @@ export const C2C_MIGRATION_FILES = [
   // DROP.
   'migrations/20261001b_projects_one_anchor_per_program.sql',
 
+  // ── An AnA conversation names its project, by key (PF-10 S1, 2026-10-01) ──
+  // chat_threads.program_id, held to the thread's organization by a NOT VALID
+  // composite key (ON DELETE SET NULL (program_id)), with a CHECK, an index,
+  // and a same-organization-only backfill from metadata->>'programId'. After
+  // 20260728 (chat_threads) and 20260926b (regulatory_programs_id_org_uq,
+  // created here too when absent). Creates no table. No DROP.
+  'migrations/20261001c_chat_threads_program_key.sql',
+
   // ── RBQM: signed records stay signed; QTLs bite in their direction; a
   //    duplicate metric load is refused (2026-09-30) ─────────────────────────
   // Ported from the abandoned #1120 / #1123 / #1130 (+ #1166's UNIQUE replay
@@ -2858,6 +2875,42 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20260615_ind_icsr_transmissions.sql',
   'migrations/20260615_regulatory_assessments.sql',
   'migrations/20260615_tmf_artifact_filings.sql',
+
+  // ── Shared state across API tasks: continuity baseline and presence roster
+  //    (2026-10-01, D1, audit W2 fix units U14 + U16) ───────────────────────
+  // Production runs two API tasks behind an ALB with no stickiness. AnA
+  // Command's continuity baseline and the Authoring presence roster each lived
+  // in one task's memory, so the trend verdict and the roster depended on
+  // which task answered and reset on every deploy. Each file creates one table
+  // in public keyed by organization_id INTEGER NOT NULL (CREATE TABLE/INDEX IF
+  // NOT EXISTS only, no DROP), so the sweep below gives it its tenant policy.
+  // collab_presence sits in db/migrations beside its precedent,
+  // 20260807_collab_section_locks.sql. Above the final pair because
+  // ci:migration-set-order pins the tail. Evidence
+  // docs/evidence/W2/2026-09-24-multi-task/u14-u16-shared-state.md.
+  'migrations/20261001_project_continuity_snapshots.sql',
+  'db/migrations/20261001_collab_presence.sql',
+
+  // ── Scheduled jobs run once per window, not once per process (2026-10-01,
+  //    D1, audit W2 fix unit U19) ────────────────────────────────────────────
+  // The advisory lease stopped overlapping runs only; a tick on another task
+  // that did not overlap ran the same window again (retention archived and
+  // audited each disposition up to three times; the sentinel notified three
+  // times an hour). One claim row per (organization, job, window), in public
+  // with organization_id INTEGER NOT NULL so the sweep below gives it its
+  // tenant policy. IF NOT EXISTS only, no DROP. Evidence
+  // docs/evidence/W2/2026-09-24-multi-task/u19-scheduler-windows.md.
+  'migrations/20261001d_scheduled_job_claims.sql',
+
+  // ── A review comment is fixed once posted (2026-10-01, D5) ────────────────
+  // concept2cure_thread_comments (the Review surface's threads) could be
+  // rewritten in place, soft-deleted and overwritten by the GDPR erasure, with
+  // no record of what a comment said. Triggers only: the words, author and
+  // place fixed, deleted_at set once (a retraction), DELETE and TRUNCATE
+  // refused. Creates no table, so the sweep has nothing new to policy. Above
+  // the final pair because ci:migration-set-order pins the tail. Evidence
+  // docs/evidence/D5-ANA-RECORD/2026-10-01-review-comments/.
+  'migrations/20261001_review_comments_record.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

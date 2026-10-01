@@ -987,6 +987,9 @@ export interface PendingToolApproval {
     projectId: number | null;
     projectRef: string | null;
     servingModel: { provider?: string | null; model?: string | null; requestId?: string | null } | null;
+    /** The conversation and turn that proposed it (PF-10 S5); absent on a run held before. */
+    threadId?: string | null;
+    turnId?: string | null;
   };
   /**
    * The model call whose tool_use proposed this action (servedModelOf), for a

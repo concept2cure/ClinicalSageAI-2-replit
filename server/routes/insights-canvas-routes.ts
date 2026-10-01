@@ -93,7 +93,8 @@ interface CanvasReportType {
 }
 
 interface CanvasLeadProgram {
-  scope: 'program';
+  /** The canvas's "program" is a project: its readiness is computed at project scope. */
+  scope: 'project';
   scopeId: string;
   projectId: number;
   code: string | null;
@@ -121,7 +122,7 @@ interface CanvasPortfolioProgram {
   code: string | null;
   label: string;
   indication: string | null;
-  readiness: number;
+  readiness: number | null;
   confidence: number;
   status: ProgramMemberInsight['status'];
   riskLevel: RiskLevel;
@@ -130,7 +131,7 @@ interface CanvasPortfolioProgram {
 
 interface CanvasPortfolioSummary {
   programCount: number;
-  avgReadiness: number;
+  avgReadiness: number | null;
   avgConfidence: number;
   worstRisk: RiskLevel;
   readyCount: number;
@@ -175,7 +176,9 @@ const LOCKED_PORTFOLIO_DECISION: ReportEntitlementDecision = {
 function pickFlagship(members: ProgramMemberInsight[]): ProgramMemberInsight | null {
   if (members.length === 0) return null;
   const sorted = [...members].sort((a, b) => {
-    if (b.readinessScore !== a.readinessScore) return b.readinessScore - a.readinessScore;
+    const ar = a.readinessScore ?? -1;
+    const br = b.readinessScore ?? -1;
+    if (br !== ar) return br - ar;
     if (a.criticalBlockerCount !== b.criticalBlockerCount) {
       return a.criticalBlockerCount - b.criticalBlockerCount;
     }
@@ -186,8 +189,16 @@ function pickFlagship(members: ProgramMemberInsight[]): ProgramMemberInsight | n
 
 /** PURE: single-program lead context. filing/agency/pdufa are unsourced → null. */
 function toLeadProgram(insight: ProgramMemberInsight): CanvasLeadProgram {
+  /* L189 (reporting review 2026-10-01). This said 'program' with a PROJECT id,
+     and the canvas runs every report over the scope it is given: POST /runs
+     read 'program' as a report program group and looked up the group whose
+     serial id equalled the project id. So a report titled for the project
+     the opener named was computed over an unrelated group, or over nothing
+     ("No governed artifacts discovered"), and half the standard-pack tiles
+     were refused because their types do not run at program scope. The lead
+     is a project, and its readiness above is computed at project scope. */
   return {
-    scope: 'program',
+    scope: 'project',
     scopeId: String(insight.projectId),
     projectId: insight.projectId,
     code: insight.code ?? null,

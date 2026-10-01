@@ -23,6 +23,7 @@ import { pool } from '../../db.js';
 import { requireGovernedReason } from '../../routes/governed-reason.js';
 import { writeChainedAuditRow } from '../auditService.js';
 import { vaultWriteRefusal } from './vault-write-authority.js';
+import { FROZEN_STAGES } from './vault-lifecycle.js';
 import {
   VAULT_CLASSIFICATIONS,
   VAULT_INGEST_DOCUMENT_TYPES,
@@ -91,6 +92,15 @@ function requested(args: EditVaultDocumentMetadataArgs): Partial<Record<Metadata
   return out;
 }
 
+/** A frozen version's stage, in words (VR-13). */
+const FROZEN_PHRASE: Record<string, string> = {
+  approved: 'approved',
+  placed: 'approved and placed in a submission',
+  packaged: 'approved and packaged',
+  submitted: 'approved and submitted',
+  superseded: 'superseded',
+};
+
 export async function editVaultDocumentMetadata(
   args: EditVaultDocumentMetadataArgs,
 ): Promise<EditVaultDocumentMetadataResult> {
@@ -126,6 +136,23 @@ export async function editVaultDocumentMetadata(
     if (found.rows.length === 0) {
       await client.query('ROLLBACK');
       return refuse(404, 'DOCUMENT_NOT_FOUND', 'No such document in this project.');
+    }
+    // An approved version's details are frozen (VR-13; FD6 ships as a
+    // refusal): what was approved is what the record says. Its successor is a
+    // new version.
+    const stage = await client.query(
+      `SELECT stage FROM canonical_documents
+        WHERE organization_id = $1 AND source_refs ? 'vault_documents'
+          AND source_refs -> 'vault_documents' ->> 'nativeId' = $2
+          AND stage = ANY($3::text[])
+        LIMIT 1`,
+      [organizationId, documentId, [...FROZEN_STAGES]],
+    );
+    if (stage.rows.length > 0) {
+      await client.query('ROLLBACK');
+      return refuse(409, 'APPROVED_VERSION_IMMUTABLE',
+        `This version is ${FROZEN_PHRASE[stage.rows[0].stage as string] ?? 'approved'}, so its details cannot be changed. ` +
+          'Upload a new version to change them. Nothing was changed.');
     }
     const before = found.rows[0] as Record<MetadataChange['field'], string | null>;
     const changes: MetadataChange[] = [];

@@ -1,0 +1,32 @@
+# tests/mdx-notifications-clinical-routes.test.ts, new cases, against HEAD's routes/mdx-ana-memory.ts
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > auth gate > GET /api/mdx/notifications returns 403/401 without org context
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > auth gate > GET /api/mdx/notifications/unread-count returns 403/401 without org context
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > auth gate > POST /api/mdx/notifications returns 403/401 without org context
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > auth gate > GET /api/mdx/clinical-studies returns 403/401 without org context
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > auth gate > POST /api/mdx/clinical-studies returns 403/401 without org context
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > auth gate > GET /api/mdx/ana/memory returns 403/401 without org context
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > auth gate > GET /api/mdx/ana/threads returns 403/401 without org context
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > notifications routes > list returns canonical envelope
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > notifications routes > rejects invalid severity filter
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > notifications routes > POST rejects invalid category
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > notifications routes > POST 201 with id
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > notifications routes > unread-count returns { unread }
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > clinical studies routes > POST rejects missing title
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > clinical studies routes > POST 201 on valid
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > clinical studies routes > POST deviation 404s when study not in tenant
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > clinical studies routes > POST AE with unanticipated flag
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > clinical studies routes > summary returns enrollment + safety aggregates
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > clinical studies routes > PATCH endpoint with p_value > 1 rejected
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > AnA memory + threads > memory list survives missing table (42P01)
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > AnA memory + threads > memory verify rejects when not found
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > AnA memory + threads > memory supersede requires supersededById
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > AnA memory + threads > threads list returns canonical envelope
+ × tests/mdx-notifications-clinical-routes.test.ts > AnA memory + threads > threads list by program reads program_id, the key bound at mint (PF-10 S2)
+   → expected 'SELECT id, user_id, organization_id, …' to match /program_id = \$2/
+ × tests/mdx-notifications-clinical-routes.test.ts > AnA memory + threads > threads list refuses a program id that is not a UUID
+   → expected 200 to be 422 // Object.is equality
+ × tests/mdx-notifications-clinical-routes.test.ts > AnA memory + threads > threads list says the store is missing rather than answering an empty list
+   → expected 200 to be 503 // Object.is equality
+ ✓ tests/mdx-notifications-clinical-routes.test.ts > AnA memory + threads > thread pin toggles metadata.pinned
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 23 passed (26)

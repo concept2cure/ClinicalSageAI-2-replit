@@ -482,7 +482,8 @@ async function handleSearchProjectDocuments(
 
 /**
  * File a chat upload into the project vault, through the SAME governed ingest
- * the Vault surface uses (ingestVaultDocument) — never a second admission path.
+ * the Vault surface uses (ingestVaultDocument, via fileUploadIntoVault) — never
+ * a second admission path.
  *
  * This is the affordance the id-space refusal above points at: a chat upload
  * has no vault row, so it can be reopened but never cataloged, chunked or
@@ -511,20 +512,6 @@ function parseFilingInput(input: Record<string, unknown>): FilingInput | { error
   const folderId = str(input.folder_id) || undefined;
   const programId = str(input.program_id) || null;
   return { fileId, documentTitle, documentType, documentCode, folderId, programId };
-}
-
-/**
- * A stable per-program code derived from the file name when none is given —
- * the ingest upserts on (program, code, version), so filing the same file
- * twice updates one row instead of growing duplicates.
- */
-function derivedDocumentCode(fileName: string, fallback: string): string {
-  return (
-    fileName
-      .replace(/\.[^.]+$/, '')
-      .replace(/[^A-Za-z0-9._-]+/g, '-')
-      .slice(0, 64) || fallback
-  );
 }
 
 /** What the user is told about where the file landed — never merely "done". */
@@ -583,21 +570,18 @@ async function handleFileChatUploadToVault(
     });
   }
 
-  const { loadUploadedFile } = await import('./uploaded-file-access.js');
-  const file = await loadUploadedFile(parsed.fileId, orgId);
-
-  const { ingestVaultDocument } = await import('../vault/vault-ingest.service.js');
-  const result = await ingestVaultDocument({
+  // The one upload-to-Vault orchestration (VR-11): the data room's "File into
+  // Vault" calls the same function, so the two cannot drift apart.
+  const { fileUploadIntoVault } = await import('../vault/vault-file-upload-to-vault.js');
+  const result = await fileUploadIntoVault({
     organizationId: orgId,
     userId: ctx?.userId ?? null,
     programId,
-    documentCode: parsed.documentCode ?? derivedDocumentCode(file.fileName, parsed.fileId),
+    fileId: parsed.fileId,
+    documentCode: parsed.documentCode,
     documentTitle: parsed.documentTitle,
     documentType: parsed.documentType,
     folderId: parsed.folderId,
-    fileBuffer: file.buffer,
-    fileName: file.fileName,
-    mimeType: file.mimeType,
   });
 
   if (!result.ok) {

@@ -273,3 +273,24 @@ describe('a check-in agrees with the tree about the current version (VR-09)', ()
     expect(res.body.error.message).not.toContain(legacy);
   });
 });
+
+describe('the data room names the version its file became (VR-16)', () => {
+  it("a captured file holding v1.0's bytes reads 'filed as 1.0, superseded by 2.0'", async () => {
+    // Captured as the owner: the capture path is not under test here, the
+    // data room's read of it is.
+    const src = await owner.query(
+      `INSERT INTO cre_evidence_sources (organization_id, source_type, title, checksum, client_program_id, metadata)
+       VALUES ($1, 'client_document', 'dbtest-vr16 capture', $2, $3::uuid, '{}'::jsonb) RETURNING id`,
+      [mine.orgId, sha(pdf('v1')), mine.programId],
+    );
+    try {
+      const res = await get(mine, '');
+      expect(res.status).toBe(200);
+      const row = res.body.data.dataRoom.sources.find((x: { id: number }) => x.id === Number(src.rows[0].id));
+      expect(row).toMatchObject({ stage: 'filed', filedAs: { version: '1.0', supersededBy: '2.0' } });
+    } finally {
+      await owner.query('DELETE FROM cre_evidence_sources WHERE id = $1', [src.rows[0].id]);
+    }
+  });
+});
+

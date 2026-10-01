@@ -34,7 +34,7 @@ openai==2.37.0
 # file. Fixed in 5.10.0 — the Trivy filesystem scan fails the build below it.
 transformers==5.10.0
 torch==2.12.0
-sentence-transformers==5.5.1
+sentence-transformers==5.6.0
 
 # Vector database
 # Chroma was a leftover from the deleted Python backend and has no importer,

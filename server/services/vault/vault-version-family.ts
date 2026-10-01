@@ -50,6 +50,24 @@ export const versionCountLateral = (alias: string) => `LEFT JOIN LATERAL (
        SELECT count(*)::int AS version_count FROM back
      ) vc ON TRUE`;
 
+/**
+ * SQL: a LATERAL join giving `current_version`, the version label at the end of
+ * row `alias`'s valid successor chain (its own when nothing supersedes it).
+ * Bounded like versionCountLateral. What the data room names a filed file's
+ * successor by (VR-16).
+ */
+export const currentVersionLateral = (alias: string) => `LEFT JOIN LATERAL (
+       WITH RECURSIVE fwd AS (
+         SELECT ${alias}.id, ${alias}.version, ${alias}.program_id, ${alias}.document_code,
+                ${alias}.organization_id, ${alias}.deleted_at, 0 AS n
+         UNION ALL
+         SELECT x.id, x.version, x.program_id, x.document_code, x.organization_id, x.deleted_at, f.n + 1
+           FROM fwd f JOIN vault.documents x ON ${VALID_LINK('x', 'f')}
+          WHERE f.n < 1000
+       )
+       SELECT version AS current_version FROM fwd ORDER BY n DESC LIMIT 1
+     ) cv ON TRUE`;
+
 /** One version as the version list shows it. */
 export interface FamilyVersion {
   id: string;
@@ -133,3 +151,28 @@ export async function readVersionFamily(
     link: r.link,
   }));
 }
+
+/**
+ * The versions before `documentId` in its family, newest first: its valid
+ * predecessors, back to the first. What an approval of it supersedes (VR-13).
+ */
+export async function readPredecessorIds(
+  q: FamilyQueryable,
+  p: { organizationId: number; documentId: string },
+): Promise<string[]> {
+  const { rows } = await q.query(
+    `WITH RECURSIVE back AS (
+       SELECT d.id, d.supersedes_id, d.program_id, d.document_code, d.organization_id, d.deleted_at, 0 AS n
+         FROM vault.documents d
+        WHERE d.id = $1::uuid AND d.organization_id = $2 AND d.deleted_at IS NULL
+       UNION ALL
+       SELECT x.id, x.supersedes_id, x.program_id, x.document_code, x.organization_id, x.deleted_at, b.n + 1
+         FROM back b JOIN vault.documents x ON ${VALID_LINK('b', 'x')}
+        WHERE b.n < 1000
+     )
+     SELECT id::text AS id FROM back WHERE n > 0 ORDER BY n`,
+    [p.documentId, p.organizationId],
+  );
+  return rows.map((r) => r.id);
+}
+

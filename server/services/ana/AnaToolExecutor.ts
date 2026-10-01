@@ -287,10 +287,12 @@ export interface ToolContext {
    */
   projectRef?: string | null;
   /**
-   * The conversation this turn belongs to, its turn id and the model the
-   * gateway is answering with — recorded as provenance by tools that create a
-   * document (draft_authoring_document). Optional: the stream's dispatch does
-   * not pass them yet, and a tool never claims a model it was not told about.
+   * The conversation this turn belongs to, its turn id (the run id) and the
+   * model the gateway is answering with — recorded as provenance by tools that
+   * create a document (draft_authoring_document). Built once for dispatch,
+   * hold and confirm by services/ana/turn-tool-context.ts (PF-10 S5). Null
+   * when unknown (no thread persisted, a run held before S5): a tool never
+   * claims a model it was not told about.
    */
   threadId?: string | null;
   turnId?: string | null;
@@ -6599,15 +6601,13 @@ async function predicateShadowCall(
   path: string,
   opts: { body?: unknown; query?: Record<string, string | undefined> } = {}
 ): Promise<string> {
-  const { db } = await import('../../db.js');
-  const { regulatoryPrograms } = await import('../../../shared/schema/programs.js');
-  const { and, eq } = await import('drizzle-orm');
-  const [program] = await db
-    .select({ id: regulatoryPrograms.id })
-    .from(regulatoryPrograms)
-    .where(and(eq(regulatoryPrograms.id, programId), eq(regulatoryPrograms.organizationId, organizationId)))
-    .limit(1);
-  if (!program) return JSON.stringify({ error: 'Access denied: program not in your organization.' });
+  const [{ getPool }, { programInOrganization }] = await Promise.all([
+    import('../../db.js'),
+    import('../c2c/program-access.js'),
+  ]);
+  if (!(await programInOrganization(getPool, programId, organizationId))) {
+    return JSON.stringify({ error: 'Access denied: program not in your organization.' });
+  }
 
   const base = (process.env.SHADOW_SERVICE_URL || 'http://localhost:8001').replace(/\/$/, '');
   const url = new URL(path, base + '/');
@@ -17304,9 +17304,9 @@ registerToolHandler('assess_recorded_batch_poolability', async (input, ctx) => {
    Two things this handler owns beyond the service call:
 
    1. TENANT PROOF. The program id comes from the model, so it must be proven to
-      belong to the caller's org before anything is read. It reuses the same
-      `programBelongsToOrg` the innovation routes use rather than a fourth copy
-      of that query.
+      belong to the caller's org before anything is read: `programInOrganization`,
+      the one program check (the registry wrapper's tool-record-scope asks it
+      too, before this handler runs).
 
    2. "NOT ASSESSED" vs "SCORED ZERO". getDashboard returns getEmptyDashboard()
       — overallScore 0, approvalProbability 0, no criteria — when no assessment
@@ -17326,8 +17326,11 @@ registerToolHandler('get_submission_readiness_twin', async (input, ctx) => {
     ? input.agency.trim() : 'FDA';
 
   try {
-    const { programBelongsToOrg } = await import('../../routes/innovation-routes.js');
-    if (!(await programBelongsToOrg(programId, Number(orgId)))) {
+    const [{ programInOrganization }, { getPool: ownershipPool }] = await Promise.all([
+      import('../c2c/program-access.js'),
+      import('../../db.js'),
+    ]);
+    if (!(await programInOrganization(ownershipPool, programId, Number(orgId)))) {
       return JSON.stringify({
         status: 'not_found',
         message: `No program "${programId}" in this organization. Do not report a readiness score; confirm the program with the user.`,
@@ -17366,13 +17369,13 @@ registerToolHandler('get_submission_readiness_twin', async (input, ctx) => {
         'Lead with the overall score, its trend, and the criteria met-vs-total. Then the ranked recommendations with their effort, because that is what the user acts on. Report per-module readiness where it is uneven rather than averaging it away. The predicted approval probability, review time and deficiency count are MODEL ESTIMATES from historical patterns — attribute them as such and never assert them as the likelihood of approval.',
     });
   } catch (err: any) {
-    // programBelongsToOrg now THROWS when every program->org source failed to
-    // run, rather than returning false (2026-09-10). Keep that distinction all
+    // The program check THROWS when it could not run, rather than returning
+    // false (2026-09-10; VerificationUnavailableError since D3). Keep that distinction all
     // the way out to the model: "we could not check" must not be paraphrased
     // to the user as "no such program", which is what a bare error string
     // invites. The instruction to withhold a score is the important half —
     // a readiness figure for an unverified program is an invented answer.
-    if (err?.name === 'GuardUnavailableError') {
+    if (err?.name === 'VerificationUnavailableError') {
       return JSON.stringify({
         status: 'ownership_unverifiable',
         message:

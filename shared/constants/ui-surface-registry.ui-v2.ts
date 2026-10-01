@@ -844,8 +844,16 @@ export const UI_V2_SURFACES: UiSurface[] = [
     // Launch-scope API (2026-09-30, ci:launch-scope-api): the canvas reads its
     // bootstrap from /api/insights-canvas, which a path-boundary match on
     // /api/insights does not cover; unclaimed, production refused it.
-    apiPrefixes: ['/api/report-os', '/api/insights', '/api/insights-canvas'],
-    anaToolFamilies: ['list_report_types', 'generate_report', 'portfolio_readiness', 'compare_regions', 'get_prediction', 'explain_blockers'],
+    // 2026-10-01 (reporting review, IAM-21 / DP-64): the surface claimed all of
+    // /api/report-os and /api/insights, so joining the launch catalog made 21
+    // routes no launch screen calls reachable in production: program groups,
+    // bundles, deliveries, subscriptions and the live prediction run among them.
+    // It now claims what the canvas calls (POST /runs, GET /runs/:id/rendered,
+    // POST /runs/:id/finalize, GET /runs/:id/export.pdf) and its bootstrap;
+    // /api/report-os/portfolio is AnA Command's. The rest stay unmapped, which
+    // production refuses, until a screen needs one.
+    apiPrefixes: ['/api/report-os/runs', '/api/insights-canvas'],
+    anaToolFamilies: ['list_report_types', 'generate_report', 'portfolio_readiness', 'compare_regions', 'explain_blockers'],
     sharedContract: null,
     discoveryCatalog: null,
     readiness: 'routes-ready',

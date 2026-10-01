@@ -145,3 +145,20 @@ run "without_an_api_origin_nothing_routes_to_it" {
     error_message = "With no API origin the distribution serves the bucket alone."
   }
 }
+
+# CloudFront waits 30 s for the origin by default; the ALB behind it waits 60.
+# A request the server answers in 30-60 s (assembling a submission package,
+# an eCTD export) reached the browser as a 504 while the server finished the
+# work and recorded it (audit U6). 60 s is the most CloudFront allows without
+# a quota increase, and the ALB's idle timeout.
+run "the_alb_origin_waits_as_long_as_the_alb_does" {
+  command = apply
+
+  assert {
+    condition = anytrue([
+      for o in aws_cloudfront_distribution.this.origin :
+      o.origin_id == "alb-api" && anytrue([for c in o.custom_origin_config : c.origin_read_timeout == 60])
+    ])
+    error_message = "The ALB origin's read timeout must be 60 s, the ALB's idle timeout; the 30 s default cuts off work the server completes."
+  }
+}

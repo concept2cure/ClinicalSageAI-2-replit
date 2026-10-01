@@ -1,6 +1,6 @@
 {
   "$comment": "LX-00 shrink-only baseline for tests/lineage/founder-path-lineage.pglite.test.ts. Each entry is a check that is broken at HEAD: the verified finding(s) from docs/design/LINEAGE_END_TO_END_PLAN_2026-09-25.md (or LX00-Fn for a defect this test found that the plan does not cover), the LX fix(es) that close it, and the value the check observes today, serialized as the test serializes it. A baselined check that passes fails the run (delete its entry); one that fails on a different value fails the run (re-examine it). Never add an entry to make the run green; the ceiling below is the size this file was written at.",
-  "ceiling": 17,
+  "ceiling": 15,
   "hops": {
     "capture": {
       "bytes-durable": {
@@ -25,28 +25,6 @@
         ],
         "observed": "false",
         "why": "draft_authoring_document's input_schema declares title, module, documentType and sections only (server/services/ana/document-surface-tool-defs.ts:141-166). The model cannot hand the tool its grounding; the sources[] the test passes is dropped by parseDraftInput."
-      },
-      "model-recorded": {
-        "findings": [
-          "AC-01",
-          "DR-ANA-13"
-        ],
-        "closedBy": [
-          "LX-06"
-        ],
-        "observed": "undefined",
-        "why": "The stream's dispatch ctx carries servingModel only (server/routes/ana-ri/stream.ts:1731-1744); the tool records provenance.model from ctx.model (server/services/authoring/authoring-draft-tool.ts:136), which no dispatch sets. provenance is {source:'ana', recordedAt}."
-      },
-      "turn-recorded": {
-        "findings": [
-          "AC-01",
-          "DR-ANA-13"
-        ],
-        "closedBy": [
-          "LX-06"
-        ],
-        "observed": "[null,null]",
-        "why": "Same dispatch: no threadId or turnId reaches the tool (server/services/ana/AnaToolExecutor.ts:228-236 says 'the stream's dispatch does not pass them yet'), so provenance names no conversation and no turn."
       },
       "source-span": {
         "findings": [
@@ -203,7 +181,7 @@
           "LX-14"
         ],
         "observed": "0",
-        "why": "The Data Room's 'Used in' (GET /api/c2c/projects/:id/sources → summarizeSourceUsage) counts authoring_citations only (server/services/clinical-regulatory-evidence/source-usage.service.ts:362-400): even once LX-06 records spans, they are invisible to it until LX-14."
+        "why": "The Data Room's 'Used in' (GET /api/c2c/projects/:id/sources \u2192 summarizeSourceUsage) counts authoring_citations only (server/services/clinical-regulatory-evidence/source-usage.service.ts:362-400): even once LX-06 records spans, they are invisible to it until LX-14."
       }
     }
   }

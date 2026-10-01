@@ -1,0 +1,13 @@
+# server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts against HEAD's intelligence-prefix.ts (parseInt)
+ × server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > which project the prefix loads > a program UUID beginning with digits loads its anchor row's intelligence, never the integer its digits spell
+   → expected "vi.fn()" to be called with arguments: [ { tag: 'shared-db' }, …(1) ]
+ × server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > which project the prefix loads > a program with no anchor row loads no project intelligence
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > which project the prefix loads > a legacy integer project loads its own intelligence
+ × server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > which project the prefix loads > a malformed project id loads none
+   → expected "vi.fn()" to not be called at all, but actually been called 3 times
+ × server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > the cache > a program and the integer its digits spell are different cache entries
+   → expected [ 7 ] to deeply equal [ 42, 7 ]
+ ✓ server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts > the cache > invalidating a program by its UUID clears its entry
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 2 passed (6)

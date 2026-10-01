@@ -1,0 +1,19 @@
+# The widened gate against the baseline before this change (b9e043d8f): it refuses every approval stamp written without a signature row in its handler
+[ci:sign-ceremony] FAIL — a `sign` ledger write, or an approval stamp, without the signature ceremony:
+  ✗ server/routes/authoring.router.ts:5813  (approval stamp with no signature-row write in its handler)
+  ✗ server/routes/ivdr-binder-routes.ts:491  (approval stamp with no signature-row write in its handler)
+  ✗ server/routes/mdx-imports.ts:396  (approval stamp with no signature-row write in its handler)
+  ✗ server/routes/mdx-imports.ts:397  (approval stamp with no signature-row write in its handler)
+  ✗ server/routes/mdx-labeling.ts:277  (approval stamp with no signature-row write in its handler)
+  ✗ server/services/ana/AnaToolExecutor.ts:15030  (approval stamp with no signature-row write in its handler)
+  ✗ server/services/ana/authoring-plan-generator.ts:1147  (approval stamp with no signature-row write in its handler)
+  ✗ server/services/ana/authoring-plan-generator.ts:1148  (approval stamp with no signature-row write in its handler)
+  ✗ server/services/cognitive-ecosystem/global-dossier.service.ts:522  (approval stamp with no signature-row write in its handler)
+  ✗ server/services/cognitive-ecosystem/global-dossier.service.ts:996  (approval stamp with no signature-row write in its handler)
+  ✗ server/services/decision-record-service.ts:368  (approval stamp with no signature-row write in its handler)
+  ✗ server/services/grants/grants-service.ts:411  (approval stamp with no signature-row write in its handler)
+  ✗ server/services/qms/document-approval-signature.ts:260  (approval stamp with no signature-row write in its handler)
+  ✗ server/services/qms/document-approval-signature.ts:261  (approval stamp with no signature-row write in its handler)
+  ✗ server/services/rbm/rbm-actuator.ts:864  (approval stamp with no signature-row write in its handler)
+  ✗ server/services/rbm/rbm-actuator.ts:923  (approval stamp with no signature-row write in its handler)
+exit=1

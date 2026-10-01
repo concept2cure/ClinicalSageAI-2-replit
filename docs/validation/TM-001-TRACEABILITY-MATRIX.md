@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | TM-001 |
-| Version | generated 2026-10-01T01:40:49.333Z |
+| Version | generated 2026-10-01T08:41:02.467Z |
 | Status | DRAFT — UNSIGNED — GENERATED, DO NOT EDIT |
 | Generator | `scripts/validation/build-traceability.mjs` (`npm run validation:traceability`) |
 | Sources | URS-001…006 requirement tables · RA-001 rows · docs/evidence/W3/2026-09-27/OQ-*/result.json · IQ/iq-results.json |
@@ -12,14 +12,14 @@
 
 ## Summary
 
-- Requirements: **73** — pass 69 · partial 2 · fail 0 · open 0 · uncovered 2
+- Requirements: **75** — pass 69 · partial 2 · fail 0 · open 0 · uncovered 4
 - OQ steps executed: **103** — pass 101 · fail 0 · deviation 2 · not-executed 0
 - IQ-001: 12 pass · 0 fail · 3 deviation (executed 2026-09-28T01:18:32.421Z)
 
 | App | Requirements | Pass | Partial | Fail | Open | Uncovered |
 |---|---|---|---|---|---|---|
 | Projects | 13 | 13 | 0 | 0 | 0 | 0 |
-| Vault | 12 | 10 | 0 | 0 | 0 | 2 |
+| Vault | 14 | 10 | 0 | 0 | 0 | 4 |
 | Authoring | 15 | 14 | 1 | 0 | 0 | 0 |
 | Submission Center | 12 | 12 | 0 | 0 | 0 | 0 |
 | Submission Readiness | 8 | 7 | 1 | 0 | 0 | 0 |
@@ -65,6 +65,8 @@
 | URS-VAULT-010 | A program the organisation does not own answers 404 on the vault read model; no cross-tenant listing. | §11.10(d) | high | scripted | OQ-VAULT-10 (pass) | **pass** |
 | URS-VAULT-011 | A new version of a document is recorded by naming the document (`supersedesDocumentId`). The server assigns the next major version (1.0 → 2.0), keeps the document code and filing, and links the predecessor. It refuses a version that is not the current one, bytes the document already holds, and a document outside the caller's program or organisation, and the database refuses a link outside the document's family. | §11.10(e) | high | scripted | — | **uncovered** |
 | URS-VAULT-012 | A document is listed once, at its current version, with how many versions it has. Every version of a document is listed newest first with its version, SHA-256, size, uploader and date, and each downloads hash-verified. The document's history carries the events of every version, each naming its version. Search lists current versions unless earlier ones are asked for. A predecessor link the lineage rule would refuse is shown as not linked, never as lineage. | §11.10(e) | high | scripted | — | **uncovered** |
+| URS-VAULT-013 | A Vault version is reviewed and approved on the document lifecycle, apart from its filing. Sending it for review starts one record per version, taking title, type and content hash from the stored version. The review and the approval are electronic signatures: the signer re-authenticates, states a reason, and the record holds the printed name, meaning and time, bound to the version's SHA-256. The uploader and whoever sent the version for review may neither review nor approve it, the reviewer does not approve it, and only the current version is approved. Approving a version supersedes the earlier approved versions of the same document in the same transaction. An approved version's details cannot be edited. A version counts as settled only when approved. | §11.10(e), §11.50, §11.70, §11.200 | high | scripted (credentialed) | — | **uncovered** |
+| URS-VAULT-014 | A person files captured sources from the project's data room into the Vault. Each source goes through the same governed ingest as a Vault upload and lands suggested or unfiled, never confirmed by the system. The answer names each source as filed (with its version and where it landed), already in the Vault (with its version), or refused with the reason. One source's refusal does not undo another's filing, and the batch reports that it is not complete. A source whose stored bytes no longer match the checksum recorded at capture is refused and nothing is stored. A viewer is refused. Another organisation's or another project's source is refused as not found. | §11.10(c), §11.10(d), §11.10(e) | high | scripted | — | **uncovered** |
 | URS-AUTH-001 | Authoring endpoints require an authenticated actor; identity for every write comes from the verified JWT, never from a header or the body. | §11.10(d) | high | scripted | OQ-AUTH-01 (pass) | **pass** |
 | URS-AUTH-002 | A document is created with a title (required, 400 otherwise), a module and an optional program binding (`client_program_id`, validated as UUID); a template that cannot be honoured refuses before anything is written. | none | medium | scripted | OQ-AUTH-02 (pass)<br>OQ-AUTH-03 (pass) | **pass** |
 | URS-AUTH-003 | Sections are created under a document with a CTD code and title and are read back in filing order; duplicate codes and order ties are reported as structure issues. | none | medium | scripted | OQ-AUTH-04 (pass) | **pass** |

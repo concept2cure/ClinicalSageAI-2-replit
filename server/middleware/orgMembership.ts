@@ -33,6 +33,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { createScopedLogger } from '../utils/logger';
 import { runWithTenantScope } from '../db/tenantStore';
+import { GOVERNED_WRITE_PERMISSION, REPORT_FINALIZE_PERMISSION, REPORT_FINALIZE_ROLES } from '../../shared/constants/permissions';
 
 const logger = createScopedLogger('auth-middleware');
 
@@ -509,6 +510,20 @@ export const GOVERNED_WRITE_ROLES: ReadonlySet<string> = new Set([
   'owner',
   'super_admin',
 ]);
+
+/**
+ * The permissions a session carries, derived from its organisation role by the
+ * same test `requireEditorAccess` applies. Every auth response that returns a
+ * user (session, login, MFA verify, /me, dev-login) uses this, so the client can
+ * withhold a control the server would refuse without restating a role list
+ * (shared/constants/permissions.ts).
+ */
+export function sessionPermissions(role: string | null | undefined): string[] {
+  const permissions = GOVERNED_WRITE_ROLES.has(String(role ?? '').toLowerCase()) ? [GOVERNED_WRITE_PERMISSION] : [];
+  // requireRole compares exactly, so this does too.
+  if ((REPORT_FINALIZE_ROLES as readonly string[]).includes(String(role ?? ''))) permissions.push(REPORT_FINALIZE_PERMISSION);
+  return permissions;
+}
 
 /**
  * Guard for a route that writes governed regulatory data: the caller must hold

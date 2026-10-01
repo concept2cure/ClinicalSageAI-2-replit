@@ -512,6 +512,75 @@ async function purgeVaultVersions(client: PoolClient, organizationId: number): P
     }));
 }
 
+/** The two AnA record tables, erased together by one door. */
+const TURN_RECORD_TABLES: ReadonlySet<string> = new Set(['ana_turn_records', 'ana_record_blobs']);
+
+/** What the purge erased of the tenant's AnA turn records. */
+export interface TurnRecordErasure {
+  records: number;
+  blobs: number;
+}
+
+/**
+ * Erase the tenant's AnA turn records and the texts they reference through
+ * public.purge_tenant_turn_records (migrations/20260926_ana_turn_records.sql,
+ * amended 2026-10-01). Both tables refuse a plain DELETE from every role. The
+ * door restates this purge's preconditions at the database and deletes as
+ * ana_record_purger, the one role the append-only trigger lets through.
+ *
+ * What it erases is Customer Data, returned in the tenant export the purge
+ * requires. Each turn's chained audit_logs row is the audit-trail record, and
+ * the purge keeps it (MSA §10.2), so an exported record stays verifiable.
+ *
+ * A deployment without the tables has nothing to erase. One with the tables
+ * but not the door is refused: its records would survive.
+ */
+async function purgeTurnRecords(client: PoolClient, organizationId: number): Promise<TurnRecordErasure> {
+  const present = await client.query(
+    `SELECT to_regclass('public.ana_turn_records') IS NOT NULL AS present,
+            to_regprocedure('public.purge_tenant_turn_records(integer)') IS NOT NULL AS door`
+  );
+  if (!present.rows[0]?.present) return { records: 0, blobs: 0 };
+  if (!present.rows[0]?.door) {
+    throw new OffboardingStateError(
+      'TURN_RECORD_PURGE_UNAVAILABLE',
+      'This database has AnA turn records but not public.purge_tenant_turn_records; run node scripts/db/deploy-migrate.mjs. Nothing was purged.'
+    );
+  }
+  const { rows } = await client.query('SELECT records, blobs FROM public.purge_tenant_turn_records($1)', [
+    organizationId,
+  ]);
+  return { records: Number(rows[0]?.records ?? 0), blobs: Number(rows[0]?.blobs ?? 0) };
+}
+
+/** What the purge's deletes hand back for the steps after COMMIT. */
+interface PurgedTables {
+  storedObjects: StoredObject[];
+  turnRecordErasure: TurnRecordErasure;
+}
+
+/** Empty each table in order; the tables that refuse a plain DELETE go through their doors. */
+async function purgeTables(
+  client: PoolClient,
+  tables: readonly string[],
+  organizationId: number
+): Promise<PurgedTables> {
+  const out: PurgedTables = { storedObjects: [], turnRecordErasure: { records: 0, blobs: 0 } };
+  let turnRecordsErased = false;
+  for (const table of tables) {
+    // The bytes' addresses come back from the rows actually deleted, and
+    // only when those rows are purged: bytes whose records survive must
+    // survive too.
+    if (table === 'vault.documents') out.storedObjects = await purgeVaultVersions(client, organizationId);
+    else if (!TURN_RECORD_TABLES.has(table)) await purgeChildTable(client, table, organizationId);
+    else if (!turnRecordsErased) {
+      out.turnRecordErasure = await purgeTurnRecords(client, organizationId);
+      turnRecordsErased = true;
+    }
+  }
+  return out;
+}
+
 /**
  * Delete the bytes of a committed purge, each from the store it was saved in.
  * After COMMIT, never before: deleting first and then rolling back would leave
@@ -540,7 +609,7 @@ export async function purgeTenant(
     /** Tables purged, in FK-safe order. Injected so callers/tests can narrow it. */
     childTables?: readonly string[];
   }
-): Promise<OffboardingRecord & { storageErasure: StorageErasure }> {
+): Promise<OffboardingRecord & { storageErasure: StorageErasure; turnRecordErasure: TurnRecordErasure }> {
   const { organizationId, purgedByUserId, preconditions } = params;
 
   await assertPurgePermitted(pool, organizationId, preconditions);
@@ -552,19 +621,13 @@ export async function purgeTenant(
      different connection: the deletes were not in the transaction the BEGIN
      opened, and a failure part-way left the tenant half-destroyed with a
      ROLLBACK that undid nothing (docs/evidence/D6/2026-09-24-purge/). */
-  let storedObjects: StoredObject[] = [];
+  const purged: PurgedTables = { storedObjects: [], turnRecordErasure: { records: 0, blobs: 0 } };
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
     try {
       await assertNoActiveLegalHold(client, organizationId);
-      for (const table of childTables) {
-        // The bytes' addresses come back from the rows actually deleted, and
-        // only when those rows are purged: bytes whose records survive must
-        // survive too.
-        if (table === 'vault.documents') storedObjects = await purgeVaultVersions(client, organizationId);
-        else await purgeChildTable(client, table, organizationId);
-      }
+      Object.assign(purged, await purgeTables(client, childTables, organizationId));
 
       await client.query(
       `UPDATE organizations
@@ -594,7 +657,7 @@ export async function purgeTenant(
   invalidateTenantPosture(organizationId);
   invalidateOrgMembershipCache(undefined, organizationId);
 
-  const storageErasure = await eraseStoredObjects(storedObjects, organizationId);
+  const storageErasure = await eraseStoredObjects(purged.storedObjects, organizationId);
   if (storageErasure.notDeleted.length > 0) {
     logger.error('Tenant purged; some stored vault objects were not deleted', {
       organizationId,
@@ -607,12 +670,13 @@ export async function purgeTenant(
     purgedByUserId,
     retentionOverride: preconditions.overrideRetentionWindowReason ?? null,
     finalExportDigest: preconditions.finalExportDigest,
+    turnRecordErasure: purged.turnRecordErasure,
   });
 
   const after = await readOrganization(pool, organizationId);
   // The row is guaranteed to exist — the purge updates it rather than deleting
   // it, precisely so the deletion remains auditable.
-  return { ...(after as OffboardingRecord), storageErasure };
+  return { ...(after as OffboardingRecord), storageErasure, turnRecordErasure: purged.turnRecordErasure };
 }
 
 /**
@@ -715,6 +779,32 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
      Position is therefore free. */
   'assumption_records',
   'decision_records',
+  /* The lifecycle log of those governed decisions: every review, approval,
+     rejection and escalation, with the actor, reason and notes. The same
+     customer content as decision_records, one row per state change. A leaf
+     since 2026-09-28: its only FK is to organizations (which a purge updates,
+     never deletes), so with no cascade path nothing but this list reaches it.
+     It joined the deploy set that day and ci:purge-coverage first ran over it
+     on 2026-10-01 (CI run 12751), as the one new org-keyed table the purge
+     could not reach. */
+  'governed_decision_transitions',
+  /* The co-authoring roster (af217590c, 2026-10-01): who is in which
+     document, with their display name and e-mail. Personal data, so an
+     erasure must remove it. Org-keyed with no foreign key in either direction,
+     so no cascade reaches it and only this list does. */
+  'collab_presence',
+  /* AnA Command's project readiness snapshots (af217590c, 2026-10-01): the
+     tenant's readiness score and state per project, over time. Tenant content,
+     and a leaf for the same reason. Both were found by ci:purge-coverage on the
+     blank-database job of CI run 12756. */
+  'project_continuity_snapshots',
+  /* Per-organization scheduled-job claims (U19, 4b1583a2c): one row per
+     (organization, job, window), so a job runs once per window across processes.
+     An operational record, but org-keyed with no foreign key, so it outlived a
+     purge. A purge deletes only this tenant's claims; the estate-wide jobs
+     claim under organization 0, which no tenant purge touches. Found by
+     ci:purge-coverage on CI run 12804. */
+  'scheduled_job_claims',
   /* The CMC workflow subsystem. All five are org-keyed with organization_id
      NOT NULL, so every row belongs to exactly one tenant — there is no
      platform-template population here for a purge to spare. What they hold is
@@ -732,4 +822,16 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
   'cmc_checklist_instances',
   'cmc_ai_tool_executions',
   'cmc_workflows',
+  /* AnA turn records and the texts they reference (rows D5/D6, 2026-10-01).
+     A turn record's body is Customer Data: the person's question, the files
+     and passages AnA was given, its tool inputs and its answer. The tenant
+     export returns it, and the purge erases it. Its audit-trail record, the
+     turn's chained audit_logs row (record_sha256, actor, time), is kept with
+     the rest of the audit trail (MSA §10.2, DPA §3.5), so an exported record
+     can still be checked against the chain. Both tables refuse a plain DELETE
+     from every role; purgeTables erases both, once, through
+     public.purge_tenant_turn_records. Leaves (no foreign keys either way), so
+     their position is free. */
+  'ana_turn_records',
+  'ana_record_blobs',
 ]);

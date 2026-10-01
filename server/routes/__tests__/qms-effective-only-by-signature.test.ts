@@ -24,8 +24,17 @@
  * P1-29 / DP-32 (security review 2026-09-24): the same legacy door also reached
  * `status = 'retired'` with no reason, no role gate and no ceremony, while the
  * canonical `POST /api/mdx/qms/documents/:id/retire` became a signed
- * transition. Door 2 now refuses `to=retired` as it refuses `to=effective`.
+ * transition. Door 2 then refused `to=retired` as it refused `to=effective`.
+ *
+ * P1-31 / DP-34 (2026-10-01): door 2 is gone. `/api/qms` (routes/qms.ts and its
+ * only service, qms.service.ts) was a second QMS write API no client called;
+ * past the two refusals above it still let any authenticated member supersede
+ * an effective document, requalify a supplier and disposition nonconforming
+ * product, most of it with no audit row. Its block here now proves it stays
+ * gone; every capability is served at `/api/mdx/qms/*`.
  */
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express, { type Request, type Response, type NextFunction } from 'express';
 import request from 'supertest';
@@ -77,7 +86,6 @@ vi.mock('../../services/auditService', () => ({
 }));
 
 import mdxQmsRouter from '../mdx-qms';
-import qmsRouter from '../qms';
 
 function app() {
   const a = express();
@@ -88,7 +96,6 @@ function app() {
     next();
   });
   a.use('/api/mdx', mdxQmsRouter);
-  a.use('/api/qms', qmsRouter);
   return a;
 }
 
@@ -111,32 +118,21 @@ beforeEach(() => {
   H.sql = [];
 });
 
-describe('POST /api/qms/documents/:id/transition cannot approve, and cannot retire', () => {
-  it('refuses to=effective and changes nothing', async () => {
-    H.doc = docInState('in_review');
-    const res = await request(app()).post('/api/qms/documents/11/transition').send({ to: 'effective' });
-    expect(res.status).toBe(422);
-    expect(res.body.error).toMatch(/electronic signature/i);
-    expect(H.doc?.status).toBe('in_review');
-    expect(H.doc?.approver_id).toBeNull();
-    expect(wrote()).toBe(false);
+describe('the second QMS write door (/api/qms) stays gone — DP-34', () => {
+  const root = path.resolve(__dirname, '..', '..', '..');
+  const read = (rel: string) => fs.readFileSync(path.join(root, rel), 'utf8');
+
+  it('no router file and no service behind it', () => {
+    expect(fs.existsSync(path.join(root, 'server/routes/qms.ts'))).toBe(false);
+    expect(fs.existsSync(path.join(root, 'server/services/qms/qms.service.ts'))).toBe(false);
   });
 
-  it('refuses to=retired and changes nothing: retirement is the signed retire route (P1-29 / DP-32)', async () => {
-    H.doc = docInState('effective');
-    const res = await request(app()).post('/api/qms/documents/11/transition').send({ to: 'retired' });
-    expect(res.status).toBe(422);
-    expect(res.body.error).toMatch(/electronic signature/i);
-    expect(res.body.error).toMatch(/\/api\/mdx\/qms\/documents\/:id\/retire/);
-    expect(H.doc?.status).toBe('effective');
-    expect(wrote()).toBe(false);
-  });
-
-  it('still moves a draft into review', async () => {
-    H.doc = docInState('draft');
-    const res = await request(app()).post('/api/qms/documents/11/transition').send({ to: 'in_review' });
-    expect(res.status).toBe(200);
-    expect(H.doc?.status).toBe('in_review');
+  it('nothing mounts /api/qms; the canonical /api/mdx/qms router is mounted', () => {
+    const mounts = ['server/bootstrap/register-document-routes.ts', 'server/bootstrap/register-inline-routes.ts']
+      .map(read)
+      .join('\n');
+    expect(mounts).not.toMatch(/['"]\/api\/qms['"]/);
+    expect(read('server/bootstrap/register-inline-routes.ts')).toMatch(/app\.use\(\s*['"]\/api\/mdx['"]\s*,\s*mdxQmsRoutes/);
   });
 });
 

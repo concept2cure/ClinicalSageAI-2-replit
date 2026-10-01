@@ -1,0 +1,7 @@
+# propose-only-partition at 720965433 (confirmedToolContext stamped humanConfirmed) and now
+ × server/services/ana-ri/__tests__/propose-only-partition.test.ts > single writer > assigns humanConfirmed in exactly one source file 212ms
+   → expected [ 'routes/ana-ri/utility.ts', …(1) ] to deeply equal [ 'routes/ana-ri/utility.ts' ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 7 passed (8)
+# now:
+      Tests  8 passed (8)

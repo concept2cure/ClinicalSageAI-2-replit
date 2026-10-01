@@ -42,3 +42,14 @@ export function optionalGovernedReason(value: unknown): OptionalReasonVerdict {
   }
   return requireGovernedReason(value);
 }
+
+/**
+ * The reason a person stated, as a ledger records it: trimmed, or null when
+ * none was stated. Never a sentence the code composes in its place (D5): what
+ * the system did belongs in the event's own fields, not in `reason`. A write
+ * path that must REQUIRE a reason validates with requireGovernedReason first.
+ */
+export function statedReasonOrNull(value: unknown): string | null {
+  const reason = typeof value === 'string' ? value.trim() : '';
+  return reason || null;
+}

@@ -24,7 +24,9 @@ test('report-os route includes reporting bundle and delivery endpoints', () => {
   assert.ok(routeSource.includes("router.post('/bundles'"));
   assert.ok(routeSource.includes("router.get('/bundles/:bundleId/export.pdf'"));
   assert.ok(routeSource.includes("router.post('/deliveries'"));
-  assert.ok(routeSource.includes("router.post('/correspondence/capture'"));
+  // Removed 2026-10-01: a second, unaudited correspondence writer. The canonical
+  // intake is /api/regulatory-correspondence/correspondence/intake.
+  assert.ok(!routeSource.includes("router.post('/correspondence/capture'"));
 });
 
 test('report-os taxonomy seed includes regional agency report packs', () => {

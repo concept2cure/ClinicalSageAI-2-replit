@@ -82,12 +82,53 @@ describe('PATCH /thread/:id', () => {
     expect(query.mock.calls.some(([sql]) => /UPDATE ai_threads/.test(String(sql)))).toBe(false);
   });
 
-  it('refuses a program UUID at the integer project column rather than failing with a 500', async () => {
+  it('writes a title change scoped to the organization, not by id alone', async () => {
     storeIs('chat');
     const r = res();
-    await patchThread({ params: { threadId: 'ana-ri_1' }, body: { project_id: '0f3c1a2b-1111-4222-8333-444455556666' }, tenantId: 7 } as any, r);
-    expect(r.statusCode).toBe(400);
-    expect(r.body.code).toBe('THREAD_PROJECT_INVALID');
+    await patchThread({ params: { threadId: 'ana-ri_1' }, body: { title: 'Renamed' }, tenantId: 7 } as any, r);
+    const [sql, params] = query.mock.calls.find(([q]) => /UPDATE chat_threads/.test(String(q)))!;
+    expect(String(sql)).toMatch(/WHERE id = \$\d+ AND organization_id = \$\d+/);
+    expect(params).toEqual(['Renamed', 'ana-ri_1', 7]);
+  });
+});
+
+describe('PATCH /thread/:id — a conversation stays in the project it was held in (PF-10 S8)', () => {
+  // Founder decision 2026-09-26: switching project forks the conversation; the
+  // old one stays bound to its own project. A re-home by PATCH is the opposite.
+  it.each([
+    ['chat', 42],
+    ['chat', '0f3c1a2b-1111-4222-8333-444455556666'],
+    ['chat', null],
+    ['ai', '0f3c1a2b-1111-4222-8333-444455556666'],
+  ] as const)('a project change on the %s store (%s) is refused 409, and nothing is written', async (store, project_id) => {
+    storeIs(store);
+    const r = res();
+    await patchThread({ params: { threadId: 'ana-ri_1' }, body: { project_id, title: 'x' }, tenantId: 7 } as any, r);
+    expect(r.statusCode).toBe(409);
+    expect(r.body.code).toBe('THREAD_PROJECT_FIXED');
     expect(query.mock.calls.some(([sql]) => /UPDATE/.test(String(sql)))).toBe(false);
+  });
+
+  it("a colleague's conversation is refused 403, and nothing is written", async () => {
+    storeIs('chat', (sql) =>
+      /SELECT id, user_id, organization_id FROM chat_threads/.test(sql)
+        ? { rows: [{ id: 'ana-ri_1', user_id: 102, organization_id: 7 }] }
+        : { rows: [] });
+    const r = res();
+    await patchThread({ params: { threadId: 'ana-ri_1' }, body: { title: 'Mine now' }, tenantId: 7, user: { id: 101 } } as any, r);
+    expect(r.statusCode).toBe(403);
+    expect(r.body.code).toBe('THREAD_FORBIDDEN');
+    expect(query.mock.calls.some(([sql]) => /UPDATE/.test(String(sql)))).toBe(false);
+  });
+
+  it('the owner renames their own conversation', async () => {
+    storeIs('chat', (sql) =>
+      /SELECT id, user_id, organization_id FROM chat_threads/.test(sql)
+        ? { rows: [{ id: 'ana-ri_1', user_id: 101, organization_id: 7 }] }
+        : { rows: [] });
+    const r = res();
+    await patchThread({ params: { threadId: 'ana-ri_1' }, body: { title: 'Mine' }, tenantId: 7, user: { id: 101 } } as any, r);
+    expect(r.statusCode).toBe(200);
+    expect(query.mock.calls.some(([sql]) => /UPDATE chat_threads/.test(String(sql)))).toBe(true);
   });
 });
