@@ -114,7 +114,7 @@ This document provides a comprehensive vendor qualification assessment for hosti
 | Aspect | Details |
 |--------|---------|
 | BAA Available | ✅ Yes |
-| Minimum Plan | Business Support ($100/mo minimum) |
+| Minimum Plan | None. The BAA is accepted in AWS Artifact on any account. *(Corrected 2026-10-01: this row said "Business Support ($100/mo minimum)". A support plan is useful in production but is not a condition of the BAA.)* |
 | Covered Services | 150+ services (RDS, S3, EC2, Lambda, etc.) |
 | Process | Self-service via AWS Artifact |
 | Response Time | Immediate (click-through) |

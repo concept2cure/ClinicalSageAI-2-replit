@@ -518,6 +518,8 @@ router.post('/:id/purge', requirePlatformAdmin, async (req, res) => {
       storageErasure: record.storageErasure,
       // The AnA turn records erased; each turn's chained audit row is kept.
       turnRecordErasure: record.turnRecordErasure,
+      // An artifact's signatures and lock snapshots erased; each signing's chained ledger row is kept.
+      artifactRecordErasure: record.artifactRecordErasure,
     });
   } catch (error) {
     if (error instanceof OffboardingStateError) {

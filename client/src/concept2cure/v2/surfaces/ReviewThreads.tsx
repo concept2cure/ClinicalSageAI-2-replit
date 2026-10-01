@@ -4,6 +4,31 @@ import { EmptyState, useLiveData } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { apiCall, apiErrorText } from '../apiCall';
 import type { FireToast } from '../toast';
+import { ANA_REVIEW_COMMENT_ROLE } from '@shared/constants/review-comment';
+
+/**
+ * Who a comment's words are from. A comment AnA wrote for a person carries
+ * author_role 'ana' (set when it was posted, fixed after): the thread shows
+ * it as AnA's, on that person's behalf, never as the person's own words.
+ */
+export function CommentByline({ authorName, authorRole }: { authorName: string; authorRole?: string | null }) {
+  if (authorRole === ANA_REVIEW_COMMENT_ROLE) {
+    return (
+      <>
+        <span className="cmt-av" aria-hidden="true">{I.sparkles}</span>
+        <b>AnA</b>
+        <span className="cmt-role">on behalf of {authorName}</span>
+      </>
+    );
+  }
+  return (
+    <>
+      <span className="cmt-av">{initials(authorName)}</span>
+      <b>{authorName}</b>
+      {authorRole && <span className="cmt-role">{authorRole}</span>}
+    </>
+  );
+}
 
 /* ================================================================
    Review threads — the compose side of the Phase-13 collaboration
@@ -330,9 +355,7 @@ export function ReviewThreadsPane({
                     {(comments.data?.comments ?? []).map(c => (
                       <div key={c.commentId} className="cmt" data-changes={c.kind === 'request_changes' || undefined}>
                         <div className="cmt-meta">
-                          <span className="cmt-av">{initials(c.authorName)}</span>
-                          <b>{c.authorName}</b>
-                          {c.authorRole && <span className="cmt-role">{c.authorRole}</span>}
+                          <CommentByline authorName={c.authorName} authorRole={c.authorRole} />
                           <span className="cmt-when">· {when(c.createdAt)}</span>
                           {c.kind === 'request_changes' && <span className="rd-chip tone-warn">changes requested</span>}
                         </div>

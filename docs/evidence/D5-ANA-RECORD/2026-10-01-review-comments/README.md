@@ -127,12 +127,33 @@ conversations UPDATE, the real redaction that remains.
 **Project deletion** (`project-retention.pglite.test.ts`): a draft with a
 review comment is a record.
 
+## Follow-up, same day: AnA's words shown as AnA's
+
+The chained row already marked `origin: 'ana'`, but the comment row carried
+the person's id and name, and the thread showed AnA's words as theirs.
+
+- **The marker.** Both AnA writers stamp `author_role = 'ana'` when they post
+  (`ANA_REVIEW_COMMENT_ROLE`, `shared/constants/review-comment.ts`). The
+  author fields are fixed after posting, so the stamp is set once and cannot
+  be changed later.
+- **The thread.** `CommentByline` (`ReviewThreads.tsx`) shows such a comment
+  as **AnA**, "on behalf of" the person. A person's own comment shows as
+  before.
+- **What stays.** The person's id and name stay on the row, because AnA wrote
+  for them.
+- **Comments posted before this change** keep the role they were posted with.
+  Their chained rows carry `origin` from 2026-10-01 on.
+
+Shown:
+- `ana-governed-command-signature.pglite.integration.test.ts`: the
+  `add_review_comment` case stamps `ana` and chains with `origin: 'ana'`.
+  22/22.
+- `reviewCommentByline.test.tsx`: 2/2.
+
+Each was seen red with its half removed (`mutations-ana-attribution.txt`).
+
 ## Not done, and why
 
-- **AnA-written comments in the thread UI.** The chained row marks
-  `origin: 'ana'`. The comment row still carries the person's id and name, and
-  the thread shows it as theirs. Showing AnA as the writer is a UI change to
-  the Review surface; it is the next item in this lane.
 - **Organization members cannot comment.** `getThreadPermissions`
   (`reviews.ts`) maps the membership role `member` to read-only, so a plain
   member gets 403 on a comment. This was not changed here; it is a product

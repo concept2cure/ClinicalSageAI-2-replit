@@ -14,7 +14,7 @@ version: '3.9'
 # REQUIRED (see .env.beta.example, and the per-variable rationale on the `app`
 # service below):
 #   DB_PASSWORD, APP_SERVICE_DB_PASSWORD, APP_DATABASE_URL, JWT_SECRET,
-#   REFRESH_TOKEN_SECRET, MFA_ENCRYPTION_KEY, AUDIT_HMAC_KEY, AUDIT_HMAC_SECRET, AUDIT_EXPORT_SIGNING_KEY,
+#   REFRESH_TOKEN_SECRET, MFA_ENCRYPTION_KEY, AUDIT_HMAC_KEY, AUDIT_HMAC_SECRET, AUDIT_EXPORT_SIGNING_KEY, AUDIT_ATTESTATION_KEY,
 #   CONNECTOR_ENCRYPTION_KEY, ANTHROPIC_API_KEY, CONCEPT2CURE_SIGNER_ACCEPT_HMAC,
 #   AI_PROVIDER_PLACEMENT_APPROVALS, APP_URL, ALLOWED_ORIGINS,
 #   SMTP_HOST, SMTP_USER, SMTP_PASS, SMTP_FROM
@@ -138,6 +138,10 @@ services:
       # to boot without it, or with it equal to the JWT secret; there is no accept
       # flag (server/services/audit/auditExportKeyPosture.ts).
       AUDIT_EXPORT_SIGNING_KEY: ${AUDIT_EXPORT_SIGNING_KEY:?AUDIT_EXPORT_SIGNING_KEY must be set (>=32 chars, not the JWT secret)}
+      # Signs the attestation a departing tenant's export carries
+      # (server/services/tenant-export/attestation-report.service.ts, >=32 chars).
+      # The server boots without it, and every attestation then fails to sign.
+      AUDIT_ATTESTATION_KEY: ${AUDIT_ATTESTATION_KEY:?AUDIT_ATTESTATION_KEY must be set (>=32 chars, distinct from the other audit keys)}
       # AES key for stored third-party connector credentials. Deliberately NOT
       # derived from JWT_SECRET — the two are separate trust domains and the
       # module throws at import in production when it is unset
