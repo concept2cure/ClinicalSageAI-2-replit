@@ -86,6 +86,7 @@
  */
 
 import type { ModelConfig, TaskType } from '../services/ai-gateway/types';
+import type { AIGateway } from '../services/ai-gateway/gateway';
 
 export type AnaReadiness =
   | 'unknown'
@@ -120,6 +121,78 @@ export function getAnaReadinessDetail(): string {
  */
 export function isAnaReadinessServing(state: AnaReadiness = anaReadiness): boolean {
   return state === 'ready' || state === 'deterministic';
+}
+
+/**
+ * A provider is not a drafting model: readiness also needs, for each high-risk
+ * task type, an enabled model the canonical registry approves for it. Records
+ * and returns the verdict; split from evaluateAnaReadiness, which calls it last.
+ */
+async function recordHighRiskCoverage(
+  gw: AIGateway,
+  providers: string[],
+): Promise<AnaReadiness> {
+  // A provider is not a drafting model. Fail closed if the gateway cannot
+  // show its registry: a posture readiness cannot inspect is not one it may
+  // pass.
+  if (typeof gw.getModels !== 'function') {
+    setAnaReadiness(
+      'error',
+      'AI gateway exposes no model registry, so whether any enabled model is approved for ' +
+        'regulatory drafting cannot be checked'
+    );
+    return 'error';
+  }
+
+  const { HIGH_RISK_TASK_TYPES, isApprovedForHighRisk } = await import(
+    '../services/ai-governance/approved-models.js'
+  );
+  const models: ModelConfig[] = gw.getModels() ?? [];
+  // The same predicate the gateway's selectModel applies to a high-risk
+  // request: enabled (model on and provider configured), capable of the
+  // task, and approved by the canonical registry. No second list.
+  const serves = (m: ModelConfig, task: TaskType) =>
+    m.capabilities.includes(task) && isApprovedForHighRisk(m.id);
+
+  const unserved: TaskType[] = [];
+  const servingIds = new Set<string>();
+  for (const task of HIGH_RISK_TASK_TYPES) {
+    const live = models.filter(m => m.enabled && serves(m, task));
+    if (live.length === 0) unserved.push(task);
+    for (const m of live) servingIds.add(m.id);
+  }
+
+  if (unserved.length > 0) {
+    // Name what would fix it, from the registry rather than from memory:
+    // every model approved for the missing work, grouped by the provider
+    // that would have to be enabled to reach it.
+    const byProvider = new Map<string, string[]>();
+    for (const m of models) {
+      if (!unserved.some(task => serves(m, task))) continue;
+      byProvider.set(m.provider, [...(byProvider.get(m.provider) ?? []), m.id]);
+    }
+    const remedy =
+      byProvider.size > 0
+        ? 'Models approved for it, by provider: ' +
+          [...byProvider].map(([p, ids]) => `${p} (${ids.join(', ')})`).join('; ') +
+          '. Enabling one of those providers is a data-placement decision, not only a key.'
+        : 'The model registry holds no model approved for it at all.';
+    setAnaReadiness(
+      'no_high_risk_model',
+      `AI provider(s) enabled: ${providers.join(', ')} — but no enabled model is approved for ` +
+        `regulatory drafting and review (${unserved.join(', ')}), so every Authoring draft is ` +
+        `refused with MODEL_NOT_APPROVED_FOR_HIGH_RISK. ${remedy} ` +
+        'See approvedForHighRisk in server/services/ai-governance/approved-models.ts.'
+    );
+    return 'no_high_risk_model';
+  }
+
+  setAnaReadiness(
+    'ready',
+    `AnA has ${providers.length} provider(s): ${providers.join(', ')}; regulatory drafting ` +
+      `and review served by ${[...servingIds].join(', ')}`
+  );
+  return 'ready';
 }
 
 /**
@@ -161,67 +234,7 @@ export async function evaluateAnaReadiness(): Promise<AnaReadiness> {
       return 'no_provider';
     }
 
-    // A provider is not a drafting model. Fail closed if the gateway cannot
-    // show its registry: a posture readiness cannot inspect is not one it may
-    // pass.
-    if (typeof gw.getModels !== 'function') {
-      setAnaReadiness(
-        'error',
-        'AI gateway exposes no model registry, so whether any enabled model is approved for ' +
-          'regulatory drafting cannot be checked'
-      );
-      return 'error';
-    }
-
-    const { HIGH_RISK_TASK_TYPES, isApprovedForHighRisk } = await import(
-      '../services/ai-governance/approved-models.js'
-    );
-    const models: ModelConfig[] = gw.getModels() ?? [];
-    // The same predicate the gateway's selectModel applies to a high-risk
-    // request: enabled (model on and provider configured), capable of the
-    // task, and approved by the canonical registry. No second list.
-    const serves = (m: ModelConfig, task: TaskType) =>
-      m.capabilities.includes(task) && isApprovedForHighRisk(m.id);
-
-    const unserved: TaskType[] = [];
-    const servingIds = new Set<string>();
-    for (const task of HIGH_RISK_TASK_TYPES) {
-      const live = models.filter(m => m.enabled && serves(m, task));
-      if (live.length === 0) unserved.push(task);
-      for (const m of live) servingIds.add(m.id);
-    }
-
-    if (unserved.length > 0) {
-      // Name what would fix it, from the registry rather than from memory:
-      // every model approved for the missing work, grouped by the provider
-      // that would have to be enabled to reach it.
-      const byProvider = new Map<string, string[]>();
-      for (const m of models) {
-        if (!unserved.some(task => serves(m, task))) continue;
-        byProvider.set(m.provider, [...(byProvider.get(m.provider) ?? []), m.id]);
-      }
-      const remedy =
-        byProvider.size > 0
-          ? 'Models approved for it, by provider: ' +
-            [...byProvider].map(([p, ids]) => `${p} (${ids.join(', ')})`).join('; ') +
-            '. Enabling one of those providers is a data-placement decision, not only a key.'
-          : 'The model registry holds no model approved for it at all.';
-      setAnaReadiness(
-        'no_high_risk_model',
-        `AI provider(s) enabled: ${providers.join(', ')} — but no enabled model is approved for ` +
-          `regulatory drafting and review (${unserved.join(', ')}), so every Authoring draft is ` +
-          `refused with MODEL_NOT_APPROVED_FOR_HIGH_RISK. ${remedy} ` +
-          'See approvedForHighRisk in server/services/ai-governance/approved-models.ts.'
-      );
-      return 'no_high_risk_model';
-    }
-
-    setAnaReadiness(
-      'ready',
-      `AnA has ${providers.length} provider(s): ${providers.join(', ')}; regulatory drafting ` +
-        `and review served by ${[...servingIds].join(', ')}`
-    );
-    return 'ready';
+    return await recordHighRiskCoverage(gw, providers);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     setAnaReadiness('error', `AI gateway could not be constructed: ${message}`);
