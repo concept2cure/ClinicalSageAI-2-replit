@@ -54,7 +54,7 @@ module "stack" {
   # Single-AZ, 7-day backups, deletion allowed, evidence under GOVERNANCE lock
   # for 30 days so the environment can be torn down. Same engine as production,
   # so staging proves what production will run.
-  rds_engine_version        = "15.4"
+  rds_engine_version        = "15" # major only; RDS patches the minor (B10)
   rds_allocated_storage     = 20
   rds_max_allocated_storage = 100
   rds_multi_az              = false

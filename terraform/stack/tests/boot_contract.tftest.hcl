@@ -80,7 +80,7 @@ variables {
   private_subnets                 = ["10.10.1.0/24", "10.10.2.0/24"]
   azs                             = ["us-east-1a", "us-east-1b"]
   rds_instance_class              = "db.t3.medium"
-  rds_engine_version              = "15.4"
+  rds_engine_version              = "15"
   rds_allocated_storage           = 50
   rds_max_allocated_storage       = 500
   rds_multi_az                    = true
@@ -760,4 +760,17 @@ run "refuses_a_sentry_dsn_that_is_not_https" {
   }
 
   expect_failures = [var.sentry_dsn]
+}
+
+# B10 (W2 / D1): RDS retires old minor versions, and a retired minor cannot be
+# created. "15.4" was pinned here and is deprecated on RDS, so the first apply,
+# and every rebuild of the database from nothing, would have failed. The
+# version is the MAJOR only; RDS picks its current minor and patches it in the
+# maintenance window.
+run "refuses_a_pinned_rds_minor_version" {
+  command = plan
+  variables {
+    rds_engine_version = "15.4"
+  }
+  expect_failures = [var.rds_engine_version]
 }

@@ -28,3 +28,8 @@ output "master_username" {
   description = "Master username (the owner role migrations connect as)"
   value       = aws_db_instance.this.username
 }
+
+output "engine_version_actual" {
+  description = "The PostgreSQL version RDS is running (major pinned, minor chosen and patched by RDS). Recorded in the IQ evidence."
+  value       = aws_db_instance.this.engine_version_actual
+}

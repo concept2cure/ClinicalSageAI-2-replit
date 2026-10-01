@@ -1,0 +1,16 @@
+[ci:component-class-coverage] build is current (newer than every source file it is built from).
+[ci:component-class-coverage] 14469 literal class use(s) across the client; 1 class name(s) with no rule in any of the 25 built chunks, 1 site(s) (baseline 0).
+
+[ci:component-class-coverage] FAIL — 1 class name(s) rendered with no rule in the shipped CSS:
+
+  client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes.tsx
+    .dd-act-retry  — rendered at line(s) 1094, defined in none of the 25 built CSS chunks
+
+A class no stylesheet defines renders as nothing. jsdom cannot see it — it applies
+no cascade — and check-surface-styling.mjs cannot see it either, because the surface
+around the component is styled and that is the question it asks.
+
+Either write the rules, or import the stylesheet that already has them: a rule in a
+sheet nothing imports (ui_kits/**, an orphan under client/src) is not
+coverage. See check-orphaned-stylesheets.mjs.
+

@@ -10,11 +10,20 @@ resource "aws_db_subnet_group" "this" {
 resource "aws_db_instance" "this" {
   identifier = var.identifier
 
-  engine                = "postgres"
-  engine_version        = var.engine_version
-  instance_class        = var.instance_class
-  allocated_storage     = var.allocated_storage
-  max_allocated_storage = var.max_allocated_storage
+  engine = "postgres"
+  # The MAJOR version (2026-10-01, B10): RDS creates on its current minor of
+  # it and applies minor (security) patches in maintenance_window below. A
+  # pinned minor is retired by AWS on a schedule; "15.4" was, so the first apply
+  # and any rebuild from nothing would have failed to create the instance. A
+  # major upgrade is never automatic: it changes the validated system and is
+  # planned, tested and applied deliberately. The version actually running is
+  # the engine_version_actual output, for the IQ record.
+  engine_version              = var.engine_version
+  auto_minor_version_upgrade  = true
+  allow_major_version_upgrade = false
+  instance_class              = var.instance_class
+  allocated_storage           = var.allocated_storage
+  max_allocated_storage       = var.max_allocated_storage
 
   db_name  = var.database_name
   username = var.master_username
