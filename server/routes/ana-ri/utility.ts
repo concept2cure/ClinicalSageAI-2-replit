@@ -9,6 +9,7 @@
  */
 
 import type { Request, Response, Router } from 'express';
+import { confirmedToolContext } from '../../services/ana/turn-tool-context.js';
 
 import { evaluateResponse } from '../../services/ana-ri/evaluation.js';
 import {
@@ -231,15 +232,9 @@ async function runConfirmedTool(
   const { getToolHandler } = await import('../../services/ana/AnaToolExecutor.js');
   const handler = getToolHandler(name);
   if (!handler) throw new Error(`${name} is not an available tool`);
-  const recorded = held.toolContext;
-  const out = await handler(params, {
-    organizationId,
-    userId,
-    projectId: recorded?.projectId ?? null,
-    projectRef: recorded?.projectRef ?? null,
-    servingModel: recorded?.servingModel ?? null,
-    humanConfirmed: true,
-  });
+  // The context the turn held it with, and the person's yes: the same
+  // conversation, turn and model the dispatch would have named (PF-10 S5).
+  const out = await handler(params, confirmedToolContext(held.toolContext, organizationId, userId));
   try {
     return JSON.parse(out);
   } catch {

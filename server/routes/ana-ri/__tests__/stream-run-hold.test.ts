@@ -36,6 +36,8 @@ const h = vi.hoisted(() => {
     toolRuns: 0,
     resumeAbandoned: 0,
     stops: 0,
+    /** The context each tool call was handed. */
+    toolCtx: [] as any[],
   };
   const pool = {
     query: async () => ({ rows: [], rowCount: 0 }),
@@ -56,9 +58,10 @@ const h = vi.hoisted(() => {
       return { content: text, toolUses: [], model: 'm', provider: 'p', usage: {}, latencyMs: 1 };
     },
   };
-  const handlers: Record<string, (input: any) => Promise<string>> = {
-    list_app_screens: async () => {
+  const handlers: Record<string, (input: any, ctx?: any) => Promise<string>> = {
+    list_app_screens: async (_input, ctx) => {
       state.toolRuns++;
+      state.toolCtx.push(ctx);
       return JSON.stringify({ screens: ['vault'] });
     },
   };
@@ -224,6 +227,7 @@ beforeEach(() => {
     toolRuns: 0,
     resumeAbandoned: 0,
     stops: 0,
+    toolCtx: [],
   });
   const realNow = Date.now.bind(Date);
   vi.spyOn(Date, 'now').mockImplementation(() => realNow() + h.state.clockOffset);
@@ -231,6 +235,16 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
+});
+
+describe('the tool context names the conversation, the turn and the model (PF-10 S5, LX-06)', () => {
+  it('a dispatched tool receives the resolved thread, the run as its turn, and the served model', async () => {
+    h.state.statuses = ['running'];
+    await turn();
+    // A document a tool creates records these as its provenance (authoring-draft-tool.ts).
+    expect(h.state.toolCtx).toHaveLength(1);
+    expect(h.state.toolCtx[0]).toMatchObject({ threadId: 'thread-1', turnId: 'run_test', model: 'm' });
+  });
 });
 
 describe('the stream pause, unchanged by the move', () => {
