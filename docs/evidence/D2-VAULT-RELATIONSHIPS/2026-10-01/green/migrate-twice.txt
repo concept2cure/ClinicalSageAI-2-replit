@@ -1,0 +1,23 @@
+== deploy-migrate run 1
+      [NOTICE] vault.legal_holds ready (RLS: tenant_isolation_policy)
+      [NOTICE] [ivdr-history-rls] parent-scoped tenant_isolation_policy applied to 0 table(s)
+  ✓ applied: migrations/20261001_vault_document_relationships.sql
+      [NOTICE] [uuid-rls] tenant_isolation_policy applied to 0 non-public uuid-tenant table(s); 2 skipped (unprovisioned/drift). federated_ml.federation_participants and audit.event_log are intentionally EXEMPT (cross-tenant by design).
+      [NOTICE] [rls-sweep] tenant_isolation_policy applied to 1 newly-provisioned table(s); 0 rebuilt to the canonical shape; 0 forced retroactively; 0 healed off allowlisted tables; 0 skipped for non-integer tenant key
+  tenant_isolation_policy: 19/19 tables policied
+✅ Schema migration complete — safe to roll services.
+== deploy-migrate run 2
+      [NOTICE] vault.legal_holds ready (RLS: tenant_isolation_policy)
+      [NOTICE] [ivdr-history-rls] parent-scoped tenant_isolation_policy applied to 0 table(s)
+  ✓ applied: migrations/20261001_vault_document_relationships.sql
+      [NOTICE] [uuid-rls] tenant_isolation_policy applied to 0 non-public uuid-tenant table(s); 2 skipped (unprovisioned/drift). federated_ml.federation_participants and audit.event_log are intentionally EXEMPT (cross-tenant by design).
+      [NOTICE] [rls-sweep] tenant_isolation_policy applied to 0 newly-provisioned table(s); 0 rebuilt to the canonical shape; 0 forced retroactively; 0 healed off allowlisted tables; 0 skipped for non-integer tenant key
+  tenant_isolation_policy: 19/19 tables policied
+✅ Schema migration complete — safe to roll services.
+
+== the table after both runs
+rls=true force=true
+policy tenant_isolation_policy
+trigger vault_document_relationships_delete_guard
+trigger vault_document_relationships_guard
+trigger vault_document_relationships_truncate_guard

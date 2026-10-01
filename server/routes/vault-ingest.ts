@@ -170,13 +170,17 @@ export default function createVaultIngestRoutes(): Router {
        program or organization; no client sends either. Refused, not dropped:
        a caller that sent lineage is told it was not recorded. A new version
        names its document with supersedesDocumentId (VR-08), and the server
-       derives and checks the link. */
+       derives and checks the link. A related document (parentDocumentId's
+       intent) is named after upload, by a person, as a document relationship
+       (POST /api/c2c/project-vault/:id/documents/:documentId/relationships). */
     const lineage = ['parentDocumentId', 'supersedesId'].filter((k) => req.body?.[k] !== undefined);
     if (lineage.length > 0) {
       return res.status(400).json({
         error: {
           code: 'LINEAGE_NOT_ACCEPTED',
-          message: `${lineage.join(' and ')} cannot be set by an upload. Nothing was saved.`,
+          message: `${lineage.join(' and ')} cannot be set by an upload. Nothing was saved. ` +
+            'A new version names its document with supersedesDocumentId; a related document is added ' +
+            'after upload, under the document\'s Relationships.',
         },
       });
     }

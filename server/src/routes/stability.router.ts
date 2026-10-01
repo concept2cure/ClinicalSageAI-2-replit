@@ -26,6 +26,10 @@ import { parse } from 'csv-parse/sync';
 import { toBuffer as barcodePng } from 'bwip-js/node';
 import { format } from 'date-fns';
 import { insertAllDayEvent, calendarEnabled } from '../services/calendar';
+import {
+  callerOwnsPlatformIntegrations,
+  notYourIntegrationNote,
+} from '../../services/integrations/platform-integration-owner';
 import { authedActorName } from '../../utils/authedActor';
 import { serverError } from '../../lib/api-response';
 import { createScopedLogger } from '../../utils/logger';
@@ -2927,6 +2931,16 @@ router.post('/studies/:id/timepoints/push-calendar', async (req, res) => {
   if (!calendarEnabled()) {
     // Nothing was pushed, so this is not a success.
     return res.status(503).json({ error: 'Calendar integration is not configured; use the ICS schedule instead' });
+  }
+  /* 2026-10-01 (D6, decision P-8): the calendar is the deployment's own
+     account, and it is written only for the organisation it belongs to
+     (services/integrations/platform-integration-owner.ts). Any organisation's
+     stability study pushed its sampling dates onto it. */
+  if (!callerOwnsPlatformIntegrations()) {
+    return res.status(503).json({
+      error: `${notYourIntegrationNote('team calendar')} Use the ICS schedule instead.`,
+      code: 'CALENDAR_NOT_YOURS',
+    });
   }
   try {
     const tps = await withTenantClient(async tx => {
