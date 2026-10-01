@@ -2,6 +2,13 @@
 
 Date: 2026-10-01. Lane: D6 (security tranche 4), porting a fix for a gate that was red on trunk.
 
+**Superseded in the merge of 2026-10-01 ~18:45 UTC.** The D4 lane fixed the same gate in parallel (`1bb92a71`,
+"Trunk Lint"), with `COMPOSE_EXCUSED`: each excused name carries its reason, the connector's three names are
+excused too, and an excusal the preflight no longer needs is itself a failure. That is the more complete fix, so the
+merge kept it and dropped this lane's `DEPLOY_ONLY` list and its two self-test cases (one implementation). What
+remains of this change is the two Compose files' `DB_AUDIT_REQUIRED: ${DB_AUDIT_REQUIRED:-}` with its comment, which
+the D4 gate accepts. The red and green runs below are this lane's, kept as the record of the reproduction.
+
 ## What was wrong
 
 The P1-11 / INF-13 work (W2 lane) added `DB_AUDIT_REQUIRED` to the deploy preflight's boot-contract list in

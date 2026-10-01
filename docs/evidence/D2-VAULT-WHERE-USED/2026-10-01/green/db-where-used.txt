@@ -1,0 +1,112 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T18:06:24.920Z","pid":6768,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T18:06:24.921Z","pid":6768,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T18:06:24.921Z","pid":6768,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-where-used.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T18:06:24.997Z', poolSize: 1 }
+
+stdout | tests/db/vault-where-used.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/vault-where-used.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-01T18:06:25.580Z","pid":6768,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+(node:6768) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-01T18:06:25.669Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 29,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-01T18:06:25.742Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "7331ef19-999f-4d06-8749-ba27076199e3",
+    "code": "DBTEST-VWHERE-STAB",
+    "type": "OTHER",
+    "size": 29,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T18:06:25.754Z","pid":6768,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-01T18:06:25.765Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 29,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-01T18:06:25.782Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "faf9d6f2-e190-47d6-99c6-2a81638225e0",
+    "code": "DBTEST-VWHERE-STAB",
+    "type": "OTHER",
+    "size": 29,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T18:06:25.792Z","pid":6768,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-01T18:06:25.793Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 18,
+    "wordCount": 2,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-01T18:06:25.805Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "0bc21fb9-a54f-441b-8a50-5ed78831fca4",
+    "code": "DBTEST-VWHERE-CO",
+    "type": "OTHER",
+    "size": 18,
+    "hasText": true
+  }
+}
+
+{"level":30,"time":"2026-10-01T18:06:25.973Z","pid":6768,"hostname":"vm","context":{"userId":4102,"tenantId":1327,"resourceId":"54"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-01T18:06:26.000Z","pid":6768,"hostname":"vm","context":{"userId":4102,"tenantId":1327,"resourceId":"55"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-01T18:06:26.024Z","pid":6768,"hostname":"vm","context":{"userId":4102,"tenantId":1327,"resourceId":"56"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-01T18:06:26.046Z","pid":6768,"hostname":"vm","context":{"userId":4102,"tenantId":1327,"resourceId":"57"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > each version lists the live leaves that name it 33ms
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > a removed leaf is not a placement 13ms
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > another organisation's leaf naming this version is not listed, and another organisation reads nothing 19ms
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > the read's own organisation filter holds without row security 2ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  18:06:23
+   Duration  3.12s (transform 1.40s, setup 72ms, import 144ms, tests 2.66s, environment 0ms)
+
