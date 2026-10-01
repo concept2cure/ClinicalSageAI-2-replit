@@ -595,6 +595,9 @@ router.patch('/:organizationId/:userId', async (req, res) => {
       return res.json({ message: 'User role unchanged', unchanged: true });
     }
 
+    // The role is cached for up to a minute per instance (orgMembership.ts);
+    // a demotion must not outlive its audited change time by that minute.
+    invalidateOrgMembershipCache(userId, organizationId);
     log.debug(`Updated role of user ${userId} in organization ${organizationId}`);
     res.json({ message: 'User role updated successfully' });
   } catch (error) {

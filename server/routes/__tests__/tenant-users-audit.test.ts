@@ -153,6 +153,19 @@ describe('PATCH /:organizationId/:userId — a role change is recorded with its 
     });
   });
 
+  it('revokes the cached membership once the change commits, so a demotion takes effect on the next request', async () => {
+    const res = await patch({ role: 'viewer', reason: 'Demoted after the access review' });
+    expect(res.status).toBe(200);
+    expect(h.invalidated).toEqual([[MEMBER, ORG]]);
+  });
+
+  it('a failed audit write leaves the cached membership alone (nothing changed)', async () => {
+    h.auditFails = true;
+    const res = await patch({ role: 'viewer', reason: 'r' });
+    expect(res.status).toBe(500);
+    expect(h.invalidated).toHaveLength(0);
+  });
+
   it('the action it writes is one the administrative changes report reads', async () => {
     await patch({ role: 'viewer', reason: 'r' });
     expect(ADMINISTRATIVE_ACTIONS).toContain(h.auditCalls[0]?.entry.action);
