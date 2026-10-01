@@ -110,13 +110,11 @@
 .ro-m-st.st-ready{ color:var(--success); }
 .ro-m-st.st-partial{ color:var(--warning); }
 .ro-m-st.st-missing{ color:var(--error); }
-.ro-m-prov{ font-size:10px; font-style:italic; color:var(--text-400); margin-top:3px; }
+/* Provenance is a disclosure anyone can open, never hover-only (review 2026-10-01, DESIGN-5). */
+.ro-m-prov{ font-size:10.5px; color:var(--text-400); margin:3px 0 10px; }
+.ro-m-prov summary{ cursor:pointer; }
+.ro-m-prov span{ display:block; margin-top:3px; color:var(--text-300); }
 .ro-table{ border:1px solid var(--border); border-radius:10px; overflow:hidden; margin:0 0 12px; }
-.ro-thead{ display:grid; background:var(--bg-050); border-bottom:1px solid var(--border); }
-.ro-thead span{ font-size:10.5px; font-weight:600; text-transform:uppercase; letter-spacing:.03em; color:var(--text-400); padding:8px 11px; }
-.ro-trow{ display:grid; border-top:1px solid var(--border); }
-.ro-trow:first-child{ border-top:none; }
-.ro-trow span{ font-size:12.5px; color:var(--text-100); padding:9px 11px; }
 .ro-chartcard{ border:1px solid var(--border); border-radius:10px; padding:14px; margin:0 0 12px; display:inline-block; background:var(--bg-000); }
 .ro-ring{ display:flex; flex-direction:column; align-items:center; gap:6px; }
 .ro-ring-lbl{ font-size:11px; color:var(--text-400); }

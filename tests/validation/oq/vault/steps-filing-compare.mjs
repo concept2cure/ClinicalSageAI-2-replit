@@ -1,7 +1,8 @@
 /**
- * OQ-002 steps OQ-VAULT-15 to OQ-VAULT-19: filing from the data room (VR-11a),
+ * OQ-002 steps OQ-VAULT-15 to OQ-VAULT-20: filing from the data room (VR-11a),
  * confirming suggestions together (VR-11b), comparing two versions, the
- * library search and the stored-file fixity check (plan critique 15). Run by ./run.mjs after OQ-VAULT-14, in this order.
+ * library search, the stored-file fixity check and document relationships
+ * (plan critique 15). Run by ./run.mjs after OQ-VAULT-14, in this order.
  * Kept in their own module so the runner stays within the file-length limit.
  */
 import { ingestPdf, makePdfBuffer } from '../../lib/fixtures.mjs';
@@ -203,6 +204,59 @@ async function fixityStep({ step, state }) {
   );
 }
 
+const listedAt = async (api, url) => (await api('GET', url)).json?.data?.relationships ?? [];
+const historyOf = async (api, url) => ((await api('GET', url)).json?.data?.entries ?? []).map((e) => e.event);
+
+/** The relationship, as each end lists it. */
+function expectBothEnds(expect, relId, ends) {
+  const { mine, theirs, docId, supportId } = ends;
+  expect(mine.some((r) => r.id === relId && r.label === 'Supported by' && r.other.documentId === supportId), 'the document does not list its supporting document', mine);
+  expect(theirs.some((r) => r.id === relId && r.label === 'Supports' && r.other.documentId === docId), 'the supporting document does not list what it supports', theirs);
+}
+
+async function relationshipStep({ step, state, stamp }) {
+  await step(
+    {
+      id: 'OQ-VAULT-20',
+      urs: ['URS-VAULT-019'],
+      title: 'A document names a supporting document, both ends list it, and removing it needs a reason; each change is in both histories',
+      action:
+        'Ingest a PDF; POST /api/c2c/project-vault/:id/documents/<the OQ-VAULT-03 document>/relationships {toDocumentId: <the new PDF>, type: supporting}; ' +
+        'GET …/relationships for both documents; POST …/relationships/<id>/remove without a reason, then with one; ' +
+        'GET …/documents/<the OQ-VAULT-03 document>/history',
+      expected:
+        'The relate answers 201. The OQ-VAULT-03 document lists it as "Supported by" the new PDF, and the new PDF lists it as "Supports" the document. ' +
+        'Removing it without a reason answers 422 REASON_REQUIRED; with a reason, 200, and neither document lists it any more. ' +
+        'The history carries "Related: supported by …" and "Relationship removed: supported by …" (vault.document.relate, vault.document.unrelate).',
+      dependsOn: ['OQ-VAULT-03'],
+    },
+    async ({ api, expect }) => {
+      const support = await ingestPdf(api, expect, { programId: state.programId, title: `OQ-002 supporting record ${stamp}` });
+      const rels = (id) => `/api/c2c/project-vault/${state.programId}/documents/${id}/relationships`;
+      const add = await api('POST', rels(state.doc.id), { toDocumentId: support.document.id, type: 'supporting' });
+      const relId = add.json?.data?.id;
+      expect(add.status === 201 && relId, `relate: expected 201, got ${add.status}`, add.json);
+      expectBothEnds(expect, relId, {
+        mine: await listedAt(api, rels(state.doc.id)),
+        theirs: await listedAt(api, rels(support.document.id)),
+        docId: state.doc.id,
+        supportId: support.document.id,
+      });
+      const removeUrl = `/api/c2c/project-vault/${state.programId}/relationships/${relId}/remove`;
+      const bare = await api('POST', removeUrl, {});
+      expect(bare.status === 422 && bare.json.error === 'REASON_REQUIRED', `remove without a reason: expected 422 REASON_REQUIRED, got ${bare.status}`, bare.json);
+      const done = await api('POST', removeUrl, { reason: 'OQ-002 exercise: removing the relationship it created.' });
+      expect(done.status === 200, `remove: expected 200, got ${done.status}`, done.json);
+      const after = await listedAt(api, rels(state.doc.id));
+      expect(!after.some((r) => r.id === relId), 'a removed relationship is still listed', after);
+      const events = await historyOf(api, `/api/c2c/project-vault/${state.programId}/documents/${state.doc.id}/history`);
+      const recorded = events.some((e) => /^Related: supported by /.test(e)) && events.some((e) => /^Relationship removed: supported by /.test(e));
+      expect(recorded, "the document's history does not record the relate and the removal", events.slice(0, 6));
+      return `related ${state.doc.id} to ${support.document.id} (supporting), listed at both ends, removed with a reason; both changes in the history`;
+    },
+  );
+}
+
 /** @param {{ step: Function, state: Record<string, any>, stamp: string }} run */
 export async function runFilingAndCompareSteps(run) {
   await fileFromRoomStep(run);
@@ -210,4 +264,5 @@ export async function runFilingAndCompareSteps(run) {
   await compareVersionsStep(run);
   await librarySearchStep(run);
   await fixityStep(run);
+  await relationshipStep(run);
 }

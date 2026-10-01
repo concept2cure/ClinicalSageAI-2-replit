@@ -331,6 +331,8 @@ describe('Vault — search', () => {
       }
       // The same for the version list (VR-09), whose failed read is an alert too.
       if (url.endsWith('/versions')) return ok({ success: true, data: { versions: [] } });
+      // And for related documents (plan critique 15), whose failed read is an alert.
+      if (url.endsWith('/relationships')) return ok({ success: true, data: { relationships: [] } });
       return ok({});
     });
   }

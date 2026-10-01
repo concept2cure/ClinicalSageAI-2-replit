@@ -157,9 +157,12 @@ export function authoringDocFromToolResult(
 
 /* ---- AnA turn (activity + answer + grounding) ---- */
 
-/** The section open in the editor beside the conversation, and how to tell the person what happened. */
+/** The section of the document's editor, and how to tell the person what happened. */
 interface InsertTarget {
   bridge: EditorBridge;
+  /** The editor is on screen. When it is not, the insert reopens it first. */
+  open: boolean;
+  reopen: () => void;
   fireToast: FireToast;
 }
 
@@ -175,8 +178,12 @@ interface InsertTarget {
 function InsertIntoOpenSection({ turn, target }: { turn: CtTurn; target?: InsertTarget }) {
   if (!target?.bridge.editable || !turn.settled || !turn.answer?.trim()) return null;
   if (turn.authoringDoc?.docId === target.bridge.docId) return null;
-  const { bridge, fireToast } = target;
+  const { bridge, open, reopen, fireToast } = target;
   const insert = () => {
+    /* A suggestion lands only where the person can see it: a closed editor is
+       reopened first. Below 1100px the conversation is hidden while the editor
+       is open, so this is the only way the offer and its target meet. */
+    if (!open) reopen();
     const ok = bridge.insert(turn.answer ?? '', {
       id: 'ana',
       name: 'AnA (AI draft)',
@@ -195,7 +202,11 @@ function InsertIntoOpenSection({ turn, target }: { turn: CtTurn; target?: Insert
         title={`Adds this answer to ${bridge.sectionCode} ${bridge.sectionTitle} as suggestions you accept or reject`}
       >
         <span className="ct-ref-ic">{I.penLine}</span>
-        <span className="ct-ref-l">{`Insert into ${bridge.sectionCode} as tracked suggestion`}</span>
+        <span className="ct-ref-l">
+          {open
+            ? `Insert into ${bridge.sectionCode} as tracked suggestion`
+            : `Open ${bridge.sectionCode} and insert as tracked suggestion`}
+        </span>
       </button>
     </div>
   );
@@ -222,8 +233,8 @@ interface AnaTurnProps {
     paneEl?: HTMLElement | null;
     /** Bumped when an AnA turn ends, so the canvas re-reads the record. */
     refreshKey?: number;
-    /** Told the open section of this document while its editor is expanded. */
-    onEditorBridge?: (docId: string, bridge: EditorBridge | null) => void;
+    /** Told the open section of this document's editor, and whether it is on screen. */
+    onEditorBridge?: (docId: string, bridge: EditorBridge | null, open: boolean) => void;
   };
   /** The open section this answer can be inserted into, while a document is open. */
   insertTarget?: InsertTarget;
@@ -861,14 +872,19 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
   /* Counts AnA turns as they settle. Every canvas re-reads its document on a
      new value, so a section AnA revised in that turn is on the card. */
   const [turnsSettled, setTurnsSettled] = useState(0);
-  /* The section open in the expanded editor, reported by its canvas, so each
-     settled answer can offer to go into it. A canvas clearing its report
-     clears only its own: closing one document never drops another's. */
-  const [editorBridge, setEditorBridge] = useState<EditorBridge | null>(null);
-  const onEditorBridge = useCallback((docId: string, bridge: EditorBridge | null) => {
-    setEditorBridge(prev => bridge ?? (prev?.docId === docId ? null : prev));
+  /* The section open in a document's editor, on screen or closed and still
+     mounted, reported by its canvas, so each settled answer can offer to go
+     into it. A canvas clearing its report clears only its own: closing one
+     document never drops another's. */
+  const [editor, setEditor] = useState<{ bridge: EditorBridge; open: boolean } | null>(null);
+  const onEditorBridge = useCallback((docId: string, bridge: EditorBridge | null, open: boolean) => {
+    setEditor(prev => (bridge ? { bridge, open } : prev?.bridge.docId === docId ? null : prev));
   }, []);
-  const insertTarget = editorBridge ? { bridge: editorBridge, fireToast } : undefined;
+  /* Only an editor on screen is named on turns (step 5). */
+  const editorBridge = editor?.open ? editor.bridge : null;
+  const insertTarget = editor
+    ? { bridge: editor.bridge, open: editor.open, reopen: () => setExpandedDocId(editor.bridge.docId), fireToast }
+    : undefined;
   /* While a document is open beside the conversation, every turn sent from
      here names it: the document, the section and its module, through the
      same authoring context the editor's own chat sends (2026-10-01). The
