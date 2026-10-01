@@ -437,7 +437,9 @@ export async function createTasksForDesign(args: {
           sourceEntityId: args.studyId,
           blueprintKey: b.key,
         },
-        reason: args.reason ?? `Raised from the biostatistics assessment of "${assessment.title}" (${b.trigger})`,
+        // The reason the request stated, or none (D5); what happened is the summary.
+        reason: args.reason,
+        summary: `Raised from the biostatistics assessment of "${assessment.title}" (${b.trigger})`,
       });
       created.push({ taskId: task.taskId, key: b.key, title: b.title, priority: b.priority });
     }

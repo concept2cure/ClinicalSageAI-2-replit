@@ -324,7 +324,8 @@ export interface RecordGovernedActionParams {
   userId:   number;
   command:  string;
   target:   string;
-  reason:   string;
+  /** The person's stated reason (audit_logs.reason), or null when none was stated — never one the code made up. */
+  reason:   string | null;
   payload?: Record<string, unknown>;
   domain?:  string;
   surface?: string;
