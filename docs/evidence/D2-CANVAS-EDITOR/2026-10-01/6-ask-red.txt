@@ -1,0 +1,5 @@
+# 6. A section not yet drafted is one ask away — RED, new thread case against the unchanged canvas
+ × client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — a section not yet drafted is one ask away (2026-10-01) > opens the editor at the section, puts the ask in the composer, and the turn and the insert name that section 5487ms
+   → Unable to find role="button" and name "Ask AnA to draft 2.5.2"
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 17 skipped (18)

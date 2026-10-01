@@ -20,7 +20,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 
 import type { AnaChatMessage } from '../../components/ana/useAnaChat';
 
@@ -37,6 +37,7 @@ vi.mock('../surfaces/AuthoringPlaceIntoFiling', () => ({
 }));
 
 const chatMessages: { current: AnaChatMessage[] } = { current: [] };
+const chatSend = vi.hoisted(() => vi.fn());
 const chatStreaming = { current: false };
 vi.mock('../../components/ana/useAnaChat', () => ({
   useAnaChat: () => ({
@@ -44,7 +45,7 @@ vi.mock('../../components/ana/useAnaChat', () => ({
     isStreaming: chatStreaming.current,
     isLoadingThread: false,
     loadThread: vi.fn().mockResolvedValue(undefined),
-    send: vi.fn(),
+    send: chatSend,
     threadId: 'thread-1',
   }),
 }));
@@ -263,6 +264,121 @@ describe('ConversationThread — AnA\u2019s answers go into the open document (2
     await vi.waitFor(() =>
       expect(screen.queryByRole('button', { name: /as tracked suggestion/ })).toBeNull(),
     );
+  });
+});
+
+describe('ConversationThread — AnA knows the document open beside the conversation (2026-10-01)', () => {
+  /* The thread runs on the shell's chat, created with no authoring context, so
+     a turn sent while a document was open beside the conversation reached AnA
+     naming no document and no section. Each turn now carries the editor's own
+     authoring context while the editor is open, and none once it closes. */
+  const sendFromComposer = async (text: string) => {
+    const box = screen.getByRole('textbox', { name: 'Reply to AnA' });
+    fireEvent.change(box, { target: { value: text } });
+    fireEvent.keyDown(box, { key: 'Enter' });
+  };
+
+  it('sends the open document and section with the turn, and nothing once the editor closes', async () => {
+    chatSend.mockReset();
+    chatMessages.current = [USER, DRAFTED];
+    render(<ConversationThread {...OWNED_PROPS} />);
+    const open = await screen.findByTestId('dc-open-editor');
+    await vi.waitFor(() => expect((open as HTMLButtonElement).disabled).toBe(false));
+    open.click();
+    await screen.findByTestId('dc-expanded');
+    await vi.waitFor(() => expect(screen.getByRole('button', { name: /Close the editor/ })).toBeTruthy());
+
+    await vi.waitFor(async () => {
+      chatSend.mockClear();
+      await sendFromComposer('Draft this section');
+      expect(chatSend).toHaveBeenCalled();
+      expect(chatSend.mock.calls[0][2]?.authoringContext).toMatchObject({
+        projectId: PID,
+        workflowStage: 'section-workspace',
+        artifactId: DOC,
+        sectionCode: '2.5.1',
+        sectionTitle: 'Product Development Rationale',
+      });
+    });
+
+    (await screen.findByTestId('dc-open-editor')).click();
+    await vi.waitFor(async () => {
+      chatSend.mockClear();
+      await sendFromComposer('And now?');
+      expect(chatSend).toHaveBeenCalled();
+      expect(chatSend.mock.calls[0][2]).toBeUndefined();
+    });
+  });
+});
+
+describe('ConversationThread — a sealed document is known to AnA, and takes no insert (2026-10-01)', () => {
+  it('names the frozen document on the turn but offers no insert into it', async () => {
+    chatSend.mockReset();
+    const FOLLOWUP: AnaChatMessage = {
+      id: 'm5', role: 'assistant', text: 'Exposure was dose-proportional from 10 to 300 mg.',
+      turnRecord: { status: 'recorded', id: 'rec-7', sha256: 'a'.repeat(64) },
+    } as unknown as AnaChatMessage;
+    const base = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method === 'GET' && url === `/api/authoring/docs/${DOC}`) {
+        return ok({ success: true, document: { id: DOC, title: 'Module 2.5 Clinical Overview — C2C-101', module: 'M2', product_code: null, status: 'FROZEN', updated_at: null, section_count: 1, provenance: { source: 'ana', conversationId: 'thread-1' } } });
+      }
+      return base(method, url, body);
+    });
+    chatMessages.current = [USER, DRAFTED, FOLLOWUP];
+    render(<ConversationThread {...OWNED_PROPS} />);
+    const open = await screen.findByTestId('dc-open-editor');
+    await vi.waitFor(() => expect((open as HTMLButtonElement).disabled).toBe(false));
+    open.click();
+    await screen.findByTestId('dc-expanded');
+
+    await vi.waitFor(async () => {
+      chatSend.mockClear();
+      const box = screen.getByRole('textbox', { name: 'Reply to AnA' });
+      fireEvent.change(box, { target: { value: 'What does this section say?' } });
+      fireEvent.keyDown(box, { key: 'Enter' });
+      expect(chatSend.mock.calls[0]?.[2]?.authoringContext).toMatchObject({ artifactId: DOC, sectionCode: '2.5.1' });
+    });
+    expect(screen.queryByRole('button', { name: /as tracked suggestion/ })).toBeNull();
+  });
+});
+
+describe('ConversationThread — a section not yet drafted is one ask away (2026-10-01)', () => {
+  /* The outline said "Not drafted" and stopped there. From a section's empty
+     state the person now asks AnA to draft it: the editor opens beside the
+     conversation AT that section, the ask is in the composer, and the turn
+     and the insert both name that section. */
+  it('opens the editor at the section, puts the ask in the composer, and the turn and the insert name that section', async () => {
+    chatSend.mockReset();
+    const base = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method === 'GET' && url === `/api/authoring/docs/${DOC}/sections`) {
+        return ok({ success: true, sections: [
+          { id: 'S1', doc_id: DOC, code: '2.5.1', title: 'Product Development Rationale', content: '<p>From the record.</p>', order_index: 0 },
+          { id: 'S2', doc_id: DOC, code: '2.5.2', title: 'Overview of Biopharmaceutics', content: '', order_index: 1 },
+        ] });
+      }
+      return base(method, url, body);
+    });
+    const FOLLOWUP: AnaChatMessage = {
+      id: 'm5', role: 'assistant', text: 'Exposure was dose-proportional from 10 to 300 mg.',
+      turnRecord: { status: 'recorded', id: 'rec-7', sha256: 'a'.repeat(64) },
+    } as unknown as AnaChatMessage;
+    chatMessages.current = [USER, DRAFTED, FOLLOWUP];
+    render(<ConversationThread {...OWNED_PROPS} />);
+
+    (await screen.findByRole('button', { name: /2\.5\.2\s*Overview of Biopharmaceutics/ })).click();
+    (await screen.findByRole('button', { name: 'Ask AnA to draft 2.5.2' })).click();
+
+    const box = screen.getByRole('textbox', { name: 'Reply to AnA' }) as HTMLTextAreaElement;
+    await vi.waitFor(() =>
+      expect(box.value).toMatch(/^Draft the text for section 2\.5\.2 Overview of Biopharmaceutics of “Module 2\.5 Clinical Overview — C2C-101”/),
+    );
+    await vi.waitFor(() => expect(document.querySelector('.ct-canvas-pane [data-testid="dc-expanded"]')).toBeTruthy());
+    await screen.findByRole('button', { name: 'Insert into 2.5.2 as tracked suggestion' }, { timeout: 4000 });
+
+    fireEvent.keyDown(box, { key: 'Enter' });
+    expect(chatSend.mock.calls[0]?.[2]?.authoringContext).toMatchObject({ artifactId: DOC, sectionCode: '2.5.2' });
   });
 });
 

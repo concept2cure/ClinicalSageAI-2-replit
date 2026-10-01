@@ -1417,6 +1417,12 @@
     font-style: italic;
     margin: 0;
   }
+  /* "Ask AnA to draft <code>" beside a section's empty state (2026-10-01):
+     the action, not the italic note, so it reads upright. */
+  .dcv-sec-empty .nda-open {
+    margin-left: 8px;
+    font-style: normal;
+  }
   .dcv-showall {
     justify-self: start;
   }
