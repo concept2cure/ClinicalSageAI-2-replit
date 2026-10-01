@@ -99,6 +99,32 @@ claim (`wf_39bf69be-ba3`) established what was still open at HEAD.
   evidence-spine, citation, authoring-audit, Data Room client, submission-service,
   CMC service, CMC route and walk suites, and the migration-list closure.
 
+## The filing picker (follow-up, same day)
+
+- **The defect.** `useFilingTarget` (`filingTarget.tsx`), behind both the Vault
+  and the Authoring "place into a submission" dialogs, offered every submission
+  of the organization. The server then refused the other projects' (409
+  `CROSS_PROJECT`), so a person could choose a target only to be told no.
+- **The fix.**
+  - The picker offers the project's own submissions: the project stated by the
+    caller, else the open project (`shellProgramId()`).
+  - Unanchored submissions stay offered, because the server cannot judge them
+    either.
+  - What it does not offer is counted and said ("1 submission belongs to another
+    project and is not offered…"). When every submission is another project's,
+    the empty state says that, not "none in this organization".
+  - With no project open, every submission is offered, as before.
+  - The submission field moved into its own component (`SubmissionChoice`) to
+    keep `FilingTargetFields` within its complexity limit. Its shipped strings
+    are unchanged.
+- **Tests.** `client/src/concept2cure/v2/__tests__/filingTargetOwnProject.test.tsx`,
+  through the real Vault dialog.
+- **Red:** `06-red-filing-picker.txt`. With the hook at HEAD, the two filtering
+  cases fail; the no-project case passes on both.
+- **Green:** `07-green-filing-picker.txt`, every suite that renders either
+  dialog: **14 files, 130 tests**. `ci:undefined-css-classes` and the ratchet
+  pass.
+
 ## Still open in PF-11, handed on
 
 - **Pins.** `stream.ts`'s `source_ids` resolve through `resolveSourceUploadIds`
@@ -108,5 +134,4 @@ claim (`wf_39bf69be-ba3`) established what was still open at HEAD.
 - **Protocol → design binding.** `protocol_documents` has no project column, so
   the binding cannot be judged. It needs an additive column and key (PF-16
   territory) before the comparison.
-- **The filing picker** (`filingTarget.tsx`) offers every submission of the
-  organization and lets the server refuse. A UX change, next.
+
