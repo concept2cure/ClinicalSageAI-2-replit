@@ -54,8 +54,10 @@ resource "aws_db_instance" "this" {
   maintenance_window      = "Mon:04:00-Mon:05:00"
 
   performance_insights_enabled = true
-  monitoring_interval          = 60
-  monitoring_role_arn          = aws_iam_role.rds_monitoring.arn
+  # Performance Insights keeps query text; on the instance's own key, not aws/rds.
+  performance_insights_kms_key_id = var.kms_key_id
+  monitoring_interval             = 60
+  monitoring_role_arn             = aws_iam_role.rds_monitoring.arn
 
   enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
 
