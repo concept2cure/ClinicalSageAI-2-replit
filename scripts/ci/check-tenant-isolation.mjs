@@ -337,6 +337,9 @@ function walk(dir) {
     } else if (entry.isFile() && (full.endsWith('.ts') || full.endsWith('.js'))) {
       if (full.endsWith('.test.ts') || full.endsWith('.test.js')) continue;
       if (full.endsWith('.spec.ts') || full.endsWith('.spec.js')) continue;
+      // A real-database test (vitest.db.config.ts) is a test file too; its
+      // fixtures TRUNCATE and seed by design.
+      if (full.endsWith('.dbtest.ts')) continue;
       out.push(full);
     }
   }

@@ -1127,6 +1127,32 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
       reds are items 8 and 9 and the D5 lane's item 4.
     - **Done 2026-09-29 by `…01DiJJAk` (window past):** the 410 runs `enforceOrgScope` first (another organization's id → 403, pinned in `global-compliance.gdpr-rights.test.ts`, red without it); `ci:org-path-param-guards` 43/43.
 
+### Trunk CI, 2026-10-01 01:05 UTC (run 12713 at `ca636c7f`), checked by `…01DiJJAk` — fixed in part, handed on
+
+Three jobs were red. The suites fixed on 09-30 are green.
+
+**Lint, `ci:tenant-isolation:no-regression`.** Fixed in this lane: VR-08's two check-in queries had no organization filter. They are scoped now (VR-09, `15a38fbfe`).
+The gate had two gaps, both fixed:
+- It expanded a SQL fragment one level only, so a tenant predicate two variables deep did not count.
+- It scanned `.dbtest.ts` files, although its header exempts test files.
+
+A nested fragment with no tenant predicate is still flagged (`docs/evidence/D2-VAULT-VERSIONS/2026-10-01-version-list/red/tenant-gate-nested-fragment-probe.txt`).
+1. **→ The PF-08 lane (`2b33033e4`, `9109aa770`).** `server/services/c2c/project-retention.ts:66` (`WITH doomed AS (… FROM projects p WHERE ${predicate} FOR UPDATE`) reads `projects` by id or workspace with no organization predicate in the statement. This is the one finding left. Add the caller's organization to the predicate, or put a `// tenant-isolation-safe: <reason>` marker that names where ownership was established.
+
+**Test, 1 failure.**
+
+2. **→ The AnA-tools lane (`d8214c170`, 23:26).** In `server/services/living-record/__tests__/fact-change-audit-outcome.test.ts`, "establish_governed_fact tells AnA the record was not written" fails. Its `programId: 'prog-1'` now goes through `tool-record-scope.ts`'s ownership check. The test's `pool: {}` has no `query`, so the tool answers `PROGRAM_CHECK_UNAVAILABLE` and `status` is undefined. Stub the check as `tool-record-scope.test.ts` does, or give the pool mock a `query` that answers the ownership read. `8767b89b1` (DP-31) edited the same test afterwards; tell that lane.
+
+**Security Scan.** `ci:dependency-risk` and Trivy fail on advisories published upstream, not on a code change:
+- axios <1.20.0
+- nodemailer <=10.0.8
+- undici <7.29.1
+- engine.io <6.6.10
+- brace-expansion <5.0.12
+- @grpc/grpc-js <=1.13.5, under firebase 12.17.1
+
+The D6 ledger's window has passed (`67f8f2dd8`, 09-26), so this lane takes it next, as its own commit.
+
 ### Trunk CI Test, 2026-09-30 (run 12690 at `9639c5f4`), checked by `…01DiJJAk` — fixed
 
 Six Test-job failures, none in a Vault or catalog suite (the VR-04/07/15 suites are green). The owners' 24 h windows had passed, and each was a test the code had correctly outgrown. Only the tests changed:
