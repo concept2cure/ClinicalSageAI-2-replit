@@ -135,11 +135,13 @@ lint job was run.
   - the unkeyed-table baseline is stale;
   - `ci:pdf-runtime-canonicality`;
   - one proof-tier contract on `deploy-frontend`.
-- The whole real-database tier, on this session's database, failed in
-  20 files. Every failure checked reads `relation
-  "organization_retention_settings" does not exist`: trunk's newest
-  migrations were not on that database. Both review suites passed in it
-  (20/20).
+- The whole real-database tier, on a database rebuilt from empty at trunk
+  `78e0649e0`: **127 files, 1333 tests, all pass** (`green/db-tier.txt`).
+  - An earlier run on this session's older database failed in 20 files.
+    Every one read `relation "organization_retention_settings" does not
+    exist`, or held grants from an older recipe.
+  - That was the database, not the code: on the rebuilt database the same
+    files pass.
 - The ESLint ratchet is unchanged. The Review pane did not grow (248 lines
   against 244): the export is its own component.
 
