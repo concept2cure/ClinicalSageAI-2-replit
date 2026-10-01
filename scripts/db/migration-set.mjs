@@ -2916,6 +2916,15 @@ export const C2C_MIGRATION_FILES = [
   // docs/evidence/W2/2026-09-24-multi-task/u20-sessions-across-tasks.md.
   'migrations/20261001e_session_activity.sql',
 
+  // ── AnA action locks and per-organisation slots shared by every process
+  //    (2026-10-01, D1, audit W2 fix unit U21) ─────────────────────────────
+  // Decision B6 (no Redis): the write-action target lock and the per-org cap
+  // held per process, so two writes on one document ran on two tasks. Leases
+  // carry the acting organisation (organization_id INTEGER NOT NULL, public)
+  // so the sweep below gives the table its tenant policy. IF NOT EXISTS only.
+  // Evidence docs/evidence/W2/2026-09-24-multi-task/u21-action-leases.md.
+  'migrations/20261001f_coordination_leases.sql',
+
   // ── A review comment is fixed once posted (2026-10-01, D5) ────────────────
   // concept2cure_thread_comments (the Review surface's threads) could be
   // rewritten in place, soft-deleted and overwritten by the GDPR erasure, with
