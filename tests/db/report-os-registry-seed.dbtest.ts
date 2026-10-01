@@ -420,6 +420,36 @@ describe('the seal on the record: what a rewrite of the mutable rows cannot hide
   });
 });
 
+describe('the export of the sealed record', () => {
+  it('exports the final run as its sealed document, signed and verified, and records the export id it prints', async () => {
+    const res = await request(ro)
+      .get(`/api/report-os/runs/${runId}/export.pdf`)
+      .set(auth(tokenB))
+      .buffer(true)
+      .parse((r, done) => {
+        const chunks: Buffer[] = [];
+        r.on('data', (c: Buffer) => chunks.push(c));
+        r.on('end', () => done(null, Buffer.concat(chunks)));
+      });
+    expect(res.status).toBe(200);
+    const { PDFParse } = (await import('pdf-parse')) as unknown as { PDFParse: new (o: { data: Buffer }) => { getText(): Promise<{ text: string }> } };
+    const text = (await new PDFParse({ data: res.body as Buffer }).getText()).text.replace(/\s+/g, ' ');
+    const recorded = (
+      await owner.query(
+        `SELECT new_values::jsonb AS details FROM audit_logs
+          WHERE tenant_id = $1 AND record_id = $2 AND action = 'report_os.run_exported' ORDER BY occurred_at DESC LIMIT 1`,
+        [ORG_B, String(runId)]
+      )
+    ).rows[0]?.details as Record<string, unknown>;
+    expect(recorded).toMatchObject({ status: 'final', sealVerdict: 'intact', sha256: createHash('sha256').update(res.body as Buffer).digest('hex') });
+    expect(text).toContain(`Export ${recorded.exportId}`);
+    expect(text).toMatch(/Final\. Signed by .+ as approval/);
+    expect(text).toContain(`Reason: ${SIGNED.reason}`);
+    expect(text).toContain('Seal verification at export: intact.');
+    expect(text).not.toMatch(/NOT FINAL/);
+  });
+});
+
 /**
  * The forgery the second review found: the app role can write report_runs,
  * report_snapshots and audit_logs, so in three writes it could make a run that
