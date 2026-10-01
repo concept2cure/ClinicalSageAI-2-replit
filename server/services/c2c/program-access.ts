@@ -190,3 +190,42 @@ export async function programInOrganization(
   }
   return rows.length > 0;
 }
+
+/**
+ * Resolve the open program as a regulatory_programs UUID the organization
+ * owns. Null when there is none — the caller refuses.
+ *
+ * Both branches end at the same check. The legacy integer project's anchor
+ * (`projects.regulatory_program_id`) is a soft link with no key, so a row can
+ * name another organization's program, a missing one or a deleted one; it is
+ * never trusted on its own (PF-04 precondition P2).
+ */
+export interface OpenProjectContext {
+  organizationId?: number | null;
+  /** A legacy integer projects.id, when the client sent one. */
+  projectId?: number | null;
+  /** The project as the client sent it: a regulatory_programs UUID under the v2 shell. */
+  projectRef?: string | null;
+}
+
+export async function resolveOpenProgram(
+  pool: { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> },
+  ctx: OpenProjectContext,
+): Promise<string | null> {
+  const orgId = Number(ctx.organizationId);
+  const ref = typeof ctx.projectRef === 'string' ? ctx.projectRef.trim() : '';
+  if (ref && PROGRAM_UUID_RE.test(ref)) {
+    return (await programInOrganization(pool, ref, orgId)) ? ref : null;
+  }
+  const legacy = Number(ctx.projectId);
+  if (Number.isSafeInteger(legacy) && legacy > 0) {
+    const anchored = await pool.query(
+      `SELECT regulatory_program_id FROM projects WHERE id = $1 AND organization_id = $2 LIMIT 1`,
+      [legacy, orgId],
+    );
+    const programId = anchored.rows[0]?.regulatory_program_id;
+    if (typeof programId !== 'string' || !PROGRAM_UUID_RE.test(programId)) return null;
+    return (await programInOrganization(pool, programId, orgId)) ? programId : null;
+  }
+  return null;
+}

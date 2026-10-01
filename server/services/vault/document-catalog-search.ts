@@ -56,6 +56,19 @@ export interface CatalogSearchResult {
   unsearchableCount: number;
 }
 
+/** The query as a pgvector literal; a provider failure is the search being unavailable. */
+async function embedQuery(query: string): Promise<string> {
+  try {
+    const { getEmbeddingService } = await import('../enhancedEmbeddingService.js');
+    const { embedding } = await getEmbeddingService(pool as any).embed(query, 'text-embedding-3-small');
+    return `[${embedding.join(',')}]`;
+  } catch (err) {
+    throw new CatalogSearchUnavailableError(
+      `the embedding provider could not embed the query (${err instanceof Error ? err.message : 'unknown error'})`,
+    );
+  }
+}
+
 /**
  * Cosine search over vault.document_catalog.embedding, org-checked through
  * regulatory_programs like every other vault read.
@@ -63,21 +76,13 @@ export interface CatalogSearchResult {
 export async function searchCatalog(
   organizationId: number,
   query: string,
-  opts: { limit?: number; minSimilarity?: number } = {},
+  /** programId: one program's documents only (the open project, PF-10 S7); absent or null = the organization's. */
+  opts: { limit?: number; minSimilarity?: number; programId?: string | null } = {},
 ): Promise<CatalogSearchResult> {
   const limit = Math.min(25, Math.max(1, opts.limit ?? 8));
   const minSimilarity = opts.minSimilarity ?? 0.15;
-
-  let vectorLiteral: string;
-  try {
-    const { getEmbeddingService } = await import('../enhancedEmbeddingService.js');
-    const { embedding } = await getEmbeddingService(pool as any).embed(query, 'text-embedding-3-small');
-    vectorLiteral = `[${embedding.join(',')}]`;
-  } catch (err) {
-    throw new CatalogSearchUnavailableError(
-      `the embedding provider could not embed the query (${err instanceof Error ? err.message : 'unknown error'})`,
-    );
-  }
+  const programId = opts.programId ?? null;
+  const vectorLiteral = await embedQuery(query);
 
   try {
     const counts = await pool.query(
@@ -87,8 +92,9 @@ export async function searchCatalog(
        FROM vault.documents d
        JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $1
        LEFT JOIN vault.document_catalog c ON c.document_id = d.id
-      WHERE d.deleted_at IS NULL`,
-      [organizationId],
+      WHERE d.deleted_at IS NULL
+        AND ($2::uuid IS NULL OR d.program_id = $2::uuid)`,
+      [organizationId, programId],
     );
     const res = await pool.query(
       `SELECT d.id, d.program_id, rp.name AS program_name, d.file_name, d.document_title,
@@ -100,9 +106,10 @@ export async function searchCatalog(
          JOIN regulatory_programs rp ON rp.id = d.program_id AND rp.organization_id = $1
         WHERE c.embedding IS NOT NULL AND c.catalog_status = 'cataloged'
           AND 1 - (c.embedding <=> $2::vector) >= $3
+          AND ($5::uuid IS NULL OR d.program_id = $5::uuid)
         ORDER BY c.embedding <=> $2::vector
         LIMIT $4`,
-      [organizationId, vectorLiteral, minSimilarity, limit],
+      [organizationId, vectorLiteral, minSimilarity, limit, programId],
     );
     return {
       hits: res.rows.map((r: any) => ({

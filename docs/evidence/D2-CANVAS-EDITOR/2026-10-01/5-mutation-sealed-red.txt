@@ -1,0 +1,5 @@
+# 5. Mutation — the insert offer ignores `editable`: a frozen document is offered as an insert target
+ × client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — a sealed document is known to AnA, and takes no insert (2026-10-01) > names the frozen document on the turn but offers no insert into it 745ms
+   → expected <button type="button" …(2)>…(2)</button> to be null
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 16 skipped (17)

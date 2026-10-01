@@ -50,6 +50,7 @@ import {
 import { registerDocumentPlacementHandlers } from './document-placement-tools.js';
 import { registerDocumentPassageHandlers } from './document-passage-tools.js';
 import { vaultWriteRefusal } from '../vault/vault-write-authority.js';
+import { catalogScope, documentScopeRefusal } from './catalog-scope.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Handlers
@@ -128,10 +129,14 @@ async function handleListProjectDocuments(
   if ('refusal' in gate) return JSON.stringify({ error: gate.refusal });
   const { svc, orgId } = gate;
 
-  let programId = typeof input.program_id === 'string' && input.program_id ? input.program_id : null;
-  if (!programId && typeof ctx?.projectId === 'number') {
-    programId = await svc.resolveProgramForProject(ctx.projectId, orgId);
-  }
+  const scope = await catalogScope(
+    ctx,
+    orgId,
+    typeof input.program_id === 'string' && input.program_id ? input.program_id : null,
+    'read',
+  );
+  if ('error' in scope) return JSON.stringify({ ok: false, error: scope.error, code: scope.code });
+  const { programId } = scope;
   const limit = typeof input.limit === 'number' ? input.limit : undefined;
   const page = await svc.listProjectDocuments(orgId, { programId, limit });
   const chat = await chatUploadsFor(svc, orgId, programId, limit);
@@ -288,6 +293,9 @@ async function handleReadProjectDocument(
   if (!doc) {
     return unknownDocumentRefusal(documentId, 'read_project_document');
   }
+  // The open project's documents only (PF-10 S7): checked before any text is served or receipt written.
+  const outOfScope = await documentScopeRefusal(ctx, orgId, doc.programId);
+  if (outOfScope) return outOfScope;
 
   const text = doc.extractedText ?? '';
   const unreadable = await ensureReadable(svc, doc, text);
@@ -403,6 +411,12 @@ async function handleCatalogProjectDocument(
   if (CHAT_UPLOAD_ID.test(parsed.documentId)) {
     return unknownDocumentRefusal(parsed.documentId, 'catalog_project_document');
   }
+  // The open project's documents only (PF-10 S7), before the shared record is written.
+  const target = await svc.loadDocumentForOrg(parsed.documentId, orgId);
+  if (target) {
+    const outOfScope = await documentScopeRefusal(ctx, orgId, target.programId);
+    if (outOfScope) return outOfScope;
+  }
   const result = await svc.completeCatalog({
     ...parsed,
     organizationId: orgId,
@@ -443,12 +457,16 @@ async function handleSearchProjectDocuments(
   if (query.length < 3) {
     return JSON.stringify({ error: 'search_project_documents requires a query of at least 3 characters.' });
   }
+  // The open project's documents only (PF-10 S7); the organization's with no project open.
+  const scope = await catalogScope(ctx, orgId, null, 'read');
+  if ('error' in scope) return JSON.stringify({ ok: false, error: scope.error, code: scope.code });
   const { searchCatalog, CatalogSearchUnavailableError } = await import(
     '../vault/document-catalog-search.js'
   );
   try {
     const result = await searchCatalog(orgId, query, {
       limit: typeof input.limit === 'number' ? input.limit : undefined,
+      programId: scope.programId,
     });
     const unsearchable =
       result.unsearchableCount > 0
@@ -542,7 +560,7 @@ async function handleFileChatUploadToVault(
 ): Promise<string> {
   const gate = await requireCatalog(ctx, 'file_chat_upload_to_vault');
   if ('refusal' in gate) return JSON.stringify({ error: gate.refusal });
-  const { svc, orgId } = gate;
+  const { orgId } = gate;
 
   const parsed = parseFilingInput(input);
   if ('error' in parsed) return JSON.stringify(parsed);
@@ -556,19 +574,9 @@ async function handleFileChatUploadToVault(
     });
   }
 
-  const programId =
-    parsed.programId ??
-    (typeof ctx?.projectId === 'number'
-      ? await svc.resolveProgramForProject(ctx.projectId, orgId)
-      : null);
-  if (!programId) {
-    return JSON.stringify({
-      ok: false,
-      error:
-        'No regulatory program to file this into: none was given and the active project is not anchored to one. ' +
-        'Ask which program it belongs to, or pass program_id.',
-    });
-  }
+  const scope = await catalogScope(ctx, orgId, parsed.programId, 'file');
+  if ('error' in scope) return JSON.stringify({ ok: false, error: scope.error, code: scope.code });
+  const programId = scope.programId!;
 
   // The one upload-to-Vault orchestration (VR-11): the data room's "File into
   // Vault" calls the same function, so the two cannot drift apart.
