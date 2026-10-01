@@ -19,7 +19,9 @@
  * tests/db/account-standing.dbtest.ts:92-97 relies on.
  *
  * Assertions are on the SQL the fake pool received, not only on the response.
- * Data layer is mocked — no DB needed.
+ * Data layer is mocked — no DB needed. Since P1-49 (2026-10-01) each write and
+ * its audit event share a transaction; a transaction's statements reach the
+ * same fake pool unless a test gives the transaction's client its own answers.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -47,7 +49,10 @@ vi.mock('../../services/tenant/tenant-lifecycle.js', () => ({
 vi.mock('../../db', () => ({
   query: queryMock,
   transaction: async (cb: (client: unknown) => Promise<unknown>) =>
-    cb({ query: clientQueryMock }),
+    cb({
+      query: async (sql: string, params?: unknown[]) =>
+        (await clientQueryMock(sql, params)) ?? queryMock(sql, params),
+    }),
 }));
 
 vi.mock('../../middleware/orgMembership', () => ({
@@ -104,6 +109,7 @@ let app: express.Express;
 
 beforeEach(async () => {
   vi.clearAllMocks();
+  clientQueryMock.mockReset();
   tenantEntitledMock.mockResolvedValue(true);
   const router = (await import('../../routes/scim')).default;
   app = express();

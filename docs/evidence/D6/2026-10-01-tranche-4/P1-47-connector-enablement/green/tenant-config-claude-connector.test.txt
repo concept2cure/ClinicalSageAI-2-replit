@@ -1,0 +1,38 @@
+# git HEAD: 0812a990 + the P1-47 working-tree change
+# command: npx vitest run server/routes/__tests__/tenant-config-claude-connector.test.ts
+# (structured JSON log lines filtered out)
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > absent is disabled; the owner is told they can change it 1655ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a admin sees the state and that they cannot change it 5ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a manager sees the state and that they cannot change it 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a member sees the state and that they cannot change it 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a viewer sees the state and that they cannot change it 4ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > a stored value that is not exactly true reads as disabled 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > reading the setting > another organization's setting is not read 11ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > an administrator is refused with 403, and nothing is written or recorded 12ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a manager is refused with 403, and nothing is written or recorded 5ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a member is refused with 403, and nothing is written or recorded 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > platform staff (super_admin) is refused with 403, and nothing is written or recorded 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > another organization's owner is refused with 403, and nothing is written or recorded 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > the owner enables it: one transaction, the setting and its chained audit row with the value before and after 6ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > the owner disables it, and the row records true → false 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a body of {} is refused with 400 and nothing is written 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a body of {"enabled":"yes"} is refused with 400 and nothing is written 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a body of {"enabled":true,"extra":1} is refused with 400 and nothing is written 3ms
+stderr | server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a refused audit row is a refused change: rolled back, 500, not reported as saved
+
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a body of null is refused with 400 and nothing is written 6ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > only the owner of this organization changes it > a refused audit row is a refused change: rolled back, 500, not reported as saved 5ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it > PATCH /settings naming claudeConnector → 403, nothing written 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it > control: PATCH /settings without it still writes 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it > PATCH /settings/claudeConnector is not a section the section door writes 3ms
+ ✓ server/routes/__tests__/tenant-config-claude-connector.test.ts > the general settings doors do not write it > a reset keeps the stored connector setting: it is not a default to restore 3ms
+
+ Test Files  1 passed (1)
+      Tests  23 passed (23)
+   Start at  14:18:43
+   Duration  2.39s (transform 1.04s, setup 106ms, import 224ms, tests 1.76s, environment 0ms)
+

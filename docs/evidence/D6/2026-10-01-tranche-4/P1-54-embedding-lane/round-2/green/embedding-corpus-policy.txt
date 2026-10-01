@@ -1,0 +1,31 @@
+# GREEN, 2026-10-01T16:24:46Z: npx vitest run server/services/__tests__/embedding-corpus-policy.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/__tests__/embedding-corpus-policy.test.ts > embedding-corpus-policy > has every corpus mapped to a model with matching dimensions 3ms
+ ✓ server/services/__tests__/embedding-corpus-policy.test.ts > embedding-corpus-policy > has unique corpus names and unique table names 0ms
+ ✓ server/services/__tests__/embedding-corpus-policy.test.ts > embedding-corpus-policy > has at least one entry per known table 2ms
+ ✓ server/services/__tests__/embedding-corpus-policy.test.ts > embedding-corpus-policy > throws a helpful error for an unregistered corpus 1ms
+ ✓ server/services/__tests__/embedding-corpus-policy.test.ts > embedding-corpus-policy > lists every known corpus 0ms
+ ✓ server/services/__tests__/embedding-corpus-policy.test.ts > embedding-corpus-policy > assertModelMatchesCorpus > passes when model matches corpus policy 0ms
+ ✓ server/services/__tests__/embedding-corpus-policy.test.ts > embedding-corpus-policy > assertModelMatchesCorpus > throws when querying 3072d corpus with 1536d model (dimension mismatch) 0ms
+ ✓ server/services/__tests__/embedding-corpus-policy.test.ts > embedding-corpus-policy > assertModelMatchesCorpus > throws when querying 1536d corpus with 3072d model 0ms
+ ✓ server/services/__tests__/embedding-corpus-policy.test.ts > embedding-corpus-policy > assertModelMatchesCorpus > throws when querying ragChunks with the legacy ada model (silent retrieval miss) 0ms
+ ✓ server/services/__tests__/embedding-corpus-policy.test.ts > embedding-corpus-policy > assertModelMatchesCorpus > passes for vaultDocumentChunks with 3-small (active writer + reader model) 0ms
+ ✓ server/services/__tests__/embedding-corpus-policy.test.ts > embedding-corpus-policy > assertModelMatchesCorpus > throws when querying vaultDocumentChunks with ada-002 (silent retrieval miss) 0ms
+ ✓ server/services/__tests__/embedding-corpus-policy.test.ts > the model each lane writes into a corpus > the self-hosted lane writes BAAI/bge-m3, native width 1024 1ms
+ ✓ server/services/__tests__/embedding-corpus-policy.test.ts > the model each lane writes into a corpus > through the self-hosted lane every corpus holds bge-m3, stored at the corpus width, zero-padded 1ms
+ ✓ server/services/__tests__/embedding-corpus-policy.test.ts > the model each lane writes into a corpus > through the OpenAI lane a corpus holds the model its callers name, at its own width 0ms
+ ✓ server/services/__tests__/embedding-corpus-policy.test.ts > the model each lane writes into a corpus > every corpus names the vector column its rows are written to 0ms
+ ✓ server/services/__tests__/embedding-corpus-policy.test.ts > the model each lane writes into a corpus > registers lumen_data_atoms, the corpus the embedding runtime itself writes (embedAtom) 0ms
+ ✓ server/services/__tests__/embedding-corpus-policy.test.ts > findVectorsFromAnotherModel: the check the readiness probe uses > reads, past the model's 1024 values, whether anything is not zero, in every corpus table 2ms
+ ✓ server/services/__tests__/embedding-corpus-policy.test.ts > findVectorsFromAnotherModel: the check the readiness probe uses > names each corpus holding vectors the self-hosted model did not write, and who could see them 1ms
+ ✓ server/services/__tests__/embedding-corpus-policy.test.ts > findVectorsFromAnotherModel: the check the readiness probe uses > a corpus whose table this database does not have holds nothing, and is reported as absent 1ms
+ ✓ server/services/__tests__/embedding-corpus-policy.test.ts > findVectorsFromAnotherModel: the check the readiness probe uses > a query that fails is an error, never an empty finding 1ms
+
+ Test Files  1 passed (1)
+      Tests  20 passed (20)
+   Start at  16:24:47
+   Duration  508ms (transform 143ms, setup 96ms, import 80ms, tests 21ms, environment 0ms)
+

@@ -163,7 +163,10 @@ variable "smtp_from" {
   type = string
 }
 
-# D1 brief B4: the founder's compliance decision. No default, no example.
+# No default. Its "local" entry (the in-VPC embedding lane) is decided by
+# ADR-0014 §1.5 (amended 2026-10-01) and shown in terraform.tfvars.example; the
+# stack refuses a value without it. The "anthropic" entry is the founder's
+# compliance decision (D1 brief B4), with no example.
 variable "ai_provider_placement_approvals" {
   type = string
 }

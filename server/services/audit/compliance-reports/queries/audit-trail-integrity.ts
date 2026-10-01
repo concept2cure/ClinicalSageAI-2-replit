@@ -14,6 +14,10 @@
  *       tenant on the admin-scope connection the chain walk uses
  *       (compliance-reports/integrity-checks.ts).
  *
+ * It also names the latest signed audit-trail review on or before the end of
+ * the period, and says when it is overdue (P1-25, Annex 11 §9; the record is
+ * services/audit/compliance-reviews.ts, the section queries/review-record.ts).
+ *
  * @module server/services/audit/compliance-reports/queries/audit-trail-integrity
  */
 import { NO_CHAINED_ROWS_REASON } from '../../audited-export';
@@ -26,6 +30,7 @@ import type {
   SectionResult,
   TenantChainWalk,
 } from '../types';
+import { reviewSection, reviewSectionDef } from './review-record';
 import { columns, isoNaiveUtc, isoUtc, naiveAsUtc, naiveUtcNote, utcWallClock } from './section';
 
 type Verdict = 'intact' | 'broken' | 'not verified';
@@ -65,6 +70,19 @@ SELECT 'audit_events' AS store,
   FROM audit_events e
  WHERE e.organization_id = $1`;
 
+/**
+ * Where the chain broke. The walk's first break as JSON (its break already
+ * redacted by walkTenantChain); when the anchored head is what broke, the
+ * head's own words and its breaks, this organisation's only (fix round DP-71,
+ * 2026-10-01: a head break used to print "null").
+ */
+function brokenDetail(walk: TenantChainWalk): string {
+  const head = walk.head;
+  if (head?.status !== 'broken') return JSON.stringify(walk.brokenAt ?? null);
+  const headWords = `${head.reason}: ${JSON.stringify(head.breaks)}`;
+  return walk.brokenAt == null ? headWords : `${JSON.stringify(walk.brokenAt)}; ${headWords}`;
+}
+
 function chainVerdict(walk: TenantChainWalk | undefined): VerdictRow {
   const base = { check: 'audit_logs hash chain', store: 'audit_logs', rows_checked: walk?.rowsChecked ?? null };
   if (!walk) return { ...base, verdict: 'not verified', detail: 'The chain walk did not run.' };
@@ -73,10 +91,13 @@ function chainVerdict(walk: TenantChainWalk | undefined): VerdictRow {
     return { ...base, verdict: 'not verified', rows_checked: 0, detail: NO_CHAINED_ROWS_REASON };
   }
   if (walk.ok === true) {
-    return { ...base, verdict: 'intact', detail: 'Every chained row re-derives from its predecessor.' };
+    // What was done about the newest rows, which the walk cannot see removed:
+    // verified against the latest anchor, or "head not verified against the anchor".
+    const head = walk.head ? `; ${walk.head.reason}` : '';
+    return { ...base, verdict: 'intact', detail: `Every chained row re-derives from its predecessor${head}.` };
   }
   if (walk.ok === false) {
-    return { ...base, verdict: 'broken', detail: JSON.stringify(walk.brokenAt ?? null) };
+    return { ...base, verdict: 'broken', detail: brokenDetail(walk) };
   }
   return {
     ...base,
@@ -153,13 +174,14 @@ async function run(ctx: RunContext): Promise<Record<string, SectionResult>> {
       truncated: false,
       notes: ['Each check covers every row of its store for this organisation, not only the rows in the period.'],
     },
+    review: await reviewSection(ctx, 'audit_trail'),
   };
 }
 
 export const auditTrailIntegrity: ReportDefinition = {
   id: 'audit-trail-integrity',
   title: 'Audit trail integrity attestation',
-  purpose: "States what this organisation's audit stores hold and what each integrity check found at the time of the report, saying so plainly when a check could not be run.",
+  purpose: "States what this organisation's audit stores hold and what each integrity check found at the time of the report, saying so plainly when a check could not be run, and names the latest signed audit trail review.",
   basis: ['21 CFR 11.10(e)', 'EU GMP Annex 11 §9', 'PMDA ER/ES guideline (authenticity)'],
   period: 'range',
   walksChain: true,
@@ -190,6 +212,7 @@ export const auditTrailIntegrity: ReportDefinition = {
         ['detail', 'Detail'],
       ]),
     },
+    reviewSectionDef('audit_trail'),
   ],
   notRecorded: [
     'Rows written before hashing was introduced carry no hash; they are counted, but no link through them can be checked.',

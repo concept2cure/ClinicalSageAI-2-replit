@@ -8,6 +8,8 @@
  * @module server/services/audit/compliance-reports/types
  */
 
+import type { TenantChainHead } from '../tenant-chain-verdict';
+
 export type PeriodKind = 'range' | 'as-of';
 
 /** The period a report covers, as stated in the report and its manifest. UTC dates, inclusive. */
@@ -90,6 +92,8 @@ export interface TenantChainWalk {
   rowsChecked?: number;
   brokenAt?: unknown;
   reason?: string;
+  /** The chain head against the latest anchor (tenant-chain-verdict.ts TenantChainHead). */
+  head?: TenantChainHead;
 }
 
 /** The audit_events linkage snapshot (signedAuditExport.ts snapshotChainIntegrity). */

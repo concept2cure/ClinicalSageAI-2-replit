@@ -28,11 +28,23 @@ import {
 } from '../ana-readiness-state';
 import { setSchemaReadiness, resetSchemaReadinessForTests } from '../readiness-state';
 import { mountFastPathHealthEndpoints } from '../inline-endpoints';
+import { isolateLaneEnvironment, LANE, laneGateway, resetEmbeddingLaneFixtures } from './support/embedding-lane';
 
 // The gateway is stubbed so each provider posture can be reproduced exactly.
 // `gatewayStub` is reassigned per test; `getGateway` reads it at call time.
 let gatewayStub: unknown;
 let getGatewayThrows: Error | null = null;
+
+// The embedding lane (DP-71): readiness embeds one short text through it
+// before it says ready, so every case below meets a server, and the corpus
+// check on the self-hosted lane. Both answer as healthy unless a case says
+// otherwise (support/embedding-lane.ts).
+vi.mock('openai', async () => (await import('./support/embedding-lane')).openaiModule);
+vi.mock('../../services/embedding-corpus-policy.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/embedding-corpus-policy')>()),
+  findVectorsFromAnotherModel: (await import('./support/embedding-lane')).corpus.check,
+}));
+vi.mock('../../db/runtime.js', () => ({ getPool: () => ({ query: async () => ({ rows: [] }) }) }));
 
 vi.mock('../../services/ai-gateway/index.js', () => ({
   getGateway: () => {
@@ -63,11 +75,12 @@ function gateway(opts: { providers: string[]; deterministic?: boolean }) {
   };
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   resetAnaReadinessForTests();
   resetSchemaReadinessForTests();
   gatewayStub = gateway({ providers: ['anthropic'] });
   getGatewayThrows = null;
+  await resetEmbeddingLaneFixtures();
 });
 
 afterEach(() => {
@@ -263,6 +276,122 @@ describe('evaluateAnaReadiness — regulatory drafting needs an approved model (
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+//
+// R4 (P1-54) — a lane an organization must elect is not a lane for every
+// organization.
+//
+// In production the gateway applies the provider election (ADR-0014 §1,
+// P1-45): OpenAI, Azure and Vertex serve an organization only when its
+// placement policy names them. Readiness counted lanes without asking whom
+// they serve, so a deployment whose embeddings ran only on OpenAI (the default
+// when EMBEDDING_PROVIDER is unset), or whose only drafting model was Claude on
+// Vertex, reported ready while every organization that had not elected that
+// vendor was refused — Vault search for all of them, or every draft.
+//
+// Built from the real gateway and the real embedding seam, as U3a is.
+
+// The environment helpers (LANE, isolateLaneEnvironment, laneGateway) are in
+// support/embedding-lane.ts, shared with ana-readiness-embedding-probe.test.ts.
+
+describe('evaluateAnaReadiness — an embedding lane an organization must elect (R4, P1-54)', () => {
+  isolateLaneEnvironment();
+
+  it('is NOT serving in production when embeddings run on OpenAI, the default lane', async () => {
+    gatewayStub = await laneGateway('production', { ANTHROPIC_API_KEY: 'sk-ant-test' });
+
+    const state = await evaluateAnaReadiness();
+
+    expect(state).toBe('needs_election');
+    expect(isAnaReadinessServing(state)).toBe(false);
+    const detail = getAnaReadinessDetail();
+    expect(detail).toContain('openai');
+    expect(detail).toMatch(/Vault and knowledge-base search/);
+    expect(detail).toContain('EMBEDDING_PROVIDER=local');
+  });
+
+  it('an OpenAI key does not make the OpenAI lane serve an organization that has not elected it', async () => {
+    gatewayStub = await laneGateway('production', {
+      ANTHROPIC_API_KEY: 'sk-ant-test',
+      OPENAI_API_KEY: 'sk-test-openai',
+      EMBEDDING_PROVIDER: 'openai',
+    });
+
+    expect(await evaluateAnaReadiness()).toBe('needs_election');
+  });
+
+  it('is serving in production with the self-hosted embedding lane, and says which lane embeds', async () => {
+    gatewayStub = await laneGateway('production', { ANTHROPIC_API_KEY: 'sk-ant-test', ...LANE });
+
+    const state = await evaluateAnaReadiness();
+
+    expect(state).toBe('ready');
+    expect(isAnaReadinessServing(state)).toBe(true);
+    expect(getAnaReadinessDetail()).toContain('embeddings: local');
+  });
+
+  it('is NOT serving when the self-hosted lane names no address', async () => {
+    gatewayStub = await laneGateway('production', { ANTHROPIC_API_KEY: 'sk-ant-test', EMBEDDING_PROVIDER: 'local' });
+
+    const state = await evaluateAnaReadiness();
+
+    expect(state).toBe('no_embedding_lane');
+    expect(isAnaReadinessServing(state)).toBe(false);
+    expect(getAnaReadinessDetail()).toContain('EMBEDDING_LOCAL_BASE_URL');
+  });
+
+  it('outside production nothing needs an election, so the default embedding lane does not change the verdict', async () => {
+    gatewayStub = await laneGateway('development', { ANTHROPIC_API_KEY: 'sk-ant-test' });
+
+    expect(await evaluateAnaReadiness()).toBe('ready');
+  });
+
+  it('/readyz answers 503 with ana down when the only embedding lane needs an election', async () => {
+    gatewayStub = await laneGateway('production', { ANTHROPIC_API_KEY: 'sk-ant-test' });
+    await evaluateAnaReadiness();
+    setSchemaReadiness('ready', '');
+    delete process.env.REDIS_URL;
+    delete process.env.REDIS_TLS_URL;
+    const a = express();
+    mountFastPathHealthEndpoints(a, { query: async () => ({ rows: [{ '?column?': 1 }] }) } as never);
+
+    const res = await request(a).get('/readyz');
+
+    expect(res.status).toBe(503);
+    expect(res.body.dependencies.ana).toBe('down');
+    expect(res.body.anaState).toBe('needs_election');
+    expect(res.body.anaDetail).toContain('EMBEDDING_PROVIDER=local');
+  });
+});
+
+// DP-71 (the lane is ready only once it has embedded at the corpus width) is
+// pinned in ana-readiness-embedding-probe.test.ts.
+
+describe('evaluateAnaReadiness — a drafting lane an organization must elect (R4, P1-54)', () => {
+  isolateLaneEnvironment();
+
+  it('is NOT serving in production when drafting runs only on Vertex, a lane an organization must elect', async () => {
+    gatewayStub = await laneGateway('production', { AI_VERTEX_ENABLED: 'true', ...LANE });
+
+    const state = await evaluateAnaReadiness();
+
+    expect(state).toBe('needs_election');
+    expect(isAnaReadinessServing(state)).toBe(false);
+    const detail = getAnaReadinessDetail();
+    expect(detail).toContain('claude-opus-4-vertex');
+    expect(detail).toMatch(/regulatory drafting/);
+    // The remedy names the lanes every organization reaches, from the registry.
+    expect(detail).toContain('anthropic');
+    expect(detail).toContain('bedrock');
+  });
+
+  it('Vertex beside Anthropic is serving: every organization still has a drafting lane', async () => {
+    gatewayStub = await laneGateway('production', { AI_VERTEX_ENABLED: 'true', ANTHROPIC_API_KEY: 'sk-ant-test', ...LANE });
+
+    expect(await evaluateAnaReadiness()).toBe('ready');
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 describe('logAnaReadinessBanner', () => {
   it('prints to console.error when AnA cannot answer', () => {
@@ -300,6 +429,56 @@ describe('logAnaReadinessBanner', () => {
     expect(spy).toHaveBeenCalledOnce();
     expect(spy.mock.calls[0][0]).toContain('AnA CANNOT DRAFT');
     expect(spy.mock.calls[0][0]).not.toContain('Every chat turn will fail');
+    expect(spy.mock.calls[0][0]).toContain('NOT READY');
+  });
+
+  it('says who is refused when a lane serves elected organizations only (R4)', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    setAnaReadiness('needs_election', 'The embedding lane is openai (EMBEDDING_PROVIDER)');
+
+    logAnaReadinessBanner();
+
+    expect(spy).toHaveBeenCalledOnce();
+    expect(spy.mock.calls[0][0]).toContain('ELECTED');
+    expect(spy.mock.calls[0][0]).toContain('The embedding lane is openai');
+    expect(spy.mock.calls[0][0]).not.toContain('Every chat turn will fail');
+    expect(spy.mock.calls[0][0]).toContain('NOT READY');
+  });
+
+  it('says search is what fails when the embedding lane cannot be built (R4)', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    setAnaReadiness('no_embedding_lane', 'EMBEDDING_PROVIDER=local requires EMBEDDING_LOCAL_BASE_URL');
+
+    logAnaReadinessBanner();
+
+    expect(spy).toHaveBeenCalledOnce();
+    expect(spy.mock.calls[0][0]).toContain('EMBEDDING LANE');
+    expect(spy.mock.calls[0][0]).not.toContain('Every chat turn will fail');
+    expect(spy.mock.calls[0][0]).toContain('NOT READY');
+  });
+
+  it('says search is what fails when the embedding lane has not answered at the corpus width (DP-71)', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    setAnaReadiness('embedding_lane_down', 'The embedding lane local could not be reached');
+
+    logAnaReadinessBanner();
+
+    expect(spy).toHaveBeenCalledOnce();
+    expect(spy.mock.calls[0][0]).toContain('AnA CANNOT SEARCH');
+    expect(spy.mock.calls[0][0]).toContain('could not be reached');
+    expect(spy.mock.calls[0][0]).not.toContain('Every chat turn will fail');
+    expect(spy.mock.calls[0][0]).toContain('NOT READY');
+  });
+
+  it('says a corpus must be re-embedded when it holds vectors another model wrote (DP-71)', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    setAnaReadiness('embedding_corpus_unverified', 'vault.document_chunks holds 4 vectors');
+
+    logAnaReadinessBanner();
+
+    expect(spy).toHaveBeenCalledOnce();
+    expect(spy.mock.calls[0][0]).toContain('ANOTHER MODEL');
+    expect(spy.mock.calls[0][0]).toContain('vault.document_chunks');
     expect(spy.mock.calls[0][0]).toContain('NOT READY');
   });
 

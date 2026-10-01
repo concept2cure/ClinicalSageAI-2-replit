@@ -2013,18 +2013,29 @@ export class AIGateway {
       });
       approvals = {};
     }
-    const region = request.dataResidency && request.dataResidency !== 'any'
-      ? request.dataResidency
-      : placement.regions[0];
+    // A self-hosted placement satisfies any tenant residency (ADR-0014 §1.5,
+    // amended 2026-10-01; isPlacementCompliant): the data stays in the region
+    // the deployment runs in, and that residency is enforced for it by the
+    // tenant floor (requestPlacementDenial), before this gate. So its decision
+    // is made at its own region, `on_prem`, against the approval's, with no
+    // tenant region to compare. Until P1-54 round 2 the tenant's residency was
+    // compared, as a string, with the approval's `on_prem`, and every PII or
+    // PHI embedding of an EU- or US-resident tenant through the in-VPC lane was
+    // refused. Every other substrate is still held to the tenant's region here.
+    const selfHosted = placement.substrate === 'self_hosted';
+    const tenantRegion = request.dataResidency && request.dataResidency !== 'any' ? request.dataResidency : undefined;
+    const region = selfHosted ? placement.regions[0] : (tenantRegion ?? placement.regions[0]);
     const approval = approvals[modelConfig.provider];
     const decision = decideSensitivePlacement({
       environment: process.env.NODE_ENV || 'development',
       detectedDataClass,
       tenantPolicy: {
         resolution: request.sensitiveTenantPolicy?.resolution ?? 'absent',
-        requiredRegion: request.sensitiveTenantPolicy?.residency && request.sensitiveTenantPolicy.residency !== 'any'
-          ? request.sensitiveTenantPolicy.residency
-          : request.dataResidency && request.dataResidency !== 'any' ? request.dataResidency : undefined,
+        requiredRegion: selfHosted
+          ? undefined
+          : request.sensitiveTenantPolicy?.residency && request.sensitiveTenantPolicy.residency !== 'any'
+            ? request.sensitiveTenantPolicy.residency
+            : tenantRegion,
         requireZeroRetention: request.sensitiveTenantPolicy?.zeroDataRetention ?? request.zeroDataRetention,
         allowedProviders: request.sensitiveTenantPolicy?.allowedSubstrates &&
           !request.sensitiveTenantPolicy.allowedSubstrates.includes(placement.substrate)

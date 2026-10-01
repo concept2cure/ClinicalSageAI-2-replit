@@ -3,19 +3,31 @@
  *
  * Handles tenant-specific configuration settings.
  */
-import { isDeepStrictEqual } from 'node:util';
-import { Router, type Request } from 'express';
+import { Router } from 'express';
 import { z } from 'zod';
 import { eq } from 'drizzle-orm';
 import { organizations } from '../../shared/schema';
 import { authMiddleware } from '../auth';
 import { requireOrganizationContext } from '../middleware/tenantContext';
-import { governedActorId } from '../middleware/orgMembership';
 import { createScopedLogger } from '../utils/logger';
-import { clientIpOf } from '../utils/client-ip';
-import { requestDb, requestPgClient } from '../db/requestDb';
+import { requestDb } from '../db/requestDb';
 import { staffCrossOrgScope } from '../middleware/staffCrossOrgScope';
-import { writeChainedAuditRow } from '../services/auditService';
+// The one settings writer and its record, shared with the AnA platform
+// controller (P1-49, DP-58): services/tenant/tenant-settings-writer.ts.
+import {
+  asSettings,
+  overlaySettings,
+  writeTenantSettings,
+  type Settings,
+} from '../services/tenant/tenant-settings-writer';
+import {
+  CLAUDE_CONNECTOR_SETTING,
+  CONNECTOR_NOT_A_GENERAL_SETTING,
+  CONNECTOR_OPENER_ONLY,
+  claudeConnectorEnabled,
+  mayChangeClaudeConnector,
+  namesClaudeConnector,
+} from '../mcp/auth/connector-enablement';
 
 const logger = createScopedLogger('tenant-config-api');
 const router = Router();
@@ -124,136 +136,6 @@ const tenantSettingsSchema = z.object({
     .optional(),
 });
 
-type Settings = Record<string, unknown>;
-
-function asSettings(value: unknown): Settings {
-  return value && typeof value === 'object' && !Array.isArray(value) ? (value as Settings) : {};
-}
-
-/**
- * The settings whose values a write's audit row carries, before and after
- * (P1-41, DP-57): the organisation's access-control posture and its audit-trail
- * retention. Every other setting is recorded by section and field NAME only —
- * notifications carry webhook URLs, which are credentials, and a value recorded
- * in an append-only chain can never be removed.
- */
-const VALUE_AUDITED: Readonly<Record<string, readonly string[]>> = {
-  security: ['mfaRequired', 'passwordPolicy', 'sessionTimeoutMinutes', 'ipRestrictions'],
-  qmp: ['auditTrailRetentionDays'],
-};
-
-function pick(section: Settings, keys: readonly string[]): Settings {
-  return Object.fromEntries(keys.map(k => [k, section[k] ?? null]));
-}
-
-/** The names, never the values, of a section's fields whose stored value differs. */
-function changedFieldNames(before: unknown, after: unknown): string[] {
-  const b = asSettings(before);
-  const a = asSettings(after);
-  return [...new Set([...Object.keys(b), ...Object.keys(a)])]
-    .filter(k => !isDeepStrictEqual(b[k], a[k]))
-    .sort();
-}
-
-/** What a settings write's audit row records: the sections written, the changed field names, and the audited values. */
-function settingsAuditDetails(before: Settings, after: Settings, sections: string[]) {
-  const changedFields: Record<string, string[]> = {};
-  const values: Record<string, { before: Settings; after: Settings }> = {};
-  for (const section of sections) {
-    const fields = changedFieldNames(before[section], after[section]);
-    if (fields.length > 0) changedFields[section] = fields;
-    const audited = VALUE_AUDITED[section];
-    if (audited) {
-      values[section] = {
-        before: pick(asSettings(before[section]), audited),
-        after: pick(asSettings(after[section]), audited),
-      };
-    }
-  }
-  return { sections, changedFields, values };
-}
-
-interface SettingsWrite {
-  action: 'tenant_settings_changed' | 'tenant_settings_reset';
-  /** The settings to store, from those stored now and the tenant's tier. */
-  next: (current: Settings, tier: string) => Settings;
-  /** The sections this write names, given what was stored and what will be. */
-  sections: (current: Settings, next: Settings) => string[];
-}
-
-/**
- * One settings write: the stored settings read under a row lock, the new ones
- * written, and the write's chained audit row — one transaction on the request's
- * own connection (requestDb is Drizzle over that same client), so the change
- * and its record commit or roll back together. A refused audit row throws and
- * the write is rolled back. Null when there is no such tenant.
- */
-async function writeTenantSettings(req: Request, tenantId: number, change: SettingsWrite): Promise<Settings | null> {
-  const client = requestPgClient(req);
-  const rdb = requestDb(req);
-  await client.query('BEGIN');
-  try {
-    const [tenant] = await rdb
-      .select()
-      .from(organizations)
-      .where(eq(organizations.id, tenantId))
-      .limit(1)
-      .for('update');
-    if (!tenant) {
-      await client.query('ROLLBACK');
-      return null;
-    }
-    const current = asSettings(tenant.settings);
-    const next = change.next(current, tenant.tier || 'standard');
-    const [updated] = await rdb
-      .update(organizations)
-      .set({ settings: next })
-      .where(eq(organizations.id, tenantId))
-      .returning();
-    if (!updated) {
-      await client.query('ROLLBACK');
-      return null;
-    }
-    const stored = asSettings(updated.settings);
-    await writeChainedAuditRow(client, {
-      tenantId,
-      userId: governedActorId(req) ?? undefined,
-      action: change.action,
-      resourceType: 'organization_settings',
-      resourceId: String(tenantId),
-      ipAddress: clientIpOf(req) ?? undefined,
-      userAgent: req.get('user-agent'),
-      details: settingsAuditDetails(current, stored, change.sections(current, stored)),
-    });
-    await client.query('COMMIT');
-    return stored;
-  } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    throw err;
-  }
-}
-
-function isPlainObject(value: unknown): value is Settings {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-/**
- * `patch` laid over `current`: where both hold an object the merge recurses,
- * otherwise `patch`'s value wins, and a key `patch` does not name is kept.
- * Until 2026-10-01 (DP-62) a reset replaced the whole object and a PATCH the
- * whole section, which erased `anaToolPolicy` (the organisation's switch-off
- * list for AnA tools) and `security.maxConcurrentSessions` (session-inactivity.ts),
- * neither of which those writes manage.
- */
-function overlaySettings(current: Settings, patch: Settings): Settings {
-  const out: Settings = { ...current };
-  for (const [key, value] of Object.entries(patch)) {
-    const existing = out[key];
-    out[key] = isPlainObject(existing) && isPlainObject(value) ? overlaySettings(existing, value) : value;
-  }
-  return out;
-}
-
 /** The defaults a reset restores, by tier. */
 function defaultSettingsFor(tier: string): Settings {
   return {
@@ -299,6 +181,9 @@ function defaultSettingsFor(tier: string): Settings {
     },
   };
 }
+
+/** The connector's own door takes exactly `{ enabled: boolean }`. */
+const connectorBodySchema = z.object({ enabled: z.boolean() }).strict();
 
 /**
  * Get tenant settings
@@ -351,6 +236,12 @@ router.patch(
       const tenantId = parseInt(String(req.params.tenantId));
       if (isNaN(tenantId)) {
         return res.status(400).json({ error: 'Invalid tenant ID' });
+      }
+
+      // The connector for Claude has its own door (P1-47): named here it is
+      // refused, whoever asks, not silently dropped by the schema below.
+      if (namesClaudeConnector(req.body)) {
+        return res.status(403).json({ error: CONNECTOR_NOT_A_GENERAL_SETTING });
       }
 
       // Check permissions
@@ -533,5 +424,84 @@ router.patch(
     }
   }
 );
+
+/**
+ * The connector for Claude, per organisation (ADR-0014 §10, plan P1-47;
+ * mcp/auth/connector-enablement.ts). Off until the organisation's owner or
+ * administrator turns it on; the connector reads it live on every request.
+ *
+ *   GET /:tenantId/claude-connector  any member of the organisation:
+ *       { connector: { enabled, canChange } }, canChange true for its owner or administrator
+ *   PUT /:tenantId/claude-connector  { enabled: boolean }, its owner or administrator only
+ *
+ * Who changes it is mayChangeClaudeConnector's list, owner and admin (IAM-25,
+ * decided by the product owner 2026-10-01): no product path writes `owner` to
+ * organization_users.role, and the administrator is the customer's highest
+ * in-product role, so the customer still decides. Refused: a manager, member
+ * or viewer, platform staff (super_admin), and the administrator or owner of
+ * another organisation. The general doors above refuse it by name (PATCH
+ * /settings), whoever asks, or do not know it (PATCH /settings/:section; a
+ * reset keeps it, since tier defaults do not define it), and the one settings
+ * writer refuses any write but this door's that would change it (connectorDoor;
+ * IAM-24 fix round). The change goes through that writer, so the setting and
+ * its chained audit row, with the value before and after, commit or roll back
+ * together.
+ */
+router.get('/:tenantId/claude-connector', authMiddleware, requireOrganizationContext, async (req, res) => {
+  try {
+    const tenantId = parseInt(String(req.params.tenantId));
+    if (isNaN(tenantId)) {
+      return res.status(400).json({ error: 'Invalid tenant ID' });
+    }
+    if (Number(req.tenantId) !== tenantId) {
+      return res.status(403).json({ error: 'You can only view settings for your own organization' });
+    }
+    const [tenant] = await requestDb(req)
+      .select()
+      .from(organizations)
+      .where(eq(organizations.id, tenantId))
+      .limit(1);
+    if (!tenant) {
+      return res.status(404).json({ error: 'Tenant not found' });
+    }
+    return res.json({
+      connector: { enabled: claudeConnectorEnabled(tenant.settings), canChange: mayChangeClaudeConnector(req.userRole) },
+    });
+  } catch (error) {
+    logger.error(`Error reading the connector setting for tenant ${req.params.tenantId}`, error);
+    return res.status(500).json({ error: 'The connector setting could not be read.' });
+  }
+});
+
+router.put('/:tenantId/claude-connector', authMiddleware, requireOrganizationContext, async (req, res) => {
+  try {
+    const tenantId = parseInt(String(req.params.tenantId));
+    if (isNaN(tenantId)) {
+      return res.status(400).json({ error: 'Invalid tenant ID' });
+    }
+    if (!mayChangeClaudeConnector(req.userRole) || Number(req.tenantId) !== tenantId) {
+      return res.status(403).json({ error: CONNECTOR_OPENER_ONLY });
+    }
+    const body = connectorBodySchema.safeParse(req.body);
+    if (!body.success) {
+      return res.status(400).json({ error: 'Send { "enabled": true } or { "enabled": false }.' });
+    }
+    const { enabled } = body.data;
+    const stored = await writeTenantSettings(req, tenantId, {
+      action: 'tenant_settings_changed',
+      next: current => ({ ...current, [CLAUDE_CONNECTOR_SETTING]: { enabled } }),
+      sections: () => [CLAUDE_CONNECTOR_SETTING],
+      // The one door the writer lets change it (IAM-24 fix round).
+      connectorDoor: true,
+    });
+    if (!stored) {
+      return res.status(404).json({ error: 'Tenant not found' });
+    }
+    return res.json({ connector: { enabled: claudeConnectorEnabled(stored), canChange: true } });
+  } catch (error) {
+    logger.error(`Error changing the connector setting for tenant ${req.params.tenantId}`, error);
+    return res.status(500).json({ error: 'The connector setting was not changed.' });
+  }
+});
 
 export default router;

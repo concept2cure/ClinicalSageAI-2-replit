@@ -25,16 +25,19 @@ export declare const DEFAULT_TABLE_PRIVILEGES: readonly string[];
 
 /**
  * The append-only audit stores: the runtime role holds SELECT, INSERT on each
- * (plus UPDATE on `updatableColumns`, the revocation carve-out) and never
- * UPDATE, DELETE, TRUNCATE or ownership.
+ * (plus UPDATE on `updatableColumns`, the revocation carve-out; SELECT alone
+ * where the store's `ceiling` says so, the archive ledger) and never UPDATE,
+ * DELETE, TRUNCATE or ownership.
  */
 export declare const APPEND_ONLY_TABLES: readonly {
   readonly schema: string;
   readonly name: string;
   readonly updatableColumns?: readonly string[];
+  /** The store's own ceiling where narrower than SELECT, INSERT. */
+  readonly ceiling?: readonly string[];
 }[];
 
-/** The ceiling on an append-only store: SELECT, INSERT. */
+/** The ceiling on an append-only store: SELECT, INSERT, unless the store's own `ceiling` narrows it. */
 export declare const APPEND_ONLY_PRIVILEGES: readonly string[];
 
 /** Withheld on every append-only store from PUBLIC and the runtime role: UPDATE, DELETE, TRUNCATE. */
@@ -122,9 +125,9 @@ export declare function ensureRuntimeRole(
 ): Promise<EnsureRuntimeRoleResult>;
 
 /**
- * REVOKE UPDATE, DELETE, TRUNCATE on each append-only store present, from PUBLIC
- * and the role (`roleIdent`, already quote_ident-ed), then GRANT UPDATE on its
- * carve-out columns. Part of the grant recipe; runs inside the caller's
+ * REVOKE UPDATE, DELETE, TRUNCATE on each append-only store present (and INSERT
+ * where its `ceiling` is SELECT), from PUBLIC and the role (`roleIdent`, already
+ * quote_ident-ed), then GRANT UPDATE on its carve-out columns. Part of the grant recipe; runs inside the caller's
  * transaction. Returns the stores withheld on, as `schema.name`.
  */
 export declare function withholdAppendOnlyPrivileges(

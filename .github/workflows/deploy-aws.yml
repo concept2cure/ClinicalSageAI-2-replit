@@ -490,6 +490,13 @@ jobs:
         #                            503. Checked below, API container only, with
         #                            the scanner container it points at
         #                            (2026-10-01).
+        #   AUDIT_ANCHOR_BUCKET      server/services/audit/chain-anchor.ts — not
+        #                            a boot refusal: without it nothing outside
+        #                            the database records the audit chain's
+        #                            head, so removal of the newest audit rows
+        #                            cannot be detected, and the daily sweep
+        #                            reports the anchor "not configured"
+        #                            (security plan P0-8, 2026-10-01).
         run: |
           set -euo pipefail
 
@@ -512,7 +519,8 @@ jobs:
                      CONCEPT2CURE_SIGNER_MODE STORAGE_PROVIDER AWS_S3_BUCKET \
                      SMTP_HOST SMTP_USER SMTP_PASS \
                      AUDIT_TRAIL_ENABLED AUDIT_REQUIRE_ENFORCE DB_AUDIT_REQUIRED \
-                     MCP_ENABLED MCP_PUBLIC_URL MCP_CLIENT_REDIRECT_ALLOWLIST; do
+                     MCP_ENABLED MCP_PUBLIC_URL MCP_CLIENT_REDIRECT_ALLOWLIST \
+                     AUDIT_ANCHOR_BUCKET; do
             if ! grep -qx "$VAR" <<< "$PRESENT"; then MISSING="$MISSING $VAR"; fi
           done
 
@@ -530,7 +538,7 @@ jobs:
           FAIL=0
           if [[ -n "$MISSING" ]]; then
             echo "::error::Task definition $ECS_API_TASK_FAMILY (container $ECS_API_CONTAINER_NAME) is missing required production env:$MISSING"
-            echo "::error::The app refuses to boot without each of these, with two exceptions it would boot through: without SMTP_* no one can sign in (login OTP is the mandatory second factor), and without AUDIT_TRAIL_ENABLED / AUDIT_REQUIRE_ENFORCE the tamper-proof audit trail is off or its checks only warn; without ANTHROPIC_API_KEY no model approved for regulatory drafting is enabled, so every Authoring draft is refused and /readyz reports AnA down. Without MCP_* the connector for Claude is not mounted, or admits no client. Add them to the task definition (terraform/stack) before deploying."
+            echo "::error::The app refuses to boot without each of these, with two exceptions it would boot through: without SMTP_* no one can sign in (login OTP is the mandatory second factor), and without AUDIT_TRAIL_ENABLED / AUDIT_REQUIRE_ENFORCE the tamper-proof audit trail is off or its checks only warn; without ANTHROPIC_API_KEY no model approved for regulatory drafting is enabled, so every Authoring draft is refused and /readyz reports AnA down. Without MCP_* the connector for Claude is not mounted, or admits no client. Without AUDIT_ANCHOR_BUCKET nothing outside the database records the audit chain's head, so removal of the newest audit rows cannot be detected. Add them to the task definition (terraform/stack) before deploying."
             FAIL=1
           fi
           if [[ "$NODE_ENV_VALUE" != "production" ]]; then

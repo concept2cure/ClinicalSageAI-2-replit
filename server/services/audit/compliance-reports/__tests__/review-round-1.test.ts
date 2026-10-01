@@ -75,12 +75,16 @@ describe('item 3 — what the seal is, and who verifies it, said plainly', () =>
 describe('item 4 — the access review says what it cannot show', () => {
   const r = findReport('access-review')!;
   it('the past role and the review decision are stated as not shown; role changes are where they are recorded', () => {
+    // P1-49 (2026-10-01): a role change through a SCIM group writes its chained
+    // member_role_changed row in its own transaction, so it is listed too.
     expect(r.notRecorded).toContain(
-      "A member's role on a past date is not reconstructed: the role shown is the current one. A role change made by an administrator in the product is listed, with the role before and after, in the administrative changes report. A role change made through a SCIM group, which is how an identity provider assigns roles, is not recorded, so a role the identity provider assigned has no record of when it was assigned or what it replaced.",
+      "A member's role on a past date is not reconstructed: the role shown is the current one. A role change made by an administrator in the product is listed, with the role before and after, in the administrative changes report. A role change made through a SCIM group, which is how an identity provider assigns roles, is listed there too, with no person as actor; those made before the product began recording them were not recorded.",
     );
+    // P1-43 (2026-10-01): the report now names the latest signed review record; its decisions stay in the record.
     expect(r.notRecorded).toContain(
-      'This report records no review decision, reviewer or sign-off. POLICY-AC-002 §4a keeps those in the access-review record.',
+      "This report names the latest signed access review, its reviewer and its signature; it does not list the review's decisions. POLICY-AC-002 §4a keeps those in the access-review record, one per account.",
     );
+    expect(r.notRecorded.join(' ')).not.toMatch(/records no review decision, reviewer or sign-off/);
   });
   it('P1-41: no longer says an administrator\'s role change or removal goes unrecorded', () => {
     const text = r.notRecorded.join(' ');
@@ -90,14 +94,15 @@ describe('item 4 — the access review says what it cannot show', () => {
     expect(text).toMatch(/A role change made by an administrator in the product is listed, with the role before and after/);
   });
   it('P1-41 fix round: no sentence says role changes in general are listed or recorded', () => {
-    // A role change through a SCIM group writes no row (routes/scim.ts PATCH
-    // /Groups/:id), so an unqualified "role changes ... are listed/recorded" is
-    // false for every role an identity provider manages.
+    // Each sentence that says role changes are listed or recorded names the
+    // path it is true for: an administrator in the product (P1-41), or a SCIM
+    // group (P1-49, which records it). An unqualified "role changes ... are
+    // listed/recorded" would also claim the paths that write no row.
     for (const line of r.notRecorded) {
       for (const sentence of line.split(/(?<=\.)\s+/)) {
         if (!/\b(are|is) (listed|recorded)\b/.test(sentence) || /\bnot recorded\b/.test(sentence)) continue;
         if (!/role change/i.test(sentence)) continue;
-        expect(sentence, sentence).toMatch(/made by an administrator in the product/);
+        expect(sentence, sentence).toMatch(/made by an administrator in the product|made through a SCIM group/);
       }
     }
   });
@@ -109,18 +114,43 @@ describe('P1-41 fix round — both reports disclose the SCIM-group role change w
   const start = scim.indexOf("router.patch('/Groups/:id'");
   const end = scim.indexOf('\nrouter.', start + 1);
   const handler = scim.slice(start, end);
-  const writesRoleChange = /UPDATE organization_users SET role/.test(handler);
-  const recordsIt = /auditScim\(|writeChainedAuditRow\(|INSERT INTO audit_/.test(handler);
+  // P1-49 (2026-10-01): the handler changes each role through the canonical
+  // membership writer, changeMemberRole (services/tenant/membership-change.ts),
+  // which makes the UPDATE and then writes its chained row on the same client
+  // (recordMembershipChange → writeChainedAuditRow). That writer is read as well,
+  // so the disclosure is required again if it stops recording.
+  const membership = readFileSync(path.join(repoRoot, 'server', 'services', 'tenant', 'membership-change.ts'), 'utf8');
+  const canonicalStart = membership.indexOf('export async function changeMemberRole(');
+  const canonical = membership.slice(canonicalStart, membership.indexOf('\nexport ', canonicalStart + 1));
+  const canonicalRecords =
+    canonicalStart > -1 &&
+    /UPDATE organization_users SET role/.test(canonical) &&
+    /recordMembershipChange\(|writeChainedAuditRow\(/.test(canonical) &&
+    /writeChainedAuditRow\(/.test(membership);
+  const viaCanonical = /changeMemberRole\(/.test(handler);
+  const writesRoleChange = /UPDATE organization_users SET role/.test(handler) || viaCanonical;
+  const recordsIt = /auditScim\(|writeChainedAuditRow\(|INSERT INTO audit_/.test(handler) || (viaCanonical && canonicalRecords);
   const disclosure = /role change (?:made|that arrives) through a SCIM group[^.]*is not recorded/;
   it('the SCIM group handler is where the test thinks it is', () => {
     expect(start).toBeGreaterThan(-1);
     expect(end).toBeGreaterThan(start);
     expect(writesRoleChange).toBe(true);
   });
+  it('P1-49: the handler records each role change, through the canonical membership writer', () => {
+    expect(viaCanonical, 'the handler calls changeMemberRole').toBe(true);
+    expect(canonicalRecords, 'changeMemberRole writes its chained row after the UPDATE').toBe(true);
+    expect(recordsIt).toBe(true);
+  });
   it.each(['access-review', 'administrative-changes'])('%s states the gap while the handler writes no row, and stops once it writes one', (id) => {
     const text = findReport(id)!.notRecorded.join(' ');
     if (recordsIt) expect(text).not.toMatch(disclosure);
     else expect(text).toMatch(disclosure);
+  });
+  it('P1-49: the administrative changes report says how a SCIM-group role change is listed', () => {
+    const text = findReport('administrative-changes')!.notRecorded.join(' ');
+    expect(text).toContain(
+      'A role change that arrives through a SCIM group is listed with the role before and after; it has no person as actor, and its reason names the group. Those made before the product began recording them were not recorded.',
+    );
   });
 });
 

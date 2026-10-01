@@ -12,10 +12,11 @@
  * Counts are read through the OWNER pool, which is exempt from RLS: reading
  * through the app role would be circular.
  */
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import reportOsRouter from '../../server/routes/report-os';
+import logger from '../../server/utils/logger';
 import {
   TAG,
   ORG_B,
@@ -73,6 +74,7 @@ beforeAll(async () => {
 afterAll(async () => {
   await owner?.query(`DROP TRIGGER IF EXISTS ${REFUSE_FN} ON c2c_correspondence`).catch(() => {});
   await owner?.query(`DROP TRIGGER IF EXISTS ${REFUSE_FN} ON audit_logs`).catch(() => {});
+  await owner?.query(`DROP TRIGGER IF EXISTS ${REFUSE_FN} ON project_memory_entries`).catch(() => {});
   await owner?.query(`DROP FUNCTION IF EXISTS ${REFUSE_FN}()`).catch(() => {});
   await removeDeliveryAuditRows().catch((err) => console.warn('[P1-44] audit rows left in place:', err));
   await teardownTwoTenantFixture();
@@ -115,7 +117,7 @@ async function traces(subject: string) {
   return { letters: letters.rows, records: records.rows, chain: chain.rows };
 }
 
-async function refuseOn(table: 'c2c_correspondence' | 'audit_logs', when: string, run: () => Promise<void>) {
+async function refuseOn(table: 'c2c_correspondence' | 'audit_logs' | 'project_memory_entries', when: string, run: () => Promise<void>) {
   await owner.query(
     `CREATE FUNCTION ${REFUSE_FN}() RETURNS trigger LANGUAGE plpgsql AS
        $$ BEGIN RAISE EXCEPTION 'refused by the P1-44 dbtest'; END $$`
@@ -188,7 +190,11 @@ describe('POST /api/report-os/deliveries on the record (P1-44)', () => {
     expect(await traces(subject)).toEqual({ letters: [], records: [], chain: [] });
   });
 
-  it('external_pdf_export of a final report needs an e-signature: 409, nothing recorded', async () => {
+  /* A run made final without the finalize signature (here, written final by
+     the owner; in production, a run finalized before finalizing was signed).
+     The signed case, through the real finalize, is in
+     report-os-registry-seed.dbtest.ts (P1-44b). */
+  it('external_pdf_export of a final report with no signature is refused: 409, nothing recorded', async () => {
     const subject = `${TAG} final external`;
     const res = await request(ro)
       .post('/api/report-os/deliveries')
@@ -196,6 +202,50 @@ describe('POST /api/report-os/deliveries on the record (P1-44)', () => {
       .send({ runId: finalRun, channel: 'external_pdf_export', subject, recipients: ['partner'], captureForLearning: false });
     expect(res.status, JSON.stringify(res.body)).toBe(409);
     expect(res.body.error.code).toBe('E_SIGNATURE_REQUIRED');
+    expect(res.body.error.message).toContain(`run ${finalRun}`);
     expect(await traces(subject)).toEqual({ letters: [], records: [], chain: [] });
+  });
+});
+
+/*
+ * DP-67 (b), GDPR Art. 5(1)(c), against the real database. A delivery record
+ * refused by PostgreSQL reaches the route as drizzle's DrizzleQueryError, whose
+ * message is the statement and every parameter: the record, with the subject,
+ * the letter and the recipients. The route logged that message. The logger is
+ * spied on (its output would otherwise go to stdout), so every line any layer
+ * handed it is read back.
+ */
+describe('a failed delivery logs ids and codes, never the letter (DP-67 (b))', () => {
+  it('a delivery record refused by the database: 503, and no log line carries the subject, the letter or a recipient', async () => {
+    const subject = `${TAG} record refused`;
+    const message = `${TAG} the clarification letter body, which is not for a log`;
+    const recipient = `${TAG}-reviewer@agency.example`;
+    const lines: Array<{ message: string; context: unknown }> = [];
+    const spies = (['error', 'warn', 'info'] as const).map((level) =>
+      vi.spyOn(logger, level).mockImplementation((m: string, context?: unknown) => {
+        lines.push({ message: m, context });
+      })
+    );
+    let res!: request.Response;
+    try {
+      await refuseOn('project_memory_entries', `NEW.subcategory = 'report_delivery_record' AND NEW.content LIKE '%${subject}%'`, async () => {
+        res = await request(ro)
+          .post('/api/report-os/deliveries')
+          .set(auth(managerToken))
+          .send({ runId: openRun, channel: 'platform_send', submissionId: submission, subject, message, recipients: [recipient], captureForLearning: false });
+      });
+    } finally {
+      for (const spy of spies) spy.mockRestore();
+    }
+    expect(res.status, JSON.stringify(res.body)).toBe(503);
+    expect(await traces(subject)).toEqual({ letters: [], records: [], chain: [] });
+    const logged = JSON.stringify(lines);
+    for (const text of [subject, message, recipient, 'refused by the P1-44 dbtest']) {
+      expect(logged, `the log must not carry "${text}"`).not.toContain(text);
+    }
+    const failure = lines.find((l) => /report delivery not recorded/.test(l.message));
+    expect(failure, 'the failure is logged').toBeDefined();
+    // RAISE EXCEPTION's SQLSTATE, read off the query error's cause.
+    expect(failure!.context).toMatchObject({ channel: 'platform_send', code: 'P0001', deliveryId: expect.any(String) });
   });
 });

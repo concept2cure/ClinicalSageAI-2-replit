@@ -19,9 +19,16 @@
 -- =============================================================================
 -- 20261001_integer_project_same_org_keys.sql
 --
+-- AMENDED IN PLACE 2026-10-01 (PF-13 follow-up, D5; CLAUDE.md Rule 1). The
+-- working-memory key's delete action is SET NULL (project_id), not NO ACTION,
+-- with 20260820's own key on the column, so that a project delete detaches the
+-- summaries of its conversations instead of being refused by them (see
+-- 20260820's note). Where the NO ACTION version deployed, the block below
+-- replaces it in place, only when it is not already SET NULL.
+--
 -- AMENDED IN PLACE 2026-10-01 (PF-10 S11; CLAUDE.md Rule 1). Added the fourth
--- key, conversation_working_memory (project_id, organization_id), with ON
--- DELETE NO ACTION (see its block below), and a preflight entry. The other
+-- key, conversation_working_memory (project_id, organization_id), (see its
+-- block below), and a preflight entry. The other
 -- statements are unchanged; the journal records drift for this file once more,
 -- and this note is why.
 --
@@ -81,9 +88,11 @@
 -- (org-scoped, project-ref.ts) or the integer the client sent, which nothing
 -- checks. The writer (working-memory.ts) catches a refusal and logs it, so a
 -- refused summary costs that turn's summary and never the turn.
--- ON DELETE NO ACTION, as its existing key (20260820_working_memory_project_id.sql),
--- for the same reason the actions agree above. project_id is nullable: a
--- thread held in no project writes NULL, which the key does not check.
+-- ON DELETE SET NULL (project_id), as its existing key (20260820_working_memory_project_id.sql,
+-- amended 2026-10-01), for the same reason the actions agree above: a project
+-- delete detaches the summary, keeping the organization. project_id is
+-- nullable: a thread held in no project writes NULL, which the key does not
+-- check.
 -- 20260820 creates the table and runs before this file on the applier.
 --
 -- RULE 1: replayed on every deploy. Each statement runs only when its object
@@ -170,12 +179,18 @@ BEGIN
     RAISE NOTICE 'conversation_working_memory or projects_id_org_uq absent - working-memory key skipped';
     RETURN;
   END IF;
+  -- The NO ACTION version (deployed before the PF-13 amendment) is replaced in place.
+  IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'conversation_working_memory_project_same_org_fk'
+                AND conrelid = 'public.conversation_working_memory'::regclass AND confdeltype <> 'n') THEN
+    ALTER TABLE public.conversation_working_memory DROP CONSTRAINT conversation_working_memory_project_same_org_fk;
+  END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'conversation_working_memory_project_same_org_fk'
                     AND conrelid = 'public.conversation_working_memory'::regclass) THEN
     ALTER TABLE public.conversation_working_memory
       ADD CONSTRAINT conversation_working_memory_project_same_org_fk
       FOREIGN KEY (project_id, organization_id)
       REFERENCES public.projects (id, organization_id)
+      ON DELETE SET NULL (project_id)
       NOT VALID;
   END IF;
 END

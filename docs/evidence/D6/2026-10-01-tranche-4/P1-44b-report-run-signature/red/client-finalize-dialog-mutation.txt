@@ -1,0 +1,737 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx > Insights — Finalize is a signature, separate from Export > offers the meanings a finalize can carry, sends reason, meaning and the password, and shows the manifestation 812ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx > Insights — Finalize is a signature, separate from Export > a member, who writes reports but may not finalize them, is offered Export and no Finalize 125ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx > Insights — Finalize is a signature, separate from Export > a report the gate holds below final is refused with its reasons, and nothing is shown as sealed 239ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx > Insights — Finalize is a signature, separate from Export > a password the server does not accept is said in the dialog, and nothing is sealed 269ms
+ × client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx > Insights — Finalize is a signature, separate from Export > separation of duties: an approval by the run's requester is refused with the server's sentence 5182ms
+   → expected 'Not finalized — finalizing a report i…' to match /You authored this record, so you cann…/
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rc"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rc-ana"[39m
+          [33mstyle[39m=[32m""[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rc-ana-head"[39m
+            [33mstyle[39m=[32m""[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-ana-id"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rc-ana-mark"[39m
+              [36m>[39m
+                [0m*[0m
+              [36m</span>[39m
+              [36m<div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"nm"[39m
+                [36m>[39m
+                  [0mReport builder[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"sub"[39m
+                [36m>[39m
+                  [0mBX204 — NDA — Biotech[0m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"pj-card-h-go"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mAudit & compliance reports[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rc-ana-scroll"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-opener"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"rc-op-head"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"rc-ana-mark sm"[39m
+                [36m>[39m
+                  [0m*[0m
+                [36m</span>[39m
+                [36m<span>[39m
+                  [0mWhere to start[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"rc-op-headline"[39m
+              [36m>[39m
+                [0mBuild any governed report or dashboard — describe what you need.[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"rc-op-body"[39m
+              [36m>[39m
+                [0mBX204 is 73% ready. The BLA assembly pack is the standard starting pack for Biotech — it is not picked from the readiness figure above.[0m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"rc-preset-btn"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 3v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M22 5h-4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M4 17v2"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5 18H3"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m Build the [0m
+                [0mBLA assembly pack[0m
+                [0m [0m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-chevron-right"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m9 18 6-6-6-6"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"rc-op-why"[39m
+              [36m>[39m
+                [0mTracks readiness and closes the evidence and financial-disclosure gaps before filing.[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"rc-chips"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"rc-chip"[39m
+                [36m>[39m
+                  [0mBuild the BLA assembly pack[0m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"rc-chip"[39m
+                [36m>[39m
+                  [0mHow ready is BX204 to file?[0m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"rc-chip"[39m
+                [36m>[39m
+                  [0mRun the audit assurance pack[0m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"rc-chip"[39m
+                [36m>[39m
+                  [0mCompare readiness across all my programs[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-msg rc-user"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"rc-bub"[39m
+              [36m>[39m
+                [0mRun the executive readiness digest report[0m
+              [36m</div>[39m
+            [36m</div>[39m
+     ...
+ × client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx > Insights — Finalize is a signature, separate from Export > a role without signing authority is refused with the server's sentence, and nothing is sealed 5209ms
+   → expected 'Not finalized — finalizing a report i…' to match /Your role does not permit applying an…/
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rc"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rc-ana"[39m
+          [33mstyle[39m=[32m""[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rc-ana-head"[39m
+            [33mstyle[39m=[32m""[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-ana-id"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rc-ana-mark"[39m
+              [36m>[39m
+                [0m*[0m
+              [36m</span>[39m
+              [36m<div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"nm"[39m
+                [36m>[39m
+                  [0mReport builder[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"sub"[39m
+                [36m>[39m
+                  [0mBX204 — NDA — Biotech[0m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"pj-card-h-go"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mAudit & compliance reports[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rc-ana-scroll"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-opener"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"rc-op-head"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"rc-ana-mark sm"[39m
+                [36m>[39m
+                  [0m*[0m
+                [36m</span>[39m
+                [36m<span>[39m
+                  [0mWhere to start[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"rc-op-headline"[39m
+              [36m>[39m
+                [0mBuild any governed report or dashboard — describe what you need.[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"rc-op-body"[39m
+              [36m>[39m
+                [0mBX204 is 73% ready. The BLA assembly pack is the standard starting pack for Biotech — it is not picked from the readiness figure above.[0m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"rc-preset-btn"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 3v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M22 5h-4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M4 17v2"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5 18H3"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m Build the [0m
+                [0mBLA assembly pack[0m
+                [0m [0m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-chevron-right"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m9 18 6-6-6-6"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"rc-op-why"[39m
+              [36m>[39m
+                [0mTracks readiness and closes the evidence and financial-disclosure gaps before filing.[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"rc-chips"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"rc-chip"[39m
+                [36m>[39m
+                  [0mBuild the BLA assembly pack[0m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"rc-chip"[39m
+                [36m>[39m
+                  [0mHow ready is BX204 to file?[0m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"rc-chip"[39m
+                [36m>[39m
+                  [0mRun the audit assurance pack[0m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"rc-chip"[39m
+                [36m>[39m
+                  [0mCompare readiness across all my programs[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-msg rc-user"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"rc-bub"[39m
+              [36m>[39m
+                [0mRun the executive readiness digest report[0m
+              [36m</div>[39m
+            [36m</div>[39m
+     ...
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx > Insights — Finalize is a signature, separate from Export > separation of duties: an approval by the run's requester is refused with the server's sentence
+AssertionError: expected 'Not finalized — finalizing a report i…' to match /You authored this record, so you cann…/
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rc"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rc-ana"[39m
+          [33mstyle[39m=[32m""[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rc-ana-head"[39m
+            [33mstyle[39m=[32m""[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-ana-id"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rc-ana-mark"[39m
+              [36m>[39m
+                [0m*[0m
+              [36m</span>[39m
+              [36m<div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"nm"[39m
+                [36m>[39m
+                  [0mReport builder[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"sub"[39m
+                [36m>[39m
+                  [0mBX204 — NDA — Biotech[0m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"pj-card-h-go"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mAudit & compliance reports[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rc-ana-scroll"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-opener"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"rc-op-head"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"rc-ana-mark sm"[39m
+                [36m>[39m
+                  [0m*[0m
+                [36m</span>[39m
+                [36m<span>[39m
+                  [0mWhere to start[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"rc-op-headline"[39m
+              [36m>[39m
+                [0mBuild any governed report or dashboard — describe what you need.[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"rc-op-body"[39m
+              [36m>[39m
+                [0mBX204 is 73% ready. The BLA assembly pack is the standard starting pack for Biotech — it is not picked from the readiness figure above.[0m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"rc-preset-btn"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 3v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M22 5h-4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M4 17v2"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5 18H3"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m Build the [0m
+                [0mBLA assembly pack[0m
+                [0m [0m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-chevron-right"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m9 18 6-6-6-6"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"rc-op-why"[39m
+              [36m>[39m
+                [0mTracks readiness and closes the evidence and financial-disclosure gaps before filing.[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"rc-chips"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"rc-chip"[39m
+                [36m>[39m
+                  [0mBuild the BLA assembly pack[0m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"rc-chip"[39m
+                [36m>[39m
+                  [0mHow ready is BX204 to file?[0m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"rc-chip"[39m
+                [36m>[39m
+                  [0mRun the audit assurance pack[0m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"rc-chip"[39m
+                [36m>[39m
+                  [0mCompare readiness across all my programs[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-msg rc-user"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"rc-bub"[39m
+              [36m>[39m
+                [0mRun the executive readiness digest report[0m
+              [36m</div>[39m
+            [36m</div>[39m
+     ...
+
+- Expected:
+/You authored this record, so you cannot approve it/
+
++ Received:
+"Not finalized — finalizing a report is for organisation owners, admins and managers."
+
+ ❯ client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx:192:79
+    190|     await runReport();
+    191|     const dialog = await signInDialog('Approval');
+    192|     await waitFor(() => expect(within(dialog).getByRole('alert').textC…
+       |                                                                               ^
+    193|     expect(within(dialog).getByRole('alert').textContent).not.toMatch(…
+    194|   });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx > Insights — Finalize is a signature, separate from Export > a role without signing authority is refused with the server's sentence, and nothing is sealed
+AssertionError: expected 'Not finalized — finalizing a report i…' to match /Your role does not permit applying an…/
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rc"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rc-ana"[39m
+          [33mstyle[39m=[32m""[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rc-ana-head"[39m
+            [33mstyle[39m=[32m""[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-ana-id"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rc-ana-mark"[39m
+              [36m>[39m
+                [0m*[0m
+              [36m</span>[39m
+              [36m<div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"nm"[39m
+                [36m>[39m
+                  [0mReport builder[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"sub"[39m
+                [36m>[39m
+                  [0mBX204 — NDA — Biotech[0m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"pj-card-h-go"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mAudit & compliance reports[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rc-ana-scroll"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-opener"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"rc-op-head"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"rc-ana-mark sm"[39m
+                [36m>[39m
+                  [0m*[0m
+                [36m</span>[39m
+                [36m<span>[39m
+                  [0mWhere to start[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"rc-op-headline"[39m
+              [36m>[39m
+                [0mBuild any governed report or dashboard — describe what you need.[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"rc-op-body"[39m
+              [36m>[39m
+                [0mBX204 is 73% ready. The BLA assembly pack is the standard starting pack for Biotech — it is not picked from the readiness figure above.[0m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"rc-preset-btn"[39m
+              [36m>[39m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M20 3v4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M22 5h-4"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M4 17v2"[39m
+                  [36m/>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"M5 18H3"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+                [0m Build the [0m
+                [0mBLA assembly pack[0m
+                [0m [0m
+                [36m<svg[39m
+                  [33maria-hidden[39m=[32m"true"[39m
+                  [33mclass[39m=[32m"lucide lucide-chevron-right"[39m
+                  [33mfill[39m=[32m"none"[39m
+                  [33mfocusable[39m=[32m"false"[39m
+                  [33mheight[39m=[32m"1em"[39m
+                  [33mstroke[39m=[32m"currentColor"[39m
+                  [33mstroke-linecap[39m=[32m"round"[39m
+                  [33mstroke-linejoin[39m=[32m"round"[39m
+                  [33mstroke-width[39m=[32m"1.75"[39m
+                  [33mviewBox[39m=[32m"0 0 24 24"[39m
+                  [33mwidth[39m=[32m"1em"[39m
+                  [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                [36m>[39m
+                  [36m<path[39m
+                    [33md[39m=[32m"m9 18 6-6-6-6"[39m
+                  [36m/>[39m
+                [36m</svg>[39m
+              [36m</button>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"rc-op-why"[39m
+              [36m>[39m
+                [0mTracks readiness and closes the evidence and financial-disclosure gaps before filing.[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"rc-chips"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"rc-chip"[39m
+                [36m>[39m
+                  [0mBuild the BLA assembly pack[0m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"rc-chip"[39m
+                [36m>[39m
+                  [0mHow ready is BX204 to file?[0m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"rc-chip"[39m
+                [36m>[39m
+                  [0mRun the audit assurance pack[0m
+                [36m</button>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"rc-chip"[39m
+                [36m>[39m
+                  [0mCompare readiness across all my programs[0m
+                [36m</button>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-msg rc-user"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"rc-bub"[39m
+              [36m>[39m
+                [0mRun the executive readiness digest report[0m
+              [36m</div>[39m
+            [36m</div>[39m
+     ...
+
+- Expected:
+/Your role does not permit applying an electronic signature/
+
++ Received:
+"Not finalized — finalizing a report is for organisation owners, admins and managers."
+
+ ❯ client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx:214:79
+    212|     await runReport();
+    213|     const dialog = await signInDialog();
+    214|     await waitFor(() => expect(within(dialog).getByRole('alert').textC…
+       |                                                                               ^
+    215|     expect(within(dialog).getByRole('alert').textContent).not.toMatch(…
+    216|     expect(screen.queryByTestId('ro-seal')).toBeNull();
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 4 passed (6)
+   Start at  14:13:25
+   Duration  13.98s (transform 617ms, setup 158ms, import 844ms, tests 11.85s, environment 741ms)
+

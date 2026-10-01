@@ -1,0 +1,7 @@
+# Fix round, 2026-10-01T15:29:45Z: npm run ci:server-error-leaks
+
+> concept2cure-riai@1.0.0 ci:server-error-leaks
+> node scripts/ci/check-server-error-leaks.mjs
+
+[ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+exit=0

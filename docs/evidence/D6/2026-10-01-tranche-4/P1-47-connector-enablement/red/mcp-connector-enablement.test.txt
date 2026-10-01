@@ -1,0 +1,273 @@
+# git HEAD: c81212ac (unchanged server code; only the new test file added)
+# command: npx vitest run server/mcp/__tests__/mcp-connector-enablement.test.ts
+# (structured JSON log lines filtered out)
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/mcp/__tests__/mcp-connector-enablement.test.ts
+{
+  "timestamp": "2026-10-01T09:03:02.810Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T09:03:02.812Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/mcp/__tests__/mcp-connector-enablement.test.ts
+{
+  "timestamp": "2026-10-01T09:03:02.812Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/mcp/__tests__/mcp-connector-enablement.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/mcp/__tests__/mcp-connector-enablement.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/mcp/__tests__/mcp-connector-enablement.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/mcp/__tests__/mcp-connector-enablement.test.ts
+{
+  "timestamp": "2026-10-01T09:03:03.464Z",
+  "level": "info",
+  "message": "[mcp] Concept2Cure MCP connector mounted",
+  "context": {
+    "resource": "http://localhost:5300/mcp",
+    "issuer": "http://localhost:5300/",
+    "resourceMetadataUrl": "http://localhost:5300/.well-known/oauth-protected-resource/mcp"
+  }
+}
+
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > control: enabled, both a connector token and the session open the connector 128ms
+ × server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > no settings at all: a connector token is refused with invalid_token and the reason 14ms
+   → an organization that has not enabled the connector was admitted: expected 200 to be 401 // Object.is equality
+ × server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > settings without the connector: a connector token is refused with invalid_token and the reason 15ms
+   → an organization that has not enabled the connector was admitted: expected 200 to be 401 // Object.is equality
+ × server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > enabled: false: a connector token is refused with invalid_token and the reason 26ms
+   → an organization that has not enabled the connector was admitted: expected 200 to be 401 // Object.is equality
+ × server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > enabled: "true" (a string, not true): a connector token is refused with invalid_token and the reason 11ms
+   → an organization that has not enabled the connector was admitted: expected 200 to be 401 // Object.is equality
+ × server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > the connector stored as a bare true: a connector token is refused with invalid_token and the reason 15ms
+   → an organization that has not enabled the connector was admitted: expected 200 to be 401 // Object.is equality
+ × server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > the session token is refused the same way 16ms
+   → expected 200 to be 401 // Object.is equality
+ × server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > refuses as an outage when the organization cannot be read: never admits, never "bad token" 11ms
+   → expected '{"error":"server_error","error_descri…' to contain 'could not be checked'
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > control: enabled, consent issues a code 13ms
+ × server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > no settings at all: 403 access_denied with the reason, and no code 13ms
+   → expected 302 to be 403 // Object.is equality
+ × server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > settings without the connector: 403 access_denied with the reason, and no code 5ms
+   → expected 302 to be 403 // Object.is equality
+ × server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > enabled: false: 403 access_denied with the reason, and no code 8ms
+   → expected 302 to be 403 // Object.is equality
+ × server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > enabled: "true" (a string, not true): 403 access_denied with the reason, and no code 18ms
+   → expected 302 to be 403 // Object.is equality
+ × server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > the connector stored as a bare true: 403 access_denied with the reason, and no code 4ms
+   → expected 302 to be 403 // Object.is equality
+ × server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > answers 503 and issues no code when the organization cannot be read 10ms
+   → an unreadable organization authorised a client: expected 401 to be 503 // Object.is equality
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the /token exchanges > control: enabled, a refresh rotates and issues, and a code exchange issues 15ms
+ × server/mcp/__tests__/mcp-connector-enablement.test.ts > the /token exchanges > not enabled: a refresh is refused (invalid_grant) and the grant is left as it was 16ms
+   → promise resolved "{ …(5) }" instead of rejecting
+ × server/mcp/__tests__/mcp-connector-enablement.test.ts > the /token exchanges > not enabled: a code exchange is refused and issues nothing 3ms
+   → promise resolved "{ …(5) }" instead of rejecting
+ × server/mcp/__tests__/mcp-connector-enablement.test.ts > the /token exchanges > a refresh refuses as an outage when the organization cannot be read, and neither rotates nor issues 3ms
+   → expected Error: connection terminated unexpectedly to match object { errorCode: 'server_error' }
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > no settings at all: a connector token is refused with invalid_token and the reason
+ FAIL  server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > settings without the connector: a connector token is refused with invalid_token and the reason
+ FAIL  server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > enabled: false: a connector token is refused with invalid_token and the reason
+ FAIL  server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > enabled: "true" (a string, not true): a connector token is refused with invalid_token and the reason
+ FAIL  server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > the connector stored as a bare true: a connector token is refused with invalid_token and the reason
+AssertionError: an organization that has not enabled the connector was admitted: expected 200 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 200
+
+ ❯ server/mcp/__tests__/mcp-connector-enablement.test.ts:145:93
+    143|       org.settings = settings;
+    144|       const res = await initialize(connectorToken);
+    145|       expect(res.status, 'an organization that has not enabled the con…
+       |                                                                                             ^
+    146|       expect(res.headers['www-authenticate']).toContain('invalid_token…
+    147|       expect(res.headers['www-authenticate']).toMatch(/connector for C…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/16]⎯
+
+ FAIL  server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > the session token is refused the same way
+AssertionError: expected 200 to be 401 // Object.is equality
+
+- Expected
++ Received
+
+- 401
++ 200
+
+ ❯ server/mcp/__tests__/mcp-connector-enablement.test.ts:153:53
+    151|   it('the session token is refused the same way', async () => {
+    152|     org.settings = null;
+    153|     expect((await initialize(sessionToken)).status).toBe(401);
+       |                                                     ^
+    154|   });
+    155|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/16]⎯
+
+ FAIL  server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > refuses as an outage when the organization cannot be read: never admits, never "bad token"
+AssertionError: expected '{"error":"server_error","error_descri…' to contain 'could not be checked'
+
+Expected: "could not be checked"
+Received: "{"error":"server_error","error_description":"Internal Server Error"}"
+
+ ❯ server/mcp/__tests__/mcp-connector-enablement.test.ts:161:38
+    159|     expect(res.status, 'an unreadable organization admitted the token'…
+    160|     expect(res.headers['www-authenticate'] ?? '').not.toContain('inval…
+    161|     expect(JSON.stringify(res.body)).toContain('could not be checked');
+       |                                      ^
+    162|   });
+    163| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/16]⎯
+
+ FAIL  server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > no settings at all: 403 access_denied with the reason, and no code
+ FAIL  server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > settings without the connector: 403 access_denied with the reason, and no code
+ FAIL  server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > enabled: false: 403 access_denied with the reason, and no code
+ FAIL  server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > enabled: "true" (a string, not true): 403 access_denied with the reason, and no code
+ FAIL  server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > the connector stored as a bare true: 403 access_denied with the reason, and no code
+AssertionError: expected 302 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 302
+
+ ❯ server/mcp/__tests__/mcp-connector-enablement.test.ts:176:26
+    174|       org.settings = settings;
+    175|       const res = await consent();
+    176|       expect(res.status).toBe(403);
+       |                          ^
+    177|       expect(res.body.error).toBe('access_denied');
+    178|       expect(res.body.error_description).toMatch(/connector for Claude…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/16]⎯
+
+ FAIL  server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > answers 503 and issues no code when the organization cannot be read
+AssertionError: an unreadable organization authorised a client: expected 401 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 401
+
+ ❯ server/mcp/__tests__/mcp-connector-enablement.test.ts:187:74
+    185|     org.readable = false;
+    186|     const res = await consent();
+    187|     expect(res.status, 'an unreadable organization authorised a client…
+       |                                                                          ^
+    188|     expect(res.body.error).toBe('temporarily_unavailable');
+    189|     expect(grants.issueAuthorizationCode).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/16]⎯
+
+ FAIL  server/mcp/__tests__/mcp-connector-enablement.test.ts > the /token exchanges > not enabled: a refresh is refused (invalid_grant) and the grant is left as it was
+AssertionError: promise resolved "{ …(5) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIzIiwiZW1haWwiOm51bGwsIm9yZ2FuaXphdGlvbklkIjoiNyIsIm9yZ2FuaXphdGlvblV1aWQiOm51bGwsInJvbGUiOiJtZW1iZXIiLCJ0eXBlIjoiYWNjZXNzIiwidG9rZW5fdXNlIjoibWNwIiwiY2xpZW50X2lkIjoiY2xpZW50LTEiLCJzY29wZSI6ImMyYzpyZWFkIiwic2lkIjoiNjEyZDhlYTMtNDI2YS00ZjBmLWEyZWMtZGNlZDA4MmM5NDhiIiwic3N0IjoxNzkwODQ1MzgzLCJpZGwiOjM2MDAsImlhdCI6MTc5MDg0NTM4MywiZXhwIjoxNzkwODQ4OTgzLCJhdWQiOiJodHRwOi8vbG9jYWxob3N0OjUzMDAvbWNwIn0.IuJSCE33fm8Kdan2Uli5HS7LiAMKLXpwxE7VgCdbXnw",
++   "expires_in": 3600,
++   "refresh_token": "7.issued-refresh-token-issued-refresh-token-issued-refresh",
++   "scope": "c2c:read",
++   "token_type": "bearer",
+  }
+
+ ❯ server/mcp/__tests__/mcp-connector-enablement.test.ts:202:70
+    200|   it('not enabled: a refresh is refused (invalid_grant) and the grant …
+    201|     org.settings = { claudeConnector: { enabled: false } };
+    202|     await expect(provider.exchangeRefreshToken(client, '7.presented'))…
+       |                                                                      ^
+    203|       errorCode: 'invalid_grant',
+    204|       message: expect.stringMatching(/connector for Claude is not enab…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/16]⎯
+
+ FAIL  server/mcp/__tests__/mcp-connector-enablement.test.ts > the /token exchanges > not enabled: a code exchange is refused and issues nothing
+AssertionError: promise resolved "{ …(5) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIzIiwiZW1haWwiOm51bGwsIm9yZ2FuaXphdGlvbklkIjoiNyIsIm9yZ2FuaXphdGlvblV1aWQiOm51bGwsInJvbGUiOiJtZW1iZXIiLCJ0eXBlIjoiYWNjZXNzIiwidG9rZW5fdXNlIjoibWNwIiwiY2xpZW50X2lkIjoiY2xpZW50LTEiLCJzY29wZSI6ImMyYzpyZWFkIiwic2lkIjoiYzBiNTMyZWYtZjk1Yi00YTVjLWFkZDAtMjE5YjA1YzU3NjI4Iiwic3N0IjoxNzkwODQ1MzgzLCJpZGwiOjM2MDAsImlhdCI6MTc5MDg0NTM4MywiZXhwIjoxNzkwODQ4OTgzLCJhdWQiOiJodHRwOi8vbG9jYWxob3N0OjUzMDAvbWNwIn0.IwIjiwtfci9NyhwBuNA3zIYQo7gfWyJe1ZdwMuTatf8",
++   "expires_in": 3600,
++   "refresh_token": "7.issued-refresh-token-issued-refresh-token-issued-refresh",
++   "scope": "c2c:read",
++   "token_type": "bearer",
+  }
+
+ ❯ server/mcp/__tests__/mcp-connector-enablement.test.ts:212:70
+    210|   it('not enabled: a code exchange is refused and issues nothing', asy…
+    211|     org.settings = null;
+    212|     await expect(provider.exchangeAuthorizationCode(client, '7.code'))…
+       |                                                                      ^
+    213|     expect(grants.issueRefreshToken).not.toHaveBeenCalled();
+    214|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/16]⎯
+
+ FAIL  server/mcp/__tests__/mcp-connector-enablement.test.ts > the /token exchanges > a refresh refuses as an outage when the organization cannot be read, and neither rotates nor issues
+AssertionError: expected Error: connection terminated unexpectedly to match object { errorCode: 'server_error' }
+
+- Expected
++ Received
+
+- {
+-   "errorCode": "server_error",
++ Error {
++   "message": "connection terminated unexpectedly",
+  }
+
+ ❯ server/mcp/__tests__/mcp-connector-enablement.test.ts:218:70
+    216|   it('a refresh refuses as an outage when the organization cannot be r…
+    217|     org.readable = false;
+    218|     await expect(provider.exchangeRefreshToken(client, '7.presented'))…
+       |                                                                      ^
+    219|     expect(grants.revokeRefreshToken).not.toHaveBeenCalled();
+    220|     expect(grants.issueRefreshToken).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/16]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  16 failed | 3 passed (19)
+   Start at  09:02:59
+   Duration  4.91s (transform 2.22s, setup 155ms, import 262ms, tests 4.07s, environment 0ms)
+

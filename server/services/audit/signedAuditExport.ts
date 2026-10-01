@@ -19,7 +19,8 @@
 
 import crypto from 'crypto';
 import { Pool } from 'pg';
-import type { ChainBreak, ChainVerificationResult } from './chain.js';
+import type { ChainBreak } from './chain.js';
+import type { TenantChainHead, TenantChainVerifier } from './tenant-chain-verdict.js';
 
 import { stableStringify } from '../../../shared/canonical-json.js';
 import {
@@ -146,6 +147,14 @@ export interface ExportManifest {
     brokenAt?: string;
     verifiedAt: string;
     reason?: string;
+    /**
+     * The chain head against the latest anchor, this organisation's only
+     * (tenant-chain-verdict.ts): verified, broken with its breaks, or a reason
+     * beginning "head not verified against the anchor". When the anchor could
+     * not be read, `status` is 'unverified' with that reason. Absent on
+     * exports sealed before the P0-8 fix round (2026-10-01).
+     */
+    head?: TenantChainHead;
   };
   compliance: {
     standard: string;
@@ -352,7 +361,7 @@ type Queryable = Pick<Pool, 'query'>;
 
 export interface AuditExportDeps {
   /** The tenant audit_logs chain verdict (services/audit/tenant-chain-verdict.ts). */
-  verifyAuditLogsChain?: (orgId: number) => Promise<ChainVerificationResult>;
+  verifyAuditLogsChain?: TenantChainVerifier;
 }
 
 const EXPORT_ROW_LIMIT = 50000;
@@ -500,9 +509,20 @@ async function auditLogsChainVerdict(
   }
   try {
     const v = await verify(orgId);
+    const head = v.head ? { head: v.head } : {};
+    // The walk held but the anchor could not be read: not a verdict (fix round DP-72).
+    if (v.ok === null) {
+      return {
+        status: 'unverified',
+        rowsChecked: v.rowsChecked,
+        verifiedAt,
+        reason: v.head?.reason ?? 'the audit_logs chain head could not be verified',
+        ...head,
+      };
+    }
     // A walk over no chained rows checked nothing: not a verdict.
     if (v.ok && v.rowsChecked === 0) {
-      return { status: 'unverified', rowsChecked: 0, verifiedAt, reason: NO_CHAINED_ROWS_REASON };
+      return { status: 'unverified', rowsChecked: 0, verifiedAt, reason: NO_CHAINED_ROWS_REASON, ...head };
     }
     return {
       status: v.ok ? 'intact' : 'broken',
@@ -511,6 +531,7 @@ async function auditLogsChainVerdict(
       sequencedRows: v.sequencedRows,
       ...(v.brokenAt ? { brokenAt: describeBreak(orgId, v.brokenAt) } : {}),
       verifiedAt,
+      ...head,
     };
   } catch (err) {
     return { status: 'unavailable', verifiedAt, reason: describeFailure(err) };

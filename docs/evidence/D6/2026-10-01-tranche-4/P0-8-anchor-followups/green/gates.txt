@@ -1,0 +1,51 @@
+# 2026-10-01T15:06:23Z, tree at HEAD 0812a990 plus this item, in the shared tree (other lanes' uncommitted edits present). No migration was added or changed, so ci:migration-set-order, ci:migration-drop-safety and the manifest check do not apply.
+
+$ npm run check:security-patterns
+check-security-patterns: 0 violations across 2977 file(s).
+exit=0
+
+$ npm run ci:server-error-leaks
+[ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+exit=0
+
+$ npm run ci:sign-ceremony
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 19 baselined site(s) remain, exactly as baselined.
+exit=0
+
+$ npm run ci:launch-scope-api
+ci:launch-scope-api: 1 API path(s) that launch or shell screens call are not attributed to the launch scope:
+"out-of-scope" is refused in production today; "unmapped" is claimed by no surface. Declare each prefix on the
+launch surface that calls it (shared/constants/ui-surface-registry*.ts apiPrefixes), or, if the shell uses it
+whatever app is open, on LAUNCH_PLATFORM_API with its reason — or stop calling it.
+
+  [unmapped] /api/tenant-config/:p/claude-connector
+    called by admin-console
+    in client/src/concept2cure/v2/surfaces/ClaudeConnectorSetting.tsx
+exit=1
+
+$ npm run ci:unreferenced-modules
+Unreferenced modules: 82 (baseline 82)
+
+OK: no new unreachable modules.
+exit=0
+
+$ npm run ci:untracked-imports
+[ci:untracked-imports] no source files changed against origin/concept2cure-v2.
+exit=0
+
+$ npm run ci:tenant-entry-points
+[ci:tenant-entry-points] 14 entry point(s); 5 consider tenant entitlement, 9 do not (baseline 9)
+[ci:tenant-entry-points] OK — no unclassified tenant entry points.
+exit=0
+
+$ npm run ci:compose-boot-contract
+docker-compose.beta.yml: service "app": AUDIT_ANCHOR_BUCKET is not passed to the app
+docker-compose.beta.yml: service "app": MCP_CLIENT_REDIRECT_ALLOWLIST is not passed to the app
+docker-compose.beta.yml: service "app": MCP_ENABLED is not passed to the app
+docker-compose.beta.yml: service "app": MCP_PUBLIC_URL is not passed to the app
+docker-compose.yml: service "app": AUDIT_ANCHOR_BUCKET is not passed to the app
+docker-compose.yml: service "app": MCP_CLIENT_REDIRECT_ALLOWLIST is not passed to the app
+docker-compose.yml: service "app": MCP_ENABLED is not passed to the app
+docker-compose.yml: service "app": MCP_PUBLIC_URL is not passed to the app
+[ci:compose-boot-contract] 8 problem(s). The server refuses to boot, or boots and signs no one in, without these; the list is deploy-aws.yml's preflight (27 names) plus ALLOWED_ORIGINS.
+exit=1

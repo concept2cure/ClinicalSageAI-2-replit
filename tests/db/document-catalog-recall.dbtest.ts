@@ -74,13 +74,16 @@ function startEmbeddingStub(): Promise<string> {
           res.end(JSON.stringify({ error: { message: 'stub: embedding refused' } }));
           return;
         }
+        // Answer in the width asked for, as Text Embeddings Inference does: the
+        // self-hosted lane asks for its model's own width and zero-pads to the
+        // corpus's (embedding-provider.ts, P1-54 round 2), and refuses a vector
+        // that is not the width it asked for.
+        const vector = CONST_VEC.slice(0, Number(parsed.dimensions) || CONST_VEC.length);
         // The OpenAI SDK requests encoding_format=base64 and decodes the
         // payload as packed float32s; honor it like a real TEI/vLLM server
         // (a plain JSON array would be misread as raw bytes → 384 dims).
         const embedding =
-          parsed.encoding_format === 'base64'
-            ? Buffer.from(new Float32Array(CONST_VEC).buffer).toString('base64')
-            : CONST_VEC;
+          parsed.encoding_format === 'base64' ? Buffer.from(new Float32Array(vector).buffer).toString('base64') : vector;
         res.writeHead(200, { 'content-type': 'application/json' });
         res.end(
           JSON.stringify({

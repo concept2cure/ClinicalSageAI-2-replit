@@ -125,7 +125,12 @@ export interface Membership {
   organizationUuid: string | null;
   /** Not selected here (users is joined only for its status); the verifier takes it from the token claims. */
   email: string | null;
-  /** organizations.settings: the concurrent-session limit a connector session is opened with (P1-38). */
+  /**
+   * organizations.settings, read with the membership on every call: the
+   * concurrent-session limit a connector session is opened with (P1-38), and
+   * whether the organisation's owner has turned the connector on (P1-47,
+   * connector-enablement.ts).
+   */
   organizationSettings?: unknown;
 }
 

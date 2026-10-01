@@ -10,6 +10,7 @@ import { eq, count, inArray } from 'drizzle-orm';
 import { authMiddleware } from '../auth';
 import { recordAuditRow } from '../services/audit/audit-write-outcome';
 import { staffCrossOrgScope } from '../middleware/staffCrossOrgScope';
+import { CONNECTOR_NOT_A_GENERAL_SETTING, namesClaudeConnector } from '../mcp/auth/connector-enablement';
 
 const router = Router();
 
@@ -496,6 +497,15 @@ router.patch('/:id/settings', validateOrgOwnership, requireOrgAdmin, staffAcross
         success: false,
         error: 'Settings update must be a non-empty object',
       });
+    }
+    // The connector for Claude is the owner's setting, with its own door
+    // (PUT /api/tenant-config/:id/claude-connector; P1-47, ADR-0014 §10).
+    // requireOrgAdmin admits an administrator, so a body naming it is refused
+    // whole, before anything is written or recorded (P1-49 fix round,
+    // 2026-10-01). This door is still a second settings writer beside
+    // services/tenant/tenant-settings-writer.ts (DP-69).
+    if (namesClaudeConnector(settingsUpdate)) {
+      return res.status(403).json({ success: false, error: CONNECTOR_NOT_A_GENERAL_SETTING });
     }
 
     const [organization] = await db

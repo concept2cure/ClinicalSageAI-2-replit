@@ -1,0 +1,100 @@
+# Vector columns in the migrated test database (c2c_testdb, every migration in C2C_MIGRATION_FILES applied), 2026-10-01T14:37:33Z
+# psql: SELECT schema.table.column, format_type(...) FROM pg_attribute ... WHERE type = vector
+adversarial.regulatory_adversarial_precedents.precedent_vector vector(1536)
+ai.document_embeddings.embedding_1024 vector(1024)
+ai.document_embeddings.embedding_1536 vector(1536)
+ai.document_embeddings.embedding_3072 vector(3072)
+ai.horizon_scans.embedding vector(1536)
+ai.search_queries.query_embedding vector(1536)
+cortex.atoms.embedding vector(3072)
+cortex.atoms.embedding_1536 vector(1536)
+cortex.atoms.embedding_3072 vector(3072)
+cortex.distilled_insights.insight_embedding vector(3072)
+cortex.domain_knowledge.domain_embedding vector(3072)
+cortex.knowledge_gaps.gap_embedding vector(3072)
+cortex.regulatory_signals.signal_embedding vector(3072)
+cortex.regulatory_signals.signal_embedding_1536 vector(1536)
+cortex.rejection_patterns.pattern_embedding vector(3072)
+cortex.rejection_patterns.pattern_embedding_1536 vector(1536)
+cortex.soft_signals.signal_embedding vector(3072)
+innovation.guidance_documents.content_embedding vector(1536)
+precedent.regulatory_precedents.embedding vector(1536)
+predicate.fda_510k_embeddings.embedding vector(1536)
+prose.smart_fragment_versions.embedding vector(1536)
+prose.smart_fragments.embedding vector(1536)
+public.account_canon_items.embedding vector(1536)
+public.biostat_knowledge_nodes.embedding vector(1536)
+public.client_memory_entries.embedding vector(1536)
+public.coauthor_documents.embedding vector(1536)
+public.conversation_working_memory.embedding vector(1536)
+public.csr_eligibility_criteria.embedding vector(1536)
+public.csr_endpoints.embedding vector(1536)
+public.csr_knowledge_nodes.embedding vector(1536)
+public.csr_regulatory_intelligence.embedding vector(1536)
+public.csr_sections.embedding vector(1536)
+public.csr_studies.embedding vector(1536)
+public.document_vectors.embedding vector(3072)
+public.knowledge_entries.embedding vector(1536)
+public.knowledge_graph_nodes.embedding vector(1536)
+public.literature_entries.embedding vector(1536)
+public.lumen_data_atoms.embedding vector(1536)
+public.project_memory_entries.embedding vector(1536)
+public.rag_chunks.embedding vector(1536)
+vault.document_catalog.embedding vector(1536)
+vault.document_chunks.embedding vector(1536)
+
+# The corpora the canonical runtime embeds (server/services/embedding-corpus-policy.ts, CORPUS_POLICY):
+34:  dimensions: 1536 | 3072;
+78:    corpus: 'documentVectors',
+79:    table: 'document_vectors',
+80:    dimensions: 3072,
+81:    model: 'text-embedding-3-large',
+85:    corpus: 'ragChunks',
+86:    table: 'rag_chunks',
+87:    dimensions: 1536,
+88:    model: 'text-embedding-3-small',
+92:    corpus: 'knowledgeEntries',
+93:    table: 'knowledge_entries',
+94:    dimensions: 1536,
+95:    model: 'text-embedding-3-small',
+99:    corpus: 'clientMemoryEntries',
+100:    table: 'client_memory_entries',
+101:    dimensions: 1536,
+102:    model: 'text-embedding-3-small',
+106:    corpus: 'projectMemoryEntries',
+107:    table: 'project_memory_entries',
+108:    dimensions: 1536,
+109:    model: 'text-embedding-3-small',
+113:    corpus: 'accountCanonItems',
+114:    table: 'account_canon_items',
+115:    dimensions: 1536,
+116:    model: 'text-embedding-3-small',
+120:    corpus: 'biostatKnowledgeNodes',
+121:    table: 'biostat_knowledge_nodes',
+122:    dimensions: 1536,
+123:    model: 'text-embedding-3-small',
+127:    corpus: 'vaultDocumentChunks',
+128:    table: 'vault.document_chunks',
+129:    dimensions: 1536,
+143:    model: 'text-embedding-3-small',
+
+# The dimension the runtime REQUESTS from the embedder (server/services/enhancedEmbeddingService.ts):
+91:    dimensions: 1536,
+92:    batchSize: 100,
+98:    dimensions: 3072,
+99:    batchSize: 50,
+105:    dimensions: 1536,
+106:    batchSize: 100,
+166:      dimensions: MODEL_CONFIGS[model].dimensions,
+211:            dimensions: config.dimensions,
+
+# The Vault chunk writer (server/services/vault/document-chunking.service.ts):
+110:const EMBED_BATCH = 64;
+111:const CHUNK_EMBEDDING_MODEL = 'text-embedding-3-small';
+
+# The column the writer fills (migrations/20260905b_vault_document_chunks.sql) and the knowledge atoms (shared/schema.ts knowledgeEntries):
+69:    EXECUTE 'ALTER TABLE vault.document_chunks ADD COLUMN IF NOT EXISTS embedding vector(1536)';
+207:    embedding: vector('embedding', { dimensions: 1536 }),
+    embedding: vector('embedding', { dimensions: 1536 }),
+
+# BAAI/bge-m3 emits 1024 dimensions. TEI refuses a request for more dimensions than the model emits (image/tei-v1.9.4-source-excerpts.txt, core/src/infer.rs).
