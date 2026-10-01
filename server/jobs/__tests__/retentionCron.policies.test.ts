@@ -97,7 +97,10 @@ function arrange(opts: { docs?: unknown[]; policies?: unknown[]; holds?: unknown
 }
 const auditEntries = () => tx.audit.mock.calls.map(c => c[1] as { action: string; resourceId: string; details: Record<string, unknown> });
 
-const SMTP_ENV = ['RETENTION_ADMIN_EMAILS', 'SMTP_USER', 'SMTP_PASSWORD'] as const;
+// The names terraform/stack renders (SMTP_HOST, SMTP_USER, SMTP_PASS). The
+// sweep once read SMTP_PASSWORD, which nothing sets, so production never sent
+// this email; SMTP_PASSWORD stays in the list to prove it is not what is read.
+const SMTP_ENV = ['RETENTION_ADMIN_EMAILS', 'SMTP_HOST', 'SMTP_USER', 'SMTP_PASS', 'SMTP_PASSWORD'] as const;
 const savedEnv: Record<string, string | undefined> = {};
 
 beforeEach(() => {
@@ -217,8 +220,9 @@ describe('runRetentionJob — orchestration', () => {
 
   it('an enumeration-level failure aborts: returns false, raises the security alert, and skips notification', async () => {
     process.env.RETENTION_ADMIN_EMAILS = 'admin@example.com';
+    process.env.SMTP_HOST = 'smtp.example.com';
     process.env.SMTP_USER = 'mailer';
-    process.env.SMTP_PASSWORD = 'secret';
+    process.env.SMTP_PASS = 'secret';
     arrange({ enumerationFails: true });
     await expect(runRetentionJob()).resolves.toBe(false);
     expect(mail.reportSecurityAlert).toHaveBeenCalledWith(expect.objectContaining({ kind: 'retention_sweep_failed' }));
@@ -229,8 +233,9 @@ describe('runRetentionJob — orchestration', () => {
 
 describe('admin notification', () => {
   it('is skipped when recipients or SMTP credentials are unconfigured', async () => {
+    process.env.SMTP_HOST = 'smtp.example.com';
     process.env.SMTP_USER = 'mailer';
-    process.env.SMTP_PASSWORD = 'secret';
+    process.env.SMTP_PASS = 'secret';
     arrange({ docs: [doc('doc-1')] });
     await expect(runRetentionJob()).resolves.toBe(true);
     expect(mail.createTransport).not.toHaveBeenCalled();
@@ -243,8 +248,9 @@ describe('admin notification', () => {
 
   it('emails every configured recipient with the sweep summary', async () => {
     process.env.RETENTION_ADMIN_EMAILS = 'admin@example.com, qa@example.com';
+    process.env.SMTP_HOST = 'smtp.example.com';
     process.env.SMTP_USER = 'mailer';
-    process.env.SMTP_PASSWORD = 'secret';
+    process.env.SMTP_PASS = 'secret';
     arrange({ docs: [doc('doc-1')] });
     await expect(runRetentionJob()).resolves.toBe(true);
     expect(mail.sendMail).toHaveBeenCalledTimes(1);
@@ -254,10 +260,20 @@ describe('admin notification', () => {
     expect(sent.html).toContain('Soft-deleted: 1');
   });
 
+  it('recipients configured but SMTP not: nothing is sent, and the alert says the summary was not delivered', async () => {
+    process.env.RETENTION_ADMIN_EMAILS = 'admin@example.com';
+    process.env.SMTP_PASSWORD = 'not-the-name-the-stack-renders';
+    arrange({ docs: [doc('doc-1')] });
+    await expect(runRetentionJob()).resolves.toBe(true);
+    expect(mail.sendMail).not.toHaveBeenCalled();
+    expect(mail.reportSecurityAlert).toHaveBeenCalledWith(expect.objectContaining({ kind: 'retention_notify_failed' }));
+  });
+
   it('a notify failure raises the security alert and never makes the job fail', async () => {
     process.env.RETENTION_ADMIN_EMAILS = 'admin@example.com';
+    process.env.SMTP_HOST = 'smtp.example.com';
     process.env.SMTP_USER = 'mailer';
-    process.env.SMTP_PASSWORD = 'secret';
+    process.env.SMTP_PASS = 'secret';
     mail.sendMail.mockRejectedValueOnce(new Error('smtp down'));
     arrange({ docs: [doc('doc-1')] });
     await expect(runRetentionJob()).resolves.toBe(true);
