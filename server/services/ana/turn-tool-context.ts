@@ -4,7 +4,8 @@
  *
  *   1. dispatched in the loop          (routes/ana-ri/stream.ts)
  *   2. held for the person's yes       (stream.ts, recorded on the run row)
- *   3. run once the person confirms    (routes/ana-ri/utility.ts runConfirmedTool)
+ *   3. run once the person confirms    (routes/ana-ri/utility.ts runConfirmedTool, which
+ *                                       alone stamps the person's yes)
  *
  * Each of the three built its own copy, and none passed the conversation, the
  * turn or the model. A document AnA drafted therefore recorded no
@@ -80,7 +81,12 @@ export function heldToolContext(toolName: string, rawProject: unknown, id: TurnI
   return { projectId, projectRef, servingModel, threadId, turnId };
 }
 
-/** 3. The context a confirmed tool runs with: the held one, and the person's yes. */
+/**
+ * 3. The context a confirmed tool runs with: the held one, as the run row
+ * recorded it. The person's yes (humanConfirmed) is NOT stamped here: it has
+ * exactly one writer, the governed-action route (routes/ana-ri/utility.ts),
+ * which the propose-only partition test holds it to.
+ */
 export function confirmedToolContext(held: HeldToolContext | null | undefined, organizationId: number, userId: number) {
   return {
     organizationId,
@@ -88,6 +94,5 @@ export function confirmedToolContext(held: HeldToolContext | null | undefined, o
     projectId: held?.projectId ?? null,
     projectRef: held?.projectRef ?? null,
     ...identityFields({ threadId: held?.threadId, turnId: held?.turnId, servingModel: held?.servingModel }),
-    humanConfirmed: true as const,
   };
 }

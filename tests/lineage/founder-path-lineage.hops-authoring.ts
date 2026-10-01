@@ -112,8 +112,9 @@ export async function hopCapture(w: World): Promise<void> {
  * governed-action route runs it, once the person says yes, with
  * confirmedToolContext (routes/ana-ri/utility.ts runConfirmedTool). Both come
  * from services/ana/turn-tool-context.ts, the builders the stream uses (PF-10
- * S5), so this walk and production cannot drift. projectId is null for a UUID
- * program; the conversation, the turn (the run id) and the model are named.
+ * S5), so the builders cannot drift; what the stream hands the hold is pinned
+ * by stream-run-hold.test.ts. projectId is null for a UUID program; the
+ * conversation, the turn (the run id) and the model are named.
  */
 /** The conversation and the run (its turn) the walk's draft is proposed in. */
 const WALK_THREAD_ID = 'ana-ri_walk_thread';
@@ -144,8 +145,9 @@ async function draftUnderStreamCtx(w: World): Promise<Record<string, unknown>> {
     turnId: WALK_RUN_ID,
     servingModel: SERVED_MODEL,
   });
-  // As the run row stores it, then as the person's yes runs it.
-  const ctx = confirmedToolContext(JSON.parse(JSON.stringify(held)), ORG_A, 3);
+  // As the run row stores it, then as the person's yes runs it (the route
+  // stamps humanConfirmed; utility.ts runConfirmedTool).
+  const ctx = { ...confirmedToolContext(JSON.parse(JSON.stringify(held)), ORG_A, 3), humanConfirmed: true };
   return JSON.parse(await handler!(input, ctx as never));
 }
 

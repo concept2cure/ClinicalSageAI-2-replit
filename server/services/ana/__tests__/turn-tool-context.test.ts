@@ -40,13 +40,17 @@ describe('held, then confirmed: what the person confirmed runs as the turn that 
     const stored = JSON.parse(JSON.stringify(held));
     expect(confirmedToolContext(stored, 7, 3)).toEqual({
       organizationId: 7, userId: 3, projectId: null, projectRef: PROGRAM,
-      servingModel: SERVED, threadId: 'ana-ri_1', turnId: 'run_1', model: 'model-x', humanConfirmed: true,
+      servingModel: SERVED, threadId: 'ana-ri_1', turnId: 'run_1', model: 'model-x',
     });
   });
 
   it('a run held before this change (no thread or turn recorded) confirms with none, honestly', () => {
     const before = { projectId: null, projectRef: PROGRAM, servingModel: SERVED };
     expect(confirmedToolContext(before, 7, 3)).toMatchObject({ threadId: null, turnId: null, model: 'model-x' });
+  });
+
+  it("never stamps the person's yes: that has one writer, the governed-action route", () => {
+    expect(confirmedToolContext(heldToolContext('draft_authoring_document', PROGRAM, ID), 7, 3)).not.toHaveProperty('humanConfirmed');
   });
 
   it('a platform command holds no tool context', () => {

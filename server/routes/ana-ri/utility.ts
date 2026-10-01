@@ -234,7 +234,10 @@ async function runConfirmedTool(
   if (!handler) throw new Error(`${name} is not an available tool`);
   // The context the turn held it with, and the person's yes: the same
   // conversation, turn and model the dispatch would have named (PF-10 S5).
-  const out = await handler(params, confirmedToolContext(held.toolContext, organizationId, userId));
+  const out = await handler(params, {
+    ...confirmedToolContext(held.toolContext, organizationId, userId),
+    humanConfirmed: true,
+  });
   try {
     return JSON.parse(out);
   } catch {

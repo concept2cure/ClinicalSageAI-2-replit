@@ -1,6 +1,6 @@
 {
   "$comment": "LX-00 shrink-only baseline for tests/lineage/founder-path-lineage.pglite.test.ts. Each entry is a check that is broken at HEAD: the verified finding(s) from docs/design/LINEAGE_END_TO_END_PLAN_2026-09-25.md (or LX00-Fn for a defect this test found that the plan does not cover), the LX fix(es) that close it, and the value the check observes today, serialized as the test serializes it. A baselined check that passes fails the run (delete its entry); one that fails on a different value fails the run (re-examine it). Never add an entry to make the run green; the ceiling below is the size this file was written at.",
-  "ceiling": 17,
+  "ceiling": 15,
   "hops": {
     "capture": {
       "bytes-durable": {

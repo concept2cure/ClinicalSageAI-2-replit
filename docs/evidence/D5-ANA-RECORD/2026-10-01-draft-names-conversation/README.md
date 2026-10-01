@@ -56,3 +56,23 @@ The rest of LX-06:
 - the workbench's AnA-pane contributor.
 
 Its baseline entries (`tool-accepts-sources`, `source-span`, `source-span-survives`) stay red and baselined.
+
+## Review
+
+The review was `wf_505025ef-41f`, with two lenses and two skeptics per finding. It raised four findings, all upheld 2/2; three are distinct. Each was fixed in the follow-up commit.
+
+1. **`humanConfirmed` gained a second writer.**
+   - `confirmedToolContext` stamped `humanConfirmed: true`, so `server/services/ana-ri/__tests__/propose-only-partition.test.ts` ("exactly one writer") failed. The first green run was a subset that left it out.
+   - The builder now returns the project and identity fields only. `utility.ts` `runConfirmedTool`, the one writer, adds `humanConfirmed: true`.
+   - A builder test pins that it never stamps it. Evidence: `07-partition-single-writer.txt`, failing at `720965433` and passing after.
+2. **Nothing tested the stream's hold-site arguments.** That is the only production path for a confirm-class draft.
+   - `stream-run-hold.test.ts` now captures what `requestApproval` is asked to hold, driving the real confirm-class `draft_authoring_document`.
+   - It asserts `toolContext` names the resolved thread, the run and the served model.
+   - When the thread could not be persisted, it asserts `threadId` is null, never the client's `thread_id`.
+   - Reds: `04-red-hold-site-thread-null.txt` and `05-red-hold-site-client-thread.txt`. Both mutations type-check and keep every other suite and the walk green.
+   - The walk's comment now says what it covers: the builders. The stream test covers the wiring.
+3. **The baseline ceiling stayed at 17 with 15 entries.**
+   - It is now 15.
+   - `06-red-baseline-over-ceiling.txt`: one added entry fails the walk, and `ci:canvas-path` refuses it ("16 entries over its ceiling of 15").
+
+`08-green-after-review.txt` is the whole AnA, authoring and lineage tree, all passing.
