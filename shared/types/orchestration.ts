@@ -302,7 +302,8 @@ export interface ValidationSnapshot {
 }
 
 export interface TaskSnapshot {
-  id: number;
+  /** The work view's composite id, `${source}:${nativeId}` (unified-work-view.ts). */
+  id: string;
   title: string;
   status: string;
   priority: string;

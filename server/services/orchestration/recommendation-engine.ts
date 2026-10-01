@@ -336,7 +336,7 @@ function analyzeBlockedTasks(
     .map((t) =>
       makeRecommendation({
         type: 'blocked_workflow',
-        severity: t.priority === 'high' || t.priority === 'critical' ? 'high' : 'medium',
+        severity: t.priority === 'high' || t.priority === 'urgent' || t.priority === 'critical' ? 'high' : 'medium',
         targetType: 'task',
         targetId: t.id,
         targetTitle: t.title,

@@ -120,7 +120,7 @@ const PAYLOAD: CrossObjectReasoningPayload = {
   ],
   tasks: [
     {
-      id: 201,
+      id: 'board:201',
       title: 'Resolve CMC query',
       status: 'blocked',
       priority: 'high',
@@ -128,7 +128,7 @@ const PAYLOAD: CrossObjectReasoningPayload = {
       isOverdue: false,
     },
     {
-      id: 202,
+      id: 'board:202',
       title: 'Submit annual report',
       status: 'open',
       priority: 'medium',

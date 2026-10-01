@@ -248,3 +248,24 @@ No line for a user id the organisation has no record of passes.
    - the role of an account removed through SCIM, because the SCIM event records none;
    - whether the named run's own period matches the review's period.
 6. **Unchanged from round 1:** items 2 (binding basis), 3 (immutability list), 4 (no route to discard a draft), 5 (separation of duties), 7 (plan and control-map rows) and 8 (commit together).
+
+## After the push: the C-33 replay (2026-10-01, evening)
+
+`npm run test:proof-tier`, run by the control tower after the push, failed one contract:
+`tests/schema-contract/tenant-isolation-sweep.contract.test.ts`, "C-33: the batch applies in set order, twice"
+(`c33/red-c33-pass1.txt`: `pass 1: migrations/20261001_compliance_review_records.sql failed — column
+es.superseded_by does not exist`). C-33 replays the set from `db/migrations/022_stability_v2.sql` (index 76) on a
+PGlite fixture whose `electronic_signatures` comes from the drizzle journal, without the gate columns
+`db/migrations/20260725_esig_gate_columns_port.sql` adds at index 41. This file's signature lookup,
+`compliance_review_signature_of`, was `LANGUAGE sql`, whose body PostgreSQL checks at creation.
+
+Fixed in the creating migration, in place, with a dated header note (CLAUDE.md Rule 1): the function is
+`LANGUAGE plpgsql`, the same query, checked at its first call. Applying the port in the fixture instead was tried
+and does not work: the port needs `submission_orchestrator_runs`, which the fixture does not have.
+
+- `c33/green-c33.txt`: C-33, 19 passed.
+- `c33/replay-local.txt`: the amended file applied to the local database as `postgres`; a second replay also exits 0,
+  and the function is `plpgsql`.
+- `c33/green-review-dbtests.txt`: the three review suites on PostgreSQL as `app_service` with RLS on, 51 passed,
+  signing through the guard included.
+- `db:sync-manifest:check`, `ci:migration-drop-safety`, `ci:migration-set-order`: OK.

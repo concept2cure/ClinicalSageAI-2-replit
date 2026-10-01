@@ -39,6 +39,15 @@
 --     §3.5 (GDPR Art. 17(3)(b); 21 CFR 11.10(c); Annex 11 §17). The tenant
 --     export returns it before the purge. docs/reports/purge-coverage-baseline.json
 --     lists it, with this reason under "retained".
+--   - Amended in place 2026-10-01 (evening, D6; CLAUDE.md Rule 1): the
+--     signature lookup compliance_review_signature_of is LANGUAGE plpgsql, was
+--     LANGUAGE sql. PostgreSQL checks a SQL function's body against
+--     electronic_signatures when it is created, and the C-33 contract
+--     (tests/schema-contract/tenant-isolation-sweep.contract.test.ts) replays
+--     this file on a fixture whose electronic_signatures predates the gate
+--     columns (db/migrations/20260725_esig_gate_columns_port.sql, before its
+--     slice), so pass 1 aborted. Same query, same result, checked at its first
+--     call; a deploy applies the port first. Function body only, no schema change.
 -- =============================================================================
 --
 -- THE RECORD. One row per review. `kind` is 'audit_trail' or 'access'. The
@@ -159,21 +168,25 @@ $mig$;
 CREATE OR REPLACE FUNCTION public.compliance_review_signature_of(
   p_id integer, p_organization_id integer, p_reviewer integer, p_content_hash text
 ) RETURNS integer
-LANGUAGE sql
+LANGUAGE plpgsql
 STABLE
 SET search_path = pg_catalog, public
 AS $fn$
-  SELECT max(es.id)
-    FROM public.electronic_signatures es
-   WHERE es.organization_id = p_organization_id
-     AND es.signed_target = 'compliance-review:' || p_id::text
-     AND es.signer_id = p_reviewer
-     AND es.signature_meaning = 'review'
-     AND es.superseded_by IS NULL
-     AND es.is_valid IS DISTINCT FROM false
-     AND es.verification_status IS DISTINCT FROM 'revoked'
-     AND es.created_at = LOCALTIMESTAMP
-     AND (es.signature_manifest -> 'act' ->> 'contentHash') = p_content_hash
+BEGIN
+  RETURN (
+    SELECT max(es.id)
+      FROM public.electronic_signatures es
+     WHERE es.organization_id = p_organization_id
+       AND es.signed_target = 'compliance-review:' || p_id::text
+       AND es.signer_id = p_reviewer
+       AND es.signature_meaning = 'review'
+       AND es.superseded_by IS NULL
+       AND es.is_valid IS DISTINCT FROM false
+       AND es.verification_status IS DISTINCT FROM 'revoked'
+       AND es.created_at = LOCALTIMESTAMP
+       AND (es.signature_manifest -> 'act' ->> 'contentHash') = p_content_hash
+  );
+END
 $fn$;
 
 -- 1. At COMMIT: a row that became 'signed' has its signature, and records it.

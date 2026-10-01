@@ -298,3 +298,42 @@ describe("the project's tasks, counted from every store", () => {
   });
 });
 
+/**
+ * The same tasks, as the readiness review and the recommendation engine read
+ * them. Until 2026-10-01 the list came from regulatory_audit_logs rows tagged
+ * 'task' — the whole organisation's, and a row no writer produces — so it was
+ * empty: the counts above said two tasks were blocked while the review beside
+ * them never raised a blocked-task blocker and nothing overdue was ever
+ * recommended. The list now comes from the same cross-store view, read once,
+ * and the counts are derived from it.
+ */
+describe("the project's tasks reach the readiness review and the recommendations", () => {
+  it('lists every store\'s open work by its real id, flags what is blocked and overdue, and the counts agree', async () => {
+    const payload = await asMember(() => resolver.assembleCrossObjectPayload({ organizationId: ORG, projectId }));
+    const titles = payload.tasks.map((t) => t.title);
+    expect(titles).toEqual(expect.arrayContaining([
+      `${TAG} statistical analysis plan`,
+      `${TAG} confirm the pre-IND meeting date`,
+      `${TAG} answer the FDA information request`,
+    ]));
+    expect(titles).not.toContain(`${TAG} foreign task`);
+    for (const t of payload.tasks) expect(String(t.id)).toMatch(/^(schedule|board|correspondence|review|filing):/);
+    expect(payload.tasks.filter((t) => t.isBlocked)).toHaveLength(payload.project.blockedTasks);
+    expect(payload.tasks.filter((t) => t.isOverdue)).toHaveLength(payload.project.overdueTasks);
+    expect(payload.tasks).toHaveLength(payload.project.totalTasks);
+    expect(payload.project.blockedTasks).toBeGreaterThan(0);
+  });
+
+  it('the readiness review raises the blocked work, and the recommendations name the overdue work', async () => {
+    const { computeReadinessAssessment } = await import('../../server/services/orchestration/readiness-engine');
+    const { generateRecommendations } = await import('../../server/services/orchestration/recommendation-engine');
+    const payload = await asMember(() => resolver.assembleCrossObjectPayload({ organizationId: ORG, projectId }));
+    const readiness = computeReadinessAssessment(payload);
+    expect(readiness.blockers.map((b) => b.category)).toContain('blocked_task');
+    const recs = generateRecommendations(payload).recommendations;
+    expect(recs.filter((r) => r.recommendationType === 'overdue_task').map((r) => r.targetObjectTitle)).toEqual(
+      expect.arrayContaining([`${TAG} confirm the pre-IND meeting date`]),
+    );
+  });
+});
+

@@ -1,0 +1,2 @@
+psql:migrations/20261001_compliance_review_records.sql:108: NOTICE:  relation "compliance_review_records" already exists, skipping
+psql:migrations/20261001_compliance_review_records.sql:112: NOTICE:  relation "compliance_review_records_latest_idx" already exists, skipping

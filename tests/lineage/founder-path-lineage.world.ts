@@ -142,6 +142,8 @@ export const PASSWORD = randomBytes(12).toString('hex');
 /** users.id is a serial in production; the JWT carries it as a string. */
 export const AUTHOR = { id: '3', organizationId: ORG_A, email: 'author@founder.example', name: 'Avery Author' };
 export const APPROVER = { id: '4', organizationId: ORG_A, email: 'approver@founder.example', name: 'Quinn Approver' };
+/** Reviews the Vault copy (VR-13): neither its filer nor its approver may (FD4). */
+export const REVIEWER = { id: '5', organizationId: ORG_A, email: 'reviewer@founder.example', name: 'Remy Reviewer' };
 /** What the gateway reports as the serving model — the stream passes it as ctx.servingModel (stream.ts:1733). */
 export const SERVED_MODEL = APPROVED_SERVING_MODEL;
 
@@ -260,14 +262,14 @@ async function seed(jdb: JourneyDb): Promise<void> {
   );
   await jdb.pool.query(
     `INSERT INTO users (id, email, name, password_hash, title) VALUES
-       (3, $1, $2, $5, 'Regulatory Writer'), (4, $3, $4, $5, 'VP Regulatory')`,
-    [AUTHOR.email, AUTHOR.name, APPROVER.email, APPROVER.name, hash],
+       (3, $1, $2, $5, 'Regulatory Writer'), (4, $3, $4, $5, 'VP Regulatory'), (5, $6, $7, $5, 'QA Reviewer')`,
+    [AUTHOR.email, AUTHOR.name, APPROVER.email, APPROVER.name, hash, REVIEWER.email, REVIEWER.name],
   );
   // The author administers the org (creates the program, files, places); the
   // approver signs (§11.10(g): approver is a signing role; separation of duties
   // keeps the sequence's creator from signing its release).
   await jdb.pool.query(
-    `INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, 3, 'admin'), ($1, 4, 'approver')`,
+    `INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, 3, 'admin'), ($1, 4, 'approver'), ($1, 5, 'admin')`,
     [ORG_A],
   );
   // One workspace, so the program's PM-spine anchor is unambiguous (program-project-anchor.ts).
@@ -316,6 +318,15 @@ async function mountApp(jdb: JourneyDb): Promise<express.Express> {
     runWithTenantScope({ tenantId: String(ORG_A), role: 'admin', source: 'request', caller: 'founder-path-lineage' }, next),
   );
   app.use('/api/authoring', authoringRouter);
+  // VR-13: a Vault version is reviewed and approved on the one lifecycle (FD5 (a):
+  // an Authoring export is approved again in the Vault). The signer ceremony's
+  // verdict is injected, as tests/db/vault-lifecycle.dbtest.ts does; its own
+  // suites prove the real one.
+  const { createDocumentLifecycleRouter } = await import('../../server/routes/document-lifecycle');
+  app.use('/api/regulatory/documents', createDocumentLifecycleRouter({
+    db: jdb.db as never,
+    reverify: async () => ({ ok: true as const, authenticationMethod: 'password+totp', secondFactorVerified: true }),
+  }));
   return app;
 }
 
