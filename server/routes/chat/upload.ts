@@ -33,6 +33,7 @@ import { sha256Hex } from '../../services/ana/uploaded-file-access';
 // without the cre_* tables cannot break the route's module graph.
 import { determineSourceVersion } from '../../services/clinical-regulatory-evidence/source-version.js';
 import { programInOrganization } from '../../services/c2c/program-access.js';
+import { projectBelongsToTenant } from '../../services/cmc/project-membership.js';
 
 const logger = createScopedLogger('chat-upload');
 
@@ -167,6 +168,17 @@ export const uploadHandler = async (req: Request, res: Response) => {
     // Refused before the bytes are stored or any row is written; 404, not 403,
     // so nothing is learned about another tenant's ids.
     if (projectScope.programId != null && !(await programInOrganization(pool, projectScope.programId, Number(orgId)))) {
+      return res.status(404).json({ error: 'Project not found', code: 'PROJECT_NOT_FOUND' });
+    }
+    // The legacy numeric id-space holds to the same rule (PF-03): a projects
+    // row of the uploader's organization. The number was taken as given, and
+    // it keys the governed artifact row and the source identity below, so a
+    // file could be filed under another organization's project. A lookup that
+    // cannot complete throws to the outer catch: nothing is written.
+    if (
+      projectScope.workspaceId != null &&
+      !(await projectBelongsToTenant({ organizationId: Number(orgId), projectId: String(projectScope.workspaceId) }, pool))
+    ) {
       return res.status(404).json({ error: 'Project not found', code: 'PROJECT_NOT_FOUND' });
     }
 

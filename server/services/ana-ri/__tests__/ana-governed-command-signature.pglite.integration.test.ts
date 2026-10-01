@@ -110,6 +110,9 @@ CREATE TABLE concept2cure_thread_comments (
 const BASE_DDL = `
 CREATE TABLE organizations (id serial PRIMARY KEY, name text, settings jsonb DEFAULT '{}'::jsonb);
 CREATE TABLE projects (id serial PRIMARY KEY, organization_id integer NOT NULL, name text);
+-- The project-membership check (PF-03) reads programs and projects as one; a
+-- package's integer project matches only the projects arm.
+CREATE TABLE regulatory_programs (id uuid PRIMARY KEY, organization_id integer NOT NULL, deleted_at timestamp);
 `;
 
 const signoff = (over: Partial<Part11Signoff> = {}): Part11Signoff => ({
@@ -301,6 +304,15 @@ describe('create_submission_package signs the creation decision', () => {
       meaning: 'authorship', command: 'create_submission_package',
       projectId: PROJECT, packageFamily: 'ind', title: params.title, targetDate: params.targetDate,
     });
+  });
+
+  it("another organization's project is refused before anything is written, signature included (PF-03)", async () => {
+    await pg.exec(`INSERT INTO projects (id, organization_id, name) VALUES (${PROJECT + 1}, ${OTHER_ORG}, 'Their IND') ON CONFLICT DO NOTHING`);
+    const { createSubmissionPackage } = await import('../command-executor');
+    const r = await createSubmissionPackage(ctxWith(signoff()) as never, { ...params, projectId: PROJECT + 1 });
+    expect(r).toMatchObject({ success: false, error: 'PROJECT_NOT_FOUND' });
+    expect(await q(`SELECT 1 FROM c2c_submission_packages`)).toHaveLength(0);
+    expect(await signatures()).toHaveLength(0);
   });
 
   it('without a verified sign-off creates no package', async () => {
