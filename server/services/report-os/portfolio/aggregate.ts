@@ -30,6 +30,12 @@ export function worstRisk(levels: RiskLevel[]): RiskLevel {
   return RISK_LEVELS[worstIndex];
 }
 
+/** Mean over the members that have a value; null when none does. */
+function roundedMeanOrNull(values: Array<number | null>): number | null {
+  const known = values.filter((v): v is number => v != null);
+  return known.length === 0 ? null : roundedMean(known);
+}
+
 function roundedMean(values: number[]): number {
   if (values.length === 0) return 0;
   const sum = values.reduce((acc, value) => acc + value, 0);
@@ -56,7 +62,10 @@ export function summarizeMembers(members: ProgramMemberInsight[]): PortfolioAggr
   const totalCriticalBlockers = members.reduce((acc, m) => acc + m.criticalBlockerCount, 0);
 
   const attentionRanked = [...members].sort((a, b) => {
-    if (a.readinessScore !== b.readinessScore) return a.readinessScore - b.readinessScore;
+    // Not computed ranks first: it needs attention before any computed score.
+    const ar = a.readinessScore ?? -1;
+    const br = b.readinessScore ?? -1;
+    if (ar !== br) return ar - br;
     return b.criticalBlockerCount - a.criticalBlockerCount;
   });
 
@@ -73,7 +82,7 @@ export function summarizeMembers(members: ProgramMemberInsight[]): PortfolioAggr
 
   return {
     memberCount: members.length,
-    avgReadiness: roundedMean(members.map(m => m.readinessScore)),
+    avgReadiness: roundedMeanOrNull(members.map(m => m.readinessScore)),
     avgConfidence: roundedMean(members.map(m => m.confidence)),
     worstRisk: worstRisk(members.map(m => m.riskLevel)),
     readyCount,
