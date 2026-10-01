@@ -824,7 +824,7 @@ router.post('/tasks/from-template/:templateId', requireEditorAccess, async (req:
               status: 'pending',
               templateId: template.templateId,
             },
-            reason: `Created from workflow template "${template.name}"`,
+            summary: `Created from workflow template "${template.name}"`,
           });
         }
       }
@@ -855,7 +855,7 @@ router.post('/tasks/from-template/:templateId', requireEditorAccess, async (req:
                 dependencyType,
                 templateId: template.templateId,
               },
-              reason: `Linked by workflow template "${template.name}"`,
+              summary: `Linked by workflow template "${template.name}"`,
             });
           }
         }
@@ -1032,7 +1032,7 @@ router.post('/tasks/dependencies', requireEditorAccess, async (req: Request, res
           command: 'task.transition',
           taskId: successorTask.taskId,
           payload: { from: successorTask.status, to: 'blocked' },
-          reason: `Blocked by new dependency on ${validatedData.predecessorTaskId}`,
+          summary: `Blocked by new dependency on ${validatedData.predecessorTaskId}`,
         });
       }
       return { newDependency: dependency, successorBlocked: Boolean(blocked) };
@@ -1157,7 +1157,7 @@ async function autoAssignOne(
       command: 'task.assign',
       taskId,
       payload: { assigneeId: optimalAssignee.id, method: 'workload-balanced' },
-      reason: 'Workload-balanced auto-assign',
+      summary: 'Workload-balanced auto-assign',
     });
     at.unconfirmed = taskId;
     return true;

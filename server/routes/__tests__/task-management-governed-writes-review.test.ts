@@ -73,7 +73,7 @@ describe('C2 — lock order: every task-row UPDATE precedes the first ledger wri
     const unblockedB = {
       orgId: 2, userId: 7, command: 'task.transition', taskId: 'TASK-B',
       payload: { from: 'blocked', to: 'in-progress', cause: 'predecessor-completed', predecessor: 'TASK-1' },
-      reason: 'Unblocked: predecessor TASK-1 completed',
+      summary: 'Unblocked: predecessor TASK-1 completed',
     };
     spies.cascadeUnblockOnCompletionInTx.mockImplementation(async (...args: unknown[]) => {
       const { tx } = args[2] as { tx: { update: () => { set: () => { where: () => PromiseLike<unknown> } } } };
@@ -92,7 +92,9 @@ describe('C2 — lock order: every task-row UPDATE precedes the first ledger wri
     expect(spies.notifyTaskEvent).toHaveBeenCalledWith(notice);
     // C11 — the cause before its effect: TASK-1's completion, then B's unblocking.
     expect(h.audits.map((a) => a.target)).toEqual(['task:TASK-1', 'task:TASK-B']);
-    expect(h.audits[1]).toMatchObject({ command: 'task.transition', reason: 'Unblocked: predecessor TASK-1 completed' });
+    // D5: the dependent's move records no reason (nobody gave one); its summary says what happened.
+    expect(h.audits[1]).toMatchObject({ command: 'task.transition', reason: null });
+    expect(h.audits[1].payload.summary).toBe('Unblocked: predecessor TASK-1 completed');
   });
 });
 
