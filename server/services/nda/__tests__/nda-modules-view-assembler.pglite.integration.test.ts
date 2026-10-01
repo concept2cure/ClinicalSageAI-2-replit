@@ -113,15 +113,18 @@ describe('assembleOrgNdaModules', () => {
     expect(byM['2'].gate).toContain('Summary of Clinical Safety');
     expect(byM['2'].gate).toContain('1 more open');
 
-    // M3 — approved + finalized (both complete) → 2/2 = 100%, no gate.
-    expect(byM['3']).toMatchObject({ docs: 2, open: 0, pct: 100, gate: null });
+    // M3 — approved (complete) + finalized, an unsigned freeze (open since
+    // DP-35, 2026-10-01) → 1/2 = 50%, gated on the frozen section.
+    expect(byM['3']).toMatchObject({ docs: 2, open: 1, pct: 50 });
+    expect(byM['3'].gate).toContain('Control of Drug Substance');
+    expect(byM['3'].gate).toContain('frozen');
 
     // M5 — signed + approved complete, ISS draft open → 2/3 = 67%.
     expect(byM['5']).toMatchObject({ docs: 3, open: 1, pct: 67 });
     expect(byM['5'].gate).toContain('Integrated Summary of Safety');
   });
 
-  it('maps the coarse coauthor vocabulary to readiness (draft/review open; approved/finalized/signed complete)', async () => {
+  it('maps the coarse coauthor vocabulary to readiness (draft/review/finalized open; approved/signed complete)', async () => {
     // One module, one doc per status, to read the open/complete classification cleanly.
     await seedApp(ORG, 'nda', [
       ['m1.1', 'draft', 'A'], ['m1.2', 'in-progress', 'B'], ['m1.3', 'review', 'C'],
@@ -129,8 +132,9 @@ describe('assembleOrgNdaModules', () => {
     ]);
     const rows = (await assembleOrgNdaModules(ORG)) as Array<Record<string, unknown>>;
     expect(rows).toHaveLength(1);
-    // draft, in-progress, review → open (3); approved, finalized, signed → complete (3).
-    expect(rows[0]).toMatchObject({ m: '1', docs: 6, open: 3, pct: 50 });
+    // draft, in-progress, review, finalized (an unsigned freeze, DP-35) → open (4);
+    // approved, signed → complete (2).
+    expect(rows[0]).toMatchObject({ m: '1', docs: 6, open: 4, pct: 33 });
   });
 
   it('includes BLA submissions (application_type IN nda/bla), not just NDA', async () => {
