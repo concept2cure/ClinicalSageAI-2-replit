@@ -1,0 +1,9 @@
+# AnA-written comments filed and shown as AnA's — mutations, each applied, run, restored (cmp-verified)
+=== B1 add_review_comment does not stamp author_role
+ × server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > add_review_comment files AnA’s words as AnA’s > stamps author_role ana and chains the comment with origin ana 33ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 21 passed (22)
+=== B2 the byline shows AnA-written words as the person's
+ × client/src/concept2cure/v2/__tests__/reviewCommentByline.test.tsx > CommentByline > shows a comment AnA wrote as AnA’s, on the person’s behalf 70ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 1 passed (2)

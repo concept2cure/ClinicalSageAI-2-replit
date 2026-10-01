@@ -35,7 +35,9 @@ export * from './cv-v4-data';
 export * from './cv-v3-data';
 export {
   usRegionalSectionElement,
+  usRegionalHeadingPlacement,
   isKnownUsRegionalSection,
+  type UsRegionalHeadingPlacement,
 } from './fda-regional-sections';
 
 /** Semantic id of a v4.0 genericode list. */

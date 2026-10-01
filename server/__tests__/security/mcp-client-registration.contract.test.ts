@@ -14,8 +14,10 @@
  *   - when MCP_CLIENT_REDIRECT_ALLOWLIST is set, its origin must be listed;
  *   - a body with no non-empty redirect_uris array is invalid_client_metadata;
  *   - a malformed allowlist refuses to resolve (fail closed);
- *   - production with no allowlist is an explicit, warned state, once, at
- *     router creation.
+ *   - production with no allowlist REFUSES every registration (product
+ *     decision 2026-10-01, docs/LAUNCH_DEFINITION_OF_DONE.md: fail closed —
+ *     until it read "warned, once" and admitted any https origin), and says so
+ *     once, at router creation.
  *
  * Needs no database: the guard is pure, and the SDK handler behind it writes
  * through the process-wide `pg` mock (tests/setup.ts).
@@ -75,24 +77,24 @@ describe('resolveMcpConfig — clientRegistration policy', () => {
     const cfg = resolveMcpConfig(PROD_ALLOWLISTED);
     expect(cfg.clientRegistration.redirectOriginAllowlist).toEqual(['https://claude.ai', 'https://claude.com']);
     expect(cfg.clientRegistration.requireHttpsRedirects).toBe(true);
-    expect(cfg.clientRegistration.openInProduction).toBe(false);
+    expect(cfg.clientRegistration.closedInProduction).toBe(false);
   });
 
-  it('is null when the variable is unset; production + null is the open state, development + null is not', async () => {
+  it('is null when the variable is unset; production + null is the closed state, development + null is not', async () => {
     const { resolveMcpConfig } = await mods();
     const prod = resolveMcpConfig(PROD_OPEN);
     expect(prod.clientRegistration.redirectOriginAllowlist).toBeNull();
     expect(prod.clientRegistration.requireHttpsRedirects).toBe(true);
-    expect(prod.clientRegistration.openInProduction).toBe(true);
+    expect(prod.clientRegistration.closedInProduction).toBe(true);
 
     const dev = resolveMcpConfig(DEV_OPEN);
     expect(dev.clientRegistration.redirectOriginAllowlist).toBeNull();
     expect(dev.clientRegistration.requireHttpsRedirects).toBe(false);
-    expect(dev.clientRegistration.openInProduction).toBe(false);
+    expect(dev.clientRegistration.closedInProduction).toBe(false);
 
     const test = resolveMcpConfig({ ...DEV_OPEN, NODE_ENV: 'test' });
     expect(test.clientRegistration.requireHttpsRedirects).toBe(false);
-    expect(test.clientRegistration.openInProduction).toBe(false);
+    expect(test.clientRegistration.closedInProduction).toBe(false);
   });
 
   it('throws on a malformed allowlist instead of resolving to an open or partial one (fail closed)', async () => {
@@ -180,10 +182,14 @@ describe('clientRegistrationGuard — scheme, fragment and shape', () => {
       expect(res.body.error, uri).toBe('invalid_redirect_uri');
     }
     expect(reached).not.toHaveBeenCalled();
-    // https with no allowlist passes: that is the open-in-production state, warned at boot (see below).
-    const ok = await register(app, { redirect_uris: ['https://anyone.example/cb'] });
-    expect(ok.status).toBe(201);
-    expect(reached).toHaveBeenCalledTimes(1);
+    // https with no allowlist is refused too: production with no listed origin is
+    // closed, not open (product decision 2026-10-01). Nothing reaches the SDK.
+    const closed = await register(app, { redirect_uris: ['https://anyone.example/cb'] });
+    expect(closed.status).toBe(400);
+    expect(closed.body.error).toBe('invalid_redirect_uri');
+    expect(closed.body.error_description).toMatch(/closed/i);
+    expect(JSON.stringify(closed.body)).not.toContain('anyone.example');
+    expect(reached).not.toHaveBeenCalled();
   });
 
   it('development posture: http://localhost and http://127.0.0.1 pass; any other http host does not', async () => {
@@ -306,11 +312,11 @@ describe('createMcpRouter — the guard sits in front of the SDK router', () => 
     expect(blocked.status).toBe(429);
   });
 
-  it('production + no allowlist: openInProduction is true and exactly one warning names MCP_CLIENT_REDIRECT_ALLOWLIST, at creation, never per request', async () => {
+  it('production + no allowlist: closedInProduction is true, registration is refused, and exactly one warning names MCP_CLIENT_REDIRECT_ALLOWLIST, at creation, never per request', async () => {
     const { createMcpRouter, resolveMcpConfig, logger } = await mods();
     const warn = vi.spyOn(logger, 'warn');
     const config = resolveMcpConfig(PROD_OPEN);
-    expect(config.clientRegistration.openInProduction).toBe(true);
+    expect(config.clientRegistration.closedInProduction).toBe(true);
 
     const app = express();
     app.use(createMcpRouter(config));
@@ -318,11 +324,13 @@ describe('createMcpRouter — the guard sits in front of the SDK router', () => 
     expect(atCreation).toHaveLength(1);
     const [message, context] = atCreation[0];
     expect(String(message)).toMatch(/registration/i);
+    expect(String(message)).toMatch(/refused/i);
     expect(JSON.stringify(context ?? {})).toContain('MCP_CLIENT_REDIRECT_ALLOWLIST');
 
     for (let i = 0; i < 3; i++) {
       await register(app, { redirect_uris: ['http://attacker.example/cb'] });
-      await register(app, { redirect_uris: ['https://anyone.example/cb'] });
+      const refused = await register(app, { redirect_uris: ['https://anyone.example/cb'] });
+      expect(refused.status).toBe(400);
     }
     expect(warn.mock.calls.filter((c) => String(c[0]).includes('MCP_CLIENT_REDIRECT_ALLOWLIST'))).toHaveLength(1);
   });

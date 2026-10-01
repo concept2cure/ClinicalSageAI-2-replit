@@ -237,8 +237,13 @@ describe('a fully vendored drop-point clears the DTD gate WITHOUT making a regio
     expect(r.blockers).toEqual([]);
   });
 
-  it('yet only FDA is region-conformant — the DTDs do not close the other eleven', () => {
-    const conformant = ALL.filter((r) => classifyRegionalBackbone(r as Region, `m1/x/${r}-regional.xml`).regionConformant);
-    expect(conformant).toEqual(['fda']);
+  it('yet only FDA can be region-conformant — the DTDs do not close the other eleven', () => {
+    /* This expected ['fda'] from classifying by region alone, which was the
+       defect (sweep F06, 2026-10-01): no region is conformant by region alone
+       now, and with a clean build report only FDA is. */
+    const byRegionAlone = ALL.filter((r) => classifyRegionalBackbone(r as Region, `m1/x/${r}-regional.xml`).regionConformant);
+    expect(byRegionAlone).toEqual([]);
+    const withCleanReport = ALL.filter((r) => classifyRegionalBackbone(r as Region, `m1/x/${r}-regional.xml`, []).regionConformant);
+    expect(withCleanReport).toEqual(['fda']);
   });
 });
