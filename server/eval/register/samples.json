@@ -1,6 +1,6 @@
 {
   "version": "0.1.0-handwritten",
-  "note": "Hand-written samples for the register linter. None of these is model output; no AI provider was available when they were written (2026-09-21). They pin the linter's behaviour on the shapes the founder reported and on the shapes the register asks for. Live transcripts are scored by run-eval.ts once a provider exists.",
+  "note": "Hand-written samples for the register linter. None of these is model output; no AI provider was available when they were written (2026-09-21). They pin the linter's behaviour on the shapes the founder reported and on the shapes the register asks for. Live transcripts are scored by run-eval.ts once a provider exists. The five samples on exclamation marks, emoji and the serious room (chat-good-earned-win, chat-good-serious-steady-1-40am, chat-bad-exclamation-on-safety, chat-bad-unmirrored-emoji, artifact-bad-exclamation) were added 2026-10-01 for the personality change; they are hand-written too, adapted from the design panel's examples, not model output.",
   "samples": [
     {
       "id": "chat-good-short-fact",
@@ -18,14 +18,18 @@
       "id": "chat-good-user-asked-for-list",
       "register": "chat",
       "expect": "pass",
-      "options": { "userAskedForList": true },
+      "options": {
+        "userAskedForList": true
+      },
       "text": "The four things a Type B pre-IND package needs before you request the meeting:\n\n- the meeting request letter with the questions ranked, not listed\n- the briefing document, with your proposed positions stated as proposals\n- the nonclinical summary that supports the starting dose\n- the CMC section at the depth of a Phase 1 IND, not more"
     },
     {
       "id": "chat-good-first-turn-greeting",
       "register": "chat",
       "expect": "pass",
-      "options": { "firstTurn": true },
+      "options": {
+        "firstTurn": true
+      },
       "text": "Good morning, Priya. The Module 3 freeze is Thursday and 3.2.P.5.4 still has no batch analysis attached — that's the one I'd look at first."
     },
     {
@@ -44,28 +48,47 @@
       "id": "chat-bad-memo-shape",
       "register": "chat",
       "expect": "fail",
-      "expectRules": ["greeting-ritual", "praise-opener", "headers", "bullets", "next-step-ritual", "empty-closer", "exclamation"],
+      "expectRules": [
+        "greeting-ritual",
+        "praise-opener",
+        "headers",
+        "bullets",
+        "next-step-ritual",
+        "empty-closer",
+        "exclamation"
+      ],
       "text": "Hi Priya! Great question.\n\n## Overview\n\nThe identification threshold under ICH Q3A(R2) depends on the maximum daily dose.\n\n## Key Points\n\n- For MDD ≤ 2 g/day the threshold is 0.10% or 1.0 mg/day\n- For MDD > 2 g/day the threshold is 0.05%\n\n**Next steps:** Review your specification against the threshold and update 3.2.S.4.1.\n\nLet me know if you need anything else!"
     },
     {
       "id": "chat-bad-bold-table-reintroduction",
       "register": "chat",
       "expect": "fail",
-      "expectRules": ["bold", "tables", "reintroduction"],
+      "expectRules": [
+        "bold",
+        "tables",
+        "reintroduction"
+      ],
       "text": "I'm AnA, your regulatory intelligence co-pilot. The **FDA** and **EMA** differ on **bracketing** under **ICH Q1D**.\n\n| Agency | Position |\n|---|---|\n| FDA | Accepts bracketing per Q1D |\n| PMDA | Expects full testing |\n\nThe **PMDA** position is the stricter one."
     },
     {
       "id": "chat-bad-restates-filler-menu-long-paragraph",
       "register": "chat",
       "expect": "fail",
-      "expectRules": ["restates-question", "filler", "capability-menu", "paragraph-length"],
+      "expectRules": [
+        "restates-question",
+        "filler",
+        "capability-menu",
+        "paragraph-length"
+      ],
       "text": "You're asking whether the substantial equivalence argument will hold. It's worth noting that there are several considerations to keep in mind here, because substantial equivalence under section 513(i) of the FD&C Act requires that the subject device have the same intended use as the predicate device and either the same technological characteristics or different technological characteristics that do not raise different questions of safety and effectiveness, and the comparison you have drafted leans heavily on the intended-use match while treating the change in energy source as a minor difference, which a CDRH reviewer is unlikely to accept without bench data demonstrating equivalent tissue effect across the operating range, and the predicate you have selected was cleared in 2011 under a different special controls guidance, so the review division may also ask why a more recent predicate was not selected, all of which means the argument as currently written is vulnerable rather than defensible and will likely generate an additional information request rather than a refuse-to-accept, which is survivable but costs you a review cycle.\n\nHere are a few things I can help with: revising the SE table, finding a newer predicate, or drafting the bench-testing rationale."
     },
     {
       "id": "chat-bad-too-many-paragraphs",
       "register": "chat",
       "expect": "fail",
-      "expectRules": ["paragraphs"],
+      "expectRules": [
+        "paragraphs"
+      ],
       "text": "Yes, it applies.\n\nThe rule is in Q1A(R2).\n\nLong-term is 25°C/60% RH.\n\nAccelerated is 40°C/75% RH.\n\nYou need 12 months long-term at filing.\n\nAnd 6 months accelerated.\n\nWith a commitment to continue through expiry."
     },
     {
@@ -78,8 +101,61 @@
       "id": "artifact-bad-chat-interjection",
       "register": "artifact",
       "expect": "fail",
-      "expectRules": ["chat-interjection", "empty-closer"],
+      "expectRules": [
+        "chat-interjection",
+        "empty-closer"
+      ],
       "text": "Here's a strong opener for your 2.5:\n\n## 2.5.1 Product Development Rationale\n\n### 2.5.1.1 Pharmacological Class\n\nThe product is a selective inhibitor of the target enzyme.\n\nLet me know if you'd like me to expand any section."
+    },
+    {
+      "id": "chat-good-earned-win",
+      "register": "chat",
+      "expect": "pass",
+      "options": {
+        "userUsedEmoji": true,
+        "userText": "IND CLEARED!!! 30 days, no hold 🎉🎉"
+      },
+      "text": "Congratulations, Dana, that's a big one! Thirty days of quiet from FDA has never sounded so good 🎉 The CMC section you rebuilt across four rounds in August is a large part of why it went through clean.\n\nOnce the celebrating's done: the may-proceed letter carries two non-hold comments on the dose-escalation stopping rules, worth folding into protocol amendment 1 before the first site activates. I can have that redline ready whenever you want it."
+    },
+    {
+      "id": "chat-good-serious-steady-1-40am",
+      "register": "chat",
+      "expect": "pass",
+      "options": {
+        "room": "serious",
+        "userText": "its 1:40am and the 2.7.4 exposure tables dont match the ISS. we dispatch at 9. what do I do"
+      },
+      "text": "Regenerate the tables rather than patching the text: the 2.7.4 exposure tables were built from ISS v0.9, and v1.0 added the 14 extension-cohort subjects, which is why every denominator is off. I can rebuild them from the v1.0 outputs now and mark each sentence in the 2.7.4 narrative whose numbers move, so you only have to read those, not the whole section.\n\nIf anything still disagrees after that, I'll tell you exactly which values and where, and you can decide whether it holds the 9 a.m. dispatch. This is fixable well before nine — let me take the tables."
+    },
+    {
+      "id": "chat-bad-exclamation-on-safety",
+      "register": "chat",
+      "expect": "fail",
+      "expectRules": [
+        "exclamation"
+      ],
+      "options": {
+        "userText": "lol site 12 just logged 4 hepatic AEs this month, pretty sure that's a data entry thing"
+      },
+      "text": "Good catch! It may well be data entry, but it needs checking as if it isn't. The safety signal engine flags site 12 as a disproportionate hepatic cluster this month, so this wants a medical look today rather than a data query next week."
+    },
+    {
+      "id": "chat-bad-unmirrored-emoji",
+      "register": "chat",
+      "expect": "fail",
+      "expectRules": [
+        "emoji"
+      ],
+      "options": {
+        "userText": "is the stability section updated?"
+      },
+      "text": "Yes — 3.2.P.8 now carries the six-month pull for Batch 0423 ✅"
+    },
+    {
+      "id": "artifact-bad-exclamation",
+      "register": "artifact",
+      "expect": "fail",
+      "text": "## 2.5.1 Product Development Rationale\n\nThe sponsor selected the 40 mg dose on the basis of exposure-response modelling, which showed a clear plateau above 30 mg!\n\n## 2.5.2 Overview of Biopharmaceutics\n\nRelative bioavailability was assessed in Study 101."
     }
   ]
 }
