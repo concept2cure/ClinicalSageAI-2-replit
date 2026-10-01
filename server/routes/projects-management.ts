@@ -8,6 +8,7 @@ import { emitRuleEvent } from '../services/rules-engine';
 import { createScopedLogger } from '../utils/logger.js';
 import { queryableFromDrizzle } from '../db/drizzle-queryable';
 import { projectDeletionHolds, projectDeletionRefusal } from '../services/c2c/project-retention';
+import { requireEditorAccess } from '../middleware/orgMembership';
 
 const log = createScopedLogger('projects-management');
 
@@ -335,7 +336,9 @@ router.post('/', async (req, res) => {
  * DELETE /api/projects/:projectId
  * Delete a specific project
  */
-router.delete('/:projectId', async (req, res) => {
+/* A writing role deletes (PF-08). The route answered any member of the
+   organization, viewer included. */
+router.delete('/:projectId', requireEditorAccess, async (req, res) => {
   try {
     const projectId = parseInt(req.params.projectId);
     const tenantContext = getTenantContext(req);

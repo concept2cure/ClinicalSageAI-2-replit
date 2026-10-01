@@ -18,6 +18,8 @@ const router = Router();
 import { createScopedLogger } from '../utils/logger.js';
 import { queryableFromDrizzle } from '../db/drizzle-queryable';
 import { ProjectDeletionRefused, projectDeletionHolds, projectDeletionRefusal } from '../services/c2c/project-retention';
+import { governedActorId, requireEditorAccess } from '../middleware/orgMembership';
+import { recordAuditRow } from '../services/audit/audit-write-outcome';
 import { mapWithConcurrency } from '../services/ana/agentic-loop';
 const log = createScopedLogger('clients-routes');
 
@@ -849,7 +851,8 @@ router.patch('/:id/security-settings', async (req, res) => {
  * Delete client with cascade deletion
  * API: DELETE /api/clients/:id
  */
-router.delete('/:id', async (req, res) => {
+/* A writing role deletes a workspace (PF-08); any member could. */
+router.delete('/:id', requireEditorAccess, async (req, res) => {
   try {
     const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
 
@@ -931,11 +934,29 @@ router.delete('/:id', async (req, res) => {
       `Successfully deleted client workspace ${id}: ${result.client.name} (${result.deletedProjects} projects, ${result.deletedProjectModules} project modules)`
     );
 
+    /* The §11.10(e) record of a delete that took projects, and their draft
+       documents and conversations, with it. It had none. Written beside the
+       completed delete, and its outcome is reported rather than assumed, the
+       way DELETE /api/device-projects/:id reports it. */
+    const auditTrail = await recordAuditRow({
+      organizationId: Number(guard.workspace.organizationId),
+      userId: governedActorId(req) ?? undefined,
+      action: 'CLIENT_WORKSPACE_DELETED',
+      resourceType: 'client_workspace',
+      resourceId: String(clientId),
+      details: {
+        name: result.client?.name ?? null,
+        deletedProjects: result.deletedProjects,
+        deletedProjectModules: result.deletedProjectModules,
+      },
+    });
+
     res.json({
       success: true,
       message: 'Client workspace and all associated data deleted successfully',
       deletedProjects: result.deletedProjects,
       deletedProjectModules: result.deletedProjectModules,
+      auditTrail,
     });
   } catch (error: any) {
     if (error instanceof ProjectDeletionRefused) {

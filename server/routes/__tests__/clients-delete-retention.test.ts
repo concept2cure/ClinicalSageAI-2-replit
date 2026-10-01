@@ -16,16 +16,19 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const h = vi.hoisted(() => ({
   holds: vi.fn(),
+  audit: vi.fn(async () => ({ persisted: true, chained: true })),
   deletes: [] as string[],
+  role: 'admin',
   workspace: { id: 5, organizationId: 7, name: 'Main' } as Record<string, unknown>,
 }));
 
 vi.mock('../../auth', () => ({
   authMiddleware: (req: any, _res: any, next: any) => {
-    req.user = { id: 1, organizationId: 7, role: 'admin' };
+    req.user = { id: 1, organizationId: 7, role: h.role };
     next();
   },
 }));
+vi.mock('../../services/audit/audit-write-outcome', () => ({ recordAuditRow: h.audit }));
 vi.mock('@shared/schema', () => {
   const table = (name: string) => new Proxy({ __name: name }, { get: (t: any, prop: string) => (prop === '__name' ? t.__name : { name: prop, table: name }) });
   return {
@@ -81,6 +84,8 @@ beforeAll(async () => {
 beforeEach(() => {
   h.deletes.length = 0;
   h.holds.mockReset();
+  h.audit.mockClear();
+  h.role = 'admin';
 });
 
 describe('DELETE /api/clients/:id — the workspace’s projects', () => {
@@ -101,12 +106,24 @@ describe('DELETE /api/clients/:id — the workspace’s projects', () => {
     expect(h.deletes).toEqual([]);
   });
 
-  it('a workspace holding only drafts is deleted, as before', async () => {
+  it('a workspace holding only drafts is deleted, and the delete is audited', async () => {
     h.holds.mockResolvedValue({ anchoredPrograms: [], governedArtifacts: 0 });
     const res = await request(app).delete('/api/clients/5');
     expect(res.status).toBe(200);
     expect(h.deletes).toContain('projects');
     expect(h.deletes).toContain('client_workspaces');
+    expect(h.audit).toHaveBeenCalledWith(expect.objectContaining({
+      organizationId: 7, userId: 1, action: 'CLIENT_WORKSPACE_DELETED', resourceType: 'client_workspace', resourceId: '5',
+    }));
+    expect(res.body.auditTrail).toEqual({ persisted: true, chained: true });
+  });
+
+  it('a viewer is refused 403, and nothing is read or deleted', async () => {
+    h.role = 'viewer';
+    const res = await request(app).delete('/api/clients/5');
+    expect(res.status).toBe(403);
+    expect(h.holds).not.toHaveBeenCalled();
+    expect(h.deletes).toEqual([]);
   });
 
   it('a holds read that cannot complete deletes nothing and is a 500', async () => {

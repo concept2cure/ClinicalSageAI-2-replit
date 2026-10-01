@@ -225,6 +225,8 @@ function prerequisites(): string {
     // The integer project's documents: the legacy project delete cascades them (PF-08),
     // and records the delete in audit_events.
     'concept2cure_artifacts', 'audit_events',
+    // A draft that kept a signature or a lock snapshot is a record (PF-08).
+    'concept2cure_signatures', 'concept2cure_submission_snapshots',
   ]);
   // extractTableDdl copies a table's body only. The cascade is what PF-08 is
   // about, so the real key comes verbatim from the same file.

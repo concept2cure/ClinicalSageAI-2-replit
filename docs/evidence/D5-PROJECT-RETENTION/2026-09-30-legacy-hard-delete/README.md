@@ -98,6 +98,66 @@ that guard.
   - The projects-management tenant-boundary suite; the audit-ledger routes.
   - The migration-list closure contract.
 
+## Review, and what it changed (2026-10-01)
+
+Before pushing, the commit was reviewed adversarially (`wf_72c8daf0-af3`,
+correctness and security lenses, a skeptic per finding). Seven findings held,
+and all are fixed in the follow-up commit:
+
+- **A third hard-delete route.** `DELETE /api/device-projects/:id` deleted any
+  `projects` row, a program's anchor included, with no check. It now judges and
+  deletes in one transaction through the same helper, and only its own
+  `medical-device` projects. It is unmapped in production's launch scope, but
+  served in development and under report mode.
+- **The race, reproduced on PostgreSQL 16.** The first version locked only the
+  `projects` rows. So an artifact could be approved between the check and the
+  delete and then cascaded away, and a project, an anchor included, could join a
+  workspace being deleted. The read now locks:
+  - the artifacts (`FOR SHARE`);
+  - the workspace row (`FOR UPDATE`, as its own statement: an unreferenced CTE
+    never runs).
+- **A remedy that could not work.** Deleting a program never clears its anchor
+  column, so "delete those programs first" could never unblock a workspace. An
+  anchor counts only while its program is live. A deleted program's anchor is an
+  ordinary project, still judged by the records rule.
+- **A signed draft read as a draft.** A locked document taken back to draft
+  keeps its signatures and lock snapshot. Their append-only triggers already
+  refuse the cascade, so nothing was destroyed (the skeptic refuted that part),
+  but the caller got an opaque 500. A draft that carries a signature or a
+  snapshot is now a record, and the answer is the 409.
+- **No role gate.** Any member, a viewer included, could delete. Both routes now
+  take `requireEditorAccess`, as `DELETE /api/device-projects/:id` already did.
+- **No audit row for a workspace delete.** It now records
+  `CLIENT_WORKSPACE_DELETED` through the canonical `recordAuditRow` and reports
+  the outcome as `auditTrail`, as the device delete does.
+- **A lock test that proved nothing.** It counted a table-level lock that any
+  `FOR UPDATE` takes, even when no row matches. It is replaced by
+  `project-retention-locks.dbtest.ts`, which runs two connections on real
+  PostgreSQL. Each lock case has a negative control: with no read held, the same
+  concurrent write goes through.
+
+One security finding is answered by the next change rather than this one.
+Under row-level security the read sees only the caller's organization's
+artifacts, while a cascade does not ask. A cross-organization artifact under the
+caller's project can exist only because `concept2cure_artifacts` has no
+same-organization key. That key is the next commit.
+
+Red, then green, for the follow-up:
+
+- `04-red-locks-first-version.txt`: the lock test against the first version of
+  the helper. **The three lock cases fail**, and both controls pass.
+- `05-red-helper-records-and-deleted-programs.txt`: the PGlite suite against
+  the first version fails three cases:
+  - the deleted program's anchor;
+  - the signed and snapshotted drafts;
+  - the refusal message.
+- `06-red-device-projects.txt`: the route at HEAD deletes the anchor; the 409
+  case fails.
+- `07-red-clients-gate-and-audit.txt`: the audit and viewer cases fail.
+- `08-red-walk-viewer.txt`: the walk's viewer check fails.
+- `09-green-followup.txt`: **11 files, 113 tests pass.**
+- `10-green-locks-real-postgres.txt`: **5 of 5 pass** on PostgreSQL 16.13.
+
 ## Found on the way, not fixed here
 
 `audit_events.updated_at` is declared in `shared/schema.ts` and laid down by

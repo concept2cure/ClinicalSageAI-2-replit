@@ -415,6 +415,14 @@ export async function hopRetention(w: World): Promise<void> {
     expect(before).toBeGreaterThan(0);
     expect(after).toBe(before);
   });
+  await hop.check('legacy-delete-needs-writing-role', 'the legacy project delete answers 403 to a viewer, and deletes nothing', async (observe) => {
+    const [anchor] = await q<{ id: number }>('SELECT id FROM projects WHERE regulatory_program_id = $1', [k.programId]);
+    const res = await asPrincipal(ORG_A, 3, 'viewer')(request(w.app).delete(`/api/projects/${anchor.id}`));
+    const kept = await q('SELECT 1 FROM projects WHERE id = $1', [anchor.id]);
+    observe({ status: res.status, kept: kept.length });
+    expect(res.status).toBe(403);
+    expect(kept).toHaveLength(1);
+  });
   await hop.check('legacy-draft-project-deleted', 'a legacy project holding only drafts is still deleted by the same route', async (observe) => {
     const [ws] = await q<{ client_workspace_id: number }>('SELECT client_workspace_id FROM projects WHERE regulatory_program_id = $1', [k.programId]);
     const [p] = await q<{ id: number }>(
