@@ -38,6 +38,7 @@ const DDL = `
   );
   CREATE TABLE concept2cure_signatures (id serial PRIMARY KEY, artifact_id integer NOT NULL);
   CREATE TABLE concept2cure_submission_snapshots (id serial PRIMARY KEY, artifact_id integer NOT NULL);
+  CREATE TABLE concept2cure_thread_comments (id serial PRIMARY KEY, artifact_id integer NOT NULL);
 `;
 
 beforeAll(async () => {
@@ -63,7 +64,7 @@ afterAll(async () => {
 });
 beforeEach(async () => {
   await pool.query(`
-    TRUNCATE concept2cure_signatures, concept2cure_submission_snapshots, concept2cure_artifacts, projects, regulatory_programs, client_workspaces;
+    TRUNCATE concept2cure_signatures, concept2cure_submission_snapshots, concept2cure_thread_comments, concept2cure_artifacts, projects, regulatory_programs, client_workspaces;
     INSERT INTO client_workspaces VALUES (10, 1);
     INSERT INTO projects VALUES (1, 1, 10, NULL);
     INSERT INTO concept2cure_artifacts VALUES (100, 1, 'draft');
