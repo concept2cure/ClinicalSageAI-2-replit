@@ -143,7 +143,8 @@ interface ProgramCtx {
    enterprise-gated portfolio rollup. No metric is originated on the client;
    filing/agency/pdufa arrive as explicit null (unsourced), never faked. */
 interface CanvasLeadProgram {
-  scope: 'program';
+  /** The lead is a project (L189: it said 'program' with a project id). */
+  scope: 'project';
   scopeId: string;
   projectId: number;
   code: string | null;
@@ -717,7 +718,7 @@ function ROReport({ report, onExport, onFinalize, seal, compact }: {
 /* ── RODashboard ── */
 /* `onAsk` is gone from here too — it was declared, threaded down from the
    canvas and never called once in the whole component. */
-function RODashboard({ dashboard, tier, onRun, canRun }: { dashboard: DashboardData; tier: string; onRun: (t: ReportType) => void; canRun: boolean }) {
+function RODashboard({ dashboard, tier, onRun, canRun, scope }: { dashboard: DashboardData; tier: string; onRun: (t: ReportType) => void; canRun: boolean; scope: string }) {
   if (!dashboard) return null;
 
   if (dashboard.kind === 'portfolio') {
@@ -799,6 +800,16 @@ function RODashboard({ dashboard, tier, onRun, canRun }: { dashboard: DashboardD
           /* Running a report creates a governed record, which the server refuses
              to a role without governed:write. The tile says so instead of
              offering a run that will be refused. */
+          /* A type that does not run at this scope (research_admin.scorecard runs
+             over a program group or account) says so instead of offering a run
+             the server refuses. */
+          if (!t.scopes.includes(scope)) return (
+            <div key={t.typeId} className="ro-pack-card is-locked">
+              <div className="ro-pack-fam">{fam.label}</div>
+              <div className="ro-pack-title">{t.label}</div>
+              <div className="ro-pack-sub">Runs over {t.scopes.join(' or ')}, not a single {scope}.</div>
+            </div>
+          );
           if (!canRun) return (
             <div key={t.typeId} className="ro-pack-card is-locked">
               <div className="ro-pack-fam">{fam.label}{fam.region ? <span className="ro-region">{fam.region}</span> : null}</div>
@@ -1310,7 +1321,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
             onFinalize={canFinalize && reportRunId != null && report.status !== 'final' ? () => setSigning(true) : undefined}
             seal={seal}
           />
-          : dashboard ? <RODashboard dashboard={dashboard} tier={tier} onRun={runFromTile} canRun={canWrite} />
+          : dashboard ? <RODashboard dashboard={dashboard} tier={tier} onRun={runFromTile} canRun={canWrite} scope={p.scope} />
           : (
             <div className="rc-empty">
               <div className="rc-empty-mark">*</div>

@@ -1449,9 +1449,10 @@ router.post('/runs', async (req: Request, res: Response) => {
 
     // A project this org does not own is not found — not an empty report about
     // it, and not a run whose scope points across the boundary for a later
-    // bundle or delivery to follow. (Program scope is left as it was: its
-    // membership query already requires the group to be this org's, and the
-    // live caller sends a project id under that scope — ledger L189.)
+    // bundle or delivery to follow. (Program scope is a report program group:
+    // its membership query below requires the group to be this org's. The
+    // canvas sent a project id under it until L189 was closed on 2026-10-01;
+    // it now sends project scope.)
     if (scopeType === 'project') {
       const projectId = Number(scopeId);
       const owned = Number.isSafeInteger(projectId)
