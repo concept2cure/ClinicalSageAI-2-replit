@@ -14,6 +14,7 @@ import { z } from 'zod';
 import { createScopedLogger } from '../utils/logger';
 import { ok, clientError, orgRequired, serverError } from '../lib/api-response';
 import { pool } from '../db';
+import { requireAuditReader } from '../services/audit/audit-api-authority';
 
 // People are named through public.actor_name, not a join on users: since users
 // took row-level security (D3, 2026-09-28) a tenant scope reads only current
@@ -204,6 +205,11 @@ export async function readAuditEvents(orgId: number, f: AuditEventFilters) {
 router.get('/audit', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
+  /* DP-18, second door (reporting review 2026-10-01): the organisation's whole
+     audit_logs, with names, roles and reasons, was readable by any member here,
+     stopped in production only by launch scope. The audit trail's readers are
+     the main door's (audit-api-authority.ts). */
+  if (!requireAuditReader(req, res)) return;
   const parsed = listQuery.safeParse(req.query);
   if (!parsed.success) return clientError(res, 422, 'Invalid query', parsed.error.flatten().fieldErrors);
   const { limit = 200, ...rest } = parsed.data;

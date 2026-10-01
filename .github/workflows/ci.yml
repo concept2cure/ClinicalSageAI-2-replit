@@ -185,6 +185,16 @@ jobs:
         # gate every PR. This guard is narrow enough to be blocking on day one.
         run: npm run ci:committed-secrets
 
+      - name: Guardrails — the Compose stacks carry the production boot contract
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # docker-compose.yml (self-host) and docker-compose.beta.yml run the app
+        # with NODE_ENV=production. Until 2026-10-01 neither passed the signer
+        # mode, the AI placement settings or SMTP, so neither could boot or sign
+        # anyone in, and nothing compared them with the contract. The required
+        # names come from deploy-aws.yml's preflight, so a variable added there
+        # is required here too (docs/evidence/W2/2026-10-01-compose-boot-contract/).
+        run: npm run ci:compose-boot-contract:selftest && npm run ci:compose-boot-contract
+
       - name: Guardrails — requirements.txt pins must install on the declared Python
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # Dependabot #1014 proposed numpy 2.4.6 -> 2.5.1. numpy 2.5.1 is
