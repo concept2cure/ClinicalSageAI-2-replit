@@ -46,9 +46,21 @@ describe('readLaunchScopeMode', () => {
 });
 
 describe('the scope list itself', () => {
-  it('has six apps and every app surface is in the id set', () => {
-    expect(LAUNCH_APPS).toHaveLength(6);
+  it('has seven apps and every app surface is in the id set', () => {
+    expect(LAUNCH_APPS).toHaveLength(7);
     for (const a of LAUNCH_APPS) for (const s of a.surfaces) expect(isLaunchSurface(s)).toBe(true);
+  });
+  it('Reporting & analytics is a launch app — founder decision, 2026-09-26', () => {
+    const reporting = LAUNCH_APPS.find((a) => a.id === 'reporting');
+    expect(reporting?.label).toBe('Reporting & analytics');
+    expect(reporting?.surfaces).toEqual(expect.arrayContaining(['insights', 'compliance-reports']));
+    expect(reporting?.modules).toContain('insights');
+    expect(isLaunchSurface('insights')).toBe(true);
+    expect(isLaunchSurface('compliance-reports')).toBe(true);
+    // The verdict the rail reads for the canvas: a grant is kept, never overwritten to launch-scope.
+    const [out] = applyLaunchScope([v('insights', { source: 'subscribed' })]);
+    expect(out.entitled).toBe(true);
+    expect(out.source).toBe('subscribed');
   });
   it('protocol development is in the Authoring app — founder decision, 2026-09-21', () => {
     const authoring = LAUNCH_APPS.find((a) => a.id === 'authoring')!;

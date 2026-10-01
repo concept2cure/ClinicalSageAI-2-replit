@@ -237,6 +237,31 @@ as High, and the refuting agent confirmed each one and cut it to Medium.
 
 With these, the register stands at **86**; with the 2026-09-26 weekly lens (IAM-19, DP-36…DP-39) at **91**.
 
+### 4.6 Added by the review of the Reporting & analytics launch and the compliance reports, 2026-09-30
+
+Found by three read-only lenses (security-auditor, honest-state-auditor, part11-ux-auditor) on the uncommitted change
+that made Reporting & analytics a launch app and added client-runnable audit and compliance reports
+(`docs/evidence/D6/2026-09-30-compliance-reports/README.md` §Reviews). DP-40 to DP-44 were filed by other lanes'
+reviews of 2026-09-28 (`docs/evidence/reviews/2026-09-28/`) and are not repeated here.
+
+| Id | Sev | Finding | Evidence | Hook | Status |
+|---|---|---|---|---|---|
+| DP-45 | Medium | A chain walk over zero rows reported `ok: true`, so an organisation with no chained audit rows was told its chain was "intact" — in the new reports, the signed audit export's `auditLogsChain`, and the other audited exports. | `server/services/audit/chain.ts` (walk returns `ok: !brokenAt`); `server/services/audit/audited-export.ts` `walkTenantChain` | 11.10(e); Annex 11 §9 | **closed 2026-10-01** (the Reporting change: zero rows is `ok: null` with a reason at the source) |
+| DP-46 | Medium | Every report run walked the whole tenant chain (and other tenants' legacy rows) with no throttle. | `server/services/audit/compliance-reports/generate.ts` (round 0) | HIPAA 164.306(a)(1); Annex 11 §16 | **closed** (only the integrity attestation walks; one run per organisation at a time; a per-person rate limit). Residual: the event-chain linkage count reads rows in the application |
+| DP-47 | Medium | Report-OS finalize, newly reachable in production, had no role gate, overwrote a seal on a second call and wrote its audit row in a separate transaction. | `server/routes/report-os.ts` finalize | 11.10(d)(e)(g); Annex 11 §12 | **closed** (owners, admins, managers; 409 for an already-final run; status, seal and chain row in one transaction) |
+| DP-48 | Low–Medium | The compliance-report package claimed "independent verification" under a symmetric, platform-held key. | `server/services/audit/compliance-reports/signed-report.ts` (round 0) | 11.10(b); claims honesty | **closed** (wording; the screen states what the seal is; a Verify control) |
+| DP-49 | Medium | A member's role change and removal write no audit row, so access changes cannot be reviewed or reported. | `server/routes/tenant-users.ts` (PATCH role, DELETE membership) | 11.10(d)(e); Annex 11 §12.4; POLICY-AC-002 §4a | **open** — plan P1-41; the reports disclose it |
+| DP-50 | Low–Medium | Report-OS bundle export skipped the entitlement gate and wrote no record; `POST /deliveries` with `platform_send` reports `sent` whatever the correspondence write did. | `server/routes/report-os.ts` bundles, deliveries | 11.10(e) | **bundle half closed**; deliveries **open** — plan P1-44 |
+| DP-51 | Low–Medium | As-of reports read current roles and status and presented them as of a past date. | `queries/access-review.ts`, `queries/controlled-documents.ts` (round 0) | 11.10(e); claims honesty | **closed by disclosure** (the history is not recorded: DP-49) |
+| DP-52 | Low | The CSV form of a report carried no period, verdict, truncation or notes. | `compliance-reports/csv.ts` (round 0) | 11.10(b) | **closed** |
+| DP-53 | Low (latent) | AnA command `audit.explain` has no minimum role; it reads one audit row with IP and user agent for any member, and is unreachable today only because of an id-type mismatch. | `server/services/ana-ri/command-rbac.ts`; `mdx-explain-audit-row.ts` | 11.10(d); GDPR 5(1)(f) | **open** — plan P1-42 |
+| DP-54 | Process | The rule file was edited in the change that relies on the edit. | `CLAUDE.md` Rule 2 | — | **answered**: the founder's instruction is quoted verbatim in `docs/evidence/D2-REPORTING-LAUNCH-APP/2026-09-30/README.md`; the definition of done follows when its window closes |
+| DP-55 | Medium | `POST /api/esignature/sign` accepts a signature with no meaning; the column is nullable and the writer stores null. | `server/routes/esignature.ts`; `signature-persistence.ts` | 11.50(a)(3) | **open** — plan P1-42 |
+| DP-56 | Low | The Reporting canvas showed "No program readiness yet" when the portfolio read failed. | `server/routes/insights-canvas-routes.ts` | claims honesty | **closed** (503 `PORTFOLIO_UNAVAILABLE`, rendered as an error) |
+| DP-57 | Medium | Tenant configuration writes (second-factor requirement, session timeout, IP restrictions, audit retention, integrations) write no audit row. | `server/routes/tenant-config.ts` | 11.10(e); SOC 2 CC8.1 | **open** — plan P1-41; the administrative-changes report discloses it |
+
+With these, the register stands at **104** (91 + DP-45 to DP-57), not counting DP-40 to DP-44 filed elsewhere.
+
 ## 5. Verified strengths (with the file that proves each)
 
 **Boot and posture.** Production refuses to start on: an unrecognised `NODE_ENV`; missing or short JWT, previous-JWT

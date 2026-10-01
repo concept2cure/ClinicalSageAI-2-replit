@@ -87,7 +87,8 @@ const launchSurfaces = [...new Set([...apps.flatMap((a) => a.surfaces), ...shell
 const launchModules = [...new Set(apps.flatMap((a) => a.modules))];
 
 const findings = [];
-if (apps.length !== 6) findings.push({ rule: 'shape', detail: `expected 6 launch apps, parsed ${apps.length}` });
+// Seven since 2026-09-30: Reporting & analytics joined (founder decision of 2026-09-26).
+if (apps.length !== 7) findings.push({ rule: 'shape', detail: `expected 7 launch apps, parsed ${apps.length}` });
 
 // ── 2. Routable + registered ───────────────────────────────────────────────
 const viewsSrc = read(VIEWS);
