@@ -21,7 +21,8 @@ import {
 } from '../../services/chat-thread-helpers.js';
 import { getEmbeddingService } from '../../services/enhancedEmbeddingService.js';
 import { getIntelligencePrefix } from '../../services/lumen-context-builder.js';
-import { processResponseActions } from '../../services/ana-guidance-executor.js';
+import { pendingSignoffFromToolResult, settleActionBlocks } from '../../services/ana-guidance-executor.js';
+import type { CommandResult } from '../../services/ana-ri/command-executor.js';
 import { logKernelDecision } from '../../services/kernel-decision-record.js';
 import { planKernelExecution } from '../../services/kernel-router.js';
 import {
@@ -433,6 +434,11 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     // offer-chips here too (this route never applies anything live).
     const collectedSurfaceActions: SurfaceActionDirective[] = [];
     const collectedDemoStarts: DemoStartDirective[] = [];
+    // The platform-command proposals the loop's execute_platform_command came
+    // back with. This route cannot hold the turn and ask, as the stream does;
+    // until P0-12's residual (2026-10-01) the proposal reached only the model,
+    // and the person had nothing to confirm. Returned as executedCommands.
+    const loopProposals: CommandResult[] = [];
     // The turn's retained record (services/ana/turn-record-loop.ts): the tool
     // calls as the loop reports them, filed when the turn answers or fails.
     const loopCalls = loopToolCollector();
@@ -857,6 +863,9 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
           // A demonstration fetched without Live Drive becomes a start chip.
           const demoStart = demoStartFromToolResult(toolName, result);
           if (demoStart) collectedDemoStarts.push(demoStart);
+          // A write the partition turned into a proposal: put it to the person.
+          const proposal = pendingSignoffFromToolResult(toolName, result);
+          if (proposal) loopProposals.push(proposal);
           // Persist the invocation for usage analytics. Latency is 0 here
           // because the agentic-loop hook fires post-success without a
           // start timestamp; the streaming path captures real latency.
@@ -944,50 +953,40 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       });
     }
 
-    // ── STEP 6b: GUIDANCE-TO-ACTION EXECUTION ──────────────────────────
-    // Process AnA's response for action signals and execute governed actions.
-    // Only runs when project context is available (org + project scoped).
-    let executedActions: Array<
-      | {
-          actionType: string;
-          executed: boolean;
-          confidence: string;
-          artifactId: string | null;
-          threadId: string | null;
-          error: string | null;
-        }
-      | NavigationAction
-      | SurfaceActionChip
-      | DemoStartChip
-    > = [];
+    // ── STEP 6b: AnA's ana-action blocks, as proposals ────────────────
+    // Each block AnA is confident in becomes a create_artifact PROPOSAL through
+    // the command partition — never a write (P0-12 residual, 2026-10-01; until
+    // then this created the artifact, and a review thread in the person's name,
+    // unasked). The proposals are returned as `executedCommands`, the envelope
+    // the sign-off prompt reads (extractPendingSignoffs); a person's yes goes to
+    // POST /api/ana-ri/governed-action, which runs the command.
+    let executedActions: Array<NavigationAction | SurfaceActionChip | DemoStartChip> = [];
+    let actionBlockProposals: CommandResult[] = [];
 
-    if (numericOrgId && project_id) {
+    if (numericOrgId && numericUserId) {
       try {
-        const actionResult = await processResponseActions(assistantMessage, {
-          projectId: typeof project_id === 'string' ? parseInt(project_id, 10) : project_id,
-          organizationId: numericOrgId,
-          userId: numericUserId,
-          userName: (req as any).user?.name || (req as any).user?.email || 'System',
-          threadId,
-        });
-
-        // Replace message with cleaned text (action blocks stripped)
-        if (actionResult.actions.length > 0) {
-          assistantMessage = actionResult.cleanedText;
-          executedActions = actionResult.actions.map(a => ({
-            actionType: a.actionType,
-            executed: a.executed,
-            confidence: a.confidence,
-            artifactId: a.artifactId,
-            threadId: a.threadId,
-            error: a.error,
-          }));
-        }
+        // The blocks are the platform's, not the answer: taken out when there
+        // were any, and the answer says what became of each (settleActionBlocks).
+        const settled = await settleActionBlocks(
+          assistantMessage,
+          {
+            projectId: project_id,
+            organizationId: numericOrgId,
+            userId: numericUserId,
+            userName: (req as any).user?.name || (req as any).user?.email || undefined,
+            threadId,
+          },
+          loopProposals,
+        );
+        actionBlockProposals = settled.proposals;
+        assistantMessage = settled.answer;
       } catch (actionErr: any) {
-        // Non-fatal — chat still works, actions just don't execute
-        console.warn('[AnA RI] Guidance action processing failed:', actionErr?.message);
+        // Non-fatal — the answer returns as AnA wrote it, blocks included;
+        // nothing was written.
+        console.warn('[AnA RI] Action-block proposals failed:', actionErr?.message);
       }
     }
+    const turnProposals: CommandResult[] = [...loopProposals, ...actionBlockProposals];
 
     // Navigation chips AFTER guidance actions — same ordering rationale as the
     // SSE path's post-processing: an artifact the turn actually created still
@@ -1339,8 +1338,11 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         suggestedActions: orchestratorResult!.suggestedActions,
         meta: orchestratorResult!.orchestrationMeta,
       },
-      // AnA 1.0 RI — Executed guidance actions
+      // Offer-chips (navigation, surface actions, demonstrations).
       executedActions: executedActions.length > 0 ? executedActions : undefined,
+      // AnA's proposals awaiting a person's confirmation — the loop's and the
+      // action blocks' — in the stream's post_done.executedCommands envelope.
+      executedCommands: turnProposals.length > 0 ? turnProposals : undefined,
       turnRecord,
     });
   } catch (error: any) {
