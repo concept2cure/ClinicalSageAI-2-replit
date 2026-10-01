@@ -9797,14 +9797,18 @@ registerToolHandler('check_consistency', async (input, ctx) => {
   if (right.length === 0) return JSON.stringify({ error: 'right (non-empty array) is required.' });
   try {
     const { runConsistencyCheck } = await import('../truth-engine/truth-engine-service.js');
-    const { findings, auditTrail } = await runConsistencyCheck(
+    const { findings, notCompared, auditTrail } = await runConsistencyCheck(
       { submissionId, dimension, left: { ref: left.ref, text: left.text }, right },
       { organizationId: ctx.organizationId, userId: ctx.userId }
     );
     const conflicts = findings.filter((f) => f.status === 'conflict').length;
+    const unread = notCompared.length
+      ? ` Not compared — no labelled figure in common with the claim: ${notCompared.join(', ')}. That is not a finding of consistency.`
+      : '';
     return JSON.stringify({
-      ok: true, findings, conflicts, auditTrail,
-      message: withAuditNote(`${findings.length} finding(s) recorded, ${conflicts} conflict(s).`, auditTrail),
+      ok: true, findings, conflicts, notCompared, auditTrail,
+      comparedBy: 'deterministic comparison of labelled figures (enrolled N, sample size, sites, events, alpha, power, hazard ratio, primary p-value)',
+      message: withAuditNote(`${findings.length} finding(s) recorded, ${conflicts} conflict(s).${unread}`, auditTrail),
     });
   } catch (err) {
     return JSON.stringify({ error: `check_consistency failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as any)?.code });

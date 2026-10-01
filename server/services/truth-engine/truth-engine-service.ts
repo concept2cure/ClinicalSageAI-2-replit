@@ -4,29 +4,28 @@
  *  - traceProvenance:   deterministic read of the provenance graph for a section
  *    (submission_evidence_links), tenant-scoped. The LLM never invents sources;
  *    the graph is data.
- *  - runConsistencyCheck: cross-document consistency via the consistency-check
- *    gateway task, persisting verdicts into consistency_findings, audited.
+ *  - runConsistencyCheck: cross-document consistency of labelled figures by the
+ *    deterministic reconciliation engine (figure-consistency.ts), persisting
+ *    verdicts into consistency_findings, audited. Until 2026-10-01 a model
+ *    labelled each pair match/conflict and its JSON was persisted as the
+ *    verdict (CLAUDE.md Rule 2).
  *  - listConsistencyFindings: tenant-scoped read of stored findings.
  *
- * All reads/writes are tenant-scoped from the caller's organizationId; the AI
- * call is audited as AI_GENERATE.
+ * All reads/writes are tenant-scoped from the caller's organizationId; the
+ * check is audited as CONSISTENCY_CHECK.
  *
  * @module server/services/truth-engine/truth-engine-service
  */
 
-import { promises as fs } from 'fs';
-import path from 'path';
 import { eq, and, isNull, desc } from 'drizzle-orm';
 import { db } from '../../db';
 import { submissions } from '../../../shared/schema';
 import { submissionEvidenceLinks, consistencyFindings } from '../../../shared/schema/evidence';
 import type { SubmissionEvidenceLink, ConsistencyFinding } from '../../../shared/types/database';
-import { getGateway } from '../ai-gateway';
-import { classifyGatewayError, type GatewayErrorCode } from '../ai-gateway/gateway-error-map';
-import auditService from '../auditService';
+import type { GatewayErrorCode } from '../ai-gateway/gateway-error-map';
 import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import { createScopedLogger } from '../../utils/logger';
-import { PROMPTS_DIR } from '../ai-gateway/prompts-dir';
+import { compareLabelledFigures } from './figure-consistency';
 
 const logger = createScopedLogger('truth-engine-service');
 
@@ -83,21 +82,11 @@ export async function traceProvenance(
   return { submissionId: params.submissionId, targetSectionCode: params.targetSectionCode, links: links as SubmissionEvidenceLink[] };
 }
 
-// ── Consistency check (AI + persistence) ────────────────────────────────────
-
-let consistencyPrompt: string | null = null;
-async function loadConsistencyPrompt(): Promise<string> {
-  if (consistencyPrompt) return consistencyPrompt;
-  consistencyPrompt = await fs.readFile(path.join(PROMPTS_DIR, 'consistency-check', 'v1.0.md'), 'utf8');
-  return consistencyPrompt;
-}
-
-interface ConsistencyAiResult {
-  findings: Array<{ leftRef: string; rightRef: string; status: 'match' | 'conflict'; detail?: string }>;
-}
+// ── Consistency check (deterministic + persistence) ─────────────────────────
 
 export interface RunConsistencyCheckParams {
   submissionId: number;
+  /** What the caller is checking, recorded with each finding. */
   dimension: string;
   left: { ref: string; text: string };
   right: Array<{ ref: string; text: string }>;
@@ -106,79 +95,37 @@ export interface RunConsistencyCheckParams {
 export interface ConsistencyCheckResult {
   findings: ConsistencyFinding[];
   /**
-   * Whether the §11.10(e) AI_GENERATE row for this check exists. The findings
-   * are persisted either way; the caller is told, and says so. Until
-   * 2026-09-25 this outcome was discarded (the failure path already kept it).
+   * Sources that shared no labelled figure with the claim, so nothing was
+   * compared. No finding is recorded for them — which is not a finding of
+   * consistency, and the caller says so.
+   */
+  notCompared: string[];
+  /**
+   * Whether the §11.10(e) row for this check exists. The findings are
+   * persisted either way; the caller is told, and says so.
    */
   auditTrail: AuditRowOutcome;
 }
 
-/** Run a consistency check via the gateway and persist the verdicts. */
+/** Compare the claim's labelled figures with each source's and persist the verdicts. */
 export async function runConsistencyCheck(
   params: RunConsistencyCheckParams,
   ctx: TruthCtx
 ): Promise<ConsistencyCheckResult> {
   await assertOwnedSubmission(params.submissionId, ctx.organizationId);
 
-  const systemPrompt = await loadConsistencyPrompt();
-  let result: ConsistencyAiResult;
-  try {
-    const response = await getGateway().route({
-      taskType: 'regulatory_review',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: JSON.stringify({ dimension: params.dimension, left: params.left, right: params.right }) },
-      ],
-      jsonMode: true,
-      temperature: 0.1,
-      maxTokens: 3000,
-      promptVersion: 'consistency-check@v1.0',
-      organizationId: ctx.organizationId,
-      userId: ctx.userId,
-      callerModule: 'truth-engine-service',
-      metadata: { task: 'consistency-check', submissionId: params.submissionId },
-    });
-    const cleaned = response.content.trim().replace(/^```(?:json)?/i, '').replace(/```$/i, '').trim();
-    result = JSON.parse(cleaned) as ConsistencyAiResult;
-  } catch (err) {
-    const { code, message } = classifyGatewayError(err);
-    // Audit the failed AI attempt (best-effort) before surfacing the error.
-    // Never block on audit — but the catch that used to assert this could not
-    // fire: `logAction` resolves normally on a persistence failure. This records
-    // a FAILED consistency check, which is the outcome most worth keeping, so a
-    // lost row is reported rather than assumed away.
-    const failureAudit = await auditService.logAction({
-      organizationId: ctx.organizationId,
-      userId: ctx.userId,
-      action: 'AI_GENERATE',
-      resourceType: 'submission',
-      resourceId: params.submissionId,
-      details: { task: 'consistency-check', promptVersion: 'consistency-check@v1.0', outcome: 'failed', code },
-    });
-    if (!failureAudit.persisted) {
-      logger.warn('Consistency-check failure audit row was not persisted', {
-        submissionId: params.submissionId,
-        organizationId: ctx.organizationId,
-        code,
-        auditError: failureAudit.error ?? 'no durable store accepted the row',
-      });
-    }
-    throw new TruthEngineError(code, message);
-  }
-
-  const findings = Array.isArray(result.findings) ? result.findings : [];
+  const { findings, notCompared } = compareLabelledFigures(params.left, params.right);
   const inserted: ConsistencyFinding[] = [];
   for (const f of findings) {
-    const status = f.status === 'conflict' ? 'conflict' : 'match';
     const [row] = await db
       .insert(consistencyFindings)
       .values({
         submissionId: params.submissionId,
         dimension: params.dimension,
-        leftRef: f.leftRef ?? params.left.ref,
-        rightRef: f.rightRef ?? '',
-        status,
-        detail: f.detail ?? null,
+        leftRef: f.leftRef,
+        rightRef: f.rightRef,
+        status: f.status,
+        detail: f.detail,
         organizationId: ctx.organizationId,
         createdBy: ctx.userId,
       })
@@ -189,19 +136,25 @@ export async function runConsistencyCheck(
   const auditTrail = await recordAuditRow({
     organizationId: ctx.organizationId,
     userId: ctx.userId,
-    action: 'AI_GENERATE',
+    action: 'CONSISTENCY_CHECK',
     resourceType: 'submission',
     resourceId: params.submissionId,
     details: {
       task: 'consistency-check',
-      promptVersion: 'consistency-check@v1.0',
+      engine: 'dossier-number-reconciliation',
       dimension: params.dimension,
       findingCount: inserted.length,
       conflicts: inserted.filter((f) => f.status === 'conflict').length,
+      notCompared,
     },
   });
-  logger.info('Ran consistency check', { submissionId: params.submissionId, organizationId: ctx.organizationId, findings: inserted.length });
-  return { findings: inserted, auditTrail };
+  logger.info('Ran consistency check', {
+    submissionId: params.submissionId,
+    organizationId: ctx.organizationId,
+    findings: inserted.length,
+    notCompared: notCompared.length,
+  });
+  return { findings: inserted, notCompared, auditTrail };
 }
 
 export async function listConsistencyFindings(

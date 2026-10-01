@@ -1119,8 +1119,11 @@ router.post('/:id/consistency', limiter, requireRole(AUTHOR), async (req, res) =
   try {
     // The body stays the findings array the Submission Center reads; the check's
     // §11.10(e) row is reported in the header pair, as the leaf removal above does.
-    const { findings, auditTrail } = await runConsistencyCheck({ submissionId: id, ...parsed.data }, ctx);
+    const { findings, notCompared, auditTrail } = await runConsistencyCheck({ submissionId: id, ...parsed.data }, ctx);
     setAuditRowHeaders(res, auditTrail);
+    // How many sources shared no labelled figure with the claim: an empty
+    // array is "nothing compared" as often as "no conflict".
+    res.setHeader('X-Consistency-Not-Compared', String(notCompared.length));
     res.json(findings);
   } catch (err) {
     fail(res, err);

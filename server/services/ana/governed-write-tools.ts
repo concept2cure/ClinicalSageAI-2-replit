@@ -77,7 +77,7 @@ export const FREE_TEXT_NON_GOVERNED_TOOLS: Readonly<Record<string, string>> = {
   build_abbreviation_list:
     'Returns a deterministic acronym extraction; nothing is stored.',
   check_consistency:
-    'The supplied texts are inputs to a model consistency check whose findings are kept as an analysis log; the texts themselves are not stored as governed content.',
+    'The supplied texts are inputs to a deterministic comparison of labelled figures whose findings are kept as an analysis log; the texts themselves are not stored as governed content.',
   check_grounding:
     'Returns a deterministic grounding report; the text is not stored.',
   check_numerical_integrity:
