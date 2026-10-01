@@ -355,6 +355,122 @@ describe('SCIM tenant-scoped writes — sole-organisation user keeps today\'s co
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// IAM-27 (2026-10-01): a sole-organisation account a platform administrator
+// suspended. SCIM owns `active` and `inactive`; `suspended` is the platform's
+// hold (routes/admin/master-admin.ts PATCH /users/:id/status). An IdP that
+// sent active=true, or a replace that left `active` out, used to write
+// 'active' over it. A held account is now treated as a shared one is for its
+// status: activation is a no-op, deactivation removes this tenant's
+// membership and leaves the hold in place. The name is still the sole
+// organisation's to change.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('SCIM tenant-scoped writes — a suspended sole-organisation account (IAM-27)', () => {
+  const HELD: FakeUser = { ...JANE, status: 'suspended' };
+  beforeEach(() => fakePool({ orgCount: 1, user: HELD }));
+
+  it('PATCH active=true does not lift the suspension: no status write, no activation row, active=false', async () => {
+    const res = await request(app)
+      .patch(`/scim/v2/Users/${USER_ID}`)
+      .set('Authorization', `Bearer ${TOKEN}`)
+      .send({ Operations: [{ op: 'replace', path: 'active', value: true }] });
+
+    expect(res.status).toBe(200);
+    expect(res.body.active).toBe(false);
+    expect(sqlMatching(queryMock, USERS_STATUS_WRITE)).toHaveLength(0);
+    expect(sqlMatching(queryMock, AUDIT_INSERT).some(c => c[1]?.[1] === 'scim.user.activated')).toBe(false);
+  });
+
+  it.each([
+    ['active: true', { userName: JANE.email, displayName: JANE.name, active: true }],
+    ['no active at all', { userName: JANE.email, displayName: JANE.name }],
+  ])('PUT with %s does not lift the suspension', async (_label, body) => {
+    const res = await request(app)
+      .put(`/scim/v2/Users/${USER_ID}`)
+      .set('Authorization', `Bearer ${TOKEN}`)
+      .send(body);
+
+    expect(res.status).toBe(200);
+    expect(res.body.active).toBe(false);
+    expect(sqlMatching(queryMock, USERS_STATUS_WRITE)).toHaveLength(0);
+  });
+
+  it('PUT still renames: the name is the sole organisation\'s, the status is not', async () => {
+    const res = await request(app)
+      .put(`/scim/v2/Users/${USER_ID}`)
+      .set('Authorization', `Bearer ${TOKEN}`)
+      .send({ userName: JANE.email, displayName: 'Jane Renamed', active: true });
+
+    expect(res.status).toBe(200);
+    const upd = sqlMatching(queryMock, USERS_NAME_WRITE);
+    expect(upd).toHaveLength(1);
+    expect(upd[0][1]).toEqual(['Jane Renamed', USER_ID]);
+    expect(sqlMatching(queryMock, USERS_STATUS_WRITE)).toHaveLength(0);
+  });
+
+  it.each([
+    ['PATCH active=false', (r: ReturnType<typeof request>) =>
+      r.patch(`/scim/v2/Users/${USER_ID}`).set('Authorization', `Bearer ${TOKEN}`)
+        .send({ Operations: [{ op: 'replace', path: 'active', value: false }] })],
+    ['PUT active=false', (r: ReturnType<typeof request>) =>
+      r.put(`/scim/v2/Users/${USER_ID}`).set('Authorization', `Bearer ${TOKEN}`)
+        .send({ userName: JANE.email, displayName: JANE.name, active: false })],
+    ['DELETE', (r: ReturnType<typeof request>) =>
+      r.delete(`/scim/v2/Users/${USER_ID}`).set('Authorization', `Bearer ${TOKEN}`)],
+  ])('%s removes this organisation\'s membership and leaves the suspension in place', async (_label, send) => {
+    const res = await send(request(app));
+
+    expect([200, 204]).toContain(res.status);
+    expect(sqlMatching(queryMock, USERS_STATUS_WRITE)).toHaveLength(0);
+    const del = sqlMatching(queryMock, MEMBERSHIP_DELETE);
+    expect(del).toHaveLength(1);
+    expect(del[0][1]).toEqual([USER_ID, ORG]);
+    expect(invalidateMock).toHaveBeenCalledWith(USER_ID, ORG);
+    expect(sqlMatching(queryMock, AUDIT_INSERT).some(c => c[1]?.[1] === 'scim.user.deactivated')).toBe(true);
+  });
+});
+
+describe('SCIM tenant-scoped writes — a replace that leaves `active` out changes no status (IAM-27)', () => {
+  it('a deactivated sole-organisation account stays inactive', async () => {
+    fakePool({ orgCount: 1, user: { ...JANE, status: 'inactive' } });
+    const res = await request(app)
+      .put(`/scim/v2/Users/${USER_ID}`)
+      .set('Authorization', `Bearer ${TOKEN}`)
+      .send({ userName: JANE.email, displayName: JANE.name });
+
+    expect(res.status).toBe(200);
+    expect(res.body.active).toBe(false);
+    const upd = sqlMatching(queryMock, USERS_STATUS_WRITE);
+    expect(upd.every(([, params]) => !params?.includes('active'))).toBe(true);
+  });
+
+  it('a shared account: a replace with no `active` removes no membership and writes no status', async () => {
+    fakePool({ orgCount: 2, user: { ...JANE, status: 'inactive' } });
+    const res = await request(app)
+      .put(`/scim/v2/Users/${USER_ID}`)
+      .set('Authorization', `Bearer ${TOKEN}`)
+      .send({ userName: JANE.email, displayName: JANE.name });
+
+    expect(res.status).toBe(200);
+    expect(sqlMatching(queryMock, MEMBERSHIP_DELETE)).toHaveLength(0);
+    expect(sqlMatching(queryMock, USERS_STATUS_WRITE)).toHaveLength(0);
+  });
+
+  it('control: PATCH active=true still reactivates an account SCIM deactivated', async () => {
+    fakePool({ orgCount: 1, user: { ...JANE, status: 'inactive' } });
+    const res = await request(app)
+      .patch(`/scim/v2/Users/${USER_ID}`)
+      .set('Authorization', `Bearer ${TOKEN}`)
+      .send({ Operations: [{ op: 'replace', path: 'active', value: true }] });
+
+    expect(res.status).toBe(200);
+    const upd = sqlMatching(queryMock, USERS_STATUS_WRITE);
+    expect(upd).toHaveLength(1);
+    expect(upd[0][1]).toEqual(['active', USER_ID]);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Fail closed: when the membership count cannot be established, the tenant is
 // NOT assumed to own the account.
 // ─────────────────────────────────────────────────────────────────────────────
