@@ -1,15 +1,15 @@
 {
   "documentId": "TM-001",
-  "generatedAt": "2026-10-01T16:34:06.653Z",
+  "generatedAt": "2026-10-01T18:13:52.348Z",
   "generator": "scripts/validation/build-traceability.mjs",
   "runDate": "2026-09-27",
   "summary": {
-    "requirements": 80,
+    "requirements": 81,
     "pass": 69,
     "partial": 2,
     "fail": 0,
     "open": 0,
-    "uncovered": 9
+    "uncovered": 10
   },
   "byApp": {
     "Projects": {
@@ -21,12 +21,12 @@
       "uncovered": 0
     },
     "Vault": {
-      "requirements": 19,
+      "requirements": 20,
       "pass": 10,
       "partial": 0,
       "fail": 0,
       "open": 0,
-      "uncovered": 9
+      "uncovered": 10
     },
     "Authoring": {
       "requirements": 15,
@@ -915,6 +915,22 @@
         "risk": "medium: a relationship is context a reviewer follows, not the record itself, so a wrong one misleads but alters no document; a relationship that changed or vanished silently, or reached another organisation's document, would be a data-integrity and confidentiality failure",
         "assurance": "scripted",
         "rationale": "OQ-VAULT-20. The refusals (self, same document, duplicate, unknown kind, another organisation's document or project, a viewer), the table's refusal of every other change, DELETE and TRUNCATE for every role, row security, and the tenant purge are in `tests/db/vault-document-relationships.dbtest.ts`"
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-VAULT-020",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "Each version in a document's version list names every live submission leaf that carries it: the submission, the sequence and its status, the section, and the leaf's lifecycle operation. A version carried by none says so. A removed leaf, or a leaf in a removed sequence or submission, is not listed, and no other organisation's leaf is.",
+      "part11": "§11.10(e)",
+      "risk": "medium",
+      "steps": [],
+      "ra": {
+        "intendedUse": "List the live submission leaves that carry each Vault version",
+        "risk": "medium: a read that informs a revision (replace, not new), and transmits nothing. A placement left off could lead to a wrong lifecycle operation in the next sequence; another organisation's placement shown would be a confidentiality failure",
+        "assurance": "scripted",
+        "rationale": "OQ-VAULT-21. The removed leaf and removed sequence, another organisation's leaf, and the read's organisation filter with row security bypassed are in `tests/db/vault-where-used.dbtest.ts`"
       },
       "verdict": "uncovered"
     },

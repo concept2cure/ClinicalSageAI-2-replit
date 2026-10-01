@@ -1,0 +1,152 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T18:06:00.710Z","pid":6570,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T18:06:00.711Z","pid":6570,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T18:06:00.711Z","pid":6570,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-where-used.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T18:06:00.799Z', poolSize: 1 }
+
+stdout | tests/db/vault-where-used.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/vault-where-used.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-01T18:06:01.417Z","pid":6570,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+(node:6570) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-01T18:06:01.505Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 29,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-01T18:06:01.579Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "08f196c9-7f17-4535-b61b-70320cddf171",
+    "code": "DBTEST-VWHERE-STAB",
+    "type": "OTHER",
+    "size": 29,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T18:06:01.590Z","pid":6570,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-01T18:06:01.602Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 29,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-01T18:06:01.616Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "ec1c8816-cb3c-400f-89f3-ffe7dd1237f8",
+    "code": "DBTEST-VWHERE-STAB",
+    "type": "OTHER",
+    "size": 29,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T18:06:01.624Z","pid":6570,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-01T18:06:01.624Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 18,
+    "wordCount": 2,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-01T18:06:01.633Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "acece561-c936-49cc-9ba8-037240692e76",
+    "code": "DBTEST-VWHERE-CO",
+    "type": "OTHER",
+    "size": 18,
+    "hasText": true
+  }
+}
+
+{"level":30,"time":"2026-10-01T18:06:01.825Z","pid":6570,"hostname":"vm","context":{"userId":4102,"tenantId":1327,"resourceId":"39"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-01T18:06:01.853Z","pid":6570,"hostname":"vm","context":{"userId":4102,"tenantId":1327,"resourceId":"40"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-01T18:06:01.875Z","pid":6570,"hostname":"vm","context":{"userId":4102,"tenantId":1327,"resourceId":"41"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-01T18:06:01.898Z","pid":6570,"hostname":"vm","context":{"userId":4102,"tenantId":1327,"resourceId":"42"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+ × tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > each version lists the live leaves that name it 41ms
+   → expected [ { leafId: 40, …(10) }, …(1) ] to deeply equal [ ObjectContaining{…} ]
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > a removed leaf is not a placement 26ms
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > another organisation's leaf naming this version is not listed, and another organisation reads nothing 25ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > each version lists the live leaves that name it
+AssertionError: expected [ { leafId: 40, …(10) }, …(1) ] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+@@ -10,6 +10,19 @@
+      "sequenceNumber": "0001",
+      "sequenceStatus": "draft",
+      "submissionId": 30,
+      "submissionTitle": "dbtest-vwhere IND 123456",
+    },
++   {
++     "applicationType": "ind",
++     "leafId": 42,
++     "leafTitle": "Leaf 3.2.P.8.3",
++     "operation": "new",
++     "region": "fda",
++     "sectionCode": "3.2.P.8.3",
++     "sequenceId": 38,
++     "sequenceNumber": "0002",
++     "sequenceStatus": "draft",
++     "submissionId": 30,
++     "submissionTitle": "dbtest-vwhere IND 123456",
++   },
+  ]
+
+ ❯ tests/db/vault-where-used.dbtest.ts:188:50
+    186|       sectionCode: '3.2.P.8.1', leafTitle: 'Leaf 3.2.P.8.1', operation…
+    187|     })]);
+    188|     expect((byId.get(ids.v2) as any).placements).toEqual([expect.objec…
+       |                                                  ^
+    189|       sequenceId: seq.second, sequenceNumber: '0001', sectionCode: '3.…
+    190|     })]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  18:05:58
+   Duration  3.17s (transform 1.47s, setup 68ms, import 131ms, tests 2.68s, environment 0ms)
+
