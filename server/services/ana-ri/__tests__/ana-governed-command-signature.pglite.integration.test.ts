@@ -381,6 +381,20 @@ describe('revert_to_version signs the new version in the transaction that writes
   });
 });
 
+/**
+ * 42703 on the conversations UPDATE for the duration of `fn`: a real failure,
+ * not an absent table. (It was the comments UPDATE until 2026-10-01; review
+ * comments are retained now.)
+ */
+async function withSummaryColumnMoved(fn: () => Promise<void>): Promise<void> {
+  await pg.exec(`ALTER TABLE concept2cure_conversations RENAME COLUMN summary TO summary_moved`);
+  try {
+    await fn();
+  } finally {
+    await pg.exec(`ALTER TABLE concept2cure_conversations RENAME COLUMN summary_moved TO summary`);
+  }
+}
+
 describe('erase_personal_data', () => {
   async function seedSubjectData() {
     const artifactPk = await seedArtifact();
@@ -416,12 +430,11 @@ describe('erase_personal_data', () => {
     const [ledger] = await signLedger();
     expect(sig.bound_payload_digest).toBe(ledger.sha256_chain);
     expect(asJson(ledger.payload)).toMatchObject({ dataSubjectId: SIGNER, command: 'erase_personal_data' });
-    expect(asJson(ledger.payload).scope).toEqual(expect.arrayContaining(['users', 'concept2cure_conversations', 'concept2cure_thread_comments']));
+    expect(asJson(ledger.payload).scope).toEqual(expect.arrayContaining(['users', 'concept2cure_conversations']));
 
     // The erasure itself happened.
     expect((await userRow()).name).toBe(`[ERASED USER ${SIGNER}]`);
     expect((await q(`SELECT summary FROM concept2cure_conversations`))[0].summary).toBe('[REDACTED PER GDPR ART.17]');
-    expect((await q(`SELECT body FROM concept2cure_thread_comments`))[0].body).toBe('[REDACTED PER GDPR ART.17]');
     expect(await q(`SELECT 1 FROM gdpr_data_subject_requests WHERE data_subject_id = $1 AND status = 'completed'`, [String(SIGNER)])).toHaveLength(1);
   });
 
@@ -462,14 +475,14 @@ describe('erase_personal_data', () => {
 
   it('a failing redaction statement returns failure with nothing committed', async () => {
     await seedSubjectData();
-    // 42703 on the comments UPDATE: a real failure, not an absent table.
-    await pg.exec(`ALTER TABLE concept2cure_thread_comments RENAME COLUMN body TO body_moved`);
-    const r = await erase(signoff());
-    expect(r.success).toBe(false);
-    expect((await userRow()).name).toBe(SIGNER_NAME);
-    expect((await q(`SELECT summary FROM concept2cure_conversations`))[0].summary).toBe('Discussed my availability');
-    expect(await signatures()).toHaveLength(0);
-    expect(await q(`SELECT 1 FROM gdpr_data_subject_requests`)).toHaveLength(0);
+    await withSummaryColumnMoved(async () => {
+      const r = await erase(signoff());
+      expect(r.success).toBe(false);
+      expect((await userRow()).name).toBe(SIGNER_NAME);
+      expect((await q(`SELECT summary_moved FROM concept2cure_conversations`))[0].summary_moved).toBe('Discussed my availability');
+      expect(await signatures()).toHaveLength(0);
+      expect(await q(`SELECT 1 FROM gdpr_data_subject_requests`)).toHaveLength(0);
+    });
   });
 
   it('an absent table is reported as not applicable, not as zero, and the erasure completes', async () => {
@@ -477,7 +490,7 @@ describe('erase_personal_data', () => {
     await pg.exec(`DROP TABLE concept2cure_thread_comments`);
     const r = await erase(signoff());
     expect(r.success).toBe(true);
-    expect(r.data?.redactedComments).toBeNull();
+    expect(r.data?.retainedReviewComments).toBeNull();
     expect(r.data?.notApplicable).toEqual(['concept2cure_thread_comments']);
     expect((await userRow()).name).toBe(`[ERASED USER ${SIGNER}]`);
     expect(await signatures()).toHaveLength(1);
@@ -499,7 +512,23 @@ describe('erase_personal_data', () => {
 
 // 2026-10-01 (D5): the reason on the erasure record is the one the person
 // stated in the ceremony, never the model's params.reason or a stock line.
-describe('erase_personal_data records the reason the person stated', () => {
+describe('erase_personal_data records the reason the person stated, and keeps the review record', () => {
+  it('retains the subject’s review comments, word for word, outside its scope (D5, 2026-10-01)', async () => {
+    const artifactPk = await seedArtifact();
+    await q(
+      `INSERT INTO concept2cure_thread_comments (comment_id, org_id, thread_id, artifact_id, author_id, author_name, body)
+       VALUES ('cmt_keep', $1, 1, $2, $3, $4, 'Table 14.2.1 uses the wrong population')`,
+      [ORG, artifactPk, SIGNER, SIGNER_NAME],
+    );
+    const { erasePersonalData } = await import('../command-executor');
+    const r = await erasePersonalData(ctxWith(signoff()) as never, { dataSubjectId: SIGNER });
+    expect(r.success).toBe(true);
+    expect(r.data?.retainedReviewComments).toBe(1);
+    expect((await q(`SELECT body FROM concept2cure_thread_comments WHERE comment_id = 'cmt_keep'`))[0].body).toBe('Table 14.2.1 uses the wrong population');
+    const [ledger] = await signLedger();
+    expect(asJson(ledger.payload).scope).not.toContain('concept2cure_thread_comments');
+  });
+
   it('takes it from the sign-off, not from what AnA wrote', async () => {
     const { erasePersonalData } = await import('../command-executor');
     const r = await erasePersonalData(ctxWith(signoff()) as never, {
