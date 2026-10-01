@@ -77,14 +77,15 @@ module "stack" {
   # The account's GitHub OIDC provider is created here.
   create_github_oidc_provider = true
 
-  jwt_secret                      = var.jwt_secret
-  refresh_token_secret            = var.refresh_token_secret
-  mfa_encryption_key              = var.mfa_encryption_key
-  audit_hmac_key                  = var.audit_hmac_key
-  audit_hmac_secret               = var.audit_hmac_secret
-  audit_export_signing_key        = var.audit_export_signing_key
-  connector_encryption_key        = var.connector_encryption_key
-  openai_api_key                  = var.openai_api_key
+  jwt_secret               = var.jwt_secret
+  refresh_token_secret     = var.refresh_token_secret
+  mfa_encryption_key       = var.mfa_encryption_key
+  audit_hmac_key           = var.audit_hmac_key
+  audit_hmac_secret        = var.audit_hmac_secret
+  audit_export_signing_key = var.audit_export_signing_key
+  connector_encryption_key = var.connector_encryption_key
+  openai_api_key           = var.openai_api_key
+  anthropic_api_key        = var.anthropic_api_key
 
   # Login OTP delivery; without it no one can sign in.
   smtp_host = var.smtp_host

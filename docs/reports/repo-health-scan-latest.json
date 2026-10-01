@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-01T03:41:00.888Z",
+  "generatedAt": "2026-10-01T06:52:05.459Z",
   "git": {
-    "sha": "165b5be5aa2899998bc7b37e01b7260978a8c038",
+    "sha": "85f5ee8ec46e78605379fff8ec2b2903b0f342a6",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -12,7 +12,7 @@
   },
   "managedMirrors": [],
   "summary": {
-    "duplicateBasenames": 211,
+    "duplicateBasenames": 212,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 45,
@@ -1494,6 +1494,14 @@
         ]
       },
       {
+        "basename": "permissions",
+        "count": 2,
+        "paths": [
+          "server/services/governance/permissions.ts",
+          "shared/constants/permissions.ts"
+        ]
+      },
+      {
         "basename": "policy",
         "count": 2,
         "paths": [
@@ -2026,7 +2034,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 223354
+        "bytes": 224169
       },
       {
         "file": "server/statistics-service.ts",
@@ -2200,7 +2208,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 5608
+        "lines": 5619
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2296,7 +2304,7 @@
       },
       {
         "file": "server/routes/auth.ts",
-        "lines": 2711
+        "lines": 2707
       },
       {
         "file": "server/routes/knowledge-base.ts",
@@ -2316,7 +2324,7 @@
       },
       {
         "file": "server/routes/report-os.ts",
-        "lines": 2394
+        "lines": 2396
       },
       {
         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
@@ -2511,6 +2519,10 @@
         "lines": 1813
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+        "lines": 1796
+      },
+      {
         "file": "ui_kits/home/Projects.jsx",
         "lines": 1795
       },
@@ -2525,10 +2537,6 @@
       {
         "file": "server/routes/ana-cortex-ft.ts",
         "lines": 1787
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "lines": 1773
       },
       {
         "file": "server/services/cmc-write-through.ts",
@@ -2624,7 +2632,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 411,
+      "duplicateGroups": 412,
       "largeByBytes": 35,
       "largeByLines": 86
     },
@@ -2636,7 +2644,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 76,
+      "duplicateGroups": 77,
       "largeByBytes": 3,
       "largeByLines": 1
     },

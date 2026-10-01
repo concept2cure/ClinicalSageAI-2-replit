@@ -24,7 +24,6 @@
     "server/routes/inline-annotations.ts": 3,
     "server/routes/market-access.routes.ts": 1,
     "server/routes/program-journey.routes.ts": 2,
-    "server/routes/qms.ts": 2,
     "server/routes/reg-change.routes.ts": 1,
     "server/routes/safety-narrative.ts": 1,
     "server/routes/se-matrix.ts": 4,
