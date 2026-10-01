@@ -27,25 +27,26 @@ both finders, and every verifier, were cut off by account usage limits
 | ID | Lens | Claimed | Finding | Status |
 |---|---|---|---|---|
 | F00 | backbone | high | The ICH heading tree stops 1–3 levels short of v3.2.2 (e.g. `m3-2-s-4-1-specification`, `m5-3-5-1-…` are never emitted), so deep Module 2–5 leaves file under their parent heading; a non-existent code such as `3.2.S.4.9` is accepted and filed under 3.2.S with 0 errors. | unverified |
-| F01 | backbone | high | `index.xml` and `us-regional.xml` declare `xmlns:xlink="http://www.w3.org/1999/xlink"`; the ICH 3.2 and FDA 3.3 DTDs fix it (`#FIXED`) to `http://www.w3c.org/1999/xlink` — every backbone would be DTD-invalid. The repo's own `docs/ectd/SPEC_DIGEST.md` shows the w3c.org value. | unverified |
+| F01 | backbone | high | `index.xml` and `us-regional.xml` declare `xmlns:xlink="http://www.w3.org/1999/xlink"`; the ICH 3.2 and FDA 3.3 DTDs fix it (`#FIXED`) to `http://www.w3c.org/1999/xlink` — every backbone would be DTD-invalid. The repo's own `docs/ectd/SPEC_DIGEST.md` shows the w3c.org value. | **confirmed** 2026-10-01 (high); **fixed** — see "Fixed after verification" |
 | F02 | backbone | high | `m3-2-s-drug-substance`, `m3-2-p-drug-product`, `m5-3-5-…` (and the 2.3.S/2.3.P/2.7.3 counterparts) are emitted without the attributes the DTD requires (substance, manufacturer, dosageform, indication); multiple substances/products/indications merge under one heading. | unverified |
 | F03 | backbone | medium | This spine can never produce a Study Tagging File: `LeafBytes` has no study fields, so 4.2.x / 5.3.x study reports ship untagged. | unverified |
-| F04 | m1-regional + lifecycle | high | Every follow-up is declared the Original of a new regulatory activity: `submission-id` is always the sequence's own number and sub-type always `fdasst1`; the assemble body has no field to say otherwise, and nothing checks submission type against application type (an IND accepts "Efficacy Supplement"). | unverified |
-| F05 | m1-regional | high | `<application-number>` is written exactly as entered; the product's own example is `IND123456`, while FDA application numbers are six digits. | unverified |
+| F04 | m1-regional + lifecycle | high | Every follow-up is declared the Original of a new regulatory activity: `submission-id` is always the sequence's own number and sub-type always `fdasst1`; the assemble body has no field to say otherwise, and nothing checks submission type against application type (an IND accepts "Efficacy Supplement"). | **confirmed** 2026-10-01 (high) |
+| F05 | m1-regional | high | `<application-number>` is written exactly as entered; the product's own example is `IND123456`, while FDA application numbers are six digits. | **confirmed** 2026-10-01 (high; FDA reaction at medium confidence) |
 | F06 | m1-regional | high | Module 1 headings are written flat under `<m1-regional>` in package order (no parent headings, not in section order), Form 1571 ships as a bare leaf with no `form-type`, and FDA is marked `regionConformant: true` by region alone. | unverified |
-| F07 | m1-regional | high | `<applicant-info/>` is always empty on this spine although the recorded applicant id and name are required and described as carried by the backbone; `application-containing-files` is also absent. | unverified |
-| F08 | m1-regional | medium | Submission-type words are matched by loose substring, so `IND` files as IND Safety Reports (fdast9), `report` as Annual Report, `supplement` as Efficacy Supplement, instead of being refused. | unverified |
+| F07 | m1-regional | high | `<applicant-info/>` is always empty on this spine although the recorded applicant id and name are required and described as carried by the backbone; `application-containing-files` is also absent. | **confirmed** 2026-10-01 (high); even the contacts path is non-conformant |
+| F08 | m1-regional | medium | Submission-type words are matched by loose substring, so `IND` files as IND Safety Reports (fdast9), `report` as Annual Report, `supplement` as Efficacy Supplement, instead of being refused. | **confirmed** 2026-10-01 (medium) |
 | F09 | lifecycle | high | `modified-file` names a content file, not a leaf (`../0000/index.xml#<leafId>`). | **fixed upstream** in `09c4c15d` (IND lane, 2026-09-29) |
 | F10 | lifecycle | high | A filed withdrawal never leaves the filed state: the delete entry carries no `leafKey`, so the fold keyed on `leafKey` drops nothing; the document can be withdrawn twice, replaced after withdrawal, and is refused ("already on file") when re-filed. | **confirmed** 2026-10-01; **fixed** — see "Fixed after verification" |
 | F11 | lifecycle | medium | An empty-section placeholder PDF ("[EMPTY SECTION] …") is filed to the agency and never superseded: the real document later files as `new` beside it. | **confirmed** 2026-10-01 (medium: lifecycle and content, not a validation error) |
 | F12 | lifecycle | medium | A document moved to another CTD section is filed `new` there while the filed copy stays current at the old section, with no finding. | **confirmed** 2026-10-01 (medium: a missing operator finding and a stale current copy, not a validation error) |
-| F13 | lifecycle | medium | Cover letters and forms are diffed like dossier content: an unchanged cover letter is left out of a follow-up, and an edited one replaces sequence 0000's. | unverified |
+| F13 | lifecycle | medium | Cover letters and forms are diffed like dossier content: an unchanged cover letter is left out of a follow-up, and an edited one replaces sequence 0000's. | **confirmed** 2026-10-01 (medium; the IND 1571 half is firm, the cover-letter half is an FDA "should") |
 | F14 | transmit | high | A send to FDA's ESG **test** environment (`staging`) is recorded as the package's real filed sequence. | **confirmed** 2026-10-01 (high) |
 | F15 | transmit | high | The duplicate-send lock is keyed on the bundle's bytes, not its sequence; re-assembling while an earlier send of 0000 is unconfirmed sends 0000 a second time. | unverified |
 | F16 | transmit | medium | The AS2 message: `AS2-To` defaults to `FDA-CESUB`, no Center/submission-type routing, no S/MIME signing or encryption (a signature is computed and dropped), and the MDN is not verified. | unverified |
 | F17 | transmit | medium | The uploaded archive has no sequence folder: `index.xml` sits at the zip root and the payload is always `ectd.zip`. | unverified |
 | F18 | transmit | low | Bundles over 1 GiB go to an SFTP path built from caller-typed sequence and application number, and a bare deposit is recorded as filed. | unverified |
 | F19 | transmit + lifecycle | critical | A sequence is recorded FILED on the ESG's MDN (Ack1) or a bare SFTP deposit, and nothing un-files it when FDA rejects it at Ack3 or it is rolled back; a second bundle with the same sequence number also reports "recorded". | **partially confirmed** 2026-10-01: high, not critical — see "Verification round 1" |
+| F20 | m1-regional | medium | The us-regional 3.3 admin block never carries `<form form-type="fdaft…">`; Form FDA 1571 ships only as an `m1-1-forms` leaf, sequence 0000 included (raised by the F13 skeptic). | unverified |
 
 ## Verification round 1 — 2026-10-01 (F10, F11, F12, F14, F19)
 
@@ -83,6 +84,47 @@ counts as filed, never revised" gap exists there (F19's analogue); and
 `foldManifestRows` keys on `leafKey ?? path`, the asymmetry F10 was, latent until
 that spine keys its leaves.
 
+## Verification round 2 — 2026-10-01 (F01, F04, F05, F07, F08, F13)
+
+Same method; all six reproduced at HEAD. What the skeptics added:
+
+- **F01:** the repo's own structural gate encoded the wrong rule.
+  `validateDtdConformance` raised `DTD_MISSING_XLINK_NS` unless the root said
+  `w3.org`, so it passed every DTD-invalid backbone and would have refused a valid
+  one; vendoring the DTDs alone would have failed every package at the
+  qualification harness's xmllint step. The sequence spine is affected identically
+  (its own evidence, `docs/evidence/W5/2026-09-29-ind-ectd/packages/0000-index.xml`,
+  carries `w3.org`), and the shared fix covers it.
+- **F04:** an IND protocol or information amendment is submission-type Original
+  Application (`fdast1`), sub-type Amendment (`fdasst4`), submission-id the IND's
+  first sequence. Supplements do not exist for an IND (21 CFR 314.70 and 601.12
+  apply to approved NDAs and BLAs), so IND + Efficacy Supplement is a false
+  statement. The skeptic's sketch ("every later sequence must state both") went
+  too far: a supplement's first sequence correctly defaults to sub-type Original
+  with its own number. The packager-side refusal must land together with the IND
+  lane: `core-to-packager.ts` sends sub-type `amendment` with no submission-id and
+  would be refused. Same defect class outside both spines:
+  `ind-lifecycle/ind-ectd-envelope.ts` always writes submission-id = sequence.
+- **F05:** `ectd-regional-rules.ts` FDA-ESG-002 enforces the opposite of the
+  correct rule: it raises an error on `123456` and passes `IND123456`, which is
+  probably where the product's example came from. `usableIdentifier` is shared
+  with the IND lane and must stay charset-only; the six-digit rule belongs at the
+  package-spine boundary (PUT identifiers, assemble).
+- **F07:** passing contacts would not fix it: `fdaContactsBlock` writes no `id` or
+  `company-name` and puts `email`/`telephone` directly under `applicant-contact`
+  without the `telephones`/`emails` wrappers or `telephone-number-type`. Making the
+  packager fail closed refuses every IND-lane assembly until that lane supplies a
+  contact, so it needs a coordinated change.
+- **F08:** the loose resolver is a deliberate choice that the other spine depends
+  on (`core-to-packager.ts` feeds enum keys such as `ind_safety_report`), so the
+  strict match belongs at the package-spine assemble boundary, not in `resolveV3`.
+- **F13:** a Form FDA 1571 with every IND submission is firm; a cover letter per
+  sequence is an FDA "should"; a cover letter filed as `replace` misfiles the
+  lifecycle record (0000's letter shown as superseded) but raises no validation
+  error that the skeptic knows of. **New, from this check (F20):** the package
+  spine never emits the us-regional 3.3 admin `<form form-type="fdaft…">`; the 1571
+  ships only as an `m1-1-forms` leaf, sequence 0000 included. Unverified.
+
 ## Fixed after verification
 
 **F10 — a filed withdrawal never left the filed state.** The assemble route filed
@@ -106,6 +148,30 @@ WITHOUT the fix: 5 failed | 32 passed (37)   [lifecycle unit + package-spine e2e
   × e2e > the withdrawn document, filed again unchanged, is NEW — not "already on file", not a replace
     → {"code":"NOTHING_TO_FILE", "error":"Sequence 0002 would file nothing: all 3 of this package's leaves are already on file, byte for byte. …"}: expected 409 to be 200
 WITH the fix:    37 passed (37); with the operator unit and assemble-route suites, 115 passed (115)
+```
+
+**F01 — both backbones declared the W3C XLink namespace, which the DTDs forbid.**
+`index.xml` and `us-regional.xml` now declare `xmlns:xlink="http://www.w3c.org/1999/xlink"`,
+the value the ICH 3.2 and FDA 3.3 DTDs fix. It comes from one constant,
+`ECTD_XLINK_NS` in `ectd-packager/ich-headings.ts`, which both the packager and the
+structural validator import, so the value written and the value required cannot
+drift apart. The validator now reports a wrong value as `DTD_WRONG_XLINK_NS`,
+separately from a missing declaration (`DTD_MISSING_XLINK_NS`), and the vendored
+`index-valid.xml` fixture uses the correct value. EU, JP and CA builders are
+unchanged because no text of their DTDs is in the repo; neither is the STF
+generator (`stf-generator.ts:130`), for which no STF DTD or example in the repo
+corroborates the value.
+
+```
+WITHOUT the fix: 4 failed (2 files)
+  × index.xml: <ectd:ectd> declares xmlns:xlink="http://www.w3c.org/1999/xlink"
+  × m1/us/us-regional.xml: <fda-regional:fda-regional> declares xmlns:xlink="http://www.w3c.org/1999/xlink"
+    → expected [ 'http://www.w3.org/1999/xlink' ] to deeply equal [ 'http://www.w3c.org/1999/xlink' ]
+  × validateDtdConformance > reports the W3C spelling of xmlns:xlink as DTD_WRONG_XLINK_NS, naming the #FIXED value
+  × validateDtdConformance > raises no xlink finding for the value the DTD fixes
+    → "code": "DTD_MISSING_XLINK_NS", "fix": "Add xmlns:xlink=\"http://www.w3.org/1999/xlink\" …"
+WITH the fix: 4 passed; server/services/submission-gateways + server/services/ectd + the
+  orchestrator and validator suites: 111 files, 1397 tests passed
 ```
 
 ## What this sweep produced that is already fixed
