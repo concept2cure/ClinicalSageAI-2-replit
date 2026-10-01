@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-01T07:58:15.550Z",
+  "generatedAt": "2026-10-01T08:01:04.786Z",
   "git": {
-    "sha": "82a5672d97b47a3b9342e252a8161e7050571595",
+    "sha": "0ba1bbad0fed9eadb868721dd5835e6087393191",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2436,11 +2436,11 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 1938
+        "lines": 1953
       },
       {
         "file": "server/routes/c2c/project-vault.ts",
-        "lines": 1935
+        "lines": 1949
       },
       {
         "file": "server/routes/ectd-compile.ts",
