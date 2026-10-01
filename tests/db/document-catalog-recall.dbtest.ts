@@ -338,14 +338,12 @@ describe('semantic search over the catalog', () => {
     expect(found.ok).toBe(true);
     const hit = found.hits.find((h: { documentId: string }) => h.documentId === docId);
     expect(hit, JSON.stringify(found)).toBeTruthy();
-    expect(hit.matchedBy).toContain('meaning'); // D2: text always runs; the catalog adds meaning
-    expect(hit.keyData).toMatchObject({ study: 'TOX-77-A' });
+    expect(hit).toMatchObject({ matchedBy: expect.arrayContaining(['meaning']), keyData: { study: 'TOX-77-A' } }); // D2
     expect(found.semantic).toMatchObject({ available: true, searchedCount: 1 });
     expect(found.semantic.unsearchableCount).toBeGreaterThanOrEqual(1);
   });
 
-  it('an embedding-provider failure narrows the search to text and says so — never an empty result passed off', async () => {
-    // D2 (2026-10-01): no key needed, so text answers and `semantic` states the gap.
+  it('D2: an embedding-provider failure narrows the search to text and says so — never an empty result passed off', async () => {
     const out = await callTool('search_project_documents', { query: 'FAIL_EMBEDDING TOX-77-A study report' });
     expect(out.ok).toBe(true);
     expect(out.semantic).toMatchObject({ available: false, reason: 'no_embedding_provider' });
