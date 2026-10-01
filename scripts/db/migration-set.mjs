@@ -2217,6 +2217,14 @@ export const C2C_MIGRATION_FILES = [
      Proven by tests/db/vault-record-immutability.dbtest.ts (red before this
      file, green after). The code that may still UPDATE the table is named in
      scripts/ci/check-vault-document-writers.mjs. */
+  /* The deletion archive and retention policies (plan critique 13,
+     2026-10-01). vault.document_archives is the snapshot the retention job
+     writes before it disposes of a document; it was on no applier, so a
+     database built by deploy-migrate had no archive to write to. CREATE ...
+     IF NOT EXISTS only: replayable, no DROP. Just before the next file, which
+     guards it (append-only, owner-only delete, row security) and has the
+     tenant purge erase it. */
+  'migrations/20260608_vault_retention.sql',
   'migrations/20260926_vault_documents_record_immutability.sql',
   // VR-08 (D2): a version names its predecessor only inside its own family,
   // and has at most one live successor. A trigger, plus a partial unique index
@@ -2906,6 +2914,26 @@ export const C2C_MIGRATION_FILES = [
   // docs/evidence/W2/2026-09-24-multi-task/u19-scheduler-windows.md.
   'migrations/20261001d_scheduled_job_claims.sql',
 
+  // ── Sign-in sessions shared by every server process (2026-10-01, D1, audit
+  //    W2 fix unit U20) ─────────────────────────────────────────────────────
+  // Production runs no Redis (decision B6); session activity, the session
+  // registry and superseded markers lived in each process's memory, so every
+  // deploy signed out everyone signed in longer than the idle window. One row
+  // per session, in public with organization_id INTEGER NOT NULL (always 0,
+  // system scope only) so the sweep below gives it its tenant policy. IF NOT
+  // EXISTS only, no DROP. Evidence
+  // docs/evidence/W2/2026-09-24-multi-task/u20-sessions-across-tasks.md.
+  'migrations/20261001e_session_activity.sql',
+
+  // ── AnA action locks and per-organisation slots shared by every process
+  //    (2026-10-01, D1, audit W2 fix unit U21) ─────────────────────────────
+  // Decision B6 (no Redis): the write-action target lock and the per-org cap
+  // held per process, so two writes on one document ran on two tasks. Leases
+  // carry the acting organisation (organization_id INTEGER NOT NULL, public)
+  // so the sweep below gives the table its tenant policy. IF NOT EXISTS only.
+  // Evidence docs/evidence/W2/2026-09-24-multi-task/u21-action-leases.md.
+  'migrations/20261001f_coordination_leases.sql',
+
   // ── A review comment is fixed once posted (2026-10-01, D5) ────────────────
   // concept2cure_thread_comments (the Review surface's threads) could be
   // rewritten in place, soft-deleted and overwritten by the GDPR erasure, with
@@ -2916,6 +2944,13 @@ export const C2C_MIGRATION_FILES = [
   // docs/evidence/D5-ANA-RECORD/2026-10-01-review-comments/.
   'migrations/20261001_review_comments_record.sql',
   'migrations/20261001_compliance_review_records.sql', // P1-25 + P1-43 (ADR-0014 §8): one public org-keyed table (audit-trail and access reviews), signed through the ceremony, fixed once signed; after electronic_signatures' creators; no DROP of anything another file creates; above the pair so the sweep gives it RLS
+  /* Vault document relationships (plan critique 15, D2, 2026-10-01): the
+     replacement for parentDocumentId. One public, org-keyed table (Rule 1),
+     frozen identity, one-way removal with a reason, no TRUNCATE, DELETE only
+     by cascade or the owner. Reached by the tenant purge through ON DELETE
+     CASCADE from regulatory_programs and vault.documents. Above the pair so
+     the sweep gives it row security. No DROP. */
+  'migrations/20261001_vault_document_relationships.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

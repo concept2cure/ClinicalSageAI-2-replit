@@ -962,9 +962,16 @@ export function requireJwtSecret(): void {
 function auditSecurityEvent(req: Request, action: string, details: Record<string, unknown>): void {
   (async () => {
     try {
-      const { default: auditService } = await import('../services/auditService');
+      const [{ default: auditService }, { runWithSystemTenantScope }] = await Promise.all([
+        import('../services/auditService'),
+        import('../db/tenantStore'),
+      ]);
       const user = (req as any).user;
-      await auditService.logAction({
+      // This middleware runs before authentication, so no tenant scope exists,
+      // and under RLS_ENFORCE=on the audit write was refused: every refused
+      // request lost its record (found booting the production bundle, U22). A
+      // security event no tenant owns is written under the audited system scope.
+      await runWithSystemTenantScope(`security:${action}`, () => auditService.logAction({
         tenantId: user?.organizationId,
         userId: user?.id ?? user?.userId,
         action,
@@ -973,7 +980,7 @@ function auditSecurityEvent(req: Request, action: string, details: Record<string
         ipAddress: req.ip,
         userAgent: req.headers['user-agent'] as string | undefined,
         details,
-      });
+      }));
     } catch {
       /* audit failure is non-fatal for security middleware */
     }

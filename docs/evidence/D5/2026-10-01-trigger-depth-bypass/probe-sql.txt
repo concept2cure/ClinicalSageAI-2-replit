@@ -1,0 +1,39 @@
+\set ON_ERROR_STOP 1
+-- Everything below is rolled back: nothing is left in the database.
+BEGIN;
+-- As the owner: one organisation, person, project, artifact, review thread and comment.
+INSERT INTO organizations (name, slug, status) VALUES ('depth-probe org', 'depth-probe-org', 'active');
+INSERT INTO users (email, name, password_hash) VALUES ('depth-probe@example.test', 'Depth Probe', 'not-a-real-hash');
+INSERT INTO client_workspaces (organization_id, name, slug) SELECT id, 'probe', 'depth-probe-ws' FROM organizations WHERE slug = 'depth-probe-org';
+INSERT INTO projects (organization_id, client_workspace_id, name, type)
+  SELECT o.id, w.id, 'probe project', 'ind' FROM organizations o JOIN client_workspaces w ON w.organization_id = o.id WHERE o.slug = 'depth-probe-org';
+INSERT INTO concept2cure_artifacts (artifact_id, project_id, organization_id, type, category, title, content)
+  SELECT 'depth-probe-a', p.id, p.organization_id, 'document', 'probe', 'probe artifact', 'x' FROM projects p WHERE p.name = 'probe project';
+INSERT INTO concept2cure_review_threads (thread_id, org_id, project_id, artifact_id, created_by_id, created_by_name)
+  SELECT 'depth-probe-t', a.organization_id, a.project_id, a.id, u.id, 'Depth Probe'
+    FROM concept2cure_artifacts a, users u WHERE a.artifact_id = 'depth-probe-a' AND u.email = 'depth-probe@example.test';
+INSERT INTO concept2cure_thread_comments (comment_id, org_id, thread_id, artifact_id, author_id, author_name, body)
+  SELECT 'depth-probe-c', t.org_id, t.id, t.artifact_id, t.created_by_id, 'Depth Probe', 'A reviewer''s comment that must not be deletable.'
+    FROM concept2cure_review_threads t WHERE t.thread_id = 'depth-probe-t';
+
+-- As the runtime role.
+SET LOCAL ROLE app_service;
+SELECT 'comments before: ' || count(*) FROM concept2cure_thread_comments WHERE comment_id = 'depth-probe-c';
+
+-- 1. A direct DELETE is refused, as the guard intends.
+SAVEPOINT direct;
+DO $$ BEGIN
+  DELETE FROM concept2cure_thread_comments WHERE comment_id = 'depth-probe-c';
+  RAISE NOTICE 'direct DELETE: ADMITTED';
+EXCEPTION WHEN raise_exception THEN RAISE NOTICE 'direct DELETE: refused (%)', left(SQLERRM, 60);
+END $$;
+ROLLBACK TO SAVEPOINT direct;
+
+-- 2. The same DELETE from a trigger the session made itself, on a temporary table.
+CREATE TEMP TABLE depth_probe (x int);
+CREATE FUNCTION pg_temp.depth_probe_fn() RETURNS trigger LANGUAGE plpgsql AS $f$
+BEGIN DELETE FROM concept2cure_thread_comments WHERE comment_id = 'depth-probe-c'; RETURN NEW; END $f$;
+CREATE TRIGGER depth_probe_t AFTER INSERT ON depth_probe FOR EACH ROW EXECUTE FUNCTION pg_temp.depth_probe_fn();
+INSERT INTO depth_probe VALUES (1);
+SELECT 'comments after a session-made trigger: ' || count(*) FROM concept2cure_thread_comments WHERE comment_id = 'depth-probe-c';
+ROLLBACK;

@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { db, getPool } from '../db';
 import { authedOrgId, usableOrgId } from '../utils/authedOrgId';
 import {
@@ -36,6 +36,9 @@ import { computeInitialRun } from '../services/report-os/orchestrator';
 import { renderReport, gapsWereEvaluated, type RenderInput } from '../services/report-os/render/render';
 import type { RenderedReport } from '../services/report-os/render/types';
 import { buildSealedRecord } from '../services/report-os/sealing/seal';
+import { readRunSeal, readSealForExport, readVerifiedSealedDocument } from '../services/report-os/sealing/run-seal';
+import { buildRunPdf } from '../services/report-os/pdf/run-pdf';
+import { buildBundlePdf } from '../services/report-os/pdf/bundle-pdf';
 import type { SealedRecord } from '../services/report-os/sealing/types';
 import { decideDelivery } from '../services/report-os/scheduling/delivery';
 import {
@@ -44,7 +47,6 @@ import {
   type ReportRunStatus,
 } from '../services/report-os/truthfulness';
 import { authMiddleware } from '../auth';
-import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
 import { writeChainedAuditRow } from '../services/auditService';
@@ -62,7 +64,7 @@ import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role';
 import { isSigningAuthorized } from '../services/part11/signing-authority';
 import { GOVERNED_REVOCATION_SIGNATURE_TYPE, isSignatureWithdrawn } from '../services/part11/signature-persistence';
 import { requireGovernedReason } from './governed-reason';
-import { projectsInOrg, submissionInProject } from '../services/report-os/ownership';
+import { projectsInOrg, submissionInProject, workspaceIsOrganisations, WORKSPACE_NOT_IN_ORGANIZATION } from '../services/report-os/ownership';
 import { PREDICTION_NOT_A_RUN, isPredictionFamily } from '../services/report-os/prediction/report-types';
 import { REPORT_FINALIZE_ROLES } from '@shared/constants/permissions';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
@@ -283,10 +285,6 @@ function parseKeywordIssues(text: string) {
   return matches;
 }
 
-function sanitizePdfText(text: string): string {
-  return text.replace(/[^\x09\x0A\x0D\x20-\x7E]/g, ' ').slice(0, 1000);
-}
-
 function safeIso(value: unknown): string {
   if (value instanceof Date) return value.toISOString();
   if (typeof value === 'string') return value;
@@ -403,19 +401,9 @@ function refuseUnrecorded(res: Response, code: string, message: string, data?: R
   return res.status(503).json({ success: false, error: { code, message }, ...(data ? { data } : {}) });
 }
 
-/**
- * POST /runs' row, written after the run: the row says a run exists. The run's
- * writes share no transaction the row could join, so when the row cannot be
- * written the answer says so — the run exists and was not recorded — and this
- * returns false having sent the 503.
- */
-async function recordRunCreated(
-  req: Request,
-  res: Response,
-  run: typeof reportRuns.$inferSelect,
-  computed: { confidence: number; blockers: string[] }
-): Promise<boolean> {
-  const recorded = await recordReportEvent(req, {
+/** POST /runs' chain row: the run exists, as computed. */
+function runCreatedEvent(run: typeof reportRuns.$inferSelect, computed: { confidence: number; blockers: string[] }): ReportAuditEvent {
+  return {
     organizationId: run.organizationId,
     action: 'report_os.run_created',
     resourceType: 'report_run',
@@ -429,17 +417,45 @@ async function recordRunCreated(
       confidence: computed.confidence,
       blockerCount: computed.blockers.length,
     },
-  });
-  if (!recorded) {
-    refuseUnrecorded(
-      res,
-      'REPORT_RUN_NOT_RECORDED',
-      'The report run was created but could not be recorded in the audit trail. ' +
-        'Run the report again once the audit trail is available.',
-      { runId: run.id }
-    );
+  };
+}
+
+type NewRun = typeof reportRuns.$inferInsert;
+type NewSnapshot = Omit<typeof reportSnapshots.$inferInsert, 'runId'>;
+type NewDependency = Omit<typeof reportRunDependencies.$inferInsert, 'runId'>;
+
+/**
+ * The run, its first snapshot, its dependencies and its report_os.run_created
+ * chain row, in one tenant-stamped transaction: all land or none (reporting
+ * review 2026-10-01, SECURITY-10). The run's writes used to commit first and
+ * the row after them, so a refused row left a listed, bundlable, finalizable
+ * run that was never recorded, and a retry made a second. 'not-recorded' when
+ * the chain row was refused (everything rolled back); any earlier failure
+ * throws.
+ */
+async function createRunOnChain(
+  req: Request,
+  rows: { run: NewRun; snapshot: NewSnapshot; dependencies: NewDependency[] },
+  computed: { confidence: number; blockers: string[] },
+): Promise<{ run: typeof reportRuns.$inferSelect; snapshot: typeof reportSnapshots.$inferSelect } | 'not-recorded'> {
+  let recording = false;
+  try {
+    return await inTenantTransaction(rows.run.organizationId, async (client) => {
+      const tx = onTransaction(client);
+      const [run] = await tx.insert(reportRuns).values(rows.run).returning();
+      const [snapshot] = await tx.insert(reportSnapshots).values({ ...rows.snapshot, runId: run.id }).returning();
+      if (rows.dependencies.length > 0) {
+        await tx.insert(reportRunDependencies).values(rows.dependencies.map((d) => ({ ...d, runId: run.id })));
+      }
+      recording = true;
+      await writeReportEvent(client, req, runCreatedEvent(run, computed));
+      return { run, snapshot };
+    });
+  } catch (error) {
+    if (!recording) throw error;
+    logger.error('report run not recorded on the audit chain; rolled back', { error: (error as Error)?.message });
+    return 'not-recorded';
   }
-  return recorded;
 }
 
 /**
@@ -475,6 +491,26 @@ async function sendRecordedPdf(
   return res.send(pdf.buffer);
 }
 
+/** The printed name of a user as this organisation may see it (public.actor_name), or null. */
+async function actorName(client: PoolClient, userId: number | null): Promise<string | null> {
+  if (userId == null) return null;
+  const { rows } = await client.query('SELECT name FROM public.actor_name($1)', [userId]);
+  const name = (rows[0] as { name?: unknown } | undefined)?.name;
+  return typeof name === 'string' && name.trim() ? name : null;
+}
+
+/** 409: the stored record does not verify against the audit chain, so it is neither shown nor exported. */
+function refuseSealMismatch(res: Response, runId: number, verb: 'shown' | 'exported') {
+  return res.status(409).json({
+    success: false,
+    error: {
+      code: 'SEALED_DOCUMENT_MISMATCH',
+      message: `This report's stored record does not verify against the audit chain, so it is not ${verb}. GET /runs/:id/seal states which check failed.`,
+    },
+    data: { runId },
+  });
+}
+
 /** 409: a final report keeps its seal; it is never sealed a second time. */
 function refuseAlreadyFinal(res: Response, runId: number) {
   return res.status(409).json({
@@ -495,13 +531,20 @@ class FinalizeStopped extends Error {
 }
 
 /**
- * The run's status, the seal on its latest snapshot: the two writes of a
- * finalize, on `client`. The snapshot is read (and locked) first: a run with
- * none has nowhere to keep its seal, so it is not finalized (P1-44b). It used
- * to be made final with the seal dropped, and its signature then named a seal
- * the run did not carry.
+ * The run's status, and the seal on its latest snapshot with the exact document
+ * it was computed over: the two writes of a finalize, on `client`. The document
+ * is what makes the seal re-verifiable (GET /runs/:id/seal, reporting review
+ * 2026-10-01). The snapshot is read (and locked) first: a run with none has
+ * nowhere to hold its seal, so it is not finalized (P1-44b). It used to be made
+ * final with the seal stored nowhere, and its signature then named a seal the
+ * run did not carry.
  */
-async function writeFinalize(client: PoolClient, run: typeof reportRuns.$inferSelect, seal: SealedRecord) {
+async function writeFinalize(
+  client: PoolClient,
+  run: typeof reportRuns.$inferSelect,
+  seal: SealedRecord,
+  sealedDocument: RenderedReport
+) {
   const at = new Date().toISOString();
   const snapshot = await client.query(
     `SELECT id, snapshot_metadata FROM report_snapshots
@@ -516,7 +559,7 @@ async function writeFinalize(client: PoolClient, run: typeof reportRuns.$inferSe
       WHERE id = $1 AND organization_id = $2`,
     [run.id, run.organizationId, at]
   );
-  const merged = { ...(latest.snapshot_metadata ?? {}), seal, finalizedAt: at };
+  const merged = { ...(latest.snapshot_metadata ?? {}), seal, sealedDocument, finalizedAt: at };
   await client.query('UPDATE report_snapshots SET snapshot_metadata = $2::json WHERE id = $1', [
     latest.id,
     JSON.stringify(merged),
@@ -547,7 +590,7 @@ const finalizeSigningAttempts = signingAttemptLimiter('report-finalize', {
 async function finalizeOnChain(
   req: Request,
   run: typeof reportRuns.$inferSelect,
-  seal: SealedRecord,
+  sealed: { seal: SealedRecord; document: RenderedReport },
   signing: { userId: number; reason: string; meaning: unknown; reauth: unknown }
 ): Promise<FinalizeOutcome | { signed: Record<string, unknown> }> {
   let recording = false;
@@ -573,26 +616,29 @@ async function finalizeOnChain(
         const priorStatus = (locked.rows[0] as { status?: string } | undefined)?.status;
         if (priorStatus == null) throw new FinalizeStopped('not-found');
         if (priorStatus === 'final') throw new FinalizeStopped('already-final');
-        await writeFinalize(client, run, seal);
+        await writeFinalize(client, run, sealed.seal, sealed.document);
         recording = true;
-        const sealed = {
+        const facts = {
           runUuid: run.runUuid,
           reportTypeId: run.reportTypeId,
           priorStatus,
-          sealHash: seal.contentHash,
-          algorithm: seal.algorithm,
-          canonVersion: seal.canonVersion,
-          atomCount: seal.atomCount,
-          sealedAt: seal.sealedAt,
+          sealHash: sealed.seal.contentHash,
+          algorithm: sealed.seal.algorithm,
+          canonVersion: sealed.seal.canonVersion,
+          atomCount: sealed.seal.atomCount,
+          sealedAt: sealed.seal.sealedAt,
+          // The sealed document is stored beside the seal: a later read that
+          // finds it missing reads a removal, not a legacy record (run-seal.ts).
+          documentStored: true,
         };
         await writeReportEvent(client, req, {
           organizationId: run.organizationId,
           action: 'report_os.run_finalized',
           resourceType: 'report_run',
           resourceId: String(run.id),
-          details: { ...sealed, reason: signing.reason, meaning },
+          details: { ...facts, reason: signing.reason, meaning },
         });
-        return { act: { finalized: true, ...sealed }, body: {} };
+        return { act: { finalized: true, ...facts }, body: {} };
       },
     });
     return { signed };
@@ -734,114 +780,6 @@ async function getReportTypeLabelMap(typeIds: string[]) {
   const map = new Map<string, string>();
   for (const row of rows) map.set(row.typeId, row.label);
   return map;
-}
-
-async function createRunPdf(params: {
-  run: any;
-  typeLabel: string;
-  blockers: string[];
-  providers: Array<{ provider: string; status: string; blocker?: string | null }>;
-}): Promise<Buffer> {
-  const pdf = await PDFDocument.create();
-  const page = pdf.addPage([612, 792]);
-  const regular = await pdf.embedFont(StandardFonts.Helvetica);
-  const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
-  const left = 50;
-  let y = 750;
-
-  page.drawText('Concept2Cure Regulatory Report', { x: left, y, size: 18, font: bold });
-  y -= 24;
-  page.drawText(`Run #${params.run.id} (${sanitizePdfText(params.run.runUuid)})`, {
-    x: left,
-    y,
-    size: 10,
-    font: regular,
-    color: rgb(0.35, 0.35, 0.35),
-  });
-  y -= 24;
-
-  const lines = [
-    `Report Type: ${sanitizePdfText(params.typeLabel)} (${sanitizePdfText(params.run.reportTypeId)})`,
-    `Scope: ${sanitizePdfText(params.run.scopeType)}:${sanitizePdfText(params.run.scopeId)}`,
-    `Status: ${sanitizePdfText(params.run.status)}`,
-    `Confidence: ${params.run.confidence ?? 'N/A'}`,
-    `Generated: ${safeIso(params.run.createdAt)}`,
-  ];
-  for (const line of lines) {
-    page.drawText(line, { x: left, y, size: 10, font: regular });
-    y -= 16;
-  }
-
-  y -= 6;
-  page.drawText('Dependency Providers', { x: left, y, size: 11, font: bold });
-  y -= 16;
-  for (const provider of params.providers) {
-    const text = `${provider.provider} — ${provider.status}${provider.blocker ? ` (${provider.blocker})` : ''}`;
-    page.drawText(sanitizePdfText(text), { x: left + 8, y, size: 9, font: regular });
-    y -= 14;
-    if (y < 80) break;
-  }
-
-  if (params.blockers.length > 0 && y > 120) {
-    y -= 4;
-    page.drawText('Known Blockers', { x: left, y, size: 11, font: bold });
-    y -= 16;
-    for (const blocker of params.blockers) {
-      page.drawText(`- ${sanitizePdfText(blocker)}`, { x: left + 8, y, size: 9, font: regular });
-      y -= 13;
-      if (y < 80) break;
-    }
-  }
-
-  const bytes = await pdf.save();
-  return Buffer.from(bytes);
-}
-
-async function createBundlePdf(bundle: ReportBundleRecord): Promise<Buffer> {
-  const pdf = await PDFDocument.create();
-  const page = pdf.addPage([612, 792]);
-  const regular = await pdf.embedFont(StandardFonts.Helvetica);
-  const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
-  const left = 50;
-  let y = 750;
-
-  page.drawText('Concept2Cure Report Bundle', { x: left, y, size: 18, font: bold });
-  y -= 22;
-  page.drawText(sanitizePdfText(bundle.name), { x: left, y, size: 12, font: regular });
-  y -= 18;
-  page.drawText(`Bundle ID: ${bundle.bundleId}`, {
-    x: left,
-    y,
-    size: 9,
-    font: regular,
-    color: rgb(0.35, 0.35, 0.35),
-  });
-  y -= 16;
-  page.drawText(`Generated: ${bundle.createdAt}`, {
-    x: left,
-    y,
-    size: 9,
-    font: regular,
-    color: rgb(0.35, 0.35, 0.35),
-  });
-  y -= 20;
-
-  if (bundle.description) {
-    page.drawText(sanitizePdfText(bundle.description), { x: left, y, size: 10, font: regular });
-    y -= 20;
-  }
-
-  page.drawText('Included Reports', { x: left, y, size: 11, font: bold });
-  y -= 16;
-  for (const item of bundle.items) {
-    const line = `#${item.runId} ${item.reportTypeLabel} — ${item.scopeType}:${item.scopeId} — ${item.status} (confidence ${item.confidence ?? 'N/A'})`;
-    page.drawText(sanitizePdfText(line), { x: left + 6, y, size: 9, font: regular });
-    y -= 13;
-    if (y < 70) break;
-  }
-
-  const bytes = await pdf.save();
-  return Buffer.from(bytes);
 }
 
 function decodeRecordPayload<T>(input: string, key: string, schema: z.ZodType<T>): T | null {
@@ -1273,6 +1211,7 @@ router.post('/program-groups', async (req: Request, res: Response) => {
     }
     const { clientWorkspaceId, name, description, projectIds, metadata } = parsed.data;
     const createdBy = getUserId(req);
+    if (!(await workspaceIsOrganisations(orgId, clientWorkspaceId))) return res.status(403).json(WORKSPACE_NOT_IN_ORGANIZATION);
 
     const uniqueProjectIds = [...new Set(projectIds)];
     const owned = await projectsInOrg(orgId, uniqueProjectIds);
@@ -1465,6 +1404,7 @@ router.post('/runs', async (req: Request, res: Response) => {
     const { clientWorkspaceId, scopeType, scopeId, reportTypeId, registryId, submissionType } =
       parsed.data;
     const requestedBy = getUserId(req);
+    if (!(await workspaceIsOrganisations(orgId, clientWorkspaceId))) return res.status(403).json(WORKSPACE_NOT_IN_ORGANIZATION);
 
     const type = await db
       .select()
@@ -1585,70 +1525,66 @@ router.post('/runs', async (req: Request, res: Response) => {
       }
     }
 
-    const [run] = await db
-      .insert(reportRuns)
-      .values({
-        organizationId: orgId,
-        clientWorkspaceId,
-        scopeType,
-        scopeId,
-        reportTypeId,
-        requestedBy,
-        status: computed.blockers.length > 0 ? 'partial' : 'completed',
-        dependencySummary: {
-          providers: computed.providers,
-          scopeLineage: scope.lineage,
-          summary: computed.summary,
-          criticalBlockers: computed.criticalBlockers,
-          ...(lineageRendered ? { lineageRendered } : {}),
-        },
-        blockers: computed.blockers,
-        confidence: computed.confidence,
-        freshness: {
-          generatedAt: new Date().toISOString(),
-          freshnessBudgetMs: scope.freshnessBudgetMs,
-        },
-        completedAt: new Date(),
-      })
-      .returning();
-
-    const [snapshot] = await db
-      .insert(reportSnapshots)
-      .values({
-        runId: run.id,
-        organizationId: orgId,
-        scopeType,
-        scopeId,
-        snapshotVersion: 1,
-        isLatest: true,
-        snapshotMetadata: {
+    const created = await createRunOnChain(
+      req,
+      {
+        run: {
+          organizationId: orgId,
+          clientWorkspaceId,
+          scopeType,
+          scopeId,
           reportTypeId,
-          providers: computed.providers,
-          summary: computed.summary,
+          requestedBy,
+          status: computed.blockers.length > 0 ? 'partial' : 'completed',
+          dependencySummary: {
+            providers: computed.providers,
+            scopeLineage: scope.lineage,
+            summary: computed.summary,
+            criticalBlockers: computed.criticalBlockers,
+            ...(lineageRendered ? { lineageRendered } : {}),
+          },
+          blockers: computed.blockers,
           confidence: computed.confidence,
+          freshness: {
+            generatedAt: new Date().toISOString(),
+            freshnessBudgetMs: scope.freshnessBudgetMs,
+          },
+          completedAt: new Date(),
         },
-        createdBy: requestedBy,
-      })
-      .returning();
-
-    if (computed.providers.length > 0) {
-      await db.insert(reportRunDependencies).values(
-        computed.providers.map(p => ({
-          runId: run.id,
+        snapshot: {
+          organizationId: orgId,
+          scopeType,
+          scopeId,
+          snapshotVersion: 1,
+          isLatest: true,
+          snapshotMetadata: {
+            reportTypeId,
+            providers: computed.providers,
+            summary: computed.summary,
+            confidence: computed.confidence,
+          },
+          createdBy: requestedBy,
+        },
+        dependencies: computed.providers.map(p => ({
           organizationId: orgId,
           provider: p.provider,
           status: p.status,
           blocker: p.blocker,
           observedAt: new Date(p.observedAt),
-          payload: {
-            scopeType,
-            scopeId,
-          },
-        }))
+          payload: { scopeType, scopeId },
+        })),
+      },
+      computed,
+    );
+    if (created === 'not-recorded') {
+      return refuseUnrecorded(
+        res,
+        'REPORT_RUN_NOT_RECORDED',
+        'The report run was not created: it could not be recorded in the audit trail, so nothing was saved. ' +
+          'Run the report again once the audit trail is available.',
       );
     }
-
-    if (!(await recordRunCreated(req, res, run, computed))) return;
+    const { run, snapshot } = created;
 
     return res.status(201).json({
       data: {
@@ -1692,6 +1628,54 @@ router.get('/runs/:id/dependencies', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * The run's governed PDF (services/report-os/pdf/run-pdf.ts), recorded before
+ * it is sent. The body is the report itself: for a final run, the sealed
+ * document, and only when it verifies; a record that contradicts the audit
+ * chain is not exported. The seal read and the requester's name come from one
+ * tenant-stamped transaction (run-seal.ts reads the status again there). The
+ * export's id and time are printed on every page and recorded on the chain.
+ */
+async function sendRunPdf(
+  req: Request,
+  res: Response,
+  run: typeof reportRuns.$inferSelect,
+  reportType: { label: string | null; truthfulnessRules: unknown } | undefined,
+) {
+  const { view, document, runBy } = await inTenantTransaction(run.organizationId, async (client) => ({
+    ...(await readSealForExport(client, run)),
+    runBy: await actorName(client, run.requestedBy),
+  }));
+  if (view.verification.verdict === 'mismatch') return refuseSealMismatch(res, run.id, 'exported');
+  const status = view.sealed ? 'final' : run.status;
+  const exportId = randomUUID();
+  const exportedAt = new Date().toISOString();
+  const pdf = await buildRunPdf({
+    run: { ...run, status },
+    typeLabel: reportType?.label || run.reportTypeId,
+    report: document ?? buildRenderedFromRun(run, reportType).rendered,
+    seal: view.sealed ? view : null,
+    runBy,
+    exportId,
+    exportedAt,
+  });
+  return sendRecordedPdf(
+    req,
+    res,
+    {
+      organizationId: run.organizationId,
+      action: 'report_os.run_exported',
+      resourceType: 'report_run',
+      resourceId: String(run.id),
+      details: {
+        runUuid: run.runUuid, reportTypeId: run.reportTypeId, status, exportId, exportedAt,
+        pages: pdf.pages, sealVerdict: view.sealed ? view.verification.verdict : null,
+      },
+    },
+    { filename: `report-run-${run.id}.pdf`, buffer: pdf.bytes }
+  );
+}
+
 router.get('/runs/:id/export.pdf', async (req: Request, res: Response) => {
   try {
     const runId = Number(req.params.id);
@@ -1713,7 +1697,7 @@ router.get('/runs/:id/export.pdf', async (req: Request, res: Response) => {
       .limit(1);
     if (!run) return res.status(404).json({ error: 'Run not found' });
     const [reportType] = await db
-      .select({ label: reportTypeRegistry.label, family: reportTypeRegistry.family })
+      .select({ label: reportTypeRegistry.label, family: reportTypeRegistry.family, truthfulnessRules: reportTypeRegistry.truthfulnessRules })
       .from(reportTypeRegistry)
       .where(eq(reportTypeRegistry.typeId, run.reportTypeId))
       .limit(1);
@@ -1731,35 +1715,8 @@ router.get('/runs/:id/export.pdf', async (req: Request, res: Response) => {
         tier: exportGate.tier,
       });
     }
-    const providers = await db
-      .select({
-        provider: reportRunDependencies.provider,
-        status: reportRunDependencies.status,
-        blocker: reportRunDependencies.blocker,
-      })
-      .from(reportRunDependencies)
-      .where(
-        and(eq(reportRunDependencies.runId, runId), eq(reportRunDependencies.organizationId, organizationId))
-      )
-      .orderBy(asc(reportRunDependencies.provider));
-    const buffer = await createRunPdf({
-      run,
-      typeLabel: reportType?.label || run.reportTypeId,
-      blockers: toBlockerArray(run.blockers),
-      providers,
-    });
-    return sendRecordedPdf(
-      req,
-      res,
-      {
-        organizationId,
-        action: 'report_os.run_exported',
-        resourceType: 'report_run',
-        resourceId: String(runId),
-        details: { runUuid: run.runUuid, reportTypeId: run.reportTypeId, status: run.status },
-      },
-      { filename: `report-run-${runId}.pdf`, buffer }
-    );
+
+    return await sendRunPdf(req, res, run, reportType);
   } catch (error: any) {
     return serverError(res, logger, 'loading export.pdf', error);
   }
@@ -1794,8 +1751,10 @@ function buildRenderedFromRun(
     : null;
   const criticalBlockers =
     storedCritical ?? (rules.forbidFinalIfMissingCritical ? blockers : []);
+  /* A final run renders as final: it read back as 'partial' (or 'draft')
+     after its seal (reporting review 2026-10-01). */
   const requestedStatus: ReportRunStatus =
-    forceRequestStatus ?? (run.status === 'completed' ? 'final' : 'partial');
+    forceRequestStatus ?? (run.status === 'completed' || run.status === 'final' ? 'final' : 'partial');
   const truthfulness = evaluateTruthfulness(
     {
       requestedStatus,
@@ -1828,6 +1787,10 @@ function buildRenderedFromRun(
         summary,
         status: truthfulness.allowedStatus,
         truthfulness,
+        // The run's computation time, not the moment of rendering: "No gaps
+        // detected as of" sealed the sealing time over data computed earlier,
+        // and no two renders of one run were the same document.
+        generatedAt: run.createdAt ? new Date(run.createdAt).toISOString() : undefined,
       });
   return { rendered, truthfulness };
 }
@@ -1864,10 +1827,50 @@ router.get('/runs/:id/rendered', async (req: Request, res: Response) => {
       .where(eq(reportTypeRegistry.typeId, run.reportTypeId))
       .limit(1);
 
+    // A final run is shown as what was sealed, not re-rendered, and only when
+    // the stored copy still verifies. A copy that no longer matches its seal is
+    // refused, never shown as the sealed record; so is a run the audit chain
+    // records as finalized whose status no longer says so. The status is read
+    // again inside that transaction, after the chain (run-seal.ts).
+    const stored = await inTenantTransaction(run.organizationId, (client) => readVerifiedSealedDocument(client, run));
+    if (stored.verdict === 'intact' && stored.document) return res.json({ data: stored.document, sealed: true });
+    if (stored.verdict === 'mismatch') return refuseSealMismatch(res, runId, 'shown');
+
     const { rendered } = buildRenderedFromRun(run, reportType);
     return res.json({ data: rendered });
   } catch (error: any) {
     return serverError(res, logger, 'loading rendered', error);
+  }
+});
+
+/**
+ * GET /runs/:id/seal
+ *
+ * A finalized run's seal, read back and re-verified (reporting review
+ * 2026-10-01, Part 11): the stored sealed document is re-hashed and checked
+ * against the stored seal and the audit chain's record of the act, with the
+ * signer's printed name, time and meaning, the reason and the prior status.
+ * A run that is not final answers `sealed: false`. A read that fails is an
+ * error, never a verdict.
+ */
+router.get('/runs/:id/seal', async (req: Request, res: Response) => {
+  try {
+    const organizationId = requireSessionOrg(req, res);
+    if (organizationId == null) return;
+    const runId = Number(req.params.id);
+    if (!Number.isSafeInteger(runId) || runId <= 0) {
+      return res.status(400).json({ error: 'Invalid run id' });
+    }
+    const [run] = await db
+      .select({ id: reportRuns.id, organizationId: reportRuns.organizationId, status: reportRuns.status })
+      .from(reportRuns)
+      .where(and(eq(reportRuns.id, runId), eq(reportRuns.organizationId, organizationId)))
+      .limit(1);
+    if (!run) return res.status(404).json({ error: 'Run not found' });
+    const view = await inTenantTransaction(organizationId, (client) => readRunSeal(client, run));
+    return res.json({ data: view });
+  } catch (error: any) {
+    return serverError(res, logger, 'reading seal', error);
   }
 });
 
@@ -1964,7 +1967,7 @@ function sendFinalizeOutcome(
       success: false,
       error: {
         code: 'RUN_HAS_NO_SNAPSHOT',
-        message: 'This run has no snapshot to keep its seal, so it was not finalized. Run the report again and finalize the new run. Nothing was signed.',
+        message: 'This run has no snapshot to hold its seal, so it cannot be finalized. Run the report again and finalize the new run. Nothing was signed.',
       },
       data: { runId },
     });
@@ -2022,7 +2025,7 @@ router.post('/runs/:id/finalize', requireRole(...REPORT_FINALIZE_ROLES), finaliz
     const seal = buildSealedRecord(rendered);
     let outcome: Awaited<ReturnType<typeof finalizeOnChain>>;
     try {
-      outcome = await finalizeOnChain(req, run, seal, {
+      outcome = await finalizeOnChain(req, run, { seal, document: rendered }, {
         userId,
         reason: asked.reason,
         meaning: req.body?.meaning,
@@ -2222,6 +2225,46 @@ router.get('/bundles', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * The bundle's governed PDF (services/report-os/pdf/bundle-pdf.ts), recorded
+ * before it is sent. Each report's status is read at export, beside the status
+ * it was bundled at; the bundler's name and the statuses come from one
+ * tenant-stamped read. The export id and time are printed on every page and
+ * recorded on the chain row with how many reports were final.
+ */
+async function sendBundlePdf(req: Request, res: Response, bundle: ReportBundleRecord) {
+  const { now, bundledBy } = await inTenantTransaction(bundle.organizationId, async (client) => {
+    const { rows } = await client.query('SELECT id, status FROM report_runs WHERE organization_id = $1 AND id = ANY($2::int[])', [
+      bundle.organizationId,
+      bundle.runIds,
+    ]);
+    const statuses = new Map((rows as Array<{ id: unknown; status: unknown }>).map((r) => [Number(r.id), String(r.status)]));
+    return { now: statuses, bundledBy: await actorName(client, bundle.createdBy ?? null) };
+  });
+  const items = bundle.items.map((i) => ({
+    runId: i.runId, label: i.reportTypeLabel, scopeType: i.scopeType, scopeId: i.scopeId,
+    bundledStatus: i.status, currentStatus: now.get(i.runId) ?? null, confidence: i.confidence,
+  }));
+  const exportId = randomUUID();
+  const exportedAt = new Date().toISOString();
+  const pdf = await buildBundlePdf({ bundle, bundledBy, items, exportId, exportedAt });
+  return sendRecordedPdf(
+    req,
+    res,
+    {
+      organizationId: bundle.organizationId,
+      action: 'report_os.bundle_exported',
+      resourceType: 'report_bundle',
+      resourceId: bundle.bundleId,
+      details: {
+        bundleId: bundle.bundleId, runIds: bundle.runIds, reportTypeIds: [...new Set(bundle.items.map((i) => i.reportTypeId))],
+        exportId, exportedAt, pages: pdf.pages, finalAtExport: items.filter((i) => i.currentStatus === 'final').length,
+      },
+    },
+    { filename: `report-bundle-${bundle.bundleId.slice(0, 8)}.pdf`, buffer: pdf.bytes }
+  );
+}
+
 router.get('/bundles/:bundleId/export.pdf', async (req: Request, res: Response) => {
   try {
     // SECURITY: JWT-bound; the legacy ?organizationId= query param is
@@ -2250,19 +2293,7 @@ router.get('/bundles/:bundleId/export.pdf', async (req: Request, res: Response) 
         tier: refusal.tier,
       });
     }
-    const buffer = await createBundlePdf(bundle);
-    return sendRecordedPdf(
-      req,
-      res,
-      {
-        organizationId,
-        action: 'report_os.bundle_exported',
-        resourceType: 'report_bundle',
-        resourceId: bundle.bundleId,
-        details: { bundleId: bundle.bundleId, runIds: bundle.runIds, reportTypeIds: [...new Set(bundle.items.map(i => i.reportTypeId))] },
-      },
-      { filename: `report-bundle-${bundle.bundleId.slice(0, 8)}.pdf`, buffer }
-    );
+    return await sendBundlePdf(req, res, bundle);
   } catch (error: any) {
     return serverError(res, logger, 'loading export.pdf', error);
   }

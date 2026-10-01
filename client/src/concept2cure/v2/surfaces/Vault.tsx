@@ -28,6 +28,9 @@ import {
 import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import { DataRoomFileBar, RoomPick, useDataRoomFiling, type DataRoomFiling } from './VaultDataRoomFiling';
 import { ConfirmSuggestedBar, useConfirmSuggested } from './VaultConfirmSuggested';
+import { VaultLibraryResults } from './VaultLibraryResults';
+import { VaultFixityCheck } from './VaultFixityCheck';
+import { VaultRelationships } from './VaultRelationships';
 import { downloadBlob, safeFileName } from '../download';
 import {
   EDITOR_TARGET_DOC_TYPES,
@@ -342,7 +345,12 @@ interface HistoryEntry {
 }
 interface HistoryShape {
   entries: HistoryEntry[];
-  chain: { ok: boolean; rowsChecked: number; legacyRows: number; brokenAt?: string };
+  /**
+   * The server's verdict (audit-trail-ledger.routes.ts AuditLedgerChainVerdict):
+   * `ok: null` with a reason when there was nothing to verify; a break names
+   * this organization's own row by id, or only says it is another's.
+   */
+  chain: { ok: boolean | null; rowsChecked: number; legacyRows: number; reason?: string; brokenAt?: { id?: string; row?: string } };
 }
 
 /** A body without an entries list and a chain verdict is a failed read, not an empty history. */
@@ -350,8 +358,14 @@ const isHistoryShape: ShapeGuard<HistoryShape> = (v): v is HistoryShape =>
   !!v && typeof v === 'object' && Array.isArray((v as HistoryShape).entries) &&
   !!(v as HistoryShape).chain && typeof (v as HistoryShape).chain === 'object';
 
+/** Where the chain breaks, as this organization may be told it. */
+function breakPlace(b: HistoryShape['chain']['brokenAt']): string {
+  if (typeof b?.id === 'string') return ` at entry ${b.id}`;
+  return b?.row ? ` at an entry of ${b.row}` : '';
+}
+
 function ChainVerdict({ chain }: { chain: HistoryShape['chain'] }) {
-  if (chain.ok) {
+  if (chain.ok === true) {
     return (
       <div className="vd-d-idx">
         <span className="vd-idx-dot" /> Audit chain verified — {chain.rowsChecked} rows checked
@@ -359,9 +373,16 @@ function ChainVerdict({ chain }: { chain: HistoryShape['chain'] }) {
       </div>
     );
   }
+  if (chain.ok !== false) {
+    return (
+      <div className="vd-d-idx">
+        Audit chain not verified: {chain.reason ?? 'the server gave no verdict on this read'}
+      </div>
+    );
+  }
   return (
     <div className="vd-dr-err" role="alert">
-      {I.alertTriangle} Audit chain check failed{chain.brokenAt ? ` at ${chain.brokenAt}` : ''}. The entries below
+      {I.alertTriangle} Audit chain check failed{breakPlace(chain.brokenAt)}. The entries below
       are what is recorded; the chain that should prove them has a break.
     </div>
   );
@@ -797,14 +818,15 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
   /* Reported in the SAME banner the upload path uses, rather than a second
      notification mechanism on one surface. */
   const [downloadNote, setDownloadNote] = useState<{ text: string; tone: 'ok' | 'error' } | null>(null);
-  const downloadVaultDoc = async (docId: string, title: string) => {
-    if (!projectId || downloading) return;
+  /* `programId`: a library hit downloads through the project that holds it. */
+  const downloadVaultDoc = async (docId: string, title: string, programId: string | null = projectId) => {
+    if (!programId || downloading) return;
     setDownloading(docId);
     setDownloadNote(null);
     try {
       const res = await apiRequest(
         'GET',
-        `/api/c2c/project-vault/${encodeURIComponent(projectId)}/documents/${encodeURIComponent(docId)}/download`,
+        `/api/c2c/project-vault/${encodeURIComponent(programId)}/documents/${encodeURIComponent(docId)}/download`,
       );
       if (!res.ok) {
         const j = await res.json().catch(() => null);
@@ -1052,8 +1074,12 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
   /* Current versions only unless asked (VR-09): an earlier version is the same
      document, and listing it beside its successor reads as two. */
   const [includeEarlier, setIncludeEarlier] = useState(false);
+  /* Library search (plan critique 15): every project's Vault. While it is on,
+     the project search does not run; VaultLibraryResults reads the library. */
+  const [allProjects, setAllProjects] = useState(false);
+  const libraryMode = Boolean(trimmedQ) && allProjects;
   const searchPath =
-    projectId && trimmedQ ? '/api/c2c/project-vault/' + encodeURIComponent(projectId) +
+    projectId && trimmedQ && !allProjects ? '/api/c2c/project-vault/' + encodeURIComponent(projectId) +
       '/search?q=' + encodeURIComponent(trimmedQ) + '&limit=100' +
       (includeEarlier ? '&includeSuperseded=true' : '') : null;
   const searchState = useLiveData<VaultSearchShape>(searchPath, [searchPath]);
@@ -1459,6 +1485,8 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
               onOpen={openUpload}
             />
           )}
+          {/* Fixity (plan critique 15): re-prove every stored version on demand. */}
+          {!searching && vault ? <VaultFixityCheck projectId={projectId ?? null} /> : null}
           {filingNote && (
             <div
               className="scaf-note"
@@ -1551,6 +1579,14 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                 />{' '}
                 Include earlier versions
               </label>
+              <label className="vd-search">
+                <input
+                  type="checkbox"
+                  checked={allProjects}
+                  onChange={(e) => setAllProjects(e.target.checked)}
+                />{' '}
+                All projects
+              </label>
             </div>
             {searching && searchState.error && (
               /* An error is not an empty result. Without this the screen reads
@@ -1567,6 +1603,15 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
               </div>
             )}
             {!searching ? <ConfirmSuggestedBar docs={folderDocs} state={confirmSuggested} /> : null}
+            {libraryMode ? (
+              <VaultLibraryResults
+                query={trimmedQ}
+                includeEarlier={includeEarlier}
+                currentProjectId={projectId ?? null}
+                onDownload={(docId, title, programId) => void downloadVaultDoc(docId, title, programId)}
+                downloadingId={downloading}
+              />
+            ) : (<>
             <div className="vd-cols">
               <span className="vd-col-name">Name</span>
               <span className="vd-col-type">Type</span>
@@ -1618,6 +1663,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                 </div>
               )}
             </div>
+            </>)}
           </section>
 
           <aside className="vd-detail">
@@ -1843,6 +1889,14 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                       />
                     ) : null}
                     {projectId && sel.docId ? (
+                      <VaultRelationships
+                        key={`relationships-${sel.docId}`}
+                        projectId={projectId}
+                        documentId={sel.docId}
+                        onChanged={() => setVaultEpoch((n) => n + 1)}
+                      />
+                    ) : null}
+                    {projectId && sel.docId ? (
                       <DocumentHistory key={`${sel.docId}-${vaultEpoch}`} projectId={projectId} documentUuid={sel.docId} />
                     ) : null}
                   </>
@@ -1866,6 +1920,12 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                       onUploadNewVersion={(file, currentId) => void uploadNewVersion(file, sel, currentId)}
                       uploading={uploading}
                       onLifecycleChanged={() => setVaultEpoch((n) => n + 1)}
+                    />
+                    <VaultRelationships
+                      key={`relationships-${sel.docId}`}
+                      projectId={projectId}
+                      documentId={sel.docId}
+                      onChanged={() => setVaultEpoch((n) => n + 1)}
                     />
                     <DocumentHistory key={`${sel.docId}-${vaultEpoch}`} projectId={projectId} documentUuid={sel.docId} />
                   </>

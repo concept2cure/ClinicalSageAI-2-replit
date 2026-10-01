@@ -420,6 +420,26 @@
   .vd-ver{ display:flex; gap:10px; align-items:baseline; }
   .vd-ver-v{ font-family:var(--font-mono,ui-monospace,monospace); font-size:11px; color:var(--accent-200); min-width:42px; }
   .vd-ver-m{ font-size:11.5px; color:var(--text-400); }
+  /* Version compare (plan critique 15): changes marked + / − as well as by colour. */
+  .vd-cmp{ display:flex; flex-direction:column; gap:6px; margin-top:8px; padding:10px; border:1px solid var(--border); border-radius:var(--radius-md); background:var(--bg-050); }
+  .vd-cmp-head{ display:flex; flex-wrap:wrap; align-items:baseline; gap:10px; font-size:12px; color:var(--text-100); }
+  .vd-cmp-details{ margin:0; padding-left:16px; font-size:11.5px; color:var(--text-300); }
+  .vd-cmp-lines{ max-height:320px; overflow:auto; font-family:var(--font-mono,ui-monospace,monospace); font-size:11px; line-height:1.5; }
+  .vd-cmp-line{ white-space:pre-wrap; padding:0 6px; color:var(--text-200); }
+  .vd-cmp-mark{ user-select:none; color:var(--text-400); }
+  .vd-cmp-added{ background:var(--success-muted); color:var(--text-100); }
+  .vd-cmp-removed{ background:var(--error-muted); color:var(--text-100); text-decoration:line-through; text-decoration-color:var(--error); }
+  .vd-cmp-skip{ padding:2px 6px; color:var(--text-400); font-style:italic; }
+  /* Library search (plan critique 15): hits from every project, each with its project. */
+  .vd-lib{ display:flex; flex-direction:column; gap:4px; margin-top:8px; }
+  .vd-lib-row{ display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 12px; padding:6px 8px; border-bottom:1px solid var(--border); font-size:12px; }
+  .vd-lib-title{ color:var(--text-100); font-weight:500; }
+  .vd-lib-proj{ color:var(--text-300); font-size:11.5px; }
+  .vd-lib-snip{ flex-basis:100%; color:var(--text-400); font-size:11px; }
+  .vd-lib-row .sp-ask{ margin-left:auto; }
+  /* Stored-file fixity check (plan critique 15). */
+  .vd-fix{ border-bottom:1px solid var(--border); background:var(--bg-050); padding:10px 24px; display:flex; flex-direction:column; gap:6px; }
+  .vd-fix .sp-ask{ margin-left:auto; }
   /* A version's review stage and sign-offs, one line each (VR-13). */
   .vd-ver-lc{ display:block; margin-top:2px; color:var(--text-300); }
   .vd-ver-acts{ display:flex; flex-wrap:wrap; align-items:baseline; gap:8px; }

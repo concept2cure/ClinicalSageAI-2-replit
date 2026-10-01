@@ -101,3 +101,14 @@ export function describeProvenance(
   }
   return null;
 }
+
+/**
+ * Was the document's module assumed rather than chosen? The server stores M2
+ * and records `moduleDefaulted: true` when a document is created without a
+ * module (`authoring-from-draft.ts`): AnA's draft tool called without one, or
+ * a draft opened as a document. "M2" alone would then read as a decision
+ * nobody made, so a statistical analysis plan would show as Module 2.
+ */
+export function moduleWasAssumed(raw: unknown): boolean {
+  return !!raw && typeof raw === 'object' && (raw as Record<string, unknown>).moduleDefaulted === true;
+}

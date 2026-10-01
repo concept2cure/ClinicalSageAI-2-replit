@@ -1,0 +1,1894 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/insightsCanvasAccessible.test.tsx > a failed canvas load > offers a retry that reads again, in plain words 69ms
+   → expected 'Couldn\'t load the reporting canvasTh…' not to match /read-model|Insights canvas|sign in a…/i
+ × client/src/concept2cure/v2/__tests__/insightsCanvasAccessible.test.tsx > a report's tables and sources > a report table is a table with column headers, and a source is a disclosure, not a hover 5054ms
+   → Unable to find role="table"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"rc"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rc-ana"[39m
+        [33mstyle[39m=[32m""[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rc-ana-head"[39m
+          [33mstyle[39m=[32m""[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rc-ana-id"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rc-ana-mark"[39m
+            [36m>[39m
+              [0m*[0m
+            [36m</span>[39m
+            [36m<div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"nm"[39m
+              [36m>[39m
+                [0mReport builder[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"sub"[39m
+              [36m>[39m
+                [0mBX204 — NDA — Biotech[0m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"pj-card-h-go"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mAudit & compliance reports[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rc-ana-scroll"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rc-opener"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-op-head"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rc-ana-mark sm"[39m
+              [36m>[39m
+                [0m*[0m
+              [36m</span>[39m
+              [36m<span>[39m
+                [0mWhere to start[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-op-headline"[39m
+            [36m>[39m
+              [0mBuild any governed report or dashboard — describe what you need.[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-op-body"[39m
+            [36m>[39m
+              [0mBX204 is 73% ready. The BLA assembly pack is the standard starting pack for Biotech — it is not picked from the readiness figure above.[0m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"rc-preset-btn"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 3v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 5h-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 17v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 18H3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Build the [0m
+              [0mBLA assembly pack[0m
+              [0m [0m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-chevron-right"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m9 18 6-6-6-6"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-op-why"[39m
+            [36m>[39m
+              [0mTracks readiness and closes the evidence and financial-disclosure gaps before filing.[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-chips"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"rc-chip"[39m
+              [36m>[39m
+                [0mBuild the BLA assembly pack[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"rc-chip"[39m
+              [36m>[39m
+                [0mHow ready is BX204 to file?[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"rc-chip"[39m
+              [36m>[39m
+                [0mRun the audit assurance pack[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"rc-chip"[39m
+              [36m>[39m
+                [0mCompare readiness across all my programs[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rc-msg rc-user"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-bub"[39m
+            [36m>[39m
+              [0mRun the executive readiness digest report[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rc-msg rc-ana-msg"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rc-ana-mark sm"[39m
+            [36m>[39m
+              [0m*[0m
+            [36m</span>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-ana-body"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"rc-bub rc-ana-bub"[39m
+              [36m>[39m
+                [0mRunning the Executive Readiness Digest for BX204 against the governed record. Every value is computed from the governed record; none is originated here.[0m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rc-composer"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Subscription tier"[39m
+            [33mclass[39m=[32m"rc-tier"[39m
+            [33mrole[39m=[32m"group"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rc-tier-lbl"[39m
+            [36m>[39m
+              [0mPlan[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"true"[39m
+              [33mclass[39m=[32m"rc-tier-b on"[39m
+            [36m>[39m
+              [0mStandard[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"rc-tier-b"[39m
+            [36m>[39m
+              [0mProfessional[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"rc-tier-b"[39m
+            [36m>[39m
+              [0mEnterprise[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rc-input"[39m
+          [36m>[39m
+            [36m<textarea[39m
+              [33maria-label[39m=[32m"Describe the report or dashboard you need"[39m
+              [33mplaceholder[39m=[32m"Describe the report or dashboard you need for BX204..."[39m
+              [33mrows[39m=[32m"1"[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Send"[39m
+              [33mclass[39m=[32m"rc-send"[39m
+              [33mdisabled[39m=[32m""[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-arrow-up"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m5 12 7-7 7 7"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 19V5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rc-guardrail"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mThis pane routes your request to a governed report type and runs it — it does not answer in its own words. Every metric, score and probability comes from a deterministic provider or a disclosed model; none is originated here.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rc-canvas"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ro-report"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ro-rep-head"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ro-rep-eyebrow"[39m
+            [36m>[39m
+              [0mReadiness[0m
+            [36m</div>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"ro-rep-title"[39m
+            [36m>[39m
+              [0mExecutive Readiness Digest[0m
+            [36m</h2>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ro-rep-meta"[39m
+            [36m>[39m
+              [36m<span>[39m
+                [0mproject[0m
+                [0m — [0m
+                [0m1[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ro-status st-warn"[39m
+              [36m>[39m
+                [0mpartial[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ro-gen"[39m
+              [36m>[39m
+                [0mgenerated [0m
+                [0mAug 1, 10:00 AM[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"ro-sec"[39m
+          [36m>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"ro-sec-h"[39m
+            [36m>[39m
+              [0mProvider readiness[0m
+            [36m</h3>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ro-sec-body"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ro-metric"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"ro-m-lbl"[39m
+                [36m>[39m
+                  [0mConfidence[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33maria-label[39m=[32m"Derived from projects"[39m
+                  [33mclass[39m=[32m"ro-m-val"[39m
+                  [33mtitle[39m=[32m"Derived from projects"[39m
+                [36m>[39m
+                  [0m64[0m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"ro-m-unit"[39m
+                  [36m>[39m
+                    [0m%[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"ro-m-prov"[39m
+                  [33mtitle[39m=[32m"Derived from projects"[39m
+                [36m>[39m
+                  [0mSource on hover[0m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ro-table"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"ro-thead"[39m
+                  [33mstyle[39m=[32m"grid-template-columns: repeat(3, minmax(0,1fr));"[39m
+                [36m>[39m
+                  [36m<span>[39m
+                    [0mProvider[0m
+                  [36m</span>[39m
+                  [36m<span>[39m
+                    [0mStatus[0m
+                  [36m</span>[39m
+                  [36m<span>[39m
+                    [0mNote[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"ro-trow"[39m
+                  [33mstyle[39m=[32m"grid-template-columns: repeat(3, minmax(0,1fr));"[39m
+                [36m>[39m
+                  [36m<span>[39m
+                    [0mlifecycle[0m
+                  [36m</span>[39m
+                  [36m<span>[39m
+                    [0mready[0m
+                  [36m</span>[39m
+                  [36m<span>[39m
+                    [0m--[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</section>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ro-rep-actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sp-primary"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-download"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[39m
+                [36m/>[39m
+                [36m<polyline[39m
+                  [33mpoints[39m=[32m"7 10 12 15 17 10"[39m
+                [36m/>[39m
+                [36m<line[39m
+                  [33mx1[39m=[32m"12"[39m
+                  [33mx2[39m=[32m"12"[39m
+                  [33my1[39m=[32m"15"[39m
+                  [33my2[39m=[32m"3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Export PDF[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m9 12 2 2 4-4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Finalize…[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"rc"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rc-ana"[39m
+        [33mstyle[39m=[32m""[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rc-ana-head"[39m
+          [33mstyle[39m=[32m""[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rc-ana-id"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rc-ana-mark"[39m
+            [36m>[39m
+              [0m*[0m
+            [36m</span>[39m
+            [36m<div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"nm"[39m
+              [36m>[39m
+                [0mReport builder[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"sub"[39m
+              [36m>[39m
+                [0mBX204 — NDA — Biotech[0m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"pj-card-h-go"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mAudit & compliance reports[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rc-ana-scroll"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rc-opener"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-op-head"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rc-ana-mark sm"[39m
+              [36m>[39m
+                [0m*[0m
+              [36m</span>[39m
+              [36m<span>[39m
+                [0mWhere to start[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-op-headline"[39m
+            [36m>[39m
+              [0mBuild any governed report or dashboard — describe what you need.[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-op-body"[39m
+            [36m>[39m
+              [0mBX204 is 73% ready. The BLA assembly pack is the standard starting pack for Biotech — it is not picked from the readiness figure above.[0m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"rc-preset-btn"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 3v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 5h-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 17v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 18H3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Build the [0m
+              [0mBLA assembly pack[0m
+              [0m [0m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-chevron-right"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m9 18 6-6-6-6"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-op-why"[39m
+            [36m>[39m
+              [0mTracks readiness and closes the evidence and financial-disclosure gaps before filing.[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-chips"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"rc-chip"[39m
+              [36m>[39m
+                [0mBuild the BLA assembly pack[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"rc-chip"[39m
+              [36m>[39m
+                [0mHow ready is BX204 to file?[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"rc-chip"[39m
+              [36m>[39m
+                [0mRun the audit assurance pack[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"rc-chip"[39m
+              [36m>[39m
+                [0mCompare readiness across all my programs[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rc-msg rc-user"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-bub"[39m
+            [36m>[39m
+              [0mRun the executive readiness digest report[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rc-msg rc-ana-msg"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rc-ana-mark sm"[39m
+            [36m>[39m
+              [0m*[0m
+            [36m</span>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-ana-body"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"rc-bub rc-ana-bub"[39m
+              [36m>[39m
+                [0mRunning the Executive Readiness Digest for BX204 against the governed record. Every value is computed from the governed record; none is originated here.[0m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rc-composer"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Subscription tier"[39m
+            [33mclass[39m=[32m"rc-tier"[39m
+            [33mrole[39m=[32m"group"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rc-tier-lbl"[39m
+            [36m>[39m
+              [0mPlan[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"true"[39m
+              [33mclass[39m=[32m"rc-tier-b on"[39m
+            [36m>[39m
+              [0mStandard[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"rc-tier-b"[39m
+            [36m>[39m
+              [0mProfessional[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"rc-tier-b"[39m
+            [36m>[39m
+              [0mEnterprise[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rc-input"[39m
+          [36m>[39m
+            [36m<textarea[39m
+              [33maria-label[39m=[32m"Describe the report or dashboard you need"[39m
+              [33mplaceholder[39m=[32m"Describe the report or dashboard you need for BX204..."[39m
+              [33mrows[39m=[32m"1"[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Send"[39m
+              [33mclass[39m=[32m"rc-send"[39m
+              [33mdisabled[39m=[32m""[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-arrow-up"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m5 12 7-7 7 7"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 19V5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rc-guardrail"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mThis pane routes your request to a governed report type and runs it — it does not answer in its own words. Every metric, score and probability comes from a deterministic provider or a disclosed model; none is originated here.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rc-canvas"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ro-report"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ro-rep-head"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ro-rep-eyebrow"[39m
+            [36m>[39m
+              [0mReadiness[0m
+            [36m</div>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"ro-rep-title"[39m
+            [36m>[39m
+              [0mExecutive Readiness Digest[0m
+            [36m</h2>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ro-rep-meta"[39m
+            [36m>[39m
+              [36m<span>[39m
+                [0mproject[0m
+                [0m — [0m
+                [0m1[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ro-status st-warn"[39m
+              [36m>[39m
+                [0mpartial[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ro-gen"[39m
+              [36m>[39m
+                [0mgenerated [0m
+                [0mAug 1, 10:00 AM[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"ro-sec"[39m
+          [36m>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"ro-sec-h"[39m
+            [36m>[39m
+              [0mProvider readiness[0m
+            [36m</h3>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ro-sec-body"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ro-metric"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"ro-m-lbl"[39m
+                [36m>[39m
+                  [0mConfidence[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33maria-label[39m=[32m"Derived from projects"[39m
+                  [33mclass[39m=[32m"ro-m-val"[39m
+                  [33mtitle[39m=[32m"Derived from projects"[39m
+                [36m>[39m
+                  [0m64[0m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"ro-m-unit"[39m
+                  [36m>[39m
+                    [0m%[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"ro-m-prov"[39m
+                  [33mtitle[39m=[32m"Derived from projects"[39m
+                [36m>[39m
+                  [0mSource on hover[0m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ro-table"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"ro-thead"[39m
+                  [33mstyle[39m=[32m"grid-template-columns: repeat(3, minmax(0,1fr));"[39m
+                [36m>[39m
+                  [36m<span>[39m
+                    [0mProvider[0m
+                  [36m</span>[39m
+                  [36m<span>[39m
+                    [0mStatus[0m
+                  [36m</span>[39m
+                  [36m<span>[39m
+                    [0mNote[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"ro-trow"[39m
+                  [33mstyle[39m=[32m"grid-template-columns: repeat(3, minmax(0,1fr));"[39m
+                [36m>[39m
+                  [36m<span>[39m
+                    [0mlifecycle[0m
+                  [36m</span>[39m
+                  [36m<span>[39m
+                    [0mready[0m
+                  [36m</span>[39m
+                  [36m<span>[39m
+                    [0m--[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</section>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ro-rep-actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sp-primary"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-download"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[39m
+                [36m/>[39m
+                [36m<polyline[39m
+                  [33mpoints[39m=[32m"7 10 12 15 17 10"[39m
+                [36m/>[39m
+                [36m<line[39m
+                  [33mx1[39m=[32m"12"[39m
+                  [33mx2[39m=[32m"12"[39m
+                  [33my1[39m=[32m"15"[39m
+                  [33my2[39m=[32m"3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Export PDF[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m9 12 2 2 4-4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Finalize…[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/insightsCanvasAccessible.test.tsx > a failed canvas load > offers a retry that reads again, in plain words
+AssertionError: expected 'Couldn\'t load the reporting canvasTh…' not to match /read-model|Insights canvas|sign in a…/i
+
+- Expected:
+/read-model|Insights canvas|sign in and retry/i
+
++ Received:
+"Couldn't load the reporting canvasThe Insights canvas read-model didn't respond. It assembles your organization's subscription tier, flagship program readiness, and portfolio rollup from the governed record — sign in and retry, or check that the service is reachable."
+
+ ❯ client/src/concept2cure/v2/__tests__/insightsCanvasAccessible.test.tsx:71:35
+     69|     const alert = await screen.findByText("Couldn't load the reporting…
+     70|     const panel = alert.closest('[role="alert"]') as HTMLElement;
+     71|     expect(panel.textContent).not.toMatch(/read-model|Insights canvas|…
+       |                                   ^
+     72|     const before = overviewCalls();
+     73|     fail = false;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/insightsCanvasAccessible.test.tsx > a report's tables and sources > a report table is a table with column headers, and a source is a disclosure, not a hover
+TestingLibraryElementError: Unable to find role="table"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"rc"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rc-ana"[39m
+        [33mstyle[39m=[32m""[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rc-ana-head"[39m
+          [33mstyle[39m=[32m""[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rc-ana-id"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rc-ana-mark"[39m
+            [36m>[39m
+              [0m*[0m
+            [36m</span>[39m
+            [36m<div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"nm"[39m
+              [36m>[39m
+                [0mReport builder[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"sub"[39m
+              [36m>[39m
+                [0mBX204 — NDA — Biotech[0m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"pj-card-h-go"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mAudit & compliance reports[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rc-ana-scroll"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rc-opener"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-op-head"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rc-ana-mark sm"[39m
+              [36m>[39m
+                [0m*[0m
+              [36m</span>[39m
+              [36m<span>[39m
+                [0mWhere to start[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-op-headline"[39m
+            [36m>[39m
+              [0mBuild any governed report or dashboard — describe what you need.[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-op-body"[39m
+            [36m>[39m
+              [0mBX204 is 73% ready. The BLA assembly pack is the standard starting pack for Biotech — it is not picked from the readiness figure above.[0m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"rc-preset-btn"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 3v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 5h-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 17v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 18H3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Build the [0m
+              [0mBLA assembly pack[0m
+              [0m [0m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-chevron-right"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m9 18 6-6-6-6"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-op-why"[39m
+            [36m>[39m
+              [0mTracks readiness and closes the evidence and financial-disclosure gaps before filing.[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-chips"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"rc-chip"[39m
+              [36m>[39m
+                [0mBuild the BLA assembly pack[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"rc-chip"[39m
+              [36m>[39m
+                [0mHow ready is BX204 to file?[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"rc-chip"[39m
+              [36m>[39m
+                [0mRun the audit assurance pack[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"rc-chip"[39m
+              [36m>[39m
+                [0mCompare readiness across all my programs[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rc-msg rc-user"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-bub"[39m
+            [36m>[39m
+              [0mRun the executive readiness digest report[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rc-msg rc-ana-msg"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rc-ana-mark sm"[39m
+            [36m>[39m
+              [0m*[0m
+            [36m</span>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-ana-body"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"rc-bub rc-ana-bub"[39m
+              [36m>[39m
+                [0mRunning the Executive Readiness Digest for BX204 against the governed record. Every value is computed from the governed record; none is originated here.[0m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rc-composer"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Subscription tier"[39m
+            [33mclass[39m=[32m"rc-tier"[39m
+            [33mrole[39m=[32m"group"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rc-tier-lbl"[39m
+            [36m>[39m
+              [0mPlan[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"true"[39m
+              [33mclass[39m=[32m"rc-tier-b on"[39m
+            [36m>[39m
+              [0mStandard[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"rc-tier-b"[39m
+            [36m>[39m
+              [0mProfessional[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"rc-tier-b"[39m
+            [36m>[39m
+              [0mEnterprise[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rc-input"[39m
+          [36m>[39m
+            [36m<textarea[39m
+              [33maria-label[39m=[32m"Describe the report or dashboard you need"[39m
+              [33mplaceholder[39m=[32m"Describe the report or dashboard you need for BX204..."[39m
+              [33mrows[39m=[32m"1"[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Send"[39m
+              [33mclass[39m=[32m"rc-send"[39m
+              [33mdisabled[39m=[32m""[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-arrow-up"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m5 12 7-7 7 7"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 19V5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rc-guardrail"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mThis pane routes your request to a governed report type and runs it — it does not answer in its own words. Every metric, score and probability comes from a deterministic provider or a disclosed model; none is originated here.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rc-canvas"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ro-report"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ro-rep-head"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ro-rep-eyebrow"[39m
+            [36m>[39m
+              [0mReadiness[0m
+            [36m</div>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"ro-rep-title"[39m
+            [36m>[39m
+              [0mExecutive Readiness Digest[0m
+            [36m</h2>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ro-rep-meta"[39m
+            [36m>[39m
+              [36m<span>[39m
+                [0mproject[0m
+                [0m — [0m
+                [0m1[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ro-status st-warn"[39m
+              [36m>[39m
+                [0mpartial[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ro-gen"[39m
+              [36m>[39m
+                [0mgenerated [0m
+                [0mAug 1, 10:00 AM[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"ro-sec"[39m
+          [36m>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"ro-sec-h"[39m
+            [36m>[39m
+              [0mProvider readiness[0m
+            [36m</h3>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ro-sec-body"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ro-metric"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"ro-m-lbl"[39m
+                [36m>[39m
+                  [0mConfidence[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33maria-label[39m=[32m"Derived from projects"[39m
+                  [33mclass[39m=[32m"ro-m-val"[39m
+                  [33mtitle[39m=[32m"Derived from projects"[39m
+                [36m>[39m
+                  [0m64[0m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"ro-m-unit"[39m
+                  [36m>[39m
+                    [0m%[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"ro-m-prov"[39m
+                  [33mtitle[39m=[32m"Derived from projects"[39m
+                [36m>[39m
+                  [0mSource on hover[0m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ro-table"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"ro-thead"[39m
+                  [33mstyle[39m=[32m"grid-template-columns: repeat(3, minmax(0,1fr));"[39m
+                [36m>[39m
+                  [36m<span>[39m
+                    [0mProvider[0m
+                  [36m</span>[39m
+                  [36m<span>[39m
+                    [0mStatus[0m
+                  [36m</span>[39m
+                  [36m<span>[39m
+                    [0mNote[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"ro-trow"[39m
+                  [33mstyle[39m=[32m"grid-template-columns: repeat(3, minmax(0,1fr));"[39m
+                [36m>[39m
+                  [36m<span>[39m
+                    [0mlifecycle[0m
+                  [36m</span>[39m
+                  [36m<span>[39m
+                    [0mready[0m
+                  [36m</span>[39m
+                  [36m<span>[39m
+                    [0m--[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</section>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ro-rep-actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sp-primary"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-download"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[39m
+                [36m/>[39m
+                [36m<polyline[39m
+                  [33mpoints[39m=[32m"7 10 12 15 17 10"[39m
+                [36m/>[39m
+                [36m<line[39m
+                  [33mx1[39m=[32m"12"[39m
+                  [33mx2[39m=[32m"12"[39m
+                  [33my1[39m=[32m"15"[39m
+                  [33my2[39m=[32m"3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Export PDF[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m9 12 2 2 4-4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Finalize…[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"rc"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rc-ana"[39m
+        [33mstyle[39m=[32m""[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rc-ana-head"[39m
+          [33mstyle[39m=[32m""[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rc-ana-id"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rc-ana-mark"[39m
+            [36m>[39m
+              [0m*[0m
+            [36m</span>[39m
+            [36m<div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"nm"[39m
+              [36m>[39m
+                [0mReport builder[0m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"sub"[39m
+              [36m>[39m
+                [0mBX204 — NDA — Biotech[0m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"pj-card-h-go"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mAudit & compliance reports[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rc-ana-scroll"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rc-opener"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-op-head"[39m
+            [36m>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"rc-ana-mark sm"[39m
+              [36m>[39m
+                [0m*[0m
+              [36m</span>[39m
+              [36m<span>[39m
+                [0mWhere to start[0m
+              [36m</span>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-op-headline"[39m
+            [36m>[39m
+              [0mBuild any governed report or dashboard — describe what you need.[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-op-body"[39m
+            [36m>[39m
+              [0mBX204 is 73% ready. The BLA assembly pack is the standard starting pack for Biotech — it is not picked from the readiness figure above.[0m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"rc-preset-btn"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 3v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 5h-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 17v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 18H3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Build the [0m
+              [0mBLA assembly pack[0m
+              [0m [0m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-chevron-right"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m9 18 6-6-6-6"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-op-why"[39m
+            [36m>[39m
+              [0mTracks readiness and closes the evidence and financial-disclosure gaps before filing.[0m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-chips"[39m
+            [36m>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"rc-chip"[39m
+              [36m>[39m
+                [0mBuild the BLA assembly pack[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"rc-chip"[39m
+              [36m>[39m
+                [0mHow ready is BX204 to file?[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"rc-chip"[39m
+              [36m>[39m
+                [0mRun the audit assurance pack[0m
+              [36m</button>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"rc-chip"[39m
+              [36m>[39m
+                [0mCompare readiness across all my programs[0m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rc-msg rc-user"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-bub"[39m
+            [36m>[39m
+              [0mRun the executive readiness digest report[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rc-msg rc-ana-msg"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rc-ana-mark sm"[39m
+            [36m>[39m
+              [0m*[0m
+            [36m</span>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"rc-ana-body"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"rc-bub rc-ana-bub"[39m
+              [36m>[39m
+                [0mRunning the Executive Readiness Digest for BX204 against the governed record. Every value is computed from the governed record; none is originated here.[0m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rc-composer"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Subscription tier"[39m
+            [33mclass[39m=[32m"rc-tier"[39m
+            [33mrole[39m=[32m"group"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"rc-tier-lbl"[39m
+            [36m>[39m
+              [0mPlan[0m
+            [36m</span>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"true"[39m
+              [33mclass[39m=[32m"rc-tier-b on"[39m
+            [36m>[39m
+              [0mStandard[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"rc-tier-b"[39m
+            [36m>[39m
+              [0mProfessional[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-pressed[39m=[32m"false"[39m
+              [33mclass[39m=[32m"rc-tier-b"[39m
+            [36m>[39m
+              [0mEnterprise[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rc-input"[39m
+          [36m>[39m
+            [36m<textarea[39m
+              [33maria-label[39m=[32m"Describe the report or dashboard you need"[39m
+              [33mplaceholder[39m=[32m"Describe the report or dashboard you need for BX204..."[39m
+              [33mrows[39m=[32m"1"[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Send"[39m
+              [33mclass[39m=[32m"rc-send"[39m
+              [33mdisabled[39m=[32m""[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-arrow-up"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m5 12 7-7 7 7"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M12 19V5"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rc-guardrail"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"m9 12 2 2 4-4"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mThis pane routes your request to a governed report type and runs it — it does not answer in its own words. Every metric, score and probability comes from a deterministic provider or a disclosed model; none is originated here.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rc-canvas"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ro-report"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ro-rep-head"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ro-rep-eyebrow"[39m
+            [36m>[39m
+              [0mReadiness[0m
+            [36m</div>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"ro-rep-title"[39m
+            [36m>[39m
+              [0mExecutive Readiness Digest[0m
+            [36m</h2>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ro-rep-meta"[39m
+            [36m>[39m
+              [36m<span>[39m
+                [0mproject[0m
+                [0m — [0m
+                [0m1[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ro-status st-warn"[39m
+              [36m>[39m
+                [0mpartial[0m
+              [36m</span>[39m
+              [36m<span[39m
+                [33mclass[39m=[32m"ro-gen"[39m
+              [36m>[39m
+                [0mgenerated [0m
+                [0mAug 1, 10:00 AM[0m
+              [36m</span>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<section[39m
+            [33mclass[39m=[32m"ro-sec"[39m
+          [36m>[39m
+            [36m<h3[39m
+              [33mclass[39m=[32m"ro-sec-h"[39m
+            [36m>[39m
+              [0mProvider readiness[0m
+            [36m</h3>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ro-sec-body"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ro-metric"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"ro-m-lbl"[39m
+                [36m>[39m
+                  [0mConfidence[0m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33maria-label[39m=[32m"Derived from projects"[39m
+                  [33mclass[39m=[32m"ro-m-val"[39m
+                  [33mtitle[39m=[32m"Derived from projects"[39m
+                [36m>[39m
+                  [0m64[0m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"ro-m-unit"[39m
+                  [36m>[39m
+                    [0m%[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"ro-m-prov"[39m
+                  [33mtitle[39m=[32m"Derived from projects"[39m
+                [36m>[39m
+                  [0mSource on hover[0m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"ro-table"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"ro-thead"[39m
+                  [33mstyle[39m=[32m"grid-template-columns: repeat(3, minmax(0,1fr));"[39m
+                [36m>[39m
+                  [36m<span>[39m
+                    [0mProvider[0m
+                  [36m</span>[39m
+                  [36m<span>[39m
+                    [0mStatus[0m
+                  [36m</span>[39m
+                  [36m<span>[39m
+                    [0mNote[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"ro-trow"[39m
+                  [33mstyle[39m=[32m"grid-template-columns: repeat(3, minmax(0,1fr));"[39m
+                [36m>[39m
+                  [36m<span>[39m
+                    [0mlifecycle[0m
+                  [36m</span>[39m
+                  [36m<span>[39m
+                    [0mready[0m
+                  [36m</span>[39m
+                  [36m<span>[39m
+                    [0m--[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</section>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ro-rep-actions"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"sp-primary"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-download"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"[39m
+                [36m/>[39m
+                [36m<polyline[39m
+                  [33mpoints[39m=[32m"7 10 12 15 17 10"[39m
+                [36m/>[39m
+                [36m<line[39m
+                  [33mx1[39m=[32m"12"[39m
+                  [33mx2[39m=[32m"12"[39m
+                  [33my1[39m=[32m"15"[39m
+                  [33my2[39m=[32m"3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Export PDF[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-shield-check"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m9 12 2 2 4-4"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Finalize…[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/insightsCanvasAccessible.test.tsx:96:32
+     94|     fireEvent.change(composer, { target: { value: 'Run the executive r…
+     95|     fireEvent.click(screen.getByLabelText('Send'));
+     96|     const table = await screen.findByRole('table');
+       |                                ^
+     97|     expect(within(table).getAllByRole('columnheader').map((th) => th.t…
+     98|     expect(within(table).getAllByRole('cell').map((td) => td.textConte…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  16:10:14
+   Duration  7.02s (transform 577ms, setup 191ms, import 731ms, tests 5.13s, environment 716ms)
+

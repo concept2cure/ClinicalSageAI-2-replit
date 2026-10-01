@@ -71,6 +71,8 @@ describe('POST /api/vault/ingest — lineage is not set by an upload', () => {
     expect(res.status).toBe(400);
     expect(res.body.error.code).toBe('LINEAGE_NOT_ACCEPTED');
     expect(res.body.error.message).toMatch(/Nothing was saved/);
+    // The refusal names where each intent now goes (plan critique 15).
+    expect(res.body.error.message).toMatch(/supersedesDocumentId.*Relationships/);
     expect(ingestVaultDocument).not.toHaveBeenCalled();
   });
 

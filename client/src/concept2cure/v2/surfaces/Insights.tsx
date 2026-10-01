@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { I } from '../icons';
-import { useLiveData, EmptyState } from '../dataConnect';
+import { useLiveData, EmptyState, ErrorState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { downloadBlob, safeFileName } from '../download';
 import { getOrgId } from '@/utils/authToken';
@@ -619,6 +619,33 @@ function ROChart({ chartType, spec }: { chartType: string; spec: Record<string, 
 }
 
 /* ── ROBlock ── */
+/**
+ * A report table as a table (reporting review 2026-10-01, DESIGN-5): column
+ * headers a screen reader associates with each cell (WCAG 1.3.1), the
+ * platform's governed table style (`reg-tbl`, as the compliance reports use).
+ */
+function ROTable({ columns, rows }: { columns: string[]; rows: string[][] }) {
+  return (
+    <div className="ro-table">
+      <table className="reg-tbl">
+        <thead><tr>{columns.map((c, i) => <th key={i} scope="col">{c}</th>)}</tr></thead>
+        <tbody>{rows.map((row, r) => <tr key={r}>{row.map((cell, c) => <td key={c}>{cell}</td>)}</tr>)}</tbody>
+      </table>
+    </div>
+  );
+}
+
+/** Where a value came from, as text anyone can open: never hover-only (DESIGN-5). */
+function ROProvenance({ prov }: { prov: string | undefined }) {
+  if (!prov) return null;
+  return (
+    <details className="ro-m-prov">
+      <summary>Source</summary>
+      <span>{prov}</span>
+    </details>
+  );
+}
+
 function ROBlock({ block }: { block: ROBlockData }) {
   switch (block.kind) {
     case 'summary': return <p className="ro-summary">{block.text}</p>;
@@ -636,22 +663,18 @@ function ROBlock({ block }: { block: ROBlockData }) {
       return (
         <div className="ro-metric">
           <div className="ro-m-lbl">{block.label}</div>
-          <div className="ro-m-val" title={prov} aria-label={prov}>{disp}{block.unit && disp !== '--' ? <span className="ro-m-unit">{block.unit}</span> : null}</div>
+          <div className="ro-m-val">{disp}{block.unit && disp !== '--' ? <span className="ro-m-unit">{block.unit}</span> : null}</div>
           {stLabel ? <div className={'ro-m-st st-' + st}>{stLabel}</div> : null}
-          {prov ? <div className="ro-m-prov" title={prov}>Source on hover</div> : null}
+          <ROProvenance prov={prov} />
         </div>
       );
     }
-    case 'table': {
-      const prov = roProv(block.provenance);
-      const cols = `repeat(${(block.columns || []).length}, minmax(0,1fr))`;
-      return (
-        <div className="ro-table" title={prov} aria-label={prov}>
-          <div className="ro-thead" style={{ gridTemplateColumns: cols }}>{(block.columns || []).map((c, i) => <span key={i}>{c}</span>)}</div>
-          {(block.rows || []).map((row, r) => (<div key={r} className="ro-trow" style={{ gridTemplateColumns: cols }}>{row.map((cell, c) => <span key={c}>{cell === null || cell === undefined ? '--' : String(cell)}</span>)}</div>))}
-        </div>
-      );
-    }
+    case 'table': return (
+      <>
+        <ROTable columns={block.columns || []} rows={(block.rows || []).map((row) => row.map((cell) => (cell === null || cell === undefined ? '--' : String(cell))))} />
+        <ROProvenance prov={roProv(block.provenance)} />
+      </>
+    );
     case 'chart': return <div className="ro-chartcard"><ROChart chartType={block.chartType!} spec={block.spec || {}} /></div>;
     case 'gap-list': return (
       <ul className="ro-list">{((block.items || []) as { title: string; severity: string; message?: string }[]).map((it, i) => {
@@ -779,10 +802,7 @@ function RODashboard({ dashboard, tier, onRun, canRun, scope }: { dashboard: Das
             Submission readiness <b>{prog.readiness}%</b> — a programme-level figure, not assessed per market.
           </div>
         )}
-        <div className="ro-table">
-          <div className="ro-thead" style={{ gridTemplateColumns: `minmax(0,1.4fr) repeat(${m.length}, minmax(0,1fr))` }}><span>Requirement</span>{m.map(x => <span key={x}>{x}</span>)}</div>
-          {tRows.map((r, ri) => (<div key={ri} className="ro-trow" style={{ gridTemplateColumns: `minmax(0,1.4fr) repeat(${m.length}, minmax(0,1fr))` }}><span>{r[0]}</span>{m.map((_, ci) => <span key={ci}>{r[1] ?? '--'}</span>)}</div>))}
-        </div>
+        <ROTable columns={['Requirement', ...m]} rows={tRows.map((r) => [r[0], ...m.map(() => r[1] ?? '--')])} />
         <div className="ro-dash-note">{I.info} No per-market assessment is in the governed record, so every market cell reads "--". Connect the live regional providers to populate the deltas.</div>
       </div>
     );
@@ -1067,7 +1087,9 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
   // insights-canvas-routes.ts → GET /api/insights-canvas/overview), replacing
   // the retired PJ_PROGRAMS / GI_BY_SEG / APP_LICENSE fixtures. Real object →
   // honest empty (no flagship program yet) → honest error.
-  const overview = useLiveData<CanvasOverview>('/api/insights-canvas/overview');
+  // Each retry is a new read (reporting review 2026-10-01, DESIGN-3).
+  const [overviewAttempt, setOverviewAttempt] = useState(0);
+  const overview = useLiveData<CanvasOverview>('/api/insights-canvas/overview', ['/api/insights-canvas/overview', overviewAttempt]);
   const data = overview.data;
   const program = data?.leadProgram ? leadToProgramCtx(data.leadProgram) : null;
   const suggest = program ? roSuggestForClient(program, seg) : null;
@@ -1196,7 +1218,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
     return (
       <div className="rc">
         <div className="rc-canvas" style={{ gridColumn: '1 / -1' }}>
-          <div role="status" className="scaf-note" style={{ padding: '40px 20px' }}>Loading the reporting canvas…</div>
+          <EmptyState busy icon={I.barChart} title="Loading the reporting canvas…" />
         </div>
       </div>
     );
@@ -1205,11 +1227,10 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
     return (
       <div className="rc">
         <div className="rc-canvas" style={{ gridColumn: '1 / -1' }}>
-          <EmptyState
-            tone="error"
-            icon={I.alertTriangle}
+          <ErrorState
             title="Couldn't load the reporting canvas"
-            hint="The Insights canvas read-model didn't respond. It assembles your organization's subscription tier, flagship program readiness, and portfolio rollup from the governed record — sign in and retry, or check that the service is reachable."
+            message="Your organization's plan, program readiness and portfolio rollup could not be read. Nothing is shown in their place."
+            retry={() => setOverviewAttempt((n) => n + 1)}
           />
           {/* A failed read of the program canvas says nothing about the audit
               records, so the compliance reports stay one click away. */}

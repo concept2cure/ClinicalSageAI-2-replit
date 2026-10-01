@@ -53,11 +53,21 @@ resource "aws_iam_role_policy" "ecs_execution_secrets" {
   role = aws_iam_role.ecs_execution.id
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [{
-      Effect   = "Allow"
-      Action   = ["secretsmanager:GetSecretValue"]
-      Resource = var.secret_arns
-    }]
+    Statement = concat(
+      [{
+        Effect   = "Allow"
+        Action   = ["secretsmanager:GetSecretValue"]
+        Resource = var.secret_arns
+      }],
+      # Secrets on a customer-managed key: without this the task cannot start
+      # (ResourceInitializationError). Through Secrets Manager only.
+      var.secrets_kms_key_arn == null ? [] : [{
+        Effect    = "Allow"
+        Action    = ["kms:Decrypt"]
+        Resource  = [var.secrets_kms_key_arn]
+        Condition = { StringEquals = { "kms:ViaService" = "secretsmanager.${var.region}.amazonaws.com" } }
+      }],
+    )
   })
 }
 

@@ -42,6 +42,8 @@ export interface FileUploadIntoVaultArgs {
   folderId?: string;
   /** The checksum recorded at capture. When given, the loaded bytes must still hash to it. */
   capturedChecksum?: string | null;
+  /** The data-room capture being filed, named in the ingest's audit row (VR-16b). */
+  dataRoomSourceId?: number;
   ipAddress?: string;
   userAgent?: string;
 }
@@ -110,6 +112,7 @@ export async function fileUploadIntoVault(args: FileUploadIntoVaultArgs): Promis
     fileBuffer: file.buffer,
     fileName: file.fileName,
     mimeType: file.mimeType,
+    dataRoomSourceId: args.dataRoomSourceId,
     ipAddress: args.ipAddress,
     userAgent: args.userAgent,
   });

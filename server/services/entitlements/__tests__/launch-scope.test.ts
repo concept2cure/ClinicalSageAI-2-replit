@@ -14,6 +14,8 @@ import { describe, it, expect, vi } from 'vitest';
 vi.mock('../module-grants.js', () => ({ writeModuleGrant: vi.fn() }));
 vi.mock('../../license-manager.js', () => ({ getLicenseInfo: vi.fn(), getModuleCatalog: vi.fn() }));
 vi.mock('../../../db', () => ({ query: vi.fn() }));
+const log = vi.hoisted(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }));
+vi.mock('../../../utils/logger.js', () => ({ createScopedLogger: () => log }));
 
 import { readLaunchScopeMode, launchScopeEnforced } from '../launch-scope.js';
 import { applyLaunchScope, type NavSurfaceEntitlement } from '../navigation-entitlements.js';
@@ -38,6 +40,19 @@ describe('readLaunchScopeMode', () => {
     expect(readLaunchScopeMode({ NODE_ENV: 'production', LAUNCH_SCOPE_ENFORCE: 'off' })).toBe('off');
     expect(readLaunchScopeMode({ NODE_ENV: 'development', LAUNCH_SCOPE_ENFORCE: 'ON ' })).toBe('on');
     expect(launchScopeEnforced({ NODE_ENV: 'test', LAUNCH_SCOPE_ENFORCE: 'on' })).toBe(true);
+  });
+  it('an explicit off in production is said once, as an error; off elsewhere and on are quiet', async () => {
+    vi.resetModules(); // a fresh module: the line is logged once per process
+    const fresh = await import('../launch-scope.js');
+    log.error.mockClear();
+    fresh.readLaunchScopeMode({ NODE_ENV: 'development', LAUNCH_SCOPE_ENFORCE: 'off' });
+    fresh.readLaunchScopeMode({ NODE_ENV: 'production', LAUNCH_SCOPE_ENFORCE: 'on' });
+    fresh.readLaunchScopeMode({ NODE_ENV: 'production' });
+    expect(log.error).not.toHaveBeenCalled();
+    fresh.readLaunchScopeMode({ NODE_ENV: 'production', LAUNCH_SCOPE_ENFORCE: 'off' });
+    fresh.launchScopeEnforced({ NODE_ENV: 'production', LAUNCH_SCOPE_ENFORCE: 'off' });
+    expect(log.error).toHaveBeenCalledTimes(1);
+    expect(String(log.error.mock.calls[0][0])).toMatch(/LAUNCH_SCOPE_ENFORCE=off in production/);
   });
   it('a value that is neither on nor off refuses to boot in production, and is off elsewhere', () => {
     expect(() => readLaunchScopeMode({ NODE_ENV: 'production', LAUNCH_SCOPE_ENFORCE: 'yes' })).toThrow(/on.*off/);

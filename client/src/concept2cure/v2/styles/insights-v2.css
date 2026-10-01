@@ -83,8 +83,13 @@
 .ro-rep-title{ font-size:22px; font-weight:600; color:var(--text-100); margin:0 0 9px; line-height:1.25; }
 .ro-rep-meta{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; font-size:12px; color:var(--text-400); }
 .ro-status{ font-size:10.5px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; padding:2px 9px; border-radius:999px; }
-.ro-status.st-ok{ background:color-mix(in srgb,var(--success) 15%,transparent); color:color-mix(in srgb,var(--success) 72%,#000); }
-.ro-status.st-warn{ background:color-mix(in srgb,var(--warning) 16%,transparent); color:color-mix(in srgb,var(--warning) 74%,#000); }
+/* Reporting review 2026-10-01 (DESIGN-1, DESIGN-2): these mixed a status hue
+   toward #000, which sinks the dark theme's tokens to 2.6-3.6:1, and the
+   critical tag was a fixed #8a3a3a (1.98:1 on dark). They now use the design
+   system's own pairs: status text on its -muted fill (light 4.57 / 4.54:1,
+   dark 4.84 / 4.55:1) and status text on the page (>= 4.93:1 in both). */
+.ro-status.st-ok{ background:var(--success-muted); color:var(--success); }
+.ro-status.st-warn{ background:var(--warning-muted); color:var(--warning); }
 .ro-status.st-idle{ background:var(--bg-100); color:var(--text-400); }
 .ro-truth{ display:flex; align-items:flex-start; gap:7px; font-size:11.5px; color:var(--text-300); line-height:1.5; margin-top:11px; padding:9px 11px; background:var(--bg-050); border-radius:var(--radius-lg); }
 .ro-truth svg{ width:13px; height:13px; flex-shrink:0; margin-top:1px; color:var(--text-400); }
@@ -102,16 +107,14 @@
 .ro-m-val{ font-size:23px; font-weight:600; color:var(--text-100); line-height:1; }
 .ro-m-unit{ font-size:13px; color:var(--text-400); margin-left:2px; }
 .ro-m-st{ font-size:10.5px; font-weight:600; margin-top:6px; }
-.ro-m-st.st-ready{ color:color-mix(in srgb,var(--success) 72%,#000); }
-.ro-m-st.st-partial{ color:color-mix(in srgb,var(--warning) 74%,#000); }
+.ro-m-st.st-ready{ color:var(--success); }
+.ro-m-st.st-partial{ color:var(--warning); }
 .ro-m-st.st-missing{ color:var(--error); }
-.ro-m-prov{ font-size:10px; font-style:italic; color:var(--text-400); margin-top:3px; }
+/* Provenance is a disclosure anyone can open, never hover-only (review 2026-10-01, DESIGN-5). */
+.ro-m-prov{ font-size:10.5px; color:var(--text-400); margin:3px 0 10px; }
+.ro-m-prov summary{ cursor:pointer; }
+.ro-m-prov span{ display:block; margin-top:3px; color:var(--text-300); }
 .ro-table{ border:1px solid var(--border); border-radius:10px; overflow:hidden; margin:0 0 12px; }
-.ro-thead{ display:grid; background:var(--bg-050); border-bottom:1px solid var(--border); }
-.ro-thead span{ font-size:10.5px; font-weight:600; text-transform:uppercase; letter-spacing:.03em; color:var(--text-400); padding:8px 11px; }
-.ro-trow{ display:grid; border-top:1px solid var(--border); }
-.ro-trow:first-child{ border-top:none; }
-.ro-trow span{ font-size:12.5px; color:var(--text-100); padding:9px 11px; }
 .ro-chartcard{ border:1px solid var(--border); border-radius:10px; padding:14px; margin:0 0 12px; display:inline-block; background:var(--bg-000); }
 .ro-ring{ display:flex; flex-direction:column; align-items:center; gap:6px; }
 .ro-ring-lbl{ font-size:11px; color:var(--text-400); }
@@ -128,7 +131,7 @@
 .ro-li{ display:flex; align-items:baseline; gap:9px; padding:7px 0; border-top:1px dashed var(--border); font-size:12.5px; }
 .ro-li:first-child{ border-top:none; }
 .ro-sev{ font-size:10px; letter-spacing:.05em; text-transform:uppercase; font-weight:600; flex:0 0 62px; }
-.ro-sev.sev-critical{ color:#8a3a3a; } .ro-sev.sev-high{ color:var(--error); } .ro-sev.sev-medium{ color:var(--warning); } .ro-sev.sev-low{ color:var(--text-400); }
+.ro-sev.sev-critical{ color:var(--error); font-weight:700; } .ro-sev.sev-high{ color:var(--error); } .ro-sev.sev-medium{ color:var(--warning); } .ro-sev.sev-low{ color:var(--text-400); }
 .ro-li-b{ color:var(--text-100); flex:1; min-width:0; }
 .ro-li-msg{ display:block; font-size:11px; color:var(--text-400); margin-top:2px; }
 .ro-disc{ margin:0 0 12px; padding:12px 14px; border-left:3px solid var(--warning); background:color-mix(in srgb,var(--warning) 6%,transparent); border-radius:var(--radius-lg); max-width:680px; }
@@ -159,7 +162,7 @@
 .ro-pack-open{ display:flex; align-items:center; gap:4px; font-size:11.5px; font-weight:600; color:var(--accent-200); }
 .ro-pack-open svg{ width:13px; height:13px; }
 .ro-lock{ margin-top:2px; }
-.ro-lock-chip{ display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:600; color:color-mix(in srgb,var(--warning) 74%,#000); background:color-mix(in srgb,var(--warning) 13%,transparent); padding:3px 9px; border-radius:999px; }
+.ro-lock-chip{ display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:600; color:var(--warning); background:var(--warning-muted); padding:3px 9px; border-radius:999px; }
 .ro-lock-chip svg{ width:12px; height:12px; }
 .ro-pack-sub{ font-size:11px; color:var(--text-400); line-height:1.45; }
 .ro-port-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:12px; }

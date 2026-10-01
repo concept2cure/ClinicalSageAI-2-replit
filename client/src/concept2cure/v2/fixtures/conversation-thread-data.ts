@@ -45,6 +45,10 @@ export interface CtTurn {
   role: string;
   text?: string;
   answer?: string;
+  /** AnA's turn has finished streaming; only a settled answer can be inserted into a document. */
+  settled?: boolean;
+  /** The retained turn record that produced the answer, when the server confirmed one. */
+  sourceRecord?: string;
   links?: CtLink[];
   grounding?: CtGrounding[];
   doc?: any;
@@ -154,6 +158,8 @@ export interface CtArtifact {
   version?: number;
   /** The draft body. What `POST /api/concept2cure/artifacts/export-docx` renders. */
   content?: string;
+  /** The message that drafted it, so the card can open that draft as a document. */
+  messageId?: string;
 }
 
 /* ---- Link maps ---- */

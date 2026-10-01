@@ -16,6 +16,7 @@ import { z } from 'zod';
 import { authMiddleware } from '../auth';
 import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 import { authedOrgId } from '../utils/authedOrgId';
+import { authedUserId } from '../utils/authedActor';
 import {
   summarizeQuality,
   freshnessRollup,
@@ -28,7 +29,7 @@ import {
 } from '../services/report-os/prediction/assembler';
 import type { PredictionInput } from '../services/report-os/prediction/types';
 import { runDeficiencyRiskForDraft } from '../services/report-os/prediction/model-adapters';
-import { projectsInOrg, submissionInProject } from '../services/report-os/ownership';
+import { projectsInOrg, submissionInProject, workspaceIsOrganisations, WORKSPACE_NOT_IN_ORGANIZATION } from '../services/report-os/ownership';
 import { requireReportEntitlement } from '../services/report-os/entitlement-map';
 import { REPORT_TYPE_SEED } from '../services/report-os/taxonomy';
 import {
@@ -197,7 +198,8 @@ const createSubscriptionSchema = z.object({
   channel: z.enum(['platform', 'external']).optional(),
   persona: z.string().nullable().optional(),
   enabled: z.boolean().optional(),
-  createdBy: z.number().int().positive().nullable().optional(),
+  // No createdBy: the creator is the session's user, never the body's
+  // (reporting review 2026-10-01, DP-59; report-os.ts did the same for runs).
 });
 
 const setEnabledSchema = z.object({
@@ -400,10 +402,17 @@ router.post('/subscriptions', async (req: Request, res: Response) => {
       return res.status(400).json({ error: parsed.error.flatten() });
     }
 
-    // Org is bound from the JWT, never the body — prevents cross-tenant writes.
+    // A workspace id in the body is a claim: it is stored only when it is this
+    // organisation's (services/report-os/ownership.ts).
+    if (!(await workspaceIsOrganisations(organizationId, parsed.data.clientWorkspaceId))) {
+      return res.status(403).json(WORKSPACE_NOT_IN_ORGANIZATION);
+    }
+
+    // Org and creator are bound from the session, never the body.
     const row = await createSubscription({
       ...parsed.data,
       organizationId,
+      createdBy: authedUserId(req),
     });
     return res.status(201).json({ data: row });
   } catch (error: any) {

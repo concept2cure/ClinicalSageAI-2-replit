@@ -93,6 +93,45 @@ async function readPersistedArtifact(
 }
 
 /**
+ * A write the artifact writer refuses before it changes anything
+ * (2026-10-01, D5; review of dacc2ff84). Every caller reaches this one writer
+ * (AnA create_artifact through governed execution, POST /api/cortex/save-draft),
+ * so the rule is here once:
+ *  - an artifact is written as a draft or in review. It wrote whatever status
+ *    it was given, so a one-click AnA create_artifact, or a save-draft body,
+ *    could put an artifact at 'approved' or 'locked' with no signature: the
+ *    states the status route and AnA's update_artifact_status reach only as an
+ *    electronic signature.
+ *  - an approved or locked artifact is not overwritten. The section branch
+ *    picked any artifact in the section and replaced its content and status,
+ *    so a signed, locked document could be rewritten and set back to draft
+ *    with no reason. AnA's update_artifact command already refuses this; the
+ *    writer now does too, for every caller.
+ */
+export class ArtifactWriteRefusedError extends Error {
+  constructor(
+    readonly code: 'STATUS_NOT_WRITABLE' | 'FINALIZED_ARTIFACT',
+    message: string,
+  ) {
+    super(message);
+    this.name = 'ArtifactWriteRefusedError';
+  }
+}
+
+const WRITABLE_STATUSES: ReadonlySet<string> = new Set(['draft', 'review']);
+const FINALIZED_STATUSES: ReadonlySet<string> = new Set(['approved', 'locked']);
+
+function refuseOverwriteOfFinalized(row: { status?: unknown; title?: unknown } | undefined, sectionCode: string): void {
+  const current = typeof row?.status === 'string' ? row.status.trim().toLowerCase() : '';
+  if (!FINALIZED_STATUSES.has(current)) return;
+  throw new ArtifactWriteRefusedError(
+    'FINALIZED_ARTIFACT',
+    `"${String(row?.title ?? 'The artifact')}" in section ${sectionCode} is ${current}, so it is not overwritten. ` +
+      'To revise it, move it back to review with a reason first, which withdraws the approval. Nothing was written.',
+  );
+}
+
+/**
  * Tag an artifact with a CTD section code. Creates a new artifact record
  * or updates an existing one, then synchronizes the project_sections status.
  */
@@ -104,11 +143,19 @@ export async function tagArtifact(params: TagArtifactParams): Promise<TagArtifac
     sectionCode,
     title,
     content,
-    status = 'draft',
     artifactId,
     source = 'ana_cortex',
     metadata = {},
   } = params;
+
+  const status = typeof params.status === 'string' && params.status.trim() ? params.status.trim().toLowerCase() : 'draft';
+  if (!WRITABLE_STATUSES.has(status)) {
+    throw new ArtifactWriteRefusedError(
+      'STATUS_NOT_WRITABLE',
+      `An artifact is written as a draft or in review, not as "${String(params.status)}": approving and locking are ` +
+        "electronic signatures (the status route, or AnA's update_artifact_status). Nothing was written.",
+    );
+  }
 
   const client = await getPool().connect();
   let isNew = false;
@@ -149,6 +196,7 @@ export async function tagArtifact(params: TagArtifactParams): Promise<TagArtifac
 
       if (currentArtifact.rows.length > 0) {
         const cur = currentArtifact.rows[0];
+        refuseOverwriteOfFinalized(cur, sectionCode);
         // This snapshot INSERT could never have run. It named title, status,
         // created_by and metadata — none of which the versions table has (its
         // columns are content_hash, change_description, created_by_id) — omitted
@@ -223,13 +271,14 @@ export async function tagArtifact(params: TagArtifactParams): Promise<TagArtifac
       // ── CREATE NEW ARTIFACT ───────────────────────────────────────────────
       // Check if artifact already exists for this section in this project
       const existing = await client.query(
-        `SELECT artifact_id FROM concept2cure_artifacts
+        `SELECT artifact_id, status, title FROM concept2cure_artifacts
          WHERE project_id = $1 AND organization_id = $2 AND ctd_section = $3
          LIMIT 1`,
         [projectId, organizationId, sectionCode]
       );
 
       if (existing.rows.length > 0) {
+        refuseOverwriteOfFinalized(existing.rows[0], sectionCode);
         // Section already has an artifact — update it instead
         const existingId = existing.rows[0].artifact_id;
         await client.query(

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { apiRequest } from '@/lib/queryClient';
 import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
@@ -22,6 +22,8 @@ import '../styles/project-home-v2.css';
 import { AppMentionMenu, useAppMentions } from '../appMentions';
 import { AnaMarkdown } from '../AnaMarkdown';
 import { DocumentCanvas } from '../editor/DocumentCanvas';
+import type { EditorBridge } from '../editor/DocumentWorkbench';
+import { isProgramId, openDraftAsDocument } from '../editor/draftToDocument';
 import {
   CT_LINKMAP, CT_LINKIC, CT_ARTIC, CT_STATUS_LABEL,
 } from '../fixtures/conversation-thread-data';
@@ -61,6 +63,8 @@ function toTurn(m: AnaChatMessage): CtTurn {
   return {
     role: 'ana',
     answer: m.text || undefined,
+    settled: !m.streaming,
+    sourceRecord: m.turnRecord?.status === 'recorded' ? m.turnRecord.id : undefined,
     grounding: grounding.length ? grounding : undefined,
     /* Present while the turn is in flight — the phase line IS the waiting
        state — and, once settled, only when there is real work to show for it.
@@ -153,6 +157,61 @@ export function authoringDocFromToolResult(
 
 /* ---- AnA turn (activity + answer + grounding) ---- */
 
+/** The section of the document's editor, and how to tell the person what happened. */
+interface InsertTarget {
+  bridge: EditorBridge;
+  /** The editor is on screen. When it is not, the insert reopens it first. */
+  open: boolean;
+  reopen: () => void;
+  fireToast: FireToast;
+}
+
+/**
+ * Puts a settled AnA answer into the section open beside the conversation, as
+ * tracked suggestions attributed to AnA and to the turn record that wrote it
+ * (2026-10-01). It goes through the editor's one suggestion door
+ * (`insertSuggestion`), so nothing is saved until the person reviews each
+ * edit in the editor and saves — the same path as the editor's own AnA rail.
+ * Not offered on the turn that drafted the open document: its answer narrates
+ * a draft that is already there.
+ */
+function InsertIntoOpenSection({ turn, target }: { turn: CtTurn; target?: InsertTarget }) {
+  if (!target?.bridge.editable || !turn.settled || !turn.answer?.trim()) return null;
+  if (turn.authoringDoc?.docId === target.bridge.docId) return null;
+  const { bridge, open, reopen, fireToast } = target;
+  const insert = () => {
+    /* A suggestion lands only where the person can see it: a closed editor is
+       reopened first. Below 1100px the conversation is hidden while the editor
+       is open, so this is the only way the offer and its target meet. */
+    if (!open) reopen();
+    const ok = bridge.insert(turn.answer ?? '', {
+      id: 'ana',
+      name: 'AnA (AI draft)',
+      ...(turn.sourceRecord ? { sourceRecord: turn.sourceRecord } : {}),
+    });
+    fireToast(ok
+      ? `Inserted into ${bridge.sectionCode} as tracked suggestions — review each edit in the editor, then save.`
+      : 'Couldn\u2019t insert — the editor is not editable right now (source view, or the document is locked).', ok ? 'ok' : 'error');
+  };
+  return (
+    <div className="ct-refs">
+      <button
+        type="button"
+        className="ct-ref"
+        onClick={insert}
+        title={`Adds this answer to ${bridge.sectionCode} ${bridge.sectionTitle} as suggestions you accept or reject`}
+      >
+        <span className="ct-ref-ic">{I.penLine}</span>
+        <span className="ct-ref-l">
+          {open
+            ? `Insert into ${bridge.sectionCode} as tracked suggestion`
+            : `Open ${bridge.sectionCode} and insert as tracked suggestion`}
+        </span>
+      </button>
+    </div>
+  );
+}
+
 interface AnaTurnProps {
   turn: CtTurn;
   onRefine: () => void;
@@ -172,10 +231,16 @@ interface AnaTurnProps {
     liveDrive?: OwnedSurfaceViewProps['liveDrive'];
     /** The pane beside the conversation the expanded editor renders into. */
     paneEl?: HTMLElement | null;
+    /** Bumped when an AnA turn ends, so the canvas re-reads the record. */
+    refreshKey?: number;
+    /** Told the open section of this document's editor, and whether it is on screen. */
+    onEditorBridge?: (docId: string, bridge: EditorBridge | null, open: boolean) => void;
   };
+  /** The open section this answer can be inserted into, while a document is open. */
+  insertTarget?: InsertTarget;
 }
 
-function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, canvas }: AnaTurnProps) {
+function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, canvas, insertTarget }: AnaTurnProps) {
   const a = turn.activity;
   return (
     <div className="ct-turn ct-ana">
@@ -232,6 +297,7 @@ function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, canvas }: Ana
             markdown renderer (marked → DOMPurify → React elements, no
             innerHTML); the person's own turn above stays as typed. */}
         {turn.answer && <AnaMarkdown text={turn.answer} className="ct-ana-text ana-md" />}
+        <InsertIntoOpenSection turn={turn} target={insertTarget} />
         {/* The document canvas: the authoring document this turn drafted,
             read from the store and expandable into THE editor in place. */}
         {turn.authoringDoc && canvas && (
@@ -247,7 +313,9 @@ function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, canvas }: Ana
             onAsk={canvas.onAsk}
             fireToast={canvas.fireToast}
             liveDrive={canvas.liveDrive}
-            paneEl={canvas.paneEl ?? null}
+            paneEl={canvas.paneEl}
+            refreshKey={canvas.refreshKey}
+            onEditorBridge={canvas.onEditorBridge}
           />
         )}
         {turn.links && (
@@ -367,6 +435,7 @@ export function conversationArtifacts(messages: AnaChatMessage[]): CtArtifact[] 
       artifactId: d.artifactId,
       version: d.version,
       content: d.content,
+      messageId: m.id,
       prov: { by: 'AnA', evidence: m.groundingSources || [] },
       /* Stated as what is KNOWN, not as a diagnosis. The server withholds
          `artifact_version_saved` for two different reasons — no project to file
@@ -389,7 +458,8 @@ interface ArtifactCardProps {
   art: CtArtifact;
   expanded: boolean;
   onToggle: () => void;
-  onNav?: (id: string) => void;
+  /** Opens this draft as an authoring document beside the conversation. */
+  onOpenAsDocument?: () => Promise<void>;
   /** The open program. Null when none is open — the status route is scoped by it. */
   projectId: string | number | null;
   /**
@@ -401,13 +471,13 @@ interface ArtifactCardProps {
   fireToast: FireToast;
 }
 
-function ArtifactCard({ art, expanded, onToggle, onNav, projectId, saveSettled, fireToast }: ArtifactCardProps) {
+function ArtifactCard({ art, expanded, onToggle, onOpenAsDocument, projectId, saveSettled, fireToast }: ArtifactCardProps) {
   /* Seeded from the artifact and then owned here, because a successful
      transition is a fact the server confirmed and the message that produced
      the draft will never carry. The card is keyed on the artifact id, so the
      moment a draft acquires a durable id this state is correctly discarded. */
   const [status, setStatus] = useState(art.status);
-  const [busy, setBusy] = useState<null | 'docx' | 'review'>(null);
+  const [busy, setBusy] = useState<null | 'docx' | 'review' | 'open'>(null);
 
   /* The '.docx' button used to be wired to an `onAdvance` the one mount passed
      as `() => undefined`, so it downloaded nothing. The endpoint it needed had
@@ -452,6 +522,24 @@ function ArtifactCard({ art, expanded, onToggle, onNav, projectId, saveSettled, 
       setBusy(null);
     }
   };
+
+  /* The draft becomes a document in the editor's store and opens beside the
+     conversation (draftToDocument.ts). This was "Edit", which went to the
+     authoring workspace with no document, so the draft never reached it. */
+  const openAsDocument = async () => {
+    if (busy || !onOpenAsDocument) return;
+    setBusy('open');
+    try {
+      await onOpenAsDocument();
+    } finally {
+      setBusy(null);
+    }
+  };
+  const openBlockedBecause = !art.content
+    ? 'There is no draft text to open.'
+    : isProgramId(projectId)
+      ? null
+      : 'Open a project first — a document is filed in one.';
 
   /* draft → review, through the governed transition route. The server owns the
      rules — VALID_TRANSITIONS and the per-role permission map — so a refusal is
@@ -605,10 +693,12 @@ function ArtifactCard({ art, expanded, onToggle, onNav, projectId, saveSettled, 
           <div className="ct-art-actions">
             <button
               className="ct-art-edit"
-              aria-label={'Edit ' + art.title + ' in the authoring workspace'}
-              onClick={() => onNav && onNav('document-authoring')}
+              aria-label={'Open ' + art.title + ' as a document in the editor'}
+              onClick={openAsDocument}
+              disabled={busy !== null || !onOpenAsDocument || openBlockedBecause !== null}
+              title={openBlockedBecause ?? undefined}
             >
-              {I.penLine} Edit
+              {I.penLine} {busy === 'open' ? 'Opening…' : 'Open as document'}
             </button>
             {/* The visible label is '.docx' because that is what the button
                 means in a row of short actions; the accessible name says the
@@ -654,7 +744,8 @@ interface ArtifactPanelProps {
   artifacts: CtArtifact[];
   openId: string | null;
   setOpenId: (id: string | null) => void;
-  onNav?: (id: string) => void;
+  /** Opens a card's draft as an authoring document beside the conversation. */
+  onOpenAsDocument: (art: CtArtifact) => Promise<void>;
   projectId: string | number | null;
   /** Card ids whose producing turn has not finished — see {@link unstoredDraftReason}. */
   pendingDraftIds: ReadonlySet<string>;
@@ -669,7 +760,7 @@ interface ArtifactPanelProps {
    the progress chip, and the column's one close control is the progress
    panel's, at its top — this panel had a second one a few hundred pixels
    below it, for the same column. */
-function ArtifactPanel({ artifacts, openId, setOpenId, onNav, projectId, pendingDraftIds, fireToast }: ArtifactPanelProps) {
+function ArtifactPanel({ artifacts, openId, setOpenId, onOpenAsDocument, projectId, pendingDraftIds, fireToast }: ArtifactPanelProps) {
   return (
     <aside className="ct-artifacts">
       <div className="ct-art-panel-h">
@@ -690,7 +781,7 @@ function ArtifactPanel({ artifacts, openId, setOpenId, onNav, projectId, pending
             art={a}
             expanded={openId === a.id}
             onToggle={() => setOpenId(openId === a.id ? null : a.id)}
-            onNav={onNav}
+            onOpenAsDocument={() => onOpenAsDocument(a)}
             projectId={projectId}
             saveSettled={!pendingDraftIds.has(a.id)}
             fireToast={fireToast}
@@ -778,6 +869,38 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
      editor into (2026-10-01). Always mounted, hidden while no canvas is open,
      so a workbench portalled into it keeps its state across close and reopen. */
   const [canvasPaneEl, setCanvasPaneEl] = useState<HTMLDivElement | null>(null);
+  /* Counts AnA turns as they settle. Every canvas re-reads its document on a
+     new value, so a section AnA revised in that turn is on the card. */
+  const [turnsSettled, setTurnsSettled] = useState(0);
+  /* The section open in a document's editor, on screen or closed and still
+     mounted, reported by its canvas, so each settled answer can offer to go
+     into it. A canvas clearing its report clears only its own: closing one
+     document never drops another's. */
+  const [editor, setEditor] = useState<{ bridge: EditorBridge; open: boolean } | null>(null);
+  const onEditorBridge = useCallback((docId: string, bridge: EditorBridge | null, open: boolean) => {
+    setEditor(prev => (bridge ? { bridge, open } : prev?.bridge.docId === docId ? null : prev));
+  }, []);
+  /* Only an editor on screen is named on turns (step 5). */
+  const editorBridge = editor?.open ? editor.bridge : null;
+  const insertTarget = editor
+    ? { bridge: editor.bridge, open: editor.open, reopen: () => setExpandedDocId(editor.bridge.docId), fireToast }
+    : undefined;
+  /* While a document is open beside the conversation, every turn sent from
+     here names it: the document, the section and its module, through the
+     same authoring context the editor's own chat sends (2026-10-01). The
+     shell's chat this thread runs on was created without one. */
+  const turnOpts = editorBridge?.authoringContext ? { authoringContext: editorBridge.authoringContext } : undefined;
+  /* With nothing open a turn is sent exactly as before; the third argument
+     only when there is a document to name. */
+  const sendTurn = (text: string, files?: Parameters<typeof anaChat.send>[1]) => {
+    if (turnOpts) return anaChat.send(text, files, turnOpts);
+    return files === undefined ? anaChat.send(text) : anaChat.send(text, files);
+  };
+  const wasStreamingRef = useRef(false);
+  useEffect(() => {
+    if (wasStreamingRef.current && !anaChat.isStreaming) setTurnsSettled(n => n + 1);
+    wasStreamingRef.current = anaChat.isStreaming;
+  }, [anaChat.isStreaming]);
   /* The side column — AnA's progress over the governed outputs — is the
      progress dock on this page: one shared show/hide memory with every other
      host (workDock.ts), toggled by the chip in the header, closed from inside
@@ -830,7 +953,15 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
   const readyAttachments = attachments.filter((a) => a.status === 'ready');
   const uploadingAttachments = attachments.filter((a) => a.status === 'uploading');
 
-  const turns: CtTurn[] = anaChat.messages.map(toTurn);
+  /* Drafts opened as documents in this session (draftToDocument.ts), by the
+     message that drafted them. Each becomes the document canvas under its
+     turn, like a draft_authoring_document draft, and leaves the side panel. */
+  const [openedDrafts, setOpenedDrafts] = useState<Record<string, { docId: string; programId: string; title: string }>>({});
+  const turns: CtTurn[] = anaChat.messages.map((m) => {
+    const t = toTurn(m);
+    const opened = openedDrafts[m.id];
+    return opened && !t.authoringDoc ? { ...t, authoringDoc: opened } : t;
+  });
   const busy = anaChat.isStreaming;
   /* The one turn Continue may be offered on: the latest, settled, with nothing
      in flight. It sends a new turn on this conversation; the stopped run is
@@ -840,7 +971,40 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
      below it, the whole `ArtifactCard` component and every control on it were
      unreachable code that nonetheless looked finished. The drafts were already
      on the messages; nothing read them. */
-  const artifacts: CtArtifact[] = conversationArtifacts(anaChat.messages);
+  const artifacts: CtArtifact[] = conversationArtifacts(anaChat.messages)
+    .filter((a) => !(a.messageId && openedDrafts[a.messageId]));
+  /* A card's draft, opened as a document in the open project: the one already
+     made from this turn's draft, or a new one through from-draft. It opens
+     beside the conversation. Refusals are said, never shown as success. */
+  const openArtifactAsDocument = async (art: CtArtifact) => {
+    const m = anaChat.messages.find((x) => x.id === art.messageId);
+    const d = m?.generatedDraft;
+    if (!m || !d?.content) {
+      fireToast('There is no draft text to open for ' + art.title + '.', 'error');
+      return;
+    }
+    if (!isProgramId(shellProjectId)) {
+      fireToast('Open a project first — a document is filed in one.', 'error');
+      return;
+    }
+    const out = await openDraftAsDocument(
+      { title: d.title, content: d.content, documentType: d.documentType },
+      {
+        programId: shellProjectId,
+        conversationId: anaChat.threadId ?? null,
+        turnId: m.turnRecord?.status === 'recorded' ? m.turnRecord.id : null,
+      },
+    );
+    if (!out.ok) {
+      fireToast(out.message, 'error');
+      return;
+    }
+    setOpenedDrafts((prev) => ({ ...prev, [m.id]: { docId: out.docId, programId: out.programId, title: d.title } }));
+    setExpandedDocId(out.docId);
+    fireToast(out.reused
+      ? d.title + ' is already a document in this project. It is open beside the conversation.'
+      : d.title + ' is now a document in this project, open beside the conversation.');
+  };
   /* Card ids of drafts whose producing turn is STILL RUNNING. `artifact_draft`
      is emitted mid-stream and `artifact_version_saved` only later, from the
      turn's post-processing, so a draft with no id on an unfinished turn is one
@@ -999,7 +1163,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
 
     setDraft('');
     clearAttachments();
-    void anaChat.send(body, files);
+    void sendTurn(body, files);
   };
 
   /* The person asking to start over — the one path on this screen that clears
@@ -1106,10 +1270,11 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
                   <AnaTurn
                     key={i}
                     turn={t}
-                    onRefine={() => { void anaChat.send('Refine that — keep it tighter and more declarative.'); }}
+                    onRefine={() => { void sendTurn('Refine that — keep it tighter and more declarative.'); }}
                     onNav={onNav}
                     onStartDemo={liveDrive?.onStartDemo}
-                    onContinue={i === continueAt ? () => { void anaChat.send(CONTINUE_PROMPT); } : undefined}
+                    onContinue={i === continueAt ? () => { void sendTurn(CONTINUE_PROMPT); } : undefined}
+                    insertTarget={insertTarget}
                     canvas={t.authoringDoc ? {
                       conversationId: anaChat.threadId ?? (isNew || isCurrent ? null : sel.id),
                       expanded: expandedDocId === t.authoringDoc.docId,
@@ -1118,6 +1283,8 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
                       fireToast,
                       liveDrive,
                       paneEl: canvasPaneEl,
+                      refreshKey: turnsSettled,
+                      onEditorBridge,
                     } : undefined}
                   />
                 )
@@ -1244,7 +1411,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
                 here" — beside a drafted document, which is the canvas under
                 its turn and never listed here (conversationArtifacts). */}
             {artifacts.length > 0 && (
-              <ArtifactPanel artifacts={artifacts} openId={openId} setOpenId={setOpenId} onNav={onNav}
+              <ArtifactPanel artifacts={artifacts} openId={openId} setOpenId={setOpenId} onOpenAsDocument={openArtifactAsDocument}
                 projectId={shellProjectId} pendingDraftIds={pendingDraftIds} fireToast={fireToast} />
             )}
           </div>

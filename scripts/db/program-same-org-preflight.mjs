@@ -150,6 +150,22 @@ export const PROGRAM_SAME_ORG_CHECKS = Object.freeze([
            ORDER BY c.id`,
   },
   {
+    // PF-10 S11 (20261001, amended): the project AnA's working memory names.
+    // project_id is nullable, so a legacy row can be cleared rather than moved.
+    relation: 'public.conversation_working_memory',
+    keyColumn: 'project_id',
+    remedy: 'clear project_id (the summary then stays out of project memory), or set it to a project of the row\'s organization',
+    keyedBy: 'conversation_working_memory_project_same_org_fk',
+    references: 'public.projects',
+    sql: `SELECT w.id, w.organization_id AS org, w.project_id,
+                 p.organization_id AS project_org, (p.id IS NULL) AS project_missing
+            FROM public.conversation_working_memory w
+            LEFT JOIN public.projects p ON p.id = w.project_id
+           WHERE w.project_id IS NOT NULL
+             AND (p.id IS NULL OR p.organization_id <> w.organization_id)
+           ORDER BY w.id`,
+  },
+  {
     // PF-10 S1 (20261001c): the project a conversation was held in. The column
     // is new and written only after an organization check, so this is a guard
     // on the guard; a backfilled thread is same-organization by construction.

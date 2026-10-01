@@ -83,6 +83,7 @@ import {
 } from './migration-set.mjs';
 import { resolveDatabaseUrl, sslFor, APPLY_URL_VARS } from './connection.mjs';
 import { ensureRuntimeRole } from './provision-app-role.mjs';
+import { databaseAuditRequired, ensureDatabaseAudit } from './database-audit.mjs';
 import { verifyReadinessContract as verifyCoreReadinessContract } from './readiness-contract.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -338,6 +339,10 @@ async function main() {
   let locked = false;
 
   try {
+    // Read before anything is applied: an unrecognised value stops here, not
+    // after the schema has moved (scripts/db/database-audit.mjs).
+    const auditRequired = databaseAuditRequired();
+
     log('▶ 1/5 Preflight — database already provisioned?');
     await preflight(client);
 
@@ -392,6 +397,11 @@ async function main() {
     // one pass sufficient. Reproduced and verified against PostgreSQL 16.
     log('\n▶ 4/5 Runtime role — required schemas + refresh non-superuser grants');
     await client.query('CREATE SCHEMA IF NOT EXISTS extensions');
+    // Database-level audit (security audit INF-13, plan P1-11): create pgaudit
+    // where the server preloads it, and fail the deploy, before any service
+    // rolls, where the stack requires it (DB_AUDIT_REQUIRED=pgaudit) and it is
+    // not recording. See scripts/db/database-audit.mjs.
+    await ensureDatabaseAudit(client, { required: auditRequired, log });
     // Re-apply the runtime role's grants so any table this deploy just created
     // is reachable by the request-serving pool. GRANT ... ON ALL TABLES only
     // covers tables that existed when it ran, so a role provisioned by a prior

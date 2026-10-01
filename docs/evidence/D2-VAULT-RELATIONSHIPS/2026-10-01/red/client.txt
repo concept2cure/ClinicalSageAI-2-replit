@@ -1,0 +1,3558 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > lists both directions in their own words, with the project and a later version named 5070ms
+   → Unable to find an element by: [data-testid="vault-relationships"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="vd-wrap"
+    >
+      <div
+        class="vd-top"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Documents 
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-dot"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                cx="12.1"
+                cy="12.1"
+                r="1"
+              />
+            </svg>
+             project vault
+          </div>
+          <h1
+            class="vd-title"
+          >
+            Vault (DMS)
+          </h1>
+          <div
+            class="vd-sub"
+          >
+            <span
+              class="vd-sub-x"
+            >
+              IND · 21 CFR 312
+               
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-dot"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12.1"
+                  cy="12.1"
+                  r="1"
+                />
+              </svg>
+               
+              1
+               document
+            </span>
+          </div>
+        </div>
+        <button
+          class="sp-ask"
+          title="Open this project in Project management"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-folder"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"
+            />
+          </svg>
+           Open project
+        </button>
+        <button
+          class="sp-ask"
+          title="TMF inspection-readiness — completeness, timeliness & QC"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           Inspection readiness
+        </button>
+        <select
+          aria-label="Document type for uploaded files"
+          class="c2c-input"
+          data-testid="vault-upload-type"
+          style="width: auto; max-width: 260px;"
+          title="Document type for uploaded files"
+        >
+          <option
+            value="CSR"
+          >
+            Clinical study report
+          </option>
+          <option
+            value="PROTOCOL"
+          >
+            Protocol
+          </option>
+          <option
+            value="CER"
+          >
+            Clinical evaluation report
+          </option>
+          <option
+            value="IB"
+          >
+            Investigator's brochure
+          </option>
+          <option
+            value="DSUR"
+          >
+            Development safety update report
+          </option>
+          <option
+            value="PSUR"
+          >
+            Periodic safety update report
+          </option>
+          <option
+            value="SAP"
+          >
+            Statistical analysis plan
+          </option>
+          <option
+            value="SAR"
+          >
+       ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="vd-wrap"
+    >
+      <div
+        class="vd-top"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Documents 
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-dot"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                cx="12.1"
+                cy="12.1"
+                r="1"
+              />
+            </svg>
+             project vault
+          </div>
+          <h1
+            class="vd-title"
+          >
+            Vault (DMS)
+          </h1>
+          <div
+            class="vd-sub"
+          >
+            <span
+              class="vd-sub-x"
+            >
+              IND · 21 CFR 312
+               
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-dot"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12.1"
+                  cy="12.1"
+                  r="1"
+                />
+              </svg>
+               
+              1
+               document
+            </span>
+          </div>
+        </div>
+        <button
+          class="sp-ask"
+          title="Open this project in Project management"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-folder"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"
+            />
+          </svg>
+           Open project
+        </button>
+        <button
+          class="sp-ask"
+          title="TMF inspection-readiness — completeness, timeliness & QC"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           Inspection readiness
+        </button>
+        <select
+          aria-label="Document type for uploaded files"
+          class="c2c-input"
+          data-testid="vault-upload-type"
+          style="width: auto; max-width: 260px;"
+          title="Document type for uploaded files"
+        >
+          <option
+            value="CSR"
+          >
+            Clinical study report
+          </option>
+          <option
+            value="PROTOCOL"
+          >
+            Protocol
+          </option>
+          <option
+            value="CER"
+          >
+            Clinical evaluation report
+          </option>
+          <option
+            value="IB"
+          >
+            Investigator's brochure
+          </option>
+          <option
+            value="DSUR"
+          >
+            Development safety update report
+          </option>
+          <option
+            value="PSUR"
+          >
+            Periodic safety update report
+          </option>
+          <option
+            value="SAP"
+          >
+            Statistical analysis plan
+          </option>
+          <option
+            value="SAR"
+          >
+       ...
+ × client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > a list that could not be read says so, and never reads as no related documents 5018ms
+   → Unable to find an element by: [data-testid="vault-relationships"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="vd-wrap"
+    >
+      <div
+        class="vd-top"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Documents 
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-dot"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                cx="12.1"
+                cy="12.1"
+                r="1"
+              />
+            </svg>
+             project vault
+          </div>
+          <h1
+            class="vd-title"
+          >
+            Vault (DMS)
+          </h1>
+          <div
+            class="vd-sub"
+          >
+            <span
+              class="vd-sub-x"
+            >
+              IND · 21 CFR 312
+               
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-dot"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12.1"
+                  cy="12.1"
+                  r="1"
+                />
+              </svg>
+               
+              1
+               document
+            </span>
+          </div>
+        </div>
+        <button
+          class="sp-ask"
+          title="Open this project in Project management"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-folder"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"
+            />
+          </svg>
+           Open project
+        </button>
+        <button
+          class="sp-ask"
+          title="TMF inspection-readiness — completeness, timeliness & QC"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           Inspection readiness
+        </button>
+        <select
+          aria-label="Document type for uploaded files"
+          class="c2c-input"
+          data-testid="vault-upload-type"
+          style="width: auto; max-width: 260px;"
+          title="Document type for uploaded files"
+        >
+          <option
+            value="CSR"
+          >
+            Clinical study report
+          </option>
+          <option
+            value="PROTOCOL"
+          >
+            Protocol
+          </option>
+          <option
+            value="CER"
+          >
+            Clinical evaluation report
+          </option>
+          <option
+            value="IB"
+          >
+            Investigator's brochure
+          </option>
+          <option
+            value="DSUR"
+          >
+            Development safety update report
+          </option>
+          <option
+            value="PSUR"
+          >
+            Periodic safety update report
+          </option>
+          <option
+            value="SAP"
+          >
+            Statistical analysis plan
+          </option>
+          <option
+            value="SAR"
+          >
+       ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="vd-wrap"
+    >
+      <div
+        class="vd-top"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Documents 
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-dot"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                cx="12.1"
+                cy="12.1"
+                r="1"
+              />
+            </svg>
+             project vault
+          </div>
+          <h1
+            class="vd-title"
+          >
+            Vault (DMS)
+          </h1>
+          <div
+            class="vd-sub"
+          >
+            <span
+              class="vd-sub-x"
+            >
+              IND · 21 CFR 312
+               
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-dot"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12.1"
+                  cy="12.1"
+                  r="1"
+                />
+              </svg>
+               
+              1
+               document
+            </span>
+          </div>
+        </div>
+        <button
+          class="sp-ask"
+          title="Open this project in Project management"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-folder"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"
+            />
+          </svg>
+           Open project
+        </button>
+        <button
+          class="sp-ask"
+          title="TMF inspection-readiness — completeness, timeliness & QC"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           Inspection readiness
+        </button>
+        <select
+          aria-label="Document type for uploaded files"
+          class="c2c-input"
+          data-testid="vault-upload-type"
+          style="width: auto; max-width: 260px;"
+          title="Document type for uploaded files"
+        >
+          <option
+            value="CSR"
+          >
+            Clinical study report
+          </option>
+          <option
+            value="PROTOCOL"
+          >
+            Protocol
+          </option>
+          <option
+            value="CER"
+          >
+            Clinical evaluation report
+          </option>
+          <option
+            value="IB"
+          >
+            Investigator's brochure
+          </option>
+          <option
+            value="DSUR"
+          >
+            Development safety update report
+          </option>
+          <option
+            value="PSUR"
+          >
+            Periodic safety update report
+          </option>
+          <option
+            value="SAP"
+          >
+            Statistical analysis plan
+          </option>
+          <option
+            value="SAR"
+          >
+       ...
+ × client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > finds a document in the library, relates it, and claims it only once the server recorded it 5019ms
+   → Unable to find an element by: [data-testid="vault-relationships"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="vd-wrap"
+    >
+      <div
+        class="vd-top"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Documents 
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-dot"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                cx="12.1"
+                cy="12.1"
+                r="1"
+              />
+            </svg>
+             project vault
+          </div>
+          <h1
+            class="vd-title"
+          >
+            Vault (DMS)
+          </h1>
+          <div
+            class="vd-sub"
+          >
+            <span
+              class="vd-sub-x"
+            >
+              IND · 21 CFR 312
+               
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-dot"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12.1"
+                  cy="12.1"
+                  r="1"
+                />
+              </svg>
+               
+              1
+               document
+            </span>
+          </div>
+        </div>
+        <button
+          class="sp-ask"
+          title="Open this project in Project management"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-folder"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"
+            />
+          </svg>
+           Open project
+        </button>
+        <button
+          class="sp-ask"
+          title="TMF inspection-readiness — completeness, timeliness & QC"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           Inspection readiness
+        </button>
+        <select
+          aria-label="Document type for uploaded files"
+          class="c2c-input"
+          data-testid="vault-upload-type"
+          style="width: auto; max-width: 260px;"
+          title="Document type for uploaded files"
+        >
+          <option
+            value="CSR"
+          >
+            Clinical study report
+          </option>
+          <option
+            value="PROTOCOL"
+          >
+            Protocol
+          </option>
+          <option
+            value="CER"
+          >
+            Clinical evaluation report
+          </option>
+          <option
+            value="IB"
+          >
+            Investigator's brochure
+          </option>
+          <option
+            value="DSUR"
+          >
+            Development safety update report
+          </option>
+          <option
+            value="PSUR"
+          >
+            Periodic safety update report
+          </option>
+          <option
+            value="SAP"
+          >
+            Statistical analysis plan
+          </option>
+          <option
+            value="SAR"
+          >
+       ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="vd-wrap"
+    >
+      <div
+        class="vd-top"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Documents 
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-dot"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                cx="12.1"
+                cy="12.1"
+                r="1"
+              />
+            </svg>
+             project vault
+          </div>
+          <h1
+            class="vd-title"
+          >
+            Vault (DMS)
+          </h1>
+          <div
+            class="vd-sub"
+          >
+            <span
+              class="vd-sub-x"
+            >
+              IND · 21 CFR 312
+               
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-dot"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12.1"
+                  cy="12.1"
+                  r="1"
+                />
+              </svg>
+               
+              1
+               document
+            </span>
+          </div>
+        </div>
+        <button
+          class="sp-ask"
+          title="Open this project in Project management"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-folder"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"
+            />
+          </svg>
+           Open project
+        </button>
+        <button
+          class="sp-ask"
+          title="TMF inspection-readiness — completeness, timeliness & QC"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           Inspection readiness
+        </button>
+        <select
+          aria-label="Document type for uploaded files"
+          class="c2c-input"
+          data-testid="vault-upload-type"
+          style="width: auto; max-width: 260px;"
+          title="Document type for uploaded files"
+        >
+          <option
+            value="CSR"
+          >
+            Clinical study report
+          </option>
+          <option
+            value="PROTOCOL"
+          >
+            Protocol
+          </option>
+          <option
+            value="CER"
+          >
+            Clinical evaluation report
+          </option>
+          <option
+            value="IB"
+          >
+            Investigator's brochure
+          </option>
+          <option
+            value="DSUR"
+          >
+            Development safety update report
+          </option>
+          <option
+            value="PSUR"
+          >
+            Periodic safety update report
+          </option>
+          <option
+            value="SAP"
+          >
+            Statistical analysis plan
+          </option>
+          <option
+            value="SAR"
+          >
+       ...
+ × client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > a refused relate says so and claims nothing 5022ms
+   → Unable to find an element by: [data-testid="vault-relationships"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="vd-wrap"
+    >
+      <div
+        class="vd-top"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Documents 
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-dot"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                cx="12.1"
+                cy="12.1"
+                r="1"
+              />
+            </svg>
+             project vault
+          </div>
+          <h1
+            class="vd-title"
+          >
+            Vault (DMS)
+          </h1>
+          <div
+            class="vd-sub"
+          >
+            <span
+              class="vd-sub-x"
+            >
+              IND · 21 CFR 312
+               
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-dot"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12.1"
+                  cy="12.1"
+                  r="1"
+                />
+              </svg>
+               
+              1
+               document
+            </span>
+          </div>
+        </div>
+        <button
+          class="sp-ask"
+          title="Open this project in Project management"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-folder"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"
+            />
+          </svg>
+           Open project
+        </button>
+        <button
+          class="sp-ask"
+          title="TMF inspection-readiness — completeness, timeliness & QC"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           Inspection readiness
+        </button>
+        <select
+          aria-label="Document type for uploaded files"
+          class="c2c-input"
+          data-testid="vault-upload-type"
+          style="width: auto; max-width: 260px;"
+          title="Document type for uploaded files"
+        >
+          <option
+            value="CSR"
+          >
+            Clinical study report
+          </option>
+          <option
+            value="PROTOCOL"
+          >
+            Protocol
+          </option>
+          <option
+            value="CER"
+          >
+            Clinical evaluation report
+          </option>
+          <option
+            value="IB"
+          >
+            Investigator's brochure
+          </option>
+          <option
+            value="DSUR"
+          >
+            Development safety update report
+          </option>
+          <option
+            value="PSUR"
+          >
+            Periodic safety update report
+          </option>
+          <option
+            value="SAP"
+          >
+            Statistical analysis plan
+          </option>
+          <option
+            value="SAR"
+          >
+       ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="vd-wrap"
+    >
+      <div
+        class="vd-top"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Documents 
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-dot"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                cx="12.1"
+                cy="12.1"
+                r="1"
+              />
+            </svg>
+             project vault
+          </div>
+          <h1
+            class="vd-title"
+          >
+            Vault (DMS)
+          </h1>
+          <div
+            class="vd-sub"
+          >
+            <span
+              class="vd-sub-x"
+            >
+              IND · 21 CFR 312
+               
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-dot"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12.1"
+                  cy="12.1"
+                  r="1"
+                />
+              </svg>
+               
+              1
+               document
+            </span>
+          </div>
+        </div>
+        <button
+          class="sp-ask"
+          title="Open this project in Project management"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-folder"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"
+            />
+          </svg>
+           Open project
+        </button>
+        <button
+          class="sp-ask"
+          title="TMF inspection-readiness — completeness, timeliness & QC"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           Inspection readiness
+        </button>
+        <select
+          aria-label="Document type for uploaded files"
+          class="c2c-input"
+          data-testid="vault-upload-type"
+          style="width: auto; max-width: 260px;"
+          title="Document type for uploaded files"
+        >
+          <option
+            value="CSR"
+          >
+            Clinical study report
+          </option>
+          <option
+            value="PROTOCOL"
+          >
+            Protocol
+          </option>
+          <option
+            value="CER"
+          >
+            Clinical evaluation report
+          </option>
+          <option
+            value="IB"
+          >
+            Investigator's brochure
+          </option>
+          <option
+            value="DSUR"
+          >
+            Development safety update report
+          </option>
+          <option
+            value="PSUR"
+          >
+            Periodic safety update report
+          </option>
+          <option
+            value="SAP"
+          >
+            Statistical analysis plan
+          </option>
+          <option
+            value="SAR"
+          >
+       ...
+ × client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > removing one needs a reason of the required length, sends it, and then re-reads the list 5021ms
+   → Unable to find an element by: [data-testid="vault-relationships"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="vd-wrap"
+    >
+      <div
+        class="vd-top"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Documents 
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-dot"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                cx="12.1"
+                cy="12.1"
+                r="1"
+              />
+            </svg>
+             project vault
+          </div>
+          <h1
+            class="vd-title"
+          >
+            Vault (DMS)
+          </h1>
+          <div
+            class="vd-sub"
+          >
+            <span
+              class="vd-sub-x"
+            >
+              IND · 21 CFR 312
+               
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-dot"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12.1"
+                  cy="12.1"
+                  r="1"
+                />
+              </svg>
+               
+              1
+               document
+            </span>
+          </div>
+        </div>
+        <button
+          class="sp-ask"
+          title="Open this project in Project management"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-folder"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"
+            />
+          </svg>
+           Open project
+        </button>
+        <button
+          class="sp-ask"
+          title="TMF inspection-readiness — completeness, timeliness & QC"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           Inspection readiness
+        </button>
+        <select
+          aria-label="Document type for uploaded files"
+          class="c2c-input"
+          data-testid="vault-upload-type"
+          style="width: auto; max-width: 260px;"
+          title="Document type for uploaded files"
+        >
+          <option
+            value="CSR"
+          >
+            Clinical study report
+          </option>
+          <option
+            value="PROTOCOL"
+          >
+            Protocol
+          </option>
+          <option
+            value="CER"
+          >
+            Clinical evaluation report
+          </option>
+          <option
+            value="IB"
+          >
+            Investigator's brochure
+          </option>
+          <option
+            value="DSUR"
+          >
+            Development safety update report
+          </option>
+          <option
+            value="PSUR"
+          >
+            Periodic safety update report
+          </option>
+          <option
+            value="SAP"
+          >
+            Statistical analysis plan
+          </option>
+          <option
+            value="SAR"
+          >
+       ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="vd-wrap"
+    >
+      <div
+        class="vd-top"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Documents 
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-dot"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                cx="12.1"
+                cy="12.1"
+                r="1"
+              />
+            </svg>
+             project vault
+          </div>
+          <h1
+            class="vd-title"
+          >
+            Vault (DMS)
+          </h1>
+          <div
+            class="vd-sub"
+          >
+            <span
+              class="vd-sub-x"
+            >
+              IND · 21 CFR 312
+               
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-dot"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12.1"
+                  cy="12.1"
+                  r="1"
+                />
+              </svg>
+               
+              1
+               document
+            </span>
+          </div>
+        </div>
+        <button
+          class="sp-ask"
+          title="Open this project in Project management"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-folder"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"
+            />
+          </svg>
+           Open project
+        </button>
+        <button
+          class="sp-ask"
+          title="TMF inspection-readiness — completeness, timeliness & QC"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           Inspection readiness
+        </button>
+        <select
+          aria-label="Document type for uploaded files"
+          class="c2c-input"
+          data-testid="vault-upload-type"
+          style="width: auto; max-width: 260px;"
+          title="Document type for uploaded files"
+        >
+          <option
+            value="CSR"
+          >
+            Clinical study report
+          </option>
+          <option
+            value="PROTOCOL"
+          >
+            Protocol
+          </option>
+          <option
+            value="CER"
+          >
+            Clinical evaluation report
+          </option>
+          <option
+            value="IB"
+          >
+            Investigator's brochure
+          </option>
+          <option
+            value="DSUR"
+          >
+            Development safety update report
+          </option>
+          <option
+            value="PSUR"
+          >
+            Periodic safety update report
+          </option>
+          <option
+            value="SAP"
+          >
+            Statistical analysis plan
+          </option>
+          <option
+            value="SAR"
+          >
+       ...
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > lists both directions in their own words, with the project and a later version named
+TestingLibraryElementError: Unable to find an element by: [data-testid="vault-relationships"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="vd-wrap"
+    >
+      <div
+        class="vd-top"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Documents 
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-dot"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                cx="12.1"
+                cy="12.1"
+                r="1"
+              />
+            </svg>
+             project vault
+          </div>
+          <h1
+            class="vd-title"
+          >
+            Vault (DMS)
+          </h1>
+          <div
+            class="vd-sub"
+          >
+            <span
+              class="vd-sub-x"
+            >
+              IND · 21 CFR 312
+               
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-dot"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12.1"
+                  cy="12.1"
+                  r="1"
+                />
+              </svg>
+               
+              1
+               document
+            </span>
+          </div>
+        </div>
+        <button
+          class="sp-ask"
+          title="Open this project in Project management"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-folder"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"
+            />
+          </svg>
+           Open project
+        </button>
+        <button
+          class="sp-ask"
+          title="TMF inspection-readiness — completeness, timeliness & QC"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           Inspection readiness
+        </button>
+        <select
+          aria-label="Document type for uploaded files"
+          class="c2c-input"
+          data-testid="vault-upload-type"
+          style="width: auto; max-width: 260px;"
+          title="Document type for uploaded files"
+        >
+          <option
+            value="CSR"
+          >
+            Clinical study report
+          </option>
+          <option
+            value="PROTOCOL"
+          >
+            Protocol
+          </option>
+          <option
+            value="CER"
+          >
+            Clinical evaluation report
+          </option>
+          <option
+            value="IB"
+          >
+            Investigator's brochure
+          </option>
+          <option
+            value="DSUR"
+          >
+            Development safety update report
+          </option>
+          <option
+            value="PSUR"
+          >
+            Periodic safety update report
+          </option>
+          <option
+            value="SAP"
+          >
+            Statistical analysis plan
+          </option>
+          <option
+            value="SAR"
+          >
+       ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="vd-wrap"
+    >
+      <div
+        class="vd-top"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Documents 
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-dot"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                cx="12.1"
+                cy="12.1"
+                r="1"
+              />
+            </svg>
+             project vault
+          </div>
+          <h1
+            class="vd-title"
+          >
+            Vault (DMS)
+          </h1>
+          <div
+            class="vd-sub"
+          >
+            <span
+              class="vd-sub-x"
+            >
+              IND · 21 CFR 312
+               
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-dot"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12.1"
+                  cy="12.1"
+                  r="1"
+                />
+              </svg>
+               
+              1
+               document
+            </span>
+          </div>
+        </div>
+        <button
+          class="sp-ask"
+          title="Open this project in Project management"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-folder"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"
+            />
+          </svg>
+           Open project
+        </button>
+        <button
+          class="sp-ask"
+          title="TMF inspection-readiness — completeness, timeliness & QC"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           Inspection readiness
+        </button>
+        <select
+          aria-label="Document type for uploaded files"
+          class="c2c-input"
+          data-testid="vault-upload-type"
+          style="width: auto; max-width: 260px;"
+          title="Document type for uploaded files"
+        >
+          <option
+            value="CSR"
+          >
+            Clinical study report
+          </option>
+          <option
+            value="PROTOCOL"
+          >
+            Protocol
+          </option>
+          <option
+            value="CER"
+          >
+            Clinical evaluation report
+          </option>
+          <option
+            value="IB"
+          >
+            Investigator's brochure
+          </option>
+          <option
+            value="DSUR"
+          >
+            Development safety update report
+          </option>
+          <option
+            value="PSUR"
+          >
+            Periodic safety update report
+          </option>
+          <option
+            value="SAP"
+          >
+            Statistical analysis plan
+          </option>
+          <option
+            value="SAR"
+          >
+       ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ pane client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx:56:27
+     54| afterEach(() => { cleanup(); delete (window as any).C2C_PROJECT; });
+     55|
+     56| const pane = () => screen.findByTestId('vault-relationships');
+       |                           ^
+     57|
+     58| describe('related documents (critique 15)', () => {
+ ❯ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx:66:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > a list that could not be read says so, and never reads as no related documents
+TestingLibraryElementError: Unable to find an element by: [data-testid="vault-relationships"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="vd-wrap"
+    >
+      <div
+        class="vd-top"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Documents 
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-dot"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                cx="12.1"
+                cy="12.1"
+                r="1"
+              />
+            </svg>
+             project vault
+          </div>
+          <h1
+            class="vd-title"
+          >
+            Vault (DMS)
+          </h1>
+          <div
+            class="vd-sub"
+          >
+            <span
+              class="vd-sub-x"
+            >
+              IND · 21 CFR 312
+               
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-dot"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12.1"
+                  cy="12.1"
+                  r="1"
+                />
+              </svg>
+               
+              1
+               document
+            </span>
+          </div>
+        </div>
+        <button
+          class="sp-ask"
+          title="Open this project in Project management"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-folder"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"
+            />
+          </svg>
+           Open project
+        </button>
+        <button
+          class="sp-ask"
+          title="TMF inspection-readiness — completeness, timeliness & QC"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           Inspection readiness
+        </button>
+        <select
+          aria-label="Document type for uploaded files"
+          class="c2c-input"
+          data-testid="vault-upload-type"
+          style="width: auto; max-width: 260px;"
+          title="Document type for uploaded files"
+        >
+          <option
+            value="CSR"
+          >
+            Clinical study report
+          </option>
+          <option
+            value="PROTOCOL"
+          >
+            Protocol
+          </option>
+          <option
+            value="CER"
+          >
+            Clinical evaluation report
+          </option>
+          <option
+            value="IB"
+          >
+            Investigator's brochure
+          </option>
+          <option
+            value="DSUR"
+          >
+            Development safety update report
+          </option>
+          <option
+            value="PSUR"
+          >
+            Periodic safety update report
+          </option>
+          <option
+            value="SAP"
+          >
+            Statistical analysis plan
+          </option>
+          <option
+            value="SAR"
+          >
+       ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="vd-wrap"
+    >
+      <div
+        class="vd-top"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Documents 
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-dot"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                cx="12.1"
+                cy="12.1"
+                r="1"
+              />
+            </svg>
+             project vault
+          </div>
+          <h1
+            class="vd-title"
+          >
+            Vault (DMS)
+          </h1>
+          <div
+            class="vd-sub"
+          >
+            <span
+              class="vd-sub-x"
+            >
+              IND · 21 CFR 312
+               
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-dot"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12.1"
+                  cy="12.1"
+                  r="1"
+                />
+              </svg>
+               
+              1
+               document
+            </span>
+          </div>
+        </div>
+        <button
+          class="sp-ask"
+          title="Open this project in Project management"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-folder"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"
+            />
+          </svg>
+           Open project
+        </button>
+        <button
+          class="sp-ask"
+          title="TMF inspection-readiness — completeness, timeliness & QC"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           Inspection readiness
+        </button>
+        <select
+          aria-label="Document type for uploaded files"
+          class="c2c-input"
+          data-testid="vault-upload-type"
+          style="width: auto; max-width: 260px;"
+          title="Document type for uploaded files"
+        >
+          <option
+            value="CSR"
+          >
+            Clinical study report
+          </option>
+          <option
+            value="PROTOCOL"
+          >
+            Protocol
+          </option>
+          <option
+            value="CER"
+          >
+            Clinical evaluation report
+          </option>
+          <option
+            value="IB"
+          >
+            Investigator's brochure
+          </option>
+          <option
+            value="DSUR"
+          >
+            Development safety update report
+          </option>
+          <option
+            value="PSUR"
+          >
+            Periodic safety update report
+          </option>
+          <option
+            value="SAP"
+          >
+            Statistical analysis plan
+          </option>
+          <option
+            value="SAR"
+          >
+       ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ pane client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx:56:27
+     54| afterEach(() => { cleanup(); delete (window as any).C2C_PROJECT; });
+     55|
+     56| const pane = () => screen.findByTestId('vault-relationships');
+       |                           ^
+     57|
+     58| describe('related documents (critique 15)', () => {
+ ❯ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx:77:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > finds a document in the library, relates it, and claims it only once the server recorded it
+TestingLibraryElementError: Unable to find an element by: [data-testid="vault-relationships"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="vd-wrap"
+    >
+      <div
+        class="vd-top"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Documents 
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-dot"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                cx="12.1"
+                cy="12.1"
+                r="1"
+              />
+            </svg>
+             project vault
+          </div>
+          <h1
+            class="vd-title"
+          >
+            Vault (DMS)
+          </h1>
+          <div
+            class="vd-sub"
+          >
+            <span
+              class="vd-sub-x"
+            >
+              IND · 21 CFR 312
+               
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-dot"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12.1"
+                  cy="12.1"
+                  r="1"
+                />
+              </svg>
+               
+              1
+               document
+            </span>
+          </div>
+        </div>
+        <button
+          class="sp-ask"
+          title="Open this project in Project management"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-folder"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"
+            />
+          </svg>
+           Open project
+        </button>
+        <button
+          class="sp-ask"
+          title="TMF inspection-readiness — completeness, timeliness & QC"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           Inspection readiness
+        </button>
+        <select
+          aria-label="Document type for uploaded files"
+          class="c2c-input"
+          data-testid="vault-upload-type"
+          style="width: auto; max-width: 260px;"
+          title="Document type for uploaded files"
+        >
+          <option
+            value="CSR"
+          >
+            Clinical study report
+          </option>
+          <option
+            value="PROTOCOL"
+          >
+            Protocol
+          </option>
+          <option
+            value="CER"
+          >
+            Clinical evaluation report
+          </option>
+          <option
+            value="IB"
+          >
+            Investigator's brochure
+          </option>
+          <option
+            value="DSUR"
+          >
+            Development safety update report
+          </option>
+          <option
+            value="PSUR"
+          >
+            Periodic safety update report
+          </option>
+          <option
+            value="SAP"
+          >
+            Statistical analysis plan
+          </option>
+          <option
+            value="SAR"
+          >
+       ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="vd-wrap"
+    >
+      <div
+        class="vd-top"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Documents 
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-dot"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                cx="12.1"
+                cy="12.1"
+                r="1"
+              />
+            </svg>
+             project vault
+          </div>
+          <h1
+            class="vd-title"
+          >
+            Vault (DMS)
+          </h1>
+          <div
+            class="vd-sub"
+          >
+            <span
+              class="vd-sub-x"
+            >
+              IND · 21 CFR 312
+               
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-dot"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12.1"
+                  cy="12.1"
+                  r="1"
+                />
+              </svg>
+               
+              1
+               document
+            </span>
+          </div>
+        </div>
+        <button
+          class="sp-ask"
+          title="Open this project in Project management"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-folder"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"
+            />
+          </svg>
+           Open project
+        </button>
+        <button
+          class="sp-ask"
+          title="TMF inspection-readiness — completeness, timeliness & QC"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           Inspection readiness
+        </button>
+        <select
+          aria-label="Document type for uploaded files"
+          class="c2c-input"
+          data-testid="vault-upload-type"
+          style="width: auto; max-width: 260px;"
+          title="Document type for uploaded files"
+        >
+          <option
+            value="CSR"
+          >
+            Clinical study report
+          </option>
+          <option
+            value="PROTOCOL"
+          >
+            Protocol
+          </option>
+          <option
+            value="CER"
+          >
+            Clinical evaluation report
+          </option>
+          <option
+            value="IB"
+          >
+            Investigator's brochure
+          </option>
+          <option
+            value="DSUR"
+          >
+            Development safety update report
+          </option>
+          <option
+            value="PSUR"
+          >
+            Periodic safety update report
+          </option>
+          <option
+            value="SAP"
+          >
+            Statistical analysis plan
+          </option>
+          <option
+            value="SAR"
+          >
+       ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ pane client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx:56:27
+     54| afterEach(() => { cleanup(); delete (window as any).C2C_PROJECT; });
+     55|
+     56| const pane = () => screen.findByTestId('vault-relationships');
+       |                           ^
+     57|
+     58| describe('related documents (critique 15)', () => {
+ ❯ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx:91:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > a refused relate says so and claims nothing
+TestingLibraryElementError: Unable to find an element by: [data-testid="vault-relationships"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="vd-wrap"
+    >
+      <div
+        class="vd-top"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Documents 
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-dot"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                cx="12.1"
+                cy="12.1"
+                r="1"
+              />
+            </svg>
+             project vault
+          </div>
+          <h1
+            class="vd-title"
+          >
+            Vault (DMS)
+          </h1>
+          <div
+            class="vd-sub"
+          >
+            <span
+              class="vd-sub-x"
+            >
+              IND · 21 CFR 312
+               
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-dot"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12.1"
+                  cy="12.1"
+                  r="1"
+                />
+              </svg>
+               
+              1
+               document
+            </span>
+          </div>
+        </div>
+        <button
+          class="sp-ask"
+          title="Open this project in Project management"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-folder"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"
+            />
+          </svg>
+           Open project
+        </button>
+        <button
+          class="sp-ask"
+          title="TMF inspection-readiness — completeness, timeliness & QC"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           Inspection readiness
+        </button>
+        <select
+          aria-label="Document type for uploaded files"
+          class="c2c-input"
+          data-testid="vault-upload-type"
+          style="width: auto; max-width: 260px;"
+          title="Document type for uploaded files"
+        >
+          <option
+            value="CSR"
+          >
+            Clinical study report
+          </option>
+          <option
+            value="PROTOCOL"
+          >
+            Protocol
+          </option>
+          <option
+            value="CER"
+          >
+            Clinical evaluation report
+          </option>
+          <option
+            value="IB"
+          >
+            Investigator's brochure
+          </option>
+          <option
+            value="DSUR"
+          >
+            Development safety update report
+          </option>
+          <option
+            value="PSUR"
+          >
+            Periodic safety update report
+          </option>
+          <option
+            value="SAP"
+          >
+            Statistical analysis plan
+          </option>
+          <option
+            value="SAR"
+          >
+       ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="vd-wrap"
+    >
+      <div
+        class="vd-top"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Documents 
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-dot"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                cx="12.1"
+                cy="12.1"
+                r="1"
+              />
+            </svg>
+             project vault
+          </div>
+          <h1
+            class="vd-title"
+          >
+            Vault (DMS)
+          </h1>
+          <div
+            class="vd-sub"
+          >
+            <span
+              class="vd-sub-x"
+            >
+              IND · 21 CFR 312
+               
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-dot"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12.1"
+                  cy="12.1"
+                  r="1"
+                />
+              </svg>
+               
+              1
+               document
+            </span>
+          </div>
+        </div>
+        <button
+          class="sp-ask"
+          title="Open this project in Project management"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-folder"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"
+            />
+          </svg>
+           Open project
+        </button>
+        <button
+          class="sp-ask"
+          title="TMF inspection-readiness — completeness, timeliness & QC"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           Inspection readiness
+        </button>
+        <select
+          aria-label="Document type for uploaded files"
+          class="c2c-input"
+          data-testid="vault-upload-type"
+          style="width: auto; max-width: 260px;"
+          title="Document type for uploaded files"
+        >
+          <option
+            value="CSR"
+          >
+            Clinical study report
+          </option>
+          <option
+            value="PROTOCOL"
+          >
+            Protocol
+          </option>
+          <option
+            value="CER"
+          >
+            Clinical evaluation report
+          </option>
+          <option
+            value="IB"
+          >
+            Investigator's brochure
+          </option>
+          <option
+            value="DSUR"
+          >
+            Development safety update report
+          </option>
+          <option
+            value="PSUR"
+          >
+            Periodic safety update report
+          </option>
+          <option
+            value="SAP"
+          >
+            Statistical analysis plan
+          </option>
+          <option
+            value="SAR"
+          >
+       ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ pane client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx:56:27
+     54| afterEach(() => { cleanup(); delete (window as any).C2C_PROJECT; });
+     55|
+     56| const pane = () => screen.findByTestId('vault-relationships');
+       |                           ^
+     57|
+     58| describe('related documents (critique 15)', () => {
+ ❯ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx:115:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > removing one needs a reason of the required length, sends it, and then re-reads the list
+TestingLibraryElementError: Unable to find an element by: [data-testid="vault-relationships"]
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="vd-wrap"
+    >
+      <div
+        class="vd-top"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Documents 
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-dot"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                cx="12.1"
+                cy="12.1"
+                r="1"
+              />
+            </svg>
+             project vault
+          </div>
+          <h1
+            class="vd-title"
+          >
+            Vault (DMS)
+          </h1>
+          <div
+            class="vd-sub"
+          >
+            <span
+              class="vd-sub-x"
+            >
+              IND · 21 CFR 312
+               
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-dot"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12.1"
+                  cy="12.1"
+                  r="1"
+                />
+              </svg>
+               
+              1
+               document
+            </span>
+          </div>
+        </div>
+        <button
+          class="sp-ask"
+          title="Open this project in Project management"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-folder"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"
+            />
+          </svg>
+           Open project
+        </button>
+        <button
+          class="sp-ask"
+          title="TMF inspection-readiness — completeness, timeliness & QC"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           Inspection readiness
+        </button>
+        <select
+          aria-label="Document type for uploaded files"
+          class="c2c-input"
+          data-testid="vault-upload-type"
+          style="width: auto; max-width: 260px;"
+          title="Document type for uploaded files"
+        >
+          <option
+            value="CSR"
+          >
+            Clinical study report
+          </option>
+          <option
+            value="PROTOCOL"
+          >
+            Protocol
+          </option>
+          <option
+            value="CER"
+          >
+            Clinical evaluation report
+          </option>
+          <option
+            value="IB"
+          >
+            Investigator's brochure
+          </option>
+          <option
+            value="DSUR"
+          >
+            Development safety update report
+          </option>
+          <option
+            value="PSUR"
+          >
+            Periodic safety update report
+          </option>
+          <option
+            value="SAP"
+          >
+            Statistical analysis plan
+          </option>
+          <option
+            value="SAR"
+          >
+       ...
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="vd-wrap"
+    >
+      <div
+        class="vd-top"
+      >
+        <div>
+          <div
+            class="sp-eyebrow"
+          >
+            Documents 
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-dot"
+              fill="none"
+              focusable="false"
+              height="1em"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+              width="1em"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                cx="12.1"
+                cy="12.1"
+                r="1"
+              />
+            </svg>
+             project vault
+          </div>
+          <h1
+            class="vd-title"
+          >
+            Vault (DMS)
+          </h1>
+          <div
+            class="vd-sub"
+          >
+            <span
+              class="vd-sub-x"
+            >
+              IND · 21 CFR 312
+               
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-dot"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                width="1em"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12.1"
+                  cy="12.1"
+                  r="1"
+                />
+              </svg>
+               
+              1
+               document
+            </span>
+          </div>
+        </div>
+        <button
+          class="sp-ask"
+          title="Open this project in Project management"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-folder"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"
+            />
+          </svg>
+           Open project
+        </button>
+        <button
+          class="sp-ask"
+          title="TMF inspection-readiness — completeness, timeliness & QC"
+        >
+          <svg
+            aria-hidden="true"
+            class="lucide lucide-shield-check"
+            fill="none"
+            focusable="false"
+            height="1em"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+            width="1em"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+            />
+            <path
+              d="m9 12 2 2 4-4"
+            />
+          </svg>
+           Inspection readiness
+        </button>
+        <select
+          aria-label="Document type for uploaded files"
+          class="c2c-input"
+          data-testid="vault-upload-type"
+          style="width: auto; max-width: 260px;"
+          title="Document type for uploaded files"
+        >
+          <option
+            value="CSR"
+          >
+            Clinical study report
+          </option>
+          <option
+            value="PROTOCOL"
+          >
+            Protocol
+          </option>
+          <option
+            value="CER"
+          >
+            Clinical evaluation report
+          </option>
+          <option
+            value="IB"
+          >
+            Investigator's brochure
+          </option>
+          <option
+            value="DSUR"
+          >
+            Development safety update report
+          </option>
+          <option
+            value="PSUR"
+          >
+            Periodic safety update report
+          </option>
+          <option
+            value="SAP"
+          >
+            Statistical analysis plan
+          </option>
+          <option
+            value="SAR"
+          >
+       ...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ pane client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx:56:27
+     54| afterEach(() => { cleanup(); delete (window as any).C2C_PROJECT; });
+     55|
+     56| const pane = () => screen.findByTestId('vault-relationships');
+       |                           ^
+     57|
+     58| describe('related documents (critique 15)', () => {
+ ❯ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx:130:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed (5)
+   Start at  16:25:48
+   Duration  27.05s (transform 909ms, setup 144ms, import 1.10s, tests 25.16s, environment 464ms)
+

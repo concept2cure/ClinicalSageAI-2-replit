@@ -1,0 +1,24 @@
+# server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts against HEAD's document-catalog-tools.ts
+ × server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > a v2 project open: lists that project, not the whole organization
+   → expected { organizationWide: true } to deeply equal { Object (programId) }
+ × server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > another project's documents are refused while a project is open, and nothing is listed
+   → expected undefined to be 'CROSS_PROJECT' // Object.is equality
+ × server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > naming the open project itself is fine
+   → expected { Object (programId) } to deeply equal { Object (programId) }
+ × server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > no project open: the organization, as today, or a program of the organization when named
+   → expected undefined to be 'PROGRAM_NOT_FOUND' // Object.is equality
+ × server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > file_chat_upload_to_vault > files into the open project
+   → expected false to be true // Object.is equality
+ × server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > file_chat_upload_to_vault > never into another project while one is open: refused, and nothing is ingested
+   → expected undefined to be 'CROSS_PROJECT' // Object.is equality
+ × server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > file_chat_upload_to_vault > with no project open: refused, pointing to the audited adopt; nothing is ingested
+   → expected undefined to be 'NO_PROJECT' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected { organizationWide: true } to deeply equal { Object (programId) }
+AssertionError: expected undefined to be 'CROSS_PROJECT' // Object.is equality
+AssertionError: expected { Object (programId) } to deeply equal { Object (programId) }
+AssertionError: expected undefined to be 'PROGRAM_NOT_FOUND' // Object.is equality
+AssertionError: expected false to be true // Object.is equality
+AssertionError: expected undefined to be 'CROSS_PROJECT' // Object.is equality
+AssertionError: expected undefined to be 'NO_PROJECT' // Object.is equality
+      Tests  7 failed (7)

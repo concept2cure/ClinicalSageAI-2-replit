@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-01T13:25:41.260Z",
+  "generatedAt": "2026-10-01T16:14:15.739Z",
   "git": {
-    "sha": "8b966c1fb9c8423290197c46643b49e2b64ac530",
+    "sha": "c2f17977b9e0278ca7b232e9b348ddcbc63ee332",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -12,10 +12,10 @@
   },
   "managedMirrors": [],
   "summary": {
-    "duplicateBasenames": 213,
+    "duplicateBasenames": 214,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
-    "largeFilesByBytes": 46,
+    "largeFilesByBytes": 47,
     "largeFilesByLines": 109
   },
   "findings": {
@@ -1998,6 +1998,14 @@
         ]
       },
       {
+        "basename": "vault-search.test",
+        "count": 2,
+        "paths": [
+          "server/routes/__tests__/vault-search.test.ts",
+          "server/services/vault/__tests__/vault-search.test.ts"
+        ]
+      },
+      {
         "basename": "vitest.config",
         "count": 2,
         "paths": [
@@ -2038,11 +2046,11 @@
       },
       {
         "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "bytes": 260801
+        "bytes": 263850
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 226425
+        "bytes": 222347
       },
       {
         "file": "server/statistics-service.ts",
@@ -2062,15 +2070,11 @@
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
-        "bytes": 173252
-      },
-      {
-        "file": "server/routes/authoring-actions.ts",
-        "bytes": 166243
+        "bytes": 167977
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 161546
+        "bytes": 162575
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
@@ -2091,6 +2095,10 @@
       {
         "file": "server/storage.ts",
         "bytes": 145405
+      },
+      {
+        "file": "server/routes/authoring-actions.ts",
+        "bytes": 144995
       },
       {
         "file": "server/routes/submission-ops.ts",
@@ -2197,6 +2205,10 @@
         "bytes": 105559
       },
       {
+        "file": "server/routes/report-os.ts",
+        "bytes": 101654
+      },
+      {
         "file": "server/routes/knowledge-base.ts",
         "bytes": 101005
       }
@@ -2219,16 +2231,16 @@
         "lines": 6920
       },
       {
+        "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
+        "lines": 5619
+      },
+      {
         "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 5665
+        "lines": 5586
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
         "lines": 5558
-      },
-      {
-        "file": "client/src/concept2cure/v2/editor/DocumentWorkbench.tsx",
-        "lines": 5557
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2244,15 +2256,11 @@
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
-        "lines": 4329
-      },
-      {
-        "file": "server/routes/authoring-actions.ts",
-        "lines": 3789
+        "lines": 4211
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 3622
+        "lines": 3640
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2269,6 +2277,10 @@
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
         "lines": 3326
+      },
+      {
+        "file": "server/routes/authoring-actions.ts",
+        "lines": 3325
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2328,7 +2340,7 @@
       },
       {
         "file": "server/routes/report-os.ts",
-        "lines": 2543
+        "lines": 2587
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
@@ -2371,12 +2383,12 @@
         "lines": 2278
       },
       {
-        "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
-        "lines": 2197
+        "file": "server/routes/c2c/reviews.ts",
+        "lines": 2213
       },
       {
-        "file": "server/routes/c2c/reviews.ts",
-        "lines": 2196
+        "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
+        "lines": 2197
       },
       {
         "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",
@@ -2407,6 +2419,10 @@
         "lines": 2068
       },
       {
+        "file": "server/routes/c2c/project-vault.ts",
+        "lines": 2062
+      },
+      {
         "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
         "lines": 2029
       },
@@ -2415,16 +2431,16 @@
         "lines": 2024
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
+        "lines": 2023
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/csr-report.ts",
         "lines": 2020
       },
       {
         "file": "server/services/medical-device/medical-device-knowledge.ts",
         "lines": 2018
-      },
-      {
-        "file": "server/routes/c2c/project-vault.ts",
-        "lines": 2012
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
@@ -2441,10 +2457,6 @@
       {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisters.tsx",
         "lines": 1990
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 1978
       },
       {
         "file": "client/src/concept2cure/v2/Shell.tsx",
@@ -2588,7 +2600,7 @@
       },
       {
         "file": "server/services/advancedRAGPipeline.ts",
-        "lines": 1665
+        "lines": 1660
       },
       {
         "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
@@ -2644,8 +2656,8 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 412,
-      "largeByBytes": 36,
+      "duplicateGroups": 414,
+      "largeByBytes": 37,
       "largeByLines": 86
     },
     {

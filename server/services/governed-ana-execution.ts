@@ -4,7 +4,7 @@ import {
 } from '../src/control-plane/governed-document-evaluator.js';
 import { hasUnresolvedGovernedDecisions } from './governed-decision-repository.js';
 import { integrateSignal } from './intelligence/rim-integration.js';
-import { tagArtifact, type ArtifactWriteHook, type TagArtifactResult } from './artifact-tagger.js';
+import { ArtifactWriteRefusedError, tagArtifact, type ArtifactWriteHook, type TagArtifactResult } from './artifact-tagger.js';
 import type {
   CanonicalGovernedState,
   GovernedArtifactMutationContract,
@@ -43,6 +43,8 @@ interface ExecuteGovernedAnaOperationResult {
   };
   qualityGateResult: GovernedArtifactMutationContract['qualityGate'];
   persistenceStatus: 'persisted' | 'rejected' | 'failed' | 'not_requested';
+  /** Why the artifact writer refused the write, in its words, when it did (ArtifactWriteRefusedError). */
+  persistenceRefusal?: { code: ArtifactWriteRefusedError['code']; message: string };
 }
 
 const MIN_CONTENT_THRESHOLD = 80;
@@ -267,6 +269,7 @@ export async function executeGovernedAnaOperation(
 
   let mutationResult: TagArtifactResult | null = null;
   let persistenceStatus: ExecuteGovernedAnaOperationResult['persistenceStatus'] = 'not_requested';
+  let persistenceRefusal: ExecuteGovernedAnaOperationResult['persistenceRefusal'];
 
   if (input.artifactMutation) {
     const validation = validateGovernedMutation(input.artifactMutation);
@@ -296,8 +299,14 @@ export async function executeGovernedAnaOperation(
           inTransaction: input.inTransaction,
         });
         persistenceStatus = 'persisted';
-      } catch {
-        persistenceStatus = 'failed';
+      } catch (err) {
+        // A refusal is not a failure: the writer said why, and nothing was written.
+        if (err instanceof ArtifactWriteRefusedError) {
+          persistenceStatus = 'rejected';
+          persistenceRefusal = { code: err.code, message: err.message };
+        } else {
+          persistenceStatus = 'failed';
+        }
       }
     }
   }
@@ -343,5 +352,6 @@ export async function executeGovernedAnaOperation(
     },
     qualityGateResult: qualityGate,
     persistenceStatus,
+    ...(persistenceRefusal && { persistenceRefusal }),
   };
 }

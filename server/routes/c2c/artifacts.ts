@@ -23,8 +23,13 @@ import { enforceAuthorLineage } from '../../services/clinical-regulatory-evidenc
 import { resolveGovernedContext } from '../../services/concept2cure/governedDocumentContractService';
 import { createTraceId, emitTraceEvent } from '../../services/generation-guard.js';
 import { markPackagesContentChangedForArtifact } from '../../services/ectd/package-content-change';
-import { artifactApproval } from '../../services/ectd/package-content-fingerprint';
-import { ARTIFACT_ACT_MEANING, reviewQuorumVerdict } from '../../services/artifact-approval-act';
+import {
+  ARTIFACT_ACT_MEANING,
+  allowedArtifactTransitions,
+  artifactStatusUpdate,
+  refuseArtifactTransition,
+  refuseSignedArtifactAct,
+} from '../../services/artifact-approval-act';
 import { ArtifactActConflictError, commitSignedArtifactAct } from '../../services/artifact-signed-act';
 import { SignerNotAttributableError } from '../../services/part11/resolve-signer-identity';
 import { interceptArtifactChange, interceptFeedback } from '../../services/intelligence/rim-interceptors.js';
@@ -2383,28 +2388,8 @@ router.post(
  */
 
 // ── Role-based permission map for status transitions ───────────────────
-const ROLE_PERMISSIONS: Record<string, string[]> = {
-  admin: [
-    'draft→review',
-    'review→approved',
-    'review→draft',
-    'approved→locked',
-    'approved→review',
-    'locked→draft',
-  ],
-  approver: [
-    'draft→review',
-    'review→approved',
-    'review→draft',
-    'approved→locked',
-    'approved→review',
-    'locked→draft',
-  ],
-  reviewer: ['draft→review', 'review→approved', 'review→draft', 'approved→review'],
-  author: ['draft→review'],
-  user: ['draft→review'],
-  viewer: [],
-};
+// In server/services/artifact-approval-act.ts (ARTIFACT_STATUS_ROLE_PERMISSIONS)
+// since 2026-10-01: AnA's signed approve and lock apply the same table.
 
 const ROLLBACK_ROLES = ['admin', 'approver', 'reviewer'];
 
@@ -2415,7 +2400,7 @@ const ROLLBACK_ROLES = ['admin', 'approver', 'reviewer'];
 router.get('/user/permissions', async (req: Request, res: Response) => {
   try {
     const userRole = (req.userRole || 'user').toLowerCase();
-    const allowedTransitions = ROLE_PERMISSIONS[userRole] || ROLE_PERMISSIONS['user'];
+    const allowedTransitions = allowedArtifactTransitions(userRole);
     const canRollback = ROLLBACK_ROLES.includes(userRole);
     const canSign = ['admin', 'approver', 'reviewer'].includes(userRole);
     const canExport = ['admin', 'approver', 'reviewer', 'author', 'user'].includes(userRole);
@@ -2496,33 +2481,10 @@ router.put(
 
       const previousStatus = artifact.status || 'draft';
 
-      // ── Role-based permission check ──────────────────────────────────
-      const transitionKey = `${previousStatus}→${status}`;
-      const allowedTransitions = ROLE_PERMISSIONS[userRole] || ROLE_PERMISSIONS['user'];
-      if (!allowedTransitions.includes(transitionKey)) {
-        return sendError(
-          res,
-          403,
-          `Role "${userRole}" is not permitted to perform transition: ${transitionKey}. ` +
-            `Allowed transitions for your role: ${allowedTransitions.join(', ') || 'none'}`
-        );
-      }
-
-      // ── Transition validation ────────────────────────────────────────
-      const VALID_TRANSITIONS: Record<string, string[]> = {
-        draft: ['review'],
-        review: ['approved', 'draft'],
-        approved: ['locked', 'review'],
-        locked: ['draft'],
-      };
-
-      const allowed = VALID_TRANSITIONS[previousStatus] || [];
-      if (!allowed.includes(status)) {
-        return sendError(
-          res,
-          400,
-          `Invalid transition: ${previousStatus} → ${status}. Allowed: ${allowed.join(', ')}`
-        );
+      // ── Role, then transition (server/services/artifact-approval-act.ts) ──
+      const transitionRefusal = refuseArtifactTransition(previousStatus, status, userRole);
+      if (transitionRefusal) {
+        return sendError(res, transitionRefusal.httpStatus, transitionRefusal.message);
       }
 
       // ── Regression requires reason ───────────────────────────────────
@@ -2542,116 +2504,36 @@ router.put(
         }
       }
 
-      // ── A lock must cover the approval ───────────────────────────────
-      // 2026-09-23 (W5/D7, residual repair): approved → locked used to check
-      // status alone and stamp published_version_id = the CURRENT version, so
-      // approved v1 → PUT edit to v2 (status stays 'approved') → lock recorded
-      // "locked at v2" over content no one reviewed. The filing rule already
-      // refuses that artifact; the lock is now refused too, so an unreviewed
-      // edit is never recorded as locked. The verdict is artifactApproval's —
-      // the one filing rule, imported, not restated: an approved artifact may
-      // be locked only when it is filable as approved (version =
-      // approved_version_id, and an approval that recorded no version fails
-      // closed). Its remedy names the re-approval (approved → review → approved).
-      if (previousStatus === 'approved' && status === 'locked') {
-        const approval = artifactApproval({
-          status: previousStatus,
-          version: artifact.version,
-          approvedVersionId: artifact.approvedVersionId,
-          publishedVersionId: artifact.publishedVersionId,
+      // ── Before a signed act: a lock covers the approval, no blocking
+      // contradiction, the review quorum ───────────────────────────────
+      // 2026-09-23 (W5/D7): a lock is lockable only when filable as approved
+      // (artifactApproval, the one filing rule); the P12 quorum blocks
+      // review → approved while assigned reviewers have not approved, and a
+      // quorum that cannot be read throws (the catch below answers 500 before
+      // anything is written). Since 2026-10-01 these live in
+      // server/services/artifact-approval-act.ts (refuseSignedArtifactAct),
+      // applied here and by AnA's signed approve and lock.
+      if (status === 'approved' || status === 'locked') {
+        const signedActRefusal = await refuseSignedArtifactAct({
+          q: pool,
+          organizationId,
+          projectId,
+          artifact,
+          previousStatus,
+          status,
         });
-        if (!approval.filable) {
+        if (signedActRefusal) {
           return sendError(
             res,
-            409,
-            `Cannot lock: ${approval.problem}. Re-approval is required first: ${approval.remedy}.`,
-            { reason: approval.reason },
-            'LOCK_NOT_COVERED_BY_APPROVAL'
+            signedActRefusal.httpStatus,
+            signedActRefusal.message,
+            signedActRefusal.details,
+            signedActRefusal.code
           );
         }
       }
 
-      // ── Contradiction governance gate ───────────────────────────────
-      // Hard block promotion if unresolved contradictions with blocks_promotion authority
-      if (status === 'approved' || status === 'locked') {
-        try {
-          const { contradictionEngineService } = await import(
-            '../../services/contradiction-engine-service'
-          );
-          const { blocked, blockingFindings, warningFindings } =
-            await contradictionEngineService.checkPromotionBlocked(
-              organizationId,
-              projectId,
-              artifact.id
-            );
-          if (blocked) {
-            return sendError(
-              res,
-              409,
-              `Promotion blocked by ${blockingFindings.length} unresolved contradiction finding(s). Resolve contradictions before promoting.`,
-              {
-                blockingFindings: blockingFindings.map(f => ({
-                  id: f.id,
-                  title: f.title,
-                  severity: f.severity,
-                  contradictionType: f.contradictionType,
-                  authorityState: f.authorityState,
-                })),
-                warningFindings: warningFindings.map(f => ({
-                  id: f.id,
-                  title: f.title,
-                  severity: f.severity,
-                })),
-              }
-            );
-          }
-        } catch (contradictionError) {
-          // Log but don't block on contradiction check failure (table may not exist yet)
-          console.warn(
-            'Contradiction check skipped:',
-            contradictionError instanceof Error ? contradictionError.message : contradictionError
-          );
-        }
-      }
-
-      // ── P12: Review quorum gate ─────────────────────────────────────
-      // Block review → approved if reviewers are assigned but not all approved.
-      // Withdrawn assignments are excluded from the quorum check.
-      // 2026-09-23 (W5/D7, residual repair, round 3; amended final pass): the
-      // gate moved, unchanged, to server/services/artifact-approval-act.ts
-      // (reviewQuorumVerdict), the one implementation this route and
-      // authoring-actions approve-artifact — the two governed approval acts —
-      // apply. A quorum that cannot be read throws, and the catch below
-      // answers 500 before anything is written: an unread quorum is not met.
-      if (previousStatus === 'review' && status === 'approved') {
-        const quorum = await reviewQuorumVerdict(pool, artifact.id, organizationId, artifact.version);
-        if (!quorum.met) {
-          return sendError(res, 400, quorum.message);
-        }
-      }
-
-      const updateData: Record<string, any> = {
-        status,
-        updatedAt: new Date(),
-      };
-      // Leaving approved/locked (approved → review, locked → draft) clears
-      // approvedVersionId and publishedVersionId in this same write: the
-      // concept2cure_artifacts trigger does it for every writer
-      // (migrations/20260923b_artifact_approval_follows_status.sql, 2026-09-23
-      // W5/D7 final pass), so a revoked approval cannot be resurrected.
-      if (status === 'approved') {
-        updateData.approvedVersionId = artifact.version;
-      }
-      if (status === 'locked') {
-        updateData.lockedAt = new Date();
-        updateData.lockedById = userId;
-        updateData.publishedVersionId = artifact.version;
-        updateData.publishedAt = new Date();
-      }
-      if (previousStatus === 'locked' && status === 'draft') {
-        updateData.lockedAt = null;
-        updateData.lockedById = null;
-      }
+      const updateData: Record<string, any> = artifactStatusUpdate(artifact, previousStatus, status, userId);
       const statusGovernedResolution = resolveGovernedContext({
         req,
         projectId: artifact.projectId,

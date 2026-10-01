@@ -1,0 +1,79 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T13:37:27.798Z","pid":18409,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T13:37:27.800Z","pid":18409,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T13:37:27.800Z","pid":18409,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/cross-object-resolver.dbtest.ts
+[Orchestrator] Registered workflow template: submission_readiness_review
+
+stdout | tests/db/cross-object-resolver.dbtest.ts
+[Orchestrator] Registered workflow template: draft_validate_route
+
+stdout | tests/db/cross-object-resolver.dbtest.ts
+[Orchestrator] Registered workflow template: project_blocker_scan
+
+stdout | tests/db/cross-object-resolver.dbtest.ts
+{
+  "timestamp": "2026-10-01T13:37:28.272Z",
+  "level": "info",
+  "message": "[index] Phase 3 orchestration system loaded",
+  "context": {}
+}
+
+ ✓ tests/db/cross-object-resolver.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 17ms
+ ✓ tests/db/cross-object-resolver.dbtest.ts > a project the organisation holds > is assembled from reads that all succeed, and names the project 64ms
+{"level":40,"time":"2026-10-01T13:37:28.447Z","pid":18409,"hostname":"vm","context":{"read":"project","error":"Failed query: select \"id\", \"organization_id\", \"client_workspace_id\", \"parent_project_id\", \"depth\", \"path\", \"name\", \"code\", \"description\", \"status\", \"priority\", \"type\", \"start_date\", \"target_end_date\", \"actual_end_date\", \"progress\", \"budget\", \"budget_currency\", \"budget_status\", \"created_by_id\", \"owner_id\", \"sponsors\", \"tags\", \"therapeutic_area\", \"critical_to_quality_factors\", \"risk_level\", \"risk_assessment\", \"quality_targets\", \"module_references\", \"settings\", \"metadata\", \"retrieval_mode\", \"knowledge_token_estimate\", \"regulatory_program_id\", \"created_at\", \"updated_at\" from \"projects\" where (\"projects\".\"id\" = $1 and \"projects\".\"organization_id\" = $2) limit $3\nparams: 1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900,1"},"msg":"[cross-object-resolver] Resolver query failed"}
+{"level":40,"time":"2026-10-01T13:37:28.448Z","pid":18409,"hostname":"vm","context":{"read":"documents","error":"Failed query: select \"id\", \"artifact_id\", \"project_id\", \"conversation_id\", \"organization_id\", \"type\", \"category\", \"title\", \"content\", \"content_hash\", \"version\", \"ctd_section\", \"template_id\", \"ana_thread_id\", \"title_slug\", \"status\", \"approved_version_id\", \"published_version_id\", \"published_at\", \"locked_at\", \"locked_by_id\", \"created_by_id\", \"metadata\", \"citations\", \"citation_run_id\", \"citations_at\", \"created_at\", \"updated_at\" from \"concept2cure_artifacts\" where (\"concept2cure_artifacts\".\"project_id\" = $1 and \"concept2cure_artifacts\".\"organization_id\" = $2) order by \"concept2cure_artifacts\".\"updated_at\" desc limit $3\nparams: 1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900,100"},"msg":"[cross-object-resolver] Resolver query failed"}
+{"level":40,"time":"2026-10-01T13:37:28.448Z","pid":18409,"hostname":"vm","context":{"read":"artifacts","error":"Failed query: select \"id\", \"artifact_id\", \"project_id\", \"conversation_id\", \"organization_id\", \"type\", \"category\", \"title\", \"content\", \"content_hash\", \"version\", \"ctd_section\", \"template_id\", \"ana_thread_id\", \"title_slug\", \"status\", \"approved_version_id\", \"published_version_id\", \"published_at\", \"locked_at\", \"locked_by_id\", \"created_by_id\", \"metadata\", \"citations\", \"citation_run_id\", \"citations_at\", \"created_at\", \"updated_at\" from \"concept2cure_artifacts\" where (\"concept2cure_artifacts\".\"project_id\" = $1 and \"concept2cure_artifacts\".\"organization_id\" = $2) order by \"concept2cure_artifacts\".\"updated_at\" desc limit $3\nparams: 1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900,100"},"msg":"[cross-object-resolver] Resolver query failed"}
+{"level":40,"time":"2026-10-01T13:37:28.449Z","pid":18409,"hostname":"vm","context":{"read":"module placements","error":"Failed query: select \"id\", \"artifact_id\", \"project_id\", \"conversation_id\", \"organization_id\", \"type\", \"category\", \"title\", \"content\", \"content_hash\", \"version\", \"ctd_section\", \"template_id\", \"ana_thread_id\", \"title_slug\", \"status\", \"approved_version_id\", \"published_version_id\", \"published_at\", \"locked_at\", \"locked_by_id\", \"created_by_id\", \"metadata\", \"citations\", \"citation_run_id\", \"citations_at\", \"created_at\", \"updated_at\" from \"concept2cure_artifacts\" where (\"concept2cure_artifacts\".\"project_id\" = $1 and \"concept2cure_artifacts\".\"organization_id\" = $2)\nparams: 1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900"},"msg":"[cross-object-resolver] Resolver query failed"}
+{"level":40,"time":"2026-10-01T13:37:28.451Z","pid":18409,"hostname":"vm","context":{"read":"last signal","error":"Failed query: \n      SELECT MAX(ts) AS last_signal_at\n      FROM (\n        SELECT MAX(updated_at) AS ts\n        FROM concept2cure_artifacts\n        WHERE organization_id = $1\n          AND project_id = $2\n        UNION ALL\n        SELECT MAX(updated_at) AS ts\n        FROM cmc_source_objects\n        WHERE organization_id = $3\n          AND project_id::text = $4\n        UNION ALL\n        SELECT MAX(updated_at) AS ts\n        FROM cmc_contradictions\n        WHERE organization_id = $5\n          AND project_id::text = $6\n      ) sub\n    \nparams: 91900,1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900,1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900,1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc"},"msg":"[cross-object-resolver] Resolver query failed"}
+{"level":40,"time":"2026-10-01T13:37:28.465Z","pid":18409,"hostname":"vm","context":{"read":"project","error":"Failed query: select \"id\", \"organization_id\", \"client_workspace_id\", \"parent_project_id\", \"depth\", \"path\", \"name\", \"code\", \"description\", \"status\", \"priority\", \"type\", \"start_date\", \"target_end_date\", \"actual_end_date\", \"progress\", \"budget\", \"budget_currency\", \"budget_status\", \"created_by_id\", \"owner_id\", \"sponsors\", \"tags\", \"therapeutic_area\", \"critical_to_quality_factors\", \"risk_level\", \"risk_assessment\", \"quality_targets\", \"module_references\", \"settings\", \"metadata\", \"retrieval_mode\", \"knowledge_token_estimate\", \"regulatory_program_id\", \"created_at\", \"updated_at\" from \"projects\" where (\"projects\".\"id\" = $1 and \"projects\".\"organization_id\" = $2) limit $3\nparams: 1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900,1"},"msg":"[cross-object-resolver] Resolver query failed"}
+{"level":40,"time":"2026-10-01T13:37:28.466Z","pid":18409,"hostname":"vm","context":{"read":"documents","error":"Failed query: select \"id\", \"artifact_id\", \"project_id\", \"conversation_id\", \"organization_id\", \"type\", \"category\", \"title\", \"content\", \"content_hash\", \"version\", \"ctd_section\", \"template_id\", \"ana_thread_id\", \"title_slug\", \"status\", \"approved_version_id\", \"published_version_id\", \"published_at\", \"locked_at\", \"locked_by_id\", \"created_by_id\", \"metadata\", \"citations\", \"citation_run_id\", \"citations_at\", \"created_at\", \"updated_at\" from \"concept2cure_artifacts\" where (\"concept2cure_artifacts\".\"project_id\" = $1 and \"concept2cure_artifacts\".\"organization_id\" = $2) order by \"concept2cure_artifacts\".\"updated_at\" desc limit $3\nparams: 1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900,100"},"msg":"[cross-object-resolver] Resolver query failed"}
+{"level":40,"time":"2026-10-01T13:37:28.466Z","pid":18409,"hostname":"vm","context":{"read":"artifacts","error":"Failed query: select \"id\", \"artifact_id\", \"project_id\", \"conversation_id\", \"organization_id\", \"type\", \"category\", \"title\", \"content\", \"content_hash\", \"version\", \"ctd_section\", \"template_id\", \"ana_thread_id\", \"title_slug\", \"status\", \"approved_version_id\", \"published_version_id\", \"published_at\", \"locked_at\", \"locked_by_id\", \"created_by_id\", \"metadata\", \"citations\", \"citation_run_id\", \"citations_at\", \"created_at\", \"updated_at\" from \"concept2cure_artifacts\" where (\"concept2cure_artifacts\".\"project_id\" = $1 and \"concept2cure_artifacts\".\"organization_id\" = $2) order by \"concept2cure_artifacts\".\"updated_at\" desc limit $3\nparams: 1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900,100"},"msg":"[cross-object-resolver] Resolver query failed"}
+{"level":40,"time":"2026-10-01T13:37:28.466Z","pid":18409,"hostname":"vm","context":{"read":"module placements","error":"Failed query: select \"id\", \"artifact_id\", \"project_id\", \"conversation_id\", \"organization_id\", \"type\", \"category\", \"title\", \"content\", \"content_hash\", \"version\", \"ctd_section\", \"template_id\", \"ana_thread_id\", \"title_slug\", \"status\", \"approved_version_id\", \"published_version_id\", \"published_at\", \"locked_at\", \"locked_by_id\", \"created_by_id\", \"metadata\", \"citations\", \"citation_run_id\", \"citations_at\", \"created_at\", \"updated_at\" from \"concept2cure_artifacts\" where (\"concept2cure_artifacts\".\"project_id\" = $1 and \"concept2cure_artifacts\".\"organization_id\" = $2)\nparams: 1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900"},"msg":"[cross-object-resolver] Resolver query failed"}
+{"level":40,"time":"2026-10-01T13:37:28.469Z","pid":18409,"hostname":"vm","context":{"read":"last signal","error":"Failed query: \n      SELECT MAX(ts) AS last_signal_at\n      FROM (\n        SELECT MAX(updated_at) AS ts\n        FROM concept2cure_artifacts\n        WHERE organization_id = $1\n          AND project_id = $2\n        UNION ALL\n        SELECT MAX(updated_at) AS ts\n        FROM cmc_source_objects\n        WHERE organization_id = $3\n          AND project_id::text = $4\n        UNION ALL\n        SELECT MAX(updated_at) AS ts\n        FROM cmc_contradictions\n        WHERE organization_id = $5\n          AND project_id::text = $6\n      ) sub\n    \nparams: 91900,1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900,1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc,91900,1d3cc4a5-5ffa-4ff1-ae79-6e3a4222b6dc"},"msg":"[cross-object-resolver] Resolver query failed"}
+ ✓ tests/db/cross-object-resolver.dbtest.ts > a project the organisation holds > is reviewed to completion, and the review says which project it read 38ms
+ ✓ tests/db/cross-object-resolver.dbtest.ts > what the review cannot read > a program uuid fails the payload, naming every read it broke 26ms
+ ✓ tests/db/cross-object-resolver.dbtest.ts > what the review cannot read > a program uuid ends the review run as failed, with no step completed and the reason recorded 19ms
+ ✓ tests/db/cross-object-resolver.dbtest.ts > what the review cannot read > a project another organisation holds is refused, not assessed as empty 25ms
+ × tests/db/cross-object-resolver.dbtest.ts > the project's tasks, counted from every store > counts schedule, board and correspondence tasks, and how many are done, blocked and overdue 52ms
+   → expected { id: 170, …(11) } to match object { totalTasks: 5, doneTasks: 2, …(3) }
+(9 matching properties omitted from actual)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/cross-object-resolver.dbtest.ts > the project's tasks, counted from every store > counts schedule, board and correspondence tasks, and how many are done, blocked and overdue
+AssertionError: expected { id: 170, …(11) } to match object { totalTasks: 5, doneTasks: 2, …(3) }
+(9 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "blockedTasks": 2,
+-   "doneTasks": 2,
+-   "overdueTasks": 2,
+-   "taskCountsPartial": false,
+-   "totalTasks": 5,
++   "blockedTasks": 0,
++   "overdueTasks": 0,
++   "totalTasks": 0,
+  }
+
+ ❯ tests/db/cross-object-resolver.dbtest.ts:291:29
+    289|
+    290|     const payload = await asMember(() => resolver.assembleCrossObjectP…
+    291|     expect(payload.project).toMatchObject({
+       |                             ^
+    292|       totalTasks: 5,
+    293|       doneTasks: 2,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  13:37:24
+   Duration  4.61s (transform 1.43s, setup 95ms, import 91ms, tests 4.03s, environment 0ms)
+
