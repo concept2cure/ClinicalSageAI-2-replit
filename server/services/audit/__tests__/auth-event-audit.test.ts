@@ -110,6 +110,15 @@ describe('what the audit ledger shows for an event', () => {
     expect(row.details.description).toBe('Second factor refused: wrong code');
   });
 
+  // /mfa/resend refuses a challenge that has had its limit of emailed codes
+  // (IAM-09; plan P1-3's resend cap, 2026-09-26); the ledger names the refusal
+  // rather than showing the fallback form.
+  it('names a resend refused at the per-challenge limit', () => {
+    expect(describeAuthEvent({ action: 'user_login_mfa_challenge', outcome: 'failure', reason: 'resend_limit' })).toBe(
+      'Emailed code not re-sent: this sign-in has already received its limit of emailed codes',
+    );
+  });
+
   // routes/sso.ts records every SAML outcome as an auth event in the tenant that
   // owns the IdP configuration (security audit 2026-09-24, IAM-03, P0-3). Each
   // has its own sentence, so the ledger does not show the generic

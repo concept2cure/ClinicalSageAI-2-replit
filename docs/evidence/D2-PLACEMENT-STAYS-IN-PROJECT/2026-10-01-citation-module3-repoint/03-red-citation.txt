@@ -1,0 +1,5 @@
+ × server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > recording what a section was drafted from > refuses a citation of another project's source, and writes nothing (PF-11) 13ms
+ × server/services/clinical-regulatory-evidence/__tests__/source-usage.pglite.integration.test.ts > change propagation > an organization-wide source cited by the project's document is the project's change too (PF-11) 11ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 34 passed (36)

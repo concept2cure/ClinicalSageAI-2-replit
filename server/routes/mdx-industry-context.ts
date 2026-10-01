@@ -5,9 +5,9 @@
  * the localStorage admin blob, and the un-persisted onboarding step. Mounted at /api/mdx:
  *
  *   GET   /api/mdx/industry-profile                          org profile
- *   PATCH /api/mdx/industry-profile                          upsert org profile (audited)
+ *   PATCH /api/mdx/industry-profile                          upsert org profile (audited; admin roles)
  *   GET   /api/mdx/projects/:programId/industry-profile      project profile
- *   PATCH /api/mdx/projects/:programId/industry-profile      upsert project profile (audited)
+ *   PATCH /api/mdx/projects/:programId/industry-profile      upsert project profile (audited; admin roles)
  *   GET   /api/mdx/effective-context?programId=              resolved context
  *
  * Every write is tenant-scoped and audit-logged. Reads return null-safe
@@ -47,6 +47,30 @@ function getUserId(req: Request): number | null {
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Roles permitted to change what regulatory instruments the workspace — or a
+ * project in it — is offered (#1136). Both PATCH routes below were reachable by
+ * any authenticated member of the organization.
+ *
+ * Checked here rather than with the shared requireRole middleware, on purpose:
+ * server/middleware/auth has a .js shadow with an INCOMPATIBLE signature (the
+ * .ts twin takes varargs, the .js one a single role and ignores the rest), so
+ * `requireRole('owner', 'admin', …)` checks a different set depending on which
+ * twin the import resolves to. An authorization decision must not depend on a
+ * bundler. Exact match, no case folding: folding would make this route MORE
+ * permissive than the rest of the platform.
+ */
+const PROFILE_ADMIN_ROLES = new Set(['owner', 'admin', 'org_admin', 'super_admin']);
+
+function isProfileAdmin(req: Request): boolean {
+  const u = (req as any).user ?? {};
+  const claims: unknown[] = [
+    u.role,
+    ...(Array.isArray(u.roles) ? u.roles : []),
+  ];
+  return claims.some(r => typeof r === 'string' && PROFILE_ADMIN_ROLES.has(r));
+}
 
 const PRIMARY_INDUSTRY = [
   'medical_device_diagnostics', 'biotech_pharma', 'cro',
@@ -88,22 +112,50 @@ router.get('/industry-profile', async (req: Request, res: Response) => {
   }
 });
 
+/** Partial update: only fields present in the request body are written, so a
+ *  single-field PATCH cannot null out the rest. primaryIndustry is required. */
+function profileFields(body: Record<string, unknown>, p: z.infer<typeof orgPatch>): Record<string, unknown> {
+  const fields: Record<string, unknown> = { primaryIndustry: p.primaryIndustry };
+  if ('mdxSpecialization' in body) fields.mdxSpecialization = p.mdxSpecialization ?? null;
+  if ('defaultMarkets' in body) fields.defaultMarkets = p.defaultMarkets ?? [];
+  if ('defaultPathways' in body) fields.defaultPathways = p.defaultPathways ?? [];
+  if ('defaultApprovalRigor' in body) fields.defaultApprovalRigor = p.defaultApprovalRigor ?? null;
+  return fields;
+}
+
+/** The trimmed reason for change, or null when it is missing or under 3 characters. */
+function reasonForChange(body: Record<string, unknown>): string | null {
+  const reason = typeof body.reason === 'string' ? body.reason.trim() : '';
+  return reason.length >= 3 ? reason : null;
+}
+
 router.patch('/industry-profile', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
+  // Checked before the body is read, so a refused caller never reaches
+  // validation or the database.
+  if (!isProfileAdmin(req)) {
+    return clientError(res, 403,
+      'Changing the organization industry profile requires an organization administrator role.');
+  }
   const body = (req.body ?? {}) as Record<string, unknown>;
   const parsed = orgPatch.safeParse(body);
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   const p = parsed.data;
+  /* A governed change carries its reason for change into the audit row, as
+     PATCH /api/organizations/:id/profile does. This route took none: Setup's
+     client-type chips saved the org's industry on one click, with no reason
+     and no confirmation, under a page promising every change is saved "and
+     written to the audit trail" with a reason (launch sweep finding 122). */
+  const reason = reasonForChange(body);
+  if (!reason) {
+    return clientError(res, 422, 'A reason for change of at least 3 characters is required — it is written to the audit record.', {
+      reason: ['required, at least 3 characters'],
+    });
+  }
   const userId = getUserId(req);
   try {
-    // Partial update: only fields present in the request body are written, so a
-    // single-field PATCH cannot null out the rest. primaryIndustry is required.
-    const fields: Record<string, unknown> = { primaryIndustry: p.primaryIndustry };
-    if ('mdxSpecialization' in body) fields.mdxSpecialization = p.mdxSpecialization ?? null;
-    if ('defaultMarkets' in body) fields.defaultMarkets = p.defaultMarkets ?? [];
-    if ('defaultPathways' in body) fields.defaultPathways = p.defaultPathways ?? [];
-    if ('defaultApprovalRigor' in body) fields.defaultApprovalRigor = p.defaultApprovalRigor ?? null;
+    const fields = profileFields(body, p);
     const now = new Date();
     const db = requestDb(req);
     const [row] = await db
@@ -124,7 +176,7 @@ router.patch('/industry-profile', async (req: Request, res: Response) => {
       action: 'update',
       resourceType: 'organization_industry_profile',
       resourceId: orgId,
-      details: { primaryIndustry: p.primaryIndustry, mdxSpecialization: p.mdxSpecialization ?? null },
+      details: { primaryIndustry: p.primaryIndustry, mdxSpecialization: p.mdxSpecialization ?? null, reason },
     });
     return ok(res, row, { auditTrail });
   } catch (err) {
@@ -168,6 +220,10 @@ router.get('/projects/:programId/industry-profile', async (req: Request, res: Re
 router.patch('/projects/:programId/industry-profile', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
+  if (!isProfileAdmin(req)) {
+    return clientError(res, 403,
+      'Changing a project industry profile requires an organization administrator role.');
+  }
   const programId = String(req.params.programId);
   if (!UUID_RE.test(programId)) return clientError(res, 422, 'programId must be a UUID');
   const body = (req.body ?? {}) as Record<string, unknown>;

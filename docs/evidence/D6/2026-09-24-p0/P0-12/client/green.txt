@@ -1,0 +1,9 @@
+$ # useGovernedAction.ts and GovernedActionSignoff.tsx with the confirm tier
+ ✓ client/src/concept2cure/components/ana/__tests__/liveApproval.test.ts > a live approval becomes the sign-off the rail already renders > carries the confirm tier the server nam
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > extractPendingSignoffs > surfaces an agent's proposal (HUMAN_CONFIRMATION_REQUIRED) with it
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — the confirm tier > asks for neither a reason nor credentials, and
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — the confirm tier > confirming posts { confirm: true } with the co
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx > GovernedActionSignoff — the confirm tier > the reason tier still needs its reason before 
+ Test Files  4 passed (4)
+      Tests  41 passed (41)
+exit=0

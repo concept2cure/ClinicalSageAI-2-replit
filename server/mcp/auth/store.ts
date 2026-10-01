@@ -7,16 +7,41 @@
  * client's hands. Every tenant-scoped row is bound to the organization_users
  * membership that authorised it, so a removed member's grants cascade away.
  *
- * Reads that run before the caller has a tenant (client lookup, code
- * redemption) run under the pre-auth scope, which is the same scope the REST
- * login path uses for its own pre-auth queries. Under RLS_ENFORCE=on a bare
- * pool.query fails closed, so the scope is not optional.
+ * Two scopes, and which one a query runs in is not a style choice:
+ *
+ *   PRE-AUTH  (runWithPreAuthScope, no tenant, no role). For the two tables
+ *             that hold no tenant data and carry no tenant policy:
+ *             mcp_oauth_clients (registration precedes any user) and the
+ *             membership read (organization_users is on the RLS allowlist).
+ *
+ *   TENANT    (the grant's own organisation). For mcp_oauth_authorization_codes
+ *             and mcp_oauth_refresh_tokens, which carry organization_id and so
+ *             are under the tenant sweep's policy. Until 2026-09-25 these ran
+ *             in the pre-auth scope too, and under RLS_ENFORCE=on (the only
+ *             mode production boots in) that scope sees and writes none of
+ *             their rows: the consent POST failed with "new row violates
+ *             row-level security policy", every /token lookup found nothing,
+ *             and no client could connect (mcp-account-standing.dbtest.ts).
+ *             The pre-auth scope is built to fail this way rather than bypass
+ *             a policy (db/tenantStore.ts), and the super-admin scope that
+ *             would bypass it is exactly what pre-auth code must not hold.
+ *
+ * So a code or refresh token names its organisation: `<organizationId>.<secret>`.
+ * /token has nothing but that string, and the prefix is what lets the lookup
+ * run in the grant's tenant scope with no bypass. The prefix grants nothing:
+ * the row is found by the sha256 of the WHOLE string, so a prefix changed to
+ * another organisation's id only narrows the search to rows it cannot match.
+ * It discloses nothing either: the access token the grant yields already
+ * carries organizationId in clear. A string without a well-formed prefix names
+ * no grant (a code or token issued before this change is refused, and the
+ * client authorises again).
  */
 
 import { createHash, randomBytes } from 'crypto';
 import type { OAuthClientInformationFull } from '@modelcontextprotocol/sdk/shared/auth.js';
 import { getPool } from '../../db';
-import { runWithPreAuthScope } from '../../db/tenantStore';
+import { runWithPreAuthScope, runWithTenantScope } from '../../db/tenantStore';
+import { ACCOUNT_STATUS_ACTIVE } from '../../services/account-standing';
 
 export function sha256Hex(value: string): string {
   return createHash('sha256').update(value).digest('hex');
@@ -28,6 +53,31 @@ export function randomToken(bytes = 32): string {
 
 function preAuth<T>(caller: string, fn: () => Promise<T>): Promise<T> {
   return runWithPreAuthScope(`mcp-oauth:${caller}`, fn);
+}
+
+/** The grant's own tenant scope. No role: it reads and writes this organisation's grant rows and nothing else. */
+function inGrantTenant<T>(organizationId: number, caller: string, fn: () => Promise<T>): Promise<T> {
+  return runWithTenantScope(
+    { tenantId: String(organizationId), role: null, source: 'request', caller: `mcp-oauth:${caller}` },
+    fn,
+  );
+}
+
+/** A code or refresh token: `<organizationId>.<random>`. */
+function mintGrantSecret(organizationId: number, bytes: number): string {
+  return `${organizationId}.${randomToken(bytes)}`;
+}
+
+/**
+ * The organisation a code or refresh token names, or null when it names none.
+ * The random part is base64url of at least 32 bytes (43+ characters); anything
+ * shorter or otherwise shaped is not a secret this server issued.
+ */
+export function organizationOfGrantSecret(secret: string): number | null {
+  const m = /^([1-9]\d{0,9})\.[A-Za-z0-9_-]{43,}$/.exec(secret);
+  if (!m) return null;
+  const id = Number(m[1]);
+  return Number.isSafeInteger(id) && id <= 2_147_483_647 ? id : null;
 }
 
 // ── Clients ─────────────────────────────────────────────────────────────────
@@ -73,8 +123,10 @@ export interface Membership {
   userId: number;
   role: string;
   organizationUuid: string | null;
-  /** Not read here (users is not joined pre-auth); the verifier takes it from the token claims. */
+  /** Not selected here (users is joined only for its status); the verifier takes it from the token claims. */
   email: string | null;
+  /** organizations.settings: the concurrent-session limit a connector session is opened with (P1-38). */
+  organizationSettings?: unknown;
 }
 
 /**
@@ -92,13 +144,24 @@ export async function findMembership(userId: number, organizationId: number): Pr
       role: string;
       uuid: string | null;
       email: string | null;
+      settings: unknown;
     }>(
-      `SELECT ou.id, ou.organization_id, ou.user_id, ou.role, o.uuid, NULL::text AS email
+      `SELECT ou.id, ou.organization_id, ou.user_id, ou.role, o.uuid, o.settings, NULL::text AS email
          FROM organization_users ou
          JOIN organizations o ON o.id = ou.organization_id
+         JOIN users u ON u.id = ou.user_id
         WHERE ou.user_id = $1 AND ou.organization_id = $2
+          -- A membership row outlives the account it belongs to: a suspended or
+          -- deactivated user, or any member of a suspended organisation, is not
+          -- a member for the connector's purposes (2026-09-22 review, #6).
+          -- Every caller has already asked the canonical question
+          -- (account-standing.ts, through verifyLiveToken or the exchanges'
+          -- liveGrantorMembership), which is what refuses with the reason; this
+          -- is the backstop, and it takes "active" from the same definition.
+          AND u.status = $3
+          AND COALESCE(o.status, 'active') <> 'suspended'
         LIMIT 1`,
-      [userId, organizationId],
+      [userId, organizationId, ACCOUNT_STATUS_ACTIVE],
     );
     const r = rows[0];
     if (!r) return null;
@@ -109,6 +172,7 @@ export async function findMembership(userId: number, organizationId: number): Pr
       role: r.role,
       organizationUuid: r.uuid,
       email: r.email,
+      organizationSettings: r.settings,
     };
   });
 }
@@ -126,8 +190,8 @@ export interface IssuedCodeInput {
 }
 
 export async function issueAuthorizationCode(input: IssuedCodeInput): Promise<string> {
-  const code = randomToken(32);
-  await preAuth('issue-code', async () => {
+  const code = mintGrantSecret(input.membership.organizationId, 32);
+  await inGrantTenant(input.membership.organizationId, 'issue-code', async () => {
     await getPool().query(
       `INSERT INTO mcp_oauth_authorization_codes
          (code_hash, client_id, organization_id, user_id, membership_id, code_challenge, redirect_uri, scopes, resource, expires_at)
@@ -163,7 +227,9 @@ export interface StoredCode {
 }
 
 export async function readAuthorizationCode(code: string): Promise<StoredCode | null> {
-  return preAuth('read-code', async () => {
+  const organizationId = organizationOfGrantSecret(code);
+  if (organizationId === null) return null;
+  return inGrantTenant(organizationId, 'read-code', async () => {
     const { rows } = await getPool().query(
       `SELECT client_id, organization_id, user_id, membership_id, code_challenge, redirect_uri, scopes, resource,
               (expires_at < now()) AS expired, (redeemed_at IS NOT NULL) AS redeemed
@@ -171,7 +237,7 @@ export async function readAuthorizationCode(code: string): Promise<StoredCode | 
       [sha256Hex(code)],
     );
     const r = rows[0];
-    if (!r) return null;
+    if (!r || Number(r.organization_id) !== organizationId) return null;
     return {
       clientId: r.client_id,
       organizationId: r.organization_id,
@@ -189,7 +255,9 @@ export async function readAuthorizationCode(code: string): Promise<StoredCode | 
 
 /** Marks the code redeemed. Returns false when it was already redeemed (replay). */
 export async function redeemAuthorizationCode(code: string): Promise<boolean> {
-  return preAuth('redeem-code', async () => {
+  const organizationId = organizationOfGrantSecret(code);
+  if (organizationId === null) return false;
+  return inGrantTenant(organizationId, 'redeem-code', async () => {
     const res = await getPool().query(
       `UPDATE mcp_oauth_authorization_codes SET redeemed_at = now()
         WHERE code_hash = $1 AND redeemed_at IS NULL AND expires_at >= now()`,
@@ -215,8 +283,8 @@ export async function issueRefreshToken(
   ttlSeconds: number,
   rotatedFrom: string | null,
 ): Promise<string> {
-  const token = randomToken(48);
-  await preAuth('issue-refresh', async () => {
+  const token = mintGrantSecret(grant.organizationId, 48);
+  await inGrantTenant(grant.organizationId, 'issue-refresh', async () => {
     await getPool().query(
       `INSERT INTO mcp_oauth_refresh_tokens
          (token_hash, client_id, organization_id, user_id, membership_id, scopes, resource, expires_at, rotated_from)
@@ -243,7 +311,9 @@ export interface StoredRefresh extends RefreshGrant {
 }
 
 export async function readRefreshToken(token: string): Promise<StoredRefresh | null> {
-  return preAuth('read-refresh', async () => {
+  const organizationId = organizationOfGrantSecret(token);
+  if (organizationId === null) return null;
+  return inGrantTenant(organizationId, 'read-refresh', async () => {
     const { rows } = await getPool().query(
       `SELECT client_id, organization_id, user_id, membership_id, scopes, resource,
               (expires_at < now()) AS expired, (revoked_at IS NOT NULL) AS revoked
@@ -251,7 +321,7 @@ export async function readRefreshToken(token: string): Promise<StoredRefresh | n
       [sha256Hex(token)],
     );
     const r = rows[0];
-    if (!r) return null;
+    if (!r || Number(r.organization_id) !== organizationId) return null;
     return {
       clientId: r.client_id,
       organizationId: r.organization_id,
@@ -266,7 +336,9 @@ export async function readRefreshToken(token: string): Promise<StoredRefresh | n
 }
 
 export async function revokeRefreshToken(token: string): Promise<void> {
-  await preAuth('revoke-refresh', async () => {
+  const organizationId = organizationOfGrantSecret(token);
+  if (organizationId === null) return;
+  await inGrantTenant(organizationId, 'revoke-refresh', async () => {
     await getPool().query(
       'UPDATE mcp_oauth_refresh_tokens SET revoked_at = now() WHERE token_hash = $1 AND revoked_at IS NULL',
       [sha256Hex(token)],

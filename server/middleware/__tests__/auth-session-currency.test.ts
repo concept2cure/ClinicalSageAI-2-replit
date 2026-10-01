@@ -66,8 +66,11 @@ const secret = process.env.JWT_SECRET as string;
 const nowSeconds = () => Math.floor(Date.now() / 1000);
 const claims = { userId: '42', email: 'holder@example.com', organizationId: '7', role: 'user', type: 'access' };
 // exp is measured from the iat given: a long life so a session issued long ago
-// is still valid on signature, and only the rule under test can refuse it.
-const accessTokenIssuedAt = (iat: number) => jwt.sign({ ...claims, iat }, secret, { expiresIn: '30d' });
+// is still valid on signature, and only the rule under test can refuse it. The
+// idle window is the widest this service mints (P1-1, auth-inactivity-logoff
+// .test.ts): a bearer issued hours ago and never seen since would otherwise be
+// refused as idle before the password-change rule is reached.
+const accessTokenIssuedAt = (iat: number) => jwt.sign({ ...claims, idl: 24 * 3600, iat }, secret, { expiresIn: '30d' });
 
 interface Outcome {
   status: number;
@@ -130,7 +133,8 @@ describe('authenticateToken — a session the password change ended', () => {
   });
 
   it('admits a bearer for an account that never changed its password', async () => {
-    const r = await drive(accessTokenIssuedAt(nowSeconds() - 86_000));
+    // Eleven hours old: a session older than twelve is over on its own account (P1-1).
+    const r = await drive(accessTokenIssuedAt(nowSeconds() - 11 * 3600));
     expect(r.reachedHandler).toBe(true);
   });
 

@@ -214,6 +214,13 @@ async function cleanupProbeRows(): Promise<void> {
     [`${PROBE_CODE}%`],
   );
   await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1', [`${PROBE_CODE}%`]);
+  // Each deploy's backfill (migrations/20260529_phase9_backfill.sql) gives every
+  // program a document, so a probe program an interrupted run left behind can
+  // carry one by the next run.
+  await owner.query(
+    'DELETE FROM c2c_documents WHERE project_id IN (SELECT id FROM regulatory_programs WHERE name LIKE $1)',
+    [`${PROBE_PREFIX}%`],
+  );
   await owner.query('DELETE FROM regulatory_programs WHERE name LIKE $1', [`${PROBE_PREFIX}%`]);
 }
 

@@ -1,4 +1,15 @@
-import { describe, it, expect } from 'vitest';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
+// 2026-09-28: a confirm-class call now also needs an editor role, read from
+// organization_users (AnaToolExecutor writeRoleRefusal). The database is mocked
+// here, so the confirming person is modelled as a 'member'. The role gate itself
+// is tested in confirmed-write-role-gate.test.ts.
+const { resolveSignerOrgRole } = vi.hoisted(() => ({
+  resolveSignerOrgRole: vi.fn(async (): Promise<string | null> => 'member'),
+}));
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
+vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole }));
+beforeEach(() => resolveSignerOrgRole.mockClear());
+
 import { getToolHandler } from '../AnaToolExecutor';
 import { ALL_ANA_TOOLS } from '../AnaToolDefinitions.js';
 import {
@@ -68,6 +79,8 @@ const baseReq: CanonicalRevisionRequest = {
   anaThreadId: 'thread-1',
   title: 'Clinical Overview',
   content: 'Section 2.5 body',
+  // The person's stated reason: the spine records no other (2026-09-29).
+  reasonForChange: 'Aligned 2.5 with the final CSR.',
   ctdSection: '2.5',
   provenance: [{ any: 'record' }],
 };
@@ -144,6 +157,37 @@ describe('commitCanonicalRevision — the atomic spine', () => {
     ).rejects.toThrow(/content/);
     expect(calls).toHaveLength(0);
   });
+
+  /* It used to record `AnA revised "<title>" (v<n>)` as the reason whenever
+     none was passed, so the ledger said a person had given a reason nobody
+     gave. Any caller of the core, not only the tool, is held to the rule. */
+  it.each([
+    ['no reason', undefined],
+    ['a blank reason', '   '],
+    ['a reason under 8 characters once trimmed', '  fix  '],
+  ])('refuses %s before touching the transaction, and records nothing', async (_label, reasonForChange) => {
+    const { deps, calls } = makeDeps();
+    await expect(
+      commitCanonicalRevision({ ...baseReq, reasonForChange } as unknown as CanonicalRevisionRequest, deps),
+    ).rejects.toMatchObject({ name: 'ReasonNotStatedError', field: 'reason_for_change' });
+    expect(calls).toHaveLength(0);
+  });
+
+  it('records exactly the stated reason, trimmed, on the version and the ledger row', async () => {
+    const seen: { version?: string; ledger?: string } = {};
+    const { deps } = makeDeps({
+      async writeVersionTx(_client, req) {
+        seen.version = req.reasonForChange;
+        return { artifactId: 'artifact_1', artifactPk: 42, version: 3, created: true, contentHash: 'hash' };
+      },
+      async recordGovernedActionTx(_client, args) {
+        seen.ledger = args.reason;
+        return { actionId: 'act_1', auditId: 'audit_1' };
+      },
+    });
+    await commitCanonicalRevision({ ...baseReq, reasonForChange: '  Aligned 2.5 with the final CSR.  ' }, deps);
+    expect(seen).toEqual({ version: 'Aligned 2.5 with the final CSR.', ledger: 'Aligned 2.5 with the final CSR.' });
+  });
 });
 
 describe('commit_document_revision — tool registration + guards', () => {
@@ -154,16 +198,20 @@ describe('commit_document_revision — tool registration + guards', () => {
 
   it('refuses without tenant + user context', async () => {
     const out = JSON.parse(
-      await approvedToolHandler('commit_document_revision')!({ title: 'X', content: 'Y' }, {} as any),
+      await approvedToolHandler('commit_document_revision')!({ title: 'X', content: 'Y' }, { humanConfirmed: true } as any),
     );
-    expect(out.error).toMatch(/tenant \+ user context/);
+    // 2026-09-28: the registry now refuses a confirm-class call with no identified
+    // member before the handler (and its own tenant + user guard) runs.
+    expect(out.error).toMatch(/needs an identified member of the organization/);
+    expect(out.error).toMatch(/Nothing was changed/);
+    expect(resolveSignerOrgRole).not.toHaveBeenCalled();
   });
 
   it('requires title and content', async () => {
     const out = JSON.parse(
       await approvedToolHandler('commit_document_revision')!(
         { title: '' },
-        { organizationId: 1, userId: 1 } as any,
+        { organizationId: 1, userId: 1, humanConfirmed: true } as any,
       ),
     );
     expect(out.error).toMatch(/title and non-empty content/);

@@ -20,6 +20,7 @@ import crypto from 'crypto';
 import type { Pool } from 'pg';
 import { createScopedLogger } from '../../utils/logger';
 import { resolveGovernedDocument } from '../c2c/governed-document-binding.js';
+import { programInOrganization } from '../c2c/program-access';
 import {
   canonicalIdFor,
   recordDocumentAlias,
@@ -61,7 +62,7 @@ export interface CreateContext {
   audit: AuthoringAuditContext;
 }
 
-export type Refusal = { kind: 'refused'; status: 400 | 403 | 404 | 503; error: string };
+export type Refusal = { kind: 'refused'; status: 400 | 403 | 404 | 503; error: string; code?: string };
 
 export interface Binding {
   documentId: string | null;
@@ -445,6 +446,30 @@ export type CreateDocumentOutcome =
       binding: Binding;
     };
 
+/**
+ * Why a document cannot be anchored to `clientProgramId`, or null when it can.
+ * A document belongs to a project (PF-07; founder decision 2026-09-26): one
+ * that names none is refused 400 PROJECT_REQUIRED — it used to be created
+ * org-wide, where no project ever listed it. A malformed id is a clean 400
+ * rather than a UUID-cast 500. Otherwise the project must be a live one this
+ * organization owns (LX-20): reads are gated on tenant_id, but the ANCHOR was
+ * not, so a document could name another organization's project, a missing one,
+ * or a deleted one. 404, not 403: the caller learns nothing about another
+ * tenant's project ids.
+ */
+async function refuseProgramAnchor(ctx: CreateContext, clientProgramId: unknown): Promise<Refusal | null> {
+  if (clientProgramId === undefined || clientProgramId === null || clientProgramId === '') {
+    return { kind: 'refused', status: 400, code: 'PROJECT_REQUIRED', error: 'Open a project first: a document belongs to a project.' };
+  }
+  if (!UUID_RE.test(String(clientProgramId))) {
+    return { kind: 'refused', status: 400, error: 'client_program_id must be a valid UUID' };
+  }
+  if (!(await programInOrganization(ctx.pool, String(clientProgramId), ctx.tenantId))) {
+    return { kind: 'refused', status: 404, error: 'Project not found' };
+  }
+  return null;
+}
+
 /** POST /docs. The caller has already resolved the actor (401 without one). */
 export async function createDocument(ctx: CreateContext, input: CreateDocumentInput): Promise<CreateDocumentOutcome> {
   const { title, module = 'M3', product_code, locale = 'en-US', template_id, client_program_id } = input;
@@ -452,12 +477,8 @@ export async function createDocument(ctx: CreateContext, input: CreateDocumentIn
 
   if (!title) return { kind: 'refused', status: 400, error: 'Document title is required' };
 
-  // Reject a malformed program id with a clean 400 rather than letting the
-  // UUID column cast throw a 500. Cross-org mis-scoping is already prevented
-  // downstream: every read is gated on tenant_id.
-  if (client_program_id !== undefined && client_program_id !== null && !UUID_RE.test(String(client_program_id))) {
-    return { kind: 'refused', status: 400, error: 'client_program_id must be a valid UUID' };
-  }
+  const programRefusal = await refuseProgramAnchor(ctx, client_program_id);
+  if (programRefusal) return programRefusal;
 
   let templateSections: TemplateSectionSeed[] | null = null;
   if (template_id) {

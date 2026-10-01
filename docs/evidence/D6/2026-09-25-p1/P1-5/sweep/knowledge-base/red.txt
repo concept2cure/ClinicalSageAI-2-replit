@@ -1,0 +1,195 @@
+$ # server/routes/knowledge-base.ts as committed at 50b04d99 (git show HEAD:server/routes/knowledge-base.ts > server/routes/knowledge-base.ts); test server/routes/__tests__/knowledge-base-upload-guards.test.ts
+$ NODE_OPTIONS='--max-old-space-size=2048' npx vitest run --config vitest.config.ts server/routes/__tests__/knowledge-base-upload-guards.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+    "mode": "on"
+
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ × server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > refuses a body over the size limit with 413 instead of buffering it 481ms
+   → an oversize upload was buffered into the heap: expected 500 to be 413 // Object.is equality
+ × server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > refuses an executable named file whatever type it declares (415) 10ms
+   → a .exe declared as text/plain was admitted: expected 200 to be 415 // Object.is equality
+ × server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > refuses a declared type the byte check cannot verify (415) 5ms
+   → expected 200 to be 415 // Object.is equality
+ × server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > refuses bytes that are not what the declared type says (the shared byte check) 5ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > checks every file of a multi-file body, not only the first 6ms
+   → expected 200 to be 400 // Object.is equality
+ ✓ server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > leaves a request with no file to the handler (its own 422, unchanged) 4ms
+ ✓ server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > control: a real text file passes the guard and reaches the ingestion proxy 4ms
+ × server/routes/__tests__/knowledge-base-upload-guards.test.ts > the same guard fronts the other three multipart routes > /ocr: an image is read, but only when the bytes are that image 4ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/knowledge-base-upload-guards.test.ts > the same guard fronts the other three multipart routes > /extract-pdf: a binary declared as PDF is refused before any extractor sees it 7ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/knowledge-base-upload-guards.test.ts > the same guard fronts the other three multipart routes > /ind-autodraft/upload: an executable is refused whatever type it declares 7ms
+   → expected 200 to be 415 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > refuses a body over the size limit with 413 instead of buffering it
+AssertionError: an oversize upload was buffered into the heap: expected 500 to be 413 // Object.is equality
+
+- Expected
++ Received
+
+- 413
++ 500
+
+ ❯ server/routes/__tests__/knowledge-base-upload-guards.test.ts:53:71
+     51|       .field('project_id', 'p1')
+     52|       .attach('files', oversize, { filename: 'big.txt', contentType: '…
+     53|     expect(r.status, 'an oversize upload was buffered into the heap').…
+       |                                                                       ^
+     54|     expect(fetchMock).not.toHaveBeenCalled();
+     55|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > refuses an executable named file whatever type it declares (415)
+AssertionError: a .exe declared as text/plain was admitted: expected 200 to be 415 // Object.is equality
+
+- Expected
++ Received
+
+- 415
++ 200
+
+ ❯ server/routes/__tests__/knowledge-base-upload-guards.test.ts:62:68
+     60|       .field('project_id', 'p1')
+     61|       .attach('files', Buffer.from('plain text'), { filename: 'payload…
+     62|     expect(r.status, 'a .exe declared as text/plain was admitted').toB…
+       |                                                                    ^
+     63|     expect(fetchMock).not.toHaveBeenCalled();
+     64|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > refuses a declared type the byte check cannot verify (415)
+AssertionError: expected 200 to be 415 // Object.is equality
+
+- Expected
++ Received
+
+- 415
++ 200
+
+ ❯ server/routes/__tests__/knowledge-base-upload-guards.test.ts:71:22
+     69|       .field('project_id', 'p1')
+     70|       .attach('files', Buffer.from('{\\rtf1 hello}'), { filename: 'not…
+     71|     expect(r.status).toBe(415);
+       |                      ^
+     72|   });
+     73|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > refuses bytes that are not what the declared type says (the shared byte check)
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/knowledge-base-upload-guards.test.ts:79:22
+     77|       .field('project_id', 'p1')
+     78|       .attach('files', Buffer.from('this is not a pdf'), { filename: '…
+     79|     expect(r.status).toBe(400);
+       |                      ^
+     80|     expect(r.body).toMatchObject({ code: 'FILE_SIGNATURE_MISMATCH' });
+     81|     expect(fetchMock).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  server/routes/__tests__/knowledge-base-upload-guards.test.ts > POST /api/knowledge-base/upload: the upload guard > checks every file of a multi-file body, not only the first
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/knowledge-base-upload-guards.test.ts:90:22
+     88|       .attach('files', Buffer.from('a,b\n1,2\n'), { filename: 'ok.csv'…
+     89|       .attach('files', Buffer.from([0x00, 0x01, 0x02, 0xff, 0xfe, 0x00…
+     90|     expect(r.status).toBe(400);
+       |                      ^
+     91|     expect(r.body).toMatchObject({ code: 'FILE_SIGNATURE_MISMATCH' });
+     92|     expect(fetchMock).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  server/routes/__tests__/knowledge-base-upload-guards.test.ts > the same guard fronts the other three multipart routes > /ocr: an image is read, but only when the bytes are that image
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/knowledge-base-upload-guards.test.ts:117:24
+    115|       .post('/api/knowledge-base/ocr')
+    116|       .attach('file', Buffer.from('not a png'), { filename: 'scan.png'…
+    117|     expect(bad.status).toBe(400);
+       |                        ^
+    118|     expect(bad.body).toMatchObject({ code: 'FILE_SIGNATURE_MISMATCH' }…
+    119|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  server/routes/__tests__/knowledge-base-upload-guards.test.ts > the same guard fronts the other three multipart routes > /extract-pdf: a binary declared as PDF is refused before any extractor sees it
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/knowledge-base-upload-guards.test.ts:136:22
+    134|       .post('/api/knowledge-base/extract-pdf')
+    135|       .attach('file', Buffer.from([0x00, 0x01, 0x02, 0xff]), { filenam…
+    136|     expect(r.status).toBe(400);
+       |                      ^
+    137|     expect(r.body).toMatchObject({ code: 'FILE_SIGNATURE_MISMATCH' });
+    138|     expect(fetchMock).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  server/routes/__tests__/knowledge-base-upload-guards.test.ts > the same guard fronts the other three multipart routes > /ind-autodraft/upload: an executable is refused whatever type it declares
+AssertionError: expected 200 to be 415 // Object.is equality
+
+- Expected
++ Received
+
+- 415
++ 200
+
+ ❯ server/routes/__tests__/knowledge-base-upload-guards.test.ts:145:22
+    143|       .post('/api/knowledge-base/ind-autodraft/upload')
+    144|       .attach('files', Buffer.from('%PDF-1.4'), { filename: 'protocol.…
+    145|     expect(r.status).toBe(415);
+       |                      ^
+    146|   });
+    147| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+ Test Files  1 failed (1)
+      Tests  8 failed | 2 passed (10)
+   Start at  23:48:00
+   Duration  3.67s (transform 1.46s, setup 108ms, import 2.68s, tests 538ms, environment 0ms)
+
+exit=1

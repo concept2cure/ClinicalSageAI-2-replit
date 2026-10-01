@@ -22,6 +22,8 @@
 
 import { Router, type Request, type Response } from 'express';
 import multer from 'multer';
+import { receiveUpload } from '../../middleware/uploadAllowlist';
+import { assertUploadSafe, UploadSafetyError } from '../../middleware/uploadSafety';
 import {
   extractTemplateFromFile,
   renderDocxWithTemplate,
@@ -34,12 +36,14 @@ import {
   deactivateTemplate,
 } from '../../services/templates';
 import type { DocxInput } from '../../services/docx/docxFactory';
+import { isUnauditedExportRefusal, sendAuditedDownload } from '../../services/export/governedExportConsequence';
 
 const router = Router();
 
+const TEMPLATE_UPLOAD_MAX_BYTES = 15 * 1024 * 1024;
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 15 * 1024 * 1024 }, // 15MB
+  limits: { fileSize: TEMPLATE_UPLOAD_MAX_BYTES, files: 1 },
   fileFilter: (_req, file, cb) => {
     if (/\.(docx|pdf)$/i.test(file.originalname)) {
       cb(null, true);
@@ -99,10 +103,32 @@ router.get('/', async (req: Request, res: Response) => {
 
 // ── extract (preview, no save) ───────────────────────────────────────────────
 
-router.post('/extract', upload.single('file'), async (req: Request, res: Response) => {
+const receiveTemplateFile = receiveUpload(upload.single('file'), { maxBytes: TEMPLATE_UPLOAD_MAX_BYTES });
+
+/**
+ * The bytes are what the declared type says, and clean (magic number + malware
+ * scan through the platform guard; fail-closed in production). Answers the
+ * refusal itself and returns false (audit IAM-14, P1-5).
+ */
+async function uploadedTemplateIsSafe(req: Request, res: Response): Promise<boolean> {
+  const file = req.file!;
+  try {
+    await assertUploadSafe(file.buffer, file.mimetype, file.originalname);
+    return true;
+  } catch (err) {
+    if (err instanceof UploadSafetyError) {
+      res.status(err.status).json({ error: err.body.code, detail: err.body.error });
+      return false;
+    }
+    throw err;
+  }
+}
+
+router.post('/extract', receiveTemplateFile, async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
   if (!orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
   if (!req.file) return res.status(400).json({ error: 'FILE_REQUIRED' });
+  if (!(await uploadedTemplateIsSafe(req, res))) return;
   try {
     const result = await extractTemplateFromFile(
       req.file.buffer,
@@ -118,11 +144,12 @@ router.post('/extract', upload.single('file'), async (req: Request, res: Respons
 
 // ── extract + save ───────────────────────────────────────────────────────────
 
-router.post('/from-upload', upload.single('file'), async (req: Request, res: Response) => {
+router.post('/from-upload', receiveTemplateFile, async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
   const userId = resolveUserId(req);
   if (!orgId || !userId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
   if (!req.file) return res.status(400).json({ error: 'FILE_REQUIRED' });
+  if (!(await uploadedTemplateIsSafe(req, res))) return;
   try {
     const extracted = await extractTemplateFromFile(
       req.file.buffer,
@@ -235,7 +262,8 @@ router.delete('/:id', async (req: Request, res: Response) => {
 
 router.post('/:id/render', async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
-  if (!orgId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
+  const userId = resolveUserId(req);
+  if (!orgId || !userId) return res.status(401).json({ error: 'AUTH_REQUIRED' });
 
   const format = (req.body?.format ?? 'docx') as string;
   const validation = validateDocument(req.body?.document);
@@ -245,14 +273,29 @@ router.post('/:id/render', async (req: Request, res: Response) => {
     const record = await getTemplate(orgId, String(req.params.id));
     if (!record) return res.status(404).json({ error: 'NOT_FOUND' });
 
+    /* Recorded before it is delivered (2026-09-29): an EXPORT_GENERATED audit
+       row with the SHA-256 of the bytes, and no file when the row does not
+       persist. A rendered template is a new document; it used to leave with no
+       trace (docs/evidence/D5-EXPORTS-RECORDED/2026-09-29/). */
+    const deliver = (buffer: Buffer, mimeType: string, filename: string, sourceType: 'export_docx' | 'export_pdf') =>
+      sendAuditedDownload(res, {
+        organizationId: orgId,
+        userId,
+        sourceType,
+        backendRoute: '/api/c2c/templates/:id/render',
+        resourceType: 'template_render',
+        resourceId: String(req.params.id),
+        programUuid: null,
+        filename,
+        mimeType,
+        buffer,
+        metadata: { title: validation.doc.metadata.title },
+      });
+
     if (format === 'docx') {
       const out = await renderDocxWithTemplate(record.spec, validation.doc);
-      res.setHeader(
-        'Content-Type',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      );
-      res.setHeader('Content-Disposition', `attachment; filename="${out.filename}"`);
-      return res.send(out.buffer);
+      await deliver(out.buffer, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', out.filename, 'export_docx');
+      return;
     }
 
     if (format === 'pdf') {
@@ -262,13 +305,15 @@ router.post('/:id/render', async (req: Request, res: Response) => {
       const html = templateSpecToHtml(record.spec, validation.doc);
       const buffer = await renderHtmlToPdf(html);
       const safe = validation.doc.metadata.title.replace(/[^a-zA-Z0-9_\- ]/g, '').replace(/\s+/g, '_');
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="${safe || 'document'}.pdf"`);
-      return res.send(buffer);
+      await deliver(buffer, 'application/pdf', `${safe || 'document'}.pdf`, 'export_pdf');
+      return;
     }
 
     return res.status(400).json({ error: 'UNSUPPORTED_FORMAT', detail: 'format must be docx or pdf' });
   } catch (err: any) {
+    if (isUnauditedExportRefusal(err)) {
+      return res.status(503).json({ error: 'UNAUDITED_EXPORT_REFUSED' });
+    }
     console.error('[c2c/templates] render', err?.message);
     return res.status(500).json({ error: 'RENDER_FAILED' });
   }

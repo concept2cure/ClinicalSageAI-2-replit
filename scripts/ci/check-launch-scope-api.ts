@@ -67,6 +67,8 @@ function makeResolver(L: Layout) {
 
 export interface Violation {
   path: string;
+  /** `computed`: the screen builds the /api namespace itself, so no verdict is possible. */
+  verdict: LaunchScopeApiVerdict | 'computed';
   surfaces: string[];
   files: string[];
 }
@@ -75,7 +77,13 @@ export function checkLaunchScopeApi(
   L: Layout,
   prefixMap: Map<string, Set<string>>,
   launchIds: ReadonlySet<string>,
-): { violations: Violation[]; unresolved: string[]; all: Map<string, { verdict: LaunchScopeApiVerdict; files: Set<string>; surfaces: Set<string> }> } {
+): {
+  violations: Violation[];
+  unresolved: string[];
+  all: Map<string, { verdict: LaunchScopeApiVerdict; files: Set<string>; surfaces: Set<string> }>;
+  /** Every client file a launch or shell surface reaches, and which. */
+  reached: Map<string, Set<string>>;
+} {
   const resolve = makeResolver(L);
   const cache = new Map<string, string>();
   const read = (f: string) => {
@@ -178,13 +186,25 @@ export function checkLaunchScopeApi(
       e.files.add(path.relative(L.root, f));
       ids.forEach((i) => e.surfaces.add(i));
     }
-  const violations = [...all]
-    .filter(([, e]) => e.verdict === 'out-of-scope')
-    .map(([p, e]) => ({ path: p, surfaces: [...e.surfaces], files: [...e.files] }));
-  return { violations, unresolved, all };
+  // `unmapped` fails too: a launch screen's call that no surface claims is one
+  // stage-2 enforcement (unmapped prefixes refused in production) would refuse.
+  // Every launch call is attributed — to its surface, or to LAUNCH_PLATFORM_API.
+  const violations: Violation[] = [...all]
+    .filter(([, e]) => e.verdict === 'out-of-scope' || e.verdict === 'unmapped')
+    .map(([p, e]) => ({ path: p, verdict: e.verdict, surfaces: [...e.surfaces], files: [...e.files] }));
+  // `/api/${x}` names no prefix, so neither this gate nor anyone reading the
+  // registry can say what it reaches, and production refuses an unclaimed one.
+  // Every launch call names its namespace literally today; this keeps it so.
+  for (const [f, ids] of fileSurfaces) {
+    if (/\/__tests__\/|\.test\.tsx?$/.test(f)) continue;
+    const src = read(f).replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+    const m = src.match(/[`'"]\/api\/\$\{[^}]*\}[^`'"\s]*/);
+    if (m) violations.push({ path: m[0].slice(1), verdict: 'computed', surfaces: [...ids], files: [path.relative(L.root, f)] });
+  }
+  return { violations, unresolved, all, reached: fileSurfaces };
 }
 
-const REAL: Layout = {
+export const REAL: Layout = {
   root: ROOT,
   client: path.join(ROOT, 'client/src'),
   shared: path.join(ROOT, 'shared'),
@@ -232,7 +252,16 @@ function selftest(): number {
   // The fix: the launch surface declares what it calls.
   const green = checkLaunchScopeApi(L, buildPrefixMap([{ id: 'launch-app', apiPrefixes: ['/api/launch-api', '/api/hidden-api'] }, surfaces[1]]), launch);
   expect('passes once the launch surface declares the prefix it calls', green.violations.length === 0);
+  // A launch screen calling a prefix no surface claims is flagged as unmapped.
+  const unmapped = checkLaunchScopeApi(L, buildPrefixMap([{ id: 'launch-app', apiPrefixes: [] }, surfaces[1]]), launch);
+  expect('flags a launch call no surface claims (unmapped)', unmapped.violations.some((v) => v.verdict === 'unmapped' && v.path.startsWith('/api/launch-api')));
   expect('resolves every registration it was given', red.unresolved.length === 0);
+  // A computed namespace hides which prefix a screen calls, so the gate cannot
+  // judge it. Production enforces the unclaimed remainder by default (stage 3),
+  // which is safe only because every launch call names its namespace.
+  w('client/src/hook.ts', "export const hook = (m: string) => fetch(`/api/${m}/items`);");
+  const computed = checkLaunchScopeApi(L, buildPrefixMap(surfaces), launch);
+  expect('flags a launch screen that computes the /api namespace', computed.violations.some((v) => v.verdict === 'computed' && v.files.some((f) => f.endsWith('hook.ts'))));
   fs.rmSync(dir, { recursive: true, force: true });
   console.log(failed === 0 ? '\nselftest PASSED — the gate flags a launch screen that production would refuse.' : `\nselftest FAILED (${failed})`);
   return failed === 0 ? 0 : 1;
@@ -251,10 +280,11 @@ function main(): number {
     return 1;
   }
   if (violations.length) {
-    console.error(`ci:launch-scope-api: ${violations.length} API path(s) that launch or shell screens call would be REFUSED in production,`);
-    console.error('because every surface claiming them is outside the launch scope. Declare each prefix on the launch');
-    console.error('surface that calls it (shared/constants/ui-surface-registry*.ts apiPrefixes), or stop calling it.\n');
-    for (const v of violations) console.error(`  ${v.path}\n    called by ${v.surfaces.join(', ')}\n    in ${v.files.slice(0, 4).join(', ')}`);
+    console.error(`ci:launch-scope-api: ${violations.length} API path(s) that launch or shell screens call are not attributed to the launch scope:`);
+    console.error('"out-of-scope" is refused in production today; "unmapped" is claimed by no surface. Declare each prefix on the');
+    console.error('launch surface that calls it (shared/constants/ui-surface-registry*.ts apiPrefixes), or, if the shell uses it');
+    console.error('whatever app is open, on LAUNCH_PLATFORM_API with its reason — or stop calling it.\n');
+    for (const v of violations) console.error(`  [${v.verdict}] ${v.path}\n    called by ${v.surfaces.join(', ')}\n    in ${v.files.slice(0, 4).join(', ')}`);
     return 1;
   }
   const counts: Record<string, number> = {};
@@ -263,4 +293,6 @@ function main(): number {
   return 0;
 }
 
-process.exit(main());
+// Run only when invoked, so the walker can be imported (the mounted-route
+// inventory uses it to say which launch screen reaches a caller).
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) process.exit(main());

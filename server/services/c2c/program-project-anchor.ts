@@ -257,7 +257,8 @@ export async function ensureProgramProjectAnchor(input: EnsureAnchorInput): Prom
 export async function resolveProgramProjectAnchor(
   /** The RLS-scoped per-request Drizzle client — `requestDb(req)`, never the shared pool. */
   db: RequestDb,
-  params: { programId: string; orgId: number; context: string },
+  /** `strict`: rethrow a lookup that could not complete (see resolveCmcArtifactProject). An absent anchor column is still null. */
+  params: { programId: string; orgId: number; context: string; strict?: boolean },
 ): Promise<number | null> {
   try {
     const rows = await db
@@ -285,6 +286,7 @@ export async function resolveProgramProjectAnchor(
       );
       return null;
     }
+    if (params.strict) throw err;
     logger.warn('Program anchor lookup failed; treating the program as unanchored', {
       context: params.context,
       err: err instanceof Error ? err.message : String(err),

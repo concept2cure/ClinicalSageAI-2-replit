@@ -1,0 +1,11 @@
+$ git rev-parse --short HEAD  # sources unchanged; cases added
+b6285a71
+ × server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > FAIL CLOSED: a sign that declares no meaning is refused before anything is written 3247ms
+ × server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > FAIL CLOSED: a free-text meaning is refused; only the closed vocabulary is a §11.50 meaning 3841ms
+ ✓ server/routes/c2c/__tests__/governed-sign-esignature.pglite.integration.test.ts > governed sign → electronic_signatures (single write path) > the task board's spelling of the vocabulary ('APPROVED') is accepted and stored as declared 3676ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: promise resolved "{ …(4) }" instead of rejecting
+AssertionError: promise resolved "{ …(4) }" instead of rejecting
+ Test Files  1 failed (1)
+      Tests  2 failed | 11 passed (13)
+exit=1

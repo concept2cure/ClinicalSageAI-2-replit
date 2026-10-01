@@ -73,9 +73,12 @@ export let savedQueryB: number;
  * activeJwtSecret() resolves the secret the same way, at the same moment, as
  * the verifier that will check the token, so the two cannot drift.
  *
- * `role` is the claim the request's role is read from once membership is
- * confirmed (establishRequestTenantScope sets req.userRole from it), so a case
- * that needs an org administrator or a platform operator mints one here.
+ * `role` does NOT make the caller anything. Since 414f203e1 (IAM-10 / P1-4)
+ * authenticateToken replaces the token's role with the confirmed
+ * `organization_users` row's, so a token claiming `admin` for a `member` row is a
+ * member. Pass the role the row holds, as sign-in mints it. A case that needs an
+ * org administrator or a platform operator provisions one: provisionMember,
+ * grantPlatformRole.
  */
 export function accessToken(userId: number, organizationId: number, role = 'member'): string {
   return jwt.sign(
@@ -288,6 +291,51 @@ export async function provisionTwoTenantFixture(): Promise<void> {
   invalidateOrgMembershipCache();
 }
 
+/**
+ * A further user of `organizationId` whose membership row holds `role`: an org
+ * administrator is `admin` on that row, as tenant-users provisions one, because
+ * the row is what authenticateToken reads (see accessToken). Opt-in, not part of
+ * provisionTwoTenantFixture, because memberships.dbtest.ts restores the orgs to
+ * exactly the two memberships above. `default_organization_id` puts the user in
+ * the teardown's org-scoped deletes. Call after provisionTwoTenantFixture.
+ */
+export async function provisionMember(
+  organizationId: number,
+  role: string,
+  label: string
+): Promise<number> {
+  const u = await owner.query(
+    `INSERT INTO users (email,name,password_hash,default_organization_id)
+     VALUES ($1,$2,'not-a-real-password',$3) RETURNING id`,
+    [`${TAG}-${label}@example.invalid`, `WO03 ${label}`, organizationId]
+  );
+  const userId = Number(u.rows[0].id);
+  await owner.query(
+    'INSERT INTO organization_users (organization_id,user_id,role) VALUES ($1,$2,$3)',
+    [organizationId, userId, role]
+  );
+  return userId;
+}
+
+/**
+ * A platform operator as production designates one: an active
+ * platform_role_grants row, which is what the Access Management console writes
+ * (server/routes/admin/access-management.ts) and what requirePlatformAdmin
+ * consults behind authenticateToken since 414f203e1. No application path puts a
+ * platform role on an organization_users row (20260926_organization_users_own_writes.sql).
+ */
+export async function grantPlatformRole(userId: number, role: string): Promise<void> {
+  await owner.query(
+    `INSERT INTO platform_role_grants (user_id,role,granted_by,reason)
+     VALUES ($1,$2,'wo03-fixture',$3)`,
+    [userId, role, `${TAG} fixture platform operator`]
+  );
+}
+
+/** Teardown: grantPlatformRole's rows, before their users (FK). A leftover is a live platform role. */
+const DELETE_FIXTURE_PLATFORM_GRANTS = `DELETE FROM platform_role_grants WHERE user_id IN
+  (SELECT id FROM users WHERE default_organization_id=ANY($1::int[]))`;
+
 /** Clears everything the fixture, or a suite on it, left under the two reserved orgs. */
 export async function teardownTwoTenantFixture(): Promise<void> {
   invalidateOrgMembershipCache();
@@ -429,6 +477,7 @@ export async function teardownTwoTenantFixture(): Promise<void> {
         await cleanup.query('DELETE FROM organization_users WHERE organization_id=ANY($1::int[])', [
           FIXTURE_ORGS,
         ]);
+        await cleanup.query(DELETE_FIXTURE_PLATFORM_GRANTS, [FIXTURE_ORGS]);
         await cleanup.query('DELETE FROM users WHERE default_organization_id=ANY($1::int[])', [
           FIXTURE_ORGS,
         ]);

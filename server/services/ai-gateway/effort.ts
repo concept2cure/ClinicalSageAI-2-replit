@@ -8,8 +8,8 @@
  * unit-tested independently of the gateway and the SSE transport.
  *
  *   effort → strategy        resolveEffortStrategy / resolveStrategyWithPrecedence
- *   model_override validity  resolveModelOverride
- *   registry → picker shape  projectModelsForPicker
+ *   model_override validity  resolveModelOverride (enabled + approved-models)
+ *   registry → picker shape  projectModelsForPicker (approved-models only)
  *
  * @module server/services/ai-gateway/effort
  */
@@ -20,6 +20,7 @@ import {
   type ModelConfig,
   type RoutingStrategy,
 } from './types';
+import { approvedEntryFor, type ApprovedModel, type PqStatus } from '../ai-governance/approved-models';
 
 /** The picker's three effort options, in display order. */
 export const EFFORT_LEVELS: readonly EffortLevel[] = ['fast', 'balanced', 'thorough'] as const;
@@ -91,11 +92,61 @@ export function resolveStrategyWithPrecedence(input: {
 }
 
 /**
- * Validate a client-supplied `model_override` against the enabled model set.
- * Matches on either the registry `id` or the wire `model` string (the picker
- * sends `id`, but we accept either for resilience). An invalid / disabled /
- * absent override resolves to `null` so the caller can DROP IT SILENTLY and
- * fall back to the effort strategy — never a 4xx.
+ * The approved-models entry a registry row IS, or undefined. Found the way the
+ * served-model gate finds one ({@link approvedEntryFor}: provider plus wire
+ * model), then held to identity: the entry's own id, and its pinned version on
+ * the wire. The lookup alone is looser than a pin in two ways, both closed here:
+ *
+ *   - it also accepts a wire model EQUAL TO an entry's alias id (e.g. wire
+ *     'claude-opus-4'), which names no pinned version at all;
+ *   - it keys on the wire model, where the gateway's high-risk check keys on the
+ *     registry id (`isApprovedForHighRisk(model.id)`), so a row carrying an
+ *     approved version under another id would pass here and be refused there.
+ *
+ * The drift gate (detectModelDrift) already holds the registry to the same id
+ * and pinned version, so every model in today's registry is its own entry and
+ * this refuses none of them.
+ */
+function governingEntry(m: ModelConfig): ApprovedModel | undefined {
+  const entry = approvedEntryFor({ provider: m.provider, model: m.model });
+  return entry && entry.id === m.id && entry.pinnedVersion === m.model ? entry : undefined;
+}
+
+/**
+ * Validate a client-supplied `model_override`. It is pinned only when all of
+ * these hold, in order:
+ *
+ *   1. Enabled — the model is in the enabled set, matched on either the
+ *      registry `id` or the wire `model` string (the picker sends `id`, but we
+ *      accept either for resilience).
+ *   2. Approved — the registry row is an approved-models entry: that entry's
+ *      id, provider and pinned version ({@link governingEntry}). CLAUDE.md
+ *      Rule 2: a model is selectable only as an approved-models entry with a
+ *      pinned version, rationale and eval reference. Until 2026-09-28 any
+ *      enabled model passed, and the gateway's own check refuses an unapproved
+ *      explicit model on HIGH-RISK work only — so on every other turn a model
+ *      with no governance entry could be pinned by any authenticated caller.
+ *      An approved alias moved to any wire model its entry does not pin —
+ *      including the alias id itself — fails here too.
+ *   3. High-risk — when `opts.highRisk`, the entry is `approvedForHighRisk`. The
+ *      gateway would refuse such a pin on high-risk work outright; refusing it
+ *      here lets the caller fall back to its default instead. Because step 2
+ *      holds the row to the entry's id, this is the same answer the gateway's
+ *      id-keyed check gives for the row matched here.
+ *
+ * `opts.highRisk` has no default. A default of "not high-risk" let any caller
+ * that forgot the question skip step 3; the type now makes every caller answer
+ * it, and a JS caller that still omits it gets the strict answer.
+ *
+ * This does not enforce Rule 2's PQ clause: `approvedForHighRisk` is the
+ * entry's approval, and every entry's PQ is still 'pending'. Nor does it apply
+ * the tenant's placement (residency, ZDR, vendor allow-list); the gateway does,
+ * and drops a pin placement excludes without saying so.
+ *
+ * Anything else — including an absent, empty or non-string value — resolves to
+ * `null` and the caller falls back to the effort strategy; never a 4xx. Whether
+ * a refusal is SAID is the caller's decision: the stream route writes a
+ * MODEL_OVERRIDE_REFUSED warning when a non-blank string resolves to null.
  *
  * Returns the resolved `{ provider, model }` to hand to the gateway's
  * explicit-override path, so the caller doesn't re-scan the registry.
@@ -103,12 +154,18 @@ export function resolveStrategyWithPrecedence(input: {
 export function resolveModelOverride(
   value: unknown,
   enabledModels: ModelConfig[],
+  opts: { highRisk: boolean },
 ): { id: string; provider: ModelConfig['provider']; model: string } | null {
   if (typeof value !== 'string' || value.length === 0) return null;
   const match = enabledModels.find(
     (m) => m.enabled && (m.id === value || m.model === value),
   );
   if (!match) return null;
+  const entry = governingEntry(match);
+  if (!entry) return null;
+  // Only an explicit `false` is normal-risk work; missing is the strict case.
+  const highRisk = opts?.highRisk !== false;
+  if (highRisk && entry.approvedForHighRisk !== true) return null;
   return { id: match.id, provider: match.provider, model: match.model };
 }
 
@@ -130,6 +187,21 @@ export interface PickerModel {
   recommendedEffort: EffortLevel;
   contextWindow: number;
   qualityScore: number;
+  /**
+   * The entry's `approvedForHighRisk`: whether governance has approved this
+   * model for high-risk work (regulatory drafting and review). A pin of one
+   * that is not is refused on such a turn — see {@link resolveModelOverride}.
+   * It is not a PQ result: Rule 2's "only PQ-passed models serve high-risk
+   * regulatory drafting" is enforced nowhere yet, and `pqStatus` says where
+   * each model stands.
+   */
+  approvedForHighRisk: boolean;
+  /**
+   * Performance qualification, read from the entry's `pq.status` — 'pending'
+   * for every entry today. Read, never defaulted: an option says 'passed' only
+   * where the governed data records a pass.
+   */
+  pqStatus: PqStatus['status'];
 }
 
 /**
@@ -201,22 +273,35 @@ export function deriveRecommendedEffort(m: ModelConfig): EffortLevel {
 
 /**
  * Project the gateway's model registry into the picker's option list. Filters
- * to enabled models and derives `label` + `recommendedEffort` (neither exists
- * on {@link ModelConfig}). Sorted highest-quality first so the dropdown leads
- * with the flagship. Pure — takes the registry, returns a new array.
+ * to enabled models that are an approved-models entry ({@link governingEntry})
+ * — the set {@link resolveModelOverride} will pin on normal-risk work, so the
+ * picker never offers a model the route would refuse on every turn — and
+ * derives `label` + `recommendedEffort`
+ * (neither exists on {@link ModelConfig}). Each option carries its entry's
+ * `approvedForHighRisk` and PQ status, so an option cannot read as more
+ * approved than it is. Sorted highest-quality first so the dropdown leads with
+ * the flagship. Pure — takes the registry, returns a new array.
  */
 export function projectModelsForPicker(models: ModelConfig[]): PickerModel[] {
   return models
-    .filter((m) => m.enabled)
-    .map((m) => ({
-      id: m.id,
-      model: m.model,
-      provider: m.provider,
-      label: deriveModelLabel(m),
-      recommendedEffort: deriveRecommendedEffort(m),
-      contextWindow: m.contextWindow,
-      qualityScore: m.qualityScore,
-    }))
+    .flatMap((m): PickerModel[] => {
+      if (!m.enabled) return [];
+      const entry = governingEntry(m);
+      if (!entry) return [];
+      return [
+        {
+          id: m.id,
+          model: m.model,
+          provider: m.provider,
+          label: deriveModelLabel(m),
+          recommendedEffort: deriveRecommendedEffort(m),
+          contextWindow: m.contextWindow,
+          qualityScore: m.qualityScore,
+          approvedForHighRisk: entry.approvedForHighRisk,
+          pqStatus: entry.pq.status,
+        },
+      ];
+    })
     .sort((a, b) => b.qualityScore - a.qualityScore);
 }
 
@@ -243,9 +328,12 @@ export function projectModelsForPicker(models: ModelConfig[]): PickerModel[] {
  * why: a name rule is exactly what let every Bedrock id skip every check.
  */
 export function apiEffortForModel(
-  model: Pick<ModelConfig, 'maxApiEffort'>,
-  effort: 'low' | 'medium' | 'high' | 'max' | undefined
+  model: Pick<ModelConfig, 'maxApiEffort' | 'defaultApiEffort'>,
+  requested: 'low' | 'medium' | 'high' | 'max' | undefined
 ): 'low' | 'medium' | 'high' | 'max' | undefined {
+  // The person's choice first; the entry's declared default only when there
+  // is none (see ModelConfig.defaultApiEffort).
+  const effort = requested ?? model.defaultApiEffort;
   if (!effort) return undefined;
   const ceiling = model.maxApiEffort;
   // Undeclared or null: send nothing. A missing declaration costs a turn its

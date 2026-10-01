@@ -1,15 +1,14 @@
 import { Router } from 'express';
-import { randomUUID } from 'crypto';
 import { z } from 'zod';
 import { pool } from '../db';
+import { inVerifiedOrgScope } from '../services/tenant/verified-org-scope';
 import { createScopedLogger } from '../utils/logger.js';
 import { invalidateOrgMembershipCache } from '../middleware/auth';
-import auditService from '../services/auditService';
-import { isEmailConfigured, sendInvitationEmail } from '../services/emailService';
 import {
-  INVITATION_TTL_MS,
-  mintPasswordSetupToken,
-  passwordSetupUrl,
+  issueInvitation,
+  type InvitationDelivery,
+} from '../services/tenant/invitation-delivery';
+import {
   resolveAppBaseUrl,
   PublicOriginNotConfiguredError,
 } from '../services/password-setup-token';
@@ -46,20 +45,21 @@ const updateUserRoleSchema = z.object({
  * list, create, re-role, or remove users in any organization. A platform
  * super_admin is allowed anywhere; otherwise the caller must belong to the
  * target org (membership for reads, admin/owner for mutations).
+ * Returns the verified role in the target org (truthy), or false once answered.
  */
 async function authorizeOrgAccess(
   req: any,
   res: any,
   targetOrgId: number,
   opts: { requireAdmin: boolean }
-): Promise<boolean> {
+): Promise<string | false> {
   const callerId = Number(req.user?.id ?? req.userId);
   const callerRole = req.userRole ?? req.user?.role;
   if (!callerId || Number.isNaN(callerId)) {
     res.status(401).json({ error: 'Authentication required' });
     return false;
   }
-  if (callerRole === 'super_admin') return true;
+  if (callerRole === 'super_admin') return 'super_admin';
   const membership = await pool.query(
     'SELECT role FROM organization_users WHERE user_id = $1 AND organization_id = $2 LIMIT 1',
     [callerId, targetOrgId]
@@ -73,8 +73,9 @@ async function authorizeOrgAccess(
     res.status(403).json({ error: 'Admin of the target organization required' });
     return false;
   }
-  return true;
+  return role;
 }
+
 
 /** Resolve the authenticated user's id from the request (set upstream). */
 function getCallerId(req: any): number | null {
@@ -95,96 +96,21 @@ function sessionOrganizationId(req: any): number | null {
   return Number.isInteger(n) && n > 0 ? n : null;
 }
 
-/** What the admin is told about how the invitee will receive their link. */
-interface InvitationDelivery {
-  expiresAt: string | null;
-  emailSent: boolean;
-  /**
-   * 'email' — the invitee has the link; 'link' — the admin must hand it over;
-   * 'failed' — the account exists but no activation link could be issued.
-   */
-  delivery: 'email' | 'link' | 'failed';
-  /** Present only when no email went out: the one copy of the setup link. */
-  setupUrl?: string;
-  /** Present when SMTP is configured but refused the message. */
-  emailError?: string;
-}
-
 /**
- * Activate a NEWLY created account: mint a password-setup token (the same
- * token "forgot password" uses — server/services/password-setup-token.ts),
- * store its hash on the user row, and send the invitation. The account was
- * inserted with an unusable password hash, so this link is the only way in.
- *
- * Delivery is reported honestly. When SMTP is not configured (or refuses the
- * message) nothing was sent, and the response carries the setup link so the
- * org admin — who just created the account and is the only reader of this
- * response — can hand it over. Either way the audit trail records which.
+ * The caller's own invitation by id, whichever organization issued it, or
+ * null — also null for another person's invitation, so its existence is not
+ * disclosed. It lives in the inviting organization's rows, which the session's
+ * tenant policy hides (migrations/20260928_invitations_for_member.sql).
  */
-async function issueInvitation(
-  req: any,
-  args: { userId: number; email: string; role: string; organizationId: number; appBaseUrl: string }
-): Promise<InvitationDelivery> {
-  const { appBaseUrl } = args;
-  const setup = mintPasswordSetupToken(INVITATION_TTL_MS);
-  // tenant-isolation-safe: users is a global identity table; this id is the row atomicCreateUser just created for the organization the caller was verified to administer (authorizeOrgAccess), inside this same request.
-  await pool.query(
-    `UPDATE users SET reset_token = $1, reset_token_expires_at = $2, updated_at = NOW() WHERE id = $3`,
-    [setup.tokenHash, setup.expiresAt, args.userId]
+async function ownInvitation(
+  callerId: number,
+  invitationId: number
+): Promise<{ organizationId: number; status: string } | null> {
+  const { rows } = await pool.query(
+    'SELECT organization_id, status FROM public.invitations_for_member($1) WHERE id = $2',
+    [callerId, invitationId]
   );
-  const setupUrl = passwordSetupUrl(appBaseUrl, setup.token);
-
-  const orgRow = await pool.query('SELECT name FROM organizations WHERE id = $1', [
-    args.organizationId,
-  ]);
-  const orgName: string = orgRow.rows[0]?.name ?? 'your organization';
-  const inviterName: string = req.user?.name || req.user?.email || 'An administrator';
-
-  let emailSent = false;
-  let emailError: string | undefined;
-  if (isEmailConfigured()) {
-    try {
-      emailSent = await sendInvitationEmail(
-        args.email,
-        inviterName,
-        orgName,
-        setupUrl,
-        setup.expiresAt
-      );
-    } catch (err) {
-      log.error('Invitation email failed', err);
-      emailError = 'The invitation email could not be sent';
-    }
-  }
-  const delivery: InvitationDelivery['delivery'] = emailSent ? 'email' : 'link';
-
-  const audit = await auditService.logAction({
-    tenantId: args.organizationId,
-    userId: getCallerId(req) ?? undefined,
-    action: 'user_invited',
-    resourceType: 'user',
-    resourceId: String(args.userId),
-    ipAddress: req.ip,
-    userAgent: req.get?.('user-agent'),
-    details: {
-      email: args.email,
-      role: args.role,
-      delivery,
-      emailSent,
-      invitationExpiresAt: setup.expiresAt.toISOString(),
-    },
-  });
-  if (!audit.persisted) {
-    log.warn('Audit log write failed (non-fatal)', { action: 'user_invited', err: audit.error });
-  }
-
-  return {
-    expiresAt: setup.expiresAt.toISOString(),
-    emailSent,
-    delivery,
-    ...(emailSent ? {} : { setupUrl }),
-    ...(emailError ? { emailError } : {}),
-  };
+  return rows[0] ? { organizationId: Number(rows[0].organization_id), status: String(rows[0].status) } : null;
 }
 
 /**
@@ -207,6 +133,10 @@ router.get('/invitations/mine', async (req, res) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
+    // The invitations naming the caller live in the INVITING organizations'
+    // rows, which this scope's tenant policy hides; invitations_for_member
+    // reads them for a member of this scope's organization and nobody else
+    // (migrations/20260928_invitations_for_member.sql).
     const result = await pool.query(
       `SELECT
          id,
@@ -216,8 +146,8 @@ router.get('/invitations/mine', async (req, res) => {
          status,
          invited_by_id as "invitedById",
          created_at as "createdAt"
-       FROM organization_invitations
-       WHERE user_id = $1 AND status = 'pending'
+       FROM public.invitations_for_member($1)
+       WHERE status = 'pending'
        ORDER BY created_at DESC`,
       [callerId]
     );
@@ -267,7 +197,16 @@ router.post('/invitations/:invitationId/accept', async (req, res) => {
       }>;
     };
 
-    const result = await atomicQuotaService.atomicAcceptInvitation(invitationId, callerId);
+    // Only the caller's own invitation is found, whichever organization issued
+    // it; the accept then runs in THAT organization's scope, where its tenant
+    // policy admits the invitation, the membership write and the quota lock.
+    const own = await ownInvitation(callerId, invitationId);
+    if (!own) {
+      return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'Invitation not found' });
+    }
+    const result = await inVerifiedOrgScope(req, own.organizationId, 'member', () =>
+      atomicQuotaService.atomicAcceptInvitation(invitationId, callerId)
+    );
 
     if (!result.success) {
       const statusByError: Record<string, number> = {
@@ -315,35 +254,28 @@ router.post('/invitations/:invitationId/decline', async (req, res) => {
       return res.status(400).json({ error: 'Invalid invitation ID' });
     }
 
-    const inviteResult = await pool.query(
-      `SELECT id, organization_id, user_id, status
-       FROM organization_invitations
-       WHERE id = $1`,
-      [invitationId]
-    );
-
-    if (inviteResult.rows.length === 0) {
+    // The caller's own invitation only (see accept); the decline is written in
+    // the inviting organization's scope, and must reach the row it names.
+    const invitation = await ownInvitation(callerId, invitationId);
+    if (!invitation) {
       return res.status(404).json({ error: 'Invitation not found' });
-    }
-
-    const invitation = inviteResult.rows[0];
-
-    if (Number(invitation.user_id) !== callerId) {
-      return res
-        .status(403)
-        .json({ error: 'Only the invited user may respond to this invitation' });
     }
 
     if (invitation.status !== 'pending') {
       return res.status(409).json({ error: `Invitation has already been ${invitation.status}` });
     }
 
-    await pool.query(
-      `UPDATE organization_invitations
-       SET status = 'declined', responded_at = NOW()
-       WHERE id = $1 AND organization_id = $2 AND user_id = $3 AND status = 'pending'`,
-      [invitationId, invitation.organization_id, callerId]
+    const declined = await inVerifiedOrgScope(req, invitation.organizationId, 'member', () =>
+      pool.query(
+        `UPDATE organization_invitations
+         SET status = 'declined', responded_at = NOW()
+         WHERE id = $1 AND organization_id = $2 AND user_id = $3 AND status = 'pending'`,
+        [invitationId, invitation.organizationId, callerId]
+      )
     );
+    if (declined.rowCount !== 1) {
+      return res.status(409).json({ error: 'Invitation is no longer pending' });
+    }
 
     log.debug(`Invitation ${invitationId} declined by user ${callerId}`);
     res.json({ success: true, message: 'Invitation declined' });
@@ -369,7 +301,8 @@ router.get('/:tenantId', async (req, res) => {
       return res.status(400).json({ error: 'Invalid tenant ID' });
     }
 
-    if (!(await authorizeOrgAccess(req, res, tenantId, { requireAdmin: false }))) return;
+    const verifiedRole = await authorizeOrgAccess(req, res, tenantId, { requireAdmin: false });
+    if (!verifiedRole) return;
 
     // Get users for this organization with their roles
     const query = `
@@ -391,7 +324,13 @@ router.get('/:tenantId', async (req, res) => {
       ORDER BY u.name ASC
     `;
 
-    const result = await pool.query(query, [tenantId]);
+    // In the organization being listed: a tenant scope reads only its own
+    // members' users rows (migrations/20260928_users_membership_rls.sql), so a
+    // member of two organizations listing the other from their session's scope
+    // would be shown an empty organization.
+    const result = await inVerifiedOrgScope(req, tenantId, verifiedRole, () =>
+      pool.query(query, [tenantId])
+    );
     log.debug(`Retrieved ${result.rows.length} users for organization ${tenantId}`);
     res.json(result.rows);
   } catch (error) {
@@ -424,7 +363,7 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Organization ID is required' });
     }
 
-    if (!(await authorizeOrgAccess(req, res, organizationId, { requireAdmin: true }))) return;
+    const verifiedRole = await authorizeOrgAccess(req, res, organizationId, { requireAdmin: true }); if (!verifiedRole) return;
 
     // The origin a new member's activation link is built on, resolved BEFORE
     // anything is created. In production it is APP_URL or nothing, never the
@@ -480,14 +419,16 @@ router.post('/', async (req, res) => {
         quotaInfo?: unknown;
       }>;
     };
-    const result = await atomicQuotaService.atomicCreateUser(organizationId, {
-      email: validatedData.email,
-      name: validatedData.name,
-      role: validatedData.role,
-      title: validatedData.title,
-      department: validatedData.department,
-      invitedById: getCallerId(req),
-    });
+    const result = await inVerifiedOrgScope(req, organizationId, verifiedRole, () =>
+      atomicQuotaService.atomicCreateUser(organizationId, {
+        email: validatedData.email,
+        name: validatedData.name,
+        role: validatedData.role,
+        title: validatedData.title,
+        department: validatedData.department,
+        invitedById: getCallerId(req),
+      })
+    );
 
     if (!result.success) {
       if (result.error === 'QUOTA_EXCEEDED') {
@@ -546,6 +487,8 @@ router.post('/', async (req, res) => {
           email: validatedData.email,
           role: validatedData.role,
           organizationId,
+          verifiedRole,
+          callerId: getCallerId(req),
           appBaseUrl,
         });
       } catch (err) {
@@ -591,7 +534,14 @@ router.patch('/:organizationId/:userId', async (req, res) => {
       return res.status(400).json({ error: 'Invalid organization ID or user ID' });
     }
 
-    if (!(await authorizeOrgAccess(req, res, organizationId, { requireAdmin: true }))) return;
+    const verifiedRole = await authorizeOrgAccess(req, res, organizationId, { requireAdmin: true }); if (!verifiedRole) return;
+
+    // PR #973 port: an admin re-roling THEMSELVES can leave an organization
+    // with no administrator and no one able to undo it. Checked after authZ so
+    // a non-member still gets 403, not a disclosure.
+    if (getCallerId(req) === userId) {
+      return res.status(400).json({ error: 'You cannot change your own role', code: 'SELF_ROLE_CHANGE' });
+    }
 
     const validatedData = updateUserRoleSchema.parse(req.body);
 
@@ -602,7 +552,7 @@ router.patch('/:organizationId/:userId', async (req, res) => {
       RETURNING *
     `;
 
-    const result = await pool.query(updateQuery, [validatedData.role, organizationId, userId]);
+    const result = await inVerifiedOrgScope(req, organizationId, verifiedRole, () => pool.query(updateQuery, [validatedData.role, organizationId, userId]));
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'User not found in organization' });
@@ -637,7 +587,12 @@ router.delete('/:organizationId/:userId', async (req, res) => {
       return res.status(400).json({ error: 'Invalid organization ID or user ID' });
     }
 
-    if (!(await authorizeOrgAccess(req, res, organizationId, { requireAdmin: true }))) return;
+    const verifiedRole = await authorizeOrgAccess(req, res, organizationId, { requireAdmin: true }); if (!verifiedRole) return;
+
+    // PR #973 port: self-removal — same lockout as a self re-role above.
+    if (getCallerId(req) === userId) {
+      return res.status(400).json({ error: 'You cannot remove yourself from an organization', code: 'SELF_REMOVAL' });
+    }
 
     const deleteQuery = `
       DELETE FROM organization_users
@@ -645,7 +600,7 @@ router.delete('/:organizationId/:userId', async (req, res) => {
       RETURNING *
     `;
 
-    const result = await pool.query(deleteQuery, [organizationId, userId]);
+    const result = await inVerifiedOrgScope(req, organizationId, verifiedRole, () => pool.query(deleteQuery, [organizationId, userId]));
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'User not found in organization' });

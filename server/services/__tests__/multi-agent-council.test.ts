@@ -15,6 +15,8 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 // Shared mock handles (hoisted so the vi.mock factories can close over them).
 const h = vi.hoisted(() => ({
@@ -203,6 +205,24 @@ describe('MultiAgentCouncilService — task routing and governance refusals', ()
     expect(h.auditLog).not.toHaveBeenCalledWith('CIRCUIT_BREAKER_OPENED', expect.anything(), expect.anything(), expect.anything());
   });
 
+  it('a tenant placement refusal is final, named for what it is, and not audited as an outage (D6)', async () => {
+    // Until 2026-09-26 it fell through to the outage branch: three retries, three
+    // "All LLM providers unavailable" records, and "the system will retry".
+    const refusal = Object.assign(
+      new Error("DENY_TENANT_POLICY: this request was not sent to any AI service, because your organization's data-placement policy does not permit it (no self-hosted lane)."),
+      { name: 'GatewayPolicyError', reasonCode: 'DENY_TENANT_POLICY', stage: 'selection' },
+    );
+    h.route.mockImplementation(async () => {
+      throw refusal;
+    });
+    (svc as any).RETRY_DELAY_MS = 0;
+    await expect(
+      (svc as any).withRetry(() => call('DRAFTER', { responseFormat: 'text' }), 'DRAFTER'),
+    ).rejects.toMatchObject({ code: 'TENANT_PLACEMENT_DENIED', recoverable: false, message: refusal.message });
+    expect(h.route).toHaveBeenCalledTimes(1);
+    expect(h.auditLog).not.toHaveBeenCalledWith('CIRCUIT_BREAKER_OPENED', expect.anything(), expect.anything(), expect.anything());
+  });
+
   it('withRetry does not retry an error marked unrecoverable, and does retry a recoverable one', async () => {
     const { CouncilError } = await import('../multi-agent-council');
     (svc as any).RETRY_DELAY_MS = 0;
@@ -233,12 +253,18 @@ interface Binding {
   query_templates: Record<string, string>;
 }
 
-function councilWith(bindings: Binding[], sqlRows: Record<string, unknown[]> = {}) {
+function councilWith(bindings: Binding[], sqlRows: Record<string, unknown[]> = {}, session: Record<string, unknown> = {}) {
   const inserted: Array<{ sql: string; params: unknown[] }> = [];
   const pool = {
     query: vi.fn(async (sql: string, params: unknown[] = []) => {
+      // Before the session read: an execution or verification row selects its
+      // tenant FROM lumen.council_sessions inside its INSERT.
+      if (/^\s*INSERT/.test(sql)) {
+        inserted.push({ sql, params });
+        return { rows: [] };
+      }
       if (/FROM lumen\.council_sessions/.test(sql)) {
-        return { rows: [{ id: 's1', section_path: '2.7.3', statistician_agent_id: 'a2', critic_agent_id: 'a3' }] };
+        return { rows: [{ id: 's1', section_path: '2.7.3', statistician_agent_id: 'a2', critic_agent_id: 'a3', organization_id: 42, ...session }] };
       }
       if (/FROM lumen\.agent_registry/.test(sql)) {
         return {
@@ -247,10 +273,6 @@ function councilWith(bindings: Binding[], sqlRows: Record<string, unknown[]> = {
       }
       if (/FROM lumen\.data_bindings/.test(sql)) return { rows: bindings };
       if (/SELECT id FROM lumen\.agent_executions/.test(sql)) return { rows: [{ id: 'e1' }] };
-      if (/^\s*INSERT/.test(sql)) {
-        inserted.push({ sql, params });
-        return { rows: [] };
-      }
       if (sql in sqlRows) return { rows: sqlRows[sql] };
       throw new Error(`unexpected query: ${sql}`);
     }),
@@ -406,5 +428,82 @@ describe('Critic — an unreadable review is not "no issues"', () => {
 
     h.route.mockResolvedValue({ ...VALID_RESPONSE, content: JSON.stringify({ issues: [], overall_assessment: 'LGTM' }) });
     expect((await svc.executeCritic('s1', 'draft', STATS)).overallAssessment).toBe('REVISE');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The council runs for one tenant, and says so everywhere (D6, 2026-09-29).
+// Until then initializeSession wrote no organization, every gateway call passed
+// organizationId: undefined (so the ledger bound the tenant only from ambient
+// scope), and the three lumen tables it writes had no tenant column at all.
+// ---------------------------------------------------------------------------
+describe('the council is bound to its tenant', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    h.isFeatureAvailable.mockReturnValue(true);
+    h.intelligencePrefix.mockResolvedValue('');
+    h.auditLog.mockResolvedValue(undefined);
+    h.analyze.mockImplementation((s: string) => ({ detected: [], blocked: false, sanitized: s, riskScore: 0 }));
+  });
+
+  function sessionPool() {
+    const inserted: Array<{ sql: string; params: unknown[] }> = [];
+    const pool = {
+      query: vi.fn(async (sql: string, params: unknown[] = []) => {
+        if (/^\s*INSERT/.test(sql)) {
+          inserted.push({ sql, params });
+          return { rows: [] };
+        }
+        if (/FROM lumen\.agent_registry/.test(sql)) {
+          return { rows: ['DRAFTER', 'STATISTICIAN', 'CRITIC', 'SYNTHESIZER'].map((r, i) => ({ id: `a${i}`, agent_code: r, agent_role: r })) };
+        }
+        return { rows: [] };
+      }),
+    };
+    return { svc: new MultiAgentCouncilService(pool as any) as any, inserted };
+  }
+
+  it('a session is created for an organization, and records it', async () => {
+    const { svc, inserted } = sessionPool();
+    await svc.initializeSession('2.5', {}, [], { organizationId: 42 });
+
+    const row = inserted.find(i => /INSERT INTO lumen\.council_sessions/.test(i.sql))!;
+    expect(row.sql).toMatch(/organization_id/);
+    expect(row.params).toContain(42);
+  });
+
+  it('a session with no organization is refused, and nothing is written', async () => {
+    const { svc, inserted } = sessionPool();
+    await expect(svc.initializeSession('2.5', {}, [], {} as never)).rejects.toThrow(/organization/i);
+    expect(inserted).toHaveLength(0);
+  });
+
+  it("every agent's model call names the session's organization", async () => {
+    const { svc } = councilWith([], {}, { organization_id: 42 });
+    h.route.mockResolvedValue({ ...VALID_RESPONSE, content: JSON.stringify({ verifications: [] }) });
+    await svc.executeStatistician('s1', 'draft');
+
+    expect(h.route).toHaveBeenCalled();
+    for (const [request] of h.route.mock.calls) expect(request).toMatchObject({ organizationId: 42 });
+  });
+
+  it('all four agents pass it, not only the one exercised above', () => {
+    const src = readFileSync(resolve(__dirname, '..', 'multi-agent-council.ts'), 'utf8');
+    const calls = [...src.matchAll(/this\.executeLLMWithFailover\([\s\S]*?\n\s{4}\);/g)].map(m => m[0]);
+    expect(calls).toHaveLength(4);
+    for (const call of calls) expect(call).toMatch(/organizationId: session\.organization_id/);
+  });
+
+  it("an execution row and a verification row take their tenant from the session's row", async () => {
+    const { svc, inserted } = councilWith([ENROLMENT], { 'SELECT n FROM enrolled': [{ n: 412 }], 'SELECT n FROM deaths': [{ n: 3 }] });
+    statisticianSays([{ claim: '2 deaths', claimedValue: '2', source: 'EDC', status: 'VERIFIED' }]);
+    await svc.executeStatistician('s1', 'draft');
+
+    const tables = ['agent_executions', 'data_verifications'];
+    for (const table of tables) {
+      const row = inserted.find(i => new RegExp(`INSERT INTO lumen\\.${table}`).test(i.sql));
+      expect(row, table).toBeDefined();
+      expect(row!.sql, table).toMatch(/organization_id[\s\S]*SELECT s\.organization_id[\s\S]*FROM lumen\.council_sessions s/);
+    }
   });
 });

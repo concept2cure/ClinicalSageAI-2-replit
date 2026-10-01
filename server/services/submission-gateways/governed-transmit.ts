@@ -361,7 +361,15 @@ export interface GovernedTransmitOutcome {
    * filed history. The bytes are with the agency either way; what is lost is
    * the baseline the NEXT sequence diffs against, so the caller must say so
    * rather than let a follow-up be planned against a stale history.
-   * 'not-applicable' ONLY for a bundle that files no eCTD sequence.
+   * 'not-applicable' ONLY for a bundle that files no eCTD sequence, or for a
+   * send to an environment other than 'production', which files nothing
+   * (filedSequenceReason says which).
+   * 2026-10-01 (W5/D7, sweep F14): a send to the agency's TEST environment
+   * ('staging', FDA ESG's pre-production endpoint) was appended to the filed
+   * history as if it were on file. The production 0000 could then never be
+   * assembled (SEQUENCE_ALREADY_FILED), 0001 was planned as a replace against
+   * a 0000 the agency's production record does not have, and the sign record
+   * said the test send had filed it.
    */
   filedSequenceRecorded: boolean | 'not-applicable';
   /**
@@ -375,6 +383,7 @@ export interface GovernedTransmitOutcome {
   filedSequenceReason:
     | 'recorded'
     | 'no-sequence'          // not an eCTD sequence filing (or a dev/test client bundle)
+    | 'test-environment'     // an eCTD sequence sent to a non-production (agency test) environment
     | 'no-usable-manifest'   // an eCTD sequence whose leaf inventory is absent or unreadable
     | 'write-failed';        // the append itself did not land
   /**
@@ -389,11 +398,52 @@ export interface GovernedTransmitOutcome {
   preTransmitWarnings: string[] | null;
 }
 
-/** Operator wording for a content change that landed during the send. */
-export const CONTENT_CHANGED_DURING_TRANSMIT =
-  'The package content changed while the transmission was in progress. The agency received the assembled bundle ' +
-  'as recorded on this transmittal (its sha256); the package no longer matches it. Review the change and re-assemble ' +
-  'before any further transmission.';
+/**
+ * The agency has the bytes: append the sequence they file to the package's
+ * filed history, which the next sequence diffs against. Recorded before the
+ * ledger write and independently of it — an audit outage must not also cost
+ * the lifecycle baseline. Never throws: the transmit is irreversible and is
+ * not undone by a failure here.
+ */
+async function recordTransmittedSequence(
+  input: GovernedTransmitInput,
+  bundle: ResolvedBundle,
+  transmittalId: number | null,
+): Promise<Pick<GovernedTransmitOutcome, 'filedSequenceRecorded' | 'filedSequenceReason'>> {
+  if (input.packageId == null || input.clientBundle || !bundle.sequence) {
+    return { filedSequenceRecorded: 'not-applicable', filedSequenceReason: 'no-sequence' };
+  }
+  // Only a production send puts a sequence on file. The agency's test
+  // environment is not a regulatory submission (2026-10-01, W5/D7, sweep F14;
+  // see GovernedTransmitOutcome.filedSequenceRecorded). `!==`, so a value that
+  // is neither environment files nothing rather than something untrue.
+  if (input.environment !== 'production') {
+    return { filedSequenceRecorded: 'not-applicable', filedSequenceReason: 'test-environment' };
+  }
+  if (!bundle.leafManifest?.length) {
+    // An eCTD sequence WITH no readable inventory is not a non-event: the
+    // filing is at the agency and the history will not know it happened.
+    // Reported as a failure so the caller can say so, where it used to stay
+    // 'not-applicable' and say nothing at all.
+    input.log?.error('transmit-filed-sequence-no-manifest', {
+      packageId: String(input.packageId), sequence: bundle.sequence, region: input.region, gateway: input.gateway,
+    });
+    return { filedSequenceRecorded: false, filedSequenceReason: 'no-usable-manifest' };
+  }
+  const recorded = await recordFiledSequence(input.packageId, {
+    sequence: bundle.sequence,
+    submissionType: bundle.submissionType ?? '',
+    sha256: bundle.sha256,
+    transmittalId,
+    leaves: bundle.leafManifest,
+  });
+  if (!recorded) {
+    input.log?.error('transmit-filed-sequence-record-failed', {
+      packageId: String(input.packageId), sequence: bundle.sequence, region: input.region, gateway: input.gateway,
+    });
+  }
+  return { filedSequenceRecorded: recorded, filedSequenceReason: recorded ? 'recorded' : 'write-failed' };
+}
 
 /**
  * Run the full governed transmit ceremony and hand the bytes to the regional
@@ -665,39 +715,10 @@ export async function executeGovernedTransmit(
     }
   }
 
-  // The agency has the bytes: this sequence is now ON FILE, and the next one
-  // must diff against it. Recorded before the ledger write and independently
-  // of it — an audit outage must not also cost the lifecycle baseline. Never
-  // throws: the transmit is irreversible and is not undone by a failure here.
-  let filedSequenceRecorded: GovernedTransmitOutcome['filedSequenceRecorded'] = 'not-applicable';
-  let filedSequenceReason: GovernedTransmitOutcome['filedSequenceReason'] = 'no-sequence';
-  if (input.packageId != null && !input.clientBundle && bundle.sequence) {
-    if (!bundle.leafManifest?.length) {
-      // An eCTD sequence WITH no readable inventory is not a non-event: the
-      // filing is at the agency and the history will not know it happened.
-      // Reported as a failure so the caller can say so, where it used to stay
-      // 'not-applicable' and say nothing at all.
-      filedSequenceRecorded = false;
-      filedSequenceReason = 'no-usable-manifest';
-      input.log?.error('transmit-filed-sequence-no-manifest', {
-        packageId: String(input.packageId), sequence: bundle.sequence, region, gateway,
-      });
-    } else {
-      filedSequenceRecorded = await recordFiledSequence(input.packageId, {
-        sequence: bundle.sequence,
-        submissionType: bundle.submissionType ?? '',
-        sha256: bundle.sha256,
-        transmittalId: result.transmittalId ?? null,
-        leaves: bundle.leafManifest,
-      });
-      filedSequenceReason = filedSequenceRecorded ? 'recorded' : 'write-failed';
-      if (!filedSequenceRecorded) {
-        input.log?.error('transmit-filed-sequence-record-failed', {
-          packageId: String(input.packageId), sequence: bundle.sequence, region, gateway,
-        });
-      }
-    }
-  }
+  // The agency has the bytes: a production send of an eCTD sequence puts it
+  // ON FILE, and the next one must diff against it (recordTransmittedSequence).
+  const { filedSequenceRecorded, filedSequenceReason } =
+    await recordTransmittedSequence(input, bundle, result.transmittalId ?? null);
 
   // Record the governed sign AFTER the external transmit succeeds. The external
   // transmit is irreversible, so if the ledger write fails we report it and
@@ -764,7 +785,7 @@ export async function executeGovernedTransmit(
       // a digest of the exact bundle bytes the agency received. Freeze and
       // dispatch always wrote this row; transmit — the irreversible act — never
       // did, so no signature manifestation existed for it anywhere.
-      await persistGovernedActionSignature(client, {
+      const signature = await persistGovernedActionSignature(client, {
         orgId: organizationId,
         userId,
         target: signedTarget,
@@ -790,6 +811,22 @@ export async function executeGovernedTransmit(
         extraManifest: { ...filedSequenceFacts, ...preTransmitFacts },
         manifestKind: 'governed-transmit',
       });
+      // 2026-09-28 (Q-0928-3): the declared §11.50 meaning lived only on the
+      // electronic_signatures row, which the transmittal log does not read, so
+      // the meaning a signer asserted was never shown back anywhere. Stamped on
+      // the transmittal in THIS transaction — it exists exactly when the
+      // signature does — and merged, because the gateways read
+      // metadata.environment from the same column.
+      await client.query(
+        `UPDATE submission_transmittals
+            SET metadata = COALESCE(metadata, '{}'::jsonb) || $1::jsonb, updated_at = now()
+          WHERE id = $2 AND organization_id = $3`,
+        [
+          JSON.stringify({ signature: { meaning: input.meaning, signatureId: signature.id } }),
+          result.transmittalId,
+          organizationId,
+        ],
+      );
       await client.query('COMMIT');
     } catch (ledgerErr) {
       try { await client.query('ROLLBACK'); } catch { /* noop */ }

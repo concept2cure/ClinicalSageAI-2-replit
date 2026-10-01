@@ -1,0 +1,686 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/authoring-record-export.pglite.test.ts
+{
+  "timestamp": "2026-10-01T01:12:25.595Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-record-attribution.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts
+{
+  "timestamp": "2026-10-01T01:12:29.063Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoring-record-attribution.pglite.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoring-record-export.pglite.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoring-record-export.pglite.test.ts
+{
+  "timestamp": "2026-10-01T01:12:31.260Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: comment_added on doc e0c0000a-0000-4000-8000-00000000000a by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-record-export.pglite.test.ts
+{
+  "timestamp": "2026-10-01T01:12:31.287Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: tracked_change_decision on doc e0c0000a-0000-4000-8000-00000000000a by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > the content, its revision, its trail row and the chained row are written on the transaction’s client, between BEGIN and COMMIT
+{
+  "timestamp": "2026-10-01T01:12:31.289Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e0c000ac-0000-4000-8000-0000000000ac by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 1 — a decision on a document this tenant does not have > the same decision on this tenant’s own document is recorded (the control)
+{
+  "timestamp": "2026-10-01T01:12:31.292Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: tracked_change_decision on doc 912ed239-7085-40e6-9ff4-fdc9dda447b5 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 1 — a decision on a document this tenant does not have > an id that names no document: 404 for single and bulk, and nothing is written 66ms
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 1 — a decision on a document this tenant does not have > another tenant’s document: 404 for single and bulk, and nothing is written 19ms
+stdout | server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 2 — the acts the legacy wrapper wrote carry the real actor, and no invented reason > a section reorder (on the transaction): actor on the trail row and the chained row; no reason
+{
+  "timestamp": "2026-10-01T01:12:31.333Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: REORDER_SECTIONS on doc 9825d2d0-7921-4a87-a8e4-e8c38120a3e1 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 2 — the acts the legacy wrapper wrote carry the real actor, and no invented reason > a review stating why (standalone): the actor on both rows, and the reviewer’s words as the reason
+{
+  "timestamp": "2026-10-01T01:12:31.366Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 23d3d6c6-166b-4d09-8b44-c5c771b8bcf4 by a***@canvas.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T01:12:31.368Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.document_reviewed authoring_document",
+  "context": {
+    "userId": "3",
+    "tenantId": 1,
+    "resourceId": "23d3d6c6-166b-4d09-8b44-c5c771b8bcf4"
+  }
+}
+
+stdout | server/routes/__tests__/authoring-record-export.pglite.test.ts > (ii) the same steps catch a rewrite > (ii) the same offline steps catch a quoted passage rewritten past the table’s guard
+{
+  "timestamp": "2026-10-01T01:12:31.372Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: comment_added on doc e0c0000c-0000-4000-8000-00000000000c by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 2 — the acts the legacy wrapper wrote carry the real actor, and no invented reason > an approval with no comment: the actor, and no reason at all
+{
+  "timestamp": "2026-10-01T01:12:31.401Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: document_reviewed on doc 122b5bea-d600-4154-9ddc-7a9a463861b5 by a***@canvas.example",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T01:12:31.402Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] authoring.section.document_reviewed authoring_document",
+  "context": {
+    "userId": "3",
+    "tenantId": 1,
+    "resourceId": "122b5bea-d600-4154-9ddc-7a9a463861b5"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the authoring_audit_trail INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable
+CRITICAL: Failed to create audit trail: Error: injected: INSERT INTO authoring_audit_trail failed
+    at Object.query (/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/_authoring-record-fixture.ts:61:13)
+    at writeAuthoringAuditTrail (/home/user/ClinicalSageAI-2-replit/server/services/authoring/authoring-evidence.ts:240:37)
+    at createAuditTrail (/home/user/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:705:9)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:3714:13
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stderr | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the authoring_audit_trail INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable
+{
+  "timestamp": "2026-10-01T01:12:31.409Z",
+  "level": "error",
+  "message": "[authoring-router] AI draft accept refused — content and lineage rolled back together",
+  "context": {
+    "sectionId": "a9654afe-fe00-49dd-8974-59ef29ceb492",
+    "tenantId": 1,
+    "err": "injected: INSERT INTO authoring_audit_trail failed"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-record-export.pglite.test.ts > (iii) no record, no export > (iii) when the export row cannot be written: 503 AUTHORING_RECORD_EXPORT_NOT_RECORDED, and no package leaves
+[audited-export] export not recorded: injected: INSERT INTO audit_logs failed
+
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (i) the export is recorded before it leaves > (i) writes exactly one chained "authoring.record.exported" row, committed before the response is sent 34ms
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (ii) the package verifies offline > (ii) every chained event in the package verifies offline by the package’s own steps 23ms
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (ii) the same steps catch a rewrite > (ii) the same offline steps catch a quoted passage rewritten past the table’s guard 37ms
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 1 — a decision on a document this tenant does not have > the same decision on this tenant’s own document is recorded (the control) 42ms
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 2 — the acts the legacy wrapper wrote carry the real actor, and no invented reason > a section reorder (on the transaction): actor on the trail row and the chained row; no reason 28ms
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 2 — the acts the legacy wrapper wrote carry the real actor, and no invented reason > a review stating why (standalone): the actor on both rows, and the reviewer’s words as the reason 41ms
+stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the authoring_audit_trail INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable
+{
+  "timestamp": "2026-10-01T01:12:31.440Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e0c000ac-0000-4000-8000-0000000000ac by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > the content, its revision, its trail row and the chained row are written on the transaction’s client, between BEGIN and COMMIT 139ms
+stderr | server/routes/__tests__/authoring-record-export.pglite.test.ts > (v) a chain walk that could not run > (v) when the tenant chain walk throws, tenantChain.ok is null in the package and in the recorded row — never true
+[audited-export] tenant chain walk failed: injected: no admin-scoped connection for the chain walk
+
+stderr | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the doc_revisions INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable
+Error creating revision: Error: injected: INSERT INTO doc_revisions failed
+    at Object.query (/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/_authoring-record-fixture.ts:61:13)
+    at createRevision (/home/user/ClinicalSageAI-2-replit/server/services/authoring/authoring-evidence.ts:399:20)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:3713:7
+
+stderr | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the doc_revisions INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable
+{
+  "timestamp": "2026-10-01T01:12:31.485Z",
+  "level": "error",
+  "message": "[authoring-router] AI draft accept refused — content and lineage rolled back together",
+  "context": {
+    "sectionId": "319dcd62-e4ac-4b8d-a145-63534b5da660",
+    "tenantId": 1,
+    "err": "injected: INSERT INTO doc_revisions failed"
+  }
+}
+
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (iii) no record, no export > (iii) when the export row cannot be written: 503 AUTHORING_RECORD_EXPORT_NOT_RECORDED, and no package leaves 34ms
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (iv) tenancy > (iv) another tenant’s document is 404 in both directions — nothing written, nothing sent 21ms
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (iv) an id that is not a document id > is 404 on the read and the export — not the uuid cast's 500 — and nothing is written 5ms
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (v) a chain walk that could not run > (v) when the tenant chain walk throws, tenantChain.ok is null in the package and in the recorded row — never true 13ms
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > the database this ran on > had every table and column the routes under test asked for 0ms
+stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the doc_revisions INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable
+{
+  "timestamp": "2026-10-01T01:12:31.521Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e0c000ac-0000-4000-8000-0000000000ac by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > what the record says about the draft > an edited draft: generated_draft is the candidate text and generated_draft_sha256 its hash; the row verifies against its chain
+{
+  "timestamp": "2026-10-01T01:12:31.567Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e0c000ac-0000-4000-8000-0000000000ac by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the authoring_audit_trail INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable 126ms
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the doc_revisions INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable 81ms
+stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > what the record says about the draft > an unedited draft (content sent equal to the candidate): generated_draft is absent, its hash is recorded
+{
+  "timestamp": "2026-10-01T01:12:31.622Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e0c000ac-0000-4000-8000-0000000000ac by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > what the record says about the draft > an unedited draft (content omitted): generated_draft is absent, its hash is recorded
+{
+  "timestamp": "2026-10-01T01:12:31.656Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: UPDATE on doc e0c000ac-0000-4000-8000-0000000000ac by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > what the record says about the draft > an edited draft: generated_draft is the candidate text and generated_draft_sha256 its hash; the row verifies against its chain 60ms
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > what the record says about the draft > an unedited draft (content sent equal to the candidate): generated_draft is absent, its hash is recorded 34ms
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > what the record says about the draft > an unedited draft (content omitted): generated_draft is absent, its hash is recorded 34ms
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the database this ran on > had every table and column the routes under test asked for 0ms
+stdout | server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 3 — who may read and export a document's record > the document's owner, and the organization's audit reader, read and export it
+{
+  "timestamp": "2026-10-01T01:12:31.754Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T01:12:31.755Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 3 — who may read and export a document's record > the document's owner, and the organization's audit reader, read and export it
+{
+  "timestamp": "2026-10-01T01:12:31.755Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 3 — who may read and export a document's record > the document's owner, and the organization's audit reader, read and export it
+[audited-export] tenant chain walk failed: Cannot read properties of undefined (reading 'rows')
+
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 2 — the acts the legacy wrapper wrote carry the real actor, and no invented reason > an approval with no comment: the actor, and no reason at all 30ms
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 2 — the acts the legacy wrapper wrote carry the real actor, and no invented reason > no row anywhere carries the reason "Legacy audit event" 1ms
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 3 — who may read and export a document's record > a member with no grant on the document: 403 on the read and the export, and nothing is exported 24ms
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 3 — who may read and export a document's record > a VIEWER grant reads the trail but may not export it; a revoked grant reads nothing 18ms
+stdout | server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 4 — the session a trail row names is the token's, not a header > records the verified token's sid, and ignores a caller-sent x-session-id
+{
+  "timestamp": "2026-10-01T01:12:31.819Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: REORDER_SECTIONS on doc a7af6249-3556-4d26-980d-424d1a613d4f by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 3 — who may read and export a document's record > the document's owner, and the organization's audit reader, read and export it 333ms
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 3 — who may read and export a document's record > another organization's document, or an id that is not one: 404 either way 12ms
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 4 — the session a trail row names is the token's, not a header > records the verified token's sid, and ignores a caller-sent x-session-id 19ms
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > the database this ran on > had every table and column the routes under test asked for 0ms
+stderr | server/routes/ana-ri/__tests__/turn-records.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/ana-ri/__tests__/turn-records.pglite.test.ts
+{
+  "timestamp": "2026-10-01T01:12:32.647Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts
+{
+  "timestamp": "2026-10-01T01:12:32.879Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T01:12:32.881Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts
+{
+  "timestamp": "2026-10-01T01:12:32.882Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/audit-compliance-reports.test.ts
+{
+  "timestamp": "2026-10-01T01:12:33.127Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T01:12:33.128Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts
+{
+  "timestamp": "2026-10-01T01:12:33.128Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/audit-compliance-reports.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts
+{
+  "timestamp": "2026-10-01T01:12:33.469Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a production deployment without its export key is 503 REPORT_SIGNING_UNAVAILABLE, before any read
+{
+  "timestamp": "2026-10-01T01:12:33.629Z",
+  "level": "error",
+  "message": "[audit-compliance-reports] compliance report refused: the audit export signing key is not available",
+  "context": {
+    "err": "[audit-export-key-posture] REFUSING TO BOOT: AUDIT_EXPORT_SIGNING_KEY is not configured in production. It signs the audit exports an inspector re-verifies (21 CFR Part 11 §11.10(e)); without it the export would be sealed under the JWT secret, the session-token key. Set it to a high-entropy secret held outside the database (KMS / secrets manager), with AUDIT_EXPORT_SIGNING_KEY_ID naming it. There is no accept flag for this posture."
+  }
+}
+
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports — the catalog > a member sees the catalog and that they cannot run it 31ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports — the catalog > an administrator can run them; a platform administrator too 8ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports — the catalog > no organisation, no catalog 3ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a non-reader is refused 403 with the audit gate body, before any query 4ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a session without an organisation is refused 403 3ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > an unknown report is 404 UNKNOWN_REPORT 4ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > the full audit trail is 409 USE_SIGNED_EXPORT: its run is the signed export 3ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a bad period (from=2026-09-30&to=2026-09-01) is 400 BAD_PERIOD 5ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a bad period (to=2026-02-30) is 400 BAD_PERIOD 4ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a bad period (from=2024-01-01&to=2026-01-01) is 400 BAD_PERIOD 2ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — refusals before any read > a production deployment without its export key is 503 REPORT_SIGNING_UNAVAILABLE, before any read 4ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — a run > reads in a tenant-stamped transaction, records the run, and sends an export that verifies 9ms
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > when the run cannot be recorded on the chain: 503 REPORT_NOT_RECORDED, and nothing is sent
+[audited-export] export not recorded: chain write refused
+
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > a failed read is a 500 that names nothing internal, and the transaction is rolled back
+{
+  "timestamp": "2026-10-01T01:12:33.681Z",
+  "level": "error",
+  "message": "[audit-compliance-reports] running the compliance report failed",
+  "context": {
+    "reportId": "access-review",
+    "err": "relation \"organization_users\" does not exist",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > the integrity attestation walks the chain and states its checks; a walk that could not run is not verified
+[audited-export] tenant chain walk failed: admin scope unavailable
+
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — the package > the existing verification endpoint verifies the package, and refuses it after a one-byte change 22ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — the package > a CSV run is one file of titled sections 9ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — the package > an unknown format is refused rather than read as JSON 3ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > when the run cannot be recorded on the chain: 503 REPORT_NOT_RECORDED, and nothing is sent 5ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > a failed read is a 500 that names nothing internal, and the transaction is rolled back 5ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > the integrity attestation walks the chain and states its checks; a walk that could not run is not verified 6ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — failures > the integrity attestation is ok only when every check is intact, and false when any is broken 5ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation runs one report at a time: a second concurrent run is 429 REPORT_IN_PROGRESS 8ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > report runs are rate limited per organisation and person: 429 REPORT_RATE_LIMITED 22ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation id of 0 is not a tenant: 403 before anything 4ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation id of -3 is not a tenant: 403 before anything 8ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation id of 7.5 is not a tenant: 403 before anything 8ms
+ ✓ server/routes/__tests__/audit-compliance-reports.test.ts > GET /api/audit/reports/:reportId — limits > an organisation id of "7abc" is not a tenant: 403 before anything 5ms
+stdout | server/routes/__tests__/audit-export-tenant-scope.test.ts
+{
+  "timestamp": "2026-10-01T01:12:35.490Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T01:12:35.492Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/audit-export-tenant-scope.test.ts
+{
+  "timestamp": "2026-10-01T01:12:35.492Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/audit-export-tenant-scope.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/audit-export-tenant-scope.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/audit-export-tenant-scope.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > rolls back and releases when the export fails
+Failed to export audit logs: Error: boom
+    at /home/user/ClinicalSageAI-2-replit/server/routes/__tests__/audit-export-tenant-scope.test.ts:84:32
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+stderr | server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > rolls back and releases when the export fails
+Failed to generate signed audit export: Error: boom
+    at /home/user/ClinicalSageAI-2-replit/server/routes/__tests__/audit-export-tenant-scope.test.ts:84:32
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > exports inside a tenant-stamped transaction, with the chain verifier 51ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > passes the record filters 5ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > refuses a malformed filter rather than exporting everything 4ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export > rolls back and releases when the export fails 7ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > exports inside a tenant-stamped transaction, with the chain verifier 4ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > passes the record filters 3ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > refuses a malformed filter rather than exporting everything 3ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > /api/audit/export/signed > rolls back and releases when the export fails 4ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > the export names its key (P1-19b) > the signed export tells the inspector to use the key its manifest names 5ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > the export names its key (P1-19b) > verification says which key vouched for the export 11ms
+ ✓ server/routes/__tests__/audit-export-tenant-scope.test.ts > the export names its key (P1-19b) > a manifest from before key ids verifies and says no key was named 5ms
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > contains the Vault events, each with its chain hash, sequence and source 58ms
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > never carries another tenant's rows 31ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > the person who asked reads it, re-verified from the stored bytes 85ms
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > still carries the audit_events rows it always did 43ms
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > narrows to one document when asked, and the manifest says so 36ms
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > verifies, and refuses after a one-byte change to a row 37ms
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > states the audit_logs chain verdict it was given — and never "intact" without one 29ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > an org admin reads it; a colleague is refused; another organization cannot tell it exists 44ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > lists only the caller's own records unless they read every record 27ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > finds a turn by the run it was served under — how a client that stopped listening learns it was filed 28ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > a record rewritten past the trigger reads as not intact 19ms
+stderr | server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > says the chain walk is unknown when it could not run — never that it passed
+[audited-export] tenant chain walk failed: no admin scope
+
+ ✓ server/services/audit/__tests__/signed-audit-export-key-id.test.ts > a new export names its signing key > carries signingKeyId — AUDIT_EXPORT_SIGNING_KEY_ID, 'k1' when unset 5ms
+ ✓ server/services/audit/__tests__/signed-audit-export-key-id.test.ts > a new export names its signing key > puts the key id under the signature: changing it invalidates the manifest 1ms
+ ✓ server/services/audit/__tests__/signed-audit-export-key-id.test.ts > rotation > an export signed before the rotation verifies through the _PREV slot, and the verdict names that key 1ms
+ ✓ server/services/audit/__tests__/signed-audit-export-key-id.test.ts > rotation > a wrong key fails 1ms
+ ✓ server/services/audit/__tests__/signed-audit-export-key-id.test.ts > rotation > a manifest naming a key that is no longer configured is refused, and the refusal names the id 1ms
+ ✓ server/services/audit/__tests__/signed-audit-export-key-id.test.ts > legacy: manifests issued before the key id still verify > a v2 manifest with no signingKeyId verifies under AUDIT_EXPORT_SIGNING_KEY, as before 1ms
+ ✓ server/services/audit/__tests__/signed-audit-export-key-id.test.ts > legacy: manifests issued before the key id still verify > a v1 manifest signed under the JWT secret alone verifies, as before 0ms
+ ✓ server/services/audit/__tests__/signed-audit-export-key-id.test.ts > legacy: manifests issued before the key id still verify > a legacy manifest signed under the JWT secret does not verify once a dedicated key is set — the chain is unchanged 0ms
+ ✓ server/services/audit/__tests__/signed-audit-export-key-id.test.ts > the JWT_SECRET fallback > is visible in the manifest outside production, and verifies by that name 1ms
+ ✓ server/services/audit/__tests__/signed-audit-export-key-id.test.ts > the JWT_SECRET fallback > is refused in production before the export is recorded 2ms
+ ✓ server/services/audit/__tests__/signed-audit-export-key-id.test.ts > the comparison > refuses a signature of the wrong length or shape without throwing 1ms
+stderr | server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > refuses the export when it cannot be recorded, and nothing leaves
+[audited-export] export not recorded: simulated failure
+
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > records the export on the chain, then hands over a package that verifies offline 33ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > says the chain walk is unknown when it could not run — never that it passed 20ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > refuses the export when it cannot be recorded, and nothing leaves 25ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > deleting a conversation > is the owner's act, audited in the same transaction, and the turn records survive it 29ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > deleting a conversation > refuses a colleague, and removes nothing 6ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > deleting a conversation > removes nothing when the audit row cannot be written 10ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > a forger who rewrites the chain row too > is caught by the payload hash the chain link was computed over 20ms
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > a forger who rewrites the chain row too > and, when the payload hash is rewritten as well, by the walk of the tenant chain 30ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > lists the eight reports in catalog order, each id once 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > access-review has a title, a one-sentence purpose, a basis, sections and what is not recorded 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > authentication-events has a title, a one-sentence purpose, a basis, sections and what is not recorded 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > administrative-changes has a title, a one-sentence purpose, a basis, sections and what is not recorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > electronic-signatures has a title, a one-sentence purpose, a basis, sections and what is not recorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > audit-trail-integrity has a title, a one-sentence purpose, a basis, sections and what is not recorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > retention-legal-holds has a title, a one-sentence purpose, a basis, sections and what is not recorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > controlled-documents has a title, a one-sentence purpose, a basis, sections and what is not recorded 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > audit-trail has a title, a one-sentence purpose, a basis, sections and what is not recorded 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > access-review is run here, and every section names its columns once 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > authentication-events is run here, and every section names its columns once 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > administrative-changes is run here, and every section names its columns once 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > electronic-signatures is run here, and every section names its columns once 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > audit-trail-integrity is run here, and every section names its columns once 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > retention-legal-holds is run here, and every section names its columns once 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > controlled-documents is run here, and every section names its columns once 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > the full audit trail is an entry only: its run is the existing signed export 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > states the periods the brief fixes 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > an unknown id is not a report 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > the summary a client receives carries the contract fields and nothing executable 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/catalog.test.ts > the compliance-report catalog > copy is calm: no exclamation marks and no route names in what a reader sees 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the stores > counts each store for this organisation only, with the period bounds 3ms
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > states three intact checks when all three ran and passed 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > a broken chain says where, as this organisation may read it 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > a broken linkage and a failing seal are broken 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > the chain walk did not run: "not verified", with the reason, never intact 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > the linkage had nothing hashed: "not verified", with the reason, never intact 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > the linkage query did not run: "not verified", with the reason, never intact 8ms
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > the seal check could not run: "not verified", with the reason, never intact 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > no row carried a seal: "not verified", with the reason, never intact 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/integrity-report.test.ts > audit-trail integrity: the verdicts > a check that could not run does not put the failure text in the report 1ms
+stderr | tests/gates/unverified-verdicts/signed-audit-export.gate.test.ts > signed audit export: the export must record itself, or refuse > refuses to produce an export whose audit record could not be written (the pre-fix 22P02)
+[SignedExport] refusing: the export could not be recorded in the audit trail: 22P02: invalid input syntax for type integer: "AUDIT-EXPORT-1"
+
+ ✓ tests/gates/unverified-verdicts/signed-audit-export.gate.test.ts > signed audit export: chainIntegrity is a verdict only when something was verified > an all-unhashed table is "unverified", not "intact" — and the manifest says how many rows had no hash 5ms
+ ✓ tests/gates/unverified-verdicts/signed-audit-export.gate.test.ts > signed audit export: chainIntegrity is a verdict only when something was verified > an empty result set is "unverified" with a reason, not "intact" 1ms
+ ✓ tests/gates/unverified-verdicts/signed-audit-export.gate.test.ts > signed audit export: chainIntegrity is a verdict only when something was verified > a snapshot query that fails is still "unavailable" — the honest branch is unchanged 1ms
+ ✓ tests/gates/unverified-verdicts/signed-audit-export.gate.test.ts > signed audit export: the export must record itself, or refuse > records the export BEFORE sealing, with an integer entity id, and carries the row id in the signed manifest 1ms
+ ✓ tests/gates/unverified-verdicts/signed-audit-export.gate.test.ts > signed audit export: the export must record itself, or refuse > refuses to produce an export whose audit record could not be written (the pre-fix 22P02) 3ms
+ ✓ tests/gates/unverified-verdicts/signed-audit-export.gate.test.ts > signed audit export: the export must record itself, or refuse > refuses without an organisation — the record must be attributable to a tenant 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > defaults to the 90 days before today, today included 3ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > defaults `from` to 90 days before a given `to` 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > takes both dates as given, the end exclusive the day after `to` 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > accepts a one-day period and a full leap year (366 days) 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > an as-of report uses `to` only, and ignores `from` even when it is malformed 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > refuses {"from":"2026-1-01","to":"2026-01-31"} (malformed from) 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > refuses {"to":"30/09/2026"} (malformed to) 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > refuses {"from":"2026-02-30","to":"2026-03-31"} (a date that does not exist) 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > refuses {"to":"2026-13-01"} (month 13) 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > refuses {"from":"2026-01-01T00:00:00Z","to":"2026-01-31"} (a timestamp, not a date) 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > refuses {"from":["2026-01-01","2026-01-02"],"to":"2026-01-31"} (a repeated parameter) 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > refuses {"from":"2026-02-01","to":"2026-01-31"} (from after to) 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > refuses {"from":"2025-01-01","to":"2026-01-02"} (a span over 366 days) 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > refuses {"from":"","to":"2026-01-31"} (an empty from) 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/period.test.ts > parseReportPeriod > an as-of report still refuses a malformed `to` 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > sealManifestV2 — the one signer > stamps version 2 and the key id, and signs the canonical manifest with the export key 3ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > sealManifestV2 — the one signer > refuses in production without the dedicated key, rather than sign under a fallback 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > sealManifestV2 — the one signer > sha256Hex is the hash the verifier recomputes 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > a json compliance report > verifies with the existing export verifier 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > a json compliance report > fails verification after a one-byte change to the data 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > a json compliance report > fails verification when a manifest claim is changed 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > a json compliance report > carries the contract manifest 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > a json compliance report > the data is the report itself 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > a csv compliance report > verifies with the existing export verifier 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > a csv compliance report > fails verification after a one-byte change to the data 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > a csv compliance report > fails verification when a manifest claim is changed 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > a csv compliance report > carries the contract manifest 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-report.test.ts > a csv compliance report > the data is the report itself 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 2 — the integrity attestation summarises its own checks > ok only when every check is intact 3ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 2 — the integrity attestation summarises its own checks > false when any check is broken, whatever the others say 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 2 — the integrity attestation summarises its own checks > null, with how many could not verify, when none is broken and not all are intact 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 3 — what the seal is, and who verifies it, said plainly > the instruction names the HMAC key the platform holds, the verifier, the CSV case and the inspector 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 3 — what the seal is, and who verifies it, said plainly > the manifest does not claim independent verification 2ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 4 — the access review says what it cannot show > role history and the review decision are stated as not recorded 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 5 — administrative changes: which settings changes are recorded, exactly > tenant configuration changes are not recorded; organisation settings are recorded by section name only 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 6 — the signature register shows what was signed, as stored > carries the purpose and the signed version as their own columns 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 7 — the controlled-document register > documents carry the approving signer, meaning, the revoked count and the superseding document 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 7 — the controlled-document register > change controls carry their description and reason 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 7 — the controlled-document register > states what does not appear and where training lives 0ms
+stdout | Object.info (/home/user/ClinicalSageAI-2-replit/server/utils/logger.js:141:13)
+{
+  "timestamp": "2026-10-01T01:12:39.101Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T01:12:39.108Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | Object.warn (/home/user/ClinicalSageAI-2-replit/server/utils/logger.js:171:13)
+{
+  "timestamp": "2026-10-01T01:12:39.109Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > writes each section as a titled block: title line, header, rows, blank line 4ms
+ ✓ server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > neutralises a formula-leading cell "=HYPERLINK(\"http://x\")" with a leading quote 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > neutralises a formula-leading cell "+1+1" with a leading quote 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > neutralises a formula-leading cell "-2+3" with a leading quote 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > neutralises a formula-leading cell "@SUM(A1)" with a leading quote 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > neutralises a formula-leading cell "\tcmd" with a leading quote 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > neutralises a formula-leading cell "\rcmd" with a leading quote 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > writes a date as its UTC ISO instant and an object as JSON 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > writes only the declared columns, in their declared order 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > opens with a block saying what the file is: report, organisation, period, time, chain, sections and what is not recorded 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/csv.test.ts > formatReportCsv > states a range period and a verified chain in the block 1ms
+ ✓ server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts > version 2 — the signature covers the manifest > includes the nested fields that version 1 signed as {} 2ms
+ ✓ server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts > version 2 — the signature covers the manifest > distinguishes a broken chain from an intact one 1ms
+ ✓ server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts > version 2 — the signature covers the manifest > distinguishes exports covering different date ranges 0ms
+ ✓ server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts > version 2 — the signature covers the manifest > is insensitive to key order, which is the point of canonicalizing 0ms
+ ✓ server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts > version 2 — the signature covers the manifest > emits valid JSON 1ms
+ ✓ server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts > version 1 — exports already issued still verify > reproduces the original expression byte for byte 0ms
+ ✓ server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts > version 1 — exports already issued still verify > still carries the defect, deliberately, because the signature did 0ms
+ ✓ server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts > version 1 — exports already issued still verify > routes by the manifest's own declaration, not by a global switch 0ms
+stdout | server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts
+{
+  "timestamp": "2026-10-01T01:12:40.200Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T01:12:40.201Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts
+{
+  "timestamp": "2026-10-01T01:12:40.201Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts > a chain walk over zero rows is not a verdict > walkTenantChain states it as unknown, with the reason 3ms
+ ✓ server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts > a chain walk over zero rows is not a verdict > walkTenantChain still says ok over rows it checked 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts > a chain walk over zero rows is not a verdict > the signed audit export states the audit_logs chain as unverified, not intact 3ms
+ ✓ server/services/audit/compliance-reports/__tests__/zero-row-chain.test.ts > a chain walk over zero rows is not a verdict > the integrity attestation says "not verified" for a walk of zero rows, even if handed ok: true 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-export-broken-at.test.ts > the audit_logs break in a signed export manifest > names this organisation's broken row and its hashes, not [object Object] 5ms
+ ✓ server/services/audit/compliance-reports/__tests__/signed-export-broken-at.test.ts > the audit_logs break in a signed export manifest > does not name another organisation's row, its hashes or its organisation 1ms
+ ✓ server/services/audit/__tests__/audited-export.test.ts > breakForTenant > names this organization's broken row and the row of its own that it commits to 2ms
+ ✓ server/services/audit/__tests__/audited-export.test.ts > breakForTenant > does not name another organization's row the break commits to 1ms
+ ✓ server/services/audit/__tests__/audited-export.test.ts > breakForTenant > does not name, or give the hashes of, a broken row that is another organization's 0ms
+ ✓ server/services/audit/__tests__/audited-export.test.ts > breakForTenant > keeps genesis and "nothing derives it" as they are 0ms
+
+ Test Files  19 passed (19)
+      Tests  199 passed (199)
+   Start at  01:12:22
+   Duration  17.83s (transform 5.97s, setup 553ms, import 18.13s, tests 29.71s, environment 3ms)
+

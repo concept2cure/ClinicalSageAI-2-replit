@@ -242,8 +242,13 @@ export function resolveTierModelIds(
 /**
  * Resolve a tier to a concrete enabled model from the tenant's registry, or
  * null when the tier's configured model isn't enabled (caller falls back to
- * strategy-based selection). Matches on registry id or wire model string, same
- * as the user model-override path. Pure.
+ * strategy-based selection). Matches on registry id or wire model string. Pure.
+ *
+ * Enabled is the only check. Unlike the user model-override path
+ * (effort.ts resolveModelOverride), a tier model — including one an
+ * ANA_TIER_*_MODEL env remap names — is not checked against approved-models.
+ * On high-risk work the gateway refuses one not approved for high risk; on
+ * other work it serves it whether or not it has an entry.
  */
 export function resolveTierModel(
   tier: ModelTier,

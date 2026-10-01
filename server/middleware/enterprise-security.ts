@@ -25,6 +25,8 @@ import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import { randomBytes } from 'crypto';
 import { reportSecurityAlert } from '../services/security-alerts';
+import { requestFullPath } from './request-path';
+import { SIGN_IN_LIMITS } from '../config/platform-limits';
 
 // ============================================================================
 // CONFIGURATION
@@ -93,7 +95,6 @@ const config = {
       global: { windowMs: 60_000, max: 1000 * m }, // 1000/min prod, 10000/min dev
       api: { windowMs: 60_000, max: 200 * m }, // 200/min prod, 2000/min dev
       ai: { windowMs: 60_000, max: 20 * m }, // 20/min prod, 200/min dev
-      auth: { windowMs: 15 * 60_000, max: isDev ? 100 : 5 }, // 5/15min prod, 100/15min dev
       write: { windowMs: 60_000, max: 100 * m }, // 100/min prod, 1000/min dev
       upload: { windowMs: 60_000, max: 20 * m }, // 20/min prod, 200/min dev
       export: { windowMs: 60_000, max: 10 * m }, // 10/min prod, 100/min dev
@@ -439,15 +440,18 @@ export const rateLimiters = {
   global: createLimiter(config.rateLimits.global),
   api: createLimiter(config.rateLimits.api),
   ai: createLimiter(config.rateLimits.ai),
-  // Every /api/auth request, at 5 per 15 minutes in production. With one
+  // Every /api/auth request's FAILURES from one address — the spraying guard
+  // (SIGN_IN_LIMITS.failuresPerIp, server/config/platform-limits.ts). With one
   // trusted hop (server/config/trust-proxy.ts) a CloudFront-routed request's
   // address is the CloudFront edge, so this budget is shared by everyone that
   // edge serves until the load balancer accepts CloudFront alone and two hops
   // reach the user (D1). Counting every request, a few SSO sign-ins (initiate
-  // plus callback), signups or metadata reads would refuse the next person at
-  // that edge for 15 minutes. It counts failures: the attempts it exists to
-  // slow. The per-account lockout and the sign-in route limits stand beside it.
-  auth: createLimiter({ ...config.rateLimits.auth, countFailuresOnly: true }),
+  // plus callback), signups or metadata reads refused the next person at that
+  // edge; so it counts failures. At 5 in production, five typos or five
+  // expired sessions answering 401 at one office refused the office for 15
+  // minutes (D6, 2026-09-29); an account is protected per account instead
+  // (middleware/sign-in-limits.ts, and the lockout in auth-security-service).
+  auth: createLimiter({ ...SIGN_IN_LIMITS.failuresPerIp, countFailuresOnly: true }),
   write: createLimiter(config.rateLimits.write),
   upload: createLimiter(config.rateLimits.upload),
   export: createLimiter(config.rateLimits.export),
@@ -518,10 +522,17 @@ export function sanitizeInput(req: Request, res: Response, next: NextFunction) {
     if (req.body && typeof req.body === 'object') {
       req.body = sanitizeObject(req.body);
     }
-    // req.query / req.params are getter-backed in Express 5 — scrub in place.
-    if (req.query && typeof req.query === 'object') {
-      scrubObjectInPlace(req.query);
+    // req.query is getter-backed in Express 5 and RE-PARSES the URL on every
+    // access, so scrubbing the object it returns in place was discarded: the
+    // handler's next `req.query` read got a fresh, unscrubbed parse
+    // (found by server/middleware/__tests__/sanitizeInputOrdering.test.ts).
+    // Scrub one parse and pin it as an own property that shadows the getter.
+    const query = req.query;
+    if (query && typeof query === 'object') {
+      scrubObjectInPlace(query);
+      Object.defineProperty(req, 'query', { value: query, writable: true, configurable: true, enumerable: true });
     }
+    // req.params is a plain own property set by the router — in place is enough.
     if (req.params && typeof req.params === 'object') {
       scrubObjectInPlace(req.params);
     }
@@ -539,19 +550,16 @@ export function sanitizeInput(req: Request, res: Response, next: NextFunction) {
 // ============================================================================
 
 export function validateTenantContext(req: Request, res: Response, next: NextFunction) {
-  // Skip for public endpoints
-  const publicPaths = [
-    '/healthz',
-    '/readyz',
-    '/api/health',
-    '/api/auth/login',
-    '/api/auth/register',
-    '/api/auth/signup',
-    '/api/csp-report',
-  ];
-  if (publicPaths.some(p => req.path.startsWith(p))) {
-    return next();
-  }
+  // No public-path skip list here (removed 2026-09-26, IAM-18 item 4 re-check).
+  // The detector is mounted on '/api' behind the auth boundary (applyAuthBoundary,
+  // server/startup/middleware.ts), and the boundary establishes no session for a
+  // path on PUBLIC_API_ALLOWLIST (./public-api-allowlist.ts): such a request
+  // reaches the no-session branch below and passes untouched, and /healthz and
+  // /readyz never reach a '/api' mount at all. The list this replaced matched
+  // nothing anyway — it held full paths ('/api/auth/login') and tested them
+  // against req.path, which Express 5 makes mount-relative ('/auth/login')
+  // under app.use('/api', …). One allowlist, the boundary's; a session that
+  // presents another organisation's id is an impersonation attempt on any path.
 
   // SECURITY: Organization ID MUST come from the verified JWT token, NOT from
   // user-supplied headers. This prevents tenant impersonation attacks where an
@@ -571,7 +579,9 @@ export function validateTenantContext(req: Request, res: Response, next: NextFun
         jwtOrg: user.organizationId,
         headerOrg: headerOrgId,
         userId: user.id || user.userId || 'unknown',
-        path: req.path,
+        // The path the client sent, /api prefix included: req.path alone is
+        // mount-relative under app.use('/api', …) (Express 5).
+        path: requestFullPath(req),
         method: req.method,
         ipAddress: req.ip,
       };
@@ -1057,8 +1067,11 @@ export function applySecurityMiddleware(app: any) {
   // CSRF protection (origin/referer validation for state-changing requests)
   app.use(csrfProtection);
 
-  // Tenant isolation
-  app.use(validateTenantContext);
+  // Tenant isolation: validateTenantContext is mounted by applyAuthBoundary
+  // (server/startup/middleware.ts), behind the auth boundary, because it can
+  // only compare the header against a session that exists. Mounted here, it
+  // ran before any session was established and detected nothing
+  // (security audit 2026-09-24, IAM-18 item 4).
 
   // Audit logging
   app.use(auditLog);
@@ -1068,6 +1081,10 @@ export function applySecurityMiddleware(app: any) {
 
   // Route-specific rate limits
   app.use('/api/auth', rateLimiters.auth);
+  // The same auth router is also mounted at /api/v1/auth
+  // (bootstrap/register-platform-routes.ts); the sign-in limit follows it there
+  // (security audit 2026-09-24, IAM-09).
+  app.use('/api/v1/auth', rateLimiters.auth);
   app.use('/api/ai', rateLimiters.ai);
   app.use('/api/export', rateLimiters.export);
   app.use('/api/upload', rateLimiters.upload);

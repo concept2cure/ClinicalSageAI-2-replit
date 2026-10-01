@@ -1,0 +1,41 @@
+add_coverage_item | confirm | - | AnaToolExecutor.ts:11961 | INSERT coverage_analysis_items + governed-action row
+add_grant_budget_line | confirm | - | AnaToolExecutor.ts:12322 | INSERT grant_budget_lines + governed-action row
+add_personnel_training | confirm | - | AnaToolExecutor.ts:13156 | INSERT personnel_training + governed-action row
+amend_schedule_of_events | confirm | - | AnaToolExecutor.ts:2408 | UPDATE project_workflow_stages, schedule revision row
+approve_import | confirm | - | AnaToolExecutor.ts:14455 | INSERT concept2cure_artifacts (draft); import job completed; human route needs no e-signature
+bind_protocol_to_study_design | confirm | - | AnaToolExecutor.ts:20395 | UPDATE protocol_documents study_design link + governed-action row
+classify_ivd_device | confirm | - | AnaToolExecutor.ts:8362 | INSERT ivdr_classifications
+convene_committee_meeting | confirm | - | AnaToolExecutor.ts:11786 | UPSERT attendance; meeting status convened + governed-action row
+create_clinical_investigator | confirm | - | AnaToolExecutor.ts:10022 | INSERT clinical_investigators + governed-action row
+create_consent_form | confirm | - | AnaToolExecutor.ts:11000 | INSERT consent_forms + elements + governed-action row
+create_export_control_review | confirm | - | AnaToolExecutor.ts:11269 | INSERT export_control_reviews + governed-action row
+create_iacuc_protocol | confirm | - | AnaToolExecutor.ts:10257 | INSERT iacuc_protocols (draft) + governed-action row
+create_irb_submission | confirm | - | AnaToolExecutor.ts:10364 | INSERT irb_submissions + governed-action row
+create_nonclinical_study | confirm | - | AnaToolExecutor.ts:10574 | INSERT nonclinical_studies + provenance + governed-action row
+create_protocol_document | confirm | - | AnaToolExecutor.ts:11460 | INSERT protocol_documents + sections + governed-action row
+create_regulatory_commitment | confirm | - | AnaToolExecutor.ts:10193 | INSERT regulatory_commitments + provenance + governed-action row
+create_software_lifecycle_item | conditional | status in (approved, superseded) -> refuse; else confirm | AnaToolExecutor.ts:8086 | INSERT software_lifecycle_items with model-chosen status
+edit_spreadsheet | confirm | - | AnaToolExecutor.ts:4727 | new .xlsx upload + file_uploads row
+fulfill_regulatory_commitment | confirm | - | AnaToolExecutor.ts:12598 | UPDATE regulatory_commitments fulfilled (terminal)
+insert_clause_template | self | - | AnaToolExecutor.ts:7421 | writes edited .docx copy to tmp/docbuilder
+log_inspection_finding | confirm | - | AnaToolExecutor.ts:12838 | INSERT inspection_findings + governed-action row
+open_device_capa | confirm | - | AnaToolExecutor.ts:6404 | INSERT capa_records
+place_into_sequence | confirm | - | AnaToolExecutor.ts:9169 | UPSERT submission_leaves (unlocked sequence) + audit row
+record_analytical_performance_study | confirm | - | AnaToolExecutor.ts:8258 | INSERT ivd_analytical_performance
+record_grant_award | confirm | - | AnaToolExecutor.ts:12094 | INSERT grant_awards; proposal -> awarded + governed-action row
+record_literature | confirm | - | AnaToolExecutor.ts:1791 | UPSERT literature_entries
+register_controlled_substance | confirm | - | AnaToolExecutor.ts:12671 | INSERT controlled_substances + governed-action row
+remember_document_in_project | confirm | - | AnaToolExecutor.ts:1537 | INSERT project_ingested_documents (tenant-visible) + memory entries
+resolve_validation_finding | confirm | - | AnaToolExecutor.ts:8844 | UPDATE submission_validation_findings resolved
+review_cs_balance | read | - | AnaToolExecutor.ts:12951 | SELECT only
+review_inspection_readiness | read | - | AnaToolExecutor.ts:12860 | SELECT + scoring
+review_protocol_portfolio | read | - | AnaToolExecutor.ts:11859 | SELECT only
+run_python_script | confirm | - | AnaToolExecutor.ts:7124 | runs model code, writes output files to tmp
+save_report_definition | confirm | - | AnaToolExecutor.ts:20293 | INSERT report definition
+set_coverage_qualifying_determination | confirm | - | AnaToolExecutor.ts:11927 | UPDATE coverage_analyses determination + governed-action row
+start_intelligence_flow | self | - | AnaToolExecutor.ts:19066 | INSERT cmc_interview_sessions (AnA interview state)
+triage_compliance_attention | confirm | - | AnaToolExecutor.ts:12562 | creates review tasks + governed-action row
+update_export_control_review | confirm | - | AnaToolExecutor.ts:11292 | UPDATE export_control_reviews + governed-action row
+update_protocol_section | confirm | - | AnaToolExecutor.ts:11493 | UPDATE protocol_sections + lineage + governed-action row
+update_vault_document | confirm | - | AnaToolExecutor.ts:19829 | new artifact version (approved-status overwrite noted as finding)
+update_plan | read | - | agentic-workflow-tools.ts:343 | no side effect; plan UI event

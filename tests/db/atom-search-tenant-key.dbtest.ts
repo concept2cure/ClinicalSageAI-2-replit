@@ -124,7 +124,7 @@ afterAll(async () => {
 
 describe("an atom search runs under the session's tenant key", () => {
   it('serves tenant A its own atoms (positive control)', async () => {
-    const rows = await asTenantA(() => service(getPool()).searchHybrid(QUERY, 5, 0.7, uuidOf.A));
+    const rows = await asTenantA(() => service(getPool()).searchHybrid(QUERY, { limit: 5, organizationUuid: uuidOf.A }));
     expect(titles(rows).join('\n')).not.toMatch(/tenant-B/);
     expect(rows.length).toBeGreaterThan(0);
   });
@@ -134,7 +134,7 @@ describe("an atom search runs under the session's tenant key", () => {
     const calls = atomSearchCalls(pool as never);
     let out: unknown;
     try {
-      out = await asTenantA(() => service(pool).searchHybrid(QUERY, 5, 0.7, uuidOf.B));
+      out = await asTenantA(() => service(pool).searchHybrid(QUERY, { limit: 5, organizationUuid: uuidOf.B }));
     } catch (err) {
       out = err;
     }
@@ -148,7 +148,7 @@ describe("an atom search runs under the session's tenant key", () => {
     const calls = atomSearchCalls(pool as never);
     let out: unknown;
     try {
-      out = await asTenantA(() => service(pool).searchHybrid(QUERY, 5, 0.7, undefined as never));
+      out = await asTenantA(() => service(pool).searchHybrid(QUERY, { limit: 5, organizationUuid: undefined as never }));
     } catch (err) {
       out = err;
     }
@@ -165,7 +165,7 @@ describe("an atom search runs under the session's tenant key", () => {
   it('on that degraded path, a key naming another tenant is still refused', async () => {
     let out: unknown;
     try {
-      out = await asTenantA(() => service(getPool()).searchHybrid(QUERY, 5, 0.7, uuidOf.B), null);
+      out = await asTenantA(() => service(getPool()).searchHybrid(QUERY, { limit: 5, organizationUuid: uuidOf.B }), null);
     } catch (err) {
       out = err;
     }
@@ -181,7 +181,7 @@ describe("an atom search runs under the session's tenant key", () => {
   it('outside any scope the key is the only boundary, and it holds on a connection RLS does not filter', async () => {
     // The owner connection bypasses RLS: only the query's own org filter stands
     // between tenant A's key and tenant B's better-scoring atoms.
-    const rows = await service(owner as never).searchHybrid(QUERY, 10, 0.7, uuidOf.A);
+    const rows = await service(owner as never).searchHybrid(QUERY, { limit: 10, organizationUuid: uuidOf.A });
     expect(titles(rows).join('\n')).not.toMatch(/tenant-B/);
     expect(rows.length).toBeGreaterThan(0);
   });

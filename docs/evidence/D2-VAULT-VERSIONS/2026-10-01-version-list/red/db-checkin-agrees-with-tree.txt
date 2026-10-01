@@ -1,0 +1,9 @@
+## RED: vault-version-checkin.ts as on trunk (811352c89); the check-in walks any row naming the head
+ × tests/db/vault-versions.dbtest.ts > a check-in agrees with the tree about the current version (VR-09) > refuses a version a legacy row names, says why, and names nothing about that row 77ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/vault-versions.dbtest.ts > a check-in agrees with the tree about the current version (VR-09) > refuses a version a legacy row names, says why, and names nothing about that row
+AssertionError: expected 'VERSION_NOT_CURRENT' to be 'VERSION_LINK_CONFLICT' // Object.is equality
+Expected: "VERSION_LINK_CONFLICT"
+Received: "VERSION_NOT_CURRENT"
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 skipped (9)

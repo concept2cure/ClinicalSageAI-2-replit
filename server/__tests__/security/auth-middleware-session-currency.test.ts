@@ -86,8 +86,11 @@ const secret = process.env.JWT_SECRET as string;
 const nowSeconds = () => Math.floor(Date.now() / 1000);
 const claims = { userId: '42', email: 'holder@example.com', organizationId: '7', role: 'user', type: 'access' };
 // exp is measured from the iat given: a long life so a session issued long ago
-// is still valid on signature, and only the rule under test can refuse it.
-const accessTokenIssuedAt = (iat: number) => jwt.sign({ ...claims, iat }, secret, { expiresIn: '30d' });
+// is still valid on signature, and only the rule under test can refuse it. The
+// session claims (P1-1) give the token the widest idle window, so the idle
+// rule does not answer before the password rule under test here.
+const accessTokenIssuedAt = (iat: number) =>
+  jwt.sign({ ...claims, iat, sid: `sid-${iat}-${Math.random()}`, sst: iat, idl: 24 * 3600 }, secret, { expiresIn: '30d' });
 
 interface Outcome {
   status: number;
@@ -162,7 +165,8 @@ describe('authMiddleware — a session the password change ended', () => {
   });
 
   it('admits a bearer for an account that never changed its password', async () => {
-    const r = await drive(accessTokenIssuedAt(nowSeconds() - 86_000));
+    // Within the 12-hour session lifetime (P1-1); the age is not what this case is about.
+    const r = await drive(accessTokenIssuedAt(nowSeconds() - 3600));
     expect(r.reachedHandler).toBe(true);
   });
 

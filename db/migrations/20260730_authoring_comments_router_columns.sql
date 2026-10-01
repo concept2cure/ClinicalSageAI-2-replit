@@ -17,6 +17,17 @@
 -- Rollback: ALTER TABLE ... DROP COLUMN for the columns below (all additive,
 --   nullable or defaulted; safe to drop).
 --
+-- AMENDED IN PLACE 2026-09-26 (row D5, docs/evidence/D5-ANA-RECORD/2026-09-26-authoring/):
+-- a comment is a record of what a person said about a passage. Its words, the
+-- passage it quoted (anchor), who wrote it and which thread it belongs to are
+-- now fixed once written — trg_authoring_comments_content_fixed refuses an
+-- UPDATE that would change any of them, for every role. Status and resolution
+-- stay mutable: they are the thread's current state, and every change to them
+-- is recorded, with before and after, in the append-only authoring_audit_trail.
+-- Deletion is still possible only by cascade from its section (which no launch
+-- route performs); the comment's body and quote survive it in the trail. This
+-- file replays on every deploy with the authoring subsystem unit (RULE 1).
+--
 -- authoring_sections is reconciled too (below): the router already uses the
 -- canonical doc_id / order_index / code names (the document_id / order_idx /
 -- section_number references in authoring.router.ts belong to OTHER tables or to
@@ -50,3 +61,43 @@ ALTER TABLE IF EXISTS user_pins
 -- on every real deploy. A unique index is the arbiter ON CONFLICT infers.
 CREATE UNIQUE INDEX IF NOT EXISTS authoring_sections_doc_code_tenant_uq
   ON authoring_sections (doc_id, code, tenant_id);
+
+-- ── 2026-09-26 amendment (see header): a comment's content is fixed ─────────
+CREATE OR REPLACE FUNCTION authoring_comments_content_fixed()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF NEW.id IS DISTINCT FROM OLD.id
+     OR NEW.body IS DISTINCT FROM OLD.body
+     OR NEW.anchor IS DISTINCT FROM OLD.anchor
+     OR NEW.created_by IS DISTINCT FROM OLD.created_by
+     OR NEW.user_name IS DISTINCT FROM OLD.user_name
+     OR NEW.user_email IS DISTINCT FROM OLD.user_email
+     OR NEW.parent_comment_id IS DISTINCT FROM OLD.parent_comment_id
+     OR NEW.section_id IS DISTINCT FROM OLD.section_id
+     OR NEW.doc_id IS DISTINCT FROM OLD.doc_id
+     OR NEW.tenant_id IS DISTINCT FROM OLD.tenant_id
+     OR NEW.created_at IS DISTINCT FROM OLD.created_at THEN
+    RAISE EXCEPTION
+      'IMMUTABILITY_VIOLATION: an authoring comment''s words, quoted passage, author and thread cannot be changed once written (21 CFR Part 11 §11.10(e)).'
+      USING ERRCODE = 'raise_exception',
+            HINT = 'Reply, or resolve with a note; the original stays as written.';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DO $$
+BEGIN
+  IF to_regclass('authoring_comments') IS NOT NULL AND NOT EXISTS (
+    SELECT 1 FROM pg_trigger
+     WHERE tgname = 'trg_authoring_comments_content_fixed'
+       AND tgrelid = 'authoring_comments'::regclass
+  ) THEN
+    CREATE TRIGGER trg_authoring_comments_content_fixed
+      BEFORE UPDATE ON authoring_comments
+      FOR EACH ROW EXECUTE FUNCTION authoring_comments_content_fixed();
+  END IF;
+END
+$$;

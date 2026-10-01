@@ -23,6 +23,7 @@
  */
 
 import { stableStringify } from '../../../shared/canonical-json.js';
+import { AUTO_MAX_ROUNDS, type AnaRunPolicy } from '../../../shared/ana/run-control-limits.js';
 
 export interface ToolCall {
   id: string;
@@ -117,6 +118,27 @@ export function CANCELLED_TOOL_RESULT(toolName: string): { cancelled: true; tool
   };
 }
 
+/**
+ * The result body for a step the person replaced before it ran (a checkpoint's
+ * `'replan'`).
+ *
+ * Like {@link CANCELLED_TOOL_RESULT}, it says so rather than leaving the call
+ * unanswered: the model asked for this step, and a missing result reads as a
+ * tool with nothing to say. Unlike a cancel, the step never started, so this
+ * one can say nothing was produced — and it points the model at the person's
+ * instruction, which rides the same model call.
+ */
+export function REDIRECTED_TOOL_RESULT(toolName: string): { redirected: true; tool: string; note: string } {
+  return {
+    redirected: true,
+    tool: toolName,
+    note:
+      'The person redirected AnA before this step ran, so it was not run and nothing ' +
+      'it would have produced exists. Follow their instruction instead. Do not treat ' +
+      'this as the tool having no answer.',
+  };
+}
+
 export function lostToolInputResult(call: ToolCall): { error: string; tool: string } | null {
   if (!call.inputParseError) return null;
   return {
@@ -142,8 +164,42 @@ export interface ModelTurn {
  * pause (awaiting inside the hook) and interjection (side-effect: splicing a
  * steering message into the next model turn); the loop only needs to honor the
  * abort. Injected like the other deps so the loop stays pure and testable.
+ *
+ * `pending` is the round's calls — what would run if the hook says continue —
+ * so a hook can say what it is holding before. It is a frozen copy (the list
+ * and each call frozen, each input a copy of its own): a hook can read the
+ * step but cannot change it, so what runs, or is answered as redirected, is
+ * always exactly what the model asked for. `'replan'` means the person
+ * replaced that step: the loop runs none of it, answers each call with
+ * {@link REDIRECTED_TOOL_RESULT}, and calls the model at once, so a steer the
+ * hook queued rides that call. A hook that never returns `'replan'` and ignores
+ * `pending` sees exactly the loop it always did.
  */
-export type LoopCheckpoint = (upcomingRound: number) => Promise<'continue' | 'abort'>;
+export type LoopCheckpoint = (
+  upcomingRound: number,
+  pending: readonly ToolCall[],
+) => Promise<'continue' | 'abort' | 'replan'>;
+
+/**
+ * A caller-owned budget, asked after each round's tools ran (see
+ * AgenticLoopOptions.stopWhen).
+ *
+ *   'budget_exhausted' | 'approval_timeout'  end the turn: the next model call
+ *                      is the closing answer (no tools), and the loop reports
+ *                      this reason.
+ *   'halt'             end the turn now with no further model call; reported
+ *                      as `cancelled`. For a turn whose run has already ended.
+ *                      It is asked AFTER the round's tools ran (a hold that
+ *                      expired while they ran is what it answers), so their
+ *                      results reached executeTools' caller but no model
+ *                      call: the last model turn's tool calls stay unanswered
+ *                      in any transcript built from model calls alone, as
+ *                      they do after a checkpoint 'abort'. A caller that keeps
+ *                      a transcript takes the results from its own
+ *                      executeTools.
+ *   null               carry on.
+ */
+export type LoopStopDirective = 'budget_exhausted' | 'approval_timeout' | 'halt' | null;
 
 export interface AgenticLoopDeps {
   /**
@@ -194,6 +250,20 @@ export interface AgenticLoopOptions {
    * `maxRounds`.
    */
   maxRoundsFloor?: () => number;
+  /**
+   * Asked once after each round's tools ran, with that round's number. A time
+   * or token budget, or an unanswered approval, belongs to the caller; this is
+   * how it ends the turn honestly — with a closing answer and its own reason,
+   * never a silent cut. See {@link LoopStopDirective}. Absent ⇒ the loop never
+   * stops early for it (behaviour unchanged).
+   */
+  stopWhen?: (round: number) => LoopStopDirective;
+  /**
+   * An absolute round ceiling. Progress-earned extension is granted only
+   * below it, and neither `maxRounds` nor a rising `maxRoundsFloor` can carry
+   * the loop past it. Absent ⇒ no cap beyond those (behaviour unchanged).
+   */
+  roundCap?: number;
 }
 
 /**
@@ -241,11 +311,49 @@ export function resolveRoundExtension(effort?: LoopEffort | string | null): numb
   return ROUND_EXTENSION_BY_EFFORT[(effort as LoopEffort)] ?? ROUND_EXTENSION_BY_EFFORT.balanced;
 }
 
+export interface RoundBudget {
+  maxRounds: number;
+  progressExtension: number;
+  /** Present only for Auto: the absolute ceiling (AUTO_MAX_ROUNDS). */
+  roundCap?: number;
+}
+
+/**
+ * A turn's round budget from its effort and run policy. Pure.
+ *
+ * Without a policy, and under Manual, it is today's pair: the effort ceiling
+ * and its progress allowance. Auto lets a turn that keeps finding new ground
+ * run on past the effort ceiling, up to AUTO_MAX_ROUNDS, and makes that an
+ * absolute `roundCap` so a demonstration promoted mid-turn cannot lift it
+ * (the demo floor alone would reach 34). A repeating loop is still cut for
+ * thrashing long before the cap, because it earns no extension.
+ *
+ * `baseMaxRounds` is the caller's own base (the demo base, for one) and is
+ * never lowered here.
+ */
+export function resolveRoundBudget(
+  effort: LoopEffort | string | null | undefined,
+  runPolicy: AnaRunPolicy | null | undefined,
+  baseMaxRounds: number = resolveMaxRounds(effort),
+): RoundBudget {
+  const extension = resolveRoundExtension(effort);
+  if (runPolicy !== 'auto') return { maxRounds: baseMaxRounds, progressExtension: extension };
+  return {
+    maxRounds: baseMaxRounds,
+    progressExtension: Math.max(extension, AUTO_MAX_ROUNDS - baseMaxRounds),
+    roundCap: AUTO_MAX_ROUNDS,
+  };
+}
+
 export type StoppedReason =
   | 'no_more_tools'
   | 'max_rounds'
   | 'duplicate_thrash'
-  | 'cancelled';
+  | 'cancelled'
+  /** A caller's stopWhen ended the turn on its time or token budget. */
+  | 'budget_exhausted'
+  /** A caller's stopWhen ended the turn because an approval went unanswered. */
+  | 'approval_timeout';
 
 export interface AgenticLoopResult {
   /** Number of tool rounds executed. */
@@ -267,87 +375,159 @@ function callKey(call: ToolCall): string {
 }
 
 /**
+ * Thrash detection (count how often each exact call recurs) and novelty
+ * detection (did this round try anything genuinely new?) in one pass. Updates
+ * `seen` in place.
+ */
+function scanRound(
+  calls: readonly ToolCall[],
+  seen: Map<string, number>,
+  duplicateLimit: number,
+): { thrashing: boolean; novelInRound: boolean } {
+  let thrashing = false;
+  let novelInRound = false;
+  for (const call of calls) {
+    const key = callKey(call);
+    const n = (seen.get(key) ?? 0) + 1;
+    if (n === 1) novelInRound = true;
+    seen.set(key, n);
+    if (n > duplicateLimit) thrashing = true;
+  }
+  return { thrashing, novelInRound };
+}
+
+/**
+ * What a checkpoint is shown of the pending step: a frozen copy of the list
+ * and of each call, each with its own copy of the input. See LoopCheckpoint.
+ */
+function pendingView(calls: readonly ToolCall[]): readonly ToolCall[] {
+  return Object.freeze(calls.map(c => Object.freeze({ ...c, input: globalThis.structuredClone(c.input) })));
+}
+
+/** One redirected result per call: none of them ran (see REDIRECTED_TOOL_RESULT). */
+function redirectedResults(calls: readonly ToolCall[]): ToolResultEntry[] {
+  return calls.map(c => ({
+    tool_use_id: c.id,
+    name: c.name,
+    content: JSON.stringify(REDIRECTED_TOOL_RESULT(c.name)),
+  }));
+}
+
+/** The loop's options with their defaults applied. */
+function loopLimits(options: AgenticLoopOptions) {
+  const maxRounds = options.maxRounds ?? 5;
+  if (maxRounds < 1) throw new Error('maxRounds must be at least 1');
+  return {
+    duplicateLimit: options.duplicateLimit ?? 2,
+    progressExtension: Math.max(0, options.progressExtension ?? 0),
+    roundCap: options.roundCap ?? Infinity,
+    /** The soft ceiling this round: `maxRounds`, raised (never lowered) by the floor. */
+    ceiling: (): number => Math.max(maxRounds, options.maxRoundsFloor?.() ?? 0),
+    stopWhen: (round: number): LoopStopDirective => options.stopWhen?.(round) ?? null,
+  };
+}
+
+interface RoundOutcome {
+  results: ToolResultEntry[];
+  thrashing: boolean;
+  novelInRound: boolean;
+  /** Calls actually dispatched (0 for a replaced step). */
+  ran: number;
+}
+
+/**
+ * Run one round's calls — or, when the person replaced the step, run none and
+ * answer each as redirected. A replaced step is not the model's own
+ * repetition or novelty, so the thrash/novelty state is left alone.
+ */
+async function takeRound(
+  calls: ToolCall[],
+  round: number,
+  replan: boolean,
+  deps: AgenticLoopDeps,
+  thrash: { seen: Map<string, number>; duplicateLimit: number },
+): Promise<RoundOutcome> {
+  if (replan) return { results: redirectedResults(calls), thrashing: false, novelInRound: false, ran: 0 };
+  const scan = scanRound(calls, thrash.seen, thrash.duplicateLimit);
+  const results = await deps.executeTools(calls, round);
+  return { ...scan, results, ran: calls.length };
+}
+
+/**
+ * After a round: grant a progress-earned extension if it earned one, and say
+ * whether the next model call is the closing one.
+ *
+ * At the ceiling, a round that tried novel work (and isn't thrashing) earns
+ * one more round, up to progressExtension and only below roundCap. A repeating
+ * or thrashing loop never extends — it is cut exactly as before. A stop from
+ * the caller's budget makes the next call the closing one.
+ */
+function afterRound(
+  limits: ReturnType<typeof loopLimits>,
+  round: number,
+  step: RoundOutcome,
+  stop: LoopStopDirective,
+  extendedRounds: number,
+): { extendedRounds: number; finalRound: boolean } {
+  const ceiling = limits.ceiling();
+  const earns = stop === null && step.novelInRound && !step.thrashing && extendedRounds < limits.progressExtension;
+  const extended = earns && round >= ceiling + extendedRounds && round < limits.roundCap ? extendedRounds + 1 : extendedRounds;
+  return { extendedRounds: extended, finalRound: stop !== null || round >= Math.min(limits.roundCap, ceiling + extended) };
+}
+
+/**
  * Run the bounded multi-round tool loop starting from the model's first turn.
  * Returns once the model produces an answer with no tool calls, the round cap is
- * hit, or the model is thrashing — always after a final answer has been
- * produced by `callModel`.
+ * hit, the model is thrashing, or the caller's stopWhen ends the turn — always
+ * after a final answer has been produced by `callModel`, except for a `'halt'`,
+ * which ends it with no further model call.
  */
 export async function runAgenticToolLoop(
   initial: ModelTurn,
   deps: AgenticLoopDeps,
   options: AgenticLoopOptions = {},
 ): Promise<AgenticLoopResult> {
-  const maxRounds = options.maxRounds ?? 5;
-  const duplicateLimit = options.duplicateLimit ?? 2;
-  const progressExtension = Math.max(0, options.progressExtension ?? 0);
-  if (maxRounds < 1) throw new Error('maxRounds must be at least 1');
-
-  const seen = new Map<string, number>();
+  const limits = loopLimits(options);
+  const thrash = { seen: new Map<string, number>(), duplicateLimit: limits.duplicateLimit };
   let turn = initial;
   let round = 0;
   let toolCallCount = 0;
   let extendedRounds = 0;
+  const ended = (stoppedReason: StoppedReason): AgenticLoopResult => ({
+    rounds: round,
+    toolCallCount,
+    stoppedReason,
+    extendedRounds,
+  });
 
   while (turn.toolCalls.length > 0) {
     // Round-boundary control: the human can pause (the hook awaits), interject a
-    // steer (side-effect, spliced into the next model turn by the caller), or
-    // cancel. On cancel we stop cleanly here, before spending the round — the
-    // final answer the model already streamed for the prior turn stands.
-    if (deps.checkpoint) {
-      const directive = await deps.checkpoint(round + 1);
-      if (directive === 'abort') {
-        return { rounds: round, toolCallCount, stoppedReason: 'cancelled', extendedRounds };
-      }
-    }
+    // steer (side-effect, spliced into the next model turn by the caller),
+    // replace the pending step, or cancel. On cancel we stop cleanly here,
+    // before spending the round — the final answer the model already streamed
+    // for the prior turn stands.
+    const directive = deps.checkpoint ? await deps.checkpoint(round + 1, pendingView(turn.toolCalls)) : 'continue';
+    if (directive === 'abort') return ended('cancelled');
 
     round++;
+    const step = await takeRound(turn.toolCalls, round, directive === 'replan', deps, thrash);
+    toolCallCount += step.ran;
 
-    // Thrash detection (count how often each exact call recurs) and novelty
-    // detection (did this round try anything genuinely new?) share one pass.
-    let thrashing = false;
-    let novelInRound = false;
-    for (const call of turn.toolCalls) {
-      const key = callKey(call);
-      const n = (seen.get(key) ?? 0) + 1;
-      if (n === 1) novelInRound = true;
-      seen.set(key, n);
-      if (n > duplicateLimit) thrashing = true;
-    }
+    const stop = limits.stopWhen(round);
+    if (stop === 'halt') return ended('cancelled');
 
-    const results = await deps.executeTools(turn.toolCalls, round);
-    toolCallCount += turn.toolCalls.length;
+    const next = afterRound(limits, round, step, stop, extendedRounds);
+    extendedRounds = next.extendedRounds;
+    const includeTools = !next.finalRound && !step.thrashing;
 
-    // Progress-earned extension: at the ceiling, a round that tried novel work
-    // (and isn't thrashing) earns one more round, up to progressExtension. A
-    // repeating or thrashing loop never extends — it is cut exactly as before.
-    const ceiling = Math.max(maxRounds, options.maxRoundsFloor?.() ?? 0);
-    if (
-      round >= ceiling + extendedRounds &&
-      novelInRound &&
-      !thrashing &&
-      extendedRounds < progressExtension
-    ) {
-      extendedRounds++;
-    }
+    turn = await deps.callModel(step.results, turn.text, round, includeTools);
 
-    const finalRound = round >= ceiling + extendedRounds;
-    const includeTools = !finalRound && !thrashing;
-
-    turn = await deps.callModel(results, turn.text, round, includeTools);
-
-    if (!includeTools) {
-      // Tools were withdrawn → this turn is the forced final answer; stop here
-      // even if the model attempted (ignored) further tool calls.
-      return {
-        rounds: round,
-        toolCallCount,
-        stoppedReason: thrashing ? 'duplicate_thrash' : 'max_rounds',
-        extendedRounds,
-      };
-    }
+    // Tools were withdrawn → this turn is the forced final answer; stop here
+    // even if the model attempted (ignored) further tool calls.
+    if (!includeTools) return ended(step.thrashing ? 'duplicate_thrash' : (stop ?? 'max_rounds'));
   }
 
-  return { rounds: round, toolCallCount, stoppedReason: 'no_more_tools', extendedRounds };
+  return ended('no_more_tools');
 }
 
 /**

@@ -664,15 +664,16 @@
 .c2c-v2 .pj-lc-stage::before{left:0;right:50%;}
 .c2c-v2 .pj-lc-stage::after{left:50%;right:0;}
 .c2c-v2 .pj-lc-stage:first-child::before, .c2c-v2 .pj-lc-stage:last-child::after{display:none;}
-.c2c-v2 .pj-lc-stage[data-status="done"]::before, .c2c-v2 .pj-lc-stage[data-status="done"]::after, .c2c-v2 .pj-lc-stage[data-status="active"]::before{background:var(--accent-100);}
+/* No progress fill. The `done` node/connector rules and the filled connector
+   into the open stage are gone: ProjectHome.tsx derived "done" from the open
+   tab's position, not from anything recorded, so the fill stated completion no
+   data backs (2026-09-23). The tracker marks the open stage and nothing else. */
 .c2c-v2 .pj-lc-node{position:relative;z-index:1;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--bg-100);border:2px solid var(--border);color:var(--text-400);transition:background var(--dur), border-color var(--dur), box-shadow var(--dur), color var(--dur);}
 .c2c-v2 .pj-lc-ic{display:flex;}.c2c-v2 .pj-lc-ic svg{width:14px;height:14px;}
 .c2c-v2 .pj-lc-l{font-size:11.5px;font-weight:500;color:var(--text-400);white-space:nowrap;}
 .c2c-v2 .pj-lc-stage:hover .pj-lc-node{border-color:var(--accent-100);color:var(--accent-200);}
-.c2c-v2 .pj-lc-stage[data-status="done"] .pj-lc-node{background:var(--accent-strong);border-color:var(--accent-strong);color:var(--accent-on-strong);}
 .c2c-v2 .pj-lc-stage[data-status="active"] .pj-lc-node{background:var(--accent-000);border-color:var(--accent-100);color:var(--accent-200);box-shadow:0 0 0 4px var(--accent-000);}
 .c2c-v2 .pj-lc-stage[data-status="active"] .pj-lc-l{color:var(--text-100);font-weight:600;}
-.c2c-v2 .pj-lc-stage[data-status="done"] .pj-lc-l{color:var(--text-200);}
 
 .c2c-v2 .pj-stageband{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;padding:13px 16px;margin:0 0 18px;background:var(--bg-100);border:1px solid var(--border);border-radius:var(--radius-lg);}
 .c2c-v2 .pj-stageband-l{display:flex;flex-direction:column;gap:2px;}
@@ -827,7 +828,7 @@
 @media (prefers-reduced-motion: reduce){
   .c2c-v2 .tt-panel,.c2c-v2 .tt-scrim,
   .c2c-v2 .tb-detail,.c2c-v2 .tb-create,
-  .c2c-v2 .cl-fab-menu,.c2c-v2 .cl-bd,.c2c-v2 .cl-modal,.c2c-v2 .cl-toast,
+  .c2c-v2 .cl-bd,.c2c-v2 .cl-modal,.c2c-v2 .cl-toast,
   /* The filings-catalog detail drawer and its backdrop are the same slide-over
      shape as .tt-panel above, and were the one pair never registered here. */
   .c2c-v2 .fc-detail,.c2c-v2 .fc-detail-bd{animation:none;}
@@ -1365,6 +1366,10 @@
 .c2c-v2 .rail-logo-text{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .c2c-v2 .rail-logo-text span{color:var(--accent-100);font-weight:500;}
 .c2c-v2.shell[data-collapsed="true"] .rail-logo-text{display:none;}
+/* Collapsed, the brand mark has the top to itself and the toggle sits in the
+   foot (Shell.tsx Rail) — side by side they left the mark 5px wide (finding 135). */
+.c2c-v2.shell[data-collapsed="true"] .rail-top{justify-content:center;padding:0;}
+.c2c-v2 .rail-foot .rail-collapse{margin:0 auto 6px;}
 .c2c-v2 .rail-collapse{width:26px;height:26px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;color:var(--text-300);flex-shrink:0;font-size:16px;}
 .c2c-v2 .rail-collapse:hover{background:var(--bg-200);color:var(--text-100);}
 .c2c-v2 .rail-scroll{flex:1;overflow-y:auto;padding:6px 0 12px;}
@@ -1385,9 +1390,18 @@
 .c2c-v2 .nav-item .lbl{flex:1;overflow:hidden;text-overflow:ellipsis;}
 .c2c-v2 .nav-item:hover{background:var(--bg-200);color:var(--text-100);}
 .c2c-v2 .nav-item:hover .ico{color:var(--text-200);}
-.c2c-v2 .nav-item[aria-current="true"]{background:var(--accent-000);color:var(--accent-200);font-weight:500;}
-.c2c-v2 .nav-item[aria-current="true"] .ico{color:var(--accent-100);}
-.c2c-v2 .nav-item[aria-current="true"]::before{content:"";position:absolute;left:0;top:6px;bottom:6px;width:2.5px;border-radius:2px;background:var(--accent-100);}
+/* Where the user is: the open surface's entry (aria-current="page"). This read
+   [aria-current="true"], which only the client-category buttons carried, so the
+   category was the one thing ever highlighted and the open surface never was
+   (launch sweep finding 130). */
+.c2c-v2 .nav-item[aria-current="page"]{background:var(--accent-000);color:var(--accent-200);font-weight:500;}
+.c2c-v2 .nav-item[aria-current="page"] .ico{color:var(--accent-100);}
+.c2c-v2 .nav-item[aria-current="page"]::before{content:"";position:absolute;left:0;top:6px;bottom:6px;width:2.5px;border-radius:2px;background:var(--accent-100);}
+/* A chosen client category is a setting (aria-pressed), not a location: an
+   inset ring and the accent icon — a shape as well as a colour — and never the
+   current-page fill and bar. */
+.c2c-v2 .nav-item[aria-pressed="true"]{color:var(--text-100);font-weight:500;box-shadow:inset 0 0 0 1px var(--accent-muted);}
+.c2c-v2 .nav-item[aria-pressed="true"] .ico{color:var(--accent-100);}
 .c2c-v2.shell[data-collapsed="true"] .nav-item .lbl, .c2c-v2.shell[data-collapsed="true"] .nav-dot{display:none;}
 .c2c-v2.shell[data-collapsed="true"] .nav-item{justify-content:center;padding:5px;}
 .c2c-v2 .nav-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
@@ -1434,7 +1448,7 @@
 .c2c-v2 .nav-unlock-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;}
 .c2c-v2 .nav-badge{margin-left:auto;flex-shrink:0;font-size:10px;font-weight:600;letter-spacing:.02em;color:var(--accent-on-strong);background:var(--accent-strong);border-radius:999px;padding:1px 6px;}
 .c2c-v2 .nav-count{margin-left:auto;flex-shrink:0;font-size:10.5px;font-weight:600;color:var(--text-400);background:var(--bg-200);border-radius:999px;padding:1px 7px;min-width:20px;text-align:center;}
-.c2c-v2 .nav-item[aria-current="true"] .nav-count{color:var(--accent-200);background:var(--accent-muted);}
+.c2c-v2 .nav-item[aria-current="page"] .nav-count{color:var(--accent-200);background:var(--accent-muted);}
 .c2c-v2.shell[data-collapsed="true"] .nav-badge, .c2c-v2.shell[data-collapsed="true"] .nav-count{display:none;}
 .c2c-v2 .rail-foot{flex-shrink:0;border-top:1px solid var(--border);padding:8px;}
 .c2c-v2 .rail-account{display:flex;align-items:center;gap:9px;width:100%;padding:6px 8px;border-radius:var(--radius-md);}
@@ -1448,14 +1462,42 @@
 /* ── Main + topbar ── */
 .c2c-v2 .main{grid-column:2;grid-row:1;height:100vh;display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--bg-000);}
 .c2c-v2 .topbar{height:var(--topbar);display:flex;align-items:center;gap:12px;padding:0 16px;border-bottom:1px solid var(--border);flex-shrink:0;}
-.c2c-v2 .crumbs{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-300);min-width:0;flex-shrink:1;overflow:hidden;white-space:nowrap;}
-.c2c-v2 .crumbs .sep{color:var(--text-400);}
-.c2c-v2 .crumbs .here{color:var(--text-100);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* The header shrinks in priority order (launch sweep finding 134: at 1440px
+   with AnA open the crumbs got nothing — "Concept2Cure.RI › Biotech & Ph",
+   the page name gone — while the org name wrapped onto two lines). The
+   search box and the org label give way first (higher flex-shrink, both
+   ellipsize — the same 100000:1 factor as inside the crumbs, below), and
+   inside the crumbs the path gives way before the page name. */
+.c2c-v2 .crumbs{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-300);min-width:0;flex:0 1 auto;overflow:hidden;white-space:nowrap;}
+/* Flex shrink is proportional (factor × width), so the path takes a factor
+   of 100000 to the page name's 1: while the path has room left, the page
+   name's share of the squeeze is below a layout unit (1/64px) and rounds to
+   nothing — at 1000 it was ~0.07px, enough to draw an ellipsis on a name that
+   fit. Once the path is at its minimum, the page name takes it all and
+   ellipsizes. (A page-name factor below 1 does not do this: alone, it absorbs
+   only that fraction of the overflow and the rest is clipped, no ellipsis.) */
+.c2c-v2 .crumbs>span{min-width:0;overflow:hidden;text-overflow:ellipsis;flex-shrink:100000;}
+.c2c-v2 .crumbs .sep{color:var(--text-400);flex-shrink:0;}
+/* The category crumb gives way before the page name, but never to nothing:
+   shrunk to zero it left an orphan "›" before the page name. */
+.c2c-v2 .crumbs .crumb-tier{min-width:3.5em;max-width:10em;}
+.c2c-v2 .crumbs .here{color:var(--text-100);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:1;}
 .c2c-v2 .tb-spacer{flex:1;}
-.c2c-v2 .tb-cmdk{display:flex;align-items:center;gap:8px;height:30px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius-lg);color:var(--text-400);font-size:12px;background:var(--bg-050);min-width:0;flex-shrink:1;max-width:230px;transition:border-color var(--dur);}
+.c2c-v2 .tb-cmdk{display:flex;align-items:center;gap:8px;height:30px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius-lg);color:var(--text-400);font-size:12px;background:var(--bg-050);min-width:64px;flex:0 100000 230px;max-width:230px;transition:border-color var(--dur);}
 .c2c-v2 .tb-cmdk:hover{border-color:var(--border-strong);}
 .c2c-v2 .tb-cmdk .ico{font-size:15px;}
-.c2c-v2 .tb-cmdk .lbl{flex:1;}
+.c2c-v2 .tb-cmdk .lbl{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+/* Where the header is narrow — AnA open below 1500px, or any shell below
+   1100px — the search box is its icon and ⌘K. Shrunk further it showed a
+   clipped sliver of its label and still took the crumbs' room. The button's
+   aria-label (Shell.tsx) keeps its name when the label is not drawn. */
+@media (max-width:1500px){.c2c-v2.shell[data-ana-open="true"] .tb-cmdk .lbl{display:none;}.c2c-v2.shell[data-ana-open="true"] .tb-cmdk{flex:0 0 auto;min-width:0;}}
+@media (max-width:1100px){.c2c-v2 .tb-cmdk .lbl{display:none;}.c2c-v2 .tb-cmdk{flex:0 0 auto;min-width:0;}}
+/* Same pressure, the crumbs: the root crumb repeats the brand mark beside it,
+   so it goes first rather than ellipsizing to "Concept2…" and taking the page
+   name's room. */
+@media (max-width:1500px){.c2c-v2.shell[data-ana-open="true"] .crumbs .crumb-root,.c2c-v2.shell[data-ana-open="true"] .crumbs .crumb-root-sep{display:none;}}
+@media (max-width:1100px){.c2c-v2 .crumbs .crumb-root,.c2c-v2 .crumbs .crumb-root-sep{display:none;}}
 .c2c-v2 .tb-cmdk .kbd{font-family:var(--font-mono);font-size:10px;padding:1px 5px;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-400);}
 .c2c-v2 .tb-btn{width:32px;height:32px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;color:var(--text-400);font-size:17px;}
 .c2c-v2 .tb-btn:hover{background:var(--bg-200);color:var(--text-100);}
@@ -1475,10 +1517,11 @@
 .c2c-v2 .tb-btn.on{background:var(--accent-000);color:var(--accent-200);}
 .c2c-v2 .tb-btn.on:hover{background:var(--accent-000);color:var(--accent-200);}
 .c2c-v2 .rail-logo[data-on="true"]{background:var(--bg-200);}
-.c2c-v2 .tb-org{display:flex;align-items:center;gap:7px;height:30px;padding:0 8px 0 6px;border-radius:var(--radius-lg);transition:background var(--dur);}
-.c2c-v2 .tb-org:hover{background:var(--bg-100);}
-.c2c-v2 .tb-org-mark{width:20px;height:20px;border-radius:5px;background:var(--accent-strong);color:var(--accent-on-strong);font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;}
-.c2c-v2 .tb-org-name{font-size:12.5px;font-weight:500;}
+/* A label, not a control (finding 131): no hover. It gives way before the
+   crumbs do, down to the mark alone. */
+.c2c-v2 .tb-org{display:flex;align-items:center;gap:7px;height:30px;padding:0 8px 0 6px;min-width:28px;flex:0 100000 auto;}
+.c2c-v2 .tb-org-mark{width:20px;height:20px;border-radius:5px;background:var(--accent-strong);color:var(--accent-on-strong);font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.c2c-v2 .tb-org-name{font-size:12.5px;font-weight:500;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
 .c2c-v2 .tb-org-chev{color:var(--text-400);font-size:13px;display:flex;}
 .c2c-v2 .tb-cmdk .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 @media (max-width:1180px){ .c2c-v2 .tb-cmdk .lbl{display:none;} .c2c-v2 .tb-org-name{display:none;} .c2c-v2 .crumbs .sep, .c2c-v2 .crumbs span:not(.here){display:none;} }
@@ -1784,9 +1827,8 @@
 .c2c-v2 .ana-runctl-err{flex-basis:100%;font-size:11px;color:var(--warning);}
 .c2c-v2 .ana-runctl-input[aria-invalid]{border-color:var(--warning);}
 /* ── Live Drive strip — fixed so it survives every navigation AnA makes.
-   The shell grid is overflow:hidden (see .c2c-v2.shell), so like .cl-fab-wrap
-   this must be position:fixed; z-index 60 sits above CmdK's scrim (50) and
-   below the collab FAB (70). Centered on the viewport; when the AnA rail is
+   The shell grid is overflow:hidden (see .c2c-v2.shell), so this must be
+   position:fixed; z-index 60 sits above CmdK's scrim (50). Centered on the viewport; when the AnA rail is
    open, shifted left by half its width so it stays centered on the canvas. */
 .c2c-v2 .ana-drive-strip{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:60;display:flex;flex-direction:column;gap:6px;max-width:min(560px,calc(100vw - 32px));padding:8px 10px 8px 14px;background:var(--bg-000);border:1px solid var(--border);border-radius:20px;box-shadow:var(--v2-shadow-lg);animation:ana-drive-in 200ms ease-out;}
 .c2c-v2 .ana-drive-row{display:flex;align-items:center;gap:10px;min-width:0;}
@@ -1889,6 +1931,26 @@
 .c2c-v2 .ana-activity-chev svg{font-size:12px;}
 /* A failure is said in the server's sentence, always visible, under the row. */
 .c2c-v2 .ana-activity-note{grid-column:2;color:var(--warning);font-size:11.5px;line-height:1.5;}
+/* A turn that was not recorded, said under the turn and never folded. */
+.c2c-v2 .ana-activity-unrecorded{display:flex;align-items:baseline;gap:6px;margin:4px 0 0;font-size:12px;line-height:1.5;font-weight:500;color:var(--text-100);}
+/* A hash or an id reads as one, beside the full hash set in the same face. */
+.c2c-v2 .ana-activity-obj.is-mono{font-family:var(--font-mono);font-size:11.5px;}
+.c2c-v2 .ana-activity-unrecorded .ana-activity-glyph{color:var(--warning);}
+/* A turn the loop stopped before she was done (the round limit, a repeated
+   step), said under the turn and never folded, in the unrecorded note's
+   register. Continue sits at the end of the sentence it answers. */
+.c2c-v2 .ana-activity-stopped{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px;margin:4px 0 0;font-size:12px;line-height:1.5;font-weight:500;color:var(--text-100);}
+.c2c-v2 .ana-activity-stopped .ana-activity-glyph{color:var(--warning);}
+/* The note takes focus by script when Continue removes itself; it shows the
+   same ring the button had, and none after a pointer press. */
+.c2c-v2 .ana-activity-stopped:focus{outline:none;}
+.c2c-v2 .ana-activity-stopped:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;border-radius:var(--radius-sm);}
+.c2c-v2 .ana-activity-continue{font:inherit;font-size:12px;font-weight:500;min-height:24px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-000);color:var(--text-100);cursor:pointer;transition:background var(--dur) var(--ease),border-color var(--dur) var(--ease);}
+.c2c-v2 .ana-activity-continue:hover{background:var(--bg-050);border-color:var(--border-strong);}
+.c2c-v2 .ana-activity-continue:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;}
+@media (prefers-reduced-motion:reduce){
+  .c2c-v2 .ana-activity-continue{transition:none;}
+}
 .c2c-v2 .ana-activity-detail{grid-column:2;display:flex;flex-direction:column;gap:6px;margin-top:6px;}
 .c2c-v2 .ana-activity-kv{font-size:11.5px;color:var(--text-300);font-variant-numeric:tabular-nums;}
 .c2c-v2 .ana-activity-pre{box-sizing:border-box;margin:0;padding:6px 8px;max-height:180px;overflow:auto;font-family:var(--font-mono);font-size:11px;line-height:1.5;color:var(--text-200);background:var(--bg-050);border:1px solid var(--border);border-radius:var(--radius-sm);white-space:pre-wrap;overflow-wrap:anywhere;}
@@ -2035,26 +2097,6 @@
 .c2c-v2 .tb-task .ico{font-size:15px;}
 @media(max-width:900px){.c2c-v2 .tb-task-lbl{display:none;}.c2c-v2 .tb-task{padding:0 9px;}}
 
-/* floating launcher — present on every surface */
-.c2c-v2 .cl-fab-wrap{position:fixed;right:22px;bottom:22px;z-index:70;display:flex;flex-direction:column;align-items:flex-end;gap:10px;}
-/* --ana is the dock column width (see the grid at .c2c-v2.shell). This read
-   --ana-w, which is defined nowhere in the repo, so it always fell back to
-   400px against a 380px dock and parked the launcher 20px inside the page
-   instead of flush against it. Using the real token also means the FAB now
-   tracks the dock if that width ever changes. */
-.c2c-v2.shell[data-ana-open="true"] .cl-fab-wrap{right:calc(var(--ana) + 22px);}
-.c2c-v2 .cl-fab{width:50px;height:50px;border-radius:50%;background:var(--accent-strong);color:var(--accent-on-strong);display:flex;align-items:center;justify-content:center;box-shadow:var(--v2-shadow-lg);transition:transform var(--dur) var(--ease),background var(--dur) var(--ease);}
-.c2c-v2 .cl-fab .ico{font-size:21px;}
-.c2c-v2 .cl-fab:hover{box-shadow:var(--shadow-sm);transform:translateY(-1px);}
-.c2c-v2 .cl-fab[data-open]{background:var(--text-200);}
-.c2c-v2 .cl-fab-menu{display:flex;flex-direction:column;gap:2px;background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--v2-shadow-lg);padding:6px;width:268px;animation:clPop .14s ease;}
-@keyframes clPop{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
-.c2c-v2 .cl-fab-mi{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:var(--radius-md);text-align:left;transition:background var(--dur);}
-.c2c-v2 .cl-fab-mi:hover{background:var(--bg-100);}
-.c2c-v2 .cl-fab-mi .ico{font-size:17px;color:var(--accent-200);flex-shrink:0;width:20px;text-align:center;}
-.c2c-v2 .cl-fab-mi span span, .c2c-v2 .cl-fab-mi>span{display:flex;flex-direction:column;}
-.c2c-v2 .cl-fab-mi b{font-size:12.5px;color:var(--text-100);font-weight:600;}
-.c2c-v2 .cl-fab-mi em{font-size:11px;color:var(--text-400);font-style:normal;}
 
 /* modal */
 .c2c-v2 .cl-bd{position:fixed;inset:0;background:rgb(20 20 19/.34);display:flex;align-items:flex-start;justify-content:center;padding:7vh 16px 16px;z-index:80;animation:clFade .14s ease;}
@@ -2750,7 +2792,7 @@
 .c2c-v2 .dsr-src-cites{font-size:10.5px;font-weight:600;color:var(--accent-200);background:var(--accent-000);border-radius:var(--radius-md);padding:3px 8px;flex-shrink:0;}
 
 .c2c-v2 .ct-wrap{height:100%;display:flex;flex-direction:column;background:var(--bg-000);min-height:0;}
-.c2c-v2 .ct-head{flex-shrink:0;display:flex;align-items:center;gap:14px;padding:12px 20px;border-bottom:1px solid var(--border);background:var(--bg-000);}
+.c2c-v2 .ct-thread-head{flex-shrink:0;display:flex;align-items:center;gap:14px;padding:12px 20px;border-bottom:1px solid var(--border);background:var(--bg-000);}
 .c2c-v2 .ct-back{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--text-300);background:none;border:none;cursor:pointer;padding:6px 8px;border-radius:7px;flex-shrink:0;}
 .c2c-v2 .ct-back:hover{background:var(--bg-100);color:var(--text-100);}
 .c2c-v2 .ct-back svg{width:15px;height:15px;}
@@ -2766,7 +2808,7 @@
    panel's one control. Without this the title collapsed to its first letter
    under the label beside it. */
 @media (max-width:560px){
-  .c2c-v2 .ct-head{gap:8px;padding:10px 12px;}
+  .c2c-v2 .ct-thread-head{gap:8px;padding:10px 12px;}
   .c2c-v2 .ct-head-model{display:none;}
   .c2c-v2 .ct-back{padding:6px 4px;}
 }
@@ -2775,6 +2817,8 @@
    2.96:1 on --bg-000 (same reason as .ph-eyebrow). */
 .c2c-v2 .ct-head-open{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:500;color:var(--accent-200);background:none;border:1px solid var(--border);border-radius:7px;padding:6px 10px;cursor:pointer;white-space:nowrap;flex-shrink:0;}
 .c2c-v2 .ct-head-open:hover{background:var(--bg-050);}
+.c2c-v2 .ct-head-open:disabled{opacity:.5;cursor:not-allowed;}
+.c2c-v2 .ct-head-open:disabled:hover{background:none;}
 .c2c-v2 .ct-head-open svg{width:13px;height:13px;}
 
 .c2c-v2 .ct-scroll{flex:1;min-height:0;overflow-y:auto;}

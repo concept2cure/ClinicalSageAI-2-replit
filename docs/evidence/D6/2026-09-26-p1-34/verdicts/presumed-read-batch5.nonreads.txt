@@ -1,0 +1,5 @@
+link_program_clinical_study | confirm | - | AnaToolExecutor.ts:7824 | UPDATE regulatory_programs.metadata (clinicalStudyId)
+package_ectd_for_region | confirm | - | submission-gateways/regional-packager.ts:1042 | writes an eCTD zip to output_dir
+place_project_document | conditional | input.confirm_suggested === true -> refuse (the handler already refuses); else confirm | vault/vault-placement.service.ts:309 | UPDATE vault.documents placement + audit
+predict_change_impact | confirm | - | submission-twin-service.ts:610 | INSERT submission_twin_change_impacts
+project_csr_evidence | confirm | - | clinical-regulatory-evidence/csr-adapter.service.ts:85 | bulk-creates evidence sources, studies and relationships

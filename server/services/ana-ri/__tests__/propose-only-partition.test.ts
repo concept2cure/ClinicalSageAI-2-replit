@@ -30,6 +30,7 @@ import {
   PROPOSE_ONLY_COMMANDS,
   isProposeOnlyCommand,
 } from '../command-rbac';
+import { governedTierOf } from '../part11-governance';
 
 const SERVER_ROOT = resolve(__dirname, '../../..');
 
@@ -76,12 +77,15 @@ describe('membership', () => {
     expect(missing).toEqual([]);
   });
 
-  it('does NOT swallow ordinary authoring mutations', () => {
-    // The partition has to stay narrow enough to leave AnA useful. Creating a
-    // task or updating a draft is work, not attestation; blocking it would
-    // trade a real capability for no control.
+  it('covers the ordinary authoring mutations, at the confirm tier (audit 2026-09-24 DP-08, P0-12)', () => {
+    // Until 2026-09-26 these were outside the partition ("work, not
+    // attestation") and ran from model output unaided. They are proposals now:
+    // AnA still drafts the task or the edit, a person clicks once, and the
+    // action runs under the person's name through the one route that stamps
+    // humanConfirmed. The capability stays; the unaided execution does not.
     for (const c of ['create_task', 'update_task', 'create_project', 'update_project', 'create_artifact']) {
-      expect(isProposeOnlyCommand(c), `${c} must remain agent-executable`).toBe(false);
+      expect(isProposeOnlyCommand(c), `${c} must be a proposal`).toBe(true);
+      expect(governedTierOf(c), `${c} is an ordinary write`).toBe('confirm');
     }
   });
 
@@ -96,16 +100,11 @@ describe('membership', () => {
     // Re-evaluate the documented rule independently of the implementation. If
     // someone converts the derivation into a hand-list, this diverges.
     const expected = Object.entries(COMMAND_AUTHORIZATION)
-      .filter(([, a]) =>
-        a.effect === 'write' &&
-        (a.requiresSignature === true ||
-          a.requiresReasonForChange === true ||
-          (a.requiresConfirmation === true && a.minRole === 'manager'))
-      )
+      .filter(([, a]) => a.effect === 'write')
       .map(([name]) => name)
       .sort();
     expect([...PROPOSE_ONLY_COMMANDS].sort()).toEqual(expected);
-    expect(expected.length).toBeGreaterThan(10);
+    expect(expected.length).toBeGreaterThan(40);
   });
 });
 

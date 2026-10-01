@@ -32,7 +32,13 @@ const updateSet = vi.fn();
 vi.mock('../../../db', () => {
   const db: any = {
     select: (..._a: unknown[]) => ({
-      from: () => ({ where: () => ({ limit: () => selectChain() }) }),
+      from: () => ({
+        where: () => ({
+          limit: () => selectChain(),
+          // The leaf's previous document, read under the lock on a re-point (PF-11).
+          for: async () => [{ documentTable: 'vault_documents', documentId: null, documentUuid: 'previous-doc', documentContentSha256: 'old' }],
+        }),
+      }),
     }),
     insert: () => ({ values: (v: unknown) => ({ returning: () => insertValues(v) }) }),
     update: () => ({
@@ -43,6 +49,9 @@ vi.mock('../../../db', () => {
   // transaction holding the sequence row lock; the stub's lock read reports an
   // unlocked sequence, and the write goes through the same stubs as before.
   db.transaction = async (fn: (tx: any) => unknown) => fn({ ...db, execute: async () => ({ rows: [{ status: 'draft' }] }) });
+  // The document's project (PF-11): these documents record none, so the
+  // cross-project check has nothing to compare and the placement stands.
+  db.execute = async () => ({ rows: [] });
   return { db };
 });
 vi.mock('../../auditService', () => ({ default: { logAction: vi.fn(async (..._a: any[]) => ({ persisted: true, chained: true, tamperProof: true })) } }));

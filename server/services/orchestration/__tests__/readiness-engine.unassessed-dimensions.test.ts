@@ -113,9 +113,14 @@ describe('readiness engine — a dimension nothing measured is null, not 50', ()
 
   it('renormalises the weights over the assessed dimensions only', () => {
     // Three draft documents in Module 1, none routed, none validated, no CMC.
-    // completeness = 100*0.6 + (3/15*100)*0.4 = 68 ; quality = 0 ; routing = 0.
+    // completeness = 100 — the average over the modules whose completeness was
+    // MEASURED. It used to be 100*0.6 + (3/15*100)*0.4 = 68, where the second
+    // term came from `docFactor = (docCount / 15) * 100`: a denominator with
+    // nothing behind it, under which fifteen documents of any kind scored full
+    // marks. That term is gone, so the figure is what the measured modules say
+    // and nothing else. quality = 0 ; routing = 0.
     // compliance and consistency are unassessed, so the total is taken over the
-    // 0.30 + 0.25 + 0.15 of weight that was: round(68*0.30 / 0.70) = 29.
+    // 0.30 + 0.25 + 0.15 of weight that was: round(100*0.30 / 0.70) = 43.
     // The pre-fix engine answered 35 — 20.4 + (50*0.20) + (50*0.10).
     const p = emptyPayload();
     p.moduleMap = [
@@ -140,12 +145,12 @@ describe('readiness engine — a dimension nothing measured is null, not 50', ()
 
     const a = computeReadinessAssessment(p);
 
-    expect(a.scores.completeness).toBe(68);
+    expect(a.scores.completeness).toBe(100);
     expect(a.scores.quality).toBe(0);
     expect(a.scores.routing).toBe(0);
     expect(a.scores.compliance).toBeNull();
     expect(a.scores.consistency).toBeNull();
-    expect(a.overallScore).toBe(29);
+    expect(a.overallScore).toBe(43);
   });
 
   it('still reports a number for a dimension that really was measured', () => {

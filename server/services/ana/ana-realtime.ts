@@ -15,17 +15,22 @@
  * unit-tests without sockets or a model.
  */
 
-import type { Server as SocketIOServer, Socket } from 'socket.io';
+import type { Server as SocketIOServer } from 'socket.io';
 
 import { createScopedLogger } from '../../utils/logger.js';
 import { verifyLiveToken } from '../token-revocation';
 import { requireAccessTokenReason } from '../../middleware/tokenType';
 import { checkOrgMembership } from '../../middleware/orgMembership';
 import { shouldProcessTenantInBackground } from '../tenant/tenant-lifecycle.js';
+import { startSessionRecheck, type RecheckableSocket } from '../../socket/sessionRecheck';
 import type { GatewayRequest } from '../ai-gateway/types.js';
-import { getAllEnabledTools } from './AnaToolDefinitions.js';
+import { governedToolsetFor } from './governed-toolset.js';
+import { getPool } from '../../db.js';
+import { runWithTenantScope } from '../../db/tenantStore.js';
 import { selectToolsForTurn, type ToolSelectionContext } from './tool-selection.js';
 import { executeAgenticLoop } from './AnaToolExecutor.js';
+import { loopToolCollector, recordLoopTurn } from './turn-record-loop.js';
+import type { TurnRecordStatus } from './turn-record.js';
 
 const log = createScopedLogger('ana-realtime');
 
@@ -46,6 +51,8 @@ export interface TurnInput {
 
 export interface TurnResult {
   text: string;
+  /** Whether the turn's retained record was filed (services/ana/turn-record.ts). */
+  turnRecord?: TurnRecordStatus;
 }
 
 export type RunTurn = (input: TurnInput, signal: AbortSignal, emit: RealtimeEmit) => Promise<TurnResult>;
@@ -77,11 +84,12 @@ export class AnaRealtimeSession {
     try {
       const result = await this.runTurn(input, controller.signal, this.emit);
       if (!controller.signal.aborted) {
-        this.emit('ana:done', { turnId: input.turnId, text: result.text });
+        this.emit('ana:done', { turnId: input.turnId, text: result.text, turnRecord: result.turnRecord });
       }
     } catch (err) {
       if (!controller.signal.aborted) {
-        this.emit('ana:error', { turnId: input.turnId, error: err instanceof Error ? err.message : String(err) });
+        const turnRecord = (err as { turnRecord?: TurnRecordStatus } | null)?.turnRecord;
+        this.emit('ana:error', { turnId: input.turnId, error: err instanceof Error ? err.message : String(err), turnRecord });
       }
     } finally {
       if (this.current === controller) this.current = null;
@@ -113,18 +121,47 @@ export class AnaRealtimeSession {
  * streaming tokens and tool progress. Output is suppressed once the turn is
  * aborted so a barged-in turn goes quiet immediately.
  */
-export const runAgenticTurn: RunTurn = async (input, signal, emit) => {
-  const tools = selectToolsForTurn(getAllEnabledTools(), input.message, {
+export const runAgenticTurn: RunTurn = (input, signal, emit) =>
+  // The socket was authenticated for this organization, and the turn runs in
+  // its tenant scope. Without one, every query the turn makes — the tool
+  // policy, each tool's own reads — refuses under RLS_ENFORCE=on, and the
+  // fail-soft policy read degrades to "every tool allowed".
+  runWithTenantScope(
+    { tenantId: String(input.organizationId), role: null, source: 'request', caller: 'ana-realtime:turn' },
+    () => runAgenticTurnInScope(input, signal, emit),
+  );
+
+const runAgenticTurnInScope: RunTurn = async (input, signal, emit) => {
+  // Governed first (tenant deny-list, catalog, Anthropic-hosted tools), then
+  // relevance — the order every chat door uses (governed-toolset.ts).
+  const governed = await governedToolsetFor(getPool(), input.organizationId);
+  const tools = selectToolsForTurn(governed, input.message, {
     pinned: input.selectedTools,
     context: input.context,
   });
 
+  const messages = [
+    ...(input.history ?? []).map(m => ({ role: m.role, content: m.content })),
+    { role: 'user' as const, content: input.message },
+  ];
+  const collected = loopToolCollector();
+  // Recorded however the turn ends: answered, stopped by barge-in, or failed.
+  const recordTurn = (outcome: 'answered' | 'stopped' | 'failed', response?: unknown, error?: unknown) =>
+    recordLoopTurn(getPool(), {
+      orgId: input.organizationId,
+      userId: input.userId,
+      surface: 'socket:ana',
+      projectId: input.projectId ?? null,
+      typed: input.message,
+      messages,
+      calls: collected.calls,
+      response: response as Parameters<typeof recordLoopTurn>[1]['response'],
+      outcome,
+      error,
+    });
   const request: GatewayRequest = {
     taskType: 'chat',
-    messages: [
-      ...(input.history ?? []).map(m => ({ role: m.role, content: m.content })),
-      { role: 'user' as const, content: input.message },
-    ],
+    messages,
     maxTokens: 4096,
     temperature: 0.6,
     stream: true,
@@ -146,20 +183,22 @@ export const runAgenticTurn: RunTurn = async (input, signal, emit) => {
       userId: input.userId,
       projectId: input.projectId ?? null,
     },
-    onToolExecution: toolName => {
+    onToolExecution: (toolName, toolInput, result) => {
+      collected.onToolExecution(toolName, toolInput, result);
       if (!signal.aborted) emit('ana:tool', { turnId: input.turnId, tool: toolName });
     },
+  }).catch(async (err: unknown) => {
+    const turnRecord = await recordTurn(signal.aborted ? 'stopped' : 'failed', undefined, err);
+    throw Object.assign(err instanceof Error ? err : new Error(String(err)), { turnRecord });
   });
 
-   
   const raw = (response as any)?.content ?? (response as any)?.text ?? (response as any)?.message ?? '';
-  return { text: typeof raw === 'string' ? raw : String(raw ?? '') };
+  const text = typeof raw === 'string' ? raw : String(raw ?? '');
+  const turnRecord = await recordTurn(signal.aborted ? 'stopped' : 'answered', { ...(response as object), content: text });
+  return { text, turnRecord };
 };
 
-interface AuthedSocket extends Socket {
-  orgId?: string;
-  authUserId?: string;
-}
+type AuthedSocket = RecheckableSocket;
 
 /**
  * Attach the ANA real-time duplex namespace (`/ana`) to the socket.io server.
@@ -225,6 +264,7 @@ export function registerAnaRealtime(io: SocketIOServer, runTurn: RunTurn = runAg
         }
         socket.orgId = String(organizationId);
         socket.authUserId = String(userId);
+        socket.sessionToken = token;
         next();
       } catch (err: any) {
         log.warn(`[ana-realtime] Auth failed for ${socket.id}: ${err?.message}`);
@@ -243,6 +283,14 @@ export function registerAnaRealtime(io: SocketIOServer, runTurn: RunTurn = runAg
 
     const emit: RealtimeEmit = (event, payload) => socket.emit(event, payload);
     const session = new AnaRealtimeSession(emit, runTurn);
+
+    // IAM-19 (P1-33), 2026-09-28: the handshake checks are re-run on a timer,
+    // as on the main namespace. Until now nothing looked again after connect,
+    // so a removed member, an ended session or a suspended tenant kept a live
+    // channel into the tool loop for the token's lifetime. When the session
+    // ends the socket is told why and disconnected, and the disconnect below
+    // disposes the session, which aborts any turn in flight.
+    startSessionRecheck(socket, 'ana-realtime');
 
     socket.on('ana:message', (data: {
       turnId?: string;

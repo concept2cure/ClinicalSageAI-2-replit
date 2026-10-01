@@ -29,20 +29,13 @@
 #     `git grep -i chromadb` finds nothing outside documents.
 #   GHSA-qwww-vcr4-c8h2 (react-router RSC CSRF): react-router and
 #     react-router-dom are no longer in package.json or package-lock.json.
-
-# owner: Security Engineering (D1 / W2 lane; ci.yml and the vendored skill tree)
-# reason: DS002 (image runs as root) fires on exactly one file,
-#   .claude/skills/gstack/.github/docker/Dockerfile.ci — a vendored skill's own
-#   CI image that this repository never builds, publishes or deploys. The
-#   production image, Dockerfile.optimized, runs as `appuser` (USER at its last
-#   stage). The plaintext ignore format cannot scope an ID to a path, and the
-#   ci.yml `skip-dirs` / `trivyignores` inputs that could are inside another
-#   lane's 24-hour window today; until one of those lands, this is the one
-#   tree-wide misconfiguration suppression left, and it hides a NEW Dockerfile
-#   that runs as root. Replace with a path-scoped exception (a
-#   .trivyignore.yaml `paths:` entry via `trivyignores`, or `skip-dirs:
-#   .claude/skills`) and delete this line.
-DS002 exp:2026-11-25
+#
+# Removed 2026-09-26 (W2; evidence docs/evidence/W2/2026-09-26-trivy-inline-ignores/):
+#   DS002 (image runs as root): it fired on one file, the vendored skill image
+#     .claude/skills/gstack/.github/docker/Dockerfile.ci, which is never built
+#     or deployed here. The config scans in ci.yml and deploy-aws.yml now skip
+#     that file alone (`skip-files`), so a new Dockerfile running as root
+#     anywhere else fails the scan again.
 
 # owner: Security Engineering (dependency-risk-ledger.json rows
 #   GHSA-w3rx-r6r6-pgpr / GHSA-5p2g-fcmc-qvqq; expires with the ledger, 2026-11-25)

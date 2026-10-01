@@ -58,7 +58,7 @@ describe('enhancedEmbeddingService source-identity enrichment', () => {
       return { rows: [] };
     });
 
-    const out = await svc.searchHybrid('q', 5, 0.7, ORG_UUID);
+    const out = await svc.searchHybrid('q', { limit: 5, organizationUuid: ORG_UUID });
 
     expect(out).toHaveLength(2);
     expect(out[0]).toMatchObject({ id: 'atom-1', content: 'c1', sourceId: 'artifact-abc', sourceType: 'data_room_upload' });
@@ -75,7 +75,7 @@ describe('enhancedEmbeddingService source-identity enrichment', () => {
       return { rows: [] };
     });
 
-    const out = await svc.searchHybrid('q', 5, 0.7, ORG_UUID);
+    const out = await svc.searchHybrid('q', { limit: 5, organizationUuid: ORG_UUID });
 
     expect(out).toHaveLength(2); // retrieval still returns its rows
     expect(out.every((r) => r.sourceId === null && r.sourceType === null)).toBe(true);

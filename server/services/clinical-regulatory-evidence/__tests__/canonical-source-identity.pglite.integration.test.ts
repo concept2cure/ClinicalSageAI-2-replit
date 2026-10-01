@@ -158,6 +158,21 @@ describe('canonical source identity (real Postgres)', () => {
     expect((await svc.findSourceByChecksum(ORG_B, 'sha-shared'))!.id).toBe(b.id);
   });
 
+  it('resolves identity within one project: the same bytes in two projects are two sources (PF-07 / VR-10)', async () => {
+    // The upload used to look the checksum up across the whole organization, so
+    // a file dropped into project B resolved to project A's source and was
+    // listed only in A.
+    const A = 'aaaaaaaa-0000-4000-8000-00000000000a';
+    const B = 'bbbbbbbb-0000-4000-8000-00000000000b';
+    const inA = await svc.createSource(ORG_A, upload('sha-two-projects', { clientProgramId: A, clientWorkspaceId: null }));
+    expect(
+      (await svc.findSourceByChecksum(ORG_A, 'sha-two-projects', { clientProgramId: A, clientWorkspaceId: null }))!.id,
+    ).toBe(inA.id);
+    expect(
+      await svc.findSourceByChecksum(ORG_A, 'sha-two-projects', { clientProgramId: B, clientWorkspaceId: null }),
+    ).toBeNull();
+  });
+
   it('finds nothing for an unknown or empty checksum', async () => {
     expect(await svc.findSourceByChecksum(ORG_A, 'sha-never-seen')).toBeNull();
     expect(await svc.findSourceByChecksum(ORG_A, '')).toBeNull();

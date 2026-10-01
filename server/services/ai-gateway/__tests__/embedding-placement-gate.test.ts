@@ -51,6 +51,13 @@ const PHI_TEXT = 'Patient MRN: 44819023 was admitted on 2026-03-02 for observati
 const PLAIN_TEXT = 'Section 3.2.P.5.1 lists the release specifications for the drug product.';
 const SECRETS = ['44819023', 'MRN', 'release specifications'];
 
+/**
+ * An allowed embedding resolves with its authorization (since 2026-09-29), which
+ * the embedding provider hands back to AIGateway.recordEmbeddingCall once the
+ * provider answers. Deciding still writes no row; the call's row comes after.
+ */
+const ALLOWED = { requestId: expect.any(String), request: expect.objectContaining({ taskType: 'embedding' }) };
+
 function buildGateway() {
   return new AIGateway({
     deterministicMode: false,
@@ -134,10 +141,10 @@ describe('AIGateway.authorizeEmbedding', () => {
       const gateway = buildGateway();
       await expect(
         gateway.authorizeEmbedding({ provider: 'openai', texts: [PLAIN_TEXT] }),
-      ).resolves.toBeUndefined();
+      ).resolves.toMatchObject(ALLOWED);
       await expect(
         gateway.authorizeEmbedding({ provider: 'local', texts: [PLAIN_TEXT], organizationId: 7 }),
-      ).resolves.toBeUndefined();
+      ).resolves.toMatchObject(ALLOWED);
       expect(auditEntries(gateway)).toHaveLength(0);
     });
 
@@ -176,7 +183,7 @@ describe('AIGateway.authorizeEmbedding', () => {
       const gateway = buildGateway();
       await expect(
         gateway.authorizeEmbedding({ provider: 'local', texts: [PLAIN_TEXT], organizationId: 7 }),
-      ).resolves.toBeUndefined();
+      ).resolves.toMatchObject(ALLOWED);
       expect(auditEntries(gateway)).toHaveLength(0);
     });
 
@@ -191,7 +198,7 @@ describe('AIGateway.authorizeEmbedding', () => {
       });
       await expect(
         gateway.authorizeEmbedding({ provider: 'local', texts: [PLAIN_TEXT], organizationId: 7 }),
-      ).resolves.toBeUndefined();
+      ).resolves.toMatchObject(ALLOWED);
     });
 
     it('a signed zero-retention agreement (OPENAI_ZERO_RETENTION=true) is the operator control that unlocks OpenAI', async () => {
@@ -201,7 +208,7 @@ describe('AIGateway.authorizeEmbedding', () => {
       const gateway = buildGateway();
       await expect(
         gateway.authorizeEmbedding({ provider: 'openai', texts: [PLAIN_TEXT], organizationId: 7 }),
-      ).resolves.toBeUndefined();
+      ).resolves.toMatchObject(ALLOWED);
     });
 
     it('an explicit request flag is honoured without an org policy', async () => {
@@ -214,7 +221,7 @@ describe('AIGateway.authorizeEmbedding', () => {
       ).rejects.toBeInstanceOf(GatewayPolicyError);
       await expect(
         gateway.authorizeEmbedding({ provider: 'local', texts: [PLAIN_TEXT], organizationId: 9 }),
-      ).resolves.toBeUndefined();
+      ).resolves.toMatchObject(ALLOWED);
     });
   });
 
@@ -223,8 +230,11 @@ describe('AIGateway.authorizeEmbedding', () => {
       process.env.NODE_ENV = 'production';
       const gateway = buildGateway();
 
+      // A production call is always bound to a tenant (request or job scope). The
+      // unbound case refuses earlier, as DENY_TENANT_POLICY, and is pinned in
+      // tenant-placement-boundary.test.ts; this case is about the decider.
       await expect(
-        gateway.authorizeEmbedding({ provider: 'openai', texts: [PHI_TEXT] }),
+        gateway.authorizeEmbedding({ provider: 'openai', texts: [PHI_TEXT], organizationId: 7 }),
       ).rejects.toMatchObject({
         name: GatewayPolicyError.name,
         message: expect.stringContaining('DENY_UNKNOWN_PROVIDER'),
@@ -246,8 +256,11 @@ describe('AIGateway.authorizeEmbedding', () => {
       process.env.AI_PROVIDER_PLACEMENT_APPROVALS = APPROVAL_OPENAI_CHAT_ONLY;
       const gateway = buildGateway();
 
+      // A production call is always bound to a tenant (request or job scope). The
+      // unbound case refuses earlier, as DENY_TENANT_POLICY, and is pinned in
+      // tenant-placement-boundary.test.ts; this case is about the decider.
       await expect(
-        gateway.authorizeEmbedding({ provider: 'openai', texts: [PHI_TEXT] }),
+        gateway.authorizeEmbedding({ provider: 'openai', texts: [PHI_TEXT], organizationId: 7 }),
       ).rejects.toMatchObject({
         name: GatewayPolicyError.name,
         message: expect.stringContaining('DENY_UNAPPROVED_INTENDED_USE'),
@@ -266,7 +279,7 @@ describe('AIGateway.authorizeEmbedding', () => {
 
       await expect(
         gateway.authorizeEmbedding({ provider: 'local', texts: [PHI_TEXT, PLAIN_TEXT], organizationId: 7 }),
-      ).resolves.toBeUndefined();
+      ).resolves.toMatchObject(ALLOWED);
       expect(auditEntries(gateway)).toHaveLength(0);
       const decision = logSpies.info.mock.calls.find(
         ([message]) => message === '[ai-gateway] sensitive placement decision',
@@ -294,8 +307,11 @@ describe('AIGateway.authorizeEmbedding', () => {
       process.env.AI_PROVIDER_PLACEMENT_APPROVALS = APPROVAL_LOCAL_EMBEDDING;
       vi.spyOn(getContentClassifier(), 'classify').mockRejectedValueOnce(new Error('detector down'));
       const gateway = buildGateway();
+      // A production call is always bound to a tenant (request or job scope). The
+      // unbound case refuses earlier, as DENY_TENANT_POLICY, and is pinned in
+      // tenant-placement-boundary.test.ts; this case is about the decider.
       await expect(
-        gateway.authorizeEmbedding({ provider: 'local', texts: [PLAIN_TEXT] }),
+        gateway.authorizeEmbedding({ provider: 'local', texts: [PLAIN_TEXT], organizationId: 7 }),
       ).rejects.toMatchObject({ message: expect.stringContaining('DENY_DETECTOR_FAILURE') });
     });
 
@@ -303,7 +319,7 @@ describe('AIGateway.authorizeEmbedding', () => {
       const gateway = buildGateway();
       await expect(
         gateway.authorizeEmbedding({ provider: 'openai', texts: [PHI_TEXT] }),
-      ).resolves.toBeUndefined();
+      ).resolves.toMatchObject(ALLOWED);
       const screen = logSpies.warn.mock.calls.filter(
         ([message]) => message === '[ai-gateway] sensitive-data screen',
       );

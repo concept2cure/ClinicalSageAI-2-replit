@@ -61,11 +61,28 @@ export function LiveDriveSwitch() {
       setOpen(false);
     };
     const dismiss = () => setOpen(false);
+    /* Escape closes the menu, hands focus back to the button that opened it,
+       and does nothing else. Caught on window in the CAPTURE phase and stopped
+       there, because the drive strip listens for Escape on window as "Take
+       over" (LiveDriveOverlay): the one keypress meant to close a menu took
+       the drive away from AnA mid-demonstration. It used to be handled on the
+       Demos button alone, which the menu's items are not inside — so Escape
+       pressed on an item, or anywhere at all in a browser that does not focus
+       a clicked button, left the menu open and reached the strip. */
+    const onEscape = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      e.stopPropagation();
+      setOpen(false);
+      btnRef.current?.focus();
+    };
     document.addEventListener('mousedown', close);
+    window.addEventListener('keydown', onEscape, true);
     window.addEventListener('resize', dismiss);
     window.addEventListener('scroll', dismiss, true);
     return () => {
       document.removeEventListener('mousedown', close);
+      window.removeEventListener('keydown', onEscape, true);
       window.removeEventListener('resize', dismiss);
       window.removeEventListener('scroll', dismiss, true);
     };
@@ -108,12 +125,6 @@ export function LiveDriveSwitch() {
         aria-controls={open ? menuId : undefined}
         ref={btnRef}
         onClick={toggleMenu}
-        onKeyDown={(e) => {
-          if (e.key === 'Escape' && open) {
-            e.stopPropagation();
-            setOpen(false);
-          }
-        }}
       >
         Demos
       </button>

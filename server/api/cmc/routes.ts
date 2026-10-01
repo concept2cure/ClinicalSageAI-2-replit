@@ -435,7 +435,15 @@ router.put('/stability-studies/:id', async (req, res) => {
 router.get('/qc-testing', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const testing = await db.select().from(qcTesting).where(eq(qcTesting.organizationId, orgId));
+    /* qc_testing carries project_id, and this read ignored it — so a register
+       opened on one program listed every program's release and stability
+       testing, while the create on the same card filed into the open program.
+       The two halves of one card disagreeing about scope is the defect; the
+       shared helper is the fix. */
+    const testing = await db
+      .select()
+      .from(qcTesting)
+      .where(and(eq(qcTesting.organizationId, orgId), projectFilter(req, qcTesting.projectId)));
     res.json({ success: true, data: testing });
   } catch (error) {
     console.error('Error fetching QC testing:', error);
@@ -730,6 +738,19 @@ router.put('/drug-products/:id', async (req, res) => {
  * with NO project is always included: it is unfiled rather than another
  * program's, and hiding it would leave a saved record nobody can find.
  */
+/**
+ * The same scope as `projectFilter`, for a handler written in raw SQL.
+ *
+ * Returns null when the caller named no program, so the predicate
+ * `($n IS NULL OR project_id = $n OR project_id IS NULL)` degrades to "no
+ * filter" — and, as above, a record with NO project is always included: it is
+ * unfiled rather than another program's.
+ */
+function projectScopeParam(req: express.Request): string | null {
+  const raw = typeof req.query.projectId === 'string' ? req.query.projectId.trim() : '';
+  return raw || null;
+}
+
 function projectFilter(req: express.Request, column: AnyPgColumn): SQL | undefined {
   const raw = typeof req.query.projectId === 'string' ? req.query.projectId.trim() : '';
   if (!raw) return undefined;
@@ -1818,8 +1839,9 @@ router.get('/comparability-studies', async (req, res) => {
               justification as outcome, reviewed_by as owner
        FROM cmc_comparability_assessments
        WHERE organization_id = $1
+         AND ($2::text IS NULL OR project_id::text = $2 OR project_id IS NULL)
        ORDER BY created_at DESC`,
-      [orgId]
+      [orgId, projectScopeParam(req)]
     );
     const studies = rows.map((r: any) => ({ ...r, methods: r.methods || [] }));
     res.json({ success: true, data: studies });

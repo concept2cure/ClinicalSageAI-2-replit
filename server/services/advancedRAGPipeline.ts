@@ -43,6 +43,8 @@ import pg from 'pg';
 import { createHash, randomUUID } from 'node:crypto';
 import { EnhancedEmbeddingService, getEmbeddingService } from './enhancedEmbeddingService.js';
 import { assertTenantIsCurrent } from '../db/currentTenant.js';
+import { getTenantScope } from '../db/tenantStore.js';
+import { getOrgPlacementResolver } from './ai-gateway/providers/org-placement.js';
 import { AIProviderRouter, getAIRouter, type AIRequest, type AIResponse } from './aiProviderRouter.js';
 import { getOpenAIClient } from './openai-client.js';
 import { getReranker, type Reranker } from './rag-reranker.js';
@@ -74,6 +76,17 @@ import {
 
 export interface RetrievalOptions {
   strategy: 'basic' | 'hyde' | 'multi_query' | 'step_back' | 'decompose' | 'advanced';
+  /**
+   * Pin the model that generates the answer in `queryWithGeneration`, by
+   * gateway model id. Retrieval itself is unaffected — this names the
+   * GENERATOR, which is the only part of a RAG run a model can be qualified
+   * on. Absent (the normal case) the gateway selects for the task type as
+   * before, so this changes nothing for existing callers.
+   *
+   * The gateway still refuses an unapproved model on a high-risk task — see
+   * AIRequest.model. This is attribution, not an approval override.
+   */
+  model?: string;
   limit?: number;
   threshold?: number;
   useReranking?: boolean;
@@ -639,13 +652,13 @@ export class AdvancedRAGPipeline {
     threshold: number,
     artifactScope: NonNullable<RetrievalOptions['artifactScope']>
   ): Promise<RetrievedDocument[]> {
-    const hits = await this.embeddingService.searchHybrid(
-      query,
+    // No floor here: the pipeline applies its own threshold to the combined score below.
+    const hits = await this.embeddingService.searchHybrid(query, {
       limit,
-      0.7,
-      artifactScope.organizationUuid,
-      String(artifactScope.projectId)
-    );
+      semanticWeight: 0.7,
+      organizationUuid: artifactScope.organizationUuid,
+      projectId: String(artifactScope.projectId),
+    });
     return hits
       .filter(h => Number.isFinite(h.score) && h.score >= threshold)
       .map(h => ({
@@ -1467,9 +1480,25 @@ export class AdvancedRAGPipeline {
    * round-trip. The final answer generation does NOT use this.
    */
   private async routeCached(request: AIRequest): Promise<AIResponse> {
+    // The tenant and its placement policy are part of the key. The pipeline is
+    // a process singleton, and until 2026-09-26 the key was the request shape
+    // alone: a hit served one tenant another tenant's model output, produced
+    // under that tenant's placement, with no placement check and no ledger row
+    // for the tenant that got it — and outlived a policy change by the full TTL
+    // (docs/evidence/D6/2026-09-26-refusals-are-final/). A policy that cannot be
+    // read bypasses the cache, so the gateway decides.
+    const tenant = getTenantScope()?.tenantId ?? null;
+    let placement: string;
+    try {
+      placement = JSON.stringify((await getOrgPlacementResolver().resolve(tenant ?? undefined)) ?? null);
+    } catch {
+      return this.aiRouter.route(request);
+    }
     const key = createHash('sha256')
       .update(
         JSON.stringify({
+          tenant,
+          placement,
           taskType: request.taskType,
           messages: request.messages,
           maxTokens: request.maxTokens,
@@ -1562,9 +1591,12 @@ export class AdvancedRAGPipeline {
     // Build context for generation
     const sourceText = this.buildSourceText(context.documents);
 
-    // Generate answer
+    // Generate answer. `options.model`, when set, pins WHICH model answers so
+    // the run can be attributed to it (a PQ requirement); unset keeps the
+    // gateway's task-type selection, which is every existing caller.
     const response = await this.aiRouter.route({
       taskType: 'regulatory_review',
+      ...(options.model ? { model: options.model } : {}),
       messages: [
         {
           role: 'system',

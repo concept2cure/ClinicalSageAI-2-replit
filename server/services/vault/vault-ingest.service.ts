@@ -53,8 +53,11 @@ import {
   type StoredUpload,
 } from './vault-ingest-discard.js';
 import { vaultWriteRefusal } from './vault-write-authority.js';
+import { readRecordedVersion, reuploadChanges, reuploadDiffers, type ReuploadChange, type ReuploadDiffer } from './vault-reupload.js';
+import { checkInArgumentRefusal, inheritedPlacement, planCheckIn, recheckUnderLock } from './vault-version-checkin.js';
 import {
   classifyForFiling,
+  filingVocabularyRefusal,
   resolveVaultView,
   isFolderInView,
   folderLabel,
@@ -77,8 +80,14 @@ export interface VaultIngestArgs {
   version?: string;
   classification?: string;
   retentionPolicy?: string;
-  parentDocumentId?: string;
-  supersedesId?: string;
+  /**
+   * Check in the next version of an existing document (VR-08): the id of one of
+   * its versions. The server finds the current head, keeps its document code
+   * and filing, assigns the next version and links the predecessor
+   * (vault-version-checkin.ts). `version` and a filing are not accepted with it.
+   * Lineage is never taken from a caller any other way.
+   */
+  supersedesDocumentId?: string;
   folderId?: string;
   evidenceKind?: string;
   ctdSection?: string;
@@ -131,6 +140,8 @@ export type VaultIngestResult =
         updatedAt: string;
       };
       filing: VaultIngestFiling;
+      /** Present when these bytes were already recorded here (vault-reupload.ts). */
+      reupload?: { unchanged: boolean; changes: ReuploadChange[]; differs: ReuploadDiffer[] };
     }
   | { ok: false; status: number; code: string; message: string };
 
@@ -160,7 +171,11 @@ export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultI
     await discardUnrecordedBytes(stored);
     throw err;
   }
-  if (result.ok) return result;
+  if (result.ok) {
+    // A same-bytes retry leaves its own fresh copy unheld (vault-reupload.ts).
+    if (result.reupload) await discardUnrecordedBytes(stored);
+    return result;
+  }
   return { ...result, message: refusalAfterDiscard(result.message, await discardUnrecordedBytes(stored)) };
 }
 
@@ -172,6 +187,13 @@ async function admitVaultDocument(
   // is told so before anything is stored, checked or disclosed.
   const roleRefusal = vaultWriteRefusal();
   if (roleRefusal) return roleRefusal;
+  // A filing the uploader names is held to the vocabulary before any byte is
+  // stored (VR-04). Only a named folder's kind and section are written; without
+  // one the classifier's proposal is, so those are not the caller's to break.
+  const vocabulary = args.folderId ? filingVocabularyRefusal(args) : null;
+  if (vocabulary) return { ok: false, status: 400, ...vocabulary };
+  const checkInArgs = checkInArgumentRefusal(args);
+  if (checkInArgs) return checkInArgs;
 
   // Tenant ownership guard. `vault.documents` now carries organization_id
   // (migrations/20260905_vault_documents_organization_id.sql), and the INSERT
@@ -233,6 +255,16 @@ async function admitVaultDocument(
 
   const contentHash = sha256Bytes(args.fileBuffer);
 
+  // A check-in is planned before any byte is stored, so a refusal stores
+  // nothing, and again under the head's row lock in the transaction below.
+  const checkIn = args.supersedesDocumentId
+    ? await planCheckIn(pool, { organizationId: orgId, programId: args.programId, headId: args.supersedesDocumentId, contentHash })
+    : null;
+  if (checkIn && !checkIn.ok) return checkIn;
+  // What this version is recorded as: a check-in's are the server's.
+  const documentCode = checkIn ? checkIn.head.document_code : args.documentCode;
+  const version = checkIn ? checkIn.version : (args.version ?? '1.0');
+
   /* Bytes go through the canonical storage seam — `server/services/storage/`.
      They used to be written straight to `uploads/vault/{programId}/{hash}` with
      that relative PATH stored in `s3_key` and `s3_bucket = 'local'`, bypassing
@@ -276,7 +308,7 @@ async function admitVaultDocument(
       filename: fileName,
       bytes: args.fileBuffer,
       mime: mimeType,
-      metadata: { contentHash, documentCode: args.documentCode },
+      metadata: { contentHash, documentCode },
     });
     storageVersionId = written.vaultVersionId;
     storageProvider = written.provider;
@@ -397,7 +429,9 @@ async function admitVaultDocument(
     placedBy: number | null;
     needsReview: boolean;
   };
-  if (args.folderId) {
+  if (checkIn) {
+    placement = inheritedPlacement(checkIn.head);
+  } else if (args.folderId) {
     if (!isFolderInView(vaultView, args.folderId)) {
       return { ok: false, status: 400, code: 'INVALID_FOLDER',
         message: `Folder '${args.folderId}' does not exist in this program's ${vaultView} vault taxonomy.` };
@@ -419,6 +453,7 @@ async function admitVaultDocument(
       mimeType,
       extractedText,
       view: vaultView,
+      documentType: args.documentType,
     });
     placement = {
       folderId: classified.folderId,
@@ -444,6 +479,13 @@ async function admitVaultDocument(
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    // A check-in holds its head's row lock from here to COMMIT: a concurrent
+    // check-in waits, then finds this version and is refused, naming it.
+    const stale = checkIn && (await recheckUnderLock(client, { organizationId: orgId, programId: args.programId, contentHash }, checkIn));
+    if (stale) return (await client.query('ROLLBACK'), stale);
+    // What is already recorded at this (program, code, version), locked: a
+    // same-bytes retry is judged against it (vault-reupload.ts).
+    const recorded = await readRecordedVersion(client, args.programId, documentCode, version);
     // tenant-isolation-safe: vault.documents is program-scoped (program_id, no
     // org_id column); the caller's ownership of args.programId was already
     // enforced above against regulatory_programs.organization_id (403 on
@@ -452,7 +494,7 @@ async function admitVaultDocument(
       `INSERT INTO vault.documents (
         program_id, document_code, document_title, document_type,
         version, s3_bucket, s3_key, file_name, file_size, mime_type,
-        content_hash, classification, retention_policy,
+        content_hash, classification, retention_policy, retention_until,
         parent_document_id, supersedes_id,
         extracted_text, page_count, word_count,
         folder_id, evidence_kind, ctd_section,
@@ -464,6 +506,12 @@ async function admitVaultDocument(
         $1, $2, $3, $4,
         $5, $6, $7, $8, $9, $10,
         $11, $12, $13,
+        -- The retention clock starts at admission (P1-22): the named, active
+        -- policy's days from today; NULL (kept indefinitely) when the document
+        -- names no policy or an unknown one. The sweep never destroys a
+        -- document with no date.
+        (SELECT CURRENT_DATE + rp.retention_days FROM vault.retention_policies rp
+          WHERE rp.policy_name = $13 AND rp.active LIMIT 1),
         $14, $15,
         $16, $17, $18,
         $19, $20, $21,
@@ -473,42 +521,29 @@ async function admitVaultDocument(
         $28, $29
       )
       ON CONFLICT (program_id, document_code, version) DO UPDATE SET
-        document_title = EXCLUDED.document_title,
-        document_type = EXCLUDED.document_type,
-        s3_bucket = EXCLUDED.s3_bucket,
-        s3_key = EXCLUDED.s3_key,
-        storage_version_id = EXCLUDED.storage_version_id,
-        storage_provider = EXCLUDED.storage_provider,
-        file_name = EXCLUDED.file_name,
-        file_size = EXCLUDED.file_size,
-        mime_type = EXCLUDED.mime_type,
+        -- Title, type, classification and filing are not in this list: a
+        -- re-upload never changes them. They change through Edit details and
+        -- Confirm / Move, each with its own audit row (vault-reupload.ts).
+        -- The same bytes are already stored and recorded: the record keeps the
+        -- copy it names. Only a record with no storage handle (it predates the
+        -- provider) takes the retry's, as one unit. file_size and mime_type
+        -- describe the same bytes and are not rewritten (vault-reupload.ts).
+        s3_bucket = CASE WHEN vault.documents.storage_version_id IS NULL THEN EXCLUDED.s3_bucket ELSE vault.documents.s3_bucket END,
+        s3_key = CASE WHEN vault.documents.storage_version_id IS NULL THEN EXCLUDED.s3_key ELSE vault.documents.s3_key END,
+        storage_provider = CASE WHEN vault.documents.storage_version_id IS NULL
+          THEN EXCLUDED.storage_provider ELSE vault.documents.storage_provider END,
+        storage_version_id = COALESCE(vault.documents.storage_version_id, EXCLUDED.storage_version_id),
+        file_name = COALESCE(vault.documents.file_name, EXCLUDED.file_name),
         content_hash = EXCLUDED.content_hash,
-        classification = EXCLUDED.classification,
-        retention_policy = EXCLUDED.retention_policy,
-        parent_document_id = EXCLUDED.parent_document_id,
-        supersedes_id = EXCLUDED.supersedes_id,
+        -- Write-once: a retry never nulls or replaces a recorded policy or lineage.
+        retention_policy = COALESCE(vault.documents.retention_policy, EXCLUDED.retention_policy),
+        -- A clock that has started is not restarted by a re-upload.
+        retention_until = COALESCE(vault.documents.retention_until, EXCLUDED.retention_until),
+        parent_document_id = COALESCE(vault.documents.parent_document_id, EXCLUDED.parent_document_id),
+        supersedes_id = COALESCE(vault.documents.supersedes_id, EXCLUDED.supersedes_id),
         extracted_text = EXCLUDED.extracted_text,
         page_count = EXCLUDED.page_count,
         word_count = EXCLUDED.word_count,
-        -- A re-upload of the same (program, code, version) re-proposes ONLY
-        -- when nobody has confirmed a placement: a person's filing decision
-        -- is never overwritten by a machine suggestion.
-        folder_id = CASE WHEN vault.documents.placement_status = 'confirmed'
-                         THEN vault.documents.folder_id ELSE EXCLUDED.folder_id END,
-        evidence_kind = CASE WHEN vault.documents.placement_status = 'confirmed'
-                             THEN vault.documents.evidence_kind ELSE EXCLUDED.evidence_kind END,
-        ctd_section = CASE WHEN vault.documents.placement_status = 'confirmed'
-                           THEN vault.documents.ctd_section ELSE EXCLUDED.ctd_section END,
-        placement_status = CASE WHEN vault.documents.placement_status = 'confirmed'
-                                THEN 'confirmed' ELSE EXCLUDED.placement_status END,
-        placement_confidence = CASE WHEN vault.documents.placement_status = 'confirmed'
-                                    THEN vault.documents.placement_confidence ELSE EXCLUDED.placement_confidence END,
-        placement_rationale = CASE WHEN vault.documents.placement_status = 'confirmed'
-                                   THEN vault.documents.placement_rationale ELSE EXCLUDED.placement_rationale END,
-        placed_by = CASE WHEN vault.documents.placement_status = 'confirmed'
-                         THEN vault.documents.placed_by ELSE EXCLUDED.placed_by END,
-        placed_at = CASE WHEN vault.documents.placement_status = 'confirmed'
-                         THEN vault.documents.placed_at ELSE EXCLUDED.placed_at END,
         processing_status = 'PENDING',
         -- Repairs a row that predates the tenant key without ever moving one:
         -- the ownership guard above proved this program belongs to $27.
@@ -530,23 +565,25 @@ async function admitVaultDocument(
       WHERE vault.documents.content_hash = EXCLUDED.content_hash
       RETURNING id, processing_status, created_at, updated_at,
                 folder_id, evidence_kind, ctd_section, placement_status,
-                placement_confidence, placement_rationale`,
+                placement_confidence, placement_rationale, document_title, document_type, classification,
+                retention_policy, parent_document_id, supersedes_id, storage_version_id, file_name, s3_key`,
       [
         args.programId,
-        args.documentCode,
+        documentCode,
         args.documentTitle,
-        args.documentType,
-        args.version ?? '1.0',
+        // A new version is the same kind of document as its head.
+        checkIn?.head.document_type ?? args.documentType,
+        version,
         s3Bucket,
         s3Key,
         fileName,
         fileSize,
         mimeType,
         contentHash,
-        args.classification ?? 'INTERNAL',
-        args.retentionPolicy ?? null,
-        args.parentDocumentId ?? null,
-        args.supersedesId ?? null,
+        args.classification ?? checkIn?.head.classification ?? 'INTERNAL',
+        args.retentionPolicy ?? checkIn?.head.retention_policy ?? null,
+        null,
+        checkIn?.head.id ?? null,
         extractedText,
         pageCount,
         wordCount,
@@ -576,9 +613,9 @@ async function admitVaultDocument(
       return {
         ok: false, status: 409, code: 'VERSION_CONTENT_CONFLICT',
         message:
-          `A different document is already recorded at code "${args.documentCode}" ` +
-          `version "${args.version ?? '1.0'}" for this program. Nothing was changed. ` +
-          'Upload it under a new version rather than replacing the existing record.',
+          `A different document is already recorded at code "${documentCode}" ` +
+          `version "${version}" for this program. Nothing was changed. ` +
+          'Add it as a new version of that document instead of replacing the recorded one.',
       };
     }
 
@@ -610,44 +647,50 @@ async function admitVaultDocument(
        `details` carries the content hash, so the audit trail records WHICH
        bytes were admitted, not merely that an upload happened. That is the
        link that makes a later integrity check meaningful. */
-    await writeChainedAuditRow(client, {
+    /* A same-bytes retry (vault-reupload.ts) records what it changed, before
+       and after, as its own event; one that changed nothing records nothing. */
+    const changes = recorded ? reuploadChanges(recorded, doc) : [];
+    const differs = recorded ? reuploadDiffers(recorded, args) : [];
+    const filed = {
+      view: vaultView, folderId: doc.folder_id ?? null, evidenceKind: doc.evidence_kind ?? null,
+      ctdSection: doc.ctd_section ?? null, placementStatus: doc.placement_status,
+      confidence: doc.placement_confidence ?? null, rationale: doc.placement_rationale ?? null,
+    };
+    if (!recorded || changes.length > 0) await writeChainedAuditRow(client, {
       tenantId: orgId,
       userId: userId ?? undefined,
-      action: 'vault.document.ingest',
+      action: recorded ? 'vault.document.reupload' : 'vault.document.ingest',
       resourceType: 'vault_document',
       resourceId: String(doc.id),
       ipAddress: args.ipAddress,
       userAgent: args.userAgent,
       details: {
         programId: args.programId,
-        documentCode: args.documentCode,
+        documentCode,
         documentTitle: args.documentTitle,
-        documentType: args.documentType,
-        version: args.version ?? '1.0',
-        fileName,
+        documentType: doc.document_type,
+        version,
+        fileName: doc.file_name ?? fileName,
         fileSize,
         mimeType,
         contentHash,
-        classification: args.classification ?? 'INTERNAL',
-        storageKey: s3Key,
+        classification: doc.classification,
+        storageKey: doc.s3_key,
+        ...(recorded ? { changes } : {}),
+        // A check-in names what it succeeds; its filing is the head's (above).
+        ...(checkIn ? { lineage: { supersedes: checkIn.head.id, predecessorVersion: checkIn.head.version, filingKept: true } } : {}),
         /* WHERE the document was filed and WHO/WHAT decided — the audit
            trail records the placement decision, not merely that an upload
            happened. A 'suggested' placement is attributed to the classifier
            (with its confidence), a 'confirmed' one to the uploader. */
-        filing: {
-          view: vaultView,
-          folderId: doc.folder_id ?? null,
-          evidenceKind: doc.evidence_kind ?? null,
-          ctdSection: doc.ctd_section ?? null,
-          placementStatus: doc.placement_status,
-          confidence: doc.placement_confidence ?? null,
-          rationale: doc.placement_rationale ?? null,
-        },
+        filing: filed,
       },
     });
 
     await client.query('COMMIT');
-    stored.committed = true;
+    // Committed means a committed record holds THIS copy. A retry's record
+    // keeps the copy it already names, and the wrapper removes this one.
+    stored.committed = doc.storage_version_id === storageVersionId;
 
     /* Passage index, post-commit: chunk + embed the extracted text into
        vault.document_chunks — the store the RAG vault corpus reads — and
@@ -663,8 +706,8 @@ async function admitVaultDocument(
 
     logger.info('Vault document ingested', {
       id: doc.id,
-      code: args.documentCode,
-      type: args.documentType,
+      code: documentCode,
+      type: doc.document_type,
       size: fileSize,
       hasText: !!extractedText,
     });
@@ -674,11 +717,11 @@ async function admitVaultDocument(
       document: {
         id: doc.id,
         programId: args.programId,
-        documentCode: args.documentCode,
-        documentTitle: args.documentTitle,
-        documentType: args.documentType,
-        version: args.version ?? '1.0',
-        fileName,
+        documentCode,
+        documentTitle: doc.document_title,
+        documentType: doc.document_type,
+        version,
+        fileName: doc.file_name ?? fileName,
         fileSize,
         mimeType,
         contentHash,
@@ -692,16 +735,11 @@ async function admitVaultDocument(
          uploader sees WHERE the file landed (or that it needs filing),
          not just that bytes arrived. */
       filing: {
-        view: vaultView,
-        folderId: doc.folder_id ?? null,
+        ...filed,
         folderLabel: folderLabel(vaultView, doc.folder_id ?? null),
-        evidenceKind: doc.evidence_kind ?? null,
-        ctdSection: doc.ctd_section ?? null,
-        placementStatus: doc.placement_status,
-        confidence: doc.placement_confidence ?? null,
-        rationale: doc.placement_rationale ?? null,
         needsReview: doc.placement_status === 'unfiled',
       },
+      ...(recorded ? { reupload: { unchanged: changes.length === 0, changes, differs } } : {}),
     };
   } catch (err: any) {
     /* Roll back BOTH halves. A failure in the audit write now aborts the

@@ -38,6 +38,18 @@ export interface FiledLeaf {
    * here and why removing the fallback would re-file every such application.
    */
   leafKey?: string;
+  /** The leaf's XML ID and the backbone that carries it (from the sequence
+   *  root) — what a later sequence's modified-file names. Absent on history
+   *  filed before 2026-09-29 (W5/D7); such a leaf cannot be acted on. */
+  leafId?: string;
+  backbone?: string;
+  /**
+   * md5 of the bytes the packager was HANDED, when it changed them (PDF/A
+   * normalization). The next sequence's "unchanged" decision compares against
+   * this, since the assemble route computes its md5 before the packager runs;
+   * `md5` is the checksum of what shipped. Absent when nothing was converted.
+   */
+  sourceMd5?: string;
 }
 
 /** One sequence this package actually transmitted. Append-only. */
@@ -55,6 +67,10 @@ export interface FiledSequence {
 
 const SEQUENCE_RE = /^\d{4}$/;
 
+/** Fields a filed leaf MAY carry, each a string when present. A field of any
+ *  other type makes the whole entry unreadable, like a missing required one. */
+const OPTIONAL_STRING_FIELDS = ['leafKey', 'leafId', 'backbone', 'sourceMd5'] as const;
+
 /**
  * Whether a value is a readable filed-leaf record. Exported because the WRITER
  * must apply it too: a manifest that only the reader rejects is written to the
@@ -69,7 +85,7 @@ export function isFiledLeaf(v: unknown): v is FiledLeaf {
     typeof l.fileName === 'string' && l.fileName.length > 0 &&
     typeof l.href === 'string' &&
     typeof l.md5 === 'string' &&
-    (l.leafKey === undefined || typeof l.leafKey === 'string')
+    OPTIONAL_STRING_FIELDS.every((f) => l[f] === undefined || typeof l[f] === 'string')
   );
 }
 
@@ -111,25 +127,56 @@ export function readFiledSequences(metadata: Record<string, unknown> | null | un
  * Each surviving leaf carries the sequence that actually holds it, so the
  * operator can point `modified-file` at the right sequence folder — the prior
  * state of an application is a fold, not simply "the last sequence".
+ *
+ * A filed leaf acts on the document it was PLANNED against, so the fold matches
+ * the way the operator matched when it planned the sequence: on identity where
+ * both sides have one, on the path where either side has none. Folding on
+ * `leafKey ?? path` alone made the two disagree. Every withdrawal the assemble
+ * route filed before 2026-10-01 carried no leafKey while the document it
+ * withdrew was folded under one, so the delete removed nothing (W5/D7, sweep
+ * F10): the document stayed "on file" for every later sequence, which withdrew
+ * it a second time, filed its return as a replace of a deleted leaf, or refused
+ * that return as "already on file". Those histories exist and this reads them.
  */
 export function foldFiledState(filed: readonly FiledSequence[]): PriorLeaf[] {
   const byKey = new Map<string, PriorLeaf>();
+  const keysAtPath = new Map<string, Set<string>>();
+  const pathOf = (l: { ctdSection: string; fileName: string }) => `${l.ctdSection}/${l.fileName}`;
+  const remove = (key: string) => {
+    const p = byKey.get(key);
+    if (!p) return;
+    byKey.delete(key);
+    keysAtPath.get(pathOf(p))?.delete(key);
+  };
   for (const seq of [...filed].sort((a, b) => a.sequence.localeCompare(b.sequence))) {
     for (const leaf of seq.leaves) {
       // Folded on the document's own identity where it has one, so a later
       // sequence that re-filed a document under a changed file name supersedes
       // the earlier copy instead of sitting beside it in the prior state.
-      const key = leaf.leafKey ?? `${leaf.ctdSection}/${leaf.fileName}`;
-      if (leaf.operation === 'delete') { byKey.delete(key); continue; }
+      const key = leaf.leafKey ?? pathOf(leaf);
+      // The document this leaf acted on, found the way the operator found it:
+      // its identity first, else what sits at its path — unless both have an
+      // identity and the two differ, which makes them two documents.
+      const actedOn = byKey.has(key)
+        ? key
+        : [...(keysAtPath.get(pathOf(leaf)) ?? [])].find((k) => {
+            const onFile = byKey.get(k)!.leafKey;
+            return !(leaf.leafKey && onFile && onFile !== leaf.leafKey);
+          });
+      if (actedOn !== undefined) remove(actedOn);
+      if (leaf.operation === 'delete') continue;
+      keysAtPath.set(pathOf(leaf), (keysAtPath.get(pathOf(leaf)) ?? new Set()).add(key));
       byKey.set(key, {
         leafKey: leaf.leafKey,
         ctdSection: leaf.ctdSection,
         fileName: leaf.fileName,
         md5: leaf.md5,
+        ...(leaf.sourceMd5 ? { sourceMd5: leaf.sourceMd5 } : {}),
         href: leaf.href,
         title: leaf.title,
         operation: leaf.operation,
         sequenceNumber: seq.sequence,
+        ...(leaf.leafId && leaf.backbone ? { leafId: leaf.leafId, backbone: leaf.backbone } : {}),
       });
     }
   }
@@ -166,6 +213,9 @@ export interface SequencePlan {
   leaves: Array<{
     ctdSection: string; fileName: string; operation: string; modifiedFile?: string;
     title?: string; md5?: string;
+    /** On a withdrawal, the identity of the document it withdraws, so the filed
+     *  history records which document left rather than only where it sat. */
+    leafKey?: string;
   }>;
   /** Leaves unchanged since the last filing: they do not ship at all. */
   omitted: Array<{ ctdSection: string; fileName: string }>;
@@ -358,6 +408,10 @@ export function planSequence(params: {
     );
   }
 
+  // The operator does not carry identity on what it emits, so a withdrawal gets
+  // it back from the document on file that it names.
+  const withdrawnKey = (l: { ctdSection: string; fileName: string }) =>
+    priorByPath.get(`${l.ctdSection}/${l.fileName}`)?.leafKey;
   return {
     leaves: leaves.map((l) => ({
       ctdSection: l.ctdSection,
@@ -365,6 +419,7 @@ export function planSequence(params: {
       operation: String(l.operation),
       ...(l.modifiedFile ? { modifiedFile: l.modifiedFile } : {}),
       ...(l.operation === 'delete' ? { title: l.title, md5: l.md5 } : {}),
+      ...(l.operation === 'delete' && withdrawnKey(l) ? { leafKey: withdrawnKey(l) } : {}),
     })),
     omitted,
     summary,

@@ -1,0 +1,33 @@
+# 2026-09-26T02:56:38Z — after the fix (working tree on 1f6c8d4f)
+$ npx vitest run server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts server/bootstrap/__tests__/routes-reach-the-bundle.test.ts
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "path": "/api/tenants/5"
+  }
+}
+stderr | server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant creation — the launch catalog comes with it (D2) > a refused creation provisions nothing
+{
+  "timestamp": "2026-09-26T02:56:41.198Z",
+  "level": "warn",
+  "message": "[platform-admin-guard] Master Administration access denied",
+  "context": {
+    "path": "/api/tenants"
+  }
+}
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant list — membership scoping > a non-admin only gets their own orgs (query joins organization_users) 1440ms
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant list — membership scoping > a platform admin gets the full list (no membership join) 4ms
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant list — membership scoping > an ORG admin does NOT get the cross-tenant list — only their own orgs 3ms
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant users — scoping > a non-admin cannot read another tenant directory (no query runs) 3ms
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant users — scoping > a non-admin can read their own tenant directory 3ms
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant users — scoping > a platform admin can read any tenant directory 2ms
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant mutations — admin only > a non-admin cannot create a tenant 8ms
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant mutations — admin only > a non-admin cannot delete a tenant 5ms
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant mutations — admin only > the legacy organisation API-key mint is gone (its keys were Math.random and nothing read them) 5ms
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant creation — the launch catalog comes with it (D2) > a platform admin creating a tenant provisions the launch catalog for THAT tenant 6ms
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant creation — the launch catalog comes with it (D2) > a refused creation provisions nothing 3ms
+ ✓ server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenants — auth > 401s without a token 5ms
+ Test Files  2 passed (2)
+      Tests  23 passed (23)
+   Start at  02:56:39
+   Duration  2.00s (transform 940ms, setup 143ms, import 205ms, tests 1.52s, environment 0ms)
+exit=0

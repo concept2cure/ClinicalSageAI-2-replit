@@ -78,6 +78,18 @@ const PREREQ = `
   -- migrations/0000_sweet_joseph.sql defines it.
   CREATE TABLE users (id INTEGER PRIMARY KEY, status TEXT NOT NULL DEFAULT 'active', password_changed_at TIMESTAMP);
   INSERT INTO users (id) VALUES (10), (11), (20);
+  -- The handshake admits a CURRENT member only (checkOrgMembership reads this
+  -- row; security audit 2026-09-24 IAM-12, P1-9), so each account holds the
+  -- membership its token claims. organizations.uuid is enrichment the lookup
+  -- falls back from when absent.
+  CREATE TABLE organization_users (
+    id SERIAL PRIMARY KEY,
+    organization_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    role TEXT NOT NULL DEFAULT 'member'
+  );
+  INSERT INTO organization_users (organization_id, user_id) VALUES
+    (${ORG_A}, 10), (${ORG_A}, 11), (${ORG_B}, 20);
   -- status/payment_status are set explicitly. The socket namespace gates on the
   -- tenant access posture (shouldProcessTenantInBackground → organizations
   -- .status/.payment_status), and it fails CLOSED: an org row that leaves them

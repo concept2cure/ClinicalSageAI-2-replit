@@ -65,6 +65,12 @@ vi.mock('../../../db', () => ({
   }),
 }));
 
+// 2026-09-28 (Q-0928-2): revise_qms_document now reads the caller's org role
+// from organization_users (resolveSignerOrgRole, over drizzle, which this
+// PGlite harness does not provide). An editor-capable role here; the refusal
+// is pinned in revise-qms-document-role.test.ts.
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole: vi.fn(async () => 'member') }));
+
 import { approvedToolHandler } from './support/approved-tool-handler';
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..', '..', '..');
@@ -120,7 +126,11 @@ const ALLOWED_COMMANDS = [
   'unclaim', 'transition-back', 'reopen', 'revoke-signature', 'reject-ai-suggestion', 'unlock',
 ];
 
-const CTX = { organizationId: 1, userId: 10, projectId: 77 };
+// humanConfirmed: the vault tools run only on a person's yes (P0-12,
+// CONFIRM_TIER_TOOLS), stamped by POST /governed-action. This file tests what
+// the handler does once it runs — its one transaction — so it dispatches as that
+// route does.
+const CTX = { organizationId: 1, userId: 10, projectId: 77, humanConfirmed: true };
 
 /**
  * Break the Part 11 audit write from INSIDE the caller's transaction. A
@@ -209,7 +219,7 @@ describe('create_qms_document — controlled document creation is audited atomic
   it('FAILS CLOSED — a broken audit write rolls the document back', async () => {
     await breakAuditWrites();
     const res = await call('create_qms_document', {
-      doc_number: 'SOP-101', title: 'Should not persist', doc_type: 'sop',
+      doc_number: 'SOP-101', title: 'Should not persist', doc_type: 'sop', reason: 'New SOP for supplier audits.',
     });
     expect(res.ok).toBeUndefined();
     expect(res.error).toMatch(/create_qms_document failed/i);
@@ -224,10 +234,15 @@ describe('create_qms_document — controlled document creation is audited atomic
     const res = await call(
       'create_qms_document',
       { doc_number: 'SOP-102', title: 'x', doc_type: 'sop' },
-      { organizationId: 1 },
+      { organizationId: 1, humanConfirmed: true },
     );
-    expect(res.error).toMatch(/requires user context/i);
+    // 2026-09-28: the registry wrapper now refuses a confirmed write with no
+    // identified member (writeRoleRefusal) before the handler's own
+    // "requires user context" check is reached. Same refusal, one layer earlier.
+    expect(res.error).toMatch(/identified member/i);
+    expect(res.error).toMatch(/Nothing was changed/);
     expect((await pglite.query(`SELECT * FROM qms_documents`)).rows).toHaveLength(0);
+    expect(await ledgerRows()).toHaveLength(0);
   });
 });
 
@@ -290,24 +305,22 @@ describe('revise_qms_document — controlled revision is audited atomically', ()
   });
 });
 
-describe('retire_qms_document — terminal lifecycle transition is audited atomically', () => {
-  it('retires the document AND writes the audit row', async () => {
+describe('retire_qms_document — AnA cannot retire a controlled document', () => {
+  /* 2026-09-28 (Q-0928-1 / SEC-0928-1). This block asserted that the tool
+     retired the document and wrote its audit row atomically. The audit row was
+     right and the act was not: retirement is an electronic signature on the
+     route (POST /api/mdx/qms/documents/:id/retire — verifyApprovalSigner +
+     retireQmsDocumentSigned, one electronic_signatures row), and the tool
+     skipped all of it. Refused like approve_qms_document. */
+  it('writes nothing and hands the retirement to the person', async () => {
     const id = await effectiveDoc('SOP-400');
     const res = await call('retire_qms_document', { document_id: id, reason: 'Superseded by SOP-401.' });
-    expect(res.ok).toBe(true);
-    expect(res.status).toBe('retired');
-    expect(await auditRows()).toHaveLength(1);
-    expect((await ledgerRows())[0].payload.kind).toBe('retire');
-  });
-
-  it('FAILS CLOSED — a broken audit write rolls the retirement back', async () => {
-    const id = await effectiveDoc('SOP-401');
-    await breakAuditWrites();
-
-    const res = await call('retire_qms_document', { document_id: id, reason: 'Attempted retire.' });
-    expect(res.error).toMatch(/retire_qms_document failed/i);
-    expect((await docRow(id)).status, 'retirement must not persist unaudited').toBe('effective');
+    expect(res.ok).toBe(false);
+    expect(res.signatureRequired).toBe(true);
+    expect(res.message).toMatch(/electronic signature/i);
+    expect((await docRow(id)).status, 'a chat turn must not retire a controlled document').toBe('effective');
     expect(await auditRows()).toHaveLength(0);
+    expect(await ledgerRows()).toHaveLength(0);
   });
 });
 
@@ -356,7 +369,7 @@ describe('save_document_to_vault — vault artifact + version + audit are one tr
   });
 
   it('REFUSES without a project — a vault document belonging to no project is an orphaned capture', async () => {
-    const res = await call('save_document_to_vault', INPUT, { organizationId: 1, userId: 10 });
+    const res = await call('save_document_to_vault', INPUT, { organizationId: 1, userId: 10, humanConfirmed: true });
     expect(res.error).toMatch(/needs an open project/i);
     expect((await pglite.query(`SELECT * FROM concept2cure_artifacts`)).rows).toHaveLength(0);
     expect(await auditRows()).toHaveLength(0);

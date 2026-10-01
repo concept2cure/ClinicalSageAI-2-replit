@@ -14,10 +14,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express, { type Request, type Response, type NextFunction } from 'express';
 import request from 'supertest';
 
-const { generate, setTenantContextTx, verifier } = vi.hoisted(() => ({
-  generate: vi.fn(), setTenantContextTx: vi.fn(), verifier: vi.fn(),
+const { generate, setTenantContextTx, verifier, verifyExport } = vi.hoisted(() => ({
+  generate: vi.fn(), setTenantContextTx: vi.fn(), verifier: vi.fn(), verifyExport: vi.fn(),
 }));
-vi.mock('../../services/audit/signedAuditExport.js', () => ({ generateSignedAuditExport: generate }));
+vi.mock('../../services/audit/signedAuditExport.js', () => ({
+  generateSignedAuditExport: generate,
+  verifySignedAuditExport: verifyExport,
+}));
 vi.mock('../../services/tenant/governed-tenant-context.js', () => ({ setTenantContextTx }));
 vi.mock('../../services/audit/tenant-chain-verdict.js', () => ({ verifyTenantChainOnAdminScope: verifier }));
 
@@ -29,8 +32,10 @@ const pool = { query: vi.fn(async () => ({ rows: [] })), connect: vi.fn(async ()
 
 function app() {
   const a = express();
+  a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
-    (req as unknown as { user: unknown }).user = { organizationId: 7, id: 3, name: 'Inspector' };
+    // An organisation admin: exports are read by owners, admins and managers (P1-20).
+    (req as unknown as { user: unknown }).user = { organizationId: 7, id: 3, name: 'Inspector', role: 'admin' };
     next();
   });
   a.use('/api', createAuditTrailRoutes(pool as never));
@@ -81,5 +86,38 @@ describe.each(['/api/audit/export', '/api/audit/export/signed'])('%s', (path) =>
     expect(res.status).toBe(500);
     expect(clientQuery.mock.calls.map((c) => c[0])).toContain('ROLLBACK');
     expect(client.release).toHaveBeenCalled();
+  });
+});
+
+// P1-19b: every manifest names the key that sealed it (signingKeyId). The
+// instructions handed to an inspector and the verification answer say which
+// key; neither speaks of "the server signing key" as if there were one.
+describe('the export names its key (P1-19b)', () => {
+  it('the signed export tells the inspector to use the key its manifest names', async () => {
+    generate.mockResolvedValue({ ...signed, manifest: { ...signed.manifest, signingKeyId: 'k2' } });
+    const res = await request(app()).get('/api/audit/export/signed');
+    expect(res.status).toBe(200);
+    expect(res.body.export.verification.signingKeyId).toBe('k2');
+    expect(res.body.export.verification.instruction).toMatch(/signingKeyId/);
+    expect(res.body.export.verification.instruction).not.toMatch(/the server signing key/);
+  });
+
+  it('verification says which key vouched for the export', async () => {
+    verifyExport.mockReturnValue({ valid: true, errors: [], signingKeyId: 'k1' });
+    const res = await request(app())
+      .post('/api/audit/export/verify')
+      .send({ data: '[]', manifest: { exportId: 'E1', signingKeyId: 'k1' }, signature: 'sig' });
+    expect(res.status).toBe(200);
+    expect(res.body.verification).toMatchObject({ valid: true, signingKeyId: 'k1' });
+  });
+
+  it('a manifest from before key ids verifies and says no key was named', async () => {
+    verifyExport.mockReturnValue({ valid: true, errors: [], signingKeyId: null });
+    const res = await request(app())
+      .post('/api/audit/export/verify')
+      .send({ data: '[]', manifest: { exportId: 'E0' }, signature: 'sig' });
+    expect(res.status).toBe(200);
+    expect(res.body.verification.valid).toBe(true);
+    expect(res.body.verification.signingKeyId).toBeNull();
   });
 });

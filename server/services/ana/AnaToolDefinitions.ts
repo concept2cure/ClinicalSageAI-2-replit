@@ -473,6 +473,10 @@ import {
 // deterministic verdict engines. Handlers live in AnaToolExecutor.ts beside the
 // other protocol-development handlers.
 import { PROTOCOL_DESIGN_TOOLS } from './protocol-design-tool-defs.js';
+// Tier 1 of docs/design/PROTOCOL_INDUSTRY_GAPS.md: trial schema, SPIRIT, CtQ, USDM,
+// DCT profile, WHO ICTRP, deviation trends, redline; Tier 2 dose escalation, enrollment, interim OC, MMRM,
+// external control, multiplicity; Tier 3 biospecimens, master protocol. All read-only.
+import { PROTOCOL_INDUSTRY_TOOLS } from './protocol-industry-tool-defs.js';
 import { ANA_ADVISORY_TOOL_SPECS, SUBMISSION_PLAN_TOOL_SPEC, PMA_ADVISORY_TOOL_SPEC, EU_TECHDOC_TOOL_SPEC, IVD_KNOWLEDGE_TOOL_SPEC } from '../ana-advisory';
 import { GLOBAL_RI_TOOL_SPECS } from '../global-ri/ana-tools';
 import { STATISTICAL_DESIGN_TOOLS } from './statisticalDesignTools';
@@ -481,6 +485,7 @@ import { CHANGE_PROPAGATION_TOOLS } from './changePropagationTools';
 import { IVD_LIFECYCLE_TOOLS } from './ivdLifecycleTools';
 import { CAPA_MDR_TOOLS } from './capaMdrTools';
 import { PREDICATE_INTELLIGENCE_TOOLS } from './predicateIntelligenceTools';
+import { WRITING_QUALITY_TOOLS } from './writingQualityTools';
 import { REGULATORY_CURRENCY_TOOLS } from './regulatoryCurrencyTools';
 import { LICENSE_STATUS_TOOLS } from './licenseStatusTools';
 import { SUBMISSION_INTELLIGENCE_TOOLS } from './submissionIntelligenceTools';
@@ -620,23 +625,13 @@ export const SEARCH_DRUG_ADVERSE_EVENTS: AnaTool = {
 export const LOOKUP_FDA_GUIDANCE: AnaTool = {
   name: 'lookup_fda_guidance',
   description:
-    'Look up FDA guidance documents, regulations (21 CFR), and draft/final guidance relevant to a topic. Returns guidance title, document number, key requirements, and citation-ready references.',
+    'Return the dated US regulatory facts the verified currency registry holds for a topic (for example the eSTAR mandates), each with its status, effective date and source. No FDA guidance index is connected, so this does not name guidance documents, docket numbers or their requirements; say an FDA guidance needs confirming unless the user supplied it.',
   input_schema: {
     type: 'object',
     properties: {
       topic: {
         type: 'string',
-        description: 'Regulatory topic to look up (e.g., "510(k) predicate comparison", "biocompatibility testing")',
-      },
-      regulation_type: {
-        type: 'string',
-        enum: ['guidance', '21cfr', 'federal_register', 'any'],
-        description: 'Type of regulatory document',
-      },
-      device_class: {
-        type: 'string',
-        enum: ['I', 'II', 'III', 'any'],
-        description: 'FDA device classification',
+        description: 'Regulatory topic to look up (e.g., "510(k)", "eSTAR", "De Novo")',
       },
     },
     required: ['topic'],
@@ -646,7 +641,7 @@ export const LOOKUP_FDA_GUIDANCE: AnaTool = {
 export const CHECK_REGULATORY_COMPLIANCE: AnaTool = {
   name: 'check_regulatory_compliance',
   description:
-    'Check a document section against specific regulatory requirements. Returns compliance status, gaps, and recommended remediation for each requirement.',
+    'Keyword scan of a document section: reports which expected topics the text MENTIONS for fda_510k or eu_mdr. It does not determine compliance — mentioning a topic is not meeting the requirement — and it returns not_assessed for frameworks it has no scan for (fda_pma, ich_e6, ich_e8, ich_e9, 21cfr_part11). Never present its output as a compliance verdict.',
   input_schema: {
     type: 'object',
     properties: {
@@ -695,28 +690,28 @@ export const LOOKUP_ICH_GUIDELINE: AnaTool = {
 export const VALIDATE_CROSS_REFERENCES: AnaTool = {
   name: 'validate_cross_references',
   description:
-    'Validate cross-references within a document — check that cited sections exist, table/figure numbers are correct, and internal references are consistent.',
+    "Check CTD section references (\"Section 3.2.P.5.1\", \"Module 2.7.3\", \"m2.5\") against the section outlines of one of the organization's documents and the other documents in its project. Each reference is reported found in this document, found in another document of the project (named), present only as a parent section, or not found. Table and figure numbers are not assessed.",
   input_schema: {
     type: 'object',
     properties: {
       document_id: {
         type: 'string',
-        description: 'Internal document ID to validate',
+        description: "The document the references are in (a governed document id, e.g. 'doc_…').",
       },
       section_references: {
         type: 'array',
         items: { type: 'string' },
-        description: 'List of section references to validate (e.g., ["Section 3.2", "Table 4", "Figure 1"])',
+        description: 'The references to check (e.g., ["Section 3.2.P.5.1", "Module 2.7.3"])',
       },
     },
-    required: ['document_id'],
+    required: ['document_id', 'section_references'],
   },
 };
 
 export const GENERATE_CITATION: AnaTool = {
   name: 'generate_citation',
   description:
-    'Generate a properly formatted regulatory citation for a given source. Supports FDA guidance, ICH guidelines, EU MDR articles, journal articles, and 21 CFR references.',
+    'Format a citation, labelled with what it rests on. A journal article (PMID or DOI, else a title) is looked up in PubMed / Crossref and formatted from the record found — or not formatted at all when it cannot be verified. An ICH guideline takes its title from the ICH corpus. FDA guidance, 21 CFR, EU MDR and ISO citations are formatted from the identifier given and labelled not verified. Journal styles: Vancouver or AMA.',
   input_schema: {
     type: 'object',
     properties: {
@@ -727,15 +722,44 @@ export const GENERATE_CITATION: AnaTool = {
       },
       source_identifier: {
         type: 'string',
-        description: 'Source identifier (guidance number, DOI, CFR section, etc.)',
+        description: 'Source identifier (PMID, DOI, ICH code, CFR section, guidance title, article, standard number)',
       },
       citation_style: {
         type: 'string',
-        enum: ['regulatory', 'apa', 'vancouver'],
-        description: 'Citation style (default: regulatory)',
+        enum: ['regulatory', 'vancouver', 'ama'],
+        description: 'Citation style for a journal article (default: Vancouver)',
       },
     },
     required: ['source_type', 'source_identifier'],
+  },
+};
+
+export const VERIFY_CITATIONS: AnaTool = {
+  name: 'verify_citations',
+  description:
+    "Check that each reference in a list exists, against PubMed (by PMID) and Crossref (by DOI), else by title search — with retraction status and any field that disagrees with the record. Returns each reference's verdict (verified, not_found, unverifiable, error) and the counts. Use it to audit a draft's reference list; report its verdicts, do not decide them. With the organization's public-source lookups off, every reference is unverifiable.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      citations: {
+        type: 'array',
+        description: 'The references to check (at most 50). Each needs at least one of raw, title, doi or pmid.',
+        items: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', description: 'Your label for the reference, echoed back (e.g. "ref 12")' },
+            raw: { type: 'string', description: 'The reference as written in the document' },
+            title: { type: 'string' },
+            authors: { type: 'string' },
+            journal: { type: 'string' },
+            year: { type: 'number' },
+            doi: { type: 'string' },
+            pmid: { type: 'string' },
+          },
+        },
+      },
+    },
+    required: ['citations'],
   },
 };
 
@@ -832,6 +856,7 @@ export const DOCUMENT_DRAFTING_TOOLS: AnaTool[] = [
   LOOKUP_FDA_GUIDANCE,
   LOOKUP_ICH_GUIDELINE,
   GENERATE_CITATION,
+  VERIFY_CITATIONS,
   ANALYZE_PREDICATE_DEVICE,
 ];
 
@@ -908,7 +933,7 @@ export const GENERATE_DOCUMENT: AnaTool = {
       },
       template_path: {
         type: 'string',
-        description: 'Optional: path to a client-uploaded DOCX template to use as base',
+        description: 'Optional: a DOCX template in your organization\'s AnA workspace (one of your uploads, or a path an earlier document tool returned) to use as base; other paths are refused',
       },
       replacements: {
         type: 'object',
@@ -928,7 +953,7 @@ export const BUILD_FROM_TEMPLATE: AnaTool = {
     properties: {
       template_path: {
         type: 'string',
-        description: 'Path to the uploaded DOCX template file',
+        description: 'The DOCX template, in your organization\'s AnA workspace (one of your uploads, or a path an earlier document tool returned); other paths are refused',
       },
       replacements: {
         type: 'object',
@@ -1003,31 +1028,33 @@ export const IND_GET_STATUS: AnaTool = {
 /** Rasterize a document page for visual inspection */
 export const RASTERIZE_PAGE: AnaTool = {
   name: 'rasterize_page',
-  description: 'Rasterize (render as image) a specific page of a DOCX or PDF document for visual inspection. Returns a PNG image of the page. Use when the user wants to preview, inspect, or visually verify a generated document page.',
+  description:
+    "Render one page of a PDF or DOCX in the organization's document workspace (an upload included) to a PNG file. Returns the PNG's path, page count, pixel size, dpi and SHA-256 — or an error naming why no page was rendered. A DOCX is converted to PDF first; a very large page is rendered at a lower dpi. The PNG is a file on the server: it is not shown to the user or to you.",
   input_schema: {
     type: 'object',
     properties: {
       document_path: {
         type: 'string',
-        description: 'Path to the DOCX or PDF document',
+        description: "Path of the PDF or DOCX in the organization's document workspace",
       },
       page_number: {
         type: 'number',
-        description: 'Page number to rasterize (1-based)',
+        description: 'Page to render (1-based, default 1)',
       },
       dpi: {
         type: 'number',
-        description: 'Resolution in DPI (default: 150)',
+        description: 'Resolution, 36–300 (default 150)',
       },
     },
     required: ['document_path'],
   },
 };
 
-/** Overlay content onto a PDF template (forms, headers, signatures, stamps) */
+/** PDF overlay — unavailable: no overlay engine is connected, so the handler applies nothing. */
 export const PDF_OVERLAY: AnaTool = {
   name: 'pdf_overlay',
-  description: 'Overlay text, images, or regulatory stamps onto specific coordinates of an existing PDF template. Use for form filling, adding signatures, watermarks, approval stamps, or finalizing templates with positioned content. Supports multi-page overlay.',
+  description:
+    'Currently unavailable: no PDF overlay engine is connected, so this applies nothing and returns status "unavailable". Do not use it to place text or stamps on a PDF; tell the user it cannot be done here yet.',
   input_schema: {
     type: 'object',
     properties: {
@@ -1054,7 +1081,7 @@ export const PDF_OVERLAY: AnaTool = {
       },
       output_path: {
         type: 'string',
-        description: 'Path for the finalized output PDF',
+        description: 'Where an overlaid PDF would be written; nothing is written while this is unavailable',
       },
     },
     required: ['base_pdf_path', 'overlays'],
@@ -1321,23 +1348,24 @@ export const PACKAGE_ECTD_FOR_REGION: AnaTool = {
         description:
           'List of eCTD leaves. Each leaf is { ctd_section, operation, source_path, file_name, title, modified_file }. ' +
           'new / append / replace leaves carry the file to ship in source_path. A delete (withdrawal) ships no content: ' +
-          'omit source_path and give modified_file, the withdrawn leaf\'s path in the prior sequence (e.g. ../0000/m3/3-2-s-2/file.pdf). ' +
-          'replace / append also take modified_file, pointing at the filed leaf they act on. ' +
+          'omit source_path and give modified_file, which names the withdrawn leaf by the prior sequence\'s backbone and that leaf\'s ID ' +
+          '(e.g. ../0000/index.xml#leaf-3-2-S-2-file, the ID as that sequence\'s leaf manifest recorded it; never a file path). ' +
+          'replace / append in a follow-up sequence also require modified_file, naming the filed leaf they act on the same way. ' +
           'Sequence 0000 cannot carry a delete: nothing is on file to withdraw.',
         items: {
           type: 'object',
           properties: {
             ctd_section:   { type: 'string' },
             operation:     { type: 'string', enum: ['new', 'append', 'replace', 'delete'] },
-            source_path:   { type: 'string', description: 'The file to ship. Required for new / append / replace; must be omitted for delete.' },
+            source_path:   { type: 'string', description: 'The file to ship, in your organization\'s AnA workspace (a path an earlier document tool returned, or one of your uploads). Required for new / append / replace; must be omitted for delete.' },
             file_name:     { type: 'string' },
             title:         { type: 'string' },
-            modified_file: { type: 'string', description: 'Path, from this sequence root, of the filed leaf this one acts on (e.g. ../0000/m3/3-2-s-2/file.pdf). Required for every delete (a delete in sequence 0000 is refused).' },
+            modified_file: { type: 'string', description: 'The filed leaf this one acts on, from this sequence root: the prior sequence\'s backbone, \'#\', and the leaf ID it recorded (e.g. ../0000/index.xml#leaf-3-2-S-2-file, or ../0000/m1/us/us-regional.xml#leaf-1-2-cover for Module 1). Never a file path. Required for every delete, and for a replace / append after 0000 (a delete in sequence 0000 is refused).' },
           },
           required: ['ctd_section', 'operation', 'file_name', 'title'],
         },
       },
-      output_dir: { type: 'string', description: 'Where to write the zip. Defaults to tmp/submissions.' },
+      output_dir: { type: 'string', description: 'Where to write the zip: a directory in your organization\'s AnA workspace. Omit it to use a fresh one.' },
     },
     required: ['region', 'application_id', 'sequence', 'submission_type', 'sponsor_id', 'sponsor_name', 'product_name', 'leaves'],
   },
@@ -1959,6 +1987,7 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   CHECK_REGULATORY_COMPLIANCE,
   VALIDATE_CROSS_REFERENCES,
   GENERATE_CITATION,
+  VERIFY_CITATIONS,
   LOOKUP_REGULATORY_PRECEDENTS,
   COMPARE_SUBMISSION_AGAINST_PRECEDENT,
   ASSESS_CLAIM_EVIDENCE_INTEGRITY,
@@ -2642,6 +2671,11 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   // substantial-equivalence matrix, and read the defense preview (shadow-service
   // proxy with org→program ownership).
   ...PREDICATE_INTELLIGENCE_TOOLS,
+  // Writing Precision Gate — deterministic critique (grounding, in-document
+  // consistency, readability, abbreviations, claims, structure) + revision brief
+  // that closes the draft->critique->revise loop for long-form medical writing.
+  // See docs/architecture/WRITING_PRECISION_GATE.md.
+  ...WRITING_QUALITY_TOOLS,
   // Regulatory Currency Engine: curated, freshness-stamped registry of DATED facts
   // (vacated/superseded/upcoming-mandatory rules) so AnA never advises on a VOID
   // rule from its static knowledge. See regulatoryCurrencyTools.ts.
@@ -2713,6 +2747,8 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   // Protocol ⇄ study-design loop: bind, review the derivation, apply accepted
   // paths, read the rule pack and the design gates. See protocol-design-tool-defs.ts.
   ...PROTOCOL_DESIGN_TOOLS,
+  // The sixteen industry-gap engines, reached read-only. See protocol-industry-tool-defs.ts.
+  ...PROTOCOL_INDUSTRY_TOOLS,
 ];
 
 // Defensive registry guard: v2's cdiscTools.ts currently re-registers
@@ -2745,6 +2781,38 @@ export const ALL_ANA_TOOLS: AnaTool[] = ALL_ANA_TOOLS_RAW.filter(
 // enablement is confirmed.
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * The agency and literature domains AnA's hosted web tools may reach. Kept
+ * tight to sources AnA actually cites, so a regulatory lookup cannot drift into
+ * low-quality web content, and shared by web_search and web_fetch.
+ */
+export const REGULATORY_WEB_DOMAINS: readonly string[] = Object.freeze([
+  'fda.gov',
+  'www.fda.gov',
+  'accessdata.fda.gov',
+  'ema.europa.eu',
+  'www.ema.europa.eu',
+  'ich.org',
+  'www.ich.org',
+  'pmda.go.jp',
+  'www.pmda.go.jp',
+  'mhra.gov.uk',
+  'www.mhra.gov.uk',
+  'tga.gov.au',
+  'www.tga.gov.au',
+  'canada.ca',
+  'www.canada.ca',
+  'iso.org',
+  'www.iso.org',
+  'ecfr.gov',
+  'www.ecfr.gov',
+  'federalregister.gov',
+  'www.federalregister.gov',
+  'clinicaltrials.gov',
+  'pubmed.ncbi.nlm.nih.gov',
+  'ncbi.nlm.nih.gov',
+]);
+
 export const WEB_SEARCH_TOOL: AnthropicServerTool = {
   // The current variant, with dynamic filtering. It was pinned to the 2025
   // `web_search_20250305` — the basic one — long after the models in the
@@ -2754,45 +2822,27 @@ export const WEB_SEARCH_TOOL: AnthropicServerTool = {
   type: 'web_search_20260209',
   name: 'web_search',
   max_uses: 5,
-  // Keep the search surface tight to sources AnA actually cites. The allowlist
-  // prevents drift into low-quality web content during regulatory lookups.
-  allowed_domains: [
-    'fda.gov',
-    'www.fda.gov',
-    'accessdata.fda.gov',
-    'ema.europa.eu',
-    'www.ema.europa.eu',
-    'ich.org',
-    'www.ich.org',
-    'pmda.go.jp',
-    'www.pmda.go.jp',
-    'mhra.gov.uk',
-    'www.mhra.gov.uk',
-    'tga.gov.au',
-    'www.tga.gov.au',
-    'canada.ca',
-    'www.canada.ca',
-    'iso.org',
-    'www.iso.org',
-    'ecfr.gov',
-    'www.ecfr.gov',
-    'federalregister.gov',
-    'www.federalregister.gov',
-    'clinicaltrials.gov',
-    'pubmed.ncbi.nlm.nih.gov',
-    'ncbi.nlm.nih.gov',
-  ],
+  allowed_domains: REGULATORY_WEB_DOMAINS,
 };
 
+/**
+ * web_fetch reads the same agency set web_search may search, and no more.
+ * Until 2026-09-26 it had no allowed_domains, so the model could fetch any URL
+ * it wrote or found in a document — the one egress on the tool surface with no
+ * boundary (docs/evidence/D6/2026-09-26-egress-tools/).
+ */
 export const WEB_FETCH_TOOL: AnthropicServerTool = {
   type: 'web_fetch_20260209',
   name: 'web_fetch',
+  max_uses: 5,
+  allowed_domains: REGULATORY_WEB_DOMAINS,
 };
 
 export const CODE_EXECUTION_TOOL: AnthropicServerTool = {
   type: 'code_execution_20260120',
   name: 'code_execution',
 };
+
 
 /**
  * Returns the subset of Anthropic server tools that are enabled for this

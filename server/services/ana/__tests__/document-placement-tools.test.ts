@@ -207,6 +207,8 @@ describe('an AnA placement is a suggestion a person confirms, attributed to AnA'
       chatMessageId: null,
       tool: 'place_project_document',
       servingModel: { provider: 'anthropic', model: 'claude-test-model' },
+      // CTX carries no request id; a real turn's servedModelOf supplies one.
+      gatewayRequestId: null,
       turnId: 'turn-placement-3',
     });
     expect(args.confirm).toBeFalsy();
@@ -223,6 +225,15 @@ describe('an AnA placement is a suggestion a person confirms, attributed to AnA'
     expect(agent.servingModel).toEqual({ provider: null, model: null });
     expect(agent.threadId).toBeNull();
     expect(agent.turnId).toBeNull();
+  });
+
+  it('names the gateway request that proposed the placement, so the row joins its ledger row', async () => {
+    loadDocumentForOrg.mockResolvedValue(doc('cataloged'));
+    await call(
+      { document_id: VAULT_ID, folder_id: 'module-4', rationale: RATIONALE },
+      { ...CTX, servingModel: { ...CTX.servingModel, requestId: 'req-placement-1' } },
+    );
+    expect(placeVaultDocument.mock.calls[0][0].agent.gatewayRequestId).toBe('req-placement-1');
   });
 
   it("refuses confirm_suggested — confirming a filing is a person's act, in the Vault", async () => {

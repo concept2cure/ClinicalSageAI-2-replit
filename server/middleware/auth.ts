@@ -9,7 +9,8 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import { verifyJwtWithRotation } from '../utils/jwtVerify';
-import { isTokenRevoked } from '../services/token-revocation';
+import { isTokenRevoked, revokeToken, verifyLiveToken } from '../services/token-revocation';
+import { sessionEndCodeOf, sessionEndMessageOf, sessionInactivityReason } from '../services/session-inactivity';
 import { nonAccessTokenReason, requireAccessTokenReason } from './tokenType';
 import { enforceOrgMembership, invalidateOrgMembershipCache, parseFiniteInt } from './orgMembership';
 import {
@@ -59,6 +60,10 @@ interface JWTPayload {
   mfaPending?: boolean;
   /** Issued-at, whole seconds; jsonwebtoken stamps it on every token it signs. */
   iat?: number;
+  /** The session's id, start and idle window (services/session-inactivity.ts). */
+  sid?: string;
+  sst?: number;
+  idl?: number;
   /**
    * Which authentication surface issued the token: 'saml' on a federated
    * sign-in (routes/sso.ts); absent on a password session. Carried onto
@@ -190,8 +195,9 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
     Promise.all([
       isTokenRevoked(token),
       accountId === null ? Promise.resolve<AccountStanding | null>(null) : readAccountStandingBeforeTenant(accountId),
+      sessionInactivityReason(token, decoded),
     ]).then(
-      ([revoked, standing]) => {
+      ([revoked, standing, inactivity]) => {
         if (revoked) {
           res.status(401).json({ error: { code: 'SESSION_ENDED', message: 'This session has ended. Sign in again.' } });
           return;
@@ -202,6 +208,16 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
         }
         if (standing && sessionPredatesPasswordChange(issuedAtOfClaims(decoded), standing.passwordChangedAtSeconds)) {
           res.status(401).json({ error: { code: 'SESSION_ENDED', message: 'This session has ended. Sign in again.' } });
+          return;
+        }
+        // Security audit 2026-09-24, IAM-06 (P1-1): a session idle past its
+        // window, or older than its lifetime, is over. This request was
+        // measured against the session's last recorded activity and, when
+        // admitted, recorded as it (services/session-inactivity.ts). The token
+        // is revoked so every other authenticator answers the same way.
+        if (inactivity) {
+          void revokeToken(token, inactivity);
+          res.status(401).json({ error: { code: sessionEndCodeOf(inactivity), message: sessionEndMessageOf(inactivity) } });
           return;
         }
         admitLiveSession(req, res, next, decoded, subject);
@@ -240,6 +256,12 @@ function admitLiveSession(
   // in the literal: Request.user is declared identically in several
   // `declare global` blocks, which TypeScript requires to stay identical.
   Object.assign(req.user, { provider: typeof decoded.provider === 'string' ? decoded.provider : 'local-jwt' });
+  // The numeric account id, as server/auth.ts sets it (req.userId). Guards that
+  // consult a database grant by user id — requirePlatformAdmin's
+  // platform_role_grants fallback — read this field, and behind this
+  // authenticator it was never set, so that fallback never ran here (found
+  // with IAM-10 / P1-4, when the org role stopped standing in for it).
+  (req as { userId?: number }).userId = parseFiniteInt(subject) ?? undefined;
   // SECURITY (M1): the organizationId claim was minted at login; re-check
   // that the membership row still exists so a revoked user loses access
   // within the cache TTL instead of the full token lifetime.
@@ -259,11 +281,32 @@ function admitLiveSession(
   //
   // The storage quota guard runs LAST, and only on content-bearing writes. A
   // suspended tenant must be told it is suspended, not that it is out of disk.
-  enforceOrgMembership(req, res, () =>
+  enforceOrgMembership(req, res, () => {
+    applyOrganizationRole(req);
     establishRequestTenantScope(req, res, () =>
       enforceTenantLifecycle(req, res, () => enforceStorageQuota(req, res, next))
-    )
-  );
+    );
+  });
+}
+
+/**
+ * The role a guard reads is the membership row's, read on this request, not
+ * the one minted into the token at login (security audit 2026-09-24 IAM-10,
+ * plan P1-4). enforceOrgMembership attaches `organizationRole` from the row it
+ * just confirmed (cached 60 s; role changes invalidate the cache), and this
+ * applies it: `role` and `roles` (expanded through the same functional grants
+ * the token path used) now come from the database, so a demotion takes effect
+ * on the next request and a promotion needs no new sign-in. server/auth.ts,
+ * the other authenticator, has resolved its role from the same row since its
+ * membership query was added; this brings authenticateToken level with it.
+ * A membership without a role value (never the case: the column is NOT NULL
+ * with a default) leaves the token's claims in place.
+ */
+function applyOrganizationRole(req: Request): void {
+  const user = req.user as ({ organizationRole?: unknown } & NonNullable<Request['user']>) | undefined;
+  if (!user || typeof user.organizationRole !== 'string' || !user.organizationRole) return;
+  user.role = user.organizationRole;
+  user.roles = expandRoleClaims(user.organizationRole, undefined);
 }
 
 /**
@@ -545,21 +588,22 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction) =>
   if (nonAccessTokenReason(decoded) || subject === undefined || subject === null || subject === '' || subject === 0) {
     return next();
   }
-  // Nor from a signed-out session (AUTH-03). If the check itself fails, the
+  // Nor from a session that is over: signed out (AUTH-03), the account
+  // inactive, the password changed since (IAM-04), idle past its window,
+  // past its lifetime or superseded (IAM-06) — the same verification the
+  // other authenticators apply, in one call. If the check itself fails, the
   // request continues unauthenticated rather than as the token's user.
-  isTokenRevoked(token).then(
-    (revoked) => {
-      if (!revoked) {
-        req.user = {
-          id: subject,
-          userId: subject,
-          email: decoded.email,
-          role: decoded.role || 'user',
-          roles: expandRoleClaims(decoded.role, decoded.roles),
-          organizationId: decoded.organizationId || decoded.orgId,
-          permissions: decoded.permissions || [],
-        };
-      }
+  verifyLiveToken(token).then(
+    () => {
+      req.user = {
+        id: subject,
+        userId: subject,
+        email: decoded.email,
+        role: decoded.role || 'user',
+        roles: expandRoleClaims(decoded.role, decoded.roles),
+        organizationId: decoded.organizationId || decoded.orgId,
+        permissions: decoded.permissions || [],
+      };
       next();
     },
     () => next(),

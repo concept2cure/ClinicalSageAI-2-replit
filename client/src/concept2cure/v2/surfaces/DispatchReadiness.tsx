@@ -43,6 +43,9 @@ interface GateView {
   rule: RuleView | null;
   cleared: boolean;
   blockers: string[];
+  /** The server's sentence when the gate cleared only because its check did
+   *  not run and is not required here. Not blocking, and not passed. */
+  notAssessed?: string;
 }
 
 interface ReadinessSummary {
@@ -100,12 +103,14 @@ interface DispatchReadinessAssessment {
    The open program comes from `readShellProject` (the one reader of
    window.C2C_PROJECT; a deep link or the OQ harness may seed it with the id
    alone), so the program RECORD is read from GET /api/c2c/projects/:id and its
-   submission is chosen by the SAME identity convention the server uses to link
-   program ↔ submission (server/services/cmc/submission-spine.ts,
-   routes/c2c/project-intake.ts): matching application type, and the program's
-   product_name / name / code equal to the submission's product_name / title,
-   case-insensitive; newest first, as the list arrives. No server read exposes
-   that link today, so the rule is applied here — mirrored, not extended.
+   submission is chosen by the rule the server's resolveSubmissionSpine applies
+   (server/services/cmc/submission-spine.ts, LX-22): of the matching application
+   type, a submission anchored to this program (`programId`, which
+   GET /api/submissions returns) is the program's, and one anchored to ANOTHER
+   program never is, whatever its name. Only a submission with no recorded
+   project is matched by name (the program's product_name / name / code against
+   its product_name / title, case-insensitive), and the gate then says so. That
+   fallback goes when no unanchored submission remains.
 
    Every state that is not "this program's sequence" is its own state, never
    another program's gate and never an empty state standing in for an error:
@@ -125,17 +130,21 @@ interface SubmissionRow {
   title: string | null;
   productName: string | null;
   applicationType: string | null;
+  /** The project the submission belongs to; null or absent when none is recorded. */
+  programId?: string | null;
 }
 
 const norm = (v: unknown): string => String(v ?? '').trim().toLowerCase();
 
-/** The server's program ↔ submission identity match, applied to one row. */
-function submissionBelongsToProgram(sub: SubmissionRow, program: ProgramRecord): boolean {
+/** Whether `sub` is this program's submission, and how that is known: by its
+ *  recorded project, or — for a submission with none recorded — by name. */
+function submissionBelongsToProgram(sub: SubmissionRow, program: ProgramRecord): 'program' | 'legacy-name' | null {
   const appType = norm(program.program_type);
-  if (!appType || norm(sub.applicationType) !== appType) return false;
+  if (!appType || norm(sub.applicationType) !== appType) return null;
+  if (sub.programId != null) return sub.programId === program.id ? 'program' : null;
   const programKeys = [program.product_name, program.name, program.code].map(norm).filter(Boolean);
   const subKeys = [sub.productName, sub.title].map(norm).filter(Boolean);
-  return programKeys.some((k) => subKeys.includes(k));
+  return programKeys.some((k) => subKeys.includes(k)) ? 'legacy-name' : null;
 }
 
 type Discovery =
@@ -149,6 +158,8 @@ type Discovery =
       programId: string;
       programLabel: string;
       submissionId: number;
+      /** 'legacy-name' when the submission has no recorded project. */
+      match: 'program' | 'legacy-name';
       seqId: number;
       /** The eCTD sequence NUMBER ("0000"), the identifier a filing is known by;
        *  the assessment carries only the row id. Null when the row has none. */
@@ -169,18 +180,19 @@ async function readProgram(programId: string): Promise<Step<ProgramRecord>> {
   return { data: r.data };
 }
 
-async function findProgramSubmission(program: ProgramRecord, programId: string, programLabel: string): Promise<Step<SubmissionRow>> {
+async function findProgramSubmission(program: ProgramRecord, programId: string, programLabel: string): Promise<Step<{ sub: SubmissionRow; match: 'program' | 'legacy-name' }>> {
   const r = await liveGetOrNull<unknown>('/api/submissions');
   if (r.error || r.data == null) {
     return { done: { state: 'error', detail: r.error ?? 'The submissions could not be read.' } };
   }
   const list = unwrapList(r.data);
-  const rows = Array.isArray(list) ? (list as SubmissionRow[]) : [];
-  const mine = rows.find((row) => row && typeof row.id === 'number' && submissionBelongsToProgram(row, program));
-  return mine ? { data: mine } : { done: { state: 'no-submission', programId, programLabel } };
+  const rows = (Array.isArray(list) ? (list as SubmissionRow[]) : []).filter((row) => row && typeof row.id === 'number');
+  // Anchored first, whatever the list order; a name match only when none is.
+  const sub = rows.find((r) => submissionBelongsToProgram(r, program) === 'program') ?? rows.find((r) => submissionBelongsToProgram(r, program) === 'legacy-name');
+  return sub ? { data: { sub, match: submissionBelongsToProgram(sub, program) ?? 'legacy-name' } } : { done: { state: 'no-submission', programId, programLabel } };
 }
 
-async function findLatestSequence(sub: SubmissionRow, programId: string, programLabel: string): Promise<Discovery> {
+async function findLatestSequence(sub: SubmissionRow, match: 'program' | 'legacy-name', programId: string, programLabel: string): Promise<Discovery> {
   const r = await liveGetOrNull<unknown>(`/api/submissions/${sub.id}/sequences`);
   if (r.error || r.data == null) {
     return { state: 'error', detail: r.error ?? 'The sequences could not be read.' };
@@ -193,7 +205,7 @@ async function findLatestSequence(sub: SubmissionRow, programId: string, program
   }
   const sequenceNumber =
     typeof latest.sequenceNumber === 'string' && latest.sequenceNumber.trim() !== '' ? latest.sequenceNumber.trim() : null;
-  return { state: 'sequence', programId, programLabel, submissionId: sub.id, seqId: latest.id, sequenceNumber };
+  return { state: 'sequence', programId, programLabel, submissionId: sub.id, match, seqId: latest.id, sequenceNumber };
 }
 
 async function discoverProgramSequence(programId: string, shellTitle: string | undefined): Promise<Discovery> {
@@ -201,9 +213,9 @@ async function discoverProgramSequence(programId: string, shellTitle: string | u
   if ('done' in prog) return prog.done;
   const program = prog.data;
   const programLabel = program.name || program.code || shellTitle || programId;
-  const sub = await findProgramSubmission(program, programId, programLabel);
-  if ('done' in sub) return sub.done;
-  return findLatestSequence(sub.data, programId, programLabel);
+  const found = await findProgramSubmission(program, programId, programLabel);
+  if ('done' in found) return found.done;
+  return findLatestSequence(found.data.sub, found.data.match, programId, programLabel);
 }
 
 function useProgramSequence(): Discovery {
@@ -297,14 +309,18 @@ function RuleLine({ rule, code }: { rule: RuleView | null; code: string }) {
 
 /** One composed gate: the rule it enforces, its outcome in words, its own blockers. */
 function GateCard({ gate }: { gate: GateView }) {
+  /* A gate that does not block because its check never ran is not "Satisfied".
+     The external validator's card read "…report for this package carries no
+     errors — Satisfied." over a package no validator had seen. */
+  const unassessed = gate.cleared && Boolean(gate.notAssessed);
   return (
-    <div data-gate={gate.key} className={'dr2-gate ' + (gate.cleared ? 'ok' : 'block')}>
+    <div data-gate={gate.key} className={'dr2-gate ' + (unassessed ? 'warn' : gate.cleared ? 'ok' : 'block')}>
       <div className="dr2-gate-top">
-        <span className="dr2-gate-dot">{gate.cleared ? I.check : I.lock}</span>
+        <span className="dr2-gate-dot">{unassessed ? I.alertTriangle : gate.cleared ? I.check : I.lock}</span>
         <span className="dr2-gate-label">{gate.rule?.title ?? `The ${gate.key} gate — not in the rule corpus`}</span>
       </div>
       <div className="dr2-gate-detail">
-        {gate.cleared ? 'Satisfied.' : 'Blocks dispatch:'}
+        {unassessed ? <>Not assessed. {gate.notAssessed}</> : gate.cleared ? 'Satisfied.' : 'Blocks dispatch:'}
         {!gate.cleared && (
           <ul style={{ margin: '2px 0 0', paddingLeft: 16 }}>
             {gate.blockers.map((b, i) => <li key={i}>{b}</li>)}
@@ -518,7 +534,7 @@ export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
     ? {
           tone: 'good',
           h: <>Your sequence is <b>cleared to dispatch</b>. Every hard gate is proven clear.</>,
-          b: <>0 open validation errors, 0 unacknowledged Shadow Review criticals{ev.configured ? ', external validator clean' : ''}. This verdict is computed from server state — not a model opinion. The wire transmit stays behind your Part-11 e-signature.</>,
+          b: <>0 open validation errors, 0 unacknowledged Shadow Review criticals{ev.ran ? ', external validator clean' : ', external validator not run'}. This verdict is computed from server state — not a model opinion. The wire transmit stays behind your Part-11 e-signature.</>,
       }
     : {
         tone: 'urgent',
@@ -540,6 +556,7 @@ export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
           {programLabel ? <>{programLabel} · </> : null}
           {sequenceNumber ? <>Sequence {sequenceNumber} (id {a.sequenceId})</> : <>Sequence id {a.sequenceId}</>} · region{' '}
           {String(a.region || 'fda').toUpperCase()} · {a.leafCount} leaves · status {a.sequenceStatus}
+          {discovery.state === 'sequence' && discovery.match === 'legacy-name' ? ' · submission matched by name: it has no project recorded' : null}
         </div>
       </div>
 

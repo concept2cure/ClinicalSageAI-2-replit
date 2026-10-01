@@ -26,12 +26,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { select, deleteFn, update, insert } = vi.hoisted(() => ({
-  select: vi.fn(),
-  deleteFn: vi.fn(),
-  update: vi.fn(),
-  insert: vi.fn(),
-}));
+const { select } = vi.hoisted(() => ({ select: vi.fn() }));
 
 /** Rows each successive `db.select()` chain resolves to. */
 let selectResults: unknown[][] = [];
@@ -39,10 +34,28 @@ let selectResults: unknown[][] = [];
 let selectThrowsAt: number | null = null;
 let selectCall = 0;
 
+/**
+ * Since 2026-09-26 (P1-22) a disposition is one transaction on a pool client:
+ * the archive snapshot, the delete and the chained audit row commit together.
+ * The client records every statement, so the order can be asserted; the
+ * chained writer is a recorder that can be told to fail.
+ */
+const tx = vi.hoisted(() => ({
+  statements: [] as string[],
+  params: [] as unknown[][],
+  audit: vi.fn(async (_client: unknown, _entry: unknown, _tenant?: unknown, _resource?: unknown) => {
+    tx.statements.push('AUDIT');
+  }),
+  auditThrows: false,
+  programOrg: 7 as number | null,
+}));
+
 /** Documents hard-deleted, by id. */
 const deleted: unknown[] = [];
-/** Documents soft-deleted (an update carrying deletedAt). */
+/** Documents soft-deleted (an UPDATE stamping deleted_at). */
 const softDeleted: unknown[] = [];
+/** Archive snapshots written. */
+const archived: unknown[] = [];
 
 vi.mock('../../db', () => {
   const selectChain: any = {
@@ -54,38 +67,37 @@ vi.mock('../../db', () => {
       return Promise.resolve(selectResults[i] ?? []).then(resolve);
     },
   };
-  const deleteChain: any = {
-    where: (w: unknown) => {
-      deleted.push(w);
-      deleteFn(w);
-      return Promise.resolve();
-    },
-  };
-  const updateChain: any = {
-    set: (v: Record<string, unknown>) => ({
-      where: (w: unknown) => {
-        if ('deletedAt' in v) softDeleted.push(w);
-        update(v);
-        return Promise.resolve();
-      },
+  const client = {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
+      const s = String(sql).trim();
+      tx.statements.push(s.split(/\s+/).slice(0, 3).join(' '));
+      tx.params.push(params);
+      if (/DELETE FROM vault\.documents/i.test(s)) deleted.push(params[0]);
+      if (/UPDATE vault\.documents SET deleted_at/i.test(s)) softDeleted.push(params[0]);
+      if (/INSERT INTO vault\.document_archives/i.test(s)) archived.push(params[0]);
+      if (/FROM regulatory_programs/i.test(s)) return { rows: tx.programOrg === null ? [] : [{ organization_id: tx.programOrg }], rowCount: tx.programOrg === null ? 0 : 1 };
+      return { rows: [], rowCount: 1 };
     }),
+    release: vi.fn(),
   };
   return {
-    db: {
-      select: (...a: unknown[]) => (select(...a), selectChain),
-      delete: (...a: unknown[]) => (deleteFn(...a), deleteChain),
-      update: (...a: unknown[]) => (update(...a), updateChain),
-      insert: (...a: unknown[]) => (insert(...a), { values: () => Promise.resolve() }),
-    },
+    db: { select: (...a: unknown[]) => (select(...a), selectChain) },
+    pool: { connect: vi.fn(async () => client), query: vi.fn() },
   };
 });
+vi.mock('../../services/auditService', () => ({
+  writeChainedAuditRow: (client: unknown, entry: unknown, tenant?: unknown, resource?: unknown) => {
+    if (tx.auditThrows) throw new Error('chain unavailable');
+    return tx.audit(client, entry, tenant, resource);
+  },
+}));
 
 vi.mock('../../db/tenantStore', () => ({
   runWithSystemTenantScope: (_label: string, fn: () => unknown) => fn(),
 }));
-vi.mock('../../utils/audit-logger.js', () => ({ logAction: vi.fn(), logSystemEvent: vi.fn() }));
 vi.mock('../../services/security-alerts', () => ({ reportSecurityAlert: vi.fn() }));
 vi.mock('nodemailer', () => ({ default: { createTransport: () => ({ sendMail: vi.fn() }) } }));
+vi.mock('node-cron', () => ({ default: { schedule: vi.fn() } }));
 
 import { runRetentionSweep } from '../retentionCron';
 
@@ -107,6 +119,10 @@ const expiredDoc = (over: Record<string, unknown> = {}) => ({
 const HARD_DELETE_POLICY = [
   { policyName: 'purge', archiveBeforeDelete: false, hardDelete: true },
 ];
+/** A disposition the sweep still performs: since VR-07 a destroy policy is refused and reported. */
+const SOFT_DELETE_POLICY = [
+  { policyName: 'purge', archiveBeforeDelete: false, hardDelete: false },
+];
 
 /**
  * The sweep reads, in order: expired documents, policies, holds.
@@ -121,6 +137,11 @@ function arrange(opts: { docs?: unknown[]; policies?: unknown[]; holds?: unknown
 beforeEach(() => {
   deleted.length = 0;
   softDeleted.length = 0;
+  archived.length = 0;
+  tx.statements.length = 0;
+  tx.params.length = 0;
+  tx.auditThrows = false;
+  tx.programOrg = 7;
   selectResults = [];
   selectCall = 0;
   selectThrowsAt = null;
@@ -140,7 +161,8 @@ describe('a hold stops disposition', () => {
     expect(deleted).toHaveLength(0);
     expect(softDeleted).toHaveLength(0);
     expect(summary.heldByLegalHold).toBe(1);
-    expect(summary.hardDeleted).toBe(0);
+    // The hold is checked first, so it is counted as a hold, not as a refusal.
+    expect(summary.destructionRefused).toBe(0);
   });
 
   it('a PROGRAM-scoped hold covers every document of that program', async () => {
@@ -166,7 +188,8 @@ describe('a hold stops disposition', () => {
 
     const summary = await runRetentionSweep();
 
-    expect(insert).not.toHaveBeenCalled();
+    expect(archived).toHaveLength(0);
+    expect(tx.statements).toEqual([]); // no transaction was even opened
     expect(summary.archived).toBe(0);
   });
 });
@@ -174,29 +197,29 @@ describe('a hold stops disposition', () => {
 describe('a hold that does not apply does not block', () => {
   it('deletes when no hold exists — the guard is not a blanket stop', async () => {
     // Guards against "fixing" the defect by never deleting anything.
-    arrange({ docs: [expiredDoc()], policies: HARD_DELETE_POLICY, holds: [] });
+    arrange({ docs: [expiredDoc()], policies: SOFT_DELETE_POLICY, holds: [] });
 
     const summary = await runRetentionSweep();
 
-    expect(summary.hardDeleted).toBe(1);
+    expect(summary.softDeleted).toBe(1);
     expect(summary.heldByLegalHold).toBe(0);
   });
 
   it('deletes when the only hold covers a DIFFERENT program', async () => {
     arrange({
       docs: [expiredDoc()],
-      policies: HARD_DELETE_POLICY,
+      policies: SOFT_DELETE_POLICY,
       holds: [{ programId: '99999999-9999-9999-9999-999999999999', documentId: null }],
     });
 
-    expect((await runRetentionSweep()).hardDeleted).toBe(1);
+    expect((await runRetentionSweep()).softDeleted).toBe(1);
   });
 
   it('a LIFTED hold does not block — the query already excludes it', async () => {
     // loadActiveHolds filters `lifted_at IS NULL`, so a lifted hold never
     // reaches the sweep. Modelled as the empty result that filter produces.
-    arrange({ docs: [expiredDoc()], policies: HARD_DELETE_POLICY, holds: [] });
-    expect((await runRetentionSweep()).hardDeleted).toBe(1);
+    arrange({ docs: [expiredDoc()], policies: SOFT_DELETE_POLICY, holds: [] });
+    expect((await runRetentionSweep()).softDeleted).toBe(1);
   });
 });
 
@@ -212,5 +235,59 @@ describe('the sweep fails closed when holds cannot be read', () => {
     // empty one are the same input unless the code refuses.
     expect(deleted).toHaveLength(0);
     expect(softDeleted).toHaveLength(0);
+  });
+});
+
+describe('a disposition is one transaction with its chained audit row (P1-22)', () => {
+  it('soft delete: BEGIN, the organisation, the tombstone, the chained audit row, COMMIT — and the row names the document', async () => {
+    arrange({ docs: [expiredDoc()], policies: SOFT_DELETE_POLICY, holds: [] });
+
+    const summary = await runRetentionSweep();
+
+    expect(summary.softDeleted).toBe(1);
+    expect(softDeleted).toEqual([DOC]);
+    expect(tx.statements).toEqual(['BEGIN', 'SELECT organization_id FROM', 'UPDATE vault.documents SET', 'AUDIT', 'COMMIT']);
+    const [, entry, tenant, resource] = tx.audit.mock.calls[0];
+    expect(entry).toMatchObject({ action: 'vault.document.retention_soft_delete', resourceType: 'vault_document', resourceId: DOC });
+    expect(tenant).toBe(7);
+    expect(resource).toBe(DOC);
+  });
+
+  it('archive then soft delete, in the same transaction, under the document\'s own organisation', async () => {
+    arrange({
+      docs: [expiredDoc({ organizationId: 9 })],
+      policies: [{ policyName: 'purge', archiveBeforeDelete: true, hardDelete: false }],
+      holds: [],
+    });
+
+    const summary = await runRetentionSweep();
+
+    expect(summary).toMatchObject({ archived: 1, softDeleted: 1, destructionRefused: 0, errors: 0 });
+    expect(tx.statements).toEqual(['BEGIN', 'INSERT INTO vault.document_archives', 'UPDATE vault.documents SET', 'AUDIT', 'COMMIT']);
+    expect(tx.audit.mock.calls[0][1]).toMatchObject({ action: 'vault.document.retention_soft_delete' });
+    expect(tx.audit.mock.calls[0][2]).toBe(9);
+  });
+
+  it('a deletion whose audit row cannot be written is rolled back and counted as an error', async () => {
+    tx.auditThrows = true;
+    arrange({ docs: [expiredDoc()], policies: SOFT_DELETE_POLICY, holds: [] });
+
+    const summary = await runRetentionSweep();
+
+    expect(summary.softDeleted).toBe(0);
+    expect(summary.errors).toBe(1);
+    expect(tx.statements).toEqual(['BEGIN', 'SELECT organization_id FROM', 'UPDATE vault.documents SET', 'ROLLBACK']);
+  });
+
+  it('a document with no organisation to chain the row under is left in place (nothing is committed unaudited)', async () => {
+    tx.programOrg = null;
+    arrange({ docs: [expiredDoc()], policies: SOFT_DELETE_POLICY, holds: [] });
+
+    const summary = await runRetentionSweep();
+
+    expect(summary.softDeleted).toBe(0);
+    expect(summary.errors).toBe(1);
+    expect(tx.statements).toEqual(['BEGIN', 'SELECT organization_id FROM', 'ROLLBACK']);
+    expect(tx.audit).not.toHaveBeenCalled();
   });
 });

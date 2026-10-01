@@ -6,6 +6,10 @@
  *     regulatory_programs UUID (verified by reading the row back).
  *   • GET /api/authoring/docs?programId=<uuid> returns ONLY that project's
  *     documents; without programId the org-wide list is unchanged.
+ *   • A create that names no project is refused 400 (PF-07, founder decision
+ *     2026-09-26: a document belongs to a project), so there is no longer an
+ *     "org-wide, no program" document; the org-wide list is exercised across
+ *     two projects of the same organization instead.
  *
  * Runs the REAL authoring.router over HTTP (supertest) with a REAL signed JWT,
  * against the canonical loop DDL plus
@@ -34,6 +38,15 @@ const AUTHOR = {
 };
 const PROGRAM_A = '11111111-1111-4111-8111-111111111111';
 const PROGRAM_B = '22222222-2222-4222-8222-222222222222';
+/**
+ * A third project of the SAME organization. PF-07 removed the org-wide (no
+ * program) document this file used to create as the "not in program A" case;
+ * that document now lives here, so program B stays empty (the no-leakage
+ * check) and the unfiltered list still spans more than one project.
+ */
+const PROGRAM_C = '44444444-4444-4444-8444-444444444444';
+/** A project of ANOTHER organization. */
+const PROGRAM_FOREIGN = '33333333-3333-4333-8333-333333333333';
 
 async function mint(u: typeof AUTHOR) {
   return new SignJWT({
@@ -79,7 +92,7 @@ const PREREQ = `
     user_id INTEGER NOT NULL,
     role TEXT NOT NULL DEFAULT 'member'
   );
-  INSERT INTO organizations (id, name) VALUES (1, 'scope-org');
+  INSERT INTO organizations (id, name) VALUES (1, 'scope-org'), (2, 'other-org');
   INSERT INTO users (id, name, email) VALUES ('${AUTHOR.id}', '${AUTHOR.name}', '${AUTHOR.email}');
   INSERT INTO organization_users (organization_id, user_id, role)
     VALUES (${AUTHOR.organizationId}, ${AUTHOR_MEMBERSHIP_ID}, 'member');
@@ -94,6 +107,10 @@ beforeAll(async () => {
   jdb = await createJourneyDb({
     prereqSql: PREREQ,
     migrations: [
+      // The projects a document is anchored to. createDocument refuses a
+      // program its organization does not own (LX-20), so the programs must
+      // exist, in the real table, for a create to succeed.
+      'migrations/20260524_program_workbench_schema.sql',
       'db/migrations/20260725_authoring_document_loop_tables.sql',
       'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
       'db/migrations/20260730_authoring_comments_router_columns.sql',
@@ -102,6 +119,14 @@ beforeAll(async () => {
   });
   h.db = jdb.db;
   h.pool = jdb.pool;
+  await jdb.pool.query(
+    `INSERT INTO regulatory_programs (id, organization_id, name, code, program_type, product_type, primary_agency, product_name)
+     VALUES ($1, 1, 'Program A', 'PA-1', 'ind', 'drug', 'FDA', 'Alpha'),
+            ($2, 1, 'Program B', 'PB-1', 'ind', 'drug', 'FDA', 'Beta'),
+            ($3, 2, 'Other org program', 'OO-1', 'ind', 'drug', 'FDA', 'Other'),
+            ($4, 1, 'Program C', 'PC-1', 'ind', 'drug', 'FDA', 'Gamma')`,
+    [PROGRAM_A, PROGRAM_B, PROGRAM_FOREIGN, PROGRAM_C],
+  );
   token = await mint(AUTHOR);
 
   const { default: authoringRouter } = await import('../server/routes/authoring.router');
@@ -125,7 +150,11 @@ describe('authoring documents — program scoping (over HTTP, canonical DDL)', (
   });
 
   it('tags a create with client_program_id and scopes the list to it', async () => {
-    // One document scoped to program A, one org-wide (no program).
+    // One document scoped to program A, one in ANOTHER project of the same
+    // organization. This second document used to be created org-wide (no
+    // program); PF-07 (a document belongs to a project) refuses that create,
+    // so it now names program C. Its role is unchanged: a document of this
+    // organization that is NOT in program A.
     const a = await auth(request(app).post('/api/authoring/docs')).send({
       title: 'Program A doc',
       module: 'M3',
@@ -133,11 +162,21 @@ describe('authoring documents — program scoping (over HTTP, canonical DDL)', (
     });
     expect(a.status).toBe(201);
 
-    const orgWide = await auth(request(app).post('/api/authoring/docs')).send({
-      title: 'Org-wide doc',
+    const programC = await auth(request(app).post('/api/authoring/docs')).send({
+      title: 'Program C doc',
       module: 'M3',
+      client_program_id: PROGRAM_C,
     });
-    expect(orgWide.status).toBe(201);
+    expect(programC.status).toBe(201);
+
+    // A legacy row: a document created org-wide before PF-07, which deployed
+    // databases still hold (PF-07 refuses new ones; it does not backfill). No
+    // route can make it now, so it is written directly. No project's list may
+    // show it; the organization's own unfiltered list still does.
+    await jdb.pool.query(
+      `INSERT INTO authoring_documents (id, title, module, status, created_by, tenant_id, client_program_id)
+       VALUES ('55555555-5555-4555-8555-555555555555', 'Legacy org-wide doc', 'M3', 'draft', 'u-1', 1, NULL)`,
+    );
 
     // The tagged document really carries the program id.
     const row = await jdb.pool.query(
@@ -159,11 +198,44 @@ describe('authoring documents — program scoping (over HTTP, canonical DDL)', (
     );
     expect(scopedB.body.documents.length).toBe(0);
 
-    // Org-wide list (no programId) is unchanged — returns both.
+    // Org-wide list (no programId) is unchanged — all three, across projects
+    // and the legacy row.
     const all = await auth(
       request(app).get('/api/authoring/docs').query({ module: 'M3', status: 'draft' }),
     );
-    expect(all.body.documents.length).toBe(2);
+    expect(all.body.documents.map((d: { title: string }) => d.title).sort()).toEqual([
+      'Legacy org-wide doc',
+      'Program A doc',
+      'Program C doc',
+    ]);
+  });
+
+  it('refuses another organization’s project with 404, and writes nothing', async () => {
+    const before = await jdb.pool.query(`SELECT count(*)::int AS n FROM authoring_documents`);
+    const res = await auth(request(app).post('/api/authoring/docs')).send({
+      title: 'Anchored to someone else',
+      module: 'M3',
+      client_program_id: PROGRAM_FOREIGN,
+    });
+    expect(res.status).toBe(404);
+    const after = await jdb.pool.query(`SELECT count(*)::int AS n FROM authoring_documents`);
+    expect((after.rows[0] as { n: number }).n).toBe((before.rows[0] as { n: number }).n);
+  });
+
+  it('refuses a create that names no project with 400, and writes nothing (PF-07)', async () => {
+    // The create this file used to make org-wide. A document belongs to a
+    // project, so it is refused before anything is written.
+    const before = await jdb.pool.query(`SELECT count(*)::int AS n FROM authoring_documents`);
+    const res = await auth(request(app).post('/api/authoring/docs')).send({
+      title: 'No project',
+      module: 'M3',
+    });
+    expect(res.status).toBe(400);
+    expect(res.body.success).toBe(false);
+    expect(res.body.code).toBe('PROJECT_REQUIRED');
+    expect(res.body.error).toBe('Open a project first: a document belongs to a project.');
+    const after = await jdb.pool.query(`SELECT count(*)::int AS n FROM authoring_documents`);
+    expect((after.rows[0] as { n: number }).n).toBe((before.rows[0] as { n: number }).n);
   });
 
   it('rejects a malformed client_program_id with 400, not a 500', async () => {

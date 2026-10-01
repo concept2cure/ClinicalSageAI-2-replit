@@ -23,6 +23,7 @@ import {
   createAuditedUnplacedExport,
 } from '../services/export/governedExportConsequence';
 import { createRateLimiter } from '../middleware/rateLimiter';
+import { GATEWAY_ERROR_HTTP_STATUS } from '../services/ai-gateway/gateway-error-map';
 import {
   createSubmission,
   listSubmissions,
@@ -86,11 +87,9 @@ function ctxOf(req: Request): Ctx | null {
 const CODE_STATUS: Record<string, number> = {
   ...SUBMISSION_ERROR_STATUS,
   NO_AUTHORED_CONTENT: 422,
-  RATE_LIMITED: 429,
-  OVERLOADED: 503,
-  TOKEN_LIMIT_EXCEEDED: 413,
-  INVALID_AI_RESPONSE: 502,
-  PROVIDER_UNAVAILABLE: 503,
+  // The gateway's own table, not a copy: a copy missed PLACEMENT_REFUSED (a
+  // tenant placement refusal, 403) and answered it as a 500 (D6).
+  ...GATEWAY_ERROR_HTTP_STATUS,
 };
 
 function fail(res: Response, err: unknown): void {
@@ -165,6 +164,13 @@ const idParam = (v: string | string[] | undefined) => {
 
 // ── Schemas ───────────────────────────────────────────────────────────────
 const createSubmissionSchema = z.object({
+  /* The project this submission belongs to (regulatory_programs.id). Required:
+     every chain of governed records starts at a project, and a submission with
+     none reaches its project only by a name match (LX-22). Without the field
+     here the plain z.object stripped the id the Submission Center form had made
+     the user pick. Tenancy is checked by createSubmission (404 for another
+     organization's project), not here. */
+  programId: z.string().uuid(),
   title: z.string().min(1).max(500),
   productName: z.string().max(500).optional(),
   applicationType: z.string().min(1).max(64),
@@ -1111,10 +1117,16 @@ router.post('/:id/consistency', limiter, requireRole(AUTHOR), async (req, res) =
   const parsed = consistencySchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
   try {
-    // The body stays the findings array the Submission Center reads; the check's
-    // §11.10(e) row is reported in the header pair, as the leaf removal above does.
-    const { findings, auditTrail } = await runConsistencyCheck({ submissionId: id, ...parsed.data }, ctx);
+    // The body stays the findings array; the check's §11.10(e) row is reported
+    // in the header pair, as the leaf removal above does. No browser client
+    // calls this route today (AnA's check_consistency is the reachable path),
+    // so neither header is on the CORS expose list; a client that adds a call
+    // adds them there.
+    const { findings, notCompared, auditTrail } = await runConsistencyCheck({ submissionId: id, ...parsed.data }, ctx);
     setAuditRowHeaders(res, auditTrail);
+    // How many of the claim's figures got no verdict: an empty array is
+    // "nothing compared" as often as "no conflict".
+    res.setHeader('X-Consistency-Not-Compared', String(notCompared.length));
     res.json(findings);
   } catch (err) {
     fail(res, err);

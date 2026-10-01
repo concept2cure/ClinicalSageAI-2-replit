@@ -158,7 +158,7 @@ describe('POST /api/evidence/ask — fail-closed JWT-derived provenance', () => 
 
     // Retrieval was scoped to the PRINCIPAL's org uuid, not the header.
     expect(searchHybrid).toHaveBeenCalledTimes(1);
-    expect(searchHybrid.mock.calls[0][3]).toBe(TENANT_ORG_UUID);
+    expect(searchHybrid.mock.calls[0][1].organizationUuid).toBe(TENANT_ORG_UUID);
 
     // Retrieval provenance recorded the PRINCIPAL's org + user, never body 999.
     const rrCall = callMatching(/INSERT INTO ai_retrieval_runs/i);

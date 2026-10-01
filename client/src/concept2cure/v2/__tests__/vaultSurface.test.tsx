@@ -318,6 +318,19 @@ describe('Vault — search', () => {
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (url.startsWith(`/api/c2c/project-vault/${PID}/search`)) return searchResponse();
       if (url === `/api/c2c/project-vault/${PID}` && method === 'GET') return ok(vaultPayload());
+      // 2026-09-28: the selected document's history read used to fall through
+      // to `ok({})` — the wrong shape, so a failed read — and was harmless only
+      // because that failure was role="status". It is now an alert (M-0928-3),
+      // so answer it with a real, empty history and keep the search failure the
+      // one alert these tests look for.
+      if (url.endsWith('/history')) {
+        return ok({
+          success: true,
+          data: { entries: [], chain: { store: 'audit_logs', ok: true, rowsChecked: 0, legacyRows: 0, sequencedRows: 0 } },
+        });
+      }
+      // The same for the version list (VR-09), whose failed read is an alert too.
+      if (url.endsWith('/versions')) return ok({ success: true, data: { versions: [] } });
       return ok({});
     });
   }

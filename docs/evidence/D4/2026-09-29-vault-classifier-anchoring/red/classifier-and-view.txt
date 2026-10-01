@@ -1,0 +1,272 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/vault/__tests__/vault-view-resolution.test.ts > resolveVaultView > degrades to the service view when the table is missing (42P01), as before
+{
+  "timestamp": "2026-09-29T20:25:45.371Z",
+  "level": "warn",
+  "message": "[vault-filing] resolveVaultView degraded to service view",
+  "context": {
+    "err": "relation \"regulatory_programs\" does not exist"
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-view-resolution.test.ts > resolveVaultView > degrades to the service view when the table is missing (42P01), as before
+{
+  "timestamp": "2026-09-29T20:25:45.373Z",
+  "level": "warn",
+  "message": "[vault-filing] resolveOrgVaultView degraded to service view",
+  "context": {
+    "err": "relation \"regulatory_programs\" does not exist"
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-view-resolution.test.ts > resolveVaultView > lets any other failure through instead of filing against the wrong taxonomy
+{
+  "timestamp": "2026-09-29T20:25:45.374Z",
+  "level": "warn",
+  "message": "[vault-filing] resolveVaultView degraded to service view",
+  "context": {
+    "err": "terminating connection due to administrator command"
+  }
+}
+
+ ✓ server/services/vault/__tests__/vault-view-resolution.test.ts > resolveVaultView > reads the program's product type 2ms
+ ✓ server/services/vault/__tests__/vault-view-resolution.test.ts > resolveVaultView > degrades to the service view when the table is missing (42P01), as before 3ms
+ × server/services/vault/__tests__/vault-view-resolution.test.ts > resolveVaultView > lets any other failure through instead of filing against the wrong taxonomy 6ms
+   → promise resolved "'service'" instead of rejecting
+stdout | server/services/vault/__tests__/vault-filing.service.test.ts
+{
+  "timestamp": "2026-09-29T20:25:46.573Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-29T20:25:46.574Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-filing.service.test.ts
+{
+  "timestamp": "2026-09-29T20:25:46.574Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/vault/__tests__/vault-filing.service.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/vault/__tests__/vault-filing.service.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/vault/__tests__/vault-filing.service.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > FILING_RULES totality > every rule target folder exists in the view preset it names 4ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > FILING_RULES totality > classifier output folder is always renderable for the input view 15ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > fail-closed on unclassifiable input > a meaningless filename lands in the Unfiled queue, not a guessed folder 1ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > fail-closed on unclassifiable input > an empty name with no text is unfiled everywhere 1ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > fail-closed on unclassifiable input > the TMF default zone is NOT treated as a finding — service-view no-match stays unfiled 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > view fidelity — the same file files by client type > labeling: pharma → Module 1, device → udi 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > view fidelity — the same file files by client type > CTD content: stability → Module 3, toxicology → Module 4, CSR → Module 5 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > view fidelity — the same file files by client type > device engineering: risk file → eng with a rationale 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > view fidelity — the same file files by client type > an SOP in a pharma dossier vault is honestly not placeable 1ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > view fidelity — the same file files by client type > service view files by TMF zone on a keyword match 1ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > view fidelity — the same file files by client type > correspondence and templates file in every view 1ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > document-body fallback > uses bounded text only when the name says nothing 1ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > document-body fallback > a name match wins over body text 0ms
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > folderLabel > labels a real folder and never invents one 0ms
+ × server/services/vault/__tests__/vault-filing.service.test.ts > CTD proposals you can trust (VR-04) > a word inside another word is not a section: "Permission" is not ISS, "Otherwise" is not ISE 9ms
+   → Permission to cross-reference.pdf: expected '5.3.5.3/high' not to be '5.3.5.3/high' // Object.is equality
+ × server/services/vault/__tests__/vault-filing.service.test.ts > CTD proposals you can trust (VR-04) > an Integrated Summary of Safety is proposed at 5.3.5.3, not the generic 5.3.5 3ms
+   → expected '5.3.5' to be '5.3.5.3' // Object.is equality
+ × server/services/vault/__tests__/vault-filing.service.test.ts > CTD proposals you can trust (VR-04) > a safety data sheet is not a clinical safety study 1ms
+   → expected '5.3.5' to be null
+ × server/services/vault/__tests__/vault-filing.service.test.ts > CTD proposals you can trust (VR-04) > "Item2" is not Module 2, and a bare module is never proposed as a section 1ms
+   → expected '2.0' to be null
+ × server/services/vault/__tests__/vault-filing.service.test.ts > CTD proposals you can trust (VR-04) > clinical pharmacology is Module 5, not the nonclinical pharmacology of Module 4 2ms
+   → expected '4.2.1' to be '5.3.3' // Object.is equality
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > CTD proposals you can trust (VR-04) > positive controls stay put 0ms
+ × server/services/vault/__tests__/vault-filing.service.test.ts > the uploader's declared type informs the proposal (VR-04) > a declared PROTOCOL on a neutral filename is a protocol 1ms
+   → expected null to be 'protocol' // Object.is equality
+ × server/services/vault/__tests__/vault-filing.service.test.ts > the uploader's declared type informs the proposal (VR-04) > a declared type that contradicts the filename is flagged for review naming both, not overridden 1ms
+   → expected false to be true // Object.is equality
+ × server/services/vault/__tests__/vault-filing.service.test.ts > the uploader's declared type informs the proposal (VR-04) > a declared type that agrees with the filename keeps the placement and the more specific kind 1ms
+   → expected 'report' to be 'csr' // Object.is equality
+ ✓ server/services/vault/__tests__/vault-filing.service.test.ts > the uploader's declared type informs the proposal (VR-04) > OTHER, or no declared type, changes nothing 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/vault/__tests__/vault-filing.service.test.ts > CTD proposals you can trust (VR-04) > a word inside another word is not a section: "Permission" is not ISS, "Otherwise" is not ISE
+AssertionError: Permission to cross-reference.pdf: expected '5.3.5.3/high' not to be '5.3.5.3/high' // Object.is equality
+ ❯ server/services/vault/__tests__/vault-filing.service.test.ts:201:56
+    199|     for (const f of ['Permission to cross-reference.pdf', 'Otherwise u…
+    200|       const c = pharma(f);
+    201|       expect(`${c.ctdSection}/${c.confidence}`, f).not.toBe('5.3.5.3/h…
+       |                                                        ^
+    202|     }
+    203|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  server/services/vault/__tests__/vault-filing.service.test.ts > CTD proposals you can trust (VR-04) > an Integrated Summary of Safety is proposed at 5.3.5.3, not the generic 5.3.5
+AssertionError: expected '5.3.5' to be '5.3.5.3' // Object.is equality
+
+Expected: "5.3.5.3"
+Received: "5.3.5"
+
+ ❯ server/services/vault/__tests__/vault-filing.service.test.ts:206:67
+    204|
+    205|   it('an Integrated Summary of Safety is proposed at 5.3.5.3, not the …
+    206|     expect(pharma('Integrated Summary of Safety.pdf').ctdSection).toBe…
+       |                                                                   ^
+    207|     expect(pharma('Integrated Summary of Efficacy.pdf').ctdSection).to…
+    208|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  server/services/vault/__tests__/vault-filing.service.test.ts > CTD proposals you can trust (VR-04) > a safety data sheet is not a clinical safety study
+AssertionError: expected '5.3.5' to be null
+
+- Expected:
+null
+
++ Received:
+"5.3.5"
+
+ ❯ server/services/vault/__tests__/vault-filing.service.test.ts:211:66
+    209|
+    210|   it('a safety data sheet is not a clinical safety study', () => {
+    211|     expect(pharma('Safety Data Sheet - ethanol.pdf').ctdSection).toBeN…
+       |                                                                  ^
+    212|   });
+    213|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  server/services/vault/__tests__/vault-filing.service.test.ts > CTD proposals you can trust (VR-04) > "Item2" is not Module 2, and a bare module is never proposed as a section
+AssertionError: expected '2.0' to be null
+
+- Expected:
+null
+
++ Received:
+"2.0"
+
+ ❯ server/services/vault/__tests__/vault-filing.service.test.ts:215:50
+    213|
+    214|   it('"Item2" is not Module 2, and a bare module is never proposed as …
+    215|     expect(pharma('Item2 notes.pdf').ctdSection).toBeNull();
+       |                                                  ^
+    216|     for (const f of ['Module 3 quality notes.pdf', 'M4 summary.pdf']) {
+    217|       const c = pharma(f);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  server/services/vault/__tests__/vault-filing.service.test.ts > CTD proposals you can trust (VR-04) > clinical pharmacology is Module 5, not the nonclinical pharmacology of Module 4
+AssertionError: expected '4.2.1' to be '5.3.3' // Object.is equality
+
+Expected: "5.3.3"
+Received: "4.2.1"
+
+ ❯ server/services/vault/__tests__/vault-filing.service.test.ts:225:67
+    223|
+    224|   it('clinical pharmacology is Module 5, not the nonclinical pharmacol…
+    225|     expect(pharma('Clinical Pharmacology report.pdf').ctdSection).toBe…
+       |                                                                   ^
+    226|   });
+    227|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  server/services/vault/__tests__/vault-filing.service.test.ts > the uploader's declared type informs the proposal (VR-04) > a declared PROTOCOL on a neutral filename is a protocol
+AssertionError: expected null to be 'protocol' // Object.is equality
+
+- Expected:
+"protocol"
+
++ Received:
+null
+
+ ❯ server/services/vault/__tests__/vault-filing.service.test.ts:240:28
+    238|   it('a declared PROTOCOL on a neutral filename is a protocol', () => {
+    239|     const c = classifyForFiling({ fileName: 'scan-0042.pdf', view: 'ph…
+    240|     expect(c.evidenceKind).toBe('protocol');
+       |                            ^
+    241|     expect(c.rationale).toMatch(/Protocol/);
+    242|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  server/services/vault/__tests__/vault-filing.service.test.ts > the uploader's declared type informs the proposal (VR-04) > a declared type that contradicts the filename is flagged for review naming both, not overridden
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/vault/__tests__/vault-filing.service.test.ts:246:27
+    244|   it('a declared type that contradicts the filename is flagged for rev…
+    245|     const c = classifyForFiling({ fileName: 'stability-summary-24m.pdf…
+    246|     expect(c.needsReview).toBe(true);
+       |                           ^
+    247|     expect(c.folderId).toBeNull();
+    248|     expect(c.rationale).toMatch(/Clinical study report/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  server/services/vault/__tests__/vault-filing.service.test.ts > the uploader's declared type informs the proposal (VR-04) > a declared type that agrees with the filename keeps the placement and the more specific kind
+AssertionError: expected 'report' to be 'csr' // Object.is equality
+
+Expected: "csr"
+Received: "report"
+
+ ❯ server/services/vault/__tests__/vault-filing.service.test.ts:256:28
+    254|     expect(c.needsReview).toBe(false);
+    255|     expect(c.folderId).toBe('module-5');
+    256|     expect(c.evidenceKind).toBe('csr');
+       |                            ^
+    257|   });
+    258|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  server/services/vault/__tests__/vault-view-resolution.test.ts > resolveVaultView > lets any other failure through instead of filing against the wrong taxonomy
+AssertionError: promise resolved "'service'" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+"service"
+
+ ❯ server/services/vault/__tests__/vault-view-resolution.test.ts:38:46
+     36|       throw pgError('57P01', 'terminating connection due to administra…
+     37|     });
+     38|     await expect(resolveVaultView(PROGRAM, 7)).rejects.toThrow(/termin…
+       |                                              ^
+     39|     await expect(resolveOrgVaultView(7)).rejects.toThrow(/terminating …
+     40|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  9 failed | 18 passed (27)
+   Start at  20:25:44
+   Duration  1.90s (transform 976ms, setup 169ms, import 1.61s, tests 64ms, environment 0ms)
+

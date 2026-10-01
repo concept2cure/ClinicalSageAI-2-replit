@@ -139,9 +139,192 @@ describe('the real registry, launch scope on', () => {
     }
   });
 
+  /* `gateway-transmittals` claimed all of /api/mdx from 2026-07-21 (its own
+     note says its routes are /api/mdx/gateways), so every device-kit API
+     answered as launch: risk items, clinical studies, IVD, labeling. Found by
+     the AnA tool measurement (2026-09-26); the device kit is outside the launch
+     catalog. */
+  it('refuses the device kit under /api/mdx, and passes the launch apps that live there', async () => {
+    for (const p of ['/api/mdx/risk-items/1', '/api/mdx/clinical-studies', '/api/mdx/labeling/documents', '/api/mdx/rbm-kris']) {
+      expect(await refused(p), p).toBe(true);
+    }
+    for (const p of [
+      '/api/mdx/gateways/transmittals',
+      '/api/mdx/vault',
+      '/api/mdx/vault/7/versions',
+      '/api/mdx/qms/documents',
+      '/api/mdx/admin/users',
+      '/api/mdx/industry-profile',
+      '/api/mdx/notifications/unread-count',
+      '/api/mdx/ana/memory',
+    ]) {
+      expect(await refused(p), p).toBe(false);
+    }
+  });
+
+  /* 2026-09-29: three more broad claims, each pre-dating launch scope, that let
+     a hidden app's routes answer as launch. dossier-map claimed all of
+     /api/global-ri and /api/rim; project-home and program-journey claimed
+     /api/rim; submission-center claimed all of /api/510k/estar. No launch
+     screen calls any of them except the two eSTAR sub-paths Submission Center
+     uses. */
+  it('refuses Global RI, RIM and the device eSTAR kit, and passes what launch screens call', async () => {
+    for (const p of ['/api/global-ri/catalog', '/api/global-ri/impurities/x', '/api/rim/products', '/api/510k/estar/official', '/api/510k/estar/build']) {
+      expect(await refused(p), p).toBe(true);
+    }
+    for (const p of ['/api/dossier-map', '/api/510k/estar/submissions', '/api/510k/estar/assemble']) {
+      expect(await refused(p), p).toBe(false);
+    }
+  });
+
+  /* Found 2026-09-29: Projects and Project home each claimed all of /api/programs.
+     Every route under it is device 510(k) predicate intelligence (21, 12 of them
+     writes), the substantial-equivalence render, or an RTM over tables nothing
+     writes to. No launch screen calls any of them. */
+  it('refuses the device predicate-intelligence and RTM routes under /api/programs, and passes Projects', async () => {
+    for (const p of [
+      '/api/programs/7/predicate-intel/defense-packet/build',
+      '/api/programs/7/predicate-intel/render/job-1/download',
+      '/api/programs/7/se-matrix/render',
+      '/api/programs/7/rtm/csv',
+    ]) {
+      expect(await refused(p), p).toBe(true);
+    }
+    expect(await refused('/api/projects')).toBe(false);
+  });
+
   it('refuses a surface outside the catalog, and leaves the public API and webhooks alone', async () => {
     expect(await refused('/api/pharmacovigilance/cases')).toBe(true);
     expect(await refused('/api/v1/documents')).toBe(false);
     expect(await refused('/api/stripe/webhook')).toBe(false);
+  });
+});
+
+/* Stage 2b. A path no surface, platform or infrastructure entry claims is outside
+   the launch scope as registered. Refusing it outright could refuse a caller
+   static analysis cannot see (a computed path, a server-to-server call), so it is
+   REPORTED in report mode — the would-refuse lands in the enforcement report
+   Master Admin → Licensing → Enforcement already reads — and refused in enforce
+   mode, production's default since stage 3 (2026-09-26). */
+describe('unattributed paths (stage 2b)', async () => {
+  const { enforcementReport, clearObservations } = await import('../../services/entitlements/enforcement-observations');
+  const snapshotObservations = () => enforcementReport('report').observations;
+  const build = (unattributed?: 'report' | 'enforce') =>
+    moduleEntitlementGate(buildPrefixMap(SURFACES), { launchScope: 'on', ...(unattributed ? { unattributed } : {}) });
+
+  beforeEach(() => clearObservations());
+
+  it('report (the default): passes the request and records the would-refuse', async () => {
+    const { passed } = await run(build(), '/api/legacy-namespace/items', 42);
+    expect(passed).toBe(true);
+    const rows = snapshotObservations();
+    expect(rows).toEqual([
+      expect.objectContaining({ path: '/api/legacy-namespace/items', organizationId: 42, enforced: false, modules: ['launch-scope:unattributed'] }),
+    ]);
+  });
+
+  it('enforce: refuses it 403 LAUNCH_SCOPE and records it as enforced', async () => {
+    const { res, passed } = await run(build('enforce'), '/api/legacy-namespace/items', 42);
+    expect(passed).toBe(false);
+    expect(res.statusCode).toBe(403);
+    expect(res.body.error.code).toBe('LAUNCH_SCOPE');
+    expect(snapshotObservations()[0]).toMatchObject({ enforced: true });
+  });
+
+  it('enforce: never refuses infrastructure (the public API, webhooks) or a non-API path (the app itself)', async () => {
+    const gate = build('enforce');
+    expect((await run(gate, '/api/v1/documents')).passed).toBe(true);
+    expect((await run(gate, '/api/firecrawl-webhooks/crawl')).passed).toBe(true);
+    expect((await run(gate, '/concept2cure/projects')).passed).toBe(true);
+    expect((await run(gate, '/assets/index.js')).passed).toBe(true);
+    expect(snapshotObservations()).toEqual([]);
+  });
+
+  it('records one row per route, not per record: numeric and uuid segments collapse to :id', async () => {
+    const gate = build();
+    await run(gate, '/api/legacy-namespace/projects/123/artifacts', 42);
+    await run(gate, '/api/legacy-namespace/projects/456/artifacts', 42);
+    await run(gate, '/api/legacy-namespace/programs/0b7f2c1e-9a4d-4c3b-8e21-5f6a7b8c9d0e', 42);
+    const rows = snapshotObservations();
+    expect(rows.map((r) => [r.path, r.count]).sort()).toEqual([
+      ['/api/legacy-namespace/programs/:id', 1],
+      ['/api/legacy-namespace/projects/:id/artifacts', 2],
+    ]);
+  });
+
+  it('a request with no organisation is recorded against organisation 0, not dropped', async () => {
+    await run(build(), '/api/legacy-namespace/items', null);
+    expect(snapshotObservations()[0]).toMatchObject({ organizationId: 0 });
+  });
+
+  it('production with LAUNCH_SCOPE_API_UNATTRIBUTED unset ENFORCES (stage 3); report is an explicit choice; an unknown value refuses to boot', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('LAUNCH_SCOPE_ENFORCE', '');
+    vi.stubEnv('LAUNCH_SCOPE_API_UNATTRIBUTED', '');
+    const unset = await run(moduleEntitlementGate(buildPrefixMap(SURFACES)), '/api/legacy-namespace/x');
+    expect(unset.passed).toBe(false);
+    expect(unset.res.statusCode).toBe(403);
+    vi.stubEnv('LAUNCH_SCOPE_API_UNATTRIBUTED', 'report');
+    expect((await run(moduleEntitlementGate(buildPrefixMap(SURFACES)), '/api/legacy-namespace/x')).passed).toBe(true);
+    vi.stubEnv('LAUNCH_SCOPE_API_UNATTRIBUTED', 'strict');
+    expect(() => moduleEntitlementGate(buildPrefixMap(SURFACES))).toThrow(/LAUNCH_SCOPE_API_UNATTRIBUTED/);
+  });
+
+  it('outside production, unset still only reports (a development server serves everything)', async () => {
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('LAUNCH_SCOPE_API_UNATTRIBUTED', '');
+    const gate = moduleEntitlementGate(buildPrefixMap(SURFACES), { launchScope: 'on' });
+    expect((await run(gate, '/api/legacy-namespace/x')).passed).toBe(true);
+  });
+});
+
+/* Stage 3. Enforcing the unclaimed remainder is safe only if nothing
+   legitimate is unclaimed. The inventory of every route production mounts
+   (docs/evidence/D2-API-SCOPE/2026-09-25/stage3-*) found the callers a screen's
+   code does not show: the public paths the auth boundary lets through
+   unauthenticated (legacy sign-in redirects, browser CSP reports, health, the
+   Prometheus scrape) and the second mount of the identity router at /api/user.
+   Each must pass in enforce mode with the REAL registry, and a mounted namespace
+   nobody calls must not. */
+describe('the real registry, unattributed paths enforced', () => {
+  const gate = () => moduleEntitlementGate(buildPrefixMap(), { launchScope: 'on', unattributed: 'enforce' });
+  const passes = async (p: string) => (await run(gate(), p)).passed;
+
+  it('never refuses a path the auth boundary serves unauthenticated (PUBLIC_API_ALLOWLIST)', async () => {
+    for (const p of ['/api/login', '/api/logout', '/api/register', '/api/csp-report', '/api/metrics', '/api/cortex/health', '/api/claude/health', '/api/claude/models', '/api/time', '/api/diag', '/api/setup/status']) {
+      expect(await passes(p), p).toBe(true);
+    }
+  });
+
+  it('passes the identity router at its second mount, /api/user', async () => {
+    expect(await passes('/api/user/me')).toBe(true);
+    expect(await passes('/api/user/me/preferences')).toBe(true);
+  });
+
+  it('refuses a mounted namespace no launch screen, shell or external caller uses', async () => {
+    for (const p of ['/api/cortex/chat', '/api/grants/opportunities', '/api/concept2cure/maintenance/run', '/api/stability/studies', '/api/demo/reset']) {
+      const { res, passed } = await run(gate(), p);
+      expect(passed, p).toBe(false);
+      expect(res.statusCode, p).toBe(403);
+    }
+  });
+
+  /* 2026-09-29: /api/biotech-artifacts generates ICSRs, PSURs, CIOMS forms,
+     expedited safety reports, monitoring/deviation/enrollment reports and eCTD
+     cover letters from the request body and records none of them: no vault
+     document, no version, no audit row. Its only caller is its own route, no
+     screen calls it, and pharmacovigilance and clinical operations are outside
+     the release. artifacts-center no longer claims it, so production refuses
+     it; a regulated document is produced only through a path that records it. */
+  it('refuses the unrecorded regulatory-document generators', async () => {
+    for (const p of ['/api/biotech-artifacts/pv/icsr', '/api/biotech-artifacts/pv/psur', '/api/biotech-artifacts/clinical/monitoring-report', '/api/biotech-artifacts/ectd/cover-letter', '/api/biotech-artifacts/catalog']) {
+      expect(await passes(p), p).toBe(false);
+    }
+  });
+
+  it('a public prefix does not widen: an exact public path is not its parent namespace', async () => {
+    // /api/cortex/health is public; the rest of /api/cortex is not.
+    expect(await passes('/api/cortex/health')).toBe(true);
+    expect(await passes('/api/cortex/threads')).toBe(false);
   });
 });

@@ -36,9 +36,21 @@ const { fakeDb } = vi.hoisted(() => ({
     insert: () => ({ values: () => ({ returning: () => mockReturning() }) }),
     update: () => ({ set: () => ({ where: () => ({ returning: () => mockReturning() }) }) }),
     delete: () => ({ where: () => ({ returning: () => mockReturning() }) }),
+    transaction: async (fn: (tx: unknown) => unknown) => fn(fakeDb),
   },
 }));
 vi.mock('../../server/db', () => ({ db: fakeDb, pool: { query: async () => ({ rows: [] }) } }));
+/* What a delete would destroy (PF-08): proven on real SQL in
+   server/services/c2c/__tests__/project-retention.pglite.test.ts. Drafts only
+   by default; the refusal is the real rule. */
+const { mockHolds } = vi.hoisted(() => ({
+  mockHolds: vi.fn(async () => ({ anchoredPrograms: [] as string[], governedArtifacts: 0 })),
+}));
+vi.mock('../../server/db/drizzle-queryable', () => ({ queryableFromDrizzle: () => ({ query: vi.fn() }) }));
+vi.mock('../../server/services/c2c/project-retention', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../server/services/c2c/project-retention')>()),
+  projectDeletionHolds: mockHolds,
+}));
 
 const deviceProjectRoutes = (await import('../../server/routes/device-projects')).default;
 
@@ -91,6 +103,17 @@ describe('/api/device-projects — the writes are gated and audited', () => {
     vi.clearAllMocks();
     mockRows.mockReturnValue([{ id: 7, name: 'BX-204 CGM', metadata: {}, organizationId: 2 }]);
     mockReturning.mockResolvedValue([{ id: 7, name: 'BX-204 CGM' }]);
+  });
+
+  it("delete /:id refuses a program's anchor row 409 — nothing is deleted or audited (PF-08)", async () => {
+    mockHolds.mockResolvedValueOnce({ anchoredPrograms: ['11111111-1111-4111-8111-111111111111'], governedArtifacts: 0 });
+    const res = createMockResponse() as any;
+    await runChain('/:id', 'delete')(makeReq('member'), res);
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'PROJECT_IS_PROGRAM_ANCHOR' }));
+    expect(mockHolds).toHaveBeenCalledWith(expect.anything(), { projectIds: [7] });
+    expect(mockReturning).not.toHaveBeenCalled();
+    expect(mockLogAction).not.toHaveBeenCalled();
   });
 
   it.each(WRITES)('%s %s runs the role gate FIRST', (method, path) => {

@@ -4,6 +4,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockQuery = vi.fn();
 const mockVerifyReauth = vi.fn();
+// The project guard's own refusals are in module3ProjectScope.test.ts.
+vi.mock('../../../services/cmc/project-membership', () => ({ projectBelongsToTenant: async () => true }));
 const mockRecordGoverned = vi.fn();
 
 vi.mock('../../../db', () => ({

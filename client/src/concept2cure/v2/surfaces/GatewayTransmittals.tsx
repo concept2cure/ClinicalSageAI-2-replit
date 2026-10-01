@@ -42,7 +42,8 @@ import { EmptyState } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig, C2CFormField } from '../C2CForm';
-import { apiRequest, serverMessage, redactInternals } from '@/lib/queryClient';
+import { apiRequest, ApiRequestError, serverMessage, redactInternals } from '@/lib/queryClient';
+import { useAuthUser } from '@/services/portal/authService';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { downloadBlob } from '../download';
@@ -56,6 +57,10 @@ interface Transmittal {
   transmission_id?: string | null; status?: string | null; error_class?: string | null; error_message?: string | null;
   submitted_at?: string | null; ack_received_at?: string | null; completed_at?: string | null;
   submitted_by?: number | null; submitted_by_name?: string | null;
+  /** 2026-09-28 (Q-0928-3): `signature` is stamped by the governed transmit in the
+   *  same transaction as the electronic signature; absent on rows transmitted
+   *  before that, or whose signature transaction was lost. */
+  metadata?: { signature?: { meaning?: string | null; signatureId?: number | null } | null; [k: string]: unknown } | null;
 }
 
 interface RefusalFinding { ruleId?: string; severity?: string; message?: string }
@@ -161,15 +166,54 @@ export function parseWithdrawals(raw: string | undefined): Array<{ ctdSection: s
     .filter((w) => w.ctdSection && w.fileName);
 }
 
-const REGIONS = ['fda', 'ema', 'pmda', 'ca'];
-const GATEWAYS = ['esg', 'cesp', 'eudamed', 'pmda_gateway', 'hc_cesg'];
+/* ── Gateway names ───────────────────────────────────────────────────────────
+   GET /api/mdx/gateways answers { region, gateway, transport, configured } — a
+   registry key, no display name — and the table rendered `g.name ?? g.gateway`,
+   so the operator read "pmda_gateway", "hc_cesg", "swissmedic_egateway". The
+   names below are the ones each implementation's own header gives
+   (server/services/submission-gateways/*.ts). A key not listed here is shown
+   as sent, never guessed at. */
+const GATEWAY_LABEL: Record<string, string> = {
+  esg: 'FDA ESG',
+  cesp: 'CESP',
+  eudamed: 'EUDAMED',
+  pmda_gateway: 'PMDA Gateway',
+  hc_cesg: 'Health Canada CESG',
+  mhra_gateway: 'MHRA Gateway',
+  nmpa_gateway: 'NMPA Gateway',
+  tga_ebs: 'TGA eBusiness Services',
+  swissmedic_egateway: 'Swissmedic eGateway',
+  anvisa_gateway: 'ANVISA Gateway',
+  cdsco_sugam: 'CDSCO SUGAM',
+  mfds_dbio: 'MFDS dBio',
+  hsa_prism: 'HSA PRISM',
+};
+const gatewayLabel = (key: string | null | undefined): string =>
+  key ? (GATEWAY_LABEL[key] ?? key) : '—';
+
+/* The transmit form's options carry the route's keys as values and a name as
+   the label — it offered the raw keys ("pmda_gateway") and lowercase region
+   slugs ("fda") as the choices themselves. */
+const REGIONS = ['fda', 'ema', 'pmda', 'ca'].map((value) => ({ value, label: value.toUpperCase() }));
+const GATEWAYS = ['esg', 'cesp', 'eudamed', 'pmda_gateway', 'hc_cesg'].map((value) => ({ value, label: gatewayLabel(value) }));
 
 async function readData<T = any>(method: 'GET' | 'POST' | 'PUT', path: string, body?: unknown): Promise<{ ok: boolean; status: number; data: T | null; raw: any }> {
   try {
     const res = await apiRequest(method, path, body);
     const parsed = (await res.json().catch(() => null)) as any;
     return { ok: res.ok, status: res.status, data: (parsed?.data ?? null) as T | null, raw: parsed };
-  } catch { return { ok: false, status: 0, data: null, raw: null }; }
+  } catch (err) {
+    // 2026-09-28 (M-0928-1): apiRequest THROWS ApiRequestError on every non-2xx
+    // but 401, carrying the status and the parsed error body. A bare catch
+    // flattened that to status 0 / raw null, so every refusal branch below
+    // (transmit 409/412/422, identifiers 400/404, assemble 404/409/400) was dead
+    // and each refusal read "HTTP 0". Only a failure with no response (network,
+    // abort) is status 0 now.
+    if (err instanceof ApiRequestError) {
+      return { ok: false, status: err.status, data: null, raw: err.payload ?? null };
+    }
+    return { ok: false, status: 0, data: null, raw: null };
+  }
 }
 function statusTone(s: string) {
   const v = s.toLowerCase();
@@ -243,6 +287,12 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
      ran, never derived from the list being empty. */
   const [refusal, setRefusal] = useState<{ source: 'transmit' | 'assemble'; message: string; findings: RefusalFinding[]; findingsState: AssessmentState; fetchFailure?: string; notSaved?: string } | null>(null);
   const [toast, fireToast] = useToast();
+  /* The signer named in the transmit confirmation — the authenticated user,
+     resolved the way SubmissionCenter resolves it. */
+  const authUser = useAuthUser();
+  const signerName = authUser
+    ? (authUser.displayName || `${authUser.firstName ?? ''} ${authUser.lastName ?? ''}`.trim() || authUser.email || null)
+    : null;
 
   const load = useCallback(async () => {
     setState('loading');
@@ -323,12 +373,20 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     const contentChanged = dataOut.contentAfterTransmit === 'drift'
       ? ' ' + String(dataOut.contentWarning ?? 'The package content changed while the transmission was in progress; re-assemble before any further transmission.')
       : '';
+    // 2026-09-28 (Q-0928-3): the §11.50 meaning the signer declared was
+    // persisted on the electronic signature and never shown back. Said here —
+    // but only when the ledger transaction that carries the signature
+    // committed; when it was lost there is no signature to name.
+    const meaning = String(body.meaning);
+    const signed = dataOut.ledgerWriteFailed
+      ? ''
+      : ' Signed by ' + (signerName ?? 'you') + ' — meaning: ' + meaning + '.';
     fireToast(
-      'Transmitted via ' + region.toUpperCase() + '/' + gateway + (txId ? ' · gateway ref ' + txId : '') + '.' + ledgerLost + contentChanged,
+      'Transmitted via ' + region.toUpperCase() + ' / ' + gatewayLabel(gateway) + (txId ? ' · gateway ref ' + txId : '') + '.' + signed + ledgerLost + contentChanged,
       ledgerLost || contentChanged ? 'error' : undefined,
     );
     void load();
-  }, [load, fireToast]);
+  }, [load, fireToast, signerName]);
 
   const checkStatus = useCallback(async (id: number) => {
     const { ok, status, data, raw } = await readData<Record<string, unknown>>('GET', `/api/mdx/gateways/transmittals/${id}/status`);
@@ -627,7 +685,7 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
             : <table className="reg-tbl"><thead><tr><th>Gateway</th><th>Region</th><th>Environment</th><th style={{ textAlign: 'right' }}>Credentials</th></tr></thead>
               <tbody>{gateways.map((g, i) => (
                 <tr key={i}>
-                  <td style={{ fontWeight: 600 }}>{String(g.name ?? g.gateway ?? '—')}</td>
+                  <td style={{ fontWeight: 600 }}>{g.name != null ? String(g.name) : gatewayLabel(g.gateway)}</td>
                   <td className="mono">{String(g.region ?? '—').toUpperCase()}</td>
                   <td>{String(g.environment ?? '—')}</td>
                   <td style={{ textAlign: 'right' }}><span className={'rd-chip tone-' + (g.configured ? 'ok' : 'warn')}>{g.configured ? 'configured' : 'not configured'}</span></td>
@@ -645,7 +703,7 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
                   <td className="mono">#{t.id}</td>
                   {/* region is nullable on partially-migrated transmittal rows; the gateways
                       table above already renders the same field the same way when it is absent. */}
-                  <td>{String(t.region ?? '—').toUpperCase()} / {t.gateway}{t.submission_type ? ' · ' + t.submission_type : ''}</td>
+                  <td>{String(t.region ?? '—').toUpperCase()} / {gatewayLabel(t.gateway)}{t.submission_type ? ' · ' + t.submission_type : ''}</td>
                   <td className="mono" style={{ fontSize: 12 }}>{t.transmission_id ?? '—'}</td>
                   {/* status is likewise nullable (a row written before its gateway replied);
                       no chip is honest, an invented tone is not — same guard as error_message below. */}
@@ -653,7 +711,11 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
                     {t.error_message && <div style={{ fontSize: 11, color: 'var(--error)' }}>{t.error_message}</div>}</td>
                   <td style={{ whiteSpace: 'nowrap' }}>{t.submitted_at ? new Date(t.submitted_at).toLocaleString() : '—'}</td>
                   {/* Who: resolved to a person by the server; a bare id is shown as such, never as a name. */}
-                  <td>{t.submitted_by_name ?? (t.submitted_by != null ? `user #${t.submitted_by}` : '—')}</td>
+                  <td>{t.submitted_by_name ?? (t.submitted_by != null ? `user #${t.submitted_by}` : '—')}
+                    {/* 2026-09-28 (Q-0928-3): the §11.50 meaning declared at transmit, as
+                        recorded on the row with its signature. A row without it says nothing
+                        — never an invented meaning. */}
+                    {t.metadata?.signature?.meaning && <div style={{ fontSize: 11, color: 'var(--muted, inherit)' }}>signed · meaning: {t.metadata.signature.meaning}</div>}</td>
                   <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                     <button className="nda-open" onClick={() => checkStatus(t.id)}>{I.zap} Status</button>
                     <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => downloadAck(t.id)} disabled={!t.ack_received_at} title={t.ack_received_at ? 'Download the acknowledgment or transmittal record — the file states which' : 'Nothing to download yet'}>{I.download} ACK</button>

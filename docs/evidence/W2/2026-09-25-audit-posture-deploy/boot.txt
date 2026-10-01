@@ -1,0 +1,17 @@
+# production bundle (npm run build; node dist/index.js), NODE_ENV=production, RLS_ENFORCE=on, non-superuser app_service,
+# TLS Postgres 16, a database built from blank by install-fresh + deploy-migrate, the CI boot smoke's env otherwise
+
+## baseline
+AUDIT_TRAIL_ENABLED is not 
+immutability triggers in force (8/8 present and enabled)
+integrity sweep scheduled (0 2 * * *)
+tamper-proof audit interceptor is NOT recording mutations and the chain-integrity monit
+
+## audit-posture
+Tamper-proof audit trail middleware enabled (AUDIT_TRAIL_ENABLED=true)
+immutability triggers in force (8/8 present and enabled)
+integrity sweep scheduled (0 2 * * *)
+
+baseline: /readyz 200 after 7s
+audit-posture (AUDIT_TRAIL_ENABLED=true AUDIT_REQUIRE_ENFORCE=true): /readyz 200 after 8s
+AUDIT_REQUIRE_ENFORCE=true without AUDIT_TRAIL_ENABLED: process exited before ready (refusal names AUDIT_TRAIL_ENABLED)

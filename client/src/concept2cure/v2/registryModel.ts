@@ -16,8 +16,8 @@
  * the kit's offline fixture shapes and carried invented per-programme values —
  * a lead programme code, a readiness percentage, linked-evidence counts and a
  * timestamped activity feed — which the AnA rail rendered on every authenticated
- * surface behind a "Sample data" pill. Those fields are gone (see the note above
- * ANA_COAUTHOR_BY_SEG and the one above SEGMENT_CONTEXT). What remains is
+ * surface behind a "Sample data" pill. Those fields are gone (see the note where
+ * ANA_COAUTHOR_BY_SEG used to be, and the one above SEGMENT_CONTEXT). What remains is
  * tenant-independent vocabulary: CTD section names, regulatory pathway lists,
  * prompt templates and surface routing. Nothing in this file may describe a
  * particular organization's programmes — that comes from the API.
@@ -117,7 +117,13 @@ export const RAIL_QUICK = [
   // No hardcoded count — the live "what needs me" number lives in the top-bar
   // Task Tray (GET /api/task-management/my-work), never a constant (D40).
   { id: 'tasks', label: 'My Tasks', icon: 'checkSquare', target: 'tasks' },
-  { id: 'starred', label: 'Starred Items', icon: 'star', target: 'projects' },
+  /* No "Starred Items". The entry (ported from the kit, 2026-07) opened the
+     full Projects list: nothing in the product can be starred — no star state
+     on any surface, no route, no column — so its label promised a list that
+     does not exist, and on Projects it marked itself current alongside
+     "Project management". The one thing it actually did, open Projects, is
+     RAIL_CORE's `projects` entry above. If starring is ever built, the entry
+     comes back pointed at the starred list, not at Projects. */
 ];
 /** Surfaces reachable via ⌘K/deep-link but intentionally not rail entries */
 export const NAV_HIDDEN: ReadonlySet<string> = new Set([
@@ -728,192 +734,27 @@ export const SEGMENT_MODULES = {
     { label: 'Review & govern', items: ['review', 'tasks', 'audit-trail'] },
   ],
 };
-/**
- * Per-segment co-author REFERENCE CONFIG — the CTD/dossier section AnA defaults
- * to for a client category, and the prompt templates its action buttons send.
+/*
+ * No per-segment co-author config (ANA_COAUTHOR_BY_SEG / getCoauthor, removed
+ * 2026-09-23, launch row D2).
  *
- * What this map no longer carries is the part that was invented. Each entry used
- * to ship a `program` ('BX-204 · oncology BLA'), a `stage`, a `readiness`
- * percentage, `evidence` counts and a `activity` feed with relative timestamps
- * ('Endpoint rationale updated · 12m ago'). None of it came from the
- * organization's data — it was a design-kit sample, rendered by the AnA rail on
- * EVERY authenticated surface as though it described the user's own program. In
- * a regulated tool that is a data-integrity defect, not a placeholder: a
- * reviewer reading "72% ready" has no way to know no such number was ever
- * computed. There is no per-surface co-author endpoint to read the real values
- * from (see the note at Shell.tsx's getAnaContext call — /api/coauthor has no
- * root handler), so the honest replacement is to render nothing at all: the rail
- * now omits the program line, the stage/readiness pair, the evidence chips and
- * the activity feed rather than fabricating them.
+ * It held a CTD `section` per client domain ('2.5 Clinical Overview',
+ * '§12 — Substantial Equivalence', …) and a set of action prompts, and
+ * getAnaContext handed both to every authoring surface. The rail labelled the
+ * section "Current section", so an empty organisation on Protocol development
+ * was told it was in §2.5 — or in §12, after one click on the domain picker —
+ * with no protocol and no document open. The prompts were worse: "Explain the
+ * ORR contradiction blocking §2.5", "Draft the §12 comparison against predicate
+ * K203117", "Summarize status across all 7 sponsors and 12 studies". Each one
+ * sent AnA a premise no tenant's data supplied.
  *
- * `section` and `actions` stay because they are configuration, not data —
- * '2.5 Clinical Overview' is the ICH CTD section name for a biologics overview,
- * identical for every tenant, and the actions are prompt text.
+ * Nothing it carried was about the person's actual position, because the rail
+ * does not know which document or section is open. Authoring surfaces now get
+ * the same module-scoped context and actions as every other surface without a
+ * curated ANA_SURFACE_CTX entry (see getAnaContext). If the rail is ever told
+ * the open section, it comes from the surface that has it open — not from a
+ * constant keyed on the client domain.
  */
-export const ANA_COAUTHOR_BY_SEG = {
-  biopharma: {
-    section: '2.5 Clinical Overview',
-    actions: [
-      {
-        id: 'draft_section',
-        label: 'Draft section',
-        icon: 'penLine',
-        prompt: 'Draft §2.5 Clinical Overview from the linked studies, CSR and approved precedents.',
-      },
-      {
-        id: 'harmonize',
-        label: 'Harmonize with §2.7.3',
-        icon: 'gitCompare',
-        prompt: 'Harmonize §2.5 endpoint language with §2.7.3 Clinical Efficacy Summary and flag any divergence.',
-      },
-      {
-        id: 'explain_blocker',
-        label: 'Explain blocker',
-        icon: 'alertTriangle',
-        prompt: 'Explain the ORR contradiction blocking §2.5 and what evidence resolves it.',
-      },
-      {
-        id: 'correction',
-        label: 'Generate correction draft',
-        icon: 'wand',
-        prompt: 'Generate a correction draft for the ORR contradiction in §2.5, tracked for review.',
-      },
-      {
-        id: 'compare_approved',
-        label: 'Compare to approved version',
-        icon: 'gitBranch',
-        prompt: 'Compare the current §2.5 draft to the last approved version and summarize the deltas.',
-      },
-      /* Folded in from the retired pharma lane — the one hero action it had
-         that the biotech set did not (BP-W2-1). */
-      {
-        id: 'label',
-        label: 'Draft USPI label',
-        icon: 'fileText',
-        prompt: 'Draft the USPI per PLLR / 21 CFR 201.57 from the clinical summary.',
-      },
-    ],
-  },
-  medtech: {
-    section: '§12 — Substantial Equivalence',
-    actions: [
-      {
-        id: 'draft',
-        label: 'Draft SE comparison',
-        icon: 'penLine',
-        prompt: 'Draft the §12 substantial-equivalence comparison table against predicate K203117.',
-      },
-      {
-        id: 'compare',
-        label: 'Compare predicates',
-        icon: 'gitCompare',
-        prompt: 'Compare the two linked predicates and recommend the strongest SE basis.',
-      },
-      {
-        id: 'explain',
-        label: 'Explain SE gap',
-        icon: 'alertTriangle',
-        prompt: 'Explain the sterilization SE gap and what evidence closes it.',
-      },
-      {
-        id: 'estar',
-        label: 'Build eSTAR section',
-        icon: 'fileCheck',
-        prompt: 'Assemble the eSTAR §12 section from the SE comparison.',
-      },
-    ],
-  },
-  diagnostics: {
-    section: 'Annex II — Performance Evaluation',
-    actions: [
-      {
-        id: 'draft',
-        label: 'Draft performance report',
-        icon: 'penLine',
-        prompt: 'Draft the IVDR Annex II performance evaluation from the linked analytical and clinical studies.',
-      },
-      {
-        id: 'gspr',
-        label: 'Check GSPR',
-        icon: 'fileCheck',
-        prompt: 'Check the performance report against IVDR GSPR requirements and flag gaps.',
-      },
-      {
-        id: 'explain',
-        label: 'Explain CDx gap',
-        icon: 'alertTriangle',
-        prompt: 'Explain the companion-diagnostic linkage gap and how to resolve it.',
-      },
-      {
-        id: 'compare',
-        label: 'Compare to precedent',
-        icon: 'gitBranch',
-        prompt: 'Compare this performance dossier to the two IVDR precedents.',
-      },
-    ],
-  },
-  cro: {
-    section: 'Cross-sponsor submission plan',
-    actions: [
-      {
-        id: 'plan',
-        label: 'Plan submission',
-        icon: 'penLine',
-        prompt: 'Draft the cross-sponsor submission plan for the active portfolio.',
-      },
-      {
-        id: 'portfolio',
-        label: 'Sponsor portfolio',
-        icon: 'gitBranch',
-        prompt: 'Summarize status across all 7 sponsors and 12 studies.',
-      },
-      {
-        id: 'explain',
-        label: 'Org-isolation check',
-        icon: 'alertTriangle',
-        prompt: 'Run the org-isolation check across sponsors and report exposure.',
-      },
-      {
-        id: 'study',
-        label: 'Set up new study',
-        icon: 'wand',
-        prompt: 'Set up a new study workspace for a sponsor.',
-      },
-    ],
-  },
-  health: {
-    section: 'IIT Protocol — IRB submission',
-    actions: [
-      {
-        id: 'draft',
-        label: 'Draft protocol',
-        icon: 'penLine',
-        prompt: 'Draft the IIT protocol sections from the study concept.',
-      },
-      {
-        id: 'irb',
-        label: 'IRB submission',
-        icon: 'fileCheck',
-        prompt: 'Assemble the IRB submission package for this investigator-initiated trial.',
-      },
-      {
-        id: 'explain',
-        label: 'Explain IRB gap',
-        icon: 'alertTriangle',
-        prompt: 'Explain the Form 1572 gap and what is required.',
-      },
-      {
-        id: 'ind',
-        label: 'Investigator IND',
-        icon: 'gitBranch',
-        prompt: 'Outline the investigator IND requirements for this trial.',
-      },
-    ],
-  },
-};
-export const ANA_COAUTHOR = ANA_COAUTHOR_BY_SEG.biopharma;
-export const getCoauthor = (segment: string) =>
-  (ANA_COAUTHOR_BY_SEG as Record<string, typeof ANA_COAUTHOR>)[resolveSegmentId(segment)] ?? ANA_COAUTHOR;
 
 /**
  * Per-client-category REFERENCE CONFIG: the category label, its regulatory
@@ -1060,9 +901,39 @@ export const DEEP_LINK_ALIASES: Record<string, string> = {
   safety: 'pv-cockpit',
 };
 
+/** Home is the shell's landing, not a registry surface (V2App renders it for
+ *  the bare base route), so a registry lookup misses it and the fallback below
+ *  named it by its raw id: the AnA rail read "Working in home". */
+const HOME_META = { id: 'home', label: 'Home', icon: 'home', notes: '' };
+
 /** Registry meta lookup with the kit's fallback shape. */
 export function getSurfaceMeta(id: string): UiSurface | { id: string; label: string; icon?: string; notes?: string } {
+  if (id === HOME_META.id) return HOME_META;
   return getSurface(id) ?? { id, label: id, icon: 'grid', notes: '' };
+}
+
+/**
+ * Surface → client-type rail group. A surface NAV_GROUP_OF does not name
+ * belongs to both client categories. The rail listing and the breadcrumb both
+ * read this: the breadcrumb used to default an unnamed surface to
+ * 'biopharma' while the rail defaulted it to 'both', so ~100 surfaces —
+ * every device workbench among them — were crumbed "Biotech & Pharma"
+ * (launch sweep finding 128).
+ */
+export function navGroupOf(id: string): string {
+  return NAV_GROUP_OF[id] ?? 'both';
+}
+
+/**
+ * The breadcrumb's client-category crumb for a surface: its tier when it
+ * belongs to exactly one, "Admin" for an admin surface, and null when it
+ * belongs to both — or when the tier would only repeat the surface's own
+ * name ("Medical Device & IVD › Medical Device & IVD").
+ */
+export function breadcrumbTierOf(surface: { id: string; label: string }): { id: string; label: string } | null {
+  const group = getSurface(surface.id)?.navTier === 'admin' ? 'admin' : navGroupOf(surface.id);
+  const tier = NAV_TIERS_V2.find((t) => t.id === group) ?? null;
+  return tier && tier.label !== surface.label ? tier : null;
 }
 
 /** Rail listing for a client-type tier (kit surfacesByTier). */
@@ -1070,7 +941,7 @@ export function surfacesByTier(tier: string): UiSurface[] {
   return UI_SURFACES.filter((s) => {
     if (NAV_HIDDEN.has(s.id)) return false;
     if (tier === 'admin') return s.navTier === 'admin';
-    const g = NAV_GROUP_OF[s.id] ?? 'both';
+    const g = navGroupOf(s.id);
     if (g === tier) return true;
     if (g === 'both' && (tier === 'mdx' || tier === 'biopharma')) return true;
     return false;
@@ -1092,17 +963,6 @@ export interface AnaContext {
   suggestions: string[];
 }
 
-const AUTHORING_SURFACES = [
-  'document-authoring',
-  'regulatory-workspace',
-  'protocol-dev',
-  'labeling-pi',
-  'doc-journey',
-  'ectd-coauthor',
-  'ectd-compile',
-  'review',
-];
-
 /** AnA context-aware suggestions per surface (kit Shell.jsx). */
 export const ANA_SUGGESTIONS: Record<string, string[]> = {
   _default: ['Summarize this surface', 'What needs my attention?', 'Draft the next action'],
@@ -1119,32 +979,43 @@ export const ANA_SUGGESTIONS: Record<string, string[]> = {
   ],
 };
 
-/** What AnA is attached to on a surface (kit getAnaContext, verbatim logic). */
-export function getAnaContext(surfaceId: string, segment: string): AnaContext {
+/**
+ * What AnA is attached to on a surface.
+ *
+ * Deterministic and tenant-independent: a curated ANA_SURFACE_CTX entry where
+ * one exists, otherwise the surface's own label. `segment` is accepted for the
+ * call sites' sake and deliberately unused — nothing here may change with the
+ * client-domain picker, because nothing here is about the person's data.
+ *
+ * Two things this no longer does (2026-09-23, launch row D2):
+ *   · It does not fill `here` from the registry `notes`. Those are capability
+ *     summaries, and their first sentence reached the rail as "what AnA is
+ *     attached to" carrying a ticket range ("(C2C-17..22)" on Protocol
+ *     development), a route ("…the governed, audited /file route" on Vault) and
+ *     a schema name ("@shared/schema unifiedTasks" on Tasks) — and, when it
+ *     ended in a period, a doubled one in the greeting, which appends its own.
+ *   · It does not report a `section`. See the note where ANA_COAUTHOR_BY_SEG
+ *     used to be: the value was a per-domain constant shown as "Current
+ *     section" with no document open. `section` stays on AnaContext, null,
+ *     until something that knows the open section supplies it.
+ */
+export function getAnaContext(surfaceId: string, _segment: string): AnaContext {
   const meta = getSurfaceMeta(surfaceId);
-  const co = getCoauthor(segment);
   const ctx = (ANA_SURFACE_CTX as Record<string, Partial<AnaContext>>)[surfaceId];
-  const isAuthoring = AUTHORING_SURFACES.includes(surfaceId);
-  const notes = 'notes' in meta && meta.notes ? String(meta.notes) : '';
-  const here = ctx?.here ?? (notes ? notes.split('. ')[0] : `the ${meta.label} workspace`);
-  const focus = ctx?.focus ?? (isAuthoring ? co.section : meta.label);
-  let actions = ctx?.actions;
-  if (!actions) {
-    if (isAuthoring) actions = co.actions;
-    else
-      actions = [
-        { label: 'Summarize this module', icon: 'sparkles', prompt: `Summarize the current state of ${meta.label} and what needs my attention.` },
-        { label: 'What is blocking me?', icon: 'alertTriangle', prompt: `What is blocking progress in ${meta.label} right now, and what clears it?` },
-        { label: 'Draft the next action', icon: 'penLine', prompt: `What is the single most important next action in ${meta.label}, and draft it.` },
-      ];
-  }
+  const here = ctx?.here ?? `the ${meta.label} workspace`;
+  const focus = ctx?.focus ?? meta.label;
+  const actions = ctx?.actions ?? [
+    { label: 'Summarize this module', icon: 'sparkles', prompt: `Summarize the current state of ${meta.label} and what needs my attention.` },
+    { label: 'What is blocking me?', icon: 'alertTriangle', prompt: `What is blocking progress in ${meta.label} right now, and what clears it?` },
+    { label: 'Draft the next action', icon: 'penLine', prompt: `What is the single most important next action in ${meta.label}, and draft it.` },
+  ];
   const suggestions = ctx?.suggestions ?? ANA_SUGGESTIONS[surfaceId] ?? ANA_SUGGESTIONS._default;
   return {
     module: meta.label,
     icon: 'icon' in meta ? meta.icon : undefined,
     here,
     focus,
-    section: isAuthoring ? co.section : null,
+    section: null,
     /* program / stage / readiness / evidence / activity are deliberately NOT
        returned. They came from the per-segment co-author fixture and described
        an invented programme ("BX-204 · oncology BLA", "72%", "ORR contradiction

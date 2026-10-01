@@ -1,0 +1,12 @@
+# Fixed: c2c_d3b, after both mutations were reverted
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > a tenant scope cannot write another organization at the database 5ms
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > an org admin still updates its own organization's settings 109ms
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > an org admin still cannot touch another organization's settings 14ms
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > platform staff edit another organization's settings, and the change is really there 37ms
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > platform staff edit another organization's profile 23ms
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > platform staff update another tenant's configuration through tenant-config 30ms
+ ✓ tests/db/rls-policy-inputs.dbtest.ts > RLS inputs are out of a tenant reach (D3) > the runtime role exists, so the privilege checks below mean something 8ms
+ ✓ tests/db/rls-policy-inputs.dbtest.ts > RLS inputs are out of a tenant reach (D3) > self-test: the sweep catches a delegate-grant table with its RLS removed 165ms
+ ✓ tests/db/rls-policy-inputs.dbtest.ts > RLS inputs are out of a tenant reach (D3) > self-test: the sweep catches the organizations table with its RLS removed 86ms
+ ✓ tests/db/rls-policy-inputs.dbtest.ts > RLS inputs are out of a tenant reach (D3) > no table an RLS decision reads is writable by the runtime role without RLS 85ms
+      Tests  10 passed (10)

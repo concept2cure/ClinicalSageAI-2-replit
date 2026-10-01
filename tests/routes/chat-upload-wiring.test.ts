@@ -49,6 +49,14 @@ const {
 vi.mock('../../server/services/concept2cure/governedDocumentContractService.js', () => ({
   resolveGovernedContext: mockResolveGovernedContext,
 }));
+/* The numeric project's ownership (PF-03). Its SQL is proven in
+   server/services/cmc/__tests__/project-membership.pglite.test.ts; here project
+   12 is organization 5's, and any other numeric project is not. */
+const mockProjectBelongs = vi.hoisted(() =>
+  vi.fn(async (p: { organizationId: number; projectId: string }) => p.organizationId === 5 && p.projectId === '12'),
+);
+vi.mock('../../server/services/cmc/project-membership.js', () => ({ projectBelongsToTenant: mockProjectBelongs }));
+vi.mock('../../server/services/cmc/project-membership.ts', () => ({ projectBelongsToTenant: mockProjectBelongs }));
 vi.mock('../../server/db.js', () => {
   const poolStub = { query: mockPoolQuery };
   return { pool: poolStub, getPool: () => poolStub };
@@ -236,9 +244,11 @@ describe('content identity comes from content', () => {
     // and with no parser those three were constants — so every upload in an
     // org produced the SAME checksum, findSourceByChecksum matched the first
     // one, and four documents collapsed into one source called 'uploaded_file'.
+    // Uploaded into a project: with none open a file records no source (PF-07).
     const send = (body: string, filename: string) =>
       request(app())
         .post('/api/chat/upload')
+        .field('projectId', 'proj_12')
         .attach('file', Buffer.from(body, 'utf8'), { filename, contentType: 'text/plain' });
 
     await send('protocol version two', 'protocol.txt');
@@ -258,6 +268,7 @@ describe('content identity comes from content', () => {
     const send = (filename: string) =>
       request(app())
         .post('/api/chat/upload')
+        .field('projectId', 'proj_12')
         .attach('file', Buffer.from('identical bytes', 'utf8'), { filename, contentType: 'text/plain' });
 
     await send('first-name.txt');
@@ -280,6 +291,7 @@ describe('content identity comes from content', () => {
 
     await request(app())
       .post('/api/chat/upload')
+      .field('projectId', 'proj_12')
       .attach('file', bytes, { filename: 'protocol.txt', contentType: 'text/plain' });
 
     expect(mockCreateSource).toHaveBeenCalledWith(

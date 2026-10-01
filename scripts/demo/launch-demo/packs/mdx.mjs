@@ -144,16 +144,17 @@ async function seedVault(ctx, programId) {
 
 // ─── 3. Authoring ────────────────────────────────────────────────────────────
 
-/** Create bound to the program; on the one-document-per-program refusal, create unbound and record why. */
+/** Create the document in the program. A document belongs to a project (PF-07): it is never created org-wide. */
 async function createAuthoringDoc({ api, run }, title, spec, programId) {
-  let r = await api('POST', '/api/authoring/docs', { title, module: spec.module, client_program_id: programId });
-  let bound = true;
+  const r = await api('POST', '/api/authoring/docs', { title, module: spec.module, client_program_id: programId });
   if (r.status === 409 && /DOCUMENT_ALIAS_CONFLICT/.test(r.text ?? '')) {
-    finding(run, `Authoring: POST /api/authoring/docs with client_program_id binds the new document to the program's ONE governed c2c_document, so a second document for the same program is refused 409 DOCUMENT_ALIAS_CONFLICT (${String(r.json?.message ?? '').slice(0, 160)}). "${spec.name}" was created without client_program_id (org-wide, unbound); the Authoring surface lists it only when no program is open.`);
-    r = await api('POST', '/api/authoring/docs', { title, module: spec.module });
-    bound = false;
+    // A second document in a program is created in it, unbound, with the
+    // reason stated; if this refusal comes back, it is a regression to report,
+    // not something to route around by creating outside the project.
+    finding(run, `Authoring: a second document in a program was refused 409 DOCUMENT_ALIAS_CONFLICT (${String(r.json?.message ?? '').slice(0, 160)}); "${spec.name}" was not created.`);
   }
-  return { doc: must(r, [200, 201], `create authoring document ${spec.name}`).document, bound };
+  const doc = must(r, [200, 201], `create authoring document ${spec.name}`).document;
+  return { doc, bound: Boolean(r.json?.governance?.bound) };
 }
 
 /** Find-or-create an authoring document by title; add any sections it lacks. */
@@ -312,12 +313,12 @@ async function seedSubmission(ctx, program, vaultDocs) {
   await run.step('Submission Center: 510(k) submission for the program', async () => {
     const list = await api('GET', '/api/submissions');
     must(list, 200, 'list submissions');
-    let sub = rowsOf(list).find((s) => s.title === program.title) || null;
+    // The program's submission is the one anchored to it (submissions.program_id,
+    // LX-22) — never one found by a matching title.
+    let sub = rowsOf(list).find((s) => s.programId === program.id && s.applicationType === '510k') || null;
     const created = !sub;
     if (!sub) {
-      // Identity convention: title/product_name equal the program name — how the
-      // platform (and the Dispatch Readiness surface) links program ↔ submission.
-      sub = must(await api('POST', '/api/submissions', { title: program.title, productName: program.title, applicationType: '510k', clientType: 'ivd', primaryRegion: 'fda' }), 201, 'create submission');
+      sub = must(await api('POST', '/api/submissions', { programId: program.id, title: program.title, productName: program.title, applicationType: '510k', clientType: 'ivd', primaryRegion: 'fda' }), 201, 'create submission');
     }
     out.submission = sub;
     run.record('submission', { id: sub.id, title: sub.title, applicationType: sub.applicationType, clientType: sub.clientType, primaryRegion: sub.primaryRegion, status: sub.status, created });
@@ -468,7 +469,10 @@ export async function seed(ctx) {
   // Findings that only fire on the run that CREATES a record, restated so an
   // idempotent re-run's manifest is complete (the evidence is in the records).
   finding(run, 'Projects: intake creates a canonical submission spine for drug application types only (server/routes/c2c/project-intake.ts DRUG_APPLICATION_TYPES); a 510(k) program gets none, so this pack creates the Submission Center entry itself, keyed by the program name.');
-  finding(run, 'Authoring: POST /api/authoring/docs with client_program_id binds the new document to the program\'s ONE governed c2c_document, so a second document for the same program is refused 409 DOCUMENT_ALIAS_CONFLICT ("c2c_documents doc_… is already recorded as a different document. Nothing was created."). The SE Discussion and the Cybersecurity Summary were created without client_program_id (org-wide, unbound); the Authoring surface lists them only when no program is open.');
+  // (Removed 2026-09-26, PF-07: the restated finding said the SE Discussion and
+  // Cybersecurity Summary were created org-wide and unbound. Nothing is created
+  // org-wide now; a second document in a program is created in it, and a
+  // refusal is reported by createAuthoringDoc on the run that meets it.)
   run.note('Purge coverage: QMS documents are retired and the change-control record deleted through the API; the program, vault documents, authoring documents, submission and sequence have no delete/archive endpoint in the launch API (see purge.retained).');
 }
 

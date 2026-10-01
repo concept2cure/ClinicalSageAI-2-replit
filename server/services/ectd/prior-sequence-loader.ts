@@ -172,6 +172,11 @@ export async function loadLatestPriorManifestBySubmission(
      that it was filed, and assuming it was is the direction that ships an empty
      package. Assuming it was not merely re-files a document the agency already
      holds, which a reviewer can see; the other way round, nobody can. */
+  /* A REHEARSAL compile is never filed state (2026-09-23, W5/D7). It binds a
+     sequence against earlier sequences that were never sent, for validation
+     only; if its sequence is later sent, what was sent is a separate compile.
+     Without this predicate a sent sequence's rehearsal manifest was folded in
+     as if the agency held it. */
   const res = await pool.query(
     `SELECT c.sequence_number, c.leaf_manifest
        FROM ectd_compilations c
@@ -184,13 +189,23 @@ export async function loadLatestPriorManifestBySubmission(
         AND c.submission_id = $2
         AND c.sequence_number < $3
         AND c.leaf_manifest IS NOT NULL
+        AND c.compilation_type IS DISTINCT FROM 'rehearsal'
         AND s.dispatch_status IN ('sent', 'acknowledged')
       ORDER BY c.sequence_number ASC, c.compiled_at ASC NULLS FIRST, c.id ASC`,
     [organizationId, submissionId, currentSequence],
   );
-  const rows = res?.rows ?? [];
-  if (!rows.length) return { priorSequenceNumber: '', leaves: [] };
+  return foldManifestRows(res?.rows ?? []);
+}
 
+/**
+ * Fold stored manifests, oldest sequence first, into the state they leave on
+ * file: a later filing of a leaf supersedes an earlier one, a leaf whose last
+ * operation is a delete drops out, and each surviving leaf remembers the
+ * sequence that holds it (its modified-file pointer traverses there).
+ */
+function foldManifestRows(
+  rows: Array<Record<string, unknown>>,
+): { priorSequenceNumber: string; leaves: PriorLeaf[] } {
   const effective = new Map<string, PriorLeaf>();
   let priorSequenceNumber = '';
   for (const row of rows) {
@@ -200,12 +215,54 @@ export async function loadLatestPriorManifestBySubmission(
       // Same identity the lifecycle diff uses (leafKey, else section + filename).
       const key = leaf.leafKey ?? `${leaf.ctdSection}/${leaf.fileName}`;
       if ((leaf.operation ?? '').trim().toLowerCase() === 'delete') {
-        effective.delete(key); // withdrawn at the agency — no longer on file
+        effective.delete(key); // withdrawn — no longer on file
         continue;
       }
       effective.set(key, { ...leaf, sequenceNumber: seq });
     }
   }
-
   return { priorSequenceNumber, leaves: [...effective.values()] };
+}
+
+/**
+ * The REHEARSAL prior state of a submission as of `currentSequence`: the
+ * LATEST recorded compile of each earlier sequence, whether or not it was ever
+ * sent, folded exactly as the filed state is — and the sequences among them
+ * that were not filed, so every caller can say so. 2026-09-23 (W5/D7; JM's
+ * decision for WO-9 Click 6).
+ *
+ * For validation only. Nothing built on it is filed state: the filed loader
+ * above never reads a rehearsal compile, and transmit assembles against the
+ * filed state. One compile per sequence (the latest), because a rehearsal asks
+ * what that sequence holds now — not every draft of it. Organization-scoped.
+ */
+export async function loadRehearsalPriorManifestBySubmission(
+  pool: PoolLike,
+  args: { organizationId: number; submissionId: number; currentSequence: string },
+): Promise<{ priorSequenceNumber: string; leaves: PriorLeaf[]; unfiledSequences: string[] }> {
+  const { organizationId, submissionId, currentSequence } = args;
+  if (!organizationId || !submissionId || !currentSequence) {
+    return { priorSequenceNumber: '', leaves: [], unfiledSequences: [] };
+  }
+  const res = await pool.query(
+    `SELECT DISTINCT ON (c.sequence_number)
+            c.sequence_number, c.leaf_manifest, s.dispatch_status
+       FROM ectd_compilations c
+       JOIN ectd_sequences s
+         ON s.submission_id = c.submission_id
+        AND s.sequence_number = c.sequence_number
+        AND s.organization_id = c.organization_id
+        AND s.deleted_at IS NULL
+      WHERE c.organization_id = $1
+        AND c.submission_id = $2
+        AND c.sequence_number < $3
+        AND c.leaf_manifest IS NOT NULL
+      ORDER BY c.sequence_number ASC, c.compiled_at DESC NULLS LAST, c.id DESC`,
+    [organizationId, submissionId, currentSequence],
+  );
+  const rows = res?.rows ?? [];
+  const unfiledSequences = rows
+    .filter((r) => !['sent', 'acknowledged'].includes(String(r.dispatch_status ?? '')))
+    .map((r) => String(r.sequence_number ?? ''));
+  return { ...foldManifestRows(rows), unfiledSequences };
 }

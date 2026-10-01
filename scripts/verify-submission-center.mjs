@@ -259,13 +259,34 @@ async function main() {
   const list0 = await c.req('GET', '/api/submissions');
   ok('GET /api/submissions (portfolio) ok', list0.status === 200 && Array.isArray(list0.json));
 
+  // A submission belongs to a project (submissions.program_id, LX-22): the
+  // throwaway one is anchored to a throwaway program, and a project the caller's
+  // organization does not hold is refused.
+  const stamp = new Date().toISOString();
+  const program = await c.req('POST', '/api/c2c/projects', {
+    name: `Verify run program ${stamp}`,
+    programType: 'ind',
+    primaryAgency: 'FDA',
+    indication: 'Submission Center verify script',
+  });
+  ok('POST /api/c2c/projects (the submission’s project)', program.status === 201 && program.json?.data?.id, `status ${program.status}`);
+  const programId = program.json?.data?.id;
+  const noProject = await c.req('POST', '/api/submissions', { title: `Verify run ${stamp}`, applicationType: 'ind', clientType: 'biotech', primaryRegion: 'fda' });
+  ok('POST /api/submissions without a project is refused (400)', noProject.status === 400, `got ${noProject.status}`);
+  const unknownProject = await c.req('POST', '/api/submissions', {
+    programId: '00000000-0000-4000-8000-000000000000',
+    title: `Verify run ${stamp}`, applicationType: 'ind', clientType: 'biotech', primaryRegion: 'fda',
+  });
+  ok('POST /api/submissions naming a project this organization does not hold is refused (404)', unknownProject.status === 404, `got ${unknownProject.status}`);
+
   const created = await c.req('POST', '/api/submissions', {
-    title: `Verify run ${new Date().toISOString()}`,
+    programId,
+    title: `Verify run ${stamp}`,
     applicationType: 'ind',
     clientType: 'biotech',
     primaryRegion: 'fda',
   });
-  ok('POST /api/submissions creates', created.status === 201 && created.json?.id, `status ${created.status}`);
+  ok('POST /api/submissions creates, anchored to its project', created.status === 201 && created.json?.id && created.json?.programId === programId, `status ${created.status}`);
   const subId = created.json?.id;
 
   if (subId) {

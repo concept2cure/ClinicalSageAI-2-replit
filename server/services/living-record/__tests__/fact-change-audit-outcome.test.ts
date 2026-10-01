@@ -20,7 +20,19 @@ const h = vi.hoisted(() => ({
 
 vi.mock('../../auditService', () => ({ default: { logAction: (...a: unknown[]) => h.logAction(...a) } }));
 vi.mock('../../../db', () => ({ db: {}, pool: {}, getPool: () => ({}) }));
+// 2026-09-28: establish_governed_fact / apply_fact_change are confirm-class and the
+// registry now also needs an editor role, read from organization_users. The
+// database is stubbed, so the confirming person (user 3, org 7) is modelled as a
+// 'member'. The role gate itself is tested in ana/__tests__/confirmed-write-role-gate.test.ts.
+vi.mock('../../part11/resolve-signer-role', () => ({ resolveSignerOrgRole: async () => 'member' }));
+vi.mock('../../part11/resolve-signer-role.js', () => ({ resolveSignerOrgRole: async () => 'member' }));
 vi.mock('../program-link', () => ({ resolveLegacyProgram: async () => null }));
+// 2026-10-01: AnA tools that name a program now check it is the caller's
+// (tool-record-scope.ts, d8214c170) before running. The database is stubbed, so
+// the ownership read is too, true only for this test's own program and org.
+vi.mock('../../../routes/innovation-routes.js', () => ({
+  programBelongsToOrg: async (programId: string, organizationId: number) => programId === 'prog-1' && organizationId === 7,
+}));
 vi.mock('../../living-file/change-router.service', () => ({ propagateRegulatoryChange: async () => undefined }));
 vi.mock('../../resolution/resolution-planner', () => ({ createResolutionPlan: async () => null }));
 
@@ -119,13 +131,15 @@ describe("AnA's governed-fact tools pass the outcome on", () => {
     const { getToolHandler } = await import('../../ana/AnaToolExecutor');
     const handler = getToolHandler(name);
     expect(handler, `${name} must be registered`).toBeTypeOf('function');
-    return JSON.parse(await handler!(input, { organizationId: 7, userId: 3 } as never));
+    return JSON.parse(await handler!(input, { organizationId: 7, userId: 3, humanConfirmed: true } as never));
   }
 
   it('establish_governed_fact tells AnA the record was not written', async () => {
     h.logAction.mockResolvedValueOnce(lost);
     const res = await tool('establish_governed_fact', {
       programId: 'prog-1', entity: 'study', field: 'enrollment', valueNum: 186, unit: 'subjects',
+      // 2026-09-29: a governed value is established only with the person's stated reason.
+      reason: 'Enrollment target set in protocol v3.',
     });
     expect(res.status).toBe('established');
     expect(res.auditTrail).toMatchObject({ persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED' });

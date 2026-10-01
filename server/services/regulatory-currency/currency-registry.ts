@@ -64,6 +64,13 @@ export interface RegulatoryFact {
   appliesTo: ClientSegment[];
   /** id (or external code) of the rule/expectation this fact supersedes or voids. */
   supersedes?: string;
+  /**
+   * Names a document cites this fact's subject by ("LDT final rule", "AI Act").
+   * check_guidance_freshness identifies a cited guidance by these, an ICH code
+   * or the id — never by `keywords`, which are retrieval terms: "510(k)" or
+   * "IVD" in a title says nothing about which dated fact it cites.
+   */
+  aliases?: string[];
   /** Plain-language consequence — what changed and what to do now. */
   note: string;
   /** Retrieval keywords. */
@@ -88,6 +95,7 @@ export const REGULATORY_FACTS: RegulatoryFact[] = [
     supersedes: 'us-ldt-final-rule-2024-phaseout',
     note:
       'The FDA 2024 LDT final rule (which phased out enforcement discretion over four stages) was VACATED in its entirety by the US District Court (E.D. Tex.) on 2025-03-31 and formally RESCINDED by FDA on 2025-09-19, reverting the device regulations to the pre-2024 text. Enforcement reverts to pre-2024 enforcement discretion: do NOT advise that LDTs require 510(k)/PMA under the phase-out timeline — that schedule is VOID.',
+    aliases: ['LDT final rule', 'LDT rule', 'Laboratory Developed Tests final rule', 'Laboratory Developed Tests rule'],
     keywords: ['LDT', 'laboratory developed test', 'vacated', 'rescinded', 'enforcement discretion', 'IVD', 'phase-out'],
   },
   {
@@ -141,6 +149,7 @@ export const REGULATORY_FACTS: RegulatoryFact[] = [
     appliesTo: ['mdx'],
     note:
       'Since 2023-10-01 all 510(k) submissions (unless exempted) must be submitted electronically using the FDA eSTAR template. Non-eSTAR 510(k)s are not accepted.',
+    aliases: ['Electronic Submission Template for Medical Device 510(k) Submissions', 'eSTAR 510(k)', '510(k) eSTAR'],
     keywords: ['eSTAR', '510(k)', 'electronic submission', 'mandatory', 'CDRH', 'device'],
   },
   {
@@ -154,6 +163,7 @@ export const REGULATORY_FACTS: RegulatoryFact[] = [
     appliesTo: ['mdx'],
     note:
       'Since 2025-10-01 all De Novo classification requests (unless exempted) must be submitted electronically using the FDA eSTAR template, extending the 510(k) eSTAR mandate to the De Novo pathway.',
+    aliases: ['Electronic Submission Template for Medical Device De Novo Requests', 'eSTAR De Novo', 'De Novo eSTAR'],
     keywords: ['eSTAR', 'De Novo', 'electronic submission', 'mandatory', 'CDRH', 'device'],
   },
   {
@@ -167,6 +177,7 @@ export const REGULATORY_FACTS: RegulatoryFact[] = [
     appliesTo: ['pharma', 'biotech'],
     note:
       'Since 2024-09-16 CDER and CBER accept new regulatory applications in eCTD v4.0. Acceptance is VOLUNTARY — eCTD v3.2.2 remains supported and FDA has NOT announced a mandatory v4.0 date. Do not tell US sponsors v4.0 is required.',
+    aliases: ['eCTD v4.0', 'eCTD 4.0'],
     keywords: ['eCTD', 'v4.0', 'CDER', 'CBER', 'electronic submission', 'voluntary', 'v3.2.2'],
   },
   {
@@ -181,6 +192,7 @@ export const REGULATORY_FACTS: RegulatoryFact[] = [
     supersedes: 'eCTD v3.2.2 (PMDA)',
     note:
       'From 2026-04-01 eCTD v4.0 is the ONLY accepted electronic format for new applications to PMDA (Japan) — there is no grace period and new dossiers can no longer be filed in v3.2.2. Japan is the first major regulator to mandate v4.0. Plan v4.0 tooling before any new Japanese filing.',
+    aliases: ['eCTD v4.0', 'eCTD 4.0'],
     keywords: ['eCTD', 'v4.0', 'PMDA', 'Japan', 'mandatory', 'only accepted', 'v3.2.2'],
   },
   {
@@ -194,6 +206,7 @@ export const REGULATORY_FACTS: RegulatoryFact[] = [
     appliesTo: ['mdx'],
     note:
       'Following the OJEU notice of full functionality (2025-11-27, Commission Decision (EU) 2025/2371), the first four EUDAMED modules (Actor Registration; UDI & Device Registration; Notified Bodies & Certificates; Market Surveillance) become MANDATORY from 2026-05-28. Legacy devices (placed on the market before that date but still sold afterwards) must complete EUDAMED registration by 2026-11-28.',
+    aliases: ['EUDAMED'],
     keywords: ['EUDAMED', 'MDR', 'IVDR', 'UDI', 'actor registration', 'mandatory', 'legacy device', 'EU'],
   },
   {
@@ -208,6 +221,7 @@ export const REGULATORY_FACTS: RegulatoryFact[] = [
     supersedes: 'EudraCT / Clinical Trials Directive 2001/20/EC',
     note:
       'Since 2025-01-31 the Clinical Trials Information System (CTIS) is the SOLE entry point for EU clinical trial applications, substantial modifications and safety reporting under the CTR; the transition from the Clinical Trials Directive/EudraCT is complete and EudraCT is retired. Do not advise EudraCT submission for new EU trials.',
+    aliases: ['CTIS', 'Clinical Trials Information System'],
     keywords: ['CTIS', 'CTR', 'EudraCT', 'clinical trial', 'EU', 'mandatory', 'transition'],
   },
   {
@@ -221,6 +235,7 @@ export const REGULATORY_FACTS: RegulatoryFact[] = [
     appliesTo: ['mdx', 'pharma', 'biotech'],
     note:
       'Under Regulation (EU) 2024/1689 (AI Act), the bulk of high-risk obligations apply from 2026-08-02 (two years after entry into force). RISK/WATCH: a proposed "Digital Omnibus" deferral (provisional agreement 2026-05-07) would postpone certain Annex III (use-case) high-risk obligations to 2027-12; treat 2026-08-02 as the statutory date and re-verify against the source before relying on either date.',
+    aliases: ['AI Act', 'Artificial Intelligence Act', 'Regulation (EU) 2024/1689'],
     keywords: ['AI Act', 'high-risk', 'EU', '2024/1689', 'AI', 'SaMD', 'annex III', 'digital omnibus'],
   },
 ];
@@ -358,13 +373,30 @@ function norm(s: string): string {
   return s.trim().toLowerCase();
 }
 
-/** Does a fact match the given topic substring (over topic + keywords + id)? */
+/**
+ * Is `needle` in `haystack` as whole words, not inside another word? A plural
+ * ending counts as the same word: "laboratory developed tests" must find the
+ * keyword "laboratory developed test", or the void LDT rule goes unflagged.
+ */
+function containsWords(haystack: string, needle: string): boolean {
+  if (!needle) return false;
+  const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(^|[^a-z0-9])${escaped}(?:s|es)?($|[^a-z0-9])`).test(haystack);
+}
+
+/**
+ * Does a fact match the given topic (over topic + keywords + id)?
+ *
+ * Whole words only in the topic-contains-keyword direction: it used to be a
+ * substring test, so any topic with "ai" inside a word ("training",
+ * "maintain", "certain") matched the EU AI Act fact's keyword "AI".
+ */
 function matchesTopic(fact: RegulatoryFact, topic: string): boolean {
   const t = norm(topic);
   if (!t) return true;
   if (norm(fact.topic).includes(t)) return true;
   if (norm(fact.id).includes(t)) return true;
-  return fact.keywords.some((k) => norm(k).includes(t) || t.includes(norm(k)));
+  return fact.keywords.some((k) => norm(k).includes(t) || containsWords(t, norm(k)));
 }
 
 /** Filters for {@link findFacts}. All optional; omitted filters do not constrain. */

@@ -94,6 +94,8 @@ export interface AuditTrail {
 export interface AuditFilters {
   action?: string;
   resource?: string;
+  /** One record's own trail (exact audit_logs.record_id). */
+  record?: string;
   actor?: string;
   /** Program anchor — the canonical project id, ILIKE-matched server-side. */
   program?: string;
@@ -209,6 +211,7 @@ class ProgramTabsService {
     const params = new URLSearchParams();
     if (filters.action) params.set('action', filters.action);
     if (filters.resource) params.set('resource', filters.resource);
+    if (filters.record) params.set('record', filters.record);
     if (filters.actor) params.set('actor', filters.actor);
     if (filters.program) params.set('program', filters.program);
     if (filters.from) params.set('from', filters.from);

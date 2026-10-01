@@ -32,6 +32,8 @@
 
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
+import { makeUploadFileFilter, receiveUpload } from '../middleware/uploadAllowlist';
+import { assertUploadSafe, UploadSafetyError } from '../middleware/uploadSafety';
 import rateLimit from 'express-rate-limit';
 import { eq } from 'drizzle-orm';
 import { authMiddleware } from '../auth';
@@ -64,6 +66,13 @@ const MAX_BYTES = 25 * 1024 * 1024; // platform upload limit
 const upload = multer({
   storage: multer.memoryStorage(), // never written to disk
   limits: { fileSize: MAX_BYTES, files: 1 },
+  // Refused at the receiver, before the body is buffered (audit IAM-14, P1-5);
+  // the handler's own check below stays as the second look.
+  fileFilter: makeUploadFileFilter({
+    extensions: ['pdf', 'doc', 'docx', 'txt', 'md'],
+    mimeTypes: [...ACCEPTED],
+    allowMimePrefixes: [],
+  }),
 });
 
 // Rate limit ahead of auth; extraction calls a model, so this is also a cost
@@ -93,7 +102,7 @@ function callerId(req: Request): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-router.post('/ingest', upload.single('file'), async (req: Request, res: Response) => {
+router.post('/ingest', receiveUpload(upload.single('file'), { maxBytes: MAX_BYTES }), async (req: Request, res: Response) => {
   // Tenant context is required so an upload is always attributable, even though
   // this route stores nothing.
   if (callerOrgId(req) === null) {
@@ -111,6 +120,16 @@ router.post('/ingest', upload.single('file'), async (req: Request, res: Response
     });
   }
 
+  // The declared type is the client's claim; the bytes are checked and scanned
+  // before anything reads them (fail-closed in production).
+  try {
+    await assertUploadSafe(file.buffer, file.mimetype, file.originalname || 'document');
+  } catch (err) {
+    if (err instanceof UploadSafetyError) {
+      return res.status(err.status).json({ success: false, error: err.body.error, code: err.body.code });
+    }
+    throw err;
+  }
   try {
     const text = await extractUploadedText(file.buffer, file.mimetype, file.originalname || 'document');
     const result = await extractOnboardingProposals({ text, fileName: file.originalname || 'document' });

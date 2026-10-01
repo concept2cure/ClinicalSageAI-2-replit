@@ -53,6 +53,9 @@ function appAs(org: number | null) {
   app.use(express.json());
   app.use((req, _res, next) => {
     (req as any).userId = USER;
+    // A session carries its organisation role; every write in these routers
+    // asks for a writing one (protocol-write-authority.routes.test.ts).
+    (req as any).userRole = 'member';
     if (org != null) (req as any).tenantId = org;
     next();
   });
@@ -132,11 +135,15 @@ describe('POST /api/protocol-development/documents/:id/study-design', () => {
     expect(recordGovernedAction).not.toHaveBeenCalled();
   });
 
-  it('401s without authentication context', async () => {
+  it('refuses a request with no organisation context, and writes nothing', async () => {
+    // The router's writing-role gate asks for the organisation before the
+    // handler runs, so the refusal is its 400, not the handler's 401.
     const res = await request(appAs(null))
       .post(`/api/protocol-development/documents/${docId}/study-design`)
       .send({ studyDesignId: STUDY, reason: 'No tenant on this request at all.' });
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'Organization context required' });
+    expect(recordGovernedAction).not.toHaveBeenCalled();
   });
 });
 

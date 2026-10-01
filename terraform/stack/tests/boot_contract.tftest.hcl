@@ -105,6 +105,7 @@ variables {
   mfa_encryption_key              = "mfa-0123456789abcdef0123456789abcdef"
   audit_hmac_key                  = "audkey-0123456789abcdef0123456789abcdef"
   audit_hmac_secret               = "audsec-0123456789abcdef0123456789abcdef"
+  audit_export_signing_key        = "audexp-0123456789abcdef0123456789abcdef"
   connector_encryption_key        = "conn-0123456789abcdef0123456789abcdef"
   smtp_host                       = "email-smtp.us-east-1.amazonaws.com"
   smtp_user                       = "test-smtp-user"
@@ -167,6 +168,18 @@ run "renders_the_boot_contract" {
       one([for e in defs.environment : e.value if e.name == "ALLOWED_ORIGINS"]) == "https://${var.domain_aliases[0]}"
     ])
     error_message = "ALLOWED_ORIGINS must carry the deployment's own origin (the first CloudFront alias) in the API and worker environments."
+  }
+
+  # The API and the worker serve no static files: CloudFront serves the SPA
+  # straight from the frontend bucket. A task role that can write that bucket
+  # lets one compromised task rewrite the site every user loads (security plan
+  # P0-15, INF-03). The deploy role publishes the bundle; the task needs nothing.
+  assert {
+    condition = alltrue([
+      for r in flatten([for st in jsondecode(module.ecs.task_s3_policy).Statement : st.Resource]) :
+      !startswith(r, module.cdn.frontend_bucket_arn)
+    ])
+    error_message = "The ECS task role can reach the frontend bucket; only the deploy role may write the site."
   }
 
   # The execution role must be able to read every secret a task references —
@@ -237,7 +250,7 @@ run "renders_the_boot_contract" {
           for secret in [
             random_password.db_master.result, random_password.db_app_service.result,
             var.jwt_secret, var.refresh_token_secret, var.mfa_encryption_key, var.audit_hmac_key,
-            var.audit_hmac_secret, var.connector_encryption_key, var.openai_api_key,
+            var.audit_hmac_secret, var.audit_export_signing_key, var.connector_encryption_key, var.openai_api_key,
             var.smtp_user, var.smtp_pass,
           ] : !strcontains(e.value, secret)
         ]
@@ -361,6 +374,28 @@ run "vault_documents_go_to_a_private_versioned_bucket_the_task_role_can_use" {
   }
 }
 
+# The SPA comes straight from S3 through CloudFront, so the server's security
+# headers never reach it; the distribution has to add them (security plan
+# P0-15, INF-04).
+run "the_site_is_served_with_security_headers" {
+  command = apply
+
+  assert {
+    condition     = module.cdn.spa_security_headers.attached
+    error_message = "The SPA behavior carries no response-headers policy: the site is served without HSTS, nosniff or a framing refusal."
+  }
+
+  assert {
+    condition = (
+      module.cdn.spa_security_headers.config.strict_transport_security[0].access_control_max_age_sec >= 31536000 &&
+      module.cdn.spa_security_headers.config.strict_transport_security[0].include_subdomains &&
+      length(module.cdn.spa_security_headers.config.content_type_options) == 1 &&
+      strcontains(module.cdn.spa_security_headers.config.content_security_policy[0].content_security_policy, "frame-ancestors 'none'")
+    )
+    error_message = "The SPA's headers policy must set HSTS for a year with subdomains, nosniff, and frame-ancestors 'none'."
+  }
+}
+
 run "production_names_are_the_ones_the_deploy_workflow_targets" {
   command = plan
   assert {
@@ -469,6 +504,33 @@ run "refuses_equal_audit_seal_and_chain_keys" {
   command = plan
   variables {
     audit_hmac_secret = "audkey-0123456789abcdef0123456789abcdef"
+  }
+  expect_failures = [terraform_data.boot_contract]
+}
+
+# The audit export key (P1-19b): the app refuses to boot on a short one, or one
+# equal to the JWT secret (server/services/audit/auditExportKeyPosture.ts). It must
+# also differ from both audit HMAC keys: each seals a different record.
+run "refuses_a_short_audit_export_key" {
+  command = plan
+  variables {
+    audit_export_signing_key = "too-short"
+  }
+  expect_failures = [var.audit_export_signing_key]
+}
+
+run "refuses_an_audit_export_key_equal_to_the_jwt_secret" {
+  command = plan
+  variables {
+    audit_export_signing_key = "jwt-0123456789abcdef0123456789abcdef"
+  }
+  expect_failures = [terraform_data.boot_contract]
+}
+
+run "refuses_an_audit_export_key_equal_to_an_audit_seal_key" {
+  command = plan
+  variables {
+    audit_export_signing_key = "audkey-0123456789abcdef0123456789abcdef"
   }
   expect_failures = [terraform_data.boot_contract]
 }

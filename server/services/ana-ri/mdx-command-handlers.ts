@@ -821,6 +821,7 @@ export async function esgTransmit(
     const { executeGovernedTransmit } = await import(
       '../submission-gateways/governed-transmit'
     );
+    const { transmitOutcomeNotices } = await import('../submission-gateways/transmit-notices');
     const { recordGovernedAction } = await import('../../routes/c2c/actions');
 
     const outcome = await executeGovernedTransmit({
@@ -834,8 +835,16 @@ export async function esgTransmit(
       metadata: { threadId: ctx.threadId ?? null, initiatedBy: 'agent:ana' },
       reason: gate.reason,
       meaning: signatureMeaning,
-      authenticationMethod: ctx.signoff?.signatureVerified ? 'password' : 'session',
-      secondFactorVerified: false,
+      /* The factors the route's re-verification actually checked, carried on
+         the sign-off (2026-09-28). This was `secondFactorVerified: false`
+         whatever happened, so a signer who passed MFA was recorded on an FDA
+         transmission as having given a password only. Spelled in the transmit
+         ledger's vocabulary ('password+totp', as the HTTP transmit route
+         records it) so both paths write the same value for the same factor.
+         validateSignoff above required a verified signature, and the route
+         verifies a password for every one, so 'password' is the floor. */
+      authenticationMethod: ctx.signoff?.secondFactorVerified === true ? 'password+totp' : 'password',
+      secondFactorVerified: ctx.signoff?.secondFactorVerified === true,
       reauthVerifiedAt,
       recordGovernedAction,
       surface: 'ana-mdx-command',
@@ -878,6 +887,16 @@ export async function esgTransmit(
       },
     });
 
+    /* 2026-09-28: a lost ledger entry, a content change during the send and an
+       unrecorded filed sequence were kept in the agent audit row above and the
+       caller got a plain success. The transmission did leave, so success stays
+       true — reporting it un-sent would be false too — but each is now said, in
+       `data` and on the message, with the HTTP route's own wording. */
+    const notices = transmitOutcomeNotices(outcome);
+    const noticeText = [notices.ledgerWarning, notices.contentWarning, notices.filedSequenceWarning]
+      .filter(Boolean)
+      .map(t => ` ${t}`)
+      .join('');
     return {
       success: true,
       action,
@@ -892,6 +911,7 @@ export async function esgTransmit(
         gateway: 'esg',
         environment,
         ...preTransmitFacts,
+        ...notices,
         agentAuditTrail,
       },
       message:
@@ -899,7 +919,7 @@ export async function esgTransmit(
         `Transmittal #${outcome.result.transmittalId}, status '${outcome.result.status}'. ` +
         `${outcome.result.message} ` +
         'Poll the transmittal for the ack1/ack2/ack3 ladder — an FDA acknowledgement exists only ' +
-        `once the agency sends one.${auditNote(agentAuditTrail)}`,
+        `once the agency sends one.${noticeText}${auditNote(agentAuditTrail)}`,
     };
   } catch (err) {
     /* WO-16C #133. This row records a refused or failed transmit — the

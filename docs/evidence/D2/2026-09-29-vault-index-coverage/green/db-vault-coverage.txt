@@ -1,0 +1,13 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-29T21:07:45.697Z","pid":16694,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-29T21:07:45.698Z","pid":16694,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-29T21:07:45.698Z","pid":16694,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/vault-coverage.dbtest.ts > Vault coverage on PostgreSQL, as the runtime role (VR-15) > counts one more covered section for a confirmed filing, and none for a suggestion 2471ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  21:07:42
+   Duration  3.15s (transform 1.34s, setup 129ms, import 35ms, tests 2.58s, environment 0ms)
+

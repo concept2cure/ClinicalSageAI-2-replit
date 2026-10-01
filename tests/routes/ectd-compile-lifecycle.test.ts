@@ -121,6 +121,8 @@ describe('POST /:projectIdent/compile — a follow-up sequence says what it does
         ],
       },
       priorSequence: '0000',
+      priorState: 'filed',
+      unfiledPriorSequences: [],
       skipped: [{ sectionCode: '3.2.P', reason: 'declared append: the content is identical to the filed version, so there is nothing to append' }],
     });
 
@@ -137,6 +139,8 @@ describe('POST /:projectIdent/compile — a follow-up sequence says what it does
           modifiedFile: '../0000/m3/32s4-contr-drug-sub/specification.pdf' },
       ],
       leftOut: [{ sectionCode: '3.2.P', reason: 'declared append: the content is identical to the filed version, so there is nothing to append' }],
+      priorState: 'filed',
+      unfiledPriorSequences: [],
     });
   });
 
@@ -146,10 +150,85 @@ describe('POST /:projectIdent/compile — a follow-up sequence says what it does
     const base = assembledResult(zipPath);
     assembleSequenceMock.mockResolvedValue({
       ...base, bundle: { ...base.bundle, dtdStatus: selfContained, leafManifest: [] }, priorSequence: null,
+      priorState: 'filed', unfiledPriorSequences: [],
     });
 
     const res = createMockResponse() as any;
     await getHandler('/:projectIdent/compile', 'post')(makeReq(), res);
-    expect(res.json.mock.calls[0][0].lifecycle).toEqual({ priorSequence: null, operations: [], leftOut: [] });
+    expect(res.json.mock.calls[0][0].lifecycle).toEqual({
+      priorSequence: null, operations: [], leftOut: [], priorState: 'filed', unfiledPriorSequences: [],
+    });
+  });
+});
+
+/**
+ * A rehearsal (2026-09-23; JM's decision for WO-9 Click 6): a follow-up sequence
+ * bound against earlier sequences that were never filed, for an agency
+ * validator only. It is asked for explicitly, refused for an original, and
+ * said everywhere — the result, the blockers and the stored compilation.
+ */
+describe('POST /:projectIdent/compile — a rehearsal is asked for, and says it is one', () => {
+  const REHEARSED = {
+    priorSequence: '0000',
+    priorState: 'rehearsal',
+    unfiledPriorSequences: ['0000'],
+  };
+
+  it('binds against the recorded, unfiled sequence, and the result, blockers and record name it a rehearsal', async () => {
+    mockSpine({ sequenceNumber: '0001' });
+    const { zipPath } = await makeFdaPackageZip();
+    const base = assembledResult(zipPath);
+    assembleSequenceMock.mockResolvedValue({
+      ...base,
+      ...REHEARSED,
+      bundle: {
+        ...base.bundle,
+        dtdStatus: selfContained,
+        leafManifest: [
+          { ctdSection: '3.2.S.1', fileName: 'general.pdf', href: 'm3/32s1/general.pdf', md5: '1'.repeat(32), operation: 'replace',
+            modifiedFile: '../0000/m3/32s1/general.pdf' },
+        ],
+      },
+    });
+
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/compile', 'post')(makeReq({ rehearsal: true }), res);
+    const payload = res.json.mock.calls[0][0];
+
+    expect(assembleSequenceMock).toHaveBeenCalledWith(expect.objectContaining({ priorState: 'rehearsal' }));
+    expect(payload.lifecycle).toMatchObject({ priorState: 'rehearsal', unfiledPriorSequences: ['0000'], priorSequence: '0000' });
+    expect(payload.submissionReady).toBe(false);
+    expect(payload.submissionBlockers.join(' ')).toMatch(/Rehearsal: bound against sequence 0000, which was never filed/);
+
+    const insert = poolQuery.mock.calls.find((c) => /INSERT INTO ectd_compilations/i.test(String(c[0])));
+    const params = insert?.[1] as unknown[];
+    expect(params[2]).toBe('rehearsal');
+    expect(String(params[1])).toMatch(/rehearsal — prior not filed/);
+  });
+
+  it('a rehearsal of an original sequence is refused before anything is assembled', async () => {
+    mockSpine();
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/compile', 'post')(makeReq({ rehearsal: true }), res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json.mock.calls[0][0].error.code).toBe('REHEARSAL_NOT_APPLICABLE');
+    expect(assembleSequenceMock).not.toHaveBeenCalled();
+  });
+
+  it('without the flag, a compile binds against filed sequences only', async () => {
+    mockSpine({ sequenceNumber: '0001' });
+    const { zipPath } = await makeFdaPackageZip();
+    const base = assembledResult(zipPath);
+    assembleSequenceMock.mockResolvedValue({
+      ...base, priorSequence: null, priorState: 'filed', unfiledPriorSequences: [],
+      bundle: { ...base.bundle, dtdStatus: selfContained, leafManifest: [] },
+    });
+
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/compile', 'post')(makeReq(), res);
+
+    expect(assembleSequenceMock).toHaveBeenCalledWith(expect.objectContaining({ priorState: 'filed' }));
+    expect(res.json.mock.calls[0][0].submissionBlockers.join(' ')).not.toMatch(/Rehearsal/);
   });
 });

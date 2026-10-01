@@ -122,13 +122,13 @@ describe("searchHybrid serves a tenant's own evidence, as asked", () => {
     // With tenant A's key: a search with none is refused since the D3 change
     // (atom-search-tenant-key.dbtest.ts), where this call once ran unfiltered and
     // only RLS kept it to tenant A.
-    const rows = await asTenantA(() => service(getPool()).searchHybrid(QUERY, 3, 0.7, orgUuidA));
+    const rows = await asTenantA(() => service(getPool()).searchHybrid(QUERY, { limit: 3, organizationUuid: orgUuidA }));
     expect(rows.length).toBe(3);
     for (const r of rows) expect(r.title).not.toMatch(/tenant-B/);
   });
 
   it('weights semantic and keyword scores as the caller asked', async () => {
-    const rows = await asTenantA(() => service(getPool()).searchHybrid(QUERY, 5, 0.7, orgUuidA));
+    const rows = await asTenantA(() => service(getPool()).searchHybrid(QUERY, { limit: 5, organizationUuid: orgUuidA }));
     expect(rows.length).toBe(5);
     for (const r of rows) {
       expect(r.score).toBeCloseTo(0.7 * r.semanticScore + 0.3 * r.keywordScore, 6);
@@ -136,14 +136,14 @@ describe("searchHybrid serves a tenant's own evidence, as asked", () => {
   });
 
   it("returns a project's own atoms even when other projects' atoms score higher", async () => {
-    const rows = await asTenantA(() => service(getPool()).searchHybrid(QUERY, 3, 0.7, orgUuidA, String(projectA)));
+    const rows = await asTenantA(() => service(getPool()).searchHybrid(QUERY, { limit: 3, organizationUuid: orgUuidA, projectId: String(projectA) }));
     expect(rows.map((r) => r.sourceId).sort()).toEqual([...projectAtomSources].sort());
   });
 
   it('never returns another tenant’s atom, even on a connection RLS does not filter', async () => {
     // The owner pool bypasses RLS: only the query's own org filter stands
     // between tenant A's search and tenant B's twelve better-scoring atoms.
-    const rows = await service(owner as never).searchHybrid(QUERY, 10, 0.7, orgUuidA);
+    const rows = await service(owner as never).searchHybrid(QUERY, { limit: 10, organizationUuid: orgUuidA });
     expect(rows.length).toBeGreaterThan(0);
     for (const r of rows) expect(r.title).not.toMatch(/tenant-B/);
   });

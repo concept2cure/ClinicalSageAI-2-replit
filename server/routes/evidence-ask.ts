@@ -207,13 +207,14 @@ router.post('/ask', async (req: Request, res: Response) => {
 
     try {
       const embeddingService = getEmbeddingService(pool);
-      const searchResults = await embeddingService.searchHybrid(
-        message,
-        topK,
-        threshold,
-        orgUuid,
-        normalizedProjectId
-      );
+      // `threshold` is the documented floor on semantic similarity; it was
+      // passed as the ranking weight, so nothing was ever filtered by it.
+      const searchResults = await embeddingService.searchHybrid(message, {
+        limit: topK,
+        organizationUuid: orgUuid,
+        projectId: normalizedProjectId,
+        minSemanticScore: threshold,
+      });
       sources = searchResults.map(r => ({
         id: r.id,
         title: r.title,

@@ -1,0 +1,13 @@
+server/routes/mdx-qms.ts: HEAD=2 now=2 errors=0
+server/services/qms/document-approval-signature.ts: HEAD=0 now=0 errors=0
+server/services/qms/qms.service.ts: HEAD=0 now=0 errors=0
+client/src/concept2cure/quality/qmsApproval.ts: HEAD=1 now=1 errors=0
+client/src/concept2cure/quality/SopRegister.tsx: HEAD=1 now=1 errors=0
+server/routes/__tests__/mdx-qms-retire.test.ts: HEAD=0 now=0 errors=0
+server/routes/__tests__/qms-effective-only-by-signature.test.ts: HEAD=0 now=0 errors=0
+client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx: HEAD=1 now=1 errors=0
+server/services/qms/__tests__/document-approval-signature.test.ts: HEAD=0 now=0 errors=0
+tests/validation/oq/qms/run.mjs: HEAD=0 now=0 errors=0
+tests/validation/lib/qms-digest.mjs: HEAD=0 now=0 errors=0
+tests/validation/oq/qms/signed-acts.mjs (new): now=0 errors=0
+note: the 1 warning on the two client quality files at HEAD and now is ESLint's 'File ignored because of a matching ignore pattern' notice, not a rule warning

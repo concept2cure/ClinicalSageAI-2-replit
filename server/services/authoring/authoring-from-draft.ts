@@ -14,6 +14,7 @@
  * authored this through the editor".
  */
 
+import { programInOrganization } from '../c2c/program-access';
 import crypto from 'crypto';
 import { ANA_MACHINE_AUTHOR_ID, MACHINE_AUTHOR_IDS } from './revision-ledger';
 import { columnState, type Queryable } from './authoring-evidence';
@@ -44,6 +45,10 @@ export interface DocumentProvenance {
   /** The model id the gateway reported. Present only when a model drafted it. */
   model?: string;
   note?: string;
+  /** True when the caller gave no module and 'M2' was assumed. Set by the
+   *  service, never by the caller; a filing must not treat the assumption as
+   *  a decision (2026-09-22 review, #13). */
+  moduleDefaulted?: boolean;
   recordedAt: string;
 }
 
@@ -196,6 +201,12 @@ export async function createDocumentFromDraft(
   ctx: CreateContext,
   input: CreateDocumentFromDraftInput,
 ): Promise<CreateDocumentFromDraftOutcome> {
+  // The project must be a live one this organization owns (LX-20 / PF-02): the
+  // route checked only that programId looked like a UUID, so a draft could be
+  // filed in another organization's project. 404, as POST /docs answers.
+  if (!(await programInOrganization(ctx.pool, input.programId, ctx.tenantId))) {
+    return { kind: 'refused', status: 404, error: 'Project not found' };
+  }
   const provenanceState = await columnState(ctx.pool, 'provenance');
   if (provenanceState !== 'present') {
     return {
@@ -207,7 +218,11 @@ export async function createDocumentFromDraft(
         '), so the draft was not saved. Nothing was created. Apply migrations/20260921_authoring_document_provenance.sql.',
     };
   }
-  const provenance: DocumentProvenance = { ...input.provenance, recordedAt: new Date().toISOString() };
+  const provenance: DocumentProvenance = {
+    ...input.provenance,
+    ...(input.module ? {} : { moduleDefaulted: true }),
+    recordedAt: new Date().toISOString(),
+  };
   const docId = crypto.randomUUID();
   // The same binding rule as POST /docs: the project's filing keeps one editing
   // copy; every further document is created in the project unbound, with the

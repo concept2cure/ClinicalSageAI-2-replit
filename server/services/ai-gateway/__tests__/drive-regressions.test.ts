@@ -19,9 +19,17 @@
  *     (the two faults above, on three turns) took a healthy provider out of
  *     rotation for every tenant. A 400 says the request was wrong, not that
  *     the provider is down.
+ *
+ * And the fix for that last one went a step too far: it exempted 404, and
+ * every 400 whatever it said. A 404 is a model or endpoint that does not exist,
+ * and a 400 saying the credit balance is too low is an account that cannot be
+ * billed — provider failures both, which the breaker must see so the next
+ * turn stops walking into them first.
  */
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
+import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 
 import { AIGateway, resetGateway, fillEmptyBodyMessages, DEFAULT_MODELS } from '../gateway';
 import { CLOUD_MODELS } from '../providers/cloud-models';
@@ -297,5 +305,128 @@ describe('recordFailure — the circuit breaker counts outages, not bad requests
     fail(gw, 'anthropic', 503);
     expect(healthOf(gw, 'anthropic').consecutiveFailures).toBe(2);
     expect(healthOf(gw, 'anthropic').healthy).toBe(true);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// recordFailure — a missing model and an unbillable account are provider failures
+// ─────────────────────────────────────────────────────────────────────────────
+
+const SDK_HEADERS = new Headers();
+
+/** What the Anthropic SDK throws for this status and body — the error route() hands recordFailure. */
+const anthropicRefusal = (status: number, message: string, type = 'invalid_request_error') =>
+  Anthropic.APIError.generate(status, { type: 'error', error: { type, message } }, undefined, SDK_HEADERS);
+
+/** What the OpenAI SDK throws — for OpenAI itself and every server or proxy spoken to through it. */
+const openAIRefusal = (status: number, body: Record<string, unknown>) =>
+  OpenAI.APIError.generate(status, { error: body }, undefined, SDK_HEADERS);
+
+const CREDIT_BALANCE_TOO_LOW =
+  'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.';
+
+const failWith = (gw: AIGateway, p: string, error: Error) =>
+  (gw as unknown as { recordFailure: (p: string, e: Error) => void }).recordFailure(p, error);
+
+describe('recordFailure — a missing model and an unbillable account trip the breaker', () => {
+  it('three 404s mark the provider unhealthy — the model or endpoint is not there', () => {
+    vi.useFakeTimers();
+    const gw = liveGateway();
+    for (let i = 0; i < 3; i++) {
+      failWith(gw, 'anthropic', anthropicRefusal(404, 'model: claude-opus-4-0', 'not_found_error'));
+    }
+    expect(healthOf(gw, 'anthropic').healthy, 'a model that does not exist was treated as a bad request').toBe(false);
+    expect(healthOf(gw, 'anthropic').consecutiveFailures).toBe(3);
+  });
+
+  it.each<[string, () => Error]>([
+    ['Anthropic: credit balance too low', () => anthropicRefusal(400, CREDIT_BALANCE_TOO_LOW)],
+    [
+      'OpenAI: insufficient_quota',
+      () =>
+        openAIRefusal(400, {
+          message: 'You exceeded your current quota, please check your plan and billing details.',
+          type: 'insufficient_quota',
+          code: 'insufficient_quota',
+        }),
+    ],
+    ['only the code says so', () => openAIRefusal(400, { message: 'Request refused.', code: 'insufficient_quota' })],
+    ['in capitals', () => openAIRefusal(400, { message: 'Monthly QUOTA exceeded for this key' })],
+    ['payment', () => openAIRefusal(400, { message: 'Payment method declined for this organization' })],
+    [
+      'only the body says so',
+      () => openAIRefusal(400, { message: 'Provider returned error', metadata: { raw: 'billing hard limit reached' } }),
+    ],
+    // Anthropic's other two account refusals arrive as the same 400
+    // invalid_request_error, and say neither billing, quota nor payment.
+    [
+      'Anthropic: spend cap reached',
+      () =>
+        anthropicRefusal(
+          400,
+          'You have reached your specified API usage limits. You will regain access on 2026-10-01 at 00:00 UTC.',
+        ),
+    ],
+    ['Anthropic: organization disabled', () => anthropicRefusal(400, 'This organization has been disabled.')],
+  ])('three account 400s mark the provider unhealthy — %s', (_label, refusal) => {
+    vi.useFakeTimers();
+    const gw = liveGateway();
+    for (let i = 0; i < 3; i++) failWith(gw, 'anthropic', refusal());
+    expect(healthOf(gw, 'anthropic').healthy, 'an account the provider will not serve was treated as a bad request').toBe(false);
+    expect(healthOf(gw, 'anthropic').consecutiveFailures).toBe(3);
+  });
+
+  it.each([400, 413, 422])('a request-shape %i from the SDK still leaves the provider healthy', status => {
+    vi.useFakeTimers();
+    const gw = liveGateway();
+    for (let i = 0; i < 4; i++) {
+      failWith(gw, 'anthropic', anthropicRefusal(status, 'messages.1.content.0.text: text content blocks must be non-empty'));
+    }
+    expect(healthOf(gw, 'anthropic').healthy).toBe(true);
+    expect(healthOf(gw, 'anthropic').consecutiveFailures).toBe(0);
+  });
+
+  it('a malformed request that names a tool with "billing" in it is still a malformed request', () => {
+    // AnA has a tool named get_billing_credits, and a refusal can quote the
+    // request back. A word inside a snake_case name is not the account talking.
+    vi.useFakeTimers();
+    const gw = liveGateway();
+    for (let i = 0; i < 4; i++) {
+      failWith(gw, 'anthropic', anthropicRefusal(400, "tool_choice.name: 'get_billing_credits' is not one of the tools provided"));
+    }
+    expect(healthOf(gw, 'anthropic').healthy).toBe(true);
+    expect(healthOf(gw, 'anthropic').consecutiveFailures).toBe(0);
+  });
+});
+
+describe('route() — a provider out of credit stops being tried first', () => {
+  it('after a turn on which every Anthropic rung answers "credit balance is too low", the next goes straight to OpenAI', async () => {
+    vi.useFakeTimers();
+    const gw = liveGateway();
+    const anthropicCreate = vi.fn(async () => {
+      throw anthropicRefusal(400, CREDIT_BALANCE_TOO_LOW);
+    });
+    (gw as any).anthropicClient = { messages: { create: anthropicCreate } };
+    const openaiCreate = vi.fn(async () => ({
+      model: 'gpt-4o-2024-08-06',
+      choices: [{ message: { role: 'assistant', content: 'Opening CMC.' }, finish_reason: 'stop' }],
+      usage: { prompt_tokens: 5, completion_tokens: 3, total_tokens: 8 },
+    }));
+    (gw as any).openaiClient = { chat: { completions: { create: openaiCreate } } };
+    const ask = {
+      taskType: 'chat',
+      messages: [{ role: 'user', content: 'take me to CMC' }],
+      maxTokens: 500,
+    } as GatewayRequest;
+
+    const first = await gw.route(ask);
+    expect(first.provider).toBe('openai');
+    expect(anthropicCreate).toHaveBeenCalled();
+    expect(healthOf(gw, 'anthropic').healthy).toBe(false);
+
+    anthropicCreate.mockClear();
+    const second = await gw.route(ask);
+    expect(second.provider).toBe('openai');
+    expect(anthropicCreate, 'the out-of-credit provider was tried first again, on every turn').not.toHaveBeenCalled();
   });
 });

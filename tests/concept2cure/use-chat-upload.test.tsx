@@ -13,6 +13,7 @@ import { renderHook, act, waitFor, cleanup } from '@testing-library/react';
 import {
   useChatUpload,
   attachmentReadLabel,
+  readyAttachmentLabel,
   validateUploadFile,
   composeTurn,
   CHAT_UPLOAD_MAX_BYTES,
@@ -48,6 +49,16 @@ describe('attachmentReadLabel', () => {
   it('returns null when nothing was read', () => {
     expect(attachmentReadLabel('utf8', 0)).toBeNull();
     expect(attachmentReadLabel(null, undefined)).toBeNull();
+  });
+});
+
+describe('readyAttachmentLabel', () => {
+  it('says a ready file with no text was not read, never "read"', () => {
+    expect(readyAttachmentLabel(null, 0)).toBe('no text extracted');
+    expect(readyAttachmentLabel('utf8', undefined)).toBe('no text extracted');
+  });
+  it('is the read label when text was extracted', () => {
+    expect(readyAttachmentLabel('pdf-ocr', 87)).toBe('read via OCR · 87 words');
   });
 });
 

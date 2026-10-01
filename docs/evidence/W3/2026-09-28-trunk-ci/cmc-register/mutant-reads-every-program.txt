@@ -1,0 +1,28 @@
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmMethodLibrary — the write half of the register > opens a drawer and POSTs the mapped body to the register endpoint 383ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmMethodLibrary — the write half of the register > shows the SERVER’s row, not the values that were typed 150ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmMethodLibrary — the write half of the register > a rejected write adds nothing and names the rejected field 124ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmMethodLibrary — the write half of the register > an edit PUTs against the row and keeps the validation record it was seeded with 86ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmQcTesting — recording and second-person review > records the signed-in user as the analyst on a new result 84ms
+ × client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmQcTesting — recording and second-person review > refuses to let the analyst review their own result, and says why 5013ms
+ × client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmQcTesting — recording and second-person review > a review PUTs the disposition and the reviewer, never the analyst 5007ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > renders the per-section build state the endpoint returns 45ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > refuses to build a section that no source data feeds, and says why 57ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > compiles the whole module against the operating-system endpoint 116ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > a compile that is refused reports the server’s reason and changes nothing 108ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > resolves a contradiction through the governed endpoint with its note 83ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > shows the export gate’s refusal as the verdict it is, with the reason 130ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > shows the pass verdict when the gate allows the export 112ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > asks for a project rather than guessing one 9ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > reports a failed board read as a failure, never as "nothing here yet" 15ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > says the artifact registry is unlinked instead of rendering its absence as "no artifacts" 28ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > places approved sections into a chosen sequence through the placement endpoint 169ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmModule3Build — the operating system, finally reachable > shows a placement refusal as the gate verdict it is, verbatim 127ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmQcTesting — recording and second-person review > refuses to let the analyst review their own result, and says why
+TestingLibraryElementError: Unable to find an element with the text: S-1. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ ❯ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx:257:18
+ FAIL  client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx > CmQcTesting — recording and second-person review > a review PUTs the disposition and the reviewer, never the analyst
+TestingLibraryElementError: Unable to find an element with the text: S-2. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ ❯ client/src/concept2cure/v2/__tests__/cmcSuiteWrites.test.tsx:276:18
+ Test Files  1 failed (1)
+      Tests  2 failed | 17 passed (19)

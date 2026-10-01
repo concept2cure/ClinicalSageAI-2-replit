@@ -38,12 +38,28 @@ factor ids). Each active CTQ factor carries a `risk_level` and optional
   own entry shows it.
 - **Low**-risk factors are reported but never affect the result.
 
-The gating level is derived from the rule, which stores no explicit level:
+A section is **assessed** only when something was checked. Each of these is **not
+assessed** — `valid: null, assessed: false`, with a message saying which — and never a
+pass:
+
+- no gating rule covers the section;
+- the rule's `required_ctq_factor_ids` cannot be read as a list of ids;
+- the rule names a factor id that does not exist in the caller's organization;
+- the rule names no **active** factor with `validation_criteria`.
+
+Factor ids are read as stored, as numbers or as numeric strings. Both forms occur.
+
+Both routes run one assessment (`server/services/qms/quality-gating-verdict.ts`). Only
+the gating level differs, because the rule stores no explicit level:
 
 - `validate-section` treats a rule with `allow_override = false` as a hard gate and one
   with `allow_override = true` as a soft gate.
 - `batch-validate` uses `minimum_mandatory_completion`: 100 is hard, 80–99 is soft, and
-  below 80 is informational (nothing blocks).
+  below 80 is informational (nothing blocks). A rule with no threshold recorded takes
+  the column's default, 100: a hard gate.
+
+The two routes can therefore answer differently for the same rule. That is recorded
+here, not resolved.
 
 `allow_override`, `override_requires_approval` and `override_requires_reason` are stored
 on the rule. No endpoint requests, approves or records an override.
@@ -66,18 +82,35 @@ on the rule. No endpoint requests, approves or records an override.
 }
 ```
 
-**Response** when the section has no gating rule:
+`404 {"error": "Quality Management Plan not found"}` when `qmpId` is not a plan of the
+caller's organization.
 
-```json
-{ "valid": true, "message": "No quality gating rules defined for this section", "validations": [] }
-```
-
-**Response** otherwise:
+**Response** when the section is not assessed, for example because no gating rule covers
+it. Not assessed is not a pass:
 
 ```json
 {
+  "sectionCode": "benefit-risk",
+  "valid": null,
+  "assessed": false,
+  "message": "No quality gating rule is defined for this section, so it was not assessed.",
+  "validations": []
+}
+```
+
+Nothing can write a gating rule today (their writes answer `501`), so on a real
+database every section gets this answer. Until 2026-09-23 it was `"valid": true`, and
+until 2026-09-28 a rule naming nothing checkable still answered `"valid": true`.
+
+**Response** when the section was assessed:
+
+```json
+{
+  "sectionCode": "benefit-risk",
   "valid": false,
+  "assessed": true,
   "gatingLevel": "hard",
+  "allowOverride": false,
   "message": "Section contains critical quality issues",
   "validations": [
     {
@@ -93,11 +126,9 @@ on the rule. No endpoint requests, approves or records an override.
 }
 ```
 
-**Known defect:** when the section's rule lists one or more factor ids, the factor
-lookup sends the ids as a parenthesised list, `id = ANY(($1, …))`, not as an array.
-Postgres rejects it: `22P02` (malformed array literal) for one id, `42809` for two or
-more. The route answers `500 {"error": "Failed to validate section"}`. It does not
-return a result in that case.
+**Fixed 2026-09-23:** when the rule listed factor ids, the factor lookup bound them as
+a row constructor, `id = ANY(($1, …))`, which Postgres rejects, so the route answered
+`500`. It now uses an `IN` list.
 
 ### Batch-validate sections
 
@@ -116,14 +147,26 @@ return a result in that case.
 }
 ```
 
-**Response:** `{ valid, hasWarnings, message, metadata, timestamp, sectionResults }`,
-where each `sectionResults` entry is
-`{ sectionCode, valid, gatingLevel, message, allowOverride, validations }`.
+`sections` must hold at least one section; an empty list is refused `400`. An unknown
+`qmpId` is `404`.
 
-**Known defect:** the gating-rule lookup sends the section codes as a parenthesised
-list, `section_key = ANY(($1, …))`, not as an array. Postgres rejects it: `22P02`
-(malformed array literal) for one section, `42809` for two or more. So any non-empty
-`sections` list answers `500 {"error": "Failed to validate sections"}`.
+**Response:** `{ valid, assessed, hasWarnings, message, metadata, timestamp, sectionResults }`.
+Each `sectionResults` entry is the assessed or the not-assessed shape shown for
+`validate-section`.
+
+The batch verdict:
+
+- `valid: false` when any section is `valid: false`, on a hard gate or a soft one;
+- otherwise `valid: null` when any section was not assessed, with the message
+  "_n_ of _m_ sections was/were not assessed; each section's result says why.";
+- `valid: true` only when every section was assessed and none failed.
+
+`assessed` is true only when every section was assessed. When no rule covers any of the
+sections, the response is `{ valid: null, assessed: false, message, sectionResults }`.
+
+**Fixed 2026-09-23:** the gating-rule lookup bound the section codes as a row
+constructor, `section_key = ANY(($1, …))`, which Postgres rejects, so any non-empty
+`sections` list answered `500`. It now uses an `IN` list.
 
 ### Validation statistics for a plan
 

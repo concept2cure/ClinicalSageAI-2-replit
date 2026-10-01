@@ -34,6 +34,19 @@ export function attachmentReadLabel(
   return method === 'image-ocr' || method === 'pdf-ocr' ? `read via OCR · ${w}` : `read · ${w}`;
 }
 
+/**
+ * The chip text for a READY attachment — what was read, or that nothing was.
+ *
+ * The upload answers `ready` whether or not extraction produced text (a scan,
+ * an image OCR could not read), and reports that as zero words. Two composers
+ * filled attachmentReadLabel's null with the literal 'read', so a file nothing
+ * had read was shown as read. One helper, used by every composer, so the
+ * unread case cannot be spelled four ways again.
+ */
+export function readyAttachmentLabel(method: string | null | undefined, words: number | undefined): string {
+  return attachmentReadLabel(method, words) ?? 'no text extracted';
+}
+
 export interface UseChatUploadOptions {
   /** Scopes the upload to a project so extracted text lands in that project's memory. */
   projectId?: string | number | null;

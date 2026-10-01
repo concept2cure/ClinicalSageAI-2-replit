@@ -1,0 +1,74 @@
+
+ RUN  v4.1.7 /home/user/w2
+
+{"level":30,"time":"2026-09-26T02:18:34.136Z","pid":2052,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-26T02:18:34.138Z","pid":2052,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-26T02:18:34.138Z","pid":2052,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/retrieval-floor.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-26T02:18:34.252Z', poolSize: 1 }
+
+stdout | tests/db/retrieval-floor.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/retrieval-floor.dbtest.ts > evidence-ask applies its similarity floor, and records only the floor it applied > an atom below the default floor (0.6) is not admissible evidence
+✅ Enhanced Embedding Service initialized
+
+ × tests/db/retrieval-floor.dbtest.ts > evidence-ask applies its similarity floor, and records only the floor it applied > an atom below the default floor (0.6) is not admissible evidence 59ms
+   → expected '[{"id":1,"title":"wo03_2052_muhrga1m-…' not to contain 'wo03_2052_muhrga1m-floor-weak'
+ × tests/db/retrieval-floor.dbtest.ts > evidence-ask applies its similarity floor, and records only the floor it applied > a question nothing clears is refused, and the model is never called 22ms
+   → expected '[{"id":1,"title":"wo03_2052_muhrga1m-…' not to contain 'wo03_2052_muhrga1m-floor-weak'
+ × tests/db/retrieval-floor.dbtest.ts > evidence-ask applies its similarity floor, and records only the floor it applied > every chunk recorded under a run clears the threshold that run records 22ms
+   → wo03_2052_muhrga1m-floor-weak was recorded under threshold 0.6: expected 0.30000001192092896 to be greater than or equal to 0.6
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/retrieval-floor.dbtest.ts > evidence-ask applies its similarity floor, and records only the floor it applied > an atom below the default floor (0.6) is not admissible evidence
+AssertionError: expected '[{"id":1,"title":"wo03_2052_muhrga1m-…' not to contain 'wo03_2052_muhrga1m-floor-weak'
+
+Expected: "wo03_2052_muhrga1m-floor-weak"
+Received: "[{"id":1,"title":"wo03_2052_muhrga1m-floor-strong","content":"wo03_2052_muhrga1m-floor-strong: renal clearance was measured","score":0.5800000023841861},{"id":2,"title":"wo03_2052_muhrga1m-floor-weak","content":"wo03_2052_muhrga1m-floor-weak: renal clearance was measured","score":0.22000000774860382}]"
+
+ ❯ tests/db/retrieval-floor.dbtest.ts:124:36
+    122|     route.mockClear();
+    123|     const res = await request(app()).post('/api/evidence/ask').send({ …
+    124|     expect(titlesOf(res.body)).not.toContain(WEAK);
+       |                                    ^
+    125|     expect(res.status).toBe(200);
+    126|     expect(titlesOf(res.body)).toContain(STRONG);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/db/retrieval-floor.dbtest.ts > evidence-ask applies its similarity floor, and records only the floor it applied > a question nothing clears is refused, and the model is never called
+AssertionError: expected '[{"id":1,"title":"wo03_2052_muhrga1m-…' not to contain 'wo03_2052_muhrga1m-floor-weak'
+
+Expected: "wo03_2052_muhrga1m-floor-weak"
+Received: "[{"id":1,"title":"wo03_2052_muhrga1m-floor-strong","content":"wo03_2052_muhrga1m-floor-strong: renal clearance was measured","score":0.8600000029057269},{"id":2,"title":"wo03_2052_muhrga1m-floor-weak","content":"wo03_2052_muhrga1m-floor-weak: renal clearance was measured","score":0.2900000113993883}]"
+
+ ❯ tests/db/retrieval-floor.dbtest.ts:132:36
+    130|     route.mockClear();
+    131|     const res = await request(app()).post('/api/evidence/ask').send({ …
+    132|     expect(titlesOf(res.body)).not.toContain(WEAK);
+       |                                    ^
+    133|     expect(res.status).toBe(422);
+    134|     expect(res.body.code).toBe('NO_ADMISSIBLE_EVIDENCE');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/db/retrieval-floor.dbtest.ts > evidence-ask applies its similarity floor, and records only the floor it applied > every chunk recorded under a run clears the threshold that run records
+AssertionError: wo03_2052_muhrga1m-floor-weak was recorded under threshold 0.6: expected 0.30000001192092896 to be greater than or equal to 0.6
+ ❯ tests/db/retrieval-floor.dbtest.ts:153:86
+    151|     expect(rows.length).toBeGreaterThan(0);
+    152|     for (const r of rows) {
+    153|       expect(r.similarity, `${r.title} was recorded under threshold ${…
+       |                                                                                      ^
+    154|         Number(r.threshold),
+    155|       );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  02:18:30
+   Duration  4.52s (transform 1.63s, setup 127ms, import 3.28s, tests 749ms, environment 0ms)
+

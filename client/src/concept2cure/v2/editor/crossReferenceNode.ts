@@ -155,7 +155,8 @@ export const CrossReference = Node.create<CrossReferenceOptions>({
       const dom = document.createElement('a');
       dom.className = 'rse-xref';
       // Not a navigation: clicking a reference in the canvas places the caret.
-      dom.setAttribute('role', 'link');
+      // So no link role — one with nothing to follow was listed as a link that
+      // does nothing (periodic review 2026-09-28, editor family, A-B-3).
       dom.setAttribute(CROSS_REF_TARGET_ATTR, String(node.attrs.target ?? ''));
 
       const paint = () => {

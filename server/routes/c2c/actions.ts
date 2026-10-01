@@ -61,8 +61,10 @@ import { can } from '../../services/governance/permissions.js';
 import {
   persistGovernedSignSignature,
   persistGovernedSignatureRevocation,
+  SignatureMeaningError,
   SignatureRevocationUnresolvedError,
 } from '../../services/part11/signature-persistence.js';
+import { signMeaningRefusal } from '../../services/part11/signature-meanings.js';
 import { clientIpOf } from '../../utils/client-ip';
 
 const router = Router();
@@ -617,6 +619,17 @@ export function separationOfDutiesRefusal(
 
 // ── Request handler factory ───────────────────────────────────────────────────
 
+/**
+ * §11.50(a)(3): a `sign` declares its meaning from the closed vocabulary. The
+ * route refuses a missing or unknown one before re-authentication, so a signer
+ * is not asked for a password for a request the writer would refuse anyway
+ * (the writer, persistGovernedActionSignature, enforces the same rule for every
+ * caller). Other commands carry no signer-declared meaning here.
+ */
+function commandMeaningRefusal(command: Command, body: ActionEnvelope) {
+  return command === 'sign' ? signMeaningRefusal(body.payload?.meaning) : null;
+}
+
 function makeHandler(command: Command) {
   return async (req: Request, res: Response) => {
     const userId = resolveUserId(req);
@@ -633,6 +646,8 @@ function makeHandler(command: Command) {
     if (!body?.reason || typeof body.reason !== 'string' || body.reason.trim().length < 8) {
       return res.status(400).json({ error: 'REASON_REQUIRED', detail: 'Minimum 8 characters.' });
     }
+    const meaningRefusal = commandMeaningRefusal(command, body);
+    if (meaningRefusal) return res.status(400).json(meaningRefusal);
 
     // Re-auth gate for high-risk commands.
     if (HIGH_RISK_COMMANDS.has(command)) {
@@ -720,6 +735,10 @@ function makeHandler(command: Command) {
         // Nothing was written (the transaction rolled back). Say so plainly
         // rather than returning an opaque 500 that reads as "maybe it worked".
         return res.status(409).json({ error: err.code, detail: err.message });
+      }
+      if (err instanceof SignatureMeaningError) {
+        // Refused ahead of the signer lookup; nothing was written.
+        return res.status(400).json({ error: err.code, detail: err.message });
       }
       console.error(`[c2c/actions/${command}]`, err?.message);
       return res.status(500).json({ error: 'INTERNAL_ERROR' });

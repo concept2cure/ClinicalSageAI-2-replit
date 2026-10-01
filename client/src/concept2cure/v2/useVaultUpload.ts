@@ -42,6 +42,16 @@ export interface VaultUploadOutcome {
   /** Per-file filing outcome, as the server stored it: the classifier's
    *  suggested dossier folder, or unfiled (visible review queue). */
   filings: Array<{ name: string; folderLabel: string | null; needsReview: boolean }>;
+  /** Files whose exact bytes the Vault already recorded at that code and
+   *  version: nothing was changed, and `differs` says the upload asked for a
+   *  title, type or classification other than the recorded one (VR-05). */
+  alreadyRecorded: Array<{ name: string; title: string; differs: boolean }>;
+  /** Files refused because a different file is already recorded at that name
+   *  (409 VERSION_CONTENT_CONFLICT). The surface can offer to add each as the
+   *  next version of the recorded document (VR-09), so the File is kept. */
+  conflicts: Array<{ name: string; file: File }>;
+  /** Versions added to an existing document, with the version the server assigned. */
+  newVersions: Array<{ name: string; version: string; title: string; folderLabel: string | null }>;
 }
 
 export interface VaultUploadOptions {
@@ -53,6 +63,13 @@ export interface VaultUploadOptions {
    * downstream regulatory handling.
    */
   documentType?: VaultIngestDocumentType;
+  /**
+   * Add the file as the next version of this document (VR-08/09), naming it by
+   * one of its versions. The server assigns the version and keeps the
+   * document's code and filing, so no document code is sent, and the title is
+   * the document's own.
+   */
+  newVersionOf?: { documentId: string; title: string };
 }
 
 export interface VaultUploadState {
@@ -66,22 +83,48 @@ export interface VaultUploadState {
 /** The default document type. See the note in `uploadOne`. */
 const DEFAULT_DOCUMENT_TYPE: VaultIngestDocumentType = 'OTHER';
 
+/** What the user is told about files the Vault already held: nothing changed,
+ *  and where a title, type or classification differs, how to change it. */
+function alreadyRecordedText(list: VaultUploadOutcome['alreadyRecorded']): string {
+  if (list.length === 0) return '';
+  const named = list.map((a) => `${a.name} (as "${a.title}")`).join('; ');
+  const hint = list.some((a) => a.differs)
+    ? ' Its title, type or classification is changed with Edit details, not by uploading it again.'
+    : '';
+  return `Already in the Vault, nothing changed: ${named}.${hint}`;
+}
+
 async function uploadOne(
   programId: string,
   file: File,
   documentType: VaultIngestDocumentType,
+  newVersionOf?: VaultUploadOptions['newVersionOf'],
 ): Promise<
-  | { ok: true; folderLabel: string | null; needsReview: boolean }
-  | { ok: false; reason: string }
+  | {
+      ok: true;
+      folderLabel: string | null;
+      needsReview: boolean;
+      already: { title: string; differs: boolean } | null;
+      version: string | null;
+    }
+  | { ok: false; reason: string; code: string | null }
 > {
   const form = new FormData();
   form.append('file', file);
   form.append('programId', programId);
-  /* The ingest schema requires a code, a title and a type. The filename is the
-     only thing the user has actually told us, so it supplies the first two
-     verbatim; the type is the caller's stated choice, defaulting to OTHER. */
-  form.append('documentCode', file.name);
-  form.append('documentTitle', file.name.replace(/\.[^.]+$/, ''));
+  if (newVersionOf) {
+    /* A check-in: the server finds the document by this version, assigns the
+       next version and keeps its code, so neither is sent (a version is
+       refused, VERSION_IS_ASSIGNED). */
+    form.append('supersedesDocumentId', newVersionOf.documentId);
+    form.append('documentTitle', newVersionOf.title);
+  } else {
+    /* The ingest schema requires a code, a title and a type. The filename is the
+       only thing the user has actually told us, so it supplies the first two
+       verbatim; the type is the caller's stated choice, defaulting to OTHER. */
+    form.append('documentCode', file.name);
+    form.append('documentTitle', file.name.replace(/\.[^.]+$/, ''));
+  }
   form.append('documentType', documentType);
 
   let res: Response;
@@ -113,7 +156,7 @@ async function uploadOne(
   } catch {
     /* A transport failure, not a server refusal. The distinction matters: the
        user can retry this one, and nothing was filed. */
-    return { ok: false, reason: 'the connection dropped before the file was sent' };
+    return { ok: false, reason: 'the connection dropped before the file was sent', code: null };
   }
 
   if (res.ok) {
@@ -121,13 +164,21 @@ async function uploadOne(
        suggested dossier folder (auto-filed, awaiting confirmation) or unfiled.
        Read, never assumed: a missing block reads as no placement reported. */
     const body = (await res.json().catch(() => null)) as
-      | { filing?: { folderLabel?: string; folderId?: string | null; needsReview?: boolean } }
+      | {
+          filing?: { folderLabel?: string; folderId?: string | null; needsReview?: boolean };
+          document?: { documentTitle?: string; version?: string };
+          reupload?: { differs?: unknown[] };
+        }
       | null;
     const filing = body?.filing;
     return {
       ok: true,
       folderLabel: filing?.folderId ? filing.folderLabel || filing.folderId : null,
       needsReview: Boolean(filing?.needsReview ?? !filing?.folderId),
+      already: body?.reupload
+        ? { title: body.document?.documentTitle || file.name, differs: (body.reupload.differs?.length ?? 0) > 0 }
+        : null,
+      version: body?.document?.version ?? null,
     };
   }
 
@@ -146,6 +197,7 @@ async function uploadOne(
   return {
     ok: false,
     reason: redactInternals(raw, `the server refused it (HTTP ${res.status})`),
+    code: typeof err === 'object' && err && typeof err.code === 'string' ? err.code : null,
   };
 }
 
@@ -161,7 +213,7 @@ export function useVaultUpload(programId: string | null | undefined): VaultUploa
   const upload = React.useCallback(
     async (files: FileList | File[] | null, opts?: VaultUploadOptions): Promise<VaultUploadOutcome> => {
       const list = files ? Array.from(files as ArrayLike<File>) : [];
-      const empty: VaultUploadOutcome = { succeeded: [], failed: [], filings: [] };
+      const empty: VaultUploadOutcome = { succeeded: [], failed: [], filings: [], alreadyRecorded: [], conflicts: [], newVersions: [] };
       if (list.length === 0) return empty;
       if (!programId) {
         setNote({
@@ -173,21 +225,35 @@ export function useVaultUpload(programId: string | null | undefined): VaultUploa
 
       setUploading(true);
       setNote(null);
-      const outcome: VaultUploadOutcome = { succeeded: [], failed: [], filings: [] };
+      const outcome: VaultUploadOutcome = { succeeded: [], failed: [], filings: [], alreadyRecorded: [], conflicts: [], newVersions: [] };
       try {
         /* Sequential, deliberately. These are 50 MB-capped uploads that each
            run a virus scan and a text extraction server-side; firing a whole
            drop-zone's worth in parallel is how one user stalls the pool. */
         for (const file of list) {
-          const r = await uploadOne(programId, file, opts?.documentType ?? DEFAULT_DOCUMENT_TYPE);
-          if (r.ok) {
+          const r = await uploadOne(programId, file, opts?.documentType ?? DEFAULT_DOCUMENT_TYPE, opts?.newVersionOf);
+          if (r.ok && r.already) {
+            outcome.succeeded.push(file.name);
+            outcome.alreadyRecorded.push({ name: file.name, ...r.already });
+          } else if (r.ok && opts?.newVersionOf) {
+            outcome.succeeded.push(file.name);
+            outcome.newVersions.push({
+              name: file.name,
+              version: r.version ?? '',
+              title: opts.newVersionOf.title,
+              folderLabel: r.folderLabel,
+            });
+          } else if (r.ok) {
             outcome.succeeded.push(file.name);
             outcome.filings.push({
               name: file.name,
               folderLabel: r.folderLabel,
               needsReview: r.needsReview,
             });
-          } else outcome.failed.push({ name: file.name, reason: r.reason });
+          } else {
+            outcome.failed.push({ name: file.name, reason: r.reason });
+            if (r.code === 'VERSION_CONTENT_CONFLICT') outcome.conflicts.push({ name: file.name, file });
+          }
         }
 
         if (outcome.failed.length === 0) {
@@ -206,14 +272,19 @@ export function useVaultUpload(programId: string | null | undefined): VaultUploa
             unplaced > 0
               ? ` ${unplaced} landed in Unfiled — the classifier could not place ${unplaced === 1 ? 'it' : 'them'}; review where ${unplaced === 1 ? 'it belongs' : 'they belong'}.`
               : '';
-          const n = outcome.succeeded.length;
-          setNote({
-            tone: 'ok',
-            text:
-              placedText || unplacedText
-                ? `${placedText}${unplacedText}`.trim()
-                : `Filed ${n} document${n === 1 ? '' : 's'} to the vault.`,
-          });
+          const n = outcome.filings.length;
+          const filedText =
+            placedText || unplacedText
+              ? `${placedText}${unplacedText}`.trim()
+              : n > 0 ? `Filed ${n} document${n === 1 ? '' : 's'} to the vault.` : '';
+          const versionText = outcome.newVersions
+            .map(
+              (v) =>
+                `Added ${v.name} to "${v.title}" as ${v.version ? `v${v.version}` : 'a new version (number not reported)'}. ` +
+                `It keeps the document's filing${v.folderLabel ? ` (${v.folderLabel})` : ''}, and the earlier versions stay in the Vault.`,
+            )
+            .join(' ');
+          setNote({ tone: 'ok', text: `${versionText} ${filedText} ${alreadyRecordedText(outcome.alreadyRecorded)}`.trim() });
         } else {
           setNote({
             tone: 'error',

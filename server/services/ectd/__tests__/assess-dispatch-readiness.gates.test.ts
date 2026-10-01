@@ -13,6 +13,8 @@ import {
   dispatchGateViews,
   withRules,
   composeDispatchGates,
+  composeStepVerdicts,
+  externalNotAssessed,
 } from '../assess-dispatch-readiness';
 import { DISPATCH_GATE_RULE_IDS } from '../validation-rule-corpus';
 
@@ -79,5 +81,139 @@ describe('the dispatch verdict, gate by gate, as named rules', () => {
     ]);
     expect(out[0].rule?.id).toBe('EMPTY_SEQUENCE');
     expect(out[1].rule).toBeNull();
+  });
+});
+
+/**
+ * composeStepVerdicts — the three verdicts an assessment reports, from one set
+ * of parts. What is pinned is MEMBERSHIP: a verdict composed without a gate
+ * blocks nothing on it, and every test of that gate alone still passes. So each
+ * case puts one real blocker in one gate and asserts which verdicts carry it.
+ */
+describe('composeStepVerdicts — each step verdict carries every gate it must', () => {
+  const clear = { cleared: true, blockers: [] as string[] };
+  const baseParts = {
+    structural: clear,
+    external: clear,
+    shadowPresence: clear,
+    releaseSignature: { required: true, verdict: 'unsigned' as const, detail: 'none on record' },
+  };
+  /** The spine precedence the real resolver produces for a never-signed sequence. */
+  const neverSigned = { verdict: 'unsigned' as const, decidedBy: 'sequence' as const };
+
+  it('P11-28b: an otherwise-clear sequence awaiting only its own signature is open to dispatch-on-signing, not to dispatch now', () => {
+    const v = composeStepVerdicts(baseParts, neverSigned);
+    expect(v.gate.cleared, 'dispatch-now must still require the signature').toBe(false);
+    expect(v.freezeGate.cleared).toBe(true);
+    expect(
+      v.dispatchGateOnSigning.cleared,
+      'the only control that creates the release signature is gated on its already existing',
+    ).toBe(true);
+  });
+
+  it('a structural error blocks all three — signing never clears a content defect', () => {
+    const v = composeStepVerdicts(
+      { ...baseParts, structural: { cleared: false, blockers: ['1 open error-severity validation finding.'] } },
+      neverSigned,
+    );
+    expect(v.gate.cleared).toBe(false);
+    expect(v.freezeGate.cleared).toBe(false);
+    expect(v.dispatchGateOnSigning.cleared).toBe(false);
+    expect(v.dispatchGateOnSigning.blockers.join(' ')).toMatch(/validation finding/);
+  });
+
+  it('a missing Shadow Review blocks dispatch-on-signing', () => {
+    const v = composeStepVerdicts(
+      { ...baseParts, shadowPresence: { cleared: false, blockers: ['No completed Shadow Review.'] } },
+      neverSigned,
+    );
+    expect(v.dispatchGateOnSigning.cleared).toBe(false);
+  });
+
+  it('an external-validator failure blocks dispatch-on-signing', () => {
+    const v = composeStepVerdicts(
+      { ...baseParts, external: { cleared: false, blockers: ['The external validator report carries 2 errors.'] } },
+      neverSigned,
+    );
+    expect(v.dispatchGateOnSigning.cleared).toBe(false);
+  });
+
+  it('an orchestrator run awaiting its signer blocks dispatch-on-signing — the sequence signature would never be read', () => {
+    const v = composeStepVerdicts(
+      { ...baseParts, releaseSignature: { required: true, verdict: 'awaiting', detail: 'run-a' } },
+      { verdict: 'awaiting', decidedBy: 'orchestrator' },
+    );
+    expect(v.gate.cleared).toBe(false);
+    expect(v.dispatchGateOnSigning.cleared).toBe(false);
+    expect(v.freezeGate.cleared, 'freeze does not require a release signature').toBe(true);
+  });
+
+  it('an invalid signature blocks all three, including freeze — tamper evidence is never signed over', () => {
+    const v = composeStepVerdicts(
+      { ...baseParts, releaseSignature: { required: true, verdict: 'invalid', detail: 'digest drift' } },
+      { verdict: 'invalid', decidedBy: 'sequence' },
+    );
+    expect(v.gate.cleared).toBe(false);
+    expect(v.freezeGate.cleared).toBe(false);
+    expect(v.dispatchGateOnSigning.cleared).toBe(false);
+  });
+
+  it('an undetermined lookup blocks dispatch-now and dispatch-on-signing', () => {
+    const v = composeStepVerdicts(
+      { ...baseParts, releaseSignature: { required: true, verdict: 'undetermined', detail: 'connection reset' } },
+      { verdict: 'undetermined', decidedBy: 'orchestrator' },
+    );
+    expect(v.gate.cleared).toBe(false);
+    expect(v.dispatchGateOnSigning.cleared).toBe(false);
+  });
+
+  it('a signature already on record: all three clear, and nothing is "resolved by signing"', () => {
+    const v = composeStepVerdicts(
+      { ...baseParts, releaseSignature: { required: true, verdict: 'signed' } },
+      { verdict: 'signed', decidedBy: 'sequence' },
+    );
+    expect(v.gate.cleared).toBe(true);
+    expect(v.freezeGate.cleared).toBe(true);
+    expect(v.dispatchGateOnSigning.cleared).toBe(true);
+  });
+
+  it('a type that requires no signature: all three clear on an otherwise-clear sequence', () => {
+    const v = composeStepVerdicts(
+      { ...baseParts, releaseSignature: { required: false, verdict: 'unsigned' } },
+      { verdict: 'unsigned', decidedBy: 'orchestrator' },
+    );
+    expect(v.gate.cleared).toBe(true);
+    expect(v.dispatchGateOnSigning.cleared).toBe(true);
+  });
+});
+
+describe('an advisory gate that did not run is not assessed, not passed (populated-org sweep, 2026-09-28)', () => {
+  const clear = { cleared: true, blockers: [] as string[] };
+  const block = { cleared: false, blockers: ['x'] };
+
+  it('says why the external gate cleared without a report', () => {
+    expect(externalNotAssessed({ ran: false, configured: false })).toMatch(/No agency-grade validator is configured/);
+    expect(externalNotAssessed({ ran: false, configured: true })).toMatch(/configured but did not run/);
+    expect(externalNotAssessed({ ran: true, configured: true })).toBeUndefined();
+  });
+
+  it('carries the sentence on the external gate view only when it cleared', () => {
+    const note = externalNotAssessed({ ran: false, configured: false })!;
+    const views = dispatchGateViews(
+      { structural: clear, external: clear, shadowPresence: block, releaseSignature: block },
+      { external: note },
+    );
+    const ext = views.find((v) => v.key === 'external')!;
+    expect(ext.cleared).toBe(true);
+    expect(ext.notAssessed).toBe(note);
+    for (const v of views.filter((x) => x.key !== 'external')) expect(v.notAssessed).toBeUndefined();
+  });
+
+  it('a gate that blocks keeps its blockers and no not-assessed note', () => {
+    const views = dispatchGateViews(
+      { structural: clear, external: block, shadowPresence: clear, releaseSignature: clear },
+      { external: 'ignored' },
+    );
+    expect(views.find((v) => v.key === 'external')!.notAssessed).toBeUndefined();
   });
 });

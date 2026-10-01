@@ -30,6 +30,31 @@ export interface C2CFormField {
   half?: boolean;
   desc?: string;
   default?: string;
+  /**
+   * The value this field takes from the others while it applies: the field is
+   * then shown as a read-only single-line box, and that value is what is
+   * validated and submitted. Null when the field is the person's to fill.
+   */
+  derive?: (values: Record<string, string>) => string | null;
+}
+
+/** The field's derived value from `values`, or null when it has none. */
+const derivedValue = (f: C2CFormField, values: Record<string, string>): string | null =>
+  f.derive?.(values) ?? null;
+
+/**
+ * What is shown is what is checked and sent: the entered values, with each
+ * derived field's value in place of anything typed there before it applied.
+ * The request-a-review drawer showed one reviewer name and could submit another
+ * (SEC-C-7 follow-on (b), periodic review 2026-09-28, editor family).
+ */
+function effectiveValues(fields: C2CFormField[], values: Record<string, string>): Record<string, string> {
+  const out = { ...values };
+  for (const f of fields) {
+    const d = derivedValue(f, values);
+    if (d !== null) out[f.key] = d;
+  }
+  return out;
 }
 
 export interface C2CFormConfig {
@@ -93,7 +118,10 @@ export function C2CForm({ config, onCancel, onSubmit }: C2CFormProps) {
     if (invalidKeys.size) setInvalidKeys(new Set());
   };
 
-  const missing = () => fields.filter((f) => f.required && !String(v[f.key] ?? '').trim());
+  const missing = () => {
+    const e = effectiveValues(fields, v);
+    return fields.filter((f) => f.required && !String(e[f.key] ?? '').trim());
+  };
 
   const submit = () => {
     const m = missing();
@@ -107,7 +135,7 @@ export function C2CForm({ config, onCancel, onSubmit }: C2CFormProps) {
       setInvalidKeys(new Set(m.map((f) => f.key)));
       return;
     }
-    onSubmit(v);
+    onSubmit(effectiveValues(fields, v));
   };
 
   /* Focus hand-off + Escape via the repo's shared dialog hook: focus moves
@@ -122,11 +150,12 @@ export function C2CForm({ config, onCancel, onSubmit }: C2CFormProps) {
   React.useEffect(() => registerCeremonyOpen(), []);
 
   const renderField = (f: C2CFormField) => {
+    const derived = derivedValue(f, v);
     const common = {
       id: fieldId(f.key),
       className:
         f.type === 'textarea' ? 'de-textarea' : f.type === 'select' ? 'de-select' : 'de-input',
-      value: v[f.key],
+      value: derived ?? v[f.key],
       'aria-required': f.required || undefined,
       'aria-invalid': invalidKeys.has(f.key) || undefined,
       'aria-describedby':
@@ -135,6 +164,8 @@ export function C2CForm({ config, onCancel, onSubmit }: C2CFormProps) {
         set(f.key, e.target.value),
     };
 
+    // A derived value is shown, not edited: what is submitted is what is shown.
+    if (derived !== null) return <input {...common} className="de-input" type="text" readOnly aria-readonly="true" />;
     if (f.type === 'select') {
       return (
         <select {...common} className="de-select">

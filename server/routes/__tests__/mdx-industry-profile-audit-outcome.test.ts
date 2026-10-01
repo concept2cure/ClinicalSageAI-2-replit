@@ -40,7 +40,9 @@ beforeAll(async () => {
   app = express();
   app.use(express.json());
   app.use((req, _res, next) => {
-    (req as any).user = { id: 3, organizationId: 7 };
+    // An administrator: both industry-profile PATCH routes are role-gated
+    // (mdx-industry-profile-role-gate.test.ts); this file is about the audit row.
+    (req as any).user = { id: 3, organizationId: 7, role: 'admin' };
     next();
   });
   app.use('/api/mdx', router);
@@ -51,7 +53,9 @@ beforeEach(() => {
   upserted = null;
 });
 
-const BODY = { primaryIndustry: 'biotech_pharma' };
+// The route requires a reason for change (finding 122); this file is about
+// what the response says of the audit row, so its body carries one.
+const BODY = { primaryIndustry: 'biotech_pharma', reason: 'Client type corrected' };
 
 describe('PATCH /api/mdx/industry-profile carries its audit-row outcome', () => {
   it('a lost row: 200 with the saved profile, and meta.auditTrail says the row is missing', async () => {
@@ -78,5 +82,30 @@ describe('PATCH /api/mdx/industry-profile carries its audit-row outcome', () => 
     expect(logActionMock).toHaveBeenCalledWith(
       expect.objectContaining({ resourceType: 'organization_industry_profile', resourceId: 7 }),
     );
+  });
+});
+
+describe('PATCH /api/mdx/industry-profile requires a reason for change (finding 122)', () => {
+  it('refuses a change with no reason, and writes nothing', async () => {
+    const res = await request(app).patch('/api/mdx/industry-profile').send({ primaryIndustry: 'biotech_pharma' });
+    expect(res.status).toBe(422);
+    expect(upserted).toBeNull();
+    expect(logActionMock).not.toHaveBeenCalled();
+  });
+
+  it('refuses a blank or too-short reason', async () => {
+    for (const reason of ['', '  ', 'ok']) {
+      const res = await request(app).patch('/api/mdx/industry-profile').send({ primaryIndustry: 'cro', reason });
+      expect(res.status).toBe(422);
+    }
+    expect(upserted).toBeNull();
+  });
+
+  it('records the reason in the audit row it writes', async () => {
+    logActionMock.mockResolvedValue({ id: 'a1' });
+    const res = await request(app).patch('/api/mdx/industry-profile').send({ primaryIndustry: 'cro', reason: '  Now a CRO  ' });
+    expect(res.status).toBe(200);
+    const details = JSON.stringify(logActionMock.mock.calls[0]);
+    expect(details).toContain('Now a CRO');
   });
 });

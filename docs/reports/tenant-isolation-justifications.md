@@ -66,7 +66,6 @@ escape can be added silently.
 | `server/services/kernel-observability.ts` | 4 | Aggregate `COUNT`/`AVG` over `ai_kernel_decision_records`; a null org is the platform-wide observability roll-up. | Frozen. Aggregates, not row reads — but the roll-up should say whether it is platform-wide or one tenant's. Kernel stream. |
 | `server/services/deep-research-orchestrator.ts` | 1 | `getJobStatus`; its comment states org is "optional only for internal callers that just created the job" and that "Route handlers MUST pass the authenticated org". | Frozen. The MUST is a convention, not enforcement — a required parameter would make it one. Research stream. |
 | `server/services/kernel-adaptive-policy.ts` | 1 | Policy read with the same optional-org shape. | Frozen. Kernel stream. |
-| `server/routes/admin/licensing-history.ts` | 1 | Platform-admin licensing history; mounted inside the router guarded by `requirePlatformAdmin`, and the null is an explicit cross-tenant display filter. | Frozen — genuinely authorized. `admin/master-admin.ts`, the same pattern, is already in `ALLOWLIST_FILES`; this file arguably belongs there too rather than in the baseline. |
 | `server/routes/module-access-requests.ts` | 1 | The administrator's access-request queue. The null `$1` appears **only** when `scope=all`, and `denyQueueRead(actor, scope)` refuses that scope for anybody but the platform owner — a console whose heading says every workspace while it shows one is worse than one that refuses. | Frozen — genuinely authorized, and the narrowest form of it: the escape is reachable only behind an explicit scope refusal. It became visible to the gate only once `expandLocalInterpolations` landed, because the literal begins with `${SELECT_REQUEST}` and so matched no SQL keyword before. |
 | `server/services/advancedRAGPipeline.ts` | 1 | Pre-existing entry, unrelated to this rule (a raw `rag_chunks` join with no tenant column mentioned at all). | Frozen, pre-dates this change. |
 
@@ -75,6 +74,32 @@ Every previously-justified entry from before this date is dispositioned inline
 Resolved subsection for the per-file mapping.
 
 ## Resolved (no longer in baseline)
+
+### 2026-09-28 — `admin/licensing-history.ts` (1): dispositioned inline, and the baseline ratcheted 9 → 8
+
+Its row above said the read was "genuinely authorized" but left it carried as
+baseline debt, noting the file "arguably belongs" in `ALLOWLIST_FILES`. It was
+instead dispositioned the narrower way, at the call site: an inline
+`// tenant-isolation-safe:` marker (`licensing-history.ts:522`) recording that
+this is an estate-wide platform-admin read under the system scope
+(`/api/admin/master`), that the optional workspace filter only narrows it, and
+that `users` is joined for the actor's email alone. Per-site rather than
+per-file, which the gate's header prefers — a file allowlist would also have
+covered any future query in it.
+
+Retired here during the 2026-09-28 weekly review
+(`docs/evidence/reviews/2026-09-28/`), which ratcheted the baseline from 9 to 8
+so the freed slot could not absorb a new finding silently. The ratchet is
+evidenced, not asserted: an unscoped `SELECT … FROM ectd_sequences WHERE id =
+$1` injected into `server/services/cmc/submission-spine.ts` fails the gate at
+the new baseline (`FAIL — 1 NEW finding(s) above baseline of 8`) and is clean
+once removed.
+
+Note this row is **not** DP-37. DP-37 (`submission-service.ts`, the unscoped
+`vault.documents` program lookup) was never in this baseline — it was a finding
+*above* it, which is why the gate failed outright on 2026-09-26. Both were
+closed in the same window by different changes; the gate's "1 previously-flagged
+finding(s) resolved" line refers to this row, not that one.
 
 ### 2026-09-19 — `c2c/project-vault.ts` (2): the predicate moved into the statement
 

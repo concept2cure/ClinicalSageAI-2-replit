@@ -34,7 +34,8 @@
  * Org id is bound from the verified JWT (authedOrgId); the mount adds
  * authenticateToken. Every handler is try/caught and never throws out of the
  * router; DB-touching services fail closed (empty list / null), never a fake
- * zero.
+ * zero. A failed portfolio read is a 503 PORTFOLIO_UNAVAILABLE, not an empty
+ * organisation (review round 1).
  *
  * Mounted at `/api/insights-canvas` (see server/bootstrap/register-*-routes.ts).
  *
@@ -238,9 +239,9 @@ export default function createInsightsCanvasRoutes(): Router {
 
       const persona = typeof req.query.persona === 'string' ? req.query.persona : null;
 
-      // Independent, resilient reads. The entitlement gate and segment
-      // derivation fail closed internally (never throw); the portfolio compute
-      // can throw, so any rejection degrades to an honest empty, not a 500.
+      // Independent reads. The entitlement gate and segment derivation fail
+      // closed internally (never throw). The portfolio compute can throw, and
+      // a failed read is answered as one (below), never as an empty org.
       const [gateResult, segmentsResult, portfolioResult] = await Promise.allSettled([
         requireReportEntitlement(organizationId, 'portfolio.board_pack', 'portfolio'),
         deriveOrgSegments(organizationId),
@@ -254,16 +255,28 @@ export default function createInsightsCanvasRoutes(): Router {
       const segments: ReportSegment[] =
         segmentsResult.status === 'fulfilled' ? segmentsResult.value : [];
 
+      // Review round 1 (honest-state M5): a failed portfolio read was answered
+      // 200 with leadProgram null, so the canvas said "No program readiness
+      // yet" for a read that failed. It is a 503 now, the detail logged only;
+      // an organisation with no program (a fulfilled null) is still the 200
+      // empty.
       if (portfolioResult.status === 'rejected') {
-        logger.warn('org portfolio compute failed; degrading to empty', {
+        logger.error('org portfolio read failed', {
           organizationId,
           err:
             portfolioResult.reason instanceof Error
               ? portfolioResult.reason.message
               : String(portfolioResult.reason),
         });
+        return res.status(503).json({
+          success: false,
+          error: {
+            code: 'PORTFOLIO_UNAVAILABLE',
+            message: 'Program readiness could not be read just now. Try again in a moment.',
+          },
+        });
       }
-      const summary = portfolioResult.status === 'fulfilled' ? portfolioResult.value : null;
+      const summary = portfolioResult.value;
 
       // Report catalog: filter the seed to the org's segment(s), annotate each
       // with the org's entitlement verdict (pure). Identical to /taxonomy.

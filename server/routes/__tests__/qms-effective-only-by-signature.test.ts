@@ -20,6 +20,11 @@
  * This file covers 2 and 3. The pool fakes are SQL-aware over one document
  * row: an UPDATE without a status guard really does change an effective
  * document, so a route that lacks the guard fails here for the right reason.
+ *
+ * P1-29 / DP-32 (security review 2026-09-24): the same legacy door also reached
+ * `status = 'retired'` with no reason, no role gate and no ceremony, while the
+ * canonical `POST /api/mdx/qms/documents/:id/retire` became a signed
+ * transition. Door 2 now refuses `to=retired` as it refuses `to=effective`.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express, { type Request, type Response, type NextFunction } from 'express';
@@ -56,6 +61,12 @@ async function fakeQuery(sql: string, params: unknown[] = []) {
 vi.mock('../../db', () => ({ pool: { query: (sql: string, p?: unknown[]) => fakeQuery(sql, p) } }));
 vi.mock('../../services/audit/audit-write-outcome', () => ({
   recordAuditRow: async () => ({ persisted: true, chained: true }),
+}));
+// The QMS write routes are editor-gated (6582e3a3e). The gate has its own
+// tests; this suite is about what an editor may do, so the harness grants it.
+vi.mock('../../middleware/orgMembership', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../middleware/orgMembership')>()),
+  requireEditorAccess: (_req: Request, _res: Response, next: NextFunction) => next(),
 }));
 // /api/qms authenticates itself; the harness below stands in for the session.
 vi.mock('../../middleware/auth', () => ({
@@ -100,7 +111,7 @@ beforeEach(() => {
   H.sql = [];
 });
 
-describe('POST /api/qms/documents/:id/transition cannot approve', () => {
+describe('POST /api/qms/documents/:id/transition cannot approve, and cannot retire', () => {
   it('refuses to=effective and changes nothing', async () => {
     H.doc = docInState('in_review');
     const res = await request(app()).post('/api/qms/documents/11/transition').send({ to: 'effective' });
@@ -108,6 +119,16 @@ describe('POST /api/qms/documents/:id/transition cannot approve', () => {
     expect(res.body.error).toMatch(/electronic signature/i);
     expect(H.doc?.status).toBe('in_review');
     expect(H.doc?.approver_id).toBeNull();
+    expect(wrote()).toBe(false);
+  });
+
+  it('refuses to=retired and changes nothing: retirement is the signed retire route (P1-29 / DP-32)', async () => {
+    H.doc = docInState('effective');
+    const res = await request(app()).post('/api/qms/documents/11/transition').send({ to: 'retired' });
+    expect(res.status).toBe(422);
+    expect(res.body.error).toMatch(/electronic signature/i);
+    expect(res.body.error).toMatch(/\/api\/mdx\/qms\/documents\/:id\/retire/);
+    expect(H.doc?.status).toBe('effective');
     expect(wrote()).toBe(false);
   });
 

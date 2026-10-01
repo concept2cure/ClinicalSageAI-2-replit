@@ -13,8 +13,13 @@ import {
   assertAuditSealPostureForProduction,
   assertAuditChainSecretForProduction,
 } from '../services/audit/auditSealPosture';
-import { assertAiGovernancePostureForProduction } from '../startup/ai-governance-posture';
+import { assertAuditExportKeyPostureForProduction } from '../services/audit/auditExportKeyPosture';
+import {
+  assertAiGovernancePostureForProduction,
+  assertDeterministicModePostureForProduction,
+} from '../startup/ai-governance-posture';
 import { assertSensitivePlacementConfiguration } from '../services/ai-gateway/sensitive-placement-policy';
+import { assertPlacementRegistryConsistency } from '../services/ai-gateway/providers/placement';
 import { assertDurableStorageForProduction } from '../services/storage/storage-posture';
 
 type Environment = 'development' | 'staging' | 'production' | 'test';
@@ -302,6 +307,15 @@ assertAuditSealPostureForProduction();
 // records to stdout. A refusal a caller can catch is not a boot gate; this is.
 assertAuditChainSecretForProduction();
 
+// Audit EXPORT signing key: the third audit key, the one an inspector's signed
+// export is sealed under (P1-19b, DP-11). In production it must be provisioned
+// (>= 32 chars, distinct from the JWT secret), and its _PREV pair, if set,
+// complete and distinct; there is no accept flag. Before this, a deployment
+// without it sealed every export under the JWT secret, silently. Fires on
+// import (same contract as the asserts above). No-op outside production.
+// See server/services/audit/auditExportKeyPosture.ts.
+assertAuditExportKeyPostureForProduction();
+
 // AI-governance boot posture (runbook B19/B20, 2026-09-20): in production the
 // two AI content-safety gates default STRICT — AI_PII_ENFORCEMENT unset means
 // 'block', AI_GROUNDEDNESS_ENFORCE unset means enforced. An explicit permissive
@@ -312,7 +326,18 @@ assertAuditChainSecretForProduction();
 // import (same contract as the asserts above). No-op outside production. See
 // server/startup/ai-governance-posture.ts.
 assertAiGovernancePostureForProduction();
+// Deterministic mode (2026-09-28, launch row D2): AI_GATEWAY_DETERMINISTIC in
+// production makes AnA answer with fixed responses that can enter a governed
+// draft. It refuses to boot unless AI_GATEWAY_ACCEPT_DETERMINISTIC=true records
+// that risk, and AI_GOVERNANCE_REQUIRE_ENFORCE=true refuses it regardless. The
+// gateway enforces the same rule per request. No-op outside production.
+assertDeterministicModePostureForProduction();
 assertSensitivePlacementConfiguration();
+// Private-cloud residency (D6, 2026-09-25): a declared AI_BEDROCK_RESIDENCY /
+// AI_VERTEX_RESIDENCY that the region the client calls does not serve refuses
+// to boot, instead of making every residency-constrained tenant "compliant" on
+// the wrong continent. No-op outside production. See providers/placement.ts.
+assertPlacementRegistryConsistency();
 
 // Export configuration for the current environment
 export const config = {

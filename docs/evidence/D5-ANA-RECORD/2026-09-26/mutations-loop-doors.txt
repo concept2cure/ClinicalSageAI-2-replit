@@ -1,0 +1,6 @@
+agent records answered: CAUGHT ['× server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > records the turn and returns its status 32ms', '× server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > files the turn under the tenant the auth middl']
+agent records failed: CAUGHT ['× server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > records a failed turn 13ms']
+socket records answered: CAUGHT ['× server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records an answered turn and emits its status wi']
+socket stop is stopped: CAUGHT ['× server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records a stopped turn when the signal was abort']
+socket emits status: CAUGHT ['× server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records an answered turn and emits its status wi']
+error result is a failed step: CAUGHT ['× server/services/ana/__tests__/turn-record-loop.test.ts > recordLoopTurn > files the tool calls, an error result as a failed step']

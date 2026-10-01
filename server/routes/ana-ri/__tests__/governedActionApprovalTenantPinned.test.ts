@@ -40,13 +40,12 @@ vi.mock('../../../services/ana/run-control.js', async (importOriginal) => ({
   }),
 }));
 
-// Past the sign-off gate, so the request reaches the decision write. Reason-only
-// tier (no e-signature), a persisted audit row, and a command that succeeds.
-vi.mock('../../../services/ana-ri/part11-governance.js', async (importOriginal) => ({
-  ...(await importOriginal<Record<string, unknown>>()),
-  requiresPart11Signoff: vi.fn(() => true),
-  requiresEsignature: vi.fn(() => false),
-}));
+// Past the sign-off gate, so the request reaches the decision write: a real
+// reason-tier command (update_milestone — in the Part 11 governed set, not the
+// e-sign set), a persisted audit row, and a command that succeeds. This used to
+// mock requiresPart11Signoff/requiresEsignature over a made-up `lock_section`;
+// the route now takes the tier from governedTierOf and refuses a command that
+// is not propose-only, so the fixture has to be a command that exists.
 vi.mock('../../../services/auditService.js', () => ({
   default: { logAction: vi.fn(async () => ({ persisted: true })) },
 }));
@@ -76,7 +75,7 @@ beforeEach(() => {
   callerOrgId = ORG_A;
   lookups.length = 0;
   writes.length = 0;
-  pending = { toolUseId: 'tu-1', command: 'lock_section', params: {} };
+  pending = { toolUseId: 'tu-1', command: 'update_milestone', params: {} };
 });
 
 const REASON = 'Locking the CMC section before the filing';

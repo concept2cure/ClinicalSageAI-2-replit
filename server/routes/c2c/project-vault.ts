@@ -65,8 +65,11 @@ import {
   folderLabel,
 } from '../../services/vault/vault-filing.service.js';
 import { listClientDocuments } from '../../services/clinical-regulatory-evidence/evidence-spine.service.js';
+import { readVaultCoverage, type VaultCoverage } from '../../services/vault/vault-coverage.js';
+import { normalizeCtdCode, compareSectionCode } from '../../../shared/regulatory/section-code.js';
 import { writeChainedAuditRow } from '../../services/auditService.js';
 import { readRecordAuditHistory } from '../audit-trail-ledger.routes.js';
+import { readVersionFamily, supersededSql, versionCountLateral } from '../../services/vault/vault-version-family.js';
 import { setTenantContextTx } from '../../services/tenant/governed-tenant-context.js';
 import { requireEditorAccess } from '../../middleware/orgMembership.js';
 import { getStorageProvider, getStorageProviderFor } from '../../services/storage/index.js';
@@ -105,6 +108,13 @@ interface VaultDoc {
    *  refuses any other leaf. */
   mimeType?: string | null;
   filing?: UploadFiling;
+  /** The version's recorded descriptive fields, as stored (uploads only):
+   *  what Edit details starts from. */
+  details?: { documentTitle: string | null; documentType: string | null; classification: string | null };
+  /** How many versions the document has (VR-09); the leaf is its current one. */
+  versionCount?: number;
+  /** vault.documents.document_code (uploads only): a 409 at this code offers a check-in (VR-09). */
+  documentCode?: string | null;
 }
 
 /** The placement block for an uploaded document — mirrors vault-ingest. */
@@ -186,6 +196,12 @@ interface VaultDisplayShape {
     uploads: number | null;
   };
   tree: VaultFolder[];
+  /**
+   * What the Vault holds against the program's required sections (VR-15):
+   * counts of confirmed filings from the one resolver, with where the list
+   * came from, or why there is no figure. Not a readiness figure.
+   */
+  coverage?: VaultCoverage;
   /** Honest signal: the c2c document store is not provisioned in this env. */
   pendingStore?: boolean;
   /** Uploaded documents awaiting a person's filing decision. Counted over the
@@ -221,6 +237,8 @@ interface ProjectRow {
   id: string;
   name: string | null;
   product_type: string | null;
+  program_type?: string | null;
+  primary_agency?: string | null;
 }
 
 interface DocRow {
@@ -415,6 +433,7 @@ export interface UploadRow {
   document_code: string | null;
   document_title: string | null;
   document_type: string | null;
+  classification?: string | null;
   version: string | null;
   file_name: string | null;
   file_size: string | number | null;
@@ -428,6 +447,8 @@ export interface UploadRow {
   placement_rationale: string | null;
   updated_at: string | Date | null;
   owner_name: string | null;
+  /** Versions back through valid predecessors, this one included (VR-09). */
+  version_count?: number | null;
 }
 
 /**
@@ -496,11 +517,44 @@ export function uploadLeaf(view: VaultViewId, row: UploadRow): VaultDoc {
       confidence: row.placement_confidence,
       rationale: row.placement_rationale,
     },
+    details: {
+      documentTitle: row.document_title,
+      documentType: row.document_type,
+      classification: row.classification ?? null,
+    },
+    versionCount: row.version_count ?? 1,
+    documentCode: row.document_code,
   };
   if (placementStatus === 'unfiled') {
     leaf.flag = row.placement_rationale ?? 'Not filed into the dossier yet.';
   }
   return leaf;
+}
+
+/**
+ * A filed folder's leaves, in a stable order, each with its index number
+ * (VR-15). In a CTD view the number is the normalized section, since a dotted
+ * folder ordinal there would read as a CTD code ('3.1' for a Module 3
+ * document); a leaf with no section is '—' until it has one. Outside a CTD
+ * view the number is the folder's ordinal and the leaf's position. Ordered by
+ * section (CTD order), then title, then id, so the same documents number the
+ * same on every read.
+ */
+function indexedLeaves(view: VaultViewId, ordinal: number, rows: UploadRow[]): VaultDoc[] {
+  const ctd = view === 'pharma' || view === 'biotech';
+  const code = (r: UploadRow) => normalizeCtdCode(r.ctd_section);
+  const title = (r: UploadRow) => r.document_title || r.file_name || '';
+  const sorted = [...rows].sort((a, b) => {
+    const ca = code(a);
+    const cb = code(b);
+    if (ca !== cb) {
+      if (ca === null) return 1;
+      if (cb === null) return -1;
+      return compareSectionCode(ca, cb);
+    }
+    return title(a).localeCompare(title(b)) || String(a.id).localeCompare(String(b.id));
+  });
+  return sorted.map((r, i) => ({ ...uploadLeaf(view, r), num: ctd ? (code(r) ?? '—') : `${ordinal}.${i + 1}` }));
 }
 
 /** A folder id's label and the view it belongs to, for a folder the current
@@ -545,16 +599,17 @@ export function filingCabinet(view: VaultViewId, uploads: UploadRow[]): VaultFol
     id: 'cab-unfiled',
     code: '',
     label: 'Unfiled · needs review',
-    children: unfiled.map(u => uploadLeaf(view, u)),
+    // Not in the index: a section here is the classifier's suggestion, not a place.
+    children: unfiled.map(u => ({ ...uploadLeaf(view, u), num: '—' })),
   });
-  for (const folder of foldersForView(view)) {
+  foldersForView(view).forEach((folder, i) => {
     children.push({
       id: `cab-${folder.id}`,
       code: '',
       label: folder.label,
-      children: (byFolder.get(folder.id) ?? []).map(u => uploadLeaf(view, u)),
+      children: indexedLeaves(view, i + 1, byFolder.get(folder.id) ?? []),
     });
-  }
+  });
   if (otherView.length > 0) {
     children.push({
       id: 'cab-other-view',
@@ -562,6 +617,7 @@ export function filingCabinet(view: VaultViewId, uploads: UploadRow[]): VaultFol
       label: 'Filed under another view · needs review',
       children: otherView.map(u => ({
         ...uploadLeaf(view, u),
+        num: '—',
         flag: `Filed to ${whereFiled(u.folder_id!)}, which is not a folder in this program's current view. Move it to a folder here, or check the program's product type.`,
       })),
     });
@@ -969,7 +1025,7 @@ export default function createProjectVaultRoutes(): Router {
     try {
       // 1) Project (org-scoped) → name + product modality.
       const projRes = await pool.query(
-        `SELECT id, name, product_type
+        `SELECT id, name, product_type, program_type, primary_agency
            FROM regulatory_programs
           WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
           LIMIT 1`,
@@ -987,6 +1043,8 @@ export default function createProjectVaultRoutes(): Router {
       const view: VaultViewId = projSegs[0] ?? (await resolveOrgVaultView(orgId));
 
       // 3) The project's active document builds + their rule-pack section specs.
+      //    Owners are named through public.actor_name, not users, so an owner who
+      //    has left is still named (D3, 2026-09-29; docs/evidence/D3/2026-09-29-actor-names/).
       const docsRes = await pool.query(
         `SELECT d.id, d.doc_type, d.agency, d.rule_pack_version, d.title,
                 d.status, d.readiness, d.updated_at,
@@ -996,7 +1054,7 @@ export default function createProjectVaultRoutes(): Router {
            LEFT JOIN c2c_rule_packs rp
              ON rp.doc_type = d.doc_type AND rp.agency = d.agency
                 AND rp.version = d.rule_pack_version
-           LEFT JOIN users du ON du.id = d.owner_id
+           LEFT JOIN LATERAL public.actor_name(d.owner_id) du ON TRUE
           WHERE d.project_id = $1 AND d.org_id = $2
           ORDER BY d.updated_at DESC`,
         [id, orgId],
@@ -1022,7 +1080,7 @@ export default function createProjectVaultRoutes(): Router {
                   ${sectionHasContentSql('ds.content')} AS has_content,
                   COALESCE(u.name, u.email) AS owner_name
              FROM c2c_document_sections ds
-             LEFT JOIN users u ON u.id = ds.owner_id
+             LEFT JOIN LATERAL public.actor_name(ds.owner_id) u ON TRUE
             WHERE ds.document_id = ANY($1::text[])
               AND EXISTS (SELECT 1 FROM c2c_documents d
                            WHERE d.id = ds.document_id AND d.org_id = $2)`,
@@ -1107,6 +1165,10 @@ export default function createProjectVaultRoutes(): Router {
                    AND rp.organization_id = $2
                    AND rp.deleted_at IS NULL
               )`;
+      /** The tree lists a document once, at its current version (VR-09): a row
+       *  a later live version of its family supersedes is not a document of its
+       *  own. The checksum join below keeps the whole program, every version. */
+      const headsWhere = `${uploadsWhere} AND NOT ${supersededSql('d')}`;
       let uploads: UploadRow[] = [];
       let uploadsStoreMissing = false;
       let uploadsWindow: { shown: number; total: number; truncated: boolean } | undefined;
@@ -1114,15 +1176,17 @@ export default function createProjectVaultRoutes(): Router {
       try {
         // cap + 1 detects the overflow without a second round trip.
         const upRes = await pool.query(
-          `SELECT d.id, d.document_code, d.document_title, d.document_type,
+          `SELECT d.id, d.document_code, d.document_title, d.document_type, d.classification::text AS classification,
                   d.version, d.file_name, d.file_size, d.mime_type, d.content_hash,
                   d.folder_id, d.evidence_kind, d.ctd_section,
                   d.placement_status, d.placement_confidence, d.placement_rationale,
                   d.updated_at,
-                  COALESCE(u.name, u.email) AS owner_name
+                  COALESCE(u.name, u.email) AS owner_name,
+                  vc.version_count
              FROM vault.documents d
-             LEFT JOIN users u ON u.id = d.created_by
-            WHERE ${uploadsWhere}
+             LEFT JOIN LATERAL public.actor_name(d.created_by) u ON TRUE
+             ${versionCountLateral('d')}
+            WHERE ${headsWhere}
             ORDER BY d.updated_at DESC
             LIMIT $3`,
           [id, orgId, uploadsCap + 1],
@@ -1139,7 +1203,7 @@ export default function createProjectVaultRoutes(): Router {
                        OR COALESCE(d.placement_status, 'unfiled') = 'unfiled'
                   )::int AS unfiled
              FROM vault.documents d
-            WHERE ${uploadsWhere}`,
+            WHERE ${headsWhere}`,
           [id, orgId],
         );
         const counts = (cntRes.rows[0] ?? {}) as { total?: number; unfiled?: number };
@@ -1270,6 +1334,15 @@ export default function createProjectVaultRoutes(): Router {
         cmcArtifacts,
         uploads: uploadsWindow ? uploadsWindow.total : null,
       };
+      // 8) Vault coverage (VR-15): never throws; a store it cannot read is
+      //    reported as unavailable, not as zero.
+      const coverage = await readVaultCoverage(pool, {
+        view,
+        programType: project.program_type,
+        primaryAgency: project.primary_agency,
+        programId: id,
+        organizationId: orgId,
+      });
       const data: VaultDisplayShape = {
         program: project.name || 'Vault',
         spine: vaultViewLabel(view),
@@ -1278,6 +1351,7 @@ export default function createProjectVaultRoutes(): Router {
           documentCounts.authored + (documentCounts.cmcArtifacts ?? 0) + (documentCounts.uploads ?? 0),
         documentCounts,
         tree,
+        coverage,
         unfiledCount,
         ...(uploadsWindow ? { uploadsWindow } : {}),
         ...(dataRoom ? { dataRoom } : {}),
@@ -1372,6 +1446,9 @@ export default function createProjectVaultRoutes(): Router {
     const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
     const limit = Math.min(Math.max(parseInt(String(req.query.limit ?? '25'), 10) || 25, 1), 100);
     const offset = Math.max(parseInt(String(req.query.offset ?? '0'), 10) || 0, 0);
+    // Current versions only unless asked (VR-09): an earlier version is the same
+    // document, and listing it beside its successor reads as two.
+    const includeSuperseded = req.query.includeSuperseded === 'true';
 
     /* An empty query is not "match everything" — that is the browse view, which
        is what GET /:id already serves. Returning the whole vault here would make
@@ -1419,7 +1496,8 @@ export default function createProjectVaultRoutes(): Router {
                    AND rp.organization_id = $2
                    AND rp.deleted_at IS NULL
               )
-              AND ${MATCH}`;
+              AND ${MATCH}${includeSuperseded ? '' : `
+              AND NOT ${supersededSql('d')}`}`;
 
       const counted = await pool.query(
         `SELECT count(*)::int AS total
@@ -1430,7 +1508,8 @@ export default function createProjectVaultRoutes(): Router {
 
       const rows = await pool.query(
         `SELECT d.id, d.document_title, d.file_name, d.document_type, d.file_size,
-                d.folder_id, d.ctd_section, d.placement_status, d.created_at,
+                d.folder_id, d.ctd_section, d.placement_status, d.created_at, d.version,
+                NOT ${supersededSql('d')} AS current,
                 ts_rank_cd(
                   vault.document_search_vector(d.document_title, d.file_name, left(d.extracted_text, 900000)),
                   websearch_to_tsquery('english', $3)
@@ -1454,6 +1533,7 @@ export default function createProjectVaultRoutes(): Router {
           total: counted.rows[0]?.total ?? 0,
           limit,
           offset,
+          includeSuperseded,
           results: rows.rows.map(r => ({
             id: r.id,
             title: r.document_title || r.file_name || 'Untitled',
@@ -1463,6 +1543,8 @@ export default function createProjectVaultRoutes(): Router {
             folderId: r.folder_id,
             ctdSection: r.ctd_section,
             placementStatus: r.placement_status,
+            version: r.version ?? null,
+            current: Boolean(r.current),
             // Only offered when the match was in the body; a snippet echoing the
             // title back is noise.
             snippet: typeof r.snippet === 'string' && r.snippet.trim() ? r.snippet : null,
@@ -1481,6 +1563,37 @@ export default function createProjectVaultRoutes(): Router {
         error: 'SEARCH_FAILED',
         message: 'The vault could not be searched. This is not an empty result — nothing was searched.',
       });
+    }
+  });
+
+  /* ── GET /:id/documents/:documentId/versions ─────────────────────────────
+     Every version of the document, newest first, from any of its versions
+     (VR-09): version, SHA-256, size, uploader, date, which one is current, and
+     whether its link to a predecessor is one the database rules admit
+     (vault-version-family.ts). The tree lists only the current version, so this
+     is where an earlier one is found; any version downloads through the one
+     hash-verified, audited route below. The document must be this program's
+     and this organization's, as for a download. */
+  router.get('/:id/documents/:documentId/versions', async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const id = Array.isArray(req.params.id) ? (req.params.id[0] ?? '') : req.params.id;
+    const documentId = String(req.params.documentId ?? '');
+    if (!UUID_RE.test(id) || !UUID_RE.test(documentId)) {
+      return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+    }
+    try {
+      const versions = await readVersionFamily(pool, { programId: id, organizationId: orgId, documentId });
+      if (!versions) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+      return res.json({ success: true, data: { versions } });
+    } catch (err) {
+      if (isMissingStore(err)) {
+        return res.status(503).json({ success: false, error: 'STORE_UNAVAILABLE',
+          message: 'The vault uploads store is not provisioned in this environment.' });
+      }
+      logger.error('vault versions read failed', { documentId, err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({ success: false, error: 'VERSIONS_UNAVAILABLE',
+        message: "This document's versions could not be read. Nothing is shown rather than an incomplete list." });
     }
   });
 
@@ -1515,15 +1628,23 @@ export default function createProjectVaultRoutes(): Router {
       );
       if (docRes.rows.length === 0) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
 
+      // Every version's trail (VR-09). A deleted version has no live family,
+      // so its own trail is read, as before.
+      const family = await readVersionFamily(pool, { programId: id, organizationId: orgId, documentId });
       client = await pool.connect();
       await client.query('BEGIN');
       await setTenantContextTx(client, orgId);
       const history = await readRecordAuditHistory(client, orgId, {
         tableName: 'vault_document',
-        recordId: documentId,
+        recordId: family ? family.map(v => v.id) : documentId,
       });
       await client.query('COMMIT');
-      return res.json({ success: true, data: { entries: history.data, chain: history.meta.chain } });
+      // Which version each event was recorded against (VR-09): the family's
+      // trail is one list, and a download of v1.0 must read as v1.0's.
+      const versionOf = (e: { target?: string | null; targetRef?: string | null }) =>
+        family?.find((v) => [e.target, e.targetRef].some((t) => typeof t === 'string' && t.endsWith(v.id)))?.version ?? null;
+      const entries = history.data.map((e) => ({ ...e, version: versionOf(e) }));
+      return res.json({ success: true, data: { entries, chain: history.meta.chain } });
     } catch (err) {
       await client?.query('ROLLBACK').catch(() => undefined);
       logger.error('vault document history read failed', {
@@ -1721,6 +1842,42 @@ export default function createProjectVaultRoutes(): Router {
         err: err instanceof Error ? err.message : String(err),
       });
       return res.status(500).json({ success: false, error: 'Failed to record the filing decision' });
+    }
+  });
+
+  /* POST /:id/documents/:documentId/details — Edit details (VR-05, D5).
+     A version's title, type and classification, changed by a person with a
+     reason for change. The writer (vault-metadata-edit.service.ts) checks the
+     role, the reason, the vocabularies and program ownership, and records each
+     field's before and after with the reason in one chained audit row; this
+     route only carries the request to it, behind the same governed-write gate
+     as filing. */
+  router.post('/:id/documents/:documentId/details', requireEditorAccess, async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    const text = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
+    try {
+      const { editVaultDocumentMetadata } = await import('../../services/vault/vault-metadata-edit.service.js');
+      const outcome = await editVaultDocumentMetadata({
+        programId: String(req.params.id),
+        documentId: String(req.params.documentId),
+        organizationId: orgId,
+        userId: (req as any).user?.id ?? null,
+        documentTitle: text(body.documentTitle),
+        documentType: text(body.documentType),
+        classification: text(body.classification),
+        reason: body.reason,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      if (!outcome.ok) {
+        return res.status(outcome.status).json({ success: false, error: outcome.code, message: outcome.message });
+      }
+      return res.json({ success: true, unchanged: outcome.unchanged, changes: outcome.changes });
+    } catch (err: unknown) {
+      logger.error('project vault details error', { err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({ success: false, error: 'The details could not be saved. Nothing was changed.' });
     }
   });
 

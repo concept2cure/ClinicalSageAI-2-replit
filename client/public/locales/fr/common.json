@@ -33,5 +33,11 @@
   "language": {
     "label": "Langue",
     "select": "Choisir la langue"
+  },
+  "session": {
+    "stillThere": "Toujours là ?",
+    "signOutIn": "Vous serez déconnecté dans {{seconds}} secondes pour cause d'inactivité.",
+    "staySignedIn": "Rester connecté",
+    "signOutNow": "Se déconnecter maintenant"
   }
 }

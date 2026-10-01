@@ -95,6 +95,9 @@ export const VAULT_DDL = `
     content_hash TEXT NOT NULL,
     classification TEXT DEFAULT 'INTERNAL',
     retention_policy TEXT, parent_document_id UUID, supersedes_id UUID,
+    -- The retention clock the ingest now starts at admission (9f43e7e9, P1-22):
+    -- today plus the named, active policy's days (migrations/20260608_vault_retention.sql).
+    retention_until DATE,
     extracted_text TEXT, page_count INTEGER, word_count INTEGER,
     folder_id TEXT, evidence_kind TEXT, ctd_section TEXT,
     placement_status TEXT NOT NULL DEFAULT 'unfiled',
@@ -108,6 +111,15 @@ export const VAULT_DDL = `
     UNIQUE (program_id, document_code, version)
   );
   CREATE UNIQUE INDEX idx_vault_documents_program_hash_unique ON vault.documents (program_id, content_hash);
+  -- The policies the ingest reads the retention days from (the columns it
+  -- reads, from migrations/20260608_vault_retention.sql). Empty here: a document
+  -- that names no policy, or an unknown one, gets no date.
+  CREATE TABLE vault.retention_policies (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    policy_name TEXT NOT NULL UNIQUE,
+    retention_days INTEGER NOT NULL,
+    active BOOLEAN NOT NULL DEFAULT TRUE
+  );
 `;
 
 export async function mint(u: { id: string; organizationId?: number; email: string; name: string }): Promise<string> {

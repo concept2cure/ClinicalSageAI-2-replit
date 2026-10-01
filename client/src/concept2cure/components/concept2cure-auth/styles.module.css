@@ -106,6 +106,19 @@
   line-height: 1.45;
 }
 .alert svg { flex: 0 0 auto; margin-top: 1px; }
+/* A statement, not a fault: why the last session ended (inactivity, lifetime). */
+.notice {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 10px 12px;
+  margin-bottom: 16px;
+  border-radius: var(--radius-md, 6px);
+  background: var(--warning-muted, var(--bg-100));
+  border: 1px solid color-mix(in oklab, var(--warning) 25%, transparent);
+  color: var(--text-200, var(--ink));
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.notice svg { flex: 0 0 auto; margin-top: 1px; color: var(--warning); }
 
 /* ─── Form fields ─── */
 .form {

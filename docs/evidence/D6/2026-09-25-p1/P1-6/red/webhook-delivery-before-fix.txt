@@ -1,0 +1,16 @@
+$ git rev-parse --short HEAD  # webhook-notifications.ts unchanged; test added
+f47aa229
+ × server/services/automation/__tests__/webhook-notifications.test.ts > webhook delivery (IAM-13 / P1-6) > delivers through safeFetch with redirects refused, never through bare fetch 104ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+ × server/services/automation/__tests__/webhook-notifications.test.ts > webhook delivery (IAM-13 / P1-6) > a refusal by the fetcher (private address, redirect) is a failed delivery, not a thrown error 7ms
+   → expected 'success' to be 'failed' // Object.is equality
+ × server/services/automation/__tests__/webhook-notifications.test.ts > webhook delivery (IAM-13 / P1-6) > a non-2xx response is recorded by status alone; the destination body is never echoed 5ms
+   → expected 'HTTP 500: internal hostname db-primar…' to be 'HTTP 500' // Object.is equality
+ × server/services/automation/__tests__/webhook-notifications.test.ts > webhook delivery (IAM-13 / P1-6) > a 2xx response is a success with the status code 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+AssertionError: expected 'success' to be 'failed' // Object.is equality
+AssertionError: expected 'HTTP 500: internal hostname db-primar…' to be 'HTTP 500' // Object.is equality
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+exit=1

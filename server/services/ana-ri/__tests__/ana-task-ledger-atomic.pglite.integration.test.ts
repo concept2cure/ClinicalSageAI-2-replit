@@ -20,6 +20,7 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vites
 import { PGlite } from '@electric-sql/pglite';
 import { AUDIT_LOGS_PGLITE_DDL } from '../../../db/pglite-harness';
 import { GOVERNED_ACTION_LEDGER_PGLITE_DDL } from './governed-action-ledger.fixture';
+import { pglitePool, TASK_GRAPH_PGLITE_DDL } from './pglite-pool.fixture';
 
 let pg: PGlite;
 
@@ -38,11 +39,13 @@ const run = async (sql: string, params?: unknown[]) => {
   };
 };
 // PGlite is one connection, so a "client" is that connection: BEGIN, the
-// writes and COMMIT/ROLLBACK issued through it form one real transaction.
-const client = { query: run, release: () => undefined };
+// writes and COMMIT/ROLLBACK issued through it form one real transaction. The
+// pool answers pg's and Drizzle's call shapes (a completion's cascade runs
+// Drizzle over the same client).
+const pool = pglitePool(() => pg);
 vi.mock('../../../db', () => ({
-  pool: { query: (sql: string, p?: unknown[]) => run(sql, p), connect: async () => client },
-  getPool: () => ({ query: (sql: string, p?: unknown[]) => run(sql, p), connect: async () => client }),
+  pool: { query: (...a: Parameters<typeof pool.query>) => pool.query(...a), connect: () => pool.connect() },
+  getPool: () => ({ query: (...a: Parameters<typeof pool.query>) => pool.query(...a), connect: () => pool.connect() }),
   db: {},
 }));
 
@@ -73,7 +76,10 @@ const USER = 1;
 
 async function command(name: string, params: Record<string, unknown>) {
   const { executeCommands } = await import('../command-executor');
-  const res = await executeCommands([{ command: name, params }] as never, { organizationId: ORG, userId: USER } as never);
+  // A person confirmed the proposal: since 2026-09-26 (audit DP-08, P0-12)
+  // every write is a proposal, and the ledger atomicity these cases pin is
+  // the execution after that confirmation.
+  const res = await executeCommands([{ command: name, params }] as never, { organizationId: ORG, userId: USER, humanConfirmed: true } as never);
   return (res as Array<{ success: boolean; message?: string; data?: Row }>)[0];
 }
 
@@ -119,6 +125,7 @@ beforeAll(async () => {
   await pg.exec(DDL);
   await pg.exec(AUDIT_LOGS_PGLITE_DDL);
   await pg.exec(GOVERNED_ACTION_LEDGER_PGLITE_DDL);
+  await pg.exec(TASK_GRAPH_PGLITE_DDL);
   await pg.exec(`INSERT INTO organizations (id, name) VALUES (${ORG}, 'Concept2Cure')`);
   await pg.exec(`INSERT INTO projects (id, organization_id, name) VALUES (${PROJECT}, ${ORG}, 'BX-204')`);
   await import('../command-executor');

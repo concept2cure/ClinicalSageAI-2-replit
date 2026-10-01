@@ -59,7 +59,7 @@ import { AnaOutputCards } from '../AnaOutputs';
 import { useAgentActivity } from '../useAgentActivity';
 import { useProgressDock } from '../workDock';
 import { shellProgramName } from '../shellProject';
-import { useChatUpload, attachmentReadLabel, composeTurn } from '../../hooks/useChatUpload';
+import { useChatUpload, readyAttachmentLabel, composeTurn } from '../../hooks/useChatUpload';
 import { SignoffList } from '../SignoffList';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 import { AnswerLead } from '../AnswerLead';
@@ -678,7 +678,7 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
 
       {/* eCTD tree */}
       <aside className="ec-tree">
-        <div className="ec-tree-head"><b>eCTD backbone</b><span className="mono">M1--5</span></div>
+        <div className="ec-tree-head"><b>eCTD backbone</b><span className="mono">M1–M5</span></div>
         <div className="ec-tree-search">{I.search}<input aria-label="Find a section" placeholder="Find section..." value={treeQuery} onChange={(e) => setTreeQuery(e.target.value)} /></div>
         {loading ? (
           <div role="status" className="ec-empty">Loading eCTD documents…</div>
@@ -750,7 +750,9 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
           <b>AnA</b>
           {/* "live" was asserted from token presence alone, including when every
     read on the surface had failed. */}
-          <span className="hint">co-authoring &sect;{activeRef || '—'} — bound to the dossier</span>
+          {/* With nothing open this read "co-authoring §— — bound to the
+              dossier" beside "No document selected". */}
+          <span className="hint">{activeRef ? <>co-authoring &sect;{activeRef}</> : 'No document open'}</span>
           <AnaProgressChip
             ref={dock.chipRef}
             messages={anaChat.messages}
@@ -832,7 +834,7 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
                   <span key={a.id} className="ec-att-chip" data-status={a.status}>
                     {I.paperclip} {a.name}
                     {a.status === 'uploading' && <em> · reading…</em>}
-                    {a.status === 'ready' && <em> · {attachmentReadLabel(a.extractionMethod, a.extractionWords) ?? 'read'}</em>}
+                    {a.status === 'ready' && <em> · {readyAttachmentLabel(a.extractionMethod, a.extractionWords)}</em>}
                     {a.status === 'error' && <em> · {a.error ?? 'failed'}</em>}
                     <button type="button" className="ec-att-x" aria-label={`Remove ${a.name}`} onClick={() => ecRemoveAttachment(a.id)}>×</button>
                   </span>
@@ -898,14 +900,17 @@ export function EctdCoauthor({ liveDrive, onNav }: OwnedSurfaceViewProps) {
                   hint="These are your organization's co-author documents — sign in and retry, or check the service is reachable."
                 />
               ) : !activeDoc ? (
+                /* This said "Create a co-author document … or ask AnA to start
+                   one" over a surface with no create control, and no AnA tool
+                   writes a co-author document. They are made by placing a
+                   document into a filing (AuthoringPlaceIntoFiling → POST
+                   /api/coauthor/documents), so the empty state names that path
+                   and opens the editor that has it. */
                 <EmptyState
                   icon={I.fileText}
                   title="No eCTD documents yet"
-                  hint={
-                    <>
-                      Create a co-author document to draft it against the eCTD backbone — it is persisted as a governed document — or ask AnA to start one.
-                    </>
-                  }
+                  hint="A co-author document is created when a document is placed into a filing. In the document editor, open a saved document and use Place into filing — it then appears here on the eCTD backbone."
+                  action={{ label: 'Open the document editor', onAct: () => onNav('document-authoring') }}
                 />
               ) : (
                 <>

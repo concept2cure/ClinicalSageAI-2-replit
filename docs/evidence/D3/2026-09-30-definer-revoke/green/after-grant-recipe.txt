@@ -1,0 +1,7 @@
+# After the grant recipe (refreshRuntimeRoleGrants, what deploy-migrate runs after the migration set): c2c_d3c
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > the runtime role exists, so the privilege check means something 12ms
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > every baseline entry carries a status and a reason 1ms
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > self-test: a definer function planted in a rolled-back transaction is caught 8ms
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > self-test: the runtime role's grant recipe revokes an unlisted one, and keeps a listed one 11ms
+ ✓ tests/db/security-definer-functions.dbtest.ts > only reviewed SECURITY DEFINER functions are callable by the runtime role (D3) > no callable definer function is missing from the reviewed allowlist 2ms
+      Tests  5 passed (5)

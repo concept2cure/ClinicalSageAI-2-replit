@@ -88,8 +88,9 @@ describe('vault search carries the org predicate in-statement', () => {
     const [counted, rows] = vaultReads();
     // Both are built from the same `searchWhere`, so the predicate text after
     // WHERE must be identical — a total taken over a different set is a wrong
-    // number, not a display detail.
-    const whereOf = (s: string) => s.slice(s.indexOf('WHERE')).replace(/ORDER BY[\s\S]*$/, '').trim();
+    // number, not a display detail. The statement's own WHERE starts a line; a
+    // subquery in the select list (the row's `current` flag) has its WHERE inline.
+    const whereOf = (s: string) => s.slice(s.search(/\n\s*WHERE\s/)).replace(/ORDER BY[\s\S]*$/, '').trim();
     expect(whereOf(counted.sql)).toBe(whereOf(rows.sql));
   });
 

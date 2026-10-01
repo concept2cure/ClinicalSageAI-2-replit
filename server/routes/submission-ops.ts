@@ -18,12 +18,14 @@
  * - Command center aggregates
  */
 import { Router, Request, Response } from 'express';
+import { resolveActorNames } from '../services/tenant/actor-names';
 import { z } from 'zod';
 import * as fs from 'fs';
 import { loadUnifiedWork } from '../services/unified-work/unified-work-view';
 import * as path from 'path';
 import { createHash } from 'crypto';
 import { db, pool } from '../db';
+import { projectBelongsToTenant } from '../services/cmc/project-membership';
 import {
   c2cSubmissionPackages,
   c2cPackageSections,
@@ -39,7 +41,6 @@ import {
   concept2cureArtifacts,
   concept2cureReviewTasks,
   concept2cureReviewAssignments,
-  users,
 } from '../../shared/schema';
 import { eq, and, desc, sql, count, inArray, isNull, asc } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
@@ -234,6 +235,12 @@ router.post('/packages', requireEditorAccess, async (req: Request, res: Response
       return res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors });
     }
     const { projectId, packageFamily, title, description, targetDate, sections } = parsed.data;
+    /* The package's project is a projects row of this organization (PF-03).
+       It was taken from the body as given, so a package, its sections and its
+       readiness could sit on another organization's project. */
+    if (!(await projectBelongsToTenant({ organizationId: orgId, projectId: String(projectId) }, pool))) {
+      return res.status(404).json({ error: 'Project not found', code: 'PROJECT_NOT_FOUND' });
+    }
 
     const packageId = `pkg_${randomUUID()}`;
     const [pkg] = await db
@@ -864,15 +871,11 @@ router.get('/packages/:packageId/milestones', async (req: Request, res: Response
           .filter((id: unknown): id is number => typeof id === 'number')
       )
     );
+    // Through actor_name, so a creator who has since left is still named
+    // (tenant/actor-names.ts; D3 2026-09-29).
     const creatorNames = new Map<number, string>();
-    if (creatorIds.length > 0) {
-      const creators = await db
-        .select({ id: users.id, name: users.name })
-        .from(users)
-        .where(inArray(users.id, creatorIds));
-      for (const u of creators) {
-        if (u.name) creatorNames.set(u.id, u.name);
-      }
+    for (const [id, a] of await resolveActorNames(creatorIds)) {
+      if (a.name) creatorNames.set(id, a.name);
     }
 
     // Attach sections for each milestone
@@ -2587,6 +2590,10 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
           operation: 'delete',
           ...(l.md5 ? { md5: l.md5 } : {}),
           ...(l.modifiedFile ? { modifiedFile: l.modifiedFile } : {}),
+          // Which document left, by identity: without it the filed history
+          // recorded only a path, and the fold kept the document on file
+          // (2026-10-01, W5/D7, sweep F10).
+          ...(l.leafKey ? { leafKey: l.leafKey } : {}),
         });
       }
       ctdLeaves.length = 0;

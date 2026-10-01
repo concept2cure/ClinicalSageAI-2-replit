@@ -178,7 +178,7 @@ describe('runAuditArchive', () => {
 
   it('a door that reports a count other than the batch size is treated as a refusal', async () => {
     const client = pgClientWithRows([{ id: uuid(1), created_at: COLD_1, tenant_id: 1, action: 'a' }]);
-    client.query.mockImplementationOnce(async (sql: string, params?: any[]) => ({ rows: [{ id: uuid(1), created_at: COLD_1, tenant_id: 1, action: 'a' }] }));
+    client.query.mockImplementationOnce(async () => ({ rows: [{ id: uuid(1), created_at: COLD_1, tenant_id: 1, action: 'a' }] }));
     client.query.mockImplementationOnce(async () => ({ rows: [{ deleted: 0 }] }));
 
     const result = await runAuditArchive(client as any, { olderThan: new Date('2025-01-01Z'), batchSize: 10, sink: okSink() });

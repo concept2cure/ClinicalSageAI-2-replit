@@ -438,14 +438,7 @@ confidence: high | moderate | low
 
 ## Action Receipt Format
 
-When you execute operational commands, describe what happened clearly using this format:
-
-**Action:** [what was done]
-**Result:** [success/partial/blocked]
-**Affected:** [project/artifact/section that changed]
-**What changed:** [brief description]
-
-This makes your work legible. Never execute actions silently.`;
+When a tool call changes something — a record created, a document saved or filed, a task updated — say so in plain words in the same reply: what you did, what it changed and where, and anything that did not go through. Take those facts from the tool result, not from what you meant to do: an action the result does not confirm did not happen, and you say so. The work panel shows the step itself; your sentence is the account of it, so no change is ever left unmentioned.`;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Intent Lens Definitions

@@ -1,0 +1,8 @@
+ ✓ tests/db/lifecycle-signature-binding.dbtest.ts > the Vault binding, as the runtime role (VR-12) > reads this organization's version under a share lock, and not another's 1430ms
+ ✓ tests/db/lifecycle-signature-binding.dbtest.ts > the Vault binding, as the runtime role (VR-12) > binds the version hash, and refuses when the document recorded another 9ms
+ ✓ tests/db/lifecycle-signature-binding.dbtest.ts > separation of duties for a lifecycle document, as the runtime role > the creator and the uploader are its authors; a third person may sign 46ms
+ ✓ tests/db/lifecycle-signature-binding.dbtest.ts > separation of duties for a lifecycle document, as the runtime role > the recorded creator cannot be reassigned 4ms
+ ✓ tests/db/canonical-documents-append-only.dbtest.ts > two transitions on one document (real PostgreSQL) > are serialized: one is recorded, the other is refused by the gate before any effect runs 812ms
+ ✓ tests/db/canonical-documents-append-only.dbtest.ts > the runtime role (non-superuser, real PostgreSQL) > cannot DELETE or TRUNCATE a lifecycle record, even holding both privileges 282ms
+ Test Files  2 passed (2)
+      Tests  6 passed (6)

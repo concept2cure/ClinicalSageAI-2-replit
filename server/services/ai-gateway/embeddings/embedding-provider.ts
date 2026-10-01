@@ -28,6 +28,8 @@
  * `embedding` — BEFORE the SDK client is constructed. A refusal is a terminal
  * `GatewayPolicyError`; the client is never built and nothing is sent. The
  * organisation comes from the request, else from the running tenant scope.
+ * Once the provider answers, the call is recorded on the ledger
+ * (`AIGateway.recordEmbeddingCall`): a served row, or a failure row.
  *
  * @module server/services/ai-gateway/embeddings/embedding-provider
  */
@@ -131,7 +133,8 @@ class OpenAICompatibleEmbeddingProvider implements EmbeddingProvider {
     // by the corpus runtime early in boot. A refusal throws GatewayPolicyError.
     const texts = Array.isArray(req.input) ? req.input : [req.input];
     const { getGateway } = await import('../gateway.js');
-    await getGateway().authorizeEmbedding({
+    const gateway = getGateway();
+    const authorization = await gateway.authorizeEmbedding({
       organizationId: req.organizationId ?? scopedOrganizationId(),
       provider: this.kind,
       texts,
@@ -148,17 +151,27 @@ class OpenAICompatibleEmbeddingProvider implements EmbeddingProvider {
     // omit it when not requested so servers that reject the field still work.
     if (req.dimensions) params.dimensions = req.dimensions;
 
-    const res: any = await this.getClient().embeddings.create(params);
+    // The call is recorded on the ledger either way (gateway.recordEmbeddingCall):
+    // a served row, or a failure row before the error goes back to the caller.
+    let res: any;
+    try {
+      res = await this.getClient().embeddings.create(params);
+    } catch (error: any) {
+      await gateway.recordEmbeddingCall(authorization, { provider: this.kind, model, error: error?.message ?? String(error) });
+      throw error;
+    }
     const embeddings: number[][] = (res.data || [])
       .sort((a: any, b: any) => (a.index ?? 0) - (b.index ?? 0))
       .map((d: any) => d.embedding as number[]);
 
-    return {
+    const result: EmbeddingProviderResult = {
       embeddings,
       model: res.model || model,
       provider: this.kind,
       inputTokens: res.usage?.prompt_tokens || res.usage?.total_tokens || 0,
     };
+    await gateway.recordEmbeddingCall(authorization, { provider: this.kind, model: result.model, inputTokens: result.inputTokens });
+    return result;
   }
 }
 

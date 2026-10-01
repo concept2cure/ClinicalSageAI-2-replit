@@ -137,9 +137,24 @@ WHERE c.table_schema NOT IN ('pg_catalog', 'information_schema')
 --
 -- Every schema, not only public (ledger L203): a child outside public is the
 -- same shape, and that migration's chained list takes schema-qualified names.
--- An edge into identity.users does not count. A row that names a user is
--- that user's, not a tenant's, and those children (cognitive_audit.*,
--- federated_ml.*) are recorded, not policied.
+-- An edge into identity.users or public.users does not count. A row that names
+-- a user is that user's, not a tenant's, and those children (cognitive_audit.*,
+-- federated_ml.*; public.drafting_tasks, notification_preferences,
+-- user_presence) are recorded, not policied. (public.platform_role_grants is
+-- policied — platform-scope writes only, 20260928_platform_role_grants_platform_writes.sql.) public.users
+-- joined this clause on 2026-09-28, when it gained row security of its own
+-- (below); before that its children were never flagged, so nothing is newly
+-- exempted.
+--
+-- The edge OUT of public.users into organizations (users.default_organization_id)
+-- is not carved out. From 2026-09-26 to 2026-09-28 it was, as "a preference
+-- pointer, not tenancy", so that an install from blank would pass once
+-- 20260926_organizations_own_writes.sql put RLS on organizations (ba797ca6d) —
+-- a classification, not a clearance: public.users (password hash, MFA secret)
+-- was readable from every tenant scope. migrations/20260928_users_membership_rls.sql
+-- now scopes it by membership (docs/evidence/D3/2026-09-28-users-rls/), in the
+-- same set as the organizations policy, so the edge passes on its merits, and
+-- this check fails again if users ever loses row security.
 UNION ALL
 SELECT DISTINCT cn.nspname || '.' || c.relname || ' (child of ' || pn.nspname || '.' || p.relname || ', row security off)'
 FROM pg_class c
@@ -148,7 +163,7 @@ JOIN pg_constraint k ON k.conrelid = c.oid AND k.contype = 'f'
 JOIN pg_class p ON p.oid = k.confrelid
 JOIN pg_namespace pn ON pn.oid = p.relnamespace
 WHERE cn.nspname NOT IN ('pg_catalog', 'information_schema')
-  AND NOT (pn.nspname = 'identity' AND p.relname = 'users')
+  AND NOT (pn.nspname IN ('identity', 'public') AND p.relname = 'users')
   AND c.relkind = 'r'
   AND p.relrowsecurity
   AND NOT EXISTS (

@@ -182,7 +182,14 @@ describe('embedding placement gate (before the SDK client exists)', () => {
     });
     const provider = getEmbeddingProvider();
 
-    await expect(provider.embed({ input: [PHI_TEXT, PLAIN_TEXT] })).rejects.toMatchObject({
+    // Vault ingestion embeds inside a tenant scope; an unbound production call
+    // refuses earlier (DENY_TENANT_POLICY, pinned in
+    // tenant-placement-boundary.test.ts). This case is about the decider.
+    await expect(
+      runWithTenantScope({ tenantId: '7', source: 'test' }, () =>
+        provider.embed({ input: [PHI_TEXT, PLAIN_TEXT] }),
+      ),
+    ).rejects.toMatchObject({
       name: GatewayPolicyError.name,
       message: expect.stringContaining('DENY_UNAPPROVED_INTENDED_USE'),
     });
@@ -226,7 +233,23 @@ describe('embedding placement gate (before the SDK client exists)', () => {
     expect(sdk.construct).toHaveBeenCalledWith(expect.objectContaining({ baseURL: 'http://embedder.internal:8080/v1' }));
     // The local server serves its own model; the caller's OpenAI model id is not forwarded.
     expect(sdk.create).toHaveBeenCalledWith(expect.objectContaining({ model: 'bge-large-en-v1.5' }));
-    expect((getGateway() as any).auditLogger.getRecentEntries()).toHaveLength(0);
+    // Served, so recorded (D6, 2026-09-29): until then an allowed embedding left
+    // no ledger row, and PHI embedded on-prem could not be shown from the ledger.
+    const entries = (getGateway() as any).auditLogger.getRecentEntries();
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({
+      success: true,
+      taskType: 'embedding',
+      provider: 'local',
+      model: 'bge-large-en-v1.5',
+      organizationId: 7,
+      region: 'on_prem',
+      dataClass: 'phi',
+      inputTokens: 6,
+      promptHash: expect.stringMatching(/^[0-9a-f]{64}$/),
+    });
+    expect(entries[0].placementReasonCode).toMatch(/^ALLOW_/);
+    expect(JSON.stringify(entries)).not.toContain('44819023');
   });
 
   it("the running request's tenant scope supplies the organisation when the caller passes none", async () => {
@@ -250,5 +273,37 @@ describe('embedding placement gate (before the SDK client exists)', () => {
     await runWithSystemTenantScope('embedding-provider.test', () => provider.embed({ input: PLAIN_TEXT }));
     expect(resolve).not.toHaveBeenCalledWith('0');
     expect(sdk.create).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('a served embedding is on the ledger (D6)', () => {
+  it('one content-free served row, with the placement decision, the model and the tokens', async () => {
+    const provider = getEmbeddingProvider();
+    await runWithTenantScope({ tenantId: '7', source: 'test' }, () => provider.embed({ input: PLAIN_TEXT }));
+
+    const entries = (getGateway() as any).auditLogger.getRecentEntries();
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({
+      success: true,
+      taskType: 'embedding',
+      provider: 'openai',
+      model: 'text-embedding-3-small',
+      inputTokens: 3,
+      callerModule: 'embedding-provider',
+      payloadProvenance: 'tenant_governed',
+    });
+    expect(JSON.stringify(entries)).not.toContain('release specifications');
+  });
+
+  it('an embedding the provider failed leaves a failure row, and the error still reaches the caller', async () => {
+    sdk.create.mockRejectedValueOnce(Object.assign(new Error('upstream 503'), { status: 503 }));
+    const provider = getEmbeddingProvider();
+
+    await expect(provider.embed({ input: PLAIN_TEXT })).rejects.toThrow('upstream 503');
+
+    const entries = (getGateway() as any).auditLogger.getRecentEntries();
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({ success: false, taskType: 'embedding', provider: 'openai', error: 'upstream 503' });
+    expect(entries[0].approvedModelId).toBeUndefined();
   });
 });

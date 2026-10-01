@@ -528,47 +528,4 @@ router.post('/:id/purge', requirePlatformAdmin, async (req, res) => {
   }
 });
 
-/**
- * POST /api/tenants/:id/api-key
- * Generate a new API key for an organization
- */
-router.post('/:id/api-key', requirePlatformAdmin, async (req, res) => {
-  try {
-    const tenantId = parseInt(String(req.params.id));
-    if (isNaN(tenantId)) {
-      return res.status(400).json({ error: 'Invalid organization ID' });
-    }
-
-    // Generate new API key
-    const newApiKey =
-      'trialsage-api-' +
-      Math.random().toString(36).substring(2, 15) +
-      Math.random().toString(36).substring(2, 15);
-
-    // Update the organization with the new API key
-    const result = await sql`
-      UPDATE organizations
-      SET api_key = ${newApiKey}, updated_at = NOW()
-      WHERE id = ${tenantId}
-      RETURNING id, name, api_key as "apiKey"
-    `;
-
-    if (result.length === 0) {
-      return res.status(404).json({ error: 'Organization not found' });
-    }
-
-    const updatedOrg = result[0];
-
-    res.json({
-      id: updatedOrg.id,
-      name: updatedOrg.name,
-      apiKey: updatedOrg.apiKey,
-      message: 'API key generated successfully',
-    });
-  } catch (error) {
-    log.error('Error generating API key:', error);
-    res.status(500).json({ error: 'Failed to generate API key' });
-  }
-});
-
 export default router;

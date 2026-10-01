@@ -61,7 +61,7 @@
  * ENABLE_CLINICAL_REGULATORY_GRAPH.
  */
 
-import { Hocuspocus } from '@hocuspocus/server';
+import { Hocuspocus, type Connection } from '@hocuspocus/server';
 import type { IncomingMessage, Server as HttpServer } from 'http';
 import type { Duplex } from 'stream';
 import { WebSocketServer, type WebSocket } from 'ws';
@@ -71,6 +71,7 @@ import { verifyLiveToken } from './token-revocation';
 import { nonAccessTokenReason } from '../middleware/tokenType';
 import { checkOrgMembership, parseFiniteInt } from '../middleware/orgMembership';
 import { getTenantAccessPosture } from './tenant/tenant-lifecycle';
+import { sessionEndReasonFor, startRecheckTimer, type SessionEndReason } from '../socket/sessionRecheck';
 import {
   authoringDocIdOf,
   authorizeResource,
@@ -101,6 +102,13 @@ interface CollabContext {
   user: { id: string; name: string; email: string; color: string };
   tenantId: number;
   resource: CollabResource;
+  /**
+   * The verified subject and the token it was admitted on, kept server-side so
+   * the open connection can be re-checked (startCollabSessionRecheck). Never
+   * sent to a client.
+   */
+  userId: number;
+  sessionToken: string;
 }
 
 /** Shape hocuspocus turns into a `permission-denied` message for the client. */
@@ -242,6 +250,10 @@ export async function authenticateCollabConnection({
   const organizationId = parseFiniteInt(payload.organizationId ?? payload.orgId);
   const userId = parseFiniteInt(subject);
   if (organizationId === null) throw denied('no-tenant');
+  // A subject that is not a platform user id cannot have its membership
+  // confirmed — now or on the re-check — so it is refused rather than admitted
+  // with the membership step skipped (2026-09-28; it was skipped).
+  if (userId === null) throw denied('invalid-token');
 
   // 5. Live membership. A socket outlives the request that opened it, so the
   //    claim minted at login is re-checked against the same cache the HTTP
@@ -252,17 +264,15 @@ export async function authenticateCollabConnection({
   //    way it is on HTTP. It does not need to be: step 6 needs the same
   //    database and fails closed, so a database outage already means no new
   //    collaboration. Refusing here just makes that explicit.
-  if (userId !== null) {
-    const membership = await checkOrgMembership(userId, organizationId);
-    if (membership !== 'member') {
-      log.warn('Refused collaboration — organization membership not confirmed', {
-        documentName,
-        userId,
-        organizationId,
-        membership,
-      });
-      throw denied('membership-revoked');
-    }
+  const membership = await checkOrgMembership(userId, organizationId);
+  if (membership !== 'member') {
+    log.warn('Refused collaboration — organization membership not confirmed', {
+      documentName,
+      userId,
+      organizationId,
+      membership,
+    });
+    throw denied('membership-revoked');
   }
 
   // 6. Tenant lifecycle. The socket is a separate TRANSPORT, so the HTTP
@@ -302,7 +312,56 @@ export async function authenticateCollabConnection({
     },
     tenantId: organizationId,
     resource,
+    userId,
+    sessionToken: token,
   };
+}
+
+/* ── Re-checking an open connection (2026-09-28) ─────────────────────────────
+   Admission above runs once. Until this, nothing looked again for as long as
+   the socket stayed open, so a member removed from the organisation, a
+   signed-out session, an account taken out of use and a suspended tenant all
+   kept a live WRITE channel into a regulated document. The socket.io
+   namespaces re-check on a timer (server/socket/sessionRecheck.ts, IAM-12 /
+   IAM-19); this is the same re-check, with the collaboration socket's own
+   tenant rule: a read-only tenant may keep a connection that is already
+   view-only, and a WRITABLE one is ended so it reconnects downgraded. */
+
+/** Why this collaboration connection may no longer stay open, or null while it may. */
+export function collabSessionEndReason(
+  context: CollabContext,
+  connection: { readOnly: boolean }
+): Promise<SessionEndReason | null> {
+  return sessionEndReasonFor(
+    { token: context.sessionToken, userId: context.userId, organizationId: context.tenantId },
+    async organizationId => {
+      const posture = await getTenantAccessPosture(organizationId);
+      if (!posture || posture.decision === 'deny') return 'tenant_inactive';
+      if (posture.decision === 'read_only' && !connection.readOnly) return 'tenant_read_only';
+      return null;
+    }
+  );
+}
+
+/** Re-check the connection on the shared interval; close it (4401) when its session ends. */
+export function startCollabSessionRecheck(
+  connection: Pick<Connection, 'readOnly' | 'close' | 'onClose'>,
+  context: CollabContext,
+  documentName: string
+): void {
+  const stop = startRecheckTimer(
+    () => collabSessionEndReason(context, connection),
+    reason => {
+      log.warn('Ending collaboration connection — session no longer valid', {
+        documentName,
+        organizationId: context.tenantId,
+        userId: context.userId,
+        reason,
+      });
+      connection.close({ code: 4401, reason });
+    }
+  );
+  connection.onClose(() => stop());
 }
 
 /**
@@ -323,6 +382,13 @@ export function createHocuspocusServer(): Hocuspocus {
 
     async onConnect({ documentName }: { documentName: string }) {
       log.debug(`[Hocuspocus] User connected to document: ${documentName}`);
+    },
+
+    // Authenticated and established: from here the session is re-checked for
+    // as long as the connection stays open.
+    async connected({ connection, context, documentName }) {
+      const ctx = readContext(context);
+      if (ctx) startCollabSessionRecheck(connection, ctx, documentName);
     },
 
     async onDisconnect({ documentName }: { documentName: string }) {

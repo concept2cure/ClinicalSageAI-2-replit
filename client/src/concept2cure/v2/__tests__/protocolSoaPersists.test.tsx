@@ -20,6 +20,9 @@
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -40,11 +43,10 @@ const DOC = {
 
 const REASON = 'Adding PK sampling at C1D1 per the amended design';
 
+/** The tick control for one assessment at one visit, found the way a screen
+ *  reader user reaches it: a checkbox named by the assessment and the visit. */
 function cell(assessment: string, visit: string) {
-  const row = screen.getAllByRole('row').find((r) => r.textContent?.startsWith(assessment))!;
-  const cells = Array.from(row.querySelectorAll('td'));
-  const idx = visit === 'Screening' ? 0 : 1;
-  return cells[idx];
+  return screen.getByRole('checkbox', { name: `${assessment}, ${visit}` });
 }
 
 function mount() {
@@ -110,5 +112,62 @@ describe('SoaTab — every tick is a governed write', () => {
     render(<SoaTab doc={DOC as never} canWrite={false} onError={() => {}} />);
     expect(screen.getByText(/no governed document id/)).toBeTruthy();
     expect(screen.queryByLabelText(/Reason for change/)).toBeNull();
+  });
+});
+
+describe('SoaTab — each tick is a named checkbox inside a table cell (A-C-5)', () => {
+  // A ticked cell's accessible name was its glyph, "✕", with the assessment
+  // and visit demoted to a description some screen-reader settings never
+  // speak; and `role="checkbox"` on the <td> overrode the only role a cell in
+  // a table may have, so row and column headers were no longer tied to it.
+  // Periodic review 2026-09-28, editor family, accessibility lens.
+  it('names a ticked cell by its assessment and visit, not by its glyph', () => {
+    mount();
+    const box = screen.getByRole('checkbox', { name: 'ECG, Screening' });
+    expect(box.getAttribute('aria-checked')).toBe('true');
+    expect(screen.queryByRole('checkbox', { name: '✕' })).toBeNull();
+    const glyph = box.querySelector('.pd-soa-x')!;
+    expect(glyph.closest('[aria-hidden="true"]')).toBeTruthy();
+  });
+
+  it('names an unticked cell the same way', () => {
+    mount();
+    expect(screen.getByRole('checkbox', { name: 'PK sample, Cycle 1 Day 1' }).getAttribute('aria-checked')).toBe('false');
+  });
+
+  it('keeps every grid cell a table cell, with the checkbox inside it', () => {
+    const { container } = mount();
+    const tds = Array.from(container.querySelectorAll('td.pd-soa-cell'));
+    expect(tds).toHaveLength(4);
+    for (const td of tds) {
+      expect(td.hasAttribute('role')).toBe(false);
+      expect(td.querySelectorAll('[role="checkbox"]')).toHaveLength(1);
+    }
+    expect(screen.getAllByRole('checkbox')).toHaveLength(4);
+  });
+
+  it('still takes a click anywhere in the cell, and Space on the focused checkbox', async () => {
+    apiRequest.mockResolvedValue({ ok: true, status: 201, json: async () => ({ id: 5 }) });
+    mount();
+    fireEvent.change(screen.getByLabelText(/Reason for change/), { target: { value: REASON } });
+    const box = screen.getByRole('checkbox', { name: 'PK sample, Cycle 1 Day 1' });
+    expect(box.getAttribute('tabindex')).toBe('0');
+    fireEvent.click(box.closest('td')!);
+    await waitFor(() => expect(apiRequest).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(box.getAttribute('aria-checked')).toBe('true'));
+    fireEvent.keyDown(screen.getByRole('checkbox', { name: 'PK sample, Screening' }), { key: ' ' });
+    await waitFor(() => expect(apiRequest).toHaveBeenCalledTimes(2));
+    expect(apiRequest.mock.calls[1][2]).toEqual({ assessmentId: 32, visitId: 11, required: true, reason: REASON });
+  });
+
+  it('gives the checkbox the whole cell and the focus ring the cell had', () => {
+    // jsdom does no layout, so the stylesheet is read: the ring used to be
+    // `.pd-soa-cell:focus-visible`, which a cell that no longer takes focus
+    // never matches.
+    const here = path.dirname(fileURLToPath(import.meta.url));
+    const css = fs.readFileSync(path.join(here, '../styles/protocol-dev-editing.css'), 'utf8');
+    expect(css).toMatch(/\.pde-soa-tick\{[^}]*position:absolute;[^}]*inset:0;/);
+    expect(css).toMatch(/\.pd-soa \.pd-soa-cell\{[^}]*position:relative;/);
+    expect(css).toMatch(/\.pde-soa-tick:focus-visible\{[^}]*outline:2px solid var\(--accent-200\)/);
   });
 });

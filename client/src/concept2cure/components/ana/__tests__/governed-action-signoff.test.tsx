@@ -28,6 +28,21 @@ describe('extractPendingSignoffs', () => {
     expect(extractPendingSignoffs(undefined)).toEqual([]);
     expect(extractPendingSignoffs(null)).toEqual([]);
   });
+
+  it("surfaces an agent's proposal (HUMAN_CONFIRMATION_REQUIRED) with its tier — the confirm tier asks for no reason", () => {
+    // Until 2026-09-26 only PART11_SIGNATURE_REQUIRED was read here, so an
+    // end-of-turn proposal never rendered (audit DP-08, P0-12).
+    const out = extractPendingSignoffs([
+      { error: 'HUMAN_CONFIRMATION_REQUIRED', message: 'Confirm to continue.', data: { tier: 'confirm', reasonRequired: false, signatureRequired: false, retry: { command: 'create_task', params: { title: 'Draft the SAP' } } } },
+      { error: 'HUMAN_CONFIRMATION_REQUIRED', message: 'Reason recorded.', data: { tier: 'reason', signatureRequired: false, retry: { command: 'update_milestone', params: {} } } },
+      { error: 'HUMAN_CONFIRMATION_REQUIRED', data: { signatureRequired: true, retry: { command: 'erase_personal_data', params: {} } } }, // older server: no tier
+    ]);
+    expect(out.map(o => [o.command, o.tier, o.signatureRequired])).toEqual([
+      ['create_task', 'confirm', false],
+      ['update_milestone', 'reason', false],
+      ['erase_personal_data', 'esignature', true],
+    ]);
+  });
 });
 
 const reasonOnly: PendingSignoff = {
@@ -42,6 +57,49 @@ const highImpact: PendingSignoff = {
   signatureRequired: true,
   message: 'This action requires a reason for change and an electronic signature.',
 };
+
+const confirmOnly: PendingSignoff = {
+  command: 'create_task',
+  params: { projectId: 4, title: 'Draft the SAP', assigneeIds: [2, 3] },
+  signatureRequired: false,
+  tier: 'confirm',
+  message: 'AnA proposed this action. Confirm to run it under your name.',
+};
+
+describe('GovernedActionSignoff — the confirm tier', () => {
+  beforeEach(() => {
+    (global as any).fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: { success: true, message: 'Task created.' } }),
+    });
+  });
+
+  it('asks for neither a reason nor credentials, and says what AnA proposed', () => {
+    render(<GovernedActionSignoff signoff={confirmOnly} onResolved={() => {}} onCancel={() => {}} />);
+    expect(screen.queryByLabelText('Reason for change')).toBeNull();
+    expect(screen.queryByLabelText('Password (electronic signature)')).toBeNull();
+    expect(screen.getByText('Confirm the proposed action')).toBeTruthy();
+    expect(screen.getByText('create_task')).toBeTruthy();
+    expect(screen.getByText('Draft the SAP')).toBeTruthy();
+    expect(screen.getByText('2 items')).toBeTruthy();
+  });
+
+  it('confirming posts { confirm: true } with the command and params, and no reason or password', async () => {
+    const onResolved = vi.fn();
+    render(<GovernedActionSignoff signoff={confirmOnly} onResolved={onResolved} onCancel={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm and run' }));
+    await waitFor(() => expect(onResolved).toHaveBeenCalledWith({ success: true, message: 'Task created.' }));
+    const body = JSON.parse(((global as any).fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body);
+    expect(body).toEqual({ command: 'create_task', params: confirmOnly.params, confirm: true });
+    expect(body).not.toHaveProperty('reasonForChange');
+    expect(body).not.toHaveProperty('password');
+  });
+
+  it('the reason tier still needs its reason before the button enables', () => {
+    render(<GovernedActionSignoff signoff={reasonOnly} onResolved={() => {}} onCancel={() => {}} />);
+    expect((screen.getByRole('button', { name: 'Confirm and run' }) as HTMLButtonElement).disabled).toBe(true);
+  });
+});
 
 describe('GovernedActionSignoff', () => {
   beforeEach(() => {
@@ -150,5 +208,120 @@ describe('GovernedActionSignoff', () => {
     expect(confirm.disabled).toBe(true);
     fireEvent.change(screen.getByLabelText('Reason for change'), { target: { value: 'too short' } });
     expect(confirm.disabled).toBe(true);
+  });
+});
+
+/*
+ * Declining. Cancel on a live prompt closed the dialog and told the server
+ * nothing, so AnA held the turn until the ten-minute ceiling — and since every
+ * write became a proposal (P0-12), that would be most turns. A live prompt's
+ * Cancel now tells the waiting run; a prompt from a finished turn has nothing
+ * waiting, so it sends nothing.
+ */
+/*
+ * A tool that records the person's reason for change is put to them at the
+ * reason tier with the reason the model wrote (D5, 2026-09-29). The field
+ * starts empty; AnA's wording is shown whole and used only if the person
+ * adopts it. What they submit is what the tool records.
+ */
+const toolWithReason: PendingSignoff = {
+  command: 'seed_tmf',
+  params: { study_id: 12, reason: 'Seeding the TMF for the Phase 1 study', index: 'SOP-114' },
+  signatureRequired: false,
+  tier: 'reason',
+  runId: 'run-1',
+  toolUseId: 'tu-7',
+  message: 'AnA proposed this action. State the reason for change to run it under your name.',
+};
+
+describe('GovernedActionSignoff — a proposed reason', () => {
+  beforeEach(() => {
+    (global as any).fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: { success: true, message: 'TMF seeded.' } }),
+    });
+  });
+
+  it('shows what AnA proposed and its reason whole, but leaves the reason field empty', () => {
+    render(<GovernedActionSignoff signoff={toolWithReason} onResolved={() => {}} onCancel={() => {}} />);
+    const field = screen.getByLabelText('Reason for change') as HTMLTextAreaElement;
+    expect(field.value).toBe('');
+    expect(screen.getByTestId('signoff-proposed-reason').textContent).toContain('Seeding the TMF for the Phase 1 study');
+    const summary = screen.getByLabelText('What AnA proposed');
+    expect(summary.textContent).toContain('seed_tmf');
+    expect(summary.textContent).toContain('SOP-114');
+    // The reason is asked for on its own, not summarised as a parameter.
+    expect(summary.textContent).not.toContain('Seeding the TMF');
+    expect((screen.getByRole('button', { name: 'Confirm and run' }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('adopting AnA\'s wording is an act of the person, and that is what is sent', async () => {
+    const onResolved = vi.fn();
+    render(<GovernedActionSignoff signoff={toolWithReason} onResolved={onResolved} onCancel={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Use AnA’s wording' }));
+    expect((screen.getByLabelText('Reason for change') as HTMLTextAreaElement).value).toBe('Seeding the TMF for the Phase 1 study');
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm and run' }));
+    await waitFor(() => expect(onResolved).toHaveBeenCalled());
+    const body = JSON.parse((global.fetch as any).mock.calls[0][1].body);
+    expect(body).toMatchObject({ command: 'seed_tmf', reasonForChange: 'Seeding the TMF for the Phase 1 study', runId: 'run-1', toolUseId: 'tu-7' });
+  });
+
+  it('the person\'s own words are sent when they write them', async () => {
+    const onResolved = vi.fn();
+    render(<GovernedActionSignoff signoff={toolWithReason} onResolved={onResolved} onCancel={() => {}} />);
+    fireEvent.change(screen.getByLabelText('Reason for change'), { target: { value: 'Phase 1 TMF per sponsor SOP-114.' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm and run' }));
+    await waitFor(() => expect(onResolved).toHaveBeenCalled());
+    const body = JSON.parse((global.fetch as any).mock.calls[0][1].body);
+    expect(body.reasonForChange).toBe('Phase 1 TMF per sponsor SOP-114.');
+  });
+});
+
+describe('GovernedActionSignoff — declining', () => {
+  let fetchMock: ReturnType<typeof vi.fn>;
+  beforeEach(() => {
+    fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ data: { declined: true } }) });
+    (global as any).fetch = fetchMock;
+  });
+
+  it('on a live prompt, Cancel tells the waiting run', async () => {
+    const onCancel = vi.fn();
+    render(
+      <GovernedActionSignoff
+        signoff={{ ...confirmOnly, runId: 'run-1', toolUseId: 'tu-1' }}
+        onResolved={() => {}}
+        onCancel={onCancel}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(onCancel).toHaveBeenCalled());
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+      runId: 'run-1',
+      toolUseId: 'tu-1',
+      decision: 'decline',
+    });
+  });
+
+  it('Escape on a live prompt declines too', async () => {
+    const onCancel = vi.fn();
+    render(
+      <GovernedActionSignoff
+        signoff={{ ...reasonOnly, runId: 'run-1', toolUseId: 'tu-2' }}
+        onResolved={() => {}}
+        onCancel={onCancel}
+      />,
+    );
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+    await waitFor(() => expect(onCancel).toHaveBeenCalled());
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toMatchObject({ toolUseId: 'tu-2', decision: 'decline' });
+  });
+
+  it('on a finished turn there is nothing waiting, and nothing is sent', async () => {
+    const onCancel = vi.fn();
+    render(<GovernedActionSignoff signoff={confirmOnly} onResolved={() => {}} onCancel={onCancel} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    await waitFor(() => expect(onCancel).toHaveBeenCalled());
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

@@ -103,7 +103,18 @@ export function serializeDocumentLineageDossierXml(
   out.push(`  </VersionHistory>\n`);
 
   // Decisions — AnA vs human, with the headline rollup.
+  /* A count is a claim. When the decision read could not run, this element used
+     to carry count="0" and six more zeros with nothing marking them as
+     unmeasured — inside an exported, namespaced regulatory metadata file that a
+     reviewer is entitled to read as fact. The contract is the one
+     docx-ledger-collector already states for its audit log and signatures. */
   const ds = dossier.decisionSummary;
+  if (ds.unavailable) {
+    out.push(`  <Decisions`);
+    out.push(attr('unavailable', 'true'));
+    out.push(attr('reason', ds.unavailable));
+    out.push(` />\n`);
+  } else {
   out.push(`  <Decisions`);
   out.push(attr('count', ds.total));
   out.push(attr('anaAuthored', ds.anaAuthored));
@@ -140,6 +151,7 @@ export function serializeDocumentLineageDossierXml(
     out.push(`    </Decision>\n`);
   }
   out.push(`  </Decisions>\n`);
+  }
 
   // Provenance events — the "how this was made" trail.
   out.push(`  <ProvenanceEvents count="${dossier.provenanceEvents.length}">\n`);
@@ -187,6 +199,28 @@ export function serializeDocumentLineageDossierXml(
     out.push(`    </Control>\n`);
   }
   out.push(`  </HumanControls>\n`);
+
+  // Retained turn records — the immutable, chained record of each AnA turn in
+  // the conversation. `unavailable` when the store could not be read, which is
+  // not the same as none.
+  if (dossier.retainedTurnRecords !== undefined) {
+    const retained = dossier.retainedTurnRecords;
+    out.push(`  <RetainedTurnRecords`);
+    out.push(attr('status', retained === null ? 'unavailable' : 'read'));
+    out.push(attr('count', retained === null ? null : retained.length));
+    out.push(`>\n`);
+    for (const r of retained ?? []) {
+      out.push(`    <TurnRecord`);
+      out.push(attr('id', r.id));
+      out.push(attr('outcome', r.outcome));
+      out.push(attr('actorUserId', r.actorUserId));
+      out.push(attr('startedAt', r.startedAt));
+      out.push(attr('endedAt', r.endedAt));
+      out.push(attr('sha256', r.recordSha256));
+      out.push(` />\n`);
+    }
+    out.push(`  </RetainedTurnRecords>\n`);
+  }
 
   // Data lineage — evidence source → content links.
   out.push(`  <DataLineage count="${dossier.dataLineage.length}">\n`);

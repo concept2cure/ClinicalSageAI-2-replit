@@ -1,0 +1,215 @@
+# Green: the ten ProtocolDev client suites
+ RUN  v4.1.7 <repo>
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > the registry is non-trivial (guards the enumeration itself) 2ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > protocol-dev — Design derivation, honest states > an unbound protocol says so and draws NO diff groups 805ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > protocol-dev — Design derivation, honest states > a failed read is reported as a failure, not as an empty derivation 250ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > adds a visit through the governed visit route and re-reads the protocol 1067ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > protocol-dev — Design derivation, the five buckets > renders all five, each explaining what the bucket means 299ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > protocol-dev — Design derivation, the five buckets > a conflict shows both values, the reason, and what accepting means 186ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > renames a visit through the visit PATCH, carrying the visit id 464ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > protocol-dev — Design derivation, the five buckets > a proposed row names the protocol rows it came from 237ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > protocol-dev — Design derivation, the five buckets > an incomplete row offers NO accept control and names the fields a human must supply 165ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > removes a visit through the governed remove route 384ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > protocol-dev — Design derivation, the five buckets > an unevidenced row offers NO accept control and is not described as a defect 178ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > adds an assessment through the SoA router 356ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > protocol-dev — Design derivation, apply > posts acceptedPaths and a reason, and never a derived value 392ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > removes an assessment through the governed remove route 395ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > schedule of assessments — visits and assessment rows > renders the assembler’s findings rather than an empty list 177ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > protocol-dev — Design derivation, apply > shows applied and rejected paths distinctly after the write 370ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevDerivation.test.tsx > protocol-dev — Design derivation, apply > refuses a reason shorter than the governed minimum without posting 367ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > risk register — residual rating, owner and mitigation > writes the residual rating through the risk PATCH 677ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > budget — line items, parameters and the engine’s verdict > says plainly that no budget has been entered instead of printing a verdict 184ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > budget — line items, parameters and the engine’s verdict > adds a line item through the budget router 309ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > budget — line items, parameters and the engine’s verdict > sets the feasibility parameters through the params PUT 359ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > requests a review through the reviewers route 303ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > access-requests 2942ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > admin-console 2936ms
+ ✓ client/src/concept2cure/v2/__tests__/irbPackage.test.tsx > protocol-dev — IRB package tab > says there is NO PACKAGE when the IRB submission was never linked, and shows no rows 623ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > assigns the review to a member's account, so the reviewer signs their own review 478ms
+ ✓ client/src/concept2cure/v2/__tests__/irbPackage.test.tsx > protocol-dev — IRB package tab > says the read FAILED rather than drawing an empty manifest 410ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > when the member list cannot be read it says so, and a reviewer can still be named without an account 509ms
+ ✓ client/src/concept2cure/v2/__tests__/irbPackage.test.tsx > protocol-dev — IRB package tab > says the read FAILED when the IRB register itself does not answer 208ms
+ ✓ client/src/concept2cure/v2/__tests__/irbPackage.test.tsx > protocol-dev — IRB package tab > says so plainly when no IRB submission exists for this protocol 193ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > neither an account nor a name: nothing is sent 343ms
+ ✓ client/src/concept2cure/v2/__tests__/irbPackage.test.tsx > protocol-dev — IRB package tab > renders NO percentage anywhere — the headline is counts 214ms
+ ✓ client/src/concept2cure/v2/__tests__/irbPackage.test.tsx > protocol-dev — IRB package tab > shows an undetermined requirement’s settling field and never draws it as satisfied 217ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > reviews — request a review and record a disposition > a disposition is signed, not submitted: nothing is sent until the signer re-authenticates 435ms
+ ✓ client/src/concept2cure/v2/__tests__/irbPackage.test.tsx > protocol-dev — IRB package tab > orders undetermined requirements first, because they are the actionable ones 180ms
+ ✓ client/src/concept2cure/v2/__tests__/irbPackage.test.tsx > protocol-dev — IRB package tab > shows an unresolvable placement and labels it a placeholder 215ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > finalize — the replacement for the deleted reason-only drawer is reachable > Finalize protocol opens the e-signature and posts the signed finalization 405ms
+ ✓ client/src/concept2cure/v2/__tests__/irbPackage.test.tsx > protocol-dev — IRB package tab > explains IN WORDS why the package is not ready, naming the undecided requirements 209ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > cover page — sponsor and principal investigator > writes both through the cover-page PATCH and re-reads 342ms
+ ✓ client/src/concept2cure/v2/__tests__/irbPackage.test.tsx > protocol-dev — IRB package tab > never claims a delivery the platform did not perform (D3) 201ms
+ ✓ client/src/concept2cure/v2/__tests__/irbPackage.test.tsx > protocol-dev — IRB package tab > states no verdict and names no review category (D4) 255ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > consent — the tab shows what the read model returns > reports the element the assembled consent form holds 192ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a governed write does not take the protocol off screen > stays on the register being edited while the record is re-read 433ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > an empty object reads as a failed load 8ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > an envelope around an object reads as a failed load 6ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > an error carried on a 200 reads as a failed load 7ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > rows with no fields reads as a failed load 5ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > a row with an id and nothing else reads as a failed load 5ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > a row whose fields are present but null reads as a failed load 5ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > a protocol read that cannot be read is not an empty register (HS-C-1) > a store that is not provisioned says so, and offers no start 5ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSurfaceWrites.test.tsx > empty state > names the open project and offers both a start and an AnA draft 35ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > agency-meetings 2946ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — Study design tab, unbound > says no design is bound and offers the bind action, claiming nothing 665ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — Study design tab, unbound > lists this tenant's persisted designs in the bind drawer 337ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevCompliance.test.tsx > protocol-dev — Compliance tab > headlines three numbers and renders NO percentage anywhere 600ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevCompliance.test.tsx > protocol-dev — Compliance tab > orders the standards that carry unmet findings first 274ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — Study design tab, bound > shows the design identity and the design gates' findings 349ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — Study design tab, bound > reports an unresolved link as unresolved, not as a clean design 177ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevCompliance.test.tsx > protocol-dev — Compliance tab > shows each finding’s clause, message and remediation 189ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevCompliance.test.tsx > protocol-dev — Compliance tab > presents a not-assessed rule as "not assessed", never as a pass 202ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the five projections (read-only) > offers all five, each labelled with what it is a projection OF 353ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevCompliance.test.tsx > protocol-dev — Compliance tab > collapses a standard group without losing what it said 181ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevCompliance.test.tsx > protocol-dev — Compliance tab > says so honestly when the rule pack found no applicable rule 260ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevCompliance.test.tsx > protocol-dev — Compliance tab > says so when the record carries no rule evaluation at all 168ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the five projections (read-only) > views the ICH M11 protocol projection with each section's status 362ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > ana-command 2885ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the five projections (read-only) > renders a projection the design cannot fill as its gap, not as an empty success 278ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStudyDesignTab.test.tsx > protocol-dev — the five projections (read-only) > renders a failed projection read as a failure, not as an empty projection 260ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > the registry says which surfaces claim the rail column > the four fixed surfaces no longer hide the rail they were writing to 2ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStatisticsTab.test.tsx > protocol-dev — Statistics tab > shows the bound design's statistical readiness and the checks that still fail 539ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > admin-console — governed mutations reach the rail that draws the sign-off > "Invite member" opens the invite form rather than asking the rail 348ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStatisticsTab.test.tsx > protocol-dev — Statistics tab > resolves the bound design by id and never shows another design in the program 262ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > admin-console — governed mutations reach the rail that draws the sign-off > a member-level grant is a governed ask, not a local mutation 150ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > csr-workflow — its section rows reach the rail > opens a section through the shell conversation 15ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStatisticsTab.test.tsx > protocol-dev — Statistics tab > hands the design to the Biostatistics designer on the navigation channel 416ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > protocol-dev — "Ask AnA" reaches the rail > hands the completeness question to the shell conversation 531ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > insights — no button hands a question to a rail it hides > renders the canvas with no "Ask AnA about this report" affordance 18ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStatisticsTab.test.tsx > protocol-dev — Statistics tab > says plainly when no design is bound — and does not borrow one from the program 297ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolStatisticsTab.test.tsx > protocol-dev — Statistics tab > renders a failed read as a failure, not as "no design" 172ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolRegisterForms.test.tsx > submitProtocolRegister — real endpoints, exact bodies > risk → POST /api/protocol-risks/documents/:id/risks with domain fields + reason 4ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolRegisterForms.test.tsx > submitProtocolRegister — real endpoints, exact bodies > milestone → POST /api/protocol-milestones/documents/:id/milestones 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolRegisterForms.test.tsx > submitProtocolRegister — real endpoints, exact bodies > amendment → POST /api/protocol-amendments/amendments with protocolDocumentId in the body 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolRegisterForms.test.tsx > submitProtocolRegister — real endpoints, exact bodies > deviation → POST /api/protocol-deviations/deviations with protocolDocumentId in the body 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolRegisterForms.test.tsx > submitProtocolRegister — real endpoints, exact bodies > rejects a governed reason under 8 chars before any network call 2ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolRegisterForms.test.tsx > submitProtocolRegister — real endpoints, exact bodies > surfaces a server rejection honestly (nothing persisted) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolRegisterForms.test.tsx > ProtocolRegisterForm — onDone only after the server confirms > renders the governed create form for a register kind 59ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolRegisterForms.test.tsx > the three actions that used to route through a dead e-signature dialog > objective → POST /api/protocol-development/documents/:id/objectives 0ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolRegisterForms.test.tsx > the three actions that used to route through a dead e-signature dialog > eligibility → POST /api/protocol-development/documents/:id/eligibility with the arm 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolRegisterForms.test.tsx > the three actions that used to route through a dead e-signature dialog > refuses every one of them below the reason floor — nothing is sent 1ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSectionEditor.test.tsx > the protocol section body is editable > mounts the canonical rich section editor on the stored content 317ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSectionEditor.test.tsx > the protocol section body is editable > refuses to save until a governed reason is given, and writes nothing 143ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSectionEditor.test.tsx > the protocol section body is editable > saves through the section PATCH with the reason and the concurrency token 133ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevSectionEditor.test.tsx > the protocol section body is editable > reports a concurrent change as a refusal, and does not report a save 124ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > ana-memory 7980ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > apps 2882ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > artifacts-center 2764ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > audit-trail 2760ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > authoring-engine 2855ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > batch-draft 2752ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > billing 2775ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > biostat-workbench 2804ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > biostatistics 3154ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > change-assessment 2761ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > client-portal 2727ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > clinical-ops 2900ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > cmc 3165ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > communication-center 2773ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > conversation-thread 3658ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > coverage 4912ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > crl-library 2792ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > cro-portfolio 2806ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > csr-workflow 2748ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > decision-lineage 2739ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > deep-research 2794ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > design-controls 2759ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-510k 4267ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-analytics 2762ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-cer 2765ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-clinical-studies 2827ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-diagnostics 3019ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-engineering 2716ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-pma 3063ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-postmarket 2886ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-presub 2755ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-software 2788ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-submission 2768ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-tasks 2738ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-udi 2724ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-validation 2729ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-vault 2817ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > device-workstream 2765ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > dispatch-readiness 2720ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > doc-journey 2741ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > document-authoring 2960ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > dossier 2763ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > dossier-map 2772ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > ectd-coauthor 2848ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > ectd-compile 2834ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > ectd-publishing 2774ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > etmf 2753ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > evidence-search 2778ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > filing-strategy 2801ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > filings-catalog 3001ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > gateway-transmittals 2786ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > global-ri 2727ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > haq-manager 2726ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > human-factors 7839ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > identity-console 2773ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > inconsistency 2726ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > ind-checklist 2746ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > ind-lifecycle 2718ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > insights 16393ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > intelligence-catalog 3043ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > investigator-brochure 2730ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > ivd-completeness 2710ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > labeling 2735ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > labeling-pi 2751ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > labeling-smpc 2725ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > licensing 2864ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > lifecycle-mgmt 2818ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > maa-cockpit 2765ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > market-access 2748ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > master-licensing 2805ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > mission-control 2747ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > nda-cockpit 2795ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > nonclinical 2822ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > onboarding 2786ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > onboarding-ingest 2716ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > orchestration 2785ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > orphan 2833ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > part11-console 2755ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pdev 2727ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pdev-clinical 2679ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pdev-cmc 2663ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pdev-contradictions 2665ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pdev-fda-interactions 2669ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pdev-ind-assembly 2661ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pdev-nonclinical 2662ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pdev-regulatory 2669ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pediatric 2846ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pharmacovigilance 2810ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > precedent-intelligence 2773ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > program-journey 14684ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > project-home 3601ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > projects 2755ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > protocol-dev 2716ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pv-cockpit 2815ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > pyramid 2726ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > qmp 2752ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > quality 2876ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > rbm 2899ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > reg-change 2745ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > registrations 2791ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > regulatory-workspace 16276ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > report-engine 2762ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > report-governance 2724ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > research-admin 2780ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > review 2748ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > risk 2732ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > safety-narrative 2744ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > setup 2814ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > shadow-review 2750ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > source-tracer 4437ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > submission-center 2760ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > submission-twin 2727ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > task-board 2744ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > tasks 2689ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > template-library 2728ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > training 2737ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > usage 2726ms
+ ✓ client/src/concept2cure/v2/__tests__/hostilePayloadProbe.test.tsx > every surface survives a response it did not expect > vault 2803ms
+ Test Files  10 passed (10)
+      Tests  211 passed (211)

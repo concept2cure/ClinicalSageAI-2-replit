@@ -85,7 +85,7 @@ export function AnaActionChip({
           /* Re-validated against the shared registry first; if the action's
              screen is not mounted the bus stashes it and navigates there (the
              tap is the consent), performing it once the screen is ready. */
-          const d = validateDriveAction({ actionType: 'surface_action', actionId, params: a.params });
+          const d = validateDriveAction({ actionType: 'surface_action', actionId, params: a.params, program: a.program });
           if (d) applySurfaceAction(d, onNav);
         }}
       >

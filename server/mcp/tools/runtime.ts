@@ -84,13 +84,29 @@ export function parseAnaResult(raw: string): ToolOutcome {
   return ok('', { value: parsed });
 }
 
-/** Call one of AnA's registered deterministic handlers with the caller's tenant. */
+/**
+ * Call one of AnA's registered deterministic handlers with the caller's tenant.
+ *
+ * The tenant's AnA tool policy applies here as on every chat door: a tool in
+ * `anaToolPolicy.deny` is withheld there by governedToolsetFor, and this ran
+ * the handler directly, so the same tool still ran for the same organization
+ * over the connector. Same loader, same filter (deny-list only; `allow` is
+ * scoped to governed mutations), so the two doors cannot disagree.
+ */
 export async function callAnaHandler(
   name: string,
   input: Record<string, unknown>,
   ctx: ToolRunContext,
 ): Promise<ToolOutcome> {
-  const { getToolHandler } = await import('../../services/ana/AnaToolExecutor');
+  const [{ getToolHandler }, { loadAnaToolPolicy, filterToolsByPolicy }, { getPool }] = await Promise.all([
+    import('../../services/ana/AnaToolExecutor'),
+    import('../../services/ana-ri/mdx-tool-policy'),
+    import('../../db'),
+  ]);
+  const policy = await loadAnaToolPolicy(getPool(), ctx.ana.organizationId);
+  if (filterToolsByPolicy([{ name }], policy).length === 0) {
+    return refused(`Platform tool "${name}" is disabled by your organization's AnA tool policy.`);
+  }
   const handler = getToolHandler(name);
   if (!handler) return refused(`Platform tool "${name}" is not registered on this deployment.`);
   const raw = await handler(input, ctx.ana);
@@ -200,6 +216,21 @@ export function registerTool(server: McpServer, spec: AnyToolSpec, config: McpCo
             const reason = `Insufficient scope: ${spec.name} requires ${spec.scope}; this token carries [${principal.scopes.join(' ')}].`;
             await writeAudit({ principal, tool: spec.name, governed: spec.governed, outcome: 'denied', durationMs: 0, detail: reason });
             return render(refused(reason), spec.name);
+          }
+          /* 2026-09-28 (GS-S-1, coverage-gap sweep): a governed tool writes a
+             governed record, so it needs an editor role in the organization —
+             read live from organization_users, never from the token. The scope
+             check alone let a viewer's own login token (which resolves to every
+             scope) run c2c_file_draft_for_review, which the REST route and AnA
+             both refuse them. Same decision as AnA's registry wrapper. */
+          if (spec.governed) {
+            const { editorRoleDecision, editorRoleRefusalText } = await import('../../services/part11/editor-role');
+            const decision = await editorRoleDecision(principal.userId, principal.organizationId);
+            if (!decision.allowed) {
+              const reason = editorRoleRefusalText(spec.name, `${spec.name}`, decision);
+              await writeAudit({ principal, tool: spec.name, governed: spec.governed, outcome: 'denied', durationMs: 0, detail: reason });
+              return render(refused(reason), spec.name);
+            }
           }
           const ctx: ToolRunContext = {
             principal,

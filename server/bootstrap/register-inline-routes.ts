@@ -32,6 +32,7 @@ import predictiveSectionsRoutes from '../routes/predictive-sections';
 import { createCsrIntelligenceRoutes } from '../routes/csr-intelligence-routes';
 import csrAnalyticsRouter from '../routes/csr-analytics';
 import { createAuditTrailRoutes } from '../routes/audit-trail-routes';
+import { createComplianceReportRoutes } from '../routes/audit-compliance-reports';
 import { createAnaRiInlineRoutes } from '../routes/ana-ri-inline-routes';
 import evidenceAskRouter from '../routes/evidence-ask';
 import esignatureRouter from '../routes/esignature';
@@ -261,6 +262,7 @@ export function registerInlinePlatformFacadesRoutes({
 
   // Audit trail — append-only, signed exports, chain integrity (21 CFR Part 11).
   app.use('/api', createAuditTrailRoutes(pool));
+  app.use('/api', createComplianceReportRoutes(pool));
 
   // Evidence Ask — single-shot grounded Q&A over the Data Room
   // (Doc System Convergence Phase 4 — Ask-Data-Room flow).
@@ -864,6 +866,17 @@ export async function registerInlineAiWorkflowRoutes({
     console.info('✅ Vault ingest route mounted (/api/vault/ingest)');
   } catch (error) {
     console.error('❌ Failed to mount Vault ingest route:', error);
+  }
+
+  // Legal holds on vault records: placed and lifted by QA and administration,
+  // each change one transaction with its chained audit row; the retention
+  // sweep honours them (P1-22). Nothing could write a hold before this.
+  try {
+    const { createVaultLegalHoldRoutes } = await import('../routes/vault-legal-holds');
+    app.use('/api/vault/legal-holds', authMiddleware, createVaultLegalHoldRoutes());
+    console.info('✅ Vault legal-hold routes mounted (/api/vault/legal-holds)');
+  } catch (error) {
+    console.error('❌ Failed to mount Vault legal-hold routes:', error);
   }
 
   // PDEV Evidence Picker library — org-scoped searchable evidence pool read by

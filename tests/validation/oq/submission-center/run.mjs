@@ -58,7 +58,7 @@ await step(
     expected: 'HTTP 400 VALIDATION with field details',
   },
   async ({ api, expect }) => {
-    const r = await api('POST', '/api/submissions', { title: 'bad', applicationType: 'IND', clientType: 'biotech', primaryRegion: 'mars' });
+    const r = await api('POST', '/api/submissions', { programId: state.programId, title: 'bad', applicationType: 'IND', clientType: 'biotech', primaryRegion: 'mars' });
     expect(r.status === 400 && r.json?.error?.code === 'VALIDATION', `expected 400 VALIDATION, got ${r.status}`, r.json);
     return `HTTP 400: ${JSON.stringify(r.json.error.details?.fieldErrors ?? r.json.error).slice(0, 160)}`;
   },
@@ -69,12 +69,18 @@ await step(
     id: 'OQ-SUBC-03',
     urs: ['URS-SUBC-002', 'URS-SUBC-003'],
     title: 'Create a submission and its first sequence',
-    action: 'POST /api/submissions {IND, biotech, fda}; POST /api/submissions/:id/sequences {fda, "0000", original}; GET sequences',
+    action: 'POST /api/c2c/projects; POST /api/submissions {programId, IND, biotech, fda}; POST /api/submissions/:id/sequences {fda, "0000", original}; GET sequences',
     expected: 'HTTP 201 for both; the audit outcome is reported on the submission; the sequence is listed with status draft',
   },
   async ({ api, expect }) => {
-    const { submission, sequence } = await createSubmissionWithSequence(api, expect, { title: `OQ-004 IND ${stamp}` });
+    // A dedicated program: the submission is anchored to the project it is
+    // created for (LX-22), and a second IND on OQ-SUBC-00's program would
+    // become that program's newest spine and change what its compile reads.
+    const own = await createProgram(api, expect, `OQ-004 Submission-create program ${stamp}`);
+    const { submission, sequence } = await createSubmissionWithSequence(api, expect, { title: `OQ-004 IND ${stamp}`, programId: own.id });
+    expect(submission.programId === own.id, 'the created submission does not name its program', submission);
     state.submission = submission;
+    state.submissionProgramId = own.id;
     state.sequence = sequence;
     const list = await api('GET', `/api/submissions/${submission.id}/sequences`);
     const seqs = Array.isArray(list.json) ? list.json : list.json?.data ?? [];
@@ -88,27 +94,33 @@ await step(
     id: 'OQ-SUBC-04',
     urs: ['URS-SUBC-004'],
     title: 'Place a vault document as an eCTD leaf',
-    action: 'PUT /api/submissions/sequences/:seq/leaves {sectionCode:"m1.2", title, documentTable:"vault_documents", documentUuid}; GET leaves',
-    expected: 'HTTP 200; the leaf is listed with its section code; an unplaceable documentTable is refused with 400',
+    action: 'POST /api/vault/ingest a cover letter into the submission\'s own program; PUT /api/submissions/sequences/:seq/leaves {sectionCode:"m1.2", title, documentTable:"vault_documents", documentUuid}; the same with OQ-SUBC-00\'s document, which belongs to another program; GET leaves',
+    expected: 'HTTP 200; the leaf is listed with its section code; a document of another project is refused 409 CROSS_PROJECT; an unplaceable documentTable is refused with 400',
     dependsOn: ['OQ-SUBC-03'],
+    note: 'A filing holds only its own project\'s documents (PF-11, 2026-09-26). Since OQ-SUBC-03 gives the submission a program of its own (LX-22), the document placed is ingested into that program; OQ-SUBC-00\'s document, in another program, is the refused case.',
   },
   async ({ api, expect }) => {
-    const r = await api('PUT', `/api/submissions/sequences/${state.sequence.id}/leaves`, {
-      sectionCode: 'm1.2',
-      title: 'Cover letter',
-      documentTable: 'vault_documents',
-      documentUuid: state.docId,
-      lifecycleOp: 'new',
-      reason: 'Placed by the validation run for this sequence',
-    });
+    const own = await ingestPdf(api, expect, { programId: state.submissionProgramId, title: `OQ-004 Sequence cover letter ${stamp}`, documentType: 'CORRESPONDENCE' });
+    const place = (documentUuid) =>
+      api('PUT', `/api/submissions/sequences/${state.sequence.id}/leaves`, {
+        sectionCode: 'm1.2',
+        title: 'Cover letter',
+        documentTable: 'vault_documents',
+        documentUuid,
+        lifecycleOp: 'new',
+        reason: 'Placed by the validation run for this sequence',
+      });
+    const r = await place(own.document.id);
     expect(r.status === 200, `expected 200, got ${r.status}`, r.json);
+    const foreign = await place(state.docId);
+    expect(foreign.status === 409 && foreign.json?.error?.code === 'CROSS_PROJECT', `another project's document expected 409 CROSS_PROJECT, got ${foreign.status}`, foreign.json);
     const bad = await api('PUT', `/api/submissions/sequences/${state.sequence.id}/leaves`, { sectionCode: 'm1.3', title: 'x', documentTable: 'not_a_table', documentId: 1, reason: 'Placed by the validation run for this sequence' });
     expect(bad.status === 400, `unplaceable table expected 400, got ${bad.status}`, bad.json);
     const leaves = await api('GET', `/api/submissions/sequences/${state.sequence.id}/leaves`);
     const arr = Array.isArray(leaves.json) ? leaves.json : leaves.json?.data ?? leaves.json?.leaves ?? [];
     expect(arr.some((l) => (l.sectionCode ?? l.section_code) === 'm1.2'), 'leaf not listed', leaves.json);
     state.leaf = arr.find((l) => (l.sectionCode ?? l.section_code) === 'm1.2');
-    return `leaf placed (${JSON.stringify(r.json).slice(0, 160)}); bad table → 400`;
+    return `leaf placed (${JSON.stringify(r.json).slice(0, 160)}); another project's document → 409 CROSS_PROJECT; bad table → 400`;
   },
 );
 
@@ -188,7 +200,7 @@ await step(
     id: 'OQ-SUBC-08',
     urs: ['URS-SUBC-007'],
     title: 'CREDENTIALED: sign the sequence under a Part 11 e-signature; freeze is then decided by the composed gate, not by the signature alone',
-    action: 'sign in as OQ_SIGNER_EMAIL with its password (and its authenticator code where the server requires MFA); when the signer has a second factor enrolled (OQ_SIGNER_TOTP_SECRET), first POST /api/c2c/actions/sign with reauth:{password} only; then POST /api/c2c/actions/sign {target:"ectd-sequence:<id>", reason, payload:{intent:"freeze"}, reauth:{password, totp}}; GET /api/part11/signatures/by-target; POST /sequences/:id/freeze {signatureActionId} as the signer',
+    action: 'sign in as OQ_SIGNER_EMAIL with its password (and its authenticator code where the server requires MFA); when the signer has a second factor enrolled (OQ_SIGNER_TOTP_SECRET), first POST /api/c2c/actions/sign with reauth:{password} only; then POST /api/c2c/actions/sign {target:"ectd-sequence:<id>", reason, payload:{intent:"freeze", meaning:"approval"}, reauth:{password, totp}}; GET /api/part11/signatures/by-target; POST /sequences/:id/freeze {signatureActionId} as the signer',
     expected:
       'A signer with a second factor enrolled: the password-only signature is refused 401 REAUTH_TOTP_REQUIRED and writes no signature row (§11.200). Sign: HTTP 200 with actionId; exactly one electronic_signatures row on ectd-sequence:<id> by the signer, second_factor_verified true when a code was presented. Freeze on this never-validated sequence (status assembling after OQ-SUBC-04): refused 409 INVALID_STATE by the sequence state machine (a valid e-signature is necessary, not sufficient); the sequence status is unchanged. Without OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD the step is recorded "not executed — credential not supplied".',
     dependsOn: ['OQ-SUBC-03'],
@@ -202,7 +214,9 @@ await step(
     const signBody = (reauth) => ({
       target,
       reason: 'OQ-004 step 08: e-signature to freeze sequence 0000 for validation',
-      payload: { intent: 'freeze' },
+      // A governed sign states its meaning (P1-21, 2026-09-25); "approval" is
+      // what the Submission Center's modal proposes for a freeze.
+      payload: { intent: 'freeze', meaning: 'approval' },
       reauth,
     });
     const signerRows = async () => {

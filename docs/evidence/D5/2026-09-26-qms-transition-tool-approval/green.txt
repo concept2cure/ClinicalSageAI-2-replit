@@ -1,0 +1,22 @@
+$ npx vitest run server/services/ana/__tests__/qms-change-tools.test.ts   # with this change
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_create > raises a controlled change and persists it 49ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_create > requires change_number and title 4ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_transition > advances a change through the lifecycle with a reason (Part 11) 9ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_transition > refuses a transition without a reason-for-change 5ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_transition > cannot approve a change from chat, and the change stays under assessment 13ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_transition > does not offer AnA an approval, and says where a change is approved 3ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_transition > rejects an illegal transition 4ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_link > links a change to a deviation 11ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > the audit row each change-control tool writes > carries a recorded row out as auditTrail 4ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > the audit row each change-control tool writes > create: says the record was not written when it was not 6ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > the audit row each change-control tool writes > transition: says the record was not written when it was not 9ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > the audit row each change-control tool writes > link: says the record was not written when it was not 8ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > revise_qms_document / retire_qms_document (SOP register) > opens a controlled revision (bumps version, back to draft, clears approval) 11ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > revise_qms_document / retire_qms_document (SOP register) > requires a reason to revise 3ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > revise_qms_document / retire_qms_document (SOP register) > requires a reason to retire — nothing is written and no placeholder reaches the ledger 4ms
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > revise_qms_document / retire_qms_document (SOP register) > retires a document (terminal) 9ms
+      Tests  16 passed (16)
+
+$ npx vitest run server/routes/__tests__/qms-change-approval-signature.test.ts server/services/qms client/src/concept2cure/v2/__tests__/cmcRegisterForms.test.ts server/services/ana/__tests__/tool-registry-consistency.test.ts server/services/ana/__tests__/catalog-gated-tools.test.ts
+ Test Files  6 passed (6)
+      Tests  872 passed (872)

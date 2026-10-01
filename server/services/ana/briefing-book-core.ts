@@ -65,7 +65,10 @@ export interface BriefingBookContext {
 }
 
 /** Provenance of the meeting data the book was built from. */
-export type BriefingBookDataSource = 'live' | 'fixture';
+/** 'supplied': every fact in the book came from the caller's own inputs.
+ *  'fixture' remains for callers that still pass sample data; nothing in the
+ *  product does since assemble_briefing_book stopped (see that handler). */
+export type BriefingBookDataSource = 'live' | 'supplied' | 'fixture';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Mandatory section headers — the FDA briefing-book skeleton. These are the
@@ -216,7 +219,9 @@ export function assembleBriefingBook(
   lines.push(
     renderBullets(
       context.supportingData,
-      '- Supporting nonclinical and clinical data summaries are compiled in the appendices.',
+      /* Was "…are compiled in the appendices" — a claim that appendices exist,
+         in a book assembled with no supporting data at all. */
+      '- Supporting nonclinical and clinical data: not yet supplied by the sponsor.',
     ),
   );
 
@@ -471,34 +476,12 @@ export function normalizePremortemFindings(raw: unknown): AnticipatedChallenge[]
 //   meeting id + organization scope.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const FIXTURE_EOP2_MEETING: RegAgencyMeetingInput = {
-  id: 'fixture-eop2-001',
-  type: 'eop2',
-  date: '2026-09-15',
-  status: 'requested',
-  division: 'DHRR — Division of Hematology Rare Diseases',
-  briefingDocDue: '2026-08-15',
-  keyQuestions: [
-    'Does the Agency concur that the proposed Phase 3 primary endpoint is acceptable to support a marketing application?',
-    'Does the Agency agree that the safety database size is adequate for the proposed indication?',
-    'Does the Agency concur with the proposed patient population and key inclusion/exclusion criteria?',
-  ],
-};
+/* FIXTURE_EOP2_MEETING / FIXTURE_EOP2_CONTEXT — removed from product code.
+   assemble_briefing_book used them for EVERY call, including one given a
+   meeting id: a fictional EOP2 meeting with DHRR on 2026-09-15, a fictional
+   sponsor, and Background and Supporting-Data text ("Phase 1 … across N=36
+   patients", "Phase 2 demonstrated a composite complete-remission signal")
+   into which the caller's real product name was substituted. Only the
+   question list was bannered as sample; the invented clinical history read as
+   the product's own. The test data for this module lives in its test. */
 
-export const FIXTURE_EOP2_CONTEXT: BriefingBookContext = {
-  productName: 'Compound C2C-117',
-  indication: 'Relapsed/Refractory AML',
-  sponsor: 'Concept2Cure Therapeutics',
-  background: [
-    'Compound C2C-117 is a small-molecule inhibitor under development for relapsed/refractory acute myeloid leukemia.',
-    'Phase 1 dose-escalation established the recommended Phase 2 dose; Phase 2 demonstrated a composite complete-remission signal in the target population.',
-  ],
-  objectives: [
-    'Confirm the registrational Phase 3 design and primary endpoint.',
-    'Agree the safety database and exposure required for the marketing application.',
-  ],
-  supportingData: [
-    'Phase 1: dose-escalation safety and PK across N=36 patients.',
-    'Phase 2: composite complete remission rate with duration-of-response follow-up.',
-  ],
-};

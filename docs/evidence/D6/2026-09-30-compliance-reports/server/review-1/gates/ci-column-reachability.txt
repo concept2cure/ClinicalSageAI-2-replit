@@ -1,0 +1,2 @@
+[ci:column-reachability] OK — 3194 column add(s) on no applier, 0 queried by the server.
+exit=0

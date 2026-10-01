@@ -9,6 +9,7 @@
  */
 
 import type { AnaTool } from '../ai-gateway/types';
+import { STATED_REASON_INPUT } from './stated-reason-input';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // QMS + Labeling + Search + Analytics tools (migration 20260511).
@@ -26,6 +27,7 @@ export const CREATE_QMS_DOCUMENT: AnaTool = {
       doc_type:   { type: 'string', enum: ['sop', 'wi', 'form', 'spec', 'policy', 'manual', 'protocol'] },
       category:   { type: 'string', description: "e.g. design / production / capa / training." },
       version:    { type: 'string' },
+      reason:     STATED_REASON_INPUT,
     },
     required: ['doc_number', 'title', 'doc_type'],
   },
@@ -68,7 +70,7 @@ export const REVISE_QMS_DOCUMENT: AnaTool = {
     type: 'object',
     properties: {
       document_id: { type: 'number' },
-      reason:      { type: 'string', description: 'Reason for change (required).' },
+      reason:      STATED_REASON_INPUT,
     },
     required: ['document_id', 'reason'],
   },
@@ -77,7 +79,9 @@ export const REVISE_QMS_DOCUMENT: AnaTool = {
 export const RETIRE_QMS_DOCUMENT: AnaTool = {
   name: 'retire_qms_document',
   description:
-    "Retire a controlled QMS document — the terminal lifecycle state. Requires a reason for change of at least 8 characters, recorded in the audit trail; ask the user for it if they did not give one. Use when the user wants to retire / withdraw a procedure that is no longer in use.",
+    // 2026-09-28 (Q-0928-1 / SEC-0928-1): this offered retirement as an act AnA
+    // performs; the handler now refuses, as approve_qms_document's does.
+    "AnA cannot sign. Retiring a QMS controlled document ends its effective status and is an electronic signature (21 CFR 11.50): it needs the person's password and second factor, which a chat turn cannot collect. This tool writes nothing; it tells the user to retire on the document in the Quality register. Use it only to explain that.",
   input_schema: {
     type: 'object',
     properties: {
@@ -135,7 +139,7 @@ export const QMS_CHANGE_CREATE: AnaTool = {
       change_type:                { type: 'string', enum: ['document', 'process', 'equipment', 'material', 'supplier', 'method', 'facility', 'computer_system', 'specification', 'other'] },
       classification:             { type: 'string', enum: ['minor', 'major', 'critical'] },
       risk_level:                 { type: 'string', enum: ['low', 'medium', 'high'] },
-      reason:                     { type: 'string', description: 'Reason for the change (captured for 21 CFR Part 11).' },
+      reason:                     STATED_REASON_INPUT,
       impact_assessment:          { type: 'string' },
       implementation_plan:        { type: 'string' },
       target_implementation_date: { type: 'string', description: 'ISO date (YYYY-MM-DD).' },
@@ -148,13 +152,13 @@ export const QMS_CHANGE_CREATE: AnaTool = {
 export const QMS_CHANGE_TRANSITION: AnaTool = {
   name: 'qms_change_transition',
   description:
-    "Advance a change through its controlled lifecycle (proposed → under_assessment → approved → in_implementation → verification → closed; or rejected/cancelled). Approval enforces segregation of duties — the approver must differ from the person who proposed the change. A reason-for-change is required (21 CFR Part 11); pass effectiveness_review when closing.",
+    "Advance a change through its controlled lifecycle (proposed → under_assessment → [approval] → in_implementation → verification → closed; or rejected/cancelled). This tool cannot approve a change: approval is an electronic signature (21 CFR 11.50) that needs the approver's password and second factor, which a chat turn cannot collect. When a change under assessment is ready for approval, tell the user to approve it with the Approve button on the change in the Quality register, which takes their signature; someone other than the person who proposed it must approve. A reason-for-change is required (21 CFR Part 11); pass effectiveness_review when closing.",
   input_schema: {
     type: 'object',
     properties: {
       change_id:            { type: 'number' },
-      to:                   { type: 'string', enum: ['proposed', 'under_assessment', 'approved', 'rejected', 'in_implementation', 'verification', 'closed', 'cancelled'] },
-      reason:               { type: 'string', description: 'Reason-for-change for this governed transition.' },
+      to:                   { type: 'string', enum: ['proposed', 'under_assessment', 'rejected', 'in_implementation', 'verification', 'closed', 'cancelled'] },
+      reason:               STATED_REASON_INPUT,
       effectiveness_review: { type: 'string', description: 'Effectiveness-check outcome — provide when moving to closed.' },
     },
     required: ['change_id', 'to'],

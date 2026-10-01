@@ -1,0 +1,1398 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > the report catalog > lists every report with its purpose and basis, read from the catalog route 5027ms
+   → Unable to find an element with the text: User access review. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > the report catalog > shows the readers notice and no Run control when the member cannot run reports 5006ms
+   → Unable to find an element with the text: Available to organisation owners, admins and managers.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > the report catalog > renders a failed catalog read as an error with a retry, never as an empty catalog 5005ms
+   → Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > the report catalog > treats a 200 that is not the catalog shape as a failed read 5004ms
+   → Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > running a report > renders sections, the empty-section sentence, what is not recorded and the chain verdict 5010ms
+   → Unable to find role="button" and name `/Sign-in and session events/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > running a report > states the chain verdict honestly ({"ok":false,"rowsChecked":40}) 5004ms
+   → Unable to find role="button" and name `/Sign-in and session events/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > running a report > states the chain verdict honestly ({"ok":null,"reason":"The chain walk did not complete."}) 5006ms
+   → Unable to find role="button" and name `/Sign-in and session events/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > running a report > uses only the as-of date for an as-of report 5004ms
+   → Unable to find role="button" and name `/User access review/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > running a report > refuses a period whose start is after its end without calling the server 5008ms
+   → Unable to find role="button" and name `/Sign-in and session events/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > running a report > shows the not-recorded refusal for a 503 and no table 5005ms
+   → Unable to find role="button" and name `/Sign-in and session events/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > running a report > uses the server sentence for a 503 when it sends one 5002ms
+   → Unable to find role="button" and name `/Sign-in and session events/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > running a report > maps a 403 to the readers notice and a 400 to the server message 5005ms
+   → Unable to find role="button" and name `/Sign-in and session events/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > running a report > shows at most 200 rows on screen and says the download has the rest 5003ms
+   → Unable to find role="button" and name `/Sign-in and session events/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > downloads > saves the CSV run’s export.data byte for byte, with its manifest beside it 5010ms
+   → Unable to find role="button" and name `/Sign-in and session events/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > downloads > saves the JSON bundle as data, manifest, signature and verification 5003ms
+   → Unable to find role="button" and name `/Sign-in and session events/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > downloads > reports a refused download as a failure, not a success 5009ms
+   → Unable to find role="button" and name `/Sign-in and session events/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > the full audit trail entry > runs through its own signed-export endpoint and renders the rows in one table 5006ms
+   → Unable to find role="button" and name `/Full audit trail/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > entry points > Insights with no lead program still reaches the reports 238ms
+   → Unable to find an accessible element with the role "button" and name "Audit & compliance reports"
+
+Here are the accessible roles:
+
+  status:
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"rc"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rc-canvas"[39m
+        [33mstyle[39m=[32m"grid-column: 1 / -1;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"c2c-empty-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-chart-column"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 3v16a2 2 0 0 0 2 2h16"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M18 17V9"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M13 17V5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 17v-3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-t"[39m
+          [36m>[39m
+            [0mNo program readiness yet[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-h"[39m
+          [36m>[39m
+            [0mOnce a program with a governed readiness run exists in your organization, the reporting canvas opens here — flagship readiness, the portfolio rollup, and every governed report, all provenance-linked. Nothing is estimated.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > entry points > Insights with a lead program links to the reports from its left pane header 99ms
+   → Unable to find an accessible element with the role "button" and name "Audit & compliance reports"
+
+There are no accessible roles. But there might be some inaccessible roles. If you wish to access them, then set the `hidden` option to `true`. Learn more about this here: https://testing-library.com/docs/dom-testing-library/api-queries#byrole
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33mclass[39m=[32m"rc-ana-head"[39m
+  [33mstyle[39m=[32m""[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"rc-ana-id"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"rc-ana-mark"[39m
+    [36m>[39m
+      [0m*[0m
+    [36m</span>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"nm"[39m
+      [36m>[39m
+        [0mReport builder[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"sub"[39m
+      [36m>[39m
+        [0mBX204 — NDA — Biotech[0m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</div>[39m
+ × client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > entry points > the audit trail links to the compliance reports beside its signed export 5016ms
+   → Unable to find role="button" and name "Compliance reports"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ph"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-eyebrow"[39m
+          [36m>[39m
+            [0mAdmin — compliance[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+          [36m>[39m
+            [0mAudit trail[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0m0 entries — hash-chained — append-only — 21 CFR Part 11 §11.10(e)[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-link"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Hash chain[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn primary"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-scroll"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M19 17V5a2 2 0 0 0-2-2H4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mExport signed bundle[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"polite"[39m
+        [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-empty-ic"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-scroll"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M19 17V5a2 2 0 0 0-2-2H4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-empty-t"[39m
+        [36m>[39m
+          [0mNo audit entries yet[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-empty-h"[39m
+        [36m>[39m
+          [0mGoverned actions — authoring, review, submission, vault locks and e-signatures — are written here to the immutable hash-chained ledger as they happen.[0m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ph"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-eyebrow"[39m
+          [36m>[39m
+            [0mAdmin — compliance[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+          [36m>[39m
+            [0mAudit trail[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0m0 entries — hash-chained — append-only — 21 CFR Part 11 §11.10(e)[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-link"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Hash chain[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn primary"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-scroll"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M19 17V5a2 2 0 0 0-2-2H4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mExport signed bundle[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"polite"[39m
+        [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-empty-ic"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-scroll"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M19 17V5a2 2 0 0 0-2-2H4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-empty-t"[39m
+        [36m>[39m
+          [0mNo audit entries yet[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-empty-h"[39m
+        [36m>[39m
+          [0mGoverned actions — authoring, review, submission, vault locks and e-signatures — are written here to the immutable hash-chained ledger as they happen.[0m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 20 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > the report catalog > lists every report with its purpose and basis, read from the catalog route
+TestingLibraryElementError: Unable to find an element with the text: User access review. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx:211:25
+    209|   it('lists every report with its purpose and basis, read from the cat…
+    210|     mount();
+    211|     expect(await screen.findByText('User access review')).toBeTruthy();
+       |                         ^
+    212|     expect(screen.getByRole('heading', { name: 'Audit & compliance rep…
+    213|     expect(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/20]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > the report catalog > shows the readers notice and no Run control when the member cannot run reports
+TestingLibraryElementError: Unable to find an element with the text: Available to organisation owners, admins and managers.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx:228:25
+    226|     route = (url) => (url === '/api/audit/reports' ? ok({ ...CATALOG, …
+    227|     mount();
+    228|     expect(await screen.findByText('Available to organisation owners, …
+       |                         ^
+    229|     // Still listed, so a member knows what exists.
+    230|     expect(screen.getByText('User access review')).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/20]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > the report catalog > renders a failed catalog read as an error with a retry, never as an empty catalog
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx:239:32
+    237|     route = () => fail(500, { success: false, error: { code: 'INTERNAL…
+    238|     mount();
+    239|     const alert = await screen.findByRole('alert');
+       |                                ^
+    240|     expect(alert.textContent).toMatch(/Couldn.t load the report catalo…
+    241|     expect(screen.queryByText('User access review')).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/20]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > the report catalog > treats a 200 that is not the catalog shape as a failed read
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx:252:26
+    250|     route = () => ok({ data: [] });
+    251|     mount();
+    252|     expect((await screen.findByRole('alert')).textContent).toMatch(/Co…
+       |                          ^
+    253|   });
+    254| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/20]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > running a report > renders sections, the empty-section sentence, what is not recorded and the chain verdict
+TestingLibraryElementError: Unable to find role="button" and name `/Sign-in and session events/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectReport client/src/concept2cure/v2/__tests__/complianceReports.test.tsx:195:29
+    193|
+    194| async function selectReport(name: RegExp) {
+    195|   const card = await screen.findByRole('button', { name });
+       |                             ^
+    196|   fireEvent.click(card);
+    197| }
+ ❯ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx:261:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/20]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > running a report > states the chain verdict honestly ({"ok":false,"rowsChecked":40})
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > running a report > states the chain verdict honestly ({"ok":null,"reason":"The chain walk did not complete."})
+TestingLibraryElementError: Unable to find role="button" and name `/Sign-in and session events/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectReport client/src/concept2cure/v2/__tests__/complianceReports.test.tsx:195:29
+    193|
+    194| async function selectReport(name: RegExp) {
+    195|   const card = await screen.findByRole('button', { name });
+       |                             ^
+    196|   fireEvent.click(card);
+    197| }
+ ❯ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx:294:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/20]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > running a report > uses only the as-of date for an as-of report
+TestingLibraryElementError: Unable to find role="button" and name `/User access review/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectReport client/src/concept2cure/v2/__tests__/complianceReports.test.tsx:195:29
+    193|
+    194| async function selectReport(name: RegExp) {
+    195|   const card = await screen.findByRole('button', { name });
+       |                             ^
+    196|   fireEvent.click(card);
+    197| }
+ ❯ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx:303:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/20]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > running a report > refuses a period whose start is after its end without calling the server
+TestingLibraryElementError: Unable to find role="button" and name `/Sign-in and session events/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectReport client/src/concept2cure/v2/__tests__/complianceReports.test.tsx:195:29
+    193|
+    194| async function selectReport(name: RegExp) {
+    195|   const card = await screen.findByRole('button', { name });
+       |                             ^
+    196|   fireEvent.click(card);
+    197| }
+ ❯ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx:312:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/20]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > running a report > shows the not-recorded refusal for a 503 and no table
+TestingLibraryElementError: Unable to find role="button" and name `/Sign-in and session events/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectReport client/src/concept2cure/v2/__tests__/complianceReports.test.tsx:195:29
+    193|
+    194| async function selectReport(name: RegExp) {
+    195|   const card = await screen.findByRole('button', { name });
+       |                             ^
+    196|   fireEvent.click(card);
+    197| }
+ ❯ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx:323:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/20]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > running a report > uses the server sentence for a 503 when it sends one
+TestingLibraryElementError: Unable to find role="button" and name `/Sign-in and session events/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectReport client/src/concept2cure/v2/__tests__/complianceReports.test.tsx:195:29
+    193|
+    194| async function selectReport(name: RegExp) {
+    195|   const card = await screen.findByRole('button', { name });
+       |                             ^
+    196|   fireEvent.click(card);
+    197| }
+ ❯ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx:341:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/20]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > running a report > maps a 403 to the readers notice and a 400 to the server message
+TestingLibraryElementError: Unable to find role="button" and name `/Sign-in and session events/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectReport client/src/concept2cure/v2/__tests__/complianceReports.test.tsx:195:29
+    193|
+    194| async function selectReport(name: RegExp) {
+    195|   const card = await screen.findByRole('button', { name });
+       |                             ^
+    196|   fireEvent.click(card);
+    197| }
+ ❯ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx:349:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/20]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > running a report > shows at most 200 rows on screen and says the download has the rest
+TestingLibraryElementError: Unable to find role="button" and name `/Sign-in and session events/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectReport client/src/concept2cure/v2/__tests__/complianceReports.test.tsx:195:29
+    193|
+    194| async function selectReport(name: RegExp) {
+    195|   const card = await screen.findByRole('button', { name });
+       |                             ^
+    196|   fireEvent.click(card);
+    197| }
+ ❯ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx:363:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/20]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > downloads > saves the CSV run’s export.data byte for byte, with its manifest beside it
+TestingLibraryElementError: Unable to find role="button" and name `/Sign-in and session events/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectReport client/src/concept2cure/v2/__tests__/complianceReports.test.tsx:195:29
+    193|
+    194| async function selectReport(name: RegExp) {
+    195|   const card = await screen.findByRole('button', { name });
+       |                             ^
+    196|   fireEvent.click(card);
+    197| }
+ ❯ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx:386:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/20]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > downloads > saves the JSON bundle as data, manifest, signature and verification
+TestingLibraryElementError: Unable to find role="button" and name `/Sign-in and session events/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectReport client/src/concept2cure/v2/__tests__/complianceReports.test.tsx:195:29
+    193|
+    194| async function selectReport(name: RegExp) {
+    195|   const card = await screen.findByRole('button', { name });
+       |                             ^
+    196|   fireEvent.click(card);
+    197| }
+ ❯ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx:409:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/20]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > downloads > reports a refused download as a failure, not a success
+TestingLibraryElementError: Unable to find role="button" and name `/Sign-in and session events/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectReport client/src/concept2cure/v2/__tests__/complianceReports.test.tsx:195:29
+    193|
+    194| async function selectReport(name: RegExp) {
+    195|   const card = await screen.findByRole('button', { name });
+       |                             ^
+    196|   fireEvent.click(card);
+    197| }
+ ❯ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx:422:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/20]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > the full audit trail entry > runs through its own signed-export endpoint and renders the rows in one table
+TestingLibraryElementError: Unable to find role="button" and name `/Full audit trail/`
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div />[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ selectReport client/src/concept2cure/v2/__tests__/complianceReports.test.tsx:195:29
+    193|
+    194| async function selectReport(name: RegExp) {
+    195|   const card = await screen.findByRole('button', { name });
+       |                             ^
+    196|   fireEvent.click(card);
+    197| }
+ ❯ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx:450:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/20]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > entry points > Insights with no lead program still reaches the reports
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Audit & compliance reports"
+
+Here are the accessible roles:
+
+  status:
+
+  Name "":
+  [36m<div[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"rc"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rc-canvas"[39m
+        [33mstyle[39m=[32m"grid-column: 1 / -1;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"c2c-empty-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-chart-column"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 3v16a2 2 0 0 0 2 2h16"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M18 17V9"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M13 17V5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 17v-3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-t"[39m
+          [36m>[39m
+            [0mNo program readiness yet[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-h"[39m
+          [36m>[39m
+            [0mOnce a program with a governed readiness run exists in your organization, the reporting canvas opens here — flagship readiness, the portfolio rollup, and every governed report, all provenance-linked. Nothing is estimated.[0m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx:488:28
+    486|     render(<InsightsCanvas onNav={onNav} segment="pharma" {...({ surfa…
+    487|     await screen.findByText('No program readiness yet');
+    488|     fireEvent.click(screen.getByRole('button', { name: 'Audit & compli…
+       |                            ^
+    489|     expect(onNav).toHaveBeenCalledWith('compliance-reports');
+    490|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/20]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > entry points > Insights with a lead program links to the reports from its left pane header
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "Audit & compliance reports"
+
+There are no accessible roles. But there might be some inaccessible roles. If you wish to access them, then set the `hidden` option to `true`. Learn more about this here: https://testing-library.com/docs/dom-testing-library/api-queries#byrole
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33mclass[39m=[32m"rc-ana-head"[39m
+  [33mstyle[39m=[32m""[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"rc-ana-id"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33mclass[39m=[32m"rc-ana-mark"[39m
+    [36m>[39m
+      [0m*[0m
+    [36m</span>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"nm"[39m
+      [36m>[39m
+        [0mReport builder[0m
+      [36m</div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"sub"[39m
+      [36m>[39m
+        [0mBX204 — NDA — Biotech[0m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</div>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx:509:34
+    507|     await waitFor(() => expect(document.querySelector('.rc-ana-head'))…
+    508|     const head = document.querySelector('.rc-ana-head') as HTMLElement;
+    509|     fireEvent.click(within(head).getByRole('button', { name: 'Audit & …
+       |                                  ^
+    510|     expect(onNav).toHaveBeenCalledWith('compliance-reports');
+    511|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/20]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReports.test.tsx > entry points > the audit trail links to the compliance reports beside its signed export
+TestingLibraryElementError: Unable to find role="button" and name "Compliance reports"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ph"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-eyebrow"[39m
+          [36m>[39m
+            [0mAdmin — compliance[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+          [36m>[39m
+            [0mAudit trail[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0m0 entries — hash-chained — append-only — 21 CFR Part 11 §11.10(e)[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-link"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Hash chain[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn primary"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-scroll"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M19 17V5a2 2 0 0 0-2-2H4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mExport signed bundle[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"polite"[39m
+        [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-empty-ic"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-scroll"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M19 17V5a2 2 0 0 0-2-2H4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-empty-t"[39m
+        [36m>[39m
+          [0mNo audit entries yet[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-empty-h"[39m
+        [36m>[39m
+          [0mGoverned actions — authoring, review, submission, vault locks and e-signatures — are written here to the immutable hash-chained ledger as they happen.[0m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"page-inner"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"ph"[39m
+      [36m>[39m
+        [36m<div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-eyebrow"[39m
+          [36m>[39m
+            [0mAdmin — compliance[0m
+          [36m</div>[39m
+          [36m<h1[39m
+            [33mclass[39m=[32m"ph-title"[39m
+          [36m>[39m
+            [0mAudit trail[0m
+          [36m</h1>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-sub"[39m
+          [36m>[39m
+            [0m0 entries — hash-chained — append-only — 21 CFR Part 11 §11.10(e)[0m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-link"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m Hash chain[0m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn primary"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-scroll"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M19 17V5a2 2 0 0 0-2-2H4"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [0mExport signed bundle[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+      [36m<div[39m
+        [33maria-live[39m=[32m"polite"[39m
+        [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+        [33mrole[39m=[32m"status"[39m
+      [36m>[39m
+        [36m<span[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"c2c-empty-ic"[39m
+        [36m>[39m
+          [36m<svg[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"lucide lucide-scroll"[39m
+            [33mfill[39m=[32m"none"[39m
+            [33mfocusable[39m=[32m"false"[39m
+            [33mheight[39m=[32m"1em"[39m
+            [33mstroke[39m=[32m"currentColor"[39m
+            [33mstroke-linecap[39m=[32m"round"[39m
+            [33mstroke-linejoin[39m=[32m"round"[39m
+            [33mstroke-width[39m=[32m"1.75"[39m
+            [33mviewBox[39m=[32m"0 0 24 24"[39m
+            [33mwidth[39m=[32m"1em"[39m
+            [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+          [36m>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M19 17V5a2 2 0 0 0-2-2H4"[39m
+            [36m/>[39m
+            [36m<path[39m
+              [33md[39m=[32m"M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"[39m
+            [36m/>[39m
+          [36m</svg>[39m
+        [36m</span>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-empty-t"[39m
+        [36m>[39m
+          [0mNo audit entries yet[0m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"c2c-empty-h"[39m
+        [36m>[39m
+          [0mGoverned actions — authoring, review, submission, vault locks and e-signatures — are written here to the immutable hash-chained ledger as they happen.[0m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/complianceReports.test.tsx:523:34
+    521|       />,
+    522|     );
+    523|     fireEvent.click(await screen.findByRole('button', { name: 'Complia…
+       |                                  ^
+    524|     expect(onNav).toHaveBeenCalledWith('compliance-reports');
+    525|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/20]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  20 failed (20)
+   Start at  00:15:37
+   Duration  92.75s (transform 995ms, setup 200ms, import 1.22s, tests 90.48s, environment 653ms)
+

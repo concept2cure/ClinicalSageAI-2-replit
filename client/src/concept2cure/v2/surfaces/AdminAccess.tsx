@@ -57,8 +57,12 @@ interface Role { id: string; label: string; members: number; desc: string; scope
 interface Grant { user: string; program: string; scope: string; granted: string; expires?: string }
 interface Conn { kind: string; provider: string; status?: string; domain: string; users: number; lastSync?: string }
 interface Sso { primary: Conn; fallback: Conn; proposed: Conn; scim: { provider: string; enabled: boolean; provisionedAttrs: number; lastEvent: string }; mfaRequired?: boolean; sessionTtl?: string }
-interface ApiKey { id: string; name: string; owner: string; scopes: string[]; created: string; lastUsed: string; rotateIn: string }
+/** `keyId` is what DELETE /api/api-keys/:id takes; `prefix` is the key's public
+ *  prefix; `owner` is the creator's name. */
+interface ApiKey { id: string; keyId?: number; prefix?: string; name: string; owner: string; scopes: string[]; created: string; lastUsed: string; rotateIn: string }
 interface Audit { id: string; when: string; actor: string; action: string; target: string; sha: string }
+/** `kind: 'policy'` is a fact about the deployment no org setting changes
+ *  (the second factor at sign-in), so it is shown, not offered for change. */
 interface Setting { id: string; label: string; value: string; kind?: string; desc: string }
 /** Shape of the GET /api/mdx/admin payload (server/routes/mdx-admin.ts). `sso`
  *  is nullable because the route degrades it to null if the stores are missing. */
@@ -76,7 +80,18 @@ const TABS = [
 ] as const;
 type TabId = (typeof TABS)[number]['id'];
 
-const MCOLS = '40px 1.4fr 100px 1fr 90px 70px 90px';
+const MCOLS = '40px 1.4fr 100px 1fr 70px 80px 120px';
+
+/** The payload facets GET /api/mdx/admin can report in `meta.unavailable`. */
+type Facet = 'apiKeys' | 'audit' | 'settings' | 'sso';
+
+/** An ISO instant in the reader's locale ("Sep 23, 2026, 2:28 PM"). '' stays
+ *  '' and a value that is not a date ('never') is shown as sent. */
+function formatWhen(iso: string): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? iso : d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+}
 // + a trailing Action column for the explicit Revoke control.
 const KCOLS = '110px 1fr 1.4fr 90px 90px 110px 70px 90px';
 
@@ -86,7 +101,17 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
      401/403, 500) is an honest error; a successful load with no members is an
      honest empty — never a codebase fixture, never a "Sample data" pill. */
   const [adminEpoch, setAdminEpoch] = useState(0);
-  const { data, loading, error } = useLiveData<AdminData>('/api/mdx/admin', ['/api/mdx/admin', adminEpoch]);
+  const { data, loading, error, status, meta } = useLiveData<AdminData>('/api/mdx/admin', ['/api/mdx/admin', adminEpoch]);
+  const reload = () => setAdminEpoch((n) => n + 1);
+  /* A 401/403 is "you don't have access", not "the service didn't respond". */
+  const forbidden = Boolean(error) && (status === 401 || status === 403);
+  /* Facets whose read FAILED on the server (mdx-admin.ts facet()). Each renders
+     "couldn't be read" — never "0 API keys" or "No admin audit entries yet". */
+  const unavailable = useMemo(
+    () => new Set<Facet>(!loading && Array.isArray(meta?.unavailable) ? (meta?.unavailable as Facet[]) : []),
+    [loading, meta],
+  );
+  const facetDown = (f: Facet) => unavailable.has(f);
 
   /* ── "Invite member" opened nothing ───────────────────────────────────────
      The page's primary CTA ran ask('Invite a new member. Confirm name, email,
@@ -102,14 +127,15 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
   const [inviting, setInviting] = useState(false);
 
   /** The key a Revoke click is confirming. Null when no confirmation is open. */
-  const [revoking, setRevoking] = useState<{ id: string; name: string } | null>(null);
+  const [revoking, setRevoking] = useState<{ id: string; keyId?: number; name: string } | null>(null);
 
   const revokeKey = async () => {
     const k = revoking;
     setRevoking(null);
     if (!k) return;
     try {
-      const res = await apiRequest('DELETE', `/api/api-keys/${encodeURIComponent(k.id)}`);
+      // The numeric key id: the route parseInt()s it, so "key-7" was refused.
+      const res = await apiRequest('DELETE', `/api/api-keys/${encodeURIComponent(String(k.keyId ?? k.id))}`);
       if (!res.ok) {
         const b = await res.json().catch(() => null);
         fireToast(
@@ -242,13 +268,19 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
      fixture) — '--' until the live payload lands. */
   const activeMembers = allMembers.filter((m) => m.state === 'active').length;
   const mfaMembers = allMembers.filter((m) => m.mfa).length;
+  /* "MFA enabled 0 of 1" beside a Settings row saying MFA is required read as
+     two opposite answers. What this counts is an enrolled authenticator app
+     (users.mfa_enabled, services/mfa-enrolment.ts); a member without one is
+     asked for an emailed code at sign-in, so the label says which it is. */
   const kpis = [
     { label: 'Members', value: allMembers.length, meta: `${activeMembers} active` },
     { label: 'Roles', value: roles.length, meta: 'Distinct org roles' },
-    { label: 'MFA enabled', value: mfaMembers, meta: `of ${allMembers.length} members` },
-    { label: 'API keys', value: apiKeys.length, meta: 'active, org-scoped' },
+    { label: 'Authenticator app', value: mfaMembers, meta: `of ${allMembers.length} members enrolled` },
+    facetDown('apiKeys')
+      ? { label: 'API keys', value: null, meta: 'Could not be read' }
+      : { label: 'API keys', value: apiKeys.length, meta: 'active, org-scoped' },
   ];
-  const kv = (n: number) => (ready ? String(n) : '--');
+  const kv = (n: number | null) => (ready && n !== null ? String(n) : '--');
 
   const ask = (t: string) => onAsk(t);
 
@@ -261,11 +293,17 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
     if (loading) {
       return { summary: 'Admin and access is still loading; the KPI counts read "--" and nothing on screen is final yet.' };
     }
+    if (forbidden) {
+      return {
+        summary:
+          'This account does not have organization-admin access, so the server refused the admin read. Nothing about the organization was read.',
+      };
+    }
     if (error) {
       return {
         summary:
-          'The admin read-model could not be read, or this account lacks organization-admin access — a failed read, not an organization with no administrators.',
-        availableActions: ['Retry the admin read as an organization admin'],
+          'The admin read failed — a failed read, not an organization with no administrators. Nothing about members, keys or the audit trail is known yet.',
+        availableActions: ['Retry the admin read'],
       };
     }
     if (!hasData) {
@@ -278,16 +316,19 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
     return {
       summary:
         `Admin and access, on the "${tabLabel}" tab: ${allMembers.length} member(s) (${activeMembers} active, ` +
-        `${mfaMembers} MFA-enrolled), ${roles.length} role(s), ${apiKeys.length} API key(s), ` +
-        `${audit.length} admin audit entry(ies) shown. SSO is ${sso ? 'configured' : 'not reported'}.`,
+        `${mfaMembers} with an authenticator app), ${roles.length} role(s), ` +
+        (unavailable.has('apiKeys') ? 'API keys could not be read, ' : `${apiKeys.length} API key(s), `) +
+        (unavailable.has('audit') ? 'the admin audit could not be read. ' : `${audit.length} admin audit entry(ies) shown. `) +
+        `SSO is ${sso ? 'reported' : 'not reported'}.`,
       facts: {
         tab,
         memberCount: allMembers.length,
         activeMembers,
         mfaMembers,
         roleCount: roles.length,
-        apiKeyCount: apiKeys.length,
-        auditEntryCount: audit.length,
+        apiKeyCount: unavailable.has('apiKeys') ? null : apiKeys.length,
+        auditEntryCount: unavailable.has('audit') ? null : audit.length,
+        unreadable: [...unavailable],
         ssoConfigured: sso !== null,
         scimEnabled: sso?.scim?.enabled ?? null,
         stateFilter,
@@ -298,7 +339,7 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
         'Switch between the Members, Roles + scopes, SSO + provisioning, API keys and Settings tabs, or filter members by state (all / active / invited / disabled)',
       ],
     };
-  }, [loading, error, hasData, tab, allMembers.length, activeMembers, mfaMembers, roles.length, apiKeys.length, audit.length, sso, stateFilter, member]);
+  }, [loading, error, forbidden, unavailable, hasData, tab, allMembers.length, activeMembers, mfaMembers, roles.length, apiKeys.length, audit.length, sso, stateFilter, member]);
   /* View state only. Every mutation this screen offers — invite, grant,
      scope edit, key revoke, setting change — is a governed administrator act
      that routes through the rail's §11.50 sign-off, and none is reachable
@@ -386,12 +427,19 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
 
       {loading ? (
         <div role="status" className="adm-empty" style={{ padding: '18px 14px' }}>Loading admin and access…</div>
+      ) : forbidden ? (
+        <EmptyState
+          icon={I.lock}
+          title="Organization admin access required"
+          hint="Admin and access is limited to this organization's admins, and this account is not one. Ask an admin of this organization if you need access."
+        />
       ) : error ? (
         <EmptyState
           tone="error"
           icon={I.alertTriangle}
           title="Couldn't load admin and access"
-          hint="The admin read-model didn't respond, or you don't have organization-admin access. This is your organization's real admin estate — sign in as an org admin and retry, or check the service is reachable."
+          hint="The admin read failed, so no members, keys or audit entries are shown. Nothing here is reported until it succeeds."
+          retry={reload}
         />
       ) : !hasData ? (
         <EmptyState
@@ -434,8 +482,10 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
                         <div>{m.role === '—' ? <span className="adm-muted">—</span> : <span className={`adm-role-pill adm-role-${m.role.toLowerCase()}`}>{m.role}</span>}</div>
                         <div className="adm-groups">{m.groups.map((g) => <span key={g} className="adm-group mono tiny">{g}</span>)}</div>
                         <div>{m.sso === 'okta' || m.sso === 'sso' ? <span className="adm-sso adm-sso-ok">{I.shieldCheck} sso</span> : <span className="adm-sso adm-sso-local">local</span>}</div>
-                        <div>{m.mfa ? <span className="adm-ok">{I.check}</span> : <span className="adm-warn">{I.alertTriangle}</span>}</div>
-                        <div className="adm-muted">{m.lastSeen}</div>
+                        <div>{m.mfa
+                          ? <span className="adm-ok" title="Authenticator app enrolled">{I.check} app</span>
+                          : <span className="adm-muted" title="No authenticator app: sign-in asks for an emailed code">email</span>}</div>
+                        <div className="adm-muted">{formatWhen(m.lastSeen) || '—'}</div>
                       </button>
                     ))}
                   </div>
@@ -452,8 +502,8 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
                     <div><div className="k">Role</div><div className="v">{member.role}</div></div>
                     <div><div className="k">State</div><div className="v"><span className={`status-pill ${member.state === 'active' ? 'active' : member.state === 'invited' ? 'review' : 'idle'}`}>{member.state}</span></div></div>
                     <div><div className="k">SSO</div><div className="v">{member.sso === 'local' || member.sso === '' ? 'Local' : 'SSO'}</div></div>
-                    <div><div className="k">MFA</div><div className="v">{member.mfa ? 'Enrolled' : 'Pending'}</div></div>
-                    <div><div className="k">Last seen</div><div className="v">{member.lastSeen || '—'}</div></div>
+                    <div><div className="k">Second factor</div><div className="v">{member.mfa ? 'Authenticator app' : 'Emailed code'}</div></div>
+                    <div><div className="k">Last seen</div><div className="v">{formatWhen(member.lastSeen) || '—'}</div></div>
                     <div><div className="k">Groups</div><div className="v adm-groups">{member.groups.length ? member.groups.map((g) => <span key={g} className="adm-group mono tiny">{g}</span>) : '—'}</div></div>
                   </div>
                   <div className="drawer-section-lbl">Role scopes</div>
@@ -492,6 +542,17 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
             </section>
           )}
 
+          {tab === 'sso' && !sso && (
+            <div className="adm-facet-error">
+              <EmptyState
+                tone="error"
+                icon={I.alertTriangle}
+                title="Couldn't load SSO and provisioning"
+                hint="The single sign-on and SCIM configuration could not be read. This is not the same as SSO being off."
+                retry={reload}
+              />
+            </div>
+          )}
           {tab === 'sso' && sso && (
             <div className="adm-sso-grid">
               {([
@@ -520,8 +581,18 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
 
           {tab === 'apikeys' && (
             <section className="section">
-              <div className="section-head"><h2>API keys</h2><span className="section-sub">{apiKeys.length} key{apiKeys.length === 1 ? '' : 's'} · scopes are immutable per key</span></div>
-              {apiKeys.length === 0 ? (
+              <div className="section-head"><h2>API keys</h2><span className="section-sub">{facetDown('apiKeys') ? 'scopes are immutable per key' : `${apiKeys.length} key${apiKeys.length === 1 ? '' : 's'} · scopes are immutable per key`}</span></div>
+              {facetDown('apiKeys') ? (
+                <div className="adm-facet-error">
+                  <EmptyState
+                    tone="error"
+                    icon={I.alertTriangle}
+                    title="Couldn't load API keys"
+                    hint="The read failed. No keys are reported — this is not a count of zero."
+                    retry={reload}
+                  />
+                </div>
+              ) : apiKeys.length === 0 ? (
                 <div className="adm-empty">No API keys. Create one to let a service authenticate — scopes are fixed at creation and every use is audited.</div>
               ) : (
                 <div className="ctable">
@@ -551,13 +622,13 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
                     const overdue = k.rotateIn === 'overdue';
                     return (
                       <div key={k.id} className="ctable-row" style={{ gridTemplateColumns: KCOLS }}>
-                        <div className="mono small">{k.id}</div>
+                        <div className="mono small">{k.prefix ? `${k.prefix}…` : '—'}</div>
                         <div className="ctable-strong">{k.name}</div>
                         <div className="adm-groups">{k.scopes.map((s) => <span key={s} className="adm-scope mono tiny">{s}</span>)}</div>
-                        <div>{k.owner}</div>
+                        <div>{k.owner || '—'}</div>
                         <div className="adm-muted">{k.created}</div>
                         <div className={overdue ? 'adm-overdue' : ''}>{k.rotateIn || '—'}</div>
-                        <div className="adm-muted">{k.lastUsed}</div>
+                        <div className="adm-muted">{formatWhen(k.lastUsed)}</div>
                         <div>
                           <button
                             className="btn ghost small"
@@ -579,34 +650,63 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
           {tab === 'settings' && (
             <section className="section">
               <div className="section-head"><h2>Org settings</h2><span className="section-sub">Changes here emit Part 11 audit entries</span></div>
+              {facetDown('settings') && (
+                <div className="adm-facet-error">
+                  <EmptyState
+                    tone="error"
+                    icon={I.alertTriangle}
+                    title="Couldn't load org settings"
+                    hint="The organization's settings could not be read, so session timeout, single sign-on and branding are not shown."
+                    retry={reload}
+                  />
+                </div>
+              )}
               {settings.length === 0 ? (
-                <div className="adm-empty">No org settings configured yet.</div>
+                facetDown('settings') ? null : <div className="adm-empty">No org settings configured yet.</div>
               ) : (
                 <div className="adm-settings">
-                  {settings.map((s) => (
-                    <button key={s.id} className="adm-setting" onClick={() => ask(`Change setting "${s.label}". Current value: ${s.value}. Confirm the new value, its impact, and the audit entry.`)}>
-                      <div><div className="adm-setting-label">{s.label}</div><div className="adm-setting-desc">{s.desc}</div></div>
-                      <div className="adm-setting-val"><span>{s.value}</span><span className="adm-setting-chev">{I.arrowRight ?? I.right}</span></div>
-                    </button>
-                  ))}
+                  {settings.map((s) =>
+                    s.kind === 'policy' ? (
+                      <div key={s.id} className="adm-setting adm-setting-fixed">
+                        <div><div className="adm-setting-label">{s.label}</div><div className="adm-setting-desc">{s.desc}</div></div>
+                        <div className="adm-setting-val"><span>{s.value}</span></div>
+                      </div>
+                    ) : (
+                      <button key={s.id} className="adm-setting" onClick={() => ask(`Change setting "${s.label}". Current value: ${s.value}. Confirm the new value, its impact, and the audit entry.`)}>
+                        <div><div className="adm-setting-label">{s.label}</div><div className="adm-setting-desc">{s.desc}</div></div>
+                        <div className="adm-setting-val"><span>{s.value}</span><span className="adm-setting-chev">{I.arrowRight ?? I.right}</span></div>
+                      </button>
+                    ),
+                  )}
                 </div>
               )}
             </section>
           )}
 
           <section className="section">
-            <div className="section-head"><h2>Admin audit · recent</h2><span className="section-sub">SHA-256 chained · cryptographically verifiable · {audit.length} action{audit.length === 1 ? '' : 's'} shown</span></div>
-            {audit.length === 0 ? (
+            <div className="section-head"><h2>Admin audit · recent</h2><span className="section-sub">SHA-256 chained · cryptographically verifiable{facetDown('audit') ? '' : ` · ${audit.length} action${audit.length === 1 ? '' : 's'} shown`}</span></div>
+            {facetDown('audit') ? (
+              <div className="adm-facet-error">
+                <EmptyState
+                  tone="error"
+                  icon={I.alertTriangle}
+                  title="Couldn't load the admin audit"
+                  hint="The read failed. This is not an empty audit trail — recorded entries are not shown until it succeeds."
+                  retry={reload}
+                />
+              </div>
+            ) : audit.length === 0 ? (
               <div className="adm-empty">No admin audit entries yet. Governed actions appear here, SHA-256 chained.</div>
             ) : (
               <div className="adm-audit">
+                {/* Named as the Audit trail surface names the same rows: when,
+                    who, what happened, to what. The row id is the key only. */}
                 {audit.map((ev) => (
                   <div key={ev.id} className="adm-audit-row">
-                    <span className="mono small adm-audit-id">{ev.id}</span>
-                    <span className="adm-audit-when">{ev.when}</span>
-                    <span className="adm-audit-actor">{ev.actor === 'system' ? <span className="adm-muted">system</span> : ev.actor}</span>
-                    <span className="mono small adm-audit-action">{ev.action}</span>
-                    <span className="adm-audit-target">{ev.target}</span>
+                    <span className="adm-audit-when">{formatWhen(ev.when)}</span>
+                    <span className="adm-audit-actor" title={ev.actor}>{ev.actor === 'system' ? <span className="adm-muted">System</span> : ev.actor}</span>
+                    <span className="adm-audit-action" title={ev.action}>{ev.action}</span>
+                    <span className="adm-audit-target" title={ev.target}>{ev.target}</span>
                     <span className="mono tiny adm-audit-sha" title="SHA-256 chain hash">{ev.sha || '—'}</span>
                   </div>
                 ))}

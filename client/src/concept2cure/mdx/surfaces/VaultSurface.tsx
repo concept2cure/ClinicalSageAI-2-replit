@@ -22,19 +22,15 @@ import { DocumentsPanel } from '../components/DocumentsPanel';
 import type { KitDocument, KitDocFramework, DocStatus } from '../components/DocumentsPanel';
 import {
   VAULT_DOC_FRAMEWORKS,
-  VAULT_FILES,
-  VAULT_VERSIONS,
   vaultFoldersForFiles,
   vaultKpisForFiles,
   type VaultFile,
   type VaultVersion,
 } from '../data/vault';
-import { useVault, useVaultVersions } from '../hooks/useVault';
-import { SampleDataBanner } from '../components/SampleDataBanner';
+import { useVault, useVaultAuditTrail, useVaultVersions } from '../hooks/useVault';
 import { useVaultUpload } from '../../v2/useVaultUpload';
 import { ErrorState } from '../../v2/dataConnect';
 import type { Program } from '../data/programs';
-import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
 
 export interface VaultSurfaceProps {
   program: Program | null;
@@ -57,6 +53,9 @@ const KIND_TO_FRAMEWORK: Record<string, string> = {
   cert: 'qms',
 };
 
+const NO_FILES: VaultFile[] = [];
+const NO_VERSIONS: VaultVersion[] = [];
+
 export function toDocStatus(status: VaultFile['status']): DocStatus {
   if (status === 'locked') return 'locked';
   if (status === 'final') return 'ready';
@@ -74,8 +73,11 @@ export function toDocStatus(status: VaultFile['status']): DocStatus {
 export function completionOf(status: VaultFile['status']): number | null {
   if (status === 'uploaded') return null;
   if (status === 'locked' || status === 'final') return 100;
-  if (status === 'review') return 88;
-  return 64;
+  /* 'review' used to be 88 and 'draft' 64. Neither was measured: a vault row
+     carries a status, not a section count, so the only completion it can
+     state is the one a locked or final status implies. Anything short of that
+     is unassessed — the same reasoning the comment above gives for uploads. */
+  return null;
 }
 
 function fileToDoc(f: VaultFile): KitDocument {
@@ -92,10 +94,16 @@ function fileToDoc(f: VaultFile): KitDocument {
     reviewers: [],
     lastEdit: f.updated,
     esigRequired: f.esig,
-    esigState: f.esig ? 'signed' : 'na',
-    signedBy: f.esig ? `${f.author} · ${f.updated}` : null as unknown as string | undefined,
-    sections: 1,
-    sectionsComplete: 1,
+    /* No signature state is asserted. This used to read `esig ? 'signed'`
+       with `signedBy: author · updated` — a signature manifestation (21 CFR
+       11.50) built from the creator's name and the last-edit time. The vault
+       list exposes only a boolean `metadata.eSig`: no signer, no time, no
+       meaning. A signature is shown from the signature record, or not at all. */
+    esigState: undefined,
+    signedBy: undefined,
+    /* A vault row has no sections; "1/1" claimed a complete one. */
+    sections: 0,
+    sectionsComplete: 0,
     editor: 'vault-viewer',
   };
 }
@@ -131,8 +139,9 @@ export function VaultSurface({ program, onAskAna, onOpenEditor }: VaultSurfacePr
    * marks the sample case; the banner was never the missing piece. */
   const live = useVault(program?.id ?? null);
   const liveFiles = live.files && live.files.length ? (live.files as VaultFile[]) : null;
-  const allFiles = useSampleRows<VaultFile>(liveFiles, VAULT_FILES);
-  const usingSample = liveFiles === null && allFiles.length > 0;
+  /* Live or nothing. VAULT_FILES and VAULT_VERSIONS are deleted — see the
+     note in data/vault.ts. */
+  const allFiles: VaultFile[] = liveFiles ?? NO_FILES;
   const folders = liveFiles
     ? (live.folders ?? vaultFoldersForFiles(allFiles))
     : vaultFoldersForFiles(allFiles);
@@ -154,8 +163,10 @@ export function VaultSurface({ program, onAskAna, onOpenEditor }: VaultSurfacePr
     liveFiles && liveVersionsQuery.versions && liveVersionsQuery.versions.length
       ? liveVersionsQuery.versions
       : null;
-  const versions: VaultVersion[] = useSampleRows(liveVersions, VAULT_VERSIONS);
-  const versionsAreSample = liveVersions === null;
+  const versions: VaultVersion[] = liveVersions ?? NO_VERSIONS;
+  /* The selected artifact's own audit trail, from audit_logs by record id,
+     under the Vault's own route (production refuses /api/mdx/audit). */
+  const selAudit = useVaultAuditTrail(liveFiles && sel ? sel.id : null);
 
   return (
     <>
@@ -239,7 +250,14 @@ export function VaultSurface({ program, onAskAna, onOpenEditor }: VaultSurfacePr
           <div className="banner-ok" role="status">{note.text}</div>
         ))}
 
-      <SampleDataBanner show={usingSample} loading={live.loading} label="vault artifacts" />
+      {live.error && !liveFiles && (
+        <ErrorState
+          title="Could not load the vault"
+          message={live.error}
+          retry={live.refresh}
+          testId="vault-error"
+        />
+      )}
 
       <div className="metrics-row metrics-compact">
         {kpis.map((k, i) => (
@@ -361,8 +379,17 @@ export function VaultSurface({ program, onAskAna, onOpenEditor }: VaultSurfacePr
             </div>
 
             <div className="drawer-section-lbl">
-              Version history{versionsAreSample ? ' · sample' : ''}
+              Version history
             </div>
+            {versions.length === 0 && (
+              <div className="version-note">
+                {liveVersionsQuery.error
+                  ? 'Version history could not be loaded.'
+                  : liveVersionsQuery.loading
+                    ? 'Loading version history…'
+                    : 'No versions recorded for this artifact.'}
+              </div>
+            )}
             {versions.map((v, i) => (
               <div key={i} className="version-row" data-status={v.status}>
                 <span className="mono version-v">{v.v}</span>
@@ -375,25 +402,34 @@ export function VaultSurface({ program, onAskAna, onOpenEditor }: VaultSurfacePr
               </div>
             ))}
 
-            {/* Audit rows are kit sample copy until the per-artifact audit
-                endpoint ships (PHASE_5_INSTALL: useVaultDetail → versions +
-                audit) — labeled honestly so live tenants can't mistake
-                fixture entries for their real trail. */}
-            <div className="drawer-section-lbl">Recent audit · sample</div>
-            <div className="audit-row">
-              <span className="mono">A-9924812</span>
-              <span>
-                Signed · {sel.author} · {sel.updated}
-              </span>
-            </div>
-            <div className="audit-row">
-              <span className="mono">A-9924809</span>
-              <span>SHA-256 verified · system · 2m ago</span>
-            </div>
-            <div className="audit-row">
-              <span className="mono">A-9924801</span>
-              <span>Uploaded · {sel.author} · 6d ago</span>
-            </div>
+            {/* This block used to be three hardcoded rows under "Recent audit
+                · sample" — A-9924812 "Signed · {author} · {updated}", a SHA-256
+                verification "2m ago", an upload "6d ago" — interpolated with the
+                REAL artifact's author and date, on every live artifact. A
+                signature event and a hash verification nobody performed, on the
+                surface subtitled "21 CFR Part 11 audit trail". The rows now come
+                from audit_logs for this record id, or the block says why not. */}
+            <div className="drawer-section-lbl">Recent audit</div>
+            {selAudit.error ? (
+              <div className="version-note" data-testid="vault-audit-error">
+                The audit trail for this artifact could not be loaded.
+              </div>
+            ) : selAudit.loading || selAudit.events === null ? (
+              <div className="version-note">Loading audit trail…</div>
+            ) : selAudit.events.length === 0 ? (
+              <div className="version-note" data-testid="vault-audit-empty">
+                No audit events recorded for this artifact.
+              </div>
+            ) : (
+              selAudit.events.map((e) => (
+                <div key={e.id} className="audit-row">
+                  <span className="mono">{e.id}</span>
+                  <span>
+                    {e.action} · {e.actorName || e.actor} · {e.when}
+                  </span>
+                </div>
+              ))
+            )}
           </aside>
         )}
       </div>

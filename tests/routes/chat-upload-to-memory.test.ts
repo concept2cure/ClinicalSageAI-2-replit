@@ -31,7 +31,25 @@ const { mockResolveGovernedContext, mockPoolQuery, mockEmbedAtom, mockGetEmbeddi
 vi.mock('../../server/services/concept2cure/governedDocumentContractService.js', () => ({
   resolveGovernedContext: mockResolveGovernedContext,
 }));
+// The Data Room source identity is not this suite's subject (chat-upload-
+// source-identity.test.ts is). Stubbed so a project-scoped upload records its
+// source; with the real service on this suite's stub pool the write fails and
+// the upload now, correctly, answers 503 SOURCE_NOT_RECORDED (PF-07).
+vi.mock('../../server/services/clinical-regulatory-evidence/evidence-spine.service.js', () => ({
+  createSource: vi.fn(async () => ({ id: 4242 })),
+  findSourceByChecksum: vi.fn(async () => null),
+  findSupersededCandidate: vi.fn(async () => null),
+  createSupersedingSource: vi.fn(async () => ({ source: { id: 4242 } })),
+}));
 
+/* The numeric project's ownership (PF-03). Its SQL is proven in
+   server/services/cmc/__tests__/project-membership.pglite.test.ts; here project
+   12 is organization 5's, and any other numeric project is not. */
+const mockProjectBelongs = vi.hoisted(() =>
+  vi.fn(async (p: { organizationId: number; projectId: string }) => p.organizationId === 5 && p.projectId === '12'),
+);
+vi.mock('../../server/services/cmc/project-membership.js', () => ({ projectBelongsToTenant: mockProjectBelongs }));
+vi.mock('../../server/services/cmc/project-membership.ts', () => ({ projectBelongsToTenant: mockProjectBelongs }));
 vi.mock('../../server/db.js', () => {
   const poolStub = { query: mockPoolQuery };
   return { pool: poolStub, getPool: () => poolStub };
@@ -209,6 +227,24 @@ describe('chat upload → extraction → project memory (e2e)', () => {
     expect(res.status).not.toHaveBeenCalledWith(400);
     const atomInsert = findAtomInsert();
     expect(atomInsert![1][3]).not.toContain('[Uploaded via chat:');
+  });
+
+  it('embeds NOTHING when extraction yields no text — the placeholder is not the document', async () => {
+    /* The project (numeric workspace) branch wrote the retrieval atom
+       unconditionally, so a file with no extractable text — a scan, an image
+       OCR cannot read, here a whitespace-only file — was embedded as
+       "[Uploaded via chat: …] (text/plain, N bytes)" and returned from
+       retrieval as if it were a passage of the document. The program branch
+       already refused this ("only real extracted content, never the filename
+       placeholder"); this pins the same rule on the project branch. */
+    const res = await runUpload({
+      originalname: 'blank.txt',
+      mimetype: 'text/plain',
+      buffer: Buffer.from('   \n\t\n   ', 'utf8'),
+    });
+    expect(res.status).not.toHaveBeenCalledWith(400);
+    expect(findAtomInsert()).toBeUndefined();
+    expect(mockEmbedAtom).not.toHaveBeenCalled();
   });
 
   it('reports extraction status for an org-scoped upload (no project, no artifact)', async () => {

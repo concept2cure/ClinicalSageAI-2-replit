@@ -74,8 +74,9 @@ describe('GET /api/c2c/projects — readiness is measured, not stored', () => {
     const byId = Object.fromEntries(res.body.data.map((p: any) => [p.id, p.readiness]));
     // THE defect: this was 0 no matter how much of the filing had been approved.
     expect(byId[P1]).toBe(62);
-    // A project with no governed sections has genuinely approved nothing.
-    expect(byId[P2]).toBe(0);
+    // A project with no governed sections has nothing to measure: no figure,
+    // not "0% ready" (a share over no sections is undefined).
+    expect(byId[P2]).toBeNull();
   });
 
   it('asks only about the projects on this page, and scopes to the caller org', async () => {
@@ -116,9 +117,9 @@ describe('GET /api/c2c/projects — readiness is measured, not stored', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.data).toHaveLength(2);
-    // Falls back to the stored value. Not a good answer — it is the same 0 —
-    // but it is the pre-existing one, and the route logs rather than pretending.
-    expect(res.body.data[0].readiness).toBe(0);
+    // Could not measure is no figure — never the stored 0, which nothing
+    // maintains. The route logs the failure.
+    expect(res.body.data[0].readiness).toBeNull();
   });
 });
 
@@ -167,10 +168,10 @@ describe('GET /api/c2c/projects/:id — the same readiness the list reports', ()
     expect(detail.body.readiness).toBe(card.readiness);
   });
 
-  it('a program with no governed sections has approved nothing: 0, as on its card', async () => {
+  it('a program with no governed sections has no figure, as on its card', async () => {
     queryMock.mockResolvedValueOnce(detailRow()).mockResolvedValueOnce({ rows: [] });
     const res = await request(app(7)).get(`/api/c2c/projects/${P1}`);
-    expect(res.body.readiness).toBe(0);
+    expect(res.body.readiness).toBeNull();
   });
 
   it('a failed readiness read is null — not assessed — never the stored 0', async () => {

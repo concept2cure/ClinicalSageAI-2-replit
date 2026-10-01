@@ -317,3 +317,69 @@ describe('sealVerifiedVersion — §11.100 signer attribution', () => {
     expect(params).not.toContain('attacker@example.com');
   });
 });
+
+/**
+ * Ported from abandoned PR #973 (hunk a), re-implemented against v2.
+ *
+ * 1. §11.50(a)(3): `signature_meaning` is the column an inspector (and every
+ *    reader — audit-trail-ledger, docx-ledger-collector, the protocol
+ *    manifestation) reads as the MEANING of the signature. It used to receive
+ *    the free-text reason-for-change, so the row asserted "Verified clean
+ *    against source." as the meaning and the real meaning lived only in JSON.
+ * 2. A caller that names the persisted artifact by PK alone (seal-verified.ts
+ *    admits `artifactPk` without `artifactExternalId`) used to fall through to
+ *    the fallback INSERT, sealing a DUPLICATE artifact rather than the one it
+ *    named. The PK is now resolved org-scoped to its external id.
+ */
+describe('sealVerifiedVersion — #973 port', () => {
+  it('writes the §11.50 meaning, not the reason-for-change, into signature_meaning', async () => {
+    const { pool, queries } = makePool();
+    await sealVerifiedVersion(baseInput(), pool);
+    const sig = queries.find((q) => /INSERT INTO concept2cure_signatures/.test(q.sql))!;
+    const cols = sig.sql
+      .slice(sig.sql.indexOf('(') + 1, sig.sql.indexOf(')'))
+      .split(',')
+      .map((c) => c.trim());
+    const meaningIdx = cols.indexOf('signature_meaning');
+    expect(meaningIdx).toBeGreaterThan(-1);
+    expect(sig.params![meaningIdx]).toBe('APPROVER');
+    expect(sig.params![meaningIdx]).not.toBe('Verified clean against source.');
+  });
+
+  it('binds to the EXISTING artifact when only artifactPk is supplied (no duplicate insert)', async () => {
+    const queries: { sql: string; params?: unknown[] }[] = [];
+    const client = {
+      query: vi.fn(async (sql: string, params?: unknown[]) => {
+        queries.push({ sql, params });
+        const who = signerLookup(sql, MEMBER_SIGNER);
+        if (who) return who;
+        const lineage = lineageStub(sql);
+        if (lineage) return lineage;
+        if (/SELECT artifact_id FROM concept2cure_artifacts/.test(sql)) return { rows: [{ artifact_id: 'artifact_by_pk' }] };
+        if (/INSERT INTO concept2cure_artifacts\b/.test(sql)) return { rows: [{ id: 101 }] };
+        if (/INSERT INTO concept2cure_artifact_versions\b/.test(sql)) return { rows: [{ id: 202, version: 1 }] };
+        return { rows: [] };
+      }),
+      release: vi.fn(),
+    };
+    const pool: SealPool = { connect: vi.fn(async () => client) };
+    const result = await sealVerifiedVersion(baseInput({ artifactPk: 900 }), pool);
+
+    const sqls = queries.map((q) => q.sql);
+    expect(sqls.some((s) => /INSERT INTO concept2cure_artifacts\b/.test(s))).toBe(false);
+    const lookup = queries.find((q) => /SELECT artifact_id FROM concept2cure_artifacts/.test(q.sql))!;
+    expect(lookup.sql).toMatch(/organization_id = \$2/);
+    expect(lookup.params).toEqual([900, baseInput().organizationId]);
+    expect(result.artifactPk).toBe(900);
+    expect(result.artifactId).toBe('artifact_by_pk');
+  });
+
+  it('never seals a foreign-org artifact PK: an unresolved PK falls through to the guarded fallback', async () => {
+    const { pool, queries } = makePool(); // every SELECT returns no rows
+    const result = await sealVerifiedVersion(baseInput({ artifactPk: 900 }), pool);
+    const sig = queries.find((q) => /INSERT INTO concept2cure_signatures/.test(q.sql))!;
+    expect(sig.params).not.toContain(900);
+    expect(result.artifactPk).toBe(101);
+    expect(result.artifactId).toMatch(/^artifact_/);
+  });
+});

@@ -122,6 +122,10 @@ module "secrets" {
       description = "Tamper-proof audit HMAC secret"
       value       = var.audit_hmac_secret
     }
+    audit_export_signing_key = {
+      description = "Seals the signed audit export an inspector re-verifies"
+      value       = var.audit_export_signing_key
+    }
     connector_encryption_key = {
       description = "Encrypts stored connector credentials"
       value       = var.connector_encryption_key
@@ -150,6 +154,14 @@ resource "terraform_data" "boot_contract" {
       condition     = var.audit_hmac_key != var.audit_hmac_secret
       error_message = "audit_hmac_key and audit_hmac_secret must be different values: one seals the audit chain, the other signs tamper-proof audit rows."
     }
+    precondition {
+      condition     = var.audit_export_signing_key != var.jwt_secret
+      error_message = "audit_export_signing_key must differ from jwt_secret: the app refuses to boot when the audit export would be sealed under the session-token key (server/services/audit/auditExportKeyPosture.ts)."
+    }
+    precondition {
+      condition     = var.audit_export_signing_key != var.audit_hmac_key && var.audit_export_signing_key != var.audit_hmac_secret
+      error_message = "audit_export_signing_key must differ from audit_hmac_key and audit_hmac_secret: each seals a different record."
+    }
   }
 }
 
@@ -157,6 +169,14 @@ locals {
   # Plain (non-secret) values the deploy preflight checks by value, not name.
   boot_environment = [
     { name = "RLS_ENFORCE", value = "on" },
+    # The Part 11 audit posture (security plan P0-9). The tamper-proof trail and
+    # its integrity monitor run only with AUDIT_TRAIL_ENABLED=true (they need
+    # AUDIT_HMAC_SECRET, in boot_secrets, and audit.tamper_proof_log, from the
+    # migration set). AUDIT_REQUIRE_ENFORCE=true makes a missing trail, a failed
+    # immutability probe or a disabled daily sweep refuse boot instead of warn
+    # (server/startup/audit-enforcement.ts). The preflight requires both `true`.
+    { name = "AUDIT_TRAIL_ENABLED", value = "true" },
+    { name = "AUDIT_REQUIRE_ENFORCE", value = "true" },
     { name = "AI_SENSITIVE_DATA_POLICY_MODE", value = "enforce" },
     { name = "AI_PROVIDER_PLACEMENT_APPROVALS", value = var.ai_provider_placement_approvals },
     # Reset and invitation links are built on APP_URL and never on the Host
@@ -195,6 +215,7 @@ locals {
     { name = "MFA_ENCRYPTION_KEY", value_from = module.secrets.secret_arns["mfa_encryption_key"] },
     { name = "AUDIT_HMAC_KEY", value_from = module.secrets.secret_arns["audit_hmac_key"] },
     { name = "AUDIT_HMAC_SECRET", value_from = module.secrets.secret_arns["audit_hmac_secret"] },
+    { name = "AUDIT_EXPORT_SIGNING_KEY", value_from = module.secrets.secret_arns["audit_export_signing_key"] },
     { name = "CONNECTOR_ENCRYPTION_KEY", value_from = module.secrets.secret_arns["connector_encryption_key"] },
     { name = "OPENAI_API_KEY", value_from = module.secrets.secret_arns["openai_api_key"] },
     { name = "SMTP_USER", value_from = module.secrets.secret_arns["smtp_user"] },
@@ -270,10 +291,12 @@ module "ecs" {
   worker_desired_count = var.worker_desired_count
 
   secret_arns = module.secrets.secret_arns_list
+  # Not the frontend bucket: CloudFront serves the SPA from it and the deploy
+  # role publishes it. A task that could write it could rewrite the site every
+  # user loads (security plan P0-15, INF-03; tests/boot_contract.tftest.hcl).
+  # Vault documents have their own grant (vault_storage.tf).
   s3_bucket_arns = [
     module.evidence.evidence_bucket_arn,
-    module.cdn.frontend_bucket_arn,
-    "${module.cdn.frontend_bucket_arn}/*",
   ]
 
   # Every name deploy-aws.yml's preflight requires, so the task definition this

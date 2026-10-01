@@ -1,0 +1,4 @@
+# npx vitest run --config vitest.config.ts server/services/ai-gateway server/services/ana
+ Test Files  311 passed | 1 skipped (312)
+      Tests  4286 passed | 3 skipped (4289)
+exit=0

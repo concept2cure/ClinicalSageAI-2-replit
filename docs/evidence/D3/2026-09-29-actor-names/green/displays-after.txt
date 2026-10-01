@@ -1,0 +1,31 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-29T01:58:16.498Z","pid":28970,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-29T01:58:16.500Z","pid":28970,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-29T01:58:16.500Z","pid":28970,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/actor-displays.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/actor-displays.dbtest.ts
+[database] Database connection successful
+
+{"level":30,"time":"2026-09-29T01:58:17.613Z","pid":28970,"hostname":"vm","context":{"userId":1146,"tenantId":90301,"resourceId":"371:m2.5-actor-displays"},"msg":"[audit-service] [AUDIT] data_modify project_section"}
+{"level":30,"time":"2026-09-29T01:58:17.631Z","pid":28970,"hostname":"vm","context":{"userId":1146,"tenantId":90301,"resourceId":"d2e2b360-ce76-4903-b997-6ab4a5bc0a25"},"msg":"[audit-service] [AUDIT] data_modify regulatory_programs"}
+stdout | tests/db/actor-displays.dbtest.ts > project sections keep the records of people who left (D3) > the section's history names who changed it
+[database] Database connection successful { timestamp: '2026-09-29T01:58:17.689Z', poolSize: 1 }
+
+ ✓ tests/db/actor-displays.dbtest.ts > project sections keep the records of people who left (D3) > the comment thread keeps every comment, named where A knows the author 43ms
+ ✓ tests/db/actor-displays.dbtest.ts > project sections keep the records of people who left (D3) > the section's history names who changed it 15ms
+ ✓ tests/db/actor-displays.dbtest.ts > project sections keep the records of people who left (D3) > the team workload keeps sections assigned to people who left 12ms
+ ✓ tests/db/actor-displays.dbtest.ts > project sections keep the records of people who left (D3) > the section list names the leaver as assignee 306ms
+ ✓ tests/db/actor-displays.dbtest.ts > a program keeps its lead's and editors' names (D3) > the lead who left is still named on the program 12ms
+ ✓ tests/db/actor-displays.dbtest.ts > a program keeps its lead's and editors' names (D3) > activity names the editor, and never calls a person "System" 7ms
+ ✓ tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the project activity feed answers 23ms
+ ✓ tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the MDx audit list names the leaver's audit entries 9ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  01:58:14
+   Duration  3.63s (transform 1.22s, setup 70ms, import 2.55s, tests 730ms, environment 0ms)
+

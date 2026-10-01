@@ -72,14 +72,20 @@ function clientDoc(checksum: string, over: Record<string, unknown> = {}) {
   };
 }
 
-/** Create a document + section in the authoring store, returning the section id. */
-async function makeSection(orgId: number, docTitle: string, code: string): Promise<{ docId: string; sectionId: string }> {
+/** Create a document + section in the authoring store, returning the section id.
+ *  The document belongs to a project, project A unless said otherwise (PF-07). */
+async function makeSection(
+  orgId: number,
+  docTitle: string,
+  code: string,
+  programId: string | null = PROGRAM_A,
+): Promise<{ docId: string; sectionId: string }> {
   const docId = crypto.randomUUID();
   const sectionId = crypto.randomUUID();
   await pool.query(
-    `INSERT INTO authoring_documents (id, title, module, status, created_by, tenant_id)
-     VALUES ($1, $2, 'M3', 'draft', $3, $4)`,
-    [docId, docTitle, ACTOR, orgId],
+    `INSERT INTO authoring_documents (id, title, module, status, created_by, tenant_id, client_program_id)
+     VALUES ($1, $2, 'M3', 'draft', $3, $4, $5)`,
+    [docId, docTitle, ACTOR, orgId, programId],
   );
   await pool.query(
     `INSERT INTO authoring_sections (id, doc_id, code, title, content, tenant_id)
@@ -96,6 +102,8 @@ beforeAll(async () => {
   await pglite.exec(migration('db/migrations/20260725_authoring_document_loop_tables.sql'));
   await pglite.exec(migration('db/migrations/20260817_doc_revisions_immutable_ledger.sql'));
   await pglite.exec(migration('db/migrations/20260730_authoring_comments_router_columns.sql'));
+  // authoring_documents.client_program_id: a document's project, which a citation is judged by (PF-11).
+  await pglite.exec(migration('migrations/20260727_authoring_document_program_scope.sql'));
   await pglite.exec(migration('migrations/20260726_authoring_citation_source_usage.sql'));
   // Four real migrations into a cold WASM Postgres exceeds the 10s default hook
   // timeout on a loaded runner.
@@ -149,7 +157,7 @@ describe('recording what a section was drafted from', () => {
     expect(listed[0].citationText).toBe('Drug product composition per protocol §5');
   });
 
-  it('citing the same source twice re-resolves rather than duplicating', async () => {
+  it('citing the same source twice returns the existing citation rather than duplicating', async () => {
     const src = await spine.createSource(ORG_A, clientDoc('sha-dup'));
     const { sectionId } = await makeSection(ORG_A, 'CTD 3.2.S', 'S.1');
 
@@ -163,9 +171,25 @@ describe('recording what a section was drafted from', () => {
     expect(await usage.listSectionSources(ORG_A, sectionId)).toHaveLength(1);
   });
 
+  it('citing it again does not re-baseline the checksum recorded at cite time (SEC-A-8)', async () => {
+    const src = await spine.createSource(ORG_A, clientDoc('sha-recite-1'));
+    const { sectionId } = await makeSection(ORG_A, 'CTD 3.2.S', 'S.2');
+    const first = await usage.citeSource(ORG_A, { sectionId, sourceId: src.id, createdBy: ACTOR });
+    await pool.query(`UPDATE cre_evidence_sources SET checksum = 'sha-recite-2' WHERE id = $1`, [src.id]);
+
+    const again = await usage.citeSource(ORG_A, { sectionId, sourceId: src.id, createdBy: ACTOR });
+
+    // Nothing was written, so there is nothing for an audit row to record.
+    expect(again).toMatchObject({ created: false, citedChecksum: 'sha-recite-1', change: null });
+    const listed = await usage.listSectionSources(ORG_A, sectionId);
+    expect(listed[0].citedChecksum).toBe('sha-recite-1');
+    expect(listed[0].state).toBe('changed');
+    expect(first.change).toMatchObject({ before: null, after: { payload_sha256: 'sha-recite-1' } });
+  });
+
   it("refuses to cite onto another tenant's section", async () => {
     const src = await spine.createSource(ORG_A, clientDoc('sha-xsection'));
-    const { sectionId } = await makeSection(ORG_B, 'Their document', 'X.1');
+    const { sectionId } = await makeSection(ORG_B, 'Their document', 'X.1', PROGRAM_B);
 
     // The pre-existing POST /cite shape would have written this row, stamped with
     // the caller's own tenant_id, keyed on a section they do not own.
@@ -204,6 +228,23 @@ describe('recording what a section was drafted from', () => {
     expect(listed[0].source?.checksum).toBe('sha-v2');
   });
 
+  it("refuses a citation of another project's source, and writes nothing (PF-11)", async () => {
+    const theirs = await spine.createSource(ORG_A, clientDoc('sha-cross-1', { clientProgramId: PROGRAM_B }));
+    const { sectionId } = await makeSection(ORG_A, 'Module 2.5', 'CO.1');
+    const err = await usage.citeSource(ORG_A, { sectionId, sourceId: theirs.id, createdBy: ACTOR }).catch((e) => e);
+    expect(err).toBeInstanceOf(usage.SourceUsageError);
+    expect(err.code).toBe('CROSS_PROJECT');
+    const { rows } = await pool.query(`SELECT 1 FROM authoring_citations WHERE section_id = $1`, [sectionId]);
+    expect(rows).toHaveLength(0);
+  });
+
+  it('a document with no project, or a source with none, is not judged', async () => {
+    const theirs = await spine.createSource(ORG_A, clientDoc('sha-unjudged-1', { clientProgramId: PROGRAM_B }));
+    const { sectionId } = await makeSection(ORG_A, 'Legacy note', 'L.1', null);
+    const r = await usage.citeSource(ORG_A, { sectionId, sourceId: theirs.id, createdBy: ACTOR });
+    expect(r.created).toBe(true);
+  });
+
   it('rejects a non-numeric source id instead of letting Postgres cast it', async () => {
     const { sectionId } = await makeSection(ORG_A, 'Guard', 'G.1');
     await expect(
@@ -233,6 +274,17 @@ describe('change propagation', () => {
     ).toHaveLength(0);
   });
 
+  it("an organization-wide source cited by the project's document is the project's change too (PF-11)", async () => {
+    // Scoped by the source's project, this was never listed for the project
+    // whose document cites it: the source names no project.
+    const src = await spine.createSource(ORG_A, clientDoc('sha-orgwide-1', { visibilityClass: 'tenant_private', clientProgramId: null }));
+    const { sectionId } = await makeSection(ORG_A, 'Module 2.3', 'QOS.1');
+    await usage.citeSource(ORG_A, { sectionId, sourceId: src.id, createdBy: ACTOR });
+    await pool.query(`UPDATE cre_evidence_sources SET checksum = 'sha-orgwide-2' WHERE id = $1`, [src.id]);
+    const changes = await usage.listChangedSourceUsages(ORG_A, { programId: PROGRAM_A, sourceId: src.id });
+    expect(changes.map((c) => c.sectionId)).toEqual([sectionId]);
+  });
+
   it('a citation whose checksum still matches is not reported as changed', async () => {
     const src = await spine.createSource(ORG_A, clientDoc('sha-stable'));
     const { sectionId } = await makeSection(ORG_A, 'Stable doc', 'T.1');
@@ -242,7 +294,7 @@ describe('change propagation', () => {
 
   it("does not leak another tenant's changed citations", async () => {
     const src = await spine.createSource(ORG_B, clientDoc('sha-b-1', { clientProgramId: PROGRAM_B }));
-    const { sectionId } = await makeSection(ORG_B, 'Their doc', 'B.1');
+    const { sectionId } = await makeSection(ORG_B, 'Their doc', 'B.1', PROGRAM_B);
     await usage.citeSource(ORG_B, { sectionId, sourceId: src.id, createdBy: ACTOR });
     await pool.query(`UPDATE cre_evidence_sources SET checksum = 'sha-b-2' WHERE id = $1`, [src.id]);
 
@@ -310,7 +362,7 @@ describe('re-resolving a citation', () => {
     ]);
 
     await pool.query(`UPDATE cre_evidence_sources SET checksum = 'sha-refresh-2' WHERE id = $1`, [src.id]);
-    const outcome = await usage.refreshSourceCitation(ORG_A, cited.citationId);
+    const outcome = await usage.refreshSourceCitation(ORG_A, { sectionId, citationId: cited.citationId });
 
     expect(outcome).toMatchObject({
       ok: true,
@@ -334,7 +386,7 @@ describe('re-resolving a citation', () => {
     const src = await spine.createSource(ORG_A, clientDoc('sha-same'));
     const { sectionId } = await makeSection(ORG_A, 'Unchanged', 'R.2');
     const cited = await usage.citeSource(ORG_A, { sectionId, sourceId: src.id, createdBy: ACTOR });
-    expect(await usage.refreshSourceCitation(ORG_A, cited.citationId)).toMatchObject({
+    expect(await usage.refreshSourceCitation(ORG_A, { sectionId, citationId: cited.citationId })).toMatchObject({
       ok: true,
       changed: false,
     });
@@ -349,7 +401,7 @@ describe('re-resolving a citation', () => {
       [citationId, sectionId, ACTOR, ORG_A],
     );
     // Honest refusal, not a hash of cite_id + Date.now().
-    expect(await usage.refreshSourceCitation(ORG_A, citationId)).toEqual({
+    expect(await usage.refreshSourceCitation(ORG_A, { sectionId, citationId })).toEqual({
       ok: false,
       reason: 'not_a_source_citation',
     });
@@ -364,18 +416,37 @@ describe('re-resolving a citation', () => {
       src.id,
     ]);
 
-    expect(await usage.refreshSourceCitation(ORG_A, cited.citationId)).toEqual({ ok: false, reason: 'frozen' });
+    expect(await usage.refreshSourceCitation(ORG_A, { sectionId, citationId: cited.citationId })).toEqual({
+      ok: false,
+      reason: 'frozen',
+    });
     const { rows } = await pool.query(`SELECT payload_sha256 FROM authoring_citations WHERE id = $1`, [
       cited.citationId,
     ]);
     expect((rows[0] as any).payload_sha256).toBe('sha-frozen-refresh');
   });
 
+  it('cannot re-resolve a citation through a section it does not belong to (SEC-A-1)', async () => {
+    const src = await spine.createSource(ORG_A, clientDoc('sha-xsection-refresh-1'));
+    const theirs = await makeSection(ORG_A, 'Sealed elsewhere', 'R.6');
+    const mine = await makeSection(ORG_A, 'The one I may edit', 'R.7');
+    const cited = await usage.citeSource(ORG_A, { sectionId: theirs.sectionId, sourceId: src.id, createdBy: ACTOR });
+    await pool.query(`UPDATE cre_evidence_sources SET checksum = 'sha-xsection-refresh-2' WHERE id = $1`, [src.id]);
+
+    expect(
+      await usage.refreshSourceCitation(ORG_A, { sectionId: mine.sectionId, citationId: cited.citationId }),
+    ).toEqual({ ok: false, reason: 'not_found' });
+    const { rows } = await pool.query(`SELECT payload_sha256 FROM authoring_citations WHERE id = $1`, [
+      cited.citationId,
+    ]);
+    expect((rows[0] as any).payload_sha256).toBe('sha-xsection-refresh-1');
+  });
+
   it("cannot re-resolve another tenant's citation", async () => {
     const src = await spine.createSource(ORG_A, clientDoc('sha-xrefresh'));
     const { sectionId } = await makeSection(ORG_A, 'Mine', 'R.5');
     const cited = await usage.citeSource(ORG_A, { sectionId, sourceId: src.id, createdBy: ACTOR });
-    expect(await usage.refreshSourceCitation(ORG_B, cited.citationId)).toEqual({
+    expect(await usage.refreshSourceCitation(ORG_B, { sectionId, citationId: cited.citationId })).toEqual({
       ok: false,
       reason: 'not_found',
     });
@@ -439,10 +510,12 @@ describe('removing a citation', () => {
     const f = await usage.citeSource(ORG_A, { sectionId: frozen.sectionId, sourceId: src.id, createdBy: ACTOR });
     await pool.query(`UPDATE authoring_citations SET frozen_at = NOW() WHERE id = $1`, [f.citationId]);
 
-    expect(await usage.removeSourceCitation(ORG_A, open.sectionId, src.id)).toBe(true);
+    const [removed] = await usage.removeSourceCitation(ORG_A, open.sectionId, src.id);
+    // The deleted row, whole: the before-image the caller's audit row keeps.
+    expect(removed).toMatchObject({ section_id: open.sectionId, reference_id: String(src.id), payload_sha256: 'sha-remove', created_by: ACTOR });
     expect(await usage.listSectionSources(ORG_A, open.sectionId)).toHaveLength(0);
 
-    expect(await usage.removeSourceCitation(ORG_A, frozen.sectionId, src.id)).toBe(false);
+    expect(await usage.removeSourceCitation(ORG_A, frozen.sectionId, src.id)).toEqual([]);
     expect(await usage.listSectionSources(ORG_A, frozen.sectionId)).toHaveLength(1);
   });
 
@@ -450,7 +523,7 @@ describe('removing a citation', () => {
     const src = await spine.createSource(ORG_A, clientDoc('sha-xremove'));
     const { sectionId } = await makeSection(ORG_A, 'Mine', 'X.3');
     await usage.citeSource(ORG_A, { sectionId, sourceId: src.id, createdBy: ACTOR });
-    expect(await usage.removeSourceCitation(ORG_B, sectionId, src.id)).toBe(false);
+    expect(await usage.removeSourceCitation(ORG_B, sectionId, src.id)).toEqual([]);
     expect(await usage.listSectionSources(ORG_A, sectionId)).toHaveLength(1);
   });
 });
@@ -490,7 +563,7 @@ describe('the Source Tracer read (listCitedSections)', () => {
 
   it("does not serve another tenant's citations", async () => {
     const src = await spine.createSource(ORG_B, clientDoc('sha-tracer-b', { clientProgramId: PROGRAM_B }));
-    const { docId, sectionId } = await makeSection(ORG_B, 'Their tracer doc', 'TR.4');
+    const { docId, sectionId } = await makeSection(ORG_B, 'Their tracer doc', 'TR.4', PROGRAM_B);
     await usage.citeSource(ORG_B, { sectionId, sourceId: src.id, createdBy: ACTOR });
 
     expect(await usage.listCitedSections(ORG_A, { documentId: docId })).toHaveLength(0);

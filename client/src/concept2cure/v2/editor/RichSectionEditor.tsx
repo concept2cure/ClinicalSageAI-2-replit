@@ -14,7 +14,7 @@
  * What it preserves from the canvases it replaces:
  *   - honest save-state labels: server-persisted, in-flight, failed-but-cached,
  *     and device-only are distinct states with distinct words (DocCanvas);
- *   - a device-local crash cache (`dc::<key>`) so a reload never loses
+ *   - a device-local crash cache (`dc::<account>::<key>`) so a reload never loses
  *     in-progress work — offered back via an explicit restore notice, never
  *     silently loaded over the server's content (fixes DocCanvas, which
  *     hydrated stale localStorage OVER newer server content);
@@ -61,6 +61,10 @@ import Highlight from '@tiptap/extension-highlight';
 import { Collaboration } from '@tiptap/extension-collaboration';
 import { HocuspocusProvider } from '@hocuspocus/provider';
 import { redactInternals } from '@/lib/queryClient';
+import { deviceDraftKey } from '@/lib/deviceDraftCache';
+import { authService } from '@/services/portal/authService';
+import { Mapping } from '@tiptap/pm/transform';
+import type { Transaction } from '@tiptap/pm/state';
 import * as Y from 'yjs';
 import { structuralSignatureFromDom, structuralSignatureFromDoc, signatureDrift, docToPlainText } from './roundTrip';
 
@@ -73,6 +77,7 @@ import {
 import {
   TrackChanges,
   collectSuggestions,
+  settleAcceptedContributions,
   type SuggestionAuthor,
   type AcceptedInsertion,
   type SuggestionDecision,
@@ -197,7 +202,8 @@ export interface RichSectionEditorProps {
   onDirtyChange?: (dirty: boolean) => void;
   readOnly?: boolean;
   placeholder?: string;
-  /** Device crash-cache key (stored under `dc::<storageKey>`). Null disables. */
+  /** Device crash-cache key (stored under `dc::<account>::<storageKey>`, see
+   *  lib/deviceDraftCache). Null disables. */
   storageKey?: string | null;
   ariaLabel?: string;
   /** 'full' draws ribbon + footer; 'bare' is just the canvas (host owns chrome). */
@@ -232,7 +238,10 @@ export interface RichSectionEditorProps {
     /** A click on annotated text — open the thread in the host's rail. */
     onOpen?: (commentId: string) => void;
     /** The anchor's fate: `saved` is whether the section save that carries the
-     *  anchor mark succeeded. A thread can exist while its highlight does not. */
+     *  anchor mark succeeded. A thread can exist while its highlight does not.
+     *  Not called when no anchor was applied at all (the quoted words changed
+     *  before the comment was posted): there is no highlight to save, and the
+     *  editor says so itself. */
     onAnchored?: (commentId: string, saved: boolean) => void;
   } | null;
   /** Image insertion. The host owns the upload (the governed image store is
@@ -322,7 +331,8 @@ const SAVE_META: Record<SaveState, { dot: string; label: string }> = {
   error: { dot: 'var(--error)', label: 'Save failed — kept on this device' },
 };
 
-const cacheKeyFor = (storageKey: string) => 'dc::' + storageKey;
+/** The signed-in account's draft for this section (see lib/deviceDraftCache). */
+const cacheKeyFor = (storageKey: string) => deviceDraftKey(authService.getUser()?.id, storageKey);
 
 /** One shared empty list, so an absent caption directory does not produce a new
  *  array identity on every render and re-run the memos that key on it. */
@@ -409,7 +419,42 @@ function structuralDriftLabel(drift: (keyof StructuralSignature)[]): string {
  *
  * `aria-pressed` is `false` rather than absent when off: omitting it tells a
  * screen reader "not a toggle" instead of "not pressed".
+ *
+ * 2026-09-28, coverage-gap sweep GA-3: and it is ABSENT on a one-shot command.
+ * The attribute was emitted as `active ?? false` on every button, so Undo,
+ * Redo, Insert table, the row/column commands and Delete table were each
+ * announced as a toggle that was "not pressed". A caller that passes `active`
+ * is a toggle and must pass a boolean (`!!editor?.isActive(...)`, so it reads
+ * "false" before the editor exists); a caller that omits it is a command.
  */
+/**
+ * Whether the table the selection is in has a header row / header column —
+ * the state "Toggle header row" and "Toggle header column" flip. Read from the
+ * document, not remembered: the first row is a header row when every cell in
+ * it is a `tableHeader`, and the first column likewise across every row.
+ * `{ row: false, col: false }` outside a table. 2026-09-28, coverage-gap sweep
+ * GA-3: these two toggles were never given a state and read "not pressed"
+ * with a header row in place.
+ */
+function tableHeaderState(state: { selection: { $from: { depth: number; node: (d: number) => PMNode } } } | null | undefined): { row: boolean; col: boolean } {
+  const none = { row: false, col: false };
+  if (!state) return none;
+  const { $from } = state.selection;
+  let table: PMNode | null = null;
+  for (let d = $from.depth; d >= 0; d--) {
+    const n = $from.node(d);
+    if (n.type.name === 'table') { table = n; break; }
+  }
+  if (!table || table.childCount === 0) return none;
+  const isHeader = (n: PMNode | null | undefined) => n?.type.name === 'tableHeader';
+  const first = table.child(0);
+  let row = first.childCount > 0;
+  first.forEach(cell => { if (!isHeader(cell)) row = false; });
+  let col = true;
+  table.forEach(r => { if (!isHeader(r.firstChild)) col = false; });
+  return { row, col };
+}
+
 const RB = React.memo(function RB({
   onClick,
   active,
@@ -432,7 +477,7 @@ const RB = React.memo(function RB({
       type="button"
       title={label}
       aria-label={label}
-      aria-pressed={active ?? false}
+      aria-pressed={active === undefined ? undefined : active}
       disabled={disabled}
       /* Keeps the editor selection alive when focus moves to the button; the
          activation itself is `click`, so keyboard and pointer agree. */
@@ -840,6 +885,13 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
 
     /* ── Source mode state (raw stored string, same save path) ── */
     const [sourceText, setSourceText] = useState<string>(value ?? '');
+    /* What the textarea holds NOW, for the save path; written wherever
+       `sourceText` is. `doSave` is a callback over one render, and that
+       render's `sourceText` is the text before the keystroke that armed the
+       autosave, or before whatever was typed while the PATCH was in flight —
+       so it compared that copy with itself and called text it never sent
+       "saved". Periodic review 2026-09-28, editor family, V-2. */
+    const sourceTextRef = useRef<string>(value ?? '');
 
     /* The footer's word count comes from the TipTap editor, which in source
        mode is constructed EMPTY — so a 120-word section under the fidelity
@@ -1038,7 +1090,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         syncedOnceRef.current = true;
         const frag = collabRuntime.doc.getXmlFragment('default');
         if (frag.length === 0 && boot.html) {
-          editor.commands.setContent(boot.html);
+          editor.commands.setContentUntracked(boot.html);
         }
         // Whether seeded here or adopted from peers, what the synced doc
         // holds now is the clean baseline for dirty-tracking.
@@ -1062,7 +1114,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     useEffect(() => {
       if (!collabRuntime || !editor || editor.isDestroyed || collabSynced || collabStatus !== 'denied') return;
       syncedOnceRef.current = true;
-      if (boot.html) editor.commands.setContent(boot.html);
+      if (boot.html) editor.commands.setContentUntracked(boot.html);
       lastSavedRef.current = serializeEditor(editor, format);
       setDirty(false);
       setSaveState('saved');
@@ -1106,6 +1158,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     const restoreCached = useCallback(() => {
       if (restoreOffer == null) return;
       if (boot.mode === 'source') {
+        sourceTextRef.current = restoreOffer;
         setSourceText(restoreOffer);
         setDirty(true);
         setSaveState('dirty');
@@ -1114,7 +1167,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           format === 'text' || !looksLikeHtml(restoreOffer)
             ? plainTextToHtml(restoreOffer)
             : restoreOffer;
-        editor.commands.setContent(html);
+        editor.commands.setContentUntracked(html);
       }
       setRestoreOffer(null);
     }, [restoreOffer, editor, boot.mode, format]);
@@ -1133,7 +1186,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     /* ── The one save path ── */
     const doSave = useCallback(async (systemReason?: string): Promise<boolean> => {
       const serialized =
-        boot.mode === 'source' ? sourceText : editor ? serialize(editor) : null;
+        boot.mode === 'source' ? sourceTextRef.current : editor ? serialize(editor) : null;
       if (serialized == null) return false;
       // Whatever a debounce was armed for, this write supersedes it.
       if (autosaveTimer.current) {
@@ -1152,19 +1205,18 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       try {
         await onSave(serialized, systemReason);
         lastSavedRef.current = serialized;
-        const nowSerialized = boot.mode === 'source' ? sourceText : editor ? serialize(editor) : serialized;
+        const nowSerialized =
+          boot.mode === 'source' ? sourceTextRef.current : editor ? serialize(editor) : serialized;
         const stillDirty = nowSerialized !== serialized;
         setDirty(stillDirty);
         onDirtyChange?.(stillDirty);
         setSaveState(stillDirty ? 'dirty' : 'saved');
         setSavedRevision((n) => n + 1);
-        if (storageKey) {
-          try {
-            localStorage.removeItem(cacheKeyFor(storageKey));
-          } catch {
-            /* ignore */
-          }
-        }
+        /* Removed only when nothing is outstanding. Text typed while the PATCH
+           was in flight is on screen and in no record, and this cache is its
+           only copy across a reload; it was removed here unconditionally, in
+           both modes (V-2). */
+        cacheDraft(nowSerialized);
         return true;
       } catch {
         // The host surface reports the server's reason; this footer reports
@@ -1172,7 +1224,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         setSaveState('error');
         return false;
       }
-    }, [boot.mode, sourceText, editor, serialize, onSave, onDirtyChange, storageKey]);
+    }, [boot.mode, editor, serialize, onSave, onDirtyChange, cacheDraft]);
 
     useEffect(() => {
       onDirtyChange?.(dirty);
@@ -1281,18 +1333,59 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         return;
       }
       const quote = editor.state.doc.textBetween(from, to, ' ');
-      let id: string | null = null;
+      /* The check above holds for the moment of the click, and the host
+         resolves only once the author has written and posted the comment in
+         the rail — minutes, on a canvas that stays editable. So the range is
+         carried through every transaction in that wait (the author's typing, a
+         co-editor's, the tracking plugin's appended ones), and the buffer is
+         compared with the record again after it. Both used to be skipped: the
+         anchor went onto the stale offsets, and prose typed during the wait
+         was saved as "Comment anchor applied". Periodic review 2026-09-28,
+         editor family, SEC-B-3. */
+      const moved = new Mapping();
+      const follow = ({
+        transaction,
+        appendedTransactions,
+      }: {
+        transaction: Transaction;
+        appendedTransactions: Transaction[];
+      }) => {
+        moved.appendMapping(transaction.mapping);
+        for (const appended of appendedTransactions) moved.appendMapping(appended.mapping);
+      };
+      editor.on('transaction', follow);
+      let id: string | null;
       try {
         id = await commentsApi.onCreate({ kind: 'text-range', quote, from, to });
       } catch (e) {
         setActionNotice('The comment was not created — ' + redactInternals(e instanceof Error ? e.message : '', 'the server refused it') + '. Nothing was anchored.');
         return;
+      } finally {
+        editor.off('transaction', follow);
       }
       if (!id) {
         setActionNotice('The comment was not created, so nothing was anchored.');
         return;
       }
-      editor.chain().focus().setTextSelection({ from, to }).setCommentAnchor(id).run();
+      const anchorFrom = moved.map(from, 1);
+      const anchorTo = moved.map(to, -1);
+      /* The anchor goes on the quoted words or nowhere. No onAnchored: there is
+         no highlight whose save could be reported. */
+      if (anchorTo <= anchorFrom || editor.state.doc.textBetween(anchorFrom, anchorTo, ' ') !== quote) {
+        setActionNotice('The comment was created, but the words it quotes changed while you were writing it, so they are not highlighted. The thread is in the comments rail.');
+        return;
+      }
+      /* Read before the mark goes on: any other difference from the record is
+         prose the author has not given a reason for, and a system reason must
+         not carry it. The author saving their own edits during the wait is
+         fine — the record moved with them. */
+      const editedDuringWait = serialize(editor) !== lastSavedRef.current;
+      editor.chain().focus().setTextSelection({ from: anchorFrom, to: anchorTo }).setCommentAnchor(id).run();
+      if (editedDuringWait) {
+        setActionNotice('The comment is highlighted, but the highlight is not saved yet: the section was edited while you wrote the comment, and those edits need your own reason for change. Save the section to record both.');
+        commentsApi.onAnchored?.(id, false);
+        return;
+      }
       /* The save is a consequence of leaving a comment, not an edit to the
          prose — so it states its own mechanism rather than borrowing whatever
          reason the author gave for their last content change. */
@@ -1301,7 +1394,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         setActionNotice('The comment thread exists, but its anchor could not be saved with the section — other readers will not see the highlight until the section is saved.');
       }
       commentsApi.onAnchored?.(id, saved);
-    }, [commentsApi, editor, doSave, dirty]);
+    }, [commentsApi, editor, doSave, dirty, serialize]);
 
     /* ── Ask the assistant for a source (parity with the retired DocCanvas) ──
        This asks a question in the AnA pane. It is NOT the citation control —
@@ -1347,6 +1440,31 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       editor?.commands.focus();
     }, [editor]);
 
+    /* ── Accepted contributions, settled against the document being saved ──
+       The host reads both lists inside its save; each entry must still be in
+       the content, unmarked, or the revision names a machine contributor for
+       words it does not hold (P11-B-4 — see settleAcceptedContributions).
+       Settled once per document state, so the two read-and-clear calls agree
+       in either order: settling again after one list was cleared would drop
+       every author from the other. */
+    const acceptedSettledForRef = useRef<PMNode | null>(null);
+    const acceptedStore = useCallback(() => {
+      /* TipTap types `storage` as a closed map of the extensions it ships
+         with, so a custom extension's slot is reached through the record
+         shape rather than by property access. */
+      const store = (editor?.storage as unknown as
+        | Record<
+            string,
+            { acceptedAuthors: SuggestionAuthor[]; acceptedInsertions: AcceptedInsertion[] } | undefined
+          >
+        | undefined)?.c2cTrackChanges;
+      if (store && editor && acceptedSettledForRef.current !== editor.state.doc) {
+        settleAcceptedContributions(store, editor.state.doc);
+        acceptedSettledForRef.current = editor.state.doc;
+      }
+      return store;
+    }, [editor]);
+
     /* ── Imperative handle ── */
     useImperativeHandle(
       ref,
@@ -1387,20 +1505,13 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         getContent: () =>
           boot.mode === 'source' ? sourceText : editor ? serialize(editor) : '',
         takeAcceptedAuthors: () => {
-          /* TipTap types `storage` as a closed map of the extensions it ships
-             with, so a custom extension's slot is reached through the record
-             shape rather than by property access. */
-          const store = (editor?.storage as unknown as
-            | Record<string, { acceptedAuthors?: SuggestionAuthor[] } | undefined>
-            | undefined)?.c2cTrackChanges;
+          const store = acceptedStore();
           const taken = store?.acceptedAuthors ?? [];
           if (store?.acceptedAuthors) store.acceptedAuthors = [];
           return taken;
         },
         takeAcceptedInsertions: () => {
-          const store = (editor?.storage as unknown as
-            | Record<string, { acceptedInsertions?: AcceptedInsertion[] } | undefined>
-            | undefined)?.c2cTrackChanges;
+          const store = acceptedStore();
           const taken = store?.acceptedInsertions ?? [];
           if (store?.acceptedInsertions) store.acceptedInsertions = [];
           return taken;
@@ -1434,10 +1545,15 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           if (boot.mode !== 'rich' || !editor.isEditable) return false;
           const clean = String(text ?? '').trim();
           if (!clean) return false;
-          return editor.chain().focus().insertContent(clean).run();
+          /* A text node, never a string: TipTap parses a string as HTML, and
+             this one carries a vault document's title, which whoever named
+             the document chose. `<ins data-author-id="ana">` in a title became
+             a pending suggestion attributed to AnA, `<a data-cite>` a citation.
+             Periodic review 2026-09-28, editor family, SEC-A-6. */
+          return editor.chain().focus().insertContent({ type: 'text', text: clean }).run();
         },
       }),
-      [doSave, editor, boot.mode, sourceText, serialize, openFind, citationsApi],
+      [doSave, editor, boot.mode, sourceText, serialize, openFind, citationsApi, acceptedStore],
     );
 
     /* Mirror the plugin's matches into the counter — on every transaction
@@ -1659,6 +1775,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
 
     /** What the caret is on: a table, a selected figure, or neither. */
     const captionSubject = editor ? captionAt(editor.state) : null;
+    const tableHeaders = tableHeaderState(editor?.state);
 
     const openCaption = useCallback(() => {
       setCaptionError(null);
@@ -1869,8 +1986,10 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           </div>
         )}
 
-        {/* ── Crash-cache restore offer (explicit, never silent) ── */}
-        {restoreOffer != null && (
+        {/* ── Crash-cache restore offer (explicit, never silent) ──
+            Not on a read-only canvas, including one frozen while it was open:
+            restoring would put unsaved text on a sealed section (SEC-A-5). */}
+        {restoreOffer != null && !readOnly && (
           <div className="rse-gate" role="status">
             A draft cached on this device differs from the saved section.
             <button type="button" className="rse-link" onClick={restoreCached}>
@@ -1904,48 +2023,48 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
               <option value="h5">Heading 5</option>
             </select>
             <span className="rse-sep" />
-            <RB title="Bold" shortcut="⌘B" active={editor?.isActive('bold')} onClick={() => editor?.chain().focus().toggleBold().run()}>
+            <RB title="Bold" shortcut="⌘B" active={!!editor?.isActive('bold')} onClick={() => editor?.chain().focus().toggleBold().run()}>
               <b>B</b>
             </RB>
-            <RB title="Italic" shortcut="⌘I" active={editor?.isActive('italic')} onClick={() => editor?.chain().focus().toggleItalic().run()}>
+            <RB title="Italic" shortcut="⌘I" active={!!editor?.isActive('italic')} onClick={() => editor?.chain().focus().toggleItalic().run()}>
               <i>I</i>
             </RB>
-            <RB title="Underline" shortcut="⌘U" active={editor?.isActive('underline')} onClick={() => editor?.chain().focus().toggleUnderline().run()}>
+            <RB title="Underline" shortcut="⌘U" active={!!editor?.isActive('underline')} onClick={() => editor?.chain().focus().toggleUnderline().run()}>
               <span style={{ textDecoration: 'underline' }}>U</span>
             </RB>
-            <RB title="Superscript" shortcut="⌘." active={editor?.isActive('superscript')} onClick={() => editor?.chain().focus().toggleSuperscript().run()}>
+            <RB title="Superscript" shortcut="⌘." active={!!editor?.isActive('superscript')} onClick={() => editor?.chain().focus().toggleSuperscript().run()}>
               <span>
                 x<sup>2</sup>
               </span>
             </RB>
-            <RB title="Subscript" shortcut="⌘," active={editor?.isActive('subscript')} onClick={() => editor?.chain().focus().toggleSubscript().run()}>
+            <RB title="Subscript" shortcut="⌘," active={!!editor?.isActive('subscript')} onClick={() => editor?.chain().focus().toggleSubscript().run()}>
               <span>
                 x<sub>2</sub>
               </span>
             </RB>
-            <RB title="Highlight" active={editor?.isActive('highlight')} onClick={() => editor?.chain().focus().toggleHighlight().run()}>
+            <RB title="Highlight" active={!!editor?.isActive('highlight')} onClick={() => editor?.chain().focus().toggleHighlight().run()}>
               <span className="rse-hl-glyph">ab</span>
             </RB>
             <span className="rse-sep" />
-            <RB title="Bullet list" shortcut="⌘⇧8" active={editor?.isActive('bulletList')} onClick={() => editor?.chain().focus().toggleBulletList().run()}>
+            <RB title="Bullet list" shortcut="⌘⇧8" active={!!editor?.isActive('bulletList')} onClick={() => editor?.chain().focus().toggleBulletList().run()}>
               {I.listBullet}
             </RB>
-            <RB title="Numbered list" shortcut="⌘⇧7" active={editor?.isActive('orderedList')} onClick={() => editor?.chain().focus().toggleOrderedList().run()}>
+            <RB title="Numbered list" shortcut="⌘⇧7" active={!!editor?.isActive('orderedList')} onClick={() => editor?.chain().focus().toggleOrderedList().run()}>
               {I.listOrdered}
             </RB>
             <span className="rse-sep" />
-            <RB title="Align left" active={editor?.isActive({ textAlign: 'left' })} onClick={() => editor?.chain().focus().setTextAlign('left').run()}>
+            <RB title="Align left" active={!!editor?.isActive({ textAlign: 'left' })} onClick={() => editor?.chain().focus().setTextAlign('left').run()}>
               {I.alignLeft}
             </RB>
-            <RB title="Align center" active={editor?.isActive({ textAlign: 'center' })} onClick={() => editor?.chain().focus().setTextAlign('center').run()}>
+            <RB title="Align center" active={!!editor?.isActive({ textAlign: 'center' })} onClick={() => editor?.chain().focus().setTextAlign('center').run()}>
               {I.alignCenter}
             </RB>
-            <RB title="Align right" active={editor?.isActive({ textAlign: 'right' })} onClick={() => editor?.chain().focus().setTextAlign('right').run()}>
+            <RB title="Align right" active={!!editor?.isActive({ textAlign: 'right' })} onClick={() => editor?.chain().focus().setTextAlign('right').run()}>
               {I.alignRight}
             </RB>
             <RB
               title={editor?.isActive('link') ? 'Edit or remove the link' : 'Insert a link'}
-              active={editor?.isActive('link') || linkOpen}
+              active={!!editor?.isActive('link') || linkOpen}
               disabled={
                 !linkOpen &&
                 !editor?.isActive('link') &&
@@ -2016,10 +2135,14 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                 >
                   Split
                 </RB>
-                <RB title="Toggle header row" onClick={() => editor?.chain().focus().toggleHeaderRow().run()}>
+                {/* 2026-09-28 (GA-3): these two ARE toggles, and were never
+                    told their state — so they read "not pressed" with a
+                    header row in place. The state is read from the table the
+                    cursor is in (tableHeaderState). */}
+                <RB title="Toggle header row" active={tableHeaders.row} onClick={() => editor?.chain().focus().toggleHeaderRow().run()}>
                   Hdr
                 </RB>
-                <RB title="Toggle header column" onClick={() => editor?.chain().focus().toggleHeaderColumn().run()}>
+                <RB title="Toggle header column" active={tableHeaders.col} onClick={() => editor?.chain().focus().toggleHeaderColumn().run()}>
                   HdrCol
                 </RB>
                 <RB title="Delete table" onClick={() => editor?.chain().focus().deleteTable().run()}>
@@ -2557,10 +2680,15 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
               readOnly={readOnly}
               aria-label={ariaLabel ?? 'Section source'}
               onChange={(e) => {
+                sourceTextRef.current = e.target.value;
                 setSourceText(e.target.value);
                 const isDirty = e.target.value !== lastSavedRef.current;
                 setDirty(isDirty);
-                setSaveState(isDirty ? 'dirty' : 'saved');
+                /* The rich canvas's rule: a keystroke never leaves 'saving'.
+                   The write's own settle recomputes the state; until then the
+                   Save control stays disabled rather than offering a second
+                   PATCH over the first. */
+                setSaveState((s) => (s === 'saving' ? s : isDirty ? 'dirty' : 'saved'));
                 if (storageKey) {
                   try {
                     if (isDirty) localStorage.setItem(cacheKeyFor(storageKey), e.target.value);

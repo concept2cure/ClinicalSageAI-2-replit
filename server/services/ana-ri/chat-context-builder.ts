@@ -16,10 +16,7 @@ import { pool } from '../../db.js';
 import { orchestrate, type OrchestratorInput, type IntentLens, type UserRole } from './index.js';
 import { prefetchProjectIntelligence, preloadRIMContext } from './orchestrator.js';
 import type { SubmissionType } from './deficiency-taxonomy.js';
-import {
-  resolveToDeficiencyType,
-  getSubmissionTypeContext,
-} from '../../../shared/regulatory/submission-type-bridge.js';
+import { resolveToDeficiencyType } from '../../../shared/regulatory/submission-type-bridge.js';
 import { inferRole } from './role-adapter.js';
 import { buildMemoryContextForChat } from '../memory-context-assembler.js';
 import { getIntelligencePrefix, buildSectionSpecificPrompt } from '../lumen-context-builder.js';
@@ -94,100 +91,9 @@ export interface PrefetchedRouteIntelligenceContext {
   contradictionWatchBlock: string;
 }
 
-// ─── Authoring context builder ───────────────────────────────────────────────
-
-/**
- * Build a compact XML block describing the user's current UI route / screen.
- * This is what lets AnA answer "this section", "this project", "here" when the
- * user hasn't explicitly attached artifact context. Produces an empty string
- * when nothing useful is known.
- */
-export function buildRouteContextBlock(context: any): string {
-  if (!context || typeof context !== 'object') return '';
-
-  const screen = context.screenName || context.screen;
-  const projectName = context.project || context.activeProject;
-  const projectId = context.projectId;
-  const productType = context.productType;
-  const userRole = context.userRole;
-  const sectionCode = context.sectionCode;
-
-  const parts: string[] = [];
-  if (screen) parts.push(`  <screen>${screen}</screen>`);
-  if (projectName || projectId) {
-    const attrs = [
-      projectId ? `id="${projectId}"` : '',
-      projectName ? `name="${String(projectName).replace(/"/g, '&quot;')}"` : '',
-    ]
-      .filter(Boolean)
-      .join(' ');
-    parts.push(`  <project ${attrs}/>`);
-  }
-  if (productType) {
-    const bridgeCtx = getSubmissionTypeContext(productType);
-    if (bridgeCtx) {
-      parts.push(
-        `  <submission_type registry_id="${bridgeCtx.registryId}" agency="${bridgeCtx.agency}" region="${bridgeCtx.region}">${bridgeCtx.displayName}</submission_type>`
-      );
-    } else {
-      parts.push(`  <submission_type>${productType}</submission_type>`);
-    }
-  }
-  if (userRole) parts.push(`  <user_role>${userRole}</user_role>`);
-  if (sectionCode) parts.push(`  <section_code>${sectionCode}</section_code>`);
-
-  if (parts.length === 0) return '';
-  return ['<current_route>', ...parts, '</current_route>'].join('\n');
-}
-
-export function buildAuthoringContextBlock(authoring_context: any): string {
-  if (!authoring_context || typeof authoring_context !== 'object') return '';
-
-  const ac = authoring_context;
-  const parts: string[] = ['<authoring_context>'];
-  if (ac.workflowStage) parts.push(`  <workflow_stage>${ac.workflowStage}</workflow_stage>`);
-  if (ac.sectionCode) parts.push(`  <section_code>${ac.sectionCode}</section_code>`);
-  if (ac.sectionTitle) parts.push(`  <section_title>${ac.sectionTitle}</section_title>`);
-  if (ac.moduleCode) parts.push(`  <module_code>${ac.moduleCode}</module_code>`);
-  if (ac.artifactId) parts.push(`  <artifact_id>${ac.artifactId}</artifact_id>`);
-  if (ac.artifactVersionId)
-    parts.push(`  <artifact_version_id>${ac.artifactVersionId}</artifact_version_id>`);
-  if (ac.artifactStatus) parts.push(`  <artifact_status>${ac.artifactStatus}</artifact_status>`);
-  if (ac.submissionType) {
-    const bridgeCtx = getSubmissionTypeContext(ac.submissionType);
-    if (bridgeCtx) {
-      parts.push(
-        `  <submission_type registry_id="${bridgeCtx.registryId}" agency="${bridgeCtx.agency}" region="${bridgeCtx.region}">${bridgeCtx.displayName}</submission_type>`
-      );
-    } else {
-      parts.push(`  <submission_type>${ac.submissionType}</submission_type>`);
-    }
-  }
-  if (ac.readiness) {
-    parts.push(
-      `  <readiness score="${ac.readiness.score ?? 'unknown'}" blocked="${
-        ac.readiness.blocked ?? false
-      }">`
-    );
-    if (ac.readiness.blockers?.length) {
-      for (const b of ac.readiness.blockers) {
-        parts.push(`    <blocker severity="${b.severity}" code="${b.code}">${b.message}</blocker>`);
-      }
-    }
-    parts.push('  </readiness>');
-  }
-  if (ac.contradictions?.length) {
-    parts.push('  <contradictions>');
-    for (const c of ac.contradictions) {
-      parts.push(
-        `    <contradiction id="${c.id}" type="${c.type}" severity="${c.severity}">${c.explanation}</contradiction>`
-      );
-    }
-    parts.push('  </contradictions>');
-  }
-  parts.push('</authoring_context>');
-  return parts.join('\n');
-}
+// The route and authoring context blocks live in context-blocks.ts.
+export { buildRouteContextBlock, buildAuthoringContextBlock } from './context-blocks.js';
+import { buildAuthoringContextBlock } from './context-blocks.js';
 
 export function resolveProjectIdFromBody(body: any): string | number | undefined {
   return body?.project_id || body?.context?.projectId || body?.project_context?.projectId;

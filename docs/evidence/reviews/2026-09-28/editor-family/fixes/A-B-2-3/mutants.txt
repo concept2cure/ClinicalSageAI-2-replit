@@ -1,0 +1,13 @@
+# Mutants against client/src/concept2cure/v2/editor/__tests__/anchorClickAndMarkerRoles.test.ts; the three files restored after each (cmp)
+## mutant: handleClick removed (text clicks read no marks)
+ × a click on commented text opens its thread (A-B-2) > opens the thread the words carry 133ms
+      Tests  1 failed | 4 passed (5)
+## mutant: handleClickOn removed (inline nodes in a range)
+ × a click on commented text opens its thread (A-B-2) > a click on a cross-reference inside the commented range opens it too 25ms
+      Tests  1 failed | 4 passed (5)
+## mutant: cross-reference link role back
+ × a marker that is not a link does not say it is one (A-B-3) > a cross-reference and a citation carry no link role 31ms
+      Tests  1 failed | 4 passed (5)
+## mutant: citation link role back
+ × a marker that is not a link does not say it is one (A-B-3) > a cross-reference and a citation carry no link role 22ms
+      Tests  1 failed | 4 passed (5)

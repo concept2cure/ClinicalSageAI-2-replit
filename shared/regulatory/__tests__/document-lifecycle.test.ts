@@ -46,10 +46,33 @@ describe('document lifecycle spine', () => {
       expect(r.allowed).toBe(false);
       expect(r.blockedBy).toContain('REVIEW_SIGNOFF_REQUIRED');
       const ok = canAdvanceDocument(
-        doc({ stage: 'in_review', reviewSignature: { actor: 'a', role: 'qa', signatureRef: 's', signedAt: 't', meaning: 'reviewed' } }),
+        doc({
+          stage: 'in_review',
+          contentHash: 'h1',
+          reviewSignature: { actor: 'a', role: 'qa', signatureRef: 's', signedAt: 't', meaning: 'reviewed', boundContentHash: 'h1' },
+        }),
         'approved',
       );
       expect(ok.allowed).toBe(true);
+    });
+
+    // VR-12: a review covers the content it was signed over, and nothing else.
+    it('a review bound to other content, or to no content, does not satisfy the approval gate', () => {
+      const review = { actor: 'a', role: 'qa', signatureRef: 's', signedAt: 't', meaning: 'reviewed' as const };
+      const other = canAdvanceDocument(
+        doc({ stage: 'in_review', contentHash: 'h2', reviewSignature: { ...review, boundContentHash: 'h1' } }),
+        'approved',
+      );
+      expect(other.blockedBy).toContain('REVIEW_SIGNOFF_REQUIRED');
+      // A sign-off recorded before reviews were bound covers nothing.
+      const unbound = canAdvanceDocument(doc({ stage: 'in_review', contentHash: 'h1', reviewSignature: review }), 'approved');
+      expect(unbound.blockedBy).toContain('REVIEW_SIGNOFF_REQUIRED');
+      // No readable content: the review binds the ledger and covers the empty hash.
+      const ledger = canAdvanceDocument(
+        doc({ stage: 'in_review', contentHash: '', reviewSignature: { ...review, boundContentHash: '' } }),
+        'approved',
+      );
+      expect(ledger.allowed).toBe(true);
     });
 
     it('approved → placed requires an approval signature AND a complete placement', () => {

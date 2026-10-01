@@ -35,7 +35,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { Pool } from 'pg';
 import { databaseUrl } from '../setup.db';
-import { GatewayAuditLogger } from '../../server/services/ai-gateway/audit';
+import { GatewayAuditLogger, LEDGER_COLUMNS } from '../../server/services/ai-gateway/audit';
 import type { AuditLogEntry } from '../../server/services/ai-gateway/types';
 
 const MIGRATION = path.join(
@@ -98,17 +98,13 @@ describe('ai.gateway_audit_log — AI provenance ledger', () => {
         WHERE table_schema = 'ai' AND table_name = 'gateway_audit_log'`,
     );
     const columns = new Set(rows.map((r: any) => r.column_name));
-    // The exact 29 identifiers in the INSERT in audit.ts. A column added to the
-    // writer without a matching migration fails here rather than at runtime,
-    // where the failure would land in the swallowing catch.
-    for (const column of [
-      'request_id', 'timestamp', 'provider', 'model', 'resolved_model', 'task_type',
-      'strategy', 'organization_id', 'user_id', 'project_id', 'caller_module',
-      'input_tokens', 'output_tokens', 'total_tokens', 'estimated_cost_usd',
-      'latency_ms', 'success', 'error', 'cached', 'deterministic', 'metadata',
-      'temperature', 'seed', 'prompt_hash', 'prompt_version', 'tried_models',
-      'substrate', 'region', 'retention_policy',
-    ]) {
+    // Every identifier in the INSERT in audit.ts, read from the INSERT itself
+    // (LEDGER_COLUMNS): a column added to the writer without a matching
+    // migration fails here rather than at runtime, where the failure would land
+    // in the swallowing catch. Until 2026-09-26 this was a literal of the first
+    // 29, so the provenance columns went unchecked on a real database.
+    expect(LEDGER_COLUMNS.length).toBeGreaterThan(29);
+    for (const column of LEDGER_COLUMNS) {
       expect(columns.has(column), `missing column ${column}`).toBe(true);
     }
   });
@@ -138,6 +134,99 @@ describe('ai.gateway_audit_log — AI provenance ledger', () => {
     expect(rows[0].resolved_model).toBe('claude-opus-4-8-20260210');
     expect(Number(rows[0].temperature)).toBeCloseTo(0.3, 2);
     expect(rows[0].region).toBe('us');
+  });
+
+  it('round-trips every provenance column, at the longest values the gateway writes (D6)', async () => {
+    // An oversize value fails the whole INSERT inside the writer's catch, and
+    // the ledger records nothing: each value here is the longest of its kind.
+    const logger = new GatewayAuditLogger(pool);
+    await logger.log(
+      entry({
+        requestId: '00000000-0000-4000-8000-000000000005',
+        region: 'us,eu,apac,global',
+        payloadProvenance: 'tenant_governed',
+        dataClass: 'unscreened_media',
+        tenantPolicyResolution: 'unresolvable',
+        tenantBoundFrom: 'platform_scope',
+        placementReasonCode: 'audit_only:DENY_UNAPPROVED_DATA_CLASS',
+        approvedModelId: 'claude-opus-4-bedrock',
+        pinnedVersion: 'us.anthropic.claude-opus-4-7-20260115-v1:0',
+        pqStatus: 'unregistered',
+        riskTier: 'medium',
+        runId: '00000000-0000-4000-8000-0000000000aa',
+        parentRunId: '00000000-0000-4000-8000-0000000000bb',
+        serverToolsUsed: ['web_search'],
+        serverToolsWithheld: [{ name: 'web_fetch', reason: 'not_first_party' }],
+      } as Partial<AuditLogEntry>),
+    );
+
+    const { rows } = await pool.query(
+      `SELECT region, payload_provenance, data_class, tenant_policy_resolution, tenant_bound_from,
+              placement_reason_code, approved_model_id, pinned_version, pq_status, risk_tier,
+              run_id, parent_run_id, server_tools_used, server_tools_withheld
+         FROM ai.gateway_audit_log WHERE request_id = '00000000-0000-4000-8000-000000000005'`,
+    );
+    expect(rows).toEqual([
+      {
+        region: 'us,eu,apac,global',
+        payload_provenance: 'tenant_governed',
+        data_class: 'unscreened_media',
+        tenant_policy_resolution: 'unresolvable',
+        tenant_bound_from: 'platform_scope',
+        placement_reason_code: 'audit_only:DENY_UNAPPROVED_DATA_CLASS',
+        approved_model_id: 'claude-opus-4-bedrock',
+        pinned_version: 'us.anthropic.claude-opus-4-7-20260115-v1:0',
+        pq_status: 'unregistered',
+        risk_tier: 'medium',
+        run_id: '00000000-0000-4000-8000-0000000000aa',
+        parent_run_id: '00000000-0000-4000-8000-0000000000bb',
+        server_tools_used: ['web_search'],
+        server_tools_withheld: [{ name: 'web_fetch', reason: 'not_first_party' }],
+      },
+    ]);
+  });
+
+  it('upgrades a table in the pre-2026-09-26 shape: columns added, region widened, rows kept (Rule 1)', async () => {
+    // The migration re-runs on every deploy against a table that already
+    // exists. Put the table back in its old shape, with a row in it, and apply
+    // the file again.
+    const added = LEDGER_COLUMNS.slice(LEDGER_COLUMNS.indexOf('payload_provenance'));
+    // An old table never held a region past 16 characters; this suite's rows can.
+    await pool.query('DELETE FROM ai.gateway_audit_log WHERE caller_module = $1', [CALLER]);
+    await pool.query(
+      `ALTER TABLE ai.gateway_audit_log ${added.map(c => `DROP COLUMN IF EXISTS ${c}`).join(', ')},
+         ALTER COLUMN region TYPE VARCHAR(16)`,
+    );
+    await pool.query(
+      `INSERT INTO ai.gateway_audit_log (request_id, timestamp, provider, model, task_type, strategy, caller_module,
+         input_tokens, output_tokens, total_tokens, estimated_cost_usd, latency_ms, success, cached, deterministic, region)
+       VALUES ('00000000-0000-4000-8000-000000000006', now(), 'anthropic', 'claude-opus-4-8', 'general', 'task_based', $1,
+         1, 1, 2, 0, 1, true, false, false, 'eu')`,
+      [CALLER],
+    );
+
+    await pool.query(fs.readFileSync(MIGRATION, 'utf8'));
+
+    const cols = await pool.query(
+      `SELECT column_name, character_maximum_length FROM information_schema.columns
+        WHERE table_schema = 'ai' AND table_name = 'gateway_audit_log'`,
+    );
+    const present = new Map(cols.rows.map((r: any) => [r.column_name, r.character_maximum_length]));
+    for (const column of added) expect(present.has(column), `missing column ${column}`).toBe(true);
+    expect(present.get('region')).toBe(64);
+    const kept = await pool.query(
+      `SELECT region, payload_provenance FROM ai.gateway_audit_log WHERE request_id = '00000000-0000-4000-8000-000000000006'`,
+    );
+    // Not backfilled: an old row's new columns are NULL (the header note says so).
+    expect(kept.rows).toEqual([{ region: 'eu', payload_provenance: null }]);
+
+    // And a second run is a no-op.
+    await pool.query(fs.readFileSync(MIGRATION, 'utf8'));
+    const again = await pool.query(
+      `SELECT character_maximum_length FROM information_schema.columns
+        WHERE table_schema = 'ai' AND table_name = 'gateway_audit_log' AND column_name = 'region'`,
+    );
+    expect(again.rows[0].character_maximum_length).toBe(64);
   });
 
   it('stores NULL rather than inventing a resolution the provider never gave', async () => {

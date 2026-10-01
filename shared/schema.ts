@@ -2599,6 +2599,11 @@ export const users = pgTable('users', {
   emailOtpHash: text('email_otp_hash'),
   emailOtpExpiresAt: timestamp('email_otp_expires_at'),
   emailOtpAttempts: integer('email_otp_attempts').default(0),
+  // Codes re-issued to the current sign-in challenge (POST /mfa/resend), refused
+  // past emailOtpService.MAX_RESENDS and started again only by a fresh challenge
+  // (the password). migrations/20260923_users_mfa_totp_last_step.sql, amended
+  // in place 2026-09-26 (CLAUDE.md Rule 1).
+  emailOtpResends: integer('email_otp_resends').default(0),
   // Account lockout fields
   failedLoginAttempts: integer('failed_login_attempts').default(0),
   lockedUntil: timestamp('locked_until'),
@@ -5715,12 +5720,15 @@ export const projects = pgTable(
      * to. NULL means "not anchored to a regulatory program", a valid and common
      * state; nothing is required to be anchored.
      *
-     * Deliberately NOT `.references()`: `regulatory_programs` lives in
+     * Held to this project's own organization by the composite key
+     * projects_regulatory_program_same_org_fk, (regulatory_program_id,
+     * organization_id) → regulatory_programs (id, organization_id), NOT VALID,
+     * ON DELETE SET NULL (regulatory_program_id) — added by
+     * migrations/20260926b_program_same_org_keys.sql (PF-04). Not declared here
+     * with `.references()`: `regulatory_programs` lives in
      * shared/schema/programs.ts, which this module does not re-export, so
-     * drizzle-kit push does not create it — the FK would name a table push has
-     * never heard of. The raw migration
-     * (migrations/20260814_projects_regulatory_program_anchor.sql) declines the
-     * FK for the same reason plus a stronger one, and states both.
+     * drizzle-kit push does not create it (push runs before the migration that
+     * does), and Drizzle cannot express SET NULL (column) or NOT VALID.
      */
     regulatoryProgramId: uuid('regulatory_program_id'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -6599,7 +6607,9 @@ export const c2cProjectWorkItems = pgTable(
     // | 'correspondence' (agency letters/issues, via regulatory-correspondence)
     sourceType: text('source_type').notNull(),
     // Integer key of the source row. Together with (source_type, org_id) this is
-    // the upsert/dedup key — see upsertProjectWorkItem.
+    // upsertProjectWorkItem's dedup key. The database key also includes
+    // source_ref (c2c_pwi_org_source_key_unique, NULLS NOT DISTINCT; see
+    // db/migrations/20260810_c2c_work_items_source_uniqueness.sql).
     sourceId: integer('source_id').notNull(),
     // Stable reference for sources keyed by a STRING/UUID rather than an integer
     // (e.g. a correspondence issue id). Those sources previously had to pass
@@ -7697,7 +7707,9 @@ export const crossModuleTaskLinks = pgTable(
     // Metadata
     metadata: json('metadata'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow(),
+    // No updated_at (removed 2026-09-23): no applier creates the column, and
+    // Drizzle names every modelled column in INSERT … RETURNING, so declaring
+    // it made every link fail on a migration-built database. Nothing reads it.
   },
   table => ({
     sourceIdx: index('link_source_idx').on(table.sourceTaskId),
@@ -13028,8 +13040,10 @@ export const cdiscPrmStudies = pgTable(
     studyId: varchar('study_id', { length: 100 }).notNull().unique(),
     // Canonical project key (regulatory_programs.id) — shared with
     // clinical_studies and rbm_*. Nullable: populated on persist from a
-    // design's programId when it is a UUID. Bare uuid, no FK, matching the
-    // clinical-spine convention.
+    // design's programId when it is a UUID. Held to tenant_id's organization by
+    // cdisc_prm_studies_program_same_org_fk (migrations/20260926b, PF-04; NOT
+    // VALID, ON DELETE SET NULL (program_id)), declared there, not here, for
+    // the reasons on projects.regulatory_program_id.
     programId: uuid('program_id'),
     protocolId: varchar('protocol_id', { length: 100 }).notNull(),
     protocolTitle: text('protocol_title').notNull(),
@@ -18926,6 +18940,9 @@ export const rbmMonitoringPlans = pgTable(
     title:          text('title').notNull(),
     strategy:       text('strategy').default('risk_based').notNull(),
     status:         text('status').default('draft').notNull(),
+    /** Plan version within the study. An approved plan is read-only; revising
+     *  it opens the next version (migrations/20260930_rbm_plan_versioning.sql). */
+    version:        integer('version').default(1).notNull(),
     approvedBy:     integer('approved_by').references(() => users.id),
     approvedAt:     timestamp('approved_at', { withTimezone: true }),
     metadata:       jsonb('metadata').default('{}'),

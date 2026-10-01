@@ -1,0 +1,12 @@
+# upgrade: the council tables as the pre-change migration creates them, with a row in them; then this change's migration and sweep
+[lumen-council-tenant] lumen.council_sessions has 1 row(s) with no tenant; organization_id is left NULLABLE, and those rows match no tenant policy
+[rls-sweep] tenant_isolation_policy applied to 3 newly-provisioned table(s); 0 rebuilt to the canonical shape; 0 forced retroactively; 0 healed off allowlisted tables; 0 skipped for non-integer tenant key
+council_sessions.organization_id nullable: YES
+agent_executions.organization_id nullable: NO
+-- the unattributed old row, read by tenant 1 and by tenant 2 under enforcement:
+SET
+SET
+SET
+tenant 1 sees 0
+SET
+tenant 2 sees 0

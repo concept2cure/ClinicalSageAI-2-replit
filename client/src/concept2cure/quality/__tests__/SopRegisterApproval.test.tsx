@@ -10,6 +10,11 @@
  * now refuses, so this button is the one way the UI approves a document. It
  * opens the shared EsignModal and posts to the signed route.
  *
+ * Retirement is the other signature the register takes (P1-29 / DP-32,
+ * security review 2026-09-24): the Retire chip opened a reason-only confirm
+ * dialog that posted `{reason}`, and the route retired the document on that
+ * alone. It now opens the same EsignModal and posts to the signed retire route.
+ *
  * EsignModal's own re-authentication is covered by its own tests. Here it is
  * a stub that hands over what a signer typed, so what is under test is where
  * the register sends it and what it shows back.
@@ -36,6 +41,9 @@ const DRAFT = {
   id: 5, docNumber: 'SOP-014', title: 'Complaint handling', docType: 'sop', category: null,
   version: '2.0', status: 'in_review', effectiveDate: null, nextReviewDate: null, updatedAt: null,
 };
+const EFFECTIVE = {
+  ...DRAFT, id: 6, docNumber: 'SOP-015', title: 'Supplier controls', version: '1.0', status: 'effective', effectiveDate: '2026-09-01',
+};
 
 vi.mock('../hooks', () => ({
   useSopRegister: () => ({ docs: H.docs, loading: H.docs == null && H.regError == null, error: H.regError, refresh: H.refresh }),
@@ -47,7 +55,7 @@ vi.mock('../../mdx/lib/useSampleRows', () => ({
   useSampleRows: <T,>(live: T[] | null) => (live ?? []) as T[],
   useShowingSample: () => H.sample,
 }));
-vi.mock('@/services/portal/authService', () => ({ useAuth: () => ({ user: { name: 'R. Approver' } }) }));
+vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => ({ name: 'R. Approver' }) }));
 vi.mock('@/lib/queryClient', () => ({
   apiRequest: (...a: unknown[]) => H.apiRequest(...a),
   serverMessage: (p: { error?: string } | null) => p?.error ?? null,
@@ -150,6 +158,52 @@ describe('SopRegister — approval is a signature taken here', () => {
   });
 });
 
+describe('SopRegister — retirement is a signature taken here (P1-29 / DP-32)', () => {
+  beforeEach(() => { H.docs = [EFFECTIVE]; });
+
+  it('opens the e-signature dialog for Retire, offering the approval meaning only', () => {
+    renderRegister();
+    fireEvent.click(screen.getByRole('button', { name: /Retire/ }));
+    const dialog = screen.getByRole('dialog', { name: 'Retire controlled document' });
+    expect(dialog.getAttribute('data-meanings')).toBe('approval');
+  });
+
+  it('posts the signature to the signed retire route and shows the server’s time', async () => {
+    H.apiRequest.mockResolvedValue({
+      status: 200,
+      ok: true,
+      json: async () => ({
+        data: { id: 6, status: 'retired' },
+        meta: { signature: { id: 42, signedAt: '2026-09-26T12:00:00.000Z', boundPayloadDigest: 'e'.repeat(64) } },
+      }),
+    });
+    renderRegister();
+    fireEvent.click(screen.getByRole('button', { name: /Retire/ }));
+    fireEvent.click(screen.getByText('stub-sign'));
+
+    await waitFor(() => expect(H.signed).toBeTruthy());
+    expect(H.apiRequest).toHaveBeenCalledTimes(1);
+    expect(H.apiRequest).toHaveBeenCalledWith('POST', '/api/mdx/qms/documents/6/retire', {
+      password: 'pw',
+      mfaToken: '123456',
+      meaning: 'APPROVED',
+      reason: 'Reviewed against ISO 13485 §8.2.2',
+    });
+    expect(H.signed).toMatchObject({ meaning: 'approval', signedAt: '2026-09-26T12:00:00.000Z', hash: 'e'.repeat(64) });
+    expect(H.refresh).toHaveBeenCalled();
+  });
+
+  it('shows a refused password as not retired', async () => {
+    H.apiRequest.mockResolvedValue({ status: 401, ok: false, json: async () => ({ error: 'Password did not verify.' }) });
+    renderRegister();
+    fireEvent.click(screen.getByRole('button', { name: /Retire/ }));
+    fireEvent.click(screen.getByText('stub-sign'));
+    await waitFor(() => expect(H.signError).toBeTruthy());
+    expect(H.signError).toMatch(/Nothing was signed/);
+    expect(H.signed).toBeNull();
+  });
+});
+
 /* HS-1 (docs/evidence/reviews/2026-09-24/lenses.md): the hooks computed an
    error and the register never read it, so an outage rendered as a clean
    register — "Effective documents 0", "Review overdue 0 — All current" in the
@@ -188,7 +242,9 @@ describe('SopRegister — a failed read is not an empty register', () => {
     H.docs = [];
     renderRegister();
     expect(screen.getByText('No controlled documents in the register yet.')).toBeTruthy();
-    expect(screen.getByText('All current')).toBeTruthy();
+    // Empty, and said as empty: not "All current", which an empty register is
+    // only vacuously (finding 112; sopRegisterReadHonesty.test.tsx).
+    expect(screen.getByText('Nothing in the register to review')).toBeTruthy();
     expect(screen.queryByTestId('sop-register-failed')).toBeNull();
   });
 

@@ -168,7 +168,7 @@ async function patchAs(u: Principal, sectionId: string, content: string) {
   return request(app)
     .patch(`/api/authoring/sections/${sectionId}`)
     .set('Authorization', `Bearer ${await mint(u)}`)
-    .send({ content });
+    .send({ content, changeReason: 'contract test edit' });
 }
 
 async function contentOf(sectionId: string): Promise<string | null> {

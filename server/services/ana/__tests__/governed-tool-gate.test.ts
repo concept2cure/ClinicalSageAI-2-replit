@@ -30,9 +30,9 @@
  */
 import { describe, it, expect } from 'vitest';
 
-import { classifyToolCall, PLATFORM_COMMAND_TOOL } from '../governed-tool-gate.js';
+import { classifyToolCall, PLATFORM_COMMAND_TOOL, registeredToolTier } from '../governed-tool-gate.js';
 import { PROPOSE_ONLY_COMMANDS, isProposeOnlyCommand } from '../../ana-ri/command-rbac.js';
-import { PART11_ESIGN_COMMANDS } from '../../ana-ri/part11-governance.js';
+import { PART11_ESIGN_COMMANDS, PART11_GOVERNED_COMMANDS } from '../../ana-ri/part11-governance.js';
 
 const cmd = (command: unknown, params?: unknown) => ({
   name: PLATFORM_COMMAND_TOOL,
@@ -41,8 +41,11 @@ const cmd = (command: unknown, params?: unknown) => ({
 
 /** A live member of the partition, so no fixture can drift from it. */
 const AN_ESIGN_COMMAND = [...PART11_ESIGN_COMMANDS].find(c => isProposeOnlyCommand(c))!;
-const A_REASON_ONLY_COMMAND = [...PROPOSE_ONLY_COMMANDS].find(
-  c => !PART11_ESIGN_COMMANDS.has(c),
+// The reason tier is the governed set minus the e-sign set; the partition
+// also holds the confirm tier now (every other write), so it is not the
+// place to draw a reason-only sample from.
+const A_REASON_ONLY_COMMAND = [...PART11_GOVERNED_COMMANDS].find(
+  c => !PART11_ESIGN_COMMANDS.has(c) && isProposeOnlyCommand(c),
 )!;
 
 describe('an unreadable call is refused, not cleared', () => {
@@ -58,7 +61,7 @@ describe('an unreadable call is refused, not cleared', () => {
 
   it('UNDECIDABLE is NOT UNGOVERNED — the distinction is the point', () => {
     const blind = classifyToolCall({ name: PLATFORM_COMMAND_TOOL, input: {} });
-    const clear = classifyToolCall({ name: 'search_documents', input: { query: 'x' } });
+    const clear = classifyToolCall({ name: 'search_document', input: { query: 'x' } });
     expect(blind.kind).not.toBe(clear.kind);
     expect(clear.kind).toBe('UNGOVERNED');
   });
@@ -99,11 +102,14 @@ describe('the gate agrees with the partition rather than restating it', () => {
     }
   });
 
-  it('leaves ordinary work alone', () => {
-    // Authoring mutations are deliberately outside the partition: making AnA
-    // unable to draft would trade a real capability for no control.
+  it('leaves reads alone and asks for a confirmation on ordinary writes', () => {
+    // Since 2026-09-26 (audit DP-08, P0-12) every write is a proposal: an
+    // ordinary authoring mutation is the confirm tier — one click, no reason,
+    // no credentials — so AnA still drafts, and a person takes the action.
     expect(classifyToolCall(cmd('list_projects')).kind).toBe('UNGOVERNED');
-    expect(classifyToolCall(cmd('create_artifact')).kind).toBe('UNGOVERNED');
+    const v = classifyToolCall(cmd('create_artifact'));
+    expect(v.kind).toBe('NEEDS_APPROVAL');
+    expect(v.kind === 'NEEDS_APPROVAL' && v.tier).toBe('confirm');
   });
 
   it('carries the command and params forward for the person to read', () => {
@@ -136,9 +142,11 @@ describe('the tier follows part11-governance, not a second opinion', () => {
     expect(v.kind === 'NEEDS_APPROVAL' && v.tier).toBe('esignature');
   });
 
-  it('demands only a reason for the rest', () => {
+  it('demands only a reason for the reason tier, and only a confirmation below it', () => {
     const v = classifyToolCall(cmd(A_REASON_ONLY_COMMAND));
     expect(v.kind === 'NEEDS_APPROVAL' && v.tier).toBe('reason');
+    const c = classifyToolCall(cmd('create_task'));
+    expect(c.kind === 'NEEDS_APPROVAL' && c.tier).toBe('confirm');
   });
 
   it('every e-sign command in the partition is classified as the signature tier', () => {
@@ -150,17 +158,33 @@ describe('the tier follows part11-governance, not a second opinion', () => {
   });
 });
 
-describe('only the command tool can be governed', () => {
-  it('a tool with its own handler is not classified here', () => {
-    // Not an omission — see the module docstring. Escalating an authoring tool
-    // is a product decision about what AnA may do unaided, taken with the tier
-    // changed in the same commit, not something this translation layer invents.
-    expect(classifyToolCall({ name: 'save_document_to_vault', input: { title: 'x' } }).kind).toBe(
-      'UNGOVERNED',
-    );
+describe('the command tool, and the tools that write on their own handlers', () => {
+  it('a tool that writes on its own handler is a confirm-tier proposal (P0-12)', () => {
+    // Until 2026-09-26 this read "a tool with its own handler is not classified
+    // here": the vault save and TMF seed ran unasked because they are not
+    // commands. They are CONFIRM_TIER_TOOLS now; the full list and the
+    // registry-side gate are pinned in direct-mutator-confirm-gate.test.ts.
+    expect(classifyToolCall({ name: 'save_report_definition', input: { title: 'x' } })).toMatchObject({
+      kind: 'NEEDS_APPROVAL',
+      tier: 'confirm',
+    });
   });
 
-  it('a tool named like a governed command is still just a tool', () => {
-    expect(classifyToolCall({ name: 'freeze_document', input: {} }).kind).toBe('UNGOVERNED');
+  it('a tool that records the person\'s reason for change is put to them at the reason tier (D5)', () => {
+    // The person types the reason, or adopts AnA's wording, at confirmation —
+    // it is not the reason the model wrote into the call.
+    expect(classifyToolCall({ name: 'save_document_to_vault', input: { title: 'x', reason: 'Filing the 24-month data' } })).toMatchObject({
+      kind: 'NEEDS_APPROVAL',
+      tier: 'reason',
+    });
+    expect(registeredToolTier('save_document_to_vault')).toBe('reason');
+    expect(registeredToolTier('save_report_definition')).toBe('confirm');
+  });
+
+  it('a tool named like a governed command is judged as a tool, not as that command', () => {
+    // freeze_document is an e-signature command. A TOOL of that name is not
+    // registered, so the tool register fails it closed — proposed at the confirm
+    // tier (P1-34) — and never borrows the command's tier or its clearance.
+    expect(classifyToolCall({ name: 'freeze_document', input: {} })).toMatchObject({ kind: 'NEEDS_APPROVAL', tier: 'confirm' });
   });
 });

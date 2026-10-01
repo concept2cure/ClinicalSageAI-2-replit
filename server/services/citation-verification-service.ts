@@ -15,6 +15,8 @@
  */
 
 import { createScopedLogger } from '../utils/logger.js';
+import { getTenantScope } from '../db/tenantStore.js';
+import { getOrgPlacementResolver } from './ai-gateway/providers/org-placement.js';
 
 const log = createScopedLogger('citation-verification');
 
@@ -50,6 +52,22 @@ export interface CitationMatch {
   publicationTypes?: string[];
   /** True when the source marks the work as retracted. undefined = unknown. */
   retracted?: boolean;
+  /**
+   * Crossref's structured author list, so a formatter need not re-split
+   * "Pieter De Smet" (whose surname is "De Smet") or drop an organisation that
+   * has only a name. Absent for PubMed, whose `authors` are already "Smith JA".
+   */
+  authorParts?: Array<{ family?: string; given?: string; name?: string }>;
+}
+
+/** Crossref author objects → CitationMatch.authorParts. */
+function crossrefAuthorParts(authors: unknown): CitationMatch['authorParts'] {
+  if (!Array.isArray(authors) || authors.length === 0) return undefined;
+  return authors.map((a: { family?: string; given?: string; name?: string }) => ({
+    family: a.family,
+    given: a.given,
+    name: a.name,
+  }));
 }
 
 export type CitationVerificationStatus = 'verified' | 'not_found' | 'unverifiable' | 'error';
@@ -170,6 +188,7 @@ async function verifyByDoi(doi: string): Promise<CitationMatch | null> {
     source: 'crossref',
     title: Array.isArray(item.title) ? item.title[0] : item.title,
     authors: (item.author || []).map((a: any) => [a.given, a.family].filter(Boolean).join(' ')).join(', ') || undefined,
+    authorParts: crossrefAuthorParts(item.author),
     journal: Array.isArray(item['container-title']) ? item['container-title'][0] : item['container-title'],
     year: item.issued?.['date-parts']?.[0]?.[0],
     doi: item.DOI,
@@ -219,6 +238,7 @@ async function searchCrossRefByTitle(
           source: 'crossref',
           title: itemTitle,
           authors: (item.author || []).map((a: any) => [a.given, a.family].filter(Boolean).join(' ')).join(', ') || undefined,
+          authorParts: crossrefAuthorParts(item.author),
           journal: Array.isArray(item['container-title']) ? item['container-title'][0] : item['container-title'],
           year: item.issued?.['date-parts']?.[0]?.[0],
           doi: item.DOI,
@@ -341,8 +361,40 @@ export async function verifyCitation(input: CitationInput): Promise<CitationVeri
   }
 }
 
+/**
+ * Whether the organization in scope allows the platform's public-source
+ * requests. A citation's DOI, PMID and title come from the tenant's own draft,
+ * and verifying them sends them to NCBI and CrossRef. Until 2026-09-26 the
+ * tenant's `public_source_egress` setting was stored, audited and never read
+ * here (docs/evidence/D6/2026-09-26-refusals-are-final/). Work with no tenant
+ * (the system scope) is not held back; a policy that cannot be read is.
+ */
+async function publicSourceEgressInScope(): Promise<'allowed' | 'off' | 'unreadable'> {
+  const tenant = getTenantScope()?.tenantId;
+  if (!tenant || tenant === '0') return 'allowed';
+  try {
+    const policy = await getOrgPlacementResolver().resolve(tenant);
+    return policy?.publicSourceEgress === false ? 'off' : 'allowed';
+  } catch {
+    return 'unreadable';
+  }
+}
+
 /** Verify a batch of citations with bounded concurrency (NCBI rate limits). */
 export async function verifyCitations(inputs: CitationInput[]): Promise<CitationVerificationResult[]> {
+  const egress = await publicSourceEgressInScope();
+  if (egress === 'off') {
+    return inputs.map(input =>
+      result(input, 'unverifiable', null, null, null,
+        'Public-source requests are turned off for this organization, so this citation was not checked against PubMed or CrossRef.'),
+    );
+  }
+  if (egress === 'unreadable') {
+    return inputs.map(input =>
+      result(input, 'error', null, null, null,
+        "The organization's data-placement policy could not be read, so no outbound check was made."),
+    );
+  }
   const results: CitationVerificationResult[] = new Array(inputs.length);
   let cursor = 0;
 

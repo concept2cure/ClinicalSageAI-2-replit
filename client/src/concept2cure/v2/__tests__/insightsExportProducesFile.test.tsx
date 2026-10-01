@@ -183,6 +183,39 @@ describe('Insights — Export report produces a file', () => {
     expect(downloadBlob).toHaveBeenCalled();
   });
 
+  it('says an already-final run is sealed, not "held below final" (RUN_ALREADY_FINAL)', async () => {
+    wire({
+      finalize: () => {
+        throw Object.assign(new Error('Conflict'), {
+          status: 409,
+          payload: { success: false, error: { code: 'RUN_ALREADY_FINAL', message: 'This report is already final. Its seal stands and is not replaced.' } },
+        });
+      },
+    });
+    await runThenExport();
+
+    await waitFor(() => expect(document.body.textContent).toMatch(/Already sealed — This report is already final/));
+    expect(document.body.textContent).not.toMatch(/held below final/);
+    expect(downloadBlob).toHaveBeenCalled();
+  });
+
+  it('tells a member who may finalize instead of echoing "Insufficient permissions"', async () => {
+    wire({
+      finalize: () => {
+        throw Object.assign(new Error('Insufficient permissions'), {
+          status: 403,
+          payload: { error: { code: 'AUTH_004', message: 'Insufficient permissions' } },
+        });
+      },
+    });
+    await runThenExport();
+
+    await waitFor(() =>
+      expect(document.body.textContent).toMatch(/Not sealed — finalizing a report is for organisation owners, admins and managers/),
+    );
+    expect(downloadBlob).toHaveBeenCalled();
+  });
+
   it('hands over NO file when the export is refused, and reports it as a failure', async () => {
     wire({
       exportPdf: () => ({

@@ -1,0 +1,124 @@
+$ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx   (before the fix)
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <repo>/
+
+ × client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx > the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a finalized protocol offers no Finalize and does not read "Ready to finalize" 551ms
+   → expected <button …(1)>…(1)</button> to be null
+ × client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx > the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a superseded protocol offers no Finalize either, and says why 203ms
+   → expected <button …(1)>…(1)</button> to be null
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx > the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a protocol still in development keeps the gate and its action 191ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx > the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a protocol in development with a blocker keeps the gate, with the action disabled 191ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx > the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a finalized protocol offers no Finalize and does not read "Ready to finalize"
+AssertionError: expected <button …(1)>…(1)</button> to be null
+
+- Expected:
+null
+
++ Received:
+<button
+  class="pg-btn primary block"
+>
+  <span
+    class="pg-ic"
+    style="font-size: 14px; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"
+  >
+    <svg
+      aria-hidden="true"
+      class="lucide lucide-file-check"
+      fill="none"
+      focusable="false"
+      height="1em"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="1.75"
+      viewBox="0 0 24 24"
+      width="1em"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"
+      />
+      <path
+        d="M14 2v4a2 2 0 0 0 2 2h4"
+      />
+      <path
+        d="m9 15 2 2 4-4"
+      />
+    </svg>
+  </span>
+  Finalize protocol
+</button>
+
+ ❯ client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx:68:73
+     66|   it('a finalized protocol offers no Finalize and does not read "Ready…
+     67|     await mount(DOC);
+     68|     expect(screen.queryByRole('button', { name: /Finalize protocol/ })…
+       |                                                                         ^
+     69|     expect(screen.queryByText(/Ready to finalize/)).toBeNull();
+     70|     expect(screen.getByText('Finalized — v2.0')).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx > the finalize gate shows a terminal protocol's state, not the action (P11-C-4) > a superseded protocol offers no Finalize either, and says why
+AssertionError: expected <button …(1)>…(1)</button> to be null
+
+- Expected:
+null
+
++ Received:
+<button
+  class="pg-btn primary block"
+>
+  <span
+    class="pg-ic"
+    style="font-size: 14px; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"
+  >
+    <svg
+      aria-hidden="true"
+      class="lucide lucide-file-check"
+      fill="none"
+      focusable="false"
+      height="1em"
+      stroke="currentColor"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="1.75"
+      viewBox="0 0 24 24"
+      width="1em"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"
+      />
+      <path
+        d="M14 2v4a2 2 0 0 0 2 2h4"
+      />
+      <path
+        d="m9 15 2 2 4-4"
+      />
+    </svg>
+  </span>
+  Finalize protocol
+</button>
+
+ ❯ client/src/concept2cure/v2/__tests__/protocolDevFinalizeTerminal.test.tsx:76:73
+     74|   it('a superseded protocol offers no Finalize either, and says why', …
+     75|     await mount({ ...DOC, status: 'superseded', version: '1.0' });
+     76|     expect(screen.queryByRole('button', { name: /Finalize protocol/ })…
+       |                                                                         ^
+     77|     expect(screen.queryByText(/Ready to finalize/)).toBeNull();
+     78|     expect(screen.getByText('Superseded — v1.0')).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  04:54:33
+   Duration  3.52s (transform 1.15s, setup 183ms, import 1.49s, tests 1.14s, environment 498ms)
+

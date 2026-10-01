@@ -41,9 +41,7 @@ no owner/reason, a tree-wide S3 ignore, the audited file's exact shape) and exit
 
 ## Not done here
 
-- **The gate is not wired yet.** `package.json` (scripts) and `.husky/pre-push` were both edited by other lanes inside
-  the last 24 hours (16:51 and 21:18 UTC on 09-24), so the `ci:trivyignore-hygiene` script and its pre-push line wait
-  for those windows to close later on 09-25; until then the gate runs by hand (`node scripts/ci/check-trivyignore-hygiene.mjs`).
+- **Wired 2026-09-26.** `ci:trivyignore-hygiene` (and `:selftest`) is in `package.json` and runs in `.husky/pre-push` after `ci:upload-guards`, refusing a `.trivyignore` entry without `exp:`, `owner:` and `reason:` and any tree-wide ignore of a per-resource check. `package.json` was inside another lane's window (02:48 UTC 09-26); the change is two script lines and is disclosed on the board.
 - **The Trivy scan itself was not run here.** No Trivy binary is reachable from this container (the release assets and
   `get.trivy.dev` are not served by the proxy), so the plan's acceptance ("a public bucket in a scratch module fails the
   config scan") is verified by reading, not by execution: with the four S3 ids gone from the ignore list nothing

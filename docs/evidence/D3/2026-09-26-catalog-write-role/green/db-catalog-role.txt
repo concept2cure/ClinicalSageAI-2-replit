@@ -1,0 +1,216 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-26T12:25:10.062Z","pid":3514,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-26T12:25:10.063Z","pid":3514,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-26T12:25:10.063Z","pid":3514,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/document-catalog-role.dbtest.ts > catalog_project_document — the comprehension record is a write > refuses a viewer, and the record is untouched
+[database] Database connection successful { timestamp: '2026-09-26T12:25:10.134Z', poolSize: 1 }
+
+stdout | tests/db/document-catalog-role.dbtest.ts > catalog_project_document — the comprehension record is a write > refuses a viewer, and the record is untouched
+[database] Database connection successful
+
+ ✓ tests/db/document-catalog-role.dbtest.ts > catalog_project_document — the comprehension record is a write > refuses a viewer, and the record is untouched 4883ms
+stdout | tests/db/document-catalog-role.dbtest.ts > catalog_project_document — the comprehension record is a write > accepts a member — the positive control: nothing else stood in the way
+✅ Enhanced Embedding Service initialized
+
+stderr | tests/db/document-catalog-role.dbtest.ts > catalog_project_document — the comprehension record is a write > accepts a member — the positive control: nothing else stood in the way
+{
+  "level": "warn",
+  "message": "[document-catalog] Catalog embedding failed — recorded as failed, catalog still written",
+  "context": {
+    "documentId": "20474bf7-2959-49ce-8a05-b496d6e8d7f7",
+    "err": "403 Host not in allowlist: api.openai.com. Add this host to your network egress settings to allow access."
+  }
+}
+
+ ✓ tests/db/document-catalog-role.dbtest.ts > catalog_project_document — the comprehension record is a write > accepts a member — the positive control: nothing else stood in the way 65ms
+{"level":30,"time":"2026-09-26T12:25:13.943Z","pid":3534,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-26T12:25:13.943Z","pid":3534,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-26T12:25:13.944Z","pid":3534,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/document-catalog.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-26T12:25:13.994Z', poolSize: 1 }
+
+stdout | tests/db/document-catalog.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/document-catalog.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-09-26T12:25:14.314Z","pid":3534,"hostname":"vm","context":{"filename":"stability-st-23-104.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+(node:3534) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > a readable upload lands with catalog_status=extracted and real counts
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 198,
+    "wordCount": 26,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > a readable upload lands with catalog_status=extracted and real counts
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "c648eabd-bb5c-43b6-bae5-16e32590da8e",
+    "code": "DBTEST-CAT-DOC-TXT",
+    "type": "OTHER",
+    "size": 198,
+    "hasText": true
+  }
+}
+
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > a readable upload lands with catalog_status=extracted and real counts 164ms
+{"level":40,"time":"2026-09-26T12:25:14.574Z","pid":3534,"hostname":"vm","context":{"filename":"three-pages.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":30,"time":"2026-09-26T12:25:15.280Z","pid":3534,"hostname":"vm","context":{"pages":3,"dpi":200,"region":"full"},"msg":"[pdf-rasterizer] Rasterized PDF"}
+(node:3534) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+{"level":30,"time":"2026-09-26T12:25:16.051Z","pid":3534,"hostname":"vm","context":{"languages":"eng","chars":0,"confidence":0,"durationMs":474},"msg":"[tesseract-ocr] OCR completed"}
+{"level":30,"time":"2026-09-26T12:25:16.326Z","pid":3534,"hostname":"vm","context":{"languages":"eng","chars":0,"confidence":0,"durationMs":275},"msg":"[tesseract-ocr] OCR completed"}
+{"level":30,"time":"2026-09-26T12:25:16.606Z","pid":3534,"hostname":"vm","context":{"languages":"eng","chars":0,"confidence":0,"durationMs":279},"msg":"[tesseract-ocr] OCR completed"}
+stdout | tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > a real PDF records its actual page count, not null
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 44,
+    "wordCount": 15,
+    "pagesMapped": 3
+  }
+}
+
+{"level":30,"time":"2026-09-26T12:25:16.606Z","pid":3534,"hostname":"vm","context":{"pages":3,"confidence":0,"durationMs":1846},"msg":"[ocr-service] PDF text OCR completed"}
+stdout | tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > a real PDF records its actual page count, not null
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "5ab53b2c-dff1-4a66-9b63-64b581477f9c",
+    "code": "DBTEST-CAT-DOC-PAGES",
+    "type": "REPORT",
+    "size": 598,
+    "hasText": true
+  }
+}
+
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > a real PDF records its actual page count, not null 2169ms
+{"level":40,"time":"2026-09-26T12:25:16.628Z","pid":3534,"hostname":"vm","context":{"filename":"opaque-scan.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":40,"time":"2026-09-26T12:25:16.632Z","pid":3534,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf-parse failed"}
+{"level":40,"time":"2026-09-26T12:25:16.633Z","pid":3534,"hostname":"vm","context":{"error":"Invalid PDF structure."},"msg":"[document-text] pdf OCR failed"}
+stdout | tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > an upload extraction cannot read is recorded as a FAILURE with a reason
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "f9438d6c-3383-4afa-8c80-21757bfb1d7c",
+    "code": "DBTEST-CAT-DOC-PDF",
+    "type": "OTHER",
+    "size": 69,
+    "hasText": false
+  }
+}
+
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > an upload extraction cannot read is recorded as a FAILURE with a reason 22ms
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > read_project_document refuses to pretend the opaque document has content 650ms
+stdout | tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > after reading ALL of it, the catalog write succeeds and is durable
+✅ Enhanced Embedding Service initialized
+
+ ✓ tests/db/document-catalog.dbtest.ts > ingest with the catalog on — the extraction tier is recorded > list_project_documents shows both files with honest catalog states 35ms
+ ✓ tests/db/document-catalog.dbtest.ts > a listing reports the scope, not the page it happened to return > reports the scope total while the page stays at the limit 6ms
+ ✓ tests/db/document-catalog.dbtest.ts > a listing reports the scope, not the page it happened to return > counts what needs attention across the scope, not across the page 5ms
+ ✓ tests/db/document-catalog.dbtest.ts > a listing reports the scope, not the page it happened to return > claims completeness only when the page really is the whole scope 5ms
+ ✓ tests/db/document-catalog.dbtest.ts > a listing reports the scope, not the page it happened to return > the session-start digest carries the scope it sampled from 12ms
+ ✓ tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > catalog_project_document REFUSES a partial read and names what is unread 17ms
+stderr | tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > after reading ALL of it, the catalog write succeeds and is durable
+{
+  "level": "warn",
+  "message": "[document-catalog] Catalog embedding failed — recorded as failed, catalog still written",
+  "context": {
+    "documentId": "c648eabd-bb5c-43b6-bae5-16e32590da8e",
+    "err": "403 Host not in allowlist: api.openai.com. Add this host to your network egress settings to allow access."
+  }
+}
+
+{"level":40,"time":"2026-09-26T12:25:17.458Z","pid":3534,"hostname":"vm","context":{"filename":"coa-23-104.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/document-catalog.dbtest.ts > key_data is verified against the text it claims to transcribe
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 245,
+    "wordCount": 35,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/document-catalog.dbtest.ts > key_data is verified against the text it claims to transcribe
+{
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "84210f21-ef9b-4b02-af91-dbd575f4000f",
+    "code": "DBTEST-CAT-DOC-COA",
+    "type": "OTHER",
+    "size": 254,
+    "hasText": true
+  }
+}
+
+stderr | tests/db/document-catalog.dbtest.ts > key_data is verified against the text it claims to transcribe > ACCEPTS the document’s own values, in its typography or plain ASCII
+{
+  "level": "warn",
+  "message": "[document-catalog] Catalog embedding failed — recorded as failed, catalog still written",
+  "context": {
+    "documentId": "84210f21-ef9b-4b02-af91-dbd575f4000f",
+    "err": "403 Host not in allowlist: api.openai.com. Add this host to your network egress settings to allow access."
+  }
+}
+
+{"level":40,"time":"2026-09-26T12:25:17.524Z","pid":3534,"hostname":"vm","context":{"op":"pool.query","caller":"server/services/enhancedEmbeddingService.ts:249:38","queryPreview":"SELECT id, content, title, atom_type, embedding IS NOT NULL as has_embedding FROM lumen_data_atoms WHERE id = $1","enforcement":"on"},"msg":"[tenant-rls-observability] Database operation blocked because tenant scope is missing"}
+ ✓ tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > after reading ALL of it, the catalog write succeeds and is durable 58ms
+ ✓ tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > hands the comprehension record BACK on the next read, instead of starting from zero 11ms
+ ✓ tests/db/document-catalog.dbtest.ts > the read-coverage gate, end to end through the tool handlers > another tenant cannot list or read the document 7ms
+ ✓ tests/db/document-catalog.dbtest.ts > key_data is verified against the text it claims to transcribe > REFUSES invented values, a verdict and a nested leaf — names each, stores nothing 7ms
+ ✓ tests/db/document-catalog.dbtest.ts > key_data is verified against the text it claims to transcribe > ACCEPTS the document’s own values, in its typography or plain ASCII 23ms
+ ✓ tests/db/document-catalog.dbtest.ts > a chat upload knows it is indexed by its opening only > writes the file length and the embedded length onto the row 19ms
+{"level":40,"time":"2026-09-26T12:25:17.524Z","pid":3534,"hostname":"vm","context":{"sourceId":"dbtest-catalog:upload-atom","atomId":23,"err":"[tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope while RLS_ENFORCE=on"},"msg":"[upload-retrieval-atom] Upload atom written but not embedded — it is not retrievable yet"}
+ ✓ tests/db/document-catalog.dbtest.ts > a chat upload knows it is indexed by its opening only > a second write for the same source is a no-op, not a duplicate 2ms
+{"level":30,"time":"2026-09-26T12:25:18.488Z","pid":3558,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-26T12:25:18.489Z","pid":3558,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-26T12:25:18.489Z","pid":3558,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > files it, records who placed it, and reports the folder label
+[database] Database connection successful { timestamp: '2026-09-26T12:25:18.534Z', poolSize: 1 }
+
+stdout | tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > files it, records who placed it, and reports the folder label
+[database] Database connection successful
+
+stderr | tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > files it, records who placed it, and reports the folder label
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > files it, records who placed it, and reports the folder label 796ms
+ ✓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > left an audit row naming the location it came from and the one it went to 15ms
+ ✓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > honours an explicit unfile — the Unfiled queue is a real answer 18ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > refuses a folder from another modality's taxonomy 9ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > refuses to confirm a suggestion that does not exist 8ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > refuses a call that names no destination at all 7ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > confirms an existing suggestion in place, keeping the CTD section 11ms
+ ✓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > will not let another organization move the document 6ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > records AnA's folder as a suggestion a person must confirm, not as a person's filing 649ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > refuses to confirm a suggestion — a person confirms filing in the Vault 10ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > the service itself refuses an agent's confirm, so no other agent caller can record one either 8ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > unfiles with the same attribution — the Unfiled queue is where a person decides 15ms
+ ✓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > leaves a person's filing through the Vault a confirmed decision with no agent marker 12ms
+ ✓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > refuses a viewer, and writes nothing 7ms
+ ✓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > refuses a scope that carries no role at all 5ms
+ ✓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > refuses AnA acting for a viewer — the path that had no check 9ms
+ ✓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > lets a member file — the role SSO provisioning assigns 11ms
+
+ Test Files  3 passed (3)
+      Tests  36 passed (36)
+   Start at  12:25:07
+   Duration  11.97s (transform 3.97s, setup 136ms, import 174ms, tests 11.09s, environment 0ms)
+

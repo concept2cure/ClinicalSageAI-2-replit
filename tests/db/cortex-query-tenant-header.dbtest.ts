@@ -176,7 +176,7 @@ describe('the cortex query route takes the tenant from the session, never x-org-
     const asked: Array<string | undefined> = [];
     const spy = vi
       .spyOn(EnhancedEmbeddingService.prototype, 'searchHybrid')
-      .mockImplementation(async (_q, _l, _w, organizationUuid) => {
+      .mockImplementation(async (_q, { organizationUuid }) => {
         asked.push(organizationUuid);
         return [];
       });
