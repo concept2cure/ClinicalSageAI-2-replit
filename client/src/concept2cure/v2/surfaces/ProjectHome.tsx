@@ -926,8 +926,8 @@ function AuthorWorkspace({
   /* Launch-scope verdicts, for the workspace tool grid below. */
   const { verdictFor } = useNavEntitlements();
   /* The program's own AnA threads — REAL. Threads carry the program they were
-     started in (chat_threads.metadata.programId, written when the stream
-     mints the thread), so this lists exactly the conversations held on this
+     started in (chat_threads.program_id, bound when the stream mints the
+     thread, only to a program of its organization), so this lists exactly the conversations held on this
      project, newest first, and opens one back into the thread surface. Until
      that key existed this section was an honest empty with nothing behind it:
      there was no way to resume a project chat from the project. */
