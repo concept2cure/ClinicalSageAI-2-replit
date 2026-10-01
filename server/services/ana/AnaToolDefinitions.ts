@@ -42,6 +42,10 @@ import {
   SEARCH_PROJECT_DOCUMENTS,
   SEARCH_DOCUMENT_PASSAGES,
 } from './document-catalog-tool-defs.js';
+// Read-only outline / section / search over the open project's authoring store
+// (authoring_documents + authoring_sections). Handlers registered from
+// authoring-read-tools.ts (inject-and-sibling).
+import { AUTHORING_READ_TOOLS } from './authoring-read-tools.js';
 // BLA biologics + CTD nonclinical/clinical tool definitions extracted to their
 // own module (decomposition tranche 2). Imported so the enabled-tools array can
 // reference them exactly as before.
@@ -2268,6 +2272,7 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   PLACE_PROJECT_DOCUMENT,
   SEARCH_PROJECT_DOCUMENTS,
   SEARCH_DOCUMENT_PASSAGES,
+  ...AUTHORING_READ_TOOLS,
   CHECK_DOSSIER_CONSISTENCY,
   CHECK_NUMERICAL_INTEGRITY,
   COMPUTE_SAMPLE_SIZE,

@@ -63,6 +63,13 @@ export interface FiledSequence {
   transmittalId?: number | null;
   filedAt: string;
   leaves: FiledLeaf[];
+  /** The us-regional codes it was filed under (FDA), when recorded: its
+   *  submission type, sub-type, and submission-id — the first sequence of the
+   *  regulatory activity it belongs to (W5/D7, sweep F04). Absent on histories
+   *  written before 2026-10-01 and outside FDA. */
+  submissionTypeCode?: string;
+  submissionSubTypeCode?: string;
+  submissionId?: string;
 }
 
 /**
@@ -165,6 +172,18 @@ export function isFiledLeaf(v: unknown): v is FiledLeaf {
  * skipped too — it stays in the metadata for audit, but nothing it carried is
  * on file. Returned oldest-first.
  */
+/** The recorded us-regional identity of a filed entry, read leniently: a
+ *  malformed field is left out, never the entry (its inventory is what matters
+ *  to the diff; the identity only narrows which activities it can continue). */
+function filedIdentityOf(e: Record<string, unknown>): Pick<FiledSequence, 'submissionTypeCode' | 'submissionSubTypeCode' | 'submissionId'> {
+  const fits = (v: unknown, re: RegExp): v is string => typeof v === 'string' && re.test(v);
+  return {
+    ...(fits(e.submissionTypeCode, /^fdast\d{1,2}$/) ? { submissionTypeCode: e.submissionTypeCode } : {}),
+    ...(fits(e.submissionSubTypeCode, /^fdasst\d{1,2}$/) ? { submissionSubTypeCode: e.submissionSubTypeCode } : {}),
+    ...(fits(e.submissionId, SEQUENCE_RE) ? { submissionId: e.submissionId } : {}),
+  };
+}
+
 export function readFiledSequences(metadata: Record<string, unknown> | null | undefined): FiledSequence[] {
   const raw = (metadata ?? {}).filedSequences;
   if (!Array.isArray(raw)) return [];
@@ -183,6 +202,7 @@ export function readFiledSequences(metadata: Record<string, unknown> | null | un
       transmittalId: typeof e.transmittalId === 'number' ? e.transmittalId : null,
       filedAt: typeof e.filedAt === 'string' ? e.filedAt : '',
       leaves,
+      ...filedIdentityOf(e),
     });
   }
   out.sort((a, b) => a.sequence.localeCompare(b.sequence));
@@ -265,11 +285,22 @@ export class SequenceLifecycleRefusal extends Error {
       | 'SUBMISSION_TYPE_UNKNOWN'
       | 'NOTHING_TO_FILE'
       | 'WITHDRAWAL_NOT_ON_FILE'
-      | 'WITHDRAWAL_CONTRADICTS_CONTENT',
+      | 'WITHDRAWAL_CONTRADICTS_CONTENT'
+      // The FDA sequence identity (./fda-sequence-identity, sweep F04):
+      | 'SUBMISSION_TYPE_NOT_FOR_APPLICATION'
+      | 'SUBMISSION_SUB_TYPE_REQUIRED'
+      | 'SUBMISSION_SUB_TYPE_UNKNOWN'
+      | 'SUBMISSION_ID_REQUIRED'
+      | 'SUBMISSION_ID_NOT_FILED'
+      | 'SUBMISSION_ID_WRONG_ACTIVITY'
+      | 'ORIGINAL_APPLICATION_ALREADY_FILED',
     message: string,
     /** For SUBMISSION_TYPE_UNKNOWN: the terms the region will accept, so the
      *  caller can offer them rather than making the operator guess again. */
     readonly acceptedSubmissionTypes?: readonly string[],
+    /** Facts a surface can offer instead of a sentence: the accepted sub-types,
+     *  the filed sequences an amendment can name. */
+    readonly details?: Record<string, unknown>,
   ) {
     super(message);
   }
@@ -409,9 +440,10 @@ export function planSequence(params: {
    * every region but FDA.
    *
    * The caller passes the matcher rather than the module reaching for it: this
-   * plan is region-agnostic, and `accepts` must stay the canonical resolver
-   * (which matches labels loosely — 'supplement' resolves to 'Efficacy
-   * Supplement') rather than a second, stricter copy of it here.
+   * plan is region-agnostic. The assemble route passes the STRICT resolver
+   * (resolveSubmissionTypeStrict): an operator's word is matched to a term
+   * exactly, never guessed — the loose one filed 'IND' as IND Safety Reports
+   * and 'supplement' as Efficacy Supplement (W5/D7, sweep F08, 2026-10-01).
    */
   submissionTypeVocabulary?: { readonly terms: readonly string[]; accepts(value: string): boolean } | null;
   /**

@@ -14,6 +14,7 @@ import { z } from 'zod';
 import { pool } from '../db';
 import { recordGovernedAction } from './c2c/actions';
 import { signGovernedAct, signedActAttempts } from './governed-signed-act';
+import { DECISION_ACT_MEANINGS } from '../services/part11/signature-meanings';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
 import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 import {
@@ -187,7 +188,7 @@ router.post('/protocols/:id/reviews', whenApproving, async (req, res) => {
     return { target: `iacuc-protocol:${id}`, payload: { outcome: parsed.data.outcome, expirationDate: result.expirationDate, provenanceLinkId: result.provenanceLinkId }, body: { id, ...result } };
   };
   if (parsed.data.outcome !== 'approved') return governed(req, res, 'resolve', parsed.data.reason, record);
-  await signGovernedAct(req, res, { domain: 'iacuc', codeStatus: CODE_STATUS, run: record });
+  await signGovernedAct(req, res, { domain: 'iacuc', target: `iacuc-protocol:${id}`, meanings: DECISION_ACT_MEANINGS, codeStatus: CODE_STATUS, run: record });
 });
 
 const cohortSchema = z.object({
