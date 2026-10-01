@@ -1,0 +1,6 @@
+# this change: tests/db/vault-library-search.dbtest.ts
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across every project (critique 15) > finds matches in every project the organisation holds, each named with its project, and never another organisation's 20ms
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across every project (critique 15) > lists an earlier version only when asked 12ms
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across every project (critique 15) > an empty query answers no results and says why 5ms
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across every project (critique 15) > the project search still searches its project only 10ms
+      Tests  4 passed (4)

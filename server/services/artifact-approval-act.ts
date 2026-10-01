@@ -31,6 +31,9 @@
  * before anything is written, and the status, the signature and the ledger pair
  * on one transaction. authoring-actions approve-artifact / lock-artifact do not
  * sign yet (handed on in docs/work-orders/README.md).
+ * 2026-10-01 (D5): authoring-actions approve-artifact / lock-artifact were
+ * removed (unsigned, no caller); the two governed acts are the status route
+ * and AnA's update_artifact_status, signed.
  * 2026-10-01 (D5): the status route's role table, its transitions and the
  * checks before a signed act (a lock covers the approval, no blocking
  * contradiction, the review quorum) are here again, unchanged, because they
@@ -135,12 +138,12 @@ export async function reviewQuorumVerdict(
 
 /** The governed approval act — the only writer of approved_version_id. */
 export const GOVERNED_APPROVE_ACTION =
-  "the review workflow's Approve action (the status route's review → approved, an electronic signature with the " +
-  "meaning 'approval' that re-authenticates the signer and applies the review quorum, or authoring-actions approve-artifact)";
+  "the review workflow's Approve action (review → approved, an electronic signature with the meaning 'approval' " +
+  "that re-authenticates the signer and applies the review quorum: the status route, or AnA's update_artifact_status, signed)";
 /** The governed lock act — the only writer of published_version_id on a lock. */
 export const GOVERNED_LOCK_ACTION =
-  "the review workflow's Lock action (the status route's approved → locked, an electronic signature with the " +
-  "meaning 'release', or authoring-actions lock-artifact)";
+  "the review workflow's Lock action (approved → locked, an electronic signature with the meaning 'release': " +
+  "the status route, or AnA's update_artifact_status, signed)";
 
 /**
  * The remedy an approved-but-not-filable artifact needs, told by a surface

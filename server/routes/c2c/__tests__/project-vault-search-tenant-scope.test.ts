@@ -1,8 +1,10 @@
 /**
  * The vault full-text search must carry its tenant boundary IN the statement.
  *
- * `GET /api/c2c/project-vault/:id/search` reads vault.documents with
- * `d.program_id = $1`. vault.documents has no organization_id to filter on —
+ * `GET /api/c2c/project-vault/:id/search` reads vault.documents through the one
+ * search query (server/services/vault/vault-search.ts, since the library search
+ * of 2026-10-01) with `d.program_id = $3` and the organisation as `$1`.
+ * vault.documents has no organization_id to filter on —
  * its own RLS is program-scoped through core.can_access_program(program_id) —
  * so for a while the only thing standing between one tenant and another's
  * documents was the regulatory_programs ownership SELECT twenty lines earlier.
@@ -71,15 +73,17 @@ describe('vault search carries the org predicate in-statement', () => {
     await search();
     for (const { sql } of vaultReads()) {
       expect(sql).toMatch(/EXISTS\s*\(\s*SELECT 1 FROM regulatory_programs rp/);
-      expect(sql).toMatch(/rp\.organization_id = \$2/);
+      // The one search query (vault-search.ts) binds the organisation first.
+      expect(sql).toMatch(/rp\.organization_id = \$1/);
+      expect(sql).toMatch(/d\.program_id = \$3::uuid/);
     }
   });
 
   it('binds the caller organization, not a value from the request', async () => {
     await search();
     for (const { params } of vaultReads()) {
-      expect(params[0]).toBe(PROGRAM);
-      expect(params[1]).toBe(ORG);
+      expect(params[0]).toBe(ORG);
+      expect(params[2]).toBe(PROGRAM);
     }
   });
 

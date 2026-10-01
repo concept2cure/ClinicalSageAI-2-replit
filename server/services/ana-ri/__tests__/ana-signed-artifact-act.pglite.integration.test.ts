@@ -146,7 +146,7 @@ beforeEach(async () => {
     DELETE FROM concept2cure_signatures; DELETE FROM concept2cure_submission_snapshots;
     DELETE FROM concept2cure_provenance_events; DELETE FROM concept2cure_artifact_versions;
     DELETE FROM concept2cure_artifacts; DELETE FROM c2c_ana_actions; DELETE FROM audit_logs;
-    DELETE FROM regulatory_audit_logs;`);
+    DELETE FROM regulatory_audit_logs; DELETE FROM concept2cure_review_decisions; DELETE FROM concept2cure_review_assignments;`);
 });
 
 describe('AnA approving an artifact is an electronic signature', () => {
@@ -238,6 +238,86 @@ describe('the status is read the one way, by the tier and by the handler', () =>
     expect((await run(`SELECT surface FROM c2c_ana_actions`)).rows).toEqual([{ surface: 'ana-governed-action' }]);
     const [sig] = (await run(`SELECT authentication_timestamp FROM concept2cure_signatures`)).rows;
     expect(new Date(sig.authentication_timestamp).toISOString()).toBe(verifiedAt.toISOString());
+  });
+});
+
+/**
+ * The status route's checks before a signed act apply here too
+ * (artifact-approval-act.ts refuseSignedArtifactAct). Pinned for this door as
+ * they were pinned for authoring-actions approve-artifact / lock-artifact,
+ * whose suite went with them (2026-10-01).
+ */
+describe('what the status route checks before a signed act, AnA checks too', () => {
+  it('a lock over an edit made after the approval: refused, nothing written', async () => {
+    await seed('approved');
+    await run(`UPDATE concept2cure_artifacts SET version = 3 WHERE artifact_id = $1`, [ARTIFACT]);
+    const result = await updateArtifactStatus(signed('release'), params('locked'));
+
+    expect(result.success, result.message).toBe(false);
+    expect(result.message).toMatch(/Cannot lock/);
+    expect(await artifactRow()).toMatchObject({ status: 'approved', published_version_id: null });
+    expect(await snapshots()).toEqual([]);
+  });
+
+  it('an approval with an assigned reviewer still pending: refused, nothing written', async () => {
+    await seed('review');
+    await run(
+      `INSERT INTO concept2cure_review_assignments (assignment_id, artifact_id, organization_id, reviewer_id, assigned_by_id, status)
+       SELECT 'asg_1', id, organization_id, $2, $2, 'pending' FROM concept2cure_artifacts WHERE artifact_id = $1`,
+      [ARTIFACT, USER],
+    );
+    const result = await updateArtifactStatus(signed('approval'), params('approved'));
+
+    expect(result.success, result.message).toBe(false);
+    expect(result.message).toMatch(/have not yet submitted their decision/);
+    expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
+    expect(await signatures()).toEqual([]);
+  });
+});
+
+describe('the review quorum decides on the version that would be approved', () => {
+  /** One completed assignment, and its reviewer's decision on `versionReviewed`. */
+  async function reviewed(decision: string, versionReviewed: number) {
+    await run(
+      `INSERT INTO concept2cure_review_assignments (assignment_id, artifact_id, organization_id, reviewer_id, assigned_by_id, status)
+       SELECT 'asg_1', id, organization_id, $2, $2, 'completed' FROM concept2cure_artifacts WHERE artifact_id = $1`,
+      [ARTIFACT, USER],
+    );
+    await run(
+      `INSERT INTO concept2cure_review_decisions
+         (decision_id, assignment_id, artifact_id, organization_id, reviewer_id, review_round, decision, version_reviewed)
+       SELECT 'dec_1', a.id, a.artifact_id, a.organization_id, a.reviewer_id, 1, $1, $2
+         FROM concept2cure_review_assignments a WHERE a.assignment_id = 'asg_1'`,
+      [decision, versionReviewed],
+    );
+  }
+
+  it('a decision recorded against an earlier version: refused, nothing written', async () => {
+    await seed('review'); // version 2
+    await reviewed('approve', 1);
+    const result = await updateArtifactStatus(signed('approval'), params('approved'));
+
+    expect(result.success, result.message).toBe(false);
+    expect(result.message).toMatch(/recorded against version 1; the artifact is now version 2/);
+    expect(await signatures()).toEqual([]);
+  });
+
+  it('a reviewer who did not approve: refused', async () => {
+    await seed('review');
+    await reviewed('reject', 2);
+    const result = await updateArtifactStatus(signed('approval'), params('approved'));
+
+    expect(result.success, result.message).toBe(false);
+    expect(result.message).toMatch(/did not approve/);
+  });
+
+  it('every reviewer approving the current version: approved and signed at that version', async () => {
+    await seed('review');
+    await reviewed('approve', 2);
+    const result = await updateArtifactStatus(signed('approval'), params('approved'));
+
+    expect(result.success, result.message).toBe(true);
+    expect(await artifactRow()).toMatchObject({ status: 'approved', approved_version_id: 2 });
   });
 });
 
