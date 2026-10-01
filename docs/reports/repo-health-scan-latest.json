@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-01T02:08:39.231Z",
+  "generatedAt": "2026-10-01T02:16:48.965Z",
   "git": {
-    "sha": "736ab7c1e7e6ed31f21ac5a88c2a49c67437a8b3",
+    "sha": "fc179003392cbd76a2970648d3448be59df53bab",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -12,7 +12,7 @@
   },
   "managedMirrors": [],
   "summary": {
-    "duplicateBasenames": 208,
+    "duplicateBasenames": 211,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 45,
@@ -125,7 +125,7 @@
       },
       {
         "basename": "types",
-        "count": 49,
+        "count": 50,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/types.ts",
           "client/src/concept2cure/mdx/types.ts",
@@ -140,6 +140,7 @@
           "server/services/ana/intelligence-questions/types.ts",
           "server/services/ana/intelligence-questions/war-game/types.ts",
           "server/services/ana/therapeutic-area-profiles/types.ts",
+          "server/services/audit/compliance-reports/types.ts",
           "server/services/biostatistics-judgment/types.ts",
           "server/services/biostats-signal-engine/types.ts",
           "server/services/clinical-regulatory-evidence/types.ts",
@@ -973,6 +974,14 @@
         ]
       },
       {
+        "basename": "catalog",
+        "count": 2,
+        "paths": [
+          "server/mcp/tools/catalog.ts",
+          "server/services/audit/compliance-reports/catalog.ts"
+        ]
+      },
+      {
         "basename": "cdx",
         "count": 2,
         "paths": [
@@ -1050,6 +1059,14 @@
         "paths": [
           "server/services/clinical-regulatory-evidence/coverage-service.ts",
           "server/services/coverage-analysis/coverage-service.ts"
+        ]
+      },
+      {
+        "basename": "csv",
+        "count": 2,
+        "paths": [
+          "server/services/audit/compliance-reports/csv.ts",
+          "server/utils/csv.ts"
         ]
       },
       {
@@ -1138,6 +1155,14 @@
         "paths": [
           "server/routes/effort-certification.ts",
           "shared/schema/effort-certification.ts"
+        ]
+      },
+      {
+        "basename": "electronic-signatures",
+        "count": 2,
+        "paths": [
+          "database/schema/electronic-signatures.ts",
+          "server/services/audit/compliance-reports/queries/electronic-signatures.ts"
         ]
       },
       {
@@ -2029,7 +2054,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 160814
+        "bytes": 161180
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
@@ -2207,7 +2232,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 3610
+        "lines": 3616
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2290,6 +2315,10 @@
         "lines": 2419
       },
       {
+        "file": "server/routes/report-os.ts",
+        "lines": 2394
+      },
+      {
         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
         "lines": 2386
       },
@@ -2336,10 +2365,6 @@
       {
         "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
         "lines": 2155
-      },
-      {
-        "file": "server/routes/report-os.ts",
-        "lines": 2135
       },
       {
         "file": "server/services/precedent-engine.ts",
@@ -2599,13 +2624,13 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 405,
+      "duplicateGroups": 411,
       "largeByBytes": 35,
       "largeByLines": 86
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 155,
+      "duplicateGroups": 156,
       "largeByBytes": 2,
       "largeByLines": 8
     },
