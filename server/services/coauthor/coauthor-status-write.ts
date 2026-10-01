@@ -92,7 +92,11 @@ export const COAUTHOR_WORKING_STATUSES: readonly string[] = Object.freeze([
  * the leaf resolver does not count filable. The resolver's own finalized set
  * is not copied here — it is asked, through isFinalizedStatus.
  */
-const SIGN_OFF_STATUSES: ReadonlySet<string> = new Set(['signed', 'locked']);
+/* Statuses only a governed act may set, beyond those the resolver files.
+   'finalized' is the sealed snapshot of a frozen authoring document: since
+   DP-35 (2026-10-01) the resolver no longer files it, since a freeze is not an
+   approval, but a PUT must still never award it. */
+const SIGN_OFF_STATUSES: ReadonlySet<string> = new Set(['signed', 'locked', 'finalized']);
 
 /** Every value the codebase documents or reads for coauthor_documents.status. */
 const DOCUMENTED_VOCABULARY: readonly string[] = [

@@ -111,7 +111,8 @@ describe('a reply that was only blocks says what happened', () => {
   });
 
   it('everything ran: it says so', () => {
-    expect(blocksOnlyAnswer([{ success: true, action: 'list_projects', message: '2 projects' }])).toBe('Action executed successfully.');
+    const ran = { success: true, action: 'list_projects', message: '2 projects' };
+    expect(blocksOnlyAnswer([ran])).toBe('Action executed successfully.');
   });
 });
 

@@ -55,6 +55,26 @@ export interface UploadedFile {
   integrity: 'verified' | 'unverifiable';
 }
 
+/**
+ * Why an upload could not be loaded, for a caller that reports per item rather
+ * than relaying a thrown message (the data room's "File into Vault", VR-11).
+ * The messages are the ones this module always threw; only the code is new.
+ *
+ *   UPLOAD_NOT_FOUND         — unknown, or another tenant's (indistinguishable on purpose).
+ *   UPLOAD_BYTES_MISSING     — the row exists but its bytes are gone.
+ *   UPLOAD_INTEGRITY_FAILED  — the bytes no longer match the digest recorded on receipt.
+ */
+export type UploadedFileErrorCode = 'UPLOAD_NOT_FOUND' | 'UPLOAD_BYTES_MISSING' | 'UPLOAD_INTEGRITY_FAILED';
+
+export class UploadedFileError extends Error {
+  readonly code: UploadedFileErrorCode;
+  constructor(code: UploadedFileErrorCode, message: string, options?: { cause?: unknown }) {
+    super(message, options);
+    this.name = 'UploadedFileError';
+    this.code = code;
+  }
+}
+
 /** Lowercase hex SHA-256, the form stored in file_uploads.checksum_sha256. */
 export function sha256Hex(buffer: Buffer): string {
   return createHash('sha256').update(buffer).digest('hex');
@@ -201,7 +221,7 @@ export async function loadUploadedFile(
     [fileId],
   );
   if (rows.length === 0) {
-    throw new Error(`upload "${fileId}" not found`);
+    throw new UploadedFileError('UPLOAD_NOT_FOUND', `upload "${fileId}" not found`);
   }
   const row = rows[0];
   const storagePath = row.storage_path || '';
@@ -209,7 +229,7 @@ export async function loadUploadedFile(
   if (!rowBelongsToOrg(row, organizationId)) {
     // Same response as "not found" — don't confirm a foreign tenant's file exists.
     logger.warn('tenant-scoped upload access denied', { fileId, orgId: organizationId ?? null });
-    throw new Error(`upload "${fileId}" not found`);
+    throw new UploadedFileError('UPLOAD_NOT_FOUND', `upload "${fileId}" not found`);
   }
 
   const resolved = path.resolve(process.cwd(), storagePath);
@@ -217,9 +237,11 @@ export async function loadUploadedFile(
   let buffer: Buffer;
   try {
     buffer = await fs.readFile(resolved);
-  } catch {
-    throw new Error(
+  } catch (err) {
+    throw new UploadedFileError(
+      'UPLOAD_BYTES_MISSING',
       `upload "${fileId}" exists but its bytes are no longer available — ask the user to re-upload the file`,
+      { cause: err },
     );
   }
 
@@ -247,7 +269,8 @@ export async function loadUploadedFile(
         recordedSize: Number(row.file_size) || null,
         actualSize: buffer.length,
       });
-      throw new Error(
+      throw new UploadedFileError(
+        'UPLOAD_INTEGRITY_FAILED',
         `upload "${fileId}" failed its integrity check: the stored bytes no longer match the ` +
           `SHA-256 recorded when it was received. The file has been altered or corrupted since ` +
           `upload and will not be served. Ask the user to re-upload it.`,

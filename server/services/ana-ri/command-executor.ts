@@ -96,6 +96,8 @@ import {
   type Part11Signoff,
 } from './part11-governance';
 import { authorizeCommand, isPrivacyAdmin, isProposeOnlyCommand } from './command-rbac';
+import { statedReasonOrNull } from '../../routes/governed-reason.js';
+import { recordCommentPosted } from '../../routes/c2c/review-comment-record.js';
 import {
   explainAuditRow,
   EXPLAIN_AUDIT_ROW_METADATA,
@@ -1801,14 +1803,19 @@ export async function exportPersonalData(
  */
 const GDPR_RETENTION_LEGAL_BASIS =
   'GDPR Art. 17(3)(b): erasure does not apply where processing is necessary to comply with a legal obligation. ' +
-  'concept2cure_artifacts are regulated records under GxP record retention and 21 CFR 11.10(c); ' +
+  'concept2cure_artifacts are regulated records under GxP record retention and 21 CFR 11.10(c), ' +
+  'and the review comments on them (concept2cure_thread_comments) are part of their review record; ' +
   "the subject's identity on them is pseudonymised by the redaction of their user record.";
 
-/** The tables the AnA erasure writes. concept2cure_artifacts is read (retained), never written. */
+/**
+ * The tables the AnA erasure writes. concept2cure_artifacts and, since
+ * 2026-10-01, concept2cure_thread_comments are read (retained), never written:
+ * a review comment's words are fixed once posted
+ * (migrations/20261001_review_comments_record.sql).
+ */
 const ERASURE_SCOPE = [
   'users',
   'concept2cure_conversations',
-  'concept2cure_thread_comments',
   'gdpr_data_subject_requests',
 ] as const;
 
@@ -1845,7 +1852,7 @@ interface ErasureOutcome {
   redactedUser: boolean;
   /** null ⇒ the table is not present here (listed in notApplicable), not zero. */
   redactedConversations: number | null;
-  redactedComments: number | null;
+  retainedReviewComments: number | null;
   retainedRegulatedArtifacts: number | null;
   notApplicable: string[];
 }
@@ -1887,20 +1894,18 @@ async function redactDataSubject(client: PoolClient, orgId: number, dataSubjectI
     `SELECT count(*)::int AS n FROM concept2cure_artifacts WHERE organization_id = $1 AND created_by_id = $2`,
     scope
   );
+  // The review record: counted, NOT overwritten (GDPR_RETENTION_LEGAL_BASIS).
+  // Until 2026-10-01 this overwrote every comment the subject had written.
   const comments = await runIfTablePresent(
     client,
-    `UPDATE concept2cure_thread_comments
-     SET body = '[REDACTED PER GDPR ART.17]',
-         updated_at = NOW()
-     WHERE org_id = $1 AND author_id = $2
-     RETURNING id`,
+    `SELECT count(*)::int AS n FROM concept2cure_thread_comments WHERE org_id = $1 AND author_id = $2`,
     scope
   );
   const count = (r: { applicable: boolean; rows: any[] }) => (r.applicable ? r.rows.length : null);
   return {
     redactedUser: userResult.rows.length > 0,
     redactedConversations: count(conversations),
-    redactedComments: count(comments),
+    retainedReviewComments: comments.applicable ? Number(comments.rows[0]?.n ?? 0) : null,
     retainedRegulatedArtifacts: artifacts.applicable ? Number(artifacts.rows[0]?.n ?? 0) : null,
     notApplicable: [
       ...(conversations.applicable ? [] : ['concept2cure_conversations']),
@@ -1914,8 +1919,9 @@ function erasureMessage(dataSubjectId: number, o: ErasureOutcome): string {
   const n = (v: number | null, what: string) => (v === null ? `${what}: not applicable` : `${v} ${what}`);
   return (
     `Erasure completed for subject ${dataSubjectId}: user record ${o.redactedUser ? 'redacted' : 'not found in this organization'}, ` +
-    `${n(o.redactedConversations, 'conversation(s) redacted')}, ${n(o.redactedComments, 'comment(s) redacted')}. ` +
-    `${n(o.retainedRegulatedArtifacts, 'regulated artifact(s) retained')} under GDPR Art. 17(3)(b) (GxP record retention).`
+    `${n(o.redactedConversations, 'conversation(s) redacted')}. ` +
+    `${n(o.retainedRegulatedArtifacts, 'regulated artifact(s)')} and ${n(o.retainedReviewComments, 'review comment(s)')} ` +
+    'retained under GDPR Art. 17(3)(b) (GxP record retention).'
   );
 }
 
@@ -1942,7 +1948,10 @@ export async function erasePersonalData(
 
   const client = await pool.connect();
   try {
-    const reason = params?.reason || 'GDPR Art. 17 erasure request';
+    // The reason the person stated in the e-signature ceremony
+    // (POST /api/ana-ri/governed-action stamps ctx.signoff), or none. Until
+    // 2026-10-01 this was the model's params.reason, or a stock sentence (D5).
+    const reason = statedReasonOrNull(ctx.signoff?.reasonForChange);
     await client.query('BEGIN');
 
     // The signature FIRST, before any redaction. persistGovernedActionSignature
@@ -1957,7 +1966,7 @@ export async function erasePersonalData(
       target: `data-subject:${dataSubjectId}`,
       payload: { dataSubjectId, scope: [...ERASURE_SCOPE] },
       binding: ledgerBinding('An erasure destroys the content it acts on, so there is no content to bind: the signer attests to the decision to erase.'),
-      extraManifest: { retainedTables: ['concept2cure_artifacts'], retentionLegalBasis: GDPR_RETENTION_LEGAL_BASIS },
+      extraManifest: { retainedTables: ['concept2cure_artifacts', 'concept2cure_thread_comments'], retentionLegalBasis: GDPR_RETENTION_LEGAL_BASIS },
     });
 
     const outcome = await redactDataSubject(client, ctx.organizationId, dataSubjectId);
@@ -1971,7 +1980,7 @@ export async function erasePersonalData(
       [
         ctx.organizationId,
         String(dataSubjectId),
-        `AnA erasure workflow completed. Reason: ${reason}. ${erasureMessage(dataSubjectId, outcome)} ` +
+        `AnA erasure workflow completed. ${reason ? `Reason: ${reason}. ` : ''}${erasureMessage(dataSubjectId, outcome)} ` +
           `Electronic signature ${signatureId}.`,
       ]
     );
@@ -2145,6 +2154,22 @@ export async function createReviewThread(
   }
 }
 
+/** BEGIN … COMMIT on one pooled client; ROLLBACK and rethrow on any failure. */
+async function onOneClient<T>(work: (client: PoolClient) => Promise<T>): Promise<T> {
+  const client = (await pool.connect()) as PoolClient;
+  try {
+    await client.query('BEGIN');
+    const out = await work(client);
+    await client.query('COMMIT');
+    return out;
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 /** Add a comment to a review thread (matches concept2cure_thread_comments schema) */
 export async function addReviewComment(
   ctx: CommandContext,
@@ -2156,22 +2181,41 @@ export async function addReviewComment(
 ): Promise<CommandResult> {
   try {
     const commentId = `comment_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-    const result = await pool.query(
-      `INSERT INTO concept2cure_thread_comments
-         (comment_id, org_id, thread_id, artifact_id, author_id, author_name,
-          body, kind, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, 'comment', NOW(), NOW())
-       RETURNING id, comment_id`,
-      [
-        commentId,
-        ctx.organizationId,
-        params.threadId,
-        params.artifactId,
-        ctx.userId,
-        ctx.userName || 'AnA RI',
-        params.body,
-      ]
-    );
+    // The comment and its chained record commit together. AnA wrote the
+    // words, and the record says so (origin 'ana', D5 2026-10-01).
+    const result = await onOneClient(async (client) => {
+      const inserted = await client.query(
+        `INSERT INTO concept2cure_thread_comments
+           (comment_id, org_id, thread_id, artifact_id, author_id, author_name,
+            body, kind, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 'comment', NOW(), NOW())
+         RETURNING id, comment_id, version_id, parent_comment_id, author_role`,
+        [
+          commentId,
+          ctx.organizationId,
+          params.threadId,
+          params.artifactId,
+          ctx.userId,
+          ctx.userName || 'AnA RI',
+          params.body,
+        ]
+      );
+      const row = inserted.rows[0];
+      await recordCommentPosted(client, {
+        orgId: ctx.organizationId,
+        authorId: ctx.userId,
+        commentId: row.comment_id,
+        threadId: params.threadId,
+        artifactId: params.artifactId,
+        versionId: row.version_id ?? null,
+        parentCommentId: row.parent_comment_id ?? null,
+        kind: 'comment',
+        authorName: ctx.userName || 'AnA RI',
+        authorRole: row.author_role ?? null,
+        body: params.body,
+      }, 'ana');
+      return inserted;
+    });
     return {
       success: true,
       action: 'add_review_comment',

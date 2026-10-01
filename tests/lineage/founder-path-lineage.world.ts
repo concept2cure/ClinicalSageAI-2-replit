@@ -235,7 +235,12 @@ function prerequisites(): string {
   const artifactsCascade = cascadeKey('migrations/0000_sweet_joseph.sql', 'concept2cure_artifacts_project_id_projects_id_fk');
   // The package spine's table, only because submission_transmittals references it.
   const packageSpine = extractTableDdl('migrations/0002_phase15_submission_ops.sql', ['c2c_submission_packages']);
-  return `${baseline}\n${artifactsCascade}\n${SUBMISSION_CORE_PGLITE_DDL}\n${LEAF_SOURCE_PGLITE_DDL}\n${VAULT_DDL}\n${packageSpine}`;
+  // An artifact with a review comment is a record (5d91058ae, D5): the retention
+  // read asks concept2cure_thread_comments, which references its thread.
+  const reviewThreads = extractTableDdl('migrations/phase13_review_threads_tasks.sql', [
+    'concept2cure_review_threads', 'concept2cure_thread_comments',
+  ]);
+  return `${baseline}\n${artifactsCascade}\n${SUBMISSION_CORE_PGLITE_DDL}\n${LEAF_SOURCE_PGLITE_DDL}\n${VAULT_DDL}\n${packageSpine}\n${reviewThreads}`;
 }
 
 /** One `ALTER TABLE … ADD CONSTRAINT <name> …;` statement, verbatim from a migration file. */

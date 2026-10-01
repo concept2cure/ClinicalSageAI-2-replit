@@ -94,6 +94,10 @@ module "secrets" {
       description = "OpenAI API key"
       value       = var.openai_api_key
     }
+    anthropic_api_key = {
+      description = "Anthropic API key (regulatory drafting: the approved high-risk models)"
+      value       = var.anthropic_api_key
+    }
     database_url = {
       description = "Owner-role connection URL (migrations)"
       value       = local.database_url
@@ -146,6 +150,12 @@ module "secrets" {
 # as a crash-loop at boot (server/config/environment.ts).
 resource "terraform_data" "boot_contract" {
   lifecycle {
+    precondition {
+      # The drafting provider must be one the placement approvals name, or a
+      # draft that carries PII/PHI is refused per request on a "ready" deployment.
+      condition     = contains(try(keys(jsondecode(var.ai_provider_placement_approvals)), []), "anthropic")
+      error_message = "ai_provider_placement_approvals must name \"anthropic\", the provider regulatory drafting runs on (anthropic_api_key)."
+    }
     precondition {
       condition     = var.refresh_token_secret != var.jwt_secret
       error_message = "refresh_token_secret must differ from jwt_secret: the app refuses to boot when they are equal (server/config/environment.ts)."
@@ -224,6 +234,7 @@ locals {
     { name = "AUDIT_EXPORT_SIGNING_KEY", value_from = module.secrets.secret_arns["audit_export_signing_key"] },
     { name = "CONNECTOR_ENCRYPTION_KEY", value_from = module.secrets.secret_arns["connector_encryption_key"] },
     { name = "OPENAI_API_KEY", value_from = module.secrets.secret_arns["openai_api_key"] },
+    { name = "ANTHROPIC_API_KEY", value_from = module.secrets.secret_arns["anthropic_api_key"] },
     { name = "SMTP_USER", value_from = module.secrets.secret_arns["smtp_user"] },
     { name = "SMTP_PASS", value_from = module.secrets.secret_arns["smtp_pass"] },
   ]

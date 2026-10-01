@@ -8,10 +8,11 @@ import { and, desc, eq, sql } from 'drizzle-orm';
 import { documents, documentVersions } from '../../shared/schema';
 import { authMiddleware } from '../auth';
 import { db } from '../db';
-import { requestDb, requestPgClient } from '../db/requestDb';
+import { requestPgClient } from '../db/requestDb';
 import { FeatureToggleService } from '../services/featureToggleService';
 import { createScopedLogger } from '../utils/logger';
 import { serverError } from '../lib/api-response';
+import { programInOrganization } from '../services/c2c/program-access';
 
 const router = Router();
 const logger = createScopedLogger('cerv2-documents');
@@ -98,18 +99,7 @@ const programVisibleInOrg = async (
   programId: string,
   organizationId: number,
 ): Promise<boolean> => {
-  const { regulatoryPrograms } = await import('../../shared/schema/programs');
-  const [program] = await requestDb(req)
-    .select({ id: regulatoryPrograms.id })
-    .from(regulatoryPrograms)
-    .where(
-      and(
-        eq(regulatoryPrograms.id, programId),
-        eq(regulatoryPrograms.organizationId, organizationId),
-      ),
-    )
-    .limit(1);
-  return Boolean(program);
+  return programInOrganization(requestPgClient(req), programId, organizationId);
 };
 
 const tableExists = async (_req: any, tableName: string) => {

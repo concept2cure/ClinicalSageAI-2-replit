@@ -7,10 +7,8 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
-import { and, eq } from 'drizzle-orm';
 
-import { db } from '../db';
-import { regulatoryPrograms } from '../../shared/schema/programs';
+import { pool } from '../db';
 import { authenticateToken } from '../middleware/auth';
 import {
   assessSufficiency,
@@ -21,6 +19,7 @@ import { recordAuditRow, type AuditRowOutcome } from '../services/audit/audit-wr
 import type { SubmissionPathway } from '../../shared/schema/evidence-sufficiency';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
+import { programInOrganization } from '../services/c2c/program-access';
 
 const router = Router();
 const log = createScopedLogger('evidence-sufficiency');
@@ -39,14 +38,7 @@ async function requireProgramAccess(req: Request, res: Response, next: NextFunct
     res.status(403).json({ error: 'Organization context required' });
     return;
   }
-  const [row] = await db
-    .select({ id: regulatoryPrograms.id })
-    .from(regulatoryPrograms)
-    .where(
-      and(eq(regulatoryPrograms.id, String(req.params.programId)), eq(regulatoryPrograms.organizationId, orgId))
-    )
-    .limit(1);
-  if (!row) {
+    if (!(await programInOrganization(pool, String(req.params.programId), orgId))) {
     res.status(403).json({ error: 'Access denied' });
     return;
   }

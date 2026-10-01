@@ -7,7 +7,8 @@
  * error and returned `persisted: false`, then answered 201 with status 'sent'
  * whatever had happened. No chained audit row was written, and a delivery with
  * no project was answered 201 and stored nowhere. POST /correspondence/capture,
- * the helper's other caller, answered 201 for a letter that was never stored.
+ * the helper's other caller, answered 201 for a letter that was never stored
+ * (that route was later removed; letters arrive through the canonical intake).
  *
  * What is pinned here:
  *   - the correspondence row (platform_send), the delivery record and the chain
@@ -117,7 +118,13 @@ app.use(express.json());
 /* The caller's role; finalize's tier (owner, admin, manager) since DP-61. */
 const caller = { role: 'manager' };
 app.use((req, _res, next) => {
-  (req as unknown as { user: { id: number; role: string; roles: string[] } }).user = { id: 5, role: caller.role, roles: [caller.role] };
+  // organizationId: the router's write gate (requireEditorAccessForWrites) reads it.
+  (req as unknown as { user: { id: number; organizationId: number; role: string; roles: string[] } }).user = {
+    id: 5,
+    organizationId: 7,
+    role: caller.role,
+    roles: [caller.role],
+  };
   next();
 });
 app.use('/api/report-os', reportOsRouter);
@@ -342,36 +349,7 @@ describe('POST /deliveries external_pdf_export (P1-44)', () => {
   });
 });
 
-describe('POST /correspondence/capture: a letter that was not stored is not a 201 (P1-44, the helper\'s other caller)', () => {
-  const capture = () =>
-    request(app).post('/api/report-os/correspondence/capture').send({
-      projectId: 12,
-      submissionId: SUBMISSION,
-      subject: 'Information request',
-      body: 'Deficiency: clarification requested on the stability section.',
-    });
-
-  it('writes the letter, its issues and the learning memory on one transaction', async () => {
-    const res = await capture();
-    expect(res.status, JSON.stringify(res.body)).toBe(201);
-    expect(res.body.data.persistedToPlatform).toBe(true);
-    expect(h.calls.find((c) => CORRESPONDENCE.test(c.text))?.params[0]).toBe(res.body.data.correspondenceId);
-    expect(h.statements.slice(0, 2)).toEqual(['BEGIN', STAMP]);
-    expect(at(/^INSERT INTO c2c_correspondence_issues/)).toBeGreaterThan(at(CORRESPONDENCE));
-    expect(at(MEMORY)).toBeGreaterThan(at(/^INSERT INTO c2c_correspondence_issues/));
-    expect(h.statements.slice(-2)).toEqual(['COMMIT', '<released>']);
-    expect(h.poolWrites).toEqual([]);
-  });
-
-  it('answers 503 with nothing captured when the letter is refused, and writes no learning memory', async () => {
-    h.fail.re = /INSERT INTO c2c_correspondence \(/;
-    const res = await capture();
-    expect(res.status).toBe(503);
-    expect(res.body).toMatchObject({ success: false, error: { code: 'CORRESPONDENCE_NOT_RECORDED' } });
-    expect(res.body.error.message).toMatch(/Nothing was recorded/);
-    expect(JSON.stringify(res.body)).not.toContain('secret-detail-xyz');
-    expect(count(MEMORY)).toBe(0);
-    expect(h.statements.slice(-2)).toEqual(['ROLLBACK', '<released>']);
-    expect(h.poolWrites).toEqual([]);
-  });
-});
+/* POST /correspondence/capture, the helper's other caller, was removed the same day
+   (reporting review, 2026-10-01): letters arrive through the canonical intake,
+   POST /api/regulatory-correspondence/correspondence/intake. Its absence is pinned by
+   tests/db/report-os-tenant-from-session.dbtest.ts. */

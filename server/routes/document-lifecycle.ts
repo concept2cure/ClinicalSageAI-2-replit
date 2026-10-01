@@ -65,6 +65,7 @@ import {
   type SignatureDbClient,
 } from '../services/part11/signature-persistence';
 import { recordGovernedAction } from './c2c/actions';
+import { requireGovernedReason } from './governed-reason';
 import {
   assertSignerIsNotAuthor,
   SeparationOfDutiesAuthorUnresolvedError,
@@ -111,6 +112,16 @@ const AUTHOR = 'regulatory-author';
 const isStage = (v: unknown): v is DocumentStage =>
   typeof v === 'string' &&
   ['authoring', 'in_review', 'approved', 'placed', 'packaged', 'submitted', 'superseded', 'withdrawn'].includes(v);
+
+/**
+ * A sign-off carries the signer's own reason (VR-13): the 400 to answer when it
+ * does not, else null. Asked before the ceremony; a reason is never written for
+ * the signer.
+ */
+function reasonRefusal(value: unknown): { ok: false; error: 'REASON_REQUIRED'; message: string } | null {
+  const reason = requireGovernedReason(value);
+  return reason.ok ? null : { ok: false, error: 'REASON_REQUIRED', message: `${reason.error} Nothing was signed.` };
+}
 
 export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptions = {}): Router {
   const router = express.Router();
@@ -254,16 +265,15 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
       meaning: 'reviewed' | 'approved';
       signer: LifecycleSigner;
       binding: LifecycleBinding;
-      reason?: string;
+      /** The signer's own reason, required and validated by the route (never written for them). */
+      reason: string;
       occurredAt: Date;
     },
   ): Promise<ApprovalSignature> {
     const { doc, signer, binding, occurredAt } = params;
     const target = lifecycleTarget(doc.canonicalId);
     const meaning = LIFECYCLE_DECLARED_MEANING[params.meaning];
-    const reason =
-      params.reason?.trim() ||
-      `${params.meaning === 'reviewed' ? 'Review' : 'Approval'} of "${doc.title}", version ${doc.version}`;
+    const reason = params.reason;
 
     const gov = await recordGovernedAction(client, {
       orgId: doc.organizationId,
@@ -348,7 +358,8 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
           meaning,
           signer: { ...signer, ipAddress: req.ip ?? null },
           binding: pre.binding,
-          reason: signCtx.reason,
+          // Validated by the advance route before anything ran; never written for the signer.
+          reason: signCtx.reason ?? '',
           occurredAt: new Date(signCtx.at),
         });
       },
@@ -426,6 +437,10 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
     if (meaning !== 'reviewed' && meaning !== 'approved') {
       return res.status(400).json({ ok: false, error: 'meaning_must_be_reviewed_or_approved' });
     }
+    // A sign-off carries the signer's own reason; none is written for them.
+    const noReason = reasonRefusal(req.body?.reason);
+    if (noReason) return res.status(400).json(noReason);
+    const reason = String(req.body.reason).trim();
     const id = String(req.params.id);
 
     let outcome: Outcome;
@@ -463,7 +478,7 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
           meaning: 'reviewed',
           signer: { ...signer, ipAddress: req.ip ?? null },
           binding: pre.binding,
-          reason: typeof req.body?.reason === 'string' ? req.body.reason : undefined,
+          reason,
           occurredAt: new Date(),
         });
         const event = await recordReviewSignature(tx, id, organizationId, signature);
@@ -495,6 +510,9 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
 
     const to = req.body?.to;
     if (!isStage(to)) return res.status(400).json({ ok: false, error: 'invalid_target_stage' });
+    // Approving signs, so it carries the signer's own reason (as /:id/sign does).
+    const noReason = to === 'approved' ? reasonRefusal(req.body?.reason) : null;
+    if (noReason) return res.status(400).json(noReason);
     const id = String(req.params.id);
 
     let outcome: Outcome;

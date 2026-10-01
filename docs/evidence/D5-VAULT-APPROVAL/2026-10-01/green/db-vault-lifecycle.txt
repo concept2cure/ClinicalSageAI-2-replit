@@ -1,47 +1,47 @@
-## GREEN: tests/db/vault-lifecycle.dbtest.ts with the Vault and lifecycle DB suites, RLS_ENFORCE=on, runtime role app_service (2026-10-01)
- ✓ tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > makes one record at authoring with the version's hash, whatever the body says 3654ms
- ✓ tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > does not find another organization's version 40ms
- ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the uploader may not review, a viewer may not act, and approval needs a review 72ms
- ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the reviewer and the uploader may not approve; a third person approves exactly those bytes 346ms
- ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > only the current version is started or approved 105ms
- ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > a failure while superseding leaves both versions as they were 198ms
- ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > records v2 with v1's code and filing, version 2.0 and the link to v1, and leaves v1 as it was 1218ms
+## GREEN: tests/db/vault-lifecycle.dbtest.ts with the Vault and lifecycle DB suites, RLS_ENFORCE=on, runtime role app_service (2026-10-01, client half and review fixes)
+ ✓ tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > makes one record at authoring with the version's hash, whatever the body says 4319ms
+ ✓ tests/db/vault-lifecycle.dbtest.ts > starting a Vault version's lifecycle (VR-13) > does not find another organization's version 41ms
+ ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the uploader may not review, a viewer may not act, and approval needs a review 95ms
+ ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > the reviewer and the uploader may not approve; a third person approves exactly those bytes 484ms
+ ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > only the current version is started or approved 153ms
+ ✓ tests/db/vault-lifecycle.dbtest.ts > review and approval of a Vault version (VR-13) > a failure while superseding leaves both versions as they were 225ms
+ ✓ tests/db/vault-versions.dbtest.ts > the Vault lists a document once, at its current version (VR-09) > one leaf for the family, the current version, with its version count 71ms
+ ✓ tests/db/vault-versions.dbtest.ts > the Vault lists a document once, at its current version (VR-09) > counts documents, not versions 29ms
+ ✓ tests/db/vault-versions.dbtest.ts > GET …/documents/:documentId/versions (VR-09) > lists the family newest first from any member, with hash, size and uploader 35ms
+ ✓ tests/db/vault-versions.dbtest.ts > GET …/documents/:documentId/versions (VR-09) > shows a link the lineage rules refuse as unverified, never as lineage 14ms
+ ✓ tests/db/vault-versions.dbtest.ts > GET …/documents/:documentId/versions (VR-09) > 404s another organization's document, from either side 17ms
+ ✓ tests/db/vault-versions.dbtest.ts > search and history across versions (VR-09) > search hides a superseded version unless asked, and counts the same set 28ms
+ ✓ tests/db/vault-versions.dbtest.ts > search and history across versions (VR-09) > a document's history spans every version 41ms
+ ✓ tests/db/vault-versions.dbtest.ts > search and history across versions (VR-09) > downloads an earlier version, hash-verified (control) 15ms
+ ✓ tests/db/vault-versions.dbtest.ts > a check-in agrees with the tree about the current version (VR-09) > refuses a version a legacy row names, says why, and names nothing about that row 62ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > records v2 with v1's code and filing, version 2.0 and the link to v1, and leaves v1 as it was 1717ms
  ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > refuses a check-in against a version that already has a successor, naming the current one 13ms
- ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > refuses bytes that are already a version of the document, naming it 17ms
- ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > assigns the version: a client-sent version with a check-in is a 400 6ms
- ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > invents no version for a head whose version is not a number 14ms
- ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > 404s another tenant's document, and neither records nor stores anything 37ms
- ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > a viewer is refused before any byte is stored 6ms
- ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > two concurrent check-ins against one version: exactly one succeeds, the other names the new head 60ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > refuses bytes that are already a version of the document, naming it 14ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > assigns the version: a client-sent version with a check-in is a 400 7ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > invents no version for a head whose version is not a number 18ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > 404s another tenant's document, and neither records nor stores anything 46ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > a viewer is refused before any byte is stored 8ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > checking in the next version of a Vault document (VR-08) > two concurrent check-ins against one version: exactly one succeeds, the other names the new head 72ms
  ✓ tests/db/vault-version-checkin.dbtest.ts > the database refuses lineage outside the family (VR-08) > refuses a raw INSERT that names another program's document as its predecessor 4ms
- ✓ tests/db/vault-version-checkin.dbtest.ts > the database refuses lineage outside the family (VR-08) > refuses a second live successor 9ms
- ✓ tests/db/vault-version-checkin.dbtest.ts > the database refuses lineage outside the family (VR-08) > replays over legacy duplicate pointers: a notice, no failure, and the trigger still refuses a third 32ms
- ✓ tests/db/vault-versions.dbtest.ts > the Vault lists a document once, at its current version (VR-09) > one leaf for the family, the current version, with its version count 40ms
- ✓ tests/db/vault-versions.dbtest.ts > the Vault lists a document once, at its current version (VR-09) > counts documents, not versions 25ms
- ✓ tests/db/vault-versions.dbtest.ts > GET …/documents/:documentId/versions (VR-09) > lists the family newest first from any member, with hash, size and uploader 24ms
- ✓ tests/db/vault-versions.dbtest.ts > GET …/documents/:documentId/versions (VR-09) > shows a link the lineage rules refuse as unverified, never as lineage 10ms
- ✓ tests/db/vault-versions.dbtest.ts > GET …/documents/:documentId/versions (VR-09) > 404s another organization's document, from either side 13ms
- ✓ tests/db/vault-versions.dbtest.ts > search and history across versions (VR-09) > search hides a superseded version unless asked, and counts the same set 19ms
- ✓ tests/db/vault-versions.dbtest.ts > search and history across versions (VR-09) > a document's history spans every version 33ms
- ✓ tests/db/vault-versions.dbtest.ts > search and history across versions (VR-09) > downloads an earlier version, hash-verified (control) 13ms
- ✓ tests/db/vault-versions.dbtest.ts > a check-in agrees with the tree about the current version (VR-09) > refuses a version a legacy row names, says why, and names nothing about that row 32ms
- ✓ tests/db/canonical-documents-append-only.dbtest.ts > two transitions on one document (real PostgreSQL) > are serialized: one is recorded, the other is refused by the gate before any effect runs 812ms
- ✓ tests/db/canonical-documents-append-only.dbtest.ts > the runtime role (non-superuser, real PostgreSQL) > cannot DELETE or TRUNCATE a lifecycle record, even holding both privileges 280ms
- ✓ tests/db/lifecycle-signature-binding.dbtest.ts > the Vault binding, as the runtime role (VR-12) > reads this organization's version under a share lock, and not another's 687ms
- ✓ tests/db/lifecycle-signature-binding.dbtest.ts > the Vault binding, as the runtime role (VR-12) > binds the version hash, and refuses when the document recorded another 9ms
- ✓ tests/db/lifecycle-signature-binding.dbtest.ts > separation of duties for a lifecycle document, as the runtime role > the creator and the uploader are its authors; a third person may sign 28ms
- ✓ tests/db/lifecycle-signature-binding.dbtest.ts > separation of duties for a lifecycle document, as the runtime role > the recorded creator cannot be reassigned 3ms
- ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > refuses a change to the recorded hash 710ms
- ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > refuses a new version label, document code, program or tenant 12ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > the database refuses lineage outside the family (VR-08) > refuses a second live successor 10ms
+ ✓ tests/db/vault-version-checkin.dbtest.ts > the database refuses lineage outside the family (VR-08) > replays over legacy duplicate pointers: a notice, no failure, and the trigger still refuses a third 37ms
+ ✓ tests/db/canonical-documents-append-only.dbtest.ts > two transitions on one document (real PostgreSQL) > are serialized: one is recorded, the other is refused by the gate before any effect runs 818ms
+ ✓ tests/db/canonical-documents-append-only.dbtest.ts > the runtime role (non-superuser, real PostgreSQL) > cannot DELETE or TRUNCATE a lifecycle record, even holding both privileges 416ms
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > refuses a change to the recorded hash 978ms
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > refuses a new version label, document code, program or tenant 14ms
  ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > refuses re-pointing a stored copy, or rewriting lineage or retention 13ms
- ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > refuses TRUNCATE 3ms
- ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > still allows what the named writers do 13ms
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > refuses TRUNCATE 4ms
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > still allows what the named writers do 14ms
  ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > allows a soft delete, and refuses undoing one 5ms
  ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > refuses a DELETE by the runtime role 4ms
  ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > has no settable bypass: session settings made before the DELETE change nothing 4ms
- ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > the purge function refuses an organization that is not pending deletion 5ms
- ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > refuses while a legal hold on the organization is active 7ms
- ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > refuses a caller in a tenant scope, even for its own organization 4ms
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > the purge function refuses an organization that is not pending deletion 7ms
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > refuses while a legal hold on the organization is active 8ms
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > refuses a caller in a tenant scope, even for its own organization 5ms
  ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version is deleted only by the tenant purge (VR-07, D5/D6) > deletes that organization's versions, and only those, once pending deletion with no active hold 9ms
+ ✓ tests/db/lifecycle-signature-binding.dbtest.ts > the Vault binding, as the runtime role (VR-12) > reads this organization's version under a share lock, and not another's 1021ms
+ ✓ tests/db/lifecycle-signature-binding.dbtest.ts > the Vault binding, as the runtime role (VR-12) > binds the version hash, and refuses when the document recorded another 11ms
+ ✓ tests/db/lifecycle-signature-binding.dbtest.ts > separation of duties for a lifecycle document, as the runtime role > the creator and the uploader are its authors; a third person may sign 71ms
+ ✓ tests/db/lifecycle-signature-binding.dbtest.ts > separation of duties for a lifecycle document, as the runtime role > the recorded creator cannot be reassigned 4ms
  Test Files  6 passed (6)
       Tests  44 passed (44)

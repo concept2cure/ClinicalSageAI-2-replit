@@ -25,6 +25,8 @@ import type { SignerCredentials, SignerReverification } from '../../services/par
 const ORG = 1;
 const OTHER_ORG = 2;
 const PASSWORD = 'correct horse battery staple';
+/** The signer's own reason: a sign-off carries one (VR-13; none is written for them). */
+const REASON = 'Checked against the protocol';
 const AUTHOR = 42;
 const REVIEWER = 43;
 const APPROVER = 44;
@@ -67,7 +69,7 @@ function appAs(userId: number): express.Express {
 
 const q = async <T = any>(sql: string, params: unknown[] = []) => (await harness.pglite.query<T>(sql, params)).rows;
 const sign = (userId: number, id: string) =>
-  request(appAs(userId)).post(`/docs/${id}/sign`).send({ meaning: 'reviewed', password: PASSWORD });
+  request(appAs(userId)).post(`/docs/${id}/sign`).send({ meaning: 'reviewed', password: PASSWORD, reason: REASON });
 const advance = (userId: number, id: string, to: string, extra: Record<string, unknown> = {}) =>
   request(appAs(userId)).post(`/docs/${id}/advance`).send({ to, ...extra });
 const signatures = (id: string) =>
@@ -189,7 +191,7 @@ describe('a review sign-off is an electronic signature record (VR-12)', () => {
   it('approving writes its own record, bound to the same content, with the approver named', async () => {
     const id = await inReview();
     expect((await sign(REVIEWER, id)).status).toBe(200);
-    const res = await advance(APPROVER, id, 'approved', { password: PASSWORD });
+    const res = await advance(APPROVER, id, 'approved', { reason: REASON, password: PASSWORD });
     expect(res.status, JSON.stringify(res.body)).toBe(200);
 
     const rows = await signatures(id);
@@ -265,7 +267,7 @@ describe('signature, audit row and stage change commit together or not at all', 
   it('a signature INSERT that fails rolls the approval back', async () => {
     const id = await inReview();
     expect((await sign(REVIEWER, id)).status).toBe(200);
-    const res = await refusingInserts('electronic_signatures', () => advance(APPROVER, id, 'approved', { password: PASSWORD }));
+    const res = await refusingInserts('electronic_signatures', () => advance(APPROVER, id, 'approved', { reason: REASON, password: PASSWORD }));
     expect(res.status).toBe(500);
     expect(await stageOf(id)).toBe('in_review');
     expect(await signatures(id)).toHaveLength(1);
@@ -302,7 +304,7 @@ describe('nobody signs off a document they created or uploaded', () => {
   it('the creator cannot approve it after someone else reviewed it', async () => {
     const id = await inReview();
     expect((await sign(REVIEWER, id)).status).toBe(200);
-    const res = await advance(AUTHOR, id, 'approved', { password: PASSWORD });
+    const res = await advance(AUTHOR, id, 'approved', { reason: REASON, password: PASSWORD });
     expect(res.status).toBe(403);
     expect(res.body.error).toBe('SELF_APPROVAL');
     expect(await stageOf(id)).toBe('in_review');
@@ -328,7 +330,7 @@ describe('a review covers the content it was signed over', () => {
     // The content changes while the document is back in authoring.
     await q(`UPDATE canonical_documents SET content_hash = 'revised' WHERE canonical_id = $1`, [id]);
     expect((await advance(AUTHOR, id, 'in_review')).status).toBe(200);
-    const stale = await advance(APPROVER, id, 'approved', { password: PASSWORD });
+    const stale = await advance(APPROVER, id, 'approved', { reason: REASON, password: PASSWORD });
     expect(stale.status).toBe(409);
     expect(stale.body.blockedBy).toContain('REVIEW_SIGNOFF_REQUIRED');
   });

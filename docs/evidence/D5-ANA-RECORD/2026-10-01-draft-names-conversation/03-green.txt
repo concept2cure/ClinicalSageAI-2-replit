@@ -1,0 +1,347 @@
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > an ordinary write runs with no reason and no password, confirmed by a person
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > does not run without an explicit yes
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > does not run when the confirmation could not be recorded
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > the Part 11 tiers still demand what they demanded
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the confirm tier runs on a yes > a read is still not something this route runs
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a yes on a held run runs the command from the ROW and releases the run
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a yes on a held command runs it with the model call that proposed it, from the ROW (D6)
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a command posted without its run names no model call: null, never the body's claim (D6)
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a decline records the decision, runs nothing, and releases the run at once
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a decline whose audit row was lost still releases the run, and says so
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > a decline needs a run to apply to
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a live prompt > an approval proposed by AnA asks for a reason, not a click
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > runs on a yes, with the run's own context and the confirmation stamped
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > runs as the conversation and turn that proposed it, under the model that served it (PF-10 S5)
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > is not run without an explicit yes
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > is not run from a body alone — there is no held run to take its context from
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > can be declined like any proposal
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > any write the register classes confirm runs on a yes — not only the original five
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > never runs a person's own act, whatever the held row says and whatever was clicked
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a confirmed tool > a tool the register does not know is still a tool, confirmed like any write (it failed closed)
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a tool that records a reason for change > is not run on a bare yes: the person states the reason
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a tool that records a reason for change > runs with the person's reason in place of the model's, and records both
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a tool that records a reason for change > a person who adopts AnA's wording is recorded as having done so
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a tool that records a reason for change > a tool whose reason input is reason_for_change gets the person's reason there
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > a signer who declares Authorship is recorded as Authorship, not Approval — on the sign-off and the audit row
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > REVIEWER is recorded as review
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > APPROVER is recorded as approval
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > refuses an e-signature with no declared meaning, and runs and records nothing
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > refuses an unknown meaning ("approval"), and runs and records nothing
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > refuses an unknown meaning ("OWNER"), and runs and records nothing
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > refuses an unknown meaning ("author"), and runs and records nothing
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > refuses an unknown meaning (""), and runs and records nothing
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > refuses an unknown meaning (7), and runs and records nothing
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > the FDA ESG transmit is handed the declared meaning — the value its signature row records
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > on a held run the meaning is the signer's, from the posted body — never one the model wrote into the row
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature tier records the declared §11.50 meaning > the reason-only tier is unchanged: no meaning is asked for
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > the e-signature sign-off carries the verified factors > the sign-off carries the factors re-verification actually checked (MFA as MFA)
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > the sign-off names the run, the tool call, the model call and a hash of the params authorised
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > an executed row follows, with the outcome, the duration and the same trace
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > a command its own gate refused is recorded refused, not ok
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > a failed execution is recorded failed, with what failed
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > a failed execution whose row did not persist says that too
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > an executed row that did not persist is said, to the person and to the waiting run
+ ✓ server/routes/ana-ri/__tests__/governedActionConfirmTier.test.ts > a governed action's audit rows > a command posted without its run still gets both rows, with no run and no model call
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the tool context names the conversation, the turn and the model (PF-10 S5, LX-06) > a dispatched tool receives the resolved thread, the run as its turn, and the served model
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a run that is not paused runs its round with no pause frames
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a paused run holds the round, says paused once and resumed once, then runs it
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a run cancelled while paused says cancelled and runs nothing more
+ ✓ server/routes/ana-ri/__tests__/stream-run-hold.test.ts > the stream pause, unchanged by the move > a pause nobody answers is resumed as abandoned once, at MAX_PAUSE_MS, and the round runs
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > the person who asked reads it, re-verified from the stored bytes
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > an org admin reads it; a colleague is refused; another organization cannot tell it exists
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > lists only the caller's own records unless they read every record
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > finds a turn by the run it was served under — how a client that stopped listening learns it was filed
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > reading a turn record > a record rewritten past the trigger reads as not intact
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > records the export on the chain, then hands over a package that verifies offline
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > is in the tool catalog the model sees
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > refuses verbatim without an open project, and writes nothing
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > refuses a project another organization owns as "no project" — never a cross-tenant write
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > says the chain walk is unknown when it could not run — never that it passed
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > exporting a turn record for an inspector > refuses the export when it cannot be recorded, and nothing leaves
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > deleting a conversation > is the owner's act, audited in the same transaction, and the turn records survive it
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > deleting a conversation > refuses a colleague, and removes nothing
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > deleting a conversation > removes nothing when the audit row cannot be written
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > a forger who rewrites the chain row too > is caught by the payload hash the chain link was computed over
+ ✓ server/routes/ana-ri/__tests__/turn-records.pglite.test.ts > a forger who rewrites the chain row too > and, when the payload hash is rewritten as well, by the walk of the tenant chain
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > with the open program (uuid projectRef): the document, its sections and its provenance exist
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > resolves a legacy integer project through its regulatory_program_id anchor
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > refuses a legacy project whose anchor names another organization’s program, and writes nothing (PF-04 P2)
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > a failed write reaches the model as a plain refusal, never the driver’s message
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > a second document in the same program is created too (many documents per program)
+ ✓ server/services/ana/__tests__/draft-authoring-document-tool.pglite.integration.test.ts > draft_authoring_document > refuses malformed input as an error the model can read, not a crash
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 1 · project — a project of org A, created the way the Projects surface creates it
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 4 · edit-save — a person edits the quoted section and saves it through the section save path
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 5 · seal — the document is frozen and approved under a Part 11 signature
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the shipped migration > applies, and re-applies — every statement is IF NOT EXISTS
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the shipped migration > refuses a status the state machine has never heard of
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the shipped migration > refuses a run with no tenant
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > lifecycle > opens a run as running, owned by this process
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > lifecycle > finishes a run
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > lifecycle > NEVER rewrites a cancelled run as finished
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > lifecycle > records a dropped socket as a disconnect, not as a human decision
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > control > pauses and resumes
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > control > writes the control event at the moment of acceptance
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > control > CANCEL IS TERMINAL — pause, resume and steer are all refused afterward
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > control > aborts the local handle on cancel, and not on pause
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > control > a steer accepted while paused also resumes
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > control > refuses an empty steer
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > control > caps a steer — a redirect, not a new document
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > control > loses a guarded race rather than applying twice
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > ownership > another organization's run is NOT FOUND, not forbidden
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > ownership > a colleague's run in the same tenant is forbidden, not hidden
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > ownership > a run with no attributed user is controllable by NOBODY
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > ownership > a read is scoped to the tenant
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > ownership > an unknown run is NOT FOUND
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the steer drain > returns what was queued
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the steer drain > empties the queue, so a steer is never applied twice
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the steer drain > two concurrent drains split the queue — neither sees the same steer
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the steer drain > is empty for a run with nothing queued
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the steer drain > a naive RETURNING drains nothing — the defect this CTE exists for
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > is drained with its kind, in arrival order with the steers around it
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > is NOT written to the control lineage — the person did not type it
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > leaves a paused run paused, and waits in the queue for the resume
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > still wakes a held checkpoint — which re-reads paused and keeps waiting
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > is refused on a colleague's run — a report must come from the run's own user
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > is NOT FOUND on another organization's run
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > is refused on a settled run, and nothing is queued for a round that will never come
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > is not lost to a Pause pressed between its read and its write
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > is still refused by a Stop that lands between its read and its write
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > refuses an empty report
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > caps a report — one sentence about a move, not a document
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > screen reports > reads an entry queued with no kind as a steer — rows queued before reports existed
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > move landings > queues a landing with its move, drained with nothing for the model to read
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > move landings > is not written to the control lineage, and leaves a paused run paused
+ ✓ server/routes/ana-ri/__tests__/decisionsTenantScoped.test.ts > GET /api/ana-ri/decisions — tenant scoping > returns the caller's own organization's decisions
+ ✓ server/routes/ana-ri/__tests__/decisionsTenantScoped.test.ts > GET /api/ana-ri/decisions — tenant scoping > does NOT hand another organization the decision trail for a project it does not own
+ ✓ server/routes/ana-ri/__tests__/decisionsTenantScoped.test.ts > GET /api/ana-ri/decisions — tenant scoping > a caller with no resolvable tenant gets nothing, not everything
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > move landings > needs a move id that is one, and is held to the same ownership as a report
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > move landings > a malformed move id on a report is dropped, and the report kept
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the reaper > fails a run whose heartbeat went stale, and says it was orphaned
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the reaper > leaves a run that is still beating alone
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the reaper > does not resurrect or re-stamp a run that already settled
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > the reaper > a heartbeat carries the round forward
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > holding a run at a governed action > moves the run to awaiting_approval and records what is being asked
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > holding a run at a governed action > a cancelled run cannot be moved into a gate it would never leave
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > holding a run at a governed action > a second tool cannot open a gate over the first
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > holding a run at a governed action > a pending approval is scoped to the tenant
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > deciding a held run > refuses a decision from another tenant, and leaves the run held
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > deciding a held run > releases the run when the person decides, and keeps what they decided
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > deciding a held run > A DECISION CANNOT BE APPLIED TO A DIFFERENT PROPOSAL
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > deciding a held run > a decision cannot be recorded against a run that is not waiting
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > deciding a held run > a denial releases the run too — she continues without the tool
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > deciding a held run > cancelling while she waits is still allowed
+ ✓ server/services/ana/__tests__/run-control.pglite.integration.test.ts > deciding a held run > a new request clears the previous decision
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > adopt · a conversation file becomes a project’s source only through one audited adopt
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the database the walk ran on held every table and column the code asked for
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, each with its verified finding and LX fix, and never grows
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a round-limit stop and its rounds reach the saved assistant message
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > an answer that was cut off is stored as one
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > post-processing stores how the turn ended — behavioural > a turn she finished stores its rounds and no reason
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > keeps the loop rounds beside its reason
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > the turn's done frame carries stoppedReason, rounds and a null runPolicy
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > hands both to post-processing
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > records a warning on the turn record when the loop did not end by her choice
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > adds the stopped-turn note beside the trace note, from the same history
+ ✓ server/routes/ana-ri/__tests__/stream-stopped-reason.test.ts > stream.ts carries the loop outcome — carriage > decides a cut-off answer from the last call, before anything reads the reason
+ ✓ server/routes/ana-ri/__tests__/governedActionApprovalTenantPinned.test.ts > a decision on a held run is bound to the tenant that proved it > writes the decision against the SAME org the lookup used
+ ✓ server/routes/ana-ri/__tests__/governedActionApprovalTenantPinned.test.ts > a decision on a held run is bound to the tenant that proved it > ignores an organization named in the body, for the lookup and the write
+ ✓ server/routes/ana-ri/__tests__/governedActionApprovalTenantPinned.test.ts > a decision on a held run is bound to the tenant that proved it > follows the caller — a caller of another org binds to that org
+ ✓ server/routes/ana-ri/__tests__/governedActionApprovalTenantPinned.test.ts > a decision on a held run is bound to the tenant that proved it > refuses a run the caller org does not hold, and writes nothing
+ ✓ server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > holdForPerson > pauses a running run and records no control event — nobody pressed pause
+ ✓ server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > holdForPerson > a second hold of the same run writes nothing
+ ✓ server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > holdForPerson > never revives a cancelled run
+ ✓ server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > holdForPerson > the person's resume is theirs: running again, with exactly one event, by the owner
+ ✓ server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > endHeldRun > ends a paused run as finished, 'hold_expired', with no control event
+ ✓ server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > endHeldRun > writes nothing to a run that is not paused — a resume that landed first wins
+ ✓ server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > endHeldRun > a late resume afterwards is refused as TERMINAL
+ ✓ server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > endHeldRun > the turn's own endRun afterwards changes nothing
+ ✓ server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > endHeldRun > wakes what is waiting on the run in this process, without aborting it
+ ✓ server/services/ana/__tests__/run-hold-writers.pglite.integration.test.ts > endHeldRun when the write fails > throws the error rather than answering false, which would read as a Continue that landed first
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > with the stored answer, its message id, the controls and the drafts, as answered
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > as stopped when the person pressed Stop
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > says in the record when the conversation could not save the answer
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > does not file the turn twice when post-processing fails after filing it
+ ✓ server/routes/ana-ri/__tests__/post-processing-turn-record.test.ts > post-processing files the turn record > still files the turn when post-processing fails before filing it
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > drive_state — a mid-turn promotion says so > a driving turn that starts a demonstration announces the promotion as promoted
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > drive_state — a mid-turn promotion says so > a turn that began as a demonstration is not promoted, and its one drive_state is unmarked
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — screen reports and steers drained together, told apart > frames the report as an observation and announces only the steer as the person steering
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — screen reports and steers drained together, told apart > a report alone announces nothing
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > moves past the drive budget lead the chips > navigations: the two AnA could not make are chips, ahead of the six she made
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > moves past the drive budget lead the chips > actions: the one past the budget is the first chip
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > moves past the drive budget lead the chips > a move she made and re-asked for past the budget is offered once, not twice
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > moves past the drive budget lead the chips > past chip room she is told the move is not offered either — never promised a chip that is dropped
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > moves past the drive budget lead the chips > a turn that does not drive reaches the same chip derivation, unchanged
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — waits for the screen to settle each move > names each move, so the screen can report it back
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — waits for the screen to settle each move > holds her next round until the move lands — and a landing puts nothing in front of her
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — waits for the screen to settle each move > a move that did not land reaches the round she writes next
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — waits for the screen to settle each move > a move still unsettled at the ceiling is told to her as not confirmed, never as done
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > the checkpoint — waits for the screen to settle each move > a client that does not report its moves is not waited on
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — move_landed > is accepted with the move it settles
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — move_landed > needs a move id, and refuses one that is not a move id
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — move_landed > a screen report can name the move it is about
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — screen_report > is accepted as its own action, not as a steer
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — screen_report > needs something to report
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > POST /stream/:runId/control — screen_report > an empty steer is still refused, and an unknown action still is
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > history — the window opens on a question after an unanswered turn > history saved in the thread: the answer at the far edge is dropped, not opened on
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > history — the window opens on a question after an unanswered turn > history sent by the client (no saved thread yet): the answer at the far edge is dropped, not opened on
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > history — the window opens on a question after an unanswered turn > a thread whose pairs are intact is passed through unchanged
+ ✓ server/routes/ana-ri/__tests__/live-drive-turn.test.ts > narration — each round starts its own paragraph > a stop narrated after the last one is not run on from it
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > start_intelligence_flow > persists the session for the caller’s org and returns its id
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > start_intelligence_flow > refuses a project the organization does not hold — the interview is not started and nothing is written (PF-15)
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > start_intelligence_flow > without an organization it runs stateless, persists nothing, and says so
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > start_intelligence_flow > fails closed when the session cannot be persisted — the interview is not started
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > answer_intelligence_question > with a session_id: loads the state from the session (org-scoped), saves the step, ignores flow_state
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > answer_intelligence_question > a validation failure returns the same question and saves nothing
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > answer_intelligence_question > a session id of another organization is refused and nothing is written
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > answer_intelligence_question > a session_id without an organization context is refused before the database
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > answer_intelligence_question > a session that is already complete refuses further answers
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > answer_intelligence_question > a step that cannot be recorded does not count
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > answer_intelligence_question > without a session_id the stateless flow_state contract still works, touching no session
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > answer_intelligence_question > with neither a session_id nor a flow_state it says what is missing
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > resume_intelligence_flow > reads the session back and returns the current question
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > resume_intelligence_flow > requires a session_id
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > commit_intelligence_flow > dry_run returns the plan — register, write path, body — and writes nothing
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > commit_intelligence_flow > commits every plan entry through the register creates under the session tenant and project, and marks the session committed
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > commit_intelligence_flow > a refused entry stops the commit with the refusal, leaves the session complete, and reports what did land
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > commit_intelligence_flow > refuses a session that is not complete
+ ✓ server/services/ana/__tests__/intelligence-flow-sessions.test.ts > commit_intelligence_flow > refuses a session with no project when none is supplied
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > the loop outcome travels with the response > a turn cut at its round ceiling says max_rounds
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > the loop outcome travels with the response > a turn stopped after its first round says cancelled, not no_more_tools
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > the loop outcome travels with the response > an answer with no tools reports a zero-round loop
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > allowedToolNames: a tool not offered is not run > answers TOOL_NOT_OFFERED without dispatching, and lists no other tools
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > allowedToolNames: a tool not offered is not run > an offered name with no handler lists only the offered tools, never the whole registry
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > allowedToolNames: a tool not offered is not run > without an allowlist the unknown-tool answer is what it always was
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > onToolEvent: start and end per call, fired inside the worker, with the round and latency
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > onToolEvent reports a refused call too, so a caller can list what did not run
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > onModelResponse: once per gateway call, first call included, with its round
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > hooks > an observer that throws is contained: the tool still answers the model, and the turn completes
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > stopWhen is the caller’s > ends the turn with a closing answer and its own reason
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > bounds a round to the lanes asked for
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > is 4 when not asked, as before
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > 0 lanes is refused before any model call is spent
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > -1 lanes is refused before any model call is spent
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > 1.5 lanes is refused before any model call is spent
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolConcurrency > NaN lanes is refused before any model call is spent
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > the dispatch runs inside the refusal scope, and the gateway sends nothing for it
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > the loop's own model calls are not refused
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > toolModelCalls 'refuse' alone also tells the tool (ctx.modelCalls), so it asks for its model-free path
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > toolContext.modelCalls 'refuse' alone also opens the refusal scope, so the gateway enforces it
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > with neither, the tool is handed exactly the context the caller passed: no modelCalls
+ ✓ server/services/ana/__tests__/executor-agentic-loop-options.test.ts > toolModelCalls 'refuse': a tool cannot call a model > without the option a tool may call a model, as before
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > executeAgenticLoop adapter > runs a round's tools in parallel, caps oversized results, and returns the final answer
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > executeAgenticLoop adapter > stops on duplicate (thrash) tool calls before the round cap
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > executeAgenticLoop adapter > short-circuits when the abort signal is already set
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > executeAgenticLoop adapter > returns immediately when the first turn requests no tools
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > the tool context carries the tenant uuid its request scope holds > fills it from the request scope when the scope is the same tenant
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > the tool context carries the tenant uuid its request scope holds > never borrows another tenant's uuid
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > the tool context carries the tenant uuid its request scope holds > keeps a uuid the caller passed
+ ✓ server/services/ana/__tests__/executor-agentic-loop.test.ts > the tool context carries the tenant uuid its request scope holds > invents nothing outside a scope
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > the cancelled-round shape > produces one entry per call, with the ids preserved
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > the cancelled-round shape > every entry SAYS it was cancelled rather than being empty
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > the cancelled-round shape > names the tool, so the record says WHICH step was stopped
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > the wrapper no longer drops the round > its barge-in branch returns a mapped result, not an empty array
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > the wrapper no longer drops the round > passes the abort signal to the gateway, not only to its own checks
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > the wrapper no longer drops the round > forwards the round-boundary checkpoint the loop has always accepted
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a steer on the non-SSE path reaches the model > drains the queued operator turns into the next round
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a steer on the non-SSE path reaches the model > places them AFTER the tool results, as the streaming route does
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a steer on the non-SSE path reaches the model > is declared on the public options, beside the checkpoint it serves
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a stop lands DURING a tool, not after it > races each handler against the signal
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a stop lands DURING a tool, not after it > puts the signal INTO the handler context, not only around it
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a stop lands DURING a tool, not after it > a CANCELLED tool is not reported as a FAILED tool
+ ✓ server/services/ana/__tests__/agentic-loop-cancel-entries.test.ts > a stop lands DURING a tool, not after it > a genuine tool failure still carries its errorMessage
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > the estate-wide sweep is estate-wide > reaps under the system scope even when called from inside a tenant request
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > the estate-wide sweep is estate-wide > does not inherit the caller tenant — the bug this replaces
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > a write about one run takes that run tenant, not a super-admin bypass > scopes the disconnect write to the run own organization
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > a write about one run takes that run tenant, not a super-admin bypass > aborts the local run even when the row write cannot be made
+ ✓ server/services/ana/__tests__/run-control-tenant-scope.test.ts > request-time reads inherit the caller scope rather than widening it > reads a run under the request own tenant
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > says so when the draft could not be saved
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > keeps the database error out of the customer sentence
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > gives the operator the cause it withholds from the customer
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > a failed save never stops the turn from closing
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > survives a client that has already disconnected
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > announces the version when the save really happened
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > an unchanged draft is not a failure, and is not reported as one
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > a missing project no longer skips silently — the client is told the save did not happen
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > a program UUID resolves through the projects anchor and the draft IS saved
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-honesty.test.ts > persistCollectedDrafts — it never overstates what was recorded > a UUID with leading digits NEVER files to the integer project those digits spell
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > every tool with a free-text input is classified — a new one cannot ship unclassified
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > no tool is in both maps
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > every classified name is a real tool — no stale entries
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > every entry says why
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > the scan still finds the tools the defect was found through
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > author_docx_native: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > commit_document_revision: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > draft_authoring_document: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > generate_document: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > insert_document_content: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > save_document_to_vault: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_biosketch_section: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_consent_element: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_dms_plan_element: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_protocol_section: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_vault_document: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > write_kit_section: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > write_q_sub_section: refused when Sonnet produced the call
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > refused when the serving model is unknown — absent means refused
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > refused for GPT-4o, which the registry caps below high-risk
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > an approved model is not refused by the gate
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > a tool that only analyses free text is not gated
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > a tool calling another tool’s handler directly is gated too (assemble_crl_premortem_artifact → author_docx_native)
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the /api/chat door: the agentic loop tells the gate which model produced each call > a call produced by Sonnet is refused and nothing is stored
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the /api/chat door: the agentic loop tells the gate which model produced each call > a call produced by Opus clears the model gate — and, being a write, is put to a person, not run (P1-34)
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the /api/chat door: the agentic loop tells the gate which model produced each call > and on a person's yes, the Opus-written content reaches the handler
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the /api/chat door: the agentic loop tells the gate which model produced each call > the caller cannot vouch for the model: a servingModel in the toolContext is overwritten by the one in the response
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the /api/chat door: the agentic loop tells the gate which model produced each call > a confirm-tier tool is proposed on this door, even from an approved model — nothing is stored
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the stream door (source pin) > hands every tool call the model that produced it
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the stream door (source pin) > sets the served model from the first response and updates it after every round
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > detects a governed draft request: Draft the clinical overview for this project as an authoring document
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > detects a governed draft request: please write section 2.5.4 for me
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > detects a governed draft request: Prepare a response to the FDA information request
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > detects a governed draft request: compose the cover letter for the submission
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > does not flag an ordinary turn: take me to CMC
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > does not flag an ordinary turn: what does section 2.5 require?
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > does not flag an ordinary turn: summarise this thread
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > does not flag an ordinary turn: is the submission ready?
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > a drafting request on Balanced is scored high-risk and routed to the flagship tier
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > both routes compute the hint from the message (source pin)
+ ✓ server/routes/ana-ri/__tests__/turn-cache-telemetry.test.ts > every model call in the turn is counted > counts the first call AND each round
+ ✓ server/routes/ana-ri/__tests__/turn-cache-telemetry.test.ts > every model call in the turn is counted > the turn totals reach the telemetry, beside the first-call figure
+ ✓ server/routes/ana-ri/__tests__/turn-cache-telemetry.test.ts > every model call in the turn is counted > the accumulator exists and reads both token fields
+ ✓ server/routes/ana-ri/__tests__/turn-cache-telemetry.test.ts > what the numbers say > sums reads and writes across the calls
+ ✓ server/routes/ana-ri/__tests__/turn-cache-telemetry.test.ts > what the numbers say > A HEALTHY FIRST CALL DOES NOT HIDE A MISSING ROUND — the point
+ ✓ server/routes/ana-ri/__tests__/turn-cache-telemetry.test.ts > what the numbers say > counts a call that reported no stats at all as a miss, not as absent
+ ✓ server/routes/ana-ri/__tests__/turn-cache-telemetry.test.ts > what the numbers say > a turn that cached nothing says so plainly
+ ✓ server/services/ana/__tests__/turn-tool-context.test.ts > turnToolContext > a v2 project: the UUID as its ref and no integer form; the conversation, turn and model
+ ✓ server/services/ana/__tests__/turn-tool-context.test.ts > turnToolContext > a legacy integer project keeps its integer form
+ ✓ server/services/ana/__tests__/turn-tool-context.test.ts > turnToolContext > claims nothing it was not told: no thread (persistence failed), no run, no model
+ ✓ server/services/ana/__tests__/turn-tool-context.test.ts > held, then confirmed: what the person confirmed runs as the turn that proposed it > the confirmed context carries the held conversation, turn and model
+ ✓ server/services/ana/__tests__/turn-tool-context.test.ts > held, then confirmed: what the person confirmed runs as the turn that proposed it > a run held before this change (no thread or turn recorded) confirms with none, honestly
+ ✓ server/services/ana/__tests__/turn-tool-context.test.ts > held, then confirmed: what the person confirmed runs as the turn that proposed it > a platform command holds no tool context
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-authoring-doc.test.ts > persistCollectedDrafts — authoring documents are not duplicated into concept2cure_artifacts > writes NO artifact row for a draft that carries authoringDocId, and emits no caveat
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-authoring-doc.test.ts > persistCollectedDrafts — authoring documents are not duplicated into concept2cure_artifacts > still versions a draft WITHOUT authoringDocId (report canvases, generate_document) as before
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-authoring-doc.test.ts > persistCollectedDrafts — authoring documents are not duplicated into concept2cure_artifacts > a mixed turn: the authoring document is skipped and the other draft is versioned
+ ✓ server/routes/ana-ri/__tests__/draft-persistence-authoring-doc.test.ts > persistCollectedDrafts — authoring documents are not duplicated into concept2cure_artifacts > does not warn "could not be saved" for an authoring document when no project is linked — it WAS saved
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > stream.ts asks the override gate the gateway’s question > passes a highRisk option to resolveModelOverride
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > stream.ts asks the override gate the gateway’s question > computes it with isHighRiskRequest from the routing plan’s taskType and riskTier
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > stream.ts asks the override gate the gateway’s question > the gateway is sent that same taskType and riskTier on every call that carries the pin
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > writes the frame in exactly one place
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > the frame is the route family’s warning shape, with the code and the plain message
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > is written after the pin is resolved and before the model is first called
+ ✓ server/routes/ana-ri/__tests__/stream-model-override.test.ts > a refused pin is said, once, and only when one was asked for > is guarded by "a named model (a non-blank string) resolved to null" — evaluated, not spelled
+ ✓ server/services/ana/__tests__/run-control.test.ts > runAgenticToolLoop — checkpoint control > aborts cleanly when the checkpoint returns abort (cancel)
+ ✓ server/services/ana/__tests__/run-control.test.ts > runAgenticToolLoop — checkpoint control > a checkpoint side-effect can steer subsequent rounds (interjection)
+ ✓ server/services/ana/__tests__/run-control.test.ts > runAgenticToolLoop — checkpoint control > runs uninterrupted when no checkpoint is provided (behavior unchanged)
+ ✓ server/routes/ana-ri/__tests__/screen-report-turn.test.ts > buildScreenReportTurn > names itself as the app, not the person, if a fallback model folds it into a user turn
+ ✓ server/routes/ana-ri/__tests__/screen-report-turn.test.ts > buildScreenReportTurn > opens with the marker the Live Drive prompt names, once
+ ✓ server/routes/ana-ri/__tests__/screen-report-turn.test.ts > buildScreenReportTurn > tells her to say what could not be done, not claim it happened
+ ✓ server/routes/ana-ri/__tests__/screen-report-turn.test.ts > buildScreenReportTurn > an empty report is no turn at all
+ Test Files  25 passed (25)
+      Tests  345 passed (345)

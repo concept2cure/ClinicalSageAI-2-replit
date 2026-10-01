@@ -140,6 +140,21 @@ export interface MaterializeLeafSourcesResult {
 const FINALIZED_SOURCE_STATUSES: ReadonlySet<string> = new Set(['approved', 'finalized']);
 
 /**
+ * coauthor_documents: `approved` only (DP-35, decided 2026-10-01).
+ *
+ * A co-author document is `finalized` only as the snapshot of a FROZEN
+ * authoring document (coauthor-snapshot.ts snapshotStatusFor), and no request
+ * can write the column (coauthor-status-write.ts). Freezing seals the content;
+ * it is not an approval. It needs no signing authority and no re-authentication,
+ * any document owner may do it, and it writes no signature row. Counting it as
+ * finalized let an unsigned lock clear the "only approved documents"
+ * completeness check and reach an agency. An approval is the signed act
+ * (authoring /sign or /e-sign → APPROVED → `approved`). A frozen document files
+ * after it is approved.
+ */
+const COAUTHOR_TRANSMITTABLE_STATUSES: ReadonlySet<string> = new Set(['approved']);
+
+/**
  * The stores whose status decides whether a leaf built from them may be
  * transmitted, each with its own vocabulary.
  */
@@ -181,7 +196,7 @@ export type FinalizedStatusStore =
  * stricter answer for `locked`, so an omission fails closed.
  */
 const FINALIZED_STATUSES_BY_STORE: Readonly<Record<FinalizedStatusStore, ReadonlySet<string>>> = {
-  coauthor_documents: FINALIZED_SOURCE_STATUSES,
+  coauthor_documents: COAUTHOR_TRANSMITTABLE_STATUSES,
   unified_documents: FINALIZED_SOURCE_STATUSES,
   c2c_document_sections: C2C_SECTION_COMPLETE_STATUSES,
   concept2cure_artifacts: new Set(['approved', 'locked']),
@@ -449,7 +464,10 @@ export async function materializeLeafSources(
       const staged = byKey.get(key);
       if (staged) staged.lineage = await coauthorLineage(organizationId, documentId);
       if (!isFinalizedStatus(doc.status, 'coauthor_documents')) {
-        noteUnfinalized(doc.moduleNumber || doc.title || `coauthor_documents:${documentId}`, doc.status ?? 'draft');
+        // 'finalized' here is an unsigned freeze (DP-35); say so, rather than
+        // print a word that reads as the opposite of the refusal it sits in.
+        const shown = doc.status === 'finalized' ? 'frozen, not approved' : (doc.status ?? 'draft');
+        noteUnfinalized(doc.moduleNumber || doc.title || `coauthor_documents:${documentId}`, shown);
       }
       continue;
     }

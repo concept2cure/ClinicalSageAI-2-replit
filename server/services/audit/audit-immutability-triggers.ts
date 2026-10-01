@@ -67,11 +67,19 @@ export const EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS: readonly ExpectedImmutability
   { schema: 'public', table: 'concept2cure_signatures', trigger: 'trg_concept2cure_signatures_no_truncate', source: 'migrations/20260929_concept2cure_signatures_append_only.sql' },
   { schema: 'public', table: 'concept2cure_submission_snapshots', trigger: 'trg_concept2cure_submission_snapshots_append_only', source: 'migrations/20260929_concept2cure_signatures_append_only.sql' },
   { schema: 'public', table: 'concept2cure_submission_snapshots', trigger: 'trg_concept2cure_submission_snapshots_no_truncate', source: 'migrations/20260929_concept2cure_signatures_append_only.sql' },
+  // A review comment's words, author and place, fixed once posted; retraction once (2026-10-01, D5).
+  { schema: 'public', table: 'concept2cure_thread_comments', trigger: 'trg_c2c_review_comment_record_guard', source: 'migrations/20261001_review_comments_record.sql' },
+  { schema: 'public', table: 'concept2cure_thread_comments', trigger: 'trg_c2c_review_comment_no_truncate', source: 'migrations/20261001_review_comments_record.sql' },
   // A recorded Vault version's identity, hash and lineage (VR-06, 2026-09-26, D5).
   { schema: 'vault', table: 'documents', trigger: 'vault_documents_record_guard', source: 'migrations/20260926_vault_documents_record_immutability.sql' },
   { schema: 'vault', table: 'documents', trigger: 'vault_documents_truncate_guard', source: 'migrations/20260926_vault_documents_record_immutability.sql' },
   // ...and no DELETE but the tenant purge's owner-run function (VR-07, 2026-09-29, D5/D6).
   { schema: 'vault', table: 'documents', trigger: 'vault_documents_delete_guard', source: 'migrations/20260926_vault_documents_record_immutability.sql' },
+  // The data room's capture record: checksum and lineage write-once, retirement
+  // one-way, no TRUNCATE, DELETE only by the owner (VR-16, 2026-10-01, D2/D5).
+  { schema: 'public', table: 'cre_evidence_sources', trigger: 'cre_evidence_sources_capture_guard', source: 'migrations/20261001_cre_evidence_sources_capture_immutability.sql' },
+  { schema: 'public', table: 'cre_evidence_sources', trigger: 'cre_evidence_sources_truncate_guard', source: 'migrations/20261001_cre_evidence_sources_capture_immutability.sql' },
+  { schema: 'public', table: 'cre_evidence_sources', trigger: 'cre_evidence_sources_delete_guard', source: 'migrations/20261001_cre_evidence_sources_capture_immutability.sql' },
 ];
 
 /** Anything with a `.query` — a pg Pool, a PoolClient, a PGlite instance. */

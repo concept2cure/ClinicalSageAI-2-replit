@@ -38,13 +38,13 @@ const h = vi.hoisted(() => {
     clientQuery,
     clientRelease,
     connect: vi.fn(async () => ({ query: clientQuery, release: clientRelease })),
-    auditLogAction: vi.fn(async () => undefined),
+    auditLogAction: vi.fn(async (..._a: unknown[]) => undefined),
     chainedAudit: vi.fn(async (..._a: unknown[]) => {}),
     /** The caller's organization_users role, per test. */
     orgRole: 'approver' as string | null,
-    saveDerivedUpload: vi.fn(async () => ({ fileId: 'file_1_abc' })),
-    importDocx: vi.fn(async () => ({ sections: [{ title: 'S' }], warnings: [], counts: { sections: 1, tables: 0 } })),
-    scanBuffer: vi.fn(async () => ({ scanned: true, clean: true })),
+    saveDerivedUpload: vi.fn(async (..._a: unknown[]) => ({ fileId: 'file_1_abc' })),
+    importDocx: vi.fn(async (..._a: unknown[]) => ({ sections: [{ title: 'S' }], warnings: [], counts: { sections: 1, tables: 0 } })),
+    scanBuffer: vi.fn(async (..._a: unknown[]) => ({ scanned: true, clean: true })),
   };
 });
 

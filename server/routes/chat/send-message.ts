@@ -290,6 +290,18 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     const normalizedProjectId = project_id
       ? String(project_id).replace(/^proj_/, '')
       : undefined;
+    // The integer project this turn's project names, resolved ONCE (PF-10
+    // S10b): an integer as itself, a program UUID through its anchor row,
+    // anything else as none. Each step below used to parseInt on its own, and
+    // parseInt('7abb1c22-…') is 7, a valid, wrong project of the same
+    // organization (services/c2c/project-ref.ts).
+    const turnProjectId =
+      numericOrgId && project_id
+        ? await (await import('../../services/c2c/project-ref.js')).integerProjectForRef(
+            async () => (await import('../../db.js')).db,
+            { ref: project_id, orgId: numericOrgId, context: 'chat.send-message' },
+          )
+        : null;
 
     // ── STEP 4: RETRIEVE (org-scoped + project-scoped when available) ───
     let sources: Array<{ id: string; title: string; content: string; score: number }> = [];
@@ -585,14 +597,10 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         const { sessionBootstrapBlockFor } = await import(
           '../../services/ana-session-bootstrap.js'
         );
-        const pid =
-          typeof project_id === 'string'
-            ? parseInt(project_id.replace(/^proj_/, ''), 10)
-            : project_id;
         const block = await sessionBootstrapBlockFor({
           priorMessageCount: previousMessages.length,
           organizationId: numericOrgId ?? null,
-          projectId: Number.isFinite(pid) && (pid as number) > 0 ? (pid as number) : undefined,
+          projectId: turnProjectId ?? undefined,
           threadId,
           atomLimit: 6,
         });
@@ -659,12 +667,9 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       // corpus. Off by default → zero extra work and no behaviour change. The
       // mode itself is surfaced separately by GET /projects/:id/knowledge.
       let projectKnowledgeCorpusBlock = '';
-      if (INCONTEXT_INJECTION_ENABLED && project_id && numericOrgId) {
-        const pidNum =
-          typeof project_id === 'string'
-            ? parseInt(project_id.replace(/^proj_/, ''), 10)
-            : project_id;
-        if (Number.isFinite(pidNum) && pidNum > 0) {
+      if (INCONTEXT_INJECTION_ENABLED && turnProjectId !== null && numericOrgId) {
+        const pidNum = turnProjectId;
+        {
           try {
             const modeState = await getProjectRetrievalMode(pidNum, numericOrgId);
             if (modeState.mode === 'in_context') {
@@ -837,8 +842,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         toolContext: {
           organizationId: numericOrgId,
           userId: numericUserId || null,
-          projectId:
-            typeof project_id === 'string' ? parseInt(project_id, 10) || null : project_id || null,
+          projectId: turnProjectId,
           // Tenant UUID so the project_knowledge_search tool can scope retrieval.
           organizationUuid: orgUuid,
           // Situational context (surface/project/document type) — same signal the
@@ -871,7 +875,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
           // AnaToolExecutor.executeAgenticLoop's catch branch.
           void logToolRun({
             threadId,
-            projectId: typeof project_id === 'string' ? parseInt(project_id, 10) || null : project_id || null,
+            projectId: turnProjectId,
             userId: numericUserId || null,
             organizationId: numericOrgId,
             toolName,
@@ -904,7 +908,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         route: '/api/chat',
         organizationId: numericOrgId ?? null,
         userId: numericUserId,
-        projectId: typeof project_id === 'string' ? parseInt(project_id, 10) : project_id || null,
+        projectId: turnProjectId,
         plannerVersion: routingPlan.plannerVersion,
         orchestratorName: routingPlan.orchestratorName,
         intentLens: orchestratorResult.detectedIntent.lens,
@@ -934,7 +938,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         route: '/api/chat',
         organizationId: numericOrgId ?? null,
         userId: numericUserId,
-        projectId: typeof project_id === 'string' ? parseInt(project_id, 10) : project_id || null,
+        projectId: turnProjectId,
         orchestratorName: 'kernel-router-v1',
         selectedTaskType: 'chat',
         routingStrategy: 'quality_optimized',
@@ -968,7 +972,8 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         const settled = await settleActionBlocks(
           assistantMessage,
           {
-            projectId: project_id,
+            // The project resolved once for the turn (PF-10 S10b).
+            projectId: turnProjectId,
             organizationId: numericOrgId,
             userId: numericUserId,
             userName: (req as any).user?.name || (req as any).user?.email || undefined,
@@ -1222,7 +1227,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     if (numericOrgId) {
       interceptChatResponse({
         organizationId: numericOrgId,
-        projectId: parseInt(String(normalizedProjectId || '0'), 10),
+        projectId: turnProjectId ?? 0,
         userId: (req as any).user?.id,
         sectionCode: (req as any).body?.section_code,
         assistantMessage,
@@ -1235,9 +1240,9 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
 
     // ── Cached reliability lookup (5-min TTL, surfaced in response) ─────
     let reliability: SignalReliability | null = null;
-    if (numericOrgId && normalizedProjectId) {
-      const projectIdNum = parseInt(String(normalizedProjectId), 10);
-      if (Number.isFinite(projectIdNum) && projectIdNum > 0) {
+    if (numericOrgId && turnProjectId !== null) {
+      const projectIdNum = turnProjectId;
+      {
         try {
           reliability = await getCachedSignalReliability(projectIdNum, numericOrgId);
         } catch {
@@ -1263,9 +1268,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         threadId,
         organizationId: numericOrgId,
         messages: writebackMessages,
-        projectId: normalizedProjectId
-          ? parseInt(String(normalizedProjectId), 10) || null
-          : null,
+        projectId: turnProjectId,
       });
     }
 
@@ -1273,10 +1276,9 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     if (numericOrgId && generationRunId && sources.length > 0) {
       try {
         const { recordLineageBatch } = await import('../../services/data-lineage-service');
-        const projectIdNum = parseInt(String(normalizedProjectId || '0'), 10);
         const entries = sources.filter((_s, i) => citedRefs.has(i)).map((s, _i) => ({
           organizationId: numericOrgId,
-          projectId: projectIdNum || undefined,
+          projectId: turnProjectId ?? undefined,
           sourceObjectType: 'retrieval_chunk' as const,
           sourceObjectId: s.id || `src-${_i}`,
           sourceTitle: s.title,

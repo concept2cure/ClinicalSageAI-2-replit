@@ -275,26 +275,63 @@ export async function resolveSourceUploadIds(
   orgId: number,
   sourceIds: Array<number | string>,
 ): Promise<string[]> {
-  const ids = (Array.isArray(sourceIds) ? sourceIds : [])
-    .map((id) => Number(id))
-    .filter((id) => Number.isFinite(id) && id > 0);
-  if (ids.length === 0) return [];
-
-  const c = visibleOrgClause(orgId, 2);
-  const { rows } = await pool.query<{ id: number; file_upload_id: string | null }>(
-    `SELECT id, provenance->>'fileUploadId' AS file_upload_id
-       FROM cre_evidence_sources
-      WHERE id = ANY($1) AND ${c.sql} AND deleted_at IS NULL`,
-    [ids, c.param],
-  );
-
-  const byId = new Map(rows.map((r) => [Number(r.id), r.file_upload_id]));
+  const ids = sourceIdList(sourceIds);
+  const byId = new Map((await readSourceUploads(orgId, ids)).map((r) => [r.id, r.fileUploadId]));
   const ordered: string[] = [];
   for (const id of ids) {
     const uploadId = byId.get(id);
     if (uploadId && !ordered.includes(uploadId)) ordered.push(uploadId);
   }
   return ordered;
+}
+
+/** Positive integer source ids, in the order given. Anything else is dropped. */
+export function sourceIdList(sourceIds: unknown): number[] {
+  return (Array.isArray(sourceIds) ? sourceIds : [])
+    .map((id) => Number(id))
+    .filter((id) => Number.isSafeInteger(id) && id > 0);
+}
+
+/** One live source and the upload its bytes live in (see resolveSourceUploadIds). */
+export interface SourceUpload {
+  id: number;
+  organizationId: number | null;
+  sourceType: string;
+  clientProgramId: string | null;
+  isCurrent: boolean;
+  title: string | null;
+  checksum: string | null;
+  /** The `file_uploads` id from provenance; null when the source has no stored file. */
+  fileUploadId: string | null;
+}
+
+/**
+ * Each requested source the caller can see, with its upload. A source the
+ * caller does not own, or a deleted one, is simply absent. One query for the
+ * two readers: AnA's grounding (resolveSourceUploadIds) and the data room's
+ * "File into Vault" (server/services/vault/vault-data-room-filing.ts), which
+ * needs each source's own row to answer per item.
+ */
+export async function readSourceUploads(orgId: number, ids: number[]): Promise<SourceUpload[]> {
+  if (ids.length === 0) return [];
+  const c = visibleOrgClause(orgId, 2);
+  const { rows } = await pool.query(
+    `SELECT id, organization_id, source_type, client_program_id, is_current, title, checksum,
+            provenance->>'fileUploadId' AS file_upload_id
+       FROM cre_evidence_sources
+      WHERE id = ANY($1) AND ${c.sql} AND deleted_at IS NULL`,
+    [ids, c.param],
+  );
+  return rows.map((r: Record<string, unknown>) => ({
+    id: Number(r.id),
+    organizationId: r.organization_id == null ? null : Number(r.organization_id),
+    sourceType: String(r.source_type),
+    clientProgramId: r.client_program_id == null ? null : String(r.client_program_id),
+    isCurrent: r.is_current !== false,
+    title: (r.title as string | null) ?? null,
+    checksum: (r.checksum as string | null) ?? null,
+    fileUploadId: (r.file_upload_id as string | null) ?? null,
+  }));
 }
 
 /**

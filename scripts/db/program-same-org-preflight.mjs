@@ -135,6 +135,36 @@ export const PROGRAM_SAME_ORG_CHECKS = Object.freeze([
            ORDER BY k.id`,
   },
   {
+    relation: 'public.concept2cure_conversations',
+    keyColumn: 'project_id',
+    // project_id is NOT NULL here, so the key cannot be cleared.
+    remedy: 're-file the row under a project of its own organization (project_id is NOT NULL)',
+    keyedBy: 'concept2cure_conversations_project_same_org_fk',
+    references: 'public.projects',
+    sql: `SELECT c.id, c.organization_id AS org, c.project_id,
+                 p.organization_id AS project_org, (p.id IS NULL) AS project_missing
+            FROM public.concept2cure_conversations c
+            LEFT JOIN public.projects p ON p.id = c.project_id
+           WHERE c.project_id IS NOT NULL
+             AND (p.id IS NULL OR p.organization_id <> c.organization_id)
+           ORDER BY c.id`,
+  },
+  {
+    // PF-10 S1 (20261001c): the project a conversation was held in. The column
+    // is new and written only after an organization check, so this is a guard
+    // on the guard; a backfilled thread is same-organization by construction.
+    relation: 'public.chat_threads',
+    keyColumn: 'program_id',
+    keyedBy: 'chat_threads_program_same_org_fk',
+    sql: `SELECT t.id, t.organization_id AS org, t.program_id,
+                 rp.organization_id AS program_org, (rp.id IS NULL) AS program_missing
+            FROM public.chat_threads t
+            LEFT JOIN public.regulatory_programs rp ON rp.id = t.program_id
+           WHERE t.program_id IS NOT NULL
+             AND (rp.id IS NULL OR t.organization_id IS NULL OR rp.organization_id <> t.organization_id)
+           ORDER BY t.id`,
+  },
+  {
     relation: 'vault.documents',
     keyColumn: 'program_id',
     keyedBy: null,

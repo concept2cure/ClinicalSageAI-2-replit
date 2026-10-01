@@ -71,6 +71,7 @@ import { writeChainedAuditRow } from '../../services/auditService.js';
 import { readRecordAuditHistory } from '../audit-trail-ledger.routes.js';
 import { readVersionFamily, supersededSql, versionCountLateral } from '../../services/vault/vault-version-family.js';
 import { readVaultLifecycles } from '../../services/vault/vault-lifecycle.js';
+import { fileDataRoomSources, readFiledAs } from '../../services/vault/vault-data-room-filing.js';
 import { setTenantContextTx } from '../../services/tenant/governed-tenant-context.js';
 import { requireEditorAccess } from '../../middleware/orgMembership.js';
 import { getStorageProvider, getStorageProviderFor } from '../../services/storage/index.js';
@@ -78,6 +79,7 @@ import { getStorageProvider, getStorageProviderFor } from '../../services/storag
    governed artifact registry FKs to. Its contract requires every caller to
    branch on the resolution and keep an honest degraded path. */
 import { resolveCmcArtifactProject } from '../../services/cmc/resolve-cmc-artifact-project.js';
+import { programInOrganization } from '../../services/c2c/program-access';
 
 const logger = createScopedLogger('c2c-project-vault-routes');
 
@@ -159,6 +161,9 @@ interface DataRoomRow {
   evidenceKind: string | null;
   confidence: string | null;
   needsReview: boolean;
+  /** Which Vault version its bytes became (VR-16): `supersededBy` names the
+   *  family's current version when a later one replaced it. Null when not filed. */
+  filedAs: { version: string | null; supersededBy: string | null } | null;
 }
 
 interface DataRoomBlock {
@@ -1318,26 +1323,20 @@ export default function createProjectVaultRoutes(): Router {
           const sourceChecksums = Array.from(
             new Set(sources.map(s => s.checksum).filter((h): h is string => Boolean(h))),
           );
-          const vaultHashes = new Set<string>();
-          if (sourceChecksums.length > 0) {
-            const matchRes = await pool.query(
-              `SELECT DISTINCT d.content_hash
-                 FROM vault.documents d
-                WHERE ${uploadsWhere}
-                  AND d.content_hash = ANY($3::text[])`,
-              [id, orgId, sourceChecksums],
-            );
-            for (const r of matchRes.rows as Array<{ content_hash: string | null }>) {
-              if (r.content_hash) vaultHashes.add(r.content_hash);
-            }
-          }
+          // …and as which version (VR-16): the version its bytes are, and the
+          // family's current version when a later one replaced it.
+          // One join for the stage and for "File into Vault" (VR-11), so the
+          // two cannot disagree about what is filed.
+          const vaultHashes = await readFiledAs(pool, id, orgId, sourceChecksums);
           const rows: DataRoomRow[] = sources.map(s => {
             const meta = (s.metadata ?? {}) as Record<string, unknown>;
             const dossier = (meta.dossier ?? null) as
               | { evidenceKind?: string | null; suggestedFolder?: string | null;
                   confidence?: string | null; needsReview?: boolean }
               | null;
-            const filed = Boolean(s.checksum && vaultHashes.has(s.checksum));
+            const match = s.checksum ? vaultHashes.get(s.checksum) : undefined;
+            const filedAs = match ? { version: match.version, supersededBy: match.supersededBy } : null;
+            const filed = filedAs !== null;
             const proposed = Boolean(dossier?.suggestedFolder);
             const stage: DataRoomRow['stage'] =
               filed ? 'filed' : proposed ? 'classified' : dossier ? 'needs_review' : 'captured';
@@ -1367,6 +1366,7 @@ export default function createProjectVaultRoutes(): Router {
               evidenceKind: dossier?.evidenceKind ?? null,
               confidence: dossier?.confidence ?? null,
               needsReview: Boolean(dossier?.needsReview),
+              filedAs,
             };
           });
           dataRoom = {
@@ -1524,12 +1524,7 @@ export default function createProjectVaultRoutes(): Router {
     try {
       // The program must be this org's before any of its documents are listed —
       // the same guard the read and download routes apply.
-      const prog = await pool.query(
-        `SELECT id FROM regulatory_programs
-          WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
-        [id, orgId],
-      );
-      if (prog.rows.length === 0) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+      if (!(await programInOrganization(pool, id, orgId))) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
 
       /* `websearch_to_tsquery` rather than `to_tsquery`: it accepts arbitrary
          user text (quotes, OR, -negation) and never raises a syntax error, so a
@@ -1730,12 +1725,7 @@ export default function createProjectVaultRoutes(): Router {
 
     try {
       // The program must be this org's before any document of it is served.
-      const prog = await pool.query(
-        `SELECT id FROM regulatory_programs
-          WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
-        [id, orgId],
-      );
-      if (prog.rows.length === 0) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+      if (!(await programInOrganization(pool, id, orgId))) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
 
       const docRes = await pool.query(
         `SELECT id, file_name, document_title, mime_type, file_size, s3_key,
@@ -1900,6 +1890,38 @@ export default function createProjectVaultRoutes(): Router {
         err: err instanceof Error ? err.message : String(err),
       });
       return res.status(500).json({ success: false, error: 'Failed to record the filing decision' });
+    }
+  });
+
+  /* POST /:id/data-room/file — File into Vault (VR-11, D2).
+     Captured sources, chosen in the data room, each filed through the one
+     upload-to-Vault orchestration (vault-data-room-filing.ts). Behind the same
+     governed-write gate as filing, so a viewer is refused before any byte is
+     read. 200 carries a result per source; `complete: false` when any was
+     refused. */
+  router.post('/:id/data-room/file', requireEditorAccess, async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    try {
+      const outcome = await fileDataRoomSources({
+        organizationId: orgId,
+        userId: (req as any).user?.id ?? null,
+        programId: String(req.params.id),
+        sourceIds: (req.body ?? {}).sourceIds,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      if (!outcome.ok) {
+        return res.status(outcome.status).json({ success: false, error: outcome.code, message: outcome.message });
+      }
+      return res.json({ success: true, complete: outcome.complete, items: outcome.items });
+    } catch (err: unknown) {
+      logger.error('data room file error', { err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({
+        success: false,
+        error: 'FILING_FAILED',
+        message: 'The files could not be filed. Check the data room before trying again: some may have been filed.',
+      });
     }
   });
 

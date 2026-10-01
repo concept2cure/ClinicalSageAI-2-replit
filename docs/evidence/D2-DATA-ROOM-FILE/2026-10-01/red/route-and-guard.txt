@@ -1,0 +1,15 @@
+# trunk server code with server/routes/__tests__/vault-data-room-file.test.ts
+ × server/routes/__tests__/vault-data-room-file.test.ts > each source is filed on its own > a 503 from the scanner on the second source leaves the first filed, and the batch is not complete 43ms
+   → expected 404 to be 200 // Object.is equality
+ × server/routes/__tests__/vault-data-room-file.test.ts > each source is filed on its own > an unexpected failure on one source is that source’s refusal, not the batch’s 7ms
+   → Cannot read properties of undefined (reading 'map')
+ × server/routes/__tests__/vault-data-room-file.test.ts > each source is filed on its own > every source filed is complete 6ms
+   → expected undefined to be true // Object.is equality
+ × server/routes/__tests__/vault-data-room-file.test.ts > the role is checked first > a viewer is refused 403 before any source is read 5ms
+   → expected 404 to be 403 // Object.is equality
+ × server/routes/__tests__/vault-data-room-file.test.ts > one upload-to-Vault orchestration > only vault-file-upload-to-vault.ts both loads an upload and admits it 1184ms
+   → expected [ …(2) ] to deeply equal [ Array(1) ]
+ × server/routes/__tests__/vault-data-room-file.test.ts > one upload-to-Vault orchestration > AnA’s filing tool and the data room both call it 3ms
+   → services/ana/document-catalog-tools.ts: expected '/**\n * Project-folder document tools…' to match /\bfileUploadIntoVault\s*\(/
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  6 failed (6)

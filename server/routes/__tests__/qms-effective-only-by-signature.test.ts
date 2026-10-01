@@ -24,12 +24,19 @@
  * P1-29 / DP-32 (security review 2026-09-24): door 2 also reached
  * `status = 'retired'` with no reason, no role gate and no ceremony, while the
  * canonical `POST /api/mdx/qms/documents/:id/retire` became a signed
- * transition. P1-31 / DP-34 (2026-10-01) deleted door 2 with its router
- * (server/routes/qms.ts) and mount; qms-legacy-api-retired.test.ts proves
- * /api/qms answers nothing through the production registrar. What door 2 was
- * tested for here is now asked of the canonical edit: PATCH cannot reach
- * effective, retired or superseded, and still routes a draft for review.
+ * transition. Door 2 then refused `to=retired` as it refused `to=effective`.
+ *
+ * P1-31 / DP-34 (2026-10-01): door 2 is gone. `/api/qms` (routes/qms.ts and its
+ * only service, qms.service.ts) was a second QMS write API no client called;
+ * past the two refusals above it still let any authenticated member supersede
+ * an effective document, requalify a supplier and disposition nonconforming
+ * product, most of it with no audit row. Its block here now proves it stays
+ * gone; every capability is served at `/api/mdx/qms/*`.
+ * What door 2 was tested for is now also asked of the canonical edit: PATCH
+ * cannot reach effective, retired or superseded.
  */
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express, { type Request, type Response, type NextFunction } from 'express';
 import request from 'supertest';
@@ -124,6 +131,24 @@ describe('PATCH /api/mdx/qms/documents/:id reaches no signed or terminal state',
     expect(res.status).toBe(422);
     expect(H.doc?.status).toBe('effective');
     expect(wrote()).toBe(false);
+  });
+});
+
+describe('the second QMS write door (/api/qms) stays gone — DP-34', () => {
+  const root = path.resolve(__dirname, '..', '..', '..');
+  const read = (rel: string) => fs.readFileSync(path.join(root, rel), 'utf8');
+
+  it('no router file and no service behind it', () => {
+    expect(fs.existsSync(path.join(root, 'server/routes/qms.ts'))).toBe(false);
+    expect(fs.existsSync(path.join(root, 'server/services/qms/qms.service.ts'))).toBe(false);
+  });
+
+  it('nothing mounts /api/qms; the canonical /api/mdx/qms router is mounted', () => {
+    const mounts = ['server/bootstrap/register-document-routes.ts', 'server/bootstrap/register-inline-routes.ts']
+      .map(read)
+      .join('\n');
+    expect(mounts).not.toMatch(/['"]\/api\/qms['"]/);
+    expect(read('server/bootstrap/register-inline-routes.ts')).toMatch(/app\.use\(\s*['"]\/api\/mdx['"]\s*,\s*mdxQmsRoutes/);
   });
 });
 

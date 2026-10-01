@@ -1,0 +1,20 @@
+# Mutation C: no chat_threads_program_needs_org CHECK. Restored after.
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > 20261001c on the applier > runs after the files that create its tables and the program key, and before the tenant sweep
+ × tests/schema-contract/chat-threads-program-key.pglite.test.ts > 20261001c on the applier > a replay adds nothing: one NOT VALID key that nulls only the program, one NOT VALID CHECK, one index
+   → expected [ { …(3) } ] to deeply equal [ { …(3) }, { …(3) } ]
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > the backfill binds only a program of the thread's own organization > t-own → 11111111-1111-4111-8111-111111111111
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > the backfill binds only a program of the thread's own organization > t-own-upper → 33333333-3333-4333-8333-333333333333
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > the backfill binds only a program of the thread's own organization > t-foreign → null
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > the backfill binds only a program of the thread's own organization > t-missing → null
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > the backfill binds only a program of the thread's own organization > t-malformed → null
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > the backfill binds only a program of the thread's own organization > t-no-org → null
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > the backfill binds only a program of the thread's own organization > t-none → null
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > from here on the database holds the key > a thread naming its own organization's program is written
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > from here on the database holds the key > a thread naming another organization's program, or a missing one, is refused
+ × tests/schema-contract/chat-threads-program-key.pglite.test.ts > from here on the database holds the key > a thread with no organization cannot name a program, and still exists without one
+   → expected 'ok' to be '23514' // Object.is equality
+ ✓ tests/schema-contract/chat-threads-program-key.pglite.test.ts > from here on the database holds the key > deleting a program unbinds its threads and keeps their organization
+ × tests/schema-contract/chat-threads-program-key.pglite.test.ts > from here on the database holds the key > the preflight reads the store, and finds no thread naming a foreign program
+   → expected { …(5) } to match object { skipped: false, rows: [], …(1) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 11 passed (14)

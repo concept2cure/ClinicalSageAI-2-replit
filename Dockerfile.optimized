@@ -195,6 +195,12 @@ COPY --from=builder /app/templates/forms/acroforms ./templates/forms/acroforms
 # back to a short summary). .dockerignore re-includes it.
 COPY --from=builder /app/SECURITY.md ./SECURITY.md
 
+# The GAMP 5 validation kit: the IQ/OQ protocols a regulated client validates
+# the system with, listed and served by server/routes/validation-kit.ts from
+# <cwd>/docs/validation. Without it production listed an honest but empty
+# catalog. .dockerignore re-includes only this directory of docs/.
+COPY --from=builder /app/docs/validation ./docs/validation
+
 # The Amazon RDS certificate bundle, from the assets copied above
 # (assets/rds-ca/README.md). Production verifies the database certificate, and
 # Node's built-in roots contain no RDS CA, so without this every connection to

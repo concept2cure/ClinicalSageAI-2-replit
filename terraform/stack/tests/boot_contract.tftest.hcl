@@ -105,6 +105,7 @@ variables {
   cloudfront_origin_secret        = "c2cTestOriginSecret_0123456789abcdef"
   create_github_oidc_provider     = true
   openai_api_key                  = "test-openai-key"
+  anthropic_api_key               = "sk-ant-test-0123456789"
   jwt_secret                      = "jwt-0123456789abcdef0123456789abcdef"
   refresh_token_secret            = "refresh-0123456789abcdef0123456789abcdef"
   mfa_encryption_key              = "mfa-0123456789abcdef0123456789abcdef"
@@ -255,7 +256,7 @@ run "renders_the_boot_contract" {
           for secret in [
             random_password.db_master.result, random_password.db_app_service.result,
             var.jwt_secret, var.refresh_token_secret, var.mfa_encryption_key, var.audit_hmac_key,
-            var.audit_hmac_secret, var.audit_export_signing_key, var.connector_encryption_key, var.openai_api_key,
+            var.audit_hmac_secret, var.audit_export_signing_key, var.connector_encryption_key, var.openai_api_key, var.anthropic_api_key,
             var.smtp_user, var.smtp_pass,
           ] : !strcontains(e.value, secret)
         ]
@@ -727,4 +728,39 @@ run "refuses_an_smtp_port_without_required_tls" {
   }
 
   expect_failures = [var.smtp_port]
+}
+
+# Regulatory drafting runs only on an approved Anthropic model: both containers
+# carry the key, as a secret only.
+run "every_container_can_reach_the_drafting_provider" {
+  command = apply
+
+  assert {
+    condition = alltrue([
+      for defs in [module.ecs.api_container, module.ecs.worker_container] :
+      contains([for e in defs.secrets : e.name], "ANTHROPIC_API_KEY") &&
+      !contains([for e in defs.environment : e.name], "ANTHROPIC_API_KEY")
+    ])
+    error_message = "Each container needs ANTHROPIC_API_KEY as a secret, never in its plain environment."
+  }
+}
+
+run "refuses_a_key_that_is_not_anthropics" {
+  command = plan
+
+  variables {
+    anthropic_api_key = "test-openai-key"
+  }
+
+  expect_failures = [var.anthropic_api_key]
+}
+
+run "refuses_placement_approvals_that_omit_the_drafting_provider" {
+  command = plan
+
+  variables {
+    ai_provider_placement_approvals = "{\"openai\":{\"region\":\"us\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\"],\"approvedIntendedUses\":[\"drafting\"]}}"
+  }
+
+  expect_failures = [terraform_data.boot_contract]
 }

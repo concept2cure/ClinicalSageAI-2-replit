@@ -128,10 +128,24 @@ export async function planCheckIn(
      successor (the lineage trigger), so say why here instead of failing at the
      insert, and name nothing about that row. */
   const named = await q.query(
-    // tenant-isolation-safe: an existence test that mirrors the lineage trigger's second-successor check, which spans every tenant; no column of the row found is returned or shown.
-    `SELECT 1 FROM vault.documents WHERE supersedes_id = $1::uuid AND deleted_at IS NULL LIMIT 1`,
-    [head.id],
+    // tenant-isolation-safe: an existence test that mirrors the lineage trigger's second-successor check, which spans every tenant; it returns only whether the row is a version of the CALLER's own document, never a column of it.
+    `SELECT (program_id = $2::uuid AND organization_id = $3 AND document_code IS NOT DISTINCT FROM $4) AS in_family
+       FROM vault.documents WHERE supersedes_id = $1::uuid AND deleted_at IS NULL LIMIT 1`,
+    [head.id, p.programId, p.organizationId, head.document_code],
   );
+  /* A successor of this document's own family found HERE, after the chain query
+     above found none, committed between the two statements: a concurrent
+     check-in won the race. That is "not current", not a foreign record an
+     administrator must resolve (CI run 12756, the two-concurrent-check-ins
+     dbtest under load). */
+  if (named.rows[0]?.in_family) {
+    return {
+      ok: false,
+      status: 409,
+      code: 'VERSION_NOT_CURRENT',
+      message: `A newer version of this document was added while this one was being prepared. ${NOTHING}`,
+    };
+  }
   if (named.rows[0]) {
     return {
       ok: false,

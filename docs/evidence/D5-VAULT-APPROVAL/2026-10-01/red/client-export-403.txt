@@ -1,0 +1,6 @@
+## RED: the signed-history export with trunk's VaultVersions.tsx, a 403 delivered as apiRequest delivers it (thrown)
+ × client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > exports the signed history of every version, and says when the role may not 5248ms
+   → Unable to find an element with the text: /Ask a user with audit export access/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 skipped (9)

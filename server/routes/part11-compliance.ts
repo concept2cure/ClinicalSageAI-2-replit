@@ -27,6 +27,7 @@ import { createPolicyGuard } from '../services/policy/opaMiddleware';
 import rbacService from '../services/roleBasedAccess';
 import { verifyAuditIntegrity } from '../services/audit/audit-integrity-service';
 import { requestPgClient } from '../db/requestDb';
+import { clientEventRefusal, requireAuditRecorder } from '../services/audit/audit-api-authority';
 import { VerificationUnavailableError, describeFailure } from '../lib/verification-outcome';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
@@ -692,6 +693,16 @@ router.post('/audit-trail', async (req: Request, res: Response) => {
   if (orgId == null) {
     return res.status(403).json({ success: false, error: 'Tenant context required' });
   }
+  /* DP-18, second door (reporting review 2026-10-01). P1-20 closed
+     POST /api/audit/events to organisation administrators and managers and to
+     the server's own event vocabulary. This route wrote the same table with
+     neither: any member, viewer included, could file a regulatory-significant
+     row of any event type, such as 'scim.user.deprovisioned', which the
+     administrative-changes compliance report and the signed export then carry.
+     The same two gates, in the same order, apply here. */
+  if (!requireAuditRecorder(req, res)) return;
+  const refusal = clientEventRefusal(req.body ?? {});
+  if (refusal) return res.status(400).json({ error: refusal });
 
   const {
     entityType,
@@ -706,10 +717,12 @@ router.post('/audit-trail', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'entityType, entityId, action required (userId derived from auth)' });
   }
 
-  // §11.10(e): change reason required for modifications to GxP records
-  if ((action === 'update' || action === 'delete') && !changeReason) {
+  // §11.10(e): every row this route writes is flagged regulatory_significant
+  // and gxp_relevant, so every one carries its reason, as the main door
+  // requires of such rows (audit-trail-routes.ts, F10).
+  if (!changeReason || String(changeReason).trim() === '') {
     return res.status(400).json({
-      error: 'changeReason is required for update/delete actions per 21 CFR Part 11 §11.10(e)',
+      error: 'changeReason is required: this route records regulatory-significant entries (21 CFR Part 11 §11.10(e))',
     });
   }
 

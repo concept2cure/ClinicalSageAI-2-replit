@@ -1,0 +1,44 @@
+$ docker compose -f docker-compose.yml --env-file <every required variable, placeholder values> config -q
+time="2026-10-01T09:01:16Z" level=warning msg="/home/user/ClinicalSageAI-2-replit/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+exit=0
+$ docker compose -f docker-compose.yml --env-file <the same, without SMTP_HOST> config -q
+error while interpolating services.app.environment.SMTP_HOST: required variable SMTP_HOST is missing a value: SMTP_HOST must be set (login codes are emailed; no SMTP, no sign-in)
+exit=1
+$ docker compose -f docker-compose.yml --env-file <the same> config | the app's resolved signer, placement, audit, origin and SMTP settings
+  NODE_ENV=production
+  RLS_ENFORCE=on
+  CONCEPT2CURE_SIGNER_MODE=hmac
+  CONCEPT2CURE_SIGNER_ACCEPT_HMAC=true
+  AI_SENSITIVE_DATA_POLICY_MODE=enforce
+  AUDIT_TRAIL_ENABLED=true
+  AUDIT_REQUIRE_ENFORCE=true
+  APP_URL=https://beta.example.com
+  ALLOWED_ORIGINS=https://beta.example.com
+  SMTP_HOST=smtp.example.com
+  SMTP_PORT=465
+  SMTP_FROM=noreply@example.com
+  STORAGE_PROVIDER=local
+  STORAGE_ACCEPT_LOCAL_DISK=true
+  SENDGRID_API_KEY passed: false
+$ docker compose -f docker-compose.beta.yml --env-file <every required variable, placeholder values> config -q
+time="2026-10-01T09:01:16Z" level=warning msg="/home/user/ClinicalSageAI-2-replit/docker-compose.beta.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+exit=0
+$ docker compose -f docker-compose.beta.yml --env-file <the same, without SMTP_HOST> config -q
+error while interpolating services.app.environment.SMTP_HOST: required variable SMTP_HOST is missing a value: SMTP_HOST must be set (login codes are emailed; no SMTP, no sign-in)
+exit=1
+$ docker compose -f docker-compose.beta.yml --env-file <the same> config | the app's resolved signer, placement, audit, origin and SMTP settings
+  NODE_ENV=production
+  RLS_ENFORCE=on
+  CONCEPT2CURE_SIGNER_MODE=hmac
+  CONCEPT2CURE_SIGNER_ACCEPT_HMAC=true
+  AI_SENSITIVE_DATA_POLICY_MODE=enforce
+  AUDIT_TRAIL_ENABLED=true
+  AUDIT_REQUIRE_ENFORCE=true
+  APP_URL=https://beta.example.com
+  ALLOWED_ORIGINS=https://beta.example.com
+  SMTP_HOST=smtp.example.com
+  SMTP_PORT=465
+  SMTP_FROM=noreply@example.com
+  STORAGE_PROVIDER=local
+  STORAGE_ACCEPT_LOCAL_DISK=true
+  SENDGRID_API_KEY passed: false

@@ -81,4 +81,14 @@ describe('GET /overview and the portfolio read', () => {
     expect(res.status).toBe(200);
     expect(res.body.data.leadProgram).toMatchObject({ projectId: 12, readiness: 64 });
   });
+
+  /* L189 (reporting review 2026-10-01): the lead said scope 'program' with a
+     project id, and the canvas runs its reports over the scope it is given, so
+     POST /runs computed them over the report program group whose serial id
+     equalled the project id. */
+  it('names the lead program as the project its readiness was computed for', async () => {
+    h.summary.mockResolvedValue({ memberCount: 1, attentionRanked: [PROGRAM], truncated: false });
+    const res = await overview();
+    expect(res.body.data.leadProgram).toMatchObject({ scope: 'project', scopeId: '12', projectId: 12 });
+  });
 });

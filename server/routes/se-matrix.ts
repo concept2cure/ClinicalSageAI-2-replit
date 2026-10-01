@@ -13,13 +13,12 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
-import { eq, and } from 'drizzle-orm';
-import { db } from '../db.js';
-import { regulatoryPrograms } from '../../shared/schema/programs.js';
+import { pool } from '../db.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { logAuditEvent } from '../services/audit/auditLogger.js';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
+import { programInOrganization } from '../services/c2c/program-access';
 
 const router = Router();
 const log = createScopedLogger('se-matrix');
@@ -69,15 +68,7 @@ async function requireProgramAccess(req: Request, res: Response, next: NextFunct
       return res.status(403).json({ error: 'Invalid organization context' });
     }
 
-    const [program] = await db
-      .select({ id: regulatoryPrograms.id })
-      .from(regulatoryPrograms)
-      .where(
-        and(eq(regulatoryPrograms.id, programId), eq(regulatoryPrograms.organizationId, orgId))
-      )
-      .limit(1);
-
-    if (!program) {
+        if (!(await programInOrganization(pool, programId, orgId))) {
       console.warn(`[se-matrix] IDOR blocked: org=${orgId} tried program=${programId}`);
       return res.status(403).json({
         error: 'Access denied',

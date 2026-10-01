@@ -1,8 +1,8 @@
 /**
  * RBM data routes — every outcome is named, none is rendered as an empty result.
  *
- *   - POST /rbm-site-risk/recompute on a program the org holds no RBQM records
- *     for is a 404 and never reads site_intel (#1128); a source failure is a
+ *   - POST /rbm-site-risk/recompute on a program that is not a live project of
+ *     the caller's organization (programInOrganization, 38a9417c6) is a 404 and never reads site_intel (#1128); a source failure is a
  *     502 with a machine-readable reason, not `200 []`.
  *   - POST /rbm-metric-ingest of an extract already loaded is a 409 naming the
  *     run; a reprocess without a reason is a 422; neither commits (#1130).
@@ -56,7 +56,7 @@ beforeEach(() => {
 
 describe('POST /rbm-site-risk/recompute', () => {
   it('refuses another tenant\'s program with 404 and never reads Site Intelligence', async () => {
-    // Ownership union returns nothing.
+    // The one program check (programInOrganization) finds no live program of the org.
     const res = await request(app()).post('/api/mdx/rbm-site-risk/recompute').send({ programId: PROGRAM });
     expect(res.status).toBe(404);
     expect(h.calls.some(c => c.sql.includes('site_intel'))).toBe(false);
@@ -64,7 +64,7 @@ describe('POST /rbm-site-risk/recompute', () => {
   });
 
   it('reports an unavailable source as 502 with its reason, not as an empty study', async () => {
-    on(/UNION ALL/, [{ one: 1 }]);
+    on(/FROM regulatory_programs WHERE id = \$1 AND organization_id = \$2/, [{ id: PROGRAM }]);
     on(/site_intel\.sites/, Object.assign(new Error('relation does not exist'), { code: '42P01' }));
     const res = await request(app()).post('/api/mdx/rbm-site-risk/recompute').send({ programId: PROGRAM });
     expect(res.status).toBe(502);
@@ -73,7 +73,7 @@ describe('POST /rbm-site-risk/recompute', () => {
   });
 
   it('returns the snapshots on a successful read', async () => {
-    on(/UNION ALL/, [{ one: 1 }]);
+    on(/FROM regulatory_programs WHERE id = \$1 AND organization_id = \$2/, [{ id: PROGRAM }]);
     on(/site_intel\.sites/, [{ id: 1, site_number: 'S1', quality_score: 30 }]);
     const res = await request(app()).post('/api/mdx/rbm-site-risk/recompute').send({ programId: PROGRAM });
     expect(res.status).toBe(200);

@@ -16,7 +16,7 @@ const SENTINEL = 'SENTINEL-DB-DETAIL permission denied for table tenant_export_r
 const { exportSvc, fullSvc, attestationSvc, logError, TenantNotFoundError, AttestationKeyMissingError } = vi.hoisted(
   () => ({
     exportSvc: { exportTenantData: vi.fn() },
-    fullSvc: { exportTenantFull: vi.fn(), recordExportReceipt: vi.fn(), digestOf: vi.fn(() => 'sha256:x') },
+    fullSvc: { exportTenantFull: vi.fn(), recordExportReceipt: vi.fn(), digestOf: vi.fn((..._a: any[]) => 'sha256:x') },
     attestationSvc: { generateAttestation: vi.fn() },
     logError: vi.fn(),
     TenantNotFoundError: class TenantNotFoundError extends Error {},

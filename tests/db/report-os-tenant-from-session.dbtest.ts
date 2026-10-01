@@ -63,8 +63,6 @@ describe('Report OS takes the tenant from the session, never the request (L184, 
   let runA: number;
   let runB: number;
   let groupA: number;
-  let submissionA: string;
-  let submissionB: string;
 
   const count = async (table: string, org: number) =>
     Number(
@@ -104,18 +102,8 @@ describe('Report OS takes the tenant from the session, never the request (L184, 
          VALUES ($1,'project',$2,$3,'completed',$4::json) RETURNING id`,
         [org, ids[side].projects, TYPE_ID, JSON.stringify({ summary: { fixture: `fixture-body-${side}` } })]
       );
-      const submission = await owner.query(
-        `INSERT INTO c2c_submissions (organization_id,project_id,submission_type,regulator,lifecycle_state)
-         VALUES ($1,$2,'NDA','FDA','drafting') RETURNING id::text AS id`,
-        [org, ids[side].projects]
-      );
-      if (side === 'A') {
-        runA = run.rows[0].id;
-        submissionA = submission.rows[0].id;
-      } else {
-        runB = run.rows[0].id;
-        submissionB = submission.rows[0].id;
-      }
+      if (side === 'A') runA = run.rows[0].id;
+      else runB = run.rows[0].id;
     }
     const group = await owner.query(
       `INSERT INTO report_program_groups (organization_id,name) VALUES ($1,$2) RETURNING id`,
@@ -350,40 +338,17 @@ describe('Report OS takes the tenant from the session, never the request (L184, 
     );
   });
 
-  it("correspondence cannot be captured into another tenant's project", async () => {
+  /* POST /correspondence/capture was removed 2026-10-01 (reporting review): a
+     second correspondence writer with no audit row or role gate. Its tenant
+     cases here go with it; the canonical intake carries its own. What stays is
+     that the door is closed: nothing lands for any tenant. */
+  it('the removed correspondence capture door writes nothing', async () => {
     const inA = await count('c2c_correspondence', ORG_A);
-    const memoryInA = await count('project_memory_entries', ORG_A);
-    const foreign = await request(ro)
+    const res = await request(ro)
       .post('/api/report-os/correspondence/capture')
       .set(auth(tokenB))
-      .send({
-        organizationId: ORG_A,
-        projectId: Number(ids.A.projects),
-        submissionId: submissionA,
-        subject: `${TAG} planted deficiency`,
-        body: 'Refuse to file: planted by another tenant.',
-      });
-    expect(await count('c2c_correspondence', ORG_A), 'no letter may land in tenant A').toBe(inA);
-    expect(await count('project_memory_entries', ORG_A), 'no memory may land in tenant A').toBe(
-      memoryInA
-    );
-    expect(foreign.status, "another tenant's project must read as not found").toBe(404);
-  });
-
-  it("correspondence is captured into the session tenant's own project and submission", async () => {
-    const inB = await count('c2c_correspondence', ORG_B);
-    const own = await request(ro)
-      .post('/api/report-os/correspondence/capture')
-      .set(auth(tokenB))
-      .send({
-        organizationId: ORG_A,
-        projectId: Number(ids.B.projects),
-        submissionId: submissionB,
-        subject: `${TAG} own correspondence`,
-        body: 'Deficiency letter: clarification requested on the stability section.',
-      });
-    expect(own.status, 'tenant B must be able to capture into its own project').toBe(201);
-    expect(own.body.data.persistedToPlatform).toBe(true);
-    expect(await count('c2c_correspondence', ORG_B)).toBe(inB + 1);
+      .send({ projectId: Number(ids.A.projects), subject: `${TAG} planted`, body: 'x' });
+    expect(res.status).toBe(404);
+    expect(await count('c2c_correspondence', ORG_A)).toBe(inA);
   });
 });

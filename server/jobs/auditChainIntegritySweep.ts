@@ -87,8 +87,11 @@ import { reportSecurityAlert } from '../services/security-alerts.js';
 import { resolveAuditChainSweepPosture } from '../startup/audit-enforcement.js';
 import { createScopedLogger } from '../utils/logger.js';
 import { runWithSystemTenantScope } from '../db/tenantStore';
+import { runScheduledOncePerWindow, windowKeyOf } from '../db/scheduledOnce';
 
 const logger = createScopedLogger('audit-chain-integrity');
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 export type AuditStoreName =
   | 'audit_logs.chain'
@@ -543,8 +546,12 @@ export function startAuditChainIntegritySchedule(): void {
 
   const expr = process.env.AUDIT_CHAIN_CHECK_CRON || '0 2 * * *';
   try {
+    // Every server process schedules this; one check per day across them
+    // (U19) — three meant three full scans and three alerts per break.
     cron.schedule(expr, () => {
-      void runAuditChainIntegrityCheck().catch(err =>
+      void runScheduledOncePerWindow('audit-chain-integrity-sweep', windowKeyOf(DAY_MS), () =>
+        runAuditChainIntegrityCheck()
+      ).catch(err =>
         logger.error(`Audit chain integrity check failed: ${err?.message ?? String(err)}`)
       );
     });

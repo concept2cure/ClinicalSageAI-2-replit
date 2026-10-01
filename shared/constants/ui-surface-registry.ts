@@ -296,7 +296,9 @@ export const UI_SURFACES: UiSurface[] = [
     // (server/routes/vault-legal-holds.ts). No screen calls them yet, so ci:launch-scope-api could not
     // see they were unclaimed, and production refused every one 403 LAUNCH_SCOPE. Its /retention
     // sub-path is Setup's, below.
-    apiPrefixes: ['/api/c2c/project-vault', '/api/vault/ingest', '/api/regulatory-programs', '/api/submission-ops', '/api/mdx/vault', '/api/vault/legal-holds'],
+    // /api/regulatory/documents: a Vault version's review and approval, on the
+    // one document lifecycle (VR-13).
+    apiPrefixes: ['/api/c2c/project-vault', '/api/vault/ingest', '/api/regulatory-programs', '/api/submission-ops', '/api/mdx/vault', '/api/vault/legal-holds', '/api/regulatory/documents'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -564,7 +566,9 @@ export const UI_SURFACES: UiSurface[] = [
     uiKit: 'tasking',
     // Launch-scope API (2026-09-25, ci:launch-scope-api): MdxSurfaceHost (useMdxPrograms, useWorkbench, useSubmissions) and the shell's TaskTray call these.
     // Launch-scope API (2026-09-25, ci:launch-scope-api): the task board and the shell's task tray.
-    apiPrefixes: ['/api/task-management', '/api/regulatory/tasks', '/api/project-sections', '/api/regulatory-programs', '/api/submission-ops', '/api/approval-workflows/pending', '/api/tasks'],
+    // /api/project-rules: the task board reads the rule definitions it shows
+    // (TaskBoard.tsx); claimed by no surface until the gate saw it (2026-10-01).
+    apiPrefixes: ['/api/task-management', '/api/regulatory/tasks', '/api/project-sections', '/api/regulatory-programs', '/api/submission-ops', '/api/approval-workflows/pending', '/api/tasks', '/api/project-rules'],
     anaToolFamilies: [],
     sharedContract: '@shared/schema',
     discoveryCatalog: null,

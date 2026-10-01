@@ -6,6 +6,7 @@ import { I } from '../icons';
 import { VaultPlaceIntoSubmission } from './VaultPlaceIntoSubmission';
 import { VaultEditDetails } from './VaultEditDetails';
 import { VaultVersions } from './VaultVersions';
+import { APPROVED_STAGES, stageLabel } from './VaultLifecycle';
 import { VaultCoverage, type VaultCoverageShape, type CoverageDocument } from './VaultCoverage';
 import { useLiveData, EmptyState, type ShapeGuard } from '../dataConnect';
 import { useVaultUpload } from '../useVaultUpload';
@@ -25,6 +26,7 @@ import {
   type VaultFolder,
 } from '../fixtures/vault-data';
 import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
+import { DataRoomFileBar, RoomPick, useDataRoomFiling, type DataRoomFiling } from './VaultDataRoomFiling';
 import { downloadBlob, safeFileName } from '../download';
 import {
   EDITOR_TARGET_DOC_TYPES,
@@ -65,6 +67,8 @@ interface DataRoomRow {
   evidenceKind: string | null;
   confidence: string | null;
   needsReview: boolean;
+  /** Which Vault version its bytes became, and what replaced it (VR-16). Absent on an older server. */
+  filedAs?: { version: string | null; supersededBy: string | null } | null;
 }
 
 interface DataRoomBlock {
@@ -89,6 +93,19 @@ const ROOM_STAGE: Record<DataRoomRow['stage'], { label: string; tone: string }> 
   needs_review: { label: 'Needs review', tone: 'warn' },
   captured: { label: 'Captured', tone: 'idle' },
 };
+
+/**
+ * A data-room source's stage in words. A filed one names the Vault version its
+ * bytes are, and the version that replaced it (VR-16): "Filed as v1.0,
+ * superseded by v2.0". A filed file that is no longer current reads as such.
+ */
+export function roomStageLabel(s: Pick<DataRoomRow, 'stage' | 'filedAs'>): string {
+  const base = (ROOM_STAGE[s.stage] ?? ROOM_STAGE.captured).label;
+  if (s.stage !== 'filed' || !s.filedAs) return base;
+  const as = s.filedAs.version ? ` as v${s.filedAs.version}` : '';
+  const replaced = s.filedAs.supersededBy ? `, superseded by v${s.filedAs.supersededBy}` : '';
+  return `${base}${as}${replaced}`;
+}
 
 /** What the lane's counts cover, and what needs a person. */
 function RoomNotes({ block }: { block: DataRoomBlock }) {
@@ -225,6 +242,32 @@ interface VaultTreeProps {
   toggle: (id: string) => void;
 }
 
+/**
+ * An upload's review stage beside its filing status (VR-13), where the server
+ * said it: tree leaves carry it, search hits do not, and a hit is never
+ * labelled "Not reviewed" for a stage nobody read.
+ */
+function reviewText(d: VaultDoc): string {
+  return d.src === 'upload' && d.lifecycleStage !== undefined ? ` · ${stageLabel(d.lifecycleStage)}` : '';
+}
+
+/** The review stage's chip tone: approved reads as settled, in review as pending, the rest as idle. */
+function stageTone(stage: string | null | undefined): string {
+  if (APPROVED_STAGES.includes(stage ?? '')) return 'ok';
+  return stage === 'in_review' ? 'ai' : 'idle';
+}
+
+/**
+ * Whether a document counts as settled in its folder's count. An upload is
+ * settled when its version is approved (VR-13; FD4's strict default): a
+ * confirmed filing says where it belongs, not that anyone approved it. An
+ * authored section keeps its own status.
+ */
+export function isSettled(d: VaultDoc): boolean {
+  if (d.src === 'upload') return APPROVED_STAGES.includes(d.lifecycleStage ?? '');
+  return ['final', 'approved', 'reviewed'].includes(d.status);
+}
+
 function VaultTree({ nodes, depth, activeFolder, onPick, expanded, toggle }: VaultTreeProps) {
   return (
     <div>
@@ -233,11 +276,7 @@ function VaultTree({ nodes, depth, activeFolder, onPick, expanded, toggle }: Vau
         const folder = n as VaultFolder;
         const docs = flattenDocs(folder.children);
         const isOpen = expanded[folder.id] !== false;
-        const ready = docs.filter((d) =>
-          // 'confirmed' = an upload a person filed; it counts as settled the
-          // way an approved authored section does.
-          ['final', 'approved', 'reviewed', 'confirmed'].includes(d.status),
-        ).length;
+        const ready = docs.filter(isSettled).length;
         return (
           <div key={folder.id}>
             <button
@@ -382,11 +421,14 @@ function DocumentHistory({ projectId, documentUuid }: { projectId: string; docum
 function DataRoomLane({
   block,
   unavailableReason,
+  filing,
 }: {
   block?: DataRoomBlock;
   /** The server's `unavailable` reason for the Data room branch, when it
    *  could not be served — rendered as a failure, never as an empty room. */
   unavailableReason?: string | null;
+  /** Selection and "File into Vault" (VR-11). */
+  filing: DataRoomFiling;
 }) {
   const [open, setOpen] = useState(false);
   if (unavailableReason) {
@@ -414,6 +456,8 @@ function DataRoomLane({
   }
   // Collapsed, the stage strip is the summary; expanding lists the sources.
   const rows = open ? block.sources : [];
+  const unfiledIds = block.sources.filter((s) => s.stage !== 'filed').map((s) => s.id);
+  const titleOf = (id: number) => block.sources.find((s) => s.id === id)?.title ?? `Source ${id}`;
   return (
     <div className="vd-dr" data-testid="vault-data-room">
       <div className="vd-dr-head">
@@ -439,10 +483,14 @@ function DataRoomLane({
           the filing cabinet and are listed under Uploaded files.
         </div>
       )}
+      {(open && unfiledIds.length > 0) || filing.outcome || filing.error ? (
+        <DataRoomFileBar filing={filing} unfiledIds={unfiledIds} titleOf={titleOf} />
+      ) : null}
       {rows.length > 0 && (
         <div className="vd-dr-rows">
           {rows.map((s) => (
             <div key={s.id} className="vd-dr-row">
+              <RoomPick id={s.id} title={s.title} filed={s.stage === 'filed'} filing={filing} />
               <span className="vd-dr-kind">{s.kind}</span>
               <span className="vd-dr-name" title={s.title}>{s.title}</span>
               <span className="vd-dr-detail">
@@ -454,7 +502,7 @@ function DataRoomLane({
                 </span>
               ) : null}
               <span className={'rd-chip tone-' + (ROOM_STAGE[s.stage] ?? ROOM_STAGE.captured).tone}>
-                {(ROOM_STAGE[s.stage] ?? ROOM_STAGE.captured).label}
+                {roomStageLabel(s)}
               </span>
             </div>
           ))}
@@ -647,6 +695,9 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
   const [vaultEpoch, setVaultEpoch] = useState(0);
   const vaultState = useLiveData<VaultDisplayShape>(vaultPath, [vaultPath, vaultEpoch]);
   const vault = vaultState.data;
+  /* The data room's "File into Vault" (VR-11): held here so its answer
+     survives the re-read that follows a filing. */
+  const roomFiling = useDataRoomFiling(projectId ?? null, () => setVaultEpoch((n) => n + 1));
 
   /* Live document tree — real VaultFolder/VaultDoc from the read-model. Stable
      EMPTY_TREE reference while loading/absent so the memo below is loop-safe. */
@@ -1372,6 +1423,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
         <>
           <DataRoomLane
             block={vault?.dataRoom}
+            filing={roomFiling}
             unavailableReason={
               vault?.unavailable?.find((u) => u.branch === 'Data room')?.reason ?? null
             }
@@ -1533,10 +1585,11 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                       </span>
                     )}
                   </span>
-                  <span className="vd-col-type">
+                  <span className="vd-col-type" title={`${d.type}${reviewText(d)}`}>
                     {d.type}
                     {(d.versionCount ?? 1) > 1 ? ` · ${d.ver}, ${d.versionCount} versions` : ''}
                     {d.earlierVersion ? ` · ${d.ver}, earlier version` : ''}
+                    {reviewText(d)}
                   </span>
                   <span className="vd-col-owner">{d.owner}</span>
                   <span className="vd-col-mod">{d.updated}</span>
@@ -1568,6 +1621,15 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                       {sel.ver}
                       {(sel.versionCount ?? 1) > 1 ? ` · ${sel.versionCount} versions` : ''}
                       {sel.earlierVersion ? ' · earlier version' : ''}
+                    </span>
+                  )}
+                  {sel.src === 'upload' && sel.lifecycleStage !== undefined && (
+                    <span
+                      className={'rd-chip tone-' + stageTone(sel.lifecycleStage)}
+                      title="Review and approval, apart from filing"
+                      aria-label={`Review and approval: ${stageLabel(sel.lifecycleStage)}`}
+                    >
+                      {stageLabel(sel.lifecycleStage)}
                     </span>
                   )}
                 </div>
@@ -1766,6 +1828,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                         downloadingId={downloading}
                         onUploadNewVersion={(file, currentId) => void uploadNewVersion(file, sel, currentId)}
                         uploading={uploading}
+                        onLifecycleChanged={() => setVaultEpoch((n) => n + 1)}
                       />
                     ) : null}
                     {projectId && sel.docId ? (
@@ -1791,6 +1854,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                       downloadingId={downloading}
                       onUploadNewVersion={(file, currentId) => void uploadNewVersion(file, sel, currentId)}
                       uploading={uploading}
+                      onLifecycleChanged={() => setVaultEpoch((n) => n + 1)}
                     />
                     <DocumentHistory key={`${sel.docId}-${vaultEpoch}`} projectId={projectId} documentUuid={sel.docId} />
                   </>

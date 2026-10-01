@@ -1,5 +1,6 @@
 import React from 'react';
 import { reportClientError } from './utils/reportClientError';
+import { isChunkLoadFailure } from './concept2cure/v2/SurfaceScaffold';
 import './error-boundary.css';
 
 /**
@@ -47,6 +48,14 @@ class ErrorBoundary extends React.Component {
    * Reset the error boundary state
    */
   resetErrorBoundary = () => {
+    // A chunk that never arrived cannot be retried in place: React.lazy caches
+    // the rejected import and rethrows it on every render. Only a page load
+    // fetches the current index.html and the chunks it names (a tab opened on
+    // the sign-in page before a release first imports V2App after MFA).
+    if (this.isChunkLoadFailure()) {
+      window.location.reload();
+      return;
+    }
     this.setState({
       hasError: false,
       error: null,
@@ -58,6 +67,10 @@ class ErrorBoundary extends React.Component {
       this.props.onReset();
     }
   };
+
+  isChunkLoadFailure() {
+    return isChunkLoadFailure(String(this.state.error?.message ?? this.state.error ?? ''));
+  }
 
   render() {
     const { fallback, title, description, showHomeButton } = this.props;
@@ -76,8 +89,13 @@ class ErrorBoundary extends React.Component {
       // Default error UI
       return (
         <div className="error-boundary-fallback">
-          <h2>{title || 'Something went wrong'}</h2>
-          <p>{description || 'An unexpected error occurred in this component.'}</p>
+          <h2>{title || (this.isChunkLoadFailure() ? 'This page didn’t finish loading' : 'Something went wrong')}</h2>
+          <p>
+            {description ||
+              (this.isChunkLoadFailure()
+                ? 'Part of the app didn’t arrive, usually because a new version was released. Try again to load it.'
+                : 'An unexpected error occurred in this component.')}
+          </p>
 
           {process.env.NODE_ENV !== 'production' && this.state.error && (
             <pre className="error-message">{this.state.error.toString()}</pre>

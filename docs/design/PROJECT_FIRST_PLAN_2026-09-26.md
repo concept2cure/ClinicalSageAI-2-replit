@@ -830,8 +830,26 @@ The founder chose the plan's recommended option in each case:
   - The user's half: `27d87155`. The Data Room offers the caller's conversation files, and "Add to this project" is the audited adopt.
   - Handed to W1 (`…01T2wooC`): the chat message shown for an upload made with no project open.
 - **PF-04**: done, `f8c32f28` (precondition P2: `b4b218bd`). The same-organization keys cover five stores, with a pre-flight for legacy rows, proven on real PostgreSQL 16 (`docs/evidence/D3/2026-09-26-program-same-org-keys/`). `vault.documents` and `submission_transmittals` are deliberately left out (see the migration header), and handed to D6 and PF-12.
-- **PF-08**: the anchor-delete half is done (`docs/evidence/D5-PROJECT-RETENTION/2026-09-30-legacy-hard-delete/`). `DELETE /api/projects/:id` and `DELETE /api/clients/:id` refuse to hard-delete a program's anchor row, or a project holding documents past draft. The unique anchor index, the anchor reader's `.limit(1)`, and the founder decision on auto-linking same-named legacy projects are still open.
-- **PF-03**: done. The writers check the `projects` row is the caller's (`docs/evidence/D3/2026-10-01-integer-space-writers/`). The database holds the integer project id to the row's organization on `concept2cure_artifacts` and `c2c_submission_packages` (`docs/evidence/D3/2026-10-01-integer-project-same-org-keys/`). Handed on: `approve_import` and `save_document_to_vault` to the D6 lane; `concept2cure_conversations` goes with the stream's project check.
+- **PF-08**: the anchor-delete half is done (`docs/evidence/D5-PROJECT-RETENTION/2026-09-30-legacy-hard-delete/`). `DELETE /api/projects/:id` and `DELETE /api/clients/:id` refuse to hard-delete a program's anchor row, or a project holding documents past draft. The anchor reader and the unique anchor index are done (`docs/evidence/D2-PROGRAM-ONE-ANCHOR/2026-10-01/`, `fa00d639`, `382e25c6`).
+  - One reader, `readProgramAnchorRow`, reads the lowest-id row, the one intake links, and names a duplicate.
+  - The six copies are folded onto it, and a contract test refuses a new one.
+  - `20261001b` adds the one-anchor-per-program partial unique index when no program has two anchor rows. Otherwise it names them as `project@organization` and the deploy proceeds.
+  - Still open: the founder decision on auto-linking same-named legacy projects, which bounds the 20260814 backfill and gives it an audit row.
+- **PF-10** (founder decision: switching project forks the conversation): in progress, planned as eleven slices by the scout of 2026-10-01 (`wf_92bf7e8a-b5e`).
+  - S1, `541a8d2e`: `chat_threads.program_id`, with a same-organization key, `ON DELETE SET NULL (program_id)`, a needs-organization CHECK, and a same-organization-only backfill from the old metadata (`docs/evidence/D2-CONVERSATION-ONE-PROJECT/2026-10-01-program-key/`).
+  - S2, `301ab17d`: the thread mint binds `program_id` only after `programInOrganization`; both thread lists read the column (`.../2026-10-01-bound-at-mint/`).
+  - S8, `6e5cf462`: no route re-homes a conversation; `PATCH /api/chat/thread/:id` refuses a project change with 409 (`.../2026-10-01-project-fixed/`).
+  - Next: S3, the fork on the server, after a deploy boundary so threads minted during the S2 roll are backfilled first; then S4 (the client marker), S5 (the tool context names its conversation, turn and model), S6a/b, S7, S9 and S10.
+  - Decisions for the founder before S3, each with the scout's recommended default:
+    - F1, no project then a project opened: fork.
+    - F2, a project then closed: fork into no project.
+    - F3, resuming a thread of A while B is open: fork on the next send.
+    - F4, a held governed action confirmed after a fork: run it under its recorded project, named in the dialog.
+    - F5, `list_project_documents` with no project open: organization-wide, as today.
+    - F6, turning on the integer-keyed AnA tools for v2 projects: first move them onto `projectRef`.
+    - F7, a turn naming a foreign or deleted project: refuse.
+    - F8, when the marker appears: on the first turn in the new project.
+- **PF-03**: done. The writers check the `projects` row is the caller's (`docs/evidence/D3/2026-10-01-integer-space-writers/`). The database holds the integer project id to the row's organization on `concept2cure_artifacts`, `c2c_submission_packages` (`docs/evidence/D3/2026-10-01-integer-project-same-org-keys/`) and `concept2cure_conversations` (`docs/evidence/D3/2026-10-01-conversation-project-key/`). Handed on: `approve_import` and `save_document_to_vault` to the D6 lane.
 - **PF-15**: the CMC and eSTAR halves are done. LX-26 (the device filing path) waits on its founder decision.
   - `652e0947`: the Module 3 routes and `POST /api/cmc-changes` write only under a project of the caller's organization.
   - `369cc698`: one membership check for CMC, `project-membership.ts` `projectBelongsToTenant`, which no longer admits a deleted program.

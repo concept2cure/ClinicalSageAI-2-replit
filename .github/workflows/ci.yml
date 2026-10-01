@@ -190,6 +190,16 @@ jobs:
         # guard is narrow enough to be blocking over the whole tree.
         run: npm run ci:committed-secrets
 
+      - name: Guardrails — the Compose stacks carry the production boot contract
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # docker-compose.yml (self-host) and docker-compose.beta.yml run the app
+        # with NODE_ENV=production. Until 2026-10-01 neither passed the signer
+        # mode, the AI placement settings or SMTP, so neither could boot or sign
+        # anyone in, and nothing compared them with the contract. The required
+        # names come from deploy-aws.yml's preflight, so a variable added there
+        # is required here too (docs/evidence/W2/2026-10-01-compose-boot-contract/).
+        run: npm run ci:compose-boot-contract:selftest && npm run ci:compose-boot-contract
+
       - name: Guardrails — requirements.txt pins must install on the declared Python
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # Dependabot #1014 proposed numpy 2.4.6 -> 2.5.1. numpy 2.5.1 is
@@ -596,6 +606,10 @@ jobs:
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:fabricated-identity
 
+      - name: Guardrails — one program-ownership check (with selftest)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run ci:program-ownership-single-source:selftest && npm run ci:program-ownership-single-source
+
       - name: Guardrails — audit_logs fixtures accept the audit writer's columns
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # The chained audit write is fail-closed: the §11.10(e) row and the
@@ -721,6 +735,12 @@ jobs:
       - name: Guardrails — the frontend deploy uploads every file the app fetches (with selftest)
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:frontend-sync-coverage:selftest && npm run ci:frontend-sync-coverage
+
+      # Three builds of @napi-rs/canvas, each with its own Skia, were mixed in
+      # one render: a scanned PDF crashed the API task with SIGSEGV. One copy.
+      - name: Guardrails — one native canvas library in the lockfile (with selftest)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run ci:single-native-canvas:selftest && npm run ci:single-native-canvas
 
       # A required security scan that gets cancelled by the next push produces
       # no release evidence for the commit it was meant to certify — 74 of the
@@ -1189,6 +1209,9 @@ jobs:
     name: Coverage (ratchet)
     runs-on: ubuntu-latest
     needs: lint
+    # As `test`: a red guardrail in lint must not skip this job (a skipped job
+    # reports neither pass nor fail). tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts
+    if: ${{ !cancelled() }}
     # Runs the vitest suite with the v8 coverage provider against a real
     # Postgres so the DB-backed paths are counted, then ENFORCES that coverage
     # has not gone down.
@@ -1314,6 +1337,9 @@ jobs:
     name: AnA Readiness Tests
     runs-on: ubuntu-latest
     needs: lint
+    # As `test`: a red guardrail in lint must not skip this job (a skipped job
+    # reports neither pass nor fail). tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts
+    if: ${{ !cancelled() }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
@@ -1343,6 +1369,9 @@ jobs:
     name: Integration Tests
     runs-on: ubuntu-latest
     needs: lint
+    # As `test`: a red guardrail in lint must not skip this job (a skipped job
+    # reports neither pass nor fail). tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts
+    if: ${{ !cancelled() }}
     services:
       postgres:
         image: pgvector/pgvector:pg15
@@ -1507,6 +1536,9 @@ jobs:
     name: Blank DB Provisioning + Deploy Migration
     runs-on: ubuntu-latest
     needs: lint
+    # As `test`: a red guardrail in lint must not skip this job (a skipped job
+    # reports neither pass nor fail). tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts
+    if: ${{ !cancelled() }}
     services:
       postgres:
         # pgvector, not stock postgres: the installer creates the `vector`
@@ -1767,6 +1799,9 @@ jobs:
     name: Production Boot Smoke (RLS on, non-superuser role)
     runs-on: ubuntu-latest
     needs: lint
+    # As `test`: a red guardrail in lint must not skip this job (a skipped job
+    # reports neither pass nor fail). tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts
+    if: ${{ !cancelled() }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
@@ -1984,6 +2019,9 @@ jobs:
     name: AIOS Audit Assets
     runs-on: ubuntu-latest
     needs: lint
+    # As `test`: a red guardrail in lint must not skip this job (a skipped job
+    # reports neither pass nor fail). tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts
+    if: ${{ !cancelled() }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 

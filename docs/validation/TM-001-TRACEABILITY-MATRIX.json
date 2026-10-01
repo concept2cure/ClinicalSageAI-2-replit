@@ -1,15 +1,15 @@
 {
   "documentId": "TM-001",
-  "generatedAt": "2026-10-01T01:40:49.333Z",
+  "generatedAt": "2026-10-01T08:41:02.467Z",
   "generator": "scripts/validation/build-traceability.mjs",
   "runDate": "2026-09-27",
   "summary": {
-    "requirements": 73,
+    "requirements": 75,
     "pass": 69,
     "partial": 2,
     "fail": 0,
     "open": 0,
-    "uncovered": 2
+    "uncovered": 4
   },
   "byApp": {
     "Projects": {
@@ -21,12 +21,12 @@
       "uncovered": 0
     },
     "Vault": {
-      "requirements": 12,
+      "requirements": 14,
       "pass": 10,
       "partial": 0,
       "fail": 0,
       "open": 0,
-      "uncovered": 2
+      "uncovered": 4
     },
     "Authoring": {
       "requirements": 15,
@@ -803,6 +803,38 @@
         "risk": "high — a superseded version shown as current, or a version missing from the list or history, puts the wrong bytes in a filing or hides who changed what",
         "assurance": "scripted",
         "rationale": "tree, versions, download, history and search checks; the legacy-link, cross-tenant and check-in agreement cases in `tests/db/vault-versions.dbtest.ts`"
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-VAULT-013",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "A Vault version is reviewed and approved on the document lifecycle, apart from its filing. Sending it for review starts one record per version, taking title, type and content hash from the stored version. The review and the approval are electronic signatures: the signer re-authenticates, states a reason, and the record holds the printed name, meaning and time, bound to the version's SHA-256. The uploader and whoever sent the version for review may neither review nor approve it, the reviewer does not approve it, and only the current version is approved. Approving a version supersedes the earlier approved versions of the same document in the same transaction. An approved version's details cannot be edited. A version counts as settled only when approved.",
+      "part11": "§11.10(e), §11.50, §11.70, §11.200",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "Review and approval of a Vault version: e-signatures bound to the version's bytes, separation of duties, only the current version approved, supersession in the same transaction, approved details frozen",
+        "risk": "high: an approval over other bytes, a self-approval, or two approved versions of one document misstates what was approved for a filing",
+        "assurance": "scripted (credentialed)",
+        "rationale": "OQ-VAULT-13/14. The refusals, supersession, rollback and the start's audit row are in `tests/db/vault-lifecycle.dbtest.ts`, on PostgreSQL with RLS on"
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-VAULT-014",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "A person files captured sources from the project's data room into the Vault. Each source goes through the same governed ingest as a Vault upload and lands suggested or unfiled, never confirmed by the system. The answer names each source as filed (with its version and where it landed), already in the Vault (with its version), or refused with the reason. One source's refusal does not undo another's filing, and the batch reports that it is not complete. A source whose stored bytes no longer match the checksum recorded at capture is refused and nothing is stored. A viewer is refused. Another organisation's or another project's source is refused as not found.",
+      "part11": "§11.10(c), §11.10(d), §11.10(e)",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "File captured sources from the data room through the governed ingest, with a result for each",
+        "risk": "high: changed bytes filed under a capture's name, a source filed into the wrong project, or a partial batch read as done would put the wrong evidence in the Vault",
+        "assurance": "scripted",
+        "rationale": "OQ-VAULT-15. The byte-check, antivirus, cross-tenant, cross-project, superseded and viewer cases are in `tests/db/vault-data-room-file.dbtest.ts`, on PostgreSQL with RLS on"
       },
       "verdict": "uncovered"
     },

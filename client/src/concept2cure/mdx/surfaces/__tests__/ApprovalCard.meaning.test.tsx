@@ -10,7 +10,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, cleanup, fireEvent, screen } from '@testing-library/react';
 
-const { signSpy } = vi.hoisted(() => ({ signSpy: vi.fn(async () => null) }));
+const { signSpy } = vi.hoisted(() => ({ signSpy: vi.fn(async (_input: unknown) => null) }));
 vi.mock('../../hooks/useElectronicSignature', () => ({
   useElectronicSignature: () => ({ sign: signSpy, receipt: null, submitting: false, error: null, reset: () => {} }),
 }));

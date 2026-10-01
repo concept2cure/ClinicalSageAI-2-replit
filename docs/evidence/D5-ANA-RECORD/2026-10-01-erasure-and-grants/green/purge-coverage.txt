@@ -1,0 +1,10 @@
+# ci:purge-coverage, same database, with this change
+   note: 2 schema-qualified purge entr(y/ies) are OUTSIDE this gate's scope (it measures public.* only): vault.document_chunks, vault.documents
+✅ purge-coverage: 606 org-keyed tables outside the purge reach (baseline 611, new 0, 5 now covered).
+   Newly covered — re-run with --write-baseline to lock the gain in:
+     coauthor_import_history
+     coauthor_status_history
+     csr_extraction_log
+     document_audit_log
+     qmp_audit_trail
+exit=0
