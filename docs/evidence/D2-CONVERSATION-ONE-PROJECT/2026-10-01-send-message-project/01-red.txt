@@ -1,0 +1,32 @@
+# tests/schema-contract/no-project-id-coercion.contract.test.ts against the three files at 1d203bd1b (before PF-10 S6a and S10b)
+ ✓ tests/schema-contract/no-project-id-coercion.contract.test.ts > no project id is coerced on the AnA turn paths > the pattern catches the coercions that were removed, and not the resolution
+ × tests/schema-contract/no-project-id-coercion.contract.test.ts > no project id is coerced on the AnA turn paths > server/routes/chat/send-message.ts
+   → expected [ { line: 586, …(1) }, …(10) ] to deeply equal []
+ × tests/schema-contract/no-project-id-coercion.contract.test.ts > no project id is coerced on the AnA turn paths > server/routes/ana-ri/post-processing.ts
+   → expected [ { line: 329, …(1) }, …(5) ] to deeply equal []
+ × tests/schema-contract/no-project-id-coercion.contract.test.ts > no project id is coerced on the AnA turn paths > server/services/lumen-context/intelligence-prefix.ts
+   → expected [ { line: 43, …(1) }, …(1) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ { line: 586, …(1) }, …(10) ] to deeply equal []
++     "line": 586,
++     "line": 661,
++     "line": 837,
++     "line": 867,
++     "line": 900,
++     "line": 930,
++     "line": 967,
++     "line": 1228,
++     "line": 1242,
++     "line": 1270,
++     "line": 1279,
+AssertionError: expected [ { line: 329, …(1) }, …(5) ] to deeply equal []
++     "line": 329,
++     "line": 373,
++     "line": 441,
++     "line": 493,
++     "line": 520,
++     "line": 583,
+AssertionError: expected [ { line: 43, …(1) }, …(1) ] to deeply equal []
++     "line": 43,
++     "line": 63,
+      Tests  3 failed | 1 passed (4)
