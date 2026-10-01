@@ -128,67 +128,142 @@ resource "aws_ecs_task_definition" "api" {
   execution_role_arn       = aws_iam_role.ecs_execution.arn
   task_role_arn            = aws_iam_role.ecs_task.arn
 
-  container_definitions = jsonencode([{
-    name      = "api"
-    image     = var.api_image
-    essential = true
+  container_definitions = jsonencode([
+    {
+      name      = "api"
+      image     = var.api_image
+      essential = true
 
-    portMappings = [{
-      containerPort = var.api_container_port
-      protocol      = "tcp"
-    }]
+      portMappings = [{
+        containerPort = var.api_container_port
+        protocol      = "tcp"
+      }]
 
-    environment = concat([
-      { name = "NODE_ENV", value = "production" },
-      { name = "PORT", value = tostring(var.api_container_port) },
-      { name = "TRUST_PROXY_HOPS", value = tostring(var.trust_proxy_hops) },
-    ], var.api_environment)
+      environment = concat([
+        { name = "NODE_ENV", value = "production" },
+        { name = "PORT", value = tostring(var.api_container_port) },
+        { name = "TRUST_PROXY_HOPS", value = tostring(var.trust_proxy_hops) },
+        # The scanner below. awsvpc gives the task's containers one network
+        # namespace, so clamd is on loopback; nothing outside the task reaches
+        # 3310 (the security group admits the API port from the ALB alone).
+        { name = "CLAMAV_HOST", value = "127.0.0.1" },
+        { name = "CLAMAV_PORT", value = tostring(local.scanner_port) },
+      ], var.api_environment)
 
-    secrets = [for s in var.api_secrets : {
-      name      = s.name
-      valueFrom = s.value_from
-    }]
+      # Not before clamd answers. Production refuses an upload the scanner did not
+      # see (server/middleware/uploadSafety.ts, 503 FILE_SCAN_UNAVAILABLE), so an
+      # API that started first would take traffic and refuse every upload until
+      # the database loaded. Dropped from the one-off migrate task with the
+      # scanner itself (scripts/ops/ecs-one-off-task.sh).
+      dependsOn = [{ containerName = local.scanner_name, condition = "HEALTHY" }]
 
-    logConfiguration = {
-      logDriver = "awslogs"
-      options = {
-        "awslogs-group"         = aws_cloudwatch_log_group.api.name
-        "awslogs-region"        = var.region
-        "awslogs-stream-prefix" = "api"
+      secrets = [for s in var.api_secrets : {
+        name      = s.name
+        valueFrom = s.value_from
+      }]
+
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = aws_cloudwatch_log_group.api.name
+          "awslogs-region"        = var.region
+          "awslogs-stream-prefix" = "api"
+        }
       }
-    }
 
-    # LIVENESS, and runnable in this image (B5, 2026-09-23).
+      # LIVENESS, and runnable in this image (B5, 2026-09-23).
+      #
+      # It was `wget …/api/health`. The image (Dockerfile.optimized) installs curl,
+      # not wget, so the check could never pass: every task unhealthy, every
+      # deploy rolled back by the circuit breaker.
+      #
+      # It is NOT /readyz, which the 2026-09-23 brief proposed. /readyz answers 503
+      # whenever the database, the schema OR AnA is down, and AnA's verdict is
+      # recorded once at boot (server/startup/ana-readiness-state.ts). A failing
+      # container check makes ECS REPLACE the task, so /readyz here would restart
+      # every task whose AnA verdict was latched down, and during a Multi-AZ
+      # failover would replace every task at once — turning a 60-second database
+      # event into an outage. Restarting cannot fix a dependency; it can only take
+      # the process down with it. So this asks the one question a restart
+      # answers: is the process alive.
+      #
+      # Readiness belongs in the deploy's post-roll check, which reports without
+      # killing. As of 2026-09-24 NOTHING in the deploy path asks /readyz — the
+      # smoke-test job probes the static /api/health (B9's lane is changing that).
+      # Until it does, a deploy can report success while /readyz is 503.
+      # node is the image's own interpreter; exec form needs no shell.
+      healthCheck = {
+        command     = ["CMD", "node", "-e", "require('http').get('http://localhost:${var.api_container_port}/healthz',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+        interval    = 30
+        timeout     = 10
+        retries     = 3
+        startPeriod = 60
+      }
+    },
+    # ── The virus scanner (D1, 2026-10-01) ─────────────────────────────────────
     #
-    # It was `wget …/api/health`. The image (Dockerfile.optimized) installs curl,
-    # not wget, so the check could never pass: every task unhealthy, every
-    # deploy rolled back by the circuit breaker.
+    # Every upload is scanned before it is stored; until this container existed
+    # nothing in the stack ran clamd or set CLAMAV_HOST, so a deployed task
+    # refused every Vault upload (docs/evidence/W2/2026-09-24-multi-task/,
+    # blocker; docs/evidence/D1/2026-10-01-production-blockers/).
     #
-    # It is NOT /readyz, which the 2026-09-23 brief proposed. /readyz answers 503
-    # whenever the database, the schema OR AnA is down, and AnA's verdict is
-    # recorded once at boot (server/startup/ana-readiness-state.ts). A failing
-    # container check makes ECS REPLACE the task, so /readyz here would restart
-    # every task whose AnA verdict was latched down, and during a Multi-AZ
-    # failover would replace every task at once — turning a 60-second database
-    # event into an outage. Restarting cannot fix a dependency; it can only take
-    # the process down with it. So this asks the one question a restart
-    # answers: is the process alive.
+    # Beside the API rather than a service of its own: nothing to route, scale
+    # or secure separately, and each task's uploads are scanned by a scanner
+    # that lives and dies with it. Essential, so a task whose scanner has died
+    # is replaced rather than left serving uploads it must refuse.
     #
-    # Readiness belongs in the deploy's post-roll check, which reports without
-    # killing. As of 2026-09-24 NOTHING in the deploy path asks /readyz — the
-    # smoke-test job probes the static /api/health (B9's lane is changing that).
-    # Until it does, a deploy can report success while /readyz is 503.
-    # node is the image's own interpreter; exec form needs no shell.
-    healthCheck = {
-      command     = ["CMD", "node", "-e", "require('http').get('http://localhost:${var.api_container_port}/healthz',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
-      interval    = 30
-      timeout     = 10
-      retries     = 3
-      startPeriod = 60
-    }
-  }])
+    # The image carries a signature database from its build, so clamd starts
+    # without the network; freshclam then keeps it current over the NAT. Pinned
+    # by digest (var.scanner_image says how to move it).
+    {
+      name      = local.scanner_name
+      image     = var.scanner_image
+      essential = true
+      # A hard limit, so a runaway reload cannot take the API's memory: clamd
+      # holds the database (~1.3 GB) and, during freshclam's reload, a second
+      # copy beside it.
+      memory = var.scanner_memory
+
+      environment = [
+        # clamd refuses a longer stream outright, and the client cannot tell that
+        # from an outage. The platform's largest upload, FILE_LIMITS.maxUploadBytes
+        # (server/config/platform-limits.ts); tests/boot_contract.tftest.hcl reads
+        # it from there, so the two cannot drift.
+        { name = "CLAMD_CONF_StreamMaxLength", value = "100M" },
+        # By default clamd answers OK for a file over MaxFileSize / MaxScanSize /
+        # MaxRecursion, having scanned part of it or none. Report it instead;
+        # server/utils/virusScan.ts refuses it as unscannable, not as a virus.
+        { name = "CLAMD_CONF_AlertExceedsMax", value = "yes" },
+      ]
+
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = aws_cloudwatch_log_group.api.name
+          "awslogs-region"        = var.region
+          "awslogs-stream-prefix" = local.scanner_name
+        }
+      }
+
+      # The image's own check (clamdcheck.sh: PING over 3310, expects PONG).
+      # startPeriod is ECS's maximum; loading the bundled database takes about a
+      # minute on one vCPU.
+      healthCheck = {
+        command     = ["CMD-SHELL", "clamdcheck.sh"]
+        interval    = 30
+        timeout     = 10
+        retries     = 3
+        startPeriod = 300
+      }
+    },
+  ])
 
   tags = var.tags
+}
+
+locals {
+  scanner_name = "clamav"
+  scanner_port = 3310
 }
 
 # ── Worker task definition ──────────────────────────────────────────────────
@@ -261,8 +336,9 @@ resource "aws_ecs_service" "api" {
   # The load balancer's checks (and ECS's reaction to them — it replaces a task
   # the target group marks unhealthy) start once the task is registered. Give a
   # cold start room before that counts, the way the container check's
-  # startPeriod does.
-  health_check_grace_period_seconds = 120
+  # startPeriod does. The API now starts only once the scanner answers (about a
+  # minute), so its own cold start begins that much later.
+  health_check_grace_period_seconds = 240
 
   tags = var.tags
 

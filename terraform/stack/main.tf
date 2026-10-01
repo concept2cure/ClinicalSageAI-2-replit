@@ -180,6 +180,13 @@ resource "terraform_data" "boot_contract" {
       condition     = !contains([var.jwt_secret, var.audit_hmac_key, var.audit_hmac_secret, var.audit_export_signing_key], var.audit_attestation_key)
       error_message = "audit_attestation_key must differ from jwt_secret, both audit HMAC keys and audit_export_signing_key: each signs a different record."
     }
+    # The API task carries the virus scanner (modules/ecs-fargate), whose hard
+    # memory limit comes out of the task's. What is left is the application's,
+    # which ran in 2048 MiB before the scanner was added.
+    precondition {
+      condition     = var.api_memory - module.ecs.scanner_memory >= 2048
+      error_message = "api_memory must leave the application 2048 MiB beside the virus scanner's ${module.ecs.scanner_memory} MiB: at least ${module.ecs.scanner_memory + 2048}."
+    }
   }
 }
 
@@ -316,6 +323,8 @@ module "ecs" {
   # than a tag once the deploy pipeline resolves the pushed image digest.
   api_image    = "${module.ecr.repository_urls["api"]}:${var.image_tag}"
   worker_image = "${module.ecr.repository_urls["worker"]}:${var.image_tag}"
+  # The virus scanner the API task carries (variables.tf says how it is pinned).
+  scanner_image = var.scanner_image
 
   api_cpu              = var.api_cpu
   api_memory           = var.api_memory

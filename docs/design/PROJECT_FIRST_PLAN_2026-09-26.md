@@ -839,7 +839,10 @@ The founder chose the plan's recommended option in each case:
   - S1, `541a8d2e`: `chat_threads.program_id`, with a same-organization key, `ON DELETE SET NULL (program_id)`, a needs-organization CHECK, and a same-organization-only backfill from the old metadata (`docs/evidence/D2-CONVERSATION-ONE-PROJECT/2026-10-01-program-key/`).
   - S2, `301ab17d`: the thread mint binds `program_id` only after `programInOrganization`; both thread lists read the column (`.../2026-10-01-bound-at-mint/`).
   - S8, `6e5cf462`: no route re-homes a conversation; `PATCH /api/chat/thread/:id` refuses a project change with 409 (`.../2026-10-01-project-fixed/`).
-  - Next: S3, the fork on the server, after a deploy boundary so threads minted during the S2 roll are backfilled first; then S4 (the client marker), S5 (the tool context names its conversation, turn and model), S6a/b, S7, S9 and S10.
+  - S5, `72096543` + `cac00a27` (LX-06's stream half): every way a tool runs (dispatched, held, confirmed) names its conversation, turn and model through one builder (`services/ana/turn-tool-context.ts`); a draft's provenance records them; the walk's `model-recorded` and `turn-recorded` are green and the baseline ceiling is 15 (`docs/evidence/D5-ANA-RECORD/2026-10-01-draft-names-conversation/`).
+  - S6a, `54aba6ce` + `583f8146`: one resolution of a turn's project ref (`services/c2c/project-ref.ts`); the intelligence prefix and post-processing no longer turn `7abb…` into project 7 (the guidance and command executors acted on it) (`.../2026-10-01-prefix-open-project/`, `.../2026-10-01-post-processing-project/`).
+  - S10b, `975290b6`: `POST /api/chat/send-message` resolves its project once; a contract test refuses project-id coercion on the AnA turn paths (`.../2026-10-01-send-message-project/`).
+  - Next: S3, the fork on the server, after a deploy boundary so threads minted during the S2 roll are backfilled first; then S4 (the client marker), the stream's own readers (S6a rest, with S3), S6b, S7, S9 and S10a.
   - Decisions for the founder before S3, each with the scout's recommended default:
     - F1, no project then a project opened: fork.
     - F2, a project then closed: fork into no project.

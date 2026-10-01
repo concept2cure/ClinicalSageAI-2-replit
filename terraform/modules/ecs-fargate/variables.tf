@@ -35,6 +35,15 @@ variable "worker_image" {
   description = "Full ECR image URI for the Worker"
 }
 
+variable "scanner_image" {
+  type        = string
+  description = "The clamd image that runs beside the API (main.tf, the scanner container), pinned by digest."
+  validation {
+    condition     = can(regex("@sha256:[0-9a-f]{64}$", var.scanner_image))
+    error_message = "scanner_image must be pinned by digest (…@sha256:<64 hex>): a tag can be moved under a running deployment."
+  }
+}
+
 # ── Resource sizing ─────────────────────────────────────────────────────────
 
 variable "api_cpu" {
@@ -45,6 +54,12 @@ variable "api_cpu" {
 variable "api_memory" {
   type    = number
   default = 2048 # 2 GB
+}
+
+variable "scanner_memory" {
+  description = "Hard memory limit (MiB) of the scanner container, out of api_memory. clamd holds its database (~1.3 GB) and briefly a second copy while freshclam's update reloads."
+  type        = number
+  default     = 4096
 }
 
 variable "worker_cpu" {

@@ -32,7 +32,8 @@ azs             = ["us-east-1a", "us-east-1b"]
 
 rds_instance_class = "db.t3.medium"
 api_cpu            = 1024
-api_memory         = 2048
+# 4096 MiB of it is the virus scanner beside the API; the stack refuses less than 6144.
+api_memory         = 6144
 api_desired_count  = 2
 # 0 until a worker image exists: deploy-aws.yml builds none, every job runs in
 # the API process, and a worker service pointed at an empty repository only

@@ -40,6 +40,13 @@
  *   - Daemon returns FOUND → `{ scanned: true, clean: false,
  *     signature: '<name>' }`. Caller rejects the upload.
  *
+ *   - Daemon returns a Heuristics.Limits.Exceeded.* FOUND → the same, plus
+ *     `incomplete: true`. The deployed scanner runs with AlertExceedsMax
+ *     (terraform/modules/ecs-fargate), so a file over its size or nesting
+ *     limits is reported instead of answered OK for the part it read. Not a
+ *     virus, and not an all-clear: still not clean, so every caller refuses
+ *     it, and marked so the refusal can say why (uploadSafety.ts).
+ *
  * The scan is bounded: the connect timeout is 5s, the total scan
  * timeout is 30s. Beyond that we abandon the connection and report
  * fail-open. Large file scans run on the daemon side, which has its
@@ -57,7 +64,16 @@ export interface VirusScanResult {
   signature?: string;
   /** Diagnostic reason when `scanned === false` (configured? unreachable? etc.). */
   reason?: string;
+  /**
+   * True when clamd reported that the file exceeded its scan limits
+   * (Heuristics.Limits.Exceeded.*): the scan did not cover the whole file.
+   * `clean` is false with it.
+   */
+  incomplete?: true;
 }
+
+/** clamd's name for "this file is over the limits I scan to" (AlertExceedsMax). */
+const LIMITS_EXCEEDED = /^Heuristics\.Limits\.Exceeded(?:\.|$)/;
 
 const DEFAULT_PORT = 3310;
 const CONNECT_TIMEOUT_MS = 5_000;
@@ -145,7 +161,12 @@ export function scanBuffer(buffer: Buffer): Promise<VirusScanResult> {
       }
       const foundMatch = text.match(/stream:\s*(.+?)\s+FOUND/i);
       if (foundMatch) {
-        settle({ scanned: true, clean: false, signature: foundMatch[1] });
+        const signature = foundMatch[1];
+        settle(
+          LIMITS_EXCEEDED.test(signature)
+            ? { scanned: true, clean: false, incomplete: true, signature }
+            : { scanned: true, clean: false, signature },
+        );
         return;
       }
       settle({ scanned: false, clean: true, reason: 'clamav_unparseable' });
