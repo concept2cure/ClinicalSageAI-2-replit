@@ -146,6 +146,16 @@ jobs:
         # a written reason; the selftest shows each failure branch firing.
         run: npm run ci:runtime-ddl && npm run ci:runtime-ddl:selftest
 
+      - name: Guardrails — the security and tenant gates fail on what they exist to catch (selftests)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # A gate that has only ever been seen to pass has not been tested
+        # (CLAUDE.md working agreement). Each selftest builds a throwaway tree
+        # with the defect its gate exists to catch, runs the real gate on it and
+        # expects the failure, then the safe forms and the baseline semantics.
+        # Each was mutation-checked against copies of its gate (2026-10-01,
+        # docs/evidence/D6/2026-10-01-gate-selftests/).
+        run: npm run ci:audit-route-mounts:selftest && npm run ci:audit-logs-fixture:selftest && npm run ci:tenant-isolation-justifications:selftest && npm run ci:committed-secrets:selftest && npm run ci:gateway-bypass:selftest && npm run ci:no-dev-auth-in-prod:selftest && npm run ci:org-path-param-guards:selftest && npm run ci:password-hygiene:selftest && npm run ci:purge-coverage:selftest && npm run ci:regulated-delete-audit:selftest && npm run ci:rls-allowlist-sync:selftest && npm run ci:route-ownership-matrix:selftest && npm run ci:server-error-leaks:selftest && npm run ci:session-scoped-rls-bypass:selftest && npm run ci:tenant-blind-models:selftest && npm run ci:tenant-column-types:selftest && npm run ci:tenant-entry-points:selftest && npm run ci:tenant-isolation:selftest && npm run ci:tenant-resolvers:selftest
+
       - name: Guardrails — no jsonb operator on a json column
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # Most JSON columns in this schema are `json`, not `jsonb`. json has no
