@@ -52,16 +52,13 @@ export interface AuthUser {
   profileImageUrl?: string;
 }
 
-export interface AuthSession {
-  id: string;
-  userId: string;
-  createdAt: Date;
-  lastActivityAt: Date;
-  expiresAt: Date;
-  deviceInfo: DeviceInfo;
-  ipAddress: string;
-  location?: string;
-  isCurrent: boolean;
+/** What a sign-out ended. This browser's session ends either way. */
+export interface LogoutResult {
+  /**
+   * Whether the server ended every session of the account: true or false when
+   * they were asked for (`logout(true)`), null when only this browser's was.
+   */
+  everySessionEnded: boolean | null;
 }
 
 export interface DeviceInfo {
@@ -665,7 +662,7 @@ export class AuthService {
     return { success: true, data: result.data!.user };
   }
 
-  async logout(terminateAllSessions: boolean = false): Promise<void> {
+  async logout(terminateAllSessions: boolean = false): Promise<LogoutResult> {
     // The refresh token outlives the access token by days, and the server
     // revokes only what it is handed (POST /logout: the bearer and
     // body.refreshToken). A logout that did not name it left it able to mint
@@ -678,14 +675,19 @@ export class AuthService {
     const storedRefreshToken = SecureStorage.getItem(AUTH_STORAGE_KEYS.refreshToken);
     await this.getValidAccessToken();
     const refreshToken = this.tokens?.refreshToken ?? storedRefreshToken ?? undefined;
-    try {
-      await this.api.post(`${this.baseUrl}/logout`, { terminateAllSessions, refreshToken }, { retryOnUnauthorized: false });
-    } catch {
-      // Ignore errors during logout
-    }
+    const answer = await this.api.post<{ success?: boolean }>(
+      `${this.baseUrl}/logout`,
+      { terminateAllSessions, refreshToken },
+      { retryOnUnauthorized: false }
+    );
 
+    // This browser's session ends whatever the server answered. The other
+    // sessions end only when the server says so: it ends them for a live access
+    // token alone and answers 401 otherwise (plan P0-4b R4), so a refusal is
+    // reported, never read as success.
     this.clearAuth();
     this.events.emit('logout');
+    return { everySessionEnded: terminateAllSessions ? answer.success && answer.data?.success === true : null };
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -843,22 +845,6 @@ export class AuthService {
     this.refreshTimer = setTimeout(() => {
       this.refreshToken();
     }, delay);
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // Session Management
-  // ─────────────────────────────────────────────────────────────────────────
-
-  async getSessions(): Promise<AuthResult<AuthSession[]>> {
-    return this.api.get<AuthSession[]>(`${this.baseUrl}/sessions`);
-  }
-
-  async terminateSession(sessionId: string): Promise<AuthResult<void>> {
-    return this.api.delete(`${this.baseUrl}/sessions/${sessionId}`);
-  }
-
-  async terminateAllOtherSessions(): Promise<AuthResult<void>> {
-    return this.api.delete(`${this.baseUrl}/sessions/others`);
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -1074,7 +1060,7 @@ interface AuthContextValue {
     credentials: LoginCredentials
   ) => Promise<AuthResult<{ mfaRequired: boolean; methods?: MfaMethod[]; maskedEmail?: string }>>;
   verifyMfa: (verification: MfaVerification) => Promise<AuthResult<AuthUser>>;
-  logout: (terminateAll?: boolean) => Promise<void>;
+  logout: (terminateAll?: boolean) => Promise<LogoutResult>;
   hasPermission: (permission: string) => boolean;
   hasRole: (role: string) => boolean;
 }
@@ -1181,9 +1167,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return authService.verifyMfa(verification);
   }, []);
 
-  const logout = useCallback(async (terminateAll?: boolean) => {
-    await authService.logout(terminateAll);
-  }, []);
+  const logout = useCallback((terminateAll?: boolean) => authService.logout(terminateAll), []);
 
   const hasPermission = useCallback((permission: string) => {
     return authService.hasPermission(permission);

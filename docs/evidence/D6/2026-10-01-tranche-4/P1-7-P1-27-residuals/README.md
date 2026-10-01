@@ -221,3 +221,31 @@ was checked with `cmp`.
 - **Pre-cut-over rows are not returned to a tenant-scoped read** of the fallback. They carry no tenant. The
   platform-wide verifier and readers still see them. The primary `audit_logs` store holds every tenant row.
 - **The fallback still cannot filter by `action`.** `search` has no such criterion. This predates this item.
+
+## Follow-up (2026-10-01, evening): the RLS coverage gate flagged the store
+
+**What was wrong.** The CI step "RLS coverage after the FIRST deploy" (`.github/workflows/ci.yml`, and the
+coverage step after the re-run) fails on any org-keyed table without `tenant_isolation_policy`, in every schema.
+The column this item added made `audit.tamper_proof_log` such a table, and this item did not tell the gate that
+the store has no policy on purpose (see "Still one chain, still no RLS policy, deliberately" above). Found by a
+blank-database deploy proof: `install-fresh`, one `deploy-migrate`, then the gate
+(`coverage-gate/red/rls-coverage-first-deploy.txt`: one row, `audit.tamper_proof_log (organization_id)`). The
+same proof showed the replay rebuilds nothing (`ci:replay-rebuilds-nothing`: 0 rebuilt, 0 dropped, 0 created)
+and no parent-scope delegate missing.
+
+**Decision.** The store stays one chain with no tenant policy, and the gate says so with its reason, in its own
+named exception (`scripts/db/rls-coverage-check.sql`), not in the analytics carve-out, whose reason is different.
+A `tenant_isolation_policy` would satisfy the gate and fork the Part 11 chain: the writer links each row to the
+previous row of the whole table under one advisory lock, and the sweep and verifier walk every row. The exception
+records the controls that stand in its place, each checked on the database: tenant reads confined in the library
+(this item), `app_service` holding `INSERT, SELECT` only, and `trg_prevent_audit_mutation` refusing UPDATE and
+DELETE.
+
+**Proof** (`coverage-gate/green/rls-coverage-first-deploy.txt`, same database): no rows; with two probe tables in
+the `audit` schema, one beside the store and one whose name begins with the store's, both are still flagged, so
+the exception covers exactly one table; with the probes dropped, no rows. `ci:rls-allowlist-sync` OK and its
+selftest 14 passed (the exception is schema-qualified and outside the public allow-list those gates pin).
+
+**Left open (register DP-28 residual).** Database-level tenant isolation for this store. It needs the chain tail
+read through a definer function (so a tenant-scoped writer can link to a row it may not read) before a tenant
+policy can go on. Until then a tenant's Part 11 rows are kept from other tenants by the library alone.
