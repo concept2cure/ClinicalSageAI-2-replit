@@ -120,3 +120,22 @@ describe('approving or locking an artifact is an electronic signature', () => {
     expect(executed[0].ctx.signoff).toMatchObject({ signatureVerified: true, signaturePurpose: meaning });
   });
 });
+
+describe('Release is the meaning of a lock, not of any e-signature', () => {
+  it('declared on an action that fixes no meaning: refused before the password is checked', async () => {
+    const res = await request(app)
+      .post('/api/ana-ri/governed-action')
+      .send({
+        command: 'place_in_dossier',
+        params: { projectId: 3, artifactId: 'artifact_abc', ctdSection: '2.5', signatureMeaning: 'RELEASE' },
+        reasonForChange: REASON,
+        password: 'wrong',
+      });
+
+    expect(res.status, JSON.stringify(res.body)).toBe(400);
+    expect(JSON.stringify(res.body)).toContain('SIGNATURE_MEANING_UNKNOWN');
+    expect(reverify).not.toHaveBeenCalled();
+    expect(executed).toEqual([]);
+  });
+});
+

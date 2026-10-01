@@ -20,6 +20,7 @@ import React, { useRef, useState } from 'react';
 import { ApiRequestError, apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import { I } from '../icons';
 import { useLiveData, type ShapeGuard } from '../dataConnect';
+import { VaultVersionCompare } from './VaultVersionCompare';
 import { downloadBlob, safeFileName } from '../download';
 import {
   APPROVED_STAGES,
@@ -157,13 +158,16 @@ function supersededBy(versions: VaultVersion[]): string[] {
 }
 
 /** Every version, newest first, each downloadable through the page's audited download. */
-function VersionRows({ versions, title, onDownload, downloadingId, onLifecycleChanged }: {
+function VersionRows({ versions, title, onDownload, downloadingId, onLifecycleChanged, onCompare }: {
   versions: VaultVersion[];
   title: string;
   onDownload: Props['onDownload'];
   downloadingId: string;
   onLifecycleChanged?: () => void;
+  /** Compare an earlier version with the current one (plan critique 15). */
+  onCompare?: (versionId: string) => void;
 }) {
+  const current = versions.find((v) => v.current);
   return (
     <div className="vd-vers">
       {versions.map((v) => (
@@ -191,6 +195,11 @@ function VersionRows({ versions, title, onDownload, downloadingId, onLifecycleCh
           >
             {I.download} Download
           </button>
+          {!v.current && current && onCompare ? (
+            <button className="sp-ask" onClick={() => onCompare(v.id)}>
+              Compare with {current.version ? `v${current.version}` : 'the current version'}
+            </button>
+          ) : null}
           {v.current && onLifecycleChanged ? (
             <VersionLifecycleActions
               vaultId={v.id}
@@ -220,6 +229,7 @@ export function VaultVersions({
   const { exporting, exportNote, exportHistory } = useSignedHistoryExport(title);
   const versions = st.data?.versions ?? [];
   const currentId = versions.find((v) => v.current)?.id;
+  const [comparing, setComparing] = useState<string | null>(null);
 
   let body: React.ReactNode;
   if (st.loading) body = <div className="vd-d-idx">Loading versions…</div>;
@@ -238,6 +248,7 @@ export function VaultVersions({
         onDownload={onDownload}
         downloadingId={downloadingId}
         onLifecycleChanged={onLifecycleChanged}
+        onCompare={setComparing}
       />
     );
   }
@@ -246,6 +257,9 @@ export function VaultVersions({
     <div data-testid="vault-versions">
       <div className="vd-d-seclbl">Versions</div>
       {body}
+      {comparing && currentId ? (
+        <VaultVersionCompare projectId={projectId} documentId={currentId} againstId={comparing} onClose={() => setComparing(null)} />
+      ) : null}
       <input
         ref={picker}
         type="file"

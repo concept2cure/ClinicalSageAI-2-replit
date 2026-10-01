@@ -69,6 +69,14 @@ export interface SignedArtifactActInput {
   /** True only when the re-authentication verified a second factor. */
   secondFactorVerified: boolean;
   ipAddress: string | null;
+  /** The door the act was taken through, on its ledger row. The status route's when omitted. */
+  surface?: string;
+  /**
+   * When the signer was re-authenticated, when that was before this commit
+   * (AnA's sign-off is verified by the governed-action route); the commit time
+   * otherwise, as the status route re-authenticates immediately before it.
+   */
+  authenticatedAt?: Date;
 }
 
 export interface SignedArtifactAct {
@@ -138,7 +146,7 @@ export async function commitSignedArtifactAct(
       signatureId,
     },
     domain: 'authoring',
-    surface: 'artifact-status',
+    surface: input.surface ?? 'artifact-status',
   });
 
   const signature = await insertActSignature(tx, input, version, {
@@ -247,7 +255,7 @@ async function insertActSignature(
       signerEmail: act.signer.email,
       signerRole: input.userRole,
       authenticationMethod: input.secondFactorVerified ? 'password+totp' : 'password',
-      authenticationTimestamp: act.signedAt,
+      authenticationTimestamp: input.authenticatedAt ?? act.signedAt,
       secondFactorVerified: input.secondFactorVerified,
       signatureHash,
       signatureManifest: {
