@@ -2057,5 +2057,80 @@ export default function createProjectVaultRoutes(): Router {
     }
   });
 
+  /* ── Document relationships (plan critique 15, D2) ─────────────────────
+     One version names the documents that support it, that it references or
+     that it is based on: the replacement for the parentDocumentId VR-05
+     refused. vault-relationships.ts checks the role, the organisation and the
+     vocabulary, and writes each change with a chained row on both documents.
+     A relationship is removed with a reason, never deleted. */
+  const relationshipFailure = (res: Response, err: unknown, what: string) => {
+    logger.error(`vault relationships ${what} failed`, { err: err instanceof Error ? err.message : String(err) });
+    return res.status(500).json({ success: false, error: 'RELATIONSHIPS_UNAVAILABLE',
+      message: what === 'read'
+        ? "This document's relationships could not be read. Nothing is shown rather than an incomplete list."
+        : 'The relationship could not be saved. Nothing was changed.' });
+  };
+
+  router.get('/:id/documents/:documentId/relationships', async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const id = String(req.params.id ?? '');
+    if (!UUID_RE.test(id)) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+    try {
+      const { listRelationships } = await import('../../services/vault/vault-relationships.js');
+      const out = await listRelationships(pool, { programId: id, organizationId: orgId, documentId: String(req.params.documentId ?? '') });
+      if (!out.ok) return res.status(out.status).json({ success: false, error: out.code, message: out.message });
+      return res.json({ success: true, data: { relationships: out.relationships } });
+    } catch (err) {
+      return relationshipFailure(res, err, 'read');
+    }
+  });
+
+  router.post('/:id/documents/:documentId/relationships', requireEditorAccess, async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    try {
+      const { addRelationship } = await import('../../services/vault/vault-relationships.js');
+      const out = await addRelationship({
+        programId: String(req.params.id),
+        organizationId: orgId,
+        userId: (req as any).user?.id ?? null,
+        documentId: String(req.params.documentId ?? ''),
+        toDocumentId: body.toDocumentId,
+        type: body.type,
+        note: body.note,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      if (!out.ok) return res.status(out.status).json({ success: false, error: out.code, message: out.message });
+      return res.status(201).json({ success: true, data: { id: out.id } });
+    } catch (err) {
+      return relationshipFailure(res, err, 'write');
+    }
+  });
+
+  router.post('/:id/relationships/:relationshipId/remove', requireEditorAccess, async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    try {
+      const { removeRelationship } = await import('../../services/vault/vault-relationships.js');
+      const out = await removeRelationship({
+        programId: String(req.params.id),
+        organizationId: orgId,
+        userId: (req as any).user?.id ?? null,
+        relationshipId: String(req.params.relationshipId ?? ''),
+        reason: body.reason,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      if (!out.ok) return res.status(out.status).json({ success: false, error: out.code, message: out.message });
+      return res.json({ success: true });
+    } catch (err) {
+      return relationshipFailure(res, err, 'write');
+    }
+  });
+
   return router;
 }

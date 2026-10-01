@@ -30,6 +30,7 @@ import { DataRoomFileBar, RoomPick, useDataRoomFiling, type DataRoomFiling } fro
 import { ConfirmSuggestedBar, useConfirmSuggested } from './VaultConfirmSuggested';
 import { VaultLibraryResults } from './VaultLibraryResults';
 import { VaultFixityCheck } from './VaultFixityCheck';
+import { VaultRelationships } from './VaultRelationships';
 import { downloadBlob, safeFileName } from '../download';
 import {
   EDITOR_TARGET_DOC_TYPES,
@@ -1888,6 +1889,14 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                       />
                     ) : null}
                     {projectId && sel.docId ? (
+                      <VaultRelationships
+                        key={`relationships-${sel.docId}`}
+                        projectId={projectId}
+                        documentId={sel.docId}
+                        onChanged={() => setVaultEpoch((n) => n + 1)}
+                      />
+                    ) : null}
+                    {projectId && sel.docId ? (
                       <DocumentHistory key={`${sel.docId}-${vaultEpoch}`} projectId={projectId} documentUuid={sel.docId} />
                     ) : null}
                   </>
@@ -1911,6 +1920,12 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                       onUploadNewVersion={(file, currentId) => void uploadNewVersion(file, sel, currentId)}
                       uploading={uploading}
                       onLifecycleChanged={() => setVaultEpoch((n) => n + 1)}
+                    />
+                    <VaultRelationships
+                      key={`relationships-${sel.docId}`}
+                      projectId={projectId}
+                      documentId={sel.docId}
+                      onChanged={() => setVaultEpoch((n) => n + 1)}
                     />
                     <DocumentHistory key={`${sel.docId}-${vaultEpoch}`} projectId={projectId} documentUuid={sel.docId} />
                   </>
