@@ -53,10 +53,10 @@
  */
 
 import type { Request, Response } from 'express';
-import type { PoolClient } from 'pg';
 import { z } from 'zod';
-import { pool } from '../db';
+import { requestPgClient } from '../db/requestDb';
 import { serverError } from '../lib/api-response';
+import type { RequestDbClient } from '../middleware/lazyRequestDbClient';
 import { signingAttemptLimiter } from '../middleware/signing-attempt-limiter';
 import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role';
 import { reverifySigner, type SignerReverification } from '../services/part11/reverify-signer';
@@ -106,7 +106,7 @@ export interface SignedAct {
   /** Set as app.current_user_role on the signing transaction, where the route's other writes set it. */
   tenantRole?: string;
   /** The domain write, on the signing transaction. Throw an error with a `code` to refuse. */
-  run: (client: PoolClient, orgId: number, userId: number) => Promise<SignedActResult>;
+  run: (client: RequestDbClient, orgId: number, userId: number) => Promise<SignedActResult>;
 }
 
 interface SignatureComponents {
@@ -195,9 +195,13 @@ export async function signGovernedAct(req: Request, res: Response, act: SignedAc
     return;
   }
 
-  let client: PoolClient;
+  // Steps 5-7 run on the request's own connection, which the auth boundary
+  // pinned with this tenant's session variables; the request releases it when
+  // the response ends. A request with no tenant connection refuses here rather
+  // than signing on a shared-pool connection.
+  let client: RequestDbClient;
   try {
-    client = await pool.connect();
+    client = requestPgClient(req) as unknown as RequestDbClient;
   } catch (err) {
     serverError(res, log, 'opening the signing transaction', err);
     return;
@@ -229,7 +233,5 @@ export async function signGovernedAct(req: Request, res: Response, act: SignedAc
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
     answerFailure(res, act.codeStatus, err);
-  } finally {
-    client.release();
   }
 }

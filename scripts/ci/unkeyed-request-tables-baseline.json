@@ -1,7 +1,7 @@
 {
   "$comment": "Tables a per-request server path reads that carry NO tenant column, so no RLS sweep in this repository can policy them. Each entry needs a reason whose first word is one of: global | derived | exempt | unreviewed. \"unreviewed\" is a DEFECT awaiting triage, not a category — three cross-tenant disclosures on 2026-09-10 were all tables that would have sat here as \"unreviewed\". Shrink this file; never grow it. See docs/work-orders/WO-13-grdhe-tenant-scoping.md.",
   "generatedAt": "2026-09-30T23:33:24.313Z",
-  "total": 109,
+  "total": 108,
   "entries": {
     "adversarial.regulatory_adversarial_precedents": "unreviewed — no one has classified this table yet",
     "ai_claim_citations": "unreviewed — no one has classified this table yet",
@@ -14,7 +14,6 @@
     "artifact_compute_runtime_profiles": "unreviewed — no one has classified this table yet",
     "assembly_audit_logs": "unreviewed — no one has classified this table yet",
     "assembly_docs": "unreviewed — no one has classified this table yet",
-    "audit.tamper_proof_log": "unreviewed — WO-13 item 5. Hash-chained Part 11 event log; no tenant column at all (db/migrations/20260813_audit_tamper_proof_log.sql:64). auditService.getAuditLog's fallback now REFUSES a tenant-scoped read rather than answering it from here (15bac663d). Same decision owed.",
     "c2c_correspondence_issues": "unreviewed — no one has classified this table yet",
     "c2c_document_section_evidence": "unreviewed — no one has classified this table yet",
     "c2c_document_section_versions": "derived — the per-section version ledger (migrations/20260528_phase9_document_schema.sql). Keyed through its parent chain: section_id bigint NOT NULL REFERENCES c2c_document_sections(id) -> document_id text NOT NULL REFERENCES c2c_documents(id) -> c2c_documents.org_id integer NOT NULL. Its one per-request reader, documentAuthors() in server/services/governance/separation-of-duties.ts (added by 610f687, 2026-09-22), joins exactly that chain and filters d.org_id = $2, where $2 is the caller's org from resolveOrgId(req) in server/routes/c2c/actions.ts (401 when absent), and it selects only author_id. The intermediate c2c_document_sections is itself still unreviewed here, so the tenant key is two joins away and no RLS policy covers either child: isolation rests on that predicate. Classified 2026-09-23.",
@@ -90,6 +89,7 @@
     "predicate.predicate_safety_signals": "unreviewed — no one has classified this table yet",
     "proc_control_strategy": "unreviewed — no one has classified this table yet",
     "program_milestones": "unreviewed — no one has classified this table yet",
+    "public.audit_log_archives": "exempt — cross-tenant by design: the archive door ledger (db/migrations/20260617_audit_logs_immutability.sql:228), one row per batch public.audit_logs_archive_delete() removed (count, created_at span, cutoff, locator, sha256); a batch spans tenants and the table COMMENT says it is not tenant-keyed. Its one reader is the audit-chain integrity sweep (server/jobs/auditChainIntegritySweep.ts, under runWithSystemTenantScope(audit-chain-integrity-sweep)) through chain-anchor.ts archiveAllowance (735ba0a74), which reads only an aggregate (batches, rows, latest cutoff) to tell archiving from tampering. No request path reads it.",
     "q_sub_commitments": "unreviewed — no one has classified this table yet",
     "q_sub_meetings": "unreviewed — no one has classified this table yet",
     "q_sub_questions": "unreviewed — no one has classified this table yet",
@@ -109,7 +109,6 @@
     "submission_projects": "unreviewed — no one has classified this table yet",
     "submission_tasks": "unreviewed — no one has classified this table yet",
     "templates": "unreviewed — no one has classified this table yet",
-    "vault.document_archives": "derived — an archive snapshot of one vault document, keyed by original_document_id and program_id, both of tenant-keyed rows; written only by the scheduled retention sweep under the system scope (server/jobs/retentionCron.ts), read by no request path. Follow-up (P1-22): an organization_id column by amending migrations/20260608_vault_retention.sql in place (Rule 1), then a policy, once the migration window opens.",
     "vault.retention_policies": "global — platform-wide retention policies keyed by policy_name, read at vault admission to set retention_until (server/services/vault/vault-ingest.service.ts); no tenant data. Per-organisation policies are the P1-22 residual and would add the tenant key with them.",
     "vigilance_events": "unreviewed — no one has classified this table yet"
   }

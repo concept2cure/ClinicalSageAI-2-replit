@@ -91,7 +91,7 @@ const SCAN_ROOT = 'client/src/concept2cure';
  * wired and this number was not raised with it. Both are failures — see (3) in
  * the header. Raise it in the same commit that wires the surface.
  */
-const ID_BASELINE = 115;
+const ID_BASELINE = 116; // 116: conversation-thread, grounded since 2026-10-01 through the DocumentWorkbench it embeds (cf4aa7800, 4c8b5534d)
 
 /**
  * Routable ids that legitimately publish nothing, with the reason.
@@ -107,7 +107,6 @@ const ID_BASELINE = 115;
  */
 const NO_CONTEXT_NEEDED = {
   'client-portal': 'external-participant surface that deliberately offers no assistant',
-  'conversation-thread': 'the conversation itself — its context is the thread',
   'ana-command': 'AnA rail surface; its subject is AnA, not a screen under discussion',
   'ana-memory': 'AnA rail surface; renders what AnA already holds',
   coverage: 'engineering diagnostic, not a customer capability',
