@@ -15,6 +15,8 @@ let selectCall = 0;
 const tx = vi.hoisted(() => ({
   statements: [] as string[],
   archiveFailFor: new Set<string>(),
+  /** Documents another process already soft-deleted: the UPDATE matches no row. */
+  alreadyGone: new Set<string>(),
   audit: vi.fn(async (_client: unknown, _entry: unknown, _tenant?: unknown, _resource?: unknown) => undefined),
 }));
 // Typed loosely on purpose: the call ARGUMENTS are what the cases read, and a
@@ -47,7 +49,10 @@ vi.mock('../../db', () => {
         archived.push(String(params[0]));
       }
       if (/DELETE FROM vault\.documents/i.test(s)) deleted.push(String(params[0]));
-      if (/UPDATE vault\.documents SET deleted_at/i.test(s)) softDeleted.push(String(params[0]));
+      if (/UPDATE vault\.documents SET deleted_at/i.test(s)) {
+        if (tx.alreadyGone.has(String(params[0]))) return { rows: [], rowCount: 0 };
+        softDeleted.push(String(params[0]));
+      }
       if (/FROM regulatory_programs/i.test(s)) return { rows: [{ organization_id: 7 }], rowCount: 1 };
       return { rows: [], rowCount: 1 };
     }),
@@ -98,6 +103,7 @@ const savedEnv: Record<string, string | undefined> = {};
 beforeEach(() => {
   tx.statements = [];
   tx.archiveFailFor = new Set();
+  tx.alreadyGone = new Set();
   tx.audit.mockClear();
   mail.sendMail.mockClear();
   mail.sendMail.mockResolvedValue(undefined);
@@ -119,10 +125,24 @@ afterEach(() => {
 });
 
 describe('runRetentionSweep — per-policy processing', () => {
+  /* U19: three server processes start the nightly sweep. One that reaches a
+     document another has just disposed of must not archive it again or write
+     a second retention_soft_delete audit row for a deletion it did not make. */
+  it('a document another process already disposed of gets no second archive and no second audit row', async () => {
+    arrange({ docs: [doc('doc-raced'), doc('doc-fresh')] });
+    tx.alreadyGone.add('doc-raced');
+    const summary = await runRetentionSweep();
+    expect(summary).toEqual({ scanned: 2, archived: 1, softDeleted: 1, destructionRefused: 0, heldByLegalHold: 0, alreadyDisposed: 1, errors: 0 });
+    // Its archive insert ran inside the transaction and was rolled back with it.
+    expect(tx.statements.filter(t => t === 'ROLLBACK')).toHaveLength(1);
+    expect(tx.statements.filter(t => t === 'COMMIT')).toHaveLength(1);
+    expect(auditEntries().map(e => e.resourceId)).toEqual(['doc-fresh']);
+  });
+
   it('falls back to archive + soft-delete for a document with no policy, and never hard-deletes it', async () => {
     arrange({ docs: [doc('doc-nopolicy')] });
     const summary = await runRetentionSweep();
-    expect(summary).toEqual({ scanned: 1, archived: 1, softDeleted: 1, destructionRefused: 0, heldByLegalHold: 0, errors: 0 });
+    expect(summary).toEqual({ scanned: 1, archived: 1, softDeleted: 1, destructionRefused: 0, heldByLegalHold: 0, alreadyDisposed: 0, errors: 0 });
     expect(archived).toEqual(['doc-nopolicy']);
     expect(softDeleted).toEqual(['doc-nopolicy']);
     expect(deleted).toEqual([]);
@@ -133,7 +153,7 @@ describe('runRetentionSweep — per-policy processing', () => {
   it('uses the default (archive + soft-delete) when the named policy is unknown or inactive', async () => {
     arrange({ docs: [doc('doc-ghost', { retentionPolicy: 'no-such-policy' })], policies: [policy('something-else', true, true)] });
     const summary = await runRetentionSweep();
-    expect(summary).toEqual({ scanned: 1, archived: 1, softDeleted: 1, destructionRefused: 0, heldByLegalHold: 0, errors: 0 });
+    expect(summary).toEqual({ scanned: 1, archived: 1, softDeleted: 1, destructionRefused: 0, heldByLegalHold: 0, alreadyDisposed: 0, errors: 0 });
     expect(deleted).toEqual([]);
     expect(auditEntries()[0].details).toMatchObject({ policyMatched: false, retentionPolicy: 'no-such-policy' });
   });
@@ -149,7 +169,7 @@ describe('runRetentionSweep — per-policy processing', () => {
       policies: [policy('purge', true, true), policy('keep-row', true, false), policy('no-archive', false, false)],
     });
     const summary = await runRetentionSweep();
-    expect(summary).toEqual({ scanned: 3, archived: 1, softDeleted: 2, destructionRefused: 1, heldByLegalHold: 0, errors: 0 });
+    expect(summary).toEqual({ scanned: 3, archived: 1, softDeleted: 2, destructionRefused: 1, heldByLegalHold: 0, alreadyDisposed: 0, errors: 0 });
     expect(deleted).toEqual([]);
     expect(archived).toEqual(['doc-keep']);
     expect(softDeleted).toEqual(['doc-keep', 'doc-noarch']);
@@ -166,7 +186,7 @@ describe('runRetentionSweep — failure semantics', () => {
     arrange({ docs: [doc('doc-bad'), doc('doc-good')] });
     tx.archiveFailFor = new Set(['doc-bad']);
     const summary = await runRetentionSweep();
-    expect(summary).toEqual({ scanned: 2, archived: 1, softDeleted: 1, destructionRefused: 0, heldByLegalHold: 0, errors: 1 });
+    expect(summary).toEqual({ scanned: 2, archived: 1, softDeleted: 1, destructionRefused: 0, heldByLegalHold: 0, alreadyDisposed: 0, errors: 1 });
     expect(archived).toEqual(['doc-good']);
     expect(softDeleted).toEqual(['doc-good']);
     expect(auditEntries().map(e => e.resourceId)).toEqual(['doc-good']);
