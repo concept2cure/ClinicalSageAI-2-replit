@@ -96,6 +96,7 @@ import {
   type Part11Signoff,
 } from './part11-governance';
 import { authorizeCommand, isPrivacyAdmin, isProposeOnlyCommand } from './command-rbac';
+import { statedReasonOrNull } from '../../routes/governed-reason.js';
 import {
   explainAuditRow,
   EXPLAIN_AUDIT_ROW_METADATA,
@@ -1942,7 +1943,10 @@ export async function erasePersonalData(
 
   const client = await pool.connect();
   try {
-    const reason = params?.reason || 'GDPR Art. 17 erasure request';
+    // The reason the person stated in the e-signature ceremony
+    // (POST /api/ana-ri/governed-action stamps ctx.signoff), or none. Until
+    // 2026-10-01 this was the model's params.reason, or a stock sentence (D5).
+    const reason = statedReasonOrNull(ctx.signoff?.reasonForChange);
     await client.query('BEGIN');
 
     // The signature FIRST, before any redaction. persistGovernedActionSignature
@@ -1971,7 +1975,7 @@ export async function erasePersonalData(
       [
         ctx.organizationId,
         String(dataSubjectId),
-        `AnA erasure workflow completed. Reason: ${reason}. ${erasureMessage(dataSubjectId, outcome)} ` +
+        `AnA erasure workflow completed. ${reason ? `Reason: ${reason}. ` : ''}${erasureMessage(dataSubjectId, outcome)} ` +
           `Electronic signature ${signatureId}.`,
       ]
     );
