@@ -172,6 +172,8 @@ interface AnaTurnProps {
     liveDrive?: OwnedSurfaceViewProps['liveDrive'];
     /** The pane beside the conversation the expanded editor renders into. */
     paneEl?: HTMLElement | null;
+    /** Bumped when an AnA turn ends, so the canvas re-reads the record. */
+    refreshKey?: number;
   };
 }
 
@@ -247,7 +249,8 @@ function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, canvas }: Ana
             onAsk={canvas.onAsk}
             fireToast={canvas.fireToast}
             liveDrive={canvas.liveDrive}
-            paneEl={canvas.paneEl ?? null}
+            paneEl={canvas.paneEl}
+            refreshKey={canvas.refreshKey}
           />
         )}
         {turn.links && (
@@ -778,6 +781,14 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
      editor into (2026-10-01). Always mounted, hidden while no canvas is open,
      so a workbench portalled into it keeps its state across close and reopen. */
   const [canvasPaneEl, setCanvasPaneEl] = useState<HTMLDivElement | null>(null);
+  /* Counts AnA turns as they settle. Every canvas re-reads its document on a
+     new value, so a section AnA revised in that turn is on the card. */
+  const [turnsSettled, setTurnsSettled] = useState(0);
+  const wasStreamingRef = useRef(false);
+  useEffect(() => {
+    if (wasStreamingRef.current && !anaChat.isStreaming) setTurnsSettled(n => n + 1);
+    wasStreamingRef.current = anaChat.isStreaming;
+  }, [anaChat.isStreaming]);
   /* The side column — AnA's progress over the governed outputs — is the
      progress dock on this page: one shared show/hide memory with every other
      host (workDock.ts), toggled by the chip in the header, closed from inside
@@ -1118,6 +1129,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
                       fireToast,
                       liveDrive,
                       paneEl: canvasPaneEl,
+                      refreshKey: turnsSettled,
                     } : undefined}
                   />
                 )
