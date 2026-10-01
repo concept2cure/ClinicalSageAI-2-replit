@@ -355,6 +355,34 @@ describe('an empty section files nothing (sweep F11)', () => {
   });
 });
 
+describe('per-submission Module 1 documents on an FDA follow-up (sweep F13)', () => {
+  it("a revised cover letter files as NEW in the follow-up — sequence 0000's letter is not superseded", async () => {
+    expect((await assemble()).status).toBe(200);
+    await fileTheStoredBundle('original');
+    await pg.query(`UPDATE concept2cure_artifacts SET content = 'We submit sequence 0001.', version = 2, approved_version_id = 2,
+      updated_at = '2026-02-03T04:05:06Z' WHERE id = 1`);
+    const res = await assemble({ sequence: '0001', submissionType: 'Efficacy Supplement' });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.data.bundle.lifecycle.summary).toMatchObject({ new: 1, replace: 0 });
+    const { zip, bundle } = await storedBundle();
+    expect(bundle.leafManifest).toEqual([expect.objectContaining({ ctdSection: '1.2', operation: 'new' })]);
+    expect(await zip.file('m1/us/us-regional.xml')!.async('string')).not.toContain('modified-file=');
+  });
+
+  it('an IND follow-up that carries no Form FDA 1571 is blocked, and one with no new cover letter is warned', async () => {
+    expect((await assemble()).status).toBe(200);
+    await fileTheStoredBundle('original');
+    await pg.query(`UPDATE concept2cure_artifacts SET content = 'The overview, version two.', version = 2, approved_version_id = 2,
+      updated_at = '2026-02-03T04:05:06Z' WHERE id = 2`);
+    const res = await assemble({ sequence: '0001', submissionType: 'Efficacy Supplement' });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    const { bundle } = await storedBundle();
+    const byRule = (id: string) => bundle.validation.findings.filter((f: any) => f.ruleId === id);
+    expect(byRule('M1-FORM-1571-MISSING')).toEqual([expect.objectContaining({ severity: 'error' })]);
+    expect(byRule('M1-COVER-LETTER-MISSING')).toEqual([expect.objectContaining({ severity: 'warning' })]);
+  });
+});
+
 describe('a document moved to another CTD section (sweep F12)', () => {
   it('blocks the sequence that files it at the new section while the copy at the old one stays current, naming the withdrawal', async () => {
     expect((await assemble()).status).toBe(200);

@@ -844,6 +844,33 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     // 0000; without modified-file the superseded version stays current at the
     // agency. Both are properties of what the packager is HANDED, so that is
     // what this asserts — a router that dropped either passed the old suite.
+    // (A dossier document, not a cover letter: an FDA submission's own cover
+    // letter is never a replace of the one on file — sweep F13, below.)
+    const coSection = [{ id: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 0 }];
+    dbState.pkg = lockedPkg();
+    dbState.sections = coSection;
+    dbState.mappedByCall = [[art('co', null, 2)]];
+    expect((await post()).status).toBe(200);
+    const filed = filedFrom('0000');
+
+    packageLeafBytesFn.mockClear();
+    (dbState as any)._pkgResolved = false;
+    dbState.pkg = lockedPkg({ regulatory: REGULATORY, filedSequences: [filed] });
+    dbState.sections = coSection;
+    dbState.mappedByCall = [[{ ...art('co', null, 2), content: 'Real content co, revised' }]];
+    const res = await post({ sequence: '0001', submissionType: 'Efficacy Supplement' });
+    expect(res.status).toBe(200);
+    const sent = packageLeafBytesFn.mock.calls[0][0].leaves;
+    expect(sent).toHaveLength(1);
+    expect(sent[0]).toMatchObject({ ctdSection: '2.5', fileName: filed.leaves[0].fileName, operation: 'replace' });
+    expect(sent[0].modifiedFile).toContain('0000');
+    expect(res.body.data.bundle.lifecycle.summary).toMatchObject({ replace: 1, new: 0, unchanged: 0 });
+  });
+
+  it('an FDA cover letter is never a replace: a revised one files NEW, beside the one on file (sweep F13)', async () => {
+    // Each FDA submission carries its own cover letter. Diffed like dossier
+    // content, a revised letter was filed as a replace of 0000's — telling the
+    // agency the original submission's letter had been superseded.
     dbState.pkg = lockedPkg({ regulatory: REGULATORY, filedSequences: [FILED_0000] });
     dbState.sections = [{ id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 }];
     dbState.mappedByCall = [[art('cover', null)]];
@@ -851,9 +878,10 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(res.status).toBe(200);
     const sent = packageLeafBytesFn.mock.calls[0][0].leaves;
     expect(sent).toHaveLength(1);
-    expect(sent[0]).toMatchObject({ ctdSection: '1.2', fileName: 'cover-letter-cover.pdf', operation: 'replace' });
-    expect(sent[0].modifiedFile).toContain('0000');
-    expect(res.body.data.bundle.lifecycle.summary).toMatchObject({ replace: 1, new: 0, unchanged: 0 });
+    expect(sent[0]).toMatchObject({ ctdSection: '1.2', fileName: 'cover-letter-cover.pdf', operation: 'new' });
+    expect(sent[0]).not.toHaveProperty('modifiedFile');
+    // 0000's letter stays on file, unchanged.
+    expect(res.body.data.bundle.lifecycle.summary).toMatchObject({ new: 1, replace: 0, unchanged: 1 });
   });
 
   it('a leaf byte-identical to the one on file is NOT handed to the packager — a sequence carries what changed', async () => {
@@ -871,7 +899,7 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     const filed = filedFrom('0000');
     expect(filed.leaves).toHaveLength(2);
 
-    // Second sequence: the cover letter is edited, the clinical overview is not.
+    // Second sequence: the clinical overview is edited, the cover letter is not.
     packageLeafBytesFn.mockClear();
     (dbState as any)._pkgResolved = false;
     dbState.pkg = lockedPkg({ regulatory: REGULATORY, filedSequences: [filed] });
@@ -880,13 +908,14 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
       { id: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 1 },
     ];
     dbState.mappedByCall = [
-      [{ ...art('cover', null), content: 'Real content cover, revised' }],
-      [art('co', null, 2)],
+      [art('cover', null)],
+      [{ ...art('co', null, 2), content: 'Real content co, revised' }],
     ];
     const res = await post({ sequence: '0001', submissionType: 'Efficacy Supplement' });
     expect(res.status).toBe(200);
     const sent = packageLeafBytesFn.mock.calls[0][0].leaves;
-    expect(sent.map((l: any) => l.fileName)).toEqual(['cover-letter-cover.pdf']);
+    const coFile = (filed.leaves as Array<{ ctdSection: string; fileName: string }>).find((l) => l.ctdSection === '2.5')!.fileName;
+    expect(sent.map((l: any) => l.fileName)).toEqual([coFile]);
     expect(sent[0].operation).toBe('replace');
     expect(res.body.data.bundle.lifecycle).toMatchObject({
       summary: { replace: 1, unchanged: 1, new: 0 }, omittedCount: 1,
@@ -1040,7 +1069,8 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(gone.operation).toBe('delete');
     expect(gone.bytes).toBeUndefined();          // a withdrawal ships no file
     expect(gone.modifiedFile).toContain('0000'); // it points at the one on file
-    expect(res.body.data.bundle.lifecycle.summary).toMatchObject({ delete: 1, replace: 1 });
+    // The revised cover letter files new: it is this submission's own (sweep F13).
+    expect(res.body.data.bundle.lifecycle.summary).toMatchObject({ delete: 1, new: 1, replace: 0 });
     // It is not a file, so it is neither validated as one nor counted as one.
     expect(dbState.updateSet.metadata.bundle.leafCount).toBe(1);
   });

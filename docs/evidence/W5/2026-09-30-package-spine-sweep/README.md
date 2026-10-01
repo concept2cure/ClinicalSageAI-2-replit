@@ -44,7 +44,7 @@ both finders, and every verifier, were cut off by account usage limits
 | F10 | lifecycle | high | A filed withdrawal never leaves the filed state: the delete entry carries no `leafKey`, so the fold keyed on `leafKey` drops nothing; the document can be withdrawn twice, replaced after withdrawal, and is refused ("already on file") when re-filed. | **confirmed** 2026-10-01; **fixed** — see "Fixed after verification" |
 | F11 | lifecycle | medium | An empty-section placeholder PDF ("[EMPTY SECTION] …") is filed to the agency and never superseded: the real document later files as `new` beside it. | **confirmed** 2026-10-01 (medium); **fixed** — an empty section files nothing |
 | F12 | lifecycle | medium | A document moved to another CTD section is filed `new` there while the filed copy stays current at the old section, with no finding. | **confirmed** 2026-10-01 (medium); **fixed** — a move names the withdrawal it needs |
-| F13 | lifecycle | medium | Cover letters and forms are diffed like dossier content: an unchanged cover letter is left out of a follow-up, and an edited one replaces sequence 0000's. | **confirmed** 2026-10-01 (medium; the IND 1571 half is firm, the cover-letter half is an FDA "should") |
+| F13 | lifecycle | medium | Cover letters and forms are diffed like dossier content: an unchanged cover letter is left out of a follow-up, and an edited one replaces sequence 0000's. | **confirmed** 2026-10-01 (medium); **fixed** — per-submission letters and forms file new; an IND follow-up without a 1571 blocks |
 | F14 | transmit | high | A send to FDA's ESG **test** environment (`staging`) is recorded as the package's real filed sequence. | **confirmed** 2026-10-01 (high); **fixed** — see "Fixed after verification" |
 | F15 | transmit | high | The duplicate-send lock is keyed on the bundle's bytes, not its sequence; re-assembling while an earlier send of 0000 is unconfirmed sends 0000 a second time. | **partially confirmed** 2026-10-01 (medium); **fixed** (sequence lock) |
 | F16 | transmit | medium | The AS2 message: `AS2-To` defaults to `FDA-CESUB`, no Center/submission-type routing, no S/MIME signing or encryption (a signature is computed and dropped), and the MDN is not verified. | **confirmed** 2026-10-01 (medium); **`FDA-CESUB` default removed**; S/MIME, routing and MDN verification open |
@@ -370,6 +370,27 @@ WITHOUT the fix: 4 failed
   × names an empty-section placeholder still on file …
   × e2e: blocks the sequence that files it at the new section … → expected [] to have a length of 1
 WITH the fix: lifecycle unit, package-spine e2e and assemble routes: 106 passed
+```
+
+**F13 — cover letters and forms were diffed like dossier content.** For FDA,
+`planSequence` takes a `perSubmission` predicate (1.2, 1.1, 1.1.x): such a leaf
+is never a `replace` — it files `new` when it differs from the one on file, and
+is left out when it is that same document unchanged (the earlier submission's).
+On an FDA follow-up the route then names what the sequence lacks of its own
+Module 1: `M1-FORM-1571-MISSING` (error, IND packages — Form FDA 1571 accompanies
+every IND submission) and `M1-COVER-LETTER-MISSING` (warning — FDA expects one
+with every submission). Other regions are diffed as before. Sequence 0000's
+completeness (an IND original without a 1571) is the readiness engine's, not
+this check's. Three route tests that used the cover letter as their example of a
+replace now use a dossier document, and the cover letter has its own case.
+
+```
+WITHOUT the fix: 3 failed
+  × a new cover letter files as NEW, never as a replace … → expected [ { …(3) } ] to deeply equal [ { ctdSection: '1.2', …(2) } ]
+  × e2e: a revised cover letter files as NEW in the follow-up … → expected { new: 0, replace: 1, … } to match { new: 1, replace: 0 }
+  × e2e: an IND follow-up that carries no Form FDA 1571 is blocked … → expected [] to deeply equal [ ObjectContaining{…} ]
+WITH the fix: lifecycle unit, package-spine e2e, assemble, preflight, transmit-guard and
+  gateway routes, client: 247 passed
 ```
 
 ## What this sweep produced that is already fixed
