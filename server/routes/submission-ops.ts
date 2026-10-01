@@ -2590,6 +2590,10 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
           operation: 'delete',
           ...(l.md5 ? { md5: l.md5 } : {}),
           ...(l.modifiedFile ? { modifiedFile: l.modifiedFile } : {}),
+          // Which document left, by identity: without it the filed history
+          // recorded only a path, and the fold kept the document on file
+          // (2026-10-01, W5/D7, sweep F10).
+          ...(l.leafKey ? { leafKey: l.leafKey } : {}),
         });
       }
       ctdLeaves.length = 0;

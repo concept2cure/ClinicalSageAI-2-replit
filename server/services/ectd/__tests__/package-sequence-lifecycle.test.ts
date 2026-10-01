@@ -95,6 +95,33 @@ describe('foldFiledState', () => {
     expect(fold.map((f) => f.fileName)).toEqual(['clinical-overview.pdf']);
   });
 
+  it('a withdrawal filed WITHOUT the document\'s key still takes the keyed document off file', () => {
+    // 2026-10-01 (W5/D7, sweep F10). The assemble route filed every withdrawal
+    // without a leafKey while the document it withdrew was folded under one, so
+    // the delete removed nothing: the document stayed "on file" for every later
+    // sequence, which then withdrew it a second time, filed its return as a
+    // replace of a deleted leaf, or refused it as "already on file". Histories
+    // written that way exist, so the fold has to read them, not only stop
+    // producing them.
+    const keyed: FiledSequence = {
+      ...SEQ_0000,
+      leaves: [
+        leaf('2.5', 'clinical-overview.pdf', 'md5-co-v1', { leafKey: 'artifact:artifact_co@2.5' }),
+        leaf('3.2.P.1', 'description.pdf', 'md5-desc-v1', { leafKey: 'artifact:artifact_d@3.2.P.1' }),
+      ],
+    };
+    const keylessDelete: FiledSequence = {
+      ...SEQ_0000, sequence: '0001',
+      leaves: [leaf('3.2.P.1', 'description.pdf', 'md5-desc-v1', { operation: 'delete' })],
+    };
+    expect(foldFiledState([keyed, keylessDelete]).map((f) => f.leafKey)).toEqual(['artifact:artifact_co@2.5']);
+    const keyedDelete: FiledSequence = {
+      ...keylessDelete,
+      leaves: [leaf('3.2.P.1', 'description.pdf', 'md5-desc-v1', { operation: 'delete', leafKey: 'artifact:artifact_d@3.2.P.1' })],
+    };
+    expect(foldFiledState([keyed, keyedDelete]).map((f) => f.leafKey)).toEqual(['artifact:artifact_co@2.5']);
+  });
+
   it('carries the pre-normalization digest into the prior state, and treats a malformed one as unreadable', () => {
     const filed: FiledSequence = {
       ...SEQ_0000, leaves: [leaf('2.5', 'clinical-overview.pdf', 'gs-output', { sourceMd5: 'rendered' })],
@@ -259,6 +286,21 @@ describe('planSequence', () => {
     // names and checks nothing.
     expect(gone.md5).toBe('md5-desc-v1');
     expect(gone.title).toBeTruthy();
+  });
+
+  it('a withdrawal names the identity of the document it withdraws, so the filed history records which one left', () => {
+    const keyed: FiledSequence = {
+      ...SEQ_0000,
+      leaves: [
+        leaf('2.5', 'clinical-overview.pdf', 'md5-co-v1', { leafKey: 'artifact:artifact_co@2.5' }),
+        leaf('3.2.P.1', 'description.pdf', 'md5-desc-v1', { leafKey: 'artifact:artifact_d@3.2.P.1' }),
+      ],
+    };
+    const plan = planSequence({
+      sequence: '0001', submissionType: 'Efficacy Supplement', filed: [keyed], desired: [],
+      withdraw: [{ ctdSection: '3.2.P.1', fileName: 'description.pdf' }],
+    });
+    expect(plan.leaves).toEqual([expect.objectContaining({ operation: 'delete', leafKey: 'artifact:artifact_d@3.2.P.1' })]);
   });
 
   it('a sequence that ONLY withdraws is a filing', () => {

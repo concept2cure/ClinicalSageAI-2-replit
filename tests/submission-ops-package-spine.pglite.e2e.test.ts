@@ -259,3 +259,54 @@ describe('the package-model spine, end to end on the real packager', () => {
     });
   }, 60_000);
 });
+
+describe('a filed withdrawal leaves the filed state (sweep F10)', () => {
+  /** File 0000; then withdraw the description in 0001 and file that too. The
+   *  section goes with its only document, so 0001 carries the withdrawal alone. */
+  async function fileAWithdrawal() {
+    expect((await assemble()).status).toBe(200);
+    await fileTheStoredBundle('original');
+    const filed = (await storedMetadata()).filedSequences[0].leaves.find((l: any) => l.ctdSection === '3.2.P.1');
+    await pg.query(`DELETE FROM c2c_package_sections WHERE id = 14`);
+    const res = await assemble({
+      sequence: '0001', submissionType: 'Efficacy Supplement',
+      withdraw: [{ ctdSection: '3.2.P.1', fileName: filed.fileName }],
+    });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.data.bundle.lifecycle.summary).toMatchObject({ delete: 1, new: 0, replace: 0 });
+    await fileTheStoredBundle('Efficacy Supplement');
+    return filed as { fileName: string; leafKey: string };
+  }
+
+  it('the filed withdrawal records WHICH document left, by its identity', async () => {
+    const filed = await fileAWithdrawal();
+    const history = (await storedMetadata()).filedSequences;
+    expect(history[1].leaves).toEqual([
+      expect.objectContaining({ operation: 'delete', fileName: filed.fileName, leafKey: filed.leafKey }),
+    ]);
+  });
+
+  it('withdrawing the same document again is refused: it is no longer on file', async () => {
+    const filed = await fileAWithdrawal();
+    const res = await assemble({
+      sequence: '0002', submissionType: 'Efficacy Supplement',
+      withdraw: [{ ctdSection: '3.2.P.1', fileName: filed.fileName }],
+    });
+    expect(res.status, `a second delete of a withdrawn leaf: ${JSON.stringify(res.body?.data?.bundle?.lifecycle)}`).toBe(409);
+    expect(res.body.code).toBe('WITHDRAWAL_NOT_ON_FILE');
+  });
+
+  it('the withdrawn document, filed again unchanged, is NEW — not "already on file", not a replace', async () => {
+    await fileAWithdrawal();
+    await pg.exec(`
+      INSERT INTO c2c_package_sections (id, section_id, org_id, package_db_id, section_key, section_label, sort_order)
+        VALUES (14, 'sec_desc', ${ORG}, ${PKG}, '3.2.P.1', 'Description and Composition', 2);
+      INSERT INTO c2c_artifact_section_map (org_id, artifact_id, section_db_id) VALUES (${ORG}, 3, 14);`);
+    const res = await assemble({ sequence: '0002', submissionType: 'Efficacy Supplement' });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.data.bundle.lifecycle.summary).toMatchObject({ new: 1, replace: 0, delete: 0, unchanged: 2 });
+    const { zip, bundle } = await storedBundle();
+    expect(bundle.leafManifest).toEqual([expect.objectContaining({ ctdSection: '3.2.P.1', operation: 'new' })]);
+    expect(await zip.file('index.xml')!.async('string')).not.toContain('modified-file=');
+  });
+});
