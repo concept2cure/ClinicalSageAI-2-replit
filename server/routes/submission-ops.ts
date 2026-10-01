@@ -57,14 +57,23 @@ import { buildECTDZip } from '../src/services/ectd';
 import { packageLeafBytes } from '../services/ectd/package-leaf-bytes';
 import { moduleForSectionKey, resolveArtifactPlacement } from '../services/ectd/section-to-ctd';
 import {
+  fdaIdentifierProblems,
+  readRegulatoryContact,
   readRegulatoryIdentifiers,
+  sameRegulatoryContact,
+  usableContactField,
   usableIdentifier,
+  REGULATORY_CONTACT_FIELDS,
   REGULATORY_IDENTIFIER_FIELDS,
+  type FdaIdentifierProblem,
+  type RegulatoryContactField,
+  type RegulatoryContactValues,
 } from '../services/ectd/regulatory-identifiers';
+import type { FdaApplicantContact } from '../services/submission-gateways/ectd-packager/types';
 import { recordGovernedAction } from './c2c/actions';
 import { mapSectionToECTDPath } from '../services/documentExportService';
 import { buildLeafPdf } from '../services/ectd/leaf-pdf';
-import { resolveSubmissionTypeCode, submissionTypeTerms } from '../services/ectd/controlled-vocab';
+import { resolveApplicationTypeCode, resolveSubmissionTypeCode, submissionTypeTerms } from '../services/ectd/controlled-vocab';
 import {
   isBundleStorageEnabled,
   bundleStorageBucket,
@@ -1895,6 +1904,22 @@ function deriveRegionAndFormat(
   return { region: 'FDA', format: 'ectd' };
 }
 
+/**
+ * The us-regional application-type code (fdaatN) a package files under when it
+ * is an FDA eCTD application, or null when it is not one. It is one when the
+ * region/format it is built for (by default, its family's) is FDA / ectd AND the
+ * family resolves to an application-type code through the resolver the packager
+ * uses. So a 510(k) / eSTAR keeps its K-number, a non-US family is not touched,
+ * and a family the vocabulary has no code for (De Novo, PMA) is not held to an
+ * application number the packager would refuse to file anyway.
+ */
+function fdaEctdApplicationType(
+  packageFamily: string,
+  built: { region: string; format: string } = deriveRegionAndFormat(packageFamily),
+): string | null {
+  return built.region === 'FDA' && built.format === 'ectd' ? resolveApplicationTypeCode(packageFamily) : null;
+}
+
 /** Deterministic, filesystem-safe slug for a section's leaf path. */
 function leafSlug(value: string): string {
   return (value || '')
@@ -2017,17 +2042,103 @@ const assembleBody = z.object({
  *   - the same charset contract as the assemble gate (shared module) — a value
  *     that cannot be carried safely in a filename / XML text is refused, never
  *     silently normalized;
+ *   - for an FDA eCTD package (fdaEctdApplicationType), FDA's own forms on top,
+ *     by the rule the assemble gate applies (fdaIdentifierProblems): the six
+ *     digits FDA assigned, the nine-digit D-U-N-S number and a regulatory
+ *     contact. Refused, never normalized: 'IND123456' is not stored as '123456'.
+ *     2026-10-01 (package-spine sweep F05, F07b): the number was stored as
+ *     entered, the form's example was 'IND123456', and no contact was recorded;
  *   - allowed on a locked package (assembly requires the lock), but a bundle
- *     assembled under different identifiers is STALE (its backbone carries the
- *     old ones) and is cleared so the transmit gate cannot ship it;
+ *     assembled under different identifiers or a different contact is STALE
+ *     (its backbone carries the old ones) and is cleared so the transmit gate
+ *     cannot ship it;
  *   - recorded as a governed action with the caller's reason.
  */
 const regulatoryIdentifiersBody = z.object({
   applicationNumber: z.string().min(1).max(64),
   applicantId: z.string().min(1).max(64),
   applicantName: z.string().min(1).max(200),
+  /** The regulatory contact the FDA us-regional backbone names. Optional here:
+   *  an FDA eCTD package is refused without all three fields (above). A blank
+   *  field is not given; the charset contract judges a filled one. */
+  contact: z
+    .object({ name: z.string().max(500).optional(), phone: z.string().max(500).optional(), email: z.string().max(500).optional() })
+    .optional(),
   reason: z.string().min(8, 'reason must be at least 8 characters'),
 });
+
+/**
+ * The contact a request carries: each field's usable value (a blank field is not
+ * given: null) and each filled field the charset contract refuses, named
+ * `contact.<field>`. Nothing is rewritten beyond trimming.
+ */
+function submittedContact(
+  body: Partial<Record<RegulatoryContactField, string>> | undefined,
+): { values: RegulatoryContactValues; invalid: string[] } {
+  const values: RegulatoryContactValues = { name: null, phone: null, email: null };
+  const invalid: string[] = [];
+  for (const field of REGULATORY_CONTACT_FIELDS) {
+    const raw = body?.[field];
+    if (!raw?.trim()) continue;
+    values[field] = usableContactField(field, raw);
+    if (values[field] === null) invalid.push(`contact.${field}`);
+  }
+  return { values, invalid };
+}
+
+/** The charset refusal, naming the contract of each kind of field refused. */
+function identifierContractMessage(invalid: readonly string[]): string {
+  const contactRefused = invalid.some((f) => f.startsWith('contact.'));
+  return (
+    `Identifier(s) do not meet the agency-identifier contract: ${invalid.join(', ')}. ` +
+    'Application number and applicant id: letters, digits, ".", "_" or "-" (start alphanumeric, max 64). ' +
+    'Applicant name: no control characters, max 200.' +
+    (contactRefused
+      ? ' Contact name: as for the applicant name. Telephone: digits, spaces and + ( ) . - x, max 40. E-mail: one "@" and no spaces, max 254.'
+      : '')
+  );
+}
+
+/**
+ * The refusal an FDA eCTD package's identifiers earn when they are not in FDA's
+ * form (fdaIdentifierProblems), or null. Any other package is not judged here.
+ */
+function fdaIdentifierRefusal(
+  packageFamily: string,
+  identifiers: { applicationNumber: string; applicantId: string },
+  contact: RegulatoryContactValues,
+): { error: string; code: 'REGULATORY_IDENTIFIER_INVALID'; fields: string[] } | null {
+  if (!fdaEctdApplicationType(packageFamily)) return null;
+  const problems = fdaIdentifierProblems({ ...identifiers, contact });
+  if (problems.length === 0) return null;
+  return {
+    error: problems.map((p) => p.message).join(' '),
+    code: 'REGULATORY_IDENTIFIER_INVALID',
+    fields: problems.flatMap((p) => p.fields),
+  };
+}
+
+/**
+ * The assemble gate's REGULATORY-IDENTIFIER-MISSING message: the identifiers the
+ * package does not record usably, named by their metadata paths as this finding
+ * always has, then what an FDA backbone needs that the recorded ones do not
+ * meet (fdaIdentifierProblems — the rule the identifiers route refuses on).
+ */
+function identifierFindingMessage(missing: readonly string[], fdaProblems: readonly FdaIdentifierProblem[]): string {
+  const parts: string[] = [];
+  if (missing.length > 0) {
+    parts.push(
+      `The regional Module 1 backbone must carry the agency application number and applicant identity, and this package records none that are usable (missing or malformed package metadata: ${missing.join(', ')}). The assembled backbone carries UNASSIGNED placeholders for inspection only — record the real identifiers before transmitting.`,
+    );
+  }
+  if (fdaProblems.length > 0) {
+    parts.push(
+      ...fdaProblems.map((p) => p.message),
+      'The backbone was assembled with the values as recorded, never rewritten; record them in FDA’s form before transmitting.',
+    );
+  }
+  return parts.join(' ');
+}
 
 router.put('/packages/:packageId/regulatory-identifiers', requireEditorAccess, async (req: Request, res: Response) => {
   try {
@@ -2038,13 +2149,14 @@ router.put('/packages/:packageId/regulatory-identifiers', requireEditorAccess, a
     if (!parsed.success) {
       return res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors });
     }
-    const invalid = REGULATORY_IDENTIFIER_FIELDS.filter((f) => usableIdentifier(f, parsed.data[f]) === null);
+    const contact = submittedContact(parsed.data.contact);
+    const invalid = [
+      ...REGULATORY_IDENTIFIER_FIELDS.filter((f) => usableIdentifier(f, parsed.data[f]) === null),
+      ...contact.invalid,
+    ];
     if (invalid.length > 0) {
       return res.status(400).json({
-        error:
-          `Identifier(s) do not meet the agency-identifier contract: ${invalid.join(', ')}. ` +
-          'Application number and applicant id: letters, digits, ".", "_" or "-" (start alphanumeric, max 64). ' +
-          'Applicant name: no control characters, max 200.',
+        error: identifierContractMessage(invalid),
         code: 'REGULATORY_IDENTIFIER_INVALID',
         fields: invalid,
       });
@@ -2061,15 +2173,20 @@ router.put('/packages/:packageId/regulatory-identifiers', requireEditorAccess, a
       applicantId: usableIdentifier('applicantId', parsed.data.applicantId)!,
       applicantName: usableIdentifier('applicantName', parsed.data.applicantName)!,
     };
-    const regulatory = { ...next, recordedAt: new Date().toISOString(), recordedBy: userId };
+    const fdaRefusal = fdaIdentifierRefusal(pkg.packageFamily, next, contact.values);
+    if (fdaRefusal) return res.status(400).json(fdaRefusal);
+    // The contact is recorded as read back: null for a field not given.
+    const regulatory = { ...next, contact: contact.values, recordedAt: new Date().toISOString(), recordedBy: userId };
 
     // Decided and written under the row lock: `previous` (the audit row's FROM
     // values), `changed`, and whether a bundle assembled under the OLD
-    // identifiers — its backbone carries them — must be cleared so the transmit
-    // gate cannot ship it.
+    // identifiers or contact — its backbone carries them — must be cleared so
+    // the transmit gate cannot ship it.
     const { previous, changed, staleBundleCleared } = await withPackageMetadataLock(pkg.id, (current) => {
-      const previous = readRegulatoryIdentifiers(current).values;
-      const changed = REGULATORY_IDENTIFIER_FIELDS.some((f) => previous[f] !== next[f]);
+      const previous = { ...readRegulatoryIdentifiers(current).values, contact: readRegulatoryContact(current) };
+      const changed =
+        REGULATORY_IDENTIFIER_FIELDS.some((f) => previous[f] !== next[f]) ||
+        !sameRegulatoryContact(previous.contact, contact.values);
       // Changed identifiers make the stored bundle stale (its backbone carries
       // the old ones); the preflight summary that described it goes with it.
       const { bundle: existingBundle, preflight: _orphan, ...metadataWithoutBundle } = current;
@@ -2090,10 +2207,12 @@ router.put('/packages/:packageId/regulatory-identifiers', requireEditorAccess, a
           applicationNumber: previous.applicationNumber,
           applicantId: previous.applicantId,
           applicantName: previous.applicantName,
+          contact: previous.contact,
         },
         applicationNumber: next.applicationNumber,
         applicantId: next.applicantId,
         applicantName: next.applicantName,
+        contact: contact.values,
         changed,
         staleBundleCleared,
       },
@@ -2219,6 +2338,9 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
     const leafs: { path: string; mediaType: string; content: Buffer }[] = [];
     const emptyLeafPaths: string[] = [];
     let emptyLeafCount = 0;
+    // eCTD sections with nothing mapped: they file nothing (sweep F11), and the
+    // validator's summary still counts them.
+    let emptySectionCount = 0;
     // `operation` / `modifiedFile` are filled in by the sequence-lifecycle plan
     // below; they are what makes a follow-up sequence packageable at all.
     const ctdLeaves: Array<{
@@ -2343,7 +2465,7 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
       // timestamps come from here rather than from `new Date()`: rendering has
       // to be reproducible or the sequence lifecycle can never see that a
       // document is unchanged. An empty section has no artifact, so its own row
-      // dates the placeholder it ships.
+      // dates the placeholder a non-eCTD format ships (an eCTD one files nothing).
       const sectionContentAt = (rows: Array<{ updatedAt: Date | null }>): Date =>
         rows.reduce<Date | null>((newest, r) => {
           const t = r.updatedAt ? new Date(r.updatedAt) : null;
@@ -2385,20 +2507,36 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
         continue;
       }
 
-      // eCTD: place each ARTIFACT at its own CTD section. An empty section is a
-      // single placeholder unit placed from the section key alone. Every code is
-      // gated to a placeable terminal heading; nothing is guessed — an unplaceable
-      // unit becomes a blocking LEAF-UNPLACED finding so transmit refuses it.
-      const units =
-        mapped.length === 0
-          ? [{ artifact: null, placement: resolveArtifactPlacement(section.sectionKey, null, packagerRegion) }]
-          : mapped.map((a) => ({ artifact: a, placement: resolveArtifactPlacement(section.sectionKey, a.ctdSection, packagerRegion) }));
+      // eCTD: an EMPTY section files nothing. 2026-10-01 (W5/D7, sweep F11): it
+      // shipped a generated "[EMPTY SECTION] <label>" PDF as a leaf, so the
+      // agency received a document saying the section was empty. The document
+      // later mapped there has its own identity, so it was filed `new` beside the
+      // placeholder and the placeholder stayed current; and withdrawing a
+      // section's only document (which means unmapping it) filed a fresh
+      // placeholder in the withdrawal itself. The section still counts in the
+      // content fingerprint above, so emptying it still makes a stored bundle
+      // stale, and the finding says what happened to it.
+      if (mapped.length === 0) {
+        emptySectionCount += 1;
+        placementFindings.push({
+          severity: 'warning',
+          ruleId: 'SECTION-EMPTY',
+          message: `${sectionLabel}: no artifact is mapped, so this section files nothing in this sequence. An eCTD sequence carries documents, never a placeholder for one: map the document, or remove the section if it is not part of this filing.`,
+        });
+        continue;
+      }
+
+      // Place each ARTIFACT at its own CTD section. Every code is gated to a
+      // placeable terminal heading; nothing is guessed — an unplaceable unit
+      // becomes a blocking LEAF-UNPLACED finding so transmit refuses it.
+      const units = mapped.map((a) => ({
+        artifact: a,
+        placement: resolveArtifactPlacement(section.sectionKey, a.ctdSection, packagerRegion),
+      }));
 
       for (const { artifact, placement } of units) {
-        const unitLabel = artifact
-          ? `${artifact.title} (${artifact.artifactId} v${artifact.version}) in ${sectionLabel}`
-          : sectionLabel;
-        const shipKey = artifact && placement.code ? `${artifact.artifactDbId}@${placement.code}` : null;
+        const unitLabel = `${artifact.title} (${artifact.artifactId} v${artifact.version}) in ${sectionLabel}`;
+        const shipKey = placement.code ? `${artifact.artifactDbId}@${placement.code}` : null;
         if (shipKey && shippedArtifacts.has(shipKey)) {
           placementFindings.push({
             severity: 'warning',
@@ -2441,9 +2579,8 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
         // suffix, or the section id for a placeholder — so two artifacts in one
         // section never collide and a long section key cannot overflow the rule
         // (it used to reach 84 characters with no finding).
-        const disc = artifact
-          ? artifact.artifactId.replace(/^artifact_/, '').slice(-12).toLowerCase().replace(/[^a-z0-9]/g, '') || `a${artifact.artifactDbId}`
-          : `s${section.id}`;
+        const disc =
+          artifact.artifactId.replace(/^artifact_/, '').slice(-12).toLowerCase().replace(/[^a-z0-9]/g, '') || `a${artifact.artifactDbId}`;
         // Composed by the canonical leaf-name helper (label gives way, the
         // discriminator is kept whole, 64-character rule); a numeric tiebreaker
         // is appended to the discriminator only when the name is already taken
@@ -2462,20 +2599,9 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
             ? `m1/${regionCode}/${sectionDashed}/${fileName}`
             : `m${moduleDigit}/${sectionDashed}/${fileName}`;
 
-        let markdown: string;
-        if (!artifact) {
-          markdown = `[EMPTY SECTION] ${sectionLabel}\n`;
-          emptyLeafCount += 1;
-          emptyLeafPaths.push(modulePath);
-        } else {
-          markdown = `### ${artifact.title} (${artifact.artifactId} v${artifact.version})\n\n${artifact.content ?? ''}\n`;
-        }
-        const title = artifact ? `${artifact.title} — ${sectionLabel}` : sectionLabel;
-        const bytes = await buildLeafPdf({
-          title,
-          markdown,
-          contentModifiedAt: sectionContentAt(artifact ? [artifact] : []),
-        });
+        const markdown = `### ${artifact.title} (${artifact.artifactId} v${artifact.version})\n\n${artifact.content ?? ''}\n`;
+        const title = `${artifact.title} — ${sectionLabel}`;
+        const bytes = await buildLeafPdf({ title, markdown, contentModifiedAt: sectionContentAt([artifact]) });
         /* Identity, not presentation. `fileName` is composed from the section
            key, which PATCH edits in place, so renaming a section changed every
            file name in it and the next sequence filed the same documents again
@@ -2483,16 +2609,12 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
            finding. The artifact's own id does not move; the CTD section is part
            of the key because one document legitimately files at two sections,
            and because moving a document to a different section is a withdrawal
-           and a new filing, never a replace across sections. An empty section
-           ships a placeholder that belongs to the SECTION ROW, whose id is
-           stable across renames of its key. */
-        const leafKey = artifact
-          ? `artifact:${artifact.artifactId}@${placement.code}`
-          : `section:${section.id}@${placement.code}`;
+           and a new filing, never a replace across sections. */
+        const leafKey = `artifact:${artifact.artifactId}@${placement.code}`;
         ctdLeaves.push({ ctdSection: placement.code, fileName, bytes, title, modulePath, leafKey });
         leafs.push({ path: modulePath, mediaType: 'application/pdf', content: bytes });
-        const approval = artifact ? approvalOf.get(artifact)! : null;
-        if (approval && !approval.filable) {
+        const approval = approvalOf.get(artifact)!;
+        if (!approval.filable) {
           unapprovedByLeafPath.set(modulePath, [{ label: unitLabel, problem: approval.problem, remedy: approval.remedy }]);
         }
         if (shipKey) shippedArtifacts.set(shipKey, sectionLabel);
@@ -2567,10 +2689,6 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
         const survivors = leafs.filter((l) => keptPaths.has(l.path));
         leafs.length = 0;
         leafs.push(...survivors);
-        const keptEmpty = emptyLeafPaths.filter((p) => keptPaths.has(p));
-        emptyLeafPaths.length = 0;
-        emptyLeafPaths.push(...keptEmpty);
-        emptyLeafCount = keptEmpty.length;
       }
       // A withdrawal ships no bytes: it is a backbone entry pointing at the
       // sequence that holds the document. It reaches the packager, and NOTHING
@@ -2603,7 +2721,7 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
     // Internal eCTD structural validation (pre-flight). Findings are stored on
     // the descriptor and surfaced to the UI; transmit hard-blocks on errors.
     // This is INTERNAL structural validation only — NOT an agency validator.
-    const validation = validateEctdLeafs(leafs, { region, emptyLeafPaths, enforceFileNames: isEctdFormat });
+    const validation = validateEctdLeafs(leafs, { region, emptyLeafPaths, emptySectionsFilingNothing: emptySectionCount, enforceFileNames: isEctdFormat });
     // LEAF-UNAPPROVED, over the leaves that SHIP (after the lifecycle drop, like
     // everything else here) and for every format — an eSTAR goes to FDA too.
     for (const leaf of leafs) {
@@ -2657,6 +2775,7 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
     // The identifiers the backbone was BUILT with, compared against the
     // package's current ones before the bundle is stored (see below).
     let identifiersAtBuild: ReturnType<typeof readRegulatoryIdentifiers> | null = null;
+    let contactAtBuild: RegulatoryContactValues | null = null;
     let zip: Buffer;
     if (isEctdFormat) {
       // Placement findings: LEAF-UNPLACED is error-severity so the governed
@@ -2677,15 +2796,27 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
       const identifiers = readRegulatoryIdentifiers(existingMetadata);
       identifiersAtBuild = identifiers;
       const { applicationNumber, applicantId, applicantName } = identifiers.values;
-      const missingIdentifiers = identifiers.missing;
-      if (missingIdentifiers.length > 0) {
+      // The regulatory contact FDA's us-regional backbone names (sweep F07b).
+      const contact = readRegulatoryContact(existingMetadata);
+      contactAtBuild = contact;
+      // An FDA eCTD backbone is also held to FDA's own forms, by the rule the
+      // identifiers route refuses on (sweep F05, 2026-10-01): the number was
+      // written exactly as entered, and the form's example was 'IND123456'.
+      const fdaProblems = fdaEctdApplicationType(pkg.packageFamily, { region, format })
+        ? fdaIdentifierProblems({ applicationNumber, applicantId, contact })
+        : [];
+      if (identifiers.missing.length > 0 || fdaProblems.length > 0) {
         validation.findings.push({
           severity: 'error',
           ruleId: 'REGULATORY-IDENTIFIER-MISSING',
-          message: `The regional Module 1 backbone must carry the agency application number and applicant identity, and this package records none that are usable (missing or malformed package metadata: ${missingIdentifiers.join(', ')}). The assembled backbone carries UNASSIGNED placeholders for inspection only — record the real identifiers before transmitting.`,
+          message: identifierFindingMessage(identifiers.missing, fdaProblems),
         });
         validation.errorCount += 1;
       }
+      const fdaContacts: FdaApplicantContact[] =
+        contact.name && contact.phone && contact.email
+          ? [{ type: 'Regulatory', name: contact.name, phone: contact.phone, email: contact.email }]
+          : [];
 
       const work = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'c2c-assemble-'));
       try {
@@ -2701,7 +2832,13 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
              the pathway ('ind', '510k', 'cer', 'ivdr_td'); the packager
              resolves it, and refuses the ones that have no eCTD Module 1 code
              rather than mislabelling them. */
-          fda: { applicationType: pkg.packageFamily, ...(parsed.data.submissionType ? { submissionType: parsed.data.submissionType } : {}) },
+          fda: {
+            applicationType: pkg.packageFamily,
+            ...(parsed.data.submissionType ? { submissionType: parsed.data.submissionType } : {}),
+            // The us-regional applicant contact (sweep F07b); none is invented
+            // when the package records none — the finding above says so.
+            ...(fdaContacts.length > 0 ? { contacts: fdaContacts } : {}),
+          },
           sponsorId: applicantId ?? `UNASSIGNED-ORG-${orgId}`,
           sponsorName: applicantName ?? `UNASSIGNED (organization ${orgId})`,
           productName: pkg.title,
@@ -2870,7 +3007,10 @@ router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Re
         }
         if (identifiersAtBuild) {
           const now = readRegulatoryIdentifiers(current).values;
-          const drifted = REGULATORY_IDENTIFIER_FIELDS.some((f) => now[f] !== identifiersAtBuild!.values[f]);
+          const drifted =
+            REGULATORY_IDENTIFIER_FIELDS.some((f) => now[f] !== identifiersAtBuild!.values[f]) ||
+            // The backbone names the contact too (sweep F07b).
+            (contactAtBuild !== null && !sameRegulatoryContact(readRegulatoryContact(current), contactAtBuild));
           if (drifted) return { metadata: null, result: 'identifiers_changed' };
         }
         // The previous bundle's preflight summary does not describe this one.

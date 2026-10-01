@@ -11,6 +11,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   foldFiledState,
+  isRejectedFiling,
   planSequence,
   readFiledSequences,
   SequenceLifecycleRefusal,
@@ -457,5 +458,64 @@ describe('planSequence', () => {
     });
     expect(plan.summary).toMatchObject({ replace: 1, new: 0 });
     expect(plan.leaves[0].modifiedFile).toContain('0000'); // where that leaf still lives
+  });
+});
+
+/*
+ * 2026-10-01 (W5/D7, sweep F19). A sequence the agency did not load — a
+ * technical rejection, FDA's failed Ack3 — stayed on file for good: its number
+ * could not be reused (SEQUENCE_ALREADY_FILED), the next one was refused
+ * (SEQUENCE_OUT_OF_ORDER), and anything later diffed against content the agency
+ * never loaded. The governed rejection marks the entry; it stays in the
+ * metadata for audit and is read as not on file.
+ */
+describe('a filing the agency rejected is not on file (sweep F19)', () => {
+  const REJECTION = {
+    recordedAt: '2026-10-01T09:00:00.000Z', recordedBy: 777, reason: 'FDA Ack3 reports a technical rejection',
+    evidence: { vaultDocumentId: '0b6f8f3e-6c1d-4f43-9a63-2f1d0c9b7a51', contentSha256: 'e'.repeat(64) },
+    transmittalStatus: { previous: 'ack2_received', current: 'validation_failed' },
+    actionId: 'act_reject', signatureId: 31,
+  };
+  // What 0001 put on file before the agency rejected it: the overview, v2.
+  const SEQ_0001: FiledSequence = {
+    ...SEQ_0000, sequence: '0001', submissionType: 'Efficacy Supplement', sha256: 'b'.repeat(64), transmittalId: 2,
+    leaves: [leaf('2.5', 'clinical-overview.pdf', 'md5-co-v2', { operation: 'replace' })],
+  };
+  const rejected = { ...SEQ_0001, state: 'rejected', rejection: REJECTION };
+
+  it('the reader skips a rejected entry; an entry with no state, or "transmitted", is on file', () => {
+    expect(readFiledSequences({ filedSequences: [SEQ_0000, rejected] }).map((f) => f.sequence)).toEqual(['0000']);
+    expect(readFiledSequences({ filedSequences: [{ ...SEQ_0000, state: 'transmitted' }, SEQ_0001] }).map((f) => f.sequence))
+      .toEqual(['0000', '0001']);
+    expect(isRejectedFiling(rejected)).toBe(true);
+    expect(isRejectedFiling(SEQ_0001)).toBe(false);
+  });
+
+  it('a "rejected" state that carries no recorded evidence does not un-file anything', () => {
+    // Only the governed action, with the agency's evidence, takes a filing off file.
+    const bare = { ...SEQ_0001, state: 'rejected' };
+    const noEvidence = { ...SEQ_0001, state: 'rejected', rejection: { ...REJECTION, evidence: {} } };
+    for (const entry of [bare, noEvidence]) {
+      expect(isRejectedFiling(entry)).toBe(false);
+      expect(readFiledSequences({ filedSequences: [SEQ_0000, entry] }).map((f) => f.sequence)).toEqual(['0000', '0001']);
+    }
+  });
+
+  it('the rejected number is reused, diffed against the sequence before it, and the one after it is out of order', () => {
+    const filed = readFiledSequences({ filedSequences: [SEQ_0000, rejected] });
+    // The very content 0001 carried is NOT on file: it ships again, as a
+    // replace of the 0000 leaf — not refused as "nothing to file".
+    const plan = planSequence({
+      sequence: '0001', submissionType: 'Efficacy Supplement', filed,
+      desired: desired([['2.5', 'clinical-overview.pdf', 'md5-co-v2'], ['3.2.P.1', 'description.pdf', 'md5-desc-v1']]),
+    });
+    expect(plan.leaves).toEqual([expect.objectContaining({ fileName: 'clinical-overview.pdf', operation: 'replace' })]);
+    expect(plan.leaves[0].modifiedFile).toContain('0000');
+    try {
+      planSequence({ sequence: '0002', submissionType: 'Efficacy Supplement', filed, desired: desired([['2.5', 'clinical-overview.pdf', 'md5-co-v3']]) });
+      throw new Error('expected a refusal');
+    } catch (e) {
+      expect((e as SequenceLifecycleRefusal).code).toBe('SEQUENCE_OUT_OF_ORDER');
+    }
   });
 });

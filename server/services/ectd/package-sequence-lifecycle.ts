@@ -65,7 +65,75 @@ export interface FiledSequence {
   leaves: FiledLeaf[];
 }
 
+/**
+ * Whether the agency holds a filed sequence. ABSENT reads as 'transmitted':
+ * every history written before 2026-10-01 has no state, and all of it is on
+ * file. 'rejected' is written only by the governed technical-rejection action
+ * (./filed-sequence-rejection) — an entry is never deleted, it is marked.
+ */
+export type FiledSequenceState = 'transmitted' | 'rejected';
+
+/**
+ * The record that took a filed sequence off file: the agency did not load it
+ * (a technical rejection — FDA's failed Ack3). There is no Ack3 ingestion, so
+ * it is an operator's signed act carrying the agency's evidence, and it states
+ * when it was RECORDED and by whom — not an agency rejection time this platform
+ * never received. A rollback is not this: the agency still holds those bytes.
+ */
+export interface FiledSequenceRejection {
+  recordedAt: string;
+  recordedBy: number;
+  reason: string;
+  /** The Vault document holding the agency's notice, and its content hash. */
+  evidence: { vaultDocumentId: string; contentSha256: string };
+  /** The transmittal's status before and after the act. */
+  transmittalStatus: { previous: string; current: string };
+  /** The governed `sign` ledger row and the electronic signature. */
+  actionId: string;
+  signatureId: number;
+}
+
+/**
+ * Whether a filed-history entry has been taken off file. THE predicate: the
+ * reader (readFiledSequences) and the writers (recordFiledSequence, the
+ * rejection action) all ask it, so they cannot disagree about which entries
+ * are on file — the disagreement that let a writer report a filing the reader
+ * then dropped (isFiledLeaf, above). Only 'rejected' WITH its evidence and
+ * signature counts: a bare or hand-edited state takes nothing off file.
+ */
+export function isRejectedFiling(e: unknown): boolean {
+  const entry = e as { state?: unknown; rejection?: Partial<FiledSequenceRejection> } | null;
+  if (!entry || typeof entry !== 'object' || entry.state !== 'rejected') return false;
+  const r = entry.rejection;
+  return (
+    !!r && typeof r === 'object' && typeof r.actionId === 'string' && typeof r.signatureId === 'number' &&
+    typeof r.evidence?.vaultDocumentId === 'string' && typeof r.evidence?.contentSha256 === 'string'
+  );
+}
+
 const SEQUENCE_RE = /^\d{4}$/;
+
+/**
+ * The filed entry that holds `sequence` — the first entry on file under that
+ * number, whether or not its inventory is readable — or null. The writer asks
+ * this before appending and governed transmit asks it before sending, so a
+ * second, different bundle under a number already on file is refused before
+ * the bytes leave rather than discovered after.
+ */
+export function filedEntryHolding(
+  history: unknown,
+  sequence: string,
+): { sha256: string; transmittalId: number | null } | null {
+  if (!Array.isArray(history)) return null;
+  for (const e of history as Array<Record<string, unknown> | null>) {
+    if (!e || typeof e !== 'object' || e.sequence !== sequence || isRejectedFiling(e)) continue;
+    return {
+      sha256: typeof e.sha256 === 'string' ? e.sha256.toLowerCase() : '',
+      transmittalId: typeof e.transmittalId === 'number' ? e.transmittalId : null,
+    };
+  }
+  return null;
+}
 
 /** Fields a filed leaf MAY carry, each a string when present. A field of any
  *  other type makes the whole entry unreadable, like a missing required one. */
@@ -93,7 +161,9 @@ export function isFiledLeaf(v: unknown): v is FiledLeaf {
  * The package's filed history, read from stored metadata and shape-checked
  * rather than trusted: a malformed entry is DROPPED, because a prior state
  * reconstructed from a half-readable record would compute `new` for a leaf that
- * is already on file. Returned oldest-first.
+ * is already on file. An entry the agency rejected (isRejectedFiling) is
+ * skipped too — it stays in the metadata for audit, but nothing it carried is
+ * on file. Returned oldest-first.
  */
 export function readFiledSequences(metadata: Record<string, unknown> | null | undefined): FiledSequence[] {
   const raw = (metadata ?? {}).filedSequences;
@@ -101,7 +171,7 @@ export function readFiledSequences(metadata: Record<string, unknown> | null | un
   const out: FiledSequence[] = [];
   for (const entry of raw) {
     const e = entry as Record<string, unknown> | null;
-    if (!e || typeof e !== 'object') continue;
+    if (!e || typeof e !== 'object' || isRejectedFiling(e)) continue;
     if (typeof e.sequence !== 'string' || !SEQUENCE_RE.test(e.sequence)) continue;
     if (!Array.isArray(e.leaves)) continue;
     const leaves = e.leaves.filter(isFiledLeaf);

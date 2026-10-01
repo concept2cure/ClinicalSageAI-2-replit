@@ -268,6 +268,9 @@ router.post('/gateways/:region/:gateway/transmit', requireEditorAccess, async (r
       // the baseline the NEXT sequence diffs against, so it is said, not implied.
       filedSequenceRecorded: outcome.filedSequenceRecorded,
       filedSequenceReason: outcome.filedSequenceReason,
+      // The bundle the history holds under this sequence when another one was
+      // recorded during the send ('sequence-conflict'); null otherwise.
+      filedSequenceConflict: outcome.filedSequenceConflict,
       // filedSequenceWarning / contentWarning / ledgerWriteFailed + ledgerWarning,
       // each only when it applies (shared with AnA's k510 transmit).
       ...transmitOutcomeNotices(outcome),
@@ -276,7 +279,9 @@ router.post('/gateways/:region/:gateway/transmit', requireEditorAccess, async (r
     // Honest pre-transmit refusals: nothing left the platform, so there is no
     // transmittal, no acknowledgement and no agency identifier to report.
     if (err instanceof GovernedTransmitRefusal) {
-      return clientError(res, err.httpStatus, err.message, err.details);
+      // The code rides in `details` so a surface can tell two 409s apart
+      // (ACTIVE_TRANSMITTAL from SEQUENCE_ALREADY_FILED) without parsing words.
+      return clientError(res, err.httpStatus, err.message, { code: err.code, ...err.details });
     }
     if (err instanceof GovernedTransmitInternalError) {
       return serverError(res, log, err.stage, err.cause);

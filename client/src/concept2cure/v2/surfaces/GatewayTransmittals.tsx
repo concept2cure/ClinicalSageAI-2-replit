@@ -108,16 +108,22 @@ const PACKAGE_FIELD = (def: string | undefined, packages: PackageOption[] | null
 const IDENTIFIERS_FORM = (def: string | undefined, packages: PackageOption[] | null): C2CFormConfig => ({
   eyebrow: 'Regulatory dispatch · governed change',
   title: 'Record regulatory identifiers',
-  sub: 'The agency application number and applicant identity the Module 1 backbone carries. Recorded on the package with your reason. A bundle assembled under different identifiers is cleared and must be assembled again.',
+  sub: 'The agency application number, applicant identity and regulatory contact the Module 1 backbone carries. Recorded on the package with your reason. A bundle assembled under different identifiers is cleared and must be assembled again.',
   // The default banner asserts an audit entry will be written; this route
   // documents the case where it cannot be, so say what actually happens.
   governed: 'Governed change — your reason is recorded with it in the audit trail. If the ledger entry cannot be written, the change is still applied and the response says so.',
   submitLabel: 'Record',
   fields: [
     PACKAGE_FIELD(def, packages),
-    { key: 'applicationNumber', label: 'Application number', type: 'text', required: true, half: true, placeholder: 'e.g. IND123456', desc: 'Letters, digits, ".", "_" or "-"; up to 64 characters.' },
-    { key: 'applicantId', label: 'Applicant id', type: 'text', required: true, half: true, placeholder: 'e.g. DUNS number', desc: 'Same character set as the application number.' },
+    /* FDA's own forms (sweep F05, F07b, 2026-10-01): the example was
+       'e.g. IND123456', which taught operators to record what FDA refuses; the
+       server now refuses it for an FDA eCTD package and never rewrites it. */
+    { key: 'applicationNumber', label: 'Application number', type: 'text', required: true, half: true, placeholder: 'e.g. 123456', desc: 'FDA eCTD (IND, NDA, ANDA, BLA, DMF): the six digits FDA assigned, leading zeros kept, no prefix. 510(k) / eSTAR: the K-number.' },
+    { key: 'applicantId', label: 'Applicant id', type: 'text', required: true, half: true, placeholder: 'e.g. 123456789', desc: 'FDA: the company’s D-U-N-S number, nine digits with no dashes.' },
     { key: 'applicantName', label: 'Applicant name', type: 'text', required: true },
+    { key: 'contactName', label: 'Regulatory contact', type: 'text', half: true, desc: 'Named in FDA’s Module 1 backbone; an FDA eCTD package needs the name, telephone and e-mail.' },
+    { key: 'contactPhone', label: 'Contact telephone', type: 'text', half: true, placeholder: 'e.g. +1 301 555 0100' },
+    { key: 'contactEmail', label: 'Contact e-mail', type: 'text', half: true },
     { key: 'reason', label: 'Reason (governed)', type: 'textarea', required: true, placeholder: 'At least 8 characters — recorded with the change.' },
   ],
 });
@@ -434,6 +440,10 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     setLastPackageId(v.packageId ?? '');
     const { ok, status, raw } = await readData('PUT', `/api/submission-ops/packages/${encodeURIComponent(v.packageId)}/regulatory-identifiers`, {
       applicationNumber: v.applicationNumber, applicantId: v.applicantId, applicantName: v.applicantName, reason: v.reason,
+      // Sent only when any of its fields is filled: a 510(k) or non-US package needs none.
+      ...([v.contactName, v.contactPhone, v.contactEmail].some((x) => x?.trim())
+        ? { contact: { name: v.contactName?.trim() || undefined, phone: v.contactPhone?.trim() || undefined, email: v.contactEmail?.trim() || undefined } }
+        : {}),
     });
     if (status === 400) { fireToast('Not recorded — ' + ((raw as any)?.error ?? 'validation failed') + (String((raw as any)?.error ?? '').endsWith('.') ? '' : '.'), 'error'); return; }
     if (status === 404) { fireToast('Not recorded — no package with that id in this tenant.', 'error'); return; }
