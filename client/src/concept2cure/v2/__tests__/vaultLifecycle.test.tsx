@@ -25,7 +25,7 @@ vi.mock('@/services/portal/authService', async (importOriginal) => ({
   useAuthUser: () => me,
 }));
 
-import { ApiRequestError } from '@/lib/queryClient';
+import { ApiRequestError, extractApiError } from '@/lib/queryClient';
 import { Vault, isSettled } from '../surfaces/Vault';
 import { PID, DOC_ID, ok, uploadDoc, cabinetTree, vaultPayload, props } from './_vault-surface-fixtures';
 
@@ -45,9 +45,11 @@ const signOff = (name: string, meaning: string, signerId: number) =>
 const calls: Array<{ method: string; url: string; body?: unknown }> = [];
 let versions: unknown[] = [];
 let answers: Record<string, () => Response> = {};
-/** A refusal as apiRequest delivers it in production: thrown, with the body as payload. */
+/** A refusal as apiRequest delivers it in production: thrown, with the body as
+ *  payload, and its message and code read by the same extractApiError. */
 const refuse = (status: number, payload: Record<string, unknown>) => () => {
-  throw new ApiRequestError(String(payload.message ?? 'Refused'), status, payload, String(payload.error ?? ''));
+  const { message, code } = extractApiError(payload, status);
+  throw new ApiRequestError(message, status, payload, code);
 };
 
 function mockApi() {
