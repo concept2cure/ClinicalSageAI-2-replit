@@ -1,0 +1,61 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal > is intact when the document, the stored seal and the chain all agree 6ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal > is a mismatch when the stored document was changed 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal > is a mismatch when the document and its stored seal were both rewritten: the chain holds the original 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal > is a mismatch when only the stored seal's sealing time was changed 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal > is a mismatch when only the stored seal's atom count was changed 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal > is a mismatch when only the stored seal's algorithm was changed 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal > is a mismatch when only the stored seal's canonicalizer was changed 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal > is a mismatch when the document's provenance atoms no longer match the recorded count 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal > is a mismatch, not "not verifiable", when the sealed document was removed after a finalize that stored it 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal > is a mismatch, not "not verifiable", when the stored seal was removed after a finalize that stored it 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal > is a mismatch when the chain holds two finalizations of the run 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal > is a mismatch when the chain row's content no longer matches its payload hash 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal > is a mismatch when a sealed document is stored but the chain holds no finalization 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal > is not verifiable for a seal from before the chain row and the stored document existed 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal > is not verifiable for a finalization recorded before the document was stored, whose seal agrees with the chain 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > verifyStoredSeal > is a mismatch for such a finalization when its stored seal disagrees with the chain 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > readRunSeal > reports the act as the chain recorded it, with the signature, and verifies the stored copies against it 2ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > readRunSeal > reads a snapshot stored as json text too 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > readRunSeal > binds the chain row's content to its payload hash: an edited row fails 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > readRunSeal > fails the chain check when the run was recorded as finalized twice 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > readRunSeal > scopes every read to the run and its organisation 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > readRunSeal > answers sealed: false for a run that is not final and never was: it reads only the chain 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > readRunSeal > is a mismatch when the run's status was rewritten after the chain recorded its finalization 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > readRunSeal > shows only what the chain recorded: seal fields the snapshot carries beside it are never returned 1ms
+ × server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > readRunSeal > reads the chain's record that the document was stored: a mismatch when the sealed document was removed 9ms
+   → expected 'not-verifiable' to be 'mismatch' // Object.is equality
+ × server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > readRunSeal > reads the chain's record that the document was stored: a mismatch when the snapshot is gone 2ms
+   → expected 'not-verifiable' to be 'mismatch' // Object.is equality
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > readRunSeal > throws when a read fails: an error is never a verdict 2ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > readVerifiedSealedDocument > returns the stored document with its verdict 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > readVerifiedSealedDocument > has no sealed document for a run not marked final: a mismatch when the chain records its finalization 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > readRunSeal > reads the chain's record that the document was stored: a mismatch when the sealed document was removed
+ FAIL  server/services/report-os/sealing/__tests__/run-seal.mut.test.ts > readRunSeal > reads the chain's record that the document was stored: a mismatch when the snapshot is gone
+AssertionError: expected 'not-verifiable' to be 'mismatch' // Object.is equality
+
+Expected: "mismatch"
+Received: "not-verifiable"
+
+ ❯ server/services/report-os/sealing/__tests__/run-seal.mut.test.ts:240:66
+    238|   ])('reads the chain\'s record that the document was stored: a mismat…
+    239|     const c = () => client({ ...rows, chain: [chainRow(CHAIN_DETAILS)]…
+    240|     expect((await readRunSeal(c(), FINAL)).verification.verdict).toBe(…
+       |                                                                  ^
+    241|     expect(await readVerifiedSealedDocument(c(), FINAL)).toMatchObject…
+    242|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 27 passed (29)
+   Start at  14:23:01
+   Duration  820ms (transform 218ms, setup 125ms, import 146ms, tests 36ms, environment 0ms)
+

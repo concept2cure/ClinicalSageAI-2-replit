@@ -1,0 +1,463 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is intact when the document, the stored seal and the chain all agree 14ms
+   → expected [ [ 'audit-chain', true ], …(2) ] to deeply equal [ [ 'audit-chain', true ], …(3) ]
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is a mismatch when the stored document was changed 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is a mismatch when the document and its stored seal were both rewritten: the chain holds the original 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is a mismatch when only the stored seal's sealing time was changed 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is a mismatch when only the stored seal's atom count was changed 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is a mismatch when only the stored seal's algorithm was changed 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is a mismatch when only the stored seal's canonicalizer was changed 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is a mismatch when the document's provenance atoms no longer match the recorded count 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is a mismatch, not "not verifiable", when the sealed document was removed after a finalize that stored it 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is a mismatch, not "not verifiable", when the stored seal was removed after a finalize that stored it 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is a mismatch when the chain holds two finalizations of the run 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is a mismatch when the chain row's content no longer matches its payload hash 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is a mismatch when a sealed document is stored but the chain holds no finalization 0ms
+ × server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is not verifiable for a seal from before the chain row and the stored document existed 1ms
+   → expected 'No sealed document is stored with thi…' to match /^Not checked: .*no finalization/
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is not verifiable for a finalization recorded before the document was stored, whose seal agrees with the chain 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is a mismatch for such a finalization when its stored seal disagrees with the chain 0ms
+ × server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is a mismatch for such a finalization when its seal was removed from a snapshot that still exists 3ms
+   → expected 'not-verifiable' to be 'mismatch' // Object.is equality
+ × server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal: what the chain, the signature and the document can vouch for > is a mismatch when the finalization row holds no chain position 1ms
+   → expected 'intact' to be 'mismatch' // Object.is equality
+ × server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal: what the chain, the signature and the document can vouch for > is a mismatch when the finalization row does not link to the organisation's chain 3ms
+   → expected 'intact' to be 'mismatch' // Object.is equality
+ × server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal: what the chain, the signature and the document can vouch for > is a mismatch when the finalization row carries no HMAC seal although the key is configured 1ms
+   → expected 'intact' to be 'mismatch' // Object.is equality
+ × server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal: what the chain, the signature and the document can vouch for > is a mismatch when the finalization row carries an HMAC seal that does not verify 1ms
+   → expected 'intact' to be 'mismatch' // Object.is equality
+ × server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal: what the chain, the signature and the document can vouch for > is a mismatch when no electronic signature is recorded for a finalize that recorded storing the document 1ms
+   → expected 'intact' to be 'mismatch' // Object.is equality
+ × server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal: what the chain, the signature and the document can vouch for > is a mismatch when the signature's manifest names another seal for a finalize that recorded storing the document 1ms
+   → expected 'intact' to be 'mismatch' // Object.is equality
+ × server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal: what the chain, the signature and the document can vouch for > checks nothing against an unverified record: every other check says it was not run, none claims agreement 1ms
+   → [{"check":"audit-chain","ok":false,"detail":"The audit chain holds no finalization of this run."},{"check":"stored-seal","ok":false,"detail":"There is no recorded finalization to check the stored seal against."},{"check":"stored-document","ok":true,"detail":"The stored document hashes to the recorded seal, and its provenance atoms match."}]: expected false to be true // Object.is equality
+ × server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal: what the chain, the signature and the document can vouch for > a malformed stored document is a failed check, never a crash 1ms
+   → expected 'The stored document no longer hashes …' to match /malformed/
+ × server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > reports the act as the chain recorded it, with the signature, and verifies the stored copies against it 4ms
+   → expected { runId: 41, sealed: false, …(5) } to match object { runId: 41, sealed: true, …(5) }
+(1 matching property omitted from actual)
+ × server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > reads a snapshot stored as json text too 1ms
+   → expected 'mismatch' to be 'intact' // Object.is equality
+ × server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > binds the chain row's content to its payload hash: an edited row fails 1ms
+   → expected 'The audit chain records this run as f…' to match /payload hash/
+ × server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > does not trust a finalization row that holds no position on the chain: the app role can insert one 1ms
+   → expected 'The audit chain records this run as f…' to match /no position on the audit chain/
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > fails the chain check when the run was recorded as finalized twice 0ms
+ × server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > scopes every read to the run and its organisation 1ms
+   → Cannot read properties of undefined (reading 'sql')
+ × server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > reads the chain before the status, so a finalize committing between the two is not a contradiction 1ms
+   → expected 'not-verifiable' to be 'intact' // Object.is equality
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > answers sealed: false for a run that is not final and never was 0ms
+ × server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > is a mismatch when the run's status was rewritten after the chain recorded its finalization 1ms
+   → expected 'The audit chain records this run as f…' to match /records this run as finalized, but th…/
+ × server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > shows only what the chain recorded: seal fields the snapshot carries beside it are never returned 1ms
+   → expected 'mismatch' to be 'intact' // Object.is equality
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > reads the chain's record of what finalize stored: a mismatch when the sealed document was removed 1ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > reads the chain's record of what finalize stored: a mismatch when the snapshot is gone 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > reads the chain's record of what finalize stored: a mismatch when the signature is gone 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > throws when a read fails: an error is never a verdict 1ms
+ × server/services/report-os/sealing/__tests__/run-seal.test.ts > the audit HMAC seal over the finalization row, where the key is configured > is intact when the row carries a valid seal over its link 1ms
+   → expected 'mismatch' to be 'intact' // Object.is equality
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > the audit HMAC seal over the finalization row, where the key is configured > is a mismatch when the row carries no seal 0ms
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > the audit HMAC seal over the finalization row, where the key is configured > is a mismatch when the row carries a seal made without the key 0ms
+ × server/services/report-os/sealing/__tests__/run-seal.test.ts > readVerifiedSealedDocument and readSealForExport > return the stored document only when it verifies 1ms
+   → expected { verdict: 'mismatch', document: null } to deeply equal { verdict: 'intact', …(1) }
+ ✓ server/services/report-os/sealing/__tests__/run-seal.test.ts > readVerifiedSealedDocument and readSealForExport > has no sealed document for a run not marked final: a mismatch when the chain records its finalization 0ms
+ × server/services/report-os/sealing/__tests__/run-seal.test.ts > readVerifiedSealedDocument and readSealForExport > a malformed stored document with no finalization on the chain is a mismatch, not a crash 1ms
+   → expected { verdict: 'not-verifiable', …(1) } to match object { verdict: 'mismatch' }
+(1 matching property omitted from actual)
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 22 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is intact when the document, the stored seal and the chain all agree
+AssertionError: expected [ [ 'audit-chain', true ], …(2) ] to deeply equal [ [ 'audit-chain', true ], …(3) ]
+
+- Expected
++ Received
+
+@@ -9,10 +9,6 @@
+    ],
+    [
+      "stored-document",
+      true,
+    ],
+-   [
+-     "signature",
+-     true,
+-   ],
+  ]
+
+ ❯ server/services/report-os/sealing/__tests__/run-seal.test.ts:70:50
+     68|     const v = verdict({});
+     69|     expect(v.verdict).toBe('intact');
+     70|     expect(v.checks.map((c) => [c.check, c.ok])).toEqual([['audit-chai…
+       |                                                  ^
+     71|   });
+     72|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/22]⎯
+
+ FAIL  server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is not verifiable for a seal from before the chain row and the stored document existed
+AssertionError: expected 'No sealed document is stored with thi…' to match /^Not checked: .*no finalization/
+
+- Expected:
+/^Not checked: .*no finalization/
+
++ Received:
+"No sealed document is stored with this run, so its hash cannot be recomputed."
+
+ ❯ server/services/report-os/sealing/__tests__/run-seal.test.ts:130:73
+    128|     const v = verdict({ sealedDocument: null, chain: null, chainRows: …
+    129|     expect(v.verdict).toBe('not-verifiable');
+    130|     expect(v.checks.find((c) => c.check === 'stored-document')?.detail…
+       |                                                                         ^
+    131|   });
+    132|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/22]⎯
+
+ FAIL  server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal > is a mismatch for such a finalization when its seal was removed from a snapshot that still exists
+AssertionError: expected 'not-verifiable' to be 'mismatch' // Object.is equality
+
+Expected: "mismatch"
+Received: "not-verifiable"
+
+ ❯ server/services/report-os/sealing/__tests__/run-seal.test.ts:144:65
+    142|   it('is a mismatch for such a finalization when its seal was removed …
+    143|     const legacy = { sealedDocument: null, seal: null, chain: { ...CHA…
+    144|     expect(verdict({ ...legacy, snapshotFound: true }).verdict).toBe('…
+       |                                                                 ^
+    145|     expect(verdict({ ...legacy, snapshotFound: false }).verdict).toBe(…
+    146|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/22]⎯
+
+ FAIL  server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal: what the chain, the signature and the document can vouch for > is a mismatch when the finalization row holds no chain position
+ FAIL  server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal: what the chain, the signature and the document can vouch for > is a mismatch when the finalization row does not link to the organisation's chain
+ FAIL  server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal: what the chain, the signature and the document can vouch for > is a mismatch when the finalization row carries no HMAC seal although the key is configured
+ FAIL  server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal: what the chain, the signature and the document can vouch for > is a mismatch when the finalization row carries an HMAC seal that does not verify
+AssertionError: expected 'intact' to be 'mismatch' // Object.is equality
+
+Expected: "mismatch"
+Received: "intact"
+
+ ❯ server/services/report-os/sealing/__tests__/run-seal.test.ts:158:23
+    156|   ] as const)('is a mismatch when the finalization row %s', (_label, c…
+    157|     const v = verdict({ chain: { ...CHAIN, chained } });
+    158|     expect(v.verdict).toBe('mismatch');
+       |                       ^
+    159|     expect(v.checks[0].detail).toMatch(detail);
+    160|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/22]⎯
+
+ FAIL  server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal: what the chain, the signature and the document can vouch for > is a mismatch when no electronic signature is recorded for a finalize that recorded storing the document
+ FAIL  server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal: what the chain, the signature and the document can vouch for > is a mismatch when the signature's manifest names another seal for a finalize that recorded storing the document
+AssertionError: expected 'intact' to be 'mismatch' // Object.is equality
+
+Expected: "mismatch"
+Received: "intact"
+
+ ❯ server/services/report-os/sealing/__tests__/run-seal.test.ts:167:23
+    165|   ])('is a mismatch when %s for a finalize that recorded storing the d…
+    166|     const v = verdict({ signature });
+    167|     expect(v.verdict).toBe('mismatch');
+       |                       ^
+    168|     expect(v.checks.find((c) => c.check === 'signature')?.ok).toBe(fal…
+    169|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/22]⎯
+
+ FAIL  server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal: what the chain, the signature and the document can vouch for > checks nothing against an unverified record: every other check says it was not run, none claims agreement
+AssertionError: [{"check":"audit-chain","ok":false,"detail":"The audit chain holds no finalization of this run."},{"check":"stored-seal","ok":false,"detail":"There is no recorded finalization to check the stored seal against."},{"check":"stored-document","ok":true,"detail":"The stored document hashes to the recorded seal, and its provenance atoms match."}]: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/report-os/sealing/__tests__/run-seal.test.ts:174:112
+    172|     for (const input of [{ chain: null, chainRows: 0 }, { chain: null,…
+    173|       const v = verdict(input);
+    174|       expect(v.checks.slice(1).every((c) => !c.ok && /^Not checked/.te…
+       |                                                                                                                ^
+    175|     }
+    176|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/22]⎯
+
+ FAIL  server/services/report-os/sealing/__tests__/run-seal.test.ts > verifyStoredSeal: what the chain, the signature and the document can vouch for > a malformed stored document is a failed check, never a crash
+AssertionError: expected 'The stored document no longer hashes …' to match /malformed/
+
+- Expected:
+/malformed/
+
++ Received:
+"The stored document no longer hashes to the recorded seal."
+
+ ❯ server/services/report-os/sealing/__tests__/run-seal.test.ts:183:73
+    181|     const v = verdict({ sealedDocument: bad });
+    182|     expect(v.verdict).toBe('mismatch');
+    183|     expect(v.checks.find((c) => c.check === 'stored-document')?.detail…
+       |                                                                         ^
+    184|   });
+    185| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/22]⎯
+
+ FAIL  server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > reports the act as the chain recorded it, with the signature, and verifies the stored copies against it
+AssertionError: expected { runId: 41, sealed: false, …(5) } to match object { runId: 41, sealed: true, …(5) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "finalization": {
+-     "meaning": "approval",
+-     "priorStatus": "completed",
+-     "reason": "Issued for the board pack",
+-   },
+-   "finalizedAt": "2026-10-01T09:00:01.000Z",
++   "finalization": null,
++   "finalizedAt": null,
+    "runId": 41,
+-   "seal": {
+-     "algorithm": "sha256",
+-     "atomCount": 0,
+-     "contentHash": "b97471cbbd52921d00cbbd5110ddd27395401d33b14ddc23301a3caac6a89166",
+-     "sealedAt": "2026-10-01T09:00:00.000Z",
+-   },
+-   "sealed": true,
+-   "signature": {
+-     "meaning": "approval",
+-     "signedAt": "2026-10-01T09:00:01.000Z",
+-     "signerName": "Dana Reyes",
+-   },
++   "seal": null,
++   "sealed": false,
++   "signature": null,
+    "verification": {
+-     "verdict": "intact",
++     "verdict": "mismatch",
+    },
+  }
+
+ ❯ server/services/report-os/sealing/__tests__/run-seal.test.ts:251:18
+    249|   it('reports the act as the chain recorded it, with the signature, an…
+    250|     const view = await readRunSeal(client(ON_RECORD), RUN);
+    251|     expect(view).toMatchObject({
+       |                  ^
+    252|       runId: 41,
+    253|       sealed: true,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/22]⎯
+
+ FAIL  server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > reads a snapshot stored as json text too
+AssertionError: expected 'mismatch' to be 'intact' // Object.is equality
+
+Expected: "intact"
+Received: "mismatch"
+
+ ❯ server/services/report-os/sealing/__tests__/run-seal.test.ts:264:119
+    262|
+    263|   it('reads a snapshot stored as json text too', async () => {
+    264|     expect((await readRunSeal(client({ ...ON_RECORD, snapshot: JSON.st…
+       |                                                                                                                       ^
+    265|   });
+    266|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/22]⎯
+
+ FAIL  server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > binds the chain row's content to its payload hash: an edited row fails
+AssertionError: expected 'The audit chain records this run as f…' to match /payload hash/
+
+- Expected:
+/payload hash/
+
++ Received:
+"The audit chain records this run as finalized, but the run is now marked \"undefined\"."
+
+ ❯ server/services/report-os/sealing/__tests__/run-seal.test.ts:271:48
+    269|     const view = await readRunSeal(client({ snapshot: STORED, chain: […
+    270|     expect(view.verification.verdict).toBe('mismatch');
+    271|     expect(view.verification.checks[0].detail).toMatch(/payload hash/);
+       |                                                ^
+    272|   });
+    273|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/22]⎯
+
+ FAIL  server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > does not trust a finalization row that holds no position on the chain: the app role can insert one
+AssertionError: expected 'The audit chain records this run as f…' to match /no position on the audit chain/
+
+- Expected:
+/no position on the audit chain/
+
++ Received:
+"The audit chain records this run as finalized, but the run is now marked \"undefined\"."
+
+ ❯ server/services/report-os/sealing/__tests__/run-seal.test.ts:277:48
+    275|     const view = await readRunSeal(client({ snapshot: STORED, chain: […
+    276|     expect(view.verification.verdict).toBe('mismatch');
+    277|     expect(view.verification.checks[0].detail).toMatch(/no position on…
+       |                                                ^
+    278|   });
+    279|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/22]⎯
+
+ FAIL  server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > scopes every read to the run and its organisation
+TypeError: Cannot read properties of undefined (reading 'sql')
+ ❯ server/services/report-os/sealing/__tests__/run-seal.test.ts:290:35
+    288|     await readRunSeal(c, RUN);
+    289|     const call = (re: RegExp) => c.calls.find((x) => re.test(x.sql))!;
+    290|     expect(call(/FROM report_runs/).sql).toMatch(/WHERE id = \$1 AND o…
+       |                                   ^
+    291|     expect(call(/FROM report_runs/).params).toEqual([41, 7]);
+    292|     expect(call(/FROM report_snapshots/).sql).toMatch(/WHERE run_id = …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/22]⎯
+
+ FAIL  server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > reads the chain before the status, so a finalize committing between the two is not a contradiction
+AssertionError: expected 'not-verifiable' to be 'intact' // Object.is equality
+
+Expected: "intact"
+Received: "not-verifiable"
+
+ ❯ server/services/report-os/sealing/__tests__/run-seal.test.ts:303:62
+    301|   it('reads the chain before the status, so a finalize committing betw…
+    302|     const c = client({ snapshot: STORED, chain: [], chainLater: [chain…
+    303|     expect((await readRunSeal(c, RUN)).verification.verdict).toBe('int…
+       |                                                              ^
+    304|     const order = c.calls.map((x) => (/run_finalized/.test(x.sql) ? 'c…
+    305|     expect(order).toEqual(['chain', 'status', 'chain']);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/22]⎯
+
+ FAIL  server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > is a mismatch when the run's status was rewritten after the chain recorded its finalization
+AssertionError: expected 'The audit chain records this run as f…' to match /records this run as finalized, but th…/
+
+- Expected:
+/records this run as finalized, but the run is now marked "completed"/
+
++ Received:
+"The audit chain records this run as finalized, but the run is now marked \"undefined\"."
+
+ ❯ server/services/report-os/sealing/__tests__/run-seal.test.ts:316:48
+    314|     const view = await readRunSeal(client({ ...ON_RECORD, status: 'com…
+    315|     expect(view.verification.verdict).toBe('mismatch');
+    316|     expect(view.verification.checks[0].detail).toMatch(/records this r…
+       |                                                ^
+    317|   });
+    318|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/22]⎯
+
+ FAIL  server/services/report-os/sealing/__tests__/run-seal.test.ts > readRunSeal > shows only what the chain recorded: seal fields the snapshot carries beside it are never returned
+AssertionError: expected 'mismatch' to be 'intact' // Object.is equality
+
+Expected: "intact"
+Received: "mismatch"
+
+ ❯ server/services/report-os/sealing/__tests__/run-seal.test.ts:322:39
+    320|     const forged = { ...SEAL, atoms: [{ sourceTable: 'forged', sourceI…
+    321|     const view = await readRunSeal(client({ ...ON_RECORD, snapshot: { …
+    322|     expect(view.verification.verdict).toBe('intact');
+       |                                       ^
+    323|     expect(view.seal).toEqual({ algorithm: SEAL.algorithm, contentHash…
+    324|     expect(view.finalizedAt).toBe(CHAIN.occurredAt);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/22]⎯
+
+ FAIL  server/services/report-os/sealing/__tests__/run-seal.test.ts > the audit HMAC seal over the finalization row, where the key is configured > is intact when the row carries a valid seal over its link
+AssertionError: expected 'mismatch' to be 'intact' // Object.is equality
+
+Expected: "intact"
+Received: "mismatch"
+
+ ❯ server/services/report-os/sealing/__tests__/run-seal.test.ts:359:39
+    357|     process.env.AUDIT_HMAC_KEY = KEY;
+    358|     const view = await readRunSeal(client({ snapshot: STORED, chain: […
+    359|     expect(view.verification.verdict).toBe('intact');
+       |                                       ^
+    360|     expect(view.verification.checks[0].detail).toMatch(/its audit HMAC…
+    361|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/22]⎯
+
+ FAIL  server/services/report-os/sealing/__tests__/run-seal.test.ts > readVerifiedSealedDocument and readSealForExport > return the stored document only when it verifies
+AssertionError: expected { verdict: 'mismatch', document: null } to deeply equal { verdict: 'intact', …(1) }
+
+- Expected
++ Received
+
+  {
+-   "document": {
+-     "generatedAt": "2026-10-01T08:00:00.000Z",
+-     "reportTypeId": "readiness.executive_digest",
+-     "scopeId": "12",
+-     "scopeType": "project",
+-     "sections": [
+-       {
+-         "blocks": [
+-           {
+-             "kind": "summary",
+-             "text": "Ready to file.",
+-           },
+-         ],
+-         "id": "executive-summary",
+-         "title": "Executive summary",
+-       },
+-     ],
+-     "status": "final",
+-   },
+-   "verdict": "intact",
++   "document": null,
++   "verdict": "mismatch",
+  }
+
+ ❯ server/services/report-os/sealing/__tests__/run-seal.test.ts:374:70
+    372| describe('readVerifiedSealedDocument and readSealForExport', () => {
+    373|   it('return the stored document only when it verifies', async () => {
+    374|     expect(await readVerifiedSealedDocument(client(ON_RECORD), RUN)).t…
+       |                                                                      ^
+    375|     const changed = { ...ON_RECORD, snapshot: { ...STORED, sealedDocum…
+    376|     expect((await readVerifiedSealedDocument(client(changed), RUN)).ve…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/22]⎯
+
+ FAIL  server/services/report-os/sealing/__tests__/run-seal.test.ts > readVerifiedSealedDocument and readSealForExport > a malformed stored document with no finalization on the chain is a mismatch, not a crash
+AssertionError: expected { verdict: 'not-verifiable', …(1) } to match object { verdict: 'mismatch' }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "verdict": "mismatch",
++   "verdict": "not-verifiable",
+  }
+
+ ❯ server/services/report-os/sealing/__tests__/run-seal.test.ts:388:119
+    386|   it('a malformed stored document with no finalization on the chain is…
+    387|     const bad = { ...REPORT, sections: [{ id: 'x', title: 'X', blocks:…
+    388|     await expect(readVerifiedSealedDocument(client({ snapshot: { seal:…
+       |                                                                                                                       ^
+    389|   });
+    390| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/22]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  22 failed | 23 passed (45)
+   Start at  14:44:36
+   Duration  831ms (transform 241ms, setup 118ms, import 188ms, tests 56ms, environment 0ms)
+

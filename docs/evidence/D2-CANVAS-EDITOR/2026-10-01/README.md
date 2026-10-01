@@ -129,3 +129,75 @@ suites, pass 321/321.
 - `check-eslint-warning-ratchet --since HEAD --gate`: no file changed its
   warning count.
 - The offer reuses the thread's existing `.ct-ref` chip, so there is no new CSS.
+
+## 4. Every AnA draft opens as a document
+
+**Before.**
+- Only `draft_authoring_document` wrote the editor's store. Every other tool
+  that drafts a document produced a markdown draft: the briefing book, the
+  plans, the statistical documents, and the rest of the
+  `status: 'generated'` family in `AnaToolExecutor`.
+- That draft was a side-panel card. The card's Edit went to the authoring
+  workspace with no document. `docs/design/ANA_DOCUMENT_CANVAS.md` names this
+  as the defect: "The thread's Edit button navigates to `document-authoring`
+  with **no document identity**."
+- So most document types AnA drafts could not reach the canvas or the editor.
+
+**Now.**
+- The card's control is "Open as document" (`ArtifactCard` in
+  `surfaces/ConversationThread.tsx`). It opens the draft as an authoring
+  document in the open project through the one door that does that,
+  `POST /api/authoring/docs/from-draft`
+  (`editor/draftToDocument.ts`).
+  - The server sanitizes every section on the way in, as it does for the tool.
+  - There is no second store and no server change.
+- The draft is split at its top heading level.
+  - A heading's own number ("2.5.1 …") becomes the section code when every
+    heading has a distinct one. Otherwise sections are numbered in order.
+  - A leading title heading is dropped, because it is the document's title.
+  - Text before the first heading is a section under the document's title.
+  - A draft with no headings is one section. HTML drafts split the same way.
+- **Provenance:** source `ana`, the conversation, and the turn record that
+  drafted it. The canvas then reads "Drafted by AnA in this conversation".
+- **Once per turn.** The project's documents with the same title are read
+  first. One whose provenance names the same conversation and turn is opened,
+  and nothing is created.
+  - If that check cannot run, nothing is created and the toast says so,
+    because a duplicate in a controlled store is worse than asking again.
+  - Without an open project the control is disabled with its reason.
+- On success, the card leaves the side panel. The document becomes the canvas
+  under the turn that drafted it and opens in the editor beside the
+  conversation (steps 1–3 then apply: outline, refresh, AnA's answers into it).
+
+**Not changed.**
+- A thread reloaded later does not bring the card back. The panel has never
+  rehydrated drafts (its own comment says so), so the canvas for a draft
+  opened this way is also this session's.
+- The document itself is in the project and in Authoring, where the next
+  session finds it.
+
+**Failing first.**
+- `4-open-red.txt`: all three new thread cases failed against the unchanged
+  thread, which had no control that opens the draft as a document.
+- Each rule was then broken on purpose and the tests caught it:
+  - `4-mutation-fail-open-red.txt`: a failed earlier-copy check treated as
+    "none found" creates a document. One unit case and one thread case fail.
+  - `4-mutation-no-reuse-red.txt`: a matching document never reused creates
+    a second copy. One unit case and one thread case fail.
+
+**Green:** `4-open-green.txt`. The 36 suites that mount the thread, the
+canvas, the workbench or the card list, plus the editor's own suites, pass
+335/335.
+
+**Also run.**
+- `tsc`: clean.
+- `ci:canvas-path`, `ci:check-phantom-tokens`, `ci:undefined-css-classes`: OK.
+- The ESLint ratchet `--since HEAD --gate`: unchanged. ESLint on the two new
+  files: clean.
+
+**Replaced, not deleted.**
+- The card's Edit navigation is replaced in place by "Open as document". The
+  same button now carries the document, as the design doc requires.
+- Reachability is proven by "every AnA draft opens as a document" in
+  `conversationThreadCanvas.test.tsx`.
+- No file was deleted.

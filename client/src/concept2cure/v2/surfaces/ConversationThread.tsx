@@ -23,6 +23,7 @@ import { AppMentionMenu, useAppMentions } from '../appMentions';
 import { AnaMarkdown } from '../AnaMarkdown';
 import { DocumentCanvas } from '../editor/DocumentCanvas';
 import type { EditorBridge } from '../editor/DocumentWorkbench';
+import { isProgramId, openDraftAsDocument } from '../editor/draftToDocument';
 import {
   CT_LINKMAP, CT_LINKIC, CT_ARTIC, CT_STATUS_LABEL,
 } from '../fixtures/conversation-thread-data';
@@ -423,6 +424,7 @@ export function conversationArtifacts(messages: AnaChatMessage[]): CtArtifact[] 
       artifactId: d.artifactId,
       version: d.version,
       content: d.content,
+      messageId: m.id,
       prov: { by: 'AnA', evidence: m.groundingSources || [] },
       /* Stated as what is KNOWN, not as a diagnosis. The server withholds
          `artifact_version_saved` for two different reasons — no project to file
@@ -445,7 +447,8 @@ interface ArtifactCardProps {
   art: CtArtifact;
   expanded: boolean;
   onToggle: () => void;
-  onNav?: (id: string) => void;
+  /** Opens this draft as an authoring document beside the conversation. */
+  onOpenAsDocument?: () => Promise<void>;
   /** The open program. Null when none is open — the status route is scoped by it. */
   projectId: string | number | null;
   /**
@@ -457,13 +460,13 @@ interface ArtifactCardProps {
   fireToast: FireToast;
 }
 
-function ArtifactCard({ art, expanded, onToggle, onNav, projectId, saveSettled, fireToast }: ArtifactCardProps) {
+function ArtifactCard({ art, expanded, onToggle, onOpenAsDocument, projectId, saveSettled, fireToast }: ArtifactCardProps) {
   /* Seeded from the artifact and then owned here, because a successful
      transition is a fact the server confirmed and the message that produced
      the draft will never carry. The card is keyed on the artifact id, so the
      moment a draft acquires a durable id this state is correctly discarded. */
   const [status, setStatus] = useState(art.status);
-  const [busy, setBusy] = useState<null | 'docx' | 'review'>(null);
+  const [busy, setBusy] = useState<null | 'docx' | 'review' | 'open'>(null);
 
   /* The '.docx' button used to be wired to an `onAdvance` the one mount passed
      as `() => undefined`, so it downloaded nothing. The endpoint it needed had
@@ -508,6 +511,24 @@ function ArtifactCard({ art, expanded, onToggle, onNav, projectId, saveSettled, 
       setBusy(null);
     }
   };
+
+  /* The draft becomes a document in the editor's store and opens beside the
+     conversation (draftToDocument.ts). This was "Edit", which went to the
+     authoring workspace with no document, so the draft never reached it. */
+  const openAsDocument = async () => {
+    if (busy || !onOpenAsDocument) return;
+    setBusy('open');
+    try {
+      await onOpenAsDocument();
+    } finally {
+      setBusy(null);
+    }
+  };
+  const openBlockedBecause = !art.content
+    ? 'There is no draft text to open.'
+    : isProgramId(projectId)
+      ? null
+      : 'Open a project first — a document is filed in one.';
 
   /* draft → review, through the governed transition route. The server owns the
      rules — VALID_TRANSITIONS and the per-role permission map — so a refusal is
@@ -661,10 +682,12 @@ function ArtifactCard({ art, expanded, onToggle, onNav, projectId, saveSettled, 
           <div className="ct-art-actions">
             <button
               className="ct-art-edit"
-              aria-label={'Edit ' + art.title + ' in the authoring workspace'}
-              onClick={() => onNav && onNav('document-authoring')}
+              aria-label={'Open ' + art.title + ' as a document in the editor'}
+              onClick={openAsDocument}
+              disabled={busy !== null || !onOpenAsDocument || openBlockedBecause !== null}
+              title={openBlockedBecause ?? undefined}
             >
-              {I.penLine} Edit
+              {I.penLine} {busy === 'open' ? 'Opening…' : 'Open as document'}
             </button>
             {/* The visible label is '.docx' because that is what the button
                 means in a row of short actions; the accessible name says the
@@ -710,7 +733,8 @@ interface ArtifactPanelProps {
   artifacts: CtArtifact[];
   openId: string | null;
   setOpenId: (id: string | null) => void;
-  onNav?: (id: string) => void;
+  /** Opens a card's draft as an authoring document beside the conversation. */
+  onOpenAsDocument: (art: CtArtifact) => Promise<void>;
   projectId: string | number | null;
   /** Card ids whose producing turn has not finished — see {@link unstoredDraftReason}. */
   pendingDraftIds: ReadonlySet<string>;
@@ -725,7 +749,7 @@ interface ArtifactPanelProps {
    the progress chip, and the column's one close control is the progress
    panel's, at its top — this panel had a second one a few hundred pixels
    below it, for the same column. */
-function ArtifactPanel({ artifacts, openId, setOpenId, onNav, projectId, pendingDraftIds, fireToast }: ArtifactPanelProps) {
+function ArtifactPanel({ artifacts, openId, setOpenId, onOpenAsDocument, projectId, pendingDraftIds, fireToast }: ArtifactPanelProps) {
   return (
     <aside className="ct-artifacts">
       <div className="ct-art-panel-h">
@@ -746,7 +770,7 @@ function ArtifactPanel({ artifacts, openId, setOpenId, onNav, projectId, pending
             art={a}
             expanded={openId === a.id}
             onToggle={() => setOpenId(openId === a.id ? null : a.id)}
-            onNav={onNav}
+            onOpenAsDocument={() => onOpenAsDocument(a)}
             projectId={projectId}
             saveSettled={!pendingDraftIds.has(a.id)}
             fireToast={fireToast}
@@ -902,7 +926,15 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
   const readyAttachments = attachments.filter((a) => a.status === 'ready');
   const uploadingAttachments = attachments.filter((a) => a.status === 'uploading');
 
-  const turns: CtTurn[] = anaChat.messages.map(toTurn);
+  /* Drafts opened as documents in this session (draftToDocument.ts), by the
+     message that drafted them. Each becomes the document canvas under its
+     turn, like a draft_authoring_document draft, and leaves the side panel. */
+  const [openedDrafts, setOpenedDrafts] = useState<Record<string, { docId: string; programId: string; title: string }>>({});
+  const turns: CtTurn[] = anaChat.messages.map((m) => {
+    const t = toTurn(m);
+    const opened = openedDrafts[m.id];
+    return opened && !t.authoringDoc ? { ...t, authoringDoc: opened } : t;
+  });
   const busy = anaChat.isStreaming;
   /* The one turn Continue may be offered on: the latest, settled, with nothing
      in flight. It sends a new turn on this conversation; the stopped run is
@@ -912,7 +944,40 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
      below it, the whole `ArtifactCard` component and every control on it were
      unreachable code that nonetheless looked finished. The drafts were already
      on the messages; nothing read them. */
-  const artifacts: CtArtifact[] = conversationArtifacts(anaChat.messages);
+  const artifacts: CtArtifact[] = conversationArtifacts(anaChat.messages)
+    .filter((a) => !(a.messageId && openedDrafts[a.messageId]));
+  /* A card's draft, opened as a document in the open project: the one already
+     made from this turn's draft, or a new one through from-draft. It opens
+     beside the conversation. Refusals are said, never shown as success. */
+  const openArtifactAsDocument = async (art: CtArtifact) => {
+    const m = anaChat.messages.find((x) => x.id === art.messageId);
+    const d = m?.generatedDraft;
+    if (!m || !d?.content) {
+      fireToast('There is no draft text to open for ' + art.title + '.', 'error');
+      return;
+    }
+    if (!isProgramId(shellProjectId)) {
+      fireToast('Open a project first — a document is filed in one.', 'error');
+      return;
+    }
+    const out = await openDraftAsDocument(
+      { title: d.title, content: d.content, documentType: d.documentType },
+      {
+        programId: shellProjectId,
+        conversationId: anaChat.threadId ?? null,
+        turnId: m.turnRecord?.status === 'recorded' ? m.turnRecord.id : null,
+      },
+    );
+    if (!out.ok) {
+      fireToast(out.message, 'error');
+      return;
+    }
+    setOpenedDrafts((prev) => ({ ...prev, [m.id]: { docId: out.docId, programId: out.programId, title: d.title } }));
+    setExpandedDocId(out.docId);
+    fireToast(out.reused
+      ? d.title + ' is already a document in this project. It is open beside the conversation.'
+      : d.title + ' is now a document in this project, open beside the conversation.');
+  };
   /* Card ids of drafts whose producing turn is STILL RUNNING. `artifact_draft`
      is emitted mid-stream and `artifact_version_saved` only later, from the
      turn's post-processing, so a draft with no id on an unfinished turn is one
@@ -1319,7 +1384,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
                 here" — beside a drafted document, which is the canvas under
                 its turn and never listed here (conversationArtifacts). */}
             {artifacts.length > 0 && (
-              <ArtifactPanel artifacts={artifacts} openId={openId} setOpenId={setOpenId} onNav={onNav}
+              <ArtifactPanel artifacts={artifacts} openId={openId} setOpenId={setOpenId} onOpenAsDocument={openArtifactAsDocument}
                 projectId={shellProjectId} pendingDraftIds={pendingDraftIds} fireToast={fireToast} />
             )}
           </div>
