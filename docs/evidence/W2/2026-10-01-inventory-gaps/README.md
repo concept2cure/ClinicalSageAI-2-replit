@@ -93,3 +93,21 @@ to drift.
 - **Docs updated:** `docs/guides/REPLIT_README.md`, whose branch-protection
   section also contradicted Rule 0, and `.env.example`'s list of deploy targets.
 - **Left for P3-6:** `app.yaml`, `charts/` and the Replit README itself.
+
+## 6. Stale and wrong documents, and dead files
+
+| File                                                             | Was                                                                                                                       | Now                                                                                                                                                                                                                                 |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/GA_OPS_PROCUREMENT_RUNBOOK_2026-08.md`                     | Named a `claude/*` branch. Its B1, B2, B7, B13, B15, B17 and B18 rows described August.                                   | A dated status block names what changed. Each change was checked against `ga-readiness-report.mjs` and the code on 2026-10-01; the live report wins.                                                                                |
+| `docs/audits/ANA_DOCUMENT_STACK_DEPENDENCY_LICENSE_INVENTORY.md` | Did not mention Ghostscript, LibreOffice, Tesseract, OpenJDK or PyMuPDF. Listed veraPDF as GPLv3 only.                    | A section for the image as shipped, with each upstream licence. **Ghostscript is AGPL-3.0, and its SaaS use is an open counsel / Artifex item.** veraPDF is dual GPLv3+ / MPL-2.0+. PyMuPDF (AGPL) is recorded as not in the image. |
+| `docs/validation/VQ-CORTEX-001-CLOUD_VENDOR_QUALIFICATION.md`    | Said the AWS BAA needs Business Support ($100/mo).                                                                        | A dated correction: the BAA is accepted in AWS Artifact on any account.                                                                                                                                                             |
+| `terraform/terraform.tfvars.example` (deleted)                   | The README's staging step copied it. It names variables nothing declares (`eks_workloads_sg`, `evidence_bucket_name`, …). | Removed. The README points at each environment's own example, which lists every `TF_VAR_` secret.                                                                                                                                   |
+| `fonts/DejaVuSans*.ttf` (deleted)                                | Three zero-byte files from the 2026-09-04 import. Nothing references them, and a font loader that found them would fail.  | Removed.                                                                                                                                                                                                                            |
+
+**Not done here, and why:**
+
+- **pgaudit preload.** Claimed meanwhile by the P1-11 database-half lane
+  (`86e789d57`).
+- **Redis and the worker, WAF, the PDF/A rule, and ESG ownership.** Founder
+  decisions.
+- **The DR rehearsal.** Needs a real database.
