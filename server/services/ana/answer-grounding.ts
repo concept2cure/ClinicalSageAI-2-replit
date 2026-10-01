@@ -9,7 +9,8 @@
  * This module closes that gap deterministically — no extra model call. It pulls the
  * verifiable, specific claims out of the answer — registry/literature/submission
  * identifiers (trial ids: NCT/ISRCTN/EudraCT; literature: PMID/DOI; FDA submissions:
- * 510(k)/PMA/De Novo/NDA/BLA/ANDA) and quoted source text — and checks each one against the
+ * 510(k)/PMA/De Novo/NDA/BLA/ANDA), the regulations it cites (CFR sections, ICH codes) and
+ * quoted source text — and checks each one against the
  * evidence corpus (the concatenated tool results). A claim that does not appear in
  * the evidence is flagged as unsupported — a direct fabrication signal. When no
  * tools ran, there is nothing to verify and the check is a no-op (ratio 1).
@@ -34,6 +35,9 @@ export interface UnsupportedClaim {
     | 'fda_nda'
     | 'fda_bla'
     | 'fda_anda'
+    // Regulations: a CFR section, an ICH guideline code
+    | 'cfr'
+    | 'ich'
     // Quoted source text
     | 'quote';
   text: string;
@@ -94,6 +98,30 @@ const LABELED_ID_PATTERNS: ReadonlyArray<{ kind: IdKind; re: RegExp }> = [
   { kind: 'fda_anda', re: /\bANDA\s*:?\s*(\d{4,6})\b/gi },
 ];
 
+// Regulations (D4, 2026-10-01). Unlike the identifiers above, a CFR section or
+// an ICH code can be recalled correctly — so a miss means "not supported by
+// this turn's evidence", not fabricated. It is still the claim most worth
+// checking: "21 CFR 820.30(g)" (superseded by the QMSR) or an ICH revision
+// cited from memory read as grounded as anything else after tools ran.
+//   - CFR: "<title> CFR <section>" in any common spelling ("21 C.F.R. §
+//     312.23", "21 CFR Part 11"); both sides are put in one spelling first.
+//   - ICH: a code after "ICH", or any code written with its revision
+//     ("E9(R1)"); a bare "E2" is too common a token to read as a guideline.
+const CFR_PREFIX_RE = /\b(\d{1,2})\s*C\.?\s*F\.?\s*R\.?\s*(?:§+\s*|Part\s+|Section\s+)?/gi;
+const CFR_CITATION_RE =
+  /\b(\d{1,2})\s*C\.?\s*F\.?\s*R\.?\s*(?:§+\s*|Part\s+|Section\s+)?(\d{1,4}(?:\.\d+[a-z]?)?(?:\([a-z0-9]{1,4}\))*)/gi;
+const ICH_CITATION_RE =
+  /\bICH\s+([QSEM]\d{1,2}[A-Z]?(?:\s?\(R\d{1,2}\))?)|(?<![A-Za-z0-9])([QSEM]\d{1,2}[A-Z]?\(R\d{1,2}\))/g;
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** Is `needle` in `haystack`, not continued as a longer number ("11" is not "110" or "11.5")? */
+function containsCitation(haystack: string, needle: string): boolean {
+  return new RegExp(`${escapeRegExp(needle)}(?![0-9]|\\.[0-9])`).test(haystack);
+}
+
 // Trailing sentence punctuation captured alongside a token (notably on a DOI at
 // the end of a sentence) — trimmed before the verbatim check so "…/jama.2020.1."
 // grounds against the same DOI in the evidence.
@@ -141,6 +169,29 @@ export function verifyAnswerGrounding(answer: string, evidence: string): Groundi
     re.lastIndex = 0;
     let lm: RegExpExecArray | null;
     while ((lm = re.exec(answer)) !== null) checkId(kind, lm[0], lm[1]);
+  }
+
+  // Regulations — checked in one spelling on both sides (see CFR_CITATION_RE).
+  const evidenceCfr = evidence.replace(CFR_PREFIX_RE, (_m, title: string) => `${title} CFR `).toUpperCase();
+  const evidenceCompact = evidenceUpper.replace(/\s+/g, '');
+  const checkRegulation = (kind: 'cfr' | 'ich', display: string, key: string, found: boolean): void => {
+    if (seenIds.has(`${kind}:${key}`)) return;
+    seenIds.add(`${kind}:${key}`);
+    result.checked++;
+    if (found) result.grounded++;
+    else result.unsupported.push({ kind, text: display.replace(TRAILING_PUNCT_RE, '').trim() });
+  };
+  CFR_CITATION_RE.lastIndex = 0;
+  let cm: RegExpExecArray | null;
+  while ((cm = CFR_CITATION_RE.exec(answer)) !== null) {
+    const needle = `${cm[1]} CFR ${cm[2]}`.toUpperCase();
+    checkRegulation('cfr', cm[0], needle, containsCitation(evidenceCfr, needle));
+  }
+  ICH_CITATION_RE.lastIndex = 0;
+  let im: RegExpExecArray | null;
+  while ((im = ICH_CITATION_RE.exec(answer)) !== null) {
+    const code = (im[1] ?? im[2]).replace(/\s+/g, '').toUpperCase();
+    checkRegulation('ich', im[0], code, containsCitation(evidenceCompact, code));
   }
 
   // Quoted source text — if AnA quotes the document, the quote should be in the
