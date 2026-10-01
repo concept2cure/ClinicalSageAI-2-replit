@@ -1,0 +1,13 @@
+# server/routes/ana-ri/__tests__/post-processing-project.test.ts against HEAD's post-processing.ts
+ × server/routes/ana-ri/__tests__/post-processing-project.test.ts > which project post-processing acts on > a program UUID beginning with digits: every step gets its anchor row, never the integer its digits spell
+   → expected { guidance: 7, commands: 7, …(4) } to deeply equal { guidance: 42, commands: 42, …(4) }
+ × server/routes/ana-ri/__tests__/post-processing-project.test.ts > which project post-processing acts on > a program with no anchor row: no step acts on any project
+   → expected { guidance: 7, commands: 7, …(4) } to deeply equal { guidance: 'not called', …(5) }
+ ✓ server/routes/ana-ri/__tests__/post-processing-project.test.ts > which project post-processing acts on > a legacy integer project is itself, without the anchor
+ × server/routes/ana-ri/__tests__/post-processing-project.test.ts > which project post-processing acts on > a malformed project is no project
+   → expected { guidance: 7, commands: 7, …(4) } to match object { guidance: 'not called', …(2) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected { guidance: 7, commands: 7, …(4) } to deeply equal { guidance: 42, commands: 42, …(4) }
+AssertionError: expected { guidance: 7, commands: 7, …(4) } to deeply equal { guidance: 'not called', …(5) }
+AssertionError: expected { guidance: 7, commands: 7, …(4) } to match object { guidance: 'not called', …(2) }
+      Tests  3 failed | 1 passed (4)
