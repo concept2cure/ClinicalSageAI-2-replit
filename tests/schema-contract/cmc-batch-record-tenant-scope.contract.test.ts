@@ -127,6 +127,10 @@ vi.mock('../../server/services/part11/signature-persistence', async (orig) => ({
     return { id: 1, signedAt: new Date() };
   },
 }));
+// The signer's role from the membership row (§11.10(g)): an admin here, so a
+// release is decided by tenant scope alone. The refusal of a role without
+// authority is pinned in server/api/cmc/__tests__/cmc-sign-signature-row.test.ts.
+vi.mock('../../server/services/part11/resolve-signer-role', () => ({ resolveSignerOrgRole: async () => 'admin' }));
 
 import batchRecordRouter from '../../server/api/cmc/batchRecordRoutes';
 

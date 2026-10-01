@@ -25,8 +25,14 @@
  * Lane "dbdsc": organization 93220, users `dbdsc-*@example.invalid`. A signature
  * can never be deleted (trg_electronic_signatures_immutable) and references its
  * organization and signer, so those are permanent and reused; every target is
- * new per run (a per-run number, or a fresh row id). Ledger rows and the BLA and
- * CMC fixture rows are removed.
+ * new per run (a per-run number, or a fresh row id). Ledger rows and the BLA,
+ * CMC, IRB, IACUC and IBC fixture rows are removed.
+ *
+ * Fix round (2026-10-01), each reproduced here before its fix: a viewer signed
+ * the three CMC acts (no §11.10(g) check); PATCH .../status set 'approved' on an
+ * IRB submission, IACUC protocol and IBC registration with no signature or
+ * review; a rejected batch was signed 'release'; a specification created with
+ * approvalStatus 'approved' was stored approved.
  */
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import express from 'express';
@@ -79,8 +85,10 @@ const REASON = 'Signing this record for the P0-10b ceremony proof.';
 /** Per-run target numbers: signatures are permanent, so a run never reuses a target. */
 const BASE = Math.floor(Date.now() / 1000) % 1_000_000_000;
 
-type Case = 'bare' | 'wrong' | 'signed';
-const CASES: Case[] = ['bare', 'wrong', 'signed'];
+type Case = 'bare' | 'wrong' | 'signed' | 'viewer' | 'rejected';
+const CASES: Case[] = ['bare', 'wrong', 'signed', 'viewer'];
+/** Fixture rows are made for these; 'rejected' is the batch disposition case. */
+const ROW_CASES: Case[] = [...CASES, 'rejected'];
 
 interface Route {
   key: string;
@@ -91,6 +99,8 @@ interface Route {
   act: Record<string, unknown>;
   /** The BLA and CMC handlers read a real row: one per case, made in beforeAll. */
   rows?: 'bla' | 'batch' | 'spec' | 'closure';
+  /** The router mounts requireEditorAccessForWrites, which refuses a viewer before the ceremony. */
+  writeGate?: true;
 }
 
 /** The seven routes that now run signGovernedAct (body: meaning, password, mfaToken). */
@@ -99,8 +109,8 @@ const CEREMONY: Route[] = [
   { key: 'iacuc', mount: '/api/iacuc', path: (id) => `/protocols/${id}/reviews`, target: (id) => `iacuc-protocol:${id}`, act: { reviewType: 'full_committee_review', outcome: 'approved' } },
   { key: 'ibc', mount: '/api/ibc', path: (id) => `/registrations/${id}/reviews`, target: (id) => `ibc-registration:${id}`, act: { outcome: 'approved' } },
   { key: 'rim', mount: '/api/rim', path: (id) => `/products/${id}/labels`, target: (id) => `rim-product:${id}`, act: { labelType: 'uspi', status: 'approved' } },
-  { key: 'consent', mount: '/api/protocol-consent', path: (id) => `/forms/${id}/approve`, target: (id) => `consent-form:${id}`, act: {} },
-  { key: 'deviations', mount: '/api/protocol-deviations', path: (id) => `/deviations/${id}/close`, target: (id) => `protocol-deviation:${id}`, act: {} },
+  { key: 'consent', mount: '/api/protocol-consent', path: (id) => `/forms/${id}/approve`, target: (id) => `consent-form:${id}`, act: {}, writeGate: true },
+  { key: 'deviations', mount: '/api/protocol-deviations', path: (id) => `/deviations/${id}/close`, target: (id) => `protocol-deviation:${id}`, act: {}, writeGate: true },
   { key: 'bla', mount: '/api/biopharma/bla', path: (id) => `/assessments/${id}/sign`, target: (id) => `bla_assessment:${id}`, act: {}, rows: 'bla' },
 ];
 
@@ -117,6 +127,8 @@ const CMC: Route[] = [
 let owner: Pool;
 let app: express.Express;
 let signer: { id: number; token: string };
+/** A member whose role carries no signing authority, with a password of their own. */
+let viewer: { id: number; token: string };
 const fixtureRows = new Map<string, string>();
 
 function idFor(route: Route, c: Case): string {
@@ -124,34 +136,34 @@ function idFor(route: Route, c: Case): string {
   return String(BASE + CEREMONY.indexOf(route) * 10 + CASES.indexOf(c));
 }
 
-async function mintToken(userId: number): Promise<string> {
+async function mintToken(userId: number, role = 'admin'): Promise<string> {
   const { activeJwtSecret } = await import('../../server/utils/jwtVerify');
-  return jwt.sign({ type: 'access', userId, organizationId: String(ORG), role: 'admin' }, activeJwtSecret(), { expiresIn: '10m' });
+  return jwt.sign({ type: 'access', userId, organizationId: String(ORG), role }, activeJwtSecret(), { expiresIn: '10m' });
 }
 
-/** A permanent signer: reused across runs, password and standing reset each run. */
-async function upsertSigner(): Promise<number> {
+/** A permanent member: reused across runs, password, standing and role reset each run. */
+async function upsertMember(who: 'signer' | 'viewer', role: 'admin' | 'viewer'): Promise<number> {
   const { rows } = await owner.query(
     `INSERT INTO users (email, name, password_hash, status)
-     VALUES ($1, 'Domain Signer', $2, 'active')
+     VALUES ($1, $2, $3, 'active')
      ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash, status = 'active',
        failed_login_attempts = 0, locked_until = NULL, mfa_enabled = false, mfa_secret = NULL,
        mfa_totp_last_step = NULL, password_changed_at = NULL
      RETURNING id`,
-    [`${TAG}-signer@example.invalid`, await bcrypt.hash(PASSWORD, 4)],
+    [`${TAG}-${who}@example.invalid`, who === 'signer' ? 'Domain Signer' : 'Domain Viewer', await bcrypt.hash(PASSWORD, 4)],
   );
   const id = Number(rows[0].id);
   await owner.query(
-    `INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, 'admin')
-     ON CONFLICT (user_id, organization_id) DO UPDATE SET role = 'admin'`,
-    [ORG, id],
+    `INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, $3)
+     ON CONFLICT (user_id, organization_id) DO UPDATE SET role = EXCLUDED.role`,
+    [ORG, id, role],
   );
   return id;
 }
 
 /** One BLA assessment and one row per CMC register, per case, in this organization. */
 async function makeFixtureRows(): Promise<void> {
-  for (const c of CASES) {
+  for (const c of ROW_CASES) {
     const bla = await owner.query(`INSERT INTO c2c_bla_assessments (org_id, kind, title) VALUES ($1, 'comparability', $2) RETURNING id`, [ORG, `${TAG} ${c}`]);
     fixtureRows.set(`bla:${c}`, String(bla.rows[0].id));
     const batch = await owner.query(
@@ -204,6 +216,9 @@ async function cleanup(): Promise<void> {
   await owner.query('DELETE FROM quality_specifications WHERE tenant_id = $1', [ORG]);
   await owner.query('DELETE FROM cmc_batch_records WHERE organization_id = $1', [ORG]);
   await owner.query('DELETE FROM cmc_container_closures WHERE organization_id = $1', [ORG]);
+  for (const table of ['irb_submissions', 'iacuc_protocols', 'ibc_registrations']) {
+    await owner.query(`DELETE FROM ${table} WHERE organization_id = $1`, [ORG]);
+  }
 }
 
 /** Everything written for a target: the ledger pair and the signature row. */
@@ -219,11 +234,22 @@ async function written(target: string) {
   return { ledger: ledger.rows, audit: audit.rows, signatures: signatures.rows };
 }
 
-function post(route: Route, c: Case, body: Record<string, unknown>) {
+function post(route: Route, c: Case, body: Record<string, unknown>, as: { token: string } = signer) {
   return request(app)
     .post(`${route.mount}${route.path(idFor(route, c))}`)
-    .set('Authorization', `Bearer ${signer.token}`)
+    .set('Authorization', `Bearer ${as.token}`)
     .send({ reason: REASON, ...route.act, ...body });
+}
+
+/** The CMC record's own signed column, read as the owner. */
+async function cmcSignedState(route: Route, c: Case): Promise<unknown> {
+  const sql: Record<string, string> = {
+    batch: 'SELECT release_status AS v FROM cmc_batch_records WHERE id = $1',
+    spec: 'SELECT approval_status AS v FROM quality_specifications WHERE id = $1',
+    closure: 'SELECT status AS v FROM cmc_container_closures WHERE id = $1',
+  };
+  const { rows } = await owner.query(sql[route.key], [idFor(route, c)]);
+  return rows[0]?.v ?? null;
 }
 
 async function expectNothingWritten(route: Route, c: Case): Promise<void> {
@@ -267,8 +293,10 @@ beforeAll(async () => {
     [ORG, `${TAG}-domain-signing`],
   );
   await cleanup();
-  const signerId = await upsertSigner();
+  const signerId = await upsertMember('signer', 'admin');
   signer = { id: signerId, token: await mintToken(signerId) };
+  const viewerId = await upsertMember('viewer', 'viewer');
+  viewer = { id: viewerId, token: await mintToken(viewerId, 'viewer') };
   await makeFixtureRows();
 
   const { authMiddleware } = await import('../../server/auth');
@@ -293,7 +321,7 @@ beforeEach(async () => {
   stubs.ran.length = 0;
   attempts.seen.length = 0;
   // A wrong password counts against the account (VSR-001 F-27); every case starts unlocked.
-  await owner.query('UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE id = $1', [signer.id]);
+  await owner.query('UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE id = ANY($1::int[])', [[signer.id, viewer.id]]);
 });
 
 afterAll(async () => {
@@ -328,6 +356,13 @@ describe.each(CEREMONY)('$key: the approval is an electronic signature', (route)
       `governed-signed-act ${route.mount}${route.path(idFor(route, 'signed'))}`,
     );
     if (!route.rows) expect(stubs.ran).toEqual([route.key]);
+  });
+
+  it('refuses a viewer who knows their own password (§11.10(g)), and writes nothing', async () => {
+    const res = await post(route, 'viewer', { meaning: 'approval', password: PASSWORD }, viewer);
+    expect(res.status, `${route.key}: a viewer signed: ${JSON.stringify(res.body)}`).toBe(403);
+    if (!route.writeGate) expect(res.body.error?.code).toBe('ESIGNATURE_NO_AUTHORITY');
+    await expectNothingWritten(route, 'viewer');
   });
 });
 
@@ -364,5 +399,100 @@ describe.each(CMC)('CMC $key: the signature row lands with the ledger sign', (ro
     const res = await post(route, 'signed', { reauth: { password: PASSWORD } });
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     await expectSignedTogether(route, 'signed', route.key === 'batch' ? 'release' : 'approval');
+  });
+
+  it('refuses a viewer who knows their own password (§11.10(g)), and changes nothing', async () => {
+    const before = await cmcSignedState(route, 'viewer');
+    const res = await post(route, 'viewer', { reauth: { password: PASSWORD } }, viewer);
+    expect(res.status, `${route.key}: a viewer signed: ${JSON.stringify(res.body)}`).toBe(403);
+    expect(res.body.error).toBe('ESIGNATURE_NO_AUTHORITY');
+    await expectNothingWritten(route, 'viewer');
+    expect(await cmcSignedState(route, 'viewer')).toEqual(before);
+  });
+});
+
+describe('CMC batch release: a rejected batch is not signed as released', () => {
+  it("signs a rejection with meaning 'responsibility', on the ledger and the signature row", async () => {
+    const route = CMC[0];
+    const res = await post(route, 'rejected', { decision: 'rejected', reauth: { password: PASSWORD } });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    await expectSignedTogether(route, 'rejected', 'responsibility');
+    expect(await cmcSignedState(route, 'rejected')).toBe('rejected');
+  });
+});
+
+/*
+ * The second door: PATCH .../status set the status a committee determination
+ * sets, 'approved' included, under a 'transition' ledger row, with no signature
+ * and no review. Real rows, the runtime role, RLS on.
+ */
+const STATUS_DOORS = [
+  {
+    key: 'irb', mount: '/api/irb', path: (id: string) => `/submissions/${id}/status`, target: (id: string) => `irb-submission:${id}`,
+    determined: ['approved', 'modifications_required'], lifecycle: 'suspended',
+    table: 'irb_submissions', insert: `(organization_id, protocol_number, title, status, created_by) VALUES ($1, $2, $2, 'under_review', $3)`,
+  },
+  {
+    key: 'iacuc', mount: '/api/iacuc', path: (id: string) => `/protocols/${id}/status`, target: (id: string) => `iacuc-protocol:${id}`,
+    determined: ['approved', 'conditional'], lifecycle: 'expired',
+    table: 'iacuc_protocols', insert: `(organization_id, protocol_number, title, pain_category, status, created_by) VALUES ($1, $2, $2, 'C', 'fcr', $3)`,
+  },
+  {
+    key: 'ibc', mount: '/api/ibc', path: (id: string) => `/registrations/${id}/status`, target: (id: string) => `ibc-registration:${id}`,
+    determined: ['approved', 'conditional'], lifecycle: 'closed',
+    table: 'ibc_registrations', insert: `(organization_id, registration_number, title, status, created_by) VALUES ($1, $2, $2, 'under_review', $3)`,
+  },
+];
+
+describe.each(STATUS_DOORS)('$key: PATCH status cannot set what a determination sets', (door) => {
+  const freshRow = async (label: string) =>
+    String((await owner.query(`INSERT INTO ${door.table} ${door.insert} RETURNING id`, [ORG, `${TAG}-${BASE}-${door.key}-${label}`, signer.id])).rows[0].id);
+  const statusOf = async (id: string) => (await owner.query(`SELECT status FROM ${door.table} WHERE id = $1`, [id])).rows[0].status;
+  const patch = (id: string, status: string) =>
+    request(app).patch(`${door.mount}${door.path(id)}`).set('Authorization', `Bearer ${signer.token}`).send({ status, reason: REASON });
+
+  it.each(door.determined)("an admin's PATCH to '%s' is refused, and nothing is written", async (status) => {
+    const id = await freshRow(status);
+    const before = await statusOf(id);
+    const res = await patch(id, status);
+    expect(res.status, `${door.key}: PATCH set '${status}': ${JSON.stringify(res.body)}`).toBe(409);
+    expect(res.body.error?.code).toBe('STATUS_SET_BY_DETERMINATION');
+    expect(await statusOf(id)).toBe(before);
+    expect(await written(door.target(id))).toEqual({ ledger: [], audit: [], signatures: [] });
+  });
+
+  it('a status no determination sets still moves, under a transition ledger row', async () => {
+    const id = await freshRow('lifecycle');
+    const res = await patch(id, door.lifecycle);
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    expect(await statusOf(id)).toBe(door.lifecycle);
+    expect((await written(door.target(id))).ledger.map((r) => r.command)).toEqual(['transition']);
+  });
+});
+
+describe('a specification is created unsigned', () => {
+  const create = (body: Record<string, unknown>) =>
+    request(app)
+      .post('/api/cmc/specifications')
+      .set('Authorization', `Bearer ${signer.token}`)
+      .send({ materialType: 'drug_substance', ...body });
+  const stored = async (name: string) =>
+    (await owner.query('SELECT id, approval_status FROM quality_specifications WHERE tenant_id = $1 AND material_name = $2', [ORG, name])).rows;
+
+  it("refuses approvalStatus 'approved' and stores nothing", async () => {
+    const name = `${TAG} ${BASE} created-approved`;
+    const res = await create({ materialName: name, approvalStatus: 'approved' });
+    expect(res.status, `create stored an approved specification: ${JSON.stringify(res.body)}`).toBe(400);
+    expect(await stored(name)).toEqual([]);
+  });
+
+  it("stores 'review' as asked, and names the creator on the audit row", async () => {
+    const name = `${TAG} ${BASE} created-review`;
+    const res = await create({ materialName: name, approvalStatus: 'review' });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    const rows = await stored(name);
+    expect(rows.map((r) => r.approval_status)).toEqual(['review']);
+    const log = await owner.query(`SELECT changed_by FROM specification_audit_log WHERE specification_id = $1 AND action = 'created'`, [rows[0].id]);
+    expect(log.rows).toEqual([{ changed_by: String(signer.id) }]);
   });
 });

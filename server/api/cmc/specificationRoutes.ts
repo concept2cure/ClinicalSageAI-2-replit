@@ -10,6 +10,7 @@ import { linkToModule3 } from '../../services/cmc/link-to-module3';
 import { recordGovernedAction, verifyReauth } from '../../routes/c2c/actions';
 import { BINDING_BASIS, persistGovernedActionSignature } from '../../services/part11/signature-persistence';
 import { clientIpOf } from '../../utils/client-ip';
+import { refusedWithoutSigningAuthority, verifiedReauthFactors } from './cmc-signer';
 import { governedSignatureSchema, resolveActorUserId } from './governance';
 
 const router = express.Router();
@@ -24,7 +25,21 @@ const createSpecSchema = z.object({
   testMethods: z.any().optional(),
   justification: z.string().optional(),
   regulatoryBasis: z.any().optional(),
-  approvalStatus: z.string().optional().default('draft'),
+  /*
+   * Only the unsigned states the client sends (cmcSpec.ts specCreateBody). This
+   * was any string and the INSERT wrote it, so a create with 'approved' stored
+   * an approved specification with no re-authentication, no ledger sign and no
+   * signature row, and the write-through carried 'approved' into Module 3
+   * (P0-10b fix round, DP-02). Approval is POST /:id/approve, and only there.
+   */
+  approvalStatus: z
+    .enum(['draft', 'review'], {
+      errorMap: () => ({
+        message: 'A specification is created as draft or review. Approval is an electronic signature: POST /api/cmc/specifications/:id/approve.',
+      }),
+    })
+    .optional()
+    .default('draft'),
 });
 
 const updateSpecSchema = z.object({
@@ -137,7 +152,11 @@ router.post('/', async (req, res) => {
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context required' });
     }
-
+    // The audit row names the person who created the record; it used to name
+    // 'system' for every create. The route sits behind the global /api auth
+    // gate (register-platform-routes.ts), so a session user is always present
+    // in production; NULL would mean "no actor resolved", never an invented one.
+    const actorId = resolveActorUserId(req);
 
     const result = await pool.query(
       `INSERT INTO quality_specifications (
@@ -156,7 +175,7 @@ router.post('/', async (req, res) => {
         JSON.stringify(data.testMethods || null),
         data.justification || null,
         JSON.stringify(data.regulatoryBasis || null),
-        data.approvalStatus || 'draft',
+        data.approvalStatus,
       ]
     );
 
@@ -166,7 +185,7 @@ router.post('/', async (req, res) => {
     await pool.query(
       `INSERT INTO specification_audit_log (specification_id, action, changed_by, new_values)
        VALUES ($1, 'created', $2, $3)`,
-      [spec.id, 'system', JSON.stringify(spec)]
+      [spec.id, actorId ? String(actorId) : null, JSON.stringify(spec)]
     );
 
     console.log(`[CMC Specs] Created specification ${spec.id} for ${data.materialName}`);
@@ -288,13 +307,6 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-/** The §11.200 factors verifyReauth checked, as the signature row records them. */
-function verifiedFactors(reauth: { totp?: string } | undefined): { authenticationMethod: string; secondFactorVerified: boolean } {
-  return reauth?.totp
-    ? { authenticationMethod: 'password+totp', secondFactorVerified: true }
-    : { authenticationMethod: 'password', secondFactorVerified: false };
-}
-
 /** No content basis is registered for a specification, and none is claimed (signature-persistence BINDING_BASIS). */
 const LEDGER_BINDING_NOTE =
   'No content digest is registered for a quality specification, so none is claimed: bound_payload_digest is the governed action audit sha256 chain hash (target, payload hash, actor, time), not a content hash.';
@@ -314,8 +326,8 @@ router.post('/:id/approve', async (req, res) => {
   }
   const { reason, meaning, reauth, idempotencyKey } = validationResult.data;
 
-  const tenantRaw = (req as any).tenantId || (req as any).tenantContext?.organizationId;
-  const orgId = typeof tenantRaw === 'string' ? parseInt(tenantRaw, 10) : Number(tenantRaw);
+  // Number(), not parseInt: a malformed tenant ('7abc') is refused, not read as 7.
+  const orgId = Number((req as any).tenantId || (req as any).tenantContext?.organizationId);
   if (!Number.isFinite(orgId) || orgId <= 0) {
     return res.status(401).json({ error: 'Tenant context required' });
   }
@@ -324,7 +336,10 @@ router.post('/:id/approve', async (req, res) => {
     return res.status(401).json({ error: 'AUTH_REQUIRED' });
   }
 
-  // Re-auth gate FIRST (high-risk).
+  // Signing authority (§11.10(g)), then the re-auth gate, before any write.
+  // Until the P0-10b fix round only the password was checked, so a viewer
+  // could approve.
+  if (await refusedWithoutSigningAuthority(res, { userId, orgId })) return;
   const reauthResult = await verifyReauth(userId, reauth);
   if (!reauthResult.ok) {
     res.setHeader('WWW-Authenticate', 'ReAuth required');
@@ -386,7 +401,7 @@ router.post('/:id/approve', async (req, res) => {
     await persistGovernedActionSignature(client, {
       orgId, userId, target: `specification:${id}`, reason, payload: { meaning },
       actionId: governance.actionId, auditId: governance.auditId, sha256Chain: governance.sha256Chain,
-      ...verifiedFactors(reauth), ipAddress: clientIpOf(req), occurredAt: new Date(),
+      ...verifiedReauthFactors(reauth), ipAddress: clientIpOf(req), occurredAt: new Date(),
       binding: { digest: null, basis: BINDING_BASIS.GOVERNED_ACTION_LEDGER, note: LEDGER_BINDING_NOTE },
       complianceStatement: 'Specification approval applied under 21 CFR Part 11 §11.50/§11.70/§11.200; ledger-chained to the audit_logs sha256 chain.',
     });

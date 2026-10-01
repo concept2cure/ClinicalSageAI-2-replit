@@ -123,11 +123,25 @@ const statusSchema = z.object({
   reason,
 });
 
+/*
+ * A status a committee determination sets is set only by the determination,
+ * POST /api/iacuc/protocols/:id/reviews, where an approval is an electronic signature
+ * (signGovernedAct) and every outcome leaves a review record. This route used
+ * to accept 'approved' too and wrote it under a 'transition' ledger row and
+ * nothing else: an approval with no signature, no review and no reviewer, from
+ * a session alone (P0-10b fix round, DP-02). The statuses no determination
+ * sets still move here.
+ */
+const SET_BY_DETERMINATION: ReadonlySet<string> = new Set(['approved', 'conditional']);
+
 router.patch('/protocols/:id/status', async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   const parsed = statusSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  if (SET_BY_DETERMINATION.has(parsed.data.status)) {
+    return res.status(409).json({ error: { code: 'STATUS_SET_BY_DETERMINATION', message: `'${parsed.data.status}' is a committee determination. Record it at POST /api/iacuc/protocols/:id/reviews; an approval there is an electronic signature. Nothing was changed.` } });
+  }
   await governed(req, res, 'transition', parsed.data.reason, async (client, orgId) => {
     await setProtocolStatusTx(client, orgId, id, parsed.data.status, parsed.data.reviewType);
     return { target: `iacuc-protocol:${id}`, payload: { status: parsed.data.status }, body: { id, status: parsed.data.status } };

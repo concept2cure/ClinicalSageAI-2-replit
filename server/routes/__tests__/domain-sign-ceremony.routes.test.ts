@@ -100,9 +100,21 @@ vi.mock('../../services/part11/signature-persistence', async (orig) => ({
   persistGovernedSignSignature: (...a: unknown[]) => persistGovernedSignSignature(...(a as [unknown, SigParams])),
 }));
 
-vi.mock('../../services/irb/irb-service', async (orig) => ({ ...(await orig<object>()), recordReviewTx: h.domainWrite(h.review) }));
-vi.mock('../../services/iacuc/iacuc-service', async (orig) => ({ ...(await orig<object>()), recordReviewTx: h.domainWrite(h.review) }));
-vi.mock('../../services/ibc/ibc-service', async (orig) => ({ ...(await orig<object>()), recordReviewTx: h.domainWrite(h.review) }));
+vi.mock('../../services/irb/irb-service', async (orig) => ({
+  ...(await orig<object>()),
+  recordReviewTx: h.domainWrite(h.review),
+  setSubmissionStatusTx: h.domainWrite(),
+}));
+vi.mock('../../services/iacuc/iacuc-service', async (orig) => ({
+  ...(await orig<object>()),
+  recordReviewTx: h.domainWrite(h.review),
+  setProtocolStatusTx: h.domainWrite(),
+}));
+vi.mock('../../services/ibc/ibc-service', async (orig) => ({
+  ...(await orig<object>()),
+  recordReviewTx: h.domainWrite(h.review),
+  setRegistrationStatusTx: h.domainWrite(),
+}));
 vi.mock('../../services/rim/rim-service', async (orig) => ({ ...(await orig<object>()), addLabelTx: h.domainWrite({ id: 77, supersededCount: 0 }) }));
 vi.mock('../../services/protocol-consent/protocol-consent-service', async (orig) => ({
   ...(await orig<object>()),
@@ -283,4 +295,61 @@ describe.each(ROUTES)('$name is a signature, so it runs the ceremony', (route) =
       expect(persistGovernedSignSignature).not.toHaveBeenCalled();
     });
   }
+});
+
+/*
+ * The second door (P0-10b fix round, DP-02). Each committee router also has a
+ * PATCH .../status that wrote any status in its enum, 'approved' included, as a
+ * 'transition' ledger row: an approval with no signature, no review record and
+ * no reviewer, from a session alone. A status a determination sets is now set
+ * only by the determination route above; the PATCH refuses it and writes
+ * nothing. Statuses no determination sets still move through the PATCH.
+ */
+interface StatusDoor {
+  name: string;
+  mount: string;
+  router: Router;
+  path: string;
+  target: string;
+  /** What recordReviewTx writes into the status column. */
+  determined: string[];
+  /** A status no determination sets: the PATCH still records it. */
+  lifecycle: string;
+}
+
+const STATUS_DOORS: StatusDoor[] = [
+  {
+    name: 'IRB submission', mount: '/api/irb', router: irbRouter, path: '/api/irb/submissions/5/status',
+    target: 'irb-submission:5', determined: ['approved', 'modifications_required'], lifecycle: 'suspended',
+  },
+  {
+    name: 'IACUC protocol', mount: '/api/iacuc', router: iacucRouter, path: '/api/iacuc/protocols/5/status',
+    target: 'iacuc-protocol:5', determined: ['approved', 'conditional'], lifecycle: 'expired',
+  },
+  {
+    name: 'IBC registration', mount: '/api/ibc', router: ibcRouter, path: '/api/ibc/registrations/5/status',
+    target: 'ibc-registration:5', determined: ['approved', 'conditional'], lifecycle: 'closed',
+  },
+];
+
+describe.each(STATUS_DOORS)('$name status PATCH cannot set what a determination sets', (door) => {
+  const patch = (status: string) =>
+    request(appFor({ name: door.name, mount: door.mount, router: door.router, path: door.path, act: {}, target: door.target }))
+      .patch(door.path)
+      .send({ status, reason: REASON });
+
+  it.each(door.determined)("refuses status '%s', and writes nothing", async (status) => {
+    const res = await patch(status);
+    expect(res.status, `${door.name}: PATCH set '${status}' without a determination: ${JSON.stringify(res.body)}`).toBe(409);
+    expect(codeOf(res.body)).toBe('STATUS_SET_BY_DETERMINATION');
+    expect(res.body.error.message).toContain(door.path.replace(/\/status$/, '/reviews').replace('/5/', '/:id/'));
+    expect(NOTHING_WRITTEN(h.log)).toEqual([]);
+    expect(persistGovernedSignSignature).not.toHaveBeenCalled();
+  });
+
+  it('still records a status no determination sets, as a transition', async () => {
+    const res = await patch(door.lifecycle);
+    expect(res.status).toBe(201);
+    expect(h.log).toEqual(['BEGIN', 'DOMAIN', `LEDGER:transition:${door.target}`, 'COMMIT']);
+  });
 });
