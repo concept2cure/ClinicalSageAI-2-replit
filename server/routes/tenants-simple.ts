@@ -516,6 +516,8 @@ router.post('/:id/purge', requirePlatformAdmin, async (req, res) => {
       purgedAt: record.purgedAt,
       // What happened to the vault's stored bytes, stated rather than implied.
       storageErasure: record.storageErasure,
+      // The AnA turn records erased; each turn's chained audit row is kept.
+      turnRecordErasure: record.turnRecordErasure,
     });
   } catch (error) {
     if (error instanceof OffboardingStateError) {
