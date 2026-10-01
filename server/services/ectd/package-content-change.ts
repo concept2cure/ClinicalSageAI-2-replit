@@ -197,6 +197,10 @@ export async function recordFiledSequence(
   entry: {
     sequence: string;
     submissionType: string;
+    /** The us-regional identity the backbone declared (FDA; sweep F04). */
+    submissionTypeCode?: string;
+    submissionSubTypeCode?: string;
+    submissionId?: string;
     sha256: string;
     transmittalId?: number | null;
     // leafId + backbone: what a later sequence's modified-file names (W5/D7, 2026-09-29).
