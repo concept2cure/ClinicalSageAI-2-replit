@@ -47,6 +47,8 @@ vi.hoisted(() => {
   process.env.JWT_SECRET = process.env.JWT_SECRET || 'as2-delivery-outcome-secret-padded-to-32-chars!!';
   process.env.SKIP_DB_STARTUP_TEST = 'true';
   process.env.FDA_ESG_AS2_FROM = 'SPONSOR-AS2';
+  // FDA's AS2 identifier has no default (2026-10-01, W5/D7, sweep F16).
+  process.env.FDA_ESG_AS2_TO = 'FDA-AS2-ID-TEST';
   process.env.FDA_ESG_CERT_PATH = '/virtual/fda-client-cert.pem';
   process.env.FDA_ESG_KEY_PATH = '/virtual/fda-client-key.pem';
   process.env.FDA_ESG_FDA_CERT_PATH = '/virtual/fda-trust-anchor.pem';
