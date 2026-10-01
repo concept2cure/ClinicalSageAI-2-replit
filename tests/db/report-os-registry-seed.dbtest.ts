@@ -197,6 +197,36 @@ describe('report type registry seed (D2)', () => {
 });
 
 /**
+ * Reporting review 2026-10-01, SECURITY-10: a run and its chain row commit
+ * together. With report_os.run_created refused by a trigger, nothing of the
+ * run is left: no run, no snapshot, no row.
+ */
+describe('a run and its chain row, together', () => {
+  const REFUSE_RUN = `wo03_refuse_run_created_${process.pid}`;
+  it('when report_os.run_created is refused, the run and its snapshot roll back with it (503, nothing saved)', async () => {
+    const ro = express();
+    ro.use(express.json());
+    ro.use('/api/report-os', reportOsRouter);
+    const count = async (sql: string) => Number((await owner.query(sql, [ORG_B])).rows[0].n);
+    const before = { runs: await count('SELECT count(*) AS n FROM report_runs WHERE organization_id = $1'), snapshots: await count('SELECT count(*) AS n FROM report_snapshots WHERE organization_id = $1') };
+    await owner.query(`CREATE FUNCTION ${REFUSE_RUN}() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'refused by the SECURITY-10 dbtest'; END $$`);
+    await owner.query(
+      `CREATE TRIGGER ${REFUSE_RUN} BEFORE INSERT ON audit_logs FOR EACH ROW
+         WHEN (NEW.action = 'report_os.run_created' AND NEW.tenant_id = ${ORG_B}) EXECUTE FUNCTION ${REFUSE_RUN}()`
+    );
+    try {
+      const res = await request(ro).post('/api/report-os/runs').set(auth(tokenB)).send({ scopeType: 'project', scopeId: ids.B.projects, reportTypeId: RUN_TYPE });
+      expect(res.status, JSON.stringify(res.body)).toBe(503);
+      expect(res.body.error.code).toBe('REPORT_RUN_NOT_RECORDED');
+    } finally {
+      await owner.query(`DROP TRIGGER IF EXISTS ${REFUSE_RUN} ON audit_logs`);
+      await owner.query(`DROP FUNCTION IF EXISTS ${REFUSE_RUN}()`);
+    }
+    expect({ runs: await count('SELECT count(*) AS n FROM report_runs WHERE organization_id = $1'), snapshots: await count('SELECT count(*) AS n FROM report_snapshots WHERE organization_id = $1') }).toEqual(before);
+  });
+});
+
+/**
  * Review round 1 (DP-47, DP-50), on the same fixture: sealing is for owners,
  * admins and managers; the status, the seal and the chain row commit together
  * or not at all; a final report is not sealed again; a bundle export is

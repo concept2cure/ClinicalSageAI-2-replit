@@ -399,19 +399,9 @@ function refuseUnrecorded(res: Response, code: string, message: string, data?: R
   return res.status(503).json({ success: false, error: { code, message }, ...(data ? { data } : {}) });
 }
 
-/**
- * POST /runs' row, written after the run: the row says a run exists. The run's
- * writes share no transaction the row could join, so when the row cannot be
- * written the answer says so — the run exists and was not recorded — and this
- * returns false having sent the 503.
- */
-async function recordRunCreated(
-  req: Request,
-  res: Response,
-  run: typeof reportRuns.$inferSelect,
-  computed: { confidence: number; blockers: string[] }
-): Promise<boolean> {
-  const recorded = await recordReportEvent(req, {
+/** POST /runs' chain row: the run exists, as computed. */
+function runCreatedEvent(run: typeof reportRuns.$inferSelect, computed: { confidence: number; blockers: string[] }): ReportAuditEvent {
+  return {
     organizationId: run.organizationId,
     action: 'report_os.run_created',
     resourceType: 'report_run',
@@ -425,17 +415,45 @@ async function recordRunCreated(
       confidence: computed.confidence,
       blockerCount: computed.blockers.length,
     },
-  });
-  if (!recorded) {
-    refuseUnrecorded(
-      res,
-      'REPORT_RUN_NOT_RECORDED',
-      'The report run was created but could not be recorded in the audit trail. ' +
-        'Run the report again once the audit trail is available.',
-      { runId: run.id }
-    );
+  };
+}
+
+type NewRun = typeof reportRuns.$inferInsert;
+type NewSnapshot = Omit<typeof reportSnapshots.$inferInsert, 'runId'>;
+type NewDependency = Omit<typeof reportRunDependencies.$inferInsert, 'runId'>;
+
+/**
+ * The run, its first snapshot, its dependencies and its report_os.run_created
+ * chain row, in one tenant-stamped transaction: all land or none (reporting
+ * review 2026-10-01, SECURITY-10). The run's writes used to commit first and
+ * the row after them, so a refused row left a listed, bundlable, finalizable
+ * run that was never recorded, and a retry made a second. 'not-recorded' when
+ * the chain row was refused (everything rolled back); any earlier failure
+ * throws.
+ */
+async function createRunOnChain(
+  req: Request,
+  rows: { run: NewRun; snapshot: NewSnapshot; dependencies: NewDependency[] },
+  computed: { confidence: number; blockers: string[] },
+): Promise<{ run: typeof reportRuns.$inferSelect; snapshot: typeof reportSnapshots.$inferSelect } | 'not-recorded'> {
+  let recording = false;
+  try {
+    return await inTenantTransaction(rows.run.organizationId, async (client) => {
+      const tx = onTransaction(client);
+      const [run] = await tx.insert(reportRuns).values(rows.run).returning();
+      const [snapshot] = await tx.insert(reportSnapshots).values({ ...rows.snapshot, runId: run.id }).returning();
+      if (rows.dependencies.length > 0) {
+        await tx.insert(reportRunDependencies).values(rows.dependencies.map((d) => ({ ...d, runId: run.id })));
+      }
+      recording = true;
+      await writeReportEvent(client, req, runCreatedEvent(run, computed));
+      return { run, snapshot };
+    });
+  } catch (error) {
+    if (!recording) throw error;
+    logger.error('report run not recorded on the audit chain; rolled back', { error: (error as Error)?.message });
+    return 'not-recorded';
   }
-  return recorded;
 }
 
 /**
@@ -1549,70 +1567,66 @@ router.post('/runs', async (req: Request, res: Response) => {
       }
     }
 
-    const [run] = await db
-      .insert(reportRuns)
-      .values({
-        organizationId: orgId,
-        clientWorkspaceId,
-        scopeType,
-        scopeId,
-        reportTypeId,
-        requestedBy,
-        status: computed.blockers.length > 0 ? 'partial' : 'completed',
-        dependencySummary: {
-          providers: computed.providers,
-          scopeLineage: scope.lineage,
-          summary: computed.summary,
-          criticalBlockers: computed.criticalBlockers,
-          ...(lineageRendered ? { lineageRendered } : {}),
-        },
-        blockers: computed.blockers,
-        confidence: computed.confidence,
-        freshness: {
-          generatedAt: new Date().toISOString(),
-          freshnessBudgetMs: scope.freshnessBudgetMs,
-        },
-        completedAt: new Date(),
-      })
-      .returning();
-
-    const [snapshot] = await db
-      .insert(reportSnapshots)
-      .values({
-        runId: run.id,
-        organizationId: orgId,
-        scopeType,
-        scopeId,
-        snapshotVersion: 1,
-        isLatest: true,
-        snapshotMetadata: {
+    const created = await createRunOnChain(
+      req,
+      {
+        run: {
+          organizationId: orgId,
+          clientWorkspaceId,
+          scopeType,
+          scopeId,
           reportTypeId,
-          providers: computed.providers,
-          summary: computed.summary,
+          requestedBy,
+          status: computed.blockers.length > 0 ? 'partial' : 'completed',
+          dependencySummary: {
+            providers: computed.providers,
+            scopeLineage: scope.lineage,
+            summary: computed.summary,
+            criticalBlockers: computed.criticalBlockers,
+            ...(lineageRendered ? { lineageRendered } : {}),
+          },
+          blockers: computed.blockers,
           confidence: computed.confidence,
+          freshness: {
+            generatedAt: new Date().toISOString(),
+            freshnessBudgetMs: scope.freshnessBudgetMs,
+          },
+          completedAt: new Date(),
         },
-        createdBy: requestedBy,
-      })
-      .returning();
-
-    if (computed.providers.length > 0) {
-      await db.insert(reportRunDependencies).values(
-        computed.providers.map(p => ({
-          runId: run.id,
+        snapshot: {
+          organizationId: orgId,
+          scopeType,
+          scopeId,
+          snapshotVersion: 1,
+          isLatest: true,
+          snapshotMetadata: {
+            reportTypeId,
+            providers: computed.providers,
+            summary: computed.summary,
+            confidence: computed.confidence,
+          },
+          createdBy: requestedBy,
+        },
+        dependencies: computed.providers.map(p => ({
           organizationId: orgId,
           provider: p.provider,
           status: p.status,
           blocker: p.blocker,
           observedAt: new Date(p.observedAt),
-          payload: {
-            scopeType,
-            scopeId,
-          },
-        }))
+          payload: { scopeType, scopeId },
+        })),
+      },
+      computed,
+    );
+    if (created === 'not-recorded') {
+      return refuseUnrecorded(
+        res,
+        'REPORT_RUN_NOT_RECORDED',
+        'The report run was not created: it could not be recorded in the audit trail, so nothing was saved. ' +
+          'Run the report again once the audit trail is available.',
       );
     }
-
-    if (!(await recordRunCreated(req, res, run, computed))) return;
+    const { run, snapshot } = created;
 
     return res.status(201).json({
       data: {

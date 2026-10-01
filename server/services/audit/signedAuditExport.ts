@@ -29,6 +29,7 @@ import {
   type ResolvedExportSigningKey,
 } from './auditExportKeyPosture.js';
 import { NO_CHAINED_ROWS_REASON, breakForTenant } from './audited-export.js';
+import { usableOrgId } from '../../utils/authedOrgId.js';
 import {
   VerificationUnavailableError,
   describeFailure,
@@ -247,11 +248,13 @@ export function sealManifestV2<M extends object>(
  */
 export async function snapshotChainIntegrity(
   pool: Pick<Pool, 'query'>,
-  organizationId?: number
+  organizationId: number
 ): Promise<ExportManifest['chainIntegrity']> {
   try {
-    const orgFilter = organizationId ? `WHERE organization_id = $1` : '';
-    const params = organizationId ? [organizationId] : [];
+    // One organisation's chain, always: both callers pass one, and an absent
+    // filter read every tenant's events (reporting review 2026-10-01, SECURITY-9).
+    const orgFilter = 'WHERE organization_id = $1';
+    const params = [organizationId];
 
     const { rows } = await pool.query(
       `SELECT id, organization_id, sequence_number, event_type, entity_type,
@@ -409,10 +412,9 @@ async function queryAuditEvents(pool: Queryable, req: AuditExportRequest) {
   const params: any[] = [];
   let idx = 1;
 
-  if (req.organizationId) {
-    conditions.push(`organization_id = $${idx++}`);
-    params.push(req.organizationId);
-  }
+  // Unconditional: generateSignedAuditExport refuses an unusable id first.
+  conditions.push(`organization_id = $${idx++}`);
+  params.push(req.organizationId);
   if (req.eventType) {
     conditions.push(`event_type = $${idx++}`);
     params.push(req.eventType);
@@ -565,6 +567,14 @@ export async function generateSignedAuditExport(
   request: AuditExportRequest,
   deps: AuditExportDeps = {},
 ): Promise<SignedAuditExport> {
+  // 0. An export is of one tenant's trail. 0 or a negative id is not a tenant
+  //    (utils/authedOrgId.ts usableOrgId): organization_id = 0 is a global
+  //    carve-out in RLS, and the audit_events read used to drop its filter for
+  //    a falsy id, exporting every tenant (reporting review 2026-10-01,
+  //    SECURITY-9). Refused before anything is read.
+  if (usableOrgId(request.organizationId) == null) {
+    throw new VerificationUnavailableError('audit export', 'no usable organisation id: an export is of one organisation\'s trail');
+  }
   // 1. Query data — both chained stores, each row labelled by source.
   const { rows, truncated, sources } = await queryAuditData(pool, request);
 
@@ -573,7 +583,7 @@ export async function generateSignedAuditExport(
   const dataHash = sha256Hex(data);
 
   // 3. Snapshot chain integrity at time of export
-  const chainIntegrity = await snapshotChainIntegrity(pool, request.organizationId);
+  const chainIntegrity = await snapshotChainIntegrity(pool, request.organizationId as number);
   const auditLogsChain = await auditLogsChainVerdict(request.organizationId, deps.verifyAuditLogsChain);
 
   // 4. Record the export in the audit trail — BEFORE the manifest is sealed,
