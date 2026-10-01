@@ -26,6 +26,7 @@ import React, { useRef, useState } from 'react';
 import { ApiRequestError, apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import { EsignModal, type EsigSignedManifest, type EsignSigner } from '../../_shared/components/EsignModal';
 import { useAuthUser, type AuthUser } from '@/services/portal/authService';
+import { isAnnotationsShape, openAnnotationsSentence } from './VaultAnnotations';
 
 export interface VaultSignOff {
   printedName: string | null;
@@ -241,11 +242,13 @@ function approveMeta(supersedes: string[]): string {
 }
 
 /** The Part 11 dialog for a review or an approval, forwarded to the lifecycle route. */
-function SignOffDialog({ signing, p, authUser, onClose }: {
+function SignOffDialog({ signing, p, authUser, onClose, annotationNote }: {
   signing: 'review' | 'approve';
   p: ActionProps;
   authUser: AuthUser | null;
   onClose: () => void;
+  /** What was open on the document when the dialog opened; undefined when no project was given to read it. */
+  annotationNote?: string;
 }) {
   const signed = useRef(false);
   const review = signing === 'review';
@@ -262,9 +265,10 @@ function SignOffDialog({ signing, p, authUser, onClose }: {
       action={review ? 'Sign the review' : 'Approve this version'}
       target={`${p.title} ${p.versionLabel}`}
       targetMeta={
-        review
+        (review
           ? "Your review applies to this version's stored file as it is now. A changed file is a new version and needs its own review."
-          : approveMeta(p.supersedes)
+          : approveMeta(p.supersedes)) +
+        (annotationNote ? ` When this dialog opened: ${annotationNote} Signing does not resolve annotations; they stay on each version's record.` : '')
       }
       meanings={review ? ['review'] : ['approval']}
       defaultMeaning={review ? 'review' : 'approval'}
@@ -291,6 +295,20 @@ interface ActionProps {
   supersedes: string[];
   /** Re-read the Vault: the server's record is what the page shows. */
   onChanged: () => void;
+  /** The project, so the dialogs can read the document's open review annotations. */
+  projectId?: string;
+}
+
+/** The open annotations on every version of the document, as a sentence; null when they could not be read. */
+async function readOpenAnnotations(projectId: string, vaultId: string): Promise<string | null> {
+  try {
+    const res = await apiRequest('GET',
+      `/api/c2c/project-vault/${encodeURIComponent(projectId)}/documents/${encodeURIComponent(vaultId)}/annotations`);
+    const body = (await res.json().catch(() => null)) as { data?: unknown } | null;
+    return res.ok && isAnnotationsShape(body?.data) ? openAnnotationsSentence(body.data.openByVersion) : null;
+  } catch {
+    return null;
+  }
 }
 
 export function VersionLifecycleActions(p: ActionProps) {
@@ -299,8 +317,20 @@ export function VersionLifecycleActions(p: ActionProps) {
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [annotationNote, setAnnotationNote] = useState<string | undefined>(undefined);
   const { step, blocked } = nextStep(p.lifecycle, actor, p.uploaderId);
   if (!step) return null;
+
+  /* What is open is read when the dialog is asked for, and said in it. It
+     never blocks signing: no decision makes open annotations a refusal (FD13). */
+  const openSignOff = async (which: 'review' | 'approve') => {
+    if (p.projectId) {
+      const note = await readOpenAnnotations(p.projectId, p.vaultId);
+      setAnnotationNote(note ?? openAnnotationsSentence(null));
+      setError(note === null ? 'Open annotations could not be read.' : null);
+    }
+    setSigning(which);
+  };
 
   const send = async () => {
     setBusy(true);
@@ -323,7 +353,7 @@ export function VersionLifecycleActions(p: ActionProps) {
         <button
           className="sp-ask"
           disabled={busy || blocked !== null}
-          onClick={() => (step === 'send' ? setConfirming(true) : setSigning(step))}
+          onClick={() => (step === 'send' ? setConfirming(true) : void openSignOff(step))}
           aria-label={`${label}: ${p.title} ${p.versionLabel}`}
         >
           {label}
@@ -341,7 +371,7 @@ export function VersionLifecycleActions(p: ActionProps) {
       {blocked ? <span className="vd-ver-m">{blocked}</span> : null}
       {error ? <span className="vd-dr-err" role="alert">{error}</span> : null}
       {signing && (
-        <SignOffDialog signing={signing} p={p} authUser={authUser} onClose={() => setSigning(null)} />
+        <SignOffDialog signing={signing} p={p} authUser={authUser} annotationNote={annotationNote} onClose={() => setSigning(null)} />
       )}
     </span>
   );

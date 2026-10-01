@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | OQ-002 |
-| Version | 0.13 |
+| Version | 0.14 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 §5; requirements URS-002 |
 | Runner (the executable protocol) | `tests/validation/oq/vault/run.mjs` — `npm run validation:oq -- vault` |
@@ -26,6 +26,7 @@
 | 0.11 | 2026-10-01 | `…01DiJJAk` (critique 15) | OQ-VAULT-19 added (URS-VAULT-018, stored-file fixity), with its runner step. Not yet executed (→ W3). No other step changed. |
 | 0.12 | 2026-10-01 | `…01DiJJAk` (critique 15) | OQ-VAULT-20 added (URS-VAULT-019, document relationships), with its runner step. Not yet executed (→ W3). No other step changed. |
 | 0.13 | 2026-10-01 | `…01DiJJAk` (VR-14a) | OQ-VAULT-21 added (URS-VAULT-020, where a version is placed), with its runner step. Not yet executed (→ W3). No other step changed. |
+| 0.14 | 2026-10-01 | `…01DiJJAk` (critique 15) | OQ-VAULT-22 added (URS-VAULT-021, review annotations), with its runner step. Not yet executed (→ W3). No other step changed. |
 
 ## 1. Method
 
@@ -62,6 +63,7 @@ IQ-001 executed; the test identity can create programs (OQ-VAULT-00 creates one 
 | OQ-VAULT-19 | URS-VAULT-018 | scripted | Run the fixity check on the program. Read the OQ-VAULT-03 document's history | 200, every stored version verified (no altered, missing or unreadable version on an untampered installation), and the history carries a `vault.document.fixity` entry |
 | OQ-VAULT-20 | URS-VAULT-019 | scripted | Ingest a PDF. Relate the OQ-VAULT-03 document to it as supported by it. Read both documents' relationships. Remove it without a reason, then with one. Read the OQ-VAULT-03 document's history | 201; the document lists "Supported by" the PDF and the PDF lists "Supports" the document; 422 REASON_REQUIRED without a reason, 200 with one, after which neither lists it; the history carries "Related: supported by …" and "Relationship removed: supported by …" |
 | OQ-VAULT-21 | URS-VAULT-020 | scripted | Create a program, ingest two PDFs into it, and create an IND submission on it with sequence 0000. Place the first PDF as a leaf at 2.5. Read each PDF's versions | The leaf is placed (200). The first PDF's version lists one placement (the submission, sequence 0000, section 2.5, operation new). The second lists none |
+| OQ-VAULT-22 | URS-VAULT-021 | scripted | Ingest a one-page PDF and a text file. Post a page-1 comment, then a page-2 one. Read the text file's text; post a change request on a passage of it; reply; resolve without a note, then with one. Post a comment; retract it without a reason, then with one. Read the annotations and the text file's history | 201 for page 1, 422 PAGE_OUT_OF_RANGE for page 2; 200 for the text read; 201 for the passage and the reply; 422 then 200 to resolve; 422 then 200 to retract. The list shows the passage resolved with its reply and the comment retracted; the history carries the text read, the post, the reply, the resolution and the retraction, and says nothing is cut |
 
 ## 4. Acceptance
 

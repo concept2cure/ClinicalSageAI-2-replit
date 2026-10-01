@@ -153,6 +153,10 @@ const TENANT_SCOPED_TABLES = new Set([
   'submission_leaves',
   'submission_orchestrator_runs',
   'electronic_signatures',
+  // The Vault's own review and relationship records (plan critique 15,
+  // 2026-10-01): each is org-keyed and every read and write filters on it.
+  'vault_version_annotations',
+  'vault_document_relationships',
   // NOT ADDED: 'regulatory_programs'. Adding it is correct and is owed — the
   // table is tenant-scoped and belongs under this gate. It is held back only
   // because it immediately surfaces a real finding this session could not

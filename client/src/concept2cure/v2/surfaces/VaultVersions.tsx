@@ -214,7 +214,7 @@ function supersededBy(versions: VaultVersion[]): string[] {
 }
 
 /** Every version, newest first, each downloadable through the page's audited download. */
-function VersionRows({ versions, title, onDownload, downloadingId, onLifecycleChanged, onCompare }: {
+function VersionRows({ versions, title, onDownload, downloadingId, onLifecycleChanged, onCompare, projectId }: {
   versions: VaultVersion[];
   title: string;
   onDownload: Props['onDownload'];
@@ -222,6 +222,7 @@ function VersionRows({ versions, title, onDownload, downloadingId, onLifecycleCh
   onLifecycleChanged?: () => void;
   /** Compare an earlier version with the current one (plan critique 15). */
   onCompare?: (versionId: string) => void;
+  projectId?: string;
 }) {
   const current = versions.find((v) => v.current);
   return (
@@ -268,7 +269,8 @@ function VersionRows({ versions, title, onDownload, downloadingId, onLifecycleCh
               contentHash={v.contentHash}
               supersedes={supersededBy(versions)}
               onChanged={onLifecycleChanged}
-            />
+              projectId={projectId}
+              />
           ) : null}
         </div>
       ))}
@@ -307,6 +309,7 @@ export function VaultVersions({
         downloadingId={downloadingId}
         onLifecycleChanged={onLifecycleChanged}
         onCompare={setComparing}
+        projectId={projectId}
       />
     );
   }

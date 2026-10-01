@@ -27,6 +27,7 @@ import { programInOrganization } from '../c2c/program-access';
 import { requireGovernedReason } from '../../routes/governed-reason';
 import { vaultWriteRefusal } from './vault-write-authority.js';
 import { readVersionFamily, supersededSql } from './vault-version-family.js';
+import { type Refusal, refuse, inRefusableTransaction } from './vault-refusal.js';
 
 export const RELATIONSHIP_TYPES = ['supporting', 'references', 'based_on'] as const;
 export type RelationshipType = (typeof RELATIONSHIP_TYPES)[number];
@@ -41,8 +42,7 @@ export const RELATIONSHIP_WORDS: Record<RelationshipType, { outgoing: string; in
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const NOTE_MAX = 500;
 
-export type Refusal = { ok: false; status: number; code: string; message: string };
-const refuse = (status: number, code: string, message: string): Refusal => ({ ok: false, status, code, message });
+export type { Refusal } from './vault-refusal.js';
 
 /** The other end of a relationship, as the list shows it. */
 export interface RelatedVersion {
@@ -129,22 +129,6 @@ async function recordBothEnds(
   }
 }
 
-async function inTransaction<T>(work: (client: PoolClient) => Promise<T | Refusal>): Promise<T | Refusal> {
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-    const out = await work(client);
-    const refused = typeof out === 'object' && out !== null && (out as Refusal).ok === false;
-    await client.query(refused ? 'ROLLBACK' : 'COMMIT');
-    return out;
-  } catch (err) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    throw err;
-  } finally {
-    client.release();
-  }
-}
-
 /** The request's own refusal, before the database is asked; null when it may proceed. */
 function addRefusal(p: { documentId: string; toDocumentId: unknown; type: unknown; note: unknown }): Refusal | null {
   if (typeof p.toDocumentId !== 'string' || !UUID_RE.test(p.toDocumentId)) {
@@ -176,7 +160,7 @@ export async function addRelationship(
   const toId = a.toDocumentId as string;
   const note = typeof a.note === 'string' && a.note.trim() ? a.note.trim() : null;
 
-  return inTransaction(async (client) => {
+  return inRefusableTransaction(async (client) => {
     const from = await lockVersion(client, a.documentId, a.organizationId, a.programId);
     if (!from) return refuse(404, 'DOCUMENT_NOT_FOUND', 'No such document in this project.');
     const to = await lockVersion(client, toId, a.organizationId);
@@ -213,7 +197,7 @@ export async function removeRelationship(
   if (!UUID_RE.test(a.relationshipId)) return refuse(404, 'RELATIONSHIP_NOT_FOUND', 'No such relationship.');
   if (!(await programInOrganization(pool, a.programId, a.organizationId))) return refuse(404, 'NOT_FOUND', 'No such project.');
 
-  return inTransaction(async (client) => {
+  return inRefusableTransaction(async (client) => {
     const { rows } = await client.query(
       `SELECT id::text AS id, relationship_type, from_document_id::text AS from_id, to_document_id::text AS to_id,
               removed_at
@@ -231,8 +215,8 @@ export async function removeRelationship(
     await client.query(
       `UPDATE public.vault_document_relationships
           SET removed_at = now(), removed_by = $2, removal_reason = $3
-        WHERE id = $1`,
-      [rel.id, a.userId, reason.reason],
+        WHERE id = $1 AND organization_id = $4`,
+      [rel.id, a.userId, reason.reason, a.organizationId],
     );
     await recordBothEnds(client, a, 'vault.document.unrelate', { id: rel.id, type: rel.relationship_type, from, to, reason: reason.reason });
     return { ok: true as const };

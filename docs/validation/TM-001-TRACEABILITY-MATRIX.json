@@ -1,15 +1,15 @@
 {
   "documentId": "TM-001",
-  "generatedAt": "2026-10-01T18:56:07.338Z",
+  "generatedAt": "2026-10-01T21:47:27.205Z",
   "generator": "scripts/validation/build-traceability.mjs",
   "runDate": "2026-09-27",
   "summary": {
-    "requirements": 81,
+    "requirements": 82,
     "pass": 69,
     "partial": 2,
     "fail": 0,
     "open": 0,
-    "uncovered": 10
+    "uncovered": 11
   },
   "byApp": {
     "Projects": {
@@ -21,12 +21,12 @@
       "uncovered": 0
     },
     "Vault": {
-      "requirements": 20,
+      "requirements": 21,
       "pass": 10,
       "partial": 0,
       "fail": 0,
       "open": 0,
-      "uncovered": 10
+      "uncovered": 11
     },
     "Authoring": {
       "requirements": 15,
@@ -931,6 +931,22 @@
         "risk": "medium: a read that informs a revision (replace, not new), and transmits nothing. A placement left off could lead to a wrong lifecycle operation in the next sequence; another organisation's placement shown would be a confidentiality failure",
         "assurance": "scripted",
         "rationale": "OQ-VAULT-21. The removed leaf and removed sequence, another organisation's leaf, and the read's organisation filter with row security bypassed are in `tests/db/vault-where-used.dbtest.ts`, with the eSTAR exports written by both real export writers: the registry and the unplaced audit row, a record naming no source (not inferred), and another organisation's record"
+      },
+      "verdict": "uncovered"
+    },
+    {
+      "id": "URS-VAULT-021",
+      "app": "Vault",
+      "doc": "URS-002-VAULT.md",
+      "requirement": "A person annotates a Vault version with a comment or a change request, anchored to the whole version, to a page of a version with a recorded page count (the count is recorded with it), or to a passage of its extracted text. A passage is accepted only where it is found at its stated position in the version's stored text, counted in characters (code points); the annotation records that text's SHA-256, so a later change of the text, or of the page count, is shown, and the quote stays as written. Reading a version's text to select a passage is recorded in the audit trail; a read that cannot be recorded is refused. Others reply. An open annotation is resolved with a note, optionally naming the version of its document that addressed it, or retracted by its author with a reason; never both. Its words, author, anchor and time cannot change; its outcome cannot be undone; it cannot be deleted while its version exists, not by a cascade from its program either. Each act is written to the audit chain against the version, with the words, their SHA-256 and the person's name. The review and approval dialogs say which annotations were open on every version when they opened; signing does not resolve them and is not refused for them. A viewer is refused; another organisation's annotations are never read. The document history says when older entries are not shown.",
+      "part11": "§11.10(c), §11.10(e)",
+      "risk": "high",
+      "steps": [],
+      "ra": {
+        "intendedUse": "Annotate a Vault version; reply; resolve with a note or retract with a reason; read its text to quote a passage",
+        "risk": "high: a change request that silently vanished, was reworded or was attributed to the wrong person, a quote that drifted from the text it named, a program DELETE that erased the review record, an unrecorded disclosure of document text, or a cross-tenant read, would each misstate the review record",
+        "assurance": "scripted",
+        "rationale": "OQ-VAULT-22. The record's own guards (posted open and checked in SQL, frozen words and anchor, write-once outcome, author-only retraction, DELETE only by the owner once the version is gone, proven against the trigger-depth bypass and the program cascade, no TRUNCATE), the purge, the history window and 15 mutants are in `tests/db/vault-version-annotations-record.dbtest.ts`; the flows, code-point anchoring and roles in `tests/db/vault-version-annotations.dbtest.ts`. Accepted: a page anchor is checked against the page count only (a passage carries no page); re-anchoring after a text change is not attempted, it is shown as stale"
       },
       "verdict": "uncovered"
     },

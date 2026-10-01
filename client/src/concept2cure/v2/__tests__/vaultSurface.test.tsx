@@ -333,6 +333,8 @@ describe('Vault — search', () => {
       if (url.endsWith('/versions')) return ok({ success: true, data: { versions: [] } });
       // And for related documents (plan critique 15), whose failed read is an alert.
       if (url.endsWith('/relationships')) return ok({ success: true, data: { relationships: [] } });
+      // And for review annotations, whose failed read is an alert too.
+      if (url.endsWith('/annotations')) return ok({ success: true, data: { annotations: [], openByVersion: [] } });
       return ok({});
     });
   }

@@ -1,0 +1,18 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | client/src/concept2cure/v2/__tests__/vaultSignOffAnnotations.test.tsx > the approval dialog says what was open (critique 15) > names the open annotations on every version, and leaves Approve to the approver
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | client/src/concept2cure/v2/__tests__/vaultSignOffAnnotations.test.tsx > the approval dialog says what was open (critique 15) > a read that failed is said as such, never as none open
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultSignOffAnnotations.test.tsx > the approval dialog says what was open (critique 15) > names the open annotations on every version, and leaves Approve to the approver 780ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSignOffAnnotations.test.tsx > the approval dialog says what was open (critique 15) > a read that failed is said as such, never as none open 389ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  21:44:51
+   Duration  3.66s (transform 1.21s, setup 229ms, import 1.46s, tests 1.18s, environment 581ms)
+
