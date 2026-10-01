@@ -50,6 +50,8 @@ import { verifyProjectAccess } from './project-access';
 import { createNotification, upsertProjectWorkItem } from './notifications';
 import { clientIpKey } from '../../utils/client-ip';
 import { postRecordedComment, retractRecordedComment } from './review-comment-record';
+import { exportReviewRecord } from './review-record-export';
+import { canReadAuditTrail, requireAuditReader } from '../../services/audit/audit-api-authority';
 
 const logger = createScopedLogger('concept2cure-reviews');
 const router = Router();
@@ -1074,6 +1076,40 @@ router.delete('/review-comments/:commentId', async (req: Request, res: Response)
   }
 });
 
+/**
+ * GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-record/export
+ * The artifact's whole review record for an inspector (§11.10(b)): every thread
+ * and comment, retractions with who and why, each comment checked against its
+ * chained rows, the tenant chain walked. Read by the audit readers (DP-18),
+ * recorded on the chain before it leaves (review-record-export.ts).
+ */
+router.get('/projects/:projectId/artifacts/:artifactId/review-record/export', async (req: Request, res: Response) => {
+  if (!requireAuditReader(req, res)) return;
+  try {
+    const organizationId = getOrganizationId(req);
+    if (!(await verifyProjectAccess(req, req.params.projectId))) return sendError(res, 404, 'Project not found');
+    const [artifact] = await db
+      .select()
+      .from(concept2cureArtifacts)
+      .where(
+        and(
+          eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
+          eq(concept2cureArtifacts.organizationId, organizationId)
+        )
+      )
+      .limit(1);
+    if (!artifact) return sendError(res, 404, 'Artifact not found');
+    return await exportReviewRecord(req, res, {
+      orgId: organizationId,
+      userId: getUserId(req),
+      artifact: { id: artifact.id, artifactId: artifact.artifactId, title: artifact.title, type: artifact.type, projectId: artifact.projectId },
+    });
+  } catch (error: any) {
+    logConcept2cureError('export review record', error, { artifactId: req.params.artifactId });
+    return sendError(res, 500, 'The review record could not be exported');
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // REVIEW TASKS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1777,6 +1813,9 @@ router.get('/reviews/my-queue', async (req: Request, res: Response) => {
         canComment: perms.has('comment'),
         canRequestChanges: perms.has('request_changes'),
         canResolve: perms.has('resolve'),
+        // The review record export's own gate (DP-18 audit readers), so the
+        // control is offered exactly to those the route will serve.
+        canExportRecord: canReadAuditTrail(req),
       },
     });
   } catch (error: any) {
