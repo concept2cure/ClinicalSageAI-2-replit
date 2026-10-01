@@ -1145,6 +1145,7 @@ The gate had two gaps, both fixed:
 
 A nested fragment with no tenant predicate is still flagged (`docs/evidence/D2-VAULT-VERSIONS/2026-10-01-version-list/red/tenant-gate-nested-fragment-probe.txt`).
 1. **→ The PF-08 lane (`2b33033e4`, `9109aa770`).** `server/services/c2c/project-retention.ts:66` (`WITH doomed AS (… FROM projects p WHERE ${predicate} FOR UPDATE`) reads `projects` by id or workspace with no organization predicate in the statement. This is the one finding left. Add the caller's organization to the predicate, or put a `// tenant-isolation-safe: <reason>` marker that names where ownership was established.
+   **Done 2026-10-01 (`…01GCu8tc`): marker, not predicate.** The read is meant to count every row the cascade removes, whatever its organization (the file's header). An organization predicate would undercount the delete. All three callers establish ownership first, and the marker names them. `ci:tenant-isolation:no-regression` is back to 8/8.
 
 **Test, 1 failure.**
 
