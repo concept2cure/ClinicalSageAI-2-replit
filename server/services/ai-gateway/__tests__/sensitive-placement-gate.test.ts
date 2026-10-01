@@ -37,6 +37,7 @@ vi.mock('../../../utils/logger', () => ({
 }));
 
 import { AIGateway, GatewayPolicyError } from '../gateway';
+import { resetOrgPlacementResolver, setOrgPlacementResolver } from '../providers/org-placement';
 
 const PII_TEXT = 'Patient email is patient@example.com';
 
@@ -78,6 +79,7 @@ describe('last-mile sensitive-dispatch gate', () => {
   const saved = { ...process.env };
   afterEach(() => {
     process.env = { ...saved };
+    resetOrgPlacementResolver();
     vi.restoreAllMocks();
     logSpies.info.mockClear();
     logSpies.warn.mockClear();
@@ -242,6 +244,10 @@ describe('last-mile sensitive-dispatch gate', () => {
     delete process.env.AI_SENSITIVE_DATA_POLICY_MODE;
     delete process.env.AI_PII_ENFORCEMENT;
     delete process.env.AI_PROVIDER_PLACEMENT_APPROVALS;
+    // The tenant has elected OpenAI: without the election, production refuses
+    // it earlier, as DENY_TENANT_POLICY (ADR-0014 §1, P1-45 —
+    // production-provider-election.test.ts). This case is about the decider.
+    setOrgPlacementResolver({ resolve: async () => ({ allowedProviders: ['openai'] }) });
     const gateway = buildGateway();
     const dispatchProvider = vi.spyOn(gateway as any, 'dispatchProvider');
 

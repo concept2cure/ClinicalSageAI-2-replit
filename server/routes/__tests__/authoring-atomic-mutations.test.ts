@@ -235,7 +235,8 @@ describe('POST /docs/:id/freeze — snapshot + status flip + audit are atomic', 
     const res = await request(makeApp())
       .post('/api/authoring/docs/D1/freeze')
       .set('Authorization', await bearer())
-      .send({ reason: 'lock for review' });
+      // DP-35: a freeze is signed — a meaning and the re-verified password.
+      .send({ reason: 'lock for review', meaning: 'AUTHOR', password: PASSWORD });
 
     expect(res.status).toBe(200);
     const begin = sawBegin();
@@ -243,7 +244,12 @@ describe('POST /docs/:id/freeze — snapshot + status flip + audit are atomic', 
     expect(begin).toBe(0);
     expect(commit).toBeGreaterThan(begin);
     expect(sawRollback()).toBe(false);
-    for (const re of [/INSERT INTO frozen_documents/i, /UPDATE authoring_documents/i, /INSERT INTO authoring_audit_trail/i]) {
+    for (const re of [
+      /INSERT INTO frozen_documents/i,
+      /UPDATE authoring_documents/i,
+      /INSERT INTO authoring_signatures/i, // DP-35: the freeze's own signature
+      /INSERT INTO authoring_audit_trail/i,
+    ]) {
       const idx = writeIndex(re);
       expect(idx).toBeGreaterThan(begin);
       expect(idx).toBeLessThan(commit);
@@ -269,7 +275,8 @@ describe('POST /docs/:id/freeze — snapshot + status flip + audit are atomic', 
     const res = await request(makeApp())
       .post('/api/authoring/docs/D1/freeze')
       .set('Authorization', await bearer())
-      .send({ reason: 'lock for review' });
+      // DP-35: a freeze is signed — a meaning and the re-verified password.
+      .send({ reason: 'lock for review', meaning: 'AUTHOR', password: PASSWORD });
 
     expect(res.status).toBe(500);
     expect(sawRollback()).toBe(true);

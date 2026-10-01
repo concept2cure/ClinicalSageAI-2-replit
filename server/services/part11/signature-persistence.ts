@@ -60,7 +60,7 @@ import { createHash } from 'crypto';
 import type { SQL } from 'drizzle-orm';
 import { queryableFromDrizzle } from '../../db/drizzle-queryable.js';
 import { resolveSignerIdentity } from './resolve-signer-identity.js';
-import { GOVERNED_SIGN_MEANINGS, isGovernedSignMeaning, type GovernedSignMeaning } from './signature-meanings.js';
+import { GOVERNED_SIGN_MEANINGS, signMeaningRefusal, type GovernedSignMeaning } from './signature-meanings.js';
 
 /** Minimal pg-compatible client: node-pg Pool, PoolClient, or a test shim. */
 export interface SignatureDbClient {
@@ -296,9 +296,10 @@ export interface ElectronicSignatureRecord {
  * Insert ONE electronic_signatures row on the supplied client. When the client
  * is a transaction client, the row commits/rolls back with the transaction.
  *
- * Fail-closed: throws on a missing anchor, missing signer identity, or a
- * missing attribution hash. Database errors propagate untouched (callers
- * decide how to map 42P01 etc. — this function never swallows them).
+ * Fail-closed: throws on a missing anchor, missing signer identity, a missing
+ * attribution hash, or a meaning outside the closed vocabulary
+ * (assertRecordedMeaning). Database errors propagate untouched (callers decide
+ * how to map 42P01 etc. — this function never swallows them).
  */
 export async function persistElectronicSignature(
   client: SignatureDbClient,
@@ -312,6 +313,7 @@ export async function persistElectronicSignature(
       'electronic_signatures: refusing anchorless signature — need (documentId AND versionId) or a signedTarget (§11.70).',
     );
   }
+  assertRecordedMeaning(record);
   if (!Number.isFinite(record.signerId)) {
     throw new Error('electronic_signatures: signerId is required (§11.100).');
   }
@@ -366,7 +368,7 @@ export async function persistElectronicSignature(
       record.authenticationTimestamp,
       record.secondFactorVerified,
       record.signatureHash,
-      record.signatureMeaning ?? null,
+      record.signatureMeaning ?? null, // null only on a governed revocation (assertRecordedMeaning)
       JSON.stringify(record.signatureManifest),
       record.isValid,
       record.verificationStatus ?? null,
@@ -380,6 +382,27 @@ export async function persistElectronicSignature(
     ],
   );
   return { id: result.rows[0].id as number, signedAt: result.rows[0].signed_at as Date };
+}
+
+/**
+ * §11.50(a)(3) at the one writer (security audit 2026-09-24 DP-55, plan P1-42):
+ * every row states a meaning from the closed vocabulary (GOVERNED_SIGN_MEANINGS),
+ * or nothing is inserted. The column is nullable and this writer used to store
+ * `signatureMeaning ?? null`, so POST /api/esignature/sign — which took the
+ * meaning as optional free text — recorded signatures that said nothing about
+ * what they meant. Routes refuse first (signMeaningRefusal, before
+ * re-authentication); this is the floor for every current and future caller.
+ *
+ * The one row that may carry none is a governed revocation: it withdraws a
+ * signature rather than asserting a meaning, and its manifest
+ * (kind 'governed-revoke-signature') records the act. Every caller was checked
+ * on 2026-10-01: the document path, the release path ('approval', OQ-8), the
+ * governed sign (asserted in persistGovernedActionSignature) and the QMS
+ * approve/retire writers ('APPROVED') all pass a vocabulary meaning.
+ */
+function assertRecordedMeaning(record: ElectronicSignatureRecord): void {
+  if (record.signatureType === GOVERNED_REVOCATION_SIGNATURE_TYPE && record.signatureMeaning == null) return;
+  assertGovernedSignMeaning(record.signatureMeaning);
 }
 
 // ── Governed-target content-binding derivation ───────────────────────────────
@@ -695,20 +718,20 @@ export class SignatureMeaningError extends Error {
 /**
  * The §11.50(a)(3) rule for a governed sign: the declared meaning is a string
  * from the closed vocabulary. The value is not echoed back (it is caller
- * text); the message names what is accepted instead.
+ * text); the message names what is accepted instead. Which refusal applies is
+ * decided once, by signMeaningRefusal — the same function the routes call
+ * before re-authentication — so the routes and this writer cannot disagree
+ * about what is "missing" and what is "unknown" (P1-42).
  */
 export function assertGovernedSignMeaning(meaning: unknown): asserts meaning is GovernedSignMeaning {
-  if (isGovernedSignMeaning(meaning)) return;
+  const refused = signMeaningRefusal(meaning);
+  if (!refused) return;
   const accepted = GOVERNED_SIGN_MEANINGS.join(', ');
-  if (typeof meaning !== 'string' || meaning.length === 0) {
-    throw new SignatureMeaningError(
-      'SIGNATURE_MEANING_REQUIRED',
-      `A signature meaning is required, one of: ${accepted}. Nothing was signed.`,
-    );
-  }
   throw new SignatureMeaningError(
-    'SIGNATURE_MEANING_UNKNOWN',
-    `The declared meaning is not a signature meaning; use one of: ${accepted}. Nothing was signed.`,
+    refused.error,
+    refused.error === 'SIGNATURE_MEANING_REQUIRED'
+      ? `A signature meaning is required, one of: ${accepted}. Nothing was signed.`
+      : `The declared meaning is not a signature meaning; use one of: ${accepted}. Nothing was signed.`,
   );
 }
 
@@ -744,10 +767,8 @@ export async function persistGovernedActionSignature(
 
   // §11.50 meaning: only what the signer actually declared (the sign modal sends
   // payload.meaning). Never fabricate a meaning that was not declared.
-  const declaredMeaning =
-    typeof params.payload?.meaning === 'string' && params.payload.meaning.length > 0
-      ? (params.payload.meaning as string)
-      : null;
+  const declared = params.payload?.meaning;
+  const declaredMeaning = typeof declared === 'string' && declared.length > 0 ? declared : null;
 
   const signedAtIso = params.occurredAt.toISOString();
 

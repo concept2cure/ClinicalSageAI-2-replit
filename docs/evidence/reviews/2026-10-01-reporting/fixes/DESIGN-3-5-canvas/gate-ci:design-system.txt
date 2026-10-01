@@ -1,0 +1,1 @@
+[design-system] OK — no icon-library, spring/bounce or inline <style> violations on live concept2cure surfaces.

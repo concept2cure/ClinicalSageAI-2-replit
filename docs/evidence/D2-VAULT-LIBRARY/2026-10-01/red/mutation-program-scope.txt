@@ -1,0 +1,8 @@
+# mutation: the program filter dropped from searchVaultDocuments (a project search reads the whole library)
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across every project (critique 15) > finds matches in every project the organisation holds, each named with its project, and never another organisation's 19ms
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across every project (critique 15) > lists an earlier version only when asked 10ms
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across every project (critique 15) > an empty query answers no results and says why 5ms
+ × tests/db/vault-library-search.dbtest.ts > library search across every project (critique 15) > the project search still searches its project only 21ms
+   → expected 2 to be 1 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 3 passed (4)

@@ -1,0 +1,2 @@
+# Real production import of server/config/environment.ts with MOONSHOT_API_KEY set (every other production posture satisfied with probe values; HEAD 0e58e794 + P1-45), 2026-10-01T06:29Z
+REFUSED: [ai-governance-posture] REFUSING TO BOOT: MOONSHOT_API_KEY is set in production. Moonshot (Kimi) is not a production AI service for any organization, under any election (ADR-0014 §1). Unset MOONSHOT_API_KEY; the lane remains for development only.

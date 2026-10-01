@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | OQ-002 |
-| Version | 0.6 |
+| Version | 0.12 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 §5; requirements URS-002 |
 | Runner (the executable protocol) | `tests/validation/oq/vault/run.mjs` — `npm run validation:oq -- vault` |
@@ -19,6 +19,12 @@
 | 0.4 | 2026-09-30 | `…01DiJJAk` (VR-08) | OQ-VAULT-11 added (URS-VAULT-011, version check-in), with its runner step. Not yet executed: the run needs the validation identities this session does not hold (→ W3). No other step changed. |
 | 0.5 | 2026-10-01 | `…01DiJJAk` (VR-09) | OQ-VAULT-12 added (URS-VAULT-012, a document's versions), with its runner step; OQ-VAULT-11 now keeps the version it creates for it. Not yet executed (→ W3). No other step changed. |
 | 0.6 | 2026-10-01 | `…01DiJJAk` (VR-13) | OQ-VAULT-13 and OQ-VAULT-14 added (URS-VAULT-013, review and approval), with their runner steps. OQ-VAULT-14 needs a third identity, `OQ_APPROVER_*`, because the uploader and the reviewer may not approve. Not yet executed (→ W3). No other step changed. |
+| 0.7 | 2026-10-01 | `…01DiJJAk` (VR-11) | OQ-VAULT-15 added (URS-VAULT-014, filing from the data room), with its runner step. Not yet executed (→ W3). No other step changed. |
+| 0.8 | 2026-10-01 | `…01DiJJAk` (VR-11b) | OQ-VAULT-16 added (URS-VAULT-015, confirming suggested filings together), with its runner step. Not yet executed (→ W3). No other step changed. |
+| 0.9 | 2026-10-01 | `…01DiJJAk` (critique 15) | OQ-VAULT-17 added (URS-VAULT-016, version compare), with its runner step. Not yet executed (→ W3). No other step changed. |
+| 0.10 | 2026-10-01 | `…01DiJJAk` (critique 15) | OQ-VAULT-18 added (URS-VAULT-017, library search), with its runner step. Not yet executed (→ W3). No other step changed. |
+| 0.11 | 2026-10-01 | `…01DiJJAk` (critique 15) | OQ-VAULT-19 added (URS-VAULT-018, stored-file fixity), with its runner step. Not yet executed (→ W3). No other step changed. |
+| 0.12 | 2026-10-01 | `…01DiJJAk` (critique 15) | OQ-VAULT-20 added (URS-VAULT-019, document relationships), with its runner step. Not yet executed (→ W3). No other step changed. |
 
 ## 1. Method
 
@@ -48,6 +54,12 @@ IQ-001 executed; the test identity can create programs (OQ-VAULT-00 creates one 
 | OQ-VAULT-12 | URS-VAULT-012 | scripted | Read the tree; list the versions from the OQ-VAULT-03 document; download it; read the history of version 2.0; search by title without and with `includeSuperseded=true` | One leaf for the document, at 2.0 with `versionCount` 2; versions `[2.0 current, 1.0 earlier]` with the OQ-VAULT-03 SHA-256 on 1.0; 1.0 downloads with that SHA-256; the history has entries for 1.0 and 2.0; search returns 2.0 alone, and both with `includeSuperseded=true` |
 | OQ-VAULT-13 | URS-VAULT-013 | credentialed | Start the OQ-VAULT-11 version's lifecycle twice and send it for review. Sign the review as the run identity (the uploader), then as OQ_SIGNER. Try to approve as OQ_SIGNER. Read the versions | One record (`created:false` on the second start), in review. The uploader's review is 403 `SELF_APPROVAL`. The signer's review is 200, bound to the version's SHA-256. The signer's approval is 403 `SELF_APPROVAL`. The version shows In review with the review's printed name |
 | OQ-VAULT-14 | URS-VAULT-013 | credentialed | Ingest a new document. Review it (OQ_SIGNER) and approve it (OQ_APPROVER). Check in v2.0, then review and approve it the same way. Read the versions, then edit v2.0's details | Each approval is 200. v2.0's approval answers `superseded` with v1.0's record. v2.0 shows Approved, with the approver's printed name, and v1.0 shows Superseded. The edit is 409 `APPROVED_VERSION_IMMUTABLE` |
+| OQ-VAULT-15 | URS-VAULT-014 | scripted | Capture a PDF into the program's data room (chat upload with `projectId`). File it from the room together with an unknown source id. File it again. Read the Vault | The capture records a data-room source. The filing answers 200 `complete:false`: the source `filed`, suggested or unfiled, and the unknown id `refused` `NOT_FOUND`. The second filing answers `complete:true`, `already_filed`, with the same document. The data room shows the source filed as version 1.0 |
+| OQ-VAULT-16 | URS-VAULT-015 | scripted | Ingest two PDFs and read the Vault. Confirm both, in the folder they were suggested for, without a note and then with one. Confirm them again. Read the Vault | Both ingests are suggested in one folder and counted in `awaitingConfirmationCount`. Without a note: 422 `REASON_REQUIRED`. With one: 200 `complete:true`, both `confirmed`. The repeat: 200 `complete:false`, both refused `CONFLICT`. The count is two lower |
+| OQ-VAULT-17 | URS-VAULT-016 | scripted | Compare the OQ-VAULT-11 document's v2.0 with its v1.0. Ingest an unrelated PDF and compare v2.0 with it | The first: 200, from v1.0 to v2.0, `sameBytes` false, and either a text comparison with at least one changed line or a reason naming the version without text. The second: 422 `NOT_SAME_DOCUMENT` |
+| OQ-VAULT-18 | URS-VAULT-017 | scripted | Create a second program and ingest a PDF into it with a unique word in its title. Search the library for that word, search the first program for it, and search the library with an empty query | The library search finds the document, named with the second program. The first program's search does not list it. The empty query answers `EMPTY_QUERY` |
+| OQ-VAULT-19 | URS-VAULT-018 | scripted | Run the fixity check on the program. Read the OQ-VAULT-03 document's history | 200, every stored version verified (no altered, missing or unreadable version on an untampered installation), and the history carries a `vault.document.fixity` entry |
+| OQ-VAULT-20 | URS-VAULT-019 | scripted | Ingest a PDF. Relate the OQ-VAULT-03 document to it as supported by it. Read both documents' relationships. Remove it without a reason, then with one. Read the OQ-VAULT-03 document's history | 201; the document lists "Supported by" the PDF and the PDF lists "Supports" the document; 422 REASON_REQUIRED without a reason, 200 with one, after which neither lists it; the history carries "Related: supported by …" and "Relationship removed: supported by …" |
 
 ## 4. Acceptance
 

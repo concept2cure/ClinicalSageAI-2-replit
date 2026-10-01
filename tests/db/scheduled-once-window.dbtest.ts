@@ -104,4 +104,18 @@ describe('runScheduledOncePerWindow', () => {
     expect(lease.windowKeyOf(hour, Date.UTC(2026, 9, 1, 3, 1))).toBe(lease.windowKeyOf(hour, Date.UTC(2026, 9, 1, 3, 59)));
     expect(lease.windowKeyOf(hour, Date.UTC(2026, 9, 1, 3, 59))).not.toBe(lease.windowKeyOf(hour, Date.UTC(2026, 9, 1, 4, 0)));
   });
+
+  it('stores a run\'s result when asked, and the latest finished result is readable from any process', async () => {
+    await lease.runScheduledOncePerWindow('dbwin:status', 'w1', async () => ({ status: 'healthy', n: 1 }), { storeResult: true });
+    await lease.runScheduledOncePerWindow('dbwin:status', 'w2', async () => ({ status: 'broken', n: 2 }), { storeResult: true });
+    const latest = await lease.readLatestWindowResult<{ status: string; n: number }>('dbwin:status');
+    expect(latest?.result).toEqual({ status: 'broken', n: 2 });
+    expect(typeof latest?.finishedAt).toBe('string');
+    expect(await lease.readLatestWindowResult('dbwin:never-ran')).toBeNull();
+  });
+
+  it('does not store a result unless asked', async () => {
+    await lease.runScheduledOncePerWindow('dbwin:no-store', 'w', async () => ({ secret: 'not for the table' }));
+    expect(await lease.readLatestWindowResult('dbwin:no-store')).toMatchObject({ result: null });
+  });
 });

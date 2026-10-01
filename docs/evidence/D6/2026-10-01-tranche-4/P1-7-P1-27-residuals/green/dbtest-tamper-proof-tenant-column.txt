@@ -1,0 +1,25 @@
+# working tree (amended db/migrations/20260813_audit_tamper_proof_log.sql + server/lib/tamper-proof-audit.ts); PostgreSQL 16, runtime role app_service
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/db/tamper-proof-log-tenant-column.dbtest.ts > the column > exists after the migration: INTEGER, nullable, its cut-over recorded 8ms
+ ✓ tests/db/tamper-proof-log-tenant-column.dbtest.ts > the column > re-applying the migration changes nothing (the set re-runs it every deploy) 19ms
+ ✓ tests/db/tamper-proof-log-tenant-column.dbtest.ts > writes and reads as the runtime role > a row written in tenant A’s session carries A 11ms
+ ✓ tests/db/tamper-proof-log-tenant-column.dbtest.ts > writes and reads as the runtime role > refuses a row attributed to B from inside A’s session, and writes nothing 4ms
+ ✓ tests/db/tamper-proof-log-tenant-column.dbtest.ts > writes and reads as the runtime role > a tenant’s read returns its own rows only; platform tooling reads all 49ms
+ ✓ tests/db/tamper-proof-log-tenant-column.dbtest.ts > writes and reads as the runtime role > the stored rows verify as one chain, and moving a row to another tenant breaks its hash 4ms
+ ✓ tests/db/part11-audit-store.dbtest.ts > the Part 11 store exists and has the right shape > is present after the migration — not created at runtime 3ms
+ ✓ tests/db/part11-audit-store.dbtest.ts > the Part 11 store exists and has the right shape > types user_id and session_id as TEXT, so attributed writes are not rejected 8ms
+ ✓ tests/db/part11-audit-store.dbtest.ts > the Part 11 store exists and has the right shape > accepts an attributed write keyed by an integer users.id 10ms
+ ✓ tests/db/part11-audit-store.dbtest.ts > the Part 11 store exists and has the right shape > carries no CHECK constraint masquerading as immutability 1ms
+ ✓ tests/db/part11-audit-store.dbtest.ts > immutability holds against the database, not by convention > refuses UPDATE even for the table owner 9ms
+ ✓ tests/db/part11-audit-store.dbtest.ts > immutability holds against the database, not by convention > refuses DELETE even for the table owner 9ms
+ ✓ tests/db/part11-audit-store.dbtest.ts > concurrent appends do not fork the hash chain > serializes writers so no two entries claim the same predecessor 84ms
+ ✓ tests/db/part11-audit-store.dbtest.ts > the runtime role can append and cannot rewrite > is granted exactly SELECT and INSERT when the role exists 6ms
+
+ Test Files  2 passed (2)
+      Tests  14 passed (14)
+   Start at  06:18:27
+   Duration  1.96s (transform 310ms, setup 151ms, import 291ms, tests 480ms, environment 0ms)
+
+exit=0

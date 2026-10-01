@@ -1,0 +1,145 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana-ri/__tests__/part11-governance.test.ts
+{
+  "timestamp": "2026-10-01T13:57:35.563Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T13:57:35.565Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/part11-governance.test.ts
+{
+  "timestamp": "2026-10-01T13:57:35.566Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana-ri/__tests__/part11-governance.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana-ri/__tests__/part11-governance.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana-ri/__tests__/part11-governance.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > requiresPart11Signoff > gates record-altering mutations 2ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > requiresPart11Signoff > does NOT gate reads / drafting / listing 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > requiresEsignature (high-impact tier) > requires an e-signature for record-altering / submission-state actions 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > requiresEsignature (high-impact tier) > does NOT require an e-signature for milestone / status transitions (reason-only) 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > requiresEsignature (high-impact tier) > requires an e-signature for the GDPR erasure (audit 2026-09-24 DP-08/DP-09, P0-12) 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > requiresEsignature (high-impact tier) > the e-sign set is a subset of the governed set 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > validateSignoff (fail-closed) > accepts a verified sign-off with a sufficient reason 1ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > validateSignoff (fail-closed) > rejects a missing sign-off 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > validateSignoff (fail-closed) > rejects an empty reason 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > validateSignoff (fail-closed) > rejects a too-short reason 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > validateSignoff (fail-closed) > rejects when the signature was not server-verified (default = strict) 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > validateSignoff (fail-closed) > reason-only tier: accepts a valid reason WITHOUT a verified signature 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > validateSignoff (fail-closed) > reason-only tier still requires a sufficient reason 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > buildSignatureRequiredResult > is a fail-closed result that cues the e-sign modal 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > buildSignatureRequiredResult > echoes the command + params so the client can re-submit with a sign-off 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > buildSignatureRequiredResult > flags signatureRequired per tier (high-impact vs reason-only) 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > governed set hygiene > contains no read-shaped verbs 1ms
+ × server/services/ana-ri/__tests__/part11-governance.test.ts > a command whose tier follows the call: update_artifact_status > to draft: the reason tier, no signature, no fixed meaning 4ms
+   → requiredSignatureMeaning is not a function
+ × server/services/ana-ri/__tests__/part11-governance.test.ts > a command whose tier follows the call: update_artifact_status > to review: the reason tier, no signature, no fixed meaning 1ms
+   → requiredSignatureMeaning is not a function
+ × server/services/ana-ri/__tests__/part11-governance.test.ts > a command whose tier follows the call: update_artifact_status > to approved: the e-signature tier, signed with the meaning approval 4ms
+   → expected 'reason' to be 'esignature' // Object.is equality
+ × server/services/ana-ri/__tests__/part11-governance.test.ts > a command whose tier follows the call: update_artifact_status > to locked: the e-signature tier, signed with the meaning release 1ms
+   → expected 'reason' to be 'esignature' // Object.is equality
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > a command whose tier follows the call: update_artifact_status > read without its params, it is the reason tier — the params decide, and every caller passes them 0ms
+ × server/services/ana-ri/__tests__/part11-governance.test.ts > a command whose tier follows the call: update_artifact_status > a command in the e-signature set fixes no meaning: the signer declares one 0ms
+   → requiredSignatureMeaning is not a function
+ × server/services/ana-ri/__tests__/part11-governance.test.ts > a command whose tier follows the call: update_artifact_status > the dialog's RELEASE is the canonical 'release' 3ms
+   → expected { ok: false, …(2) } to deeply equal { ok: true, meaning: 'release' }
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana-ri/__tests__/part11-governance.test.ts > a command whose tier follows the call: update_artifact_status > to draft: the reason tier, no signature, no fixed meaning
+ FAIL  server/services/ana-ri/__tests__/part11-governance.test.ts > a command whose tier follows the call: update_artifact_status > to review: the reason tier, no signature, no fixed meaning
+TypeError: requiredSignatureMeaning is not a function
+ ❯ server/services/ana-ri/__tests__/part11-governance.test.ts:130:12
+    128|     expect(governedTierOf('update_artifact_status', call(status))).toB…
+    129|     expect(requiresEsignature('update_artifact_status', call(status)))…
+    130|     expect(requiredSignatureMeaning('update_artifact_status', call(sta…
+       |            ^
+    131|   });
+    132|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/services/ana-ri/__tests__/part11-governance.test.ts > a command whose tier follows the call: update_artifact_status > to approved: the e-signature tier, signed with the meaning approval
+ FAIL  server/services/ana-ri/__tests__/part11-governance.test.ts > a command whose tier follows the call: update_artifact_status > to locked: the e-signature tier, signed with the meaning release
+AssertionError: expected 'reason' to be 'esignature' // Object.is equality
+
+Expected: "esignature"
+Received: "reason"
+
+ ❯ server/services/ana-ri/__tests__/part11-governance.test.ts:137:68
+    135|     ['locked', 'release', 'RELEASE'],
+    136|   ])('to %s: the e-signature tier, signed with the meaning %s', (statu…
+    137|     expect(governedTierOf('update_artifact_status', call(status))).toB…
+       |                                                                    ^
+    138|     expect(requiresEsignature('update_artifact_status', call(status)))…
+    139|     expect(requiredSignatureMeaning('update_artifact_status', call(sta…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/services/ana-ri/__tests__/part11-governance.test.ts > a command whose tier follows the call: update_artifact_status > a command in the e-signature set fixes no meaning: the signer declares one
+TypeError: requiredSignatureMeaning is not a function
+ ❯ server/services/ana-ri/__tests__/part11-governance.test.ts:155:12
+    153|
+    154|   it('a command in the e-signature set fixes no meaning: the signer de…
+    155|     expect(requiredSignatureMeaning('place_in_dossier', {})).toBeNull(…
+       |            ^
+    156|     expect(buildHumanConfirmationRequiredResult('place_in_dossier', {}…
+    157|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/services/ana-ri/__tests__/part11-governance.test.ts > a command whose tier follows the call: update_artifact_status > the dialog's RELEASE is the canonical 'release'
+AssertionError: expected { ok: false, …(2) } to deeply equal { ok: true, meaning: 'release' }
+
+- Expected
++ Received
+
+  {
+-   "meaning": "release",
+-   "ok": true,
++   "code": "SIGNATURE_MEANING_UNKNOWN",
++   "error": "The declared signature meaning is not one this action accepts; use one of: AUTHOR, REVIEWER, APPROVER. Nothing was run.",
++   "ok": false,
+  }
+
+ ❯ server/services/ana-ri/__tests__/part11-governance.test.ts:160:56
+    158|
+    159|   it("the dialog's RELEASE is the canonical 'release'", () => {
+    160|     expect(resolveDeclaredSignatureMeaning('RELEASE')).toEqual({ ok: t…
+       |                                                        ^
+    161|     expect(declaredMeaningTokenFor('release')).toBe('RELEASE');
+    162|     expect(declaredMeaningTokenFor('approval')).toBe('APPROVER');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 18 passed (24)
+   Start at  13:57:33
+   Duration  2.17s (transform 932ms, setup 94ms, import 1.76s, tests 25ms, environment 0ms)
+

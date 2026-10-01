@@ -13,6 +13,16 @@
 //     file it wrote was itself a logged write: the recursive-logging loop AWS
 //     warns against, growing the evidence without bound.
 // Each is fixed below, and tests/evidence.tftest.hcl asserts it.
+//
+// 2026-10-01 (security plan P0-8, finding DP-04): the audit chain's head is
+// anchored here. The application's daily integrity sweep
+// (server/jobs/auditChainIntegritySweep.ts, server/services/audit/chain-anchor.ts)
+// writes every organisation's chain head under anchors/ and verifies the
+// database against the latest one. With var.anchor_writer_role_arn set, the
+// bucket policy lets that role put and get objects under anchors/ and list that
+// prefix, the key policy lets it use this key through S3 only, and an explicit
+// Deny keeps it from deleting or unlocking any evidence. The bucket's default
+// object-lock retention applies to every anchor.
 
 terraform {
   required_providers {
@@ -39,10 +49,54 @@ locals {
   log_group_arn = "arn:${local.partition}:logs:${local.region}:${local.account}:log-group:${local.log_group}"
   bucket_arn    = "arn:${local.partition}:s3:::${var.bucket_name}"
 
+  # The audit-chain anchors (P0-8). Empty when no writer role is named.
+  anchor_prefix = "anchors/"
+  anchor_key_statements = [for st in [
+    {
+      Sid       = "AnchorWriterUsesTheKeyThroughS3"
+      Effect    = "Allow"
+      Principal = { AWS = var.anchor_writer_role_arn }
+      Action    = ["kms:GenerateDataKey", "kms:Decrypt"]
+      Resource  = "*"
+      Condition = { StringEquals = { "kms:ViaService" = "s3.${local.region}.amazonaws.com" } }
+    },
+  ] : st if var.anchor_writer_role_arn != ""]
+  anchor_bucket_statements = [for st in [
+    {
+      # The verifier finds the latest anchor by listing this prefix, and only it.
+      Sid       = "AnchorWriterListsTheAnchors"
+      Effect    = "Allow"
+      Principal = { AWS = var.anchor_writer_role_arn }
+      Action    = "s3:ListBucket"
+      Resource  = local.bucket_arn
+      Condition = { StringLike = { "s3:prefix" = "${local.anchor_prefix}*" } }
+    },
+    {
+      Sid       = "AnchorWriterPutsAndGetsAnchors"
+      Effect    = "Allow"
+      Principal = { AWS = var.anchor_writer_role_arn }
+      Action    = ["s3:PutObject", "s3:GetObject"]
+      Resource  = "${local.bucket_arn}/${local.anchor_prefix}*"
+    },
+    {
+      # Object lock already refuses these under COMPLIANCE. This holds under
+      # GOVERNANCE too, and against any grant the role is given later.
+      Sid       = "AnchorWriterNeverRemovesOrUnlocksEvidence"
+      Effect    = "Deny"
+      Principal = { AWS = var.anchor_writer_role_arn }
+      Action = [
+        "s3:DeleteObject", "s3:DeleteObjectVersion", "s3:PutObjectRetention", "s3:PutObjectLegalHold",
+        "s3:BypassGovernanceRetention", "s3:PutBucketObjectLockConfiguration", "s3:PutBucketPolicy",
+        "s3:DeleteBucketPolicy", "s3:PutLifecycleConfiguration",
+      ]
+      Resource = [local.bucket_arn, "${local.bucket_arn}/*"]
+    },
+  ] : st if var.anchor_writer_role_arn != ""]
+
   # Plain jsonencode() so tests can assert it without AWS.
   key_policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
+    Statement = concat([
       {
         # Key administration and use are then granted by IAM policies in this
         # account, as for any customer managed key.
@@ -79,12 +133,12 @@ locals {
         Resource  = "*"
         Condition = { ArnEquals = { "kms:EncryptionContext:aws:logs:arn" = local.log_group_arn } }
       },
-    ]
+    ], local.anchor_key_statements)
   })
 
   bucket_policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
+    Statement = concat([
       {
         Sid       = "CloudTrailAclCheck"
         Effect    = "Allow"
@@ -115,7 +169,7 @@ locals {
         Resource  = [local.bucket_arn, "${local.bucket_arn}/*"]
         Condition = { Bool = { "aws:SecureTransport" = "false" } }
       },
-    ]
+    ], local.anchor_bucket_statements)
   })
 }
 
@@ -272,7 +326,9 @@ resource "aws_cloudtrail" "part11_audit" {
 }
 
 output "evidence_bucket" {
-  value = aws_s3_bucket.evidence.id
+  # The configured name: the same value as .id once created, and known at plan,
+  # so the task definition's AUDIT_ANCHOR_BUCKET is checkable without AWS.
+  value = aws_s3_bucket.evidence.bucket
 }
 
 output "evidence_bucket_arn" {
@@ -295,6 +351,19 @@ output "names" {
 
 output "key_policy" {
   value = local.key_policy
+}
+
+output "anchor_prefix" {
+  description = "Where the audit-chain anchors live in the bucket (security plan P0-8)."
+  value       = local.anchor_prefix
+}
+
+output "object_lock" {
+  description = "The default retention every object, the anchors included, is written under."
+  value = {
+    mode = one(one(aws_s3_bucket_object_lock_configuration.evidence.rule).default_retention).mode
+    days = one(one(aws_s3_bucket_object_lock_configuration.evidence.rule).default_retention).days
+  }
 }
 
 output "bucket_policy" {

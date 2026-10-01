@@ -118,11 +118,16 @@ afterAll(async () => {
 });
 
 describe('GET /docs/:docId — the caller’s access', () => {
-  it('the creator (OWNER + AUTHOR grants, org role member) may freeze, file and assign, and may not sign', async () => {
+  it('the creator (OWNER + AUTHOR grants, org role member) may file and assign, and may neither freeze nor sign', async () => {
     const res = await author(request(app).get(`/api/authoring/docs/${docId}`));
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     const { access } = res.body;
-    expect(access.freeze).toEqual({ allowed: true, reason: null });
+    /* DP-35 (2026-10-01): a freeze is a signature, so it meets the same
+       §11.10(g) org-role step as E-sign — the freeze route answers
+       ESIGNATURE_NO_AUTHORITY for a member, and the bar is told so first. */
+    expect(access.freeze.allowed).toBe(false);
+    expect(access.freeze.reason).toMatch(/signing role/i);
+    expect(access.freeze.reason).toMatch(/Your role: member/);
     expect(access.fileToVault).toEqual({ allowed: true, reason: null });
     expect(access.assignReview).toEqual({ allowed: true, reason: null });
     /* §11.10(g): 'member' is not a signing role by default (admin, approver,
@@ -167,11 +172,12 @@ describe('GET /docs/:docId — the caller’s access', () => {
       const res = await author(request(app).get(`/api/authoring/docs/${docId}`));
       expect(res.status, 'the document read itself must not fail').toBe(200);
       const { access } = res.body;
-      expect(access.freeze).toBeNull();
       expect(access.fileToVault).toBeNull();
       /* E-sign's grant is unknown, but its org-role step is a certain refusal
-         for a member — the route refuses on that step alone. */
+         for a member — the route refuses on that step alone. Freeze too: it is
+         a signature (DP-35) and meets the same step. */
       expect(access.esign.allowed).toBe(false);
+      expect(access.freeze.allowed).toBe(false);
       expect(access.assignReview).toEqual({ allowed: true, reason: null });
     } finally {
       await jdb.pool.query('ALTER TABLE doc_permissions_unavailable RENAME TO doc_permissions');

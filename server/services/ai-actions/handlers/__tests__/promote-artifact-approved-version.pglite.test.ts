@@ -128,7 +128,10 @@ const filable = (r: Row) =>
 // 2026-09-23 (W5/D7, final pass, repair): the warning must name the governed
 // act that records the version and say this action records none — not a
 // generic "approval through review" a user could take to mean this action.
-const NAMES_GOVERNED_APPROVE = /An approved version is recorded only by the review workflow's Approve action \(the status route's review → approved, .*authoring-actions approve-artifact\); this action records none/;
+// 2026-10-01 (D5): the two governed approval acts are the status route and
+// AnA's update_artifact_status, signed (authoring-actions approve-artifact was
+// removed: unsigned, no caller).
+const NAMES_GOVERNED_APPROVE = /An approved version is recorded only by the review workflow's Approve action \(review → approved, .*the status route, or AnA's update_artifact_status, signed\); this action records none/;
 const FALSE_REMEDIES = [
   '(approved → review, then review → approved), which records',
   'Filing requires approval through review, which records the approved version.',

@@ -31,7 +31,7 @@ import { getCachedSignalReliability } from '../../services/intelligence/learning
 import { verifyAnswerGrounding } from '../../services/ana/answer-grounding.js';
 import { computeRimClaimMetrics } from '../../services/ana/rim-claim-metrics.js';
 import { interceptChatResponse } from '../../services/intelligence/rim-interceptors.js';
-import { processResponseActions } from '../../services/ana-guidance-executor.js';
+import { blocksOnlyAnswer, settleActionBlocks } from '../../services/ana-guidance-executor.js';
 import type { CommandContext } from '../../services/ana-ri/command-executor.js';
 import { isPositiveIntegerId } from './shared.js';
 import { upsertDocumentArtifactVersion } from '../../services/ana/artifactVersionStore.js';
@@ -333,20 +333,29 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     // The turn's project, resolved once for every step below (PF-10 S6a).
     const projectId = await turnProjectId(streamProjectId, orgId, 'ana-ri.post-processing');
 
-    // Guidance executor — auto-create artifacts if response contains action signals
-    if (fullContent && projectId !== null && orgId && isPositiveIntegerId(userId)) {
+    // AnA's ```ana-action blocks: each one she is confident in becomes a
+    // create_artifact PROPOSAL through the command partition, never a write
+    // (P0-12 residual, 2026-10-01; until then this created the artifact, and a
+    // review thread in the person's name, unasked). The proposals join
+    // executedCommands, which is what the client's sign-off prompt reads. The
+    // answer says what became of each block (settleActionBlocks, shared with
+    // POST /api/chat): proposed and not yet saved, or not saved and why.
+    if (fullContent && orgId && isPositiveIntegerId(userId)) {
       try {
-        const guidance = await processResponseActions(fullContent, {
+        const settled = await settleActionBlocks(fullContent, {
+          // The turn's project, resolved once (PF-10 S6a).
           projectId,
           organizationId: Number(orgId),
           userId,
-          userName: 'AnA',
+          userName,
+          userRole: effectiveRole,
           threadId: threadId || undefined,
+          servingModel: servingModel ?? null,
         });
-        executedActions = guidance.actions;
-        contentForCommandProcessing = guidance.cleanedText || fullContent;
+        executedCommands = [...settled.proposals];
+        contentForCommandProcessing = settled.answer;
       } catch (e: any) {
-        console.warn('[AnA RI Stream] Guidance executor failed:', e?.message);
+        console.warn('[AnA RI Stream] Action-block proposals failed:', e?.message);
       }
     }
 
@@ -386,10 +395,10 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
         const { processCommandsInResponse } =
           await import('../../services/ana-ri/command-executor.js');
         const cmdResult = await processCommandsInResponse(contentForCommandProcessing, cmdCtx);
-        executedCommands = cmdResult.executedCommands;
+        executedCommands = [...executedCommands, ...cmdResult.executedCommands];
         cleanedFullContent = cmdResult.cleanedText ? cmdResult.cleanedText : contentForCommandProcessing;
-        if (executedCommands.length > 0) {
-          console.log(`[AnA RI Stream] Executed ${executedCommands.length} command(s)`);
+        if (cmdResult.executedCommands.length > 0) {
+          console.info(`[AnA RI Stream] Dispatched ${cmdResult.executedCommands.length} command(s)`);
         }
       } catch (e: any) {
         console.warn('[AnA RI Stream] Command executor failed:', e?.message);
@@ -400,7 +409,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
       cleanedFullContent && cleanedFullContent.trim().length > 0
         ? cleanedFullContent
         : executedActions.length > 0 || executedCommands.length > 0
-          ? 'Action executed successfully.'
+          ? blocksOnlyAnswer(executedCommands)
           : contentForCommandProcessing || fullContent;
 
     // Self-verification round (computed before persistence so its verdict can

@@ -1,0 +1,77 @@
+===== npm run -s ci:sign-ceremony
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 3 baselined site(s) remain, exactly as baselined.
+exit=0
+===== npm run -s ci:sign-ceremony:selftest
+[ci:sign-ceremony:selftest]
+  ✓ the pre-fix protocol finalize route fails the gate
+  ✓ an AnA tool that signs from a chat turn fails the gate
+  ✓ re-authentication without a signature row still fails
+  ✓ the full ceremony passes
+  ✓ a ceremony in another handler does not count for this one
+  ✓ writeMutation("sign") needs the caller to re-authenticate
+  ✓ comments, type annotations and other commands are not sites
+  ✓ a command chosen by a ternary is still a sign write (IRB approval, as it stood on 2026-09-23)
+  ✓ a ternary or template-literal command inside recordGovernedAction is a site
+  ✓ "sign" in a reason, a target or a callback is not a command
+  ✓ the baseline is a ceiling per file, not a pass
+  ✓ a baseline that allows more than exists is reported, so a fixed site cannot be refilled
+  ✓ a baseline entry without a written reason fails
+[ci:sign-ceremony:selftest] 13 passed — the gate fails on what it exists to catch.
+exit=0
+===== npm run -s ci:client-ip-single-source
+✓ client-ip-single-source: no forwarding-header reads and no stray trust proxy in server/ or shared/
+exit=0
+===== npm run -s ci:no-mock-in-prod-routes
+✅ no-mock-in-prod-routes check passed (current=0, baseline=0, new=0)
+exit=0
+===== npm run -s ci:server-error-leaks
+[ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+exit=0
+===== npm run -s ci:untracked-imports
+
+[ci:untracked-imports] FAIL — 3 import(s) resolve to a file that is on disk but NOT in git:
+  server/api/cmc/batchRecordRoutes.ts:13  →  ./cmc-signer
+  server/api/cmc/routes.ts:62  →  ./cmc-signer
+  server/api/cmc/specificationRoutes.ts:13  →  ./cmc-signer
+
+  This builds for you and for nobody else. The usual cause is a .gitignore
+  pattern matching a source directory — check `git check-ignore -v <path>`,
+  and anchor the pattern with a leading slash if it names a root directory.
+exit=1
+===== npm run -s ci:drizzle-tenant-scope
+[ci:drizzle-tenant-scope] OK — 123 site(s), all baselined; 28 fixed since the baseline was written.
+[ci:drizzle-tenant-scope] Re-run with --write-baseline to bank the 28 fix(es).
+exit=0
+===== npm run -s ci:session-scoped-rls-bypass
+[ci:session-scoped-rls-bypass] OK — no new session-scoped RLS bypass. 34 baselined occurrence(s) remain in 7 unmounted innovation service(s), every one of them releasing through releaseWithoutBypass(); the baseline may only shrink.
+exit=0
+===== npm run -s ci:fixture-fallback
+[ci:fixture-fallback] `live ?? FIXTURE` and `live?.length ? live : FIXTURE` in client/src/concept2cure
+  ungated content fallbacks  : 0
+  baselined (known, unfixed) : 0
+
+✅ no new ungated fixture fallback. 0 baselined.
+exit=0
+===== npm run -s ci:runtime-ddl
+[ci:runtime-ddl] 84 DDL statement(s) in 14 runtime server file(s); 14 baselined
+[ci:runtime-ddl] ✅ no new runtime DDL.
+exit=0
+===== npm run -s ci:fabricated-identity
+[ci:fabricated-identity] OK — 0 baselined occurrence(s), 0 new.
+exit=0
+===== npm run -s ci:discarded-audit-write
+check-discarded-audit-write: no new occurrences. 117 baselined across 51 file(s).
+  3 baselined file(s) now below their count — run --write-baseline to shrink it.
+exit=0
+===== npm run -s ci:tenant-resolvers
+Local tenant resolvers: 184 (baseline 189)
+
+5 baselined module(s) no longer define one — regenerate the baseline:
+  - server/api/cmc/module3AutoDraftRoutes.ts
+  - server/api/cmc/module3BuildStateRoutes.ts
+  - server/api/cmc/module3ConvergenceRoutes.ts
+  - server/api/cmc/module3OperatingSystemRoutes.ts
+  - server/routes/qms.ts
+
+OK: no new local tenant resolvers.
+exit=0

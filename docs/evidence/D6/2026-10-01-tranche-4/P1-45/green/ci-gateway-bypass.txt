@@ -1,0 +1,3 @@
+# npm run -s ci:gateway-bypass, HEAD 0e58e794 + P1-45, 2026-10-01T06:29Z
+[check-gateway-bypass] OK — no new bypasses (8 baselined site(s) tolerated).
+exit=0

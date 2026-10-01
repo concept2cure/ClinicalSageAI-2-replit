@@ -14,7 +14,11 @@ import {
   applyCoauthorDocumentPut,
   planCoauthorStatusWrite,
 } from '../services/coauthor/coauthor-status-write.js';
-import { coauthorAuditActor, recordCoauthorDocumentEvent } from '../services/coauthor/coauthor-audit.js';
+import {
+  coauthorAuditActor,
+  coauthorDeleteHistoryRefusal,
+  deleteCoauthorDocument,
+} from '../services/coauthor/coauthor-audit.js';
 import { createRateLimiter } from '../middleware/rateLimiter';
 import {
   classifyDocument,
@@ -236,7 +240,7 @@ router.put('/:id', requireRole('regulatory-author'), async (req: Request, res: R
     const organizationId = resolveOrganizationId(req);
     if (organizationId === null) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
 
-    const { title, content, status, module: ectdModule, section, region } = req.body || {};
+    const { title, content, status, module: ectdModule, section, region, changeReason } = req.body || {};
 
     /* 2026-09-23 (W5/D7, round-3 review): this handler wrote `status` from the
        body verbatim, behind requireRole('regulatory-author') — which
@@ -280,9 +284,13 @@ router.put('/:id', requireRole('regulatory-author'), async (req: Request, res: R
       return { metadata: updatedMetadata };
     };
 
+    // 2026-10-01 (D5, P11-B-1): the write states its reason and is versioned
+    // and audited in the shared writer's transaction (rule 4 there).
     const outcome = await applyCoauthorDocumentPut({
       documentId: docId,
       organizationId,
+      actor: coauthorAuditActor(req),
+      changeReason,
       status,
       governed: { title, content, moduleNumber: ectdModule },
       ungoverned: mergeMetadata,
@@ -337,36 +345,30 @@ router.delete('/:id', requireRole('regulatory-author'), async (req: Request, res
     // delete back, so a regulated document is never removed unaudited).
     // 2026-09-23 (W5/D7, round-3 review, repair 2): through the one writer of
     // a coauthor document event, services/coauthor/coauthor-audit.ts, which
-    // coauthor.ts's DELETE and the filing-copy re-take also use.
-    const deletedRow = await transaction(async (client: any) => {
-      const delParams: unknown[] = [docId];
-      let delSql = 'DELETE FROM coauthor_documents WHERE id = $1';
-      if (organizationId) {
-        delParams.push(organizationId);
-        delSql += ` AND organization_id = $${delParams.length}`;
-      }
-      delSql += ' RETURNING id, organization_id';
-
-      const del = await client.query(delSql, delParams);
-      if (!del.rows.length) return null;
-      const row = del.rows[0];
-
-      await recordCoauthorDocumentEvent(client, {
-        organizationId: row.organization_id,
-        documentId: row.id,
-        eventType: 'coauthor_document.deleted',
+    // coauthor.ts's DELETE and the filing-copy re-take also use. 2026-10-01
+    // (D5, P11-B-1): through deleteCoauthorDocument, which refuses a document
+    // with saved versions (its history) and records the person's stated reason
+    // or null.
+    const outcome = await transaction((client: any) =>
+      deleteCoauthorDocument(client, {
+        documentId: docId,
+        organizationId,
         actor,
-        reason: 'eCTD coauthor document deleted',
-      });
+        changeReason: req.body?.changeReason,
+      }),
+    );
 
-      return row;
-    });
-
-    if (!deletedRow) {
+    if (outcome.kind === 'not_found') {
       return res.status(404).json({ error: 'eCTD document not found' });
     }
+    if (outcome.kind === 'has_history') {
+      return res.status(409).json(coauthorDeleteHistoryRefusal(outcome.versions));
+    }
+    if (outcome.kind === 'reason_invalid') {
+      return res.status(400).json({ error: 'REASON_INVALID', message: outcome.message });
+    }
 
-    res.json({ success: true, deletedId: deletedRow.id });
+    res.json({ success: true, deletedId: outcome.id });
   } catch (error: any) {
     logger.error('Delete error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to delete eCTD document', code: 'INTERNAL' });

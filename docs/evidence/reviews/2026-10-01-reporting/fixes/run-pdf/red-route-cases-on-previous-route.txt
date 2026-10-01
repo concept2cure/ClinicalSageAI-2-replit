@@ -1,0 +1,206 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts
+{
+  "timestamp": "2026-10-01T15:05:09.652Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/report-os-audit-recording.test.ts
+{
+  "timestamp": "2026-10-01T15:05:10.162Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T15:05:10.163Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts
+{
+  "timestamp": "2026-10-01T15:05:10.163Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain > answers 503 saying the run exists but was not recorded when the row cannot be written
+{
+  "timestamp": "2026-10-01T15:05:10.612Z",
+  "level": "error",
+  "message": "[report-os] report event not recorded on the audit chain",
+  "context": {
+    "action": "report_os.run_created",
+    "resourceId": "41",
+    "error": "audit_logs refused the row"
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs never computes a prediction (reporting review 2026-10-01) > refuses a prediction-family type with 422 before the plan gate, the computation or any write 51ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain > writes report_os.run_created for the run, on a tenant-stamped transaction, and answers 201 9ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain > answers 503 saying the run exists but was not recorded when the row cannot be written 6ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > refuses a member with 403 before reading anything 4ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > refuses a viewer with 403 before reading anything 4ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > lets the owner finalize: status, seal, chain row and signature commit together 10ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > lets the admin finalize: status, seal, chain row and signature commit together 6ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > lets the manager finalize: status, seal, chain row and signature commit together 5ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize is an electronic signature (reporting review 2026-10-01) > limits signing attempts on finalize (11.300(d)) 1ms
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > answers 503 with nothing changed when the signature row cannot be written
+{
+  "timestamp": "2026-10-01T15:05:10.674Z",
+  "level": "error",
+  "message": "[report-os] report finalize not recorded on the audit chain; rolled back",
+  "context": {
+    "runId": 41,
+    "error": "electronic_signatures refused the row"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > answers 503 with nothing changed when the chain row cannot be written: the writes roll back with it
+{
+  "timestamp": "2026-10-01T15:05:10.684Z",
+  "level": "error",
+  "message": "[report-os] report finalize not recorded on the audit chain; rolled back",
+  "context": {
+    "runId": 41,
+    "error": "audit_logs refused the row"
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize is an electronic signature (reporting review 2026-10-01) > refuses no reason with 400 REASON_REQUIRED before reading anything 8ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize is an electronic signature (reporting review 2026-10-01) > refuses a reason under 8 characters with 400 REASON_REQUIRED before reading anything 4ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize is an electronic signature (reporting review 2026-10-01) > refuses a password that is not accepted with 401, before any transaction 3ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize is an electronic signature (reporting review 2026-10-01) > refuses a meaning a finalize cannot carry 3ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > refuses an approval from the run's own requester (separation of duties) and rolls back 3ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > refuses an authorship signature from someone who did not request the run 3ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > answers 503 with nothing changed when the signature row cannot be written 5ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > refuses a run that is already final with 409 RUN_ALREADY_FINAL and writes nothing 3ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > refuses when a concurrent finalize won the lock, and rolls back 3ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > answers 503 with nothing changed when the chain row cannot be written: the writes roll back with it 5ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize: separation of duties and the signature row > records nothing when the truthfulness gate refuses the finalize 4ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > the seal is stored with what it sealed (reporting review 2026-10-01) > stores the exact sealed document beside its seal on the snapshot 4ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > the seal is stored with what it sealed (reporting review 2026-10-01) > refuses a run with no snapshot to hold its seal, and rolls back 3ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > shows a final run as what was sealed, not a re-render 5ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > refuses a stored copy that no longer matches its seal, and never shows it as the sealed record 3ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > refuses a run whose record contradicts the chain (its sealed document was removed after a finalize that stored it), and renders nothing 3ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > refuses a run whose record contradicts the chain (its status was rewritten after the chain recorded its finalization), and renders nothing 4ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > renders a final run with no stored document as final, never partial 3ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/rendered > stamps a render with the run's computation time, so two renders of one run are one document 4ms
+ × server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > writes report_os.run_exported carrying the hash of the bytes sent and the export id they print, then sends the PDF 65ms
+   → expected { tenantId: 7, userId: 5, …(6) } to match object { tenantId: 7, …(4) }
+(4 matching properties omitted from actual)
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > answers 503 and sends no PDF when the export cannot be recorded
+{
+  "timestamp": "2026-10-01T15:05:11.064Z",
+  "level": "error",
+  "message": "[report-os] report event not recorded on the audit chain",
+  "context": {
+    "action": "report_os.run_exported",
+    "resourceId": "41",
+    "error": "audit_logs refused the row"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > answers 503 and sends no PDF when the bundle export cannot be recorded
+{
+  "timestamp": "2026-10-01T15:05:11.093Z",
+  "level": "error",
+  "message": "[report-os] report event not recorded on the audit chain",
+  "context": {
+    "action": "report_os.bundle_exported",
+    "resourceId": "11111111-1111-4111-8111-111111111111",
+    "error": "audit_logs refused the row"
+  }
+}
+
+ × server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > exports a final run as its verified sealed document, with the signature and the verdict 251ms
+   → expected 'Concept2Cure Regulatory Report Run #4…' to contain 'As sealed'
+ × server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > refuses a record that does not verify against the audit chain: 409, no PDF, nothing recorded 19ms
+   → Unexpected token '%', "%PDF-1.7
+%"... is not valid JSON
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > answers 503 and sends no PDF when the export cannot be recorded 12ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > refuses with the run export gate when a report in the bundle is above the plan, and sends nothing 7ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > writes report_os.bundle_exported carrying the hash of the bytes sent, then sends the PDF 12ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > answers 503 and sends no PDF when the bundle export cannot be recorded 9ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > the registry has one writer > POST /taxonomy/seed no longer exists: the generated migration seeds the registry 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > writes report_os.run_exported carrying the hash of the bytes sent and the export id they print, then sends the PDF
+AssertionError: expected { tenantId: 7, userId: 5, …(6) } to match object { tenantId: 7, …(4) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -3,11 +3,10 @@
+    "details": {
+      "byteLength": 1265,
+      "filename": "report-run-41.pdf",
+      "format": "pdf",
+      "reportTypeId": "readiness.executive_digest",
+-     "sealVerdict": null,
+      "sha256": "c9bd64641ef6708e50ee29fb619e3b44b380e8bf681078ec6d9440d9a1ad2b28",
+      "status": "completed",
+    },
+    "resourceId": "41",
+    "resourceType": "report_run",
+
+ ❯ server/routes/__tests__/report-os-audit-recording.test.ts:477:26
+    475|     const body = res.body as Buffer;
+    476|     expect(body.subarray(0, 4).toString()).toBe('%PDF');
+    477|     expect(auditEntry()).toMatchObject({
+       |                          ^
+    478|       tenantId: 7,
+    479|       action: 'report_os.run_exported',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > exports a final run as its verified sealed document, with the signature and the verdict
+AssertionError: expected 'Concept2Cure Regulatory Report Run #4…' to contain 'As sealed'
+
+Expected: "As sealed"
+Received: "Concept2Cure Regulatory Report Run #41 (00000000-0000-4000-8000-000000000041) Report Type: Executive Readiness Digest (readiness.executive_digest) Scope: submission:sub-1 Status: final Confidence: 90 Generated: 2026-09-30T12:00:00.000Z Dependency Providers -- 1 of 1 -- "
+
+ ❯ server/routes/__tests__/report-os-audit-recording.test.ts:495:135
+    493|     const res = await exportPdf();
+    494|     const text = await pdfText(res.body as Buffer);
+    495|     for (const line of ['As sealed', 'Final. Signed by Dana Reyes as a…
+       |                                                                                                                                       ^
+    496|     expect(text).not.toMatch(/NOT FINAL/);
+    497|     expect(auditEntry()?.details).toMatchObject({ status: 'final', sea…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > refuses a record that does not verify against the audit chain: 409, no PDF, nothing recorded
+SyntaxError: Unexpected token '%', "%PDF-1.7
+%"... is not valid JSON
+ ❯ server/routes/__tests__/report-os-audit-recording.test.ts:504:30
+    502|     sealedOnRecord({ seal, sealedDocument: { ...sealedDocument, sectio…
+    503|     const res = await exportPdf();
+    504|     expect([res.status, JSON.parse((res.body as Buffer).toString('utf8…
+       |                              ^
+    505|     expect(h.audit).not.toHaveBeenCalled();
+    506|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 33 passed (36)
+   Start at  15:05:06
+   Duration  4.58s (transform 2.10s, setup 111ms, import 3.49s, tests 556ms, environment 0ms)
+

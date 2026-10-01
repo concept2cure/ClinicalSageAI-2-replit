@@ -1,0 +1,82 @@
+# working tree (fixed recipe applied by deploy step 4), 2026-10-01T06:14:21Z, as app_service
+Pager usage is off.
+    role     | rolsuper | rolbypassrls 
+-------------+----------+--------------
+ app_service | f        | f
+(1 row)
+
+== 1. table-level privileges the runtime role holds on each store
+                  store                   | sel | ins | upd | del | trunc 
+------------------------------------------+-----+-----+-----+-----+-------
+ public.audit_logs                        | t   | t   | f   | f   | f
+ public.audit_events                      | t   | t   | f   | f   | f
+ public.audit_log_archives                | t   | t   | f   | f   | f
+ audit.tamper_proof_log                   | t   | t   | f   | f   | f
+ public.electronic_signatures             | t   | t   | f   | f   | f
+ public.ana_turn_records                  | t   | t   | f   | f   | f
+ public.ana_record_blobs                  | t   | t   | f   | f   | f
+ public.authoring_audit_trail             | t   | t   | f   | f   | f
+ public.doc_revisions                     | t   | t   | f   | f   | f
+ public.concept2cure_signatures           | t   | t   | f   | f   | f
+ public.concept2cure_submission_snapshots | t   | t   | f   | f   | f
+(11 rows)
+
+== 2. electronic_signatures: the supersession columns stay updatable, the attested ones do not
+         col         | can_update 
+---------------------+------------
+ superseded_by       | t
+ is_valid            | t
+ verification_status | t
+ verification_date   | t
+ updated_at          | t
+ signer_id           | f
+ signature_hash      | f
+ signed_at           | f
+(8 rows)
+
+== 3. statements the role can run today: UPDATE/DELETE ... WHERE false (no row, so no trigger fires)
+psql:probe-as-app_service.sql:31: ERROR:  42501: permission denied for table audit_logs
+LOCATION:  aclcheck_error, aclchk.c:2812
+psql:probe-as-app_service.sql:32: ERROR:  42501: permission denied for table audit_logs
+LOCATION:  aclcheck_error, aclchk.c:2812
+psql:probe-as-app_service.sql:33: ERROR:  42501: permission denied for table audit_events
+LOCATION:  aclcheck_error, aclchk.c:2812
+psql:probe-as-app_service.sql:34: ERROR:  42501: permission denied for table audit_events
+LOCATION:  aclcheck_error, aclchk.c:2812
+psql:probe-as-app_service.sql:35: ERROR:  42501: permission denied for table audit_log_archives
+LOCATION:  aclcheck_error, aclchk.c:2812
+psql:probe-as-app_service.sql:36: ERROR:  42501: permission denied for table audit_log_archives
+LOCATION:  aclcheck_error, aclchk.c:2812
+psql:probe-as-app_service.sql:37: ERROR:  42501: permission denied for table electronic_signatures
+LOCATION:  aclcheck_error, aclchk.c:2812
+psql:probe-as-app_service.sql:38: ERROR:  42501: permission denied for table electronic_signatures
+LOCATION:  aclcheck_error, aclchk.c:2812
+psql:probe-as-app_service.sql:39: ERROR:  42501: permission denied for table ana_turn_records
+LOCATION:  aclcheck_error, aclchk.c:2812
+psql:probe-as-app_service.sql:40: ERROR:  42501: permission denied for table ana_record_blobs
+LOCATION:  aclcheck_error, aclchk.c:2812
+psql:probe-as-app_service.sql:41: ERROR:  42501: permission denied for table authoring_audit_trail
+LOCATION:  aclcheck_error, aclchk.c:2812
+psql:probe-as-app_service.sql:42: ERROR:  42501: permission denied for table doc_revisions
+LOCATION:  aclcheck_error, aclchk.c:2812
+psql:probe-as-app_service.sql:43: ERROR:  42501: permission denied for table concept2cure_signatures
+LOCATION:  aclcheck_error, aclchk.c:2812
+psql:probe-as-app_service.sql:44: ERROR:  42501: permission denied for table concept2cure_submission_snapshots
+LOCATION:  aclcheck_error, aclchk.c:2812
+   the governed revocation path (superseded_by et al.) must still be allowed:
+UPDATE 0
+== 4. a real audit row in the role's own tenant: who refuses, the privilege or the trigger?
+BEGIN
+SET
+SET
+INSERT 0 1
+SAVEPOINT
+psql:probe-as-app_service.sql:58: ERROR:  42501: permission denied for table audit_logs
+LOCATION:  aclcheck_error, aclchk.c:2812
+ROLLBACK
+psql:probe-as-app_service.sql:60: ERROR:  42501: permission denied for table audit_logs
+LOCATION:  aclcheck_error, aclchk.c:2812
+ROLLBACK
+psql:probe-as-app_service.sql:62: ERROR:  42501: permission denied for table audit_logs
+LOCATION:  aclcheck_error, aclchk.c:2812
+ROLLBACK

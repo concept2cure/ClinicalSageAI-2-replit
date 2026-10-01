@@ -22,6 +22,7 @@
 
 import { COMMAND_AUTHORIZATION } from './command-rbac';
 import type { GovernedSignMeaning } from '../part11/signature-meanings';
+import { ARTIFACT_ACT_MEANING } from '../artifact-approval-act';
 
 /** AnA command names whose effect alters the regulatory record and therefore
  * require, at minimum, a Part 11 reason-for-change. Scoped deliberately to
@@ -165,8 +166,45 @@ export function requiresPart11Signoff(command: string): boolean {
  */
 export type GovernedTier = 'confirm' | 'reason' | 'esignature';
 
-export function governedTierOf(command: string): GovernedTier {
-  if (PART11_ESIGN_COMMANDS.has(command)) return 'esignature';
+/**
+ * Commands whose tier follows what the call does, each with the §11.50 meaning
+ * the act fixes (2026-10-01, D5). `update_artifact_status` moves an artifact
+ * between draft and review on a reason for change; to approved or locked it is
+ * the status route's signed act (ARTIFACT_ACT_MEANING), so it is the
+ * e-signature tier there, and it is signed with that act's own meaning. It was
+ * the reason tier for every target: AnA approved and locked on a reason alone,
+ * the one approve/lock door a person could reach.
+ *
+ * Read from the params the call will run with. The governed-action route takes
+ * them from the held run row, not the browser, so the tier a person signed at
+ * is the tier of what runs.
+ */
+const SIGNED_ACTS: Readonly<Record<string, (params: Record<string, unknown> | undefined) => GovernedSignMeaning | null>> = {
+  update_artifact_status: (params) => {
+    // Normalised: 'Approved' or ' locked' is the same act, and the handler
+    // reads it the same way (command-executor.ts updateArtifactStatus). Read
+    // exactly, they were the reason tier and were written raw (review of
+    // dacc2ff84, 2026-10-01).
+    const status = normalizedArtifactStatus(params?.status);
+    return status === 'approved' || status === 'locked' ? ARTIFACT_ACT_MEANING[status] : null;
+  },
+};
+
+/** An artifact status as the platform spells it: trimmed, lower case; '' for anything not a string. */
+export function normalizedArtifactStatus(value: unknown): string {
+  return typeof value === 'string' ? value.trim().toLowerCase() : '';
+}
+
+/** The meaning this call's e-signature must carry, when the act fixes one; otherwise null. */
+export function requiredSignatureMeaning(
+  command: string,
+  params?: Record<string, unknown>,
+): GovernedSignMeaning | null {
+  return SIGNED_ACTS[command]?.(params) ?? null;
+}
+
+export function governedTierOf(command: string, params?: Record<string, unknown>): GovernedTier {
+  if (PART11_ESIGN_COMMANDS.has(command) || requiredSignatureMeaning(command, params)) return 'esignature';
   if (PART11_GOVERNED_COMMANDS.has(command)) return 'reason';
   const authz = COMMAND_AUTHORIZATION[command];
   if (authz?.requiresConfirmation === true && authz.minRole === 'manager') return 'reason';
@@ -175,8 +213,8 @@ export function governedTierOf(command: string): GovernedTier {
 
 /** Does this command additionally require a manifested electronic signature
  * (re-authentication), not just a reason-for-change? */
-export function requiresEsignature(command: string): boolean {
-  return PART11_ESIGN_COMMANDS.has(command);
+export function requiresEsignature(command: string, params?: Record<string, unknown>): boolean {
+  return PART11_ESIGN_COMMANDS.has(command) || requiredSignatureMeaning(command, params) !== null;
 }
 
 /**
@@ -194,12 +232,28 @@ export function requiresEsignature(command: string): boolean {
  * 2026-09-28 (coverage-gap sweep GP-P-2): until this, the route stamped
  * `signaturePurpose: 'approval'` whatever the signer declared.
  */
-export const GOVERNED_ACTION_DECLARED_MEANINGS: Readonly<Record<'AUTHOR' | 'REVIEWER' | 'APPROVER', GovernedSignMeaning>> =
+export const GOVERNED_ACTION_DECLARED_MEANINGS: Readonly<Record<DeclaredMeaningToken, GovernedSignMeaning>> =
   Object.freeze({
     AUTHOR: 'authorship',
     REVIEWER: 'review',
     APPROVER: 'approval',
+    // Locking an approved artifact (2026-10-01, D5): the status route's lock is
+    // signed with the meaning 'release' (ARTIFACT_ACT_MEANING), and the dialog
+    // offers it when the act requires it (requiredSignatureMeaning).
+    RELEASE: 'release',
   });
+
+/** The dialog's spelling of a declared meaning. */
+export type DeclaredMeaningToken = 'AUTHOR' | 'REVIEWER' | 'APPROVER' | 'RELEASE';
+
+/** The dialog's token for a canonical meaning, or null when the dialog has none for it. */
+export function declaredMeaningTokenFor(meaning: GovernedSignMeaning | null): DeclaredMeaningToken | null {
+  if (!meaning) return null;
+  const hit = (Object.entries(GOVERNED_ACTION_DECLARED_MEANINGS) as Array<[DeclaredMeaningToken, GovernedSignMeaning]>).find(
+    ([, m]) => m === meaning,
+  );
+  return hit ? hit[0] : null;
+}
 
 export type DeclaredMeaningResolution =
   | { ok: true; meaning: GovernedSignMeaning }
@@ -289,12 +343,15 @@ export function buildSignatureRequiredResult(
     reasonRequired: true;
     /** True for the high-impact tier (e-signature also required). */
     signatureRequired: boolean;
+    /** The meaning the act fixes, in the dialog's spelling, when it fixes one. */
+    signatureMeaning?: DeclaredMeaningToken;
     code: SignoffValidation['code'];
     /** Everything the client needs to re-submit via POST /governed-action. */
     retry: { command: string; params: Record<string, unknown> };
   };
 } {
-  const signatureRequired = requiresEsignature(command);
+  const signatureRequired = requiresEsignature(command, params);
+  const signatureMeaning = declaredMeaningTokenFor(requiredSignatureMeaning(command, params));
   return {
     success: false,
     action: command,
@@ -309,6 +366,7 @@ export function buildSignatureRequiredResult(
       tier: signatureRequired ? 'esignature' : 'reason',
       reasonRequired: true,
       signatureRequired,
+      ...(signatureMeaning && { signatureMeaning }),
       code: validation.code,
       retry: { command, params: params ?? {} },
     },
@@ -348,10 +406,13 @@ export function buildHumanConfirmationRequiredResult(
     reasonRequired: boolean;
     signatureRequired: boolean;
     proposedByAgent: true;
+    /** The meaning the act fixes, in the dialog's spelling, when it fixes one. */
+    signatureMeaning?: DeclaredMeaningToken;
     retry: { command: string; params: Record<string, unknown> };
   };
 } {
-  const tier = tierOverride ?? governedTierOf(command);
+  const tier = tierOverride ?? governedTierOf(command, params);
+  const signatureMeaning = tier === 'esignature' ? declaredMeaningTokenFor(requiredSignatureMeaning(command, params)) : null;
   const message =
     tier === 'confirm'
       ? 'This action changes the record, so it is taken by a person rather than on your ' +
@@ -369,6 +430,7 @@ export function buildHumanConfirmationRequiredResult(
       tier,
       reasonRequired: tier !== 'confirm',
       signatureRequired: tier === 'esignature',
+      ...(signatureMeaning && { signatureMeaning }),
       proposedByAgent: true,
       retry: { command, params: params ?? {} },
     },

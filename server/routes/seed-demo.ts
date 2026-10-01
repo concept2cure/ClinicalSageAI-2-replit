@@ -7,8 +7,11 @@ import {
   medicalDevices,
   sharepoint_files
 } from '../../shared/schema';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = express.Router();
+const log = createScopedLogger('seed-demo');
 
 // SECURITY: Block demo seeding in production
 router.use((_req, res, next) => {
@@ -402,13 +405,10 @@ router.post('/seed', async (req: Request, res: Response) => {
       ]
     });
 
-  } catch (error: any) {
-    console.error('Error seeding demo projects:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to seed demo projects',
-      error: error.message
-    });
+  } catch (error) {
+    // The insert's driver text (relation, column and constraint names) goes to
+    // the log against the request id, not into the body (P1-17, IAM-18 (1)).
+    serverError(res, log, 'seeding the demo projects', error);
   }
 });
 

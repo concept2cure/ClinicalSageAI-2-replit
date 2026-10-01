@@ -31,6 +31,16 @@
  * Once the provider answers, the call is recorded on the ledger
  * (`AIGateway.recordEmbeddingCall`): a served row, or a failure row.
  *
+ * ── Provider election (ADR-0014 §1.4, P1-45) ─────────────────────────────────
+ * The default lane is OpenAI. In production `authorizeEmbedding` applies the
+ * provider election through the same predicate as chat: an organization whose
+ * placement policy does not name `openai` — including one with no policy, and
+ * platform work with no organization — gets a terminal GatewayPolicyError
+ * (DENY_TENANT_POLICY) before the client exists. There is no fallback to
+ * another lane: an embedder is fixed per corpus by EMBEDDING_PROVIDER, and the
+ * self-hosted lane (EMBEDDING_PROVIDER=local) is the one that serves a tenant
+ * that has not elected OpenAI.
+ *
  * @module server/services/ai-gateway/embeddings/embedding-provider
  */
 

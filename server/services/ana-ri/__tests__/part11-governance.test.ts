@@ -12,6 +12,11 @@ import {
   PART11_GOVERNED_COMMANDS,
   PART11_ESIGN_COMMANDS,
   MIN_REASON_FOR_CHANGE_LEN,
+  governedTierOf,
+  requiredSignatureMeaning,
+  buildHumanConfirmationRequiredResult,
+  resolveDeclaredSignatureMeaning,
+  declaredMeaningTokenFor,
   type Part11Signoff,
 } from '../part11-governance.js';
 
@@ -107,5 +112,60 @@ describe('governed set hygiene', () => {
     for (const c of PART11_GOVERNED_COMMANDS) {
       expect(c).not.toMatch(/^(list|search|get|load|check|view)_/);
     }
+  });
+});
+
+/**
+ * 2026-10-01 (D5): a command's tier can follow what the call does. AnA's
+ * update_artifact_status moves an artifact to review or draft on a reason for
+ * change; approving or locking it is the status route's electronic signature,
+ * each with its own §11.50 meaning. It was the reason tier for every target.
+ */
+describe('a command whose tier follows the call: update_artifact_status', () => {
+  const call = (status: string) => ({ projectId: 3, artifactId: 'artifact_abc', status });
+
+  it.each([['draft'], ['review']])('to %s: the reason tier, no signature, no fixed meaning', status => {
+    expect(governedTierOf('update_artifact_status', call(status))).toBe('reason');
+    expect(requiresEsignature('update_artifact_status', call(status))).toBe(false);
+    expect(requiredSignatureMeaning('update_artifact_status', call(status))).toBeNull();
+  });
+
+  it.each([
+    ['approved', 'approval', 'APPROVER'],
+    ['locked', 'release', 'RELEASE'],
+  ])('to %s: the e-signature tier, signed with the meaning %s', (status, meaning, token) => {
+    expect(governedTierOf('update_artifact_status', call(status))).toBe('esignature');
+    expect(requiresEsignature('update_artifact_status', call(status))).toBe(true);
+    expect(requiredSignatureMeaning('update_artifact_status', call(status))).toBe(meaning);
+    expect(buildHumanConfirmationRequiredResult('update_artifact_status', call(status)).data).toMatchObject({
+      tier: 'esignature',
+      signatureRequired: true,
+      signatureMeaning: token,
+    });
+    expect(
+      buildSignatureRequiredResult('update_artifact_status', { ok: false, code: 'SIGNATURE_NOT_VERIFIED' }, call(status)).data,
+    ).toMatchObject({ tier: 'esignature', signatureRequired: true, signatureMeaning: token });
+  });
+
+  it.each([['Approved'], [' approved '], ['APPROVED'], ['Locked'], ['LOCKED ']])(
+    'to %j: the same act, read the way the handler reads it — the e-signature tier',
+    status => {
+      expect(governedTierOf('update_artifact_status', call(status))).toBe('esignature');
+    },
+  );
+
+  it('read without its params, it is the reason tier — the params decide, and every caller passes them', () => {
+    expect(governedTierOf('update_artifact_status')).toBe('reason');
+  });
+
+  it('a command in the e-signature set fixes no meaning: the signer declares one', () => {
+    expect(requiredSignatureMeaning('place_in_dossier', {})).toBeNull();
+    expect(buildHumanConfirmationRequiredResult('place_in_dossier', {}).data).not.toHaveProperty('signatureMeaning');
+  });
+
+  it("the dialog's RELEASE is the canonical 'release'", () => {
+    expect(resolveDeclaredSignatureMeaning('RELEASE')).toEqual({ ok: true, meaning: 'release' });
+    expect(declaredMeaningTokenFor('release')).toBe('RELEASE');
+    expect(declaredMeaningTokenFor('approval')).toBe('APPROVER');
   });
 });

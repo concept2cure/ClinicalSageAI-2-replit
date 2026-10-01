@@ -59,7 +59,6 @@
     "migrations/20260604_study_twins.sql",
     "migrations/20260605_consistency_findings.sql",
     "migrations/20260608_submission_leaf_document_type.sql",
-    "migrations/20260608_vault_retention.sql",
     "migrations/20260609_ind_master_data.sql",
     "migrations/20260610_controlled_substances.sql",
     "migrations/20260610_egrants.sql",

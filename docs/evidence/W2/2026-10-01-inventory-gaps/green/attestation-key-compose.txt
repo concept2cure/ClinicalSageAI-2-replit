@@ -1,0 +1,13 @@
+$ node scripts/ci/check-compose-boot-contract.mjs
+[ci:compose-boot-contract] OK — 2 production Compose stack(s) carry the boot contract (23 preflight names + ALLOWED_ORIGINS).
+exit=0
+$ docker compose -f docker-compose.yml --env-file <every required variable, placeholders> config -q
+exit=0
+$ docker compose -f docker-compose.yml --env-file <the same, without AUDIT_ATTESTATION_KEY> config -q
+error while interpolating services.app.environment.AUDIT_ATTESTATION_KEY: required variable AUDIT_ATTESTATION_KEY is missing a value: AUDIT_ATTESTATION_KEY must be set (>=32 chars, distinct from the other audit keys)
+exit=1
+$ docker compose -f docker-compose.beta.yml --env-file <every required variable, placeholders> config -q
+exit=0
+$ docker compose -f docker-compose.beta.yml --env-file <the same, without AUDIT_ATTESTATION_KEY> config -q
+error while interpolating services.app.environment.AUDIT_ATTESTATION_KEY: required variable AUDIT_ATTESTATION_KEY is missing a value: AUDIT_ATTESTATION_KEY must be set (>=32 chars, distinct from the other audit keys)
+exit=1

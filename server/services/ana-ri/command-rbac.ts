@@ -82,7 +82,8 @@ export interface CommandAuthorization {
   /**
    * Minimum organization role required to dispatch this command. Required for
    * every `effect: 'write'` entry unless `handlerAuthorized` is set (asserted
-   * in command-rbac.test.ts).
+   * in command-rbac.test.ts). On a read it is optional and, when present,
+   * enforced the same way (audit.explain is the one such read).
    */
   minRole?: MinRole;
   /**
@@ -414,7 +415,13 @@ export const COMMAND_AUTHORIZATION: Readonly<Record<string, CommandAuthorization
   },
 
   // ── Auditor capability ──────────────────────────────────────────────────
-  'audit.explain': { effect: 'read', object: 'audit_row' },
+  // A read, but of one audit_logs row with the actor's IP address and user
+  // agent: the audit-reader set's data (AUDIT_READER_ROLES — owner, admin,
+  // manager — in services/audit/audit-api-authority.ts; GDPR 5(1)(f)). It had
+  // no tier, so any member could have AnA read it to them (security audit
+  // 2026-09-24 DP-53, plan P1-42). The only read with a tier; enforced in
+  // authorizeCommand step 3.
+  'audit.explain': { effect: 'read', object: 'audit_row', minRole: 'manager' },
 };
 
 /**
@@ -547,9 +554,11 @@ export async function authorizeCommand(
   // 3. Read-only commands stay available even when tenant governance
   //    configuration cannot be read — the documented degraded mode. They are
   //    still tenant-scoped by ctx.organizationId in every handler's SQL and by
-  //    the tenant_isolation_policy RLS underneath.
+  //    the tenant_isolation_policy RLS underneath. A read that carries a tier
+  //    (audit.explain) is role-checked like a write: before P1-42 this branch
+  //    returned ok without looking, so a tier on a read would have been inert.
   if (authz.effect === 'read' && !authz.handlerAuthorized) {
-    return { ok: true };
+    return authz.minRole ? roleDecision(command, ctx, authz.minRole) : { ok: true };
   }
   if (authz.effect === 'read') {
     // handlerAuthorized read (GDPR export): identity must still be provable.
@@ -600,22 +609,41 @@ export async function authorizeCommand(
     );
   }
 
+  return roleDecision(command, ctx, authz.minRole);
+}
+
+/**
+ * The role check every tiered command ends in: identity from the verified
+ * principal, the role from the canonical RBAC service (never ctx.userRole),
+ * and a lookup failure denies. Shared by tiered writes and tiered reads so the
+ * two cannot drift.
+ */
+async function roleDecision(
+  command: string,
+  ctx: CommandContext,
+  minRole: MinRole,
+): Promise<AuthorizationDecision> {
+  if (!isValidId(ctx.userId) || !isValidId(ctx.organizationId)) {
+    return deny(
+      command,
+      'RBAC_CONTEXT_MISSING',
+      'Cannot authorize this action: missing user or organization context.',
+    );
+  }
   let allowed: boolean;
   try {
-    allowed = await rbacService.hasRole(ctx.userId, authz.minRole, ctx.organizationId);
+    allowed = await rbacService.hasRole(ctx.userId, minRole, ctx.organizationId);
   } catch {
     allowed = false; // fail closed on any RBAC lookup failure
   }
-
   if (!allowed) {
     return deny(
       command,
       'RBAC_DENIED',
       `You do not have permission to perform '${command}'. ` +
-        `This action requires at least the '${authz.minRole}' role in this organization.`,
+        `This action requires at least the '${minRole}' role in this organization.`,
     );
   }
-
   return { ok: true };
 }
 

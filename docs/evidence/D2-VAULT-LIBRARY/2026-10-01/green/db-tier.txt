@@ -1,0 +1,34 @@
+# npm run test:db, this change, RLS_ENFORCE=on, app_service runtime role, 2026-10-01T15:14:34Z
+# The one failure (actor-displays, project activity feed) is order-dependent: it passes alone and on trunk's code, and is noted on the board.
+ × tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the project activity feed answers 48ms
+stdout | tests/db/vault-library-search.dbtest.ts
+stdout | tests/db/vault-library-search.dbtest.ts
+stderr | tests/db/vault-library-search.dbtest.ts
+stdout | tests/db/vault-library-search.dbtest.ts
+stdout | tests/db/vault-library-search.dbtest.ts
+stdout | tests/db/vault-library-search.dbtest.ts
+stdout | tests/db/vault-library-search.dbtest.ts
+stdout | tests/db/vault-library-search.dbtest.ts
+stdout | tests/db/vault-library-search.dbtest.ts
+stdout | tests/db/vault-library-search.dbtest.ts
+stdout | tests/db/vault-library-search.dbtest.ts
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across every project (critique 15) > finds matches in every project the organisation holds, each named with its project, and never another organisation's 20ms
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across every project (critique 15) > lists an earlier version only when asked 12ms
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across every project (critique 15) > an empty query answers no results and says why 4ms
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across every project (critique 15) > the project search still searches its project only 10ms
+stdout | tests/db/vault-version-compare.dbtest.ts
+stdout | tests/db/vault-version-compare.dbtest.ts
+stderr | tests/db/vault-version-compare.dbtest.ts
+stdout | tests/db/vault-version-compare.dbtest.ts
+stdout | tests/db/vault-version-compare.dbtest.ts
+stdout | tests/db/vault-version-compare.dbtest.ts
+stdout | tests/db/vault-version-compare.dbtest.ts
+stdout | tests/db/vault-version-compare.dbtest.ts
+stdout | tests/db/vault-version-compare.dbtest.ts
+ ✓ tests/db/vault-version-compare.dbtest.ts > compare two versions of a Vault document > names both sides and returns the changed lines and details, unchanged runs collapsed 42ms
+ ✓ tests/db/vault-version-compare.dbtest.ts > compare two versions of a Vault document > the earlier version is always the one compared from 15ms
+ ✓ tests/db/vault-version-compare.dbtest.ts > compare two versions of a Vault document > refuses a version of another document, and another organisation's document reads as not found 16ms
+ ✓ tests/db/vault-version-compare.dbtest.ts > compare two versions of a Vault document > a version with no extracted text gets no text comparison, and the answer says which 18ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 122 passed (123)
+      Tests  1 failed | 1292 passed (1293)

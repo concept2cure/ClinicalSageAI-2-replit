@@ -4,11 +4,18 @@
  * Prevents any single tenant from monopolizing server resources by
  * limiting the number of concurrent AI actions per organization.
  *
- * Uses Redis INCR/DECR for distributed counting when available,
- * falls back to in-memory Map for single-node deployments.
+ * The per-organisation cap counts every server process's running actions:
+ * each action holds a slot lease in Postgres (coordination-leases.ts), in the
+ * organisation's own scope. Production runs no Redis (decision B6,
+ * 2026-10-01); this was Redis with an in-memory fallback, so there the cap was
+ * multiplied by the number of API tasks (U21). The global cap protects this
+ * process's own resources, so it stays per process.
+ *
+ * Falls back to in-memory counting when the store cannot be reached.
  */
 
-import { getRedisClient } from './redis-manager';
+import { randomUUID } from 'crypto';
+import { acquireSlot, releaseLease } from './coordination-leases';
 import { createScopedLogger } from '../../utils/logger';
 
 const logger = createScopedLogger('concurrency-limiter');
@@ -19,10 +26,10 @@ const logger = createScopedLogger('concurrency-limiter');
 
 const DEFAULT_MAX_CONCURRENT_PER_ORG = 5;
 const DEFAULT_MAX_CONCURRENT_GLOBAL = 50;
-const REDIS_KEY_PREFIX = 'csai:concurrency:';
-const REDIS_KEY_TTL = 120; // 2 minutes — safety TTL to prevent stuck counters
+/** A slot lapses on its own after this, so a crashed process never holds one for good. */
+const SLOT_TTL_MS = 120_000;
 
-// In-memory fallback
+/** This process's running actions, per organisation (metrics, and the fallback cap). */
 const memoryCounters = new Map<string, number>();
 let globalCounter = 0;
 
@@ -45,118 +52,50 @@ export async function acquireConcurrencySlot(
   maxGlobal = DEFAULT_MAX_CONCURRENT_GLOBAL
 ): Promise<ConcurrencySlot | null> {
   const orgKey = `org:${organizationId}`;
-  const redis = getRedisClient();
-
-  if (redis) {
-    return acquireRedis(orgKey, organizationId, maxPerOrg, maxGlobal);
-  }
-  return acquireMemory(orgKey, maxPerOrg, maxGlobal);
-}
-
-// ---------------------------------------------------------------------------
-// Redis implementation
-// ---------------------------------------------------------------------------
-
-// Lua script for atomic acquire: increments both counters only if within limits
-const ACQUIRE_SCRIPT = `
-  local org_key = KEYS[1]
-  local global_key = KEYS[2]
-  local max_per_org = tonumber(ARGV[1])
-  local max_global = tonumber(ARGV[2])
-  local ttl = tonumber(ARGV[3])
-
-  -- Check global limit
-  local global_count = tonumber(redis.call('GET', global_key) or '0')
-  if global_count >= max_global then
-    return 0
-  end
-
-  -- Atomically increment org counter
-  local org_count = redis.call('INCR', org_key)
-  redis.call('EXPIRE', org_key, ttl)
-
-  if org_count > max_per_org then
-    redis.call('DECR', org_key)
-    return 0
-  end
-
-  -- Atomically increment global counter
-  redis.call('INCR', global_key)
-  redis.call('EXPIRE', global_key, ttl)
-  return 1
-`;
-
-async function acquireRedis(
-  orgKey: string,
-  organizationId: number,
-  maxPerOrg: number,
-  maxGlobal: number
-): Promise<ConcurrencySlot | null> {
-  const redis = getRedisClient()!;
-  const redisOrgKey = `${REDIS_KEY_PREFIX}${orgKey}`;
-  const redisGlobalKey = `${REDIS_KEY_PREFIX}global`;
-
-  try {
-    // Atomic acquire via Lua script — prevents counter desynchronization
-    const result = await redis.eval(
-      ACQUIRE_SCRIPT,
-      2, redisOrgKey, redisGlobalKey,
-      maxPerOrg, maxGlobal, REDIS_KEY_TTL
-    );
-
-    if (result === 0) {
-      logger.warn('Concurrency limit reached', { organizationId, orgKey });
-      return null;
-    }
-
-    return {
-      orgKey,
-      release: async () => {
-        try {
-          const pipeline = redis.pipeline();
-          pipeline.decr(redisOrgKey);
-          pipeline.decr(redisGlobalKey);
-          await pipeline.exec();
-        } catch (err: any) {
-          logger.error('Failed to release Redis concurrency slot', { error: err.message });
-        }
-      },
-    };
-  } catch (err: any) {
-    logger.warn('Redis concurrency check failed, falling back to memory', { error: err.message });
-    return acquireMemory(orgKey, maxPerOrg, maxGlobal);
-  }
-}
-
-// ---------------------------------------------------------------------------
-// In-memory implementation
-// ---------------------------------------------------------------------------
-
-function acquireMemory(
-  orgKey: string,
-  maxPerOrg: number,
-  maxGlobal: number
-): ConcurrencySlot | null {
   if (globalCounter >= maxGlobal) {
-    logger.warn('Global concurrency limit reached (memory)', { current: globalCounter, max: maxGlobal });
+    logger.warn('Global concurrency limit reached', { current: globalCounter, max: maxGlobal });
     return null;
   }
 
+  const owner = randomUUID();
+  const taken = await acquireSlot(organizationId, owner, maxPerOrg, SLOT_TTL_MS);
+  if (taken === false) {
+    logger.warn('Concurrency limit reached', { organizationId, orgKey });
+    return null;
+  }
+  if (taken === null) return acquireMemory(orgKey, maxPerOrg);
+
+  count(orgKey, +1);
+  return {
+    orgKey,
+    release: async () => {
+      count(orgKey, -1);
+      const released = await releaseLease(organizationId, `slot:${owner}`, owner);
+      if (released === null) logger.warn('Slot could not be released in the store; it lapses on its own', { organizationId });
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// In-memory accounting and fallback
+// ---------------------------------------------------------------------------
+
+function count(orgKey: string, delta: 1 | -1): void {
+  memoryCounters.set(orgKey, Math.max(0, (memoryCounters.get(orgKey) || 0) + delta));
+  globalCounter = Math.max(0, globalCounter + delta);
+}
+
+function acquireMemory(orgKey: string, maxPerOrg: number): ConcurrencySlot | null {
   const current = memoryCounters.get(orgKey) || 0;
   if (current >= maxPerOrg) {
     logger.warn('Org concurrency limit reached (memory)', { orgKey, current, max: maxPerOrg });
     return null;
   }
-
-  memoryCounters.set(orgKey, current + 1);
-  globalCounter++;
-
+  count(orgKey, +1);
   return {
     orgKey,
     release: async () => {
-      const c = memoryCounters.get(orgKey) || 1;
-      memoryCounters.set(orgKey, Math.max(0, c - 1));
-      globalCounter = Math.max(0, globalCounter - 1);
+      count(orgKey, -1);
     },
   };
 }
@@ -165,39 +104,14 @@ function acquireMemory(
 // Metrics
 // ---------------------------------------------------------------------------
 
+/** This process's running actions: in total, and per organisation. */
 export async function getConcurrencyMetrics(): Promise<{
   global: number;
   perOrg: Record<string, number>;
 }> {
-  const redis = getRedisClient();
-
-  if (redis) {
-    try {
-      const globalCount = parseInt(await redis.get(`${REDIS_KEY_PREFIX}global`) || '0', 10);
-      // Scan for org keys
-      const orgCounts: Record<string, number> = {};
-      let cursor = '0';
-      do {
-        const [nextCursor, keys] = await redis.scan(cursor, 'MATCH', `${REDIS_KEY_PREFIX}org:*`, 'COUNT', 100);
-        cursor = nextCursor;
-        if (keys.length > 0) {
-          const values = await redis.mget(...keys);
-          keys.forEach((key, i) => {
-            const orgId = key.replace(`${REDIS_KEY_PREFIX}`, '');
-            orgCounts[orgId] = parseInt(values[i] || '0', 10);
-          });
-        }
-      } while (cursor !== '0');
-
-      return { global: globalCount, perOrg: orgCounts };
-    } catch {
-      // Fall through to memory
-    }
-  }
-
   const perOrg: Record<string, number> = {};
-  for (const [key, count] of memoryCounters) {
-    if (count > 0) perOrg[key] = count;
+  for (const [key, n] of memoryCounters) {
+    if (n > 0) perOrg[key] = n;
   }
   return { global: globalCounter, perOrg };
 }

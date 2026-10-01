@@ -36,8 +36,11 @@ import {
   SUPPORTED_FORMATS,
   SupportedFormat
 } from '../services/grdhe/exportGenerators';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('grdhe-routes');
 
 // =============================================================================
 // MIDDLEWARE
@@ -691,14 +694,10 @@ router.post('/exports/:jobId/execute', asyncHandler(async (req: Request, res: Re
         errorDetails: { stack: error.stack }
       });
     } catch { /* non-blocking: best-effort status update */ }
-    
-    res.status(500).json({
-      success: false,
-      error: {
-        code: 'EXPORT_FAILED',
-        message: error.message
-      }
-    });
+
+    // The thrown text (driver or generator detail) goes to the log against the
+    // request id, not into the body (P1-17, IAM-18 (1)).
+    serverError(res, log, 'executing the export job', error, { jobId });
   }
 }));
 
@@ -1096,9 +1095,18 @@ router.get('/health', asyncHandler(async (req: Request, res: Response) => {
 // =============================================================================
 
 router.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  const status = err.status || 500;
+  if (status >= 500) {
+    // Every asyncHandler route without a catch of its own lands here. A server
+    // failure's text (relation names, driver detail, a stack in development)
+    // goes to the log against the request id, never into the body (P1-17,
+    // IAM-18 (1)). An error that carries a 4xx status is a deliberate refusal
+    // and keeps its answer below, unchanged.
+    return serverError(res, log, 'handling the GRDHE request', err);
+  }
   console.error('[GRDHE ERROR]', err);
-  
-  res.status(err.status || 500).json({
+
+  res.status(status).json({
     success: false,
     error: {
       code: err.code || 'INTERNAL_ERROR',

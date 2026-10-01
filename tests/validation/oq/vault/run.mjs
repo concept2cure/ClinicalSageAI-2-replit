@@ -5,6 +5,7 @@
 import { createRun, helpers } from '../../lib/harness.mjs';
 import { createProgram, ingestPdf, makePdfBuffer, sha256 } from '../../lib/fixtures.mjs';
 import { requireApprover, requireSigner, signerCode } from '../../lib/credentials.mjs';
+import { runFilingAndCompareSteps } from './steps-filing-compare.mjs';
 
 const run = await createRun({
   app: 'VAULT',
@@ -448,6 +449,8 @@ await step(
     return `v1.0 approved, then superseded by v2.0 (approved by ${list[0].lifecycle.approval.printedName}); the approved version's edit refused`;
   },
 );
+
+await runFilingAndCompareSteps({ step, state, stamp });
 
 const result = await run.finish();
 process.exit(result.counts.fail > 0 ? 1 : 0);

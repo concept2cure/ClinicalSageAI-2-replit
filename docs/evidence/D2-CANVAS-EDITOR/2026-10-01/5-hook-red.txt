@@ -1,0 +1,8 @@
+# 5. A turn names the open document — RED, useAnaChat.ts without the per-turn authoringContext (git stash of that file)
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-context.test.ts > a turn names the document open beside the conversation > sends the turn’s authoring context as authoring_context and in the route context 30ms
+   → expected undefined to match object { …(6) }
+ ✓ client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-context.test.ts > a turn names the document open beside the conversation > a turn without one sends the host’s context, not the previous turn’s 5ms
+ × client/src/concept2cure/components/ana/__tests__/useAnaChat-turn-context.test.ts > a turn names the document open beside the conversation > the turn’s context wins over the host’s own 12ms
+   → expected '3.2.S.1' to be '2.5.1' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 1 passed (3)

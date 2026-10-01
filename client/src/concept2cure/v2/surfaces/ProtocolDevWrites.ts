@@ -37,7 +37,7 @@
  * confirmed write — no register is patched locally, so the screen can only
  * ever show what the record holds.
  */
-import { ApiRequestError, apiRequest } from '@/lib/queryClient';
+import { ApiRequestError, apiRequest, errorCodeOf, serverMessage } from '@/lib/queryClient';
 
 /** The section PATCH's optimistic-concurrency refusal (409 SECTION_CHANGED). */
 export class ProtocolSectionConflict extends Error {
@@ -71,13 +71,11 @@ export function optionalNumber(raw: string | undefined): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
+/* serverMessage() first: a 500 answered through serverError() puts the code
+   INTERNAL_ERROR in `error` and its sentence in `message`, and returning a
+   string `error` as-is showed the code as the reason (P1-17, IAM-18 (1)). */
 function detailOf(json: unknown, status: number): string {
-  const err = (json as { error?: unknown } | null)?.error;
-  if (typeof err === 'string') return err;
-  const obj = err as { message?: unknown; code?: unknown } | undefined;
-  if (typeof obj?.message === 'string') return obj.message;
-  if (typeof obj?.code === 'string') return obj.code;
-  return `HTTP ${status}`;
+  return serverMessage(json) ?? errorCodeOf(json) ?? `HTTP ${status}`;
 }
 
 /** The one refusal, whichever way the HTTP client delivered it. */
