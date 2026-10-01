@@ -273,3 +273,58 @@ not edited:
     several claimed lanes (`…01SuVLo2`, `…01GCu8tc`, `…0194UQPx`,
     `…01KnUGoX`).
   - This is proposed for whichever lane next holds those files.
+
+## 6. A section not yet drafted is one ask away
+
+**Before.** The outline (step 2) said "Not drafted" and stopped there. To get
+AnA to draft one section, the person had to:
+- type the request,
+- open the editor,
+- find the section,
+- and hope the turn and the insert agreed on which section was meant.
+
+**Now.**
+- A section with no text shows "Ask AnA to draft 2.5.2" beside "Not drafted
+  yet". It works the same in the card and once chosen from the outline.
+- The ask opens the editor beside the conversation at that section. The
+  canvas passes `embedded.focusSection` (one request per nonce). The
+  workbench applies it once, through its own `requestLeave`, so unsaved text
+  in the open section is held for the author to decide, never saved or
+  dropped for them.
+- The ask lands in the composer for the person to send: "Draft the text for
+  section 2.5.2 … of "<document>" here in the conversation, so I can insert
+  it into the document." It asks for the text in the conversation because
+  the document already exists, and a second draft of it would be a
+  duplicate.
+- With the editor open at 2.5.2, that turn carries 2.5.2 (step 5), and AnA's
+  answer offers "Insert into 2.5.2 as tracked suggestion" (step 3).
+- When the window is too narrow for two columns, the existing `canvasAsk`
+  rule closes the editor so that the prefilled ask is on screen.
+
+**Failing first.**
+- `6-ask-red.txt`: the new thread case failed against the unchanged canvas,
+  which had no ask.
+- `6-mutation-no-focus-red.txt`: with the canvas not passing `focusSection`,
+  the editor opens at its first section, and the case fails on "Insert into
+  2.5.2".
+
+**Green:** `6-ask-green.txt`. The thread suite (18/18) and both canvas
+suites. The 56 files that mount the thread, the canvas or the workbench, plus
+the editor's and `useAnaChat`'s suites, pass 555/555.
+
+**Also run.**
+- `tsc`: clean.
+- `ci:canvas-path`, `ci:check-phantom-tokens`, `ci:undefined-css-classes`,
+  `ci:check-css-selector-shadowing`, `ci:check-shell-css-collisions`: OK.
+- The ESLint ratchet `--since HEAD --gate`: unchanged.
+- One rule was added in `authoring-v2.css`
+  (`.dcv-sec-empty .nda-open`), using existing tokens only.
+
+**A process note.**
+- Step 5's first push ran its hook while step 6 was still uncommitted in the
+  working tree. The hook's typecheck reads the working tree, so it refused
+  step 5 for step 6's unfinished line (`doc` possibly null). That was
+  correct, and nothing was pushed.
+- Interrupting that loop left the ESLint ratchet's temporary
+  `__eslint_ratchet_prev__.*` copies behind. They were removed.
+- Steps 5 and 6 are pushed together from a clean tree.

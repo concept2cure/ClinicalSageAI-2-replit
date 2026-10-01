@@ -706,8 +706,10 @@ export interface DocumentWorkbenchProps {
     backLabel?: string;
     hostShowsBack?: boolean;
     /** The host is told which section is open and given its suggestion door,
-     *  or null when nothing can take a suggestion (no section, or sealed). */
+     *  or null with no section open. A sealed document is reported as not editable. */
     onEditorBridge?: (bridge: EditorBridge | null) => void;
+    /** A section the host asks to show; each new nonce is one request. */
+    focusSection?: { id: string; nonce: number } | null;
   } | null;
   /** Surface-action bus id to register under, or null to register nothing —
    *  the canvas must not claim the bus while ConversationThread is on. */
@@ -1103,6 +1105,19 @@ export function DocumentWorkbench({
     },
     [dirty, activeSectionId, activeDocId, applyNav]
   );
+
+  /* The host asking for a section (the conversation canvas: "Ask AnA to draft"
+     opens the editor at it). Through requestLeave, so unsaved text in the open
+     section is held for the author to decide. Each request is applied once,
+     when its section is in the list, and never again on a later reload. */
+  const focusSection = embedded?.focusSection ?? null;
+  const appliedFocusRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!focusSection || appliedFocusRef.current === focusSection.nonce) return;
+    if (!sections.some(s => s.id === focusSection.id)) return;
+    appliedFocusRef.current = focusSection.nonce;
+    requestLeave({ kind: 'section', id: focusSection.id });
+  }, [focusSection, sections, requestLeave]);
 
   /** Save through the editor's one save path, then move. A refused save keeps
    *  the author here with the text intact — the toast says why. */

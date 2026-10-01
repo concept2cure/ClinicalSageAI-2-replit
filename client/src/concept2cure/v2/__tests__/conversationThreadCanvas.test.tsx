@@ -343,6 +343,45 @@ describe('ConversationThread — a sealed document is known to AnA, and takes no
   });
 });
 
+describe('ConversationThread — a section not yet drafted is one ask away (2026-10-01)', () => {
+  /* The outline said "Not drafted" and stopped there. From a section's empty
+     state the person now asks AnA to draft it: the editor opens beside the
+     conversation AT that section, the ask is in the composer, and the turn
+     and the insert both name that section. */
+  it('opens the editor at the section, puts the ask in the composer, and the turn and the insert name that section', async () => {
+    chatSend.mockReset();
+    const base = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method === 'GET' && url === `/api/authoring/docs/${DOC}/sections`) {
+        return ok({ success: true, sections: [
+          { id: 'S1', doc_id: DOC, code: '2.5.1', title: 'Product Development Rationale', content: '<p>From the record.</p>', order_index: 0 },
+          { id: 'S2', doc_id: DOC, code: '2.5.2', title: 'Overview of Biopharmaceutics', content: '', order_index: 1 },
+        ] });
+      }
+      return base(method, url, body);
+    });
+    const FOLLOWUP: AnaChatMessage = {
+      id: 'm5', role: 'assistant', text: 'Exposure was dose-proportional from 10 to 300 mg.',
+      turnRecord: { status: 'recorded', id: 'rec-7', sha256: 'a'.repeat(64) },
+    } as unknown as AnaChatMessage;
+    chatMessages.current = [USER, DRAFTED, FOLLOWUP];
+    render(<ConversationThread {...OWNED_PROPS} />);
+
+    (await screen.findByRole('button', { name: /2\.5\.2\s*Overview of Biopharmaceutics/ })).click();
+    (await screen.findByRole('button', { name: 'Ask AnA to draft 2.5.2' })).click();
+
+    const box = screen.getByRole('textbox', { name: 'Reply to AnA' }) as HTMLTextAreaElement;
+    await vi.waitFor(() =>
+      expect(box.value).toMatch(/^Draft the text for section 2\.5\.2 Overview of Biopharmaceutics of “Module 2\.5 Clinical Overview — C2C-101”/),
+    );
+    await vi.waitFor(() => expect(document.querySelector('.ct-canvas-pane [data-testid="dc-expanded"]')).toBeTruthy());
+    await screen.findByRole('button', { name: 'Insert into 2.5.2 as tracked suggestion' }, { timeout: 4000 });
+
+    fireEvent.keyDown(box, { key: 'Enter' });
+    expect(chatSend.mock.calls[0]?.[2]?.authoringContext).toMatchObject({ artifactId: DOC, sectionCode: '2.5.2' });
+  });
+});
+
 describe('ConversationThread — every AnA draft opens as a document (2026-10-01)', () => {
   /* Only draft_authoring_document wrote the editor's store. A draft from any
      other tool (a plan, a briefing book, a statistical document) was a
