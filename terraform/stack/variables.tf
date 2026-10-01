@@ -58,7 +58,12 @@ variable "rds_deletion_protection" {
 }
 
 variable "rds_engine_version" {
-  type = string
+  type        = string
+  description = "PostgreSQL major version for RDS. Major only: see the validation."
+  validation {
+    condition     = can(regex("^[0-9]+$", var.rds_engine_version))
+    error_message = "RDS PostgreSQL MAJOR version only, e.g. \"15\". RDS creates the instance on its current minor and applies minor patches in the maintenance window. A pinned minor is retired by AWS on a schedule (15.4 was) and a retired minor cannot be created, so the first apply and every rebuild of the database would fail."
+  }
 }
 
 variable "api_cpu" {
