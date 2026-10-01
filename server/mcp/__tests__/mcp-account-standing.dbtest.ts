@@ -504,6 +504,59 @@ describe('a connector grant made while the account was in use', () => {
   }
 });
 
+/*
+ * Product decision 2026-10-01 (docs/LAUNCH_DEFINITION_OF_DONE.md): a password
+ * change ends every connector grant authorised before it. In a regulated tenant
+ * a password is changed most often because it may be known to someone else,
+ * and a grant authorised with it is a credential derived from it; without this
+ * the remedy left that credential minting access for 30 days (§11.300(b), (d)).
+ */
+describe('a password change ends the connector grants authorised before it', () => {
+  /** The statement a password change or reset leaves behind (users.password_changed_at, UTC). */
+  const changePassword = (m: Member) =>
+    // tenant-isolation-safe: an account's own password-change stamp in the global identity table, keyed by this suite's fixture user id
+    owner.query(`UPDATE users SET password_changed_at = (now() AT TIME ZONE 'utc') WHERE id = $1`, [m.id]);
+
+  it('refuses the access token, the refresh token and an unredeemed code, says why, and a fresh sign-in connects again', async () => {
+    const m = members.held;
+    const g = await grant(m);
+    const pending = await codeFor(m);
+    expect((await mcp(g.access)).status).toBe(200);
+
+    // Whole seconds on both sides (sessionPredatesPasswordChange): the change
+    // lands in a later second than the authorisation, as it does in life.
+    await new Promise((r) => setTimeout(r, 1100));
+    await changePassword(m);
+    try {
+      const access = await mcp(g.access);
+      expect(access.status, 'a connector token issued before the password change still opened /mcp').toBe(401);
+
+      const r = await refresh(g.refresh);
+      expect(r.status, `a grant authorised before the password change still refreshed: ${shown(r.body)}`).toBe(400);
+      expect(r.body.error).toBe('invalid_grant');
+      expect(r.body.error_description).toMatch(/password/i);
+      expect(r.body.access_token).toBeUndefined();
+
+      const c = await exchangeCode(pending.code, pending.verifier);
+      expect(c.status, `a code issued before the password change still redeemed: ${shown(c.body)}`).toBe(400);
+      expect(c.body.error).toBe('invalid_grant');
+      expect(c.body.error_description).toMatch(/password/i);
+
+      // The control: the holder signs in again with the new password and
+      // connects again — the refusal was the change, not the account.
+      const { activeJwtSecret } = await import('../../utils/jwtVerify');
+      const fresh = { ...m, session: sessionToken(activeJwtSecret(), m) };
+      const again = await grant(fresh);
+      expect((await mcp(again.access)).status).toBe(200);
+      const rotated = await refresh(again.refresh);
+      expect(rotated.status, shown(rotated.body)).toBe(200);
+    } finally {
+      // tenant-isolation-safe: restores this suite's fixture user's stamp
+      await owner.query(`UPDATE users SET password_changed_at = NULL WHERE id = $1`, [m.id]);
+    }
+  });
+});
+
 describe('a connector token is not a platform session (IAM-02, P0-2 part a)', () => {
   it('the first-party session opens both /api authenticators (control)', async () => {
     const m = members.active;

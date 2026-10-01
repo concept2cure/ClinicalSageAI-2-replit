@@ -224,6 +224,8 @@ export interface StoredCode {
   resource: string | null;
   expired: boolean;
   redeemed: boolean;
+  /** When the user consented: the code's created_at. */
+  issuedAt: Date;
 }
 
 export async function readAuthorizationCode(code: string): Promise<StoredCode | null> {
@@ -232,7 +234,7 @@ export async function readAuthorizationCode(code: string): Promise<StoredCode | 
   return inGrantTenant(organizationId, 'read-code', async () => {
     const { rows } = await getPool().query(
       `SELECT client_id, organization_id, user_id, membership_id, code_challenge, redirect_uri, scopes, resource,
-              (expires_at < now()) AS expired, (redeemed_at IS NOT NULL) AS redeemed
+              (expires_at < now()) AS expired, (redeemed_at IS NOT NULL) AS redeemed, created_at
          FROM mcp_oauth_authorization_codes WHERE code_hash = $1`,
       [sha256Hex(code)],
     );
@@ -249,6 +251,7 @@ export async function readAuthorizationCode(code: string): Promise<StoredCode | 
       resource: r.resource,
       expired: r.expired === true,
       redeemed: r.redeemed === true,
+      issuedAt: new Date(r.created_at),
     };
   });
 }
@@ -308,6 +311,12 @@ export async function issueRefreshToken(
 export interface StoredRefresh extends RefreshGrant {
   expired: boolean;
   revoked: boolean;
+  /**
+   * When THIS token was minted: its created_at. Every rotation passes the same
+   * checks first, so once a password changes no token can be minted from a
+   * grant authorised before it, and this is always earlier than that change.
+   */
+  issuedAt: Date;
 }
 
 export async function readRefreshToken(token: string): Promise<StoredRefresh | null> {
@@ -316,7 +325,7 @@ export async function readRefreshToken(token: string): Promise<StoredRefresh | n
   return inGrantTenant(organizationId, 'read-refresh', async () => {
     const { rows } = await getPool().query(
       `SELECT client_id, organization_id, user_id, membership_id, scopes, resource,
-              (expires_at < now()) AS expired, (revoked_at IS NOT NULL) AS revoked
+              (expires_at < now()) AS expired, (revoked_at IS NOT NULL) AS revoked, created_at
          FROM mcp_oauth_refresh_tokens WHERE token_hash = $1`,
       [sha256Hex(token)],
     );
@@ -331,6 +340,7 @@ export async function readRefreshToken(token: string): Promise<StoredRefresh | n
       resource: r.resource,
       expired: r.expired === true,
       revoked: r.revoked === true,
+      issuedAt: new Date(r.created_at),
     };
   });
 }
