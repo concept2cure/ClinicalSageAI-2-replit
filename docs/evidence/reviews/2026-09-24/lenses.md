@@ -170,6 +170,8 @@ or meaning field. P1-28's fix needs a client half.
 
 ### DP-35: Medium, Authoring: freeze makes a document "finalized" with no re-authentication and no signing-authority check
 
+**Decided 2026-10-01:** freeze stays a content lock, and an unsigned freeze no longer counts as approved or complete; see the commit naming DP-35.
+
 - **Where:** `POST /api/authoring/docs/:docId/freeze` (`authoring.router.ts:3673-3880`).
   - **Who may call it:** a document OWNER, which every creator becomes by trigger, or an
     APPROVER (`authoringObjectAuthorization.ts:35`).

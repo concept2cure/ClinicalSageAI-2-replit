@@ -316,7 +316,7 @@ Full record: `docs/evidence/reviews/2026-09-24/lenses.md`.
      `governed:write`, so the client mirrors no role list.
    - The board then hides or disables its write controls without it.
    - Not taken tonight because `auth.ts` is in the D6 session's active lane.
-2. **Founder: DP-35.** Authoring freeze needs no re-authentication and no
+2. ~~**Founder: DP-35.**~~ **Decided and done 2026-10-01 (`…015oLV2v`, on the founder's authority), in the commit naming DP-35:** a freeze stays a content lock; an unsigned freeze counts as neither approved (the eCTD resolver refuses to transmit it) nor complete (IND checklist and NDA cockpit show it as "frozen, not approved"). Originally: Authoring freeze needs no re-authentication and no
    signing authority. It counts as `finalized` for eCTD leaf completeness and
    as COMPLETE on the IND checklist. `ind-checklist-view-assembler.ts:71-79`
    already leaves "should an unsigned freeze count as complete" open. Plan row
