@@ -167,6 +167,22 @@ run "renders_the_boot_contract" {
     error_message = "APP_URL must be the https origin of the first CloudFront alias, in the API environment."
   }
 
+  # The connector for Claude is on, at the deployment's own origin, and admits
+  # client registrations from Claude's origins only (D8 decision P-2,
+  # docs/LAUNCH_DEFINITION_OF_DONE.md). Without MCP_ENABLED the connector is not
+  # mounted though CloudFront routes its paths here; without the allowlist
+  # production refuses every registration, so no client could connect.
+  assert {
+    condition = alltrue([
+      for defs in [module.ecs.api_container, module.ecs.worker_container] : alltrue([
+        one([for e in defs.environment : e.value if e.name == "MCP_ENABLED"]) == "true",
+        one([for e in defs.environment : e.value if e.name == "MCP_PUBLIC_URL"]) == "https://${var.domain_aliases[0]}",
+        one([for e in defs.environment : e.value if e.name == "MCP_CLIENT_REDIRECT_ALLOWLIST"]) == "https://claude.ai,https://claude.com",
+      ])
+    ])
+    error_message = "The connector must be on (MCP_ENABLED=true) at the deployment's origin (MCP_PUBLIC_URL) and admit registrations from https://claude.ai and https://claude.com only."
+  }
+
   # The deployment has an owner from its first boot (D1, 2026-10-01). The
   # e-mail allowlists are the documented bootstrap: Master Administration
   # (PLATFORM_ADMIN_EMAILS) and the Business Center (BUSINESS_CENTER_EMAILS),
