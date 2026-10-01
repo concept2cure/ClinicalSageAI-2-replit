@@ -41,5 +41,19 @@ Each edit below is inside another lane's 24-hour window, and is disclosed on the
   `…015oLV2v`, 15:06 and 16:06 UTC) import pdfkit directly instead of `server/services/pdf-converter.ts`. Whether they
   join the APPROVED list (as the eCTD leaf renderer did, for byte-determinism) or route through the converter is a design
   decision with its own proof; next in this lane.
-- Proof tier: `tests/schema-contract/deploy-frontend-after-api.contract.test.ts`, two cases ("publishes: a full release,
-  API rolled", "publishes: a frontend-only dispatch"). Found while this commit was being prepared; next in this lane.
+
+## Follow-up, same day: the proof tier's deploy-frontend contract
+
+`tests/schema-contract/deploy-frontend-after-api.contract.test.ts` (Lint's proof-tier step) was red from 08:02 UTC: P1-12
+(`8060c28bc`) made `deploy-frontend` also need `ci-verdict`, the deploy-time check that the SHA's CI passed (decision
+P-3), and the contract's scenarios carried no verdict, which its model reads as `skipped`. The workflow is right; the
+contract was stale. Every scenario now carries a green verdict, the test-failure case states its own, and two cases pin
+the gate: a red CI verdict publishes nothing, on a full release or a frontend-only dispatch.
+
+| File | |
+|---|---|
+| `red/7-deploy-frontend-contract-trunk.txt` | On trunk: 2 of 8 fail, the two publishing cases. |
+| `green/7-deploy-frontend-contract-after.txt` | 10/10. |
+| `red/7-mutation-verdict-dropped-from-condition.txt` | With `needs.ci-verdict.result == 'success'` removed from the workflow's condition, exactly the two new cases fail. |
+
+This also confirms that P-3's deploy gate (deploy only a commit whose CI is green) is in `deploy-aws.yml`.
