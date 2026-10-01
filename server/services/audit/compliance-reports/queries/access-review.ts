@@ -13,12 +13,22 @@
  * through services/tenant/membership-change.ts) writes a chained audit row
  * since P1-41 (2026-10-01); those rows are listed in the administrative
  * changes report, not reconstructed into this as-of list. A role change made
- * through a SCIM group (routes/scim.ts PATCH /Groups/:id) writes no row, and
- * notRecorded says so (pinned against that handler by review-round-1.test.ts).
+ * through a SCIM group (routes/scim.ts PATCH /Groups/:id) goes through the same
+ * changeMemberRole and writes the same chained member_role_changed row in its
+ * own transaction since P1-49 (2026-10-01), with no person as actor; until then
+ * it wrote no row and notRecorded said so. review-round-1.test.ts pins the
+ * sentence against that handler and that writer.
+ *
+ * The review itself — who reviewed, each decision, the sign-off — is the
+ * access-review record (P1-43, ADR-0014 §8; services/audit/compliance-reviews.ts).
+ * This report names the latest signed one and says when it is overdue
+ * (queries/review-record.ts), and the record's completeness check reads the
+ * same members list (readMembers, privilegedOf), so "privileged" means one thing.
  *
  * @module server/services/audit/compliance-reports/queries/access-review
  */
-import type { ReportDefinition, RunContext, SectionResult } from '../types';
+import type { ReportDefinition, RunContext, SectionResult, SqlClient } from '../types';
+import { reviewSection, reviewSectionDef } from './review-record';
 import { cappedSection, columns, isoNaiveUtc, isoUtc, naiveUtcNote, utcWallClock } from './section';
 
 const MEMBER_COLUMNS = columns([
@@ -81,26 +91,37 @@ function isPrivileged(row: Record<string, unknown>): boolean {
   return PRIVILEGED_ORG_ROLES.includes(String(row.org_role ?? '').toLowerCase()) || Boolean(row.platform_roles);
 }
 
+/** Who holds access to the organisation at `endIso` (joined before it), capped like every section. */
+export function readMembers(client: SqlClient, orgId: number, endIso: string): Promise<SectionResult> {
+  return cappedSection(client, MEMBERS_SQL, [orgId, endIso]);
+}
+
+/** The members a periodic review must decide on (POLICY-AC-002 §4a). */
+export function privilegedOf(rows: Record<string, unknown>[]): Record<string, unknown>[] {
+  return rows.filter(isPrivileged);
+}
+
 async function run(ctx: RunContext): Promise<Record<string, SectionResult>> {
-  const members = await cappedSection(ctx.client, MEMBERS_SQL, [ctx.orgId, ctx.bounds.end]);
+  const members = await readMembers(ctx.client, ctx.orgId, ctx.bounds.end);
   const currentState =
     'Organisation role, persona, platform roles, account status, second factor, recovery codes and lock are read as they are at generation time; none of them has a recorded history to read a past value from.';
   const times = naiveUtcNote('Membership, second-factor enrolment, lock and password-change times');
   return {
     members: { ...members, notes: [currentState, times] },
     privileged: {
-      rows: members.rows.filter(isPrivileged),
+      rows: privilegedOf(members.rows),
       // Derived from the members list: incomplete exactly when that list is.
       truncated: members.truncated,
       notes: ['Owners, admins and managers of this organisation, and anyone holding a platform role.', currentState, times],
     },
+    review: await reviewSection(ctx, 'access'),
   };
 }
 
 export const accessReview: ReportDefinition = {
   id: 'access-review',
   title: 'User access review',
-  purpose: 'Lists everyone who holds access to this organisation on the chosen date, with their role, second factor and last sign-in, and separates the privileged accounts a periodic review must decide on.',
+  purpose: 'Lists everyone who holds access to this organisation on the chosen date, with their role, second factor and last sign-in, separates the privileged accounts a periodic review must decide on, and names the latest signed access review.',
   basis: [
     '21 CFR 11.10(d)',
     '21 CFR 11.10(g)',
@@ -113,11 +134,12 @@ export const accessReview: ReportDefinition = {
   sections: [
     { key: 'members', title: 'Members', columns: MEMBER_COLUMNS },
     { key: 'privileged', title: 'Privileged accounts', columns: MEMBER_COLUMNS },
+    reviewSectionDef('access'),
   ],
   notRecorded: [
     'A member who was removed leaves no membership record, so removed members do not appear. A removal made by an administrator in the product or through SCIM provisioning is recorded and appears in the administrative changes report. Removals and role changes an administrator made before the product began recording them were not recorded.',
-    "A member's role on a past date is not reconstructed: the role shown is the current one. A role change made by an administrator in the product is listed, with the role before and after, in the administrative changes report. A role change made through a SCIM group, which is how an identity provider assigns roles, is not recorded, so a role the identity provider assigned has no record of when it was assigned or what it replaced.",
-    'This report records no review decision, reviewer or sign-off. POLICY-AC-002 §4a keeps those in the access-review record.',
+    "A member's role on a past date is not reconstructed: the role shown is the current one. A role change made by an administrator in the product is listed, with the role before and after, in the administrative changes report. A role change made through a SCIM group, which is how an identity provider assigns roles, is listed there too, with no person as actor; those made before the product began recording them were not recorded.",
+    "This report names the latest signed access review, its reviewer and its signature; it does not list the review's decisions. POLICY-AC-002 §4a keeps those in the access-review record, one per account.",
     'The account sign-in timestamp is set when the password alone is accepted, before the second factor, so it is not reported; the last sign-in shown is read from successful sign-in audit records only.',
   ],
   run,

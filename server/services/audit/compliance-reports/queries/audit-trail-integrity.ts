@@ -14,6 +14,10 @@
  *       tenant on the admin-scope connection the chain walk uses
  *       (compliance-reports/integrity-checks.ts).
  *
+ * It also names the latest signed audit-trail review on or before the end of
+ * the period, and says when it is overdue (P1-25, Annex 11 §9; the record is
+ * services/audit/compliance-reviews.ts, the section queries/review-record.ts).
+ *
  * @module server/services/audit/compliance-reports/queries/audit-trail-integrity
  */
 import { NO_CHAINED_ROWS_REASON } from '../../audited-export';
@@ -26,6 +30,7 @@ import type {
   SectionResult,
   TenantChainWalk,
 } from '../types';
+import { reviewSection, reviewSectionDef } from './review-record';
 import { columns, isoNaiveUtc, isoUtc, naiveAsUtc, naiveUtcNote, utcWallClock } from './section';
 
 type Verdict = 'intact' | 'broken' | 'not verified';
@@ -153,13 +158,14 @@ async function run(ctx: RunContext): Promise<Record<string, SectionResult>> {
       truncated: false,
       notes: ['Each check covers every row of its store for this organisation, not only the rows in the period.'],
     },
+    review: await reviewSection(ctx, 'audit_trail'),
   };
 }
 
 export const auditTrailIntegrity: ReportDefinition = {
   id: 'audit-trail-integrity',
   title: 'Audit trail integrity attestation',
-  purpose: "States what this organisation's audit stores hold and what each integrity check found at the time of the report, saying so plainly when a check could not be run.",
+  purpose: "States what this organisation's audit stores hold and what each integrity check found at the time of the report, saying so plainly when a check could not be run, and names the latest signed audit trail review.",
   basis: ['21 CFR 11.10(e)', 'EU GMP Annex 11 §9', 'PMDA ER/ES guideline (authenticity)'],
   period: 'range',
   walksChain: true,
@@ -190,6 +196,7 @@ export const auditTrailIntegrity: ReportDefinition = {
         ['detail', 'Detail'],
       ]),
     },
+    reviewSectionDef('audit_trail'),
   ],
   notRecorded: [
     'Rows written before hashing was introduced carry no hash; they are counted, but no link through them can be checked.',

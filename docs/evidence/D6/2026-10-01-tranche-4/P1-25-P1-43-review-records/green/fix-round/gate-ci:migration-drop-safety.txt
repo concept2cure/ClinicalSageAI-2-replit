@@ -1,0 +1,2 @@
+[ci:migration-drop-safety] OK — 349 migrations, 35 DROP(s), none re-created by the set; 4 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 17 dynamic DROP(s) in 17 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+exit 0

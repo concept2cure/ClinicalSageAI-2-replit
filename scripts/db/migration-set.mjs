@@ -2914,6 +2914,7 @@ export const C2C_MIGRATION_FILES = [
   // the final pair because ci:migration-set-order pins the tail. Evidence
   // docs/evidence/D5-ANA-RECORD/2026-10-01-review-comments/.
   'migrations/20261001_review_comments_record.sql',
+  'migrations/20261001_compliance_review_records.sql', // P1-25 + P1-43 (ADR-0014 §8): one public org-keyed table (audit-trail and access reviews), signed through the ceremony, fixed once signed; after electronic_signatures' creators; no DROP of anything another file creates; above the pair so the sweep gives it RLS
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
