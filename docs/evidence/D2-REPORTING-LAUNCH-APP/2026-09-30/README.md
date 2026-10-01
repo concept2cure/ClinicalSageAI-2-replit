@@ -49,6 +49,12 @@ The definition of done's row D2 text still says six apps; that file was inside a
 | The registry reaches a deployed database; run, finalize and PDF exports are recorded on the chain; finalize is role-gated and atomic; the dev seed route is deleted | `report-os/README.md` | in that folder |
 | The canvas tells an already-final run and a refused role apart from the truthfulness gate | `client/src/concept2cure/v2/surfaces/Insights.tsx` | `red/insights-finalize-refusal-wording.txt` → green |
 
+**On a real database, through sign-up.** `tests/db/signup-launch-catalog.dbtest.ts` and
+`tests/db/entitlement-grants-resolution.dbtest.ts` iterate `LAUNCH_APPS`, so with the seventh app they sign up a new
+organisation through `POST /api/auth/signup` and through first-run setup, and read the rail's verdicts with
+`LAUNCH_SCOPE_ENFORCE` on: every launch surface, Reporting & analytics included, is available, every launch module
+granted (72/72 as `app_service` under RLS, `launch-scope/green/signup-rail-dbtests.txt`).
+
 Entitlement: the `insights` catalog row has no tier restriction, so the rail verdict for it is entitled for every
 organisation once launch scope admits it (`server/services/entitlements/__tests__/launch-scope.test.ts`, the reporting
 pin: a `subscribed` verdict is kept). Report-OS report families still carry their plan tiers
