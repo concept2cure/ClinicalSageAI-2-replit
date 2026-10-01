@@ -1,0 +1,408 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T19:13:39.209Z","pid":29744,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T19:13:39.211Z","pid":29744,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T19:13:39.211Z","pid":29744,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-10-01T19:13:39.604Z","pid":29744,"hostname":"vm","context":{"resource":"http://localhost:46535/mcp","issuer":"http://localhost:46535/","resourceMetadataUrl":"http://localhost:46535/.well-known/oauth-protected-resource/mcp"},"msg":"[mcp] Concept2Cure MCP connector mounted"}
+stderr | server/mcp/__tests__/mcp-connector-enablement.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-01T19:13:40.090Z","pid":29744,"hostname":"vm","context":{"caller":"register","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+stdout | server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > until its administrator enables it, the connector is closed to the organization > a member is refused at consent: 403, no code, no code row
+[database] Database connection successful
+
+stdout | server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > until its administrator enables it, the connector is closed to the organization > a member is refused at consent: 403, no code, no code row
+[database] Database connection successful { timestamp: '2026-10-01T19:13:40.229Z', poolSize: 1 }
+
+{"level":40,"time":"2026-10-01T19:13:40.244Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.252Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 9ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > until its administrator enables it, the connector is closed to the organization > the organization starts with no connector setting (absent means disabled) 2ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > until its administrator enables it, the connector is closed to the organization > a member is refused at consent: 403, no code, no code row 105ms
+{"level":40,"time":"2026-10-01T19:13:40.272Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.274Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.293Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.297Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+stdout | server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > until its administrator enables it, the connector is closed to the organization > every member sees it is off; only the administrator is told they can change it
+[database] Database connection successful { timestamp: '2026-10-01T19:13:40.308Z', poolSize: 2 }
+
+{"level":40,"time":"2026-10-01T19:13:40.312Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.313Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.339Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.342Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > until its administrator enables it, the connector is closed to the organization > a connector token minted for the organization is refused at /mcp 19ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > until its administrator enables it, the connector is closed to the organization > the member's own session is refused at /mcp too 21ms
+{"level":40,"time":"2026-10-01T19:13:40.374Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+stdout | server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > until its administrator enables it, the connector is closed to the organization > every member sees it is off; only the administrator is told they can change it
+[database] Database connection successful { timestamp: '2026-10-01T19:13:40.376Z', poolSize: 3 }
+
+{"level":40,"time":"2026-10-01T19:13:40.377Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.395Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.396Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.430Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.432Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.448Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.450Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > until its administrator enables it, the connector is closed to the organization > every member sees it is off; only the administrator is told they can change it 164ms
+{"level":40,"time":"2026-10-01T19:13:40.472Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.473Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.480Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.483Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.495Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.497Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.504Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.506Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.514Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.515Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.526Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.528Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.536Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.538Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.543Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.545Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.553Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.555Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.560Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.562Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > no one else enables it, and the administrator not through tenant-config's general doors > PUT /api/tenant-config/:id/claude-connector as manager → 403 24ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > no one else enables it, and the administrator not through tenant-config's general doors > PUT /api/tenant-config/:id/claude-connector as member → 403 20ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > no one else enables it, and the administrator not through tenant-config's general doors > PUT /api/tenant-config/:id/claude-connector as otherAdmin → 403 22ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > no one else enables it, and the administrator not through tenant-config's general doors > PATCH /api/tenant-config/:id/settings naming the connector, as the administrator → 403 16ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > no one else enables it, and the administrator not through tenant-config's general doors > PATCH /api/tenant-config/:id/settings/claudeConnector → refused 20ms
+{"level":40,"time":"2026-10-01T19:13:40.580Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.582Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.593Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.595Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.602Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.604Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.659Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.661Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > no one else enables it, and the administrator not through tenant-config's general doors > nothing was stored and nothing was recorded as a change 19ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the administrator enables it, through its own door > PUT by the administrator: 200, stored, and one chained audit row naming them, the value before and after 57ms
+{"level":40,"time":"2026-10-01T19:13:40.702Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.704Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.751Z","pid":29744,"hostname":"vm","context":{"caller":"register","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.770Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.771Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the administrator enables it, through its own door > the same connector token is now admitted at /mcp 40ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the administrator enables it, through its own door > a member can now consent, and the grant opens /mcp 95ms
+{"level":40,"time":"2026-10-01T19:13:40.787Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.790Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.797Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.798Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.841Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.842Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.877Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.878Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.887Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.888Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the administrator disables it: tokens already issued are cut > PUT {enabled:false} by the administrator: 200 and a second audit row 52ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the administrator disables it: tokens already issued are cut > the same connector token is refused at /mcp again 15ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the administrator disables it: tokens already issued are cut > the refresh token of a grant made while it was enabled is refused at /token 17ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the administrator disables it: tokens already issued are cut > a member is refused at consent again 17ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the settings doors outside tenant-config refuse the administrator the key too > control: the AnA settings door is open to this administrator for another setting 37ms
+{"level":40,"time":"2026-10-01T19:13:40.924Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.926Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.935Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.937Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.946Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.947Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.953Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.954Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.985Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.986Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.991Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:40.992Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:41.009Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:41.011Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the settings doors outside tenant-config refuse the administrator the key too > PATCH /api/ana/platform/settings naming the connector → 403, nothing stored, the token still refused 22ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the settings doors outside tenant-config refuse the administrator the key too > control: the organizations settings door is open to this administrator for another setting 39ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the settings doors outside tenant-config refuse the administrator the key too > PATCH /api/organizations/:id/settings naming the connector → 403, nothing stored, the token still refused 37ms
+{"level":40,"time":"2026-10-01T19:13:41.024Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:41.026Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:41.068Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:41.070Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:41.095Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:41.096Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the settings doors outside tenant-config refuse the administrator the key too > control: a door with no connector check of its own writes another setting through the one writer 45ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > the settings doors outside tenant-config refuse the administrator the key too > that door cannot turn it on: the one writer refuses, nothing stored, nothing recorded, the token still refused 38ms
+stderr | server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > IAM-25 (decided 2026-10-01): the organisation a sign-up creates has someone who can open the connector > sign-up and e-mail verification, through production's own routes, leave one membership: its creator's
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > IAM-25 (decided 2026-10-01): the organisation a sign-up creates has someone who can open the connector > sign-up and e-mail verification, through production's own routes, leave one membership: its creator's
+✅ Platform health/auth routes mounted
+
+stdout | server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > IAM-25 (decided 2026-10-01): the organisation a sign-up creates has someone who can open the connector > sign-up and e-mail verification, through production's own routes, leave one membership: its creator's
+{
+  "timestamp": "2026-10-01T19:13:42.504Z",
+  "level": "info",
+  "message": "[launch-scope] launch catalog provisioned",
+  "context": {
+    "organizationId": 502,
+    "granted": 20
+  }
+}
+
+{"level":30,"time":"2026-10-01T19:13:42.513Z","pid":29744,"hostname":"vm","context":{"userId":3615,"tenantId":502,"resourceId":"3615"},"msg":"[audit-service] [AUDIT] user_signup user"}
+{"level":30,"time":"2026-10-01T19:13:42.546Z","pid":29744,"hostname":"vm","context":{"userId":3615,"tenantId":502,"resourceId":"3615"},"msg":"[audit-service] [AUDIT] email_verified user"}
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > IAM-25 (decided 2026-10-01): the organisation a sign-up creates has someone who can open the connector > sign-up and e-mail verification, through production's own routes, leave one membership: its creator's 1457ms
+{"level":40,"time":"2026-10-01T19:13:42.561Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:42.565Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:42.574Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:42.576Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:42.595Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:42.597Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:42.604Z","pid":29744,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:42.605Z","pid":29744,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ server/mcp/__tests__/mcp-connector-enablement.dbtest.ts > IAM-25 (decided 2026-10-01): the organisation a sign-up creates has someone who can open the connector > that creator, its administrator, is told they can change it, and turns it on 71ms
+{"level":30,"time":"2026-10-01T19:13:44.586Z","pid":29764,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T19:13:44.588Z","pid":29764,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T19:13:44.588Z","pid":29764,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/memberships.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/memberships.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/memberships.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/memberships.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > positive control: the route admits A into its own organization
+[database] Database connection successful { timestamp: '2026-10-01T19:13:45.205Z', poolSize: 1 }
+
+stdout | tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > positive control: the route admits A into its own organization
+[database] Database connection successful { timestamp: '2026-10-01T19:13:45.208Z', poolSize: 2 }
+
+{"level":40,"time":"2026-10-01T19:13:45.209Z","pid":29764,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:45.212Z","pid":29764,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:45.237Z","pid":29764,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:45.239Z","pid":29764,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:45.262Z","pid":29764,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:45.264Z","pid":29764,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:45.269Z","pid":29764,"hostname":"vm","context":{"userId":3616,"organizationId":90302},"msg":"[auth-middleware] Org membership revoked — rejecting authenticated request (fail-closed)"}
+{"level":40,"time":"2026-10-01T19:13:45.270Z","pid":29764,"hostname":"vm","context":{"method":"GET","path":"/api/organizations/90302","statusCode":403},"msg":"[auth-boundary] Unauthenticated request passed through auth boundary (mode=warn). This route would be rejected in enforce mode."}
+{"level":40,"time":"2026-10-01T19:13:45.281Z","pid":29764,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:45.282Z","pid":29764,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > positive control: the route admits A into its own organization 93ms
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > cannot place its user in B, so the gate never admits a token for B 38ms
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > cannot change or remove B's members 6ms
+ ✓ tests/db/memberships.dbtest.ts > no tenant can mint a platform-staff role, not even in its own organization (D3) > its own member cannot be made super_admin, platform_admin or app_super_admin 9ms
+ ✓ tests/db/memberships.dbtest.ts > the legitimate writers still write (D3) > an organization manages its own members' ordinary roles 11ms
+ ✓ tests/db/memberships.dbtest.ts > the legitimate writers still write (D3) > the platform scope writes any organization, staff roles included 7ms
+stdout | tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > self-serve signup gives the new organization its first admin
+{
+  "timestamp": "2026-10-01T19:13:45.779Z",
+  "level": "info",
+  "message": "[launch-scope] launch catalog provisioned",
+  "context": {
+    "organizationId": 503,
+    "granted": 20
+  }
+}
+
+{"level":30,"time":"2026-10-01T19:13:45.786Z","pid":29764,"hostname":"vm","context":{"userId":3622,"tenantId":503,"resourceId":"3622"},"msg":"[audit-service] [AUDIT] user_signup user"}
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > self-serve signup gives the new organization its first admin 769ms
+{"level":40,"time":"2026-10-01T19:13:46.106Z","pid":29764,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:46.108Z","pid":29764,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:46.124Z","pid":29764,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:46.126Z","pid":29764,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+stderr | tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into
+{
+  "timestamp": "2026-10-01T19:13:46.192Z",
+  "level": "warn",
+  "message": "[email-service] SMTP not configured — invitation email not sent",
+  "context": {
+    "to": "w***@example.invalid"
+  }
+}
+
+{"level":30,"time":"2026-10-01T19:13:46.193Z","pid":29764,"hostname":"vm","context":{"userId":3621,"tenantId":90302,"resourceId":"3623"},"msg":"[audit-service] [AUDIT] user_invited user"}
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > a member sets their own persona (a write to their own membership row) 23ms
+{"level":50,"time":"2026-10-01T19:13:46.205Z","pid":29764,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)\n    at issueInvitation (/home/user/ClinicalSageAI-2-replit/server/services/tenant/invitation-delivery.ts:114:17)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/tenant-users.ts:512:22"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+stderr | tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into
+{
+  "timestamp": "2026-10-01T19:13:46.207Z",
+  "level": "warn",
+  "message": "[tenant-users] Audit log write failed (non-fatal)",
+  "context": {
+    "action": "user_invited",
+    "err": "new row violates row-level security policy for table \"audit_logs\""
+  }
+}
+
+{"level":50,"time":"2026-10-01T19:13:46.207Z","pid":29764,"hostname":"vm","context":{"error":"retrieval refused: tenant 90302 was requested inside tenant 90301's session","stack":"TenantScopeMismatchError: retrieval refused: tenant 90302 was requested inside tenant 90301's session\n    at assertTenantIsCurrent (/home/user/ClinicalSageAI-2-replit/server/db/currentTenant.ts:101:11)\n    at resolveAuditOrganization (/home/user/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:323:9)\n    at TamperProofAuditLog.log (/home/user/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:469:34)\n    at AuditService.logAction (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:473:21)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at issueInvitation (/home/user/ClinicalSageAI-2-replit/server/services/tenant/invitation-delivery.ts:114:17)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/tenant-users.ts:512:22"},"msg":"[audit-service] Failed to write tamper-proof audit entry"}
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into 225ms
+{"level":40,"time":"2026-10-01T19:13:46.352Z","pid":29764,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:46.354Z","pid":29764,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations changes a member's role in the one they are not signed into 31ms
+{"level":30,"time":"2026-10-01T19:13:47.685Z","pid":29782,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T19:13:47.686Z","pid":29782,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T19:13:47.687Z","pid":29782,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/role-config-change-audit.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":50,"time":"2026-10-01T19:13:47.987Z","pid":29782,"hostname":"vm","context":{"error":"probe: the audit store refused the row","stack":"Error: probe: the audit store refused the row\n    at writeChainedAuditRow (/home/user/ClinicalSageAI-2-replit/tests/db/role-config-change-audit.dbtest.ts:41:38)\n    at recordMembershipChange (/home/user/ClinicalSageAI-2-replit/server/services/tenant/membership-change.ts:53:9)\n    at changeMemberRole (/home/user/ClinicalSageAI-2-replit/server/services/tenant/membership-change.ts:96:9)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:1217:27\n    at Module.transaction (/home/user/ClinicalSageAI-2-replit/server/db/runtime.ts:199:20)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:1208:21"},"msg":"[scim] SCIM patch group failed"}
+{"level":50,"time":"2026-10-01T19:13:48.086Z","pid":29782,"hostname":"vm","context":{"error":"probe: the audit store refused the event","stack":"Error: probe: the audit store refused the event\n    at refusal (/home/user/ClinicalSageAI-2-replit/tests/db/role-config-change-audit.dbtest.ts:49:40)\n    at Object.query (/home/user/ClinicalSageAI-2-replit/tests/db/role-config-change-audit.dbtest.ts:56:74)\n    at auditScim (/home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:310:16)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:1067:15\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at Module.transaction (/home/user/ClinicalSageAI-2-replit/server/db/runtime.ts:199:20)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:1063:5"},"msg":"[scim] SCIM delete user failed"}
+ ✓ tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > when its audit row cannot be written, the role stays as it was 58ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > an added member: one chained row on the organisation's chain, written by the change's own transaction 29ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > a member already in the group: nothing changes, nothing is recorded 14ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > a removed member is set to member, with the role it held recorded 20ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > removal from a group the member is not in changes nothing and records nothing 11ms
+{"level":50,"time":"2026-10-01T19:13:48.125Z","pid":29782,"hostname":"vm","context":{"error":"probe: the audit store refused the event","stack":"Error: probe: the audit store refused the event\n    at refusal (/home/user/ClinicalSageAI-2-replit/tests/db/role-config-change-audit.dbtest.ts:49:40)\n    at Object.query (/home/user/ClinicalSageAI-2-replit/tests/db/role-config-change-audit.dbtest.ts:56:74)\n    at auditScim (/home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:310:16)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:516:13\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at Module.transaction (/home/user/ClinicalSageAI-2-replit/server/db/runtime.ts:199:20)\n    at replaceOwnedAccount (/home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:509:3)\n    at replaceSoleOrgAccount (/home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:550:3)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:908:27"},"msg":"[scim] SCIM replace user failed"}
+{"level":50,"time":"2026-10-01T19:13:48.158Z","pid":29782,"hostname":"vm","context":{"error":"probe: the audit store refused the event","stack":"Error: probe: the audit store refused the event\n    at refusal (/home/user/ClinicalSageAI-2-replit/tests/db/role-config-change-audit.dbtest.ts:49:40)\n    at Object.query (/home/user/ClinicalSageAI-2-replit/tests/db/role-config-change-audit.dbtest.ts:56:74)\n    at auditScim (/home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:310:16)\n    at removeMembership (/home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:430:9)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at Module.transaction (/home/user/ClinicalSageAI-2-replit/server/db/runtime.ts:199:20)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:1011:11"},"msg":"[scim] SCIM patch user failed"}
+{"level":50,"time":"2026-10-01T19:13:48.195Z","pid":29782,"hostname":"vm","context":{"error":"probe: the audit store refused the event","stack":"Error: probe: the audit store refused the event\n    at refusal (/home/user/ClinicalSageAI-2-replit/tests/db/role-config-change-audit.dbtest.ts:49:40)\n    at Object.query (/home/user/ClinicalSageAI-2-replit/tests/db/role-config-change-audit.dbtest.ts:56:74)\n    at auditScim (/home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:310:16)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:851:13\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at Module.transaction (/home/user/ClinicalSageAI-2-replit/server/db/runtime.ts:199:20)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:819:21"},"msg":"[scim] SCIM create user failed"}
+ ✓ tests/db/role-config-change-audit.dbtest.ts > SCIM account writes record their event in the same transaction (auditScim) > DELETE: a refused event leaves the account active; otherwise status and event share a transaction 35ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > SCIM account writes record their event in the same transaction (auditScim) > PUT active=false: a refused event leaves the account active 38ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > SCIM account writes record their event in the same transaction (auditScim) > PATCH active=false on a shared account: a refused event leaves this organisation's membership 36ms
+{"level":40,"time":"2026-10-01T19:13:48.285Z","pid":29782,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+stdout | tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > when its audit row cannot be written, the settings stay as they were
+[database] Database connection successful { timestamp: '2026-10-01T19:13:48.286Z', poolSize: 1 }
+
+stdout | tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > when its audit row cannot be written, the settings stay as they were
+[database] Database connection successful { timestamp: '2026-10-01T19:13:48.287Z', poolSize: 2 }
+
+stdout | tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > when its audit row cannot be written, the settings stay as they were
+[database] Database connection successful { timestamp: '2026-10-01T19:13:48.288Z', poolSize: 3 }
+
+stdout | tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > when its audit row cannot be written, the settings stay as they were
+[database] Database connection successful
+
+{"level":40,"time":"2026-10-01T19:13:48.290Z","pid":29782,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/role-config-change-audit.dbtest.ts > SCIM account writes record their event in the same transaction (auditScim) > POST: a refused event provisions nobody; otherwise membership and event share a transaction 31ms
+{"level":50,"time":"2026-10-01T19:13:48.332Z","pid":29782,"hostname":"vm","context":{"error":"probe: the audit store refused the row","stack":"Error: probe: the audit store refused the row\n    at writeChainedAuditRow (/home/user/ClinicalSageAI-2-replit/tests/db/role-config-change-audit.dbtest.ts:41:38)\n    at writeTenantSettings (/home/user/ClinicalSageAI-2-replit/server/services/tenant/tenant-settings-writer.ts:141:11)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at AnaPlatformController.writeSettings (/home/user/ClinicalSageAI-2-replit/server/services/ana-platform-controller.ts:269:20)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/ana-platform-control.ts:94:20"},"msg":"[ana-platform-control] AnA platform update_settings failed"}
+{"level":40,"time":"2026-10-01T19:13:48.343Z","pid":29782,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:48.345Z","pid":29782,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:48.356Z","pid":29782,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:48.358Z","pid":29782,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:48.421Z","pid":29782,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:48.424Z","pid":29782,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > when its audit row cannot be written, the settings stay as they were 121ms
+{"level":40,"time":"2026-10-01T19:13:48.473Z","pid":29782,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:48.476Z","pid":29782,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:48.516Z","pid":29782,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:48.517Z","pid":29782,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:48.533Z","pid":29782,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:48.535Z","pid":29782,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:48.546Z","pid":29782,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:48.548Z","pid":29782,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > a settings change writes the record the tenant configuration route writes, and keeps what it does not name 129ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > a module toggle is recorded by the same writer 42ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the connector for Claude is not a general setting on these doors (P1-47, ADR-0014 §10) > PATCH /api/ana/platform/settings naming the connector: 403, nothing stored, no row written 13ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the connector for Claude is not a general setting on these doors (P1-47, ADR-0014 §10) > PATCH /api/ana/platform/settings, beside another key naming the connector: 403, nothing stored, no row written 18ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the connector for Claude is not a general setting on these doors (P1-47, ADR-0014 §10) > PATCH /api/ana/platform/ai-config naming the connector: 403, nothing stored, no row written 13ms
+{"level":40,"time":"2026-10-01T19:13:48.559Z","pid":29782,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:48.561Z","pid":29782,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:48.573Z","pid":29782,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:48.575Z","pid":29782,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:48.585Z","pid":29782,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:48.587Z","pid":29782,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:48.592Z","pid":29782,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:48.594Z","pid":29782,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:48.605Z","pid":29782,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:48.606Z","pid":29782,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:48.611Z","pid":29782,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:48.612Z","pid":29782,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:48.620Z","pid":29782,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:48.622Z","pid":29782,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:48.649Z","pid":29782,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:48.650Z","pid":29782,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:48.683Z","pid":29782,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:48.685Z","pid":29782,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:48.690Z","pid":29782,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:48.691Z","pid":29782,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the connector for Claude is not a general setting on these doors (P1-47, ADR-0014 §10) > POST /api/ana/platform/execute (settings) naming the connector: 403, nothing stored, no row written 15ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the connector for Claude is not a general setting on these doors (P1-47, ADR-0014 §10) > POST /api/ana/platform/execute (ai_config) naming the connector: 403, nothing stored, no row written 13ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the connector for Claude is not a general setting on these doors (P1-47, ADR-0014 §10) > PATCH /api/organizations/:id/settings (with a reason) naming the connector: 403, nothing stored, no row written 19ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the connector for Claude is not a general setting on these doors (P1-47, ADR-0014 §10) > PATCH /api/organizations/:id/settings (bare) naming the connector: 403, nothing stored, no row written 18ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the connector for Claude is not a general setting on these doors (P1-47, ADR-0014 §10) > control: the same administrator, on the same doors, still changes another setting 97ms
+{"level":30,"time":"2026-10-01T19:13:50.226Z","pid":29800,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T19:13:50.227Z","pid":29800,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T19:13:50.227Z","pid":29800,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/compliance-reports.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/compliance-reports.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > a member who is not an audit reader is refused before anything is read
+[database] Database connection successful { timestamp: '2026-10-01T19:13:51.133Z', poolSize: 1 }
+
+stdout | tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > a member who is not an audit reader is refused before anything is read
+[database] Database connection successful { timestamp: '2026-10-01T19:13:51.140Z', poolSize: 2 }
+
+{"level":40,"time":"2026-10-01T19:13:51.141Z","pid":29800,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.144Z","pid":29800,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.171Z","pid":29800,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.173Z","pid":29800,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > a member who is not an audit reader is refused before anything is read 73ms
+{"level":40,"time":"2026-10-01T19:13:51.207Z","pid":29800,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.209Z","pid":29800,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.238Z","pid":29800,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.240Z","pid":29800,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.260Z","pid":29800,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.262Z","pid":29800,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.288Z","pid":29800,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.289Z","pid":29800,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > access-review runs as organisation A, verifies, and carries only A rows 38ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > authentication-events runs as organisation A, verifies, and carries only A rows 29ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > administrative-changes runs as organisation A, verifies, and carries only A rows 24ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > electronic-signatures runs as organisation A, verifies, and carries only A rows 22ms
+{"level":40,"time":"2026-10-01T19:13:51.316Z","pid":29800,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.318Z","pid":29800,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.343Z","pid":29800,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.345Z","pid":29800,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.368Z","pid":29800,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.370Z","pid":29800,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.391Z","pid":29800,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.393Z","pid":29800,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > audit-trail-integrity runs as organisation A, verifies, and carries only A rows 35ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > retention-legal-holds runs as organisation A, verifies, and carries only A rows 28ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > controlled-documents runs as organisation A, verifies, and carries only A rows 23ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > access review: A members only, with the last sign-in read from the sign-in audit row 24ms
+{"level":40,"time":"2026-10-01T19:13:51.413Z","pid":29800,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.416Z","pid":29800,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.436Z","pid":29800,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.438Z","pid":29800,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.456Z","pid":29800,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.458Z","pid":29800,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.490Z","pid":29800,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.494Z","pid":29800,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > sign-in events and administrative changes: A rows are there, B rows are not 45ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > signature register: the A fixture signature, never the B one 20ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > retention and holds: the vault is reached under its own policy, A hold and disposition only 20ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > with no organisation UUID in the session scope (the degraded membership path), the vault is still read as A, not read as empty 8ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > controlled documents: the A document only 36ms
+{"level":40,"time":"2026-10-01T19:13:51.533Z","pid":29800,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.535Z","pid":29800,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.554Z","pid":29800,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.555Z","pid":29800,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.570Z","pid":29800,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.571Z","pid":29800,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.581Z","pid":29800,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.582Z","pid":29800,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.629Z","pid":29800,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.631Z","pid":29800,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.655Z","pid":29800,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.657Z","pid":29800,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.693Z","pid":29800,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.700Z","pid":29800,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.729Z","pid":29800,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.731Z","pid":29800,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/compliance-reports.dbtest.ts > administrator changes, as their writers record them, appear in the administrative changes report (P1-41) > a role change, a removal and a security settings change each appear, with what changed and why 134ms
+ ✓ tests/db/compliance-reports.dbtest.ts > the integrity attestation and the record of a run > integrity attestation: A's stores counted as the owner counts them, and each check a stated verdict 37ms
+ ✓ tests/db/compliance-reports.dbtest.ts > the integrity attestation and the record of a run > each run writes exactly one compliance.report_run row on A's chain, and none on B's 29ms
+ ✓ tests/db/compliance-reports.dbtest.ts > what the compliance reports say about what they cannot see > an account created by single sign-on is not reported as having the emailed code 28ms
+{"level":40,"time":"2026-10-01T19:13:51.750Z","pid":29800,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:13:51.751Z","pid":29800,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/compliance-reports.dbtest.ts > what the compliance reports say about what they cannot see > the retention policies section says it is as at generation, not as at the period 31ms
+
+ Test Files  4 passed (4)
+      Tests  76 passed (76)
+   Start at  19:13:36
+   Duration  15.81s (transform 2.78s, setup 172ms, import 4.29s, tests 10.55s, environment 0ms)
+
+exit 0
