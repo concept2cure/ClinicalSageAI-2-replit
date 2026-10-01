@@ -138,6 +138,30 @@ describe('DocumentCanvas — what the document is, and how far along', () => {
     expect(card.querySelector('.dcv-kind')?.textContent).toContain('Clinical overview');
   });
 
+  /* A document created without a module (AnA's draft tool without one, or a
+     draft opened as a document) is stored as M2 with provenance
+     moduleDefaulted: the server assumed it. The type line said "M2" as if it
+     had been chosen, so a statistical analysis plan read as Module 2. */
+  it('says an assumed module was assumed, and a chosen one plainly', async () => {
+    mockApi({
+      doc: () => ok({ ...DOC_ROW, document: { ...DOC_ROW.document, provenance: { ...DOC_ROW.document.provenance, moduleDefaulted: true } } }),
+    });
+    render(<LiveHost refreshKey={0} />);
+    const card = await screen.findByTestId('document-canvas');
+    await within(card).findByRole('article', { name: /2\.5\.1/ });
+    const kind = card.querySelector('.dcv-kind') as HTMLElement;
+    expect(kind.textContent).toContain('M2 (assumed)');
+    expect(kind.querySelector('[title]')?.getAttribute('title')).toMatch(/No module was chosen/);
+    cleanup();
+
+    mockApi();
+    render(<LiveHost refreshKey={0} />);
+    const plain = await screen.findByTestId('document-canvas');
+    await within(plain).findByRole('article', { name: /2\.5\.1/ });
+    expect(plain.querySelector('.dcv-kind')?.textContent).toContain('· M2 ·');
+    expect(plain.querySelector('.dcv-kind')?.textContent).not.toContain('assumed');
+  });
+
   it('outlines every section, drafted or not, with the count drafted', async () => {
     render(<LiveHost refreshKey={0} />);
     const outline = await screen.findByRole('list', { name: 'Sections' });

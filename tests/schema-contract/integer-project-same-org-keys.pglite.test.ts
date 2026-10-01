@@ -1,8 +1,9 @@
 /**
  * 20261001_integer_project_same_org_keys.sql — an artifact, a submission
- * package and a conversation name an integer project only of their own
- * organization, at the database (PF-03, D3; the integer half of PF-04). The
- * conversations key was added 2026-10-01 by amending the file in place.
+ * package, a conversation and AnA's working memory name an integer project
+ * only of their own organization, at the database (PF-03, D3; the integer half
+ * of PF-04). The conversations key and the working-memory key (PF-10 S11) were
+ * added 2026-10-01 by amending the file in place.
  *
  * The writers check first since PF-03. This holds every other writer, and the
  * next one, to the same rule. Run on real SQL (PGlite) with the tables lifted
@@ -47,6 +48,12 @@ const pkg = (id: string, project: number, org: number) =>
     `INSERT INTO c2c_submission_packages (package_id, org_id, project_id, package_family, title) VALUES ($1, $2, $3, 'ind', 't')`,
     [id, org, project],
   );
+const memory = (id: string, project: number, org: number) =>
+  db.query(
+    `INSERT INTO conversation_working_memory (thread_id, project_id, organization_id, summary, message_count_at_generation)
+     VALUES ($1, $2, $3, 's', 1)`,
+    [id, project, org],
+  );
 const code = async (p: Promise<unknown>) => p.then(() => 'ok', (e: { code?: string }) => e.code ?? String(e));
 
 beforeAll(async () => {
@@ -58,6 +65,8 @@ beforeAll(async () => {
   await db.exec(constraintFrom('migrations/0000_sweet_joseph.sql', 'concept2cure_artifacts_project_id_projects_id_fk'));
   await db.exec(constraintFrom('migrations/0000_sweet_joseph.sql', 'concept2cure_conversations_project_id_projects_id_fk'));
   await db.exec(extractTableDdl('migrations/0002_phase15_submission_ops.sql', ['c2c_submission_packages']));
+  // AnA's working memory, from the file that creates it, with its own NO ACTION project key.
+  await db.exec(read('migrations/20260820_working_memory_project_id.sql'));
   await db.exec(`
     INSERT INTO organizations VALUES (1), (2);
     INSERT INTO client_workspaces VALUES (1), (2);
@@ -68,6 +77,7 @@ beforeAll(async () => {
   await artifact('legacy-a', 20, 1);
   await pkg('legacy-p', 20, 1);
   await conv('legacy-c', 20, 1);
+  await memory('legacy-m', 20, 1);
   // Two deploys.
   await db.exec(read(KEYS));
   await db.exec(read(KEYS));
@@ -85,17 +95,20 @@ describe('20261001 on the applier', () => {
     expect(at).toBeLessThan(files.indexOf(UUID_TENANT_ISOLATION_NONPUBLIC as string));
   });
 
-  it('a replay adds nothing: one NOT VALID key per table, ON DELETE CASCADE, ON UPDATE NO ACTION', async () => {
+  it('a replay adds nothing: one NOT VALID key per table, each with its existing key\'s delete action', async () => {
     const { rows } = await db.query<{ conname: string; convalidated: boolean; confdeltype: string; confupdtype: string }>(
       `SELECT conname, convalidated, confdeltype, confupdtype FROM pg_constraint
         WHERE conname IN ('concept2cure_artifacts_project_same_org_fk', 'c2c_submission_packages_project_same_org_fk',
-                          'concept2cure_conversations_project_same_org_fk')
+                          'concept2cure_conversations_project_same_org_fk',
+                          'conversation_working_memory_project_same_org_fk')
         ORDER BY conname`,
     );
     expect(rows).toEqual([
       { conname: 'c2c_submission_packages_project_same_org_fk', convalidated: false, confdeltype: 'c', confupdtype: 'a' },
       { conname: 'concept2cure_artifacts_project_same_org_fk', convalidated: false, confdeltype: 'c', confupdtype: 'a' },
       { conname: 'concept2cure_conversations_project_same_org_fk', convalidated: false, confdeltype: 'c', confupdtype: 'a' },
+      // NO ACTION, as 20260820's own key on the column: two keys on one column must agree on delete.
+      { conname: 'conversation_working_memory_project_same_org_fk', convalidated: false, confdeltype: 'a', confupdtype: 'a' },
     ]);
   });
 });
@@ -104,6 +117,7 @@ describe.each([
   ['concept2cure_artifacts', artifact],
   ['c2c_submission_packages', pkg],
   ['concept2cure_conversations', conv],
+  ['conversation_working_memory', memory],
 ] as const)('%s: (project_id, org) → projects (id, organization_id)', (_table, write) => {
   it('a row under a project of its own organization is written', async () => {
     expect(await code(write(`own-${_table}`, 10, 1))).toBe('ok');
@@ -129,6 +143,17 @@ describe('legacy rows and the existing behaviour', () => {
     expect(byRel['public.concept2cure_conversations'].rows).toEqual([
       expect.objectContaining({ org: 1, project_id: 20, project_org: 2, project_missing: false }),
     ]);
+    expect(byRel['public.conversation_working_memory']?.skipped).toBe(false);
+    expect(byRel['public.conversation_working_memory'].rows).toEqual([
+      expect.objectContaining({ org: 1, project_id: 20, project_org: 2, project_missing: false }),
+    ]);
+  });
+
+  it('working memory with no project is written, as for a conversation held in none', async () => {
+    expect(await code(db.query(
+      `INSERT INTO conversation_working_memory (thread_id, organization_id, summary, message_count_at_generation)
+       VALUES ('no-project', 1, 's', 1)`,
+    ))).toBe('ok');
   });
 
   it('a legacy row still takes a change that is neither its project nor its organization', async () => {

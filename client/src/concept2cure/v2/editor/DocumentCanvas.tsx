@@ -70,7 +70,7 @@ import { AuthoringPlaceIntoFiling } from '../surfaces/AuthoringPlaceIntoFiling';
 import { FileToVaultDialog } from './FileToVaultDialog';
 import { AssignReviewDialog } from './AssignReviewDialog';
 import { useProgramRead, programHeadline, programLineFor } from './programSummary';
-import { describeProvenance, type DocumentProvenance } from './provenance';
+import { describeProvenance, moduleWasAssumed, type DocumentProvenance } from './provenance';
 
 /** GET /docs/:id → `document` (the columns this card reads). */
 interface DocRow {
@@ -417,7 +417,13 @@ export function DocumentCanvas({
       <div className="dcv-card" hidden={expanded && !beside} data-open-beside={(expanded && beside) || undefined}>
         <div className="dcv-head">
           <div className="dcv-kind">
-            {I.fileText} Document{typeLabel ? ` · ${typeLabel}` : ''}{doc?.module ? ` · ${doc.module}` : ''}{doc?.status ? ` · ${String(doc.status).replace(/_/g, ' ').toLowerCase()}` : ''}
+            {I.fileText} Document{typeLabel ? ` · ${typeLabel}` : ''}
+            {doc?.module && (moduleWasAssumed(doc.provenance) ? (
+              <span title={`No module was chosen when this document was created, so ${doc.module} was assumed. Check it before filing.`}>
+                {` · ${doc.module} (assumed)`}
+              </span>
+            ) : ` · ${doc.module}`)}
+            {doc?.status ? ` · ${String(doc.status).replace(/_/g, ' ').toLowerCase()}` : ''}
           </div>
           <h3 className="dcv-title" id={titleId}>{title}</h3>
           <div className="dcv-meta">

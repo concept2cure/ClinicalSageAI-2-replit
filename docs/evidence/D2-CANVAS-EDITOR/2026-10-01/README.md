@@ -391,3 +391,35 @@ suites, 48/48.
   governed filing document …". It is true, and about the filing outline,
   not this document. It takes the top of a narrow pane. It is a candidate for
   the editor family's next pass.
+
+## 8. An assumed module is said to be assumed
+
+**Before.**
+- A document created without a module is stored as M2, and the server
+  records `moduleDefaulted: true` on its provenance (`authoring-from-draft.ts`,
+  2026-09-22 review #13: "a filing must not treat the assumption as a
+  decision").
+- This happens when `draft_authoring_document` is called without a module,
+  and for every draft opened as a document in step 4.
+- No client read the flag, so the card's type line said "M2" as though it
+  had been chosen. A statistical analysis plan read as "Statistical analysis
+  plan · M2". Step 4 made this case common.
+
+**Now.**
+- `provenance.ts` gains `moduleWasAssumed(raw)`, kept in the one module that
+  reads the record.
+- The type line says "M2 (assumed)". The hover text says no module was
+  chosen when the document was created, so M2 was assumed, and to check it
+  before filing.
+- A module that was chosen reads as before.
+
+**Failing first.** `8-module-red.txt`: the new case failed against the
+unchanged canvas.
+
+**Green:** `8-module-green.txt`. The 51 suites that mount the thread, the
+canvas, the workbench or read provenance pass 656/656.
+
+**Also run.**
+- `tsc`: clean.
+- The ESLint ratchet: unchanged.
+- `ci:canvas-path`, `ci:check-phantom-tokens`, `ci:undefined-css-classes`: OK.
