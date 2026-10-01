@@ -20,10 +20,13 @@
  *      filtered site_intel.sites on program_id ALONE — so one organization
  *      could recompute against another's sites by passing their program UUID,
  *      and the result was then persisted under the caller's organization_id.
- *      Ownership is now proved FIRST, against the RBM store (see
- *      programBelongsToOrg), and Site Intelligence is not queried at all when
- *      it fails. site_intel.sites carries no integer organization_id of its own
- *      to filter on.
+ *      Ownership is now proved FIRST, by `programInOrganization` — the one
+ *      program check — and Site Intelligence is not queried at all when it
+ *      fails. site_intel.sites carries no integer organization_id of its own to
+ *      filter on. (Until 2026-10-01 the proof was "this organization holds RBM
+ *      records naming the program". rbm_*.program_id has no foreign key, so a
+ *      KRI naming another tenant's program passed it, and an owner whose study
+ *      had no RBM records yet was refused its own. D3.)
  *
  *   2. A failed read never looks like a healthy empty study, and never destroys
  *      the last good snapshot. `catch { return [] }` collapsed "no sites",
@@ -36,6 +39,7 @@
  */
 
 import { pool } from '../../db';
+import { programInOrganization } from '../c2c/program-access';
 import { monitoringTierFromRisk, type MonitoringTier } from './rbm-engine';
 
 /** Minimal pg-compatible executor — matches rbm-actuator's `Exec`. */
@@ -55,14 +59,14 @@ const INSUFFICIENT_PRIVILEGE = '42501';
  * site risk. Naming each case is the whole point.
  */
 export type SiteReadFailure =
-  /** The caller's organization holds no RBQM records for this program. */
+  /** The program is not a live project of the caller's organization. */
   | 'not_in_tenant'
   /** site_intel.sites / the site_intel schema is not provisioned or readable here. */
   | 'source_unavailable'
   /** The table exists but not in a shape this engine can read. */
   | 'schema_mismatch'
-  /** rbm_* is not provisioned, so ownership cannot even be checked. */
-  | 'store_missing'
+  /** Whether the program is the caller's could not be checked, so nothing was read. */
+  | 'ownership_unverifiable'
   /** Anything else the read or the snapshot write raised. */
   | 'source_error';
 
@@ -144,47 +148,6 @@ function classify(err: unknown): { reason: SiteReadFailure; detail: string } {
 }
 
 /**
- * Does this organization own RBQM records for this program?
- *
- * The authorization check for every site-risk read. Deliberately broad across
- * the RBM tables rather than requiring a risk assessment specifically, so a
- * study set up KRIs-first is not locked out of its own site risk — but it
- * always requires SOMETHING this organization created for this program, which
- * a caller reaching for another tenant's program UUID will not have. Every
- * branch of the union carries both the organization and the program predicate.
- */
-export async function programBelongsToOrg(
-  exec: Exec,
-  organizationId: number,
-  programId: string,
-): Promise<boolean | 'store_missing'> {
-  try {
-    const { rows } = await exec.query(
-      `SELECT 1 FROM rbm_risk_assessments
-         WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
-       UNION ALL
-       SELECT 1 FROM rbm_kris
-         WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
-       UNION ALL
-       SELECT 1 FROM rbm_qtls
-         WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
-       UNION ALL
-       SELECT 1 FROM rbm_monitoring_plans
-         WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
-       UNION ALL
-       SELECT 1 FROM rbm_site_risk_scores
-         WHERE organization_id = $1 AND program_id = $2
-       LIMIT 1`,
-      [organizationId, programId],
-    );
-    return rows.length > 0;
-  } catch (err) {
-    if ((err as { code?: string })?.code === UNDEFINED_TABLE) return 'store_missing';
-    throw err;
-  }
-}
-
-/**
  * Read site_intel.sites for a program the caller's organization owns.
  *
  * Ownership is checked FIRST and the source read does not happen at all if it
@@ -196,14 +159,12 @@ export async function readProgramSites(
   organizationId: number,
   programId: string,
 ): Promise<SiteReadOutcome> {
-  let owns: boolean | 'store_missing';
+  let owns: boolean;
   try {
-    owns = await programBelongsToOrg(exec, organizationId, programId);
+    owns = await programInOrganization(exec, programId, organizationId);
   } catch (err) {
-    const { reason, detail } = classify(err);
-    return { ok: false, reason, detail };
+    return { ok: false, reason: 'ownership_unverifiable', detail: err instanceof Error ? err.message : String(err) };
   }
-  if (owns === 'store_missing') return { ok: false, reason: 'store_missing' };
   if (!owns) return { ok: false, reason: 'not_in_tenant' };
 
   try {
@@ -289,13 +250,13 @@ export async function recomputeSiteRisk(
 /** Operator-facing explanation for each failure. Never "no sites". */
 export const SITE_READ_MESSAGE: Record<SiteReadFailure, string> = {
   not_in_tenant:
-    'This study has no RBQM records for your organization, so its site risk cannot be recomputed.',
+    'This study is not a project of your organization, so its site risk cannot be recomputed.',
   source_unavailable:
     'Site Intelligence is not available in this environment, so site risk cannot be derived. The previous snapshot is unchanged.',
   schema_mismatch:
     'Site Intelligence returned a shape this engine does not recognise, so no site risk was derived. The previous snapshot is unchanged.',
-  store_missing:
-    'The RBQM store is not provisioned in this environment.',
+  ownership_unverifiable:
+    'Whether this study is your organization\'s could not be checked just now, so its site risk was not recomputed. This is not a permission decision. The previous snapshot is unchanged.',
   source_error:
     'Reading Site Intelligence or writing the snapshot failed, so no site risk was derived. The previous snapshot is unchanged.',
 };

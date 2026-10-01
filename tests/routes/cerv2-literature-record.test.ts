@@ -23,7 +23,13 @@ const { mockRecord, mockProgramRows, fakeDb, fakePgClient } = vi.hoisted(() => (
   })),
   mockProgramRows: vi.fn<[], unknown[]>(() => []),
   fakeDb: { select: vi.fn(), insert: vi.fn(), update: vi.fn(), execute: vi.fn() } as any,
-  fakePgClient: { query: vi.fn(async () => ({ rows: [] })) },
+  // The program check (programInOrganization) reads regulatory_programs on the
+  // request's client; it answers from the same fixture as the Drizzle chain.
+  fakePgClient: {
+    query: vi.fn(async (sql: string) =>
+      /FROM regulatory_programs/.test(sql) ? { rows: mockProgramRows() } : { rows: [] },
+    ),
+  },
 }));
 
 vi.mock('../../server/auth', () => ({

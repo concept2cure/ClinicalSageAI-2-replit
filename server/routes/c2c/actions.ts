@@ -66,6 +66,7 @@ import {
 } from '../../services/part11/signature-persistence.js';
 import { signMeaningRefusal } from '../../services/part11/signature-meanings.js';
 import { clientIpOf } from '../../utils/client-ip';
+import { programInOrganization } from '../../services/c2c/program-access';
 
 const router = Router();
 
@@ -154,11 +155,9 @@ async function resolveTarget(
   try {
     switch (prefix) {
       case 'program': {
-        const r = await pool.query(
-          `SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-          [rest, orgId],
-        );
-        return r.rows.length > 0 ? { exists: true, table: 'regulatory_programs', id: rest, rowBacked: true } : null;
+        return (await programInOrganization(pool, rest, orgId))
+          ? { exists: true, table: 'regulatory_programs', id: rest, rowBacked: true }
+          : null;
       }
       case 'document': {
         const r = await pool.query(

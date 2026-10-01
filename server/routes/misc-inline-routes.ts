@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { Pool } from 'pg';
 import { fallbackTemplates } from '../services/templates/ectd-fallback-templates';
 import { getSecureOrgId } from '../utils/tenantContext';
+import { programInOrganization } from '../services/c2c/program-access';
 
 // Document generation helper — used by POST /v1/drafting/start_task
 async function generateDocumentContent(
@@ -426,11 +427,7 @@ export function createMiscInlineRoutes(pool: Pool, authMiddleware: any): Router 
     }
     try {
       // tenant-isolation-safe: the program is read with the session's organisation as a predicate.
-      const program = await pool.query(
-        'SELECT id FROM regulatory_programs WHERE id::text = $1 AND organization_id = $2 LIMIT 1',
-        [String(project_id), organizationId]
-      );
-      if (program.rows.length !== 1) {
+      if (!(await programInOrganization(pool, String(project_id), organizationId))) {
         return res.status(404).json({ error: 'Project not found' });
       }
       const taskId = `task_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;

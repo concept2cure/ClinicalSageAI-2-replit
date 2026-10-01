@@ -87,7 +87,7 @@ describe('readProgramSites — tenant isolation', () => {
   const pgError = (code: string, message = code) =>
     Object.assign(new Error(message), { code });
 
-  it('refuses a program the organization holds no RBQM records for', async () => {
+  it('refuses a program that is not a project of the organization', async () => {
     // Ownership check returns nothing → refuse.
     const { exec, calls } = mockExec([[]]);
     const out = await readProgramSites(exec, ORG, PROGRAM);
@@ -97,21 +97,19 @@ describe('readProgramSites — tenant isolation', () => {
     // cross-tenant program UUID cannot reach another org's site data.
     expect(calls).toHaveLength(1);
     expect(calls[0].sql).not.toContain('site_intel');
-    expect(calls[0].args).toEqual([ORG, PROGRAM]);
+    expect(calls[0].args).toEqual([PROGRAM, ORG]);
   });
 
-  it('scopes the ownership check by organization AND program', async () => {
-    const { exec, calls } = mockExec([[{ '?column?': 1 }], []]);
+  it('asks whether the organization OWNS the program, not whether it has RBM records naming it', async () => {
+    // Until 2026-10-01 the proof was a UNION over rbm_* rows. rbm_*.program_id
+    // has no foreign key, so a KRI naming another tenant's program passed it,
+    // and an owner with no RBM records yet was refused. It is now the one
+    // program check: a live project of this organization.
+    const { exec, calls } = mockExec([[{ id: PROGRAM }], []]);
     await readProgramSites(exec, ORG, PROGRAM);
-    // Every branch of the ownership union must carry both predicates; a branch
-    // missing organization_id would re-open the hole for that table.
     const ownership = calls[0].sql;
-    const branches = ownership.split('UNION ALL');
-    expect(branches.length).toBeGreaterThan(1);
-    for (const b of branches) {
-      expect(b).toContain('organization_id = $1');
-      expect(b).toContain('program_id = $2');
-    }
+    expect(ownership).toMatch(/FROM regulatory_programs WHERE id = \$1 AND organization_id = \$2 AND deleted_at IS NULL/);
+    expect(ownership).not.toMatch(/rbm_/);
   });
 
   it('reads sites only after ownership is proved', async () => {
@@ -148,11 +146,12 @@ describe('readProgramSites — tenant isolation', () => {
     if (!out.ok) expect(out.reason).toBe('schema_mismatch');
   });
 
-  it('reports an unprovisioned RBQM store distinctly from a refusal', async () => {
-    const { exec } = mockExec([pgError('42P01')]);
+  it('reports an ownership check that could not run distinctly from a refusal', async () => {
+    const { exec, calls } = mockExec([pgError('42P01')]);
     const out = await readProgramSites(exec, ORG, PROGRAM);
     expect(out.ok).toBe(false);
-    if (!out.ok) expect(out.reason).toBe('store_missing');
+    if (!out.ok) expect(out.reason).toBe('ownership_unverifiable');
+    expect(calls).toHaveLength(1);
   });
 
   it('classifies an unexpected database error as source_error, not emptiness', async () => {
@@ -167,7 +166,7 @@ describe('readProgramSites — tenant isolation', () => {
 
   it('has an operator-facing message for every failure, none of which says "no sites"', () => {
     const reasons: SiteReadFailure[] = [
-      'not_in_tenant', 'source_unavailable', 'schema_mismatch', 'store_missing', 'source_error',
+      'not_in_tenant', 'source_unavailable', 'schema_mismatch', 'ownership_unverifiable', 'source_error',
     ];
     for (const r of reasons) {
       expect(SITE_READ_MESSAGE[r]).toBeTruthy();

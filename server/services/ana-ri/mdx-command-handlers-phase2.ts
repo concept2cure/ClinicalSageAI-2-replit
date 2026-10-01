@@ -67,12 +67,15 @@ async function refuseUnownedProgram(
   programId: string,
   ctx: CommandContext,
 ): Promise<CommandResult | null> {
-  const { programBelongsToOrg } = await import('../../routes/innovation-routes.js');
+  const [{ programInOrganization }, { getPool }] = await Promise.all([
+    import('../c2c/program-access.js'),
+    import('../../db.js'),
+  ]);
   let ownsProgram: boolean;
   try {
-    ownsProgram = await programBelongsToOrg(programId, ctx.organizationId);
+    ownsProgram = await programInOrganization(getPool, programId, ctx.organizationId);
   } catch (err: unknown) {
-    if ((err as { name?: string } | null)?.name !== 'GuardUnavailableError') throw err;
+    if ((err as { name?: string } | null)?.name !== 'VerificationUnavailableError') throw err;
     // The check could not run: neither "yours" nor "not yours". Nothing is
     // written, and the model is told which, as AnaToolExecutor's tools tell it.
     return {
