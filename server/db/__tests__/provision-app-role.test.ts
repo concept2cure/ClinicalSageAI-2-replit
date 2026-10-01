@@ -459,6 +459,12 @@ describe('refreshRuntimeRoleGrants / ensureRuntimeRole', () => {
   });
 });
 
+describe('APPEND_ONLY_TABLES', () => {
+  it('names the Part 11 store among the append-only stores (the full list: provision-app-role-append-only.test.ts)', () => {
+    expect([...APPEND_ONLY_TABLES]).toContainEqual({ schema: 'audit', name: 'tamper_proof_log' });
+  });
+});
+
 describe('auditRuntimeRoleGrants', () => {
   type Rel = {
     schema: string;
@@ -502,10 +508,6 @@ describe('auditRuntimeRoleGrants', () => {
       },
     };
   }
-
-  it('names the Part 11 store among the append-only stores (the full list: provision-app-role-append-only.test.ts)', () => {
-    expect([...APPEND_ONLY_TABLES]).toContainEqual({ schema: 'audit', name: 'tamper_proof_log' });
-  });
 
   it('passes a recipe-shaped estate', async () => {
     const a = await auditRuntimeRoleGrants(

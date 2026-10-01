@@ -23,7 +23,6 @@ import {
 } from '../../../scripts/db/readiness-contract.mjs';
 import { APPEND_ONLY_TABLES } from '../../../scripts/db/provision-app-role.mjs';
 import { CRITICAL_TABLES, REQUIRED_SCHEMAS } from '../ensureCoreTables';
-import { APPEND_ONLY_TABLES } from '../../../scripts/db/provision-app-role.mjs';
 import { SECURITY_CRITICAL_TABLES } from '../../startup/services';
 
 describe('readiness-contract.mjs mirrors the server-side readiness lists', () => {
