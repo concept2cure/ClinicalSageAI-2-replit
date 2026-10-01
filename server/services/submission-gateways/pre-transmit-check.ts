@@ -34,7 +34,7 @@ import {
   evalidatorRequiredFromEnv,
   type ExternalValidationReport,
 } from '../ectd/external-validator';
-import { pdfaRequiredFromEnv } from '../ectd/pdfa-readiness';
+import { pdfaRequirementFrom, pdfaRequirementWho, type PdfARequirement } from '../ectd/pdfa-requirement';
 import { dtdRequiredFromEnv } from '../ectd/dtd-bundler';
 import {
   evaluateRegionalBackboneGate,
@@ -82,6 +82,12 @@ export interface PreTransmitInput {
    * report, and external enforcement already lives in assess-dispatch-readiness.
    */
   enforceExternal?: boolean;
+  /**
+   * Whether PDF/A is required, and by whom (ectd/pdfa-requirement.ts). The
+   * transmit guard resolves it with the organisation's own setting; absent, it
+   * is the deployment's ECTD_REQUIRE_PDFA alone.
+   */
+  pdfa?: PdfARequirement;
   /** Env overrides (tests). */
   env?: NodeJS.ProcessEnv;
 }
@@ -161,6 +167,43 @@ function evaluateDtdSelfContainment(
 }
 
 /** Evaluate the pre-transmit preconditions for a package. Pure + deterministic. */
+function checkPdfA(
+  grade: SubmissionBundle['submissionGrade'],
+  pdfa: PdfARequirement,
+  isProd: boolean,
+  checks: PreTransmitCheck[],
+  blockers: string[],
+  warnings: string[],
+): void {
+  // A grade is evidence only when it carries the list the check reads; `{}`
+  // used to pass as "0 not converted".
+  if (!grade || !Array.isArray(grade.notConverted)) {
+    if (isProd && pdfa.required) {
+      warnings.push(`PDF/A is required (${pdfaRequirementWho(pdfa)}) but the bundle carries no PDF/A grade — cannot prove PDF/A compliance at transmit time.`);
+    }
+    return;
+  }
+  const notConverted = grade.notConverted.length;
+  const asIssued = Array.isArray(grade.agencyFormsAsIssued) && grade.agencyFormsAsIssued.length > 0
+    ? `; ${grade.agencyFormsAsIssued.length} agency form(s) shipped as issued (${grade.agencyFormsAsIssued.join(', ')})`
+    : '';
+  checks.push({
+    name: 'pdfa-submission-grade',
+    // Plain PDF fails this check only where PDF/A was chosen.
+    passed: notConverted === 0 || !pdfa.required,
+    detail:
+      `${grade.pdfaConverted}/${grade.pdfLeaves} PDF leaves are PDF/A; ${notConverted} plain PDF` +
+      asIssued +
+      (pdfa.required ? `. PDF/A required: ${pdfaRequirementWho(pdfa)}.` : '. PDF/A not required: the agency accepts plain PDF 1.4–1.7.'),
+  });
+  if (isProd && pdfa.required && notConverted > 0) {
+    blockers.push(
+      `${notConverted} PDF leaf/leaves are not PDF/A (${grade.notConverted.slice(0, 3).join(', ')}${notConverted > 3 ? ', …' : ''}), ` +
+        `and ${pdfaRequirementWho(pdfa)}. The agency itself also accepts plain PDF 1.4–1.7.`,
+    );
+  }
+}
+
 export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult {
   const env = input.env ?? process.env;
   const blockers: string[] = [];
@@ -190,37 +233,10 @@ export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult 
     );
   }
 
-  // 2. PDF/A submission grade.
-  const grade = input.bundle.submissionGrade;
-  const pdfaRequired = pdfaRequiredFromEnv(env);
-  // A grade is evidence only when it carries the list the check reads; `{}`
-  // used to pass as "0 not converted".
-  if (grade && Array.isArray(grade.notConverted)) {
-    const notConverted = grade.notConverted?.length ?? 0;
-    const pdfaOk = notConverted === 0;
-    checks.push({
-      name: 'pdfa-submission-grade',
-      passed: pdfaOk,
-      detail:
-        `${grade.pdfaConverted}/${grade.pdfLeaves} PDF leaves are PDF/A; ${notConverted} not converted` +
-        (Array.isArray(grade.agencyFormsAsIssued) && grade.agencyFormsAsIssued.length > 0
-          ? `; ${grade.agencyFormsAsIssued.length} agency form(s) shipped as issued (${grade.agencyFormsAsIssued.join(', ')})`
-          : ''),
-    });
-    if (isProd && pdfaRequired && !pdfaOk) {
-      blockers.push(
-        `${notConverted} PDF leaf/leaves are not PDF/A (${grade.notConverted
-          .slice(0, 3)
-          .join(', ')}${
-          notConverted > 3 ? ', …' : ''
-        }); ECTD_REQUIRE_PDFA blocks this production transmit.`
-      );
-    }
-  } else if (isProd && pdfaRequired) {
-    warnings.push(
-      'ECTD_REQUIRE_PDFA is set but the bundle carries no PDF/A grade — cannot prove PDF/A compliance at transmit time.'
-    );
-  }
+  // 2. PDF/A submission grade. Required only when the deployment or the
+  // organisation chose it: every agency here accepts plain PDF 1.4–1.7 too
+  // (ectd/pdfa-requirement.ts, decided 2026-10-01).
+  checkPdfA(input.bundle.submissionGrade, input.pdfa ?? pdfaRequirementFrom(env, false), isProd, checks, blockers, warnings);
 
   // 3. DTD + stylesheet self-containment.
   const dtdGate = evaluateDtdSelfContainment(
