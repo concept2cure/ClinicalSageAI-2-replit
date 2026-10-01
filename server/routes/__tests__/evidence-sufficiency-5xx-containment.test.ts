@@ -31,8 +31,10 @@ vi.mock('../../middleware/auth', () => ({
 // requireProgramAccess: the program is the caller's.
 vi.mock('../../db', () => ({
   db: {
-    select: () => ({ from: () => ({ where: () => ({ limit: async () => [{ id: 'prog-1' }] }) }) }),
+    select: () => ({ from: () => ({ where: () => ({ limit: async () => [{ id: 'aaaaaaaa-2222-4222-8222-aaaaaaaaaaa2' }] }) }) }),
   },
+  // The program check (programInOrganization, D3) reads on the pool.
+  pool: { query: async () => ({ rows: [{ id: 'aaaaaaaa-2222-4222-8222-aaaaaaaaaaa2' }] }) },
 }));
 vi.mock('../../services/evidence-sufficiency/evidence-sufficiency.service', () => svc);
 vi.mock('../../services/audit/audit-write-outcome', () => ({
@@ -74,7 +76,7 @@ describe('evidence-sufficiency 500s: envelope out, detail to the log', () => {
   it('POST /programs/:programId/assess', async () => {
     svc.assessSufficiency.mockRejectedValue(new Error(SENTINEL));
     const res = await request(app())
-      .post('/api/evidence-sufficiency/programs/prog-1/assess')
+      .post('/api/evidence-sufficiency/programs/aaaaaaaa-2222-4222-8222-aaaaaaaaaaa2/assess')
       .send({ pathway: '510K', profile: {} });
     expectContained(res);
     expect(JSON.stringify(logError.mock.calls)).toContain('SENTINEL-DB-DETAIL');
@@ -82,7 +84,7 @@ describe('evidence-sufficiency 500s: envelope out, detail to the log', () => {
 
   it('GET /programs/:programId/assessments', async () => {
     svc.listProgramAssessments.mockRejectedValue(new Error(SENTINEL));
-    expectContained(await request(app()).get('/api/evidence-sufficiency/programs/prog-1/assessments'));
+    expectContained(await request(app()).get('/api/evidence-sufficiency/programs/aaaaaaaa-2222-4222-8222-aaaaaaaaaaa2/assessments'));
   });
 
   it('GET /assessments/:id', async () => {
@@ -91,7 +93,7 @@ describe('evidence-sufficiency 500s: envelope out, detail to the log', () => {
   });
 
   it('leaves the 422 and 404 answers unchanged', async () => {
-    const bad = await request(app()).post('/api/evidence-sufficiency/programs/prog-1/assess').send({ pathway: 'X' });
+    const bad = await request(app()).post('/api/evidence-sufficiency/programs/aaaaaaaa-2222-4222-8222-aaaaaaaaaaa2/assess').send({ pathway: 'X' });
     expect(bad.status).toBe(422);
     expect(bad.body).toEqual({ error: 'pathway must be PMA, DE_NOVO, or 510K' });
     svc.getAssessment.mockResolvedValue(null);
