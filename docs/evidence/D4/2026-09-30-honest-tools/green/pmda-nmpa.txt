@@ -1,0 +1,52 @@
+# green: slice 4 on fe749b1a + working tree
+ ✓ server/services/search/__tests__/provenance-ranking.test.ts > connectorAuthorityTier > maps regulatory / registry / peer-reviewed connectors to primary 3ms
+ ✓ server/services/search/__tests__/provenance-ranking.test.ts > connectorAuthorityTier > maps preprints to preliminary and repos/other to secondary 1ms
+ ✓ server/services/search/__tests__/provenance-ranking.test.ts > rankResultsByProvenance > ranks by authority tier first, then relevance within a tier 2ms
+ ✓ server/services/search/__tests__/provenance-ranking.test.ts > rankResultsByProvenance > a high-relevance preprint still ranks below a lower-relevance primary source 0ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > GrantsGovConnector > shapes a Search2 POST and maps oppHits to results 4ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > GrantsGovConnector > throws on a non-ok Search2 response 2ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > GrantsGovConnector > requires no credentials (authenticate is a no-op) 1ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > SamExclusionsConnector > refuses to authenticate without an API key 0ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > SamExclusionsConnector > refuses to screen before authentication 0ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > SamExclusionsConnector > requires a party name to screen 0ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > SamExclusionsConnector > a clean screen returns no matches (empty exclusion list) 1ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > SamExclusionsConnector > maps an exclusion hit to an EXCLUSION MATCH result and passes the key 1ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > EllucianBannerConnector > requires baseUrl and apiKey 1ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > EllucianBannerConnector > exchanges the API key for a token then reads the resource (persons by default) 3ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > EllucianBannerConnector > routes grant/award keywords to the grants resource 1ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > EllucianBannerConnector > surfaces an auth failure 1ms
+ ✓ server/services/connectors/__tests__/fda-drugs.test.ts > buildOpenFdaDrugSearch > percent-encodes spaces in a value (no raw space in the URL) 3ms
+ ✓ server/services/connectors/__tests__/fda-drugs.test.ts > buildOpenFdaDrugSearch > encodes an ampersand so it cannot inject a new query parameter 1ms
+ ✓ server/services/connectors/__tests__/fda-drugs.test.ts > buildOpenFdaDrugSearch > strips embedded double quotes that would break the phrase 0ms
+ ✓ server/services/connectors/__tests__/fda-drugs.test.ts > buildOpenFdaDrugSearch > joins indication and sponsor with +AND+ 0ms
+ ✓ server/services/connectors/__tests__/fda-drugs.test.ts > buildOpenFdaDrugSearch > builds an AND-joined keyword group and drops blanks 0ms
+ ✓ server/services/connectors/__tests__/fda-drugs.test.ts > buildOpenFdaDrugSearch > returns match-all when no terms are supplied 0ms
+ ✓ server/services/connectors/__tests__/fda-drugs.test.ts > FDADrugsConnector.fetch — application_number encoding > percent-encodes a space/&/# in the resource id (no raw chars that break or inject the query) 1ms
+ ✓ server/services/connectors/__tests__/fda-drugs.test.ts > FDADrugsConnector.fetch — application_number encoding > strips an embedded double quote so the phrase cannot be broken out of 0ms
+ ✓ server/services/connectors/__tests__/veeva-vault.test.ts > escapeVqlLiteral > doubles single quotes 2ms
+ ✓ server/services/connectors/__tests__/veeva-vault.test.ts > escapeVqlLiteral > leaves quote-free values untouched 0ms
+ ✓ server/services/connectors/__tests__/veeva-vault.test.ts > buildDocumentVql > escapes an indication containing an apostrophe (no broken/injected VQL) 1ms
+ ✓ server/services/connectors/__tests__/veeva-vault.test.ts > buildDocumentVql > neutralizes an injection attempt by escaping the closing quote 0ms
+ ✓ server/services/connectors/__tests__/veeva-vault.test.ts > buildDocumentVql > ANDs indication and therapeutic area 0ms
+ ✓ server/services/connectors/__tests__/veeva-vault.test.ts > buildDocumentVql > builds an escaped OR group for keywords and drops blanks 0ms
+ ✓ server/services/connectors/__tests__/veeva-vault.test.ts > buildDocumentVql > omits WHERE when there are no conditions 0ms
+ ✓ server/services/connectors/__tests__/veeva-vault.test.ts > buildDocumentVql > coerces the limit to a positive integer (default 20) 0ms
+ ✓ server/services/connectors/__tests__/connector-id-encoding.test.ts > ClinicalTrialsGovConnector.fetch — path id encoding > encodes a resource id so it cannot escape the /studies/ path segment 2ms
+ ✓ server/services/connectors/__tests__/connector-id-encoding.test.ts > ClinicalTrialsGovConnector.fetch — path id encoding > leaves a clean NCT id unchanged 1ms
+ ✓ server/services/connectors/__tests__/connector-id-encoding.test.ts > PubMedConnector.fetch — query id encoding > encodes the pmid so a raw & cannot inject query params 1ms
+ ✓ server/services/connectors/__tests__/connector-id-encoding.test.ts > PubMedConnector.fetch — query id encoding > leaves a clean pmid unchanged 0ms
+ ✓ server/services/integrations/__tests__/connector-search.test.ts > searchConnectedRepositories > searches only configured+healthy connectors and reports the rest as skipped 4ms
+ ✓ server/services/integrations/__tests__/connector-search.test.ts > searchConnectedRepositories > flags unknown requested connectors and short-circuits when none are usable 1ms
+ ✓ server/services/integrations/__tests__/connector-search.test.ts > searchConnectedRepositories > surfaces per-connector errors as skipped and clamps the limit 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > refuses a search instead of returning the query as a scored result 3ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > refuses a fetch instead of returning a placeholder document 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > reports itself unavailable, without reaching out to test a web page 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > does not promise search, scraping or translation in the catalog 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > is reported as skipped by the repository search, never as a document 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > refuses a search instead of returning the query as a scored result 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > refuses a fetch instead of returning a placeholder document 0ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > reports itself unavailable, without reaching out to test a web page 0ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > does not promise search, scraping or translation in the catalog 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > is reported as skipped by the repository search, never as a document 0ms
+ Test Files  7 passed (7)
+      Tests  49 passed (49)

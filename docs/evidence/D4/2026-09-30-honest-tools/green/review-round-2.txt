@@ -1,0 +1,1012 @@
+# green, review round 2
+ ✓ server/services/ocr/__tests__/documentIntake.test.ts > extractDocumentText — spreadsheet routing > extracts xlsx by MIME type 88ms
+ ✓ server/services/ocr/__tests__/documentIntake.test.ts > extractDocumentText — spreadsheet routing > extracts xlsx by extension when the MIME is generic 26ms
+ ✓ server/services/ocr/__tests__/documentIntake.test.ts > extractDocumentText — spreadsheet routing > still treats markdown/CSV as utf8 text 1ms
+ ✓ server/services/ocr/__tests__/documentIntake.test.ts > extractDocumentText — spreadsheet routing > returns method none for an unreadable xlsx buffer 1ms
+ ✓ server/services/ocr/__tests__/documentIntake.test.ts > pdfInspector.samplePageNumbers — census planning > returns every page for small documents 1ms
+ ✓ server/services/ocr/__tests__/documentIntake.test.ts > pdfInspector.samplePageNumbers — census planning > samples edges plus a uniform spread for huge documents 3ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > every tool with a free-text input is classified — a new one cannot ship unclassified 6ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > no tool is in both maps 1ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > every classified name is a real tool — no stale entries 4ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > every entry says why 2ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the classification cannot go stale > the scan still finds the tools the defect was found through 2ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > author_docx_native: refused when Sonnet produced the call 1ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > commit_document_revision: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > draft_authoring_document: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > generate_document: refused when Sonnet produced the call 1ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > insert_document_content: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > save_document_to_vault: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_biosketch_section: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_consent_element: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_dms_plan_element: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_protocol_section: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > update_vault_document: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > write_kit_section: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > write_q_sub_section: refused when Sonnet produced the call 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > refused when the serving model is unknown — absent means refused 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > refused for GPT-4o, which the registry caps below high-risk 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > an approved model is not refused by the gate 1ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > a tool that only analyses free text is not gated 2ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the gate, on the real registered handlers > a tool calling another tool’s handler directly is gated too (assemble_crl_premortem_artifact → author_docx_native) 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the /api/chat door: the agentic loop tells the gate which model produced each call > a call produced by Sonnet is refused and nothing is stored 2ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the /api/chat door: the agentic loop tells the gate which model produced each call > a call produced by Opus clears the model gate — and, being a write, is put to a person, not run (P1-34) 1ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the /api/chat door: the agentic loop tells the gate which model produced each call > and on a person's yes, the Opus-written content reaches the handler 15ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the /api/chat door: the agentic loop tells the gate which model produced each call > the caller cannot vouch for the model: a servingModel in the toolContext is overwritten by the one in the response 1ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the /api/chat door: the agentic loop tells the gate which model produced each call > a confirm-tier tool is proposed on this door, even from an approved model — nothing is stored 1ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the stream door (source pin) > hands every tool call the model that produced it 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > the stream door (source pin) > sets the served model from the first response and updates it after every round 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > detects a governed draft request: Draft the clinical overview for this project as an authoring document 1ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > detects a governed draft request: please write section 2.5.4 for me 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > detects a governed draft request: Prepare a response to the FDA information request 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > detects a governed draft request: compose the cover letter for the submission 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > does not flag an ordinary turn: take me to CMC 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > does not flag an ordinary turn: what does section 2.5 require? 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > does not flag an ordinary turn: summarise this thread 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > does not flag an ordinary turn: is the submission ready? 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > a drafting request on Balanced is scored high-risk and routed to the flagship tier 0ms
+ ✓ server/services/ana/__tests__/governed-write-gate.test.ts > drafting turns get an approved model up front > both routes compute the hint from the message (source pin) 1ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > ALL_ANA_TOOLS has no duplicate names 3ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > introduces no new duplicate names pre-dedupe 1ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > every tool has a well-formed input_schema 1ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > list_fda_forms has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > prepare_fda_form has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > amend_fda_form has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > list_vault_documents has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > read_vault_document has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > get_document_versions has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > list_governed_documents has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > read_governed_document has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > get_tmf_view has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > list_report_types has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > get_portfolio_readiness has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > generate_report has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > explain_report_blockers has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > suggest_reports has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > save_report_definition has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > list_report_definitions has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > save_document_to_vault has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > draft_authoring_document has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > update_vault_document has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > compare_vault_versions has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > seed_tmf has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > update_tmf_artifact_status has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > search_all_documents has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > get_plan_usage has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > get_billing_credits has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > get_org_capabilities has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > reconcile_dossier_numbers has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > generate_schedule_of_events has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > amend_schedule_of_events has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_schedule_of_events_health has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > reset_project_goals has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > list_platform_commands has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > execute_platform_command has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > search_chembl_compound has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > screen_compound_liabilities has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > search_preprints has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_trial_feasibility has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > search_clinical_evidence has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > search_literature has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > record_literature has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > search_medicare_coverage has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > search_connected_repositories has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > search_regulatory_correspondence has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_calendar_event has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > search_crm has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > search_ivd_knowledge has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > search_device_recalls has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > search_drug_labels has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > search_drug_approvals has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_regulatory_landscape has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > lookup_icd10_code has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > draft_safety_narrative has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > narrate_statistical_result has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > value_dossier_guidance has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > advise_regulatory_pathway has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > advise_risk_management has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > run_rbm_assessment has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_site_risk has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > evaluate_kris_qtls has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > generate_rbm_plan has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > prioritize_monitoring_queries has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > run_central_monitoring has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > scan_patient_profiles has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > generate_rbm_report has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > get_rbm_attention has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > add_ctq_factor has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > define_kri has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > record_kri_reading has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > set_qtl has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > raise_monitoring_signal has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > triage_signal has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > draft_monitoring_plan has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_monitoring_action has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > update_monitoring_action has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > approve_rbm_assessment has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > approve_rbm_plan has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > advise_gcp has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_informed_consent has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > advise_coa_selection has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > advise_ctd_structure has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > advise_special_designation has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > plan_orphan_drug_designation has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > plan_ind_module_authoring has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > advise_estimand has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > advise_pharmacovigilance has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > advise_study_design has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > advise_labeling_structure has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > plan_labeling_authoring has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > advise_medical_information has a registered handler 8ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > advise_reporting_guideline has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > advise_data_integrity has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > advise_rwe_design has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > screen_promotional_language has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > medical_writing_guidance has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > medical_writing_review has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_readability has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > build_abbreviation_list has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > describe_capabilities has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > project_knowledge_search has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > project_knowledge_search_multi has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > search_large_document has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > remember_document_in_project has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > run_submission_premortem has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assemble_crl_premortem_artifact has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assemble_briefing_book has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_output_confidence has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > check_grounding has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > render_signature_manifestation has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > scan_regulatory_deficiencies has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > recall_session_context has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > simulate_study_design has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > search_device_adverse_events has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > search_drug_adverse_events has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > lookup_fda_guidance has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > lookup_ich_guideline has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > check_regulatory_compliance has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > validate_cross_references has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > generate_citation has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > lookup_regulatory_precedents has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > compare_submission_against_precedent has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_claim_evidence_integrity has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > simulate_reviewer_challenges has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > predict_change_impact has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > fetch_template_and_fill has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > author_docx_native has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > convert_docx_to_pdf has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > run_python_script has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > insert_document_content has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > surgical_docx_xml_edit has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > verify_docx_against_source has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > insert_clause_template has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > validate_docx has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > run_in_container has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > write_kit_section has a registered handler 1ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_q_sub has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > update_q_sub_commitment_rolled_in has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > link_program_clinical_study has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > set_program_metadata has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > write_q_sub_section has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_udi_record has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_risk_item has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > add_risk_control has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_software_lifecycle_item has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > record_analytical_performance_study has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > record_clinical_performance_study has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > classify_ivd_device has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_per_document has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > categorize_clia_complexity has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > pair_companion_diagnostic has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > register_ldt has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > package_ectd_for_region has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > transmit_submission has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > check_submission_status has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > get_submission_ack has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > record_validation_finding has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > resolve_validation_finding has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > gateway_configuration_status has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > compute_lifecycle_operations has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > convert_to_rps_v4 has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > generate_stf has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > check_ectd_cross_references has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > classify_submission_document has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > extract_submission_document has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > run_shadow_review has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > validate_ectd_package has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > plan_submission has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > explain_validation_findings has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > cross_region_gap_analysis has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > dispatch_qc_check has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > trace_provenance has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > check_consistency has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_pathway_readiness has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > build_pathway_manifest has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > list_validation_rules has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > lookup_regulatory_pathway has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > resolve_regulatory_structure has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > get_market_submission_spec has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > get_document_template has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > validate_market_formatting has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > get_submission_requirements has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_pathway_eligibility has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > classify_post_submission_change has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_device_evidence_structure has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > classify_device has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > get_device_reviewer_checklist has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > get_biocompatibility_endpoints has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > build_device_blueprint has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_stored_cer has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > build_global_device_strategy has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > get_regulatory_timeline has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > validate_udi has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > get_electrical_standards has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > get_sterilization_requirements has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_combination_product has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > get_device_labeling has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_qms has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > list_regulatory_capabilities has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_dispatch_readiness has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > place_into_sequence has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > fire_notification has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_clinical_study has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_clinical_investigator has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_financial_disclosure has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > add_disclosure_interest has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_financial_disclosure has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_ha_interaction has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_regulatory_commitment has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_commitment_portfolio has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_iacuc_protocol has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > register_animal_cohort has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_iacuc_protocol has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_irb_submission has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > add_irb_site has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_irb_submission has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_ibc_registration has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > add_biological_agent has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_ibc_registration has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_nonclinical_study has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_send_readiness has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_protocol_document has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > update_protocol_section has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > add_protocol_objective has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > add_eligibility_criterion has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_protocol_completeness has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > finalize_protocol_document has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > add_protocol_risk has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_protocol_risk_register has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_protocol_template has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > clone_protocol_template has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > save_document_as_template has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > list_protocol_templates has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > add_protocol_milestone has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > set_protocol_milestone_status has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_protocol_timeline has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > export_protocol_document has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > generate_ctgov_registration_draft has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > add_soa_assessment has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > set_soa_cell has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_soa_matrix has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > add_protocol_budget_item has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > set_protocol_budget_params has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_protocol_budget has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_protocol_amendment has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > add_amendment_change has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_amendment has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > report_protocol_deviation has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > add_capa_action has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_deviation has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assign_protocol_reviewer has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > add_protocol_review_comment has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_protocol_review_status has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_consent_form has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > update_consent_element has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_consent_completeness has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_dms_plan has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > update_dms_plan_element has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_dms_plan_completeness has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > finalize_dms_plan has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_other_support has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > add_other_support_entry has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_other_support has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > certify_other_support has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_biosketch has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > update_biosketch_section has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_biosketch_completeness has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > finalize_biosketch has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_invention_disclosure has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > update_invention_disclosure has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_invention_disclosure has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > submit_invention_disclosure has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_export_control_review has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > update_export_control_review has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_export_control has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > finalize_export_control_determination has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_research_agreement has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > update_research_agreement has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_research_agreement has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > execute_research_agreement has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > import_citi_records has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_training_matrix has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_expiring_training has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_protocol_portfolio_analytics has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > set_funding_profile has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > find_grant_opportunities has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assign_committee_member has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > convene_committee_meeting has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > add_committee_agenda_item has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > cast_committee_vote has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > finalize_committee_determination has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_protocol_portfolio has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_coverage_analysis has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > set_coverage_qualifying_determination has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > add_coverage_item has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > classify_coverage_item has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_coverage_analysis has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_grant_proposal has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > record_grant_award has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_grant_reporting has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > set_grant_milestone_status has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > open_grant_closeout has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > update_grant_closeout has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > finalize_grant_closeout has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > record_subaward has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > screen_subaward has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > execute_subaward has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > add_grant_budget_line has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > record_grant_expenditure has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_grant_budget has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > record_cost_share_contribution has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_cost_share has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > request_no_cost_extension has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > approve_no_cost_extension has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > record_grant_opportunity has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > prepare_award_closeout has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > research_compliance_briefing has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > triage_compliance_attention has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > fulfill_regulatory_commitment has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_ha_interaction has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > prepare_meeting_package has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > register_controlled_substance has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_rim_product has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > set_registration_status has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_label_currency has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_inspection has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > log_inspection_finding has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_inspection_readiness has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > register_dea has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > log_cs_transaction has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_cs_balance has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_lifecycle_obligation has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_lifecycle_calendar has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_tmf has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > classify_tmf_artifact has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_tmf_completeness has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > run_compliance_checklist has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_study_onboarding has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > add_personnel_training has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_training_gate has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_effort_certification has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > add_effort_line has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_coi_disclosure has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > search_grants_gov has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > screen_restricted_party has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > log_study_deviation has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > log_study_ae has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > record_endpoint_result has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > verify_memory_atom has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_qms_document has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > approve_qms_document has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > revise_qms_document has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > retire_qms_document has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > ack_training has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > register_supplier has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > log_nonconforming_product has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > qms_change_create has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > qms_change_transition has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > qms_change_link has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > search_clinical_regulatory_evidence has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > compare_proposed_design_to_precedent has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > explain_design_risk has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > stress_test_protocol has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > trace_design_recommendation has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > project_csr_evidence has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_labeling_document has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > add_labeling_translation has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > add_labeling_symbol has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > global_search has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > start_legacy_import has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > override_import_mapping has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > approve_import has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assemble_ectd_module_from_artifacts has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > draft_510k_substantial_equivalence has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > draft_clinical_overview_m2_5 has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > batch_draft_sections has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > convene_drafting_council has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > update_plan has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > get_client_journey has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > get_biotech_program_status has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > commit_document_revision has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > start_deep_investigation has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > check_deep_investigation has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > draft_fda_ir_response has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > analyze_predicate_device has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > extract_document_structure has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > compare_document_versions has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > search_document has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > inspect_uploaded_document has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > read_uploaded_document has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > ocr_document_pages has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > read_spreadsheet has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > edit_spreadsheet has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > file_chat_upload_to_vault has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > list_project_documents has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > read_project_document has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > catalog_project_document has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > place_project_document has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > search_project_documents has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > search_document_passages has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > check_dossier_consistency has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > check_numerical_integrity has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > compute_sample_size has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > compare_statistical_scenarios has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_statistical_defensibility has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > analyze_missing_data_impact has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > generate_statistical_document has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > compute_fih_dose has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > classify_tox_findings has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > select_exposure_response_dose has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > load_nonclinical_program has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > get_nonclinical_template has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > get_csr_template has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > draft_nonclinical_overview_m2_4 has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > draft_quality_overall_summary_m2_3 has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > draft_nonclinical_summaries_m2_6 has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_nonclinical_program has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_nonclinical_safety has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_concentration_qtc has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_ddi_risk has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > characterize_pk has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > draft_clinical_summary_m2_7 has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_analytical_similarity has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_comparability has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_immunogenicity has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_bla_filing_risk has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > generate_sop has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > resolve_submission_plan has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > get_ctd_module_home has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > mine_precedents has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > generate_document has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > build_from_template has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > ind_generate_section has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > ind_get_status has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > rasterize_page has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > pdf_overlay has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > advise_device_readiness has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > advise_global_market_strategy has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > advise_global_submission_plan has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > advise_pma_readiness has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > advise_eu_technical_file_readiness has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > ivd_knowledge_lookup has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > global_ri_regulatory_pathway has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > global_ri_strategy_brief has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > global_ri_exclusivity has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > global_ri_dossier_classifier has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > global_ri_expedited_programs has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > global_ri_special_designations has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > global_ri_fee_estimate has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > global_ri_post_approval_change has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > global_ri_device_classification has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > global_ri_safety_reporting has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > global_ri_stability_conditions has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > global_ri_lifecycle_schedule has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > global_ri_pediatric_plan has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > global_ri_reliance_pathways has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > global_ri_cmc_specifications has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > global_ri_bioequivalence_criteria has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > global_ri_bcs_biowaiver has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > global_ri_expanded_access has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > global_ri_advanced_therapy has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > global_ri_companion_diagnostic has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > global_ri_promotional_compliance has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > global_ri_controlled_substance has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > global_ri_process_validation has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > global_ri_evidence_standard has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > global_ri_establishment_registration has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > global_ri_import_export has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > classify_bcs has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_be_study has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_dissolution_similarity has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_biowaiver has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > guidance_for_anda has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_popk_study has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > evaluate_pbpk_model has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > analyze_exposure_response has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > advise_midd has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > select_dose has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > select_tox_species has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_repeat_dose_study has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > calculate_safety_margin has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_genotox_battery has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_carcinogenicity_need has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_repro_tox_study has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > classify_pediatric_age has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_pediatric_investigation has a registered handler 7ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_pediatric_extrapolation has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > select_pediatric_formulation has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > select_pediatric_dose has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_pediatric_requirements has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > classify_atmp has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_gene_therapy_requirements has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_cell_therapy_manufacturing has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_cart_requirements has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > select_atmp_pathway has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_atmp_comparability has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_target_trial has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > score_rwe_data_source has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_propensity_analysis has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > select_rwe_design has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_rwe_bias_risk has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_rwe_regulatory_acceptability has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > classify_ddi_risk has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_qtc_risk has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_organ_impairment_study has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > classify_cyp_phenotype has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_bioanalytical_method has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_food_effect has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_stability_study has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > validate_analytical_method has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > classify_impurity has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > set_specifications has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_process_validation has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_comparability_protocol has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_expedited_program has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > plan_fda_meeting has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_orphan_designation has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > select_505_pathway has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_rolling_submission has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > compare_global_pathways has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_analytical_similarity_biosimilar has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_biosimilar_clinical has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_indication_extrapolation has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_interchangeability has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > plan_biosimilar_ip_strategy has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_biosimilar_cmc has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > classify_mutagenic_impurity has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > calculate_ttc has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_structural_alerts has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_purge_study has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_nitrosamine_risk has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > control_mutagenic_impurity has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_plr_structure has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_boxed_warning has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_rems has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_pregnancy_lactation_labeling has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > structure_smpc has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_otc_labeling has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_immunogenicity_risk has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_ada_assay_strategy has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > classify_immunogenicity_clinical_impact has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_nab_assay has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > plan_immunogenicity_sampling has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_immunogenicity_comparability has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_core_battery has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_cardiovascular_safety_pharmacology has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_cns_safety_pharmacology has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_respiratory_safety_pharmacology has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_followup_safety_study has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_abuse_liability has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > classify_expedited_reporting has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_pv_causality has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > plan_aggregate_safety_report has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > detect_safety_signal has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_signal_priority has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_pv_system has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > select_coa_type has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_coa_validation has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > determine_meaningful_change has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_coa_fit_for_purpose has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > position_coa_endpoint has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > plan_coa_development has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > select_dose_finding_design has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_project_optimus_alignment has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_randomized_dose_comparison has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > select_rp2d has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_backfill_strategy has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_dose_exposure_response has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > determine_primary_mode_of_action has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > classify_combination_product has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > plan_combination_cgmp has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_human_factors_study has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_device_constituent_controls has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > select_combination_submission_pathway has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > define_estimand has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_intercurrent_event_strategy has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > plan_multiplicity_control has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_adaptive_design has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > select_missing_data_strategy has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > estimate_sample_size has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_data_integrity has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_capa has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > classify_gmp_deviation has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_api_gmp has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_sterile_controls has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_computer_system_validation has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_adme_program has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_mass_balance_study has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_metabolite_safety has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_toxicokinetics has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_reaction_phenotyping has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_protein_binding has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > classify_biomarker has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > plan_biomarker_qualification has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_cdx_codevelopment has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_biomarker_analytical_validation has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_biomarker_clinical_validation has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > plan_enrichment_strategy has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_natural_history_study has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_external_control has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_small_population_design has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > plan_bayesian_borrowing has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_rare_disease_endpoint has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > plan_rare_disease_program has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_monitoring_plan has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_inspection_readiness has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_gcp_compliance has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_informed_consent has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > classify_protocol_deviation has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > plan_essential_documents has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > classify_medical_device has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > select_device_pathway has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_substantial_equivalence has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_device_clinical_evidence has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_essential_principles has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > plan_device_submission has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > classify_samd has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_ai_ml_device has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_pccp has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_gmlp has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_samd_clinical_validation has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_device_cybersecurity has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_vaccine_cmc has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_correlate_of_protection has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_vaccine_clinical_program has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_lot_consistency has a registered handler 5ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_vaccine_platform has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > plan_vaccine_special_populations has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > structure_benefit_risk_framework has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > build_effects_table has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_benefit_risk_balance has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_value_tree has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_br_uncertainty has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > plan_br_communication has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > classify_post_approval_change has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_established_conditions has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_pacmp has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > plan_annual_report has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_postapproval_comparability has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > plan_lifecycle_management has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > ana_tool_pedigree has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > detect_evidence_contradictions has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > detect_evidence_gaps has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > lookup_submission_deficiencies has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > regulatory_deadline_radar has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > compile_correspondence_response_package has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > get_session_briefing has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > scan_project_risks has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_mmrm has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_group_sequential has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_dose_finding has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > analyze_win_ratio has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > analyze_rmst has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_mrmc_reader_study has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > analyze_external_control_borrow has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > analyze_safety_signal has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > screen_signal_panel has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > adjust_multiplicity has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > compute_diagnostic_accuracy has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > size_diagnostic_study has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > design_bayesian_device has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > compute_analytical_performance has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_ivd_analytical_extensions has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > compute_assurance has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > forecast_enrollment has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > project_events has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > run_monte_carlo_simulation has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > reconcile_extracted_figures has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > list_governed_facts has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > establish_governed_fact has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > preview_fact_impact has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > apply_fact_change has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > scan_document_citations has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > reconcile_device_documents has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > trace_fact_to_source has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > explain_resolution_plan has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_iso17511_traceability has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_scientific_validity has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > determine_assay_cutoff has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_shelf_life_stability has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_accelerated_stability has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > generate_declaration_of_conformity has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > build_postmarket_report has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_mdr_reportability has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > triage_capa_mdr_queue has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > read_vigilance_timeline has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > create_complaint has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > open_device_capa has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > suggest_predicate_devices has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > generate_se_matrix has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > get_predicate_defense_preview has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > critique_draft has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > verify_revision has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > critique_document has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > check_regulatory_currency has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > guidance_change_radar has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > benchmark_precedent_trials has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_submission_package has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assemble_device_submission has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > score_predicate_adequacy has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > code_drug has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > code_meddra has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > code_whodrug has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > get_usage_and_license_status has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > list_app_screens has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > navigate_to has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > list_screen_actions has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > act_on_screen has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > list_demo_scripts has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > start_product_demo has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > model_budget_impact has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > model_cost_effectiveness has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > generate_spl has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > validate_spl has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > generate_define_xml has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > check_dataset_conformance has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > import_ris_references has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > format_references has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > lint_references has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > model_budget_impact_mix has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > model_cost_effectiveness_nmb has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > build_sae_line_listing has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > compose_e2b_icsr has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_analytical_method_validation has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > model_markov_cohort has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > run_probabilistic_sensitivity has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > run_cdisc_pipeline has a registered handler 1ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > compose_correspondence_cover_letter has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > compose_510k_summary has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > estimate_shelf_life has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_batch_poolability has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_recorded_batch_poolability has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > list_cmc_registers has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > estimate_recorded_shelf_life has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > compare_recorded_dissolution has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > get_submission_readiness_twin has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_benefit_risk has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_recorded_stability_trend has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > assess_recorded_process_capability has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > lookup_published_label has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > recall_rim_patterns has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > query_rim_patterns_by_domain has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > summarize_rim_intelligence has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > search_eudamed has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > search_ema_epar has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > search_eu_ctis has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > validate_cdisc_dataset has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > validate_sdtm_dataset has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > validate_adam_dataset has a registered handler 4ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > fetch_fda_guidance_list has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > fetch_ich_guideline_updates has a registered handler 2ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > check_guidance_freshness has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > generate_spl_xml has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > validate_spl_structure has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > generate_psur_structure has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > generate_dsur_structure has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > start_intelligence_flow has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > answer_intelligence_question has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > resume_intelligence_flow has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > commit_intelligence_flow has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > list_intelligence_flows has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > start_war_game has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > summarize_onboarding_readiness has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > bind_protocol_to_study_design has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_protocol_design_derivation has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > apply_protocol_design_derivation has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_protocol_regulatory_rules has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_protocol_design_gates has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_trial_schema has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_spirit_conformance has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > derive_ctq_factors has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > export_usdm_projection has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_dct_profile has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_who_ictrp_record has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_deviation_trends has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_protocol_redline has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_dose_escalation_design has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_enrollment_forecast has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_interim_operating_characteristics has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_mmrm_sizing has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_external_control_plan has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_multiplicity_control has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_biospecimen_profile has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every defined tool is wired > review_master_protocol has a registered handler 0ms
+ ✓ server/services/ana/__tests__/tool-registry-consistency.test.ts > AnA tool registry — every handler is reachable > no registered handler is absent from ALL_ANA_TOOLS 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > is the caller's own uploads and scratch areas, and nothing else 3ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > accepts a builder output path 1ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > accepts an eCTD packager path 1ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > accepts an upload of its own 1ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > accepts an absolute path that genuinely lives in its workspace 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > rejects an absolute path to a secrets file 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > rejects an absolute system path 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > rejects a traversal out of the workspace 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > rejects a bare traversal segment 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > rejects a windows-style traversal 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > rejects an absolute sibling directory sharing the root prefix 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > rejects an embedded NUL truncation trick 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > rejects an empty string 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > rejects a non-string 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > rejects null 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > rejects undefined 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > throws a correctable, non-echoing error 1ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > AnA document workspace confinement > returns the RESOLVED absolute path, not the caller's string 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > refuses another tenant's upload 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > refuses another tenant's builder output 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > refuses another tenant's eCTD package 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > refuses a tenant whose id merely starts with ours 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > refuses a scratch file that belongs to nobody (the old layout) 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > refuses the whole uploads tree 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > refuses a tmp area AnA does not write to 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > refuses everything with no organization 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > refuses everything with organization 0 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > refuses everything with a non-numeric organization 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > refuses everything with a negative organization 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > names every scratch directory inside the tenant's own area 1ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > a symlink cannot carry a checked path out > to another tenant's files, or to the host 3ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement is per tenant (INJ-PATH-002) > builds file names that cannot leave a directory 1ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement — relative paths that escape (regression) > rejects the production server bundle reached by a plain relative path 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement — relative paths that escape (regression) > rejects the package manifest reached by a plain relative path 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement — relative paths that escape (regression) > rejects a secrets file reached by a plain relative path 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement — relative paths that escape (regression) > rejects application source reached by a plain relative path 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement — relative paths that escape (regression) > rejects a nested source path reached by a plain relative path 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement — relative paths that escape (regression) > still accepts the paths the document tools actually produce 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > workspace confinement — relative paths that escape (regression) > the guard and the consumer now agree on which file is meant 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > RIM query tools take no tenant id from the model > 'query_rim_patterns_by_domain' declares no orgId parameter 1ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > RIM query tools take no tenant id from the model > 'summarize_rim_intelligence' declares no orgId parameter 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > RIM query tools take no tenant id from the model > does not invite the model to name an organization 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > RIM query tools take no tenant id from the model > still asks for the domain filter, which is genuinely the model's to choose 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > every AnA tool that takes a path runs it through the workspace guard > finds the handlers it checks 0ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > every AnA tool that takes a path runs it through the workspace guard > has no unguarded path argument 2ms
+ ✓ tests/ana-tool-tenant-and-path-scope.contract.test.ts > every AnA tool that takes a path runs it through the workspace guard > lists only handlers that still take a path argument 0ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > GrantsGovConnector > shapes a Search2 POST and maps oppHits to results 4ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > GrantsGovConnector > throws on a non-ok Search2 response 2ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > GrantsGovConnector > requires no credentials (authenticate is a no-op) 1ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > SamExclusionsConnector > refuses to authenticate without an API key 0ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > SamExclusionsConnector > refuses to screen before authentication 0ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > SamExclusionsConnector > requires a party name to screen 0ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > SamExclusionsConnector > a clean screen returns no matches (empty exclusion list) 1ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > SamExclusionsConnector > maps an exclusion hit to an EXCLUSION MATCH result and passes the key 0ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > EllucianBannerConnector > requires baseUrl and apiKey 1ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > EllucianBannerConnector > exchanges the API key for a token then reads the resource (persons by default) 4ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > EllucianBannerConnector > routes grant/award keywords to the grants resource 1ms
+ ✓ server/services/connectors/__tests__/sponsored-programs-connectors.test.ts > EllucianBannerConnector > surfaces an auth failure 1ms
+ ✓ server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page > writes a PNG of the page asked for, and succeeds only when it exists 344ms
+ ✓ server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page > refuses a page the document does not have, naming how many it has 4ms
+ ✓ server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page > refuses a path outside the tenant's workspace without opening it 1ms
+ ✓ server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page > refuses another tenant's file 1ms
+ ✓ server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page > converts a DOCX through the one DOCX→PDF pipeline first 32ms
+ ✓ server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page > reports a failed conversion as a failure 1ms
+ ✓ server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page — limits and inputs > caps the pixels it renders, lowering the dpi and saying so, instead of exhausting memory 13ms
+ ✓ server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page — limits and inputs > renders an upload stored without an extension, by what its bytes are 31ms
+ ✓ server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page — limits and inputs > reads a page number given as a numeral string, and refuses one that is not a page 35ms
+ ✓ server/services/ana/__tests__/rasterize-page-honest.test.ts > rasterize_page — limits and inputs > says the image is a server file that nobody is shown 42ms
+ ✓ server/services/ana/__tests__/rasterize-page-honest.test.ts > pdf_overlay > says it is unavailable and writes nothing, instead of reporting overlays queued 1ms
+ ✓ server/services/ana/__tests__/rasterize-page-honest.test.ts > pdf_overlay > answers unavailable to an unapproved model too, rather than inviting a retry that cannot succeed 0ms
+ ✓ server/services/ana/__tests__/rasterize-page-honest.test.ts > pdf_overlay > does not offer signatures or approval stamps in its definition 1ms
+ ✓ server/services/ocr/__tests__/page-offsets.test.ts > alignPageSpans > maps pages joined by a separator, and the spans point at the real text 4ms
+ ✓ server/services/ocr/__tests__/page-offsets.test.ts > alignPageSpans > survives a leading trim, which is where naive arithmetic goes wrong 1ms
+ ✓ server/services/ocr/__tests__/page-offsets.test.ts > alignPageSpans > keeps the page numbering true across a blank page 1ms
+ ✓ server/services/ocr/__tests__/page-offsets.test.ts > alignPageSpans > honours the page numbers the extractor reports, not the array index 1ms
+ ✓ server/services/ocr/__tests__/page-offsets.test.ts > alignPageSpans > REFUSES the whole map when one page cannot be located 0ms
+ ✓ server/services/ocr/__tests__/page-offsets.test.ts > alignPageSpans > refuses out-of-order pages rather than re-finding an earlier one 0ms
+ ✓ server/services/ocr/__tests__/page-offsets.test.ts > alignPageSpans > returns null for empty input rather than an empty map that reads as success 0ms
+ ✓ server/services/ocr/__tests__/page-offsets.test.ts > pageForOffset > finds the page a chunk starts on 0ms
+ ✓ server/services/ocr/__tests__/page-offsets.test.ts > pageForOffset > attributes a chunk starting between pages to the page it runs into 0ms
+ ✓ server/services/ocr/__tests__/page-offsets.test.ts > pageForOffset > attributes an offset past the end to the last page, not to nothing 0ms
+ ✓ server/services/ocr/__tests__/page-offsets.test.ts > pageForOffset > is null without a map — no map means no page, not page 1 0ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > refuses a search instead of returning the query as a scored result 3ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > refuses a fetch instead of returning a placeholder document 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > reports itself unavailable, without reaching out to test a web page 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > does not promise search, scraping or translation in the catalog 0ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > is not offered as connected: the catalog says unavailable, so nothing preselects or lists it 2ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > is skipped by the repository search as not connected, and never listed as searched 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > is reported as skipped by the repository search, never as a document 1ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > refuses a search instead of returning the query as a scored result 0ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > refuses a fetch instead of returning a placeholder document 0ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > reports itself unavailable, without reaching out to test a web page 0ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > does not promise search, scraping or translation in the catalog 0ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > is not offered as connected: the catalog says unavailable, so nothing preselects or lists it 0ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > is skipped by the repository search as not connected, and never listed as searched 0ms
+ ✓ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > is reported as skipped by the repository search, never as a document 0ms
+ ✓ server/services/connectors/__tests__/fda-drugs.test.ts > buildOpenFdaDrugSearch > percent-encodes spaces in a value (no raw space in the URL) 2ms
+ ✓ server/services/connectors/__tests__/fda-drugs.test.ts > buildOpenFdaDrugSearch > encodes an ampersand so it cannot inject a new query parameter 0ms
+ ✓ server/services/connectors/__tests__/fda-drugs.test.ts > buildOpenFdaDrugSearch > strips embedded double quotes that would break the phrase 0ms
+ ✓ server/services/connectors/__tests__/fda-drugs.test.ts > buildOpenFdaDrugSearch > joins indication and sponsor with +AND+ 0ms
+ ✓ server/services/connectors/__tests__/fda-drugs.test.ts > buildOpenFdaDrugSearch > builds an AND-joined keyword group and drops blanks 0ms
+ ✓ server/services/connectors/__tests__/fda-drugs.test.ts > buildOpenFdaDrugSearch > returns match-all when no terms are supplied 0ms
+ ✓ server/services/connectors/__tests__/fda-drugs.test.ts > FDADrugsConnector.fetch — application_number encoding > percent-encodes a space/&/# in the resource id (no raw chars that break or inject the query) 1ms
+ ✓ server/services/connectors/__tests__/fda-drugs.test.ts > FDADrugsConnector.fetch — application_number encoding > strips an embedded double quote so the phrase cannot be broken out of 0ms
+ ✓ server/services/ocr/__tests__/ocr-language-codes.test.ts > OCR language codes > refuses "../../etc/passwd" before opening anything 5ms
+ ✓ server/services/ocr/__tests__/ocr-language-codes.test.ts > OCR language codes > refuses "eng/../../x" before opening anything 1ms
+ ✓ server/services/ocr/__tests__/ocr-language-codes.test.ts > OCR language codes > refuses "/abs" before opening anything 6ms
+ ✓ server/services/ocr/__tests__/ocr-language-codes.test.ts > OCR language codes > refuses "eng\u0000" before opening anything 1ms
+ ✓ server/services/ocr/__tests__/ocr-language-codes.test.ts > OCR language codes > refuses "" before opening anything 1ms
+ ✓ server/services/ocr/__tests__/ocr-language-codes.test.ts > OCR language codes > refuses "ENGLISH" before opening anything 1ms
+ ✓ server/services/connectors/__tests__/veeva-vault.test.ts > escapeVqlLiteral > doubles single quotes 6ms
+ ✓ server/services/connectors/__tests__/veeva-vault.test.ts > escapeVqlLiteral > leaves quote-free values untouched 1ms
+ ✓ server/services/connectors/__tests__/veeva-vault.test.ts > buildDocumentVql > escapes an indication containing an apostrophe (no broken/injected VQL) 1ms
+ ✓ server/services/connectors/__tests__/veeva-vault.test.ts > buildDocumentVql > neutralizes an injection attempt by escaping the closing quote 8ms
+ ✓ server/services/connectors/__tests__/veeva-vault.test.ts > buildDocumentVql > ANDs indication and therapeutic area 0ms
+ ✓ server/services/connectors/__tests__/veeva-vault.test.ts > buildDocumentVql > builds an escaped OR group for keywords and drops blanks 0ms
+ ✓ server/services/connectors/__tests__/veeva-vault.test.ts > buildDocumentVql > omits WHERE when there are no conditions 0ms
+ ✓ server/services/connectors/__tests__/veeva-vault.test.ts > buildDocumentVql > coerces the limit to a positive integer (default 20) 0ms
+ ✓ server/services/connectors/__tests__/connector-id-encoding.test.ts > ClinicalTrialsGovConnector.fetch — path id encoding > encodes a resource id so it cannot escape the /studies/ path segment 2ms
+ ✓ server/services/connectors/__tests__/connector-id-encoding.test.ts > ClinicalTrialsGovConnector.fetch — path id encoding > leaves a clean NCT id unchanged 1ms
+ ✓ server/services/connectors/__tests__/connector-id-encoding.test.ts > PubMedConnector.fetch — query id encoding > encodes the pmid so a raw & cannot inject query params 1ms
+ ✓ server/services/connectors/__tests__/connector-id-encoding.test.ts > PubMedConnector.fetch — query id encoding > leaves a clean pmid unchanged 0ms
+ ✓ server/services/integrations/__tests__/connector-search.test.ts > searchConnectedRepositories > searches only configured+healthy connectors and reports the rest as skipped 4ms
+ ✓ server/services/integrations/__tests__/connector-search.test.ts > searchConnectedRepositories > flags unknown requested connectors and short-circuits when none are usable 2ms
+ ✓ server/services/integrations/__tests__/connector-search.test.ts > searchConnectedRepositories > surfaces per-connector errors as skipped and clamps the limit 1ms
+ ✓ server/services/integrations/__tests__/connector-search.test.ts > searchConnectedRepositories > does not list a connector whose search failed as searched 1ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > the register covers the registry exactly > every registered tool has a class 2ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > the register covers the registry exactly > every entry names a registered tool 1ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > the register covers the registry exactly > is the whole surface, not a sample of it 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > the register covers the registry exactly > every conditional entry has its rule, and every rule an entry 1ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > the register covers the registry exactly > every refusal says where the person does it 1ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > the register covers the registry exactly > only the command carrier defers to the command partition 1ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > cast_committee_vote is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > ack_training is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > approve_qms_document is refuse 1ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > retire_qms_document is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > revise_qms_document is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > transmit_submission is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > raise_monitoring_signal is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > predict_change_impact is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > catalog_project_document is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > check_consistency is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > assess_site_risk is confirm 1ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > set_protocol_budget_params is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > save_document_to_vault is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > seed_tmf is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > list_vault_documents is read 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > global_ri_exclusivity is read 1ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > set_specifications is read 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > answer_intelligence_question is self 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > a tool the register does not know is proposed, not run 1ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > qms_change_transition {"to":"under_assessment"} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > qms_change_transition {"to":"approved"} is refuse 1ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > qms_change_transition {"to":" Closed "} is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > create_clinical_study {"title":"P1"} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > create_clinical_study {"title":"P1","irb_approved":true} is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > update_tmf_artifact_status {"status":"received"} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > update_tmf_artifact_status {"status":"final"} is refuse 1ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > set_registration_status {"market_status":"submitted"} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > set_registration_status {"market_status":"approved"} is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > log_cs_transaction {"quantity":2} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > log_cs_transaction {"quantity":2,"witnessed_by":"R. Ortiz"} is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > report_protocol_deviation {"severity":"major"} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > report_protocol_deviation {"severity":"major","affects_safety":false} is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > review_schedule_of_events_health {"apply":false} is read 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > review_schedule_of_events_health {} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > run_rbm_assessment {} is read 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > run_rbm_assessment {"seed":true} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > commit_intelligence_flow {"dry_run":true} is read 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > commit_intelligence_flow {} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > convert_docx_to_pdf {"input_docx_path":"tmp/docbuilder/a/x.docx"} is self 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > convert_docx_to_pdf {"input_docx_path":"tmp/docbuilder/a/x.docx","output_pdf_path":"uploads/7/x.pdf"} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > convert_docx_to_pdf {"input_docx_path":"uploads/7/x.docx"} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > generate_document {"output_format":"docx"} is self 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > generate_document {"output_format":"xml"} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > place_project_document {"document_id":3} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > place_project_document {"document_id":3,"confirm_suggested":true} is refuse 0ms
+ Test Files  14 passed (14)
+      Tests  1009 passed (1009)
