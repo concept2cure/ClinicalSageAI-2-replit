@@ -92,6 +92,27 @@ describe('APPEND_ONLY_TABLES', () => {
       'public.doc_revisions',
       'public.concept2cure_signatures',
       'public.concept2cure_submission_snapshots',
+      // DP-66 (2026-10-01): written by INSERT only on every path; a ceiling, no trigger.
+      'public.proof_audit_logs',
+      'public.coauthor_validation_history',
+      'public.embedding_audit_log',
+      'public.ai_provider_audit_log',
+      'ai.gateway_audit_log',
+      'public.credit_ledger',
+      'public.document_audit_trail',
+      'public.ectd_submission_status_history',
+      'public.specification_audit_log',
+      'public.stab_audit',
+      'public.ivdr_validation_parameter_history',
+      'public.ivdr_evidence_result_history',
+      'public.ivdr_cdx_status_history',
+      'regulatory_harmonization.export_job_audit_log',
+      // P1-24's domain-history stores (DP-66, 2026-10-01).
+      'public.workflow_history',
+      'public.document_audit_logs',
+      'public.regulatory_audit_logs',
+      'public.c2c_ana_actions',
+      'public.authoring_signatures',
     ]);
     const carveOuts = APPEND_ONLY_TABLES.filter((t: Store) => t.updatableColumns);
     expect(carveOuts).toEqual([{ schema: 'public', name: 'electronic_signatures', updatableColumns: SUPERSESSION }]);
@@ -126,9 +147,33 @@ describe('APPEND_ONLY_TABLES', () => {
       'public.cre_evidence_sources':
         'write-once and one-way columns, the rest (title, extraction and ingestion status) governed by its writer: UPDATEs (20261001_cre_evidence_sources_capture_immutability.sql)',
     };
+    const DP66_CEILING_ONLY =
+      'DP-66 (2026-10-01): the grant ceiling only. The census found it written by INSERT only on every path; it has no immutability trigger for the boot to require (docs/evidence/D6/2026-10-01-tranche-4/DP-66-store-ceiling/)';
+    const P1_24_NOT_YET_BOOT_REQUIRED =
+      'append-only by trigger (migrations/20261001_domain_history_append_only.sql, P1-24); the boot does not require that trigger yet (server/services/audit/audit-immutability-triggers.ts, handed on: another lane changed it inside 24 hours on 2026-10-01)';
     const NOT_BOOT_REQUIRED: Record<string, string> = {
+      'public.workflow_history': P1_24_NOT_YET_BOOT_REQUIRED,
+      'public.document_audit_logs': P1_24_NOT_YET_BOOT_REQUIRED,
+      'public.regulatory_audit_logs': P1_24_NOT_YET_BOOT_REQUIRED,
+      'public.c2c_ana_actions': P1_24_NOT_YET_BOOT_REQUIRED,
+      'public.authoring_signatures': P1_24_NOT_YET_BOOT_REQUIRED,
+
       'public.audit_log_archives':
         "the archive door's own ledger, append-only by triggers from the same file as audit_logs' (20260617)",
+      'public.proof_audit_logs': DP66_CEILING_ONLY,
+      'public.coauthor_validation_history': DP66_CEILING_ONLY,
+      'public.embedding_audit_log': DP66_CEILING_ONLY,
+      'public.ai_provider_audit_log': DP66_CEILING_ONLY,
+      'ai.gateway_audit_log': DP66_CEILING_ONLY,
+      'public.credit_ledger': DP66_CEILING_ONLY,
+      'public.document_audit_trail': DP66_CEILING_ONLY,
+      'public.ectd_submission_status_history': DP66_CEILING_ONLY,
+      'public.specification_audit_log': DP66_CEILING_ONLY,
+      'public.stab_audit': DP66_CEILING_ONLY,
+      'public.ivdr_validation_parameter_history': DP66_CEILING_ONLY,
+      'public.ivdr_evidence_result_history': DP66_CEILING_ONLY,
+      'public.ivdr_cdx_status_history': DP66_CEILING_ONLY,
+      'regulatory_harmonization.export_job_audit_log': DP66_CEILING_ONLY,
     };
     const guarded = new Set(EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS.map((t) => `${t.schema}.${t.table}`));
     const stores = new Set(names(APPEND_ONLY_TABLES));

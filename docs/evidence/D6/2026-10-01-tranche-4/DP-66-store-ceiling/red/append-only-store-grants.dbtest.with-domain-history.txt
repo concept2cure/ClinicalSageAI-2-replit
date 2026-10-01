@@ -1,0 +1,192 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the stores exist on this database > every append-only store this file names is present (a missing one would make the rest vacuous) 2ms
+ × tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > withholds UPDATE, DELETE and TRUNCATE on every append-only store, and keeps SELECT and INSERT 12ms
+   → expected [ …(19) ] to deeply equal []
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > electronic_signatures: the supersession columns stay updatable (revocation), the attested ones do not 2ms
+ × tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > the privilege refuses first: UPDATE/DELETE that reach no row, and TRUNCATE, are 42501 on every store 81ms
+   → expected [ …(38) ] to deeply equal []
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > the governed revocation statement still runs (its columns only) 3ms
+ × tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > a re-run of the recipe takes a hand GRANT of DELETE on audit_logs back 5ms
+   → expected [ …(20) ] to deeply equal [ 'public.audit_logs: DELETE' ]
+ × tests/db/append-only-store-grants.dbtest.ts > the deploy grant audit (auditRuntimeRoleGrants → readiness contract, deploy-migrate 5/5) > reports the per-run role clean on every store: nothing beyond the ceiling, nothing denied 38ms
+   → expected [ { …(2) } ] to deeply equal []
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the deploy grant audit (auditRuntimeRoleGrants → readiness contract, deploy-migrate 5/5) > refuses a hand GRANT of DELETE, TRUNCATE or an attested column on a store, by name 62ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > holds no UPDATE, DELETE or TRUNCATE on any append-only store 3ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > as app_service, in its own tenant: DELETE and UPDATE of an audit row are refused by the privilege (42501), before the trigger 15ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > with the trigger out of the way (replica mode), app_service still cannot remove or rewrite an audit row 6ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > cannot append to the archive ledger itself: the forged row of DP-68 is refused by the privilege (42501) 4ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > the archive door still deletes for app_service, and records the batch in its ledger 7ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > the deploy grant audit agrees with the catalog for app_service: nothing beyond the ceiling on any store 25ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > withholds UPDATE, DELETE and TRUNCATE on every append-only store, and keeps SELECT and INSERT
+AssertionError: expected [ …(19) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "ai.gateway_audit_log: UPDATE,DELETE",
++   "public.ai_provider_audit_log: UPDATE,DELETE",
++   "public.authoring_signatures: UPDATE,DELETE",
++   "public.c2c_ana_actions: UPDATE,DELETE",
++   "public.coauthor_validation_history: UPDATE,DELETE",
++   "public.credit_ledger: UPDATE,DELETE",
++   "public.document_audit_logs: UPDATE,DELETE",
++   "public.document_audit_trail: UPDATE,DELETE",
++   "public.ectd_submission_status_history: UPDATE,DELETE",
++   "public.embedding_audit_log: UPDATE,DELETE",
++   "public.ivdr_cdx_status_history: UPDATE,DELETE",
++   "public.ivdr_evidence_result_history: UPDATE,DELETE",
++   "public.ivdr_validation_parameter_history: UPDATE,DELETE",
++   "public.proof_audit_logs: UPDATE,DELETE",
++   "public.regulatory_audit_logs: UPDATE,DELETE",
++   "public.specification_audit_log: UPDATE,DELETE",
++   "public.stab_audit: UPDATE,DELETE",
++   "public.workflow_history: UPDATE,DELETE",
++   "regulatory_harmonization.export_job_audit_log: UPDATE,DELETE",
++ ]
+
+ ❯ tests/db/append-only-store-grants.dbtest.ts:232:46
+    230| describe('the grant recipe (provisionAppServiceRole) on a per-run role…
+    231|   it('withholds UPDATE, DELETE and TRUNCATE on every append-only store…
+    232|     expect(await beyondCeiling(runtimeRole)).toEqual([]);
+       |                                              ^
+    233|     const held = await privileges(runtimeRole);
+    234|     for (const { store } of present) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > the privilege refuses first: UPDATE/DELETE that reach no row, and TRUNCATE, are 42501 on every store
+AssertionError: expected [ …(38) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "UPDATE public.proof_audit_logs SET id = id WHERE false → ran (0 row(s))",
++   "DELETE FROM public.proof_audit_logs WHERE false → ran (0 row(s))",
++   "UPDATE public.coauthor_validation_history SET id = id WHERE false → ran (0 row(s))",
++   "DELETE FROM public.coauthor_validation_history WHERE false → ran (0 row(s))",
++   "UPDATE public.embedding_audit_log SET id = id WHERE false → ran (0 row(s))",
++   "DELETE FROM public.embedding_audit_log WHERE false → ran (0 row(s))",
++   "UPDATE public.ai_provider_audit_log SET id = id WHERE false → ran (0 row(s))",
++   "DELETE FROM public.ai_provider_audit_log WHERE false → ran (0 row(s))",
++   "UPDATE ai.gateway_audit_log SET id = id WHERE false → ran (0 row(s))",
++   "DELETE FROM ai.gateway_audit_log WHERE false → ran (0 row(s))",
++   "UPDATE public.credit_ledger SET id = id WHERE false → ran (0 row(s))",
++   "DELETE FROM public.credit_ledger WHERE false → ran (0 row(s))",
++   "UPDATE public.document_audit_trail SET id = id WHERE false → ran (0 row(s))",
++   "DELETE FROM public.document_audit_trail WHERE false → ran (0 row(s))",
++   "UPDATE public.ectd_submission_status_history SET id = id WHERE false → ran (0 row(s))",
++   "DELETE FROM public.ectd_submission_status_history WHERE false → ran (0 row(s))",
++   "UPDATE public.specification_audit_log SET id = id WHERE false → ran (0 row(s))",
++   "DELETE FROM public.specification_audit_log WHERE false → ran (0 row(s))",
++   "UPDATE public.stab_audit SET event_id = event_id WHERE false → ran (0 row(s))",
++   "DELETE FROM public.stab_audit WHERE false → ran (0 row(s))",
++   "UPDATE public.ivdr_validation_parameter_history SET id = id WHERE false → ran (0 row(s))",
++   "DELETE FROM public.ivdr_validation_parameter_history WHERE false → ran (0 row(s))",
++   "UPDATE public.ivdr_evidence_result_history SET id = id WHERE false → ran (0 row(s))",
++   "DELETE FROM public.ivdr_evidence_result_history WHERE false → ran (0 row(s))",
++   "UPDATE public.ivdr_cdx_status_history SET id = id WHERE false → ran (0 row(s))",
++   "DELETE FROM public.ivdr_cdx_status_history WHERE false → ran (0 row(s))",
++   "UPDATE regulatory_harmonization.export_job_audit_log SET id = id WHERE false → ran (0 row(s))",
++   "DELETE FROM regulatory_harmonization.export_job_audit_log WHERE false → ran (0 row(s))",
++   "UPDATE public.workflow_history SET id = id WHERE false → ran (0 row(s))",
++   "DELETE FROM public.workflow_history WHERE false → ran (0 row(s))",
++   "UPDATE public.document_audit_logs SET id = id WHERE false → ran (0 row(s))",
++   "DELETE FROM public.document_audit_logs WHERE false → ran (0 row(s))",
++   "UPDATE public.regulatory_audit_logs SET id = id WHERE false → ran (0 row(s))",
++   "DELETE FROM public.regulatory_audit_logs WHERE false → ran (0 row(s))",
++   "UPDATE public.c2c_ana_actions SET id = id WHERE false → ran (0 row(s))",
++   "DELETE FROM public.c2c_ana_actions WHERE false → ran (0 row(s))",
++   "UPDATE public.authoring_signatures SET id = id WHERE false → ran (0 row(s))",
++   "DELETE FROM public.authoring_signatures WHERE false → ran (0 row(s))",
++ ]
+
+ ❯ tests/db/append-only-store-grants.dbtest.ts:249:49
+    247|
+    248|   it('the privilege refuses first: UPDATE/DELETE that reach no row, an…
+    249|     expect(await mutationAttempts(runtimePool)).toEqual([]);
+       |                                                 ^
+    250|   });
+    251|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > a re-run of the recipe takes a hand GRANT of DELETE on audit_logs back
+AssertionError: expected [ …(20) ] to deeply equal [ 'public.audit_logs: DELETE' ]
+
+- Expected
++ Received
+
+  [
++   "ai.gateway_audit_log: UPDATE,DELETE",
++   "public.ai_provider_audit_log: UPDATE,DELETE",
+    "public.audit_logs: DELETE",
++   "public.authoring_signatures: UPDATE,DELETE",
++   "public.c2c_ana_actions: UPDATE,DELETE",
++   "public.coauthor_validation_history: UPDATE,DELETE",
++   "public.credit_ledger: UPDATE,DELETE",
++   "public.document_audit_logs: UPDATE,DELETE",
++   "public.document_audit_trail: UPDATE,DELETE",
++   "public.ectd_submission_status_history: UPDATE,DELETE",
++   "public.embedding_audit_log: UPDATE,DELETE",
++   "public.ivdr_cdx_status_history: UPDATE,DELETE",
++   "public.ivdr_evidence_result_history: UPDATE,DELETE",
++   "public.ivdr_validation_parameter_history: UPDATE,DELETE",
++   "public.proof_audit_logs: UPDATE,DELETE",
++   "public.regulatory_audit_logs: UPDATE,DELETE",
++   "public.specification_audit_log: UPDATE,DELETE",
++   "public.stab_audit: UPDATE,DELETE",
++   "public.workflow_history: UPDATE,DELETE",
++   "regulatory_harmonization.export_job_audit_log: UPDATE,DELETE",
+  ]
+
+ ❯ tests/db/append-only-store-grants.dbtest.ts:267:46
+    265|   it('a re-run of the recipe takes a hand GRANT of DELETE on audit_log…
+    266|     await owner.query(`GRANT DELETE ON public.audit_logs TO ${runtimeR…
+    267|     expect(await beyondCeiling(runtimeRole)).toEqual(['public.audit_lo…
+       |                                              ^
+    268|     await refreshRuntimeRoleGrants(owner, { role: runtimeRole });
+    269|     expect(await beyondCeiling(runtimeRole)).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/db/append-only-store-grants.dbtest.ts > the deploy grant audit (auditRuntimeRoleGrants → readiness contract, deploy-migrate 5/5) > reports the per-run role clean on every store: nothing beyond the ceiling, nothing denied
+AssertionError: expected [ { …(2) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "held": [
++       "DELETE",
++     ],
++     "relation": "public.audit_logs",
++   },
++ ]
+
+ ❯ tests/db/append-only-store-grants.dbtest.ts:277:43
+    275|     const audit = await auditRuntimeRoleGrants(owner, runtimeRole);
+    276|     const onStores = (r: { relation: string }) => (STORES as readonly …
+    277|     expect(audit.excess.filter(onStores)).toEqual([]);
+       |                                           ^
+    278|     expect(audit.denied.filter(onStores)).toEqual([]);
+    279|     expect(audit.ownedAppendOnly).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 10 passed (14)
+   Start at  21:58:36
+   Duration  1.24s (transform 130ms, setup 95ms, import 93ms, tests 768ms, environment 0ms)
+
