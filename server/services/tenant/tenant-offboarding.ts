@@ -561,7 +561,7 @@ export interface ArtifactRecordErasure {
  * A deployment without a door's tables has nothing to erase. One with the
  * tables but not the door is refused: their records would survive.
  */
-const PURGE_DOORS = Object.freeze([
+export const PURGE_DOORS = Object.freeze([
   {
     tables: ['ana_turn_records', 'ana_record_blobs'],
     fn: 'purge_tenant_turn_records',
@@ -1000,4 +1000,17 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
      purge updates that row rather than deleting it, so the cascade never fires
      and nothing but this list erases it. A leaf, so its position is free. */
   'organization_retention_settings',
+  /* AnA turn records and the texts they reference (rows D5/D6, 2026-10-01).
+     A turn record's body is Customer Data: the person's question, the files
+     and passages AnA was given, its tool inputs and its answer. The tenant
+     export returns it, and the purge erases it. Its audit-trail record, the
+     turn's chained audit_logs row, is kept with the rest of the audit trail
+     (MSA §10.2, DPA §3.5). Both tables refuse a plain DELETE from every role;
+     deleteTenantRows erases both, once, through their PURGE_DOORS entry, and
+     a door opens only for a table on this list. The 3938f0659 merge dropped
+     these two entries, so a purge kept every turn record until they were
+     restored (tenant-purge-artifact-records.dbtest.ts). Leaves, so their
+     position is free. */
+  'ana_turn_records',
+  'ana_record_blobs',
 ]);
