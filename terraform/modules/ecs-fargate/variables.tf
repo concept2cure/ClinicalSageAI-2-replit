@@ -111,6 +111,12 @@ variable "secret_arns" {
   default     = ["*"]
 }
 
+variable "secrets_kms_key_arn" {
+  type        = string
+  description = "Customer-managed KMS key the secrets are encrypted under. The execution role may decrypt with it through Secrets Manager only. Null: secrets are on aws/secretsmanager."
+  default     = null
+}
+
 variable "api_secrets" {
   type = list(object({
     name       = string
