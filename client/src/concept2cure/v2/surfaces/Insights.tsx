@@ -28,18 +28,19 @@ const RO_TIERS: Tier[] = [
   { id: 'enterprise', label: 'Enterprise', rank: 2 },
 ];
 
+/** A tier's display name. */
+function tierLabel(id: string): string {
+  return (RO_TIERS.find(t => t.id === id) || { label: id }).label;
+}
+
 const RO_FEATURE_TIER: Record<string, string> = {
   report_families: 'standard',
-  prediction_forecast_report: 'professional',
-  crl_rtf_premortem: 'professional',
   scheduled_reports: 'professional',
   portfolio_rollup: 'enterprise',
 };
 
 const RO_FEATURE_LABEL: Record<string, string> = {
   report_families: 'Governed report families',
-  prediction_forecast_report: 'Predictive forecast',
-  crl_rtf_premortem: 'CRL / RTF pre-mortem',
   scheduled_reports: 'Scheduled reports',
   portfolio_rollup: 'Portfolio rollup',
 };
@@ -114,8 +115,6 @@ const RO_TYPES: ReportType[] = [
   { typeId: 'effort.certification_register', label: 'Effort Certification Register', family: 'effort_certification', scopes: ['program', 'project', 'account'], segments: ['academic', 'biotech', 'pharma'], t: { allowPartial: true, requireBlockers: true } },
   { typeId: 'research_security.coi_register', label: 'Research Security & COI Disclosure Register', family: 'research_security', scopes: ['program', 'project', 'account'], segments: ['academic', 'biotech', 'pharma'], t: { allowPartial: true, requireBlockers: true } },
   { typeId: 'research_admin.scorecard', label: 'Research Administration Scorecard', family: 'research_admin', scopes: ['program', 'account'], segments: ['academic', 'biotech', 'pharma'], t: { allowPartial: true, requireBlockers: true } },
-  { typeId: 'prediction.regulatory_forecast', label: 'Predictive Regulatory Forecast', family: 'prediction', scopes: ['program', 'project', 'submission'], segments: ['pharma', 'biotech', 'device'], t: { allowPartial: true, forbidFinal: true, requireDisclosure: true } },
-  { typeId: 'prediction.crl_rtf_premortem', label: 'CRL / RTF Pre-Mortem', family: 'prediction', scopes: ['program', 'project', 'submission'], segments: ['pharma', 'biotech'], t: { allowPartial: true, forbidFinal: true, requireDisclosure: true } },
 ];
 
 /* ── Segment labels ── */
@@ -149,7 +148,8 @@ interface ProgramCtx {
    enterprise-gated portfolio rollup. No metric is originated on the client;
    filing/agency/pdufa arrive as explicit null (unsourced), never faked. */
 interface CanvasLeadProgram {
-  scope: 'program';
+  /** The lead is a project (L189: it said 'program' with a project id). */
+  scope: 'project';
   scopeId: string;
   projectId: number;
   code: string | null;
@@ -250,8 +250,6 @@ function roDecide(typeId: string, family: string, tier: string): { entitled: boo
   const hay = (typeId + ' ' + (family || '')).toLowerCase();
   let feature = 'report_families';
   if (/(^|[._\s])portfolio|board[_\s-]?pack|rollup|roll[_\s-]up/.test(hay)) feature = 'portfolio_rollup';
-  else if (/premortem|pre[_\s-]?mortem|(^|[._\s])crl([._\s]|$)|(^|[._\s])rtf([._\s]|$)/.test(hay)) feature = 'crl_rtf_premortem';
-  else if (/(^|[._\s])prediction|forecast|trajectory|probability[_\s-]?of[_\s-]?success/.test(hay)) feature = 'prediction_forecast_report';
   const required = RO_FEATURE_TIER[feature] || 'standard';
   const rank = (t: string) => (RO_TIERS.find(x => x.id === t) || { rank: 0 }).rank;
   return { entitled: rank(tier) >= rank(required), feature, requiredTier: required };
@@ -274,11 +272,11 @@ interface Preset {
    Insights.presetCopy.test.ts. */
 const RO_PRESETS: Record<string, Preset[]> = {
   pharma: [
-    { id: 'preapproval', label: 'Pre-approval command pack', types: ['readiness.executive_digest', 'prediction.crl_rtf_premortem', 'ema.rmp_psur_signal_alignment', 'compliance.audit_assurance_pack'], why: 'Pairs the readiness digest with a CRL/RTF pre-mortem, safety-signal alignment and the audit assurance an action date calls for.' },
+    { id: 'preapproval', label: 'Pre-approval command pack', types: ['readiness.executive_digest', 'ema.rmp_psur_signal_alignment', 'compliance.audit_assurance_pack'], why: 'Pairs the readiness digest with safety-signal alignment and the audit assurance an action date calls for.' },
     { id: 'globalfile', label: 'Global filing harmonization', types: ['ema.maa_readiness_assessment', 'china_nmpa.ctd_module_gap_analysis', 'provenance.evidence_trace_report'], why: 'Reuse the US dossier across EMA and NMPA — the gap analyses show what each region still needs.' },
   ],
   biotech: [
-    { id: 'blaassembly', label: 'BLA assembly pack', types: ['readiness.executive_digest', 'prediction.regulatory_forecast', 'provenance.evidence_trace_report', 'fcoi.disclosure_register'], why: 'Tracks readiness, forecasts the review trajectory, and closes the evidence and financial-disclosure gaps before filing.' },
+    { id: 'blaassembly', label: 'BLA assembly pack', types: ['readiness.executive_digest', 'provenance.evidence_trace_report', 'fcoi.disclosure_register'], why: 'Tracks readiness and closes the evidence and financial-disclosure gaps before filing.' },
     { id: 'nonclin', label: 'Nonclinical & CMC readiness', types: ['nonclinical.study_send_register', 'compliance.audit_assurance_pack'], why: 'Confirm Module 4 / SEND datasets and the audit trail are submission-grade.' },
   ],
   medtech: [
@@ -324,8 +322,6 @@ function roResolveType(utterance: string, seg: string): ReportType | null {
     tokens.forEach(tok => { if (hay.includes(tok)) s++; });
     if (/510|equivalence|predicate/.test(text) && t.typeId.includes('510k')) s += 3;
     if (/readiness|ready|digest|executive/.test(text) && t.typeId === 'readiness.executive_digest') s += 3;
-    if (/crl|rtf|pre.?mortem|reject/.test(text) && t.typeId === 'prediction.crl_rtf_premortem') s += 3;
-    if (/forecast|predict|trajectory/.test(text) && t.typeId === 'prediction.regulatory_forecast') s += 3;
     if (/etmf|tmf|trial master/.test(text) && t.typeId === 'etmf.completeness_pack') s += 3;
     if (/audit|compliance|part 11|assurance/.test(text) && t.typeId === 'compliance.audit_assurance_pack') s += 2;
     if (/evidence|provenance|trace/.test(text) && t.typeId === 'provenance.evidence_trace_report') s += 2;
@@ -398,7 +394,7 @@ function roSuggestForClient(p: ProgramCtx, seg: string) {
     prompts: [
       `Build the ${preset.label}`,
       p.readiness != null ? `How ready is ${p.code} to file?` : `What reports can you run for ${p.code}?`,
-      seg === 'pharma' || seg === 'biotech' ? 'What is my CRL risk?' : 'Show the 510(k) equivalence matrix',
+      seg === 'pharma' || seg === 'biotech' ? 'Run the audit assurance pack' : 'Show the 510(k) equivalence matrix',
       'Compare readiness across all my programs',
     ],
   };
@@ -504,7 +500,12 @@ function roRouteReply(utterance: string, seg: string, tier: string, ctx: { progr
 
   if (name === 'portfolio_readiness') {
     const dec = roDecide('portfolio_rollup', 'portfolio', tier);
-    if (!dec.entitled) return lockMsg('portfolio_rollup', 'Portfolio readiness rollup');
+    /* The organisation's real entitlement, not the previewed tier: previewing
+       Enterprise on a Standard plan answered "Your plan unlocks the portfolio
+       rollup, but there are no governed programs", false twice (reporting
+       review 2026-10-01). The server withholds the programs from an org it
+       does not entitle. */
+    if (!dec.entitled || !ctx.portfolio.entitled) return lockMsg('portfolio_rollup', 'Portfolio readiness rollup');
     // Live, enterprise-gated rollup — programs is null when the org isn't
     // entitled or has none; show an honest empty, never a fabricated board.
     const rows = ctx.portfolio.programs ? roPortfolioFrom(ctx.portfolio.programs) : [];
@@ -522,12 +523,19 @@ function roRouteReply(utterance: string, seg: string, tier: string, ctx: { progr
     const reasons = (rep.truthfulness && rep.truthfulness.reasons) || [];
     return { tool: name, text: `"${rep.reportTypeLabel}" is held at ${rep.status} because: ${reasons.join('; ')}. Those are the gate's own reasons, verbatim. Clear them and it can promote toward final; the status gate is deterministic.`, report: rep, dashboard: null };
   }
+  /* A forecast or CRL/RTF pre-mortem was the readiness run under a prediction's
+     title, behind a Professional lock: no prediction model ran (reporting
+     review 2026-10-01). None is part of this release, and the server now
+     refuses a prediction type as a run. The question is answered with what the
+     governed record does hold. */
   if (name === 'get_prediction') {
-    const isPre = /crl|rtf|reject|refuse/.test((utterance || '').toLowerCase());
-    const t = RO_TYPES.find(x => x.typeId === (isPre ? 'prediction.crl_rtf_premortem' : 'prediction.regulatory_forecast'))!;
-    const dec = entitledFor(t);
-    if (!dec.entitled) return lockMsg(dec.feature, t.label);
-    return { tool: name, text: `Running the ${t.label} for ${p.code}. It is advisory — the model is not validated, so every projected value carries a disclosure and the result is held at partial, never final.`, report: null, reportType: t, dashboard: null };
+    return {
+      tool: name,
+      text: `Forecasts and CRL/RTF pre-mortems are not part of this release: no validated prediction model is in the governed record, and a readiness report is not shown under a prediction's name. The Executive Readiness Digest states ${p.code}'s evaluated readiness and the blockers that stand before filing.`,
+      chips: [['Executive Readiness Digest', `Generate the executive readiness digest for ${p.code}`]],
+      report: null,
+      dashboard: null,
+    };
   }
   const resolved = roResolveType(utterance, seg);
   if (name === 'list_report_types' || !resolved) {
@@ -536,7 +544,7 @@ function roRouteReply(utterance: string, seg: string, tier: string, ctx: { progr
   }
   const dec = entitledFor(resolved);
   if (!dec.entitled) return lockMsg(dec.feature, resolved.label);
-  return { tool: 'generate_report', text: `Running the ${resolved.label} for ${p.code} against the governed record. Every value is provenance-linked to its governed source; none is originated here.`, report: null, reportType: resolved, dashboard: null };
+  return { tool: 'generate_report', text: `Running the ${resolved.label} for ${p.code} against the governed record. Every value is computed from the governed record; none is originated here.`, report: null, reportType: resolved, dashboard: null };
 }
 
 /* ── Inline helpers ── */
@@ -720,7 +728,7 @@ function ROReport({ report, onExport, onFinalize, seal, compact }: {
 /* ── RODashboard ── */
 /* `onAsk` is gone from here too — it was declared, threaded down from the
    canvas and never called once in the whole component. */
-function RODashboard({ dashboard, tier, onRun, canRun }: { dashboard: DashboardData; tier: string; onRun: (t: ReportType) => void; canRun: boolean }) {
+function RODashboard({ dashboard, tier, onRun, canRun, scope }: { dashboard: DashboardData; tier: string; onRun: (t: ReportType) => void; canRun: boolean; scope: string }) {
   if (!dashboard) return null;
 
   if (dashboard.kind === 'portfolio') {
@@ -742,7 +750,7 @@ function RODashboard({ dashboard, tier, onRun, canRun }: { dashboard: DashboardD
             </div>
           ))}
         </div>
-        <div className="ro-dash-note">{I.info} Readiness values are the governed scores per program — AnA ranks and frames them, it does not recompute them.</div>
+        <div className="ro-dash-note">{I.info} Readiness values are the governed scores per program, in the order the server ranked them. The average is taken here, over the programs that have one.</div>
       </div>
     );
   }
@@ -802,6 +810,16 @@ function RODashboard({ dashboard, tier, onRun, canRun }: { dashboard: DashboardD
           /* Running a report creates a governed record, which the server refuses
              to a role without governed:write. The tile says so instead of
              offering a run that will be refused. */
+          /* A type that does not run at this scope (research_admin.scorecard runs
+             over a program group or account) says so instead of offering a run
+             the server refuses. */
+          if (!t.scopes.includes(scope)) return (
+            <div key={t.typeId} className="ro-pack-card is-locked">
+              <div className="ro-pack-fam">{fam.label}</div>
+              <div className="ro-pack-title">{t.label}</div>
+              <div className="ro-pack-sub">Runs over {t.scopes.join(' or ')}, not a single {scope}.</div>
+            </div>
+          );
           if (!canRun) return (
             <div key={t.typeId} className="ro-pack-card is-locked">
               <div className="ro-pack-fam">{fam.label}{fam.region ? <span className="ro-region">{fam.region}</span> : null}</div>
@@ -1057,7 +1075,9 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
   // Real subscription tier comes from the overview; `tierOverride` is the local
   // "preview on another plan" control (canonical entitlement UX), not persisted.
   const [tierOverride, setTierOverride] = useState<string | null>(null);
-  const tier = tierOverride ?? data?.tier ?? 'standard';
+  const realTier = data?.tier ?? 'standard';
+  const tier = tierOverride ?? realTier;
+  const previewing = tierOverride != null && tierOverride !== realTier;
   const [thread, setThread] = useState<ThreadMsg[]>([]);
   const [draft, setDraft] = useState('');
   const [report, setReport] = useState<RenderedReport | null>(null);
@@ -1207,7 +1227,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
           <EmptyState
             icon={I.barChart || I.fileText}
             title="No program readiness yet"
-            hint="Once a program with a governed readiness run exists in your organization, the reporting canvas opens here — flagship readiness, the portfolio rollup, and every governed report, all provenance-linked. Nothing is estimated."
+            hint="Once a program with a governed readiness run exists in your organization, the reporting canvas opens here — flagship readiness, the portfolio rollup, and every governed report, computed from the governed record. Nothing is estimated."
             /* Audit and compliance reports read the organisation's own records,
                not a program, so they stay reachable before any program exists. */
             action={{ label: 'Audit & compliance reports', onAct: () => onNav && onNav('compliance-reports') }}
@@ -1293,8 +1313,16 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
         <div className="rc-composer">
           <div className="rc-tier" role="group" aria-label="Subscription tier">
             <span className="rc-tier-lbl">Plan</span>
-            {RO_TIERS.map(t => (<button key={t.id} className={'rc-tier-b' + (tier === t.id ? ' on' : '')} onClick={() => setTierOverride(t.id)}>{t.label}</button>))}
+            {RO_TIERS.map(t => (<button key={t.id} className={'rc-tier-b' + (tier === t.id ? ' on' : '')} aria-pressed={tier === t.id} onClick={() => setTierOverride(t.id)}>{t.label}</button>))}
           </div>
+          {/* A preview looked exactly like the organisation's plan (reporting
+              review 2026-10-01). It says it is one, and names the real plan. */}
+          {previewing && (
+            <div className="ro-dash-note" role="status" data-testid="rc-tier-preview">
+              {I.info} Previewing {tierLabel(tier)}. Your organization's plan is {tierLabel(realTier)}.{' '}
+              <button type="button" className="rc-chip" onClick={() => setTierOverride(null)}>Back to {tierLabel(realTier)}</button>
+            </div>
+          )}
           <div className="rc-input">
             <textarea rows={1} aria-label="Describe the report or dashboard you need" value={draft} placeholder={`Describe the report or dashboard you need for ${p.code}...`}
               onChange={e => setDraft(e.target.value)}
@@ -1313,7 +1341,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
             onFinalize={canFinalize && reportRunId != null && report.status !== 'final' ? () => setSigning(true) : undefined}
             seal={seal}
           />
-          : dashboard ? <RODashboard dashboard={dashboard} tier={tier} onRun={runFromTile} canRun={canWrite} />
+          : dashboard ? <RODashboard dashboard={dashboard} tier={tier} onRun={runFromTile} canRun={canWrite} scope={p.scope} />
           : (
             <div className="rc-empty">
               <div className="rc-empty-mark">*</div>
@@ -1323,7 +1351,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
                   recommendation for `roPresetsForSeg(seg)`, which reads neither
                   the portfolio nor the program. */}
               <h2 className="rc-empty-h">Governed reports, built to order.</h2>
-              <p className="rc-empty-s">Describe what you need on the left, or start from one of the standard packs for {p.code}. Every value is provenance-linked to a governed source; nothing is estimated.</p>
+              <p className="rc-empty-s">Describe what you need on the left, or start from one of the standard packs for {p.code}. Every value is computed from the governed record; nothing is estimated.</p>
               <div className="rc-empty-presets">
                 {roPresetsForSeg(seg).map(pr => (
                   <button key={pr.id} className="rc-empty-preset" onClick={() => buildPreset(pr)}>

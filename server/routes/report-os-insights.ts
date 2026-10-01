@@ -27,10 +27,8 @@ import {
   type PredictionReportMeta,
 } from '../services/report-os/prediction/assembler';
 import type { PredictionInput } from '../services/report-os/prediction/types';
-import {
-  readinessTwinToTrajectoryInput,
-  runDeficiencyRiskForDraft,
-} from '../services/report-os/prediction/model-adapters';
+import { runDeficiencyRiskForDraft } from '../services/report-os/prediction/model-adapters';
+import { projectsInOrg, submissionInProject } from '../services/report-os/ownership';
 import { requireReportEntitlement } from '../services/report-os/entitlement-map';
 import { REPORT_TYPE_SEED } from '../services/report-os/taxonomy';
 import {
@@ -298,6 +296,20 @@ router.post('/predictions/run', async (req: Request, res: Response) => {
     }
     const body = parsed.data;
 
+    /* DP-64 (reporting review 2026-10-01). The forecast's input is the readiness
+       twin's assessment for `scopeId`, and the twin keeps no organisation on
+       its rows: there is nothing to prove the program is this organisation's,
+       so a member could read another tenant's assessment by naming its id. The
+       twin is also RULE 2's regulatory digital twin, outside this release. The
+       forecast is refused before anything is read. */
+    if (body.kind === 'regulatory_forecast') {
+      return res.status(422).json({
+        error:
+          'A regulatory forecast cannot be bound to this organisation: its readiness source records no organisation. Nothing was run.',
+        code: 'FORECAST_NOT_SCOPED',
+      });
+    }
+
     const typeInfo = PREDICTION_KIND_TO_TYPE[body.kind];
     // Entitlement gate — fail-closed. Both prediction kinds are professional.
     const decision = await requireReportEntitlement(
@@ -314,35 +326,27 @@ router.post('/predictions/run', async (req: Request, res: Response) => {
       });
     }
 
-    let input: PredictionInput | null;
-    if (body.kind === 'regulatory_forecast') {
-      input = await readinessTwinToTrajectoryInput({
-        programId: body.scopeId,
-        submissionType: body.submissionType,
-        agency: body.agency ?? 'FDA',
-      });
-      // Honest refusal: no assessment on record → don't fabricate a 0-score.
-      if (input === null) {
-        return res.status(422).json({
-          error:
-            'No readiness assessment exists for this program yet. Run a submission-readiness assessment before requesting a forecast.',
-          code: 'no_assessment',
-        });
-      }
-    } else {
-      input = await runDeficiencyRiskForDraft({
-        organizationId,
-        projectId: body.projectId,
-        submissionId: body.submissionId,
-        submissionType: body.submissionType,
-        targetAgency: body.targetAgency,
-        therapeuticArea: body.therapeuticArea ?? null,
-        presentSections: body.presentSections,
-        sectionScores: body.sectionScores,
-        harmonizeIssueCount: body.harmonizeIssueCount,
-        openEscalations: body.openEscalations,
-      });
+    // The pre-mortem stores its result against the project and submission it
+    // names; an id from another tenant reads as not found, before any model runs.
+    if (body.projectId != null && !(await projectsInOrg(organizationId, [body.projectId])).has(body.projectId)) {
+      return res.status(404).json({ error: 'Project not found' });
     }
+    if (body.submissionId != null) {
+      const owned = body.projectId != null && (await submissionInProject(organizationId, body.projectId, body.submissionId));
+      if (!owned) return res.status(404).json({ error: 'Submission not found' });
+    }
+    const input: PredictionInput = await runDeficiencyRiskForDraft({
+      organizationId,
+      projectId: body.projectId,
+      submissionId: body.submissionId,
+      submissionType: body.submissionType,
+      targetAgency: body.targetAgency,
+      therapeuticArea: body.therapeuticArea ?? null,
+      presentSections: body.presentSections,
+      sectionScores: body.sectionScores,
+      harmonizeIssueCount: body.harmonizeIssueCount,
+      openEscalations: body.openEscalations,
+    });
 
     const meta: PredictionReportMeta = {
       reportTypeId: typeInfo.typeId,

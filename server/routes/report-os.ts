@@ -56,6 +56,8 @@ import {
   type CeremonySignMeaning,
 } from '../services/part11/governed-signature-ceremony';
 import { requireGovernedReason } from './governed-reason';
+import { projectsInOrg, submissionInProject } from '../services/report-os/ownership';
+import { PREDICTION_NOT_A_RUN, isPredictionFamily } from '../services/report-os/prediction/report-types';
 import { REPORT_FINALIZE_ROLES } from '@shared/constants/permissions';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
 
@@ -610,37 +612,6 @@ async function bundleExportRefusal(
     if (!decision.entitled) return decision;
   }
   return null;
-}
-
-/**
- * Which of `projectIds` belong to `organizationId`. A program group, delivery
- * or captured letter names projects by id; an id from another tenant must read
- * as not found rather than become a membership or a record pointing across the
- * boundary. report_program_group_projects has no organization column and no
- * RLS policy, so nothing below the app would stop it.
- */
-async function projectsInOrg(organizationId: number, projectIds: number[]): Promise<Set<number>> {
-  if (projectIds.length === 0) return new Set();
-  const rows = await db
-    .select({ id: projects.id })
-    .from(projects)
-    .where(and(eq(projects.organizationId, organizationId), inArray(projects.id, projectIds)));
-  return new Set(rows.map(row => row.id));
-}
-
-/** Whether `submissionId` is a submission of `projectId` in `organizationId`. */
-async function submissionInProject(
-  organizationId: number,
-  projectId: number,
-  submissionId: string
-): Promise<boolean> {
-  const { rows } = await getPool().query(
-    `SELECT 1 FROM c2c_submissions
-      WHERE id::text = $1 AND organization_id = $2 AND project_id = $3
-      LIMIT 1`,
-    [submissionId, organizationId, projectId]
-  );
-  return rows.length > 0;
 }
 
 function resolveProjectIdForRun(run: {
@@ -1478,15 +1449,22 @@ router.post('/runs', async (req: Request, res: Response) => {
 
     // A project this org does not own is not found — not an empty report about
     // it, and not a run whose scope points across the boundary for a later
-    // bundle or delivery to follow. (Program scope is left as it was: its
-    // membership query already requires the group to be this org's, and the
-    // live caller sends a project id under that scope — ledger L189.)
+    // bundle or delivery to follow. (Program scope is a report program group:
+    // its membership query below requires the group to be this org's. The
+    // canvas sent a project id under it until L189 was closed on 2026-10-01;
+    // it now sends project scope.)
     if (scopeType === 'project') {
       const projectId = Number(scopeId);
       const owned = Number.isSafeInteger(projectId)
         ? await projectsInOrg(orgId, [projectId])
         : new Set<number>();
       if (owned.size === 0) return res.status(404).json({ error: 'Project not found' });
+    }
+
+    // A prediction is never computed by the generic run: it would be the
+    // readiness run under a prediction title (reporting review 2026-10-01).
+    if (isPredictionFamily(type[0].family)) {
+      return res.status(422).json({ error: PREDICTION_NOT_A_RUN, code: 'PREDICTION_NOT_A_RUN' });
     }
 
     // Entitlement gate: refuse to generate a report above the org's tier —
