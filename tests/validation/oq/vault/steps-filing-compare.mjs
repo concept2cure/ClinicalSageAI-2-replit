@@ -1,7 +1,7 @@
 /**
- * OQ-002 steps OQ-VAULT-15 to OQ-VAULT-18: filing from the data room (VR-11a),
- * confirming suggestions together (VR-11b), comparing two versions and the
- * library search (plan critique 15). Run by ./run.mjs after OQ-VAULT-14, in this order.
+ * OQ-002 steps OQ-VAULT-15 to OQ-VAULT-19: filing from the data room (VR-11a),
+ * confirming suggestions together (VR-11b), comparing two versions, the
+ * library search and the stored-file fixity check (plan critique 15). Run by ./run.mjs after OQ-VAULT-14, in this order.
  * Kept in their own module so the runner stays within the file-length limit.
  */
 import { ingestPdf, makePdfBuffer } from '../../lib/fixtures.mjs';
@@ -177,10 +177,37 @@ async function librarySearchStep({ step, state, stamp }) {
   );
 }
 
+async function fixityStep({ step, state }) {
+  await step(
+    {
+      id: 'OQ-VAULT-19',
+      urs: ['URS-VAULT-018'],
+      title: 'Every stored version of the program is re-proven against its recorded SHA-256, each verdict in the document\'s history',
+      action: 'POST /api/c2c/project-vault/:id/fixity; GET …/documents/<the OQ-VAULT-03 document>/history',
+      expected:
+        'HTTP 200 with checked equal to the number of stored versions, every one verified (no altered, missing or unreadable version on an installation ' +
+        'nobody has tampered with), and the document\'s history carrying a "Fixity check: verified" entry (vault.document.fixity).',
+      dependsOn: ['OQ-VAULT-03'],
+    },
+    async ({ api, expect }) => {
+      const r = await api('POST', `/api/c2c/project-vault/${state.programId}/fixity`, {});
+      expect(r.status === 200, `fixity: expected 200, got ${r.status}`, r.json);
+      const d = r.json.data;
+      const intact = d.checked > 0 && d.counts.verified === d.checked && d.findings.length === 0;
+      expect(intact, 'a stored version could not be proven against its SHA-256', d);
+      const h = await api('GET', `/api/c2c/project-vault/${state.programId}/documents/${state.doc.id}/history`);
+      const entries = h.json?.data?.entries ?? [];
+      expect(entries.some((e) => /^Fixity check: verified$/.test(e.event)), "the document's history has no fixity entry", entries.slice(0, 5));
+      return `${d.checked} stored version(s) re-proven, all verified; the history records the check`;
+    },
+  );
+}
+
 /** @param {{ step: Function, state: Record<string, any>, stamp: string }} run */
 export async function runFilingAndCompareSteps(run) {
   await fileFromRoomStep(run);
   await confirmTogetherStep(run);
   await compareVersionsStep(run);
   await librarySearchStep(run);
+  await fixityStep(run);
 }

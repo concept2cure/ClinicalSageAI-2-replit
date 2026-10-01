@@ -1989,6 +1989,38 @@ export default function createProjectVaultRoutes(): Router {
     }
   });
 
+  /* POST /:id/fixity — re-prove every stored version (plan critique 15, D5).
+     Each version is read through readVerifiedVaultBytes, the verifier a
+     download uses, and its verdict is written to the audit chain as its own
+     vault.document.fixity row (vault-fixity.ts). Behind the governed-write
+     gate, because each verdict is a record attributed to the person. */
+  router.post('/:id/fixity', requireEditorAccess, async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    try {
+      const { checkProgramFixity } = await import('../../services/vault/vault-fixity.js');
+      const out = await checkProgramFixity({
+        programId: String(req.params.id),
+        organizationId: orgId,
+        userId: (req as any).user?.id ?? null,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      if (!out.ok) return res.status(out.status).json({ success: false, error: out.code, message: out.message });
+      return res.json({
+        success: true,
+        data: { checkedAt: out.checkedAt, checked: out.checked, counts: out.counts, findings: out.findings, truncated: out.truncated },
+      });
+    } catch (err) {
+      logger.error('vault fixity check failed', { err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({
+        success: false,
+        error: 'FIXITY_FAILED',
+        message: 'The check did not finish. No result is shown; the verdicts recorded before it stopped are in each document\'s history.',
+      });
+    }
+  });
+
   /* POST /:id/documents/:documentId/details — Edit details (VR-05, D5).
      A version's title, type and classification, changed by a person with a
      reason for change. The writer (vault-metadata-edit.service.ts) checks the
