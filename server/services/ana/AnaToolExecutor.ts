@@ -4559,43 +4559,79 @@ registerToolHandler('check_regulatory_compliance', async (input) => {
 });
 
 // Validate Cross References
-registerToolHandler('validate_cross_references', async (input) => {
-  const documentId = input.document_id as string;
-  const references = input.section_references as string[] || [];
-
-  return JSON.stringify({
-    documentId,
-    referencesChecked: references.length,
-    results: references.map(ref => ({
-      reference: ref,
-      status: 'unverified',
-      note: 'Cross-reference validation requires document store access — flagged for manual review',
-    })),
-    recommendation: 'Run full cross-reference validation after document assembly',
-  });
+registerToolHandler('validate_cross_references', async (input, ctx) => {
+  /* Each reference is checked against the section outlines of the tenant's
+     own documents (c2c_document_sections): this document, then the other
+     documents of its project (cross-reference-check.ts). It used to read
+     nothing and return every reference 'unverified' — "requires document
+     store access". A table or figure number has no resolver, so it is not
+     assessed, never passed. */
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'validate_cross_references requires tenant context.' });
+  const documentId = typeof input.document_id === 'string' ? input.document_id.trim() : '';
+  if (!documentId) return JSON.stringify({ error: 'document_id (string) is required.' });
+  const references = Array.isArray(input.section_references)
+    ? (input.section_references as unknown[]).filter((r): r is string => typeof r === 'string' && r.trim() !== '')
+    : [];
+  if (references.length === 0) {
+    return JSON.stringify({
+      error: 'section_references is required: list the references to check, e.g. ["Section 3.2.P.5.1"].',
+    });
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const { checkCrossReference } = await import('./cross-reference-check.js');
+    const doc = await getPool().query(
+      `SELECT id, project_id, title FROM c2c_documents
+        WHERE org_id = $1 AND id = $2 LIMIT 1`,
+      [ctx.organizationId, documentId],
+    );
+    if (!doc.rows.length) return JSON.stringify({ error: `No document '${documentId}' in this organization.` });
+    /* This document's outline always, even when it belongs to no project
+       (project_id is nullable for legacy rows); the project's other
+       documents unless archived. */
+    const outlines = await getPool().query(
+      `SELECT s.document_id, d.title, s.section_key, s.status
+         FROM c2c_document_sections s
+         JOIN c2c_documents d ON d.id = s.document_id
+        WHERE d.org_id = $1
+          AND (d.id = $3 OR (d.project_id = $2 AND d.status <> 'archived'))
+        ORDER BY s.document_id, s.section_key`,
+      [ctx.organizationId, doc.rows[0].project_id, documentId],
+    );
+    const results = references.map((reference) => checkCrossReference(reference, documentId, outlines.rows));
+    const count = (...statuses: string[]) => results.filter((r) => statuses.includes(r.status)).length;
+    return JSON.stringify({
+      documentId,
+      referencesChecked: results.length,
+      results,
+      summary: {
+        found: count('found_in_document', 'found_in_project'),
+        outlineOnly: count('outline_only'),
+        parentOnly: count('parent_only'),
+        notFound: count('not_found'),
+        notAssessed: count('not_assessed'),
+      },
+      checkedAgainst: 'the section outlines of this document and of the other documents in its project',
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `validate_cross_references failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
 });
 
 // Generate Citation
 registerToolHandler('generate_citation', async (input) => {
-  const sourceType = input.source_type as string;
-  const sourceId = input.source_identifier as string;
-  const style = input.citation_style as string || 'regulatory';
-
-  const citationTemplates: Record<string, string> = {
-    fda_guidance: `U.S. Food and Drug Administration. "${sourceId}." Available at: https://www.fda.gov/regulatory-information/search-fda-guidance-documents.`,
-    ich_guideline: `International Council for Harmonisation. "${sourceId}." Available at: https://ich.org/page/ich-guidelines.`,
-    '21cfr': `Title 21, Code of Federal Regulations, Part ${sourceId}. U.S. Government Publishing Office.`,
-    eu_mdr: `Regulation (EU) 2017/745 of the European Parliament and of the Council, ${sourceId}.`,
-    iso_standard: `International Organization for Standardization. ${sourceId}. Geneva, Switzerland.`,
-    journal_article: `[Author(s)]. "[Title]." [Journal], ${sourceId}. DOI: [doi].`,
-  };
-
-  return JSON.stringify({
-    sourceType,
-    sourceIdentifier: sourceId,
-    citation: citationTemplates[sourceType] || `${sourceType}: ${sourceId}`,
-    style,
-  });
+  /* Formats only what it can stand behind, and says which (citation-generator.ts).
+     It filled a string template per type: a journal article came back as
+     `[Author(s)]. "[Title]." [Journal], <id>. DOI: [doi].`, and the style asked
+     for was echoed but never applied. */
+  const { generateCitation } = await import('./citation-generator.js');
+  return JSON.stringify(
+    await generateCitation({
+      sourceType: input.source_type,
+      sourceIdentifier: input.source_identifier,
+      style: input.citation_style,
+    }),
+  );
 });
 
 // Analyze Predicate Device
@@ -6897,39 +6933,57 @@ registerToolHandler('ind_get_status', async (input: Record<string, unknown>) => 
   }
 });
 
-registerToolHandler('rasterize_page', async (input: Record<string, unknown>) => {
-  const documentPath = input.document_path as string;
-  const pageNumber = (input.page_number as number) || 1;
-  const dpi = (input.dpi as number) || 150;
-
-  // Rasterization requires Puppeteer or LibreOffice — return instructions
-  return JSON.stringify({
-    success: true,
-    documentPath,
-    pageNumber,
-    dpi,
-    note: 'Page rasterization initiated. For DOCX, the document is converted to PDF first, then the specified page is rendered as a PNG image at the requested DPI.',
-    command: `libreoffice --headless --convert-to pdf "${documentPath}" && pdftoppm -png -r ${dpi} -f ${pageNumber} -l ${pageNumber} output.pdf page`,
-    message: `Rasterizing page ${pageNumber} of ${documentPath} at ${dpi} DPI.`,
-  });
+registerToolHandler('rasterize_page', async (input, ctx) => {
+  /* Renders one page of a PDF or DOCX in the tenant's document workspace to a
+     PNG in its scratch area (page-render.ts) and succeeds only when that file
+     exists. It used to return `success: true` and a shell command it never
+     ran, for any path at all. */
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ success: false, error: 'rasterize_page requires tenant context (organizationId).' });
+  }
+  const confined = workspacePathOrRefusal(input.document_path, 'document_path', ctx.organizationId);
+  if (!confined.ok) return confined.refusal;
+  const page = input.page_number === undefined || input.page_number === null ? 1 : Number(input.page_number);
+  if (!Number.isInteger(page) || page < 1) {
+    return JSON.stringify({ success: false, error: 'page_number must be a whole number of 1 or more.' });
+  }
+  const dpi = Math.min(300, Math.max(36, Math.round(Number(input.dpi) || 150)));
+  try {
+    const { renderDocumentPage } = await import('./page-render.js');
+    const rendered = await renderDocumentPage({
+      documentPath: confined.path,
+      page,
+      dpi,
+      outputDir: anaScratchDir(ctx.organizationId, 'docbuilder'),
+    });
+    const lowered = rendered.dpi < dpi ? ` (lowered from ${dpi} dpi to stay within the page pixel limit)` : '';
+    return JSON.stringify({
+      success: true,
+      ...rendered,
+      displayed: false,
+      message:
+        `Rendered page ${page} of ${rendered.pageCount} at ${rendered.dpi} dpi${lowered} to ${rendered.pngPath} ` +
+        `(${rendered.widthPx}×${rendered.heightPx} px). The image is a file on the server; it is not shown to you or the user.`,
+    });
+  } catch (err) {
+    return JSON.stringify({ success: false, error: err instanceof Error ? err.message : String(err) });
+  }
 });
 
-registerToolHandler('pdf_overlay', async (input: Record<string, unknown>) => {
-  const basePdfPath = input.base_pdf_path as string;
-  const overlays = input.overlays as Array<{ page: number; type: string; x: number; y: number; content: string; font_size?: number; color?: string }> || [];
-  const outputPath = input.output_path as string || basePdfPath.replace('.pdf', '_finalized.pdf');
-
-  // PDF overlay requires a PDF manipulation library (pdf-lib, PyPDF2, or reportlab)
-  return JSON.stringify({
-    success: true,
-    basePdfPath,
-    outputPath,
-    overlayCount: overlays.length,
-    overlays: overlays.map(o => ({ page: o.page, type: o.type, position: `(${o.x}, ${o.y})` })),
-    note: 'PDF overlay operations queued. Text, stamps, and image overlays will be applied at the specified coordinates.',
-    message: `${overlays.length} overlay operations will be applied to ${basePdfPath}.`,
-  });
-});
+registerToolHandler('pdf_overlay', async () =>
+  /* No overlay engine exists, so this applies nothing and says so. It used to
+     report overlays "queued" and "will be applied" — including approval
+     stamps and signatures — and write nothing. The planned replacement is the
+     deterministic bind engine (bind_pdf_package, plan WS13); whether to keep
+     this name until then or remove it is open founder decision 8. */
+  JSON.stringify({
+    success: false,
+    status: 'unavailable',
+    error:
+      'pdf_overlay is not available: no PDF overlay engine is connected, so nothing was applied or written. ' +
+      'Tell the user the overlay was not made.',
+  }),
+);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Precedent Engine handlers — exposes server/services/precedent-engine.ts.
@@ -9741,16 +9795,23 @@ registerToolHandler('check_consistency', async (input, ctx) => {
   if (!dimension) return JSON.stringify({ error: 'dimension is required.' });
   if (!left || !left.ref || !left.text) return JSON.stringify({ error: 'left { ref, text } is required.' });
   if (right.length === 0) return JSON.stringify({ error: 'right (non-empty array) is required.' });
+  if (right.some((r) => typeof r?.ref !== 'string' || !r.ref || typeof r?.text !== 'string')) {
+    return JSON.stringify({ error: 'each right item needs a ref and a text.' });
+  }
   try {
     const { runConsistencyCheck } = await import('../truth-engine/truth-engine-service.js');
-    const { findings, auditTrail } = await runConsistencyCheck(
+    const { findings, notCompared, auditTrail } = await runConsistencyCheck(
       { submissionId, dimension, left: { ref: left.ref, text: left.text }, right },
       { organizationId: ctx.organizationId, userId: ctx.userId }
     );
     const conflicts = findings.filter((f) => f.status === 'conflict').length;
+    const unread = notCompared.length
+      ? ` ${notCompared.length} figure(s) of the claim were not compared (see notCompared for which and why). That is not a finding of consistency.`
+      : '';
     return JSON.stringify({
-      ok: true, findings, conflicts, auditTrail,
-      message: withAuditNote(`${findings.length} finding(s) recorded, ${conflicts} conflict(s).`, auditTrail),
+      ok: true, findings, conflicts, notCompared, auditTrail,
+      comparedBy: 'deterministic comparison of labelled figures (enrolled N, sample size, sites, events, alpha, power, hazard ratio, primary p-value)',
+      message: withAuditNote(`${findings.length} finding(s) recorded, ${conflicts} conflict(s).${unread}`, auditTrail),
     });
   } catch (err) {
     return JSON.stringify({ error: `check_consistency failed: ${err instanceof Error ? err.message : String(err)}`, code: (err as any)?.code });

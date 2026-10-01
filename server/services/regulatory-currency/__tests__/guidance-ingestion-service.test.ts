@@ -24,7 +24,7 @@ describe('fetchIchGuidelineUpdates', () => {
     expect(result.status).toBe('fetched');
     // A static list is not a fetch from ich.org; the label said it was.
     expect(result.source).toBe('curated_registry');
-    expect(result.guidelines.length).toBeGreaterThanOrEqual(6);
+    expect(result.guidelines.length).toBeGreaterThanOrEqual(5);
     // Known entries should be present
     const codes = result.guidelines.map((g) => g.code);
     expect(codes).toContain('E6(R3)');
@@ -32,7 +32,6 @@ describe('fetchIchGuidelineUpdates', () => {
     expect(codes).toContain('Q12');
     expect(codes).toContain('Q14');
     expect(codes).toContain('E8(R1)');
-    expect(codes).toContain('M4(R4)');
   });
 
   it('filters by category Q', () => {
@@ -59,7 +58,8 @@ describe('fetchIchGuidelineUpdates', () => {
   it('filters by category M', () => {
     const result = fetchIchGuidelineUpdates({ category: 'M' });
     expect(result.status).toBe('fetched');
-    expect(result.guidelines.length).toBe(2);
+    // M11 only: the "M4(R4), Step 2, 2025-06" entry was not M4(R4) at all.
+    expect(result.guidelines.length).toBe(1);
     for (const g of result.guidelines) {
       expect(g.category).toBe('M');
     }
@@ -68,10 +68,10 @@ describe('fetchIchGuidelineUpdates', () => {
   it('filters by since date', () => {
     const result = fetchIchGuidelineUpdates({ since: '2025-01' });
     expect(result.status).toBe('fetched');
-    // Should include E6(R3) (2025-01), M4(R4) (2025-06), but not Q12 (2023-01)
+    // E6(R3) (2025-01) and M11 (2025-11), not Q12 (2019-11)
     const codes = result.guidelines.map((g) => g.code);
     expect(codes).toContain('E6(R3)');
-    expect(codes).toContain('M4(R4)');
+    expect(codes).toContain('M11');
     expect(codes).not.toContain('Q12');
     expect(codes).not.toContain('E8(R1)');
   });
@@ -85,10 +85,22 @@ describe('fetchIchGuidelineUpdates', () => {
     expect(m11?.stepDate).toBe(fact!.effectiveDate.slice(0, 7));
   });
 
+  it('dates Q12 and Q14 at their Step 4, and carries no undated M4 revision', () => {
+    // Q12 reached Step 4 in 2019 (as post-approval-knowledge.ts and
+    // standards-registry.ts already say) and Q14 in November 2023; the list
+    // said 2023-01 and 2024-01, so a correct 2019 citation of Q12 read stale.
+    const byCode = new Map(fetchIchGuidelineUpdates().guidelines.map((g) => [g.code, g.stepDate]));
+    expect(byCode.get('Q12')).toBe('2019-11');
+    expect(byCode.get('Q14')).toBe('2023-11');
+    expect(byCode.has('M4(R4)')).toBe(false);
+    const [q12] = checkGuidanceFreshness({ citedGuidances: [{ title: 'ICH Q12', citedDate: '2019-11-20' }] }).results;
+    expect(q12.current).toBe(true);
+  });
+
   it('combines category and since filters', () => {
-    const result = fetchIchGuidelineUpdates({ category: 'Q', since: '2024-01' });
+    const result = fetchIchGuidelineUpdates({ category: 'Q', since: '2023-06' });
     expect(result.status).toBe('fetched');
-    // Q14 (2024-01) should match; Q12 (2023-01) should not
+    // Q14 (2023-11) should match; Q12 (2019-11) should not
     const codes = result.guidelines.map((g) => g.code);
     expect(codes).toContain('Q14');
     expect(codes).not.toContain('Q12');
@@ -132,10 +144,11 @@ describe('checkGuidanceFreshness', () => {
   });
 
   it('flags void guidance from the currency registry', () => {
-    // The LDT rule is void in the currency registry
+    // The LDT rule is void in the currency registry. A bare "LDT" names a
+    // kind of test, not the rule, so the citation names the rule.
     const result = checkGuidanceFreshness({
       citedGuidances: [
-        { title: 'LDT' },
+        { title: 'FDA LDT final rule (2024)' },
       ],
     });
     expect(result.status).toBe('checked');
@@ -213,6 +226,55 @@ describe('checkGuidanceFreshness — identification', () => {
       citedGuidances: [{ title: 'EUDAMED', jurisdiction: 'US' }],
     }).results;
     expect(r.current).toBeNull();
+  });
+
+});
+
+// Identified by a name a document cites it by — never by a retrieval keyword.
+describe('checkGuidanceFreshness — names and keywords', () => {
+  it.each(['IVD', 'MDR', 'IVDR', 'CTR', 'SaMD', '510(k)', 'De Novo', 'Real-world data', 'clinical trials'])(
+    'does not identify "%s" — a retrieval keyword, not the name of a dated fact',
+    (title) => {
+      const [r] = checkGuidanceFreshness({ citedGuidances: [{ title, citedDate: '2014-07-28' }] }).results;
+      expect(r.current).toBeNull();
+      expect(r.basis).toBeUndefined();
+    },
+  );
+
+  it('identifies a fact by a name it is cited by', () => {
+    const [estar, ldt, ai] = checkGuidanceFreshness({
+      asOf: '2026-10-01',
+      citedGuidances: [
+        { title: 'Electronic Submission Template for Medical Device 510(k) Submissions', citedDate: '2022-09-01' },
+        { title: 'LDT final rule' },
+        { title: 'Regulation (EU) 2024/1689 (AI Act)' },
+      ],
+    }).results;
+    expect(estar).toMatchObject({ current: false, basis: { id: 'fda-estar-510k-mandatory' } });
+    expect(ldt).toMatchObject({ current: false, basis: { id: 'us-ldt-final-rule-void' } });
+    expect(ai.basis?.id).toBe('eu-ai-act-high-risk');
+  });
+
+  it('dates "ICH E6(R3) Annex 2" by Annex 2, not by the base guideline', () => {
+    const [r] = checkGuidanceFreshness({
+      citedGuidances: [{ title: 'ICH E6(R3) Annex 2', citedDate: '2025-03-01' }],
+    }).results;
+    expect(r.basis?.id).toBe('ich-e6r3-annex2-step4');
+    expect(r.current).toBe(false);
+  });
+
+  it('does not call a title superseded when it also names what superseded it', () => {
+    const [gcp, ctis, eudract] = checkGuidanceFreshness({
+      citedGuidances: [
+        { title: 'ICH E6(R3) Good Clinical Practice (replaces E6(R2))', citedDate: '2025-06-01' },
+        { title: 'CTIS sponsor handbook: transition from EudraCT', citedDate: '2025-06-01' },
+        { title: 'EudraCT' },
+      ],
+    }).results;
+    expect(gcp).toMatchObject({ current: true, basis: { id: 'ich-e6r3-gcp-step4' } });
+    expect(ctis).toMatchObject({ current: true, basis: { id: 'eu-ctis-only-trials' } });
+    expect(eudract.current).toBe(false);
+    expect(eudract.warning).toMatch(/superseded/);
   });
 
   it('names the registry entry and source every identified verdict rests on', () => {

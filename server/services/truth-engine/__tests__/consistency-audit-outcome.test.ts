@@ -1,7 +1,7 @@
 /**
  * A consistency check reports its 21 CFR Part 11 §11.10(e) audit row.
  *
- * `runConsistencyCheck` records an AI_GENERATE row for every check it persists.
+ * `runConsistencyCheck` records a CONSISTENCY_CHECK row for every check it persists.
  * The failure path already checked `persisted`; the success path awaited the
  * write and discarded it, so the findings were stored and answered whether or
  * not the record of who ran the check existed. It now returns the outcome with
@@ -9,7 +9,7 @@
  * item 2). The route reports it in headers: see
  * server/routes/__tests__/submissions-consistency-audit-outcome.test.ts.
  *
- * The store and the gateway are stubbed: what is under test is the outcome.
+ * The store is stubbed: what is under test is the outcome.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -18,16 +18,13 @@ const h = vi.hoisted(() => ({
 }));
 
 vi.mock('../../auditService', () => ({ default: { logAction: (...a: unknown[]) => h.logAction(...a) } }));
+// The check makes no model call (consistency-deterministic.test.ts); a call
+// here would throw.
 vi.mock('../../ai-gateway', () => ({
   getGateway: () => ({
-    route: async () => ({
-      content: JSON.stringify({
-        findings: [
-          { status: 'conflict', leftRef: '2.7.3', rightRef: 'CSR-001', detail: 'Enrollment 186 vs 120' },
-          { status: 'match', leftRef: '2.7.3', rightRef: 'CSR-002', detail: null },
-        ],
-      }),
-    }),
+    route: async () => {
+      throw new Error('the consistency check must not call a model');
+    },
   }),
 }));
 
@@ -55,8 +52,11 @@ const CTX = { organizationId: 7, userId: 3 };
 const PARAMS = {
   submissionId: 11,
   dimension: 'enrollment',
-  left: { ref: '2.7.3', text: '186 subjects were enrolled.' },
-  right: [{ ref: 'CSR-001', text: '120 subjects were enrolled.' }],
+  left: { ref: '2.7.3', text: 'The study randomized 186 subjects.' },
+  right: [
+    { ref: 'CSR-001', text: 'The study randomized 120 subjects.' },
+    { ref: 'CSR-002', text: 'The study randomized 186 subjects.' },
+  ],
 };
 
 beforeEach(() => {
