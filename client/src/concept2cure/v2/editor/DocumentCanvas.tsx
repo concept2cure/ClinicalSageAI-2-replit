@@ -462,7 +462,10 @@ export function DocumentCanvas({
         ) : sections.length === 0 ? (
           <p className="dcv-empty">This document has no sections yet. Open the full editor to add one, or ask AnA to draft the sections.</p>
         ) : (
-          <div className="dcv-body">
+          /* Collapsed to the card's head while the document is open beside the
+             conversation: the outline and the section are in the editor next to
+             it, and the editor's own "Draft with AnA" takes the ask. */
+          <div className="dcv-body" hidden={expanded && beside}>
             {sections.length > 1 && (
               <ol className="dcv-outline" aria-label="Sections">
                 {sections.map(sec => {

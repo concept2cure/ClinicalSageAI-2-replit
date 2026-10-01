@@ -2217,6 +2217,14 @@ export const C2C_MIGRATION_FILES = [
      Proven by tests/db/vault-record-immutability.dbtest.ts (red before this
      file, green after). The code that may still UPDATE the table is named in
      scripts/ci/check-vault-document-writers.mjs. */
+  /* The deletion archive and retention policies (plan critique 13,
+     2026-10-01). vault.document_archives is the snapshot the retention job
+     writes before it disposes of a document; it was on no applier, so a
+     database built by deploy-migrate had no archive to write to. CREATE ...
+     IF NOT EXISTS only: replayable, no DROP. Just before the next file, which
+     guards it (append-only, owner-only delete, row security) and has the
+     tenant purge erase it. */
+  'migrations/20260608_vault_retention.sql',
   'migrations/20260926_vault_documents_record_immutability.sql',
   // VR-08 (D2): a version names its predecessor only inside its own family,
   // and has at most one live successor. A trigger, plus a partial unique index

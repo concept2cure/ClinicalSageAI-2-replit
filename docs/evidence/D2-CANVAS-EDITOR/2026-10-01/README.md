@@ -328,3 +328,66 @@ the editor's and `useAnaChat`'s suites, pass 555/555.
 - Interrupting that loop left the ESLint ratchet's temporary
   `__eslint_ratchet_prev__.*` copies behind. They were removed.
 - Steps 5 and 6 are pushed together from a clean tree.
+
+## 7. Seen in a browser: the card collapses while its document is open beside it
+
+**How these screens were made.** Steps 1–6 were proven in jsdom, which lays
+nothing out. These screens are real layout:
+- The thread's markup is captured with the same API fixtures as the tests (a
+  four-section Module 2.5, two sections drafted).
+- It is wrapped in the design tokens (`design-system/colors_and_type.css`)
+  and every `client/src/concept2cure/v2/styles/*.css`.
+- It is rendered by the pre-installed headless Chromium at 1440×900.
+
+Two things in them are artifacts of this method, not the product:
+- Fonts fall back to system fonts.
+- The editor's "Attribution could not be read … Failed to parse URL" banner
+  comes from a relative-URL fetch in jsdom.
+
+The capture spec was a temporary file and is not committed.
+
+**Seen.**
+- `screens/2-card.png`: the card from step 2 (type line, project and
+  progress, provenance, outline with drafted state) reads as intended. 2.5.3
+  is chosen in the outline, with step 6's "Ask AnA to draft 2.5.3" beside
+  its empty state.
+- `screens/7-beside-before.png`: with the editor open beside the
+  conversation, the card in the conversation column still repeated the
+  outline and the section, the same content as the editor next to it. That
+  pushed AnA's next answer out of view.
+- The same screen also shows step 6 as built: "Not drafted yet. Ask AnA to
+  draft 2.5.3".
+
+**Changed.**
+- While its document is open beside the conversation, the card collapses to
+  its head (type, title, progress, provenance, "Updated after AnA's last
+  turn" when it applies) and its actions. The outline and the section are in
+  the editor next to it.
+- The editor's own "Draft with AnA" takes the ask there. It routes to the
+  conversation's composer, through the canvas's `onAsk`.
+- Closing the editor restores the whole card.
+- `screens/7-beside-after.png` shows the result: the follow-up question and
+  AnA's answer are in view beside the editor.
+- The CSS gains `.dcv-body[hidden] { display: none }`, because `.dcv-body`
+  is `display: grid`, which beats the user agent's `[hidden]` rule.
+
+**Failing first.**
+- `7-collapse-red.txt`: the step-1 beside case, extended to assert the
+  collapse and the restore, fails on the unchanged canvas.
+
+**Green:** `7-collapse-green.txt`. The thread suite and the three canvas
+suites, 48/48.
+
+**Also run.**
+- `tsc`: clean.
+- The ESLint ratchet: unchanged.
+- `ci:canvas-path`, `ci:check-phantom-tokens`, `ci:undefined-css-classes`,
+  `ci:check-css-selector-shadowing`: OK.
+
+**Seen, not changed: the editor family's files.**
+- In a ~940px pane the editor's header actions scroll sideways. That is the
+  editor's documented choice: wrapping was measured and rejected.
+- The outline column opens with a long notice: "This project has no
+  governed filing document …". It is true, and about the filing outline,
+  not this document. It takes the top of a narrow pane. It is a candidate for
+  the editor family's next pass.
