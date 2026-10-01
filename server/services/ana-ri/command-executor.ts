@@ -1084,6 +1084,21 @@ async function boardWriteWithLineage(
   return true;
 }
 
+/**
+ * The lineage row for a task write AnA carried out. Its reason is the one the
+ * person stated through a verified sign-off (`ctx.signoff`, stamped only by
+ * POST /api/ana-ri/governed-action), or none — task-audit records null. Both
+ * task commands are the confirm tier (part11-governance.ts governedTierOf): the
+ * person says yes and is asked for no reason, and a `reason` the model wrote
+ * into params is not theirs. What AnA did is the row's `summary`. Until
+ * 2026-10-01 these rows recorded "Task created by AnA and mirrored to the
+ * canonical task board" / "Task status changed by AnA" as the reason (D5).
+ */
+function anaTaskLineage(ctx: CommandContext, event: AnaTaskEvent): AuditTaskActionParams {
+  return { orgId: ctx.organizationId, userId: ctx.userId, reason: ctx.signoff?.reasonForChange, ...event };
+}
+type AnaTaskEvent = Pick<AuditTaskActionParams, 'command' | 'taskId' | 'payload' | 'summary'>;
+
 /** What a board write records when it caused more than its own change: its own
  *  row first, then one per record it moved (a completion's unblocked
  *  dependents), and the notices to send once all of it has committed. */
@@ -1147,9 +1162,7 @@ async function mirrorProjectTaskToUnified(
     // tasking routes record. Nothing on a conflict (an idempotent re-run wrote
     // nothing).
     if (!inserted) return null;
-    return {
-      orgId: ctx.organizationId,
-      userId: ctx.userId,
+    return anaTaskLineage(ctx, {
       command: 'task.create',
       taskId: mirroredTaskId,
       payload: {
@@ -1160,8 +1173,8 @@ async function mirrorProjectTaskToUnified(
         sourceEntityType: 'project_task',
         sourceEntityId: String(projectTaskId),
       },
-      reason: 'Task created by AnA and mirrored to the canonical task board',
-    };
+      summary: 'Task created by AnA and mirrored to the canonical task board',
+    });
   });
   // Tell the assignee only about a board row that committed.
   if (onBoard && inserted && params.assigneeId && params.assigneeId !== ctx.userId) {
@@ -1433,14 +1446,12 @@ export async function updateTask(
           // Governed lineage only for a status change that actually landed.
           transitioned = Boolean(mirrored.rowCount) && Boolean(newStatus) && newStatus !== mirrorFrom;
           if (!transitioned) return null;
-          const own: AuditTaskActionParams = {
-            orgId: ctx.organizationId,
-            userId: ctx.userId,
+          const own = anaTaskLineage(ctx, {
             command: 'task.transition',
             taskId: mirroredTaskId,
             payload: { from: mirrorFrom, to: newStatus },
-            reason: 'Task status changed by AnA',
-          };
+            summary: 'Task status changed by AnA',
+          });
           if (newStatus !== 'completed') return own;
           // Completing a task wakes its dependents on every write path — here
           // on this transaction, locking them after the completed row and

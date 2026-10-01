@@ -126,3 +126,25 @@ describe('a new project’s blueprint milestones', () => {
     expect(await createRows(), 'a row outlived its task').toEqual([]);
   });
 });
+
+/**
+ * D5 (2026-10-01): a seeded milestone is the system's act, and nobody states a
+ * reason for it. Each row used to record "Milestone seeded from the <registry>
+ * blueprint when the project was created" as the reason for change; that is
+ * now the payload's summary, and the reason is null.
+ */
+describe('the reason a seeded milestone records', () => {
+  it('is null — what happened is the summary', async () => {
+    await seed();
+
+    const rows = (await run(`SELECT a.decision_reason, a.payload, l.reason AS audit_reason
+                               FROM c2c_ana_actions a JOIN audit_logs l ON l.ana_action_id = a.id
+                              WHERE a.command = 'task.create' ORDER BY a.seq`)).rows;
+    expect(rows).toHaveLength(MILESTONES.length);
+    for (const r of rows) {
+      expect(r.decision_reason).toBeNull();
+      expect(r.audit_reason).toBeNull();
+      expect(r.payload.summary).toBe(`Milestone seeded from the ${REGISTRY} blueprint when the project was created`);
+    }
+  });
+});
