@@ -45,7 +45,8 @@ function overview(leadReadiness: number | null) {
         projectId: 1, code: 'BX204', label: 'BX204', filing: null, indication: null,
         readiness: leadReadiness, scope: 'program', scopeId: '1', agency: null, pdufa: null, criticalBlockerCount: 0,
       },
-      portfolio: { programs: [program('BX204', 80), program('ZX9', null)] },
+      // As the overview sends it to an entitled organisation (insights-canvas-routes.ts).
+      portfolio: { entitled: true, requiredTier: 'enterprise', summary: null, programs: [program('BX204', 80), program('ZX9', null)] },
     },
   };
 }

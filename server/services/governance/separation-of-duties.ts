@@ -270,6 +270,29 @@ async function single(db: AuthorshipReader, sql: string, params: unknown[], colu
 }
 
 /**
+ * Target types whose author is one recorded column on one row, keyed by the
+ * target prefix. The id is passed as text; `$1::int` columns are guarded by
+ * `numericId`, so a malformed id reads as "no such record" (no authors, refused
+ * 409) rather than a failed lookup (503).
+ */
+const SINGLE_AUTHOR: Record<string, { sql: string; column: string; source: string; numericId?: boolean }> = {
+  task: { sql: `SELECT owner_id FROM c2c_project_work_items WHERE id = $1 AND org_id = $2 LIMIT 1`, column: 'owner_id', source: 'recorded owner' },
+  blocker: { sql: `SELECT owner_user_id FROM c2c_blockers WHERE blocker_id = $1 AND org_id = $2 LIMIT 1`, column: 'owner_user_id', source: 'recorded owner' },
+  // The one target the Part 11 freeze/dispatch/transmit chain signs.
+  'ectd-sequence': { sql: `SELECT created_by FROM ectd_sequences WHERE id = $1 AND organization_id = $2 LIMIT 1`, column: 'created_by', source: 'sequence creator' },
+  program: { sql: `SELECT created_by FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`, column: 'created_by', source: 'program creator' },
+  // Report finalize is signed (reporting review 2026-10-01). The run's content
+  // is computed by the engines; the person who requested it is its author. A
+  // run whose requester was removed has none, and is refused.
+  'report-run': {
+    sql: `SELECT requested_by FROM report_runs WHERE id = $1::int AND organization_id = $2 LIMIT 1`,
+    column: 'requested_by',
+    source: 'run requester',
+    numericId: true,
+  },
+};
+
+/**
  * Resolve the authors of a governed target, org-scoped. THROWS when a lookup
  * fails — that is not an answer about authorship and must not be read as one.
  */
@@ -278,6 +301,12 @@ export async function resolveTargetAuthors(target: string, orgId: number, db: Au
   if (colonIdx === -1) return NOT_MODELLED;
   const prefix = target.slice(0, colonIdx);
   const rest = target.slice(colonIdx + 1);
+
+  const one = SINGLE_AUTHOR[prefix];
+  if (one) {
+    if (one.numericId && !/^\d+$/.test(rest)) return new AuthorSet().result();
+    return single(db, one.sql, [rest, orgId], one.column, one.source);
+  }
 
   switch (prefix) {
     case 'document':
@@ -288,15 +317,6 @@ export async function resolveTargetAuthors(target: string, orgId: number, db: Au
       const [docId, ...keyParts] = parts;
       return documentAuthors(db, docId, orgId, keyParts.join(':'));
     }
-    case 'task':
-      return single(db, `SELECT owner_id FROM c2c_project_work_items WHERE id = $1 AND org_id = $2 LIMIT 1`, [rest, orgId], 'owner_id', 'recorded owner');
-    case 'blocker':
-      return single(db, `SELECT owner_user_id FROM c2c_blockers WHERE blocker_id = $1 AND org_id = $2 LIMIT 1`, [rest, orgId], 'owner_user_id', 'recorded owner');
-    case 'ectd-sequence':
-      // The one target the Part 11 freeze/dispatch/transmit chain signs.
-      return single(db, `SELECT created_by FROM ectd_sequences WHERE id = $1 AND organization_id = $2 LIMIT 1`, [rest, orgId], 'created_by', 'sequence creator');
-    case 'program':
-      return single(db, `SELECT created_by FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`, [rest, orgId], 'created_by', 'program creator');
     case 'protocol-document':
       return protocolDocumentAuthors(db, rest, orgId);
     case 'canonical_document':

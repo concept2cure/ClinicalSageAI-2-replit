@@ -13,6 +13,13 @@
  *     (409 RUN_ALREADY_FINAL), so a seal is never overwritten; the status, the
  *     seal and `report_os.run_finalized` are written in ONE tenant-stamped
  *     transaction on one connection — all land or none (503, nothing changed).
+ *     Since the reporting review of 2026-10-01 it is an electronic signature:
+ *     a reason of at least 8 characters, a declared meaning and
+ *     re-authentication, refused before anything is written; separation of
+ *     duties against the run's requester; the sign ledger row and the
+ *     electronic_signatures row on the same transaction. The ceremony's own
+ *     edges (verifyReauth, the ledger writer, the signature writer) are
+ *     replaced; separation of duties runs for real on the connection.
  *   - GET /runs/:id/export.pdf and GET /bundles/:bundleId/export.pdf (DP-50) →
  *     the entitlement gate, then a chained row carrying the hash of the exact
  *     bytes, written BEFORE anything is sent; 503 and no PDF when it cannot be.
@@ -61,7 +68,12 @@ const h = vi.hoisted(() => {
     release: () => statements.push('<released>'),
   };
   const pool = { connect: async () => client, query: async () => ({ rows: [] }) };
-  return { queued, reads, db, pool, statements, respond, audit: vi.fn(), gate: vi.fn(), compute: vi.fn() };
+  return {
+    queued, reads, db, pool, statements, respond,
+    audit: vi.fn(), gate: vi.fn(), compute: vi.fn(),
+    reauth: vi.fn(), ledger: vi.fn(), signature: vi.fn(),
+    limiterScopes: [] as string[],
+  };
 });
 
 vi.mock('../../db', () => ({ db: h.db, pool: h.pool, getPool: () => h.pool, getDb: () => h.db, query: vi.fn(), transaction: vi.fn() }));
@@ -76,6 +88,24 @@ vi.mock('../../services/report-os/entitlement-map', async (importOriginal) => ({
 }));
 vi.mock('../../services/report-os/orchestrator', () => ({ computeInitialRun: h.compute }));
 vi.mock('../../services/report-os/research-compliance-report-providers', () => ({ computeDomainReport: async () => null }));
+/* The attempt limiter's budget is its own test's subject
+   (middleware/__tests__/signing-attempt-limiter.test.ts); here it would refuse
+   this suite's eleventh finalize. It passes through and records its scope. */
+vi.mock('../../middleware/signing-attempt-limiter', () => ({
+  signingAttemptLimiter: (scope: string) => {
+    h.limiterScopes.push(scope);
+    return (_req: unknown, _res: unknown, next: () => void) => next();
+  },
+}));
+vi.mock('../c2c/actions', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../c2c/actions')>()),
+  verifyReauth: h.reauth,
+  recordGovernedAction: h.ledger,
+}));
+vi.mock('../../services/part11/signature-persistence', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/part11/signature-persistence')>()),
+  persistGovernedSignSignature: h.signature,
+}));
 vi.mock('../../services/auditService', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../services/auditService')>()),
   writeChainedAuditRow: h.audit,
@@ -137,6 +167,31 @@ beforeEach(() => {
   });
   h.gate.mockReset().mockResolvedValue({ entitled: true, tier: 'standard' });
   h.compute.mockReset().mockResolvedValue({ providers: [], blockers: [], criticalBlockers: [], summary: {}, confidence: 90 });
+  h.reauth.mockReset().mockResolvedValue({ ok: true });
+  h.ledger.mockReset().mockImplementation(async () => {
+    h.statements.push('<sign ledger>');
+    return { actionId: 'act_1', auditId: 'aud_1', sha256Chain: 'c'.repeat(64) };
+  });
+  h.signature.mockReset().mockImplementation(async () => {
+    h.statements.push('<signature row>');
+    return { id: 'sig_1', signedAt: new Date('2026-10-01T09:00:00Z') };
+  });
+});
+
+describe('POST /runs never computes a prediction (reporting review 2026-10-01)', () => {
+  it('refuses a prediction-family type with 422 before the plan gate, the computation or any write', async () => {
+    h.queued.select.push([{ typeId: 'prediction.regulatory_forecast', label: 'Predictive Regulatory Forecast', family: 'prediction', allowedScopes: ['program', 'project', 'submission'] }]);
+    const res = await request(app)
+      .post('/api/report-os/runs')
+      .send({ scopeType: 'submission', scopeId: 'sub-1', reportTypeId: 'prediction.regulatory_forecast' });
+    expect(res.status).toBe(422);
+    expect(res.body.code).toBe('PREDICTION_NOT_A_RUN');
+    expect(res.body.error).toMatch(/not computed by the report run/);
+    expect(h.gate).not.toHaveBeenCalled();
+    expect(h.compute).not.toHaveBeenCalled();
+    expect(h.audit).not.toHaveBeenCalled();
+    expect(h.statements).toEqual([]);
+  });
 });
 
 describe('POST /runs records the run on the audit chain', () => {
@@ -174,14 +229,25 @@ describe('POST /runs records the run on the audit chain', () => {
   });
 });
 
+const SIGNED = { reason: 'Issued for the board pack', meaning: 'authorship', reauth: { password: 'correct horse' } };
+const finalize = (role = 'manager', body: Record<string, unknown> = SIGNED) =>
+  request(app).post(`/api/report-os/runs/${RUN.id}/finalize`).set('x-test-role', role).send(body);
+const eligible = (status = 'completed') => h.queued.select.push([{ ...RUN, status }], [{ label: TYPE.label, truthfulnessRules: {} }]);
+/** The connection answers the run reads with `locked` and requester 5 (the session user), and the snapshot read with one snapshot. */
+const lockedAs = (locked: string, requestedBy: number | null = 5) => {
+  h.respond.fn = (sql) =>
+    /FROM report_runs/.test(sql)
+      ? [{ status: locked, requested_by: requestedBy }]
+      : /FROM report_snapshots/.test(sql) ? [{ id: 3, snapshot_metadata: { reportTypeId: TYPE.typeId } }] : [];
+};
+const nothingWritten = () => {
+  expect(h.statements.filter((x) => /^UPDATE/.test(x))).toEqual([]);
+  expect(h.audit).not.toHaveBeenCalled();
+  expect(h.ledger).not.toHaveBeenCalled();
+  expect(h.signature).not.toHaveBeenCalled();
+};
+
 describe('POST /runs/:id/finalize (DP-47)', () => {
-  const finalize = (role = 'manager') => request(app).post(`/api/report-os/runs/${RUN.id}/finalize`).set('x-test-role', role);
-  const eligible = (status = 'completed') => h.queued.select.push([{ ...RUN, status }], [{ label: TYPE.label, truthfulnessRules: {} }]);
-  /** The connection answers the locked re-read with `locked` and the snapshot read with one snapshot. */
-  const lockedAs = (locked: string) => {
-    h.respond.fn = (sql) =>
-      /FROM report_runs/.test(sql) ? [{ status: locked }] : /FROM report_snapshots/.test(sql) ? [{ id: 3, snapshot_metadata: { reportTypeId: TYPE.typeId } }] : [];
-  };
 
   it.each(['member', 'viewer'])('refuses a %s with 403 before reading anything', async (role) => {
     eligible();
@@ -192,20 +258,29 @@ describe('POST /runs/:id/finalize (DP-47)', () => {
     expect(h.audit).not.toHaveBeenCalled();
   });
 
-  it.each(['owner', 'admin', 'manager'])('lets the %s finalize: status, seal and chain row commit together', async (role) => {
+  it.each(['owner', 'admin', 'manager'])('lets the %s finalize: status, seal, chain row and signature commit together', async (role) => {
     eligible();
     lockedAs('completed');
     const res = await finalize(role);
     expect(res.status).toBe(200);
     const seal = res.body.data.seal;
     expect(seal.contentHash).toMatch(/^[0-9a-f]{64}$/);
+    expect(res.body.data.signature).toEqual({ signatureId: 'sig_1', signedAt: '2026-10-01T09:00:00.000Z', meaning: 'authorship' });
     expect(auditEntry()).toMatchObject({
       tenantId: 7,
       userId: 5,
       action: 'report_os.run_finalized',
       resourceType: 'report_run',
       resourceId: '41',
-      details: { reportTypeId: TYPE.typeId, sealHash: seal.contentHash, algorithm: 'sha256', atomCount: seal.atomCount },
+      details: {
+        reportTypeId: TYPE.typeId, sealHash: seal.contentHash, algorithm: 'sha256', atomCount: seal.atomCount,
+        reason: SIGNED.reason, meaning: 'authorship', priorStatus: 'completed',
+      },
+    });
+    expect(h.reauth).toHaveBeenCalledWith(5, { password: 'correct horse' });
+    expect(h.ledger.mock.calls[0][1]).toMatchObject({
+      orgId: 7, userId: 5, command: 'sign', target: 'report-run:41', reason: SIGNED.reason, domain: 'report_os',
+      payload: { finalized: true, sealHash: seal.contentHash, priorStatus: 'completed', meaning: 'authorship' },
     });
     // One connection, one transaction: the lock, both writes and the row sit between BEGIN and COMMIT.
     const s = h.statements;
@@ -216,8 +291,87 @@ describe('POST /runs/:id/finalize (DP-47)', () => {
     expect(at(/^UPDATE report_runs SET status = 'final'/)).toBeGreaterThan(at(/FOR UPDATE/));
     expect(at(/^UPDATE report_snapshots SET snapshot_metadata/)).toBeGreaterThan(at(/^UPDATE report_runs/));
     expect(at(/<audit row>/)).toBeGreaterThan(at(/^UPDATE report_snapshots/));
-    expect(at(/COMMIT/)).toBeGreaterThan(at(/<audit row>/));
+    expect(at(/<sign ledger>/)).toBeGreaterThan(at(/<audit row>/));
+    expect(at(/<signature row>/)).toBeGreaterThan(at(/<sign ledger>/));
+    expect(at(/COMMIT/)).toBeGreaterThan(at(/<signature row>/));
     expect(h.reads.select, 'the run and its type are read before the transaction; nothing else').toBe(2);
+  });
+
+});
+
+describe('POST /runs/:id/finalize is an electronic signature (reporting review 2026-10-01)', () => {
+  it('limits signing attempts on finalize (11.300(d))', () => {
+    expect(h.limiterScopes).toContain('report-finalize');
+  });
+
+  it.each([
+    ['no reason', { ...SIGNED, reason: undefined }],
+    ['a reason under 8 characters', { ...SIGNED, reason: 'ok' }],
+  ])('refuses %s with 400 REASON_REQUIRED before reading anything', async (_label, body) => {
+    eligible();
+    const res = await finalize('manager', body);
+    expect(res.status).toBe(400);
+    expect(res.body).toMatchObject({ error: { code: 'REASON_REQUIRED' }, field: 'reason' });
+    expect(h.reads.select).toBe(0);
+    expect(h.reauth).not.toHaveBeenCalled();
+    nothingWritten();
+  });
+
+  it('refuses a password that is not accepted with 401, before any transaction', async () => {
+    eligible();
+    lockedAs('completed');
+    h.reauth.mockResolvedValue({ ok: false, error: 'REAUTH_PASSWORD_INVALID' });
+    const res = await finalize();
+    expect(res.status).toBe(401);
+    expect(res.body).toMatchObject({ error: { code: 'REAUTH_PASSWORD_INVALID' } });
+    expect(res.body.error.message).toMatch(/Nothing was signed/);
+    expect(h.statements).toEqual([]);
+    nothingWritten();
+  });
+
+  it('refuses a meaning a finalize cannot carry', async () => {
+    eligible();
+    const res = await finalize('manager', { ...SIGNED, meaning: 'release' });
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('MEANING_NOT_ALLOWED');
+    nothingWritten();
+  });
+
+});
+
+describe('POST /runs/:id/finalize: separation of duties and the signature row', () => {
+  it('refuses an approval from the run\'s own requester (separation of duties) and rolls back', async () => {
+    eligible();
+    lockedAs('completed', 5);
+    const res = await finalize('manager', { ...SIGNED, meaning: 'approval' });
+    expect(res.status).toBe(403);
+    expect(h.statements.slice(-2)).toEqual(['ROLLBACK', '<released>']);
+    nothingWritten();
+  });
+
+  it('refuses an authorship signature from someone who did not request the run', async () => {
+    eligible();
+    lockedAs('completed', 99);
+    const res = await finalize();
+    expect(res.status).toBe(403);
+    expect(res.body.error.code).toBe('NOT_AN_AUTHOR');
+    expect(res.body.error.message).toMatch(/not an author of this report/);
+    nothingWritten();
+  });
+
+  it('answers 503 with nothing changed when the signature row cannot be written', async () => {
+    eligible();
+    lockedAs('completed');
+    h.signature.mockImplementation(async () => {
+      h.statements.push('<signature row>');
+      throw new Error('electronic_signatures refused the row');
+    });
+    const res = await finalize();
+    expect(res.status).toBe(503);
+    expect(res.body).toMatchObject({ error: { code: 'REPORT_FINALIZE_NOT_RECORDED' } });
+    expect(JSON.stringify(res.body)).not.toContain('electronic_signatures refused');
+    expect(h.statements).not.toContain('COMMIT');
+    expect(h.statements.slice(-2)).toEqual(['ROLLBACK', '<released>']);
   });
 
   it('refuses a run that is already final with 409 RUN_ALREADY_FINAL and writes nothing', async () => {

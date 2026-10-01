@@ -278,6 +278,14 @@ describe('a confirmed tool', () => {
     expect(audits.map(a => a.action)).toEqual(['ana.governed_action.confirm', 'ana.governed_action.executed']);
   });
 
+  it('runs as the conversation and turn that proposed it, under the model that served it (PF-10 S5)', async () => {
+    pending = { ...heldTool(), toolContext: { ...heldTool().toolContext, threadId: 'ana-ri_7', turnId: 'run-1' } };
+    const res = await post({ runId: 'run-1', toolUseId: 'tu-9', confirm: true });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    // A document a confirmed tool creates records these as its provenance.
+    expect(toolCalls[0].ctx).toMatchObject({ threadId: 'ana-ri_7', turnId: 'run-1', model: 'claude-opus-5-5' });
+  });
+
   it('is not run without an explicit yes', async () => {
     pending = heldTool();
     const res = await post({ runId: 'run-1', toolUseId: 'tu-9' });
