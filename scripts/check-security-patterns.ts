@@ -122,7 +122,11 @@ const PATTERNS: Pattern[] = [
     // rule matched only the integer-id headers, so nine route reads of
     // `tenantContext?.organizationUuid || req.headers['x-org-uuid']` passed it.
     // docs/evidence/D3/2026-09-24-atom-search-tenant-key/.
-    regex: /\breq\.headers\s*\[\s*['"]x-(?:(?:organization|tenant)-id|org-uuid)['"]\s*\]/i,
+    // req.header('x-…') / req.get('x-…') added 2026-10-01: middleware/tenantAuth.ts
+    // admitted on req.header('x-tenant-id') with no session, and the rule only
+    // matched the req.headers[...] spelling. x-tenant is the same header, shortened.
+    regex:
+      /\breq\.(?:headers\s*\[\s*['"]|(?:header|get)\s*\(\s*['"])x-(?:(?:organization|tenant)-id|org-uuid|tenant)['"]/i,
     message:
       'Do not read org / tenant identity from request headers — validateTenantContext ' +
       'sources it from the JWT and emits a tenant_impersonation_attempt audit ' +

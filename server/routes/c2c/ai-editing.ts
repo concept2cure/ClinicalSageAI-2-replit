@@ -17,6 +17,11 @@ import { and, eq, ne } from 'drizzle-orm';
 import * as crypto from 'crypto';
 import { db, pool } from '../../db';
 import { currentTenantOrgUuid } from '../../db/currentTenant';
+import {
+  retrieveDataRoomEvidence,
+  RETRIEVAL_STATUS_MESSAGE,
+  type RetrievalStatus,
+} from '../../services/data-room-retrieval';
 import { concept2cureArtifacts } from '../../../shared/schema';
 import { interceptComplianceScan } from '../../services/intelligence/rim-interceptors.js';
 import { createScopedLogger } from '../../utils/logger';
@@ -140,6 +145,10 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
     let retrievalRunId: string | null = null;
     const chunkRows: Array<{ id: string; rank: number; atomId: string; score: number }> = [];
     let evidenceBlock = '';
+    /* Whether Data Room retrieval ran and what it found. 'not_requested' when
+       the edit names no project; 'failed' is not 'empty' — one is an outage,
+       the other a fact about the corpus (services/data-room-retrieval.ts). */
+    let retrievalStatus: RetrievalStatus | 'not_requested' = 'not_requested';
 
     if (data.projectId) {
       // The session's tenant key, never the client's x-org-uuid header. Refused
@@ -148,9 +157,6 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
       const orgUuid = await currentTenantOrgUuid(pool);
       if (!orgUuid) return sendError(res, 403, 'Tenant context required');
       try {
-        const { getEmbeddingService } = await import('../../services/enhancedEmbeddingService.js');
-        const embeddingService = getEmbeddingService(pool);
-
         // Build search query from section title + first 200 chars of content
         const searchQuery = [
           data.sectionTitle || '',
@@ -161,13 +167,14 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
           .join(' ');
 
         // RETRIEVAL_THRESHOLD is a floor on semantic similarity, and the one
-        // recorded in ai_retrieval_runs below; it used to go in as the ranking weight.
-        const searchResults = await embeddingService.searchHybrid(searchQuery, {
+        // recorded in ai_retrieval_runs below.
+        const retrieval = await retrieveDataRoomEvidence(pool, searchQuery, {
           limit: RETRIEVAL_TOP_K,
-          organizationUuid: orgUuid,
           minSemanticScore: RETRIEVAL_THRESHOLD,
         });
-        sources = searchResults.map((r: any) => ({
+        retrievalStatus = retrieval.status;
+        if (retrieval.cause) logger.warn('Data Room retrieval failed', { cause: retrieval.cause });
+        sources = retrieval.hits.map(r => ({
           id: r.id,
           title: r.title,
           content: r.content.length > 600 ? r.content.substring(0, 600) + '…' : r.content,
@@ -245,7 +252,12 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
             'If a claim is not supported by retrieved evidence, do NOT fabricate citations.';
         }
       } catch (srcErr: any) {
-        logger.warn('Source retrieval failed (non-fatal)', { error: srcErr.message });
+        // Anything that escapes here happened before the evidence reached the
+        // prompt, so the edit is ungrounded: say so, never "no sources".
+        retrievalStatus = 'failed';
+        sources = [];
+        evidenceBlock = '';
+        logger.warn('Data Room retrieval failed', { cause: srcErr?.message });
       }
     }
 
@@ -536,6 +548,7 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
       outputLength: result.length,
       model: gwResponse.model,
       sourcesRetrieved: sources.length,
+      retrievalStatus,
       claimsExtracted: sourceCitationResults.length,
       latencyMs,
     });
@@ -555,6 +568,10 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
         retrievalRunId,
         generationRunId,
         sourcesRetrieved: sources.length,
+        retrievalStatus,
+        ...(retrievalStatus === 'not_requested'
+          ? {}
+          : { retrievalMessage: RETRIEVAL_STATUS_MESSAGE[retrievalStatus] }),
         sources: sources.map((s, i) => ({
           ref: `SRC-${i + 1}`,
           id: s.id,
@@ -1068,24 +1085,25 @@ router.post('/ai/templates/:templateId/generate', async (req: Request, res: Resp
     // ── Retrieve Data Room evidence if project context available ─────
     let evidenceBlock = '';
     let sourcesRetrieved = 0;
+    // As in edit-section: 'failed' is not 'empty' (services/data-room-retrieval.ts).
+    let retrievalStatus: RetrievalStatus | 'not_requested' = 'not_requested';
     if (data.projectId) {
       // The session's tenant key, never the client's x-org-uuid header (see the
       // edit-section route above for why it is refused outside the try).
       const orgUuid = await currentTenantOrgUuid(pool);
       if (!orgUuid) return sendError(res, 403, 'Tenant context required');
       try {
-        const { getEmbeddingService } = await import('../../services/enhancedEmbeddingService.js');
-        const embeddingService = getEmbeddingService(pool);
-
         const searchQuery = Object.values(data.variables)
           .filter(Boolean)
           .join(' ')
           .substring(0, 300);
-        const searchResults = await embeddingService.searchHybrid(searchQuery, {
+        const retrieval = await retrieveDataRoomEvidence(pool, searchQuery, {
           limit: 5,
-          organizationUuid: orgUuid,
           minSemanticScore: 0.65,
         });
+        retrievalStatus = retrieval.status;
+        if (retrieval.cause) logger.warn('Template generation: Data Room retrieval failed', { cause: retrieval.cause });
+        const searchResults = retrieval.hits;
         if (searchResults.length > 0) {
           sourcesRetrieved = searchResults.length;
           evidenceBlock =
@@ -1101,7 +1119,10 @@ router.post('/ai/templates/:templateId/generate', async (req: Request, res: Resp
             'Cite evidence inline using [SRC-n] where supported. Do NOT fabricate citations.';
         }
       } catch (e: any) {
-        logger.warn('Template generation: Data Room retrieval failed', { error: e.message });
+        retrievalStatus = 'failed';
+        sourcesRetrieved = 0;
+        evidenceBlock = '';
+        logger.warn('Template generation: Data Room retrieval failed', { cause: e?.message });
       }
     }
 
@@ -1205,6 +1226,7 @@ router.post('/ai/templates/:templateId/generate', async (req: Request, res: Resp
       outputLength: result.length,
       wordCount,
       sourcesRetrieved,
+      retrievalStatus,
       latencyMs,
       model: gwResponse.model,
     });
@@ -1230,6 +1252,10 @@ router.post('/ai/templates/:templateId/generate', async (req: Request, res: Resp
         sourcesRetrieved,
         wordsPerMinute: latencyMs > 0 ? Math.round(wordCount / (latencyMs / 60000)) : 0,
       },
+      retrievalStatus,
+      ...(retrievalStatus === 'not_requested'
+        ? {}
+        : { retrievalMessage: RETRIEVAL_STATUS_MESSAGE[retrievalStatus] }),
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {

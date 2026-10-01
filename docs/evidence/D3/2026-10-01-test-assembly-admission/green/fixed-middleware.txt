@@ -1,0 +1,14 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/w2
+
+ ✓ server/middleware/__tests__/tenantAuth.test.ts > test-assembly tenant gate > admits a session whose tenant is allowlisted (positive control) 2ms
+ ✓ server/middleware/__tests__/tenantAuth.test.ts > test-assembly tenant gate > refuses a session whose tenant is not allowlisted, whatever the header names 1ms
+ ✓ server/middleware/__tests__/tenantAuth.test.ts > test-assembly tenant gate > refuses a request with no session, even when its header names an allowlisted tenant 1ms
+ ✓ server/middleware/__tests__/tenantAuth.test.ts > test-assembly tenant gate > stands down when no allowlist is configured 0ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  20:09:23
+   Duration  556ms (transform 158ms, setup 130ms, import 63ms, tests 9ms, environment 0ms)
+
