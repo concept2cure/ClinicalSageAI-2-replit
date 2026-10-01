@@ -47,6 +47,7 @@ import * as emailOtpService from '../services/emailOtpService';
 import { sendLoginOtpEmail } from '../services/emailService';
 import * as mfaService from '../services/mfaService';
 import { mfaEnrolmentOf } from '../services/mfa-enrolment';
+import { signInLimits } from '../middleware/sign-in-limits';
 import { padUnknownEmailTiming } from '../services/login-timing-pad';
 import { auditOrganizationOf, membershipsOf, signInMembership } from '../services/sign-in-organisation';
 
@@ -391,8 +392,12 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
       });
     }
 
-    // Reset failed login counter on success
-    await resetFailedLogins(user.id);
+    // A right password clears the lockout count only for an account whose
+    // second factor is the emailed code. For an account with an authenticator
+    // it is cleared once the code is right (/verify-mfa): clearing it here gave
+    // anyone holding the password a fresh allowance of code guesses with every
+    // sign-in (IAM-30; routes/auth.ts has done this since P1-2).
+    if (mfaEnrolmentOf(user).signInFactor !== 'totp') await resetFailedLogins(user.id);
 
     // Check if password has expired
     const passwordExpired = await isPasswordExpired(user.id);
@@ -498,7 +503,7 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
  * POST /verify-mfa
  * Step 3: Verify MFA code (TOTP or backup code)
  */
-router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Response) => {
+router.post('/verify-mfa', enterpriseAuthLimiter, signInLimits.secondFactor, async (req: Request, res: Response) => {
   try {
     const parsed = verifyMfaSchema.safeParse(req.body);
     if (!parsed.success) {
@@ -582,6 +587,24 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
       });
       return res.status(403).json({ error: 'AUTH_ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE });
     }
+    // A locked account tries no code (IAM-30; routes/auth.ts asks the same at
+    // its challenge). Wrong codes below count toward this lock.
+    if ((await isAccountLocked(userId)).locked) {
+      await recordAuthEvent({
+        action: 'user_login',
+        userId,
+        tenantId: decoded.organizationId,
+        email: decoded.email,
+        outcome: 'failure',
+        reason: 'account_locked',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      return res.status(423).json({
+        error: 'ACCOUNT_LOCKED',
+        message: 'Account is temporarily locked due to too many failed attempts. Try again later.',
+      });
+    }
 
     // The factor this account signs in with (mfa-enrolment.ts), read before any
     // code is tried. An account with an authenticator never completes sign-in
@@ -611,14 +634,18 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
     }
 
     if (!isValid) {
-      // The organisation comes from the partial token this server signed.
+      // A wrong authenticator or recovery code counts toward the password
+      // step's lockout (IAM-30), as at routes/auth.ts; an emailed code keeps its
+      // own cap (emailOtpService). The organisation comes from the partial token
+      // this server signed.
+      const locked = authenticatorAccount && (await recordFailedLogin(userId)).locked;
       await recordAuthEvent({
         action: 'user_login_mfa_failed',
         userId,
         tenantId: decoded.organizationId,
         email: decoded.email,
         outcome: 'failure',
-        reason: 'invalid_code',
+        reason: locked ? 'invalid_code_threshold_exceeded' : 'invalid_code',
         ipAddress: req.ip,
         userAgent: req.headers['user-agent'],
       });
@@ -628,7 +655,9 @@ router.post('/verify-mfa', enterpriseAuthLimiter, async (req: Request, res: Resp
       });
     }
 
-    // MFA verified — issue full token with actual role
+    // MFA verified: the lockout count is cleared now, not at the password step
+    // (IAM-30), then the full token with the actual role.
+    await resetFailedLogins(userId);
     const mfaOrgId = decoded.organizationId ? parseInt(decoded.organizationId) : null;
 
     // Parallel: fetch role and org name concurrently (the user row was read above).

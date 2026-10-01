@@ -17,7 +17,11 @@
  *   signInLimits.secondFactor — wrong second-factor codes for one account,
  *     keyed by the account the verified challenge names. Wrong authenticator
  *     and recovery codes were counted per address only; emailed codes are also
- *     capped per code and per challenge (emailOtpService).
+ *     capped per code and per challenge (emailOtpService). One limiter, one
+ *     count, at both doors: the /api/auth challenge (`challengeId`) and the
+ *     enterprise sign-in's partial token (`partialToken`, routes/authEnterprise.ts
+ *     /verify-mfa; security review 2026-10-01, IAM-30), so guesses at one door
+ *     are not a fresh allowance at the other.
  *
  * A request that names no account (no address, an invalid challenge) is keyed
  * by its client address, so it is limited no less than before. Guessing
@@ -33,6 +37,7 @@ import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { SIGN_IN_LIMITS } from '../config/platform-limits';
 import { clientIpKey } from '../utils/client-ip';
 import * as mfaService from '../services/mfaService';
+import { verifyJwtWithRotation } from '../utils/jwtVerify';
 
 /** The address signed in with, as an account key, or null when the body names none. */
 export function signInAccountKey(body: unknown): string | null {
@@ -42,12 +47,26 @@ export function signInAccountKey(body: unknown): string | null {
   return normalised ? `email:${normalised}` : null;
 }
 
-/** The account a second-factor request's VERIFIED challenge names, or null. */
+/** The account the enterprise sign-in's partial token names, when this server signed it as a challenge. */
+function partialTokenUserId(partialToken: string): number {
+  try {
+    const claims = verifyJwtWithRotation<{ userId?: unknown; mfaPending?: unknown }>(partialToken);
+    return claims?.mfaPending === true ? Number.parseInt(String(claims.userId), 10) : Number.NaN;
+  } catch {
+    return Number.NaN;
+  }
+}
+
+/** The account a second-factor request's VERIFIED challenge names, at either door, or null. */
 export function secondFactorAccountKey(body: unknown): string | null {
-  const challengeId = (body as { challengeId?: unknown } | null)?.challengeId;
-  if (typeof challengeId !== 'string' || !challengeId) return null;
-  const challenge = mfaService.verifyMfaChallengeToken(challengeId);
-  const userId = challenge ? Number.parseInt(String(challenge.userId), 10) : Number.NaN;
+  const { challengeId, partialToken } = (body ?? {}) as { challengeId?: unknown; partialToken?: unknown };
+  let userId = Number.NaN;
+  if (typeof challengeId === 'string' && challengeId) {
+    const challenge = mfaService.verifyMfaChallengeToken(challengeId);
+    userId = challenge ? Number.parseInt(String(challenge.userId), 10) : Number.NaN;
+  } else if (typeof partialToken === 'string' && partialToken) {
+    userId = partialTokenUserId(partialToken);
+  }
   return Number.isInteger(userId) && userId > 0 ? `user:${userId}` : null;
 }
 

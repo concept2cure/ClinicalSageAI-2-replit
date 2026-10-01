@@ -38,7 +38,6 @@ import type {
 } from '../../services/programTabsService';
 import { PATHWAY_TABS_DATA } from '../data/pathwayTabs';
 import { toDataState, type DataState } from '../lib/dataState';
-import { useSampleRows } from '../lib/useSampleRows';
 import type {
   Approval,
   AuditEvent,
@@ -125,7 +124,8 @@ function adaptCorrespondence(rows: CorrespondenceRow[]): Correspondence[] {
     due: r.due_date || undefined,
     status: mapCorrStatus(r.status),
     subject: r.subject || '(no subject)',
-    summary: r.subject || '',
+    /* The row has its own summary column; this used to repeat the subject. */
+    summary: str(r.summary) ?? r.subject ?? '',
     refs: [],
     ai: false,
   }));
@@ -181,6 +181,7 @@ function num(v: unknown): number | undefined {
    fresh `[]` each render would rebuild the tree on every render. */
 const EMPTY_AUDIT: AuditEvent[] = [];
 const EMPTY_APPROVALS: Approval[] = [];
+const EMPTY_CORRESPONDENCE: Correspondence[] = [];
 
 /** Operator-facing message for a failed query, or null when there is none. */
 function errorMessage(e: unknown): string | null {
@@ -191,6 +192,8 @@ function errorMessage(e: unknown): string | null {
 export interface PathwayTabsLive extends PathwayTabsBundle {
   /** Live audit events. Never sample content — see the note above. */
   audit: AuditEvent[];
+  /** Live agency / notified-body correspondence. Never sample content. */
+  correspondence: Correspondence[];
   /** Live pending/decided approvals. Never sample content. */
   approvals: Approval[];
   /** Which buckets resolved from the backend (true) vs sample/empty (false). */
@@ -244,7 +247,9 @@ export function usePathwayTabsData(pathway: PathwayKey, programId?: string | nul
      lesser version of the record, it is the opposite of one. Empty is the
      honest answer, and it is the only one these two buckets can now give. */
   const audit = liveAudit ?? EMPTY_AUDIT;
-  const correspondence = useSampleRows(liveCorr, fixtures.correspondence);
+  /* Correspondence is live or empty, like the other two: the example letters
+     it used to fall back to under sample mode were invented agency letters. */
+  const correspondence = liveCorr ?? EMPTY_CORRESPONDENCE;
   const approvals = liveAppr ?? EMPTY_APPROVALS;
 
   return {

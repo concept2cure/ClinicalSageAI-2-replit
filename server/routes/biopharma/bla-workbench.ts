@@ -24,6 +24,7 @@ import { Router, type Request, type Response } from 'express';
 import { pool } from '../../db.js';
 import { signGovernedAct, signedActAttempts } from '../governed-signed-act.js';
 import { SIGN_OFF_ACT_MEANINGS } from '../../services/part11/signature-meanings.js';
+import { isUuid } from '../../middleware/uuidParam.js';
 import { requireEditorAccessForWrites } from '../../middleware/orgMembership.js';
 import { assessAnalyticalSimilarity, type SimilarityAssessmentInput } from '../../services/biologics/analytical-similarity.js';
 import { assessComparability, type ComparabilityInput } from '../../services/biologics/comparability.js';
@@ -305,15 +306,23 @@ const SIGN_CODE_STATUS = { NOT_FOUND: 404, ALREADY_SIGNED: 409 } as const;
 const signRefusal = (code: keyof typeof SIGN_CODE_STATUS, message: string) => Object.assign(new Error(message), { code });
 
 router.post('/assessments/:id/sign', signedActAttempts, async (req: Request, res: Response) => {
+  // The assessment's id is a uuid, and PostgreSQL reads one uuid from many
+  // spellings. The signed target is the canonical one (lower-case, hyphenated),
+  // so the ceremony's lock is one lock per assessment and a lookup by target
+  // finds every signature (P1-51 follow-up, security review 2026-10-01). Any
+  // other spelling is not an assessment of this route.
+  const rawId = String(req.params.id ?? '');
+  if (!isUuid(rawId)) return send(res, 404, { error: { code: 'NOT_FOUND', message: 'Assessment not found.' } });
+  const assessmentId = rawId.toLowerCase();
   await signGovernedAct(req, res, {
     domain: 'biopharma',
-    target: `bla_assessment:${req.params.id}`,
+    target: `bla_assessment:${assessmentId}`,
     meanings: SIGN_OFF_ACT_MEANINGS,
     codeStatus: SIGN_CODE_STATUS,
     run: async (client, orgId, userId) => {
       const existing = await client.query(
         `SELECT id, status FROM c2c_bla_assessments WHERE id = $1 AND org_id = $2 FOR UPDATE`,
-        [req.params.id, orgId],
+        [assessmentId, orgId],
       );
       if (existing.rows.length === 0) throw signRefusal('NOT_FOUND', 'Assessment not found.');
       if (existing.rows[0].status === 'signed') throw signRefusal('ALREADY_SIGNED', 'This assessment is already signed.');
@@ -324,9 +333,9 @@ router.post('/assessments/:id/sign', signedActAttempts, async (req: Request, res
             SET status = 'signed', signed_by = $1, signed_at = now(),
                 signature_reason = $2, updated_at = now()
           WHERE id = $3 AND org_id = $4`,
-        [userId, reason, req.params.id, orgId],
+        [userId, reason, assessmentId, orgId],
       );
-      return { target: `bla_assessment:${req.params.id}`, payload: { kind: 'bla_assessment' }, body: { id: req.params.id, status: 'signed' } };
+      return { target: `bla_assessment:${assessmentId}`, payload: { kind: 'bla_assessment' }, body: { id: assessmentId, status: 'signed' } };
     },
   });
 });
