@@ -21,23 +21,20 @@ import { workflowTemplates, workflowSteps } from '../../shared/schema/unified_wo
 
 import { createScopedLogger } from '../utils/logger.js';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
+import { requireAccessTokenReason } from '../middleware/tokenType';
 
 const logger = createScopedLogger('approval-workflow');
 
 const router = Router();
 
-const isDev = process.env.NODE_ENV === 'development';
-
 // ── Auth helper ────────────────────────────────────────────────────────────
 
 function getUser(req: Request): { userId: string; organizationId: string } | null {
+  // IAM-23 (2026-10-01): no development fallback identity (it answered a
+  // request with no token as user 1 of organisation 2), and only an access
+  // token: a refresh, pre-MFA or connector token is not a session.
   const authHeader = req.headers.authorization;
   const token = authHeader?.replace('Bearer ', '');
-
-  if (isDev && !token) {
-    return { userId: '1', organizationId: '2' };
-  }
-
   if (!token) return null;
 
   try {
@@ -45,6 +42,7 @@ function getUser(req: Request): { userId: string; organizationId: string } | nul
       userId: string;
       organizationId?: string;
     };
+    if (requireAccessTokenReason(decoded as Parameters<typeof requireAccessTokenReason>[0])) return null;
     if (decoded.organizationId === undefined) return null;
     return {
       userId: decoded.userId,

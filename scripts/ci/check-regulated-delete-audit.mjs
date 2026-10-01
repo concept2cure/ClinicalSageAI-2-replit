@@ -54,8 +54,14 @@ const REGULATED = [
 // in the delete's transaction, instead of the inline INSERT this gate used to
 // see there. server/__tests__/security/coauthor-document-delete-audit.contract.test.ts
 // pins the row it writes (event type, reason, flags) for both.
+// 2026-10-01 (D6 tranche 4, P1-30 / DP-33): writeChainedAuditRow
+// (server/services/auditService.ts) writes one sha256-chained, HMAC-sealed
+// audit_logs row on the caller's client, inside the caller's transaction, and
+// a failure propagates. The governed DELETE /api/authoring/docs/:docId calls it
+// on the delete's own transaction. tests/db/authoring-governed-delete-signed-freeze.dbtest.ts
+// pins the row it writes (action, reason, actor, digest).
 const AUDIT_RE =
-  /\b(writeMutation|logAuditEntry|recordGovernedAction|logAuditEvent|recordGovernedDecision|logRegulatedDeletion|recordCoauthorDocumentEvent)\s*\(|\bauditService\.|INSERT\s+INTO\s+audit_events\b/i;
+  /\b(writeMutation|logAuditEntry|recordGovernedAction|logAuditEvent|recordGovernedDecision|logRegulatedDeletion|recordCoauthorDocumentEvent|writeChainedAuditRow)\s*\(|\bauditService\.|INSERT\s+INTO\s+audit_events\b/i;
 
 // Operator-tracked unaudited regulated deletes (PRODUCT_QC_REVIEW Part 11).
 // Empty — every regulated-table delete is now positively audited. New entries

@@ -70,6 +70,25 @@ vi.mock('../../services/clinical-regulatory-evidence/lineage-gate', async (orig)
   ...(await orig<any>()),
   enforceAuthorLineage: async () => undefined,
 }));
+/* DP-35 (2026-10-01): a freeze is signed — signing authority and the platform
+   re-verification. Both have their own suites (authoring-signing-authority,
+   authoring-sign-ceremony, authoring-governed-delete-signed-freeze); here they
+   pass, so this file keeps proving what it is about: the seal and the filing. */
+vi.mock('../../services/part11/resolve-signer-role.js', () => ({
+  resolveSignerOrgRole: async () => 'approver',
+}));
+vi.mock('../../services/part11/reverify-signer-deps', () => ({
+  signerReverificationDeps: () => ({
+    loadPasswordHash: async () => 'stored-hash',
+    comparePassword: async (plain: string) => plain === 'signer-password',
+    isMfaEnabled: async () => false,
+    verifyMfaToken: async () => false,
+    isAccountActive: async () => true,
+    isAccountLocked: async () => false,
+    recordFailedAttempt: async () => {},
+    warn: () => {},
+  }),
+}));
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { readFileSync } from 'node:fs';
@@ -142,7 +161,7 @@ const freeze = (docId: string) =>
   request(app)
     .post(`/api/authoring/docs/${docId}/freeze`)
     .set('Authorization', `Bearer ${token()}`)
-    .send({ reason: 'seal for filing' });
+    .send({ reason: 'seal for filing', meaning: 'AUTHOR', password: 'signer-password' });
 
 /** A DRAFT authoring document with one section, frozen through the real router. */
 async function frozenDocument(docId: string, sectionId: string, text: string): Promise<void> {

@@ -14,8 +14,10 @@ import { authMiddleware } from '../auth';
 import { requireAuthedOrgId } from '../utils/authedOrgId';
 import { normalizeEvidence, persistEvidence } from '../services/research-intelligence';
 import { indexGovernedDocument } from '../services/search/opensearchClient';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('firecrawl-routes');
 router.use(authMiddleware);
 
 type Pool = ReturnType<typeof getPool>;
@@ -181,11 +183,13 @@ router.get('/quota-status', async (req, res) => {
 });
 
 router.post('/scrape', async (req, res) => {
+  // Outside the try so the provider-error answer below carries the same id as
+  // every other answer from this route and as the log line it is filed under.
+  const correlationId = buildCorrelationId(req);
   try {
     const orgGuard = requireAuthedOrgId(req, res);
     if (!orgGuard.ok) return;
     const tenantId = orgGuard.orgId;
-    const correlationId = buildCorrelationId(req);
     const { url } = req.body || {};
     if (!url) return res.status(400).json({ success: false, error: { code: 'INVALID_INPUT' } });
 
@@ -240,8 +244,17 @@ router.post('/scrape', async (req, res) => {
     });
 
     return res.json({ success: true, data, quota: updatedQuota, correlationId, evidenceDocumentId, cached: false });
-  } catch (error: any) {
-    return res.status(502).json(firecrawlError('provider_error', error?.message));
+  } catch (error) {
+    /* The 502 keeps its status and its provider_error code (serverError()
+       answers only 500) and says the code's own static sentence. The thrown
+       text is `provider_error:<status>:<the provider's body>` or the
+       missing-key message, so it goes to the log under the correlation id the
+       body carries, not into the body (P1-17, IAM-18 (1)). */
+    log.error('scrape failed', {
+      correlationId,
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(502).json({ ...firecrawlError('provider_error'), correlationId });
   }
 });
 

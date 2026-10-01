@@ -1,0 +1,5 @@
+ × tests/db/research-admin-sign-ceremony.dbtest.ts > the ceremony refuses before it writes > a member whose role carries no signing authority is refused, with the right password, before it is checked (§11.10(g)) 163ms
+   → a viewer signed: {"biosketchId":790834311,"completeness":{"addressedPct":100},"actionId":"act_22a5e0fca5da4818a14ed527bb365832","auditId":"4354e654-edd8-4c06-bcf3-2a00c8d10a2c","sha256Chain":"353e96c9d9fca43120793fe3acc153123818ec4eab7b15002b0b8b237f340ec4","signatureId":128,"signedAt":"2026-10-01T05:58:31.149Z","meaning":"approval"}: expected 201 to be 403 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: a viewer signed: {"biosketchId":790834311,"completeness":{"addressedPct":100},"actionId":"act_22a5e0fca5da4818a14ed527bb365832","auditId":"4354e654-edd8-4c06-bcf3-2a00c8d10a2c","sha256Chain":"353e96c9d9fca43120793fe3acc153123818ec4eab7b15002b0b8b237f340ec4","signatureId":128,"signedAt":"2026-10-01T05:58:31.149Z","meaning":"approval"}: expected 201 to be 403 // Object.is equality
+      Tests  1 failed | 37 skipped (38)

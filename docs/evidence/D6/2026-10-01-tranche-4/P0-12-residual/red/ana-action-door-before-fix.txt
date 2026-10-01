@@ -1,0 +1,933 @@
+# HEAD 66e82a6d, unfixed sources (ana-guidance-executor.ts, post-processing.ts, send-message.ts as committed)
+# NODE_OPTIONS=--max-old-space-size=3072 npx vitest run server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+[AnA Executor] Created memo: id=501, project=5, org=61
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+[AnA Executor] 1 signals → 1 executed, 0 prepared, 0 failed
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts
+Loaded 0 academic documents
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+Loaded 0 academic documents
+
+stderr | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+{
+  "timestamp": "2026-10-01T03:29:23.965Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts
+{
+  "timestamp": "2026-10-01T03:29:23.964Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+{
+  "timestamp": "2026-10-01T03:29:24.320Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T03:29:24.321Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+{
+  "timestamp": "2026-10-01T03:29:24.321Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts
+{
+  "timestamp": "2026-10-01T03:29:24.344Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T03:29:24.345Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts
+{
+  "timestamp": "2026-10-01T03:29:24.345Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > a reply with a command block and an action block carries both proposals
+[AnA Executor] Created memo: id=501, project=5, org=61
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > a reply with a command block and an action block carries both proposals
+[AnA Executor] 1 signals → 1 executed, 0 prepared, 0 failed
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > a reply with a command block and an action block carries both proposals
+[AnA Command] Proposed create_task: HUMAN_CONFIRMATION_REQUIRED
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > a reply with a command block and an action block carries both proposals
+[AnA RI Stream] Executed 1 command(s)
+
+ × server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it 4663ms
+   → the artifact was created on the model’s word: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "artifactMutation": Object {
+          "artifactClass": "ana_guidance_generated_artifact",
+          "content": "## Summary
+    The drug substance stability package lacks the six-month accelerated data that ICH Q1A(R2) expects for the proposed retest period, so the shelf-life claim in 3.2.S.7 is not yet supported.
+    ## Evidence
+    [KNOWN] Long-term data at 25C/60%RH cover 12 months for three primary batches. [MISSING] Accelerated 40C/75%RH data beyond 3 months.
+    ## Recommendation
+    Complete the accelerated study on the three primary batches and revise the retest period justification before the pre-IND package is assembled.",
+          "documentType": "memo",
+          "intentLens": "guidance",
+          "organizationId": 61,
+          "originSurface": "ri_copilot",
+          "projectId": 5,
+          "provenance": Object {
+            "anaActionType": "memo",
+            "anaGenerated": true,
+            "confidence": "strong",
+            "conversationId": undefined,
+            "decisionContext": undefined,
+            "guidanceSummary": undefined,
+            "runId": "f683026b-6a55-4e93-bd30-078d91c99e39",
+            "source": "ana_guidance",
+            "threadId": "th_9",
+          },
+          "qualityGate": Object {
+            "grade": "medium",
+            "issues": Array [],
+            "pass": true,
+            "score": 7,
+          },
+          "sectionCode": undefined,
+          "source": "AnA",
+          "status": "draft",
+          "structureSections": Array [],
+          "title": "Risk Memo: Accelerated Stability",
+          "versioningMode": "create",
+        },
+        "evaluationInput": Object {
+          "context": Object {
+            "actorId": "7",
+            "actorRole": "AnA",
+            "ctdSection": undefined,
+            "documentType": "memo",
+            "intendedAction": "create",
+            "organizationId": "61",
+            "originSurface": "ri_copilot",
+            "projectId": "5",
+            "sectionCode": undefined,
+          },
+          "documentState": Object {
+            "criticalContradictionCount": 0,
+            "hasApproval": false,
+            "hasBeenReviewed": false,
+            "hasContent": true,
+            "hasEvidence": true,
+            "hasPlacement": false,
+            "hasProvenance": true,
+            "placementValid": true,
+            "unresolvedContradictionCount": 0,
+          },
+        },
+      },
+    ]
+
+
+Number of calls: 1
+
+ × server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > a reply with a command block and an action block carries both proposals 16ms
+   → expected [ [ …(2) ] ] to deeply equal ArrayContaining{…}
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a strong memo becomes a confirm-tier create_artifact proposal; no artifact is created
+[AnA Executor] Created memo: id=501, project=5, org=61
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a strong memo becomes a confirm-tier create_artifact proposal; no artifact is created
+[AnA Executor] 1 signals → 1 executed, 0 prepared, 0 failed
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a review_thread block opens no thread and writes no comment in the person’s name
+[AnA Executor] Created memo: id=501, project=5, org=61
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a review_thread block opens no thread and writes no comment in the person’s name
+[AnA Executor] Created review thread: threadId=867fa8ad-89da-4a86-aa68-a892d07b691f, artifactPk=501, project=5, org=61
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a review_thread block opens no thread and writes no comment in the person’s name
+[AnA Executor] 1 signals → 1 executed, 0 prepared, 0 failed
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > provisional and uncertain blocks propose nothing and write nothing
+[AnA Executor] confidence=provisional — no execution for memo
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > provisional and uncertain blocks propose nothing and write nothing
+[AnA Executor] confidence=uncertain — no execution for memo
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > provisional and uncertain blocks propose nothing and write nothing
+[AnA Executor] 2 signals → 0 executed, 2 prepared, 0 failed
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > someone who may not create the artifact is told so, and is not asked to confirm it
+[AnA Executor] Created memo: id=501, project=5, org=61
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > someone who may not create the artifact is told so, and is not asked to confirm it
+[AnA Executor] 1 signals → 1 executed, 0 prepared, 0 failed
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > without an integer project the block is not proposed against a guessed one
+[AnA Executor] Created memo: id=501, project=7abb1c22-1111-4222-8333-944445555666, org=61
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > without an integer project the block is not proposed against a guessed one
+[AnA Executor] 1 signals → 1 executed, 0 prepared, 0 failed
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > the proposal is the canonical command, so a person’s yes runs the canonical handler > confirmed through the governed route’s context, create_artifact writes the proposed content
+[AnA Executor] Created memo: id=501, project=5, org=61
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > the proposal is the canonical command, so a person’s yes runs the canonical handler > confirmed through the governed route’s context, create_artifact writes the proposed content
+[AnA Executor] 1 signals → 1 executed, 0 prepared, 0 failed
+
+ × server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a strong memo becomes a confirm-tier create_artifact proposal; no artifact is created 15ms
+   → an artifact was created on the model’s word: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "artifactMutation": Object {
+          "artifactClass": "ana_guidance_generated_artifact",
+          "content": "## Summary
+    The drug substance stability package lacks the six-month accelerated data that ICH Q1A(R2) expects for the proposed retest period, so the shelf-life claim in 3.2.S.7 is not yet supported.
+    ## Evidence
+    [KNOWN] Long-term data at 25C/60%RH cover 12 months for three primary batches. [MISSING] Accelerated 40C/75%RH data beyond 3 months.
+    ## Recommendation
+    Complete the accelerated study on the three primary batches and revise the retest period justification before the pre-IND package is assembled.",
+          "documentType": "memo",
+          "intentLens": "guidance",
+          "organizationId": 61,
+          "originSurface": "ri_copilot",
+          "projectId": 5,
+          "provenance": Object {
+            "anaActionType": "memo",
+            "anaGenerated": true,
+            "confidence": "strong",
+            "conversationId": undefined,
+            "decisionContext": undefined,
+            "guidanceSummary": undefined,
+            "runId": "64939b59-da31-4363-a87b-5b6807f6cfed",
+            "source": "ana_guidance",
+            "threadId": "th_9",
+          },
+          "qualityGate": Object {
+            "grade": "medium",
+            "issues": Array [],
+            "pass": true,
+            "score": 7,
+          },
+          "sectionCode": "3.2.S.7",
+          "source": "AnA",
+          "status": "draft",
+          "structureSections": Array [],
+          "title": "Risk Memo: Accelerated Stability",
+          "versioningMode": "create",
+        },
+        "evaluationInput": Object {
+          "context": Object {
+            "actorId": "7",
+            "actorRole": "Rita Ortiz",
+            "ctdSection": "3.2.S.7",
+            "documentType": "memo",
+            "intendedAction": "create",
+            "organizationId": "61",
+            "originSurface": "ri_copilot",
+            "projectId": "5",
+            "sectionCode": "3.2.S.7",
+          },
+          "documentState": Object {
+            "criticalContradictionCount": 0,
+            "hasApproval": false,
+            "hasBeenReviewed": false,
+            "hasContent": true,
+            "hasEvidence": true,
+            "hasPlacement": true,
+            "hasProvenance": true,
+            "placementValid": true,
+            "unresolvedContradictionCount": 0,
+          },
+        },
+      },
+    ]
+
+
+Number of calls: 1
+
+ × server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a review_thread block opens no thread and writes no comment in the person’s name 4ms
+   → a review thread was opened unasked: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      [Function anonymous],
+    ]
+
+
+Number of calls: 1
+
+ ✓ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > provisional and uncertain blocks propose nothing and write nothing 3ms
+ × server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > someone who may not create the artifact is told so, and is not asked to confirm it 5ms
+   → expected undefined to match object { Object (success, error) }
+ × server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > without an integer project the block is not proposed against a guessed one 2ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "artifactMutation": Object {
+          "artifactClass": "ana_guidance_generated_artifact",
+          "content": "## Summary
+    The drug substance stability package lacks the six-month accelerated data that ICH Q1A(R2) expects for the proposed retest period, so the shelf-life claim in 3.2.S.7 is not yet supported.
+    ## Evidence
+    [KNOWN] Long-term data at 25C/60%RH cover 12 months for three primary batches. [MISSING] Accelerated 40C/75%RH data beyond 3 months.
+    ## Recommendation
+    Complete the accelerated study on the three primary batches and revise the retest period justification before the pre-IND package is assembled.",
+          "documentType": "memo",
+          "intentLens": "guidance",
+          "organizationId": 61,
+          "originSurface": "ri_copilot",
+          "projectId": "7abb1c22-1111-4222-8333-944445555666",
+          "provenance": Object {
+            "anaActionType": "memo",
+            "anaGenerated": true,
+            "confidence": "strong",
+            "conversationId": undefined,
+            "decisionContext": undefined,
+            "guidanceSummary": undefined,
+            "runId": "bb773421-723c-4c2c-af49-d8a30b2efcc3",
+            "source": "ana_guidance",
+            "threadId": "th_9",
+          },
+          "qualityGate": Object {
+            "grade": "medium",
+            "issues": Array [],
+            "pass": true,
+            "score": 7,
+          },
+          "sectionCode": "3.2.S.7",
+          "source": "AnA",
+          "status": "draft",
+          "structureSections": Array [],
+          "title": "Risk Memo: Accelerated Stability",
+          "versioningMode": "create",
+        },
+        "evaluationInput": Object {
+          "context": Object {
+            "actorId": "7",
+            "actorRole": "Rita Ortiz",
+            "ctdSection": "3.2.S.7",
+            "documentType": "memo",
+            "intendedAction": "create",
+            "organizationId": "61",
+            "originSurface": "ri_copilot",
+            "projectId": "7abb1c22-1111-4222-8333-944445555666",
+            "sectionCode": "3.2.S.7",
+          },
+          "documentState": Object {
+            "criticalContradictionCount": 0,
+            "hasApproval": false,
+            "hasBeenReviewed": false,
+            "hasContent": true,
+            "hasEvidence": true,
+            "hasPlacement": true,
+            "hasProvenance": true,
+            "placementValid": true,
+            "unresolvedContradictionCount": 0,
+          },
+        },
+      },
+    ]
+
+
+Number of calls: 1
+
+ × server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > the proposal is the canonical command, so a person’s yes runs the canonical handler > confirmed through the governed route’s context, create_artifact writes the proposed content 2ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "artifactMutation": Object {
+          "artifactClass": "ana_guidance_generated_artifact",
+          "content": "## Summary
+    The drug substance stability package lacks the six-month accelerated data that ICH Q1A(R2) expects for the proposed retest period, so the shelf-life claim in 3.2.S.7 is not yet supported.
+    ## Evidence
+    [KNOWN] Long-term data at 25C/60%RH cover 12 months for three primary batches. [MISSING] Accelerated 40C/75%RH data beyond 3 months.
+    ## Recommendation
+    Complete the accelerated study on the three primary batches and revise the retest period justification before the pre-IND package is assembled.",
+          "documentType": "memo",
+          "intentLens": "guidance",
+          "organizationId": 61,
+          "originSurface": "ri_copilot",
+          "projectId": 5,
+          "provenance": Object {
+            "anaActionType": "memo",
+            "anaGenerated": true,
+            "confidence": "strong",
+            "conversationId": undefined,
+            "decisionContext": undefined,
+            "guidanceSummary": undefined,
+            "runId": "f378e7ab-a81a-4ad6-88d8-4673ea3aad12",
+            "source": "ana_guidance",
+            "threadId": "th_9",
+          },
+          "qualityGate": Object {
+            "grade": "medium",
+            "issues": Array [],
+            "pass": true,
+            "score": 7,
+          },
+          "sectionCode": "3.2.S.7",
+          "source": "AnA",
+          "status": "draft",
+          "structureSections": Array [],
+          "title": "Risk Memo: Accelerated Stability",
+          "versioningMode": "create",
+        },
+        "evaluationInput": Object {
+          "context": Object {
+            "actorId": "7",
+            "actorRole": "Rita Ortiz",
+            "ctdSection": "3.2.S.7",
+            "documentType": "memo",
+            "intendedAction": "create",
+            "organizationId": "61",
+            "originSurface": "ri_copilot",
+            "projectId": "5",
+            "sectionCode": "3.2.S.7",
+          },
+          "documentState": Object {
+            "criticalContradictionCount": 0,
+            "hasApproval": false,
+            "hasBeenReviewed": false,
+            "hasContent": true,
+            "hasEvidence": true,
+            "hasPlacement": true,
+            "hasProvenance": true,
+            "placementValid": true,
+            "unresolvedContradictionCount": 0,
+          },
+        },
+      },
+    ]
+
+
+Number of calls: 1
+
+ × server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > there is one write path for an AnA artifact > the action-block module writes nothing itself 3ms
+   → writes an artifact itself: expected true to be false // Object.is equality
+ × server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > there is one write path for an AnA artifact > both chat paths hand the proposals to the response the sign-off prompt reads 2ms
+   → ana-ri/post-processing.ts must return the proposals as executedCommands: expected false to be true // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+AssertionError: the artifact was created on the model’s word: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "artifactMutation": Object {
+          "artifactClass": "ana_guidance_generated_artifact",
+          "content": "## Summary
+    The drug substance stability package lacks the six-month accelerated data that ICH Q1A(R2) expects for the proposed retest period, so the shelf-life claim in 3.2.S.7 is not yet supported.
+    ## Evidence
+    [KNOWN] Long-term data at 25C/60%RH cover 12 months for three primary batches. [MISSING] Accelerated 40C/75%RH data beyond 3 months.
+    ## Recommendation
+    Complete the accelerated study on the three primary batches and revise the retest period justification before the pre-IND package is assembled.",
+          "documentType": "memo",
+          "intentLens": "guidance",
+          "organizationId": 61,
+          "originSurface": "ri_copilot",
+          "projectId": 5,
+          "provenance": Object {
+            "anaActionType": "memo",
+            "anaGenerated": true,
+            "confidence": "strong",
+            "conversationId": undefined,
+            "decisionContext": undefined,
+            "guidanceSummary": undefined,
+            "runId": "f683026b-6a55-4e93-bd30-078d91c99e39",
+            "source": "ana_guidance",
+            "threadId": "th_9",
+          },
+          "qualityGate": Object {
+            "grade": "medium",
+            "issues": Array [],
+            "pass": true,
+            "score": 7,
+          },
+          "sectionCode": undefined,
+          "source": "AnA",
+          "status": "draft",
+          "structureSections": Array [],
+          "title": "Risk Memo: Accelerated Stability",
+          "versioningMode": "create",
+        },
+        "evaluationInput": Object {
+          "context": Object {
+            "actorId": "7",
+            "actorRole": "AnA",
+            "ctdSection": undefined,
+            "documentType": "memo",
+            "intendedAction": "create",
+            "organizationId": "61",
+            "originSurface": "ri_copilot",
+            "projectId": "5",
+            "sectionCode": undefined,
+          },
+          "documentState": Object {
+            "criticalContradictionCount": 0,
+            "hasApproval": false,
+            "hasBeenReviewed": false,
+            "hasContent": true,
+            "hasEvidence": true,
+            "hasPlacement": false,
+            "hasProvenance": true,
+            "placementValid": true,
+            "unresolvedContradictionCount": 0,
+          },
+        },
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts:98:81
+     96|     const done = await run(`The gap and what to do.\n\n${BLOCK}`);
+     97|
+     98|     expect(writes.governed, 'the artifact was created on the model’s w…
+       |                                                                                 ^
+     99|     expect(writes.transaction).not.toHaveBeenCalled();
+    100|     const proposals = (done.executedCommands ?? []).filter((r: any) =>…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > a reply with a command block and an action block carries both proposals
+AssertionError: expected [ [ …(2) ] ] to deeply equal ArrayContaining{…}
+
+- Expected
++ Received
+
+- ArrayContaining [
+  [
+-     "HUMAN_CONFIRMATION_REQUIRED",
+-     "create_artifact",
+-   ],
+    [
+      "HUMAN_CONFIRMATION_REQUIRED",
+      "create_task",
+    ],
+  ]
+
+ ❯ server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts:115:22
+    113|     const done = await run(`Two things.\n\n${BLOCK}\n\n${cmd}`);
+    114|     const commands = (done.executedCommands ?? []).map((r: any) => [r.…
+    115|     expect(commands).toEqual(
+       |                      ^
+    116|       expect.arrayContaining([
+    117|         ['HUMAN_CONFIRMATION_REQUIRED', 'create_artifact'],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a strong memo becomes a confirm-tier create_artifact proposal; no artifact is created
+AssertionError: an artifact was created on the model’s word: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "artifactMutation": Object {
+          "artifactClass": "ana_guidance_generated_artifact",
+          "content": "## Summary
+    The drug substance stability package lacks the six-month accelerated data that ICH Q1A(R2) expects for the proposed retest period, so the shelf-life claim in 3.2.S.7 is not yet supported.
+    ## Evidence
+    [KNOWN] Long-term data at 25C/60%RH cover 12 months for three primary batches. [MISSING] Accelerated 40C/75%RH data beyond 3 months.
+    ## Recommendation
+    Complete the accelerated study on the three primary batches and revise the retest period justification before the pre-IND package is assembled.",
+          "documentType": "memo",
+          "intentLens": "guidance",
+          "organizationId": 61,
+          "originSurface": "ri_copilot",
+          "projectId": 5,
+          "provenance": Object {
+            "anaActionType": "memo",
+            "anaGenerated": true,
+            "confidence": "strong",
+            "conversationId": undefined,
+            "decisionContext": undefined,
+            "guidanceSummary": undefined,
+            "runId": "64939b59-da31-4363-a87b-5b6807f6cfed",
+            "source": "ana_guidance",
+            "threadId": "th_9",
+          },
+          "qualityGate": Object {
+            "grade": "medium",
+            "issues": Array [],
+            "pass": true,
+            "score": 7,
+          },
+          "sectionCode": "3.2.S.7",
+          "source": "AnA",
+          "status": "draft",
+          "structureSections": Array [],
+          "title": "Risk Memo: Accelerated Stability",
+          "versioningMode": "create",
+        },
+        "evaluationInput": Object {
+          "context": Object {
+            "actorId": "7",
+            "actorRole": "Rita Ortiz",
+            "ctdSection": "3.2.S.7",
+            "documentType": "memo",
+            "intendedAction": "create",
+            "organizationId": "61",
+            "originSurface": "ri_copilot",
+            "projectId": "5",
+            "sectionCode": "3.2.S.7",
+          },
+          "documentState": Object {
+            "criticalContradictionCount": 0,
+            "hasApproval": false,
+            "hasBeenReviewed": false,
+            "hasContent": true,
+            "hasEvidence": true,
+            "hasPlacement": true,
+            "hasProvenance": true,
+            "placementValid": true,
+            "unresolvedContradictionCount": 0,
+          },
+        },
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts:93:80
+     91|     const out = await processResponseActions(reply(block({})), turn);
+     92|
+     93|     expect(writes.governed, 'an artifact was created on the model’s wo…
+       |                                                                                ^
+     94|     const [p, ...rest] = proposalsOf(out);
+     95|     expect(rest).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a review_thread block opens no thread and writes no comment in the person’s name
+AssertionError: a review thread was opened unasked: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      [Function anonymous],
+    ]
+
+
+Number of calls: 1
+
+ ❯ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts:120:74
+    118|     );
+    119|
+    120|     expect(writes.transaction, 'a review thread was opened unasked').n…
+       |                                                                          ^
+    121|     expect(writes.governed).not.toHaveBeenCalled();
+    122|     const [p] = proposalsOf(out);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > someone who may not create the artifact is told so, and is not asked to confirm it
+AssertionError: expected undefined to match object { Object (success, error) }
+
+- Expected:
+{
+  "error": "RBAC_DENIED",
+  "success": false,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts:141:15
+    139|     const out = await processResponseActions(reply(block({})), turn);
+    140|     const [p] = proposalsOf(out);
+    141|     expect(p).toMatchObject({ success: false, error: 'RBAC_DENIED' });
+       |               ^
+    142|     expect(writes.governed).not.toHaveBeenCalled();
+    143|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > without an integer project the block is not proposed against a guessed one
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "artifactMutation": Object {
+          "artifactClass": "ana_guidance_generated_artifact",
+          "content": "## Summary
+    The drug substance stability package lacks the six-month accelerated data that ICH Q1A(R2) expects for the proposed retest period, so the shelf-life claim in 3.2.S.7 is not yet supported.
+    ## Evidence
+    [KNOWN] Long-term data at 25C/60%RH cover 12 months for three primary batches. [MISSING] Accelerated 40C/75%RH data beyond 3 months.
+    ## Recommendation
+    Complete the accelerated study on the three primary batches and revise the retest period justification before the pre-IND package is assembled.",
+          "documentType": "memo",
+          "intentLens": "guidance",
+          "organizationId": 61,
+          "originSurface": "ri_copilot",
+          "projectId": "7abb1c22-1111-4222-8333-944445555666",
+          "provenance": Object {
+            "anaActionType": "memo",
+            "anaGenerated": true,
+            "confidence": "strong",
+            "conversationId": undefined,
+            "decisionContext": undefined,
+            "guidanceSummary": undefined,
+            "runId": "bb773421-723c-4c2c-af49-d8a30b2efcc3",
+            "source": "ana_guidance",
+            "threadId": "th_9",
+          },
+          "qualityGate": Object {
+            "grade": "medium",
+            "issues": Array [],
+            "pass": true,
+            "score": 7,
+          },
+          "sectionCode": "3.2.S.7",
+          "source": "AnA",
+          "status": "draft",
+          "structureSections": Array [],
+          "title": "Risk Memo: Accelerated Stability",
+          "versioningMode": "create",
+        },
+        "evaluationInput": Object {
+          "context": Object {
+            "actorId": "7",
+            "actorRole": "Rita Ortiz",
+            "ctdSection": "3.2.S.7",
+            "documentType": "memo",
+            "intendedAction": "create",
+            "organizationId": "61",
+            "originSurface": "ri_copilot",
+            "projectId": "7abb1c22-1111-4222-8333-944445555666",
+            "sectionCode": "3.2.S.7",
+          },
+          "documentState": Object {
+            "criticalContradictionCount": 0,
+            "hasApproval": false,
+            "hasBeenReviewed": false,
+            "hasContent": true,
+            "hasEvidence": true,
+            "hasPlacement": true,
+            "hasProvenance": true,
+            "placementValid": true,
+            "unresolvedContradictionCount": 0,
+          },
+        },
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts:149:33
+    147|     const out = await processResponseActions(reply(block({})), { ...tu…
+    148|     expect(proposalsOf(out)).toEqual([]);
+    149|     expect(writes.governed).not.toHaveBeenCalled();
+       |                                 ^
+    150|   });
+    151| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > the proposal is the canonical command, so a person’s yes runs the canonical handler > confirmed through the governed route’s context, create_artifact writes the proposed content
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      Object {
+        "artifactMutation": Object {
+          "artifactClass": "ana_guidance_generated_artifact",
+          "content": "## Summary
+    The drug substance stability package lacks the six-month accelerated data that ICH Q1A(R2) expects for the proposed retest period, so the shelf-life claim in 3.2.S.7 is not yet supported.
+    ## Evidence
+    [KNOWN] Long-term data at 25C/60%RH cover 12 months for three primary batches. [MISSING] Accelerated 40C/75%RH data beyond 3 months.
+    ## Recommendation
+    Complete the accelerated study on the three primary batches and revise the retest period justification before the pre-IND package is assembled.",
+          "documentType": "memo",
+          "intentLens": "guidance",
+          "organizationId": 61,
+          "originSurface": "ri_copilot",
+          "projectId": 5,
+          "provenance": Object {
+            "anaActionType": "memo",
+            "anaGenerated": true,
+            "confidence": "strong",
+            "conversationId": undefined,
+            "decisionContext": undefined,
+            "guidanceSummary": undefined,
+            "runId": "f378e7ab-a81a-4ad6-88d8-4673ea3aad12",
+            "source": "ana_guidance",
+            "threadId": "th_9",
+          },
+          "qualityGate": Object {
+            "grade": "medium",
+            "issues": Array [],
+            "pass": true,
+            "score": 7,
+          },
+          "sectionCode": "3.2.S.7",
+          "source": "AnA",
+          "status": "draft",
+          "structureSections": Array [],
+          "title": "Risk Memo: Accelerated Stability",
+          "versioningMode": "create",
+        },
+        "evaluationInput": Object {
+          "context": Object {
+            "actorId": "7",
+            "actorRole": "Rita Ortiz",
+            "ctdSection": "3.2.S.7",
+            "documentType": "memo",
+            "intendedAction": "create",
+            "organizationId": "61",
+            "originSurface": "ri_copilot",
+            "projectId": "5",
+            "sectionCode": "3.2.S.7",
+          },
+          "documentState": Object {
+            "criticalContradictionCount": 0,
+            "hasApproval": false,
+            "hasBeenReviewed": false,
+            "hasContent": true,
+            "hasEvidence": true,
+            "hasPlacement": true,
+            "hasProvenance": true,
+            "placementValid": true,
+            "unresolvedContradictionCount": 0,
+          },
+        },
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts:156:33
+    154|   it('confirmed through the governed route’s context, create_artifact …
+    155|     const [p] = proposalsOf(await processResponseActions(reply(block({…
+    156|     expect(writes.governed).not.toHaveBeenCalled();
+       |                                 ^
+    157|
+    158|     // What POST /api/ana-ri/governed-action does with { command, para…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > there is one write path for an AnA artifact > the action-block module writes nothing itself
+AssertionError: writes an artifact itself: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts:176:82
+    174|   it('the action-block module writes nothing itself', () => {
+    175|     // Booleans, so a failure names the rule rather than printing the …
+    176|     expect(/executeGovernedAnaOperation/.test(src), 'writes an artifac…
+       |                                                                                  ^
+    177|     expect(/concept2cureReviewThreads|concept2cureThreadComments|\.ins…
+    178|     expect(/humanConfirmed\s*:/.test(src), 'asserts a confirmation').t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > there is one write path for an AnA artifact > both chat paths hand the proposals to the response the sign-off prompt reads
+AssertionError: ana-ri/post-processing.ts must return the proposals as executedCommands: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts:186:96
+    184|       const s = read(file);
+    185|       expect(s.includes('processResponseActions'), `${file} calls proc…
+    186|       expect(/\.proposals\b/.test(s), `${file} must return the proposa…
+       |                                                                                                ^
+    187|       expect(/executedCommands/.test(s), file).toBe(true);
+    188|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  9 failed | 1 passed (10)
+   Start at  03:29:14
+   Duration  11.32s (transform 11.00s, setup 368ms, import 15.31s, tests 4.73s, environment 0ms)
+

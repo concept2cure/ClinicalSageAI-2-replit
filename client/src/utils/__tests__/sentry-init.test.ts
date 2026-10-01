@@ -4,6 +4,10 @@
  * `sendDefaultPii` decision, replay masking left implicit (audit DP-26, plan
  * P1-27). A default is not a control; these cases make the choices explicit so
  * a refactor cannot drop them silently.
+ *
+ * Since 2026-10-01 there is no session replay at all (ADR-0014 §3): a replay
+ * is a recording of a regulated screen sent to a third party, and masking
+ * changes what it shows, not that it is sent.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -60,10 +64,15 @@ describe('utils/sentry — how the browser client is initialised', () => {
     expect(beforeBreadcrumb({ message: 'sent to ops@example.org' })).toEqual({ message: 'sent to [REDACTED]' });
   });
 
-  it('replays mask every text node and input and block every image, video and canvas', async () => {
+  it('records no session replay: no replay integration and no replay sample rate', async () => {
     vi.stubEnv('VITE_SENTRY_DSN', DSN);
     await import('../sentry');
-    expect(replaySpy).toHaveBeenCalledTimes(1);
-    expect(replaySpy.mock.calls[0][0]).toEqual(expect.objectContaining({ maskAllText: true, maskAllInputs: true, blockAllMedia: true }));
+    expect(initSpy).toHaveBeenCalledTimes(1);
+    const options = initSpy.mock.calls[0][0] as Record<string, unknown>;
+    expect(replaySpy).not.toHaveBeenCalled();
+    const integrations = (options.integrations ?? []) as Array<{ name?: string }>;
+    expect(integrations.map((i) => i.name)).not.toContain('Replay');
+    expect(options).not.toHaveProperty('replaysSessionSampleRate');
+    expect(options).not.toHaveProperty('replaysOnErrorSampleRate');
   });
 });

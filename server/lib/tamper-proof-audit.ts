@@ -27,6 +27,8 @@ import { Pool } from 'pg';
 import { createHash, createHmac, timingSafeEqual } from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 import { isIP } from 'node:net';
+import { getTenantScope } from '../db/tenantStore';
+import { assertTenantIsCurrent } from '../db/currentTenant';
 
 /**
  * `audit.tamper_proof_log.ip_address` is INET, and callers routinely supply a
@@ -123,6 +125,8 @@ export interface AuditEntry {
   signature?: string;
   ipAddress?: string;
   userAgent?: string;
+  /** The tenant the row was written for; null for a platform row or one written before the column existed. */
+  organizationId?: number | null;
 }
 
 export interface VerificationResult {
@@ -153,6 +157,8 @@ export interface TamperProofLogRow {
   signature?: string | null;
   ip_address?: string | null;
   user_agent?: string | null;
+  /** Absent on a database the 2026-10-01 amendment has not reached; null on platform rows. */
+  organization_id?: number | null;
 }
 
 export interface TamperProofRowsVerification {
@@ -217,6 +223,7 @@ export function verifyTamperProofLogRows(
       resourceId: row.resource_id,
       ipAddress: row.ip_address,
       userAgent: row.user_agent,
+      organizationId: row.organization_id,
     });
     const matchesContentHash =
       row.content_hash === sha256(TamperProofAuditLog.stringifyForHash(contentData)) ||
@@ -285,6 +292,49 @@ export class AuditConfigurationError extends Error {
     super(message);
     this.name = 'AuditConfigurationError';
   }
+}
+
+/**
+ * The tenant a tamper-proof row belongs to, or a per-tenant read is scoped to
+ * (DP-28, plan P1-27; docs/evidence/D6/2026-10-01-tranche-4/P1-7-P1-27-residuals/).
+ *
+ * The store is ONE hash chain across every tenant, by design: the writer links
+ * each row to the previous row of the whole table, which is also why the table
+ * carries no RLS policy (a FORCEd policy would hide other tenants' tail rows
+ * from the writer and fork the chain). Tenancy is therefore a column, set from
+ * the caller and checked against the session here, and filtered on by every
+ * per-tenant read.
+ *
+ *   - `null`      — explicitly a platform row (boot, shutdown, the verifier's own row).
+ *   - a number    — that tenant; inside a per-user request scope it must be the
+ *                   scope's tenant, or the write/read is refused.
+ *   - `undefined` — the per-user request scope's tenant, or null outside one.
+ */
+async function resolveAuditOrganization(
+  db: Pick<Pool, 'query'>,
+  requested: number | null | undefined,
+): Promise<number | null> {
+  if (requested === null) return null;
+  if (requested === undefined) return scopeOrganizationId();
+  if (!Number.isSafeInteger(requested) || requested <= 0) {
+    throw new TypeError(`tamper-proof audit: organizationId must be a positive integer, got ${String(requested)}`);
+  }
+  // Throws TenantScopeMismatchError inside another tenant's per-user scope.
+  await assertTenantIsCurrent(db, { organizationId: requested });
+  return requested;
+}
+
+/** The per-user request scope's tenant id, or null outside one (jobs, boot, system scope). */
+function scopeOrganizationId(): number | null {
+  const scope = getTenantScope();
+  if (!scope || scope.tenantId === '0') return null;
+  const id = Number(scope.tenantId);
+  if (!Number.isSafeInteger(id) || id <= 0) {
+    // A per-user scope whose tenant is not an organisation id names no tenant
+    // this store can key on. Refused rather than read or written unscoped.
+    throw new TypeError(`tamper-proof audit: tenant scope '${scope.tenantId}' is not an organisation id`);
+  }
+  return id;
 }
 
 export class TamperProofAuditLog {
@@ -360,6 +410,25 @@ export class TamperProofAuditLog {
       );
     }
 
+    // The tenant column every write names (DP-28, the 2026-10-01 amendment of
+    // that same migration). Without it every INSERT fails with 42703 inside
+    // callers that treat an audit-write failure as non-fatal, so the store would
+    // look present while recording nothing. Said here, at boot, with the remedy.
+    const tenantColumn = await this.pool.query(
+      `SELECT EXISTS (
+         SELECT 1 FROM information_schema.columns
+          WHERE table_schema = 'audit' AND table_name = 'tamper_proof_log'
+            AND column_name = 'organization_id'
+       ) AS present`,
+    );
+    if (!tenantColumn.rows[0]?.present) {
+      throw new Error(
+        '[AuditLog] audit.tamper_proof_log has no organization_id column. It is added by ' +
+          'db/migrations/20260813_audit_tamper_proof_log.sql (amended 2026-10-01); run ' +
+          '`node scripts/db/deploy-migrate.mjs`.',
+      );
+    }
+
     // Presence is not usability: the role also needs INSERT. Checking it here
     // means a misconfigured grant surfaces at startup with the remedy named,
     // rather than as a failed audit write during a regulated action.
@@ -392,8 +461,12 @@ export class TamperProofAuditLog {
       resourceId?: string;
       ipAddress?: string;
       userAgent?: string;
+      /** See resolveAuditOrganization: null = platform row, undefined = the session's tenant. */
+      organizationId?: number | null;
     }
   ): Promise<string> {
+    // Resolved before a connection is taken, so a refused attribution writes nothing.
+    const organizationId = await resolveAuditOrganization(this.pool, context?.organizationId);
     const client = await this.pool.connect();
 
     try {
@@ -451,6 +524,7 @@ export class TamperProofAuditLog {
             resourceId: context?.resourceId,
             ipAddress,
             userAgent: context?.userAgent,
+            organizationId,
           }),
         ),
       );
@@ -467,8 +541,8 @@ export class TamperProofAuditLog {
           id, event_type, event_timestamp, user_id, user_name, session_id,
           correlation_id, resource_type, resource_id, action, details,
           previous_hash, content_hash, chain_hash, signature,
-          ip_address, user_agent
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
+          ip_address, user_agent, organization_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`,
         [
           entryId,
           eventType,
@@ -487,6 +561,7 @@ export class TamperProofAuditLog {
           signature,
           ipAddress,
           context?.userAgent,
+          organizationId,
         ]
       );
 
@@ -570,7 +645,9 @@ export class TamperProofAuditLog {
         endSequence,
         verifiedAt: verifiedAt.toISOString(),
       },
-      { correlationId: `verify-${Date.now()}` }
+      // The chain is every tenant's, so its verification is a platform row,
+      // whichever tenant's request asked for it.
+      { correlationId: `verify-${Date.now()}`, organizationId: null }
     );
 
     return {
@@ -581,23 +658,24 @@ export class TamperProofAuditLog {
   }
 
   /**
-   * Get recent audit entries
+   * Get recent audit entries — scoped exactly as {@link search} is.
    */
   async getRecentEntries(limit: number = 100): Promise<AuditEntry[]> {
-    const result = await this.pool.query(
-      `SELECT * FROM audit.tamper_proof_log
-       ORDER BY sequence_number DESC
-       LIMIT $1`,
-      [limit]
-    );
-
-    return result.rows.map(this.rowToEntry);
+    return this.search({ limit });
   }
 
   /**
-   * Search audit log by criteria
+   * Search audit log by criteria.
+   *
+   * Tenant-scoped like every per-tenant read of this store: inside a per-user
+   * request scope only that tenant's rows are returned (naming another tenant
+   * is refused before the query); outside one, `organizationId` filters when
+   * given and platform tooling reads the whole store when not. Rows written
+   * before the organisation column existed carry no tenant and are not returned
+   * to a tenant-scoped read (cut-over: db/migrations/20260813 header).
    */
   async search(criteria: {
+    organizationId?: number;
     eventType?: AuditEventType;
     userId?: string;
     resourceType?: string;
@@ -607,9 +685,14 @@ export class TamperProofAuditLog {
     toDate?: Date;
     limit?: number;
   }): Promise<AuditEntry[]> {
+    const organizationId = await resolveAuditOrganization(this.pool, criteria.organizationId);
     let query = `SELECT * FROM audit.tamper_proof_log WHERE 1=1`;
     const params: unknown[] = [];
 
+    if (organizationId !== null) {
+      params.push(organizationId);
+      query += ` AND organization_id = $${params.length}`;
+    }
     if (criteria.eventType) {
       params.push(criteria.eventType);
       query += ` AND event_type = $${params.length}`;
@@ -684,6 +767,7 @@ export class TamperProofAuditLog {
     resourceId?: unknown;
     ipAddress?: unknown;
     userAgent?: unknown;
+    organizationId?: unknown;
   }): Record<string, unknown> {
     const out: Record<string, unknown> = {
       eventType: input.eventType,
@@ -703,6 +787,10 @@ export class TamperProofAuditLog {
       ['resourceId', input.resourceId],
       ['ipAddress', input.ipAddress],
       ['userAgent', input.userAgent],
+      // Last, and dropped when null: a row written before the column existed,
+      // or a platform row, hashes exactly as it did before 2026-10-01 — no
+      // re-chaining — while a tenant row's tenant is covered by its hash.
+      ['organizationId', input.organizationId],
     ];
     for (const [k, v] of optional) {
       if (v !== undefined && v !== null) out[k] = v;
@@ -814,6 +902,7 @@ export class TamperProofAuditLog {
       signature: row.signature as string | undefined,
       ipAddress: row.ip_address as string | undefined,
       userAgent: row.user_agent as string | undefined,
+      organizationId: (row.organization_id as number | null | undefined) ?? null,
     };
   }
 }

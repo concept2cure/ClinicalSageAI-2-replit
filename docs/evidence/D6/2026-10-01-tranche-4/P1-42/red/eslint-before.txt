@@ -1,0 +1,8 @@
+server/routes/esignature.ts errors 0 warnings 2
+   182 max-lines-per-function Async arrow function has too many lines (209). Maximum allowed is 100.
+   182 complexity Async arrow function has a complexity of 49. Maximum allowed is 15.
+server/services/ana-ri/command-rbac.ts errors 0 warnings 1
+   477 complexity Async function 'authorizeCommand' has a complexity of 21. Maximum allowed is 15.
+server/services/part11/signature-persistence.ts errors 0 warnings 1
+   303 complexity Async function 'persistElectronicSignature' has a complexity of 23. Maximum allowed is 15.
+TOTAL warnings (3 source files at HEAD) 4

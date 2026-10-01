@@ -1,0 +1,349 @@
+
+ RUN  v4.1.7 /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/54adf5a4-792f-5e11-8798-ae17682e5284/scratchpad/p010b-head
+
+{"level":30,"time":"2026-10-01T08:23:37.587Z","pid":31233,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T08:23:37.589Z","pid":31233,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T08:23:37.589Z","pid":31233,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/domain-sign-ceremony.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T08:23:37.922Z', poolSize: 1 }
+
+stdout | tests/db/domain-sign-ceremony.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/domain-sign-ceremony.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'irb': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 124ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'irb': the approval is an electronic signature > refuses a wrong password, and writes nothing 43ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'irb': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 55ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'irb': the approval is an electronic signature > refuses a viewer who knows their own password (§11.10(g)), and writes nothing 27ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 22ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': the approval is an electronic signature > refuses a wrong password, and writes nothing 40ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 44ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': the approval is an electronic signature > refuses a viewer who knows their own password (§11.10(g)), and writes nothing 18ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 33ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': the approval is an electronic signature > refuses a wrong password, and writes nothing 36ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 47ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': the approval is an electronic signature > refuses a viewer who knows their own password (§11.10(g)), and writes nothing 23ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'rim': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 19ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'rim': the approval is an electronic signature > refuses a wrong password, and writes nothing 33ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'rim': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 47ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'rim': the approval is an electronic signature > refuses a viewer who knows their own password (§11.10(g)), and writes nothing 21ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'consent': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 22ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'consent': the approval is an electronic signature > refuses a wrong password, and writes nothing 36ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'consent': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 46ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'consent': the approval is an electronic signature > refuses a viewer who knows their own password (§11.10(g)), and writes nothing 19ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'deviations': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 17ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'deviations': the approval is an electronic signature > refuses a wrong password, and writes nothing 32ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'deviations': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 35ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'deviations': the approval is an electronic signature > refuses a viewer who knows their own password (§11.10(g)), and writes nothing 13ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'bla': the approval is an electronic signature > refuses a sign without credentials, and writes nothing 16ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'bla': the approval is an electronic signature > refuses a wrong password, and writes nothing 35ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'bla': the approval is an electronic signature > with the ceremony, writes the act, the ledger pair and the signature row in one transaction 49ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'bla': the approval is an electronic signature > refuses a viewer who knows their own password (§11.10(g)), and writes nothing 17ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > a determination that is not an approval is not a signature > an IRB deferral is recorded under resolve, with no password and no signature row 19ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'batch': the signature row lands with the ledger sign > refuses a sign without credentials, and writes nothing 14ms
+stdout | tests/db/domain-sign-ceremony.dbtest.ts > CMC 'batch': the signature row lands with the ledger sign > with re-authentication, writes the ledger pair and the electronic_signatures row in one transaction
+[CMC Batch] Release testing for batch 80b652db-f2b0-43ba-90f1-2ff12fe0ccda: released
+
+stdout | tests/db/domain-sign-ceremony.dbtest.ts > CMC 'batch': the signature row lands with the ledger sign > refuses a viewer who knows their own password (§11.10(g)), and changes nothing
+[CMC Batch] Release testing for batch c6347a46-3878-4458-bb83-6924f3b1d50f: released
+
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'batch': the signature row lands with the ledger sign > refuses a wrong password, and writes nothing 24ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'batch': the signature row lands with the ledger sign > with re-authentication, writes the ledger pair and the electronic_signatures row in one transaction 38ms
+ × tests/db/domain-sign-ceremony.dbtest.ts > CMC 'batch': the signature row lands with the ledger sign > refuses a viewer who knows their own password (§11.10(g)), and changes nothing 43ms
+   → batch: a viewer signed: {"success":true,"data":{"batchRecord":{"id":"c6347a46-3878-4458-bb83-6924f3b1d50f","organization_id":93220,"project_id":"1eedc2bc-5863-4ff2-bef6-f006829936c6","batch_number":"dbdsc-790843015-viewer","batch_type":null,"material_type":null,"scale":null,"site":null,"manufacturing_date":null,"expiry_date":null,"batch_size":null,"batch_size_unit":null,"yield":null,"yield_unit":null,"purpose":null,"process_version":null,"deviations":null,"disposition":null,"linked_analyses":null,"linked_stability_study_id":null,"specification_compliance":null,"oos_events":null,"created_at":"2026-10-01T08:23:35.842Z","updated_at":"2026-10-01T08:23:41.852Z","product_name":"Dbdsc 5 mg","manufacturing_site":null,"status":"completed","process_parameters":null,"in_process_controls":null,"yield_data":null,"release_testing":{"comments":null,"decision":"approved","releasedAt":"2026-10-01T08:23:41.853Z","releasedBy":"QA Head","testResults":[{"test":"assay","passed":true,"result":"pass","evaluatedAt":"2026-10-01T08:23:41.853Z"}],"releaseStatus":"released","allTestsPassed":true},"release_status":"released","released_by":"QA Head","released_at":"2026-10-01T08:23:41.852Z","tenant_id":"93220"},"releaseEvaluation":{"decision":"approved","releasedBy":"QA Head","comments":null,"testResults":[{"test":"assay","result":"pass","passed":true,"evaluatedAt":"2026-10-01T08:23:41.853Z"}],"allTestsPassed":true,"releaseStatus":"released","releasedAt":"2026-10-01T08:23:41.853Z"}},"governance":{"actionId":"act_26b9ce0cbcc94816a8f5942bc9399c54","sha256Chain":"fb5f423f8fb06296e0d716aff4a84e5667a08bd718e117802a55d8fa3e925768"},"message":"Batch released successfully","timestamp":"2026-10-01T08:23:41.862Z","module3Linked":false,"module3Warning":"Module 3 linkage is not under test here."}: expected 200 to be 403 // Object.is equality
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'spec': the signature row lands with the ledger sign > refuses a sign without credentials, and writes nothing 16ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'spec': the signature row lands with the ledger sign > refuses a wrong password, and writes nothing 33ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'spec': the signature row lands with the ledger sign > with re-authentication, writes the ledger pair and the electronic_signatures row in one transaction 37ms
+stdout | tests/db/domain-sign-ceremony.dbtest.ts > CMC 'closure': the signature row lands with the ledger sign > with re-authentication, writes the ledger pair and the electronic_signatures row in one transaction
+[database] Database connection successful { timestamp: '2026-10-01T08:23:42.058Z', poolSize: 2 }
+
+ × tests/db/domain-sign-ceremony.dbtest.ts > CMC 'spec': the signature row lands with the ledger sign > refuses a viewer who knows their own password (§11.10(g)), and changes nothing 27ms
+   → spec: a viewer signed: {"success":true,"data":{"id":"57a5dc5e-928a-41b4-b45d-3b4ec0782866","project_id":null,"tenant_id":93220,"material_type":"drug_substance","material_name":"dbdsc viewer","test_parameters":null,"acceptance_criteria":null,"test_methods":null,"justification":null,"regulatory_basis":null,"approval_status":"approved","created_at":"2026-10-01T08:23:35.843Z","updated_at":"2026-10-01T08:23:41.977Z"},"governance":{"actionId":"act_df022dfbe62c4549a2338ad0f7b0af2b","sha256Chain":"668e7b338da0d134ee7d7f5d9c10c97db8f6038c870c2ab9273dc62b880ab916"},"timestamp":"2026-10-01T08:23:41.985Z","module3Linked":false,"module3Warning":"Module 3 linkage is not under test here."}: expected 200 to be 403 // Object.is equality
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'closure': the signature row lands with the ledger sign > refuses a sign without credentials, and writes nothing 14ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'closure': the signature row lands with the ledger sign > refuses a wrong password, and writes nothing 23ms
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > CMC 'closure': the signature row lands with the ledger sign > with re-authentication, writes the ledger pair and the electronic_signatures row in one transaction 47ms
+stdout | tests/db/domain-sign-ceremony.dbtest.ts > CMC batch release: a rejected batch is not signed as released > signs a rejection with meaning 'responsibility', on the ledger and the signature row
+[CMC Batch] Release testing for batch d4d09608-0511-4be9-aef1-b7822afe7f9b: rejected
+
+ × tests/db/domain-sign-ceremony.dbtest.ts > CMC 'closure': the signature row lands with the ledger sign > refuses a viewer who knows their own password (§11.10(g)), and changes nothing 38ms
+   → closure: a viewer signed: {"success":true,"data":{"id":39,"organizationId":93220,"projectId":null,"scope":"drug_product","systemName":"dbdsc viewer","componentType":"primary","containerDescription":"Type I glass vial","closureDescription":"Bromobutyl stopper","materialsOfConstruction":null,"compendialStandards":null,"suitabilityJustification":null,"extractablesLeachables":null,"integrityTesting":null,"supplier":null,"status":"qualified","qualifiedBy":1133,"qualificationDate":"2026-10-01T08:23:42.097Z","createdAt":"2026-10-01T08:23:35.844Z","updatedAt":"2026-10-01T08:23:42.097Z"},"governance":{"actionId":"act_9664fdac62a049d19ca1560e93a4b541","sha256Chain":"a2e296fa7aa4153636ba84329a240d018d59fb18a28b4fcbe5f436a9f11e904a"},"module3Linked":false,"module3Warning":"Module 3 linkage is not under test here."}: expected 200 to be 403 // Object.is equality
+ × tests/db/domain-sign-ceremony.dbtest.ts > CMC batch release: a rejected batch is not signed as released > signs a rejection with meaning 'responsibility', on the ledger and the signature row 40ms
+   → expected { signer_id: 396, …(7) } to match object { signer_id: 396, …(5) }
+(19 matching properties omitted from actual)
+ × tests/db/domain-sign-ceremony.dbtest.ts > 'irb': PATCH status cannot set what a determination sets > an admin's PATCH to 'approved' is refused, and nothing is written 24ms
+   → irb: PATCH set 'approved': {"id":4,"status":"approved","actionId":"act_4d2de1cefc25403583865b8fa4d9dca0","auditId":"99488207-5708-403a-bfe5-f48f17cc5064","sha256Chain":"9eeaa0a4d526b5a98869a3c03efe14ef67d83735354e122db97c7d0dcb93a36a"}: expected 201 to be 409 // Object.is equality
+ × tests/db/domain-sign-ceremony.dbtest.ts > 'irb': PATCH status cannot set what a determination sets > an admin's PATCH to 'modifications_required' is refused, and nothing is written 19ms
+   → irb: PATCH set 'modifications_required': {"id":5,"status":"modifications_required","actionId":"act_3f4635569f9c46c398fb3fbdf9907e5f","auditId":"fc1fc0e4-c876-439b-a2fb-5410bc5fdee0","sha256Chain":"f527fba934ad6cb3430e64f79ce54357e9b06198c4cd7901df113ac87e7950b2"}: expected 201 to be 409 // Object.is equality
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'irb': PATCH status cannot set what a determination sets > a status no determination sets still moves, under a transition ledger row 24ms
+ × tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': PATCH status cannot set what a determination sets > an admin's PATCH to 'approved' is refused, and nothing is written 28ms
+   → iacuc: PATCH set 'approved': {"id":4,"status":"approved","actionId":"act_0457910b527d4079b3f593f4f55d95aa","auditId":"2703525c-5832-421b-aa27-a05c81418a0d","sha256Chain":"543fcf78ffa9c91d0ebebc010dc5233eadc607f2ef89e12f412fb984ae8f516f"}: expected 201 to be 409 // Object.is equality
+ × tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': PATCH status cannot set what a determination sets > an admin's PATCH to 'conditional' is refused, and nothing is written 28ms
+   → iacuc: PATCH set 'conditional': {"id":5,"status":"conditional","actionId":"act_7d259a681f664598b38a51525a35d0d4","auditId":"a38a9b41-4136-4d77-bd8b-c649129f33bf","sha256Chain":"5549b084e33d5c9bb1df7ab1fc4368b88e715a4fef37953108a781fc80a8c61d"}: expected 201 to be 409 // Object.is equality
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': PATCH status cannot set what a determination sets > a status no determination sets still moves, under a transition ledger row 30ms
+stdout | tests/db/domain-sign-ceremony.dbtest.ts > a specification is created unsigned > refuses approvalStatus 'approved' and stores nothing
+[CMC Specs] Created specification 953c1516-4a3a-4936-80b7-f6c5f864a3e3 for dbdsc 790843015 created-approved
+
+stdout | tests/db/domain-sign-ceremony.dbtest.ts > a specification is created unsigned > stores 'review' as asked, and names the creator on the audit row
+[CMC Specs] Created specification 359d4c3f-f11a-4fea-9d61-b60fa37c90e9 for dbdsc 790843015 created-review
+
+ × tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': PATCH status cannot set what a determination sets > an admin's PATCH to 'approved' is refused, and nothing is written 21ms
+   → ibc: PATCH set 'approved': {"id":4,"status":"approved","actionId":"act_ec8f6db4be2240fb9ee63867d43c8d6e","auditId":"5afd1e45-078d-4787-964e-fdb5fdbbfd59","sha256Chain":"a1eb721a207e0ce9590e5a38048a24841846f628fd2ad9fc1aa6c9b3dce6935f"}: expected 201 to be 409 // Object.is equality
+ × tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': PATCH status cannot set what a determination sets > an admin's PATCH to 'conditional' is refused, and nothing is written 19ms
+   → ibc: PATCH set 'conditional': {"id":5,"status":"conditional","actionId":"act_37def4eace2a49bda881231d8b17c548","auditId":"252d2569-5fd2-4dc2-88e3-5f7b449937bc","sha256Chain":"24b5b0c192e3374413998c3e68cd2ca3a11d99f1ed4615c94089b7d1aa06ca8e"}: expected 201 to be 409 // Object.is equality
+ ✓ tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': PATCH status cannot set what a determination sets > a status no determination sets still moves, under a transition ledger row 23ms
+ × tests/db/domain-sign-ceremony.dbtest.ts > a specification is created unsigned > refuses approvalStatus 'approved' and stores nothing 17ms
+   → create stored an approved specification: {"success":true,"data":{"id":"953c1516-4a3a-4936-80b7-f6c5f864a3e3","project_id":null,"tenant_id":93220,"material_type":"drug_substance","material_name":"dbdsc 790843015 created-approved","test_parameters":null,"acceptance_criteria":null,"test_methods":null,"justification":null,"regulatory_basis":null,"approval_status":"approved","created_at":"2026-10-01T08:23:42.374Z","updated_at":"2026-10-01T08:23:42.374Z"},"message":"Specification created successfully","timestamp":"2026-10-01T08:23:42.379Z","module3Linked":false,"module3Warning":"Module 3 linkage is not under test here."}: expected 201 to be 400 // Object.is equality
+ × tests/db/domain-sign-ceremony.dbtest.ts > a specification is created unsigned > stores 'review' as asked, and names the creator on the audit row 21ms
+   → expected [ { changed_by: 'system' } ] to deeply equal [ { changed_by: '396' } ]
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > CMC 'batch': the signature row lands with the ledger sign > refuses a viewer who knows their own password (§11.10(g)), and changes nothing
+AssertionError: batch: a viewer signed: {"success":true,"data":{"batchRecord":{"id":"c6347a46-3878-4458-bb83-6924f3b1d50f","organization_id":93220,"project_id":"1eedc2bc-5863-4ff2-bef6-f006829936c6","batch_number":"dbdsc-790843015-viewer","batch_type":null,"material_type":null,"scale":null,"site":null,"manufacturing_date":null,"expiry_date":null,"batch_size":null,"batch_size_unit":null,"yield":null,"yield_unit":null,"purpose":null,"process_version":null,"deviations":null,"disposition":null,"linked_analyses":null,"linked_stability_study_id":null,"specification_compliance":null,"oos_events":null,"created_at":"2026-10-01T08:23:35.842Z","updated_at":"2026-10-01T08:23:41.852Z","product_name":"Dbdsc 5 mg","manufacturing_site":null,"status":"completed","process_parameters":null,"in_process_controls":null,"yield_data":null,"release_testing":{"comments":null,"decision":"approved","releasedAt":"2026-10-01T08:23:41.853Z","releasedBy":"QA Head","testResults":[{"test":"assay","passed":true,"result":"pass","evaluatedAt":"2026-10-01T08:23:41.853Z"}],"releaseStatus":"released","allTestsPassed":true},"release_status":"released","released_by":"QA Head","released_at":"2026-10-01T08:23:41.852Z","tenant_id":"93220"},"releaseEvaluation":{"decision":"approved","releasedBy":"QA Head","comments":null,"testResults":[{"test":"assay","result":"pass","passed":true,"evaluatedAt":"2026-10-01T08:23:41.853Z"}],"allTestsPassed":true,"releaseStatus":"released","releasedAt":"2026-10-01T08:23:41.853Z"}},"governance":{"actionId":"act_26b9ce0cbcc94816a8f5942bc9399c54","sha256Chain":"fb5f423f8fb06296e0d716aff4a84e5667a08bd718e117802a55d8fa3e925768"},"message":"Batch released successfully","timestamp":"2026-10-01T08:23:41.862Z","module3Linked":false,"module3Warning":"Module 3 linkage is not under test here."}: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:407:86
+    405|     const before = await cmcSignedState(route, 'viewer');
+    406|     const res = await post(route, 'viewer', { reauth: { password: PASS…
+    407|     expect(res.status, `${route.key}: a viewer signed: ${JSON.stringif…
+       |                                                                                      ^
+    408|     expect(res.body.error).toBe('ESIGNATURE_NO_AUTHORITY');
+    409|     await expectNothingWritten(route, 'viewer');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > CMC 'spec': the signature row lands with the ledger sign > refuses a viewer who knows their own password (§11.10(g)), and changes nothing
+AssertionError: spec: a viewer signed: {"success":true,"data":{"id":"57a5dc5e-928a-41b4-b45d-3b4ec0782866","project_id":null,"tenant_id":93220,"material_type":"drug_substance","material_name":"dbdsc viewer","test_parameters":null,"acceptance_criteria":null,"test_methods":null,"justification":null,"regulatory_basis":null,"approval_status":"approved","created_at":"2026-10-01T08:23:35.843Z","updated_at":"2026-10-01T08:23:41.977Z"},"governance":{"actionId":"act_df022dfbe62c4549a2338ad0f7b0af2b","sha256Chain":"668e7b338da0d134ee7d7f5d9c10c97db8f6038c870c2ab9273dc62b880ab916"},"timestamp":"2026-10-01T08:23:41.985Z","module3Linked":false,"module3Warning":"Module 3 linkage is not under test here."}: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:407:86
+    405|     const before = await cmcSignedState(route, 'viewer');
+    406|     const res = await post(route, 'viewer', { reauth: { password: PASS…
+    407|     expect(res.status, `${route.key}: a viewer signed: ${JSON.stringif…
+       |                                                                                      ^
+    408|     expect(res.body.error).toBe('ESIGNATURE_NO_AUTHORITY');
+    409|     await expectNothingWritten(route, 'viewer');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > CMC 'closure': the signature row lands with the ledger sign > refuses a viewer who knows their own password (§11.10(g)), and changes nothing
+AssertionError: closure: a viewer signed: {"success":true,"data":{"id":39,"organizationId":93220,"projectId":null,"scope":"drug_product","systemName":"dbdsc viewer","componentType":"primary","containerDescription":"Type I glass vial","closureDescription":"Bromobutyl stopper","materialsOfConstruction":null,"compendialStandards":null,"suitabilityJustification":null,"extractablesLeachables":null,"integrityTesting":null,"supplier":null,"status":"qualified","qualifiedBy":1133,"qualificationDate":"2026-10-01T08:23:42.097Z","createdAt":"2026-10-01T08:23:35.844Z","updatedAt":"2026-10-01T08:23:42.097Z"},"governance":{"actionId":"act_9664fdac62a049d19ca1560e93a4b541","sha256Chain":"a2e296fa7aa4153636ba84329a240d018d59fb18a28b4fcbe5f436a9f11e904a"},"module3Linked":false,"module3Warning":"Module 3 linkage is not under test here."}: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:407:86
+    405|     const before = await cmcSignedState(route, 'viewer');
+    406|     const res = await post(route, 'viewer', { reauth: { password: PASS…
+    407|     expect(res.status, `${route.key}: a viewer signed: ${JSON.stringif…
+       |                                                                                      ^
+    408|     expect(res.body.error).toBe('ESIGNATURE_NO_AUTHORITY');
+    409|     await expectNothingWritten(route, 'viewer');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > CMC batch release: a rejected batch is not signed as released > signs a rejection with meaning 'responsibility', on the ledger and the signature row
+AssertionError: expected { signer_id: 396, …(7) } to match object { signer_id: 396, …(5) }
+(19 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "authentication_method": "password",
+    "binding_basis": "governed-action-sha256-chain",
+    "second_factor_verified": false,
+-   "signature_meaning": "responsibility",
++   "signature_meaning": "release",
+    "signature_purpose": "Signing this record for the P0-10b ceremony proof.",
+    "signer_id": 396,
+  }
+
+ ❯ expectSignedTogether tests/db/domain-sign-ceremony.dbtest.ts:274:15
+    272|   const [sig] = rows.signatures;
+    273|   expect(audit.ana_action_id).toBe(action.id);
+    274|   expect(sig).toMatchObject({
+       |               ^
+    275|     signer_id: signer.id,
+    276|     signature_meaning: meaning,
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:419:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > 'irb': PATCH status cannot set what a determination sets > an admin's PATCH to 'approved' is refused, and nothing is written
+AssertionError: irb: PATCH set 'approved': {"id":4,"status":"approved","actionId":"act_4d2de1cefc25403583865b8fa4d9dca0","auditId":"99488207-5708-403a-bfe5-f48f17cc5064","sha256Chain":"9eeaa0a4d526b5a98869a3c03efe14ef67d83735354e122db97c7d0dcb93a36a"}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:458:91
+    456|     const before = await statusOf(id);
+    457|     const res = await patch(id, status);
+    458|     expect(res.status, `${door.key}: PATCH set '${status}': ${JSON.str…
+       |                                                                                           ^
+    459|     expect(res.body.error?.code).toBe('STATUS_SET_BY_DETERMINATION');
+    460|     expect(await statusOf(id)).toBe(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > 'irb': PATCH status cannot set what a determination sets > an admin's PATCH to 'modifications_required' is refused, and nothing is written
+AssertionError: irb: PATCH set 'modifications_required': {"id":5,"status":"modifications_required","actionId":"act_3f4635569f9c46c398fb3fbdf9907e5f","auditId":"fc1fc0e4-c876-439b-a2fb-5410bc5fdee0","sha256Chain":"f527fba934ad6cb3430e64f79ce54357e9b06198c4cd7901df113ac87e7950b2"}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:458:91
+    456|     const before = await statusOf(id);
+    457|     const res = await patch(id, status);
+    458|     expect(res.status, `${door.key}: PATCH set '${status}': ${JSON.str…
+       |                                                                                           ^
+    459|     expect(res.body.error?.code).toBe('STATUS_SET_BY_DETERMINATION');
+    460|     expect(await statusOf(id)).toBe(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': PATCH status cannot set what a determination sets > an admin's PATCH to 'approved' is refused, and nothing is written
+AssertionError: iacuc: PATCH set 'approved': {"id":4,"status":"approved","actionId":"act_0457910b527d4079b3f593f4f55d95aa","auditId":"2703525c-5832-421b-aa27-a05c81418a0d","sha256Chain":"543fcf78ffa9c91d0ebebc010dc5233eadc607f2ef89e12f412fb984ae8f516f"}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:458:91
+    456|     const before = await statusOf(id);
+    457|     const res = await patch(id, status);
+    458|     expect(res.status, `${door.key}: PATCH set '${status}': ${JSON.str…
+       |                                                                                           ^
+    459|     expect(res.body.error?.code).toBe('STATUS_SET_BY_DETERMINATION');
+    460|     expect(await statusOf(id)).toBe(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/12]⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > 'iacuc': PATCH status cannot set what a determination sets > an admin's PATCH to 'conditional' is refused, and nothing is written
+AssertionError: iacuc: PATCH set 'conditional': {"id":5,"status":"conditional","actionId":"act_7d259a681f664598b38a51525a35d0d4","auditId":"a38a9b41-4136-4d77-bd8b-c649129f33bf","sha256Chain":"5549b084e33d5c9bb1df7ab1fc4368b88e715a4fef37953108a781fc80a8c61d"}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:458:91
+    456|     const before = await statusOf(id);
+    457|     const res = await patch(id, status);
+    458|     expect(res.status, `${door.key}: PATCH set '${status}': ${JSON.str…
+       |                                                                                           ^
+    459|     expect(res.body.error?.code).toBe('STATUS_SET_BY_DETERMINATION');
+    460|     expect(await statusOf(id)).toBe(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/12]⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': PATCH status cannot set what a determination sets > an admin's PATCH to 'approved' is refused, and nothing is written
+AssertionError: ibc: PATCH set 'approved': {"id":4,"status":"approved","actionId":"act_ec8f6db4be2240fb9ee63867d43c8d6e","auditId":"5afd1e45-078d-4787-964e-fdb5fdbbfd59","sha256Chain":"a1eb721a207e0ce9590e5a38048a24841846f628fd2ad9fc1aa6c9b3dce6935f"}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:458:91
+    456|     const before = await statusOf(id);
+    457|     const res = await patch(id, status);
+    458|     expect(res.status, `${door.key}: PATCH set '${status}': ${JSON.str…
+       |                                                                                           ^
+    459|     expect(res.body.error?.code).toBe('STATUS_SET_BY_DETERMINATION');
+    460|     expect(await statusOf(id)).toBe(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/12]⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > 'ibc': PATCH status cannot set what a determination sets > an admin's PATCH to 'conditional' is refused, and nothing is written
+AssertionError: ibc: PATCH set 'conditional': {"id":5,"status":"conditional","actionId":"act_37def4eace2a49bda881231d8b17c548","auditId":"252d2569-5fd2-4dc2-88e3-5f7b449937bc","sha256Chain":"24b5b0c192e3374413998c3e68cd2ca3a11d99f1ed4615c94089b7d1aa06ca8e"}: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:458:91
+    456|     const before = await statusOf(id);
+    457|     const res = await patch(id, status);
+    458|     expect(res.status, `${door.key}: PATCH set '${status}': ${JSON.str…
+       |                                                                                           ^
+    459|     expect(res.body.error?.code).toBe('STATUS_SET_BY_DETERMINATION');
+    460|     expect(await statusOf(id)).toBe(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/12]⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > a specification is created unsigned > refuses approvalStatus 'approved' and stores nothing
+AssertionError: create stored an approved specification: {"success":true,"data":{"id":"953c1516-4a3a-4936-80b7-f6c5f864a3e3","project_id":null,"tenant_id":93220,"material_type":"drug_substance","material_name":"dbdsc 790843015 created-approved","test_parameters":null,"acceptance_criteria":null,"test_methods":null,"justification":null,"regulatory_basis":null,"approval_status":"approved","created_at":"2026-10-01T08:23:42.374Z","updated_at":"2026-10-01T08:23:42.374Z"},"message":"Specification created successfully","timestamp":"2026-10-01T08:23:42.379Z","module3Linked":false,"module3Warning":"Module 3 linkage is not under test here."}: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:485:96
+    483|     const name = `${TAG} ${BASE} created-approved`;
+    484|     const res = await create({ materialName: name, approvalStatus: 'ap…
+    485|     expect(res.status, `create stored an approved specification: ${JSO…
+       |                                                                                                ^
+    486|     expect(await stored(name)).toEqual([]);
+    487|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/12]⎯
+
+ FAIL  tests/db/domain-sign-ceremony.dbtest.ts > a specification is created unsigned > stores 'review' as asked, and names the creator on the audit row
+AssertionError: expected [ { changed_by: 'system' } ] to deeply equal [ { changed_by: '396' } ]
+
+- Expected
++ Received
+
+  [
+    {
+-     "changed_by": "396",
++     "changed_by": "system",
+    },
+  ]
+
+ ❯ tests/db/domain-sign-ceremony.dbtest.ts:496:22
+    494|     expect(rows.map((r) => r.approval_status)).toEqual(['review']);
+    495|     const log = await owner.query(`SELECT changed_by FROM specificatio…
+    496|     expect(log.rows).toEqual([{ changed_by: String(signer.id) }]);
+       |                      ^
+    497|   });
+    498| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/12]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  12 failed | 41 passed (53)
+   Start at  08:23:35
+   Duration  7.39s (transform 3.60s, setup 105ms, import 322ms, tests 6.71s, environment 0ms)
+

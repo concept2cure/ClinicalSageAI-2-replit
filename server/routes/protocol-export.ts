@@ -11,8 +11,11 @@
 import { Router, type Request, type Response } from 'express';
 import { getProtocolExport, getCtGovDraft } from '../services/protocol-export/protocol-export-service';
 import { recordProtocolExport, recordCtGovDraft } from '../services/protocol-export-metrics';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('protocol-export');
 
 function resolveOrgId(req: Request): number | null {
   const r = req as any;
@@ -23,7 +26,7 @@ function resolveOrgId(req: Request): number | null {
 function fail(res: Response, err: unknown): void {
   const code = (err as { code?: string } | null)?.code;
   if (code === 'NOT_FOUND') { res.status(404).json({ error: { code, message: err instanceof Error ? err.message : 'Not found.' } }); return; }
-  res.status(500).json({ error: { code: 'INTERNAL', message: err instanceof Error ? err.message : 'Request failed.' } });
+  serverError(res, log, 'handling the protocol export request', err);
 }
 
 router.get('/:id', async (req, res) => {

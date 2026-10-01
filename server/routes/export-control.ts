@@ -5,7 +5,8 @@
  * deterministic ITAR/EAR/OFAC assessment + Fundamental Research Exclusion outcome,
  * read determination readiness, and finalize the determination behind the
  * deterministic readiness gate (persisting the computed license-required result).
- * Every mutation runs BEGIN → Tx → recordGovernedAction → COMMIT, org-scoped.
+ * Every mutation runs BEGIN → Tx → recordGovernedAction → COMMIT, org-scoped; the
+ * determination is an electronic signature (governed-signed-act.ts).
  * Mounted at /api/export-control.
  *
  * @module server/routes/export-control
@@ -15,6 +16,7 @@ import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import { pool } from '../db';
 import { recordGovernedAction } from './c2c/actions';
+import { signedActAttempts, signGovernedAct } from './governed-signed-act';
 import {
   createReviewTx, updateReviewTx, determineReviewTx, getAssessment, getReadiness, listReviews, getReview,
 } from '../services/export-control/export-control-service';
@@ -129,15 +131,18 @@ router.get('/reviews/:id/assessment', async (req, res) => {
   try { res.json({ assessment: await getAssessment(orgId, id), readiness: await getReadiness(orgId, id) }); } catch (err) { fail(res, err); }
 });
 
-router.post('/reviews/:id/determine', async (req, res) => {
+// The determination is an electronic signature (P0-10a): governed-signed-act.ts.
+router.post('/reviews/:id/determine', signedActAttempts, async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
-  const parsed = z.object({ reason }).safeParse(req.body ?? {});
-  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
-  await governed(req, res, 'sign', parsed.data.reason, async (client, orgId, userId) => {
-    const result = await determineReviewTx(client, orgId, userId, id);
-    recordExportReviewDetermined();
-    return { target: `export-control:${id}`, payload: { licenseRequired: result.readiness.assessment.licenseRequired }, body: { id, ...result } };
+  await signGovernedAct(req, res, {
+    domain: 'protocol_development',
+    codeStatus: CODE_STATUS,
+    run: async (client, orgId, userId) => {
+      const result = await determineReviewTx(client, orgId, userId, id);
+      recordExportReviewDetermined();
+      return { target: `export-control:${id}`, payload: { licenseRequired: result.readiness.assessment.licenseRequired }, body: { id, ...result } };
+    },
   });
 });
 

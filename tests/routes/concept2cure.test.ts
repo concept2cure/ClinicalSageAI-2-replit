@@ -574,7 +574,8 @@ describe('Concept2Cure API', () => {
       documentId: 10,
       versionId: 1,
       signaturePurpose: 'Approved for submission',
-      signatureMeaning: 'I approve this version for submission',
+      // §11.50(a)(3): from the closed vocabulary; free text is refused (P1-42).
+      signatureMeaning: 'approval',
       action: 'approved',
       password: 'correct-horse-battery',
       // Claims about HOW identity was established, asserted by the party being
@@ -607,6 +608,9 @@ describe('Concept2Cure API', () => {
       documentId: 10,
       versionId: 1,
       signaturePurpose: 'Approved for submission',
+      // A valid meaning, so the refusal under test is the password's (a
+      // missing meaning is refused first, before any password is checked).
+      signatureMeaning: 'approval',
       action: 'approved',
       password: 'wrong',
     });

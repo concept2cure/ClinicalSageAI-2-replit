@@ -1,0 +1,69 @@
+===== npm run ci:tenant-isolation:no-regression  (2026-10-01T07:00:58Z)
+  server/services/kernel-adaptive-policy.ts  (1)
+    L85  tables=[]
+      `SELECT strategy, AVG(quality_score)::float AS avg_quality, COUNT(*)::int AS samples
+
+  server/services/kernel-observability.ts  (4)
+    L53  tables=[]
+      `SELECT
+    L63  tables=[]
+      `SELECT
+    L72  tables=[]
+      `SELECT
+    … 1 more
+
+Total: 8 candidate(s). These are RAW SQL queries against known tenant-scoped tables that don't reference an org_id / tenant_id / workspace_id in the same statement. Each one is either a real tenant-isolation bug, needs a `// tenant-isolation-safe: <reason>` marker at the call site, or belongs in the file allowlist with a one-line justification (admin tool / schema migration / pre-tenant-resolution auth).
+[ci:tenant-isolation] OK — no new findings above baseline (8 current, 8 baseline)
+exit=0
+===== npm run ci:discarded-audit-write  (2026-10-01T07:01:00Z)
+check-discarded-audit-write: no new occurrences. 117 baselined across 51 file(s).
+  3 baselined file(s) now below their count — run --write-baseline to shrink it.
+exit=0
+===== npm run ci:dead-audit-catch  (2026-10-01T07:01:01Z)
+check-dead-audit-catch: no new occurrences. 0 baselined across 0 file(s).
+exit=0
+===== npm run ci:server-error-leaks  (2026-10-01T07:01:02Z)
+[ci:server-error-leaks] OK — 48 baselined site(s) across 46 file(s); no file gained one.
+[ci:server-error-leaks] 48 site(s) fixed since the baseline — shrink it with --write-baseline.
+exit=0
+===== npm run ci:runtime-ddl  (2026-10-01T07:01:03Z)
+[ci:runtime-ddl] 84 DDL statement(s) in 14 runtime server file(s); 14 baselined
+[ci:runtime-ddl] ✅ no new runtime DDL.
+exit=0
+===== npm run ci:json-operator-types  (2026-10-01T07:01:05Z)
+[ci:json-operator-types] 961 json column(s) (0 more retyped to jsonb by a migration, 28 more created jsonb by the migration that owns an unpushed table, 14 declared inconsistently); 2952 server file(s) read; 0 finding(s), 0 baselined
+[ci:json-operator-types] ✅ no jsonb operator on a json column.
+exit=0
+===== npm run ci:session-scoped-rls-bypass  (2026-10-01T07:01:07Z)
+[ci:session-scoped-rls-bypass] OK — no new session-scoped RLS bypass. 34 baselined occurrence(s) remain in 7 unmounted innovation service(s), every one of them releasing through releaseWithoutBypass(); the baseline may only shrink.
+exit=0
+===== npm run ci:fixture-fallback  (2026-10-01T07:01:09Z)
+[ci:fixture-fallback] `live ?? FIXTURE` and `live?.length ? live : FIXTURE` in client/src/concept2cure
+  ungated content fallbacks  : 0
+  baselined (known, unfixed) : 0
+
+✅ no new ungated fixture fallback. 0 baselined.
+exit=0
+===== npm run ci:no-mock-in-prod-routes  (2026-10-01T07:01:09Z)
+✅ no-mock-in-prod-routes check passed (current=0, baseline=0, new=0)
+exit=0
+===== npm run ci:fabricated-identity  (2026-10-01T07:01:10Z)
+[ci:fabricated-identity] OK — 0 baselined occurrence(s), 0 new.
+exit=0
+===== npm run ci:unreferenced-modules  (2026-10-01T07:01:12Z)
+Unreferenced modules: 82 (baseline 86)
+
+4 baselined module(s) no longer unreferenced — regenerate the baseline:
+  - server/routes/health.ts
+  - server/routes/reports/manifest-routes.ts
+  - server/routes/reports/subscriptions-routes.ts
+  - server/utils/monitoring.js
+
+OK: no new unreachable modules.
+exit=0
+===== npm run check:security-patterns  (2026-10-01T07:01:14Z)
+check-security-patterns: 0 violations across 2961 file(s).
+exit=0
+===== npm run ci:untracked-imports  (2026-10-01T07:01:16Z)
+[ci:untracked-imports] OK — every relative import in 60 file(s) resolves to a tracked file.
+exit=0

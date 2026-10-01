@@ -1,0 +1,5 @@
+ × server/mcp/__tests__/mcp-registration-posture.test.ts > connector client registration in production (IAM-22) > refuses to build with no redirect allow-list 2911ms
+ ✓ server/mcp/__tests__/mcp-registration-posture.test.ts > connector client registration in production (IAM-22) > builds with an allow-list 7ms
+ ✓ server/mcp/__tests__/mcp-registration-posture.test.ts > connector client registration in production (IAM-22) > builds outside production without one (development and test are unchanged) 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 2 passed (3)

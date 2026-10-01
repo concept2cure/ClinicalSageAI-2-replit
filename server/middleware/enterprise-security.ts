@@ -731,11 +731,60 @@ export function auditLog(req: Request, res: Response, next: NextFunction) {
 // API KEY VALIDATION
 // ============================================================================
 
+/**
+ * Where an API key is a credential: the public API (routes/public-api.ts),
+ * mounted at /api/v1, and nowhere else. /api/v1/auth is the session router's
+ * alias (bootstrap/register-platform-routes.ts), not the public API.
+ */
+const PUBLIC_API_PREFIX = '/api/v1';
+const PUBLIC_API_SESSION_ALIAS = '/api/v1/auth';
+
+function onPathPrefix(path: string, prefix: string): boolean {
+  return path === prefix || path.startsWith(`${prefix}/`);
+}
+
+/**
+ * Security audit 2026-09-24 IAM-02, plan P0-2 (b): an API key opens the public
+ * API with the scopes it was minted for (requireScope, below), and nothing else.
+ *
+ * This middleware is mounted app-wide, ahead of the /api auth boundary, and
+ * until 2026-10-01 it validated a key on ANY path and ran the rest of the
+ * request inside the KEY's tenant scope. The boundary's tenant step keeps a real
+ * scope it finds already open (establishRequestTenantScope), so a request
+ * carrying a read-only key of organisation A and a session of organisation B
+ * reached every launch write handler as B's user under A's row-level security,
+ * with req.tenantId = A: B read and wrote A's rows, and the key's scopes limited
+ * nothing. Reproduced against PostgreSQL as the runtime role, RLS enforcing
+ * (server/middleware/__tests__/delegated-credential-scope.dbtest.ts;
+ * docs/evidence/D6/2026-10-01-tranche-4/P0-2-residual/).
+ *
+ * So a key is refused, before it is looked up, wherever it is not the request's
+ * credential: off the public API (no route there takes one; the session surface
+ * authenticates Bearer sessions only), and beside a second credential (one
+ * request, one principal). A refusal is 401: the key authenticates nothing here.
+ */
+function apiKeyRefusal(req: Request): { error: string; code: string } | null {
+  // Lower-cased because Express routes case-insensitively: /API/V1/AUTH reaches the session alias.
+  const path = requestFullPath(req).toLowerCase();
+  if (!onPathPrefix(path, PUBLIC_API_PREFIX) || onPathPrefix(path, PUBLIC_API_SESSION_ALIAS)) {
+    return { error: 'API keys are accepted on the public API (/api/v1) only', code: 'API_KEY_NOT_ACCEPTED' };
+  }
+  if (req.headers.authorization !== undefined) {
+    return { error: 'Send one credential: an API key or a session, not both', code: 'AMBIGUOUS_CREDENTIALS' };
+  }
+  return null;
+}
+
 export async function validateApiKey(req: Request, res: Response, next: NextFunction) {
   const apiKey = req.headers['x-api-key'] as string;
 
   if (!apiKey) {
-    return next(); // API key is optional, fall through to JWT auth
+    return next(); // No key: the session boundary decides.
+  }
+
+  const refusal = apiKeyRefusal(req);
+  if (refusal) {
+    return res.status(401).json(refusal);
   }
 
   // Validate format: prefix_base64urlsafe
@@ -814,6 +863,11 @@ export async function validateApiKey(req: Request, res: Response, next: NextFunc
  *     (`req.authMethod !== 'api_key'`), this guard PASSES THROUGH. Normal
  *     JWT/session requests are governed by session RBAC, not by API-key
  *     scopes; applying scope checks to them would block every browser user.
+ *     A key never reaches a session route, nor shares a request with a
+ *     session (validateApiKey refuses both, P0-2 (b)), so a pass-through here
+ *     is never a key escaping its scopes. A connector (MCP) token never reaches
+ *     /api at all (middleware/tokenType.ts); its OAuth scope is read per tool
+ *     at /mcp (mcp/tools/runtime.ts).
  *   - If the request WAS authenticated via an API key, the key must carry
  *     ALL of the required scopes (logical AND). A key missing any one of
  *     them gets 403. ALL (not ANY) is the conservative choice: a route that

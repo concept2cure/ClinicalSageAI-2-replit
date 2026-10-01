@@ -1,0 +1,23 @@
+$ git rev-parse HEAD
+55518c70dfae0c55a9a7884dec74fa4f5ab86b79
+$ npm run ci:tenant-entry-points
+
+> concept2cure-riai@1.0.0 ci:tenant-entry-points
+> node scripts/ci/check-tenant-entry-points.mjs
+
+[ci:tenant-entry-points] 14 entry point(s); 5 consider tenant entitlement, 9 do not (baseline 9)
+
+[ci:tenant-entry-points] FAIL — 1 baselined entry point(s) CHANGED since justification:
+    server/jobs/auditChainIntegritySweep.ts  (scheduled-sweep)
+
+  Re-read the justification against the new code. If it still holds, refresh
+  the digest: npm run ci:tenant-entry-points:write-baseline
+
+exit=1
+
+baseline digest for server/jobs/auditChainIntegritySweep.ts:
+bdfe7fa89f25d1b5
+digest of the file at HEAD (git show HEAD:...):
+bdfe7fa89f25d1b5
+digest of the worktree file:
+4ff5d136cdb49a93

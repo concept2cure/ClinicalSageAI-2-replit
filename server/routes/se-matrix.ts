@@ -16,9 +16,12 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { pool } from '../db.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { logAuditEvent } from '../services/audit/auditLogger.js';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 import { programInOrganization } from '../services/c2c/program-access';
 
 const router = Router();
+const log = createScopedLogger('se-matrix');
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Configuration
@@ -74,9 +77,8 @@ async function requireProgramAccess(req: Request, res: Response, next: NextFunct
     }
 
     next();
-  } catch (err: any) {
-    console.error('[se-matrix] program access check failed:', err.message);
-    return res.status(500).json({ error: 'Program access check failed', detail: err.message });
+  } catch (err) {
+    return serverError(res, log, 'checking program access', err, { programId });
   }
 }
 
@@ -225,9 +227,27 @@ router.post(
           /* best-effort */
         }
 
-        return res.status(shadowResult.status >= 500 ? 502 : shadowResult.status).json({
+        const shadowDetail =
+          typeof shadowResult.data === 'object' ? shadowResult.data : shadowResult.raw;
+
+        /* A shadow 5xx body is the service's own failure text — traceback,
+           driver error, file path — so it goes to the log, against the
+           program, and the caller gets the same 502 sentence as the transport
+           failure below (IAM-18 (1), P1-17 tranche 3 fix round). */
+        if (shadowResult.status >= 500) {
+          log.error('shadow service answered a server error', {
+            programId,
+            shadowStatus: shadowResult.status,
+            shadowDetail,
+          });
+          return res.status(502).json({ error: 'Shadow service unavailable' });
+        }
+
+        // Below 500 (in practice a 4xx validation body about this request),
+        // the shadow answer is relayed with its status, as before.
+        return res.status(shadowResult.status).json({
           error: 'SE matrix payload generation failed',
-          detail: typeof shadowResult.data === 'object' ? shadowResult.data : shadowResult.raw,
+          detail: shadowDetail,
         });
       }
 
@@ -296,11 +316,12 @@ router.post(
         /* best-effort */
       }
 
-      console.error('[se-matrix] render orchestration failed:', err.message);
-      return res.status(502).json({
-        error: 'Shadow service unavailable',
-        detail: err.message,
-      });
+      /* A 502 with a stable sentence, so it keeps its status: `serverError()`
+         answers only 500. The detail is the transport's or the shadow
+         service's own text — the internal host and port this proxy dials — so
+         it goes to the log and the audit row above, not the body. */
+      log.error('render orchestration failed', { err: err?.message, programId });
+      return res.status(502).json({ error: 'Shadow service unavailable' });
     }
   }
 );

@@ -1,0 +1,10 @@
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/links — cross-references > 422 on an invalid link type 5ms
+ × server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer post /api/mdx/qms/changes: 403, nothing read or written 17ms
+ × server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer patch /api/mdx/qms/changes/1: 403, nothing read or written 7ms
+ × server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer post /api/mdx/qms/changes/1/transition: 403, nothing read or written 8ms
+ × server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer delete /api/mdx/qms/changes/1: 403, nothing read or written 7ms
+ × server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer post /api/mdx/qms/changes/1/links: 403, nothing read or written 5ms
+ × server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer delete /api/mdx/qms/changes/1/links/3: 403, nothing read or written 6ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer still reads the register 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  6 failed | 12 passed (18)

@@ -41,6 +41,7 @@
  */
 
 import { createHash } from 'node:crypto';
+import { DEFAULT_RETENTION_YEARS } from '../../../shared/schema/vault';
 import { pool } from '../../db.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { assertUploadSafe, UploadSafetyError, type UploadOrigin } from '../../middleware/uploadSafety.js';
@@ -483,6 +484,12 @@ async function admitVaultDocument(
     // What is already recorded at this (program, code, version), locked: a
     // same-bytes retry is judged against it (vault-reupload.ts).
     const recorded = await readRecordedVersion(client, args.programId, documentCode, version);
+    // retention_until — the clock starts at admission (P1-22; ADR-0014 §6): the
+    // organisation's own period, or DEFAULT_RETENTION_YEARS ($30) when it has
+    // set none, and the LATER of that and the named, active policy's date, so a
+    // named policy is never shortened silently (GREATEST skips the NULL of an
+    // absent or unknown policy). Read under the caller's RLS scope and keyed by
+    // $27, the organisation the ownership guard proved.
     // tenant-isolation-safe: vault.documents is program-scoped (program_id, no
     // org_id column); the caller's ownership of args.programId was already
     // enforced above against regulatory_programs.organization_id (403 on
@@ -503,12 +510,10 @@ async function admitVaultDocument(
         $1, $2, $3, $4,
         $5, $6, $7, $8, $9, $10,
         $11, $12, $13,
-        -- The retention clock starts at admission (P1-22): the named, active
-        -- policy's days from today; NULL (kept indefinitely) when the document
-        -- names no policy or an unknown one. The sweep never destroys a
-        -- document with no date.
-        (SELECT CURRENT_DATE + rp.retention_days FROM vault.retention_policies rp
-          WHERE rp.policy_name = $13 AND rp.active LIMIT 1),
+        GREATEST(
+          (CURRENT_DATE + make_interval(years => COALESCE(
+            (SELECT s.retention_years FROM organization_retention_settings s WHERE s.organization_id = $27), $30::integer)))::date,
+          (SELECT CURRENT_DATE + rp.retention_days FROM vault.retention_policies rp WHERE rp.policy_name = $13 AND rp.active LIMIT 1)),
         $14, $15,
         $16, $17, $18,
         $19, $20, $21,
@@ -595,6 +600,7 @@ async function admitVaultDocument(
         orgId,
         storageVersionId,
         storageProvider,
+        DEFAULT_RETENTION_YEARS,
       ],
     );
 

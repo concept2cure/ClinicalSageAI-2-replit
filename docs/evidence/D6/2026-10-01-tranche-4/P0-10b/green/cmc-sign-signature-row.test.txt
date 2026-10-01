@@ -1,0 +1,59 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' writes the electronic_signatures row with its ledger sign > records the signature row on the ledger's own client, before COMMIT
+[CMC Batch] Release testing for batch 9: released
+
+stderr | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back
+[CMC Batch] Error processing release: Error: signer identity unresolvable
+    at /home/user/ClinicalSageAI-2-replit/server/api/cmc/__tests__/cmc-sign-signature-row.test.ts:162:17
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+stderr | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back
+[CMC Specs] Error approving specification: Error: signer identity unresolvable
+    at /home/user/ClinicalSageAI-2-replit/server/api/cmc/__tests__/cmc-sign-signature-row.test.ts:162:17
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+stderr | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back
+{
+  "timestamp": "2026-10-01T03:26:18.058Z",
+  "level": "error",
+  "message": "[cmc-routes] CMC write failed",
+  "context": {
+    "operation": "Failed to qualify container closure system",
+    "error": "signer identity unresolvable"
+  }
+}
+
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' writes the electronic_signatures row with its ledger sign > records the signature row on the ledger's own client, before COMMIT 39ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back 9ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' writes the electronic_signatures row with its ledger sign > a request with no credentials is refused and writes nothing 4ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' writes the electronic_signatures row with its ledger sign > records the signature row on the ledger's own client, before COMMIT 4ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back 5ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' writes the electronic_signatures row with its ledger sign > a request with no credentials is refused and writes nothing 3ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' writes the electronic_signatures row with its ledger sign > records the signature row on the ledger's own client, before COMMIT 4ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back 4ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' writes the electronic_signatures row with its ledger sign > a request with no credentials is refused and writes nothing 5ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  03:26:14
+   Duration  3.34s (transform 1.76s, setup 143ms, import 2.72s, tests 82ms, environment 0ms)
+
