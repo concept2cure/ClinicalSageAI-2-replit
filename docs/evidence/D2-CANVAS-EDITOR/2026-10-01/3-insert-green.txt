@@ -1,0 +1,39 @@
+# 3. AnA's answers into the open document — GREEN
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > mounts DocumentCanvas beneath a turn whose draft carries authoringDocId, read from the store 137ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > keeps a document-backed draft OUT of the side-panel artifact list, and a legacy draft IN it 1ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > a turn without a document gets no canvas 42ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > finds the document in a rehydrated turn’s tool trace, and never in prose 1ms
+stderr | client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > hides the side column while a canvas is expanded, and Open full editor mounts the one workbench in place
+stderr | client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the editor opens beside the conversation (2026-10-01) > mounts the workbench in a pane beside the conversation, and the conversation stays
+stderr | client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the editor opens beside the conversation (2026-10-01) > mounts the workbench in a pane beside the conversation, and the conversation stays
+stderr | client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the editor opens beside the conversation (2026-10-01) > mounts the workbench in a pane beside the conversation, and the conversation stays
+stderr | client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the editor opens beside the conversation (2026-10-01) > mounts the workbench in a pane beside the conversation, and the conversation stays
+stderr | client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the editor opens beside the conversation (2026-10-01) > mounts the workbench in a pane beside the conversation, and the conversation stays
+stderr | client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the editor opens beside the conversation (2026-10-01) > mounts the workbench in a pane beside the conversation, and the conversation stays
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the document canvas > hides the side column while a canvas is expanded, and Open full editor mounts the one workbench in place 141ms
+stderr | client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the canvas keeps up with AnA (2026-10-01) > re-reads the document when AnA’s turn ends
+stderr | client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the canvas keeps up with AnA (2026-10-01) > re-reads the document when AnA’s turn ends
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the editor opens beside the conversation (2026-10-01) > mounts the workbench in a pane beside the conversation, and the conversation stays 284ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the canvas keeps up with AnA (2026-10-01) > re-reads the document when AnA’s turn ends 49ms
+stderr | client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > inserts a settled answer into the open section as an AnA suggestion, naming its turn record
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > offers no insert while no document is open 242ms
+stderr | client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > inserts a settled answer into the open section as an AnA suggestion, naming its turn record
+stderr | client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > withdraws the offer when the editor closes: the workbench stays mounted, hidden, and a hidden editor is not a target
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > inserts a settled answer into the open section as an AnA suggestion, naming its turn record 870ms
+stderr | client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > withdraws the offer when the editor closes: the workbench stays mounted, hidden, and a hidden editor is not a target
+stderr | client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > withdraws the offer when the editor closes: the workbench stays mounted, hidden, and a hidden editor is not a target
+stderr | client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the answer as prose > renders a heading, bold and a list as elements, not symbols; user text stays as typed
+stderr | client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the answer as prose > renders a heading, bold and a list as elements, not symbols; user text stays as typed
+stderr | client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the answer as prose > renders a heading, bold and a list as elements, not symbols; user text stays as typed
+stderr | client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the answer as prose > a <script> in model text never reaches the DOM
+stderr | client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the answer as prose > a <script> in model text never reaches the DOM
+stderr | client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the answer as prose > a <script> in model text never reaches the DOM
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > withdraws the offer when the editor closes: the workbench stays mounted, hidden, and a hidden editor is not a target 846ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the answer as prose > renders a heading, bold and a list as elements, not symbols; user text stays as typed 22ms
+ ✓ client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — the answer as prose > a <script> in model text never reaches the DOM 28ms
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  14:23:39
+   Duration  5.36s (transform 1.42s, setup 126ms, import 1.90s, tests 2.67s, environment 510ms)

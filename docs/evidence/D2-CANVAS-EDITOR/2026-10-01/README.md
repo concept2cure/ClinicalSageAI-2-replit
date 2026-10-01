@@ -81,3 +81,51 @@ and the person edited with the conversation out of sight.
   change had added. The fetch-and-parse moved into one `readDocumentRecord`,
   and two `??` defaults went, because `DocumentCanvas` already defaults both
   props. The ESLint ratchet is unchanged.
+
+## 3. AnA's answers go into the open document
+
+**Before.**
+- The editor's "Insert into <section> as tracked suggestion" existed only in
+  the editor's own AnA rail, and the rail is hidden when the editor is
+  embedded in the conversation canvas.
+- So while a document was open beside the conversation, nothing AnA answered
+  in the conversation could reach it except by copy and paste, unattributed.
+
+**Now.**
+- When the editor is embedded, `DocumentWorkbench` reports its open section
+  and an `insert` bound to its editor (`EditorBridge`). It reports nothing
+  while the document is sealed or no section is open.
+- `DocumentCanvas` passes that on only while it is expanded. After it closes,
+  the workbench stays mounted but hidden, and a hidden editor is not offered
+  as a target.
+- Each settled AnA answer in the thread offers "Insert into 2.5.1 as tracked
+  suggestion". The turn that drafted the open document does not, because its
+  answer describes a draft that is already there.
+- The insert goes through the editor's one suggestion door,
+  `RichSectionEditorHandle.insertSuggestion`. That is the same path as the
+  rail.
+  - The text lands as `<ins>` marks attributed to AnA, with
+    `data-source-record` naming the turn record that wrote it.
+  - Nothing is saved until the person reviews each edit and saves.
+  - In source mode, or when the editor refuses, the toast says so instead of
+    claiming success.
+- No server write and no new route. The section PATCH has no optimistic
+  concurrency, so a server-side write while the editor is open could be
+  overwritten by the editor's next save. The editor's own door avoids that.
+
+**Failing first.**
+- `3-insert-red.txt`: the insert case failed against the unchanged thread
+  ("Unable to find role=button … Insert into 2.5.1 as tracked suggestion").
+- `3-withdraw-red.txt`: with the canvas's `expanded` gate removed, the offer
+  stayed after the editor closed. The case fails without the gate.
+
+**Green:** `3-insert-green.txt`, 12/12 in the thread suite. The 35 suites
+that mount the thread, the canvas or the workbench, plus the editor's own
+suites, pass 321/321.
+
+**Also run.**
+- `tsc`: clean.
+- `ci:canvas-path`, `ci:check-phantom-tokens`, `ci:undefined-css-classes`: OK.
+- `check-eslint-warning-ratchet --since HEAD --gate`: no file changed its
+  warning count.
+- The offer reuses the thread's existing `.ct-ref` chip, so there is no new CSS.
