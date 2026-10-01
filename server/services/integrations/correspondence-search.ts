@@ -10,8 +10,14 @@
  * unit-testable without the Gmail client or a database connection, and a
  * deployment without GMAIL_OAUTH_JSON degrades gracefully instead of throwing.
  *
+ * 2026-10-01 (D6, decision P-8): the mailbox is the deployment's own account,
+ * and it serves only the organisation PLATFORM_INTEGRATIONS_ORGANIZATION_ID
+ * names (platform-integration-owner.ts). It read the one mailbox for every
+ * organisation that asked.
+ *
  * @module server/services/integrations/correspondence-search
  */
+import { callerOwnsPlatformIntegrations, notYourIntegrationNote } from './platform-integration-owner.js';
 
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 25;
@@ -91,6 +97,16 @@ export async function searchRegulatoryCorrespondence(
       resultCount: 0,
       messages: [],
       note: 'The regulatory mailbox is not connected (GMAIL_OAUTH_JSON unset). Ask an admin to connect it in Settings → Integrations.',
+    };
+  }
+
+  if (!callerOwnsPlatformIntegrations()) {
+    return {
+      source: 'Regulatory Mailbox (Gmail)',
+      configured: false,
+      resultCount: 0,
+      messages: [],
+      note: notYourIntegrationNote('regulatory mailbox'),
     };
   }
 

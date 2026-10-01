@@ -2942,6 +2942,13 @@ export const C2C_MIGRATION_FILES = [
   // the final pair because ci:migration-set-order pins the tail. Evidence
   // docs/evidence/D5-ANA-RECORD/2026-10-01-review-comments/.
   'migrations/20261001_review_comments_record.sql',
+  /* Vault document relationships (plan critique 15, D2, 2026-10-01): the
+     replacement for parentDocumentId. One public, org-keyed table (Rule 1),
+     frozen identity, one-way removal with a reason, no TRUNCATE, DELETE only
+     by cascade or the owner. Reached by the tenant purge through ON DELETE
+     CASCADE from regulatory_programs and vault.documents. Above the pair so
+     the sweep gives it row security. No DROP. */
+  'migrations/20261001_vault_document_relationships.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
