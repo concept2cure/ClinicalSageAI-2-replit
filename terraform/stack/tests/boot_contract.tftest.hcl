@@ -99,7 +99,7 @@ variables {
   domain_aliases                  = ["app.example.com"]
   cloudfront_origin_secret        = "c2cTestOriginSecret_0123456789abcdef"
   create_github_oidc_provider     = true
-  openai_api_key                  = "test-openai-key"
+  openai_api_key                  = "sk-test-openai-0123456789"
   anthropic_api_key               = "sk-ant-test-0123456789"
   jwt_secret                      = "jwt-0123456789abcdef0123456789abcdef"
   refresh_token_secret            = "refresh-0123456789abcdef0123456789abcdef"
@@ -107,6 +107,7 @@ variables {
   audit_hmac_key                  = "audkey-0123456789abcdef0123456789abcdef"
   audit_hmac_secret               = "audsec-0123456789abcdef0123456789abcdef"
   audit_export_signing_key        = "audexp-0123456789abcdef0123456789abcdef"
+  audit_attestation_key           = "attest-0123456789abcdef0123456789abcdef"
   connector_encryption_key        = "conn-0123456789abcdef0123456789abcdef"
   smtp_host                       = "email-smtp.us-east-1.amazonaws.com"
   smtp_user                       = "test-smtp-user"
@@ -308,7 +309,7 @@ run "renders_the_boot_contract" {
           for secret in [
             random_password.db_master.result, random_password.db_app_service.result,
             var.jwt_secret, var.refresh_token_secret, var.mfa_encryption_key, var.audit_hmac_key,
-            var.audit_hmac_secret, var.audit_export_signing_key, var.connector_encryption_key, var.openai_api_key, var.anthropic_api_key,
+            var.audit_hmac_secret, var.audit_export_signing_key, var.audit_attestation_key, var.connector_encryption_key, var.openai_api_key, var.anthropic_api_key,
             var.smtp_user, var.smtp_pass,
           ] : !strcontains(e.value, secret)
         ]
@@ -744,6 +745,88 @@ run "refuses_placement_approvals_that_omit_the_drafting_provider" {
   }
 
   expect_failures = [terraform_data.boot_contract]
+}
+
+# Vault search embeds with OpenAI by default (server/services/ai-gateway/embeddings).
+# An empty key deployed, and the Vault then had no embeddings and searched
+# nothing, with no error at boot (D1, docs/evidence/W2/2026-10-01-inventory-gaps/).
+run "refuses_an_empty_openai_key" {
+  command = plan
+
+  variables {
+    openai_api_key = ""
+  }
+
+  expect_failures = [var.openai_api_key]
+}
+
+run "refuses_an_anthropic_key_as_the_openai_key" {
+  command = plan
+
+  variables {
+    openai_api_key = "sk-ant-test-0123456789"
+  }
+
+  expect_failures = [var.openai_api_key]
+}
+
+# Tenant-export attestations are signed with AUDIT_ATTESTATION_KEY. No deploy path
+# provided it before 2026-10-01, so every attestation failed to sign in
+# production (D1, docs/evidence/W2/2026-10-01-inventory-gaps/). The preflight now
+# names it, so renders_the_boot_contract requires it in both containers.
+run "refuses_a_short_attestation_key" {
+  command = plan
+
+  variables {
+    audit_attestation_key = "too-short"
+  }
+
+  expect_failures = [var.audit_attestation_key]
+}
+
+run "refuses_an_attestation_key_equal_to_the_audit_export_key" {
+  command = plan
+
+  variables {
+    audit_attestation_key = "audexp-0123456789abcdef0123456789abcdef"
+  }
+
+  expect_failures = [terraform_data.boot_contract]
+}
+
+run "error_reporting_is_absent_unless_configured" {
+  command = apply
+
+  assert {
+    condition     = !contains([for e in module.ecs.api_container.environment : e.name], "SENTRY_DSN")
+    error_message = "With no sentry_dsn, SENTRY_DSN is absent rather than empty."
+  }
+}
+
+run "error_reporting_reaches_both_containers_when_configured" {
+  command = apply
+
+  variables {
+    sentry_dsn = "https://0123456789abcdef@o0.ingest.sentry.io/0"
+  }
+
+  assert {
+    condition = alltrue([
+      for defs in [module.ecs.api_container, module.ecs.worker_container] :
+      one([for e in defs.environment : e.value if e.name == "SENTRY_DSN"]) == "https://0123456789abcdef@o0.ingest.sentry.io/0"
+    ])
+    error_message = "SENTRY_DSN must reach the API and the worker when sentry_dsn is set."
+  }
+}
+
+run "refuses_a_sentry_dsn_that_is_not_https" {
+  command = plan
+
+  variables {
+    sentry_dsn = "http://0123456789abcdef@o0.ingest.sentry.io/0"
+  }
+
+  expect_failures = [var.sentry_dsn]
 }
 
 # B10 (W2 / D1): RDS retires old minor versions, and a retired minor cannot be
