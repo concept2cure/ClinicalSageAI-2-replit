@@ -171,23 +171,19 @@ function checkPdfA(
   grade: SubmissionBundle['submissionGrade'],
   pdfa: PdfARequirement,
   isProd: boolean,
-  checks: PreTransmitCheck[],
-  blockers: string[],
-  warnings: string[],
-): void {
+): { check?: PreTransmitCheck; blocker?: string; warning?: string } {
   // A grade is evidence only when it carries the list the check reads; `{}`
   // used to pass as "0 not converted".
   if (!grade || !Array.isArray(grade.notConverted)) {
-    if (isProd && pdfa.required) {
-      warnings.push(`PDF/A is required (${pdfaRequirementWho(pdfa)}) but the bundle carries no PDF/A grade — cannot prove PDF/A compliance at transmit time.`);
-    }
-    return;
+    return isProd && pdfa.required
+      ? { warning: `PDF/A is required (${pdfaRequirementWho(pdfa)}) but the bundle carries no PDF/A grade — cannot prove PDF/A compliance at transmit time.` }
+      : {};
   }
   const notConverted = grade.notConverted.length;
   const asIssued = Array.isArray(grade.agencyFormsAsIssued) && grade.agencyFormsAsIssued.length > 0
     ? `; ${grade.agencyFormsAsIssued.length} agency form(s) shipped as issued (${grade.agencyFormsAsIssued.join(', ')})`
     : '';
-  checks.push({
+  const check: PreTransmitCheck = {
     name: 'pdfa-submission-grade',
     // Plain PDF fails this check only where PDF/A was chosen.
     passed: notConverted === 0 || !pdfa.required,
@@ -195,13 +191,14 @@ function checkPdfA(
       `${grade.pdfaConverted}/${grade.pdfLeaves} PDF leaves are PDF/A; ${notConverted} plain PDF` +
       asIssued +
       (pdfa.required ? `. PDF/A required: ${pdfaRequirementWho(pdfa)}.` : '. PDF/A not required: the agency accepts plain PDF 1.4–1.7.'),
-  });
-  if (isProd && pdfa.required && notConverted > 0) {
-    blockers.push(
+  };
+  if (!(isProd && pdfa.required && notConverted > 0)) return { check };
+  return {
+    check,
+    blocker:
       `${notConverted} PDF leaf/leaves are not PDF/A (${grade.notConverted.slice(0, 3).join(', ')}${notConverted > 3 ? ', …' : ''}), ` +
-        `and ${pdfaRequirementWho(pdfa)}. The agency itself also accepts plain PDF 1.4–1.7.`,
-    );
-  }
+      `and ${pdfaRequirementWho(pdfa)}. The agency itself also accepts plain PDF 1.4–1.7.`,
+  };
 }
 
 export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult {
@@ -236,7 +233,10 @@ export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult 
   // 2. PDF/A submission grade. Required only when the deployment or the
   // organisation chose it: every agency here accepts plain PDF 1.4–1.7 too
   // (ectd/pdfa-requirement.ts, decided 2026-10-01).
-  checkPdfA(input.bundle.submissionGrade, input.pdfa ?? pdfaRequirementFrom(env, false), isProd, checks, blockers, warnings);
+  const pdfaOutcome = checkPdfA(input.bundle.submissionGrade, input.pdfa ?? pdfaRequirementFrom(env, false), isProd);
+  if (pdfaOutcome.check) checks.push(pdfaOutcome.check);
+  if (pdfaOutcome.blocker) blockers.push(pdfaOutcome.blocker);
+  if (pdfaOutcome.warning) warnings.push(pdfaOutcome.warning);
 
   // 3. DTD + stylesheet self-containment.
   const dtdGate = evaluateDtdSelfContainment(
