@@ -234,7 +234,8 @@ describe('route registration reaches the production bundle', () => {
       ['server/bootstrap/register-tenant-routes.ts', ['tenants-simple.js', 'tenant-users.js']],
       ['server/bootstrap/register-project-routes.ts', ['project-hierarchy.js', 'planner-routes.js']],
       ['server/bootstrap/register-clinical-intel-routes.ts', ['ind.js', 'regulatoryRoutes.js']],
-      ['server/bootstrap/register-document-routes.ts', ['ectd-compile.js', 'qms.js', 'evidence.js']],
+      // qms.js was the representative here until /api/qms was removed (DP-34, 2026-10-01).
+      ['server/bootstrap/register-document-routes.ts', ['ectd-compile.js', 'capa-mdr.js', 'evidence.js']],
       ['server/bootstrap/register-advanced-platform-routes.ts', ['market-access.js', 'cro.js']],
     ];
 

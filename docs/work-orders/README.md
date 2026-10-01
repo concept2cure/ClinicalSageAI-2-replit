@@ -254,6 +254,10 @@ Full record: `docs/evidence/D5-AUDIT-OUTCOMES/2026-09-24/README.md`.
    - Every capability has an audited twin on `/api/mdx/qms/*`.
    - Deleting it was attempted in the review session and stopped at a permission
      check. It waits on the founder.
+   **Done 2026-10-01 (`…015oLV2v`, on the founder's authority):** the router
+   and its only service are deleted and unmounted, and the three baselines that
+   named them have shrunk. `qms-effective-only-by-signature.test.ts` now proves
+   the door stays gone. See the commit naming DP-34.
 5. **W1 / D2 (launch catalog):** launch scope is enforced in navigation only.
    `applyLaunchScope` locks the rail, the Apps catalog and deep links. The one
    API-level check, `server/middleware/moduleEntitlementGate.ts`, never reads
@@ -291,7 +295,13 @@ Full record: `docs/evidence/D5-AUDIT-OUTCOMES/2026-09-24/README.md`.
 
 Full record: `docs/evidence/reviews/2026-09-24/lenses.md`.
 
-1. **Auth owner (D6), then Tasks (T2's UI half).** The server refuses a `viewer`
+1. ~~**Auth owner (D6), then Tasks (T2's UI half).**~~ **Done 2026-10-01 (`…015oLV2v`), in the commit naming T2:**
+   - Every auth response that returns a user carries `governed:write`, derived
+     by `sessionPermissions` from `GOVERNED_WRITE_ROLES`.
+   - A test holds that permission equal to `requireEditorAccess` for every role.
+   - The task board withholds its write controls without it.
+
+   Originally: the server refuses a `viewer`
    on every task write (`requireEditorAccess`). The task board still offers the
    viewer *New task*, *Start workflow*, move, archive and sign, and refuses only
    after the click (`TaskBoard.tsx:745-746,895-896`). The client cannot tell
