@@ -179,19 +179,15 @@ export async function persistCollectedDrafts(args: {
   const { parseIntegerProjectId, looksLikeProgramUuid } = await import('../../lib/project-id.js');
   let projectId = parseIntegerProjectId(streamProjectId);
   if (projectId == null && looksLikeProgramUuid(streamProjectId)) {
-    try {
-      const { pool } = await import('../../db.js');
-      const anchor = await pool.query(
-        `SELECT id FROM projects
-          WHERE regulatory_program_id = $1 AND organization_id = $2
-          LIMIT 1`,
-        [String(streamProjectId).trim(), Number(orgId)],
-      );
-      const anchored = parseIntegerProjectId(anchor.rows[0]?.id);
-      if (anchored != null) projectId = anchored;
-    } catch (anchorErr: any) {
-      console.warn('[AnA RI Stream] Program→project anchor lookup failed:', anchorErr?.message);
-    }
+    /* The one anchor reader (PF-08): the lowest-id row, the one intake links,
+       so a draft versions under the same project every export reads. Not
+       strict: a failed read leaves the draft unfiled, and the caveat below
+       says so. */
+    const { db } = await import('../../db.js');
+    const { resolveProgramProjectAnchor } = await import('../../services/c2c/program-project-anchor.js');
+    projectId = await resolveProgramProjectAnchor(db, {
+      programId: String(streamProjectId).trim(), orgId: Number(orgId), context: 'ana-ri.persistCollectedDrafts',
+    });
   }
   if (projectId == null) {
     /* No project to file under. The rail says "Drafted <title>" — saying
