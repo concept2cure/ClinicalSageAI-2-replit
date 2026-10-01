@@ -1,0 +1,301 @@
+# HEAD c6f2028b code (provision-app-role.mjs / readiness-contract.mjs unchanged); app_service as HEAD's recipe left it; 2026-10-01T06:10:32Z
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the stores exist on this database > every append-only store this file names is present (a missing one would make the rest vacuous) 2ms
+ × tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > withholds UPDATE, DELETE and TRUNCATE on every append-only store, and keeps SELECT and INSERT 27ms
+   → expected [ …(10) ] to deeply equal []
+ × tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > electronic_signatures: the supersession columns stay updatable (revocation), the attested ones do not 8ms
+   → expected [ 'bound_payload_digest', …(10) ] to deeply equal [ 'is_valid', 'superseded_by', …(3) ]
+ × tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > the privilege refuses first: UPDATE/DELETE that reach no row, and TRUNCATE, are 42501 on every store 143ms
+   → expected [ …(20) ] to deeply equal []
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > the governed revocation statement still runs (its columns only) 7ms
+ × tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > a re-run of the recipe takes a hand GRANT of DELETE on audit_logs back 5ms
+   → expected [ …(10) ] to deeply equal [ 'public.audit_logs: DELETE' ]
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the deploy grant audit (auditRuntimeRoleGrants → readiness contract, deploy-migrate 5/5) > reports the per-run role clean on every store: nothing beyond the ceiling, nothing denied 109ms
+ × tests/db/append-only-store-grants.dbtest.ts > the deploy grant audit (auditRuntimeRoleGrants → readiness contract, deploy-migrate 5/5) > refuses a hand GRANT of DELETE, TRUNCATE or an attested column on a store, by name 82ms
+   → expected [] to deeply equal [ { …(2) }, { …(2) }, { …(2) } ]
+ × tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > holds no UPDATE, DELETE or TRUNCATE on any append-only store 2ms
+   → expected [ …(10) ] to deeply equal []
+ × tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > as app_service, in its own tenant: DELETE and UPDATE of an audit row are refused by the privilege (42501), before the trigger 21ms
+   → expected 'P0A02 IMMUTABILITY_VIOLATION: audit_l…' to match /^42501 permission denied for table au…/
+ × tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > with the trigger out of the way (replica mode), app_service still cannot remove or rewrite an audit row 27ms
+   → expected 'ran (1 row(s))' to match /^42501 /
+ ✓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > the archive door still deletes for app_service, and records the batch in its ledger 6ms
+ × tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > the deploy grant audit agrees with the catalog for app_service: nothing beyond the ceiling on any store 34ms
+   → expected [] to deeply equal [ …(10) ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > withholds UPDATE, DELETE and TRUNCATE on every append-only store, and keeps SELECT and INSERT
+AssertionError: expected [ …(10) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "public.audit_logs: UPDATE,DELETE",
++   "public.audit_events: UPDATE,DELETE",
++   "public.audit_log_archives: UPDATE,DELETE",
++   "public.electronic_signatures: UPDATE,DELETE",
++   "public.ana_turn_records: UPDATE,DELETE",
++   "public.ana_record_blobs: UPDATE,DELETE",
++   "public.authoring_audit_trail: UPDATE,DELETE",
++   "public.doc_revisions: UPDATE,DELETE",
++   "public.concept2cure_signatures: UPDATE,DELETE",
++   "public.concept2cure_submission_snapshots: UPDATE,DELETE",
++ ]
+
+ ❯ tests/db/append-only-store-grants.dbtest.ts:202:46
+    200| describe('the grant recipe (provisionAppServiceRole) on a per-run role…
+    201|   it('withholds UPDATE, DELETE and TRUNCATE on every append-only store…
+    202|     expect(await beyondCeiling(runtimeRole)).toEqual([]);
+       |                                              ^
+    203|     const held = await privileges(runtimeRole);
+    204|     for (const { store } of present) expect([store, held[store].SELECT…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > electronic_signatures: the supersession columns stay updatable (revocation), the attested ones do not
+AssertionError: expected [ 'bound_payload_digest', …(10) ] to deeply equal [ 'is_valid', 'superseded_by', …(3) ]
+
+- Expected
++ Received
+
+  [
++   "bound_payload_digest",
+    "is_valid",
++   "signature_hash",
++   "signature_meaning",
++   "signed_at",
++   "signer_email",
++   "signer_id",
+    "superseded_by",
+    "updated_at",
+    "verification_date",
+    "verification_status",
+  ]
+
+ ❯ tests/db/append-only-store-grants.dbtest.ts:213:30
+    211|     );
+    212|     const updatable = rows.filter((r) => r.u).map((r) => r.c);
+    213|     expect(updatable.sort()).toEqual([...SUPERSESSION].sort());
+       |                              ^
+    214|   });
+    215|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > the privilege refuses first: UPDATE/DELETE that reach no row, and TRUNCATE, are 42501 on every store
+AssertionError: expected [ …(20) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "UPDATE public.audit_logs SET id = id WHERE false → ran (0 row(s))",
++   "DELETE FROM public.audit_logs WHERE false → ran (0 row(s))",
++   "UPDATE public.audit_events SET id = id WHERE false → ran (0 row(s))",
++   "DELETE FROM public.audit_events WHERE false → ran (0 row(s))",
++   "UPDATE public.audit_log_archives SET id = id WHERE false → ran (0 row(s))",
++   "DELETE FROM public.audit_log_archives WHERE false → ran (0 row(s))",
++   "UPDATE public.electronic_signatures SET id = id WHERE false → ran (0 row(s))",
++   "DELETE FROM public.electronic_signatures WHERE false → ran (0 row(s))",
++   "UPDATE public.ana_turn_records SET id = id WHERE false → ran (0 row(s))",
++   "DELETE FROM public.ana_turn_records WHERE false → ran (0 row(s))",
++   "UPDATE public.ana_record_blobs SET organization_id = organization_id WHERE false → ran (0 row(s))",
++   "DELETE FROM public.ana_record_blobs WHERE false → ran (0 row(s))",
++   "UPDATE public.authoring_audit_trail SET id = id WHERE false → ran (0 row(s))",
++   "DELETE FROM public.authoring_audit_trail WHERE false → ran (0 row(s))",
++   "UPDATE public.doc_revisions SET id = id WHERE false → ran (0 row(s))",
++   "DELETE FROM public.doc_revisions WHERE false → ran (0 row(s))",
++   "UPDATE public.concept2cure_signatures SET id = id WHERE false → ran (0 row(s))",
++   "DELETE FROM public.concept2cure_signatures WHERE false → ran (0 row(s))",
++   "UPDATE public.concept2cure_submission_snapshots SET id = id WHERE false → ran (0 row(s))",
++   "DELETE FROM public.concept2cure_submission_snapshots WHERE false → ran (0 row(s))",
++ ]
+
+ ❯ tests/db/append-only-store-grants.dbtest.ts:217:49
+    215|
+    216|   it('the privilege refuses first: UPDATE/DELETE that reach no row, an…
+    217|     expect(await mutationAttempts(runtimePool)).toEqual([]);
+       |                                                 ^
+    218|   });
+    219|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > a re-run of the recipe takes a hand GRANT of DELETE on audit_logs back
+AssertionError: expected [ …(10) ] to deeply equal [ 'public.audit_logs: DELETE' ]
+
+- Expected
++ Received
+
+  [
+-   "public.audit_logs: DELETE",
++   "public.audit_logs: UPDATE,DELETE",
++   "public.audit_events: UPDATE,DELETE",
++   "public.audit_log_archives: UPDATE,DELETE",
++   "public.electronic_signatures: UPDATE,DELETE",
++   "public.ana_turn_records: UPDATE,DELETE",
++   "public.ana_record_blobs: UPDATE,DELETE",
++   "public.authoring_audit_trail: UPDATE,DELETE",
++   "public.doc_revisions: UPDATE,DELETE",
++   "public.concept2cure_signatures: UPDATE,DELETE",
++   "public.concept2cure_submission_snapshots: UPDATE,DELETE",
+  ]
+
+ ❯ tests/db/append-only-store-grants.dbtest.ts:235:46
+    233|   it('a re-run of the recipe takes a hand GRANT of DELETE on audit_log…
+    234|     await owner.query(`GRANT DELETE ON public.audit_logs TO ${runtimeR…
+    235|     expect(await beyondCeiling(runtimeRole)).toEqual(['public.audit_lo…
+       |                                              ^
+    236|     await refreshRuntimeRoleGrants(owner, { role: runtimeRole });
+    237|     expect(await beyondCeiling(runtimeRole)).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  tests/db/append-only-store-grants.dbtest.ts > the deploy grant audit (auditRuntimeRoleGrants → readiness contract, deploy-migrate 5/5) > refuses a hand GRANT of DELETE, TRUNCATE or an attested column on a store, by name
+AssertionError: expected [] to deeply equal [ { …(2) }, { …(2) }, { …(2) } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "held": [
+-       "TRUNCATE",
+-     ],
+-     "relation": "public.audit_events",
+-   },
+-   {
+-     "held": [
+-       "DELETE",
+-     ],
+-     "relation": "public.audit_logs",
+-   },
+-   {
+-     "held": [
+-       "UPDATE(signer_id)",
+-     ],
+-     "relation": "public.electronic_signatures",
+-   },
+- ]
++ []
+
+ ❯ tests/db/append-only-store-grants.dbtest.ts:259:116
+    257|     try {
+    258|       const audit = await auditRuntimeRoleGrants(owner, runtimeRole);
+    259|       expect(audit.excess.filter((e: { relation: string }) => (STORES …
+       |                                                                                                                    ^
+    260|         { relation: 'public.audit_events', held: ['TRUNCATE'] },
+    261|         { relation: 'public.audit_logs', held: ['DELETE'] },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > holds no UPDATE, DELETE or TRUNCATE on any append-only store
+AssertionError: expected [ …(10) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "public.audit_logs: UPDATE,DELETE",
++   "public.audit_events: UPDATE,DELETE",
++   "public.audit_log_archives: UPDATE,DELETE",
++   "public.electronic_signatures: UPDATE,DELETE",
++   "public.ana_turn_records: UPDATE,DELETE",
++   "public.ana_record_blobs: UPDATE,DELETE",
++   "public.authoring_audit_trail: UPDATE,DELETE",
++   "public.doc_revisions: UPDATE,DELETE",
++   "public.concept2cure_signatures: UPDATE,DELETE",
++   "public.concept2cure_submission_snapshots: UPDATE,DELETE",
++ ]
+
+ ❯ tests/db/append-only-store-grants.dbtest.ts:277:43
+    275| describe(`${APP_ROLE}, as deploy-migrate step 4/5 leaves it`, () => {
+    276|   it('holds no UPDATE, DELETE or TRUNCATE on any append-only store', a…
+    277|     expect(await beyondCeiling(APP_ROLE)).toEqual([]);
+       |                                           ^
+    278|   });
+    279|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > as app_service, in its own tenant: DELETE and UPDATE of an audit row are refused by the privilege (42501), before the trigger
+AssertionError: expected 'P0A02 IMMUTABILITY_VIOLATION: audit_l…' to match /^42501 permission denied for table au…/
+
+- Expected:
+/^42501 permission denied for table audit_logs/
+
++ Received:
+"P0A02 IMMUTABILITY_VIOLATION: audit_logs are append-only"
+
+ ❯ tests/db/append-only-store-grants.dbtest.ts:288:26
+    286|       ];
+    287|     });
+    288|     expect(outcome(del)).toMatch(/^42501 permission denied for table a…
+       |                          ^
+    289|     expect(outcome(upd)).toMatch(/^42501 permission denied for table a…
+    290|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > with the trigger out of the way (replica mode), app_service still cannot remove or rewrite an audit row
+AssertionError: expected 'ran (1 row(s))' to match /^42501 /
+
+- Expected:
+/^42501 /
+
++ Received:
+"ran (1 row(s))"
+
+ ❯ tests/db/append-only-store-grants.dbtest.ts:303:94
+    301|       ]);
+    302|       const id = await insertAuditRow(c, 'dbtest-p08.replica-probe');
+    303|       expect(outcome(await attempt(c, 'DELETE FROM public.audit_logs W…
+       |                                                                                              ^
+    304|       expect(outcome(await attempt(c, `UPDATE public.audit_logs SET ac…
+    305|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > the deploy grant audit agrees with the catalog for app_service: nothing beyond the ceiling on any store
+AssertionError: expected [] to deeply equal [ …(10) ]
+
+- Expected
++ Received
+
+- [
+-   "public.audit_logs: UPDATE,DELETE",
+-   "public.audit_events: UPDATE,DELETE",
+-   "public.audit_log_archives: UPDATE,DELETE",
+-   "public.electronic_signatures: UPDATE,DELETE",
+-   "public.ana_turn_records: UPDATE,DELETE",
+-   "public.ana_record_blobs: UPDATE,DELETE",
+-   "public.authoring_audit_trail: UPDATE,DELETE",
+-   "public.doc_revisions: UPDATE,DELETE",
+-   "public.concept2cure_signatures: UPDATE,DELETE",
+-   "public.concept2cure_submission_snapshots: UPDATE,DELETE",
+- ]
++ []
+
+ ❯ tests/db/append-only-store-grants.dbtest.ts:331:22
+    329|       .filter((e: { relation: string }) => (STORES as readonly string[…
+    330|       .map((e: { relation: string; held: string[] }) => `${e.relation}…
+    331|     expect(reported).toEqual(await beyondCeiling(APP_ROLE));
+       |                      ^
+    332|     expect(reported).toEqual([]);
+    333|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed | 4 passed (13)
+   Start at  06:10:33
+   Duration  2.73s (transform 207ms, setup 101ms, import 173ms, tests 1.59s, environment 0ms)
+

@@ -1,0 +1,26 @@
+# 2026-10-01 08:59 UTC, HEAD eefd33e7. Exit code 1.
+# $ node docs/evidence/D6/2026-10-01-tranche-4/P0-11/fix-round/check-dpa-proposal.mjs docs/evidence/D6/2026-10-01-tranche-4/P0-11/fix-round/round-1-proposal.json HEAD
+
+"the last row of Annex III" resolves, at HEAD, to the row: Google LLC (Vertex AI); Microsoft Corporation (Azure OpenAI)
+proposal: P0-11 round 1, as filed: "Replace the last row of Annex III, and add a sentence under the table" (README lines 103-108 before the fix round)
+DPA at: HEAD (eefd33e7)
+
+PASS  every text the proposal tells the owner to find occurs exactly once
+FAIL  no Annex III subprocessor is dropped
+      dropped: Google LLC (Vertex AI); Microsoft Corporation (Azure OpenAI)
+FAIL  no subprocessor is listed twice
+      listed twice: OpenAI, L.L.C.
+FAIL  Moonshot's exclusion is stated exactly once in Annex III (as at HEAD: 1)
+      stated 2 times:
+      *Anthropic, PBC is the only model subprocessor provisioned in every deployment. No other model provider receives Customer Data unless that Customer's Order Form elects it. Moonshot AI (Kimi) is not available in production for any Customer.*
+      Moonshot AI is not a subprocessor and cannot be elected (ADR-0014 §1: GDPR Chapter V, APPI Art. 28, 28 CFR Part 202).
+FAIL  every Annex III OpenAI row says no key is provisioned without an election
+      OpenAI rows: 2; without the provisioning clause: 1
+
+The change this proposal makes to the DPA at HEAD (word diff):
+@@ -271 +271,3 @@ with `SECURITY.md`.
+| [-Google LLC (Vertex AI); Microsoft Corporation (Azure OpenAI)-]{+OpenAI, L.L.C.+} | LLM inference, [-only-]{+as a fallback lane,+} for a [-Customer-]{+tenant+} whose Order Form elects [-it; not deployed for launch-]{+it | United States (global API)+} | [-As-]{+**Not provisioned unless a tenant's Order Form elects it.** Where one has,+} the {+deployment holds an OpenAI key and the gateway still refuses every request from any organization that has not+} elected [-placement declares-]{+OpenAI, before dispatch. Not approved for high-risk regulatory drafting.+} |
+
+{+*Anthropic, PBC is the only model subprocessor provisioned in every deployment. No other model provider receives Customer Data unless that+} Customer's [-written election, recorded as its placement policy and enforced-]{+Order Form elects it. Moonshot AI (Kimi) is not available+} in production [-|-]{+for any Customer.*+}
+
+4 check(s) FAIL
