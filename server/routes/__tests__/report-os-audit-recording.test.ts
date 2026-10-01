@@ -178,6 +178,22 @@ beforeEach(() => {
   });
 });
 
+describe('POST /runs never computes a prediction (reporting review 2026-10-01)', () => {
+  it('refuses a prediction-family type with 422 before the plan gate, the computation or any write', async () => {
+    h.queued.select.push([{ typeId: 'prediction.regulatory_forecast', label: 'Predictive Regulatory Forecast', family: 'prediction', allowedScopes: ['program', 'project', 'submission'] }]);
+    const res = await request(app)
+      .post('/api/report-os/runs')
+      .send({ scopeType: 'submission', scopeId: 'sub-1', reportTypeId: 'prediction.regulatory_forecast' });
+    expect(res.status).toBe(422);
+    expect(res.body.code).toBe('PREDICTION_NOT_A_RUN');
+    expect(res.body.error).toMatch(/not computed by the report run/);
+    expect(h.gate).not.toHaveBeenCalled();
+    expect(h.compute).not.toHaveBeenCalled();
+    expect(h.audit).not.toHaveBeenCalled();
+    expect(h.statements).toEqual([]);
+  });
+});
+
 describe('POST /runs records the run on the audit chain', () => {
   const post = () =>
     request(app).post('/api/report-os/runs').send({ scopeType: 'submission', scopeId: 'sub-1', reportTypeId: TYPE.typeId });
