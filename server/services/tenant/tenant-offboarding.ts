@@ -855,4 +855,11 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
   'cmc_checklist_instances',
   'cmc_ai_tool_executions',
   'cmc_workflows',
+  /* The organisation's own retention period (P1-22; ADR-0014 §6): its years,
+     the reason and governing rule for a shorter one, and the user who set it.
+     Each change's history is the chained audit row it wrote, which a purge
+     keeps. The table's only FK is to organizations ON DELETE CASCADE, and a
+     purge updates that row rather than deleting it, so the cascade never fires
+     and nothing but this list erases it. A leaf, so its position is free. */
+  'organization_retention_settings',
 ]);

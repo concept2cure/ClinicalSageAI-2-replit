@@ -23,6 +23,7 @@ import { AUDIT_READER_ROLES } from '../services/audit/audit-api-authority';
 import { writeChainedAuditRow } from '../services/auditService';
 import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger';
+import { createRetentionPeriodRoutes } from './vault-retention-period';
 
 const log = createScopedLogger('vault-legal-holds');
 
@@ -243,6 +244,9 @@ async function liftHold(req: Request, res: Response): Promise<void> {
 
 export function createVaultLegalHoldRoutes(): Router {
   const router = Router();
+  // The organisation's retention period: the other control on disposition
+  // (ADR-0014 §6), owner/admin only, in its own file (vault-retention-period.ts).
+  router.use('/retention', createRetentionPeriodRoutes());
   router.get('/', listHolds);
   router.post('/', placeHold);
   router.post('/:id/lift', liftHold);

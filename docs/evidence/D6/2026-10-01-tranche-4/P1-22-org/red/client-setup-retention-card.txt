@@ -1,0 +1,2136 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/adminSetupRetentionPeriod.test.tsx > Setup → Records retention > reads the period from the server and says when it is the 25-year default 5255ms
+   → Setup renders no Records retention card: expected null not to be null
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-inner"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ph"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-eyebrow"[39m
+            [36m>[39m
+              [0mAdmin — organization[0m
+            [36m</div>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"ph-title"[39m
+            [36m>[39m
+              [0mSetup[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-sub"[39m
+            [36m>[39m
+              [0mOrganization profile and module configuration, saved to the organization record and written to the audit trail. Controls the platform enforces rather than exposes are marked as enforced.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33maria-label[39m=[32m"Reason for change"[39m
+              [33mclass[39m=[32m"txw-gov-field"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mplaceholder[39m=[32m"Reason for change (audited)"[39m
+              [33mstyle[39m=[32m"font-size: 12.5px; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border-control); background: var(--bg-050); color: var(--text-100); min-width: 220px;"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn"[39m
+              [33mdisabled[39m=[32m""[39m
+            [36m>[39m
+              [0mNo unsaved changes[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 3v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 5h-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 17v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 18H3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Ask AnA[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-atomic[39m=[32m"true"[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"txw-settings"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"txw-set-card"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"txw-set-head"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-set-head-l"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-set-eyebrow"[39m
+                [36m>[39m
+                  [0mOrganization[0m
+                [36m</div>[39m
+                [36m<h2[39m
+                  [33mclass[39m=[32m"txw-set-title"[39m
+                [36m>[39m
+                  [0mProfile & client type[0m
+                [36m</h2>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"txw-set-sub"[39m
+                [36m>[39m
+                  [0mDrives default templates, pathways, and the AnA context across every project.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"txw-set-body"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-row"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-l"[39m
+                [36m>[39m
+                  [0mOrganization name[0m
+                  [36m<small>[39m
+                    [0mDisplayed in audit, e-sign manifest, and export footers.[0m
+                  [36m</small>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-r"[39m
+                [36m>[39m
+                  [36m<input[39m
+                    [33maria-label[39m=[32m"Organization name"[39m
+                    [33mclass[39m=[32m"txw-gov-field"[39m
+                    [33mstyle[39m=[32m"font-size: 13px; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-control); background: var(--bg-050); width: 100%; max-width: 340px;"[39m
+                    [33mvalue[39m=[32m"Northwind Bio"[39m
+                  [36m/>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"txw-help"[39m
+                  [36m>[39m
+                    [0mGoverned — stored on the organization record.[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-row"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-l"[39m
+                [36m>[39m
+                  [0mClient type[0m
+                  [36m<small>[39m
+                    [0mSets the default rail focus and AnA framing. Governed — saved to your organization's industry profile.[0m
+                  [36m</small>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-r"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"txw-row-r-grid"[39m
+                  [36m>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mMedical device[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mBiotech[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mPharma[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mDiagnostics (IVD)[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mCRO[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mRegulatory consulting[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mHealth system or academic[0m
+                    [36m</button>[39m
+                  [36m</div>[39m
+                  [36m<span[39m
+                    [33maria-live[39m=[32m"polite"[39m
+                    [33mclass[39m=[32m"txw-help"[39m
+                    [33mrole[39m=[32m"status"[39m
+                  [36m>[39m
+                    [0mNo governed profile saved yet — pick a type to create one.[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-row"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-l"[39m
+                [36m>[39m
+                  [0mMulti-factor authentication[0m
+                  [36m<small>[39m
+                    [0mTOTP via an authenticator app, enrolled by each member.[0m
+                  [36m</small>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-r"[39m
+                  [33mstyle[39m=[32m"flex-direction: row; align-items: center; gap: 10px;"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"txw-help"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-info"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mfocusable[39m=[32m"false"[39m
+                      [33mheight[39m=[32m"1em"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"1.75"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"1em"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<circle[39m
+                        [33mcx[39m=[32m"12"[39m
+                        [33mcy[39m=[32m"12"[39m
+                        [33mr[39m=[32m"10"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M12 16v-4"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M12 8h.01"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [0m Set per user, not per organization. Sign-in enforcement follows each member's own enrolment, so there is nothing for an administrator to switch here.[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-row"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-l"[39m
+                [36m>[39m
+                  [0mSSO & SCIM[0m
+                  [36m<small>[39m
+                    [0mSAML / OIDC and directory provisioning.[0m
+                  [36m</small>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-r"[39m
+                  [33mstyle[39m=[32m"flex-direction: row; align-items: center; gap: 10px;"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"btn ghost"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-lock"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mfocusable[39m=[32m"false"[39m
+                      [33mheight[39m=[32m"1em"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"1.75"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"1em"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<rect[39m
+                        [33mheight[39m=[32m"11"[39m
+                        [33mrx[39m=[32m"2"[39m
+                        [33mry[39m=[32m"2"[39m
+                        [33mwidth[39m=[32m"18"[39m
+                        [33mx[39m=[32m"3"[39m
+                        [33my[39m=[32m"11"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [0m Open Identity console[0m
+                  [36m</button>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"txw-help"[39m
+                  [36m>[39m
+                    [0mGoverned there, not here — SAML endpoints, SCIM provisioning tokens and the SCIM IP allowlist. A boolean on this page would be a second copy of that state with nothing to reconcile it.[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"txw-set-card"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"txw-set-head"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-set-head-l"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-set-eyebrow"[39m
+                [36m>[39m
+                  [0mModule — authoring[0m
+                [36m</div>[39m
+                [36m<h2[39m
+                  [33mclass[39m=[32m"txw-set-title"[39m
+                [36m>[39m
+                  [0mTranslation workspace[0m
+                [36m</h2>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"txw-set-sub"[39m
+                [36m>[39m
+                  [0mBilingual review for non-English regulatory content — drafted by MT, post-edited by a human, back-translated for verification, and approved under 21 CFR Part 11. Exposed inside the Document editor's Trans dock.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Enable translation workspace"[39m
+                [33maria-pressed[39m=[32m"false"[39m
+                [33mclass[39m=[32m"txw-switch"[39m
+              [36m/>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ × client/src/concept2cure/v2/__tests__/adminSetupRetentionPeriod.test.tsx > Setup → Records retention > a failed read is an error, never the default presented as this organisation’s period 5022ms
+   → Setup renders no Records retention card: expected null not to be null
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-inner"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ph"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-eyebrow"[39m
+            [36m>[39m
+              [0mAdmin — organization[0m
+            [36m</div>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"ph-title"[39m
+            [36m>[39m
+              [0mSetup[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-sub"[39m
+            [36m>[39m
+              [0mOrganization profile and module configuration, saved to the organization record and written to the audit trail. Controls the platform enforces rather than exposes are marked as enforced.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33maria-label[39m=[32m"Reason for change"[39m
+              [33mclass[39m=[32m"txw-gov-field"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mplaceholder[39m=[32m"Reason for change (audited)"[39m
+              [33mstyle[39m=[32m"font-size: 12.5px; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border-control); background: var(--bg-050); color: var(--text-100); min-width: 220px;"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn"[39m
+              [33mdisabled[39m=[32m""[39m
+            [36m>[39m
+              [0mNo unsaved changes[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 3v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 5h-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 17v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 18H3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Ask AnA[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-atomic[39m=[32m"true"[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"txw-settings"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"txw-set-card"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"txw-set-head"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-set-head-l"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-set-eyebrow"[39m
+                [36m>[39m
+                  [0mOrganization[0m
+                [36m</div>[39m
+                [36m<h2[39m
+                  [33mclass[39m=[32m"txw-set-title"[39m
+                [36m>[39m
+                  [0mProfile & client type[0m
+                [36m</h2>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"txw-set-sub"[39m
+                [36m>[39m
+                  [0mDrives default templates, pathways, and the AnA context across every project.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"txw-set-body"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-row"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-l"[39m
+                [36m>[39m
+                  [0mOrganization name[0m
+                  [36m<small>[39m
+                    [0mDisplayed in audit, e-sign manifest, and export footers.[0m
+                  [36m</small>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-r"[39m
+                [36m>[39m
+                  [36m<input[39m
+                    [33maria-label[39m=[32m"Organization name"[39m
+                    [33mclass[39m=[32m"txw-gov-field"[39m
+                    [33mstyle[39m=[32m"font-size: 13px; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-control); background: var(--bg-050); width: 100%; max-width: 340px;"[39m
+                    [33mvalue[39m=[32m"Northwind Bio"[39m
+                  [36m/>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"txw-help"[39m
+                  [36m>[39m
+                    [0mGoverned — stored on the organization record.[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-row"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-l"[39m
+                [36m>[39m
+                  [0mClient type[0m
+                  [36m<small>[39m
+                    [0mSets the default rail focus and AnA framing. Governed — saved to your organization's industry profile.[0m
+                  [36m</small>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-r"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"txw-row-r-grid"[39m
+                  [36m>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mMedical device[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mBiotech[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mPharma[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mDiagnostics (IVD)[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mCRO[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mRegulatory consulting[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mHealth system or academic[0m
+                    [36m</button>[39m
+                  [36m</div>[39m
+                  [36m<span[39m
+                    [33maria-live[39m=[32m"polite"[39m
+                    [33mclass[39m=[32m"txw-help"[39m
+                    [33mrole[39m=[32m"status"[39m
+                  [36m>[39m
+                    [0mNo governed profile saved yet — pick a type to create one.[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-row"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-l"[39m
+                [36m>[39m
+                  [0mMulti-factor authentication[0m
+                  [36m<small>[39m
+                    [0mTOTP via an authenticator app, enrolled by each member.[0m
+                  [36m</small>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-r"[39m
+                  [33mstyle[39m=[32m"flex-direction: row; align-items: center; gap: 10px;"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"txw-help"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-info"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mfocusable[39m=[32m"false"[39m
+                      [33mheight[39m=[32m"1em"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"1.75"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"1em"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<circle[39m
+                        [33mcx[39m=[32m"12"[39m
+                        [33mcy[39m=[32m"12"[39m
+                        [33mr[39m=[32m"10"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M12 16v-4"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M12 8h.01"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [0m Set per user, not per organization. Sign-in enforcement follows each member's own enrolment, so there is nothing for an administrator to switch here.[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-row"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-l"[39m
+                [36m>[39m
+                  [0mSSO & SCIM[0m
+                  [36m<small>[39m
+                    [0mSAML / OIDC and directory provisioning.[0m
+                  [36m</small>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-r"[39m
+                  [33mstyle[39m=[32m"flex-direction: row; align-items: center; gap: 10px;"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"btn ghost"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-lock"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mfocusable[39m=[32m"false"[39m
+                      [33mheight[39m=[32m"1em"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"1.75"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"1em"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<rect[39m
+                        [33mheight[39m=[32m"11"[39m
+                        [33mrx[39m=[32m"2"[39m
+                        [33mry[39m=[32m"2"[39m
+                        [33mwidth[39m=[32m"18"[39m
+                        [33mx[39m=[32m"3"[39m
+                        [33my[39m=[32m"11"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [0m Open Identity console[0m
+                  [36m</button>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"txw-help"[39m
+                  [36m>[39m
+                    [0mGoverned there, not here — SAML endpoints, SCIM provisioning tokens and the SCIM IP allowlist. A boolean on this page would be a second copy of that state with nothing to reconcile it.[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"txw-set-card"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"txw-set-head"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-set-head-l"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-set-eyebrow"[39m
+                [36m>[39m
+                  [0mModule — authoring[0m
+                [36m</div>[39m
+                [36m<h2[39m
+                  [33mclass[39m=[32m"txw-set-title"[39m
+                [36m>[39m
+                  [0mTranslation workspace[0m
+                [36m</h2>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"txw-set-sub"[39m
+                [36m>[39m
+                  [0mBilingual review for non-English regulatory content — drafted by MT, post-edited by a human, back-translated for verification, and approved under 21 CFR Part 11. Exposed inside the Document editor's Trans dock.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Enable translation workspace"[39m
+                [33maria-pressed[39m=[32m"false"[39m
+                [33mclass[39m=[32m"txw-switch"[39m
+              [36m/>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ × client/src/concept2cure/v2/__tests__/adminSetupRetentionPeriod.test.tsx > Setup → Records retention > a member is told who sets the period and is offered no control 5030ms
+   → Setup renders no Records retention card: expected null not to be null
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-inner"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ph"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-eyebrow"[39m
+            [36m>[39m
+              [0mAdmin — organization[0m
+            [36m</div>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"ph-title"[39m
+            [36m>[39m
+              [0mSetup[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-sub"[39m
+            [36m>[39m
+              [0mOrganization profile and module configuration, saved to the organization record and written to the audit trail. Controls the platform enforces rather than exposes are marked as enforced.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33maria-label[39m=[32m"Reason for change"[39m
+              [33mclass[39m=[32m"txw-gov-field"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mplaceholder[39m=[32m"Reason for change (audited)"[39m
+              [33mstyle[39m=[32m"font-size: 12.5px; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border-control); background: var(--bg-050); color: var(--text-100); min-width: 220px;"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn"[39m
+              [33mdisabled[39m=[32m""[39m
+            [36m>[39m
+              [0mNo unsaved changes[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 3v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 5h-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 17v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 18H3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Ask AnA[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-atomic[39m=[32m"true"[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"txw-settings"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"txw-set-card"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"txw-set-head"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-set-head-l"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-set-eyebrow"[39m
+                [36m>[39m
+                  [0mOrganization[0m
+                [36m</div>[39m
+                [36m<h2[39m
+                  [33mclass[39m=[32m"txw-set-title"[39m
+                [36m>[39m
+                  [0mProfile & client type[0m
+                [36m</h2>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"txw-set-sub"[39m
+                [36m>[39m
+                  [0mDrives default templates, pathways, and the AnA context across every project.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"txw-set-body"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-row"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-l"[39m
+                [36m>[39m
+                  [0mOrganization name[0m
+                  [36m<small>[39m
+                    [0mDisplayed in audit, e-sign manifest, and export footers.[0m
+                  [36m</small>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-r"[39m
+                [36m>[39m
+                  [36m<input[39m
+                    [33maria-label[39m=[32m"Organization name"[39m
+                    [33mclass[39m=[32m"txw-gov-field"[39m
+                    [33mstyle[39m=[32m"font-size: 13px; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-control); background: var(--bg-050); width: 100%; max-width: 340px;"[39m
+                    [33mvalue[39m=[32m"Northwind Bio"[39m
+                  [36m/>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"txw-help"[39m
+                  [36m>[39m
+                    [0mGoverned — stored on the organization record.[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-row"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-l"[39m
+                [36m>[39m
+                  [0mClient type[0m
+                  [36m<small>[39m
+                    [0mSets the default rail focus and AnA framing. Governed — saved to your organization's industry profile.[0m
+                  [36m</small>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-r"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"txw-row-r-grid"[39m
+                  [36m>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mMedical device[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mBiotech[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mPharma[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mDiagnostics (IVD)[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mCRO[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mRegulatory consulting[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mHealth system or academic[0m
+                    [36m</button>[39m
+                  [36m</div>[39m
+                  [36m<span[39m
+                    [33maria-live[39m=[32m"polite"[39m
+                    [33mclass[39m=[32m"txw-help"[39m
+                    [33mrole[39m=[32m"status"[39m
+                  [36m>[39m
+                    [0mNo governed profile saved yet — pick a type to create one.[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-row"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-l"[39m
+                [36m>[39m
+                  [0mMulti-factor authentication[0m
+                  [36m<small>[39m
+                    [0mTOTP via an authenticator app, enrolled by each member.[0m
+                  [36m</small>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-r"[39m
+                  [33mstyle[39m=[32m"flex-direction: row; align-items: center; gap: 10px;"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"txw-help"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-info"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mfocusable[39m=[32m"false"[39m
+                      [33mheight[39m=[32m"1em"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"1.75"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"1em"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<circle[39m
+                        [33mcx[39m=[32m"12"[39m
+                        [33mcy[39m=[32m"12"[39m
+                        [33mr[39m=[32m"10"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M12 16v-4"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M12 8h.01"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [0m Set per user, not per organization. Sign-in enforcement follows each member's own enrolment, so there is nothing for an administrator to switch here.[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-row"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-l"[39m
+                [36m>[39m
+                  [0mSSO & SCIM[0m
+                  [36m<small>[39m
+                    [0mSAML / OIDC and directory provisioning.[0m
+                  [36m</small>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-r"[39m
+                  [33mstyle[39m=[32m"flex-direction: row; align-items: center; gap: 10px;"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"btn ghost"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-lock"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mfocusable[39m=[32m"false"[39m
+                      [33mheight[39m=[32m"1em"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"1.75"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"1em"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<rect[39m
+                        [33mheight[39m=[32m"11"[39m
+                        [33mrx[39m=[32m"2"[39m
+                        [33mry[39m=[32m"2"[39m
+                        [33mwidth[39m=[32m"18"[39m
+                        [33mx[39m=[32m"3"[39m
+                        [33my[39m=[32m"11"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [0m Open Identity console[0m
+                  [36m</button>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"txw-help"[39m
+                  [36m>[39m
+                    [0mGoverned there, not here — SAML endpoints, SCIM provisioning tokens and the SCIM IP allowlist. A boolean on this page would be a second copy of that state with nothing to reconcile it.[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"txw-set-card"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"txw-set-head"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-set-head-l"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-set-eyebrow"[39m
+                [36m>[39m
+                  [0mModule — authoring[0m
+                [36m</div>[39m
+                [36m<h2[39m
+                  [33mclass[39m=[32m"txw-set-title"[39m
+                [36m>[39m
+                  [0mTranslation workspace[0m
+                [36m</h2>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"txw-set-sub"[39m
+                [36m>[39m
+                  [0mBilingual review for non-English regulatory content — drafted by MT, post-edited by a human, back-translated for verification, and approved under 21 CFR Part 11. Exposed inside the Document editor's Trans dock.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Enable translation workspace"[39m
+                [33maria-pressed[39m=[32m"false"[39m
+                [33mclass[39m=[32m"txw-switch"[39m
+              [36m/>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ × client/src/concept2cure/v2/__tests__/adminSetupRetentionPeriod.test.tsx > Setup → Records retention > shortening sends the reason and the governing rule; a refusal leaves the period in force and says why 5037ms
+   → Setup renders no Records retention card: expected null not to be null
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-inner"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ph"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-eyebrow"[39m
+            [36m>[39m
+              [0mAdmin — organization[0m
+            [36m</div>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"ph-title"[39m
+            [36m>[39m
+              [0mSetup[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-sub"[39m
+            [36m>[39m
+              [0mOrganization profile and module configuration, saved to the organization record and written to the audit trail. Controls the platform enforces rather than exposes are marked as enforced.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33maria-label[39m=[32m"Reason for change"[39m
+              [33mclass[39m=[32m"txw-gov-field"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mplaceholder[39m=[32m"Reason for change (audited)"[39m
+              [33mstyle[39m=[32m"font-size: 12.5px; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border-control); background: var(--bg-050); color: var(--text-100); min-width: 220px;"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn"[39m
+              [33mdisabled[39m=[32m""[39m
+            [36m>[39m
+              [0mNo unsaved changes[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 3v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 5h-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 17v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 18H3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Ask AnA[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-atomic[39m=[32m"true"[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"txw-settings"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"txw-set-card"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"txw-set-head"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-set-head-l"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-set-eyebrow"[39m
+                [36m>[39m
+                  [0mOrganization[0m
+                [36m</div>[39m
+                [36m<h2[39m
+                  [33mclass[39m=[32m"txw-set-title"[39m
+                [36m>[39m
+                  [0mProfile & client type[0m
+                [36m</h2>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"txw-set-sub"[39m
+                [36m>[39m
+                  [0mDrives default templates, pathways, and the AnA context across every project.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"txw-set-body"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-row"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-l"[39m
+                [36m>[39m
+                  [0mOrganization name[0m
+                  [36m<small>[39m
+                    [0mDisplayed in audit, e-sign manifest, and export footers.[0m
+                  [36m</small>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-r"[39m
+                [36m>[39m
+                  [36m<input[39m
+                    [33maria-label[39m=[32m"Organization name"[39m
+                    [33mclass[39m=[32m"txw-gov-field"[39m
+                    [33mstyle[39m=[32m"font-size: 13px; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-control); background: var(--bg-050); width: 100%; max-width: 340px;"[39m
+                    [33mvalue[39m=[32m"Northwind Bio"[39m
+                  [36m/>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"txw-help"[39m
+                  [36m>[39m
+                    [0mGoverned — stored on the organization record.[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-row"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-l"[39m
+                [36m>[39m
+                  [0mClient type[0m
+                  [36m<small>[39m
+                    [0mSets the default rail focus and AnA framing. Governed — saved to your organization's industry profile.[0m
+                  [36m</small>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-r"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"txw-row-r-grid"[39m
+                  [36m>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mMedical device[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mBiotech[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mPharma[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mDiagnostics (IVD)[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mCRO[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mRegulatory consulting[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mHealth system or academic[0m
+                    [36m</button>[39m
+                  [36m</div>[39m
+                  [36m<span[39m
+                    [33maria-live[39m=[32m"polite"[39m
+                    [33mclass[39m=[32m"txw-help"[39m
+                    [33mrole[39m=[32m"status"[39m
+                  [36m>[39m
+                    [0mNo governed profile saved yet — pick a type to create one.[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-row"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-l"[39m
+                [36m>[39m
+                  [0mMulti-factor authentication[0m
+                  [36m<small>[39m
+                    [0mTOTP via an authenticator app, enrolled by each member.[0m
+                  [36m</small>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-r"[39m
+                  [33mstyle[39m=[32m"flex-direction: row; align-items: center; gap: 10px;"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"txw-help"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-info"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mfocusable[39m=[32m"false"[39m
+                      [33mheight[39m=[32m"1em"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"1.75"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"1em"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<circle[39m
+                        [33mcx[39m=[32m"12"[39m
+                        [33mcy[39m=[32m"12"[39m
+                        [33mr[39m=[32m"10"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M12 16v-4"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M12 8h.01"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [0m Set per user, not per organization. Sign-in enforcement follows each member's own enrolment, so there is nothing for an administrator to switch here.[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-row"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-l"[39m
+                [36m>[39m
+                  [0mSSO & SCIM[0m
+                  [36m<small>[39m
+                    [0mSAML / OIDC and directory provisioning.[0m
+                  [36m</small>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-r"[39m
+                  [33mstyle[39m=[32m"flex-direction: row; align-items: center; gap: 10px;"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"btn ghost"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-lock"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mfocusable[39m=[32m"false"[39m
+                      [33mheight[39m=[32m"1em"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"1.75"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"1em"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<rect[39m
+                        [33mheight[39m=[32m"11"[39m
+                        [33mrx[39m=[32m"2"[39m
+                        [33mry[39m=[32m"2"[39m
+                        [33mwidth[39m=[32m"18"[39m
+                        [33mx[39m=[32m"3"[39m
+                        [33my[39m=[32m"11"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [0m Open Identity console[0m
+                  [36m</button>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"txw-help"[39m
+                  [36m>[39m
+                    [0mGoverned there, not here — SAML endpoints, SCIM provisioning tokens and the SCIM IP allowlist. A boolean on this page would be a second copy of that state with nothing to reconcile it.[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"txw-set-card"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"txw-set-head"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-set-head-l"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-set-eyebrow"[39m
+                [36m>[39m
+                  [0mModule — authoring[0m
+                [36m</div>[39m
+                [36m<h2[39m
+                  [33mclass[39m=[32m"txw-set-title"[39m
+                [36m>[39m
+                  [0mTranslation workspace[0m
+                [36m</h2>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"txw-set-sub"[39m
+                [36m>[39m
+                  [0mBilingual review for non-English regulatory content — drafted by MT, post-edited by a human, back-translated for verification, and approved under 21 CFR Part 11. Exposed inside the Document editor's Trans dock.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Enable translation workspace"[39m
+                [33maria-pressed[39m=[32m"false"[39m
+                [33mclass[39m=[32m"txw-switch"[39m
+              [36m/>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ × client/src/concept2cure/v2/__tests__/adminSetupRetentionPeriod.test.tsx > Setup → Records retention > a lengthened period is shown from the server’s answer, and only then reported as saved 5049ms
+   → Setup renders no Records retention card: expected null not to be null
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-inner"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ph"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-eyebrow"[39m
+            [36m>[39m
+              [0mAdmin — organization[0m
+            [36m</div>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"ph-title"[39m
+            [36m>[39m
+              [0mSetup[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-sub"[39m
+            [36m>[39m
+              [0mOrganization profile and module configuration, saved to the organization record and written to the audit trail. Controls the platform enforces rather than exposes are marked as enforced.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33maria-label[39m=[32m"Reason for change"[39m
+              [33mclass[39m=[32m"txw-gov-field"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mplaceholder[39m=[32m"Reason for change (audited)"[39m
+              [33mstyle[39m=[32m"font-size: 12.5px; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border-control); background: var(--bg-050); color: var(--text-100); min-width: 220px;"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn"[39m
+              [33mdisabled[39m=[32m""[39m
+            [36m>[39m
+              [0mNo unsaved changes[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 3v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 5h-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 17v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 18H3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Ask AnA[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-atomic[39m=[32m"true"[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"txw-settings"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"txw-set-card"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"txw-set-head"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-set-head-l"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-set-eyebrow"[39m
+                [36m>[39m
+                  [0mOrganization[0m
+                [36m</div>[39m
+                [36m<h2[39m
+                  [33mclass[39m=[32m"txw-set-title"[39m
+                [36m>[39m
+                  [0mProfile & client type[0m
+                [36m</h2>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"txw-set-sub"[39m
+                [36m>[39m
+                  [0mDrives default templates, pathways, and the AnA context across every project.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"txw-set-body"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-row"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-l"[39m
+                [36m>[39m
+                  [0mOrganization name[0m
+                  [36m<small>[39m
+                    [0mDisplayed in audit, e-sign manifest, and export footers.[0m
+                  [36m</small>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-r"[39m
+                [36m>[39m
+                  [36m<input[39m
+                    [33maria-label[39m=[32m"Organization name"[39m
+                    [33mclass[39m=[32m"txw-gov-field"[39m
+                    [33mstyle[39m=[32m"font-size: 13px; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-control); background: var(--bg-050); width: 100%; max-width: 340px;"[39m
+                    [33mvalue[39m=[32m"Northwind Bio"[39m
+                  [36m/>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"txw-help"[39m
+                  [36m>[39m
+                    [0mGoverned — stored on the organization record.[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-row"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-l"[39m
+                [36m>[39m
+                  [0mClient type[0m
+                  [36m<small>[39m
+                    [0mSets the default rail focus and AnA framing. Governed — saved to your organization's industry profile.[0m
+                  [36m</small>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-r"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"txw-row-r-grid"[39m
+                  [36m>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mMedical device[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mBiotech[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mPharma[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mDiagnostics (IVD)[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mCRO[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mRegulatory consulting[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mHealth system or academic[0m
+                    [36m</button>[39m
+                  [36m</div>[39m
+                  [36m<span[39m
+                    [33maria-live[39m=[32m"polite"[39m
+                    [33mclass[39m=[32m"txw-help"[39m
+                    [33mrole[39m=[32m"status"[39m
+                  [36m>[39m
+                    [0mNo governed profile saved yet — pick a type to create one.[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-row"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-l"[39m
+                [36m>[39m
+                  [0mMulti-factor authentication[0m
+                  [36m<small>[39m
+                    [0mTOTP via an authenticator app, enrolled by each member.[0m
+                  [36m</small>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-r"[39m
+                  [33mstyle[39m=[32m"flex-direction: row; align-items: center; gap: 10px;"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"txw-help"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-info"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mfocusable[39m=[32m"false"[39m
+                      [33mheight[39m=[32m"1em"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"1.75"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"1em"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<circle[39m
+                        [33mcx[39m=[32m"12"[39m
+                        [33mcy[39m=[32m"12"[39m
+                        [33mr[39m=[32m"10"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M12 16v-4"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M12 8h.01"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [0m Set per user, not per organization. Sign-in enforcement follows each member's own enrolment, so there is nothing for an administrator to switch here.[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-row"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-l"[39m
+                [36m>[39m
+                  [0mSSO & SCIM[0m
+                  [36m<small>[39m
+                    [0mSAML / OIDC and directory provisioning.[0m
+                  [36m</small>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-r"[39m
+                  [33mstyle[39m=[32m"flex-direction: row; align-items: center; gap: 10px;"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"btn ghost"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-lock"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mfocusable[39m=[32m"false"[39m
+                      [33mheight[39m=[32m"1em"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"1.75"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"1em"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<rect[39m
+                        [33mheight[39m=[32m"11"[39m
+                        [33mrx[39m=[32m"2"[39m
+                        [33mry[39m=[32m"2"[39m
+                        [33mwidth[39m=[32m"18"[39m
+                        [33mx[39m=[32m"3"[39m
+                        [33my[39m=[32m"11"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [0m Open Identity console[0m
+                  [36m</button>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"txw-help"[39m
+                  [36m>[39m
+                    [0mGoverned there, not here — SAML endpoints, SCIM provisioning tokens and the SCIM IP allowlist. A boolean on this page would be a second copy of that state with nothing to reconcile it.[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"txw-set-card"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"txw-set-head"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-set-head-l"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-set-eyebrow"[39m
+                [36m>[39m
+                  [0mModule — authoring[0m
+                [36m</div>[39m
+                [36m<h2[39m
+                  [33mclass[39m=[32m"txw-set-title"[39m
+                [36m>[39m
+                  [0mTranslation workspace[0m
+                [36m</h2>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"txw-set-sub"[39m
+                [36m>[39m
+                  [0mBilingual review for non-English regulatory content — drafted by MT, post-edited by a human, back-translated for verification, and approved under 21 CFR Part 11. Exposed inside the Document editor's Trans dock.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Enable translation workspace"[39m
+                [33maria-pressed[39m=[32m"false"[39m
+                [33mclass[39m=[32m"txw-switch"[39m
+              [36m/>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/adminSetupRetentionPeriod.test.tsx > Setup → Records retention > reads the period from the server and says when it is the 25-year default
+ FAIL  client/src/concept2cure/v2/__tests__/adminSetupRetentionPeriod.test.tsx > Setup → Records retention > a failed read is an error, never the default presented as this organisation’s period
+ FAIL  client/src/concept2cure/v2/__tests__/adminSetupRetentionPeriod.test.tsx > Setup → Records retention > a member is told who sets the period and is offered no control
+ FAIL  client/src/concept2cure/v2/__tests__/adminSetupRetentionPeriod.test.tsx > Setup → Records retention > shortening sends the reason and the governing rule; a refusal leaves the period in force and says why
+ FAIL  client/src/concept2cure/v2/__tests__/adminSetupRetentionPeriod.test.tsx > Setup → Records retention > a lengthened period is shown from the server’s answer, and only then reported as saved
+AssertionError: Setup renders no Records retention card: expected null not to be null
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-inner"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"ph"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-eyebrow"[39m
+            [36m>[39m
+              [0mAdmin — organization[0m
+            [36m</div>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"ph-title"[39m
+            [36m>[39m
+              [0mSetup[0m
+            [36m</h1>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"ph-sub"[39m
+            [36m>[39m
+              [0mOrganization profile and module configuration, saved to the organization record and written to the audit trail. Controls the platform enforces rather than exposes are marked as enforced.[0m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mstyle[39m=[32m"display: flex; gap: 8px;"[39m
+          [36m>[39m
+            [36m<input[39m
+              [33maria-label[39m=[32m"Reason for change"[39m
+              [33mclass[39m=[32m"txw-gov-field"[39m
+              [33mdisabled[39m=[32m""[39m
+              [33mplaceholder[39m=[32m"Reason for change (audited)"[39m
+              [33mstyle[39m=[32m"font-size: 12.5px; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border-control); background: var(--bg-050); color: var(--text-100); min-width: 220px;"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn"[39m
+              [33mdisabled[39m=[32m""[39m
+            [36m>[39m
+              [0mNo unsaved changes[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-sparkles"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.75"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M20 3v4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M22 5h-4"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M4 17v2"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"M5 18H3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+              [0m Ask AnA[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-atomic[39m=[32m"true"[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"txw-settings"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"txw-set-card"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"txw-set-head"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-set-head-l"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-set-eyebrow"[39m
+                [36m>[39m
+                  [0mOrganization[0m
+                [36m</div>[39m
+                [36m<h2[39m
+                  [33mclass[39m=[32m"txw-set-title"[39m
+                [36m>[39m
+                  [0mProfile & client type[0m
+                [36m</h2>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"txw-set-sub"[39m
+                [36m>[39m
+                  [0mDrives default templates, pathways, and the AnA context across every project.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"txw-set-body"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-row"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-l"[39m
+                [36m>[39m
+                  [0mOrganization name[0m
+                  [36m<small>[39m
+                    [0mDisplayed in audit, e-sign manifest, and export footers.[0m
+                  [36m</small>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-r"[39m
+                [36m>[39m
+                  [36m<input[39m
+                    [33maria-label[39m=[32m"Organization name"[39m
+                    [33mclass[39m=[32m"txw-gov-field"[39m
+                    [33mstyle[39m=[32m"font-size: 13px; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-control); background: var(--bg-050); width: 100%; max-width: 340px;"[39m
+                    [33mvalue[39m=[32m"Northwind Bio"[39m
+                  [36m/>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"txw-help"[39m
+                  [36m>[39m
+                    [0mGoverned — stored on the organization record.[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-row"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-l"[39m
+                [36m>[39m
+                  [0mClient type[0m
+                  [36m<small>[39m
+                    [0mSets the default rail focus and AnA framing. Governed — saved to your organization's industry profile.[0m
+                  [36m</small>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-r"[39m
+                [36m>[39m
+                  [36m<div[39m
+                    [33mclass[39m=[32m"txw-row-r-grid"[39m
+                  [36m>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mMedical device[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mBiotech[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mPharma[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mDiagnostics (IVD)[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mCRO[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mRegulatory consulting[0m
+                    [36m</button>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"txw-pchip"[39m
+                    [36m>[39m
+                      [0mHealth system or academic[0m
+                    [36m</button>[39m
+                  [36m</div>[39m
+                  [36m<span[39m
+                    [33maria-live[39m=[32m"polite"[39m
+                    [33mclass[39m=[32m"txw-help"[39m
+                    [33mrole[39m=[32m"status"[39m
+                  [36m>[39m
+                    [0mNo governed profile saved yet — pick a type to create one.[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-row"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-l"[39m
+                [36m>[39m
+                  [0mMulti-factor authentication[0m
+                  [36m<small>[39m
+                    [0mTOTP via an authenticator app, enrolled by each member.[0m
+                  [36m</small>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-r"[39m
+                  [33mstyle[39m=[32m"flex-direction: row; align-items: center; gap: 10px;"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"txw-help"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-info"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mfocusable[39m=[32m"false"[39m
+                      [33mheight[39m=[32m"1em"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"1.75"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"1em"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<circle[39m
+                        [33mcx[39m=[32m"12"[39m
+                        [33mcy[39m=[32m"12"[39m
+                        [33mr[39m=[32m"10"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M12 16v-4"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M12 8h.01"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [0m Set per user, not per organization. Sign-in enforcement follows each member's own enrolment, so there is nothing for an administrator to switch here.[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-row"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-l"[39m
+                [36m>[39m
+                  [0mSSO & SCIM[0m
+                  [36m<small>[39m
+                    [0mSAML / OIDC and directory provisioning.[0m
+                  [36m</small>[39m
+                [36m</div>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-row-r"[39m
+                  [33mstyle[39m=[32m"flex-direction: row; align-items: center; gap: 10px;"[39m
+                [36m>[39m
+                  [36m<button[39m
+                    [33mclass[39m=[32m"btn ghost"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-lock"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mfocusable[39m=[32m"false"[39m
+                      [33mheight[39m=[32m"1em"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"1.75"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"1em"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<rect[39m
+                        [33mheight[39m=[32m"11"[39m
+                        [33mrx[39m=[32m"2"[39m
+                        [33mry[39m=[32m"2"[39m
+                        [33mwidth[39m=[32m"18"[39m
+                        [33mx[39m=[32m"3"[39m
+                        [33my[39m=[32m"11"[39m
+                      [36m/>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"M7 11V7a5 5 0 0 1 10 0v4"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                    [0m Open Identity console[0m
+                  [36m</button>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"txw-help"[39m
+                  [36m>[39m
+                    [0mGoverned there, not here — SAML endpoints, SCIM provisioning tokens and the SCIM IP allowlist. A boolean on this page would be a second copy of that state with nothing to reconcile it.[0m
+                  [36m</span>[39m
+                [36m</div>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"txw-set-card"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"txw-set-head"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"txw-set-head-l"[39m
+              [36m>[39m
+                [36m<div[39m
+                  [33mclass[39m=[32m"txw-set-eyebrow"[39m
+                [36m>[39m
+                  [0mModule — authoring[0m
+                [36m</div>[39m
+                [36m<h2[39m
+                  [33mclass[39m=[32m"txw-set-title"[39m
+                [36m>[39m
+                  [0mTranslation workspace[0m
+                [36m</h2>[39m
+                [36m<p[39m
+                  [33mclass[39m=[32m"txw-set-sub"[39m
+                [36m>[39m
+                  [0mBilingual review for non-English regulatory content — drafted by MT, post-edited by a human, back-translated for verification, and approved under 21 CFR Part 11. Exposed inside the Document editor's Trans dock.[0m
+                [36m</p>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33maria-label[39m=[32m"Enable translation workspace"[39m
+                [33maria-pressed[39m=[32m"false"[39m
+                [33mclass[39m=[32m"txw-switch"[39m
+              [36m/>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+ ❯ client/src/concept2cure/v2/__tests__/adminSetupRetentionPeriod.test.tsx:105:66
+    103|   const el = await waitFor(() => {
+    104|     const found = view.container.querySelector('[data-testid="retentio…
+    105|     expect(found, 'Setup renders no Records retention card').not.toBeN…
+       |                                                                  ^
+    106|     return found as HTMLElement;
+    107|   });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed (5)
+   Start at  06:24:59
+   Duration  29.04s (transform 1.47s, setup 304ms, import 1.68s, tests 25.41s, environment 1.23s)
+

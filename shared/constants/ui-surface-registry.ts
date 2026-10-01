@@ -292,7 +292,11 @@ export const UI_SURFACES: UiSurface[] = [
     uiKit: 'mdx',
     // Launch-scope API (2026-09-25, ci:launch-scope-api): MdxSurfaceHost (useMdxPrograms, useWorkbench, useSubmissions) calls these for the Vault too.
     // '/api/mdx/vault' (2026-09-26): mdx/hooks/useVault.ts, the list and version reads.
-    apiPrefixes: ['/api/c2c/project-vault', '/api/vault/ingest', '/api/regulatory-programs', '/api/submission-ops', '/api/mdx/vault'],
+    // '/api/vault/legal-holds' (2026-10-01, P1-22; ADR-0014 §6): the legal-hold list, place and lift
+    // (server/routes/vault-legal-holds.ts). No screen calls them yet, so ci:launch-scope-api could not
+    // see they were unclaimed, and production refused every one 403 LAUNCH_SCOPE. Its /retention
+    // sub-path is Setup's, below.
+    apiPrefixes: ['/api/c2c/project-vault', '/api/vault/ingest', '/api/regulatory-programs', '/api/submission-ops', '/api/mdx/vault', '/api/vault/legal-holds'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -864,7 +868,9 @@ export const UI_SURFACES: UiSurface[] = [
     group: 'admin',
     uiKit: null,
     // Launch-scope API (2026-09-25, ci:launch-scope-api): AdminSurfaces.tsx Setup reads the GAMP 5 validation kit.
-    apiPrefixes: ['/api/setup', '/api/admin', '/api/users', '/api/api-keys', '/api/validation-kit'],
+    // 2026-10-01 (P1-22; ADR-0014 §6): Setup's Records retention card (RetentionPeriodCard.tsx)
+    // reads and sets the organisation's retention period.
+    apiPrefixes: ['/api/setup', '/api/admin', '/api/users', '/api/api-keys', '/api/validation-kit', '/api/vault/legal-holds/retention'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
