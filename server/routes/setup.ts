@@ -174,6 +174,7 @@ router.post('/initialize', setupLimiter, requireSetupToken, async (req: Request,
       // One first call at a time, and the count again under the lock: two
       // concurrent calls both passed the count above.
       await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext('c2c:first-run-setup'))`);
+      // tenant-isolation-safe: first-run setup counts every account on the install, before any tenant exists
       const { rows } = await tx.execute(sql`SELECT count(*)::int AS count FROM users`);
       if (Number((rows[0] as { count?: unknown } | undefined)?.count ?? 0) > 0) throw new AlreadyInitializedError();
 
