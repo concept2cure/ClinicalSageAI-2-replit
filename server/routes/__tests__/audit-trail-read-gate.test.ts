@@ -144,6 +144,18 @@ describe('recording an event from a client', () => {
     expect(JSON.stringify(r.body)).toMatch(/not a recognised event type|unknown event type|vocabulary/i);
   });
 
+  it('a batch insert the database refuses is reported as insert_failed, with none of the database text (DP-63)', async () => {
+    pool.query.mockImplementationOnce(async () => {
+      throw new Error('null value in column "event_type" of relation "audit_events" violates not-null constraint');
+    });
+    const r = await request(app('admin')).post('/api/audit/events/batch').send({
+      events: [{ eventType: 'orchestration.gate_decision', entityType: 'gate', entityId: 2, reason: 'gate decided' }],
+    });
+    expect(r.status).toBe(207);
+    expect(r.body.skippedDetails).toEqual([{ index: 0, reason: 'insert_failed' }]);
+    expect(JSON.stringify(r.body)).not.toMatch(/audit_events|constraint|column/);
+  });
+
   it('a member may not record events at all', async () => {
     const r = await request(app('member')).post('/api/audit/events').send({ eventType: 'orchestration.gate_decision', entityType: 'gate', entityId: 1, reason: 'gate decided' });
     expect(r.status).toBe(403);
