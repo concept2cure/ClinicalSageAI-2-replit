@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-01T07:38:04.120Z",
+  "generatedAt": "2026-10-01T08:01:04.786Z",
   "git": {
-    "sha": "92c134b4a1ffd83f8e8ba0dc76340e03852d316f",
+    "sha": "0ba1bbad0fed9eadb868721dd5835e6087393191",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2034,7 +2034,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 224169
+        "bytes": 224479
       },
       {
         "file": "server/statistics-service.ts",
@@ -2134,7 +2134,7 @@
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
-        "bytes": 119840
+        "bytes": 119982
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
@@ -2208,7 +2208,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 5619
+        "lines": 5623
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2300,7 +2300,7 @@
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
-        "lines": 2796
+        "lines": 2798
       },
       {
         "file": "server/routes/auth.ts",
@@ -2436,11 +2436,11 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
-        "lines": 1938
+        "lines": 1953
       },
       {
         "file": "server/routes/c2c/project-vault.ts",
-        "lines": 1935
+        "lines": 1949
       },
       {
         "file": "server/routes/ectd-compile.ts",
