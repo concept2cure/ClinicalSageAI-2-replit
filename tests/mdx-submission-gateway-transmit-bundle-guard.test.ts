@@ -173,6 +173,14 @@ function signPayload(): Record<string, any> | undefined {
   }
   return undefined;
 }
+/** The transmit's electronic-signature MANIFEST as persisted (a JSON param) —
+ *  the attributed record an auditor reads, not only the digest it is bound to. */
+function transmitManifest(): Record<string, any> | undefined {
+  return ledgerQuery.mock.calls
+    .flatMap((c) => ((c[1] as unknown[]) ?? []))
+    .map((p) => { try { return typeof p === 'string' ? JSON.parse(p) : p; } catch { return null; } })
+    .find((o) => o && typeof o === 'object' && (o as any).kind === 'governed-transmit');
+}
 
 function installDb() {
   queryFn.mockReset();
@@ -518,7 +526,7 @@ describe('POST transmit — legitimate validated package (C2C-SUB-003)', () => {
 
     const res = await request(makeApp())
       .post('/api/mdx/gateways/fda/esg/transmit')
-      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+      .send({ packageId: 5, environment: 'production', ...REAUTH });
 
     expect(res.status).toBe(201);
     expect(res.body.data.transmittalId).toBe(4242);
@@ -562,11 +570,14 @@ describe('POST transmit — filed-sequence history (C2C-SUB-003)', () => {
       leafManifest: [{ ctdSection: '2.5', fileName: 'clinical-overview.pdf', href: 'm2/25-clin-overview/clinical-overview.pdf', md5: 'md5-co', operation: 'new' }],
     }) }];
     transmitFn.mockResolvedValueOnce({ transmittalId: 4244, transmissionId: 'mdn-filed', status: 'received', transport: 'as2', httpStatus: 200 });
+    // A PRODUCTION send: only that puts a sequence on file (the staging case is below).
     const res = await request(makeApp())
       .post('/api/mdx/gateways/fda/esg/transmit')
-      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+      .send({ packageId: 5, environment: 'production', ...REAUTH });
     expect(res.status).toBe(201);
+    expect(transmitFn.mock.calls[0][0].environment).toBe('production');
     expect(res.body.data.filedSequenceRecorded).toBe(true);
+    expect(res.body.data.filedSequenceReason).toBe('recorded');
     // The history was appended under the package row lock, carrying the leaf
     // inventory the next sequence diffs against.
     const write = ledgerQuery.mock.calls.find((c) => /^UPDATE c2c_submission_packages/.test(String(c[0])));
@@ -575,6 +586,33 @@ describe('POST transmit — filed-sequence history (C2C-SUB-003)', () => {
     expect(written.filedSequences).toHaveLength(1);
     expect(written.filedSequences[0]).toMatchObject({ sequence: '0000', submissionType: 'original', sha256: legitSha, transmittalId: 4244 });
     expect(written.filedSequences[0].leaves[0]).toMatchObject({ ctdSection: '2.5', fileName: 'clinical-overview.pdf', md5: 'md5-co' });
+  });
+
+  it('a send to the agency TEST environment (staging) puts nothing on file: no history write, and the sign record does not say it filed', async () => {
+    /* 2026-10-01 (W5/D7, sweep F14). FDA ESG's test environment is not a
+       regulatory submission. Recording a staging 0000 as filed made the real
+       0000 unassemblable (SEQUENCE_ALREADY_FILED) and planned 0001 against a
+       0000 that FDA's production record does not have. */
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor({
+      sequence: '0000', submissionType: 'original',
+      leafManifest: [{ ctdSection: '2.5', fileName: 'clinical-overview.pdf', href: 'm2/25-clin-overview/clinical-overview.pdf', md5: 'md5-co', operation: 'new' }],
+    }) }];
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4249, transmissionId: 'mdn-test-env', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+    expect(res.status).toBe(201);
+    expect(transmitFn.mock.calls[0][0].environment).toBe('staging');
+    expect(res.body.data.filedSequenceRecorded).toBe('not-applicable');
+    expect(res.body.data.filedSequenceReason).toBe('test-environment');
+    expect(ledgerQuery.mock.calls.some((c) => /^UPDATE c2c_submission_packages/.test(String(c[0])))).toBe(false);
+    // Nothing was meant to be filed, so no lost-baseline warning either.
+    expect(res.body.data.filedSequenceWarning).toBeUndefined();
+    // The Part 11 sign row and the signature manifest name the sequence the
+    // bundle carried and say it was NOT filed.
+    const notFiled = { sequence: '0000', filedSequenceRecorded: 'not-applicable', filedSequenceReason: 'test-environment' };
+    expect(signPayload()).toMatchObject(notFiled);
+    expect(transmitManifest(), 'the transmit signature manifest was persisted').toMatchObject(notFiled);
   });
 
   it('a bundle that files no sequence records no history, and says so rather than reporting a failure', async () => {
@@ -615,7 +653,7 @@ describe('POST transmit — the sequence it filed (C2C-SUB-003)', () => {
     transmitFn.mockResolvedValueOnce({ transmittalId: 4246, transmissionId: 'mdn-partial', status: 'received', transport: 'as2', httpStatus: 200 });
     const res = await request(makeApp())
       .post('/api/mdx/gateways/fda/esg/transmit')
-      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+      .send({ packageId: 5, environment: 'production', ...REAUTH });
     expect(res.status).toBe(201);
     expect(res.body.data.filedSequenceRecorded).toBe(false);
     expect(res.body.data.filedSequenceReason).toBe('no-usable-manifest');
@@ -633,7 +671,7 @@ describe('POST transmit — the sequence it filed (C2C-SUB-003)', () => {
     transmitFn.mockResolvedValueOnce({ transmittalId: 4247, transmissionId: 'mdn-nomanifest', status: 'received', transport: 'as2', httpStatus: 200 });
     const res = await request(makeApp())
       .post('/api/mdx/gateways/fda/esg/transmit')
-      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+      .send({ packageId: 5, environment: 'production', ...REAUTH });
     expect(res.status).toBe(201);
     expect(res.body.data.filedSequenceRecorded).toBe(false);
     expect(res.body.data.filedSequenceReason).toBe('no-usable-manifest');
@@ -650,7 +688,7 @@ describe('POST transmit — the sequence it filed (C2C-SUB-003)', () => {
     transmitFn.mockResolvedValueOnce({ transmittalId: 4248, transmissionId: 'mdn-sign', status: 'received', transport: 'as2', httpStatus: 200 });
     const res = await request(makeApp())
       .post('/api/mdx/gateways/fda/esg/transmit')
-      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+      .send({ packageId: 5, environment: 'production', ...REAUTH });
     expect(res.status).toBe(201);
     expect(signPayload()).toMatchObject({
       sequence: '0000', submissionType: 'original',
@@ -659,10 +697,7 @@ describe('POST transmit — the sequence it filed (C2C-SUB-003)', () => {
     // And in the signature MANIFEST — the attributed record an auditor reads.
     // The payload only reaches the signature as a digest, which answers no
     // question about what was filed.
-    const manifest = ledgerQuery.mock.calls
-      .flatMap((c) => ((c[1] as unknown[]) ?? []))
-      .map((p) => { try { return typeof p === 'string' ? JSON.parse(p) : p; } catch { return null; } })
-      .find((o) => o && typeof o === 'object' && (o as any).kind === 'governed-transmit');
+    const manifest = transmitManifest();
     expect(manifest, 'the transmit signature manifest was persisted').toBeDefined();
     expect(manifest).toMatchObject({ sequence: '0000', filedSequenceRecorded: true });
   });

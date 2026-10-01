@@ -40,7 +40,7 @@ both finders, and every verifier, were cut off by account usage limits
 | F11 | lifecycle | medium | An empty-section placeholder PDF ("[EMPTY SECTION] …") is filed to the agency and never superseded: the real document later files as `new` beside it. | **confirmed** 2026-10-01 (medium: lifecycle and content, not a validation error) |
 | F12 | lifecycle | medium | A document moved to another CTD section is filed `new` there while the filed copy stays current at the old section, with no finding. | **confirmed** 2026-10-01 (medium: a missing operator finding and a stale current copy, not a validation error) |
 | F13 | lifecycle | medium | Cover letters and forms are diffed like dossier content: an unchanged cover letter is left out of a follow-up, and an edited one replaces sequence 0000's. | **confirmed** 2026-10-01 (medium; the IND 1571 half is firm, the cover-letter half is an FDA "should") |
-| F14 | transmit | high | A send to FDA's ESG **test** environment (`staging`) is recorded as the package's real filed sequence. | **confirmed** 2026-10-01 (high) |
+| F14 | transmit | high | A send to FDA's ESG **test** environment (`staging`) is recorded as the package's real filed sequence. | **confirmed** 2026-10-01 (high); **fixed** — see "Fixed after verification" |
 | F15 | transmit | high | The duplicate-send lock is keyed on the bundle's bytes, not its sequence; re-assembling while an earlier send of 0000 is unconfirmed sends 0000 a second time. | unverified |
 | F16 | transmit | medium | The AS2 message: `AS2-To` defaults to `FDA-CESUB`, no Center/submission-type routing, no S/MIME signing or encryption (a signature is computed and dropped), and the MDN is not verified. | unverified |
 | F17 | transmit | medium | The uploaded archive has no sequence folder: `index.xml` sits at the zip root and the payload is always `ectd.zip`. | unverified |
@@ -172,6 +172,29 @@ WITHOUT the fix: 4 failed (2 files)
     → "code": "DTD_MISSING_XLINK_NS", "fix": "Add xmlns:xlink=\"http://www.w3.org/1999/xlink\" …"
 WITH the fix: 4 passed; server/services/submission-gateways + server/services/ectd + the
   orchestrator and validator suites: 111 files, 1397 tests passed
+```
+
+**F14 — a send to FDA's ESG test environment was recorded as the package's real
+filed sequence.** Only a `production` send now appends to the filed history; a
+send anywhere else returns `filedSequenceRecorded: 'not-applicable'` with
+`filedSequenceReason: 'test-environment'`, and the Part 11 sign payload and
+manifest say so. The check is `!== 'production'`, so an unexpected value files
+nothing rather than something untrue. The filed-sequence block moved into
+`recordTransmittedSequence`, which also lowers `executeGovernedTransmit`'s
+complexity (68 → 58). The runbook's "Filed means transmitted" now says
+"transmitted to production". Lifecycle testing in the test environment
+(0000 then 0001 there) is not supported by this change: it needs a per-environment
+filed history, which is a new capability. The duplicate-send lock still ignores
+the environment; it fails safe.
+
+```
+WITHOUT the fix: 1 failed | 26 passed (27)
+  × a send to the agency TEST environment (staging) puts nothing on file
+    → expected true to be 'not-applicable'
+  (the five tests switched to environment 'production' pass before and after:
+   production behaviour is unchanged)
+WITH the fix: 27 passed (27); gateway routes 40/40, AnA command handlers 43/43,
+  all transmit/gateway suites 496 tests passed
 ```
 
 ## What this sweep produced that is already fixed
