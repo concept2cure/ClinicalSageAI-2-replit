@@ -1117,9 +1117,9 @@
    "site": "AnaToolExecutor.ts:18810"
   },
   "classify_submission_document": {
-   "class": "confirm",
-   "writes": "UPDATE coauthor_documents classification; can place a leaf into a sequence",
-   "site": "ingestion/ingestion-service.ts:337"
+   "class": "read",
+   "writes": "none (proposes a section and the leaf to place; places nothing, changes no document; the AI call's audit row only)",
+   "site": "ingestion/ingestion-service.ts:classifyDocument"
   },
   "classify_tmf_artifact": {
    "class": "conditional",
@@ -1904,8 +1904,8 @@
   },
   "extract_submission_document": {
    "class": "confirm",
-   "writes": "UPDATE coauthor_documents metadata; INSERT submission_evidence_links",
-   "site": "ingestion/ingestion-service.ts:506"
+   "writes": "INSERT submission_evidence_links (the document is not changed)",
+   "site": "ingestion/ingestion-service.ts:extractStructure"
   },
   "fetch_fda_guidance_list": {
    "class": "read",
