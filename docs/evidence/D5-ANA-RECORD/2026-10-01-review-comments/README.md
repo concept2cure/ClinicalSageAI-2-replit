@@ -152,12 +152,45 @@ Shown:
 
 Each was seen red with its half removed (`mutations-ana-attribution.txt`).
 
+## Follow-up, same day: who takes part in a review
+
+The morning's note below called this a product question. Read closer, it is a
+defect. `getThreadPermissions` (`reviews.ts`) named document roles that no
+membership carries: approver, reviewer, author and user. The roles a request
+actually has are the organisation's own (`organization_users.role`, resolved
+live per request): owner, admin, manager, member, the legacy editor, and
+viewer. So every organisation role but admin was read-only on the Review
+surface. A manager could not comment on a review or resolve it, and neither
+could a member doing the work.
+
+**The decision.** The map now follows the vocabulary
+`ORG_ROLE_FUNCTIONAL_GRANTS` (`middleware/auth.ts`) already uses: whoever does
+the regulatory work takes part in its review.
+
+- **owner, admin, manager:** comment, request changes, resolve, assign.
+- **member, editor:** comment, request changes, resolve. Not assign:
+  assigning review work stays with those who lead it.
+- **viewer, and any role the map does not name:** read only.
+- **The old names** are kept for tokens that still carry them.
+- **Retraction is unchanged:** the author, or an admin.
+
+Shown on the real router (`tests/db/review-comments-record.dbtest.ts`,
+`roles/`):
+
+- **Red at HEAD's route:** 2 of the 3 new cases fail (`roles/red-at-head.txt`).
+  The member is refused with "Your role does not permit commenting", and the
+  manager is refused reassigning.
+- **Green:** 10/10 (`roles/green.txt`). The viewer case is the control, green
+  both ways.
+- **Mutations** (`roles/mutations.txt`). Each fails only its own case:
+  - the member read-only again;
+  - the manager without assign;
+  - the viewer allowed to comment;
+  - the member allowed to reassign.
+
 ## Not done, and why
 
-- **Organization members cannot comment.** `getThreadPermissions`
-  (`reviews.ts`) maps the membership role `member` to read-only, so a plain
-  member gets 403 on a comment. This was not changed here; it is a product
-  question about who may review.
+- ~~**Organization members cannot comment.**~~ Done the same day, above.
 - **Found, not this lane's.**
   - **The tenant purge and signed artifacts.**
     `20260929_concept2cure_signatures_append_only.sql` refuses the cascade
