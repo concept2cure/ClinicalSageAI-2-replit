@@ -46,6 +46,24 @@ import type { SurfaceActionDirective } from '../../../shared/navigation/surface-
 import type { TurnPlanStep } from '../../services/ana/turn-plan.js';
 import type { TurnOutcome, TurnRecorder, TurnRecordStatus } from '../../services/ana/turn-record.js';
 
+/**
+ * The integer project the turn's project names, resolved ONCE per use (PF-10
+ * S6a): an integer as itself, a program UUID through its anchor row, anything
+ * else as none. Every step below used to coerce on its own, and
+ * Number.parseInt('7abb1c22-…', 10) is 7, a valid, wrong project.
+ */
+async function turnProjectId(
+  streamProjectId: string | number | null | undefined,
+  orgId: unknown,
+  context: string,
+): Promise<number | null> {
+  const org = Number(orgId);
+  if (streamProjectId === null || streamProjectId === undefined || streamProjectId === '') return null;
+  if (!Number.isSafeInteger(org) || org <= 0) return null;
+  const { integerProjectForRef } = await import('../../services/c2c/project-ref.js');
+  return integerProjectForRef(async () => (await import('../../db.js')).db, { ref: streamProjectId, orgId: org, context });
+}
+
 export interface StreamPostProcessingContext {
   res: Response;
   /** Raw model output for the turn (pre-cleaning). */
@@ -176,19 +194,12 @@ export async function persistCollectedDrafts(args: {
      silently dropped whenever it did not. Fail-closed parse instead; a
      genuine program UUID resolves through the projects.regulatory_program_id
      anchor so drafts from the live UUID spine are captured too. */
-  const { parseIntegerProjectId, looksLikeProgramUuid } = await import('../../lib/project-id.js');
-  let projectId = parseIntegerProjectId(streamProjectId);
-  if (projectId == null && looksLikeProgramUuid(streamProjectId)) {
-    /* The one anchor reader (PF-08): the lowest-id row, the one intake links,
-       so a draft versions under the same project every export reads. Not
-       strict: a failed read leaves the draft unfiled, and the caveat below
-       says so. */
-    const { db } = await import('../../db.js');
-    const { resolveProgramProjectAnchor } = await import('../../services/c2c/program-project-anchor.js');
-    projectId = await resolveProgramProjectAnchor(db, {
-      programId: String(streamProjectId).trim(), orgId: Number(orgId), context: 'ana-ri.persistCollectedDrafts',
-    });
-  }
+  /* The one resolution of the turn's project (services/c2c/project-ref.ts): an
+     integer as itself, a program through its anchor row, the lowest id, the
+     one intake links, so a draft versions under the same project every export
+     reads. Not strict: a failed read leaves the draft unfiled, and the caveat
+     below says so. */
+  const projectId = await turnProjectId(streamProjectId, orgId, 'ana-ri.persistCollectedDrafts');
   if (projectId == null) {
     /* No project to file under. The rail says "Drafted <title>" — saying
        nothing here leaves the user believing a version was durably recorded.
@@ -319,15 +330,14 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     let executedActions: any[] = [];
     let contentForCommandProcessing = fullContent;
     let executedCommands: any[] = [];
+    // The turn's project, resolved once for every step below (PF-10 S6a).
+    const projectId = await turnProjectId(streamProjectId, orgId, 'ana-ri.post-processing');
 
     // Guidance executor — auto-create artifacts if response contains action signals
-    if (fullContent && streamProjectId && orgId && isPositiveIntegerId(userId)) {
+    if (fullContent && projectId !== null && orgId && isPositiveIntegerId(userId)) {
       try {
         const guidance = await processResponseActions(fullContent, {
-          projectId:
-            typeof streamProjectId === 'string'
-              ? Number.parseInt(streamProjectId, 10)
-              : streamProjectId,
+          projectId,
           organizationId: Number(orgId),
           userId,
           userName: 'AnA',
@@ -368,11 +378,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
         const cmdCtx: CommandContext = {
           userId,
           organizationId: Number(orgId),
-          activeProjectId: streamProjectId
-            ? typeof streamProjectId === 'string'
-              ? Number.parseInt(streamProjectId, 10)
-              : streamProjectId
-            : undefined,
+          activeProjectId: projectId ?? undefined,
           userName,
           userRole: effectiveRole,
           servingModel: servingModel ?? null,
@@ -438,7 +444,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     if (orgId && threadId && collectedProvenance && collectedProvenance.length > 0) {
       void persistProvenance(collectedProvenance, {
         organizationId: Number(orgId),
-        projectId: streamProjectId ? Number(streamProjectId) || undefined : undefined,
+        projectId: projectId ?? undefined,
         targetObjectType: 'answer',
         targetObjectId: threadId,
         targetField: new Date().toISOString(),
@@ -482,7 +488,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     // Claim metrics blend the structure + evidence checks with the direct
     // grounding measurement (when claims were checkable) so RIM receives an
     // actual turn-quality signal instead of a flat 0.5.
-    if (finalAssistantContent && streamProjectId && orgId) {
+    if (finalAssistantContent && projectId !== null && orgId) {
       const { claimCount, supportedClaimRate } = computeRimClaimMetrics({
         structure: streamStructureCheck,
         evidence: streamEvidenceCheck,
@@ -490,7 +496,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
       });
       interceptChatResponse({
         organizationId: Number(orgId),
-        projectId: Number(streamProjectId),
+        projectId,
         userId: typeof userId === 'number' ? userId : undefined,
         sectionCode,
         assistantMessage: finalAssistantContent,
@@ -517,7 +523,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
         // Recorded so the nightly consolidation job can promote this thread's
         // memory into project_memory_entries; null when the stream had no
         // project scope.
-        projectId: streamProjectId ? Number(streamProjectId) || null : null,
+        projectId,
       });
     }
 
@@ -579,8 +585,8 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     // client UI can render AnA's self-assessed accuracy on this project
     // once the Phase 2 chat shell ships. Failure is silently null.
     const streamReliability =
-      streamProjectId && orgId
-        ? await getCachedSignalReliability(Number(streamProjectId), Number(orgId)).catch(
+      projectId !== null && orgId
+        ? await getCachedSignalReliability(projectId, Number(orgId)).catch(
             () => null,
           )
         : null;

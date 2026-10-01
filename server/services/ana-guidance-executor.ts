@@ -25,6 +25,8 @@ import { eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { executeGovernedAnaOperation } from './governed-ana-execution.js';
 import { validateArtifactQuality } from './ana-ri/enforcement.js';
+import { recordCommentPosted } from '../routes/c2c/review-comment-record';
+import { queryableFromDrizzle } from '../db/drizzle-queryable';
 
 async function getDbClient() {
   const mod = await import('../db.js');
@@ -403,8 +405,9 @@ async function executeReviewThreadCreation(payload: AnaActionPayload): Promise<A
 
       const pk = thread.id;
 
-      // Insert initial comment via Drizzle ORM
-      await tx.insert(concept2cureThreadComments).values({
+      // Insert initial comment via Drizzle ORM, with its chained record. AnA
+      // wrote these words for the person, and the record says so (D5).
+      const [comment] = await tx.insert(concept2cureThreadComments).values({
         commentId: commentExtId,
         orgId: payload.organizationId,
         threadId: pk,
@@ -413,7 +416,8 @@ async function executeReviewThreadCreation(payload: AnaActionPayload): Promise<A
         authorName: payload.userName,
         body: payload.content,
         kind: 'comment',
-      });
+      }).returning();
+      await recordCommentPosted(queryableFromDrizzle(tx), comment, 'ana');
 
       // Provenance event — 21 CFR Part 11 § 11.10(e) audit trail
       await tx.insert(concept2cureProvenanceEvents).values({
