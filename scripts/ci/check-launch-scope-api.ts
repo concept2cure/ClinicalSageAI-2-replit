@@ -73,6 +73,9 @@ export interface Violation {
   files: string[];
 }
 
+/** Launch surfaces the shell renders itself, whose code the shell walk covers. */
+const SHELL_RENDERED: ReadonlySet<string> = new Set(['home']);
+
 export function checkLaunchScopeApi(
   L: Layout,
   prefixMap: Map<string, Set<string>>,
@@ -146,7 +149,13 @@ export function checkLaunchScopeApi(
     fileSurfaces.get(f)!.add(id);
   };
   for (const id of launchIds) {
-    const m = sv.match(new RegExp(`['"]?${id.replace(/-/g, '\\-')}['"]?\\s*:\\s*\\{\\s*component:\\s*([\\w\\[\\]'".-]+)`));
+    // Home is rendered by the shell itself (V2App: `activeId === 'home'` renders
+    // <Home>, imported from ./surfaces/Surfaces), so its code is the shell
+    // chrome's, walked below. It has no surfaceViews entry of its own.
+    if (SHELL_RENDERED.has(id)) continue;
+    // Anchored on the left: `vault` must not match inside `'device-vault': {`,
+    // which once made the v2 Vault resolve to the device surface's component.
+    const m = sv.match(new RegExp(`(?<![\\w-])['"]?${id.replace(/-/g, '\\-')}['"]?\\s*:\\s*\\{\\s*component:\\s*([\\w\\[\\]'".-]+)`));
     if (!m) {
       unresolved.push(id);
       continue;
@@ -256,6 +265,17 @@ function selftest(): number {
   const unmapped = checkLaunchScopeApi(L, buildPrefixMap([{ id: 'launch-app', apiPrefixes: [] }, surfaces[1]]), launch);
   expect('flags a launch call no surface claims (unmapped)', unmapped.violations.some((v) => v.verdict === 'unmapped' && v.path.startsWith('/api/launch-api')));
   expect('resolves every registration it was given', red.unresolved.length === 0);
+  // A longer id ending in this one, registered first, must not stand in for it:
+  // `vault` once resolved to `'device-vault'`'s component, so the v2 Vault's
+  // calls went unchecked (2026-10-01).
+  w('client/src/other.tsx', 'export default () => null;');
+  w(
+    'client/src/sv.ts',
+    `const Other = lazySurface(() => import('./other'));\nconst Launch = lazySurface(() => import('./launch'));\n` +
+      `export const SURFACE_VIEWS = { 'device-launch-app': { component: Other }, 'launch-app': { component: Launch } };`,
+  );
+  const shadowed = checkLaunchScopeApi(L, buildPrefixMap(surfaces), launch);
+  expect("reads the surface's own registration, not a longer id ending in it", shadowed.violations.some((v) => v.path === '/api/hidden-api/items'));
   // A computed namespace hides which prefix a screen calls, so the gate cannot
   // judge it. Production enforces the unclaimed remainder by default (stage 3),
   // which is safe only because every launch call names its namespace.

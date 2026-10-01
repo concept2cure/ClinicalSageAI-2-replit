@@ -17,10 +17,17 @@
  * version" would be a claim about a document the page could not read.
  */
 import React, { useRef, useState } from 'react';
-import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
+import { ApiRequestError, apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import { I } from '../icons';
 import { useLiveData, type ShapeGuard } from '../dataConnect';
 import { downloadBlob, safeFileName } from '../download';
+import {
+  APPROVED_STAGES,
+  LifecycleSummary,
+  stageLabel,
+  VersionLifecycleActions,
+  type VaultVersionLifecycle,
+} from './VaultLifecycle';
 
 export interface VaultVersion {
   id: string;
@@ -33,6 +40,8 @@ export interface VaultVersion {
   createdAt: string;
   current: boolean;
   link: 'none' | 'verified' | 'unverified';
+  /** Its review and approval (VR-13); null when nobody has started one. */
+  lifecycle?: VaultVersionLifecycle | null;
 }
 
 interface VersionsShape {
@@ -75,6 +84,8 @@ interface Props {
   /** The page's upload call, naming the document's current version when known. */
   onUploadNewVersion: (file: File, currentId?: string) => void;
   uploading: boolean;
+  /** Re-read the Vault after a review or approval was recorded (VR-13). */
+  onLifecycleChanged?: () => void;
 }
 
 interface ExportManifestSummary {
@@ -107,6 +118,13 @@ function useSignedHistoryExport(title: string) {
   const exportHistory = async (ids: string[]) => {
     setExporting(true);
     setExportNote(null);
+    // apiRequest throws on every refusal but a 401, so a refusal arrives here or in the catch.
+    const refused = (status: number, said: string) =>
+      fail(
+        status === 403
+          ? `${said} Nothing was downloaded. Ask a user with audit export access to run the export.`
+          : `The signed history was not exported. ${said} Nothing was downloaded.`,
+      );
     try {
       const res = await apiRequest(
         'GET',
@@ -114,19 +132,15 @@ function useSignedHistoryExport(title: string) {
       );
       const body = await res.json().catch(() => null);
       if (!res.ok || !body?.export) {
-        const said = redactInternals(serverMessage(body), 'The export was refused.');
-        return fail(
-          res.status === 403
-            ? `${said} Nothing was downloaded. Ask a user with audit export access to run the export.`
-            : `The signed history was not exported. ${said} Nothing was downloaded.`,
-        );
+        return refused(res.status, redactInternals(serverMessage(body), 'The export was refused.'));
       }
       const blob = new Blob([JSON.stringify(body.export, null, 2)], { type: 'application/json' });
       if (!downloadBlob(`${safeFileName(title, 'document')}-signed-history.json`, blob)) {
         return fail('The signed history was generated but the browser blocked the download. Allow downloads for this site, then export again.');
       }
       setExportNote(exportSummary(body.export.manifest ?? {}, ids.length));
-    } catch {
+    } catch (e) {
+      if (e instanceof ApiRequestError) return refused(e.status, redactInternals(serverMessage(e.payload), e.message));
       fail('The signed history was not exported: the connection dropped. Nothing was downloaded. Check the connection and export again.');
     } finally {
       setExporting(false);
@@ -135,12 +149,20 @@ function useSignedHistoryExport(title: string) {
   return { exporting, exportNote, exportHistory };
 }
 
+/** The earlier versions an approval of the current one supersedes, in words: those at an approved stage. */
+function supersededBy(versions: VaultVersion[]): string[] {
+  return versions
+    .filter((v) => !v.current && APPROVED_STAGES.includes(v.lifecycle?.stage ?? ''))
+    .map((v) => `${v.version ? `v${v.version}` : 'An unnumbered version'} (${stageLabel(v.lifecycle?.stage)})`);
+}
+
 /** Every version, newest first, each downloadable through the page's audited download. */
-function VersionRows({ versions, title, onDownload, downloadingId }: {
+function VersionRows({ versions, title, onDownload, downloadingId, onLifecycleChanged }: {
   versions: VaultVersion[];
   title: string;
   onDownload: Props['onDownload'];
   downloadingId: string;
+  onLifecycleChanged?: () => void;
 }) {
   return (
     <div className="vd-vers">
@@ -159,6 +181,7 @@ function VersionRows({ versions, title, onDownload, downloadingId }: {
               </>
             ) : null}
             {LINK_TEXT[v.link]}
+            <LifecycleSummary lifecycle={v.lifecycle} />
           </span>
           <button
             className="sp-ask"
@@ -168,13 +191,27 @@ function VersionRows({ versions, title, onDownload, downloadingId }: {
           >
             {I.download} Download
           </button>
+          {v.current && onLifecycleChanged ? (
+            <VersionLifecycleActions
+              vaultId={v.id}
+              versionLabel={v.version ? `v${v.version}` : ''}
+              title={title}
+              lifecycle={v.lifecycle}
+              uploaderId={v.uploaderId}
+              contentHash={v.contentHash}
+              supersedes={supersededBy(versions)}
+              onChanged={onLifecycleChanged}
+            />
+          ) : null}
         </div>
       ))}
     </div>
   );
 }
 
-export function VaultVersions({ projectId, documentId, title, onDownload, downloadingId, onUploadNewVersion, uploading }: Props) {
+export function VaultVersions({
+  projectId, documentId, title, onDownload, downloadingId, onUploadNewVersion, uploading, onLifecycleChanged,
+}: Props) {
   const path =
     '/api/c2c/project-vault/' + encodeURIComponent(projectId) +
     '/documents/' + encodeURIComponent(documentId) + '/versions';
@@ -194,7 +231,15 @@ export function VaultVersions({ projectId, documentId, title, onDownload, downlo
       </div>
     );
   } else {
-    body = <VersionRows versions={versions} title={title} onDownload={onDownload} downloadingId={downloadingId} />;
+    body = (
+      <VersionRows
+        versions={versions}
+        title={title}
+        onDownload={onDownload}
+        downloadingId={downloadingId}
+        onLifecycleChanged={onLifecycleChanged}
+      />
+    );
   }
 
   return (
