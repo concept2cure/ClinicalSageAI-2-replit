@@ -8,9 +8,10 @@
  * the 500-line limit. The proof is still one contract in one test file; only
  * the route scaffolding it drives lives here.
  */
-import express, { type Response } from 'express';
+import express from 'express';
 import { authenticateToken } from '../../server/middleware/auth';
 import { requestPgClient, type RequestSqlClient } from '../../server/db/requestDb';
+import { APPEND_ONLY_TABLES } from '../../scripts/db/provision-app-role.mjs';
 
 /**
  * The domains this probe proves isolation FOR. Everything outside this list is
@@ -57,6 +58,18 @@ import { requestPgClient, type RequestSqlClient } from '../../server/db/requestD
  * the policy hiding B's signature from A, A's DELETE matches zero rows and never
  * reaches the trigger; with the policy off, it reaches it and the answer is a
  * 500. The mutation runs filed with the change show both.
+ *
+ * 2026-10-01 (P0-8, DP-04; docs/evidence/D6/2026-10-01-tranche-4/P0-8-grants/):
+ * the runtime role no longer holds UPDATE, DELETE or TRUNCATE on the append-only
+ * stores (APPEND_ONLY_TABLES in scripts/db/provision-app-role.mjs), apart from
+ * UPDATE on electronic_signatures' revocation columns. A statement it holds no
+ * privilege for is refused with 42501 before RLS or the trigger is reached. That
+ * refusal answers the same opaque 404 here, for exactly those statements
+ * (privilegeWithheld) and no others, so a privilege lost on a table the product
+ * does update still answers 500. audit_logs' PATCH and DELETE and signatures'
+ * DELETE therefore prove the privilege, not RLS: no such statement is left for
+ * RLS to scope. signatures' PATCH now writes a revocation column, the one UPDATE
+ * the role still holds, so it keeps proving RLS where RLS is still the defence.
  */
 export type Domain =
   | 'projects'
@@ -105,14 +118,47 @@ export const updateColumnFor: Record<Domain, string> = {
   audit_logs: 'action',
   design_controls: 'req',
   risk_items: 'status',
-  // §11.70: the trigger refuses this for any row the statement can see.
-  signatures: 'signature_purpose',
+  // A revocation column: the only UPDATE the runtime role holds on this table
+  // since P0-8, so RLS is what keeps tenant A off B's row. Outside a
+  // supersession, §11.70's trigger refuses it on any row the statement can see.
+  signatures: 'verification_status',
   // Not `status`: its CHECK would refuse 'TAMPERED' and mask the RLS result.
   orchestrator_runs: 'application_number',
 };
 
 export function safeDomain(value: string): Domain | null {
   return domains.includes(value as Domain) ? (value as Domain) : null;
+}
+
+/**
+ * True when the provisioning recipe withholds this statement's privilege from
+ * the runtime role on this domain's table: every DELETE on an append-only store,
+ * and every UPDATE outside its `updatableColumns` carve-out. Read from the
+ * recipe's own list, not restated here.
+ */
+export function privilegeWithheld(domain: Domain, op: 'UPDATE' | 'DELETE'): boolean {
+  const store = APPEND_ONLY_TABLES.find(t => `${t.schema}.${t.name}` === tableFor[domain]);
+  if (!store) return false;
+  return op === 'DELETE' || !(store.updatableColumns ?? []).includes(updateColumnFor[domain]);
+}
+
+/**
+ * Runs a PATCH/DELETE probe's statement. A 42501 on a statement whose privilege
+ * the recipe withholds answers 404 and returns null; any other error propagates
+ * (Express answers 500), including a 42501 the role should never have met.
+ */
+async function mutateOr404<T>(
+  res: express.Response,
+  withheld: boolean,
+  run: () => Promise<T>
+): Promise<T | null> {
+  try {
+    return await run();
+  } catch (error) {
+    if (!withheld || (error as { code?: string }).code !== '42501') throw error;
+    res.sendStatus(404);
+    return null;
+  }
 }
 
 /**
@@ -258,36 +304,27 @@ export function mountTenantProofRoutes(app: express.Express, fixture: ProofFixtu
       return res.status(500).json({ error: { code: 'INTERNAL_ERROR' } });
     }
   });
-  // A record table the runtime role may only read and append to (audit_logs;
-  // P0-8, scripts/db/provision-app-role.mjs APPEND_ONLY_TABLES) refuses UPDATE
-  // and DELETE as a privilege (42501), for every tenant. That answers with the
-  // same opaque 404 as a WITH CHECK denial above; any other error is a 500.
-  const mutate = async (res: Response, run: () => Promise<{ rows: unknown[] }>) => {
-    try {
-      return res.sendStatus((await run()).rows.length ? 204 : 404);
-    } catch (error) {
-      return res.sendStatus((error as { code?: string }).code === '42501' ? 404 : 500);
-    }
-  };
   app.patch('/proof/:domain/:id', async (req, res) => {
     const domain = safeDomain(req.params.domain);
     if (!domain) return res.sendStatus(404);
-    return mutate(res, () =>
+    const result = await mutateOr404(res, privilegeWithheld(domain, 'UPDATE'), () =>
       requestPgClient(req).query(
         `UPDATE ${tableFor[domain]} SET ${updateColumnFor[domain]}=$1
            WHERE ${idColumnFor[domain]}::text=$2 RETURNING ${idColumnFor[domain]}`,
         ['TAMPERED', req.params.id]
       )
     );
+    if (result) res.sendStatus(result.rows.length ? 204 : 404);
   });
   app.delete('/proof/:domain/:id', async (req, res) => {
     const domain = safeDomain(req.params.domain);
     if (!domain) return res.sendStatus(404);
-    return mutate(res, () =>
+    const result = await mutateOr404(res, privilegeWithheld(domain, 'DELETE'), () =>
       requestPgClient(req).query(
         `DELETE FROM ${tableFor[domain]} WHERE ${idColumnFor[domain]}::text=$1 RETURNING ${idColumnFor[domain]}`,
         [req.params.id]
       )
     );
+    if (result) res.sendStatus(result.rows.length ? 204 : 404);
   });
 }

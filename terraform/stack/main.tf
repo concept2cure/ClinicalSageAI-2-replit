@@ -92,17 +92,28 @@ locals {
 
 # ── Secrets Manager ─────────────────────────────────────────────────────────
 
+# OpenAI's key is stored only when a tenant elected OpenAI (var.openai_enabled;
+# P0-11, ADR-0014 §1); otherwise the secret does not exist and no task is given
+# OPENAI_API_KEY. The secret and the container entry read the same map, so they
+# cannot disagree.
+locals {
+  openai_secret = {
+    for k, v in {
+      openai_api_key = {
+        description = "OpenAI API key (a tenant's Order Form elects OpenAI)"
+        value       = var.openai_api_key
+      }
+    } : k => v if var.openai_enabled
+  }
+}
+
 module "secrets" {
   source = "../modules/secrets"
   prefix = "c2c/${var.environment}"
-  secrets = {
+  secrets = merge(local.openai_secret, {
     jwt_secret = {
       description = "JWT signing secret"
       value       = var.jwt_secret
-    }
-    openai_api_key = {
-      description = "OpenAI API key"
-      value       = var.openai_api_key
     }
     anthropic_api_key = {
       description = "Anthropic API key (regulatory drafting: the approved high-risk models)"
@@ -160,7 +171,7 @@ module "secrets" {
       description = "SMTP password (login OTP delivery)"
       value       = var.smtp_pass
     }
-  }
+  })
   tags = var.tags
 }
 
@@ -173,6 +184,13 @@ resource "terraform_data" "boot_contract" {
       # draft that carries PII/PHI is refused per request on a "ready" deployment.
       condition     = contains(try(keys(jsondecode(var.ai_provider_placement_approvals)), []), "anthropic")
       error_message = "ai_provider_placement_approvals must name \"anthropic\", the provider regulatory drafting runs on (anthropic_api_key)."
+    }
+    # OpenAI is provisioned exactly when a tenant elected it (P0-11): a key with no
+    # election would be held for nobody; an election with no key leaves the
+    # gateway's OpenAI provider off while the Order Form says it is on.
+    precondition {
+      condition     = var.openai_enabled == (length(trimspace(var.openai_api_key)) > 0)
+      error_message = "openai_enabled and openai_api_key go together: set both when a tenant's Order Form elects OpenAI (DPA Annex III), and neither otherwise."
     }
     precondition {
       condition     = var.refresh_token_secret != var.jwt_secret
@@ -279,7 +297,7 @@ locals {
 
   # What every container of this image needs to boot. The API and the worker
   # run the same image and the same import-time refusals, so they share it.
-  boot_secrets = [
+  boot_secrets = concat([
     { name = "DATABASE_URL", value_from = module.secrets.secret_arns["database_url"] },
     { name = "APP_DATABASE_URL", value_from = module.secrets.secret_arns["app_database_url"] },
     { name = "JWT_SECRET", value_from = module.secrets.secret_arns["jwt_secret"] },
@@ -290,11 +308,13 @@ locals {
     { name = "AUDIT_EXPORT_SIGNING_KEY", value_from = module.secrets.secret_arns["audit_export_signing_key"] },
     { name = "AUDIT_ATTESTATION_KEY", value_from = module.secrets.secret_arns["audit_attestation_key"] },
     { name = "CONNECTOR_ENCRYPTION_KEY", value_from = module.secrets.secret_arns["connector_encryption_key"] },
-    { name = "OPENAI_API_KEY", value_from = module.secrets.secret_arns["openai_api_key"] },
     { name = "ANTHROPIC_API_KEY", value_from = module.secrets.secret_arns["anthropic_api_key"] },
     { name = "SMTP_USER", value_from = module.secrets.secret_arns["smtp_user"] },
     { name = "SMTP_PASS", value_from = module.secrets.secret_arns["smtp_pass"] },
-  ]
+    ], [
+    # Present exactly when the secret is: only when a tenant elected OpenAI.
+    for k in keys(local.openai_secret) : { name = "OPENAI_API_KEY", value_from = module.secrets.secret_arns[k] }
+  ])
 }
 
 # Optional error reporting (server/utils/sentry.ts): absent rather than empty
