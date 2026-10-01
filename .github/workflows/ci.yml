@@ -79,6 +79,15 @@ jobs:
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:migration-prefix-collisions
 
+      - name: Guardrails — a new migration is on a DEPLOY path (with selftest)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # install-fresh applies every top-level migrations/*.sql to a NEW
+        # database; deploy-migrate applies only C2C_MIGRATION_FILES. A file on
+        # neither the set nor the journal reaches no database already deployed:
+        # the IND amendment/annual-report tables were missing that way until
+        # 9d6e3375b. Baselined at 113 pre-existing files; must only shrink.
+        run: npm run ci:migration-deploy-path:selftest && npm run ci:migration-deploy-path
+
       - name: Guardrails — RLS allowlist TS↔SQL parity
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:rls-allowlist-sync
