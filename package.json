@@ -150,6 +150,8 @@
     "ci:tenant-entry-points:write-baseline": "node scripts/ci/check-tenant-entry-points.mjs --write-baseline",
     "ci:unreferenced-modules": "node scripts/ci/check-unreferenced-modules.mjs",
     "ci:committed-secrets": "node scripts/ci/check-committed-secrets.mjs",
+    "ci:compose-boot-contract": "node scripts/ci/check-compose-boot-contract.mjs",
+    "ci:compose-boot-contract:selftest": "node scripts/ci/check-compose-boot-contract.mjs --self-test",
     "ci:requirements-pins": "node scripts/ci/check-requirements-pins.mjs",
     "ci:node-runtime": "node scripts/ci/check-node-runtime.mjs",
     "ci:node-runtime:self-test": "node scripts/ci/check-node-runtime.mjs --self-test",
