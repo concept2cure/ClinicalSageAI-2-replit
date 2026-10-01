@@ -59,6 +59,7 @@ import {
 } from '../../_shared/components/GovernedConfirmDialog';
 import { RetentionPeriodCard } from './RetentionPeriodCard';
 import { GatewayAccountsSetting } from './GatewayAccountsSetting';
+import { PdfARequirementSetting } from './PdfARequirementSetting';
 import '../styles/project-home-v2.css';
 import '../styles/ana-v2.css';
 import '../styles/translation-v2.css';
@@ -734,6 +735,8 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
         {/* -- Agency gateway accounts: platform or the organisation's own, per
             gateway and environment (D7, founder decision 2026-10-01). -- */}
         <GatewayAccountsSetting />
+        {/* PDF/A only where this organisation's procedures require it (D7, decided 2026-10-01). */}
+        <PdfARequirementSetting />
 
         {/* -- Translation workspace -- */}
         <div className="txw-set-card">

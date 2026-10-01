@@ -214,9 +214,15 @@ const GATE_POSTURE: GatePosture[] = [
     read: pdfaRequiredFromEnv,
     enforcedByDefault: false,
     gates: 'a production package whose PDF leaves are not PDF/A',
+    // Decided 2026-10-01 (D7, the PDF/A rule; ectd/pdfa-requirement.ts): the
+    // binaries are in the image, and it stays off anyway, because every agency
+    // here accepts plain PDF 1.4–1.7. An organisation that requires PDF/A sets it
+    // in Admin, Setup and the transmit guard enforces it for that organisation.
     flipWhen:
-      'Ghostscript + veraPDF are present in the deploy image so conversion and verification can actually run. ' +
-      'Not asset-gated: the precondition is a runtime binary, not a checked-in file, so it cannot be probed from the repo.',
+      'a deployment serves only organisations whose own procedures require PDF/A for every submission. ' +
+      'Not for agency conformance: FDA, EMA and the other agencies accept plain PDF 1.4-1.7 as well as PDF/A, ' +
+      "so on, it refuses packages the agency accepts. One organisation's requirement is its own setting " +
+      '(settings.submission.requirePdfA, Admin, Setup), enforced by the transmit guard.',
   },
   {
     envVar: 'ECTD_REQUIRE_XREF',

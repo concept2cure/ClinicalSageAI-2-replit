@@ -17,7 +17,7 @@ import {
   SequenceLifecycleRefusal,
   type FiledSequence,
 } from '../package-sequence-lifecycle';
-import { resolveSubmissionTypeCode, submissionTypeTerms } from '../controlled-vocab';
+import { resolveSubmissionTypeStrict, submissionTypeTerms } from '../controlled-vocab';
 import { baseLeafId } from '../../submission-gateways/ectd-packager/leaf-id';
 
 // A filed leaf as the packager records it, backbone ID included: that ID is
@@ -38,11 +38,12 @@ const SEQ_0000: FiledSequence = {
 const desired = (rows: Array<[string, string, string]>) =>
   rows.map(([ctdSection, fileName, md5]) => ({ ctdSection, fileName, md5, title: fileName }));
 
-/** The FDA vocabulary, reached through the same resolver the packager uses —
- *  a second, stricter copy here would refuse terms the backbone accepts. */
+/** The FDA vocabulary as the assemble route passes it: a term or code matched
+ *  EXACTLY (sweep F08, 2026-10-01 — the loose resolver filed 'IND' as IND
+ *  Safety Reports and 'supplement' as Efficacy Supplement). */
 const FDA_VOCAB = {
   terms: submissionTypeTerms('fda')!,
-  accepts: (v: string) => resolveSubmissionTypeCode(v) !== null,
+  accepts: (v: string) => resolveSubmissionTypeStrict(v) !== null,
 };
 
 describe('readFiledSequences', () => {
@@ -243,11 +244,18 @@ describe('planSequence', () => {
   it('accepts what the region accepts, and names its terms when it asks for one', () => {
     // The refusal has to point at values that resolve, or it sends the operator
     // back to guess again.
-    for (const ok of ['Efficacy Supplement', 'supplement', 'Annual Report', 'original']) {
+    for (const ok of ['Efficacy Supplement', 'efficacy_supplement', 'Annual Report', 'fdast1']) {
       expect(() => planSequence({
         sequence: '0001', submissionType: ok, filed: [SEQ_0000], desired: desired([['2.5', 'a.pdf', 'm2']]),
         submissionTypeVocabulary: FDA_VOCAB,
       }), ok).not.toThrow();
+    }
+    // A word that only resembles a term is refused, not guessed (sweep F08).
+    for (const guess of ['supplement', 'original', 'IND', 'report', 'labeling']) {
+      expect(() => planSequence({
+        sequence: '0001', submissionType: guess, filed: [SEQ_0000], desired: desired([['2.5', 'a.pdf', 'm2']]),
+        submissionTypeVocabulary: FDA_VOCAB,
+      }), guess).toThrow(/not a submission type this region can file/);
     }
     try {
       planSequence({ sequence: '0001', filed: [SEQ_0000], desired: desired([['2.5', 'a.pdf', 'm2']]), submissionTypeVocabulary: FDA_VOCAB });
