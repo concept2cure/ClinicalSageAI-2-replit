@@ -90,7 +90,7 @@ variables {
   evidence_object_lock_mode       = "COMPLIANCE"
   evidence_retention_days         = 2555
   api_cpu                         = 1024
-  api_memory                      = 2048
+  api_memory                      = 6144
   api_desired_count               = 2
   worker_desired_count            = 1
   image_tag                       = "v1.0.0"
@@ -158,6 +158,63 @@ run "renders_the_boot_contract" {
   assert {
     condition     = one([for e in module.ecs.api_container.environment : e.value if e.name == "APP_URL"]) == "https://${var.domain_aliases[0]}"
     error_message = "APP_URL must be the https origin of the first CloudFront alias, in the API environment."
+  }
+
+  # Every upload is scanned before it is stored, and production refuses one the
+  # scanner did not see (server/middleware/uploadSafety.ts: 503
+  # FILE_SCAN_UNAVAILABLE). Until 2026-10-01 nothing here set CLAMAV_HOST, so a
+  # deployed stack booted, read ready, and refused every Vault upload
+  # (docs/evidence/W2/2026-09-24-multi-task/audit-findings.md). clamd runs in
+  # the API task; on awsvpc the two share one network namespace.
+  assert {
+    condition = (
+      one([for e in module.ecs.api_container.environment : e.value if e.name == "CLAMAV_HOST"]) == "127.0.0.1" &&
+      one([for e in module.ecs.api_container.environment : e.value if e.name == "CLAMAV_PORT"]) == "3310"
+    )
+    error_message = "The API container must reach clamd at CLAMAV_HOST=127.0.0.1, CLAMAV_PORT=3310: the scanner in its own task."
+  }
+
+  # The scanner is in the task, essential, health-checked, pinned by digest, and
+  # the API does not start until it answers: an API that starts first refuses
+  # every upload until clamd has loaded its database.
+  assert {
+    condition = length([
+      for c in module.ecs.api_task_containers : c.name
+      if c.name != "api" && c.essential && try(c.healthCheck.command, null) != null &&
+      can(regex("@sha256:[0-9a-f]{64}$", c.image)) &&
+      contains([for d in try(module.ecs.api_container.dependsOn, []) : d.containerName if d.condition == "HEALTHY"], c.name)
+    ]) == 1
+    error_message = "The API task must carry one essential, health-checked, digest-pinned scanner container that the API container waits on (dependsOn HEALTHY)."
+  }
+
+  # clamd refuses a stream longer than StreamMaxLength, and the client then
+  # cannot tell that from an outage (503). The limit is the platform's own
+  # largest upload, read from the file that defines it, so the two cannot drift.
+  assert {
+    condition = one(flatten([
+      for c in module.ecs.api_task_containers : [
+        for e in try(c.environment, []) : e.value if e.name == "CLAMD_CONF_StreamMaxLength"
+      ] if c.name != "api"
+    ])) == "${one(regex("maxUploadBytes: ([0-9]+) \\* 1024 \\* 1024", file("../../server/config/platform-limits.ts")))}M"
+    error_message = "The scanner's StreamMaxLength must equal FILE_LIMITS.maxUploadBytes (server/config/platform-limits.ts)."
+  }
+
+  # A file too large or too deeply nested to scan whole is reported, not passed:
+  # by default clamd answers OK for what it skipped.
+  assert {
+    condition = one(flatten([
+      for c in module.ecs.api_task_containers : [
+        for e in try(c.environment, []) : e.value if e.name == "CLAMD_CONF_AlertExceedsMax"
+      ] if c.name != "api"
+    ])) == "yes"
+    error_message = "The scanner must report a file it could not scan whole (AlertExceedsMax yes), not answer OK for it."
+  }
+
+  # The worker has no scanner beside it, so it is given no address for one:
+  # an upload reaching it is refused as unscanned rather than sent nowhere.
+  assert {
+    condition     = length([for e in module.ecs.worker_container.environment : e.name if e.name == "CLAMAV_HOST"]) == 0
+    error_message = "The worker task has no scanner; it must not be pointed at one."
   }
 
   # Sign-in is accepted only from ALLOWED_ORIGINS (csrfProtection); the
@@ -475,6 +532,16 @@ run "provision_workflow_names_are_the_ones_terraform_creates" {
 }
 
 # ── Each of these must FAIL. A check only ever seen to pass has not been tested.
+
+# The virus scanner's memory comes out of the API task's; a task sized as it
+# was before the scanner (2048) would starve one or the other.
+run "refuses_an_api_task_too_small_for_the_scanner" {
+  command = plan
+  variables {
+    api_memory = 4096
+  }
+  expect_failures = [terraform_data.boot_contract]
+}
 
 run "refuses_a_refresh_secret_equal_to_the_jwt_secret" {
   command = plan

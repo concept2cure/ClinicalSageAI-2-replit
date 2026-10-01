@@ -69,6 +69,23 @@ variable "api_memory" {
   type = number
 }
 
+variable "scanner_image" {
+  description = <<-EOT
+    The virus scanner beside the API (modules/ecs-fargate, the clamav container):
+    ClamAV's own image, on its long-term-support line, pinned by digest. The image
+    carries a signature database from its build and freshclam keeps it current,
+    so moving the digest is for clamd itself, not for signatures. To move it:
+    resolve the tag's index digest (Docker Hub, clamav/clamav) and replace both
+    parts here. To pull from a registry of your own instead of Docker Hub (its
+    anonymous pull limit is per NAT address), mirror the same digest and name the
+    mirror here.
+  EOT
+  type        = string
+  # clamav/clamav:1.4.6, the index digest resolved 2026-10-01 (amd64; Fargate's
+  # default platform).
+  default = "clamav/clamav:1.4.6@sha256:57deb108fc4c72778aa83eafbca7bb7153e28c3f57c005afd38d31f16da86f23"
+}
+
 variable "api_desired_count" {
   type = number
 }
