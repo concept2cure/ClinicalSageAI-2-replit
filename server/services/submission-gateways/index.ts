@@ -31,6 +31,7 @@ import {
   CredentialError, TransmitAuthorizationError, TransportError, UnverifiedTransportError, ValidationError,
 } from './types';
 import { evaluatePreTransmit } from './pre-transmit-check';
+import { resolvePdfARequirement } from '../ectd/pdfa-requirement';
 import { assertBundleLeafSecurity } from './bundle-leaf-security';
 import { pool } from '../../db';
 import { clientAccountRefusal, resolveGatewayAccount, specFor, type ResolvedGatewayAccount } from './gateway-accounts';
@@ -166,6 +167,12 @@ export function refusedBeforeWire(err: unknown): boolean {
 export { preTransmitFindings } from './pre-transmit-findings';
 export type { PreTransmitFindings } from './pre-transmit-findings';
 
+/** A production transmit whose packager grade lists PDF leaves shipped as plain PDF. */
+function carriesPlainPdf(req: GatewayTransmitRequest): boolean {
+  const notConverted = req?.bundle?.submissionGrade?.notConverted;
+  return req?.environment === 'production' && Array.isArray(notConverted) && notConverted.length > 0;
+}
+
 /**
  * Resolve the gateway implementation for (region, gateway).
  *
@@ -215,6 +222,12 @@ export function getGateway(region: Region, gateway: GatewayName): SubmissionGate
           bundle: req.bundle,
           environment: req.environment,
           enforceExternal: false,
+          // PDF/A only where the deployment or the organisation chose it
+          // (ectd/pdfa-requirement.ts, decided 2026-10-01). A setting that
+          // cannot be read refuses here rather than sending plain PDF.
+          // Read only where it can decide something: a production transmit
+          // carrying plain-PDF leaves. A test transmit is never refused for PDF/A.
+          pdfa: carriesPlainPdf(req) ? await resolvePdfARequirement(pool, req.organizationId) : undefined,
         });
         if (!pre.cleared) {
           throw new ValidationError(

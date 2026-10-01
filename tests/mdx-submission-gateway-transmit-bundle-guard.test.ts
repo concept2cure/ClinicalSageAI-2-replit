@@ -991,7 +991,8 @@ describe('POST transmit — packager evidence is forwarded to the pre-transmit g
     });
     expect(blocked.cleared).toBe(false);
     expect(blocked.blockers.some((b) => /ECTD_REQUIRE_DTD blocks/.test(b))).toBe(true);
-    expect(blocked.blockers.some((b) => /ECTD_REQUIRE_PDFA blocks/.test(b))).toBe(true);
+    // 2026-10-01 (D7, the PDF/A rule): the refusal names who required PDF/A.
+    expect(blocked.blockers.some((b) => /not PDF\/A .*this deployment requires PDF\/A for every submission \(ECTD_REQUIRE_PDFA\)/.test(b))).toBe(true);
 
     // Report-only when not opted in — the same evidence is surfaced, not blocking.
     const reported = evaluatePreTransmit({

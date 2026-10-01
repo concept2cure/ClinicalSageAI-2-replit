@@ -89,6 +89,24 @@ An answer of "the founder has not decided" is an answer of "no".
 
 ### 2. Redis is part of the production stack
 
+> **Superseded, 2026-10-01 14:01, by decision B6: production runs without Redis**
+> (`docs/evidence/W2/2026-09-24-multi-task/u20-sessions-across-tasks.md`; restated as P-10 in
+> `docs/LAUNCH_DEFINITION_OF_DONE.md`). This note was added 2026-10-01 (D7 session `…01J935DZ`)
+> because the two records contradicted each other and nothing in the code implements this section.
+> No `rediss://` boot check exists, and no ElastiCache is in `terraform/`.
+>
+> The two reasons below are met without Redis:
+>
+> - **Revocation.** With no Redis, `server/services/token-revocation.ts` reads the shared
+>   `revoked_tokens` table on every check, so a token revoked on one task is refused on every task.
+> - **Password guessing.** The per-account lockout (`users.failed_login_attempts`, `locked_until`)
+>   is in PostgreSQL, so it is one limit across tasks.
+>
+> What stays per task is the in-memory request rate limiter (`server/middleware/rateLimiter.ts`).
+> The global per-IP limit is the WAF's rate-based rule (P-11). B6 records why adding Redis would be
+> worse: code paths that have never run in production, including a job-poll route with no tenant
+> check, and a single point of failure for `/readyz`. The text below is kept as it was decided.
+
 Production requires a managed Redis (ElastiCache: TLS in transit, an AUTH token, encryption at rest
 under a customer-managed key, private subnets only). Boot refuses a production process without a
 `rediss://` `REDIS_URL`, and the deploy preflight refuses a task definition without it (P1-46).
@@ -211,7 +229,7 @@ issued.
 | Item | What | Where it is tracked |
 |---|---|---|
 | P1-45 | Production provider election (OpenAI only when named; Moonshot never) | plan §2 |
-| P1-46 | ElastiCache in the stack; boot and preflight require `rediss://` | plan §2 |
+| P1-46 | ~~ElastiCache in the stack; boot and preflight require `rediss://`~~ superseded by B6 (§2 note): no Redis | plan §2 |
 | P1-47 | Per-organization enablement of the connector | plan §2 |
 | P1-54 | Self-hosted embedding lane; an embedding refusal is reported, not rendered as no results | plan §2 |
 | P1-2b | Authenticator required for owners, administrators and signers | plan §2, P1-2 |
@@ -225,4 +243,5 @@ issued.
 Signatures on the eight policies, the trust statement, the SIG-Lite and the §11.100(c) letter to FDA;
 the GitHub ruleset and secret scanning (P0-14); rotation of the historical Neon credentials (P0-17);
 the AWS account, DNS and the first `terraform apply`; contracts and BAAs with AWS and Anthropic; the
-pen-test firm (P1-15); EU and Japanese counsel (P2-2, P2-3).
+pen-test firm (P1-15); EU and Japanese counsel (P2-2, P2-3); the Artifex commercial licence for
+Ghostscript, decided 2026-10-01 (`docs/audits/ANA_DOCUMENT_STACK_DEPENDENCY_LICENSE_INVENTORY.md`).
