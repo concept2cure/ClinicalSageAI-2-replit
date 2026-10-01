@@ -391,27 +391,27 @@ describe('the seal is stored with what it sealed (reporting review 2026-10-01)',
   });
 });
 
+const sealedDocument: RenderedReport = { reportTypeId: TYPE.typeId, scopeType: 'submission', scopeId: 'sub-1', generatedAt: '2026-09-30T12:00:00.000Z', status: 'final', sections: [{ id: 'as-sealed', title: 'As sealed', blocks: [] }] };
+const seal = buildSealedRecord(sealedDocument, '2026-09-30T13:00:00.000Z');
+/**
+ * On the record: the snapshot holds `metadata`; finalize's chain row (documentStored,
+ * payload-bound, linked from genesis) and its signature exist; the run reads `status`
+ * inside the transaction.
+ */
+const sealedOnRecord = (metadata: Record<string, unknown>, status = 'final') => {
+  const nv = JSON.stringify({ sealHash: seal.contentHash, sealedAt: seal.sealedAt, atomCount: seal.atomCount, algorithm: seal.algorithm, canonVersion: seal.canonVersion, documentStored: true });
+  const linked = { action: 'report_os.run_finalized', actor_id: 5, target: `report_run:${RUN.id}`, payload_hash: createHash('sha256').update(nv).digest('hex'), occurred_at: new Date('2026-09-30T13:00:01Z') };
+  const row = { ...linked, nv, tenant_id: 7, chain_seq: 3, sha256_chain: deriveChainHash(linked, '0'.repeat(64)), hmac_seal: null };
+  const signature = { signer_name: 'Dana Reyes', signed_at: new Date(), signature_meaning: 'approval', manifest: JSON.stringify({ act: { sealHash: seal.contentHash } }) };
+  h.respond.fn = (sql) =>
+    /FROM report_runs/.test(sql) ? [{ status }]
+      : /FROM report_snapshots/.test(sql) ? [{ snapshot_metadata: metadata }]
+        : /run_finalized/.test(sql) ? [row]
+          : /FROM electronic_signatures/.test(sql) ? [signature] : [];
+};
+
 describe('GET /runs/:id/rendered', () => {
   const rendered = () => request(app).get(`/api/report-os/runs/${RUN.id}/rendered`);
-
-  const sealedDocument: RenderedReport = { reportTypeId: TYPE.typeId, scopeType: 'submission', scopeId: 'sub-1', generatedAt: '2026-09-30T12:00:00.000Z', status: 'final', sections: [{ id: 'as-sealed', title: 'As sealed', blocks: [] }] };
-  const seal = buildSealedRecord(sealedDocument, '2026-09-30T13:00:00.000Z');
-  /**
-   * On the record: the snapshot holds `metadata`; finalize's chain row (documentStored,
-   * payload-bound, linked from genesis) and its signature exist; the run reads `status`
-   * inside the transaction.
-   */
-  const sealedOnRecord = (metadata: Record<string, unknown>, status = 'final') => {
-    const nv = JSON.stringify({ sealHash: seal.contentHash, sealedAt: seal.sealedAt, atomCount: seal.atomCount, algorithm: seal.algorithm, canonVersion: seal.canonVersion, documentStored: true });
-    const linked = { action: 'report_os.run_finalized', actor_id: 5, target: `report_run:${RUN.id}`, payload_hash: createHash('sha256').update(nv).digest('hex'), occurred_at: new Date('2026-09-30T13:00:01Z') };
-    const row = { ...linked, nv, tenant_id: 7, chain_seq: 3, sha256_chain: deriveChainHash(linked, '0'.repeat(64)), hmac_seal: null };
-    const signature = { signer_name: 'Dana Reyes', signed_at: new Date(), signature_meaning: 'approval', manifest: JSON.stringify({ act: { sealHash: seal.contentHash } }) };
-    h.respond.fn = (sql) =>
-      /FROM report_runs/.test(sql) ? [{ status }]
-        : /FROM report_snapshots/.test(sql) ? [{ snapshot_metadata: metadata }]
-          : /run_finalized/.test(sql) ? [row]
-            : /FROM electronic_signatures/.test(sql) ? [signature] : [];
-  };
 
   it('shows a final run as what was sealed, not a re-render', async () => {
     h.queued.select.push([{ ...RUN, status: 'final' }], [{ label: TYPE.label, truthfulnessRules: {} }]);
@@ -458,12 +458,17 @@ describe('GET /runs/:id/rendered', () => {
 
 describe('GET /runs/:id/export.pdf records the export before anything is sent', () => {
   const exportPdf = () => pdfBody(request(app).get(`/api/report-os/runs/${RUN.id}/export.pdf`));
+  const typeRow = { label: TYPE.label, family: TYPE.family, truthfulnessRules: {} };
+  const pdfText = async (bytes: Buffer) => {
+    const { PDFParse } = (await import('pdf-parse')) as unknown as { PDFParse: new (o: { data: Buffer }) => { getText(): Promise<{ text: string }> } };
+    return (await new PDFParse({ data: bytes }).getText()).text.replace(/\s+/g, ' ');
+  };
 
   beforeEach(() => {
-    h.queued.select.push([RUN], [{ label: TYPE.label, family: TYPE.family }], []);
+    h.queued.select.push([RUN], [typeRow]);
   });
 
-  it('writes report_os.run_exported carrying the hash of the bytes sent, then sends the PDF', async () => {
+  it('writes report_os.run_exported carrying the hash of the bytes sent and the export id they print, then sends the PDF', async () => {
     const res = await exportPdf();
     expect(res.status).toBe(200);
     expect(res.headers['content-type']).toBe('application/pdf');
@@ -474,9 +479,30 @@ describe('GET /runs/:id/export.pdf records the export before anything is sent', 
       action: 'report_os.run_exported',
       resourceType: 'report_run',
       resourceId: '41',
-      details: { reportTypeId: TYPE.typeId, format: 'pdf', filename: 'report-run-41.pdf', byteLength: body.length, sha256: createHash('sha256').update(body).digest('hex') },
+      details: { reportTypeId: TYPE.typeId, status: 'completed', sealVerdict: null, format: 'pdf', filename: 'report-run-41.pdf', byteLength: body.length, sha256: createHash('sha256').update(body).digest('hex') },
     });
-    expect(h.statements).toEqual(['BEGIN', STAMP, '<audit row>', 'COMMIT', '<released>']);
+    const text = await pdfText(body);
+    expect(text).toContain(`Export ${auditEntry()?.details.exportId} · Exported ${auditEntry()?.details.exportedAt} (UTC)`);
+    expect(text).toContain('NOT FINAL (COMPLETED)');
+    expect(h.statements.slice(-5)).toEqual(['BEGIN', STAMP, '<audit row>', 'COMMIT', '<released>']);
+  });
+
+  it('exports a final run as its verified sealed document, with the signature and the verdict', async () => {
+    h.queued.select.splice(0, 2, [{ ...RUN, status: 'final' }], [typeRow]);
+    sealedOnRecord({ seal, sealedDocument });
+    const res = await exportPdf();
+    const text = await pdfText(res.body as Buffer);
+    for (const line of ['As sealed', 'Final. Signed by Dana Reyes as approval', 'Seal verification at export: intact.']) expect(text).toContain(line);
+    expect(text).not.toMatch(/NOT FINAL/);
+    expect(auditEntry()?.details).toMatchObject({ status: 'final', sealVerdict: 'intact' });
+  });
+
+  it('refuses a record that does not verify against the audit chain: 409, no PDF, nothing recorded', async () => {
+    h.queued.select.splice(0, 2, [{ ...RUN, status: 'final' }], [typeRow]);
+    sealedOnRecord({ seal, sealedDocument: { ...sealedDocument, sections: [{ id: 'as-sealed', title: 'Edited after sealing', blocks: [] }] } });
+    const res = await exportPdf();
+    expect([res.status, JSON.parse((res.body as Buffer).toString('utf8')).error.code]).toEqual([409, 'SEALED_DOCUMENT_MISMATCH']);
+    expect(h.audit).not.toHaveBeenCalled();
   });
 
   it('answers 503 and sends no PDF when the export cannot be recorded', async () => {
