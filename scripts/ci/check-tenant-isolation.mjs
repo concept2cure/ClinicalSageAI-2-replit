@@ -398,13 +398,21 @@ const SQL_KEYWORD_RE = /\b(?:SELECT|INSERT\s+INTO|UPDATE|DELETE\s+FROM)\b/i;
  * without pretending to evaluate JavaScript.
  */
 function expandLocalInterpolations(sql, text) {
-  if (!sql.includes('${')) return sql;
-  return sql.replace(/\$\{(\w+)\}/g, (whole, ident) => {
-    const def = new RegExp(
-      '\\bconst\\s+' + ident + '\\s*(?::[^=]+)?=\\s*`([^`]*)`',
-    ).exec(text);
-    return def ? def[1] : whole;
-  });
+  /* A fragment may itself be built from fragments (`headsWhere` =
+     `${uploadsWhere} AND …`): expand until nothing more resolves, bounded so a
+     self-referencing const cannot loop. */
+  let out = sql;
+  for (let depth = 0; depth < 4 && out.includes('${'); depth++) {
+    const next = out.replace(/\$\{(\w+)\}/g, (whole, ident) => {
+      const def = new RegExp(
+        '\\bconst\\s+' + ident + '\\s*(?::[^=]+)?=\\s*`([^`]*)`',
+      ).exec(text);
+      return def ? def[1] : whole;
+    });
+    if (next === out) break;
+    out = next;
+  }
+  return out;
 }
 
 const findings = [];

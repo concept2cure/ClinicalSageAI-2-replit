@@ -1,0 +1,8 @@
+## ci:tenant-isolation:no-regression on the VR-09 working tree before the fix (2026-10-01)
+## Copied from the run output; the five fingerprints the gate reported:
+[ci:tenant-isolation] FAIL — 5 NEW finding(s) above baseline of 8:
+  server/routes/c2c/project-vault.ts#0e5826c9a768:documents      (tree page: WHERE ${headsWhere}; org predicate two fragments deep)
+  server/routes/c2c/project-vault.ts#376743f5cba7:documents      (tree count: same)
+  server/services/vault/vault-version-checkin.ts#cc0b136839e8:documents   (successor walk: no organization filter; on trunk since VR-08)
+  server/services/vault/vault-version-checkin.ts#653f539cab68:documents   (known-bytes check: no organization filter; on trunk since VR-08)
+  server/services/vault/vault-version-family.ts#9b51904e3a0c:documents    (supersededSql: a correlated fragment)

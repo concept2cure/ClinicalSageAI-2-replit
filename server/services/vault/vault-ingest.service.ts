@@ -571,7 +571,8 @@ async function admitVaultDocument(
         args.programId,
         documentCode,
         args.documentTitle,
-        args.documentType,
+        // A new version is the same kind of document as its head.
+        checkIn?.head.document_type ?? args.documentType,
         version,
         s3Bucket,
         s3Key,
@@ -614,7 +615,7 @@ async function admitVaultDocument(
         message:
           `A different document is already recorded at code "${documentCode}" ` +
           `version "${version}" for this program. Nothing was changed. ` +
-          'Add it as the next version of that document (supersedesDocumentId) rather than replacing the existing record.',
+          'Add it as a new version of that document instead of replacing the recorded one.',
       };
     }
 
@@ -667,7 +668,7 @@ async function admitVaultDocument(
         programId: args.programId,
         documentCode,
         documentTitle: args.documentTitle,
-        documentType: args.documentType,
+        documentType: doc.document_type,
         version,
         fileName: doc.file_name ?? fileName,
         fileSize,
@@ -706,7 +707,7 @@ async function admitVaultDocument(
     logger.info('Vault document ingested', {
       id: doc.id,
       code: documentCode,
-      type: args.documentType,
+      type: doc.document_type,
       size: fileSize,
       hasText: !!extractedText,
     });
