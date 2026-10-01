@@ -51,19 +51,6 @@ function pgError(code: string, message: string): Error & { code: string } {
   return Object.assign(new Error(message), { code });
 }
 
-function client(handler: (sql: string) => unknown) {
-  return {
-    query: vi.fn(async (sql: string) => {
-      if (sql === 'BEGIN' || sql === 'COMMIT' || sql === 'ROLLBACK') return { rows: [] };
-      if (sql.startsWith('SET LOCAL')) return { rows: [] };
-      const out = handler(sql);
-      if (out instanceof Error) throw out;
-      return { rows: out as unknown[] };
-    }),
-    release: vi.fn(),
-  };
-}
-
 async function load() {
   vi.resetModules();
   return import('../innovation-routes');
