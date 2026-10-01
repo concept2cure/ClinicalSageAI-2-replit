@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-01T07:20:54.283Z",
+  "generatedAt": "2026-10-01T07:38:04.120Z",
   "git": {
-    "sha": "9425147e4f6bc567963642ab9cb5615e4098c43a",
+    "sha": "92c134b4a1ffd83f8e8ba0dc76340e03852d316f",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2010,7 +2010,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1111830
+        "bytes": 1111769
       },
       {
         "file": "shared/schema.ts",
@@ -2192,7 +2192,7 @@
     "largeFilesByLines": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 21459
+        "lines": 21460
       },
       {
         "file": "shared/schema.ts",
@@ -2427,20 +2427,20 @@
         "lines": 1990
       },
       {
-        "file": "server/routes/c2c/projects.ts",
-        "lines": 1986
-      },
-      {
         "file": "client/src/concept2cure/v2/Shell.tsx",
         "lines": 1968
       },
       {
-        "file": "server/routes/c2c/project-vault.ts",
-        "lines": 1944
+        "file": "server/routes/c2c/projects.ts",
+        "lines": 1956
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/Vault.tsx",
         "lines": 1938
+      },
+      {
+        "file": "server/routes/c2c/project-vault.ts",
+        "lines": 1935
       },
       {
         "file": "server/routes/ectd-compile.ts",
@@ -2471,10 +2471,6 @@
         "lines": 1869
       },
       {
-        "file": "server/routes/ivdr-routes.ts",
-        "lines": 1866
-      },
-      {
         "file": "server/services/rare-disease/rare-disease-knowledge.ts",
         "lines": 1866
       },
@@ -2485,6 +2481,10 @@
       {
         "file": "server/services/contradiction-engine-service.ts",
         "lines": 1857
+      },
+      {
+        "file": "server/routes/ivdr-routes.ts",
+        "lines": 1855
       },
       {
         "file": "server/services/ana/citation-engine.ts",
