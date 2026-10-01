@@ -16,7 +16,11 @@
  *   Generate the plan from the RACT → POST /rbm-monitoring-plans/generate
  *
  * Monitoring actions hang off a monitoring plan, so the controls that raise one
- * are disabled — with the reason shown — until the study has a plan.
+ * are disabled — with the reason shown — until the study has a plan. Every
+ * action is raised against `board.governingPlanId` — the plan in force — not
+ * `board.plan`: while an amendment draft is open, the plan on screen is that
+ * draft, which governs nothing until approved, and the server refuses actions
+ * on it (409 amendment_not_in_force).
  */
 import { ErrorState } from '../dataConnect';
 import React, { useState } from 'react';
@@ -88,7 +92,8 @@ export function RbmSignals({ board, onTab, onReload }: SubProps) {
   const [invFor, setInvFor] = useState<RbmSignal | null>(null);
   const mut = useRbmMutation(onReload);
   const owners = useRbmOwners();
-  const planId = board.plan?.id ?? null;
+  // The plan in force, not the plan on screen — see the header.
+  const planId = board.governingPlanId ?? null;
 
   const isOpen = (s: RbmSignal) => !['resolved', 'dismissed'].includes(s.status);
   const shown = signals
@@ -137,7 +142,7 @@ export function RbmSignals({ board, onTab, onReload }: SubProps) {
       const notes = [f.rootCause ? `Root cause: ${f.rootCause}` : '', f.notes, f.evidence ? `Evidence: ${f.evidence}` : '']
         .filter(Boolean).join('\n');
       const raisesAction = f.action && f.action !== 'none' && planId != null;
-      await rbmWrite('POST', `/rbm-signals/${sig.id}/investigate`, {
+      const out = await rbmWrite<{ actionRefused?: { message?: string } | null }>('POST', `/rbm-signals/${sig.id}/investigate`, {
         status: f.status,
         resolutionNotes: notes || null,
         action: raisesAction ? {
@@ -149,6 +154,11 @@ export function RbmSignals({ board, onTab, onReload }: SubProps) {
           dueDate: dueDate(f.due),
         } : null,
       });
+      // The notes were saved but the server did not raise the action. Say so
+      // plainly: a refused action is never reported as created.
+      if (out?.actionRefused) {
+        return `Investigation saved. The follow-up action was not raised: ${out.actionRefused.message ?? 'the plan does not take new actions.'}`;
+      }
     });
     if (done) setInvFor(null);
   };
@@ -377,12 +387,14 @@ export function RbmOversight({ board, onTab, onReload }: SubProps) {
   const [schedFor, setSchedFor] = useState<RbmBoardSite | null>(null);
   const mut = useRbmMutation(onReload);
   const owners = useRbmOwners();
-  const planId = board.plan?.id ?? null;
+  // The plan in force, not the plan on screen — see the header.
+  const planId = board.governingPlanId ?? null;
 
   /* An oversight visit already scheduled for a site is a real site_visit action
      on the plan, not a page-local flag — so it survives a reload and shows up
-     on the plan board. Scoped to the plan on screen: an action carried over
-     from a superseded plan version is not this plan's commitment. */
+     on the plan board. Scoped to the plan in force: open actions move to a new
+     version when it is approved, and a completed one left on a superseded
+     version is that version's history. */
   const visitFor = (siteNumber: string | null) => board.actions.find(
     a => a.planId === planId && a.type === 'site_visit' && a.status !== 'done'
       && !!siteNumber && a.title.includes(`site ${siteNumber}`),
@@ -457,11 +469,14 @@ export function RbmOversight({ board, onTab, onReload }: SubProps) {
 /* 10 -- Plan */
 export function RbmPlan({ board, onReload }: SubProps) {
   const plan = board.plan;
-  // board.actions spans every plan version in the program. This surface shows
-  // one plan, so it must show — and mutate — only that plan's actions;
-  // otherwise Start/Complete would PATCH an action belonging to a superseded
-  // plan while appearing to act on the one on screen.
-  const acts: RbmBoardAction[] = plan ? board.actions.filter(a => a.planId === plan.id) : [];
+  // Actions are execution records logged against the plan in force, which is
+  // not the plan on screen while an amendment draft is open. board.actions
+  // spans every plan version, so the list shows — and mutates — only the
+  // governing plan's actions; a superseded version's completed actions stay
+  // with it as its history.
+  const governingId = board.governingPlanId ?? null;
+  const acts: RbmBoardAction[] = governingId != null ? board.actions.filter(a => a.planId === governingId) : [];
+  const showingOtherPlan = plan != null && governingId != null && governingId !== plan.id;
   const [signFor, setSignFor] = useState(false);
   const [adding, setAdding] = useState(false);
   const [amending, setAmending] = useState(false);
@@ -476,7 +491,7 @@ export function RbmPlan({ board, onReload }: SubProps) {
   const addAction = async (f: Record<string, string>) => {
     const done = await mut.run(async () => {
       await rbmWrite('POST', '/rbm-monitoring-actions', {
-        planId: plan!.id,
+        planId: governingId,
         actionType: f.type,
         description: f.title,
         priority: f.priority,
@@ -488,13 +503,13 @@ export function RbmPlan({ board, onReload }: SubProps) {
   };
 
   /** Open a versioned amendment. The signed version stays on file untouched;
-   *  the new draft carries its unfinished actions and governs nothing until it
-   *  is approved in its own right. */
+   *  the new draft governs nothing until it is approved in its own right. No
+   *  actions are copied: they stay on the plan in force and the open ones move
+   *  to the amendment when it is approved. */
   const amendPlan = async (f: Record<string, string>) => {
     const done = await mut.run(async () => {
-      const { data, meta } = await rbmWriteWithMeta<{ version?: number }>('POST', `/rbm-monitoring-plans/${plan!.id}/amend`, { reason: f.reason });
-      const copied = Number(meta.actionsCopied ?? 0);
-      return `Amendment v${data.version ?? '?'} opened as a draft with ${copied} unfinished action${copied === 1 ? '' : 's'} carried forward. Add or change actions there, then approve it.`;
+      const { data } = await rbmWriteWithMeta<{ version?: number }>('POST', `/rbm-monitoring-plans/${plan!.id}/amend`, { reason: f.reason });
+      return `Amendment v${data.version ?? '?'} opened as a draft. Actions stay on the approved plan until the amendment is approved; the open ones then move to it.`;
     });
     if (done) setAmending(false);
   };
@@ -540,8 +555,8 @@ export function RbmPlan({ board, onReload }: SubProps) {
         </div>
       )}
       <div className="rbm-bar" style={{ marginBottom: 11 }}>
-        <span className="rbm-bar-info">{acts.length} actions — {acts.filter(a => a.overdue).length} overdue — escalations, investigations and scheduled visits land here</span>
-        <button className="rbm-btn" disabled={mut.busy || !plan} title={!plan ? 'Generate a monitoring plan first' : undefined} onClick={() => setAdding(true)}>{I.zap}Add action</button>
+        <span className="rbm-bar-info">{acts.length} actions — {acts.filter(a => a.overdue).length} overdue — {showingOtherPlan ? 'logged against the approved plan in force' : 'escalations, investigations and scheduled visits land here'}</span>
+        <button className="rbm-btn" disabled={mut.busy || governingId == null} title={governingId == null ? (plan ? 'This study has no monitoring plan in force' : 'Generate a monitoring plan first') : undefined} onClick={() => setAdding(true)}>{I.zap}Add action</button>
       </div>
       <div className="rbm-board">{cols.map(([st, label]) => (
         <div key={st} className="rbm-col">
@@ -558,7 +573,7 @@ export function RbmPlan({ board, onReload }: SubProps) {
         </div>
       ))}</div>
       <div className="rbm-note">{I.info}The plan record carries the strategy, its governing assessment and its actions. The full monitoring plan content — monitoring methods per critical process, review frequency, targeted SDV/SDR rules and escalation thresholds — is not modelled yet, and completed actions do not yet carry evidence or an effectiveness check.</div>
-      {adding && plan && <RbmFormModal title="Add monitoring action"
+      {adding && governingId != null && <RbmFormModal title="Add monitoring action"
         intro="Actions track the response to risks and signals. Overdue actions feed the attention queue."
         fields={[
           { key: 'type', label: 'Type', type: 'select', options: ACT_TYPES, labels: ACT_TYPE_LABEL },
@@ -569,7 +584,7 @@ export function RbmPlan({ board, onReload }: SubProps) {
         ]}
         busy={mut.busy} error={mut.error}
         submitLabel="Add action" onCancel={() => { setAdding(false); mut.clearError(); }} onSubmit={addAction} />}
-      {plan?.status === 'active' && <div className="rbm-note">{I.lock}This plan is <b>approved</b>, so what it commits to is fixed: the e-signature attests to this strategy and these actions. New actions — escalations, scheduled visits, signal follow-ups — go on an amendment. <b>Amend</b> opens the next version as a draft carrying the unfinished actions; it governs nothing until it is approved.</div>}
+      {(plan?.status === 'active' || showingOtherPlan) && <div className="rbm-note">{I.lock}The approved plan&apos;s strategy is fixed under its signature. Actions raised while the study runs — escalations, scheduled visits, signal follow-ups — are logged against it. <b>Amend</b> opens a draft of the next version, which governs nothing until it is approved; the open actions move to it on approval.</div>}
       {amending && plan && <RbmFormModal title={`Amend monitoring plan${plan.version != null ? ` v${plan.version}` : ''}`}
         intro="Opens the next version as a draft. This version and its signature stay on file as the historical record."
         fields={[{ key: 'reason', label: 'Why is the plan being amended?', type: 'textarea' }]}

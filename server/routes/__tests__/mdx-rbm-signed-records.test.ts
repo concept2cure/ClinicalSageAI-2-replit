@@ -7,8 +7,10 @@
  *
  *   - POST cannot create an active (signed-looking) plan or assessment: `status`
  *     is not accepted on create, so every hand-created record starts as a draft.
- *   - A monitoring action can be added only to a DRAFT plan. The approver's
- *     signature attests to a specific set of actions.
+ *   - A monitoring action is an execution record, logged against the plan in
+ *     force (the active version, or a study's first draft). A superseded
+ *     version or an open amendment draft refuses it with 409 and names the
+ *     plan in force (governingPlanId).
  *   - PATCH on an approved plan is a 409 pointing at /amend; /amend opens the
  *     next version as a draft.
  *   - PATCH /rbm-qtls/:id with an explicit `threshold: null` clears the limit,
@@ -85,20 +87,77 @@ describe('POST cannot create a signed-looking record', () => {
   });
 });
 
-describe('POST /rbm-monitoring-actions — only a draft plan takes new actions', () => {
-  it('refuses an action on an approved plan with a 409 that points at /amend', async () => {
-    on(/SELECT status, version FROM rbm_monitoring_plans/, [{ status: 'active' }]);
-    const res = await request(app()).post('/api/mdx/rbm-monitoring-actions').send({ planId: 11, description: 'late' });
+const PLAN_BY_ID = /FROM rbm_monitoring_plans WHERE id = \$1 AND organization_id = \$2/;
+const PLAN_IN_FORCE = /FROM rbm_monitoring_plans[\s\S]*status = 'active'/;
+
+describe('POST /rbm-monitoring-actions — actions are logged against the plan in force', () => {
+  it('accepts an action on the approved (active) plan', async () => {
+    on(PLAN_BY_ID, [{ id: 11, status: 'active', version: 2, program_id: 'p' }]);
+    on(/INSERT INTO rbm_monitoring_actions/, [{ id: 5, plan_id: 11 }]);
+    const res = await request(app()).post('/api/mdx/rbm-monitoring-actions').send({ planId: 11, description: 'Escalate site 5' });
+    expect(res.status).toBe(201);
+    expect(issued(/INSERT INTO rbm_monitoring_actions/)).toHaveLength(1);
+  });
+
+  it('refuses a superseded version with 409 plan_superseded naming the plan in force', async () => {
+    on(PLAN_BY_ID, [{ id: 10, status: 'archived', version: 1, program_id: 'p' }]);
+    on(PLAN_IN_FORCE, [{ id: 11, version: 2 }]);
+    const res = await request(app()).post('/api/mdx/rbm-monitoring-actions').send({ planId: 10, description: 'late' });
     expect(res.status).toBe(409);
-    expect(JSON.stringify(res.body)).toContain('/amend');
+    expect(JSON.stringify(res.body)).toContain('plan_superseded');
+    expect(JSON.stringify(res.body)).toContain('"governingPlanId":11');
     expect(issued(/INSERT INTO rbm_monitoring_actions/)).toHaveLength(0);
   });
 
-  it('accepts an action on a draft plan', async () => {
-    on(/SELECT status, version FROM rbm_monitoring_plans/, [{ status: 'draft' }]);
+  it('refuses an open amendment draft with 409 amendment_not_in_force', async () => {
+    on(PLAN_BY_ID, [{ id: 12, status: 'draft', version: 3, program_id: 'p' }]);
+    on(PLAN_IN_FORCE, [{ id: 11, version: 2 }]);
+    const res = await request(app()).post('/api/mdx/rbm-monitoring-actions').send({ planId: 12, description: 'new visit' });
+    expect(res.status).toBe(409);
+    expect(JSON.stringify(res.body)).toContain('amendment_not_in_force');
+    expect(JSON.stringify(res.body)).toContain('"governingPlanId":11');
+    expect(issued(/INSERT INTO rbm_monitoring_actions/)).toHaveLength(0);
+  });
+
+  it('accepts an action on a study\'s first plan while it is a draft', async () => {
+    on(PLAN_BY_ID, [{ id: 11, status: 'draft', version: 1, program_id: 'p' }]);
     on(/INSERT INTO rbm_monitoring_actions/, [{ id: 5 }]);
     const res = await request(app()).post('/api/mdx/rbm-monitoring-actions').send({ planId: 11, description: 'ok' });
     expect(res.status).toBe(201);
+  });
+});
+
+describe('POST /rbm-signals/:id/investigate — the follow-up action goes through the same rule', () => {
+  const body = (planId: number) => ({
+    status: 'resolved', resolutionNotes: 'Retrained site staff',
+    action: { planId, actionType: 'capa', description: 'Retrain' },
+  });
+
+  it('raises the follow-up on the plan in force, in the same transaction', async () => {
+    on(/UPDATE rbm_signals/, [{ id: 31, status: 'resolved' }]);
+    on(PLAN_BY_ID, [{ id: 11, status: 'active', version: 2, program_id: 'p' }]);
+    on(/INSERT INTO rbm_monitoring_actions/, [{ id: 70 }]);
+    const res = await request(app()).post('/api/mdx/rbm-signals/31/investigate').send(body(11));
+    expect(res.status).toBe(200);
+    expect(res.body.data.action).toMatchObject({ id: 70 });
+    const [ins] = issued(/INSERT INTO rbm_monitoring_actions/);
+    expect(ins.args).toEqual(expect.arrayContaining([1, 11, 31, 'capa', 'Retrain']));
+    const stmts = h.calls.map(c => c.sql.trim());
+    expect(stmts[0]).toBe('BEGIN');
+    expect(stmts[stmts.length - 1]).toBe('COMMIT');
+  });
+
+  it('saves the notes but does not raise an action on a superseded version, and says so', async () => {
+    on(/UPDATE rbm_signals/, [{ id: 31, status: 'resolved' }]);
+    on(PLAN_BY_ID, [{ id: 10, status: 'archived', version: 1, program_id: 'p' }]);
+    on(PLAN_IN_FORCE, [{ id: 11, version: 2 }]);
+    const res = await request(app()).post('/api/mdx/rbm-signals/31/investigate').send(body(10));
+    expect(issued(/INSERT INTO rbm_monitoring_actions/)).toHaveLength(0);
+    expect(issued(/UPDATE rbm_signals/)).toHaveLength(1);
+    expect(h.calls.map(c => c.sql.trim())).toContain('COMMIT');
+    expect(res.status).toBe(200);
+    expect(res.body.data.action).toBeNull();
+    expect(res.body.data.actionRefused).toMatchObject({ reason: 'plan_superseded', governingPlanId: 11 });
   });
 });
 
@@ -129,6 +188,9 @@ describe('PATCH /rbm-monitoring-plans/:id — an approved plan is read-only', ()
     const stmts = h.calls.map(c => c.sql.trim());
     expect(stmts[0]).toBe('BEGIN');
     expect(stmts[stmts.length - 1]).toBe('COMMIT');
+    // Actions are not plan content: none are copied onto the amendment.
+    expect(issued(/rbm_monitoring_actions/)).toHaveLength(0);
+    expect(res.body.data).not.toHaveProperty('actions');
   });
 
   it('POST /:id/amend without a reason is a 422', async () => {
