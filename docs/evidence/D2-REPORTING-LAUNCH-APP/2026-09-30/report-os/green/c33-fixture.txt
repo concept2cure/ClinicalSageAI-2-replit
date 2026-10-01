@@ -1,0 +1,2 @@
+# C-33 with the fixture creating report_type_registry from 0014's DDL
+      Tests  19 passed (19)

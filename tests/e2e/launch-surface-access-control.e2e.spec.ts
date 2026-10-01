@@ -2,7 +2,7 @@
  * OQ — access to the launch catalog is limited to an authenticated session.
  *
  * 21 CFR 11.10(d): "Limiting system access to authorized individuals." This is
- * the browser-tier evidence for that control across every surface of the six
+ * the browser-tier evidence for that control across every surface of the seven
  * launch applications (`shared/constants/launch-scope.ts`), executed by
  * `scripts/ops/generate-validation-package.mjs --run` and traced in
  * TM-LAUNCH-001.
@@ -47,6 +47,8 @@ const SURFACES: ReadonlyArray<{ id: string; app: string }> = [
   { id: 'submission-center', app: 'Submission Center' },
   { id: 'dispatch-readiness', app: 'Submission Readiness' },
   { id: 'quality', app: 'QMS controlled documents' },
+  { id: 'insights', app: 'Reporting & analytics' },
+  { id: 'compliance-reports', app: 'Reporting & analytics' },
   { id: 'audit-trail', app: '§11.10(e) audit trail (never switchable)' },
   { id: 'part11-console', app: 'Part 11 console (never switchable)' },
 ];

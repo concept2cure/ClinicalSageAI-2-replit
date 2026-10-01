@@ -2813,6 +2813,24 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20260930_rbm_plan_versioning.sql',
   'migrations/20260930_rbm_ingest_idempotency.sql',
 
+  // ── The report type registry reaches a deployed database (2026-09-30, D2) ─
+  // report_runs.report_type_id references report_type_registry(type_id), and
+  // nothing on any applier inserted into it — its only writer,
+  // POST /api/report-os/taxonomy/seed, was refused in production, and was
+  // deleted in review round 1, leaving this file the one writer — so the
+  // registry was empty on every provisioned database and every report run
+  // answered 404. Generated from the in-code report types by
+  // scripts/db/generate-report-type-registry-seed.ts (drift test beside the
+  // taxonomy). INSERT … ON CONFLICT (type_id) DO UPDATE of every descriptive
+  // column except `enabled`, so each deploy mirrors the code and an operator's
+  // disable survives; ends with a row-count assertion. Raises when the table is
+  // missing (drizzle-kit push creates it). Data only: no DDL, no DROP, creates
+  // no table, so the sweep has nothing new to policy — the registry is global
+  // by design (install-fresh's surface list, tenantColumn: null). Above the
+  // final pair because ci:migration-set-order pins those last.
+  // Evidence docs/evidence/D2-REPORTING-LAUNCH-APP/2026-09-30/report-os/.
+  'migrations/20260930_report_type_registry_seed.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)

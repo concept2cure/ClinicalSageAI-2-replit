@@ -16,9 +16,6 @@ import {
 import { projectIntelligenceProfiles, projectMemoryEntries, projects } from '@shared/schema';
 import { createHash, randomUUID } from 'crypto';
 import { z } from 'zod';
-import { REPORT_TYPE_SEED } from '../services/report-os/taxonomy';
-import { GLOBAL_REPORT_TYPE_SEED } from '../services/report-os/taxonomy-global';
-import { PREDICTION_REPORT_TYPES } from '../services/report-os/prediction/report-types';
 import { resolveScope } from '../services/report-os/scope-model';
 import {
   deriveOrgSegments,
@@ -28,6 +25,7 @@ import {
 import {
   requireReportEntitlement,
   decideReportEntitlement,
+  type ReportEntitlementDecision,
 } from '../services/report-os/entitlement-map';
 import { fetchPortfolioReport, fetchOrgPortfolioSummary } from '../services/report-os/portfolio/fetch';
 import { resolveCapabilities } from '../services/entitlements/resolver';
@@ -36,6 +34,7 @@ import { computeInitialRun } from '../services/report-os/orchestrator';
 import { renderReport, type RenderInput } from '../services/report-os/render/render';
 import type { RenderedReport } from '../services/report-os/render/types';
 import { buildSealedRecord } from '../services/report-os/sealing/seal';
+import type { SealedRecord } from '../services/report-os/sealing/types';
 import {
   evaluateTruthfulness,
   type TruthfulnessRules,
@@ -45,16 +44,15 @@ import { authMiddleware } from '../auth';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
+import { writeChainedAuditRow } from '../services/auditService';
+import type { PoolClient } from 'pg';
+import { requireRole } from '../middleware/auth';
+import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
 
 const router = Router();
 
 const logger = createScopedLogger('report-os');
 router.use(authMiddleware);
-const canSeedTaxonomy = () =>
-  process.env.NODE_ENV !== 'production' ||
-  (process.env.REPORT_OS_ALLOW_SEED === 'true' &&
-    !!process.env.REPORT_OS_SEED_KEY &&
-    process.env.REPORT_OS_SEED_KEY.length > 8);
 
 /*
  * Request schemas carry no organization and no actor. Both come from the
@@ -308,6 +306,280 @@ function requireSessionOrg(req: Request, res: Response): number | null {
     return null;
   }
   return orgId;
+}
+
+/*
+ * A report run, its finalization (the seal) and the PDF export of a run or a
+ * bundle are events on the record (21 CFR Part 11 §11.10(e)). Until 2026-09-30
+ * none of them wrote an audit row. Each is now one chained audit_logs row on
+ * the organization's chain, written on a transaction stamped with the
+ * organization (setTenantContextTx), so it is written under row-level security.
+ */
+type ReportAuditAction =
+  | 'report_os.run_created'
+  | 'report_os.run_finalized'
+  | 'report_os.run_exported'
+  | 'report_os.bundle_exported';
+
+interface ReportAuditEvent {
+  organizationId: number;
+  action: ReportAuditAction;
+  resourceType: 'report_run' | 'report_bundle';
+  resourceId: string;
+  details: Record<string, unknown>;
+}
+
+/**
+ * Run `fn` in one transaction on one connection, stamped with the
+ * organization. Commits when `fn` resolves; rolls back and rethrows otherwise.
+ */
+async function inTenantTransaction<T>(organizationId: number, fn: (client: PoolClient) => Promise<T>): Promise<T> {
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, organizationId);
+    const out = await fn(client);
+    await client.query('COMMIT');
+    return out;
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+/** The chained audit row for `event`, on `client`'s open transaction. */
+function writeReportEvent(client: PoolClient, req: Request, event: ReportAuditEvent): Promise<void> {
+  return writeChainedAuditRow(client, {
+    tenantId: event.organizationId,
+    userId: getUserId(req),
+    action: event.action,
+    resourceType: event.resourceType,
+    resourceId: event.resourceId,
+    details: event.details,
+    ipAddress: req.ip,
+    userAgent: req.get('user-agent') ?? undefined,
+  });
+}
+
+/**
+ * Write one chained row in its own tenant-stamped transaction. True when it
+ * committed. False when it did not: the reason goes to the log, never into a
+ * response. The same two steps as sendAuditedExport
+ * (services/audit/audited-export.ts), which sends JSON only and so cannot carry
+ * a PDF.
+ */
+async function recordReportEvent(req: Request, event: ReportAuditEvent): Promise<boolean> {
+  try {
+    await inTenantTransaction(event.organizationId, (client) => writeReportEvent(client, req, event));
+    return true;
+  } catch (error) {
+    logger.error('report event not recorded on the audit chain', {
+      action: event.action,
+      resourceId: event.resourceId,
+      error: (error as Error)?.message,
+    });
+    return false;
+  }
+}
+
+/** 503: the act was not recorded on the audit chain. Says what does and does not exist. */
+function refuseUnrecorded(res: Response, code: string, message: string, data?: Record<string, unknown>) {
+  return res.status(503).json({ success: false, error: { code, message }, ...(data ? { data } : {}) });
+}
+
+/**
+ * POST /runs' row, written after the run: the row says a run exists. The run's
+ * writes share no transaction the row could join, so when the row cannot be
+ * written the answer says so — the run exists and was not recorded — and this
+ * returns false having sent the 503.
+ */
+async function recordRunCreated(
+  req: Request,
+  res: Response,
+  run: typeof reportRuns.$inferSelect,
+  computed: { confidence: number; blockers: string[] }
+): Promise<boolean> {
+  const recorded = await recordReportEvent(req, {
+    organizationId: run.organizationId,
+    action: 'report_os.run_created',
+    resourceType: 'report_run',
+    resourceId: String(run.id),
+    details: {
+      runUuid: run.runUuid,
+      reportTypeId: run.reportTypeId,
+      scopeType: run.scopeType,
+      scopeId: run.scopeId,
+      status: run.status,
+      confidence: computed.confidence,
+      blockerCount: computed.blockers.length,
+    },
+  });
+  if (!recorded) {
+    refuseUnrecorded(
+      res,
+      'REPORT_RUN_NOT_RECORDED',
+      'The report run was created but could not be recorded in the audit trail. ' +
+        'Run the report again once the audit trail is available.',
+      { runId: run.id }
+    );
+  }
+  return recorded;
+}
+
+/**
+ * Record the export, then send the PDF: the row carries the SHA-256 and length
+ * of the exact bytes and is written BEFORE anything is sent. When it cannot be
+ * written the answer is 503 and nothing leaves (§11.10(e)).
+ */
+async function sendRecordedPdf(
+  req: Request,
+  res: Response,
+  event: ReportAuditEvent,
+  pdf: { filename: string; buffer: Buffer }
+) {
+  const recorded = await recordReportEvent(req, {
+    ...event,
+    details: {
+      ...event.details,
+      format: 'pdf',
+      filename: pdf.filename,
+      byteLength: pdf.buffer.length,
+      sha256: createHash('sha256').update(pdf.buffer).digest('hex'),
+    },
+  });
+  if (!recorded) {
+    return refuseUnrecorded(
+      res,
+      'REPORT_EXPORT_NOT_RECORDED',
+      'The export was refused because it could not be recorded in the audit trail. Nothing was exported.'
+    );
+  }
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="${pdf.filename}"`);
+  return res.send(pdf.buffer);
+}
+
+/** 409: a final report keeps its seal; it is never sealed a second time. */
+function refuseAlreadyFinal(res: Response, runId: number) {
+  return res.status(409).json({
+    success: false,
+    error: { code: 'RUN_ALREADY_FINAL', message: 'This report is already final. Its seal stands and is not replaced.' },
+    data: { runId },
+  });
+}
+
+type FinalizeOutcome = 'finalized' | 'already-final' | 'not-found' | 'not-recorded';
+
+/** Ends the finalize transaction without a write; rolled back, never committed. */
+class FinalizeStopped extends Error {
+  constructor(readonly outcome: 'already-final' | 'not-found') {
+    super(outcome);
+  }
+}
+
+/** The run's status, the seal on its latest snapshot: the two writes of a finalize, on `client`. */
+async function writeFinalize(client: PoolClient, run: typeof reportRuns.$inferSelect, seal: SealedRecord) {
+  const at = new Date().toISOString();
+  await client.query(
+    `UPDATE report_runs SET status = 'final', completed_at = $3, updated_at = $3
+      WHERE id = $1 AND organization_id = $2`,
+    [run.id, run.organizationId, at]
+  );
+  const snapshot = await client.query(
+    `SELECT id, snapshot_metadata FROM report_snapshots
+      WHERE run_id = $1 AND organization_id = $2 AND is_latest = true
+      ORDER BY id DESC LIMIT 1 FOR UPDATE`,
+    [run.id, run.organizationId]
+  );
+  const latest = snapshot.rows[0] as { id: number; snapshot_metadata: Record<string, unknown> | null } | undefined;
+  if (latest) {
+    const merged = { ...(latest.snapshot_metadata ?? {}), seal, finalizedAt: at };
+    await client.query('UPDATE report_snapshots SET snapshot_metadata = $2::json WHERE id = $1', [
+      latest.id,
+      JSON.stringify(merged),
+    ]);
+  }
+}
+
+/**
+ * Finalize a run on ONE tenant-stamped transaction (review round 1, DP-47).
+ * The run is re-read under a row lock, so a finalize that committed first is
+ * refused rather than overwritten. Then the status, the seal and the chained
+ * row land together or not at all: a chained row that cannot be written is
+ * 'not-recorded', with nothing changed. Any other failure rolls back and is
+ * thrown to the handler.
+ */
+async function finalizeOnChain(
+  req: Request,
+  run: typeof reportRuns.$inferSelect,
+  seal: SealedRecord
+): Promise<FinalizeOutcome> {
+  let recording = false;
+  try {
+    return await inTenantTransaction(run.organizationId, async (client) => {
+      const locked = await client.query(
+        'SELECT status FROM report_runs WHERE id = $1 AND organization_id = $2 FOR UPDATE',
+        [run.id, run.organizationId]
+      );
+      const status = (locked.rows[0] as { status?: string } | undefined)?.status;
+      if (status == null) throw new FinalizeStopped('not-found');
+      if (status === 'final') throw new FinalizeStopped('already-final');
+      await writeFinalize(client, run, seal);
+      recording = true;
+      await writeReportEvent(client, req, {
+        organizationId: run.organizationId,
+        action: 'report_os.run_finalized',
+        resourceType: 'report_run',
+        resourceId: String(run.id),
+        details: {
+          runUuid: run.runUuid,
+          reportTypeId: run.reportTypeId,
+          sealHash: seal.contentHash,
+          algorithm: seal.algorithm,
+          canonVersion: seal.canonVersion,
+          atomCount: seal.atomCount,
+          sealedAt: seal.sealedAt,
+        },
+      });
+      return 'finalized' as const;
+    });
+  } catch (error) {
+    if (error instanceof FinalizeStopped) return error.outcome;
+    if (!recording) throw error;
+    logger.error('report finalize not recorded on the audit chain; rolled back', {
+      runId: run.id,
+      error: (error as Error)?.message,
+    });
+    return 'not-recorded';
+  }
+}
+
+/**
+ * The run export's entitlement gate (review round 1, DP-50), over every report
+ * a bundle carries: the decision for the first report type the organization's
+ * plan does not cover, or null. The tier is resolved once, through the same
+ * gate; each type is then decided with its registry family, as the run export
+ * decides one.
+ */
+async function bundleExportRefusal(
+  organizationId: number,
+  bundle: ReportBundleRecord
+): Promise<ReportEntitlementDecision | null> {
+  const typeIds = [...new Set(bundle.items.map(item => item.reportTypeId))];
+  if (typeIds.length === 0) return null;
+  const rows = await db
+    .select({ typeId: reportTypeRegistry.typeId, family: reportTypeRegistry.family })
+    .from(reportTypeRegistry)
+    .where(inArray(reportTypeRegistry.typeId, typeIds));
+  const families = new Map(rows.map(row => [row.typeId, row.family]));
+  const { tier } = await requireReportEntitlement(organizationId, typeIds[0], families.get(typeIds[0]));
+  for (const typeId of typeIds) {
+    const decision = decideReportEntitlement(typeId, families.get(typeId), tier);
+    if (!decision.entitled) return decision;
+  }
+  return null;
 }
 
 /**
@@ -770,49 +1042,17 @@ router.get('/scopes', (_req: Request, res: Response) => {
   res.json({ data: reportScopeEnum });
 });
 
-router.post('/taxonomy/seed', async (_req: Request, res: Response) => {
-  if (!canSeedTaxonomy()) {
-    return res.status(403).json({ error: 'taxonomy seeding is disabled in this environment' });
-  }
-  if (process.env.REPORT_OS_SEED_KEY) {
-    const providedKey = _req.headers['x-report-os-seed-key'];
-    if (!providedKey || providedKey !== process.env.REPORT_OS_SEED_KEY) {
-      return res.status(403).json({ error: 'Invalid seed key' });
-    }
-  }
-  try {
-    // The base seed plus the global-markets seed (FDA/EMA/PMDA/HC/MHRA/TGA/NMPA/
-    // MFDS/Swissmedic/ANVISA + EU MDR/IVDR + PV) register together so every market
-    // is available; typeIds are unique across both sets.
-    const allSeed = [...REPORT_TYPE_SEED, ...GLOBAL_REPORT_TYPE_SEED, ...PREDICTION_REPORT_TYPES];
-    for (const row of allSeed) {
-      await db
-        .insert(reportTypeRegistry)
-        .values(row)
-        .onConflictDoUpdate({
-          target: reportTypeRegistry.typeId,
-          set: {
-            label: row.label,
-            family: row.family,
-            allowedScopes: row.allowedScopes,
-            allowedPersonas: row.allowedPersonas,
-            allowedClientSegments: row.allowedClientSegments,
-            dataDependencies: row.dataDependencies,
-            artifactDependencies: row.artifactDependencies,
-            workflowDependencies: row.workflowDependencies,
-            anaModules: row.anaModules,
-            exportTemplate: row.exportTemplate,
-            governanceRequirements: row.governanceRequirements,
-            truthfulnessRules: row.truthfulnessRules,
-            updatedAt: new Date(),
-          },
-        });
-    }
-    return res.json({ success: true, seeded: allSeed.length });
-  } catch (error: any) {
-    return serverError(res, logger, 'seeding taxonomy', error);
-  }
-});
+/*
+ * POST /taxonomy/seed was removed on 2026-09-30 (review round 1, zero
+ * duplication). The registry has one writer: the generated migration
+ * migrations/20260930_report_type_registry_seed.sql, produced by
+ * scripts/db/generate-report-type-registry-seed.ts from the in-code report
+ * types and applied on every deploy (C2C_MIGRATION_FILES). Its drift test
+ * (server/services/report-os/__tests__/report-type-registry-seed.test.ts) and
+ * dbtest (tests/db/report-os-registry-seed.dbtest.ts) prove it reaches a
+ * provisioned database. The route, its REPORT_OS_ALLOW_SEED / REPORT_OS_SEED_KEY
+ * guard and its x-report-os-seed-key header went with it.
+ */
 
 router.get('/taxonomy', async (req: Request, res: Response) => {
   try {
@@ -1365,6 +1605,8 @@ router.post('/runs', async (req: Request, res: Response) => {
       );
     }
 
+    if (!(await recordRunCreated(req, res, run, computed))) return;
+
     return res.status(201).json({
       data: {
         run,
@@ -1463,9 +1705,18 @@ router.get('/runs/:id/export.pdf', async (req: Request, res: Response) => {
       blockers: toBlockerArray(run.blockers),
       providers,
     });
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="report-run-${runId}.pdf"`);
-    return res.send(buffer);
+    return sendRecordedPdf(
+      req,
+      res,
+      {
+        organizationId,
+        action: 'report_os.run_exported',
+        resourceType: 'report_run',
+        resourceId: String(runId),
+        details: { runUuid: run.runUuid, reportTypeId: run.reportTypeId, status: run.status },
+      },
+      { filename: `report-run-${runId}.pdf`, buffer }
+    );
   } catch (error: any) {
     return serverError(res, logger, 'loading export.pdf', error);
   }
@@ -1585,8 +1836,14 @@ router.get('/runs/:id/rendered', async (req: Request, res: Response) => {
  * On success the rendered report is sealed (sha256 content hash + provenance
  * atoms), the run is marked final, and the seal is persisted onto the latest
  * snapshot's metadata.
+ *
+ * Review round 1 (DP-47): sealing is a governed act, so only organization
+ * owners, admins and managers may do it, refused before anything is read. A
+ * run already final is refused (409 RUN_ALREADY_FINAL): a seal is never
+ * overwritten. The status, the seal and the chained audit row are written in
+ * one tenant-stamped transaction (finalizeOnChain), so all land or none do.
  */
-router.post('/runs/:id/finalize', async (req: Request, res: Response) => {
+router.post('/runs/:id/finalize', requireRole('owner', 'admin', 'manager'), async (req: Request, res: Response) => {
   try {
     const runId = Number(req.params.id);
     const organizationId = authedOrgId(req) ?? NaN;
@@ -1603,6 +1860,7 @@ router.post('/runs/:id/finalize', async (req: Request, res: Response) => {
       .where(and(eq(reportRuns.id, runId), eq(reportRuns.organizationId, organizationId)))
       .limit(1);
     if (!run) return res.status(404).json({ error: 'Run not found' });
+    if (run.status === 'final') return refuseAlreadyFinal(res, runId);
 
     const [reportType] = await db
       .select({ label: reportTypeRegistry.label, truthfulnessRules: reportTypeRegistry.truthfulnessRules })
@@ -1620,33 +1878,17 @@ router.post('/runs/:id/finalize', async (req: Request, res: Response) => {
     }
 
     const seal = buildSealedRecord(rendered);
-
-    await db
-      .update(reportRuns)
-      .set({ status: 'final', completedAt: new Date(), updatedAt: new Date() })
-      .where(and(eq(reportRuns.id, runId), eq(reportRuns.organizationId, organizationId)));
-
-    const [snapshot] = await db
-      .select()
-      .from(reportSnapshots)
-      .where(
-        and(
-          eq(reportSnapshots.runId, runId),
-          eq(reportSnapshots.organizationId, organizationId),
-          eq(reportSnapshots.isLatest, true)
-        )
-      )
-      .limit(1);
-    if (snapshot) {
-      const mergedMetadata = {
-        ...((snapshot.snapshotMetadata ?? {}) as Record<string, unknown>),
-        seal,
-        finalizedAt: new Date().toISOString(),
-      };
-      await db
-        .update(reportSnapshots)
-        .set({ snapshotMetadata: mergedMetadata })
-        .where(eq(reportSnapshots.id, snapshot.id));
+    const outcome = await finalizeOnChain(req, run, seal);
+    if (outcome === 'not-found') return res.status(404).json({ error: 'Run not found' });
+    if (outcome === 'already-final') return refuseAlreadyFinal(res, runId);
+    if (outcome === 'not-recorded') {
+      return refuseUnrecorded(
+        res,
+        'REPORT_FINALIZE_NOT_RECORDED',
+        'The report was not finalized because the finalization could not be recorded in the audit trail. ' +
+          'Nothing was changed.',
+        { runId }
+      );
     }
 
     return res.json({ data: { runId, status: 'final', seal } });
@@ -1856,13 +2098,30 @@ router.get('/bundles/:bundleId/export.pdf', async (req: Request, res: Response) 
     if (!bundle || bundle.organizationId !== organizationId) {
       return res.status(404).json({ error: 'Bundle not found' });
     }
+    // The run export's entitlement gate, over every report in the bundle, and
+    // the same record-before-send step (review round 1, DP-50).
+    const refusal = await bundleExportRefusal(organizationId, bundle);
+    if (refusal) {
+      return res.status(403).json({
+        error: `Exporting this bundle requires the ${refusal.requiredTier} plan.`,
+        feature: refusal.feature,
+        requiredTier: refusal.requiredTier,
+        tier: refusal.tier,
+      });
+    }
     const buffer = await createBundlePdf(bundle);
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="report-bundle-${bundle.bundleId.slice(0, 8)}.pdf"`
+    return sendRecordedPdf(
+      req,
+      res,
+      {
+        organizationId,
+        action: 'report_os.bundle_exported',
+        resourceType: 'report_bundle',
+        resourceId: bundle.bundleId,
+        details: { bundleId: bundle.bundleId, runIds: bundle.runIds, reportTypeIds: [...new Set(bundle.items.map(i => i.reportTypeId))] },
+      },
+      { filename: `report-bundle-${bundle.bundleId.slice(0, 8)}.pdf`, buffer }
     );
-    return res.send(buffer);
   } catch (error: any) {
     return serverError(res, logger, 'loading export.pdf', error);
   }

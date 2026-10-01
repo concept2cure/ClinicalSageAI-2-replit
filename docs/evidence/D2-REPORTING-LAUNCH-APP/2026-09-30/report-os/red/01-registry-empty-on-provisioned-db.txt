@@ -1,0 +1,22 @@
+$ psql "$TEST_DATABASE_URL" -c 'select count(*) ...'   # 2026-10-01T00:06:24Z, before the change
+ report_type_registry_rows 
+---------------------------
+                         0
+(1 row)
+
+    table_present     
+----------------------
+ report_type_registry
+(1 row)
+
+ report_os_audit_rows 
+----------------------
+                    0
+(1 row)
+
+
+$ grep -rli 'insert into report_type_registry' migrations db/migrations   # no migration seeds it
+(exit 1 — no match)
+
+$ grep -n "writeChainedAuditRow\|auditService\|logAction" server/routes/report-os.ts | wc -l   # no report-os route writes an audit row
+0

@@ -63,7 +63,7 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
   /* ── The three Live Drive scripts are cut to the LAUNCH CATALOG ────────────
      docs/LAUNCH_DEFINITION_OF_DONE.md row D2 — Projects, Vault, Authoring
      (incl. protocol development), Submission Center, Submission Readiness,
-     QMS controlled documents — plus the shell surfaces (audit trail, Part 11
+     QMS controlled documents, Reporting & analytics — plus the shell surfaces (audit trail, Part 11
      console). Under LAUNCH_SCOPE_ENFORCE=on any other stop renders "Not in
      this release", and a demonstration that lands there fails in front of the
      person it was written for. __tests__/demo-scripts.test.ts holds every
@@ -81,10 +81,10 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
     audience: 'A new subscriber team learning to run their regulatory work here.',
     minutes: 8,
     description:
-      'The complete working tour of the launch catalog: the Projects portfolio and a real program, the Vault, Authoring and the protocol workspace, the Submission Center, Submission Readiness, QMS controlled documents, and the audit trail — each stop showing what the team actually does there.',
+      'The complete working tour of the launch catalog: the Projects portfolio and a real program, the Vault, Authoring and the protocol workspace, the Submission Center, Submission Readiness, QMS controlled documents, Reporting & analytics with its audit and compliance reports, and the audit trail — each stop showing what the team actually does there.',
     steps: [
       {
-        say: 'Welcome them to their workspace and set the frame: this is a working tour of their own tenant, on their real data, through the six apps of this release, and they can interrupt with a question at any moment.',
+        say: 'Welcome them to their workspace and set the frame: this is a working tour of their own tenant, on their real data, through the seven apps of this release, and they can interrupt with a question at any moment.',
       },
       {
         say: 'Projects is the front door: every regulatory program with its workstream, stage, readiness and blockers. In the demo workspace that is "[Demo · Biotech] C2C-101", an anti-IL-23 antibody IND, beside "[Demo · MDX] NeuroPanel-Dx", an IVD 510(k) — the same portfolio holds both.',
@@ -129,6 +129,14 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
       {
         say: 'Filter the change log to what is approved and waiting to be implemented — the live change-control pipeline.',
         act: { actionId: 'quality.filter-changes', params: { stage: 'approved' } },
+      },
+      {
+        say: 'Reporting & analytics is the same central service for every client type: governed reports drawn from the program records, each with its confidence, its gaps and its blockers stated.',
+        navigate: { target: 'insights' },
+      },
+      {
+        say: 'From here, the audit and compliance reports an auditor or inspector asks for: user access review, sign-in events, administrative changes, the e-signature register, audit trail integrity, retention and legal holds, and the controlled document register. Each run is sealed and recorded, and each report lists what the platform does not record.',
+        navigate: { target: 'compliance-reports' },
       },
       {
         say: 'End where an inspector would start: the audit trail. Every governed act on this tour — the register writes, the approvals, the signatures — is a hash-chained entry here, verified by the server, and it can never be switched off.',

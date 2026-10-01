@@ -340,7 +340,7 @@ await step(
     urs: ['URS-PROJ-008'],
     title: 'Launch scope is enforced in the navigation verdicts',
     action: 'GET /api/module-subscriptions/navigation',
-    expected: 'launchScope.enforced=true; the out-of-scope surface "rbm" is not entitled with source "launch-scope"; all six launch apps\' primary surfaces are entitled',
+    expected: 'launchScope.enforced=true; the out-of-scope surface "rbm" is not entitled with source "launch-scope"; all seven launch apps\' primary surfaces are entitled',
   },
   async ({ api, expect }) => {
     const r = await api('GET', '/api/module-subscriptions/navigation');
@@ -350,7 +350,7 @@ await step(
     const arr = Object.values(j).find((v) => Array.isArray(v) && v.some((x) => x && typeof x === 'object' && 'entitled' in x)) ?? [];
     const byId = Object.fromEntries(arr.map((v) => [v.id, v]));
     expect(byId.rbm && byId.rbm.entitled === false && byId.rbm.source === 'launch-scope', 'rbm not launch-scope locked', byId.rbm);
-    const launch = ['projects', 'vault', 'document-authoring', 'submission-center', 'dispatch-readiness', 'quality'];
+    const launch = ['projects', 'vault', 'document-authoring', 'submission-center', 'dispatch-readiness', 'quality', 'insights'];
     const missing = launch.filter((id) => !(byId[id] && byId[id].entitled === true));
     expect(missing.length === 0, `launch surfaces not entitled: ${missing.join(', ')}`, launch.map((id) => byId[id]));
     return `${arr.length} verdicts; rbm locked by launch-scope; launch surfaces entitled`;

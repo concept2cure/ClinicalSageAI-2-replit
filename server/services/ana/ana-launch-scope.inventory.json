@@ -208,19 +208,6 @@
    },
    {
     "surfaces": [
-     "insights"
-    ],
-    "names": [
-     "explain_report_blockers",
-     "generate_report",
-     "list_report_definitions",
-     "list_report_types",
-     "save_report_definition",
-     "suggest_reports"
-    ]
-   },
-   {
-    "surfaces": [
      "labeling"
     ],
     "names": [
@@ -721,6 +708,7 @@
    "evaluate_pbpk_model",
    "execute_platform_command",
    "explain_design_risk",
+   "explain_report_blockers",
    "explain_resolution_plan",
    "explain_validation_findings",
    "export_protocol_document",
@@ -743,6 +731,7 @@
    "generate_document",
    "generate_dsur_structure",
    "generate_psur_structure",
+   "generate_report",
    "generate_schedule_of_events",
    "generate_sop",
    "generate_spl",
@@ -818,6 +807,8 @@
    "list_project_documents",
    "list_protocol_templates",
    "list_regulatory_capabilities",
+   "list_report_definitions",
+   "list_report_types",
    "list_screen_actions",
    "list_validation_rules",
    "list_vault_documents",
@@ -936,6 +927,7 @@
    "run_submission_premortem",
    "save_document_as_template",
    "save_document_to_vault",
+   "save_report_definition",
    "scan_document_citations",
    "scan_project_risks",
    "scan_regulatory_deficiencies",
@@ -995,6 +987,7 @@
    "stress_test_protocol",
    "structure_benefit_risk_framework",
    "structure_smpc",
+   "suggest_reports",
    "summarize_onboarding_readiness",
    "summarize_rim_intelligence",
    "surgical_docx_xml_edit",

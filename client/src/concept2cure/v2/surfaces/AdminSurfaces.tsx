@@ -1016,7 +1016,7 @@ function ActorRef({ value }: { value?: string | null }) {
   );
 }
 
-export function AuditTrail({ onAsk }: SurfaceViewProps) {
+export function AuditTrail({ onAsk, onNav }: SurfaceViewProps) {
   const [kind, setKind] = useState('all');
   const [q, setQ] = useState('');
   const [sel, setSel] = useState<string | null>(null);
@@ -1168,6 +1168,12 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
               }
             >
               {I.link || I.network} Hash chain
+            </button>
+            {/* The scoped, per-question reports (access review, sign-ins,
+                signatures, retention) are sealed the same way and live on
+                their own surface. */}
+            <button type="button" className="btn ghost" onClick={() => onNav('compliance-reports')}>
+              {I.fileCheck} Compliance reports
             </button>
             <button className="btn primary" onClick={doExport} disabled={exporting}>
               {I.scroll} {exporting ? 'Generating…' : 'Export signed bundle'}

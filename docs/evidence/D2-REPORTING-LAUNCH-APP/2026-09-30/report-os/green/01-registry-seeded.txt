@@ -1,0 +1,64 @@
+$ psql "$TEST_DATABASE_URL"   # 2026-10-01T00:22:32Z, after the dbtest applied the migration through applyMigrationFiles
+ report_type_registry_rows | enabled 
+---------------------------+---------
+                        61 |      61
+(1 row)
+
+           family           | count 
+----------------------------+-------
+ australia_tga_device       |     1
+ australia_tga_medicine     |     1
+ brazil_anvisa_registration |     1
+ canada_hc_device           |     1
+ canada_hc_nds              |     1
+ china_nmpa_ctd             |     1
+ china_nmpa_registration    |     1
+ china_nmpa_response        |     1
+ compliance_audit           |     1
+ controlled_substances      |     1
+ effort_certification       |     1
+ ema_maa                    |     1
+ ema_meetings               |     1
+ ema_post_market            |     2
+ ema_response               |     1
+ ema_variation              |     1
+ etmf                       |     1
+ eu_ivdr_performance        |     1
+ eu_mdr_clinical            |     1
+ eu_mdr_techdoc             |     1
+ evidence_provenance        |     1
+ fcoi_compliance            |     1
+ global_labeling            |     1
+ global_portfolio           |     2
+ ha_commitment              |     1
+ iacuc_governance           |     1
+ ibc_biosafety              |     1
+ inspection_readiness       |     1
+ irb_ethics                 |     1
+ japan_pmda_jnda            |     1
+ japan_pmda_meetings        |     1
+ japan_pmda_post_market     |     1
+ korea_mfds_registration    |     1
+ lifecycle_obligations      |     1
+ nonclinical_module4        |     1
+ prediction                 |     5
+ pv_periodic                |     1
+ pv_signal                  |     1
+ readiness                  |     1
+ research_admin             |     1
+ research_compliance        |     1
+ research_security          |     1
+ rim_registration           |     1
+ sponsored_programs         |     1
+ switzerland_swissmedic_maa |     1
+ uk_mhra_maa                |     1
+ uk_mhra_pathway            |     1
+ usa_fda_510k               |     1
+ usa_fda_de_novo            |     1
+ usa_fda_ind                |     1
+ usa_fda_meetings           |     1
+ usa_fda_nda_bla            |     1
+ usa_fda_pma                |     1
+ usa_fda_response           |     2
+(54 rows)
+

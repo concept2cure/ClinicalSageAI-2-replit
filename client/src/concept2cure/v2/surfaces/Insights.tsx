@@ -803,6 +803,20 @@ function RODashboard({ dashboard, tier, onRun }: { dashboard: DashboardData; tie
 
 /* ════ Insights -- AnA Reporting Canvas ════ */
 
+/** The seal line for a finalize the server refused, from the refusal's own
+ *  status and code. A 409 is either the truthfulness gate (its reasons) or a run
+ *  that is already final (RUN_ALREADY_FINAL: its seal stands); a 403 is a role
+ *  the server does not let finalize. Null when the refusal is none of these. */
+function finalizeRefusalNote(status: unknown, payload: unknown): string | null {
+  const p = (payload ?? {}) as { reasons?: unknown; error?: { code?: unknown; message?: unknown } };
+  if (status === 409 && p.error?.code === 'RUN_ALREADY_FINAL') {
+    return `Already sealed — ${typeof p.error.message === 'string' ? p.error.message : 'this run was finalized earlier.'}`;
+  }
+  if (status === 409 && Array.isArray(p.reasons)) return `Not sealed — held below final: ${p.reasons.join('; ')}`;
+  if (status === 403) return 'Not sealed — finalizing a report is for organisation owners, admins and managers.';
+  return null;
+}
+
 export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
   const seg = segment || 'pharma';
 
@@ -974,7 +988,10 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
     try {
       const res = await apiRequest('POST', `/api/report-os/runs/${runId}/finalize`);
       const body = await res.json().catch(() => null);
-      if (res.status === 409) {
+      const refused = res.ok ? null : finalizeRefusalNote(res.status, body);
+      if (refused) {
+        sealNote = refused;
+      } else if (res.status === 409) {
         const reasons = Array.isArray(body?.reasons)
           ? body.reasons.join('; ')
           : (serverMessage(body) || 'the truthfulness gate holds it below final');
@@ -996,14 +1013,10 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
       // `apiRequest`, which binds the class to undefined and makes
       // `e instanceof undefined` throw inside the catch (dataConnect's
       // `failureFrom` documents the same hazard and takes the same precaution).
-      const err = e as { status?: unknown; payload?: { reasons?: unknown } } | null;
-      const reasons =
-        err && err.status === 409 && Array.isArray(err.payload?.reasons)
-          ? (err.payload!.reasons as unknown[]).join('; ')
-          : null;
-      sealNote = reasons
-        ? `Not sealed — held below final: ${reasons}`
-        : `Not sealed — ${e instanceof Error ? e.message : String(e)}`;
+      const err = e as { status?: unknown; payload?: unknown } | null;
+      sealNote =
+        (err ? finalizeRefusalNote(err.status, err.payload) : null) ??
+        `Not sealed — ${e instanceof Error ? e.message : String(e)}`;
     }
 
     // ── 2. The file ──
@@ -1049,6 +1062,11 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
             title="Couldn't load the reporting canvas"
             hint="The Insights canvas read-model didn't respond. It assembles your organization's subscription tier, flagship program readiness, and portfolio rollup from the governed record — sign in and retry, or check that the service is reachable."
           />
+          {/* A failed read of the program canvas says nothing about the audit
+              records, so the compliance reports stay one click away. */}
+          <div style={{ marginTop: 12 }}>
+            <button type="button" className="btn ghost" onClick={() => onNav && onNav('compliance-reports')}>Audit & compliance reports</button>
+          </div>
         </div>
       </div>
     );
@@ -1061,6 +1079,9 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
             icon={I.barChart || I.fileText}
             title="No program readiness yet"
             hint="Once a program with a governed readiness run exists in your organization, the reporting canvas opens here — flagship readiness, the portfolio rollup, and every governed report, all provenance-linked. Nothing is estimated."
+            /* Audit and compliance reports read the organisation's own records,
+               not a program, so they stay reachable before any program exists. */
+            action={{ label: 'Audit & compliance reports', onAct: () => onNav && onNav('compliance-reports') }}
           />
         </div>
       </div>
@@ -1088,6 +1109,9 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
       <div className="rc-ana">
         <div className="rc-ana-head">
           <div className="rc-ana-id"><span className="rc-ana-mark">*</span><div><div className="nm">Report builder</div><div className="sub">{[p.code, p.filing, SEG_LABEL[seg] || seg].filter(Boolean).join(' — ')}</div></div></div>
+          {/* The organisation-wide audit and compliance reports live on their own
+              surface; this is the quiet way there from the program canvas. */}
+          <button type="button" className="pj-card-h-go" onClick={() => onNav && onNav('compliance-reports')}>Audit & compliance reports</button>
         </div>
 
         <div className="rc-ana-scroll" ref={scrollRef}>

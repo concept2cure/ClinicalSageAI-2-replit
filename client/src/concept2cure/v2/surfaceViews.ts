@@ -293,6 +293,7 @@ const CrlLibrary = lazySurface(() => import('./surfaces/CrlLibrary').then((m) =>
 const CroPortfolio = lazySurface(() => import('./surfaces/CroPortfolio').then((m) => ({ default: m.CroPortfolio })));
 const CmcModule = lazySurface(() => import('./surfaces/CmcModule').then((m) => ({ default: m.CmcModule })));
 const CommunicationCenter = lazySurface(() => import('./surfaces/CommunicationCenter').then((m) => ({ default: m.CommunicationCenter })));
+const ComplianceReports = lazySurface(() => import('./surfaces/ComplianceReports').then((m) => ({ default: m.ComplianceReports })));
 const CodebaseCoverage = lazySurface(() => import('./surfaces/Coverage').then((m) => ({ default: m.CodebaseCoverage })));
 const DecisionLineage = lazySurface(() => import('./surfaces/DecisionLineage').then((m) => ({ default: m.DecisionLineage })));
 const DeepResearch = lazySurface(() => import('./surfaces/DeepResearch').then((m) => ({ default: m.DeepResearch })));
@@ -393,6 +394,7 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'filing-strategy': { component: FilingStrategy },
   'change-assessment': { component: ChangeAssessment },
   'clinical-ops': { component: ClinicalOps },
+  'compliance-reports': { component: ComplianceReports },
   // External client portal — full-page read-only view (no internal AnA rail).
   // Deep-link only (/concept2cure/client-portal); external-client users are
   // scoped to their own workspace server-side, CRO staff can preview.

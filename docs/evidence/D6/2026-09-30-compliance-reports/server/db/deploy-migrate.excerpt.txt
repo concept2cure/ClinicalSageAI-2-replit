@@ -1,0 +1,27 @@
+Local test database brought to the branch's migration set before the dbtest (2026-10-01).
+It had been provisioned on 2026-09-26 and lacked 20260928_users_membership_rls.sql, 20260929_actor_names.sql (public.actor_name) and later files.
+Command: DATABASE_URL=postgresql://postgres@127.0.0.1:5432/c2c_testdb?sslmode=disable APP_SERVICE_DB_PASSWORD=<local> node scripts/db/deploy-migrate.mjs
+
+372:      [NOTICE] vault.legal_holds ready (RLS: tenant_isolation_policy)
+378:  ✓ applied: migrations/20260926_vault_documents_record_immutability.sql
+392:      [NOTICE] [ivdr-history-rls] parent-scoped tenant_isolation_policy applied to 0 table(s)
+427:  ✓ applied: migrations/20260926_organizations_own_writes.sql
+429:  ✓ applied: migrations/20260926_organization_users_own_writes.sql
+431:  ✓ applied: migrations/20260928_users_membership_rls.sql
+433:  ✓ applied: migrations/20260928_platform_role_grants_platform_writes.sql
+435:  ✓ applied: migrations/20260928_invitations_for_member.sql
+437:  ✓ applied: migrations/20260929_actor_names.sql
+440:  ✓ applied: migrations/20260926_ana_turn_records.sql
+443:  ✓ applied: migrations/20260929_concept2cure_signatures_append_only.sql
+444:  ✓ applied: migrations/20260926b_program_same_org_keys.sql
+445:  ✓ applied: migrations/20260930_rbm_qtl_direction.sql
+446:  ✓ applied: migrations/20260930_rbm_plan_versioning.sql
+447:  ✓ applied: migrations/20260930_rbm_ingest_idempotency.sql
+450:      [NOTICE] [uuid-rls] tenant_isolation_policy applied to 0 non-public uuid-tenant table(s); 2 skipped (unprovisioned/drift). federated_ml.federation_participants and audit.event_log are intentionally EXEMPT (cross-tenant by design).
+586:      [NOTICE] [rls-sweep] tenant_isolation_policy applied to 3 newly-provisioned table(s); 0 rebuilt to the canonical shape; 0 forced retroactively; 0 healed off allowlisted tables; 0 skipped for non-integer tenant key
+588:  ✓ 328/328 migration files applied
+595:  ✓ runtime role app_service minted (identified from APP_SERVICE_DB_PASSWORD)
+597:▶ 5/5 Verify readiness contract (incl. grant audit for app_service)
+605:  grant audit: 1285/1285 application relations hold the recipe privileges for app_service; beyond the audit ceiling: 0
+608:  tenant_isolation_policy: 19/19 tables policied
+611:✅ Schema migration complete — safe to roll services.
