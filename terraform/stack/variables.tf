@@ -321,12 +321,23 @@ variable "platform_owner_emails" {
   }
 }
 
+# OpenAI is a lane a tenant elects in writing (ADR-0014 §1; DPA Annex III;
+# security plan P0-11, DP-07). The gateway refuses it, before dispatch, for
+# every organisation that has not elected it (P1-45), so a key held for no
+# elected tenant serves nobody; it is provisioned exactly when one has.
+variable "openai_enabled" {
+  type        = bool
+  default     = false
+  description = "True when a tenant's Order Form elects OpenAI; then openai_api_key is required and provisioned."
+}
+
 variable "openai_api_key" {
   type      = string
   sensitive = true
+  default   = ""
   validation {
-    condition     = startswith(var.openai_api_key, "sk-") && !startswith(var.openai_api_key, "sk-ant-")
-    error_message = "openai_api_key must be an OpenAI API key (sk-…, not an Anthropic sk-ant- key): Vault search embeds with it."
+    condition     = var.openai_api_key == "" || (startswith(var.openai_api_key, "sk-") && !startswith(var.openai_api_key, "sk-ant-"))
+    error_message = "openai_api_key must be empty or an OpenAI API key (sk-…, not an Anthropic sk-ant- key)."
   }
 }
 
