@@ -489,9 +489,7 @@ describe('GET /runs/:id/export.pdf records the export before anything is sent', 
     return (await new PDFParse({ data: bytes }).getText()).text.replace(/\s+/g, ' ');
   };
 
-  beforeEach(() => {
-    h.queued.select.push([RUN], [typeRow]);
-  });
+  beforeEach(() => void h.queued.select.push([RUN], [typeRow]));
 
   it('writes report_os.run_exported carrying the hash of the bytes sent and the export id they print, then sends the PDF', async () => {
     const res = await exportPdf();
@@ -559,6 +557,8 @@ describe('GET /bundles/:bundleId/export.pdf (DP-50)', () => {
       [{ title: `bundle:${BUNDLE_ID}`, content: JSON.stringify({ bundleRecord: BUNDLE }), createdAt: new Date() }],
       [{ typeId: TYPE.typeId, family: 'readiness' }, { typeId: 'portfolio.board_pack', family: 'portfolio' }],
     );
+    // The statuses at export: 41 has been finalized since it was bundled.
+    h.respond.fn = (sql) => (/FROM report_runs/.test(sql) ? [{ id: 41, status: 'final' }, { id: 42, status: 'completed' }] : []);
   });
 
   it('refuses with the run export gate when a report in the bundle is above the plan, and sends nothing', async () => {
@@ -583,9 +583,9 @@ describe('GET /bundles/:bundleId/export.pdf (DP-50)', () => {
       action: 'report_os.bundle_exported',
       resourceType: 'report_bundle',
       resourceId: BUNDLE_ID,
-      details: { runIds: [41, 42], format: 'pdf', byteLength: body.length, sha256: createHash('sha256').update(body).digest('hex') },
+      details: { runIds: [41, 42], finalAtExport: 1, exportId: expect.any(String), format: 'pdf', byteLength: body.length, sha256: createHash('sha256').update(body).digest('hex') },
     });
-    expect(h.statements).toEqual(['BEGIN', STAMP, '<audit row>', 'COMMIT', '<released>']);
+    expect(h.statements.slice(-5)).toEqual(['BEGIN', STAMP, '<audit row>', 'COMMIT', '<released>']);
   });
 
   it('answers 503 and sends no PDF when the bundle export cannot be recorded', async () => {
