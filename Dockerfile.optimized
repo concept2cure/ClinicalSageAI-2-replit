@@ -177,16 +177,6 @@ COPY --from=builder /app/scripts/db ./scripts/db
 # and template integrity still verifies at runtime.
 COPY --from=builder /app/assets ./assets
 
-# The official FDA form PDFs (1571, 1572, 3454, 356h, 3674) and their SHA-256
-# manifests. The IND form renderer fills them from <package root>/templates/forms/acroforms
-# (server/services/ind-forms/template-locations.ts; /app here). Without this the
-# folder does not exist in the image: 1571 and 3674 were drawn as
-# reconstructions, the rest went out as labeled drafts, and a genuine
-# FDA-secured 1571 was refused as LEAF-ENCRYPTED at packaging (D1, 2026-10-01;
-# tests/schema-contract/ind-form-templates-in-image.contract.test.ts). Only this
-# folder: nothing at runtime reads the rest of templates/.
-COPY --from=builder /app/templates/forms/acroforms ./templates/forms/acroforms
-
 # The Amazon RDS certificate bundle, from the assets copied above
 # (assets/rds-ca/README.md). Production verifies the database certificate, and
 # Node's built-in roots contain no RDS CA, so without this every connection to
