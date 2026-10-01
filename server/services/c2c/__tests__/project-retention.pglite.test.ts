@@ -41,20 +41,23 @@ beforeAll(async () => {
     );
     CREATE TABLE concept2cure_signatures (id serial PRIMARY KEY, artifact_id integer NOT NULL);
     CREATE TABLE concept2cure_submission_snapshots (id serial PRIMARY KEY, artifact_id integer NOT NULL);
-    INSERT INTO client_workspaces VALUES (10), (20), (30), (40);
+    CREATE TABLE concept2cure_thread_comments (id serial PRIMARY KEY, artifact_id integer NOT NULL);
+    INSERT INTO client_workspaces VALUES (10), (20), (30), (40), (50);
     INSERT INTO regulatory_programs VALUES ('${PROGRAM}', 1, NULL), ('${DELETED_PROGRAM}', 1, now());
     -- Workspace 10: the program's anchor (1), a drafts-only project (2), a project with approved + locked work (3).
     -- Workspace 20: a drafts-only project (4). Workspace 30: a project in review (5).
     -- Workspace 40: a deleted program's anchor holding drafts only (6); a draft that was signed (7); a draft with a lock snapshot (8).
     INSERT INTO projects (id, organization_id, client_workspace_id, regulatory_program_id) VALUES
       (1, 1, 10, '${PROGRAM}'), (2, 1, 10, NULL), (3, 1, 10, NULL), (4, 1, 20, NULL), (5, 1, 30, NULL),
-      (6, 1, 40, '${DELETED_PROGRAM}'), (7, 1, 40, NULL), (8, 1, 40, NULL);
+      (6, 1, 40, '${DELETED_PROGRAM}'), (7, 1, 40, NULL), (8, 1, 40, NULL), (9, 1, 50, NULL);
     INSERT INTO concept2cure_artifacts (id, project_id, status) VALUES
       (101, 1, 'approved'), (102, 2, 'draft'), (103, 2, 'draft'), (104, 3, 'approved'), (105, 3, 'locked'), (106, 3, 'draft'),
-      (107, 4, 'draft'), (108, 5, 'review'), (109, 6, 'draft'), (110, 7, 'draft'), (111, 8, 'draft');
+      (107, 4, 'draft'), (108, 5, 'review'), (109, 6, 'draft'), (110, 7, 'draft'), (111, 8, 'draft'), (112, 9, 'draft');
     -- 110 was approved, signed, locked and taken back to draft: its signature stays. 111 keeps its lock snapshot.
     INSERT INTO concept2cure_signatures (artifact_id) VALUES (110);
     INSERT INTO concept2cure_submission_snapshots (artifact_id) VALUES (111);
+    -- Workspace 50: a draft (112) a reviewer has commented on.
+    INSERT INTO concept2cure_thread_comments (artifact_id) VALUES (112);
   `);
 });
 afterAll(async () => {
@@ -96,6 +99,10 @@ describe('projectDeletionHolds', () => {
     expect(await projectDeletionHolds(q, { projectIds: [7] })).toEqual({ anchoredPrograms: [], governedArtifacts: 1 });
     expect(await projectDeletionHolds(q, { projectIds: [8] })).toEqual({ anchoredPrograms: [], governedArtifacts: 1 });
     expect(await projectDeletionHolds(q, { workspaceId: 40 })).toEqual({ anchoredPrograms: [], governedArtifacts: 2 });
+  });
+  it('a draft with review comments is a record: the comments are its review record (D5, 2026-10-01)', async () => {
+    expect(await projectDeletionHolds(q, { projectIds: [9] })).toEqual({ anchoredPrograms: [], governedArtifacts: 1 });
+    expect(await projectDeletionHolds(q, { workspaceId: 50 })).toEqual({ anchoredPrograms: [], governedArtifacts: 1 });
   });
   // The locks the read takes are proven with two connections on real PostgreSQL:
   // project-retention-locks.dbtest.ts.

@@ -20,6 +20,7 @@ const m = vi.hoisted(() => ({
   scans: [] as number[],
   emitted: [] as number[],
   claimCalls: [] as Array<{ job: string; window: string; org?: number }>,
+  heartbeats: [] as Array<{ ok: boolean; processed?: number }>,
 }));
 
 vi.mock('../../../db/scheduledOnce', async (orig) => {
@@ -46,7 +47,7 @@ vi.mock('../sentinel', () => ({
 }));
 vi.mock('../../rules-engine', () => ({ emitRuleEvent: vi.fn(async (_t: string, org: number) => { m.emitted.push(org); }) }));
 vi.mock('../../background-jobs-metrics', () => ({
-  recordBackgroundJobRun: vi.fn(),
+  recordBackgroundJobRun: vi.fn((_n: string, o: { ok: boolean; processed?: number }) => { m.heartbeats.push(o); }),
   registerBackgroundJob: vi.fn(),
   BACKGROUND_JOB: { SENTINEL_SCAN: 'sentinel_scan' },
 }));
@@ -61,6 +62,7 @@ beforeEach(() => {
   m.scans.length = 0;
   m.emitted.length = 0;
   m.claimCalls.length = 0;
+  m.heartbeats.length = 0;
 });
 
 describe('sentinel across three server processes', () => {
@@ -85,5 +87,18 @@ describe('sentinel across three server processes', () => {
       { job: 'sentinel-scan', window: hour, org: 42 },
       { job: 'sentinel-scan', window: hour, org: 43 },
     ]);
+  });
+
+  it('a process whose tick finds the window already scanned still reports a live scanner', async () => {
+    // /api/health/jobs is per process: a task that only ever skips would read
+    // 'stale' after 90 minutes and report the deployment degraded, though the
+    // scan ran on another task. The digest heartbeat already records a skip as
+    // a successful tick with nothing processed; the sentinel does the same.
+    const processes = [1, 2, 3].map(() => new SentinelScheduler({} as never));
+    for (const p of processes) await p.scheduleOrg(42);
+    await flush();
+    for (const p of processes) p.stop();
+    expect(m.heartbeats).toHaveLength(3);
+    expect(m.heartbeats.every((h) => h.ok)).toBe(true);
   });
 });

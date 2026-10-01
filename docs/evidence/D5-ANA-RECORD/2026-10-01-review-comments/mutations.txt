@@ -1,0 +1,23 @@
+# Mutations: each applied, tests/db/review-comments-record.dbtest.ts run, then restored (migration re-applied; files cmp-verified)
+# rm1 the guard admits a direct DELETE; rm2 'body' not among the fixed columns; rm3 the cascade from the thread refused too
+# rw1 no transaction around the comment and its chained row; rw2 the retraction without its chained row
+=== rm1
+ × tests/db/review-comments-record.dbtest.ts > the words are fixed > the database refuses a rewrite, a direct delete and a truncate from the owner 98ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 6 passed (7)
+=== rm2
+ × tests/db/review-comments-record.dbtest.ts > the words are fixed > the database refuses a rewrite, a direct delete and a truncate from the owner 50ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 6 passed (7)
+=== rm3
+ × tests/db/review-comments-record.dbtest.ts > a comment goes only with what it belongs to > deleting its thread removes it (the cascade), and the chained rows remain 69ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 6 passed (7)
+=== rw1 the comment and its chained row written on the global handle, no transaction (the shape before this change)
+ × tests/db/review-comments-record.dbtest.ts > posting > writes neither when the chained row cannot be written 76ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 6 passed (7)
+=== rw2
+ × tests/db/review-comments-record.dbtest.ts > retraction > hides the comment, keeps its words, and chains who retracted it and why 72ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 6 passed (7)
