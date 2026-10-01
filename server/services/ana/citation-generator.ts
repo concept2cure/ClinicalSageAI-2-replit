@@ -49,6 +49,8 @@ export interface GeneratedCitation {
   verifiedAgainst?: CitationMatch['source'] | 'ich_corpus';
   url?: string;
   retracted?: boolean;
+  /** False when the verifying source (Crossref) does not report retractions. */
+  retractionChecked?: false;
   discrepancies?: string[];
   warning?: string;
   detail?: string;
@@ -58,27 +60,44 @@ export interface GeneratedCitation {
 }
 
 const DOI_RE = /10\.\d{4,9}\/[^\s"<>]+/i;
-const PMID_RE = /^(?:pmid:?\s*)?(\d{1,9})$/i;
+const PMID_RE = /^(?:pmid:?\s*)?(\d{1,9})$|\bpmid:?\s*(\d{1,9})\b/i;
 
+/** Drop sentence punctuation and an unbalanced closing parenthesis ("(doi:10.1/x)"). */
+function trimDoi(doi: string): string {
+  let d = doi.replace(/[.,;]+$/, '');
+  const count = (c: string) => d.split(c).length - 1;
+  while (d.endsWith(')') && count(')') > count('(')) d = d.slice(0, -1).replace(/[.,;]+$/, '');
+  return d;
+}
+
+/**
+ * What to look the reference up by. A PMID wins over a DOI when both are
+ * given: PubMed reports retractions and Crossref does not, so the DOI path
+ * would verify a retracted paper without a warning.
+ */
 function lookupFor(identifier: string): CitationInput {
-  const doi = identifier.match(DOI_RE)?.[0].replace(/[.,;)]+$/, '');
-  if (doi) return { doi };
-  const pmid = identifier.match(PMID_RE)?.[1];
-  if (pmid) return { pmid };
+  const pmid = identifier.trim().match(PMID_RE);
+  if (pmid) return { pmid: pmid[1] ?? pmid[2] };
+  const doi = identifier.match(DOI_RE)?.[0];
+  if (doi) return { doi: trimDoi(doi) };
   return { title: identifier };
 }
 
-/** PubMed names read "Smith JA"; the formatter expects "Smith, J A". */
+/**
+ * Author names in the form the formatter keeps as given. formatReference
+ * re-splits a name into surname and initials, which turns PubMed's "Smith JA"
+ * into "JA S", "RECOVERY Collaborative Group" into "Group RC" and Crossref's
+ * "Pieter De Smet" into "Smet PD". A trailing comma marks a name it must not
+ * split; Crossref names go in as "Family, Given".
+ */
 function authorsOf(match: CitationMatch): string[] {
+  if (match.authorParts?.length) {
+    return match.authorParts
+      .map((a) => (a.family ? `${a.family}, ${a.given ?? ''}` : a.name ? `${a.name},` : ''))
+      .filter(Boolean);
+  }
   const names = (match.authors ?? '').split(',').map((n) => n.trim()).filter(Boolean);
-  if (match.source !== 'pubmed') return names;
-  return names.map((name) => {
-    const parts = name.split(/\s+/);
-    const initials = parts.length > 1 ? parts[parts.length - 1] : '';
-    return /^[A-Z]{1,4}$/.test(initials)
-      ? `${parts.slice(0, -1).join(' ')}, ${initials.split('').join(' ')}`
-      : name;
-  });
+  return match.source === 'pubmed' ? names.map((n) => `${n},`) : names;
 }
 
 type CitationBody = Omit<GeneratedCitation, 'sourceType' | 'sourceIdentifier'>;
@@ -106,6 +125,16 @@ function cautions(result: CitationVerificationResult): Partial<CitationBody> {
   };
 }
 
+function notes(match: CitationMatch, styleRequested: string): Partial<CitationBody> {
+  const parts = [
+    match.source === 'crossref'
+      ? 'Verified in Crossref, which does not report retractions: retraction status was not checked.'
+      : '',
+    styleRequested === 'apa' ? 'APA is not supported; formatted in Vancouver.' : '',
+  ].filter(Boolean);
+  return parts.length ? { note: parts.join(' ') } : {};
+}
+
 async function journalCitation(identifier: string, styleRequested: string): Promise<CitationBody> {
   const styleApplied: CitationStyle = styleRequested === 'ama' ? 'ama' : 'vancouver';
   const [result] = await verifyCitations([lookupFor(identifier)]);
@@ -129,9 +158,10 @@ async function journalCitation(identifier: string, styleRequested: string): Prom
     verifiedAgainst: match.source,
     url: match.url,
     ...cautions(result),
+    ...(match.source === 'crossref' ? { retractionChecked: false } : {}),
     styleRequested,
     styleApplied,
-    ...(styleRequested === 'apa' ? { note: 'APA is not supported; formatted in Vancouver.' } : {}),
+    ...notes(match, styleRequested),
   };
 }
 

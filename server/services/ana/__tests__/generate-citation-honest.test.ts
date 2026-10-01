@@ -64,6 +64,36 @@ describe('generate_citation', () => {
     expect(out.warning).toMatch(/retracted/i);
   });
 
+  it('keeps PubMed author names as PubMed gives them, a collective author included', async () => {
+    verifyCitations.mockResolvedValue(verified({ title: 'T', authors: 'RECOVERY Collaborative Group, Horby P, Lim WS', journal: 'J', year: 2021 }));
+    const out = await run({ source_type: 'journal_article', source_identifier: '32678530' });
+    expect(out.citation).toBe('RECOVERY Collaborative Group, Horby P, Lim WS. T. J. 2021.');
+  });
+
+  it('formats Crossref authors from their family and given names, particles and organisations included', async () => {
+    verifyCitations.mockResolvedValue(verified({
+      source: 'crossref', title: 'T', journal: 'J', year: 2020, doi: '10.1000/abc',
+      authors: 'Pieter De Smet, Ludwig van Beethoven',
+      authorParts: [{ given: 'Pieter', family: 'De Smet' }, { given: 'Ludwig', family: 'van Beethoven' }, { name: 'WHO Working Group' }],
+    }));
+    const out = await run({ source_type: 'journal_article', source_identifier: '10.1000/abc' });
+    expect(out.citation).toBe('De Smet P, van Beethoven L, WHO Working Group. T. J. 2020.');
+  });
+
+  it('looks a reference up by its PMID when it carries both, so a retraction is seen', async () => {
+    verifyCitations.mockResolvedValue(verified({ title: 'T', authors: 'Wakefield AJ', journal: 'Lancet', year: 1998 }, { retracted: true }));
+    const out = await run({ source_type: 'journal_article', source_identifier: 'PMID 9500320 doi:10.1016/S0140-6736(97)11096-0' });
+    expect(verifyCitations).toHaveBeenCalledWith([{ pmid: '9500320' }]);
+    expect(out.retracted).toBe(true);
+  });
+
+  it('says retraction status was not checked when only Crossref verified it', async () => {
+    verifyCitations.mockResolvedValue(verified({ source: 'crossref', title: 'T', authors: 'Jane Roe', journal: 'J', year: 2019, doi: '10.1000/xyz' }));
+    const out = await run({ source_type: 'journal_article', source_identifier: '10.1000/xyz' });
+    expect(out.retractionChecked).toBe(false);
+    expect(out.note).toMatch(/retraction status was not checked/i);
+  });
+
   it('takes an ICH guideline\'s title from the ICH corpus', async () => {
     const out = await run({ source_type: 'ich_guideline', source_identifier: 'ICH E6(R3)' });
     expect(out.verification).toBe('identified');

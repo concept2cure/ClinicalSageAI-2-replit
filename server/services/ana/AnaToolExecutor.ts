@@ -4586,12 +4586,17 @@ registerToolHandler('validate_cross_references', async (input, ctx) => {
       [ctx.organizationId, documentId],
     );
     if (!doc.rows.length) return JSON.stringify({ error: `No document '${documentId}' in this organization.` });
+    /* This document's outline always, even when it belongs to no project
+       (project_id is nullable for legacy rows); the project's other
+       documents unless archived. */
     const outlines = await getPool().query(
       `SELECT s.document_id, d.title, s.section_key, s.status
          FROM c2c_document_sections s
          JOIN c2c_documents d ON d.id = s.document_id
-        WHERE d.org_id = $1 AND d.project_id = $2`,
-      [ctx.organizationId, doc.rows[0].project_id],
+        WHERE d.org_id = $1
+          AND (d.id = $3 OR (d.project_id = $2 AND d.status <> 'archived'))
+        ORDER BY s.document_id, s.section_key`,
+      [ctx.organizationId, doc.rows[0].project_id, documentId],
     );
     const results = references.map((reference) => checkCrossReference(reference, documentId, outlines.rows));
     const count = (...statuses: string[]) => results.filter((r) => statuses.includes(r.status)).length;
@@ -4601,6 +4606,7 @@ registerToolHandler('validate_cross_references', async (input, ctx) => {
       results,
       summary: {
         found: count('found_in_document', 'found_in_project'),
+        outlineOnly: count('outline_only'),
         parentOnly: count('parent_only'),
         notFound: count('not_found'),
         notAssessed: count('not_assessed'),
