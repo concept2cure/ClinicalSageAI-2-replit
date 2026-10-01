@@ -4,6 +4,8 @@ import { useLiveData, EmptyState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { downloadBlob, safeFileName } from '../download';
 import { getOrgId } from '@/utils/authToken';
+import { useAuthUser } from '@/services/portal/authService';
+import { canGovernedWrite } from '@shared/constants/permissions';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 import '../styles/insights-v2.css';
@@ -711,7 +713,7 @@ function ROReport({ report, onExport, compact }: { report: RenderedReport; onExp
 /* ── RODashboard ── */
 /* `onAsk` is gone from here too — it was declared, threaded down from the
    canvas and never called once in the whole component. */
-function RODashboard({ dashboard, tier, onRun }: { dashboard: DashboardData; tier: string; onRun: (t: ReportType) => void }) {
+function RODashboard({ dashboard, tier, onRun, canRun }: { dashboard: DashboardData; tier: string; onRun: (t: ReportType) => void; canRun: boolean }) {
   if (!dashboard) return null;
 
   if (dashboard.kind === 'portfolio') {
@@ -790,6 +792,16 @@ function RODashboard({ dashboard, tier, onRun }: { dashboard: DashboardData; tie
               <div className="ro-pack-sub">{RO_FEATURE_LABEL[dec.feature]} — unlock to include in this pack.</div>
             </div>
           );
+          /* Running a report creates a governed record, which the server refuses
+             to a role without governed:write. The tile says so instead of
+             offering a run that will be refused. */
+          if (!canRun) return (
+            <div key={t.typeId} className="ro-pack-card is-locked">
+              <div className="ro-pack-fam">{fam.label}{fam.region ? <span className="ro-region">{fam.region}</span> : null}</div>
+              <div className="ro-pack-title">{t.label}</div>
+              <div className="ro-pack-sub">View only. Running a report needs an editor role in this organization.</div>
+            </div>
+          );
           // Tiles no longer pre-generate a report client-side (that was the mock
           // KPI preview). Each tile runs the REAL governed report on click.
           return (
@@ -850,6 +862,10 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [busy, setBusy] = useState(false);
   const [toast, fireToast] = useToast();
+  /* Every write under /api/report-os and /api/insights needs a writing role
+     (requireEditorAccessForWrites). A viewer reads the canvas and is told,
+     rather than offered runs the server will refuse. */
+  const canWrite = canGovernedWrite(useAuthUser());
   const scrollRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -868,6 +884,10 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
      fabricated, and an unentitled/unknown type is stated, never estimated. */
   const runReport = async (type: ReportType): Promise<void> => {
     if (!program) return;
+    if (!canWrite) {
+      setThread(t => [...t, { role: 'ana', text: `"${type.label}" wasn't run. Running a report creates a governed record, which needs an editor role in this organization.`, tool: 'generate_report' }]);
+      return;
+    }
     setBusy(true);
     setDashboard(null);
     try {
@@ -880,8 +900,13 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
       });
       const body = await res.json().catch(() => null);
       if (!res.ok) {
-        const msg = res.status === 403
+        /* A plan refusal carries requiredTier; the write gate's does not. Every
+           403 read as "needs a higher plan" before the write gate existed, and
+           would have told a viewer to upgrade. */
+        const msg = res.status === 403 && body?.requiredTier
           ? `"${type.label}" needs a higher plan${body?.requiredTier ? ` (${body.requiredTier})` : ''} — I won't show an estimated result on a plan that hasn't unlocked the governed model.`
+          : res.status === 403
+            ? `"${type.label}" wasn't run — ${serverMessage(body) ?? 'the server refused it'}. Running a report needs an editor role in this organization.`
           : res.status === 404
             ? `"${type.label}" isn't in your governed report registry, so I can't run it against real data — I won't fabricate one.`
             : `Couldn't run "${type.label}" — ${serverMessage(body) ?? 'the server did not say why'}.`;
@@ -1122,6 +1147,11 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
         </div>
 
         <div className="rc-ana-scroll" ref={scrollRef}>
+          {!canWrite && (
+            <div className="ro-dash-note" role="note" data-testid="rc-view-only">
+              {I.lock} View only. Running or exporting a governed report needs an editor role in this organization.
+            </div>
+          )}
           {/* Opener. The program facts below are live; the preset is a static
               per-segment default, and says so. */}
           <div className="rc-opener">
@@ -1181,7 +1211,7 @@ export function InsightsCanvas({ onNav, segment }: OwnedSurfaceViewProps) {
       {/* -- Right: the report / dashboard artifact -- */}
       <div className="rc-canvas" ref={canvasRef}>
         {report ? <ROReport report={report} onExport={exportRep} />
-          : dashboard ? <RODashboard dashboard={dashboard} tier={tier} onRun={runFromTile} />
+          : dashboard ? <RODashboard dashboard={dashboard} tier={tier} onRun={runFromTile} canRun={canWrite} />
           : (
             <div className="rc-empty">
               <div className="rc-empty-mark">*</div>
