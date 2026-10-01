@@ -1,0 +1,355 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit/logs: a member is refused (403) 37ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit-logs: a member is refused (403) 8ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit/events: a member is refused (403) 6ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > /api/audit: a member is refused (403) 6ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > owner reads it 7ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > admin reads it 6ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > manager reads it 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > reading the audit trail > a viewer is refused 5ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > exporting the audit trail > a member is refused before the export starts 16ms
+stderr | server/routes/__tests__/audit-trail-read-gate.test.ts > exporting the audit trail > a session whose organisation is 0 is refused before any read: 0 is not a tenant (SECURITY-9)
+{
+  "timestamp": "2026-10-01T15:38:00.950Z",
+  "level": "error",
+  "message": "[audit-trail-routes] recording the audit export could not be run",
+  "context": {
+    "reason": "audit-export record could not be run: INSERT returned no row id",
+    "correlationId": null
+  }
+}
+
+stderr | server/routes/__tests__/audit-trail-read-gate.test.ts > exporting the audit trail > an admin gets past the gate to the export itself
+{
+  "timestamp": "2026-10-01T15:38:00.973Z",
+  "level": "error",
+  "message": "[audit-trail-routes] recording the audit export could not be run",
+  "context": {
+    "reason": "audit-export record could not be run: INSERT returned no row id",
+    "correlationId": null
+  }
+}
+
+ × server/routes/__tests__/audit-trail-read-gate.test.ts > exporting the audit trail > a session whose organisation is 0 is refused before any read: 0 is not a tenant (SECURITY-9) 1606ms
+   → /api/audit/export?format=json: expected 503 to be 403 // Object.is equality
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > exporting the audit trail > an admin gets past the gate to the export itself 8ms
+stderr | server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > a batch insert the database refuses is reported as insert_failed, with none of the database text (DP-63)
+{
+  "timestamp": "2026-10-01T15:38:01.094Z",
+  "level": "error",
+  "message": "[audit-trail-routes] Failed to insert batch audit event",
+  "context": {
+    "index": 0,
+    "error": "null value in column \"event_type\" of relation \"audit_events\" violates not-null constraint"
+  }
+}
+
+stdout | server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > user: refused (403 AUDIT_WRITE_RESTRICTED) and nothing is written
+{
+  "timestamp": "2026-10-01T15:38:01.140Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T15:38:01.140Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > user: refused (403 AUDIT_WRITE_RESTRICTED) and nothing is written
+{
+  "timestamp": "2026-10-01T15:38:01.141Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > an event type outside the vocabulary is refused (400) and nothing is written 91ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > the free-form default is not a type either: a body with no event type is refused 9ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > metadata must be an object, not a string of any length 8ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > a vocabulary type with a reason is recorded, attributed to the caller 5ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > in a batch, an unknown type is skipped with the reason and the known one is written 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > a batch insert the database refuses is reported as insert_failed, with none of the database text (DP-63) 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording an event from a client > a member may not record events at all 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > viewer: refused (403 AUDIT_WRITE_RESTRICTED) and nothing is written 14ms
+stderr | server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > a failed check answers 500 without the caught error's text
+Chain integrity check failed: relation "audit_logs" does not exist
+
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > user: refused (403 AUDIT_WRITE_RESTRICTED) and nothing is written 62ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > member: refused (403 AUDIT_WRITE_RESTRICTED) and nothing is written 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > the role answers before the body: a viewer claiming a signed status meets the gate, not the forgery guard 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > owner: records the non-authoritative marker (201), one signature.create row 3ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > admin: records the non-authoritative marker (201), one signature.create row 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > manager: records the non-authoritative marker (201), one signature.create row 5ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > recording a signature marker (DP-38, P1-36) > an owner still may not claim a binding signature here (forgery guard unchanged) 6ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > owner of an organisation cannot start the estate-wide check (403) or read its status 12ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > admin of an organisation cannot start the estate-wide check (403) or read its status 5ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > manager of an organisation cannot start the estate-wide check (403) or read its status 6ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > user of an organisation cannot start the estate-wide check (403) or read its status 4ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > viewer of an organisation cannot start the estate-wide check (403) or read its status 5ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > a platform administrator runs the check and reads the status 7ms
+ ✓ server/routes/__tests__/audit-trail-read-gate.test.ts > the chain-integrity monitor is a platform administrator's surface (P1-36 follow-up, 2026-09-26) > a failed check answers 500 without the caught error's text 5ms
+stdout | server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts
+{
+  "timestamp": "2026-10-01T15:38:01.364Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T15:38:01.365Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts
+{
+  "timestamp": "2026-10-01T15:38:01.366Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > contains the Vault events, each with its chain hash, sequence and source 41ms
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > never carries another tenant's rows 20ms
+ × server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > refuses an export for organisation 0 before reading anything: it never widens to every tenant (SECURITY-9) 33ms
+   → promise resolved "{ …(5) }" instead of rejecting
+ × server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > refuses an export for organisation -1 before reading anything: it never widens to every tenant (SECURITY-9) 25ms
+   → promise resolved "{ data: '[]', …(4) }" instead of rejecting
+ × server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > refuses an export for organisation undefined before reading anything: it never widens to every tenant (SECURITY-9) 23ms
+   → expected [Function] to throw error matching /usable organisation id/ but got 'audit-export record could not be run:…'
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > still carries the audit_events rows it always did 26ms
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > narrows to one document when asked, and the manifest says so 23ms
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > verifies, and refuses after a one-byte change to a row 29ms
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > states the audit_logs chain verdict it was given — and never "intact" without one 40ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/audit-trail-read-gate.test.ts > exporting the audit trail > a session whose organisation is 0 is refused before any read: 0 is not a tenant (SECURITY-9)
+AssertionError: /api/audit/export?format=json: expected 503 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 503
+
+ ❯ server/routes/__tests__/audit-trail-read-gate.test.ts:106:30
+    104|     for (const path of ['/api/audit/export?format=json', '/api/audit/e…
+    105|       const r = await request(app('admin', { organizationId: 0 })).get…
+    106|       expect(r.status, path).toBe(403);
+       |                              ^
+    107|     }
+    108|     expect(pool.connect).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > refuses an export for organisation 0 before reading anything: it never widens to every tenant (SECURITY-9)
+AssertionError: promise resolved "{ …(5) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "contentType": "application/json; charset=utf-8",
++   "data": "[
++   {
++     \"source\": \"audit_events\",
++     \"id\": 5,
++     \"organization_id\": 51,
++     \"event_type\": \"scim.user.provisioned\",
++     \"entity_type\": \"user\",
++     \"entity_id\": 9,
++     \"user_id\": null,
++     \"user_name\": \"scim\",
++     \"user_role\": null,
++     \"ip_address\": null,
++     \"timestamp\": \"2026-10-01T15:38:04.044Z\",
++     \"reason\": null,
++     \"comments\": null,
++     \"regulatory_significant\": null,
++     \"gxp_relevant\": null,
++     \"record_hash\": null,
++     \"previous_hash\": null,
++     \"sequence_number\": null,
++     \"created_at\": \"2026-10-01T15:38:04.044Z\"
++   }
++ ]",
++   "filename": "audit_export_2026-10-01T15-38-04_edefc0f3.json",
++   "manifest": {
++     "auditLogsChain": {
++       "legacyRows": 0,
++       "rowsChecked": 4,
++       "sequencedRows": 4,
++       "status": "intact",
++       "verifiedAt": "2026-10-01T15:38:04.063Z",
++     },
++     "chainIntegrity": {
++       "brokenLinks": 0,
++       "hashedEntries": 0,
++       "reason": "no row carries a record_hash: the chain has never been hashed, so no link could be checked",
++       "status": "unverified",
++       "totalEntries": 1,
++       "unhashedEntries": 1,
++       "verifiedAt": "2026-10-01T15:38:04.063Z",
++     },
++     "compliance": {
++       "description": "Tamper-evident audit trail export with cryptographic integrity verification",
++       "section": "§11.10(e)",
++       "standard": "21 CFR Part 11",
++     },
++     "dataHash": "0de3043bdc9c40c2de3040c823837e29d6c0474e26fca102778f1bc4733e14b7",
++     "exportId": "AUDIT-EXPORT-1790869084063-edefc0f3",
++     "exportRecord": {
++       "auditEventId": 6,
++     },
++     "exportSource": "Concept2Cure / Concept2Cure Platform",
++     "exportedAt": "2026-10-01T15:38:04.064Z",
++     "exportedBy": "inspector-probe",
++     "exportedByRole": "admin",
++     "format": "json",
++     "hashAlgorithm": "SHA-256",
++     "manifestVersion": 2,
++     "queryFilters": {
++       "endDate": undefined,
++       "eventType": undefined,
++       "organizationId": 0,
++       "recordIds": undefined,
++       "resourceType": undefined,
++       "startDate": undefined,
++       "userId": undefined,
++     },
++     "rowCount": 1,
++     "signingKeyId": "k1",
++     "sources": {
++       "audit_events": 1,
++       "audit_logs": 0,
++     },
++     "truncated": false,
++   },
++   "signature": "dc90dd6a0c8dd260cbdd4fca583155bc2623e605474f6270d8d0eabd621d64c8",
+  }
+
+ ❯ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts:97:133
+     95|   it.each([0, -1, undefined])('refuses an export for organisation %s b…
+     96|     const before = (await pg.query<{ n: number }>('SELECT count(*)::in…
+     97|     await expect(generateSignedAuditExport(pool, { ...base, organizati…
+       |                                                                                                                                     ^
+     98|     expect((await pg.query<{ n: number }>('SELECT count(*)::int AS n F…
+     99|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > refuses an export for organisation -1 before reading anything: it never widens to every tenant (SECURITY-9)
+AssertionError: promise resolved "{ data: '[]', …(4) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "contentType": "application/json; charset=utf-8",
++   "data": "[]",
++   "filename": "audit_export_2026-10-01T15-38-04_e5da030a.json",
++   "manifest": {
++     "auditLogsChain": {
++       "legacyRows": 0,
++       "rowsChecked": 4,
++       "sequencedRows": 4,
++       "status": "intact",
++       "verifiedAt": "2026-10-01T15:38:04.098Z",
++     },
++     "chainIntegrity": {
++       "brokenLinks": 0,
++       "hashedEntries": 0,
++       "reason": "no entries: there is no chain to verify",
++       "status": "unverified",
++       "totalEntries": 0,
++       "unhashedEntries": 0,
++       "verifiedAt": "2026-10-01T15:38:04.098Z",
++     },
++     "compliance": {
++       "description": "Tamper-evident audit trail export with cryptographic integrity verification",
++       "section": "§11.10(e)",
++       "standard": "21 CFR Part 11",
++     },
++     "dataHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
++     "exportId": "AUDIT-EXPORT-1790869084098-e5da030a",
++     "exportRecord": {
++       "auditEventId": 8,
++     },
++     "exportSource": "Concept2Cure / Concept2Cure Platform",
++     "exportedAt": "2026-10-01T15:38:04.099Z",
++     "exportedBy": "inspector-probe",
++     "exportedByRole": "admin",
++     "format": "json",
++     "hashAlgorithm": "SHA-256",
++     "manifestVersion": 2,
++     "queryFilters": {
++       "endDate": undefined,
++       "eventType": undefined,
++       "organizationId": -1,
++       "recordIds": undefined,
++       "resourceType": undefined,
++       "startDate": undefined,
++       "userId": undefined,
++     },
++     "rowCount": 0,
++     "signingKeyId": "k1",
++     "sources": {
++       "audit_events": 0,
++       "audit_logs": 0,
++     },
++     "truncated": false,
++   },
++   "signature": "354e19625d8f981016a24082c85ebe7e521e6a8ae300cee1de909ca329894adb",
+  }
+
+ ❯ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts:97:133
+     95|   it.each([0, -1, undefined])('refuses an export for organisation %s b…
+     96|     const before = (await pg.query<{ n: number }>('SELECT count(*)::in…
+     97|     await expect(generateSignedAuditExport(pool, { ...base, organizati…
+       |                                                                                                                                     ^
+     98|     expect((await pg.query<{ n: number }>('SELECT count(*)::int AS n F…
+     99|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > refuses an export for organisation undefined before reading anything: it never widens to every tenant (SECURITY-9)
+AssertionError: expected [Function] to throw error matching /usable organisation id/ but got 'audit-export record could not be run:…'
+
+- Expected:
+/usable organisation id/
+
++ Received:
+"audit-export record could not be run: no organisation id: audit_events.organization_id is NOT NULL and an export must be attributable to a tenant"
+
+ ❯ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts:97:133
+     95|   it.each([0, -1, undefined])('refuses an export for organisation %s b…
+     96|     const before = (await pg.query<{ n: number }>('SELECT count(*)::in…
+     97|     await expect(generateSignedAuditExport(pool, { ...base, organizati…
+       |                                                                                                                                     ^
+     98|     expect((await pg.query<{ n: number }>('SELECT count(*)::int AS n F…
+     99|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 38 passed (42)
+   Start at  15:37:58
+   Duration  5.76s (transform 2.02s, setup 206ms, import 2.11s, tests 5.51s, environment 0ms)
+
