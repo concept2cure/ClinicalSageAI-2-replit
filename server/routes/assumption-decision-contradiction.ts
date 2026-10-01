@@ -37,6 +37,7 @@
 
 import { Router, Request, Response } from 'express';
 import { createScopedLogger } from '../utils/logger';
+import { serverError } from '../lib/api-response';
 import { assumptionRegistryService } from '../services/assumption-registry-service';
 import { decisionRecordService } from '../services/decision-record-service';
 import {
@@ -85,16 +86,11 @@ function getUserId(req: Request): string {
   );
 }
 
-function handleError(res: Response, error: unknown, context: string) {
-  log.error(`Error in ${context}`, {
-    error: error instanceof Error ? error.message : String(error),
-  });
-  res
-    .status(500)
-    .json({
-      error: `Failed to ${context}`,
-      details: error instanceof Error ? error.message : 'Unknown error',
-    });
+/* Every 500 in this file answers through the one helper: the detail is logged
+   against the request id, the client gets the envelope. `context` is an
+   imperative verb phrase ('search assumptions'), hence "trying to". */
+function handleError(res: Response, error: unknown, context: string): void {
+  serverError(res, log, `trying to ${context}`, error);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

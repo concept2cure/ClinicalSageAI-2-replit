@@ -11,7 +11,11 @@ import request from 'supertest';
 const { authState, audit, dbState } = vi.hoisted(() => ({
   authState: { user: null as Record<string, any> | null },
   audit: { logAction: vi.fn().mockResolvedValue({ persisted: true, chained: true, tamperProof: true }) },
-  dbState: { settings: null as Record<string, unknown> | null },
+  dbState: {
+    settings: null as Record<string, unknown> | null,
+    /** When set, every pool.query rejects with it — a failed read or write. */
+    failWith: null as Error | null,
+  },
 }));
 
 vi.mock('../../middleware/auth', () => ({
@@ -24,6 +28,7 @@ vi.mock('../../middleware/auth', () => ({
 vi.mock('../../db', () => ({
   pool: {
     query: vi.fn(async (sql: string, params: unknown[]) => {
+      if (dbState.failWith) throw dbState.failWith;
       if (sql.startsWith('SELECT settings')) {
         return { rows: [{ settings: dbState.settings }] };
       }
@@ -44,6 +49,7 @@ beforeEach(async () => {
   vi.clearAllMocks();
   authState.user = { id: 1, organizationId: '7', role: 'admin' };
   dbState.settings = null;
+  dbState.failWith = null;
   vi.resetModules();
   const mod = await import('../../routes/ana-tool-policy');
   app = express();
@@ -125,5 +131,75 @@ describe('PUT /api/ana-tool-policy', () => {
       'q_sub.create',
       'q_sub.commitment.set_rolled_in',
     ]);
+  });
+});
+
+/* D6 / IAM-18 (1), P1-17 paydown 2. Both handlers used to answer a failed
+   query with `{ error: 'Failed to … policy', detail: err.message }` — for a
+   node-postgres failure that is the relation or column name. The client now
+   gets the envelope and the request id; the text goes to the file's log. The
+   403s above are the 4xx branches and are untouched. */
+describe('a failed read or write answers 500 without naming what broke', () => {
+  function undefinedTable(relation: string) {
+    const e = new Error(`relation "${relation}" does not exist`) as Error & { code: string };
+    e.code = '42P01';
+    return e;
+  }
+  async function appWithRequestId() {
+    const mod = await import('../../routes/ana-tool-policy');
+    const a = express();
+    a.use(express.json());
+    a.use((_req, res, next) => {
+      res.setHeader('X-Request-Id', 'req-p1-17-2');
+      next();
+    });
+    a.use('/api/ana-tool-policy', mod.default);
+    return a;
+  }
+  function expectContained(res: request.Response) {
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('INTERNAL_ERROR');
+    expect(res.body.correlationId).toBe('req-p1-17-2');
+    expect(res.body.detail).toBeUndefined();
+    const body = JSON.stringify(res.body);
+    expect(body).not.toContain('organizations');
+    expect(body).not.toMatch(/relation |does not exist|42P01/i);
+  }
+
+  /* GET reads through loadAnaToolPolicy, which is fail-soft BY DESIGN for
+     read/display callers (services/ana-ri/mdx-tool-policy.ts): an unreadable
+     settings row answers 200 with an empty policy, and the route's catch is
+     never reached by a query failure. Pinned here so the next reader does not
+     mistake it for a swallowed 500. */
+  it('GET: a failed settings read is fail-soft — 200 and an empty policy, no error text', async () => {
+    dbState.failWith = undefinedTable('organizations');
+    const res = await request(await appWithRequestId()).get('/api/ana-tool-policy');
+    expect(res.status).toBe(200);
+    expect(res.body.policy).toEqual({});
+    expect(JSON.stringify(res.body)).not.toMatch(/relation |does not exist|42P01/i);
+  });
+
+  it('GET: when the loader itself throws, the text stays in the log and the client gets the envelope', async () => {
+    vi.doMock('../../services/ana-ri/mdx-tool-policy', () => ({
+      loadAnaToolPolicy: async () => {
+        throw undefinedTable('organizations');
+      },
+    }));
+    try {
+      vi.resetModules();
+      expectContained(await request(await appWithRequestId()).get('/api/ana-tool-policy'));
+    } finally {
+      vi.doUnmock('../../services/ana-ri/mdx-tool-policy');
+    }
+  });
+
+  it('PUT: the relation name stays in the log, the client gets the envelope', async () => {
+    dbState.failWith = undefinedTable('organizations');
+    expectContained(
+      await request(await appWithRequestId())
+        .put('/api/ana-tool-policy')
+        .send({ deny: ['k510_workflow.transmit'] }),
+    );
+    expect(audit.logAction).not.toHaveBeenCalled();
   });
 });

@@ -13,6 +13,7 @@ import {
   assertAuditSealPostureForProduction,
   assertAuditChainSecretForProduction,
 } from '../services/audit/auditSealPosture';
+import { assertAuditExportKeyPostureForProduction } from '../services/audit/auditExportKeyPosture';
 import {
   assertAiGovernancePostureForProduction,
   assertDeterministicModePostureForProduction,
@@ -305,6 +306,15 @@ assertAuditSealPostureForProduction();
 // falls back to console logging, so the process started anyway and wrote Part 11
 // records to stdout. A refusal a caller can catch is not a boot gate; this is.
 assertAuditChainSecretForProduction();
+
+// Audit EXPORT signing key: the third audit key, the one an inspector's signed
+// export is sealed under (P1-19b, DP-11). In production it must be provisioned
+// (>= 32 chars, distinct from the JWT secret), and its _PREV pair, if set,
+// complete and distinct; there is no accept flag. Before this, a deployment
+// without it sealed every export under the JWT secret, silently. Fires on
+// import (same contract as the asserts above). No-op outside production.
+// See server/services/audit/auditExportKeyPosture.ts.
+assertAuditExportKeyPostureForProduction();
 
 // AI-governance boot posture (runbook B19/B20, 2026-09-20): in production the
 // two AI content-safety gates default STRICT — AI_PII_ENFORCEMENT unset means

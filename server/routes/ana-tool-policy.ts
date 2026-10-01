@@ -13,9 +13,12 @@ import { authenticateToken } from '../middleware/auth';
 import { pool } from '../db';
 import { recordAuditRow } from '../services/audit/audit-write-outcome';
 import { loadAnaToolPolicy, type AnaToolPolicy } from '../services/ana-ri/mdx-tool-policy';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
 router.use(authenticateToken);
+const log = createScopedLogger('ana-tool-policy');
 
 function getOrgId(req: Request): number | null {
   const raw = (req as any).user?.organizationId;
@@ -44,10 +47,7 @@ router.get('/', async (req: Request, res: Response) => {
     const policy = await loadAnaToolPolicy(pool, orgId);
     res.json({ organizationId: orgId, policy });
   } catch (err) {
-    res.status(500).json({
-      error: 'Failed to load policy',
-      detail: err instanceof Error ? err.message : 'unknown',
-    });
+    return serverError(res, log, 'loading the tool policy', err);
   }
 });
 
@@ -115,10 +115,7 @@ router.put('/', async (req: Request, res: Response) => {
 
     res.json({ organizationId: orgId, policy: next, auditTrail });
   } catch (err) {
-    res.status(500).json({
-      error: 'Failed to update policy',
-      detail: err instanceof Error ? err.message : 'unknown',
-    });
+    return serverError(res, log, 'updating the tool policy', err);
   }
 });
 
@@ -147,10 +144,7 @@ router.get('/catalog', async (req: Request, res: Response) => {
     }
     res.json({ categories, deniedTools });
   } catch (err) {
-    res.status(500).json({
-      error: 'Failed to load tool catalog',
-      detail: err instanceof Error ? err.message : 'unknown',
-    });
+    return serverError(res, log, 'loading the tool catalog', err);
   }
 });
 

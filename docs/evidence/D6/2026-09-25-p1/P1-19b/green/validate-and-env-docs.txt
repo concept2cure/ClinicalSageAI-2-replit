@@ -1,0 +1,5 @@
+# terraform validate on scratch copies of both environment roots, with the providers each lock file pins (aws 5.70.0, random 3.6.3)
+production: Success! The configuration is valid.
+staging: Success! The configuration is valid.
+
+# node scripts/ci/check-env-var-docs.mjs --strict-no-regression: exit 1 on 28 names, none AUDIT_EXPORT_*; the gate runs in neither .husky/pre-push nor any workflow
