@@ -19,16 +19,16 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { and, eq } from 'drizzle-orm';
 
-import { requestDb } from '../db/requestDb';
+import { requestDb, requestPgClient } from '../db/requestDb';
 import {
   organizationIndustryProfiles,
   projectIndustryProfiles,
 } from '../../shared/schema';
-import { regulatoryPrograms } from '../../shared/schema/programs';
 import { ok, clientError, orgRequired, notFoundInTenant, serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
 import { recordAuditRow } from '../services/audit/audit-write-outcome';
 import { resolveEffectiveProjectContext } from '../services/industry-context/resolver';
+import { programInOrganization } from '../services/c2c/program-access';
 
 const router = Router();
 const log = createScopedLogger('mdx-industry-context');
@@ -236,15 +236,7 @@ router.patch('/projects/:programId/industry-profile', async (req: Request, res: 
     // Ownership: the program must belong to the caller's org. program_id has no
     // FK to regulatory_programs, so without this a caller could squat or
     // overwrite a profile for another tenant's program id.
-    const [prog] = await db
-      .select({ id: regulatoryPrograms.id })
-      .from(regulatoryPrograms)
-      .where(and(
-        eq(regulatoryPrograms.id, programId),
-        eq(regulatoryPrograms.organizationId, orgId),
-      ))
-      .limit(1);
-    if (!prog) return notFoundInTenant(res, 'Program');
+    if (!(await programInOrganization(requestPgClient(req), programId, orgId))) return notFoundInTenant(res, 'Program');
 
     // Partial update: only fields present in the body are written.
     const fields: Record<string, unknown> = {};

@@ -177,16 +177,33 @@ restored: the migration re-applied, files compared with `cmp`.
 - `tsc`: 0 errors. ESLint ratchet: no file gained a warning.
 - `ci:migration-drop-safety` and `ci:migration-set-order`: OK.
 
+## 4. The last two places that composed a reason (done, same day)
+
+- **Collab lock events.** `auditLockEvent` (`server/routes/realtime-collab.ts`)
+  recorded "Section lock acquired/released/takeover via realtime-collab API"
+  when the person gave no reason. It now records the reason given, trimmed, or
+  null; the command already names what happened. A takeover still requires a
+  reason.
+- **The AnA erasure command.** `erasePersonalData` recorded `params?.reason ||
+  'GDPR Art. 17 erasure request'`: the model's words, or a stock line. It now
+  records the reason the person stated in the e-signature ceremony
+  (`ctx.signoff.reasonForChange`), or no reason.
+- **One helper.** The tasking ledger, the lock events and the erasure use one
+  helper, `statedReasonOrNull` in `server/routes/governed-reason.ts`, next to
+  `requireGovernedReason`. The tasking helper from `4656ab885` is gone.
+- **Tests.**
+  - `tests/routes/realtime-collab-lock-reason.test.ts`, with the HEAD route:
+    "expected 'Section lock acquired via realtime-co…' to be null".
+  - `ana-governed-command-signature.pglite.integration.test.ts`, "records the
+    reason the person stated", with the old line restored: red. Both green
+    now (`other-reasons/`).
+  - Neighbours: tasking, ana-ri, realtime-collab and GDPR suites, 77 files,
+    923/923. `tsc` 0; ESLint ratchet unchanged.
+
 ## Not done
 
 - **The anchored chain head**, P0-8's other half: a daily chain-head anchor in
   the object-locked evidence bucket, checked by the sweep.
-- **Two more places that compose a reason**, open in this lane:
-  - realtime-collab lock events: "Section lock acquired/released via
-    realtime-collab API" (`realtime-collab.ts` ~798);
-  - `erasePersonalData`: `params?.reason || 'GDPR Art. 17 erasure request'`,
-    and the model's params rather than the person's sign-off
-    (`command-executor.ts` ~1934).
 - **`authoring_audit_trail` at purge** stays retained, deliberately. It is an
   audit trail of changes to electronic records (21 CFR 11.10(e)), the category
   the contract retains.

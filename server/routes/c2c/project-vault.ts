@@ -78,6 +78,7 @@ import { getStorageProvider, getStorageProviderFor } from '../../services/storag
    governed artifact registry FKs to. Its contract requires every caller to
    branch on the resolution and keep an honest degraded path. */
 import { resolveCmcArtifactProject } from '../../services/cmc/resolve-cmc-artifact-project.js';
+import { programInOrganization } from '../../services/c2c/program-access';
 
 const logger = createScopedLogger('c2c-project-vault-routes');
 
@@ -1538,12 +1539,7 @@ export default function createProjectVaultRoutes(): Router {
     try {
       // The program must be this org's before any of its documents are listed —
       // the same guard the read and download routes apply.
-      const prog = await pool.query(
-        `SELECT id FROM regulatory_programs
-          WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
-        [id, orgId],
-      );
-      if (prog.rows.length === 0) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+      if (!(await programInOrganization(pool, id, orgId))) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
 
       /* `websearch_to_tsquery` rather than `to_tsquery`: it accepts arbitrary
          user text (quotes, OR, -negation) and never raises a syntax error, so a
@@ -1744,12 +1740,7 @@ export default function createProjectVaultRoutes(): Router {
 
     try {
       // The program must be this org's before any document of it is served.
-      const prog = await pool.query(
-        `SELECT id FROM regulatory_programs
-          WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
-        [id, orgId],
-      );
-      if (prog.rows.length === 0) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+      if (!(await programInOrganization(pool, id, orgId))) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
 
       const docRes = await pool.query(
         `SELECT id, file_name, document_title, mime_type, file_size, s3_key,

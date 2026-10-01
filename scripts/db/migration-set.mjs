@@ -2814,6 +2814,14 @@ export const C2C_MIGRATION_FILES = [
   // DROP.
   'migrations/20261001b_projects_one_anchor_per_program.sql',
 
+  // ── An AnA conversation names its project, by key (PF-10 S1, 2026-10-01) ──
+  // chat_threads.program_id, held to the thread's organization by a NOT VALID
+  // composite key (ON DELETE SET NULL (program_id)), with a CHECK, an index,
+  // and a same-organization-only backfill from metadata->>'programId'. After
+  // 20260728 (chat_threads) and 20260926b (regulatory_programs_id_org_uq,
+  // created here too when absent). Creates no table. No DROP.
+  'migrations/20261001c_chat_threads_program_key.sql',
+
   // ── RBQM: signed records stay signed; QTLs bite in their direction; a
   //    duplicate metric load is refused (2026-09-30) ─────────────────────────
   // Ported from the abandoned #1120 / #1123 / #1130 (+ #1166's UNIQUE replay
