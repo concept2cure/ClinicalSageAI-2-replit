@@ -19,6 +19,7 @@
  * circular, since a row RLS hid would look like a row never written.
  */
 import { createHash } from 'node:crypto';
+import bcrypt from 'bcryptjs';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import express from 'express';
@@ -95,8 +96,16 @@ async function removeFixtureReportAuditRows(): Promise<void> {
   const cleanup = await owner.connect();
   try {
     await cleanup.query('BEGIN');
+    // The finalize cases' signatures, removed as the owner (append-only otherwise),
+    // as compliance-reports.dbtest.ts removes its own: they reference fixture users.
+    await cleanup.query('ALTER TABLE electronic_signatures DISABLE TRIGGER trg_electronic_signatures_immutable');
+    await cleanup.query(`DELETE FROM electronic_signatures WHERE organization_id = $1 AND signed_target LIKE 'report-run:%'`, [ORG_B]);
+    await cleanup.query('ALTER TABLE electronic_signatures ENABLE TRIGGER trg_electronic_signatures_immutable');
     await cleanup.query('ALTER TABLE audit_logs DISABLE TRIGGER trg_audit_logs_no_delete');
-    await cleanup.query(`DELETE FROM audit_logs WHERE tenant_id = $1 AND action LIKE 'report\\_os.%'`, [ORG_B]);
+    await cleanup.query(
+      `DELETE FROM audit_logs WHERE tenant_id = $1 AND (action LIKE 'report\\_os.%' OR action = 'c2c.work.sign')`,
+      [ORG_B]
+    );
     await cleanup.query('ALTER TABLE audit_logs ENABLE TRIGGER trg_audit_logs_no_delete');
     await cleanup.query('COMMIT');
   } catch (err) {
@@ -186,6 +195,12 @@ describe('report type registry seed (D2)', () => {
  * admins and managers; the status, the seal and the chain row commit together
  * or not at all; a final report is not sealed again; a bundle export is
  * recorded, with the hash of its bytes, before it is sent.
+ *
+ * Reporting review 2026-10-01: finalize is an electronic signature. The admin
+ * signs with a real password (re-verified by the ceremony against the stored
+ * bcrypt hash), as an approval of a run the member requested, so separation of
+ * duties runs against report_runs.requested_by; the signature row lands with
+ * the seal.
  */
 const ro = express();
 ro.use(express.json());
@@ -193,37 +208,51 @@ ro.use('/api/report-os', reportOsRouter);
 /** The final-eligible run the finalize cases seal and the bundle case packs. */
 let runId: number;
 
+let adminToken: string;
+let adminId: number;
+const REFUSE_FN = `wo03_refuse_finalize_row_${process.pid}`;
+const PASSWORD = 'report-finalize-dbtest-password';
+const SIGNED = { reason: 'Issued for the review round 1 dbtest', meaning: 'approval', reauth: { password: PASSWORD } };
+const finalize = (token: string, body: Record<string, unknown> = SIGNED) =>
+  request(ro).post(`/api/report-os/runs/${runId}/finalize`).set(auth(token)).send(body);
+const signatureRows = async () =>
+  (
+    await owner.query(
+      `SELECT signer_id, signature_meaning FROM electronic_signatures WHERE organization_id = $1 AND signed_target = $2`,
+      [ORG_B, `report-run:${runId}`]
+    )
+  ).rows;
+
+const finalizedRows = async () =>
+  (
+    await owner.query(
+      `SELECT new_values::jsonb AS details, sha256_chain IS NOT NULL AS chained FROM audit_logs
+        WHERE tenant_id = $1 AND record_id = $2 AND action = 'report_os.run_finalized'`,
+      [ORG_B, String(runId)]
+    )
+  ).rows;
+const runState = async () =>
+  (
+    await owner.query(
+      `SELECT r.status, s.snapshot_metadata::jsonb -> 'seal' ->> 'contentHash' AS seal_hash
+         FROM report_runs r JOIN report_snapshots s ON s.run_id = r.id AND s.is_latest
+        WHERE r.id = $1`,
+      [runId]
+    )
+  ).rows[0];
+
 describe('finalize on the record (review round 1, DP-47)', () => {
-  let adminToken: string;
-  const REFUSE_FN = `wo03_refuse_finalize_row_${process.pid}`;
-
-  const finalizedRows = async () =>
-    (
-      await owner.query(
-        `SELECT new_values::jsonb AS details, sha256_chain IS NOT NULL AS chained FROM audit_logs
-          WHERE tenant_id = $1 AND record_id = $2 AND action = 'report_os.run_finalized'`,
-        [ORG_B, String(runId)]
-      )
-    ).rows;
-  const runState = async () =>
-    (
-      await owner.query(
-        `SELECT r.status, s.snapshot_metadata::jsonb -> 'seal' ->> 'contentHash' AS seal_hash
-           FROM report_runs r JOIN report_snapshots s ON s.run_id = r.id AND s.is_latest
-          WHERE r.id = $1`,
-        [runId]
-      )
-    ).rows[0];
-
   beforeAll(async () => {
     await applySeed();
-    const adminId = await provisionMember(ORG_B, 'admin', 'report-admin');
+    adminId = await provisionMember(ORG_B, 'admin', 'report-admin');
     adminToken = accessToken(adminId, ORG_B, 'admin');
-    // A run the truthfulness gate lets be final: no blockers, no critical blockers.
+    await owner.query('UPDATE users SET password_hash = $2 WHERE id = $1', [adminId, await bcrypt.hash(PASSWORD, 4)]);
+    // A run the truthfulness gate lets be final: no blockers, no critical
+    // blockers. Requested by the member, so the admin's approval is independent.
     const run = await owner.query(
-      `INSERT INTO report_runs (organization_id,scope_type,scope_id,report_type_id,status,confidence,blockers,dependency_summary)
-       VALUES ($1,'project',$2,$3,'completed',90,'[]'::json,$4::json) RETURNING id`,
-      [ORG_B, ids.B.projects, RUN_TYPE, JSON.stringify({ providers: [], summary: {}, criticalBlockers: [] })]
+      `INSERT INTO report_runs (organization_id,scope_type,scope_id,report_type_id,status,confidence,blockers,dependency_summary,requested_by)
+       VALUES ($1,'project',$2,$3,'completed',90,'[]'::json,$4::json,$5) RETURNING id`,
+      [ORG_B, ids.B.projects, RUN_TYPE, JSON.stringify({ providers: [], summary: {}, criticalBlockers: [] }), userB]
     );
     runId = run.rows[0].id;
     await owner.query(
@@ -234,10 +263,18 @@ describe('finalize on the record (review round 1, DP-47)', () => {
   });
 
   it('refuses a member: nothing is sealed and nothing is recorded', async () => {
-    const res = await request(ro).post(`/api/report-os/runs/${runId}/finalize`).set(auth(tokenB));
+    const res = await finalize(tokenB);
     expect(res.status).toBe(403);
     expect(await runState()).toEqual({ status: 'completed', seal_hash: null });
     expect(await finalizedRows()).toEqual([]);
+  });
+
+  it('refuses a password that is not the signer\'s: nothing is sealed, signed or recorded', async () => {
+    const res = await finalize(adminToken, { ...SIGNED, reauth: { password: 'not the password' } });
+    expect(res.status, JSON.stringify(res.body)).toBe(401);
+    expect(await runState()).toEqual({ status: 'completed', seal_hash: null });
+    expect(await finalizedRows()).toEqual([]);
+    expect(await signatureRows()).toEqual([]);
   });
 
   it('when the chain row is refused, the status and the seal roll back with it (503, nothing changed)', async () => {
@@ -251,7 +288,7 @@ describe('finalize on the record (review round 1, DP-47)', () => {
          EXECUTE FUNCTION ${REFUSE_FN}()`
     );
     try {
-      const res = await request(ro).post(`/api/report-os/runs/${runId}/finalize`).set(auth(adminToken));
+      const res = await finalize(adminToken);
       expect(res.status, JSON.stringify(res.body)).toBe(503);
       expect(res.body.error.code).toBe('REPORT_FINALIZE_NOT_RECORDED');
     } finally {
@@ -260,21 +297,27 @@ describe('finalize on the record (review round 1, DP-47)', () => {
     }
     expect(await runState(), 'nothing may have changed').toEqual({ status: 'completed', seal_hash: null });
     expect(await finalizedRows()).toEqual([]);
+    expect(await signatureRows()).toEqual([]);
   });
 
-  it('an admin finalizes: status, seal and one chained row, together', async () => {
-    const res = await request(ro).post(`/api/report-os/runs/${runId}/finalize`).set(auth(adminToken));
+  it('an admin finalizes: status, seal, one chained row and the signature, together', async () => {
+    const res = await finalize(adminToken);
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     const sealHash = res.body.data.seal.contentHash as string;
+    expect(res.body.data.signature).toMatchObject({ meaning: 'approval' });
     expect(await runState()).toEqual({ status: 'final', seal_hash: sealHash });
     const rows = await finalizedRows();
     expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ chained: true, details: { sealHash, reportTypeId: RUN_TYPE } });
+    expect(rows[0]).toMatchObject({
+      chained: true,
+      details: { sealHash, reportTypeId: RUN_TYPE, reason: SIGNED.reason, meaning: 'approval', priorStatus: 'completed' },
+    });
+    expect(await signatureRows()).toEqual([{ signer_id: adminId, signature_meaning: 'approval' }]);
   });
 
   it('a second finalize is refused: the seal stands and nothing more is recorded', async () => {
     const before = await runState();
-    const res = await request(ro).post(`/api/report-os/runs/${runId}/finalize`).set(auth(adminToken));
+    const res = await finalize(adminToken);
     expect(res.status).toBe(409);
     expect(res.body.error.code).toBe('RUN_ALREADY_FINAL');
     expect(await runState()).toEqual(before);
