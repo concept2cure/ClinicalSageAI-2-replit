@@ -1,0 +1,88 @@
+# Database-side and code-side mutations, each applied to the fixed tree, the dbtest run, and restored (the migration re-applied; files cmp-verified)
+=== m1
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > P0-8: the runtime role can read and append to a record table, never rewrite it > holds SELECT and INSERT, and no UPDATE, DELETE or TRUNCATE, on every append-only table present 18ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > P0-8: the runtime role can read and append to a record table, never rewrite it > refuses the runtime role an UPDATE, DELETE or TRUNCATE as a privilege, before any trigger runs 33ms
+ × tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > refuses a plain DELETE and a TRUNCATE from the table owner too 125ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > refuses an organization that is not pending deletion, a tenant scope and an active hold 37ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > is not executable by PUBLIC, and is owned by the NOLOGIN purger role 9ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > a purge returns the records first, erases them, and keeps their audit trail > exports the turn records, erases them with the tenant, leaves the other tenant’s, and keeps each chained row 912ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > a purge returns the records first, erases them, and keeps their audit trail > refuses a database that has the tables but not the door, and erases nothing 22ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 6 passed (7)
+=== m2
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > P0-8: the runtime role can read and append to a record table, never rewrite it > holds SELECT and INSERT, and no UPDATE, DELETE or TRUNCATE, on every append-only table present 17ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > P0-8: the runtime role can read and append to a record table, never rewrite it > refuses the runtime role an UPDATE, DELETE or TRUNCATE as a privilege, before any trigger runs 23ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > refuses a plain DELETE and a TRUNCATE from the table owner too 110ms
+ × tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > refuses an organization that is not pending deletion, a tenant scope and an active hold 53ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > is not executable by PUBLIC, and is owned by the NOLOGIN purger role 11ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > a purge returns the records first, erases them, and keeps their audit trail > exports the turn records, erases them with the tenant, leaves the other tenant’s, and keeps each chained row 752ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > a purge returns the records first, erases them, and keeps their audit trail > refuses a database that has the tables but not the door, and erases nothing 21ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 6 passed (7)
+=== m3
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > P0-8: the runtime role can read and append to a record table, never rewrite it > holds SELECT and INSERT, and no UPDATE, DELETE or TRUNCATE, on every append-only table present 13ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > P0-8: the runtime role can read and append to a record table, never rewrite it > refuses the runtime role an UPDATE, DELETE or TRUNCATE as a privilege, before any trigger runs 26ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > refuses a plain DELETE and a TRUNCATE from the table owner too 110ms
+ × tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > refuses an organization that is not pending deletion, a tenant scope and an active hold 61ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > is not executable by PUBLIC, and is owned by the NOLOGIN purger role 7ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > a purge returns the records first, erases them, and keeps their audit trail > exports the turn records, erases them with the tenant, leaves the other tenant’s, and keeps each chained row 727ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > a purge returns the records first, erases them, and keeps their audit trail > refuses a database that has the tables but not the door, and erases nothing 20ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 6 passed (7)
+=== m4
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > P0-8: the runtime role can read and append to a record table, never rewrite it > holds SELECT and INSERT, and no UPDATE, DELETE or TRUNCATE, on every append-only table present 14ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > P0-8: the runtime role can read and append to a record table, never rewrite it > refuses the runtime role an UPDATE, DELETE or TRUNCATE as a privilege, before any trigger runs 26ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > refuses a plain DELETE and a TRUNCATE from the table owner too 117ms
+ × tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > refuses an organization that is not pending deletion, a tenant scope and an active hold 62ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > is not executable by PUBLIC, and is owned by the NOLOGIN purger role 8ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > a purge returns the records first, erases them, and keeps their audit trail > exports the turn records, erases them with the tenant, leaves the other tenant’s, and keeps each chained row 878ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > a purge returns the records first, erases them, and keeps their audit trail > refuses a database that has the tables but not the door, and erases nothing 26ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 6 passed (7)
+=== m5 purge sends the turn tables through a plain DELETE
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > P0-8: the runtime role can read and append to a record table, never rewrite it > holds SELECT and INSERT, and no UPDATE, DELETE or TRUNCATE, on every append-only table present 15ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > P0-8: the runtime role can read and append to a record table, never rewrite it > refuses the runtime role an UPDATE, DELETE or TRUNCATE as a privilege, before any trigger runs 36ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > refuses a plain DELETE and a TRUNCATE from the table owner too 123ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > refuses an organization that is not pending deletion, a tenant scope and an active hold 57ms
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > is not executable by PUBLIC, and is owned by the NOLOGIN purger role 8ms
+ × tests/db/turn-record-purge-door.dbtest.ts > a purge returns the records first, erases them, and keeps their audit trail > exports the turn records, erases them with the tenant, leaves the other tenant’s, and keeps each chained row 857ms
+   → IMMUTABILITY_VIOLATION: ana_turn_records row cannot be deleted — it is part of a retained AnA turn record (21 CFR Part 11 §11.10(e)).
+ × tests/db/turn-record-purge-door.dbtest.ts > a purge returns the records first, erases them, and keeps their audit trail > refuses a database that has the tables but not the door, and erases nothing 27ms
+   → expected error: IMMUTABILITY_VIOLATION: ana_turn_r… { …(15) } to match object { Object (code) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+error: IMMUTABILITY_VIOLATION: ana_turn_records row cannot be deleted — it is part of a retained AnA turn record (21 CFR Part 11 §11.10(e)).
+AssertionError: expected error: IMMUTABILITY_VIOLATION: ana_turn_r… { …(15) } to match object { Object (code) }
+
+# Unit mutations on the grant audit and recipe (provision-app-role-append-only.test.ts)
+=== U1 the audit holds a public record table to its schema's default (full DML)
+ ✓ server/db/__tests__/provision-app-role-append-only.test.ts > APPEND_ONLY_TABLES > names the audit store and every public record table a trigger keeps append-only 2ms
+ × server/db/__tests__/provision-app-role-append-only.test.ts > auditRuntimeRoleGrants holds a record table to SELECT/INSERT in any schema > reports UPDATE, DELETE or TRUNCATE on a public record table as EXCESS, and nothing as denied 11ms
+ × server/db/__tests__/provision-app-role-append-only.test.ts > auditRuntimeRoleGrants holds a record table to SELECT/INSERT in any schema > fails a runtime role that owns a public record table 2ms
+ × server/db/__tests__/provision-app-role-append-only.test.ts > auditRuntimeRoleGrants holds a record table to SELECT/INSERT in any schema > reports a record table the role cannot append to as denied 2ms
+ ✓ server/db/__tests__/provision-app-role-append-only.test.ts > auditRuntimeRoleGrants holds a record table to SELECT/INSERT in any schema > reports TRUNCATE on the audit store as EXCESS 1ms
+ ✓ server/db/__tests__/provision-app-role-append-only.test.ts > withdrawAppendOnlyWrites > revokes UPDATE, DELETE and TRUNCATE from PUBLIC and the role on every record table present, and skips one absent 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 3 passed (6)
+=== U2 the audit does not read TRUNCATE
+ ✓ server/db/__tests__/provision-app-role-append-only.test.ts > APPEND_ONLY_TABLES > names the audit store and every public record table a trigger keeps append-only 2ms
+ × server/db/__tests__/provision-app-role-append-only.test.ts > auditRuntimeRoleGrants holds a record table to SELECT/INSERT in any schema > reports UPDATE, DELETE or TRUNCATE on a public record table as EXCESS, and nothing as denied 9ms
+ ✓ server/db/__tests__/provision-app-role-append-only.test.ts > auditRuntimeRoleGrants holds a record table to SELECT/INSERT in any schema > fails a runtime role that owns a public record table 1ms
+ ✓ server/db/__tests__/provision-app-role-append-only.test.ts > auditRuntimeRoleGrants holds a record table to SELECT/INSERT in any schema > reports a record table the role cannot append to as denied 1ms
+ × server/db/__tests__/provision-app-role-append-only.test.ts > auditRuntimeRoleGrants holds a record table to SELECT/INSERT in any schema > reports TRUNCATE on the audit store as EXCESS 2ms
+ ✓ server/db/__tests__/provision-app-role-append-only.test.ts > withdrawAppendOnlyWrites > revokes UPDATE, DELETE and TRUNCATE from PUBLIC and the role on every record table present, and skips one absent 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 4 passed (6)
+=== U3 the recipe revokes UPDATE and DELETE only, from the role only
+ ✓ server/db/__tests__/provision-app-role-append-only.test.ts > APPEND_ONLY_TABLES > names the audit store and every public record table a trigger keeps append-only 2ms
+ ✓ server/db/__tests__/provision-app-role-append-only.test.ts > auditRuntimeRoleGrants holds a record table to SELECT/INSERT in any schema > reports UPDATE, DELETE or TRUNCATE on a public record table as EXCESS, and nothing as denied 1ms
+ ✓ server/db/__tests__/provision-app-role-append-only.test.ts > auditRuntimeRoleGrants holds a record table to SELECT/INSERT in any schema > fails a runtime role that owns a public record table 4ms
+ ✓ server/db/__tests__/provision-app-role-append-only.test.ts > auditRuntimeRoleGrants holds a record table to SELECT/INSERT in any schema > reports a record table the role cannot append to as denied 1ms
+ ✓ server/db/__tests__/provision-app-role-append-only.test.ts > auditRuntimeRoleGrants holds a record table to SELECT/INSERT in any schema > reports TRUNCATE on the audit store as EXCESS 0ms
+ × server/db/__tests__/provision-app-role-append-only.test.ts > withdrawAppendOnlyWrites > revokes UPDATE, DELETE and TRUNCATE from PUBLIC and the role on every record table present, and skips one absent 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 5 passed (6)
+
+# scheduler-jobs-under-rls: the lease removed (runConsolidation called directly)
+ × tests/db/scheduler-jobs-under-rls.dbtest.ts > AnA memory consolidation > the nightly cron fired on two processes at once runs ONE cycle (lease) 38ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 10 passed (11)

@@ -8,7 +8,7 @@
  * the 500-line limit. The proof is still one contract in one test file; only
  * the route scaffolding it drives lives here.
  */
-import express from 'express';
+import express, { type Response } from 'express';
 import { authenticateToken } from '../../server/middleware/auth';
 import { requestPgClient, type RequestSqlClient } from '../../server/db/requestDb';
 
@@ -258,23 +258,36 @@ export function mountTenantProofRoutes(app: express.Express, fixture: ProofFixtu
       return res.status(500).json({ error: { code: 'INTERNAL_ERROR' } });
     }
   });
+  // A record table the runtime role may only read and append to (audit_logs;
+  // P0-8, scripts/db/provision-app-role.mjs APPEND_ONLY_TABLES) refuses UPDATE
+  // and DELETE as a privilege (42501), for every tenant. That answers with the
+  // same opaque 404 as a WITH CHECK denial above; any other error is a 500.
+  const mutate = async (res: Response, run: () => Promise<{ rows: unknown[] }>) => {
+    try {
+      return res.sendStatus((await run()).rows.length ? 204 : 404);
+    } catch (error) {
+      return res.sendStatus((error as { code?: string }).code === '42501' ? 404 : 500);
+    }
+  };
   app.patch('/proof/:domain/:id', async (req, res) => {
     const domain = safeDomain(req.params.domain);
     if (!domain) return res.sendStatus(404);
-    const result = await requestPgClient(req).query(
-      `UPDATE ${tableFor[domain]} SET ${updateColumnFor[domain]}=$1
-         WHERE ${idColumnFor[domain]}::text=$2 RETURNING ${idColumnFor[domain]}`,
-      ['TAMPERED', req.params.id]
+    return mutate(res, () =>
+      requestPgClient(req).query(
+        `UPDATE ${tableFor[domain]} SET ${updateColumnFor[domain]}=$1
+           WHERE ${idColumnFor[domain]}::text=$2 RETURNING ${idColumnFor[domain]}`,
+        ['TAMPERED', req.params.id]
+      )
     );
-    return result.rows.length ? res.sendStatus(204) : res.sendStatus(404);
   });
   app.delete('/proof/:domain/:id', async (req, res) => {
     const domain = safeDomain(req.params.domain);
     if (!domain) return res.sendStatus(404);
-    const result = await requestPgClient(req).query(
-      `DELETE FROM ${tableFor[domain]} WHERE ${idColumnFor[domain]}::text=$1 RETURNING ${idColumnFor[domain]}`,
-      [req.params.id]
+    return mutate(res, () =>
+      requestPgClient(req).query(
+        `DELETE FROM ${tableFor[domain]} WHERE ${idColumnFor[domain]}::text=$1 RETURNING ${idColumnFor[domain]}`,
+        [req.params.id]
+      )
     );
-    return result.rows.length ? res.sendStatus(204) : res.sendStatus(404);
   });
 }
