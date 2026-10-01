@@ -1,0 +1,25 @@
+# npm run test:db, this change, RLS_ENFORCE=on, app_service runtime role, 2026-10-01T13:46:57Z
+# The one failure is tests/db/actor-displays.dbtest.ts (MDx audit list), red on trunk after 4f74b0f18; handed on in docs/work-orders/README.md.
+stdout | tests/db/data-room-capture-provenance.dbtest.ts
+stdout | tests/db/data-room-capture-provenance.dbtest.ts
+stderr | tests/db/data-room-capture-provenance.dbtest.ts
+stdout | tests/db/data-room-capture-provenance.dbtest.ts
+stderr | tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > a file attached in chat with the project open is recorded with its capturer and a chained capture row
+stdout | tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > a file attached in chat with the project open is recorded with its capturer and a chained capture row
+stdout | tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > a file attached in chat with the project open is recorded with its capturer and a chained capture row
+stdout | tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > a file attached in chat with the project open is recorded with its capturer and a chained capture row
+stdout | tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > a file attached in chat with the project open is recorded with its capturer and a chained capture row
+stdout | tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > a file attached in chat with the project open is recorded with its capturer and a chained capture row
+ ✓ tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > a file attached in chat with the project open is recorded with its capturer and a chained capture row 186ms
+ ✓ tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > a re-capture names what it supersedes, and the retired capture names its successor 18ms
+ ✓ tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > a failed audit write rolls the capture back 6ms
+ ✓ tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > who captured a file, and where its bytes are stored, cannot be changed 13ms
+ ✓ tests/db/data-room-capture-provenance.dbtest.ts > a capture names who made it, in the chain (VR-16b) > control: a system source writes no data-room row and names no capturer 5ms
+ ✓ tests/db/licensing-history.dbtest.ts > integrity > rows the verifier walked are verified, unsealed on this deployment, and the walk covered every tenant 94ms
+ ✓ tests/db/licensing-history.dbtest.ts > integrity > on a tenant-scoped connection the walk refuses rather than verifying a subset 12ms
+ ✓ tests/db/licensing-history.dbtest.ts > integrity > a tampered row does not match; later rows of ITS chain cannot be proven; earlier rows and other tenants stay verified 136ms
+ ✓ tests/db/licensing-history.dbtest.ts > integrity > within one tenant, position is the chain order (chain_seq), not the timestamp 131ms
+ ✓ tests/db/licensing-history.dbtest.ts > integrity > a row written after the verification ran is never reported as verified by it 119ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 104 passed (105)
+      Tests  1 failed | 1015 passed (1016)

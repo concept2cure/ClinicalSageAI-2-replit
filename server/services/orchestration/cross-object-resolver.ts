@@ -11,6 +11,7 @@
 import { db, getPool } from '../../db';
 import { eq, and, desc, sql, gte } from 'drizzle-orm';
 import { createScopedLogger } from '../../utils/logger';
+import { loadUnifiedWork } from '../unified-work/unified-work-view';
 
 const logger = createScopedLogger('cross-object-resolver');
 import {
@@ -187,13 +188,40 @@ async function resolveProjectSnapshot(
       therapeuticArea: (project as any).therapeuticArea,
       targetDate: (project as any).targetDate,
       totalDocuments: artifactCounts?.count ?? 0,
-      totalTasks: 0,
-      blockedTasks: 0,
-      overdueTasks: 0,
+      ...(await projectTaskCounts(orgId, projectId)),
     };
   } catch (err) {
     throw readFailed('project', err);
   }
+}
+
+/**
+ * The project's tasks from every store the platform keeps — the schedule of
+ * events, the board, agency correspondence and filings — through the one
+ * cross-store view (loadUnifiedWork), completed board work included.
+ *
+ * Until 2026-10-01 these were hardcoded to 0, and the continuity briefing turns a
+ * zero total into "100% done": AnA Command showed every project's tasks as
+ * complete, and AnA's context said nothing was blocked. A store that could not
+ * be read is named by the view; it travels here as `taskCountsPartial`, so a
+ * floor is never read as a total.
+ */
+async function projectTaskCounts(
+  orgId: number,
+  projectId: number,
+): Promise<Pick<ProjectSnapshot, 'totalTasks' | 'doneTasks' | 'blockedTasks' | 'overdueTasks' | 'taskCountsPartial'>> {
+  const view = await loadUnifiedWork({ organizationId: orgId, projectId, includeCompleted: true });
+  const now = Date.now();
+  const overdue = view.items.filter(
+    (i) => i.status !== 'done' && i.dueAt !== null && Date.parse(i.dueAt) < now,
+  ).length;
+  return {
+    totalTasks: view.summary.total,
+    doneTasks: view.summary.done,
+    blockedTasks: view.summary.blocking,
+    overdueTasks: overdue,
+    taskCountsPartial: view.summary.partial,
+  };
 }
 
 async function resolveDocuments(
