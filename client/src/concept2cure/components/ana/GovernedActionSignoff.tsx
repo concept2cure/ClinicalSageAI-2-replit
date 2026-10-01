@@ -38,11 +38,26 @@ const MEANING_OPTIONS: ReadonlyArray<{ value: 'AUTHOR' | 'REVIEWER' | 'APPROVER'
 ];
 type SignatureMeaning = (typeof MEANING_OPTIONS)[number]['value'];
 
+/** The inputs a governed tool carries its reason for change in (server
+ *  stated-reason-input.ts reasonFieldOf). The reason is not a parameter to
+ *  summarise: it is asked for on its own, in full. */
+const REASON_KEYS = ['reason', 'reason_for_change'] as const;
+
+/** The reason AnA wrote into the call, if any — shown whole, never recorded as the person's unless they adopt it. */
+function proposedReasonOf(params: Record<string, unknown>): string | null {
+  for (const k of REASON_KEYS) {
+    const v = params?.[k];
+    if (typeof v === 'string' && v.trim()) return v.trim();
+  }
+  return null;
+}
+
 /** A compact, readable key: value list of what AnA proposed — never a raw JSON dump. */
 function summariseParams(params: Record<string, unknown>): Array<[string, string]> {
   const out: Array<[string, string]> = [];
   for (const [k, v] of Object.entries(params ?? {})) {
     if (out.length >= 8) break;
+    if ((REASON_KEYS as readonly string[]).includes(k)) continue;
     if (v === undefined || v === null || v === '') continue;
     const text =
       typeof v === 'string' ? v : typeof v === 'number' || typeof v === 'boolean' ? String(v) : Array.isArray(v) ? `${v.length} item${v.length === 1 ? '' : 's'}` : 'details';
@@ -95,6 +110,9 @@ export function GovernedActionSignoff({ signoff, onResolved, onCancel }: Governe
 
   // Reason validity is only an error once the user has typed something.
   const reasonInvalid = reason.length > 0 && !reasonOk;
+  // What AnA wrote as the reason. The field starts empty: the reason recorded
+  // is the one the person types or explicitly adopts (D5, 2026-09-29).
+  const proposedReason = confirmOnly ? null : proposedReasonOf(signoff.params);
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -168,7 +186,7 @@ export function GovernedActionSignoff({ signoff, onResolved, onCancel }: Governe
         {signoff.message}
       </p>
 
-      {confirmOnly && (
+      {(confirmOnly || proposedReason) && (
         <dl className={styles.signoffHint} aria-label="What AnA proposed">
           <dt>Action</dt>
           <dd>{signoff.command}</dd>
@@ -184,6 +202,14 @@ export function GovernedActionSignoff({ signoff, onResolved, onCancel }: Governe
         <label className={styles.signoffLabel} htmlFor={reasonId}>
           Reason for change
         </label>
+      )}
+      {proposedReason && (
+        <p className={styles.signoffHint} data-testid="signoff-proposed-reason">
+          AnA suggested: “{proposedReason}”{' '}
+          <button type="button" className={styles.suggestPill} onClick={() => setReason(proposedReason)}>
+            Use AnA’s wording
+          </button>
+        </p>
       )}
       {!confirmOnly && (
         <>
