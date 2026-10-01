@@ -106,6 +106,28 @@ export const RUNTIME_PATHS = {
     kind: 'ship',
     reason: 'The AI-gateway prompt library (ai-gateway/prompts-dir.ts); shipped by COPY server.',
   },
+  'server/data': {
+    kind: 'ship',
+    // Exact: each file the server reads beneath it is listed below, with why.
+    exact: true,
+    reason: 'The directory the pathway engine reads its knowledge base from. Shipped by COPY server.',
+  },
+  'server/data/common-passwords.txt': {
+    kind: 'ship',
+    reason:
+      'The password blocklist (password-blocklist.ts; NIST 800-63B). Read module-relative until ' +
+      '2026-10-01, which in the bundle is /app/data, so every password set threw; now cwd-anchored. ' +
+      'Shipped by COPY server.',
+  },
+  'server/data/global-regulatory-authorities.json': {
+    kind: 'ship',
+    reason:
+      'Knowledge base for the public-API pathway engine (regulatory-pathway-intelligence.ts). ' +
+      'Read module-relative until 2026-10-01 (/app/data in the bundle: an empty knowledge base, ' +
+      'no error); now cwd-anchored. Shipped by COPY server.',
+  },
+  'server/data/ich-guidelines-comprehensive.json': { kind: 'ship', reason: 'Same engine, same fix as above.' },
+  'server/data/regulatory-document-requirements-matrix.json': { kind: 'ship', reason: 'Same engine, same fix as above.' },
   'server/export/stylePacks': {
     kind: 'ship',
     reason: 'Print style packs for 510(k)/PMA/CER PDF renders (export/stylePacks/config.ts); shipped by COPY server.',
@@ -162,19 +184,6 @@ export const RUNTIME_PATHS = {
     kind: 'known-gap',
     reason: 'The interpreter for ingestion/pdf_extractor.py (PYTHON_PATH default). Same Python decision.',
   },
-  'data/global-regulatory-authorities.json': {
-    kind: 'known-gap',
-    reason:
-      'regulatory-pathway-intelligence.ts reads path.join(__dirname, "..", "data") — server/data in ' +
-      'source, /app/data in the bundle, where nothing is. The public-API pathway engine loads an ' +
-      'empty knowledge base without error. Fix is in code: anchor on process.cwd() + server/data, ' +
-      'as prompts-dir.ts does; then reclassify as ship.',
-  },
-  'data/ich-guidelines-comprehensive.json': { kind: 'known-gap', reason: 'Same bundle-relative __dirname read as above.' },
-  'data/regulatory-document-requirements-matrix.json': {
-    kind: 'known-gap',
-    reason: 'Same bundle-relative __dirname read as above.',
-  },
   'dist/rules/manufacturingRules.yaml': {
     kind: 'known-gap',
     reason:
@@ -205,6 +214,9 @@ export const RUNTIME_PATHS = {
   'server/.cache': { kind: 'not-shipped', reason: 'conversation-os kernel snapshot, written by the process.' },
   data: {
     kind: 'not-shipped',
+    // The root alone: a read beneath it must have its own entry. As a prefix
+    // this entry absorbed the password blocklist's data/common-passwords.txt.
+    exact: true,
     reason:
       'An allow-list root for pdf-compression-service input paths, not a read. The reads beneath it ' +
       'are classified path by path.',
@@ -466,7 +478,12 @@ async function shippedModules() {
 
 const STRING = /^(['"`])((?:\\.|(?!\1)[^\\\n])*)\1/;
 const CWD = /^process\.cwd\(\)/;
-const MODULE_DIR = /^(?:__dirname|import\.meta\.dirname)\b/;
+// The module's own directory, in each spelling the server uses. The inline
+// `dirname(fileURLToPath(import.meta.url))` was missed until 2026-10-01, and
+// with it the password blocklist (password-blocklist.ts), which read
+// /app/data/common-passwords.txt in the bundle: every password set threw.
+const MODULE_DIR =
+  /^(?:__dirname\b|import\.meta\.dirname\b|(?:path\.)?dirname\(\s*(?:url\.)?fileURLToPath\(\s*import\.meta\.url\s*\)\s*\))/;
 const PKG_ROOT = /^PACKAGE_ROOT\b/;
 const IDENT = /^(?:this\.)?[A-Za-z_$][\w$]*/;
 
@@ -596,7 +613,8 @@ export function discoverPaths(source) {
 function classify(rel) {
   let best = null;
   for (const key of Object.keys(CLASSIFICATION)) {
-    if ((rel === key || rel.startsWith(`${key}/`)) && (!best || key.length > best.length)) best = key;
+    const prefix = !CLASSIFICATION[key].exact && rel.startsWith(`${key}/`);
+    if ((rel === key || prefix) && (!best || key.length > best.length)) best = key;
   }
   return best;
 }
