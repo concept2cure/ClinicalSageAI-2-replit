@@ -64,6 +64,7 @@ import {
   UNKNOWN_DOCUMENT_ACCESS,
   type AuthDoc,
   type DocumentAccess,
+  type EditorBridge,
 } from './DocumentWorkbench';
 import { AuthoringPlaceIntoFiling } from '../surfaces/AuthoringPlaceIntoFiling';
 import { FileToVaultDialog } from './FileToVaultDialog';
@@ -121,6 +122,12 @@ export interface DocumentCanvasProps {
    * thread; the sections whose text changed are marked updated.
    */
   refreshKey?: number;
+  /**
+   * Told which section of this document is open, and given its suggestion
+   * door, while the editor is expanded; null otherwise. The thread uses it to
+   * put AnA's answers into the document being built.
+   */
+  onEditorBridge?: (docId: string, bridge: EditorBridge | null) => void;
 }
 
 /** The stored document type (`product_code`), in words: `clinical_overview` → "Clinical overview". */
@@ -197,6 +204,7 @@ export function DocumentCanvas({
   liveDrive,
   paneEl = null,
   refreshKey = 0,
+  onEditorBridge,
 }: DocumentCanvasProps) {
   /* Beside the conversation the card stays in the thread, marked as the
      document that is open; in place it gives way to the editor. */
@@ -373,6 +381,16 @@ export function DocumentCanvas({
   const reloadDoc = useCallback(async () => {
     await load();
   }, [load]);
+
+  /* The workbench reports its open section whether or not this canvas is
+     expanded (it stays mounted, hidden). Only an expanded editor is one the
+     person can see the suggestion land in, so only then is it passed on. */
+  const [bridge, setBridge] = useState<EditorBridge | null>(null);
+  useEffect(() => {
+    if (!onEditorBridge) return undefined;
+    onEditorBridge(docId, expanded ? bridge : null);
+    return () => onEditorBridge(docId, null);
+  }, [onEditorBridge, docId, expanded, bridge]);
 
   return (
     <section
@@ -573,7 +591,7 @@ export function DocumentCanvas({
               reloadDocs={reloadDoc}
               programId={programId}
               pinnedDocId={doc.id}
-              embedded={{ onBack: () => onExpandedChange(false), hostShowsBack: true }}
+              embedded={{ onBack: () => onExpandedChange(false), hostShowsBack: true, onEditorBridge: setBridge }}
               surfaceActionId={null}
               consumeDeepLinks={false}
               onAsk={onAsk}

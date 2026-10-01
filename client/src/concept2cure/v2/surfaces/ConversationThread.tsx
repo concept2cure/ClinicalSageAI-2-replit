@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { apiRequest } from '@/lib/queryClient';
 import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
@@ -22,6 +22,7 @@ import '../styles/project-home-v2.css';
 import { AppMentionMenu, useAppMentions } from '../appMentions';
 import { AnaMarkdown } from '../AnaMarkdown';
 import { DocumentCanvas } from '../editor/DocumentCanvas';
+import type { EditorBridge } from '../editor/DocumentWorkbench';
 import {
   CT_LINKMAP, CT_LINKIC, CT_ARTIC, CT_STATUS_LABEL,
 } from '../fixtures/conversation-thread-data';
@@ -61,6 +62,8 @@ function toTurn(m: AnaChatMessage): CtTurn {
   return {
     role: 'ana',
     answer: m.text || undefined,
+    settled: !m.streaming,
+    sourceRecord: m.turnRecord?.status === 'recorded' ? m.turnRecord.id : undefined,
     grounding: grounding.length ? grounding : undefined,
     /* Present while the turn is in flight — the phase line IS the waiting
        state — and, once settled, only when there is real work to show for it.
@@ -153,6 +156,50 @@ export function authoringDocFromToolResult(
 
 /* ---- AnA turn (activity + answer + grounding) ---- */
 
+/** The section open in the editor beside the conversation, and how to tell the person what happened. */
+interface InsertTarget {
+  bridge: EditorBridge;
+  fireToast: FireToast;
+}
+
+/**
+ * Puts a settled AnA answer into the section open beside the conversation, as
+ * tracked suggestions attributed to AnA and to the turn record that wrote it
+ * (2026-10-01). It goes through the editor's one suggestion door
+ * (`insertSuggestion`), so nothing is saved until the person reviews each
+ * edit in the editor and saves — the same path as the editor's own AnA rail.
+ * Not offered on the turn that drafted the open document: its answer narrates
+ * a draft that is already there.
+ */
+function InsertIntoOpenSection({ turn, target }: { turn: CtTurn; target?: InsertTarget }) {
+  if (!target || !turn.settled || !turn.answer?.trim()) return null;
+  if (turn.authoringDoc?.docId === target.bridge.docId) return null;
+  const { bridge, fireToast } = target;
+  const insert = () => {
+    const ok = bridge.insert(turn.answer ?? '', {
+      id: 'ana',
+      name: 'AnA (AI draft)',
+      ...(turn.sourceRecord ? { sourceRecord: turn.sourceRecord } : {}),
+    });
+    fireToast(ok
+      ? `Inserted into ${bridge.sectionCode} as tracked suggestions — review each edit in the editor, then save.`
+      : 'Couldn\u2019t insert — the editor is not editable right now (source view, or the document is locked).', ok ? 'ok' : 'error');
+  };
+  return (
+    <div className="ct-refs">
+      <button
+        type="button"
+        className="ct-ref"
+        onClick={insert}
+        title={`Adds this answer to ${bridge.sectionCode} ${bridge.sectionTitle} as suggestions you accept or reject`}
+      >
+        <span className="ct-ref-ic">{I.penLine}</span>
+        <span className="ct-ref-l">{`Insert into ${bridge.sectionCode} as tracked suggestion`}</span>
+      </button>
+    </div>
+  );
+}
+
 interface AnaTurnProps {
   turn: CtTurn;
   onRefine: () => void;
@@ -174,10 +221,14 @@ interface AnaTurnProps {
     paneEl?: HTMLElement | null;
     /** Bumped when an AnA turn ends, so the canvas re-reads the record. */
     refreshKey?: number;
+    /** Told the open section of this document while its editor is expanded. */
+    onEditorBridge?: (docId: string, bridge: EditorBridge | null) => void;
   };
+  /** The open section this answer can be inserted into, while a document is open. */
+  insertTarget?: InsertTarget;
 }
 
-function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, canvas }: AnaTurnProps) {
+function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, canvas, insertTarget }: AnaTurnProps) {
   const a = turn.activity;
   return (
     <div className="ct-turn ct-ana">
@@ -234,6 +285,7 @@ function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, canvas }: Ana
             markdown renderer (marked → DOMPurify → React elements, no
             innerHTML); the person's own turn above stays as typed. */}
         {turn.answer && <AnaMarkdown text={turn.answer} className="ct-ana-text ana-md" />}
+        <InsertIntoOpenSection turn={turn} target={insertTarget} />
         {/* The document canvas: the authoring document this turn drafted,
             read from the store and expandable into THE editor in place. */}
         {turn.authoringDoc && canvas && (
@@ -251,6 +303,7 @@ function AnaTurn({ turn, onRefine, onNav, onStartDemo, onContinue, canvas }: Ana
             liveDrive={canvas.liveDrive}
             paneEl={canvas.paneEl}
             refreshKey={canvas.refreshKey}
+            onEditorBridge={canvas.onEditorBridge}
           />
         )}
         {turn.links && (
@@ -784,6 +837,14 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
   /* Counts AnA turns as they settle. Every canvas re-reads its document on a
      new value, so a section AnA revised in that turn is on the card. */
   const [turnsSettled, setTurnsSettled] = useState(0);
+  /* The section open in the expanded editor, reported by its canvas, so each
+     settled answer can offer to go into it. A canvas clearing its report
+     clears only its own: closing one document never drops another's. */
+  const [editorBridge, setEditorBridge] = useState<EditorBridge | null>(null);
+  const onEditorBridge = useCallback((docId: string, bridge: EditorBridge | null) => {
+    setEditorBridge(prev => bridge ?? (prev?.docId === docId ? null : prev));
+  }, []);
+  const insertTarget = editorBridge ? { bridge: editorBridge, fireToast } : undefined;
   const wasStreamingRef = useRef(false);
   useEffect(() => {
     if (wasStreamingRef.current && !anaChat.isStreaming) setTurnsSettled(n => n + 1);
@@ -1121,6 +1182,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
                     onNav={onNav}
                     onStartDemo={liveDrive?.onStartDemo}
                     onContinue={i === continueAt ? () => { void anaChat.send(CONTINUE_PROMPT); } : undefined}
+                    insertTarget={insertTarget}
                     canvas={t.authoringDoc ? {
                       conversationId: anaChat.threadId ?? (isNew || isCurrent ? null : sel.id),
                       expanded: expandedDocId === t.authoringDoc.docId,
@@ -1130,6 +1192,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
                       liveDrive,
                       paneEl: canvasPaneEl,
                       refreshKey: turnsSettled,
+                      onEditorBridge,
                     } : undefined}
                   />
                 )

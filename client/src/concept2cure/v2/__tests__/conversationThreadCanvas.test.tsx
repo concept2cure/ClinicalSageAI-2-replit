@@ -211,6 +211,61 @@ describe('ConversationThread — the canvas keeps up with AnA (2026-10-01)', () 
   });
 });
 
+describe('ConversationThread — AnA\u2019s answers go into the open document (2026-10-01)', () => {
+  /* The editor's "Insert into <section> as tracked suggestion" lived only in
+     its own AnA rail, and the rail is hidden when the editor is embedded in the
+     conversation canvas. So while building a document beside the conversation,
+     nothing AnA answered could reach it. Each settled answer now offers that
+     insert into the open section, through the editor's one suggestion door. */
+  const FOLLOWUP: AnaChatMessage = {
+    id: 'm5',
+    role: 'assistant',
+    text: 'Exposure was dose-proportional from 10 to 300 mg.',
+    turnRecord: { status: 'recorded', id: 'rec-7', sha256: 'a'.repeat(64) },
+  } as unknown as AnaChatMessage;
+
+  it('offers no insert while no document is open', async () => {
+    chatMessages.current = [USER, DRAFTED, FOLLOWUP];
+    render(<ConversationThread {...OWNED_PROPS} />);
+    await screen.findByText('Exposure was dose-proportional from 10 to 300 mg.');
+    expect(screen.queryByRole('button', { name: /as tracked suggestion/ })).toBeNull();
+  });
+
+  it('inserts a settled answer into the open section as an AnA suggestion, naming its turn record', async () => {
+    chatMessages.current = [USER, DRAFTED, FOLLOWUP];
+    render(<ConversationThread {...OWNED_PROPS} />);
+    const open = await screen.findByTestId('dc-open-editor');
+    await vi.waitFor(() => expect((open as HTMLButtonElement).disabled).toBe(false));
+    open.click();
+    await screen.findByTestId('dc-expanded');
+
+    const insert = await screen.findByRole('button', { name: 'Insert into 2.5.1 as tracked suggestion' }, { timeout: 4000 });
+    insert.click();
+
+    const ins = await vi.waitFor(() => {
+      const el = document.querySelector('.ct-canvas-pane ins[data-author-id="ana"]');
+      if (!el) throw new Error('no AnA suggestion in the open section');
+      return el as HTMLElement;
+    });
+    expect(ins.textContent).toContain('Exposure was dose-proportional');
+    expect(ins.getAttribute('data-source-record')).toBe('rec-7');
+  });
+
+  it('withdraws the offer when the editor closes: the workbench stays mounted, hidden, and a hidden editor is not a target', async () => {
+    chatMessages.current = [USER, DRAFTED, FOLLOWUP];
+    render(<ConversationThread {...OWNED_PROPS} />);
+    const open = await screen.findByTestId('dc-open-editor');
+    await vi.waitFor(() => expect((open as HTMLButtonElement).disabled).toBe(false));
+    open.click();
+    await screen.findByRole('button', { name: 'Insert into 2.5.1 as tracked suggestion' }, { timeout: 4000 });
+
+    (await screen.findByTestId('dc-open-editor')).click();
+    await vi.waitFor(() =>
+      expect(screen.queryByRole('button', { name: /as tracked suggestion/ })).toBeNull(),
+    );
+  });
+});
+
 describe('ConversationThread — the answer as prose', () => {
   it('renders a heading, bold and a list as elements, not symbols; user text stays as typed', async () => {
     chatMessages.current = [USER, DRAFTED];
