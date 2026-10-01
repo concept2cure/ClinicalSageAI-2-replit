@@ -25,7 +25,7 @@
  */
 
 import type { PoolClient } from 'pg';
-import { and, eq } from 'drizzle-orm';
+import { and, asc, eq } from 'drizzle-orm';
 import { projects } from '../../../shared/schema';
 import type { RequestDb } from '../../db/requestDb';
 import { createScopedLogger } from '../../utils/logger.js';
@@ -242,6 +242,51 @@ export async function ensureProgramProjectAnchor(input: EnsureAnchorInput): Prom
   return { projectId: Number(inserted.rows[0].id), created: true };
 }
 
+export interface ProgramAnchorRow {
+  id: number;
+  clientWorkspaceId: number | null;
+}
+
+/**
+ * The program's anchor row, org-scoped: the lowest-id projects row naming it,
+ * which is the row intake links (ensureProgramProjectAnchor, ORDER BY id). The
+ * one reader of the anchor (PF-08). Its copies used `.limit(1)` with no order,
+ * so two anchor rows for one program read as whichever the plan met first, and
+ * one export could file under one row and the next under the other.
+ *
+ * Two rows is a data fault, so it is named in the log. One anchor per program
+ * is held by the partial unique index projects_one_anchor_per_program
+ * (migrations/20261001b) wherever the data allowed it.
+ *
+ * Throws when the read cannot complete; an absent anchor column is the
+ * caller's to judge (isMissingAnchorColumn).
+ */
+export async function readProgramAnchorRow(
+  db: RequestDb,
+  params: { programId: string; orgId: number; context: string },
+): Promise<ProgramAnchorRow | null> {
+  const rows = await db
+    .select({ id: projects.id, clientWorkspaceId: projects.clientWorkspaceId })
+    .from(projects)
+    .where(and(eq(projects.regulatoryProgramId, params.programId), eq(projects.organizationId, params.orgId)))
+    .orderBy(asc(projects.id))
+    .limit(2);
+  if ((rows?.length ?? 0) > 1) {
+    logger.warn('Program has more than one anchor row; reading the lowest id, the row intake links', {
+      context: params.context,
+      programId: params.programId,
+      projectIds: rows.map((r) => r.id),
+    });
+  }
+  const row = rows?.[0];
+  if (!row) return null;
+  // A non-integer id is not an anchor. `concept2cure_artifacts.project_id` is
+  // an integer FK, so placing against anything else would fail at the
+  // registry — better to take the honest unanchored path than to try.
+  const id = Number(row.id);
+  return Number.isInteger(id) && id > 0 ? { id, clientWorkspaceId: row.clientWorkspaceId ?? null } : null;
+}
+
 /**
  * Resolve the PM-spine project id anchored to `programId`, org-scoped.
  *
@@ -261,22 +306,7 @@ export async function resolveProgramProjectAnchor(
   params: { programId: string; orgId: number; context: string; strict?: boolean },
 ): Promise<number | null> {
   try {
-    const rows = await db
-      .select({ id: projects.id })
-      .from(projects)
-      .where(
-        and(
-          eq(projects.regulatoryProgramId, params.programId),
-          eq(projects.organizationId, params.orgId),
-        ),
-      )
-      .limit(1);
-    const id = rows?.[0]?.id;
-    const numeric = Number(id);
-    // A non-integer id is not an anchor. `concept2cure_artifacts.project_id` is
-    // an integer FK, so placing against anything else would fail at the
-    // registry — better to take the honest unanchored path than to try.
-    return Number.isInteger(numeric) && numeric > 0 ? numeric : null;
+    return (await readProgramAnchorRow(db, params))?.id ?? null;
   } catch (err) {
     if (isMissingAnchorColumn(err)) {
       logger.warn(
