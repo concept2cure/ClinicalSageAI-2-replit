@@ -25,7 +25,7 @@ import type { SubmissionEvidenceLink, ConsistencyFinding } from '../../../shared
 import type { GatewayErrorCode } from '../ai-gateway/gateway-error-map';
 import { recordAuditRow, type AuditRowOutcome } from '../audit/audit-write-outcome';
 import { createScopedLogger } from '../../utils/logger';
-import { compareLabelledFigures } from './figure-consistency';
+import { compareLabelledFigures, type FigureNotCompared } from './figure-consistency';
 
 const logger = createScopedLogger('truth-engine-service');
 
@@ -95,11 +95,12 @@ export interface RunConsistencyCheckParams {
 export interface ConsistencyCheckResult {
   findings: ConsistencyFinding[];
   /**
-   * Sources that shared no labelled figure with the claim, so nothing was
-   * compared. No finding is recorded for them — which is not a finding of
-   * consistency, and the caller says so.
+   * Each figure of the claim that got no verdict against a source, and why
+   * (not stated there, stated more than once, a bound, an arm-level count).
+   * No finding is recorded for it — which is not a finding of consistency,
+   * and the caller says so.
    */
-  notCompared: string[];
+  notCompared: FigureNotCompared[];
   /**
    * Whether the §11.10(e) row for this check exists. The findings are
    * persisted either way; the caller is told, and says so.
@@ -145,7 +146,7 @@ export async function runConsistencyCheck(
       dimension: params.dimension,
       findingCount: inserted.length,
       conflicts: inserted.filter((f) => f.status === 'conflict').length,
-      notCompared,
+      notCompared: notCompared.length,
     },
   });
   logger.info('Ran consistency check', {

@@ -1117,12 +1117,15 @@ router.post('/:id/consistency', limiter, requireRole(AUTHOR), async (req, res) =
   const parsed = consistencySchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
   try {
-    // The body stays the findings array the Submission Center reads; the check's
-    // §11.10(e) row is reported in the header pair, as the leaf removal above does.
+    // The body stays the findings array; the check's §11.10(e) row is reported
+    // in the header pair, as the leaf removal above does. No browser client
+    // calls this route today (AnA's check_consistency is the reachable path),
+    // so neither header is on the CORS expose list; a client that adds a call
+    // adds them there.
     const { findings, notCompared, auditTrail } = await runConsistencyCheck({ submissionId: id, ...parsed.data }, ctx);
     setAuditRowHeaders(res, auditTrail);
-    // How many sources shared no labelled figure with the claim: an empty
-    // array is "nothing compared" as often as "no conflict".
+    // How many of the claim's figures got no verdict: an empty array is
+    // "nothing compared" as often as "no conflict".
     res.setHeader('X-Consistency-Not-Compared', String(notCompared.length));
     res.json(findings);
   } catch (err) {

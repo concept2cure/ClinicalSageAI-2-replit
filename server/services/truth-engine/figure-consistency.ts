@@ -7,9 +7,18 @@
  * comes from an engine; the model narrates). This compares the labelled
  * figures reconcileDossierNumbers extracts — enrolled N, sample size, sites,
  * events, alpha, power, hazard ratio, primary p-value — between the claim and
- * each source. A figure both texts state is a match when they agree and a
- * conflict when they do not. A pair with no figure in common yields no
- * finding and is reported as not compared, never as consistent.
+ * each source.
+ *
+ * A verdict needs one value on each side, read as written:
+ * - a text that states a figure more than once (two p-values, PFS and OS
+ *   hazard ratios, events and deaths) gets no verdict for it;
+ * - "p<0.001" is a bound: a stated value at or above it is a conflict, one
+ *   below it is consistent but not a match;
+ * - values are compared at the coarser precision of the two (0.71 ≡ 0.712);
+ * - alphas differing by exactly two may differ only by sidedness: no verdict;
+ * - "randomized 120 patients to drug …" is one arm, not the total: no verdict.
+ * Every figure of the claim that got no verdict for a source is returned in
+ * `notCompared` with why. Nothing here is a finding of consistency.
  *
  * @module server/services/truth-engine/figure-consistency
  */
@@ -24,16 +33,73 @@ export interface FigureFinding {
   detail: string;
 }
 
-export interface FigureComparison {
-  findings: FigureFinding[];
-  /** Sources that shared no labelled figure with the claim. */
-  notCompared: string[];
+export interface FigureNotCompared {
+  rightRef: string;
+  label: string;
+  reason: string;
 }
 
-function valuesOf(facts: ExtractedFact[], docId: string, label: string): number[] {
-  return [...new Set(facts.filter((f) => f.docId === docId && f.label === label).map((f) => f.value))].sort(
-    (a, b) => a - b,
-  );
+export interface FigureComparison {
+  findings: FigureFinding[];
+  /** Each figure of the claim that got no verdict against a source, and why. */
+  notCompared: FigureNotCompared[];
+}
+
+interface Reading {
+  value: number;
+  /** Stated as an upper bound ("p<0.001"). */
+  bound: boolean;
+}
+
+const P_VALUE_AT = /p\s*(?:-?\s*value)?\s*([=<])\s*(0?\.\d{1,5})/gi;
+const ARM_LEVEL = /(?:patients|subjects|participants)\s+(?:to|in|per)\b/i;
+
+function readingOf(fact: ExtractedFact): Reading {
+  if (fact.label !== 'primary_p_value') return { value: fact.value, bound: false };
+  for (const m of fact.snippet.matchAll(P_VALUE_AT)) {
+    if (Number(m[2]) === fact.value) return { value: fact.value, bound: m[1] === '<' };
+  }
+  return { value: fact.value, bound: false };
+}
+
+function distinct(readings: Reading[]): Reading[] {
+  const seen = new Map<string, Reading>();
+  for (const r of readings) seen.set(`${r.bound ? '<' : '='}${r.value}`, r);
+  return [...seen.values()];
+}
+
+function decimals(n: number): number {
+  return (String(n).split('.')[1] ?? '').length;
+}
+
+function show(r: Reading): string {
+  return `${r.bound ? '<' : ''}${r.value}`;
+}
+
+/** match | conflict, or why there is no verdict. */
+function verdict(label: string, l: Reading, r: Reading): 'match' | 'conflict' | { reason: string } {
+  if (l.bound && r.bound) return { reason: 'both texts state only a bound' };
+  if (l.bound || r.bound) {
+    const [bound, exact] = l.bound ? [l, r] : [r, l];
+    return exact.value >= bound.value
+      ? 'conflict'
+      : { reason: 'consistent with the stated bound, which is not an equality' };
+  }
+  if (label === 'alpha' && l.value !== r.value && Math.max(l.value, r.value) === 2 * Math.min(l.value, r.value)) {
+    return { reason: 'the two alphas may differ only by one- versus two-sided testing' };
+  }
+  const dp = Math.min(decimals(l.value), decimals(r.value));
+  const round = (n: number) => Math.round(n * 10 ** dp) / 10 ** dp;
+  return round(l.value) === round(r.value) ? 'match' : 'conflict';
+}
+
+/** The one reading a side states for a label, or why there is none to compare. */
+function sideReading(facts: ExtractedFact[]): Reading | { reason: string } {
+  if (facts.some((f) => f.label === 'enrolled_n' && ARM_LEVEL.test(f.snippet))) {
+    return { reason: 'an arm-level count, not the total' };
+  }
+  const readings = distinct(facts.map(readingOf));
+  return readings.length === 1 ? readings[0] : { reason: 'a text states more than one value for it' };
 }
 
 export function compareLabelledFigures(
@@ -41,36 +107,37 @@ export function compareLabelledFigures(
   right: ReadonlyArray<{ ref: string; text: string }>,
 ): FigureComparison {
   const findings: FigureFinding[] = [];
-  const notCompared: string[] = [];
+  const notCompared: FigureNotCompared[] = [];
 
   for (const source of right) {
-    const result = reconcileDossierNumbers([
+    const { facts } = reconcileDossierNumbers([
       { id: 'left', title: left.ref, text: left.text },
       { id: 'right', title: source.ref, text: source.text },
     ]);
-    const conflicting = new Set(result.discrepancies.map((d) => d.label));
-    const shared = [...new Set(result.facts.map((f) => f.label))]
-      .filter((label) => result.facts.some((f) => f.label === label && f.docId === 'left'))
-      .filter((label) => result.facts.some((f) => f.label === label && f.docId === 'right'))
-      .sort();
-
-    if (shared.length === 0) {
-      notCompared.push(source.ref);
-      continue;
-    }
-    for (const label of shared) {
-      const l = valuesOf(result.facts, 'left', label);
-      const r = valuesOf(result.facts, 'right', label);
-      const status = conflicting.has(label) ? 'conflict' : 'match';
+    const claimLabels = [...new Set(facts.filter((f) => f.docId === 'left').map((f) => f.label))].sort();
+    for (const label of claimLabels) {
+      const sourceFacts = facts.filter((f) => f.docId === 'right' && f.label === label);
+      if (sourceFacts.length === 0) {
+        notCompared.push({ rightRef: source.ref, label, reason: 'not stated in the source' });
+        continue;
+      }
+      const l = sideReading(facts.filter((f) => f.docId === 'left' && f.label === label));
+      const r = sideReading(sourceFacts);
+      if ('reason' in l || 'reason' in r) {
+        notCompared.push({ rightRef: source.ref, label, reason: ('reason' in l ? l : (r as { reason: string })).reason });
+        continue;
+      }
+      const v = verdict(label, l, r);
+      if (typeof v !== 'string') {
+        notCompared.push({ rightRef: source.ref, label, reason: v.reason });
+        continue;
+      }
       findings.push({
         leftRef: left.ref,
         rightRef: source.ref,
-        status,
+        status: v,
         label,
-        detail:
-          status === 'conflict'
-            ? `${label}: ${left.ref} gives ${l.join(', ')}; ${source.ref} gives ${r.join(', ')}.`
-            : `${label}: both give ${l.join(', ')}.`,
+        detail: `${label}: ${left.ref} gives ${show(l)}; ${source.ref} gives ${show(r)}.`,
       });
     }
   }

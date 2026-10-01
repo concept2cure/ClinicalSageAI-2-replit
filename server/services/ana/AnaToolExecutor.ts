@@ -9795,6 +9795,9 @@ registerToolHandler('check_consistency', async (input, ctx) => {
   if (!dimension) return JSON.stringify({ error: 'dimension is required.' });
   if (!left || !left.ref || !left.text) return JSON.stringify({ error: 'left { ref, text } is required.' });
   if (right.length === 0) return JSON.stringify({ error: 'right (non-empty array) is required.' });
+  if (right.some((r) => typeof r?.ref !== 'string' || !r.ref || typeof r?.text !== 'string')) {
+    return JSON.stringify({ error: 'each right item needs a ref and a text.' });
+  }
   try {
     const { runConsistencyCheck } = await import('../truth-engine/truth-engine-service.js');
     const { findings, notCompared, auditTrail } = await runConsistencyCheck(
@@ -9803,7 +9806,7 @@ registerToolHandler('check_consistency', async (input, ctx) => {
     );
     const conflicts = findings.filter((f) => f.status === 'conflict').length;
     const unread = notCompared.length
-      ? ` Not compared — no labelled figure in common with the claim: ${notCompared.join(', ')}. That is not a finding of consistency.`
+      ? ` ${notCompared.length} figure(s) of the claim were not compared (see notCompared for which and why). That is not a finding of consistency.`
       : '';
     return JSON.stringify({
       ok: true, findings, conflicts, notCompared, auditTrail,

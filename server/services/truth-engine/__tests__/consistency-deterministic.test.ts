@@ -68,19 +68,27 @@ describe('runConsistencyCheck', () => {
     const byRef = (ref: string) => r.findings.filter((f) => f.rightRef === ref).map((f) => [f.status, f.detail]);
     expect(byRef('CSR-001')).toEqual([
       ['conflict', 'enrolled_n: 2.7.3 gives 186; CSR-001 gives 120.'],
-      ['match', 'sites: both give 42.'],
+      ['match', 'sites: 2.7.3 gives 42; CSR-001 gives 42.'],
     ]);
-    expect(byRef('CSR-002')).toEqual([['match', 'enrolled_n: both give 186.']]);
-    expect(r.notCompared).toEqual([]);
+    expect(byRef('CSR-002')).toEqual([['match', 'enrolled_n: 2.7.3 gives 186; CSR-002 gives 186.']]);
+    expect(r.notCompared).toEqual([
+      { rightRef: 'CSR-001', label: 'hazard_ratio', reason: 'not stated in the source' },
+      { rightRef: 'CSR-002', label: 'hazard_ratio', reason: 'not stated in the source' },
+      { rightRef: 'CSR-002', label: 'sites', reason: 'not stated in the source' },
+    ]);
   });
 
-  it('records nothing for a source that shares no labelled figure, and names it as not compared', async () => {
+  it('records nothing for a source that states none of the claim\'s figures, and names each as not compared', async () => {
     const r = await runConsistencyCheck(
       { submissionId: 11, dimension: 'label-vs-safety', left: LEFT, right: [{ ref: 'Label', text: 'Hepatotoxicity has been reported.' }] },
       CTX,
     );
     expect(r.findings).toEqual([]);
-    expect(r.notCompared).toEqual(['Label']);
+    expect(r.notCompared.map((n) => [n.rightRef, n.label])).toEqual([
+      ['Label', 'enrolled_n'],
+      ['Label', 'hazard_ratio'],
+      ['Label', 'sites'],
+    ]);
     expect(h.inserted).toEqual([]);
   });
 
@@ -91,13 +99,13 @@ describe('runConsistencyCheck', () => {
     );
     const [entry] = h.logAction.mock.calls.at(-1) as [Record<string, any>];
     expect(entry.action).toBe('CONSISTENCY_CHECK');
-    expect(entry.details).toMatchObject({ engine: 'dossier-number-reconciliation', findingCount: 1, conflicts: 0, notCompared: [] });
+    expect(entry.details).toMatchObject({ engine: 'dossier-number-reconciliation', findingCount: 1, conflicts: 0, notCompared: 2 });
     expect(JSON.stringify(entry)).not.toMatch(/promptVersion|AI_GENERATE/);
   });
 });
 
 describe("AnA's check_consistency", () => {
-  it('tells AnA which sources were not compared, and that this is not a finding of consistency', async () => {
+  it('tells AnA which figures were not compared, and that this is not a finding of consistency', async () => {
     const { getToolHandler } = await import('../../ana/AnaToolExecutor');
     const res = JSON.parse(
       await getToolHandler('check_consistency')!(
@@ -106,8 +114,20 @@ describe("AnA's check_consistency", () => {
       ),
     );
     expect(res.ok).toBe(true);
-    expect(res.notCompared).toEqual(['Label']);
+    expect(res.notCompared.map((n: { rightRef: string }) => n.rightRef)).toEqual(['Label', 'Label', 'Label']);
     expect(res.message).toMatch(/not compared/i);
     expect(res.message).toMatch(/not a finding of consistency/i);
+  });
+
+  it('refuses a source without a ref before writing anything', async () => {
+    const { getToolHandler } = await import('../../ana/AnaToolExecutor');
+    const res = JSON.parse(
+      await getToolHandler('check_consistency')!(
+        { submission_id: 11, dimension: 'x', left: LEFT, right: [{ text: 'The study randomized 186 subjects.' }] },
+        { ...CTX, humanConfirmed: true } as never,
+      ),
+    );
+    expect(res.error).toMatch(/ref and a text/);
+    expect(h.inserted).toEqual([]);
   });
 });
