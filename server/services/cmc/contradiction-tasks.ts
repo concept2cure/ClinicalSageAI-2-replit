@@ -41,6 +41,7 @@ import { db } from '../../db';
 import * as schema from '../../../shared/schema';
 import unifiedTaskService from '../unifiedTaskService';
 import { createScopedLogger } from '../../utils/logger';
+import { resolveProgramProjectAnchor } from '../c2c/program-project-anchor';
 
 const logger = createScopedLogger('cmc-contradiction-tasks');
 
@@ -96,21 +97,12 @@ async function resolveProjectId(
   organizationId: number,
   projectUuid: string
 ): Promise<number | undefined> {
-  try {
-    const [row] = await db
-      .select({ id: schema.projects.id })
-      .from(schema.projects)
-      .where(
-        and(
-          eq(schema.projects.regulatoryProgramId, projectUuid),
-          eq(schema.projects.organizationId, organizationId)
-        )
-      )
-      .limit(1);
-    return row?.id;
-  } catch {
-    return undefined;
-  }
+  // The one anchor reader (PF-08). Not strict: an unanchored or unreadable
+  // program still gets its task, as this always did.
+  const id = await resolveProgramProjectAnchor(db, {
+    programId: projectUuid, orgId: organizationId, context: 'cmc.contradiction-tasks',
+  });
+  return id ?? undefined;
 }
 
 /**

@@ -2802,6 +2802,13 @@ export const C2C_MIGRATION_FILES = [
   // no table; adds one index and two keys. No DROP.
   'migrations/20261001_integer_project_same_org_keys.sql',
 
+  // ── A program has at most one anchor row (PF-08, 2026-10-01) ──────────────
+  // Partial unique index on projects (regulatory_program_id), created only when
+  // no program has two anchors; otherwise a NOTICE names them and the deploy
+  // proceeds. After 20260814, which creates the column. Creates no table. No
+  // DROP.
+  'migrations/20261001b_projects_one_anchor_per_program.sql',
+
   // ── RBQM: signed records stay signed; QTLs bite in their direction; a
   //    duplicate metric load is refused (2026-09-30) ─────────────────────────
   // Ported from the abandoned #1120 / #1123 / #1130 (+ #1166's UNIQUE replay
