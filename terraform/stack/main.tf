@@ -69,6 +69,16 @@ resource "random_password" "db_master" {
   special = false
 }
 
+# First-run setup's secret (server/routes/setup.ts): in production
+# POST /api/setup/initialize creates the first administrator only for a request
+# carrying it in X-Setup-Token. Read it from Secrets Manager once, for that one
+# call (outputs.tf, first_run_setup); the route closes itself once any account
+# exists.
+resource "random_password" "setup_token" {
+  length  = 48
+  special = false
+}
+
 resource "random_password" "db_app_service" {
   length  = 40
   special = false
@@ -105,6 +115,10 @@ module "secrets" {
     app_database_url = {
       description = "app_service connection URL (runtime, RLS enforced)"
       value       = local.app_database_url
+    }
+    setup_token = {
+      description = "First-run setup token: POST /api/setup/initialize requires it in X-Setup-Token in production"
+      value       = random_password.setup_token.result
     }
     app_service_db_password = {
       description = "app_service password, for deploy-migrate to mint the role"
@@ -232,6 +246,18 @@ locals {
     { name = "AUDIT_ANCHOR_BUCKET", value = module.evidence.evidence_bucket },
   ]
 
+  # The platform owner, by the address of their own password sign-in. The
+  # documented bootstrap (server/middleware/requirePlatformAdmin.ts,
+  # requireBusinessAdmin.ts): Master Administration, and the Business Center,
+  # whose holder can designate a super_admin in the audited Access Management
+  # console, after which these lists can shrink. A federated (SAML) session
+  # gets nothing from either. MASTER_ADMIN_EMAILS is left unset: that grant
+  # follows a designation (services/entitlements/master-admin.ts). API only.
+  owner_environment = [
+    { name = "PLATFORM_ADMIN_EMAILS", value = join(",", var.platform_owner_emails) },
+    { name = "BUSINESS_CENTER_EMAILS", value = join(",", var.platform_owner_emails) },
+  ]
+
   # The deployment's public origin: the first CloudFront alias. One input, so
   # APP_URL and ALLOWED_ORIGINS cannot disagree with the domain browsers use.
   app_origin = "https://${var.domain_aliases[0]}"
@@ -351,6 +377,8 @@ module "ecs" {
   # verifier). The API never mints; APP_DATABASE_URL already holds the password.
   api_secrets = concat(local.boot_secrets, [
     { name = "APP_SERVICE_DB_PASSWORD", value_from = module.secrets.secret_arns["app_service_db_password"] },
+    # First-run setup (setup_token above). Only the API serves the route.
+    { name = "SETUP_TOKEN", value_from = module.secrets.secret_arns["setup_token"] },
   ])
 
   # The worker runs the same image, so the same import-time refusals: with less
@@ -359,7 +387,7 @@ module "ecs" {
   worker_secrets = local.boot_secrets
 
   # The release signer (release_signing.tf) and the boot contract's plain values.
-  api_environment    = concat(local.signer_environment, local.boot_environment, local.observability_environment)
+  api_environment    = concat(local.signer_environment, local.boot_environment, local.observability_environment, local.owner_environment)
   worker_environment = concat(local.signer_environment, local.boot_environment, local.observability_environment)
 
   tags = var.tags
