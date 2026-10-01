@@ -714,11 +714,23 @@ jobs:
   # deploy-frontend only.
 
   # ── Deploy frontend to S3 + CloudFront ────────────────────────────────────
+  # Published only once the API that serves it is rolled. In parallel, the new
+  # index.html went live before any new API task existed and stayed live when
+  # migrate failed, deploy-api failed or the circuit breaker rolled back: a
+  # paired client/route change then failed on every launch surface (the filing
+  # bar sent a password to an API still demanding the retired signing PIN). A
+  # frontend-only dispatch (deploy_api=false) still publishes.
+  # tests/schema-contract/deploy-frontend-after-api.contract.test.ts
   deploy-frontend:
     name: Deploy Frontend → S3/CloudFront
-    needs: [test, security-gate]
+    needs: [test, security-gate, deploy-api]
     runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.deploy_frontend != 'false' }}
+    if: >-
+      ${{ always()
+      && needs.test.result == 'success'
+      && needs.security-gate.result == 'success'
+      && github.event.inputs.deploy_frontend != 'false'
+      && (needs.deploy-api.result == 'success' || github.event.inputs.deploy_api == 'false') }}
     environment: production
 
     steps:

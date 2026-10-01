@@ -135,6 +135,14 @@ export const RUNTIME_PATHS = {
       'Python DOCX runtimes for AnA document tools (compute/workerClient.ts, compute/scriptWorker.ts). ' +
       'A known gap until 2eda0ed0f shipped them with python-docx; this gate then failed on the stale entry.',
   },
+  'docs/validation': {
+    kind: 'ship',
+    reason:
+      'GAMP 5 validation kit — the IQ/OQ protocols for Projects, Vault, Authoring, Submission Center ' +
+      'and Readiness that a regulated client validates the system with (routes/validation-kit.ts, ' +
+      'AdminSurfaces). docs/ is excluded by .dockerignore, so until 2026-10-01 production listed an ' +
+      'empty catalog for documents that exist. .dockerignore re-includes it.',
+  },
   'SECURITY.md': {
     kind: 'ship',
     reason:
@@ -153,13 +161,6 @@ export const RUNTIME_PATHS = {
   '.venv/bin/python3': {
     kind: 'known-gap',
     reason: 'The interpreter for ingestion/pdf_extractor.py (PYTHON_PATH default). Same Python decision.',
-  },
-  'docs/validation': {
-    kind: 'known-gap',
-    reason:
-      'GAMP 5 validation kit (routes/validation-kit.ts, AdminSurfaces). docs/ is excluded by ' +
-      '.dockerignore and no COPY names it, so production lists an empty catalog for documents that ' +
-      'exist. Fix needs a .dockerignore re-include plus a COPY; owner: launch lead (D1).',
   },
   'data/global-regulatory-authorities.json': {
     kind: 'known-gap',
