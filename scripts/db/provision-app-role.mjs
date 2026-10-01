@@ -190,10 +190,11 @@ export const DEFAULT_TABLE_PRIVILEGES = Object.freeze(['SELECT', 'INSERT', 'UPDA
  * round, and this removes the forger). The recipe withholds INSERT there too,
  * and the audit reports it as excess.
  *
- * Not here: P1-24's domain-history stores (workflow_history,
- * document_audit_logs, regulatory_audit_logs, c2c_ana_actions,
- * authoring_signatures) join once migrations/20261001_domain_history_append_only.sql
- * lands, with that lane's dbtest reading a refusal as 42501 as well as the trigger's.
+ * P1-24's domain-history stores (workflow_history, document_audit_logs,
+ * regulatory_audit_logs, c2c_ana_actions, authoring_signatures) joined on
+ * 2026-10-01 (DP-66), once migrations/20261001_domain_history_append_only.sql
+ * had landed; tests/db/domain-history-append-only.dbtest.ts reads a refusal as
+ * 42501 as well as the trigger's.
  */
 export const APPEND_ONLY_TABLES = Object.freeze(
   [
@@ -212,6 +213,35 @@ export const APPEND_ONLY_TABLES = Object.freeze(
     { schema: 'public', name: 'doc_revisions' },
     { schema: 'public', name: 'concept2cure_signatures' },
     { schema: 'public', name: 'concept2cure_submission_snapshots' },
+    // DP-66 (plan P1-52), 2026-10-01. Audit, history and ledger stores that had
+    // no trigger and full DML for the runtime role. A census of every writer
+    // found each written by INSERT only (no UPDATE, DELETE, TRUNCATE, upsert or
+    // FOR UPDATE on any path); foreign-key actions run as the table's owner, so
+    // a ceiling here changes none of them
+    // (docs/evidence/D6/2026-10-01-tranche-4/DP-66-store-ceiling/).
+    { schema: 'public', name: 'proof_audit_logs' },
+    { schema: 'public', name: 'coauthor_validation_history' },
+    { schema: 'public', name: 'embedding_audit_log' },
+    { schema: 'public', name: 'ai_provider_audit_log' },
+    // Its creator left the runtime role DELETE for erasure and retention
+    // (20260813_ai_gateway_audit_log.sql); no runtime path uses it, and an
+    // erasure belongs behind a door, as the turn records' is (06152498).
+    { schema: 'ai', name: 'gateway_audit_log' },
+    { schema: 'public', name: 'credit_ledger' },
+    { schema: 'public', name: 'document_audit_trail' },
+    { schema: 'public', name: 'ectd_submission_status_history' },
+    { schema: 'public', name: 'specification_audit_log' },
+    { schema: 'public', name: 'stab_audit' },
+    { schema: 'public', name: 'ivdr_validation_parameter_history' },
+    { schema: 'public', name: 'ivdr_evidence_result_history' },
+    { schema: 'public', name: 'ivdr_cdx_status_history' },
+    { schema: 'regulatory_harmonization', name: 'export_job_audit_log' },
+    // P1-24's domain-history stores, append-only by trigger since 00f94ee9 (DP-66).
+    { schema: 'public', name: 'workflow_history' },
+    { schema: 'public', name: 'document_audit_logs' },
+    { schema: 'public', name: 'regulatory_audit_logs' },
+    { schema: 'public', name: 'c2c_ana_actions' },
+    { schema: 'public', name: 'authoring_signatures' },
   ].map((t) => Object.freeze(t)),
 );
 

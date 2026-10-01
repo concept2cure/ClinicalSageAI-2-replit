@@ -80,6 +80,18 @@
 -- on audit.tamper_proof_log, not here, and claiming immutability that the
 -- retention path must later break would be a claim this schema cannot keep.
 --
+-- ── AMENDED 2026-10-01 (D6, plan P1-52 / DP-66; CLAUDE.md Rule 1) ────────────
+-- The runtime role is granted SELECT and INSERT here, no longer UPDATE and
+-- DELETE. A census of every writer found the ledger written by INSERT only;
+-- nothing at run time updates or deletes it. The application's own credentials
+-- could nevertheless rewrite or remove any organisation's AI provenance rows.
+-- The table joins the grant recipe's append-only stores
+-- (scripts/db/provision-app-role.mjs APPEND_ONLY_TABLES), which withholds
+-- UPDATE, DELETE and TRUNCATE from the runtime role on every deploy. Still no
+-- trigger, for the reason above: an erasure or retention disposal runs as the
+-- owner, behind a door of its own, as the assistant's turn records' purge does.
+-- Evidence: docs/evidence/D6/2026-10-01-tranche-4/DP-66-store-ceiling/.
+--
 -- Idempotent throughout (IF NOT EXISTS / ADD COLUMN IF NOT EXISTS); safe to
 -- re-run on every deploy, and safe against a deployment where the old runtime
 -- DDL already managed to create the table.
@@ -228,7 +240,8 @@ CREATE INDEX IF NOT EXISTS idx_gateway_audit_run         ON ai.gateway_audit_log
 -- either way; granting here means the ledger is writable the moment it exists,
 -- regardless of step ordering. `ai` carries no entry in
 -- SCHEMA_PRIVILEGE_OVERRIDES, so its runtime privileges are the full-DML
--- default — matched here deliberately (see "Why this table is NOT immutable").
+-- default; since 2026-10-01 the recipe withholds UPDATE, DELETE and TRUNCATE
+-- on this table (see the amendment above), so this grants SELECT and INSERT.
 DO $$
 DECLARE
   app_role text := current_setting('app.service_role', TRUE);
@@ -236,7 +249,7 @@ BEGIN
   IF app_role IS NULL OR app_role = '' THEN app_role := 'app_service'; END IF;
   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = app_role) THEN
     EXECUTE format('GRANT USAGE ON SCHEMA ai TO %I', app_role);
-    EXECUTE format('GRANT SELECT, INSERT, UPDATE, DELETE ON ai.gateway_audit_log TO %I', app_role);
+    EXECUTE format('GRANT SELECT, INSERT ON ai.gateway_audit_log TO %I', app_role);
     EXECUTE format('GRANT USAGE, SELECT ON SEQUENCE ai.gateway_audit_log_id_seq TO %I', app_role);
     RAISE NOTICE '[ai-gateway] grants applied to %', app_role;
   END IF;
