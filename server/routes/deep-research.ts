@@ -23,6 +23,11 @@ import {
 import { getUsageSummary } from '../services/usage-metering.js';
 import { ai } from '../lib/unified-ai-client.js';
 import { serverError } from '../lib/api-response';
+import {
+  retrieveDataRoomEvidence,
+  RETRIEVAL_STATUS_MESSAGE,
+  type RetrievalStatus,
+} from '../services/data-room-retrieval';
 import { createScopedLogger } from '../utils/logger';
 
 const logger = createScopedLogger('deep-research');
@@ -341,36 +346,36 @@ router.post('/document/generate', requireTier('standard'), async (req: Request, 
     const templates = sectionTemplates[documentType] || sectionTemplates.csr;
 
     // ── Retrieve Data Room evidence for richer generation context ──────
+    // Per section, each with its own outcome. One failure used to end retrieval
+    // for every remaining section and was only logged, so an outage read as
+    // "no sources" (services/data-room-retrieval.ts says why that matters).
+    const { pool } = await import('../db.js');
     const dataRoomEvidence = new Map<string, string>();
-    try {
-      const { pool } = await import('../db.js');
-      const { getEmbeddingService } = await import('../services/enhancedEmbeddingService.js');
-      const embeddingService = getEmbeddingService(pool);
-      // The session's tenant key. This search used to pass none, so every
-      // section's evidence was ranked across every tenant's Data Room wherever
-      // RLS was not filtering. No key is a failed retrieval, never an unscoped one.
-      const { currentTenantOrgUuid, TenantKeyRequiredError } = await import('../db/currentTenant.js');
-      const orgUuid = await currentTenantOrgUuid(pool);
-      if (!orgUuid) throw new TenantKeyRequiredError('no tenant key for this session');
-      // Retrieve evidence once for the study, indexed by section relevance
-      for (const tmpl of templates) {
-        const searchQuery = `${tmpl.title} ${studyInfo.title} ${studyInfo.indication || ''}`.trim();
-        const results = await embeddingService.searchHybrid(searchQuery, {
-          limit: 3,
-          organizationUuid: orgUuid,
-          minSemanticScore: 0.65,
-        });
-        if (results.length > 0) {
-          const block = results.map((r: any, i: number) => {
-            const content = r.content.length > 400 ? r.content.substring(0, 400) + '…' : r.content;
-            return `[SRC-${i + 1}] "${r.title}"\n${content}`;
-          }).join('\n\n');
-          dataRoomEvidence.set(tmpl.number, block);
-        }
+    const retrievalBySection = new Map<string, RetrievalStatus>();
+    for (const tmpl of templates) {
+      const searchQuery = `${tmpl.title} ${studyInfo.title} ${studyInfo.indication || ''}`.trim();
+      const retrieval = await retrieveDataRoomEvidence(pool, searchQuery, {
+        limit: 3,
+        minSemanticScore: 0.65,
+      });
+      retrievalBySection.set(tmpl.number, retrieval.status);
+      if (retrieval.cause) {
+        logger.warn('Data Room retrieval failed', { section: tmpl.number, cause: retrieval.cause });
       }
-    } catch (e: any) {
-      console.warn('[DeepResearch] Data Room retrieval failed (non-fatal):', e.message);
+      if (retrieval.hits.length > 0) {
+        const block = retrieval.hits.map((r, i) => {
+          const content = r.content.length > 400 ? r.content.substring(0, 400) + '…' : r.content;
+          return `[SRC-${i + 1}] "${r.title}"\n${content}`;
+        }).join('\n\n');
+        dataRoomEvidence.set(tmpl.number, block);
+      }
     }
+    const statuses = [...retrievalBySection.values()];
+    const retrievalStatus: RetrievalStatus = statuses.includes('failed')
+      ? 'failed'
+      : statuses.includes('ok')
+        ? 'ok'
+        : 'empty';
 
     // Generate content for each section using Claude
     const sections = await Promise.all(
@@ -440,6 +445,7 @@ Generate the section content with proper regulatory structure and cross-referenc
             wordCount: content.split(/\s+/).length,
             agency: agencies[0],
             sourcesUsed: dataRoomEvidence.has(tmpl.number) ? true : false,
+            retrievalStatus: retrievalBySection.get(tmpl.number) ?? 'failed',
           };
         } catch {
           return {
@@ -449,6 +455,8 @@ Generate the section content with proper regulatory structure and cross-referenc
             status: 'template_only',
             wordCount: 0,
             agency: agencies[0],
+            sourcesUsed: false,
+            retrievalStatus: retrievalBySection.get(tmpl.number) ?? 'failed',
           };
         }
       })
@@ -499,7 +507,10 @@ Generate the section content with proper regulatory structure and cross-referenc
         sectionsWithSources: sourcedCount,
         avgMsPerSection: draftedCount > 0 ? Math.round(totalLatencyMs / draftedCount) : 0,
         wordsPerMinute: totalLatencyMs > 0 ? Math.round((totalWordCount / (totalLatencyMs / 60000))) : 0,
+        sectionsRetrievalFailed: statuses.filter(st => st === 'failed').length,
       },
+      retrievalStatus,
+      retrievalMessage: RETRIEVAL_STATUS_MESSAGE[retrievalStatus],
     });
   } catch (err) {
     return serverError(res, logger, 'generating the document', err);
