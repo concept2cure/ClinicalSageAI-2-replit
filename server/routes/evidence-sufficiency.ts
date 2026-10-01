@@ -19,8 +19,11 @@ import {
 } from '../services/evidence-sufficiency/evidence-sufficiency.service';
 import { recordAuditRow, type AuditRowOutcome } from '../services/audit/audit-write-outcome';
 import type { SubmissionPathway } from '../../shared/schema/evidence-sufficiency';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('evidence-sufficiency');
 router.use(authenticateToken);
 
 function getOrgId(req: Request): number | null {
@@ -111,8 +114,10 @@ router.post(
       }
 
       res.json(auditTrail ? { ...result, auditTrail } : result);
-    } catch (err: any) {
-      res.status(500).json({ error: 'Assessment failed', detail: err?.message });
+    } catch (err) {
+      return serverError(res, log, 'running the sufficiency assessment', err, {
+        programId: String(req.params.programId),
+      });
     }
   }
 );
@@ -126,8 +131,10 @@ router.get(
     try {
       const rows = await listProgramAssessments(orgId, String(req.params.programId), limit);
       res.json({ programId: req.params.programId, assessments: rows, count: rows.length });
-    } catch (err: any) {
-      res.status(500).json({ error: 'List failed', detail: err?.message });
+    } catch (err) {
+      return serverError(res, log, 'listing the program assessments', err, {
+        programId: String(req.params.programId),
+      });
     }
   }
 );
@@ -139,8 +146,8 @@ router.get('/assessments/:id', async (req: Request, res: Response) => {
     const row = await getAssessment(orgId, String(req.params.id));
     if (!row) return res.status(404).json({ error: 'Assessment not found' });
     res.json(row);
-  } catch (err: any) {
-    res.status(500).json({ error: 'Fetch failed', detail: err?.message });
+  } catch (err) {
+    return serverError(res, log, 'reading the assessment', err, { assessmentId: String(req.params.id) });
   }
 });
 

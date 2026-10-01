@@ -1,0 +1,100 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/subscriptions-routes-5xx-containment.test.ts > report subscription 500s: envelope out, detail to the log > GET /api/reports/download/:personaId/:filename 83ms
+ ✓ server/routes/__tests__/subscriptions-routes-5xx-containment.test.ts > report subscription 500s: envelope out, detail to the log > GET /api/reports/preview/:personaId/:imageFile 29ms
+ ✓ server/routes/__tests__/subscriptions-routes-5xx-containment.test.ts > report subscription 500s: envelope out, detail to the log > POST /api/reports/generate/:personaId 24ms
+ ✓ server/routes/__tests__/subscriptions-routes-5xx-containment.test.ts > report subscription 500s: envelope out, detail to the log > POST /api/reports/subscribe/:personaId 14ms
+ ✓ server/routes/__tests__/subscriptions-routes-5xx-containment.test.ts > report subscription 500s: envelope out, detail to the log > creates no directories when they already exist, and leaves the 404 unchanged 18ms
+ ✓ server/routes/__tests__/se-matrix-5xx-containment.test.ts > se-matrix: no thrower text in a 5xx body > a failed program-access read answers 500 with the envelope 43ms
+ ✓ server/routes/__tests__/se-matrix-5xx-containment.test.ts > se-matrix: no thrower text in a 5xx body > an unreachable shadow service answers 502 with its sentence and no detail 8ms
+ ✓ server/routes/__tests__/se-matrix-5xx-containment.test.ts > se-matrix: no thrower text in a 5xx body > leaves the 403 and 422 answers unchanged 7ms
+ ✓ server/routes/__tests__/nanoBanana-5xx-containment.test.ts > nano-banana 500s: envelope out, detail to the log > POST /generate 50ms
+ ✓ server/routes/__tests__/nanoBanana-5xx-containment.test.ts > nano-banana 500s: envelope out, detail to the log > POST /edit 32ms
+ ✓ server/routes/__tests__/nanoBanana-5xx-containment.test.ts > nano-banana 500s: envelope out, detail to the log > POST /presentation 24ms
+ ✓ server/routes/__tests__/nanoBanana-5xx-containment.test.ts > nano-banana 500s: envelope out, detail to the log > POST /chat 13ms
+ ✓ server/routes/__tests__/nanoBanana-5xx-containment.test.ts > nano-banana 500s: envelope out, detail to the log > leaves the 400 answers unchanged 5ms
+ ✓ server/routes/__tests__/evidence-sufficiency-5xx-containment.test.ts > evidence-sufficiency 500s: envelope out, detail to the log > POST /programs/:programId/assess 116ms
+ ✓ server/routes/__tests__/evidence-sufficiency-5xx-containment.test.ts > evidence-sufficiency 500s: envelope out, detail to the log > GET /programs/:programId/assessments 39ms
+ ✓ server/routes/__tests__/evidence-sufficiency-5xx-containment.test.ts > evidence-sufficiency 500s: envelope out, detail to the log > GET /assessments/:id 6ms
+ ✓ server/routes/__tests__/evidence-sufficiency-5xx-containment.test.ts > evidence-sufficiency 500s: envelope out, detail to the log > leaves the 422 and 404 answers unchanged 11ms
+ ✓ server/routes/__tests__/universal-packager-5xx-containment.test.ts > packager 500s: envelope out, detail to the log > POST /generate 55ms
+ ✓ server/routes/__tests__/universal-packager-5xx-containment.test.ts > packager 500s: envelope out, detail to the log > POST /download/:format 22ms
+ ✓ server/routes/__tests__/universal-packager-5xx-containment.test.ts > packager 500s: envelope out, detail to the log > POST /multi-download 7ms
+ ✓ server/routes/__tests__/universal-packager-5xx-containment.test.ts > packager 500s: envelope out, detail to the log > leaves the 400 answers unchanged 4ms
+ ✓ server/routes/__tests__/real-world-evidence-5xx-containment.test.ts > FAERS 503: the outage is stated, the transport text is logged > POST /faers 77ms
+ ✓ server/routes/__tests__/real-world-evidence-5xx-containment.test.ts > FAERS 503: the outage is stated, the transport text is logged > POST /signal-detection 15ms
+ ✓ server/routes/__tests__/real-world-evidence-5xx-containment.test.ts > study 501: the unconfigured source is named, the deployment variable is not > POST /query with no FHIR source connected 17ms
+ ✓ server/routes/__tests__/real-world-evidence-5xx-containment.test.ts > study 501: the unconfigured source is named, the deployment variable is not > POST /query with a licensed vendor source 15ms
+stderr | server/routes/__tests__/knowledge-base-5xx-containment.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/knowledge-base-5xx-containment.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/knowledge-base-5xx-containment.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/routes/__tests__/planner-routes-5xx-containment.test.ts > planner 500s: envelope out, detail to the log > POST /export-sap 52ms
+ ✓ server/routes/__tests__/planner-routes-5xx-containment.test.ts > planner 500s: envelope out, detail to the log > POST /export-ind 14ms
+ ✓ server/routes/__tests__/planner-routes-5xx-containment.test.ts > planner 500s: envelope out, detail to the log > POST /export-summary 8ms
+ ✓ server/routes/__tests__/planner-routes-5xx-containment.test.ts > planner 500s: envelope out, detail to the log > POST /generate-ind 10ms
+ ✓ server/routes/__tests__/planner-routes-5xx-containment.test.ts > planner 500s: envelope out, detail to the log > POST /generate-sap 13ms
+ ✓ server/routes/__tests__/planner-routes-5xx-containment.test.ts > planner 500s: envelope out, detail to the log > POST /generate-summary 10ms
+ ✓ server/routes/__tests__/planner-routes-5xx-containment.test.ts > planner 500s: envelope out, detail to the log > leaves the 400 answers unchanged 9ms
+ ✓ server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base 502s: the status and sentence stay, the upstream text goes to the log > GET /search-connectors 53ms
+ ✓ server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base 502s: the status and sentence stay, the upstream text goes to the log > POST /upload 50ms
+ ✓ server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base 502s: the status and sentence stay, the upstream text goes to the log > GET /context/:projectId 5ms
+ ✓ server/routes/__tests__/knowledge-base-5xx-containment.test.ts > knowledge-base 502s: the status and sentence stay, the upstream text goes to the log > leaves the 422 answer unchanged 8ms
+ ✓ server/routes/__tests__/predictive-sections-5xx-containment.test.ts > predictive-sections 500s: envelope out, detail to the log > POST /suggestions 125ms
+ ✓ server/routes/__tests__/predictive-sections-5xx-containment.test.ts > predictive-sections 500s: envelope out, detail to the log > POST /analyze-document 8ms
+ ✓ server/routes/__tests__/predictive-sections-5xx-containment.test.ts > predictive-sections 500s: envelope out, detail to the log > POST /update-context 61ms
+ ✓ server/routes/__tests__/predictive-sections-5xx-containment.test.ts > predictive-sections 500s: envelope out, detail to the log > GET /completion-status/:submissionType 67ms
+ ✓ server/routes/__tests__/predictive-sections-5xx-containment.test.ts > predictive-sections 500s: envelope out, detail to the log > leaves the 400 answer unchanged 9ms
+ ✓ server/routes/__tests__/platform-capabilities.routes-5xx-containment.test.ts > platform AI-provider 500s: envelope out, detail to the log > GET /ai-providers 49ms
+ ✓ server/routes/__tests__/platform-capabilities.routes-5xx-containment.test.ts > platform AI-provider 500s: envelope out, detail to the log > PUT /ai-providers/preference 44ms
+ ✓ server/routes/__tests__/platform-capabilities.routes-5xx-containment.test.ts > platform AI-provider 500s: envelope out, detail to the log > leaves the 400 and 501 answers unchanged 50ms
+ ✓ server/routes/__tests__/health-5xx-containment.test.ts > health probe failures: no thrower text in the body > GET /health/ready — a throwing probe answers 500 with the envelope 42ms
+ ✓ server/routes/__tests__/health-5xx-containment.test.ts > health probe failures: no thrower text in the body > GET /health/deep — a failed database probe degrades to 503 without the driver text 8ms
+ ✓ server/routes/__tests__/health-5xx-containment.test.ts > health probe failures: no thrower text in the body > GET /health/deep — a failed SagePlus probe degrades to 503 without the thrower text 5ms
+ ✓ server/routes/__tests__/health-5xx-containment.test.ts > health probe failures: no thrower text in the body > GET /health/deep — a failed latency probe keeps status ok and drops the thrower text 3ms
+ ✓ server/routes/__tests__/health-5xx-containment.test.ts > health probe failures: no thrower text in the body > leaves the healthy answers unchanged 6ms
+ ✓ server/routes/__tests__/part11-compliance-5xx-containment.test.ts > Part 11 500s: envelope out, detail to the log > GET /signatures/:signatureId/manifest — a non-schema query failure 94ms
+ ✓ server/routes/__tests__/part11-compliance-5xx-containment.test.ts > Part 11 500s: envelope out, detail to the log > GET /audit-trail/seal-integrity — a verifier failure (platform admin) 12ms
+ ✓ server/routes/__tests__/part11-compliance-5xx-containment.test.ts > Part 11 500s: envelope out, detail to the log > leaves the 503 for an unprovisioned store and the 403 for an org admin unchanged 74ms
+ ✓ server/routes/__tests__/tenant-export-5xx-containment.test.ts > tenant-export 500s: envelope out, detail to the log > GET / 56ms
+ ✓ server/routes/__tests__/tenant-export-5xx-containment.test.ts > tenant-export 500s: envelope out, detail to the log > GET /full 22ms
+ ✓ server/routes/__tests__/tenant-export-5xx-containment.test.ts > tenant-export 500s: envelope out, detail to the log > GET /attestation 4ms
+ ✓ server/routes/__tests__/tenant-export-5xx-containment.test.ts > tenant-export 500s: envelope out, detail to the log > leaves the 404 and the 503 answers unchanged 22ms
+ ✓ server/routes/__tests__/manifest-routes-5xx-containment.test.ts > report manifest 500s: envelope out, detail to the log > GET /personas 23ms
+ ✓ server/routes/__tests__/manifest-routes-5xx-containment.test.ts > report manifest 500s: envelope out, detail to the log > GET /persona/:personaId 5ms
+ ✓ server/routes/__tests__/manifest-routes-5xx-containment.test.ts > report manifest 500s: envelope out, detail to the log > GET /launch-config 4ms
+ ✓ server/routes/__tests__/manifest-routes-5xx-containment.test.ts > report manifest 500s: envelope out, detail to the log > GET /index 3ms
+ ✓ server/routes/__tests__/manifest-routes-5xx-containment.test.ts > report manifest 500s: envelope out, detail to the log > leaves the 404 answer unchanged 5ms
+ ✓ server/routes/__tests__/documentOrchestrationRoutes-5xx-containment.test.ts > 510(k) orchestration 500s: envelope out, detail to the log > POST /api/510k/:projectId/generate-documents 124ms
+ ✓ server/routes/__tests__/documentOrchestrationRoutes-5xx-containment.test.ts > 510(k) orchestration 500s: envelope out, detail to the log > POST /api/510k/documents/:documentId/lock 7ms
+ ✓ server/routes/__tests__/documentOrchestrationRoutes-5xx-containment.test.ts > 510(k) orchestration 500s: envelope out, detail to the log > POST /api/510k/documents/:documentId/version 35ms
+ ✓ server/routes/__tests__/documentOrchestrationRoutes-5xx-containment.test.ts > 510(k) orchestration 500s: envelope out, detail to the log > leaves the 401 for a missing actor unchanged 6ms
+ ✓ tests/routes/project-modules-5xx-containment.test.ts > project-modules 500s: envelope out, detail to the log > POST /:projectId/modules 5ms
+ ✓ tests/routes/project-modules-5xx-containment.test.ts > project-modules 500s: envelope out, detail to the log > POST /:projectId/modules/bulk 1ms
+ ✓ tests/routes/project-modules-5xx-containment.test.ts > project-modules 500s: envelope out, detail to the log > leaves the Zod 400 unchanged 1ms
+stderr | tests/routes/ectd-compile-5xx-containment.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > GET /:projectIdent/history — an unreadable history is still the coded 503, unchanged
+[eCTD History] query failed for Project 42: SENTINEL-DB-DETAIL relation "ectd_required_sections" does not exist
+
+ ✓ tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > POST /:projectIdent/compile 8ms
+ ✓ tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > GET /:projectIdent/status 2ms
+ ✓ tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > POST /:projectIdent/validate 1ms
+ ✓ tests/routes/ectd-compile-5xx-containment.test.ts > ectd-compile 500s: envelope out, detail to the log > GET /:projectIdent/history — an unreadable history is still the coded 503, unchanged 5ms
+
+ Test Files  17 passed (17)
+      Tests  72 passed (72)
+   Start at  08:09:20
+   Duration  14.44s (transform 7.42s, setup 1.30s, import 27.19s, tests 2.19s, environment 4ms)
+

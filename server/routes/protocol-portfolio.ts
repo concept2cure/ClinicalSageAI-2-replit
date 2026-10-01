@@ -11,8 +11,11 @@
 import { Router, type Request, type Response } from 'express';
 import { getPortfolioAnalytics } from '../services/protocols/protocol-portfolio-service';
 import { recordPortfolioView } from '../services/protocol-portfolio-metrics';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('protocol-portfolio');
 
 function resolveOrgId(req: Request): number | null {
   const r = req as any;
@@ -21,7 +24,7 @@ function resolveOrgId(req: Request): number | null {
   return Number.isFinite(n) ? n : null;
 }
 function fail(res: Response, err: unknown): void {
-  res.status(500).json({ error: { code: 'INTERNAL', message: err instanceof Error ? err.message : 'Request failed.' } });
+  serverError(res, log, 'handling the protocol portfolio request', err);
 }
 
 router.get('/analytics', async (req, res) => {

@@ -87,6 +87,10 @@ import {
   SubmissionError,
   SUBMISSION_ERROR_STATUS,
 } from '../services/submission-service/submission-service';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
+
+const log = createScopedLogger('document-lifecycle');
 
 export interface DocumentLifecycleRouterOptions {
   /** Drizzle handle. Defaults to the runtime db. */
@@ -174,16 +178,16 @@ export function createDocumentLifecycleRouter(opts: DocumentLifecycleRouterOptio
 
   // Async handlers must not throw into Express unguarded (Express 4 does not
   // catch async rejections — the request would hang). Every handler is wrapped
-  // so a failure returns a clean 500 with the reason.
+  // so a failure returns a clean 500. The reason goes to the log against the
+  // request id, never into the body: a Drizzle failure's message is the SQL
+  // text with its table and column names (P1-17, IAM-18 (1)).
   const wrap =
     (fn: (req: Request, res: Response) => Promise<Response | void>) =>
     async (req: Request, res: Response): Promise<Response | void> => {
       try {
         return await fn(req, res);
       } catch (err) {
-        return res
-          .status(500)
-          .json({ ok: false, error: 'internal_error', detail: err instanceof Error ? err.message : String(err) });
+        return serverError(res, log, 'handling the document lifecycle request', err);
       }
     };
 

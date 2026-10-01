@@ -28,6 +28,8 @@ import rbacService from '../services/roleBasedAccess';
 import { verifyAuditIntegrity } from '../services/audit/audit-integrity-service';
 import { requestPgClient } from '../db/requestDb';
 import { VerificationUnavailableError, describeFailure } from '../lib/verification-outcome';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 /**
  * The request-scoped, tenant-pinned SQL client.
@@ -307,6 +309,7 @@ function computeHash(data: string): string {
 // ---------------------------------------------------------------------------
 
 const router = Router();
+const log = createScopedLogger('part11');
 
 // ============================
 // ELECTRONIC SIGNATURES (§11.50, §11.70, §11.100)
@@ -539,10 +542,7 @@ router.get('/signatures/:signatureId/manifest', async (req: Request, res: Respon
       // Store or its D6 columns unprovisioned — fail closed, honestly.
       return res.status(503).json({ success: false, error: 'SIGNATURE_STORE_UNPROVISIONED' });
     }
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to build signature manifest',
-    });
+    return serverError(res, log, 'building the signature manifest', error, { signatureId: idNum });
   }
 });
 
@@ -1289,7 +1289,7 @@ router.get('/audit-trail/seal-integrity', async (req: Request, res: Response) =>
     const result = await verifyAuditIntegrity(pool);
     return res.json({ success: true, data: result });
   } catch (error) {
-    return res.status(500).json({ success: false, error: error instanceof Error ? error.message : 'Verification failed.' });
+    return serverError(res, log, 'verifying the audit seal chain', error);
   }
 });
 
