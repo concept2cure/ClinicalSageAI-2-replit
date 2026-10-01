@@ -78,10 +78,13 @@ import {
   TrackChanges,
   collectSuggestions,
   settleAcceptedContributions,
+  proposeReplacement,
   type SuggestionAuthor,
   type AcceptedInsertion,
   type SuggestionDecision,
   type SuggestionRange,
+  type ReplacementProposal,
+  type ProposeResult,
 } from './suggestions';
 import {
   CommentAnchor,
@@ -133,6 +136,14 @@ export interface RichSectionEditorHandle {
   save: () => Promise<boolean>;
   /** Insert proposed text at the caret as a tracked suggestion. */
   insertSuggestion: (text: string, author: SuggestionAuthor) => boolean;
+  /**
+   * Redline the one passage `proposal.quote` names: struck, with the
+   * replacement inserted after it, both attributed to `author` (see
+   * suggestions.ts `proposeReplacement`). Refuses `not-editable` where
+   * insertSuggestion returns false — source mode, a frozen or read-only
+   * section — and otherwise says why it could not place the proposal.
+   */
+  proposeReplacement: (proposal: ReplacementProposal, author: SuggestionAuthor) => ProposeResult;
   /** Current serialized content (unsaved included). */
   getContent: () => string;
   /**
@@ -1501,6 +1512,15 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           // Frozen / read-only: the save path would refuse it anyway.
           if (!editor.isEditable) return false;
           return editor.chain().focus().insertSuggestedContent(text, author).run();
+        },
+        /* The same three refusals as insertSuggestion, for the same reasons:
+           in source mode the textarea is the document and the editor a shell
+           that is never saved, and a frozen section would be refused at save. */
+        proposeReplacement: (proposal: ReplacementProposal, author: SuggestionAuthor): ProposeResult => {
+          if (!editor || editor.isDestroyed) return { ok: false, reason: 'not-editable' };
+          if (boot.mode !== 'rich') return { ok: false, reason: 'not-editable' };
+          if (!editor.isEditable) return { ok: false, reason: 'not-editable' };
+          return proposeReplacement(editor, { ...proposal, author });
         },
         getContent: () =>
           boot.mode === 'source' ? sourceText : editor ? serialize(editor) : '',

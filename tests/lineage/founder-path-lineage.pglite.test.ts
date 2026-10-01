@@ -235,6 +235,9 @@ const MIGRATIONS = [
   'migrations/20260509_submission_gateways.sql',
   'migrations/20260629_submission_transmittals_mdn_raw.sql',
   'migrations/20260629_submission_transmittals_active_lock.sql',
+  // Which account a transmit is sent under (b7bf25037, 2026-10-01). The guard
+  // resolves it before the wire, and an unreadable choice refuses the send.
+  'migrations/20261001g_organization_gateway_accounts.sql',
   // Last: the same-organization project keys (PF-04) over every store above
   // that names a project. After 20260727_prm_program_link, whose unchecked
   // backfill must never run with the key present.
@@ -272,7 +275,7 @@ describe('LX-00 — the founder path: project → Data Room → AnA → editor �
   it('hop 4 · edit-save — a person edits the quoted section and saves it through the section save path', () => hopEditSave(world), T);
   it('hop 5 · seal — the document is frozen and approved under a Part 11 signature', () => hopSeal(world), T);
   it('hop 6 · file-to-vault — the sealed document is filed to the project’s Vault', () => hopFileToVault(world), T);
-  it('hop 6b · vault approval — the Vault copy is reviewed and approved (FD5 (a): an Authoring export is approved again in the Vault)', () => hopVaultApproval(world), T);
+  it('hop 6b · vault approval — the Vault copy is reviewed and approved (FD5 (c): approved in Authoring without a review, so approved in the Vault)', () => hopVaultApproval(world), T);
   it('hop 7 · place — the filing copy and the Vault copy are placed as submission leaves', () => hopPlace(world), T);
   it('hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)', () => hopTransmit(world), T);
   it('walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project', () => walkBack(world), T);

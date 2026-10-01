@@ -349,6 +349,7 @@ export async function pgliteInsertSection(db: PGlite, s: FakeSection): Promise<v
 
 /** Replace whatever the database holds with `st`. */
 export async function pgliteSeed(db: PGlite, st: FakeState): Promise<void> {
+  // tenant-isolation-safe: resets this test's own in-memory PGlite database before seeding it; no tenant's data exists outside the test
   await db.exec('DELETE FROM authoring_sections; DELETE FROM authoring_documents; DELETE FROM regulatory_programs; DELETE FROM projects;');
   for (const p of st.programs) {
     await db.query('INSERT INTO regulatory_programs (id, organization_id, deleted_at) VALUES ($1,$2,$3)', [p.id, p.organization_id, p.deleted ? new Date().toISOString() : null]);

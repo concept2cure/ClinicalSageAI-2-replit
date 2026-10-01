@@ -39,12 +39,18 @@ import { writeChainedAuditRow } from '../auditService';
 import { createScopedLogger } from '../../utils/logger';
 import { LOCKED_DOCUMENT_STATUSES } from './document-lock';
 import { columnState, writeAuthoringAuditTrail, type AuthoringAuditContext } from './authoring-evidence';
-import { renderAuthoringExport, logExport, computeDocHash, type RenderedExport } from './authoring-export';
+import { renderAuthoringExport, logExport, computeDocHash, sectionsDigest, type RenderedExport } from './authoring-export';
 import type { AuthoringPool, AuthoringActor } from './authoring-documents';
 import { ingestVaultDocument } from '../vault/vault-ingest.service';
 import { placeVaultDocument, type VaultFilingRecord } from '../vault/vault-placement.service';
 import { resolveVaultView, isFolderInView, folderLabel } from '../vault/vault-filing.service';
 import { VAULT_INGEST_DOCUMENT_TYPES } from '../../../shared/constants/domain/vault-taxonomy';
+import {
+  carryAuthoringApproval,
+  readAuthoringSignatures,
+  type CarryOutcome,
+} from '../regulatory/authoring-approval-carryover';
+import type { CanonicalStoreDb } from '../regulatory/canonicalDocumentStore';
 
 const logger = createScopedLogger('authoring-file-to-vault');
 
@@ -64,6 +70,8 @@ export interface FileToVaultArgs {
   documentType?: string | null;
   ipAddress?: string;
   userAgent?: string;
+  /** The Drizzle handle the Vault lifecycle record is written on. Defaults to the runtime db. */
+  lifecycleDb?: CanonicalStoreDb;
 }
 
 export type FileToVaultOutcome =
@@ -77,6 +85,8 @@ export type FileToVaultOutcome =
       fileName: string;
       programId: string;
       sealed: boolean;
+      /** Whether the Authoring approval carried to the Vault version (FD5 (c)), and why not when it did not. */
+      approval: CarryOutcome;
     };
 
 interface DocRow {
@@ -87,6 +97,7 @@ interface DocRow {
   locked_at: string | Date | null;
   client_program_id: string | null;
   version: string | null;
+  created_by: string | null;
   created_at: unknown;
 }
 
@@ -116,7 +127,7 @@ async function readDocumentForFiling(
     // rather than chosen; read it only where the column exists.
     const hasProvenance = (await columnState(pool, 'provenance')) === 'present';
     const r = await client.query(
-      `SELECT id, title, module, status, locked_at, client_program_id, version, created_at${hasProvenance ? ', provenance' : ''}
+      `SELECT id, title, module, status, locked_at, client_program_id, version, created_by, created_at${hasProvenance ? ', provenance' : ''}
          FROM authoring_documents WHERE id = $1 AND tenant_id = $2
          FOR UPDATE NOWAIT`,
       [docId, tenantId],
@@ -426,6 +437,8 @@ export async function fileAuthoringDocumentToVault(args: FileToVaultArgs): Promi
       : refuse(500, 'FILE_TO_VAULT_FAILED', 'The filing could not be recorded, so the document was not filed. Nothing was kept in the vault.');
   }
 
+  const approval = await carryApprovalToVault(args, doc, sectionsRes.rows, admitted.id, rendered.artifactSha256);
+
   return {
     kind: 'filed',
     vaultDocumentId: admitted.id,
@@ -435,7 +448,49 @@ export async function fileAuthoringDocumentToVault(args: FileToVaultArgs): Promi
     fileName: rendered.fileName,
     programId,
     sealed,
+    approval,
   };
+}
+
+/**
+ * Step 5, after the filing has committed: carry the Authoring approval to the
+ * Vault version when it is bound to these bytes (FD5 (c),
+ * authoring-approval-carryover.ts). Its own transaction; a failure leaves the
+ * version filed and unapproved, and says so.
+ */
+async function carryApprovalToVault(
+  args: FileToVaultArgs,
+  doc: DocRow,
+  renderedSections: Array<{ code: string; content: string | null }>,
+  vaultDocumentId: string,
+  artifactSha256: string,
+): Promise<CarryOutcome> {
+  const filerId = /^\d+$/.test(args.actor.id) ? Number(args.actor.id) : null;
+  if (filerId === null) {
+    return { carried: false, reason: 'The filer is not a user on record, so nothing can be recorded on their behalf.' };
+  }
+  try {
+    const db = args.lifecycleDb ?? ((await import('../../db')) as unknown as { db: CanonicalStoreDb }).db;
+    return await carryAuthoringApproval(db, {
+      organizationId: args.tenantId,
+      filerId,
+      vaultDocumentId,
+      artifactSha256,
+      authoringDocumentId: doc.id,
+      authoringAuthor: doc.created_by,
+      status: doc.status,
+      renderedDigest: sectionsDigest(renderedSections),
+      signatures: await readAuthoringSignatures(args.pool, doc.id, args.tenantId),
+    });
+  } catch (err) {
+    logger.error('the Authoring approval could not be carried to the Vault version; it stays unapproved', {
+      docId: doc.id, vaultDocumentId, err: err instanceof Error ? err.message : String(err),
+    });
+    return {
+      carried: false,
+      reason: 'The approval could not be recorded in the Vault, so this version needs its review and approval there.',
+    };
+  }
 }
 
 /** Exposed for the route: a well-formed folder id is a short slug, never a path. */

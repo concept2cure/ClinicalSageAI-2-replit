@@ -1,0 +1,22 @@
+  ✓ FAILS on a new org-keyed table nothing reaches — and a commented-out entry does not count as listed
+  ✓ FAILS on a foreign key to a purged table that does not cascade (SET NULL, NO ACTION)
+  ✓ FAILS on an unlisted parent of a purged table — a purged child does not reach its parent
+  ✓ FAILS on a table that cascades only from organizations — a purge UPDATEs that row, never deletes it
+  ✓ FAILS on a cascade from a parent the purge never reaches (cascade is followed only from reached tables)
+  ✓ quiet — listed, cascade-reached in one and two hops, or baselined; view / non-org / vault tables ignored
+  ✓ quiet — a residue table already in the baseline stays suppressed
+  ✓ reports a baselined table the purge now reaches, and asks for the gain to be locked in
+  ✓ --write-baseline KEEPS a baselined table this database cannot see, drops only an earned one
+  ✓ FAILS closed on a missing baseline — every residue table counts as NEW
+  ✓ FAILS closed when DATABASE_URL is unset
+  ✓ FAILS closed on a placeholder DATABASE_URL
+  ✓ FAILS closed, readably, when the database cannot be reached
+  ✓ FAILS closed on a partly provisioned database (3 of 4 probe tables) rather than measuring it
+  ✓ FAILS closed on an empty database rather than measuring it
+  ✓ FAILS closed when the offboarding service is missing
+  ✓ FAILS closed when PURGE_CHILD_TABLES is not a frozen literal it can read
+  ✓ FAILS closed on an entry it cannot interpret instead of dropping it
+  ✓ FAILS closed on a list with no public-schema entries
+  ✓ FAILS closed on a list that parses to zero entries
+
+[ci:purge-coverage:selftest] 20 passed — the gate fails on what it exists to catch.
