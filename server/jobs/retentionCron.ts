@@ -29,7 +29,6 @@
  * task's disk.
  */
 
-import nodemailer from 'nodemailer';
 import cron from 'node-cron';
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import { db, pool } from '../db';
@@ -40,6 +39,7 @@ import {
 } from '../../shared/schema/vault';
 import { writeChainedAuditRow } from '../services/auditService';
 import { reportSecurityAlert } from '../services/security-alerts';
+import { sendGenericEmail } from '../services/emailService';
 import { runWithSystemTenantScope } from '../db/tenantStore';
 import { runScheduledOncePerWindow, windowKeyOf } from '../db/scheduledOnce';
 import { createScopedLogger } from '../utils/logger';
@@ -286,47 +286,43 @@ export async function runRetentionSweep(): Promise<RetentionSummary> {
   });
 }
 
-/** Best-effort admin notification. Recipients come from RETENTION_ADMIN_EMAILS
- *  (comma-separated); silently skipped when SMTP or recipients are unconfigured. */
+/**
+ * Best-effort admin notification. Recipients come from RETENTION_ADMIN_EMAILS
+ * (comma-separated); with none configured nothing is sent.
+ *
+ * Sent through the one mail path (services/emailService.ts), which reads the
+ * SMTP_HOST / SMTP_USER / SMTP_PASS that terraform/stack renders. This used to
+ * build its own transport from SMTP_PASSWORD, which nothing sets, so in
+ * production the summary was never sent and nothing said so. Recipients with
+ * no deliverable mail now raise the alert instead of passing silently.
+ */
 async function notifyAdmins(summary: RetentionSummary): Promise<void> {
   const recipients = (process.env.RETENTION_ADMIN_EMAILS || '')
     .split(',')
     .map(s => s.trim())
     .filter(Boolean);
+  if (!recipients.length) return;
 
-  if (!recipients.length || !process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
-    return;
-  }
-
-  try {
-    const transport = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.example.com',
-      port: Number(process.env.SMTP_PORT) || 587,
-      secure: process.env.SMTP_SECURE === 'true',
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASSWORD },
-    });
-    await transport.sendMail({
-      from: process.env.EMAIL_FROM || 'Concept2Cure Vault <no-reply@trialsage.ai>',
-      to: recipients.join(', '),
-      subject: `[Retention] ${summary.softDeleted} document(s) processed, ${summary.destructionRefused} destruction(s) refused`,
-      html: `<p>Document retention sweep complete.</p>
-        <ul>
-          <li>Scanned (expired): ${summary.scanned}</li>
-          <li>Archived: ${summary.archived}</li>
-          <li>Soft-deleted: ${summary.softDeleted}</li>
-          <li>Destruction refused (policy asks to destroy; awaiting the retention decision): ${summary.destructionRefused}</li>
-          <li>Already disposed of by another run: ${summary.alreadyDisposed}</li>
-          <li>Errors: ${summary.errors}</li>
-        </ul>`,
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error('[RETENTION] Failed to send notification:', message);
+  const lines: Array<[string, number]> = [
+    ['Scanned (expired)', summary.scanned],
+    ['Archived', summary.archived],
+    ['Soft-deleted', summary.softDeleted],
+    ['Destruction refused (policy asks to destroy; awaiting the retention decision)', summary.destructionRefused],
+    ['Already disposed of by another run', summary.alreadyDisposed],
+    ['Errors', summary.errors],
+  ];
+  const sent = await sendGenericEmail(
+    recipients.join(', '),
+    `[Retention] ${summary.softDeleted} document(s) processed, ${summary.destructionRefused} destruction(s) refused`,
+    ['Document retention sweep complete.', ...lines.map(([label, n]) => `${label}: ${n}`)].join('\n'),
+    `<p>Document retention sweep complete.</p>\n<ul>${lines.map(([label, n]) => `<li>${label}: ${n}</li>`).join('')}</ul>`,
+  );
+  if (!sent) {
+    logger.error('Retention sweep admin notification was not delivered', { recipients: recipients.length });
     reportSecurityAlert({
       kind: 'retention_notify_failed',
-      message: 'Retention sweep admin notification failed',
+      message: 'Retention sweep admin notification was not delivered',
       detail: {
-        error: message,
         scanned: summary.scanned,
         softDeleted: summary.softDeleted,
         destructionRefused: summary.destructionRefused,

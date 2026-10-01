@@ -121,6 +121,22 @@ and it passes 3/3.
 - **Dormant jobs behind unset flags:** `driftSentinelSweep`,
   `corpusIngestionSweep` and `regulatoryHorizonScan`. Each must go through
   `runScheduledOncePerWindow` before anyone enables it.
-- **The retention admin email.** It reads `SMTP_PASSWORD`, but the stack sets
-  `SMTP_PASS`, so in production the email is never sent. This is the next
-  unit.
+## Follow-up, same day: the retention admin email was never sent
+
+`retentionCron.ts` built its own nodemailer transport from `SMTP_PASSWORD`.
+Nothing sets that variable: terraform/stack renders `SMTP_HOST`, `SMTP_USER`
+and `SMTP_PASS`, which is what `services/emailService.ts` reads. In
+production the summary was therefore never sent, and nothing reported it.
+
+**Fix.** `notifyAdmins` now sends through `sendGenericEmail`, the one mail
+path (no second transport). If recipients are configured but the mail is not
+delivered, it raises `retention_notify_failed` instead of skipping silently.
+
+**Test (`retentionCron.policies.test.ts`).** It now sets the variables the
+stack renders, and sets `SMTP_PASSWORD` to a decoy value.
+
+- Before the fix, 3 failed:
+  - every recipient is emailed;
+  - unconfigured SMTP raises the alert;
+  - a send failure raises the alert.
+- After the fix, `server/jobs` passes 65/65.
