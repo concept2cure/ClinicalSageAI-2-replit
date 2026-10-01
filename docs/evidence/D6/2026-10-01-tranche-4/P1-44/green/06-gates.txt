@@ -1,0 +1,35 @@
+=== ci:server-error-leaks
+[ci:server-error-leaks] OK — 95 baselined site(s) across 61 file(s); no file gained one.
+[ci:server-error-leaks] 1 site(s) fixed since the baseline — shrink it with --write-baseline.
+exit=0
+=== ci:discarded-audit-write
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/home/user/ClinicalSageAI-2-replit/server/routes/qms.ts'
+}
+
+Node.js v22.22.2
+exit=1
+=== ci:dead-audit-catch
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/home/user/ClinicalSageAI-2-replit/server/routes/qms.ts'
+}
+
+Node.js v22.22.2
+exit=1
+=== ci:empty-state-honesty
+check-empty-state-honesty: no new occurrences. 1 baselined across 1 file(s).
+exit=0
+=== ci:fabricated-identity
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/home/user/ClinicalSageAI-2-replit/server/routes/qms.ts'
+}
+
+Node.js v22.22.2
+exit=1
+=== ci:drizzle-tenant-scope
+[ci:drizzle-tenant-scope] OK — 123 site(s), all baselined; 28 fixed since the baseline was written.
+[ci:drizzle-tenant-scope] Re-run with --write-baseline to bank the 28 fix(es).
+exit=0

@@ -1,0 +1,8 @@
+[ci:unkeyed-request-tables] 1069 tables created; 597 read by a per-request path; 108 of those carry NO tenant column; 109 baselined, 100 still unreviewed
+
+🚫 Stale baseline entries — these tables are no longer unkeyed-and-read:
+      audit.tamper_proof_log
+
+  A baseline that overstates the debt hides the next real entry.
+  Fix: npm run ci:unkeyed-request-tables:write-baseline
+

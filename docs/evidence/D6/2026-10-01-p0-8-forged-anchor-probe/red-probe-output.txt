@@ -1,0 +1,8 @@
+ × server/services/audit/__tests__/zz-forged-anchor-probe.dbtest.ts > probe (not committed): a newer anchor written after a truncation > truncate the anchored head, then write the next anchor as the task role can: is the truncation still reported? 184ms
+   → {"anchorKey":"anchors/audit-chain/2031/01/02/2031-01-02T02-00-00-000Z-2f06d8d9.json","anchoredAt":"2031-01-02T02:00:00.000Z","organizations":1,"status":"ok","reason":"every anchored head is present and unchanged (anchors/audit-chain/2031/01/02/2031-01-02T02-00-00-000Z-2f06d8d9.json)","breaks":[],"archived":[]}: expected 'ok' to be 'broken' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: {"anchorKey":"anchors/audit-chain/2031/01/02/2031-01-02T02-00-00-000Z-2f06d8d9.json","anchoredAt":"2031-01-02T02:00:00.000Z","organizations":1,"status":"ok","reason":"every anchored head is present and unchanged (anchors/audit-chain/2031/01/02/2031-01-02T02-00-00-000Z-2f06d8d9.json)","breaks":[],"archived":[]}: expected 'ok' to be 'broken' // Object.is equality
+Expected: "broken"
+Received: "ok"
+    219|     expect(verdict.status, JSON.stringify(verdict)).toBe('broken');
+      Tests  1 failed (1)

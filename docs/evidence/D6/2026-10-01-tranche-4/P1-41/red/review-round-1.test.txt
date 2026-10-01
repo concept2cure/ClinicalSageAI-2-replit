@@ -1,0 +1,113 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 2 — the integrity attestation summarises its own checks > ok only when every check is intact 4ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 2 — the integrity attestation summarises its own checks > false when any check is broken, whatever the others say 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 2 — the integrity attestation summarises its own checks > null, with how many could not verify, when none is broken and not all are intact 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 3 — what the seal is, and who verifies it, said plainly > the instruction names the HMAC key the platform holds, the verifier, the CSV case and the inspector 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 3 — what the seal is, and who verifies it, said plainly > the manifest does not claim independent verification 2ms
+ × server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 4 — the access review says what it cannot show > the past role and the review decision are stated as not shown; role changes are where they are recorded 6ms
+   → expected [ …(4) ] to include 'A member\'s role on a past date is no…'
+ × server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 4 — the access review says what it cannot show > P1-41: no longer says an administrator's role change or removal goes unrecorded 2ms
+   → expected 'A member who was removed leaves no me…' not to match /role changes are not recorded/
+ × server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 5 — administrative changes: which settings changes are recorded, exactly > tenant configuration is recorded by section and field name, with values only for security and audit-trail retention 1ms
+   → expected 'A change to a member\'s organisation …' to match /Tenant configuration changes and rese…/
+ × server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 5 — administrative changes: which settings changes are recorded, exactly > P1-41: no longer says a role change, a removal or a tenant configuration change goes unrecorded 1ms
+   → expected 'A change to a member\'s organisation …' not to match /organisation role, and a member's rem…/
+ × server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 5 — administrative changes: which settings changes are recorded, exactly > P1-41: reads the actions the membership and tenant configuration writers store 1ms
+   → expected [ 'api_key_created', …(7) ] to include 'member_role_changed'
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 6 — the signature register shows what was signed, as stored > carries the purpose and the signed version as their own columns 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 7 — the controlled-document register > documents carry the approving signer, meaning, the revoked count and the superseding document 1ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 7 — the controlled-document register > change controls carry their description and reason 0ms
+ ✓ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 7 — the controlled-document register > states what does not appear and where training lives 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 4 — the access review says what it cannot show > the past role and the review decision are stated as not shown; role changes are where they are recorded
+AssertionError: expected [ …(4) ] to include 'A member\'s role on a past date is no…'
+ ❯ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts:74:27
+     72|   const r = findReport('access-review')!;
+     73|   it('the past role and the review decision are stated as not shown; r…
+     74|     expect(r.notRecorded).toContain(
+       |                           ^
+     75|       "A member's role on a past date is not reconstructed: the role s…
+     76|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 4 — the access review says what it cannot show > P1-41: no longer says an administrator's role change or removal goes unrecorded
+AssertionError: expected 'A member who was removed leaves no me…' not to match /role changes are not recorded/
+
+- Expected:
+/role changes are not recorded/
+
++ Received:
+"A member who was removed leaves no membership record, so removed members do not appear. A removal or a role change made by an administrator in the product is not written to the audit trail; a removal made through SCIM provisioning is recorded and appears in the administrative changes report. A member's role on a past date cannot be reported: role changes are not recorded. This report records no review decision, reviewer or sign-off. POLICY-AC-002 §4a keeps those in the access-review record. The account sign-in timestamp is set when the password alone is accepted, before the second factor, so it is not reported; the last sign-in shown is read from successful sign-in audit records only."
+
+ ❯ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts:83:22
+     81|   it('P1-41: no longer says an administrator\'s role change or removal…
+     82|     const text = r.notRecorded.join(' ');
+     83|     expect(text).not.toMatch(/role changes are not recorded/);
+       |                      ^
+     84|     expect(text).not.toMatch(/not written to the audit trail/);
+     85|     expect(text).toMatch(/Removals and role changes made by an adminis…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 5 — administrative changes: which settings changes are recorded, exactly > tenant configuration is recorded by section and field name, with values only for security and audit-trail retention
+AssertionError: expected 'A change to a member\'s organisation …' to match /Tenant configuration changes and rese…/
+
+- Expected:
+/Tenant configuration changes and resets are recorded by section and by the names of the fields changed/
+
++ Received:
+"A change to a member's organisation role, and a member's removal by an administrator, are not recorded. Acceptance of an invitation is not recorded. A role change that arrives through a SCIM group is not recorded. Settings changed through the tenant configuration are not recorded: branding; security (the second-factor requirement, password policy, session timeout and IP restrictions); notifications; workflow; clinical evaluation and quality-plan settings, including audit-trail retention; and integrations. Resetting them to their defaults is not recorded either. Changes to the organisation settings are recorded by section name only, without the values before or after the change. Administration of SCIM tokens and of the IP allow-list is not recorded. SAML single sign-on is configured from the server environment, so its configuration has no change record. Suspensions by the platform operator and grants of platform roles are recorded in the platform's records, not the organisation's, so they do not appear here."
+
+ ❯ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts:92:18
+     90|   const text = findReport('administrative-changes')!.notRecorded.join(…
+     91|   it('tenant configuration is recorded by section and field name, with…
+     92|     expect(text).toMatch(/Tenant configuration changes and resets are …
+       |                  ^
+     93|     expect(text).toMatch(/second-factor requirement/);
+     94|     expect(text).toMatch(/session timeout/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 5 — administrative changes: which settings changes are recorded, exactly > P1-41: no longer says a role change, a removal or a tenant configuration change goes unrecorded
+AssertionError: expected 'A change to a member\'s organisation …' not to match /organisation role, and a member's rem…/
+
+- Expected:
+/organisation role, and a member's removal by an administrator, are not recorded/
+
++ Received:
+"A change to a member's organisation role, and a member's removal by an administrator, are not recorded. Acceptance of an invitation is not recorded. A role change that arrives through a SCIM group is not recorded. Settings changed through the tenant configuration are not recorded: branding; security (the second-factor requirement, password policy, session timeout and IP restrictions); notifications; workflow; clinical evaluation and quality-plan settings, including audit-trail retention; and integrations. Resetting them to their defaults is not recorded either. Changes to the organisation settings are recorded by section name only, without the values before or after the change. Administration of SCIM tokens and of the IP allow-list is not recorded. SAML single sign-on is configured from the server environment, so its configuration has no change record. Suspensions by the platform operator and grants of platform roles are recorded in the platform's records, not the organisation's, so they do not appear here."
+
+ ❯ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts:101:22
+     99|   });
+    100|   it('P1-41: no longer says a role change, a removal or a tenant confi…
+    101|     expect(text).not.toMatch(/organisation role, and a member's remova…
+       |                      ^
+    102|     expect(text).not.toMatch(/Settings changed through the tenant conf…
+    103|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  server/services/audit/compliance-reports/__tests__/review-round-1.test.ts > item 5 — administrative changes: which settings changes are recorded, exactly > P1-41: reads the actions the membership and tenant configuration writers store
+AssertionError: expected [ 'api_key_created', …(7) ] to include 'member_role_changed'
+ ❯ server/services/audit/compliance-reports/__tests__/review-round-1.test.ts:106:38
+    104|   it('P1-41: reads the actions the membership and tenant configuration…
+    105|     for (const action of ['member_role_changed', 'member_removed', 'te…
+    106|       expect(ADMINISTRATIVE_ACTIONS).toContain(action);
+       |                                      ^
+    107|     }
+    108|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 9 passed (14)
+   Start at  03:12:03
+   Duration  3.04s (transform 1.71s, setup 145ms, import 2.33s, tests 32ms, environment 0ms)
+

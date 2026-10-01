@@ -124,9 +124,17 @@ variable "connector_encryption_key" {
   sensitive = true
 }
 
+# OpenAI only when a tenant's Order Form elects it (ADR-0014 §1); validated in
+# terraform/stack.
+variable "openai_enabled" {
+  type    = bool
+  default = false
+}
+
 variable "openai_api_key" {
   type      = string
   sensitive = true
+  default   = ""
 }
 
 # Regulatory drafting's provider; validated in terraform/stack.
@@ -170,4 +178,9 @@ variable "tags" {
 variable "sentry_dsn" {
   type    = string
   default = ""
+}
+
+variable "platform_owner_emails" {
+  description = "The platform owner(s), by password sign-in address, lower case (the stack's variable says what they are given)."
+  type        = list(string)
 }

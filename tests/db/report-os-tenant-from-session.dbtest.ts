@@ -23,6 +23,8 @@ import {
   ids,
   auth,
   provisionTwoTenantFixture,
+  provisionMember,
+  accessToken,
   teardownTwoTenantFixture,
 } from './two-tenant-fixture';
 
@@ -68,6 +70,10 @@ describe('Report OS takes the tenant from the session, never the request (L184, 
         .rows[0].n
     );
 
+  /* Deliveries carry finalize's tier (DP-61); tokenB is a plain member. */
+  let managerB: number;
+  let managerTokenB: string;
+
   beforeAll(async () => {
     // Mounted exactly as server/bootstrap/register-inline-routes.ts mounts it:
     // no outer middleware. The router applies server/auth's authMiddleware,
@@ -75,6 +81,8 @@ describe('Report OS takes the tenant from the session, never the request (L184, 
     ro = express();
     ro.use(express.json());
     ro.use('/api/report-os', reportOsRouter);
+    managerB = await provisionMember(ORG_B, 'manager', 'report-manager-b');
+    managerTokenB = accessToken(managerB, ORG_B, 'manager');
 
     /* A deployed database holds the report types the registry seed writes
        (migrations/20260930_report_type_registry_seed.sql, since 2026-09-30; the
@@ -295,7 +303,7 @@ describe('Report OS takes the tenant from the session, never the request (L184, 
     const memoryInA = await count('project_memory_entries', ORG_A);
     const foreign = await request(ro)
       .post('/api/report-os/deliveries')
-      .set(auth(tokenB))
+      .set(auth(managerTokenB))
       .send({
         organizationId: ORG_A,
         runId: runA,
@@ -315,7 +323,7 @@ describe('Report OS takes the tenant from the session, never the request (L184, 
   it("a delivery of the session tenant's own run records the session user", async () => {
     const delivery = await request(ro)
       .post('/api/report-os/deliveries')
-      .set(auth(tokenB))
+      .set(auth(managerTokenB))
       .send({
         organizationId: ORG_A,
         runId: runB,
@@ -326,7 +334,7 @@ describe('Report OS takes the tenant from the session, never the request (L184, 
     expect(delivery.status, 'tenant B must be able to deliver its own run').toBe(201);
     expect(delivery.body.data.organizationId).toBe(ORG_B);
     expect(delivery.body.data.requestedBy, 'the requester is the session user, not the body').toBe(
-      userB
+      managerB
     );
   });
 

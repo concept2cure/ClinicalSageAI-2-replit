@@ -9,6 +9,7 @@
 
 import { Router, Request, Response } from 'express';
 import { createScopedLogger } from '../utils/logger.js';
+import { serverError } from '../lib/api-response';
 
 const logger = createScopedLogger('universal-packager');
 
@@ -74,9 +75,8 @@ router.post('/generate', async (req: Request, res: Response) => {
         data: o.buffer.toString('base64'),
       })),
     });
-  } catch (err: any) {
-    logger.error('POST /generate error', { err: err instanceof Error ? err.message : String(err) });
-    return res.status(500).json({ success: false, error: err.message });
+  } catch (err) {
+    return serverError(res, logger, 'generating the package', err);
   }
 });
 
@@ -118,9 +118,8 @@ router.post('/download/:format', async (req: Request, res: Response) => {
     res.setHeader('X-Generation-Time-Ms', String(result.generationTimeMs));
 
     return res.send(output.buffer);
-  } catch (err: any) {
-    logger.error('POST /download/:format error', { err: err instanceof Error ? err.message : String(err) });
-    return res.status(500).json({ success: false, error: err.message });
+  } catch (err) {
+    return serverError(res, logger, 'generating the download', err, { format: req.params.format });
   }
 });
 
@@ -195,9 +194,8 @@ router.post('/multi-download', async (req: Request, res: Response) => {
     res.setHeader('Content-Length', zipBuffer.length);
 
     return res.send(zipBuffer);
-  } catch (err: any) {
-    logger.error('POST /multi-download error', { err: err instanceof Error ? err.message : String(err) });
-    return res.status(500).json({ success: false, error: err.message });
+  } catch (err) {
+    return serverError(res, logger, 'generating the multi-format package', err);
   }
 });
 

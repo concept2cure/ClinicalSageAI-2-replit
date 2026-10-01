@@ -9,6 +9,13 @@
  * audit rows only: users.last_login is stamped when the password alone is
  * accepted, before the second factor, so it is not reported.
  *
+ * A role change or removal an administrator makes (routes/tenant-users.ts,
+ * through services/tenant/membership-change.ts) writes a chained audit row
+ * since P1-41 (2026-10-01); those rows are listed in the administrative
+ * changes report, not reconstructed into this as-of list. A role change made
+ * through a SCIM group (routes/scim.ts PATCH /Groups/:id) writes no row, and
+ * notRecorded says so (pinned against that handler by review-round-1.test.ts).
+ *
  * @module server/services/audit/compliance-reports/queries/access-review
  */
 import type { ReportDefinition, RunContext, SectionResult } from '../types';
@@ -47,7 +54,11 @@ SELECT ou.user_id,
        ou.role AS org_role,
        ou.persona,
        u.status AS account_status,
-       CASE WHEN u.mfa_enabled AND u.mfa_method = 'totp' THEN 'authenticator_app' ELSE 'emailed_code' END AS mfa_posture,
+       CASE
+         WHEN u.password_hash LIKE 'saml:%' OR u.password_hash LIKE 'scim:%' THEN 'Identity provider (not verified by the platform)'
+         WHEN u.mfa_enabled AND u.mfa_method = 'totp' THEN 'Authenticator app'
+         ELSE 'Emailed code'
+       END AS mfa_posture,
        ${isoNaiveUtc('u.mfa_verified_at')} AS authenticator_enrolled_at,
        CASE WHEN json_typeof(u.mfa_backup_codes) = 'array' THEN json_array_length(u.mfa_backup_codes) END AS recovery_codes_remaining,
        ${isoNaiveUtc('u.locked_until')} AS locked_until,
@@ -79,13 +90,19 @@ async function run(ctx: RunContext): Promise<Record<string, SectionResult>> {
   const currentState =
     'Organisation role, persona, platform roles, account status, second factor, recovery codes and lock are read as they are at generation time; none of them has a recorded history to read a past value from.';
   const times = naiveUtcNote('Membership, second-factor enrolment, lock and password-change times');
+  /* Reporting review 2026-10-01 (HONEST-STATE-9): every account without an
+     authenticator read 'emailed_code', including accounts created by single
+     sign-on or SCIM, which have no password here and are never asked for a
+     code by the platform. */
+  const secondFactor =
+    'Second factor is the one password sign-in asks for. An account created by single sign-on or SCIM has no password here and signs in through the organisation\'s identity provider; the platform does not see whether that provider asked for a second factor. A member with a password who also signs in through the identity provider is not asked for the platform\'s second factor on that path.';
   return {
-    members: { ...members, notes: [currentState, times] },
+    members: { ...members, notes: [currentState, secondFactor, times] },
     privileged: {
       rows: members.rows.filter(isPrivileged),
       // Derived from the members list: incomplete exactly when that list is.
       truncated: members.truncated,
-      notes: ['Owners, admins and managers of this organisation, and anyone holding a platform role.', currentState, times],
+      notes: ['Owners, admins and managers of this organisation, and anyone holding a platform role.', currentState, secondFactor, times],
     },
   };
 }
@@ -108,8 +125,8 @@ export const accessReview: ReportDefinition = {
     { key: 'privileged', title: 'Privileged accounts', columns: MEMBER_COLUMNS },
   ],
   notRecorded: [
-    'A member who was removed leaves no membership record, so removed members do not appear. A removal or a role change made by an administrator in the product is not written to the audit trail; a removal made through SCIM provisioning is recorded and appears in the administrative changes report.',
-    "A member's role on a past date cannot be reported: role changes are not recorded.",
+    'A member who was removed leaves no membership record, so removed members do not appear. A removal made by an administrator in the product or through SCIM provisioning is recorded and appears in the administrative changes report. Removals and role changes an administrator made before the product began recording them were not recorded.',
+    "A member's role on a past date is not reconstructed: the role shown is the current one. A role change made by an administrator in the product is listed, with the role before and after, in the administrative changes report. A role change made through a SCIM group, which is how an identity provider assigns roles, is not recorded, so a role the identity provider assigned has no record of when it was assigned or what it replaced.",
     'This report records no review decision, reviewer or sign-off. POLICY-AC-002 §4a keeps those in the access-review record.',
     'The account sign-in timestamp is set when the password alone is accepted, before the second factor, so it is not reported; the last sign-in shown is read from successful sign-in audit records only.',
   ],

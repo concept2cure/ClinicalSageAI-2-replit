@@ -124,8 +124,9 @@ async function main() {
     if (bad) {
       console.error(
         `\n✗ runtime role ${role} does not hold the recipe posture. Re-run deploy-migrate as the owner ` +
-          '(step 4 refreshes grants for an identified runtime role); excess privileges on the audit ' +
-          'store must be REVOKEd by the operator — the recipe never grants them.',
+          '(step 4 refreshes grants for an identified runtime role, and withholds UPDATE/DELETE/TRUNCATE ' +
+          'again on every append-only store, provision-app-role.mjs APPEND_ONLY_TABLES); excess on any other ' +
+          'audit-schema relation must be REVOKEd by the operator — the recipe never grants it.',
       );
       process.exit(1);
     }

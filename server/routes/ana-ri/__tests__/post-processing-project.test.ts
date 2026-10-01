@@ -5,7 +5,8 @@
  * runStreamPostProcessing coerced the stream's project at each step:
  * Number.parseInt('7abb1c22-…', 10) is 7, a valid, wrong project of the same
  * organization. So for a v2 program whose UUID began with digits:
- *   - the guidance executor auto-created artifacts under project 7;
+ *   - the guidance executor auto-created artifacts under project 7 (it now
+ *     proposes them, settleActionBlocks);
  *   - the command executor ran AnA's commands (create task, artifact) with
  *     project 7 active;
  * and Number(uuid) gave NaN or null to the working memory, the RIM signal,
@@ -16,7 +17,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const h = vi.hoisted(() => ({
-  guidance: vi.fn(async () => ({ actions: [], cleanedText: '' })),
+  // settleActionBlocks (P0-12 residual): the reply as written, nothing proposed.
+  guidance: vi.fn(async (reply: string) => ({ answer: reply, proposals: [] as unknown[] })),
   commands: vi.fn(async () => ({ executed: [], cleanedText: '' })),
   memory: vi.fn(async () => undefined),
   rim: vi.fn(() => undefined),
@@ -29,7 +31,7 @@ vi.mock('../../../services/evidence/persist-provenance.js', () => ({ persistProv
 vi.mock('../../../services/working-memory.js', () => ({ summarizeAndStoreWorkingMemoryForThread: h.memory }));
 vi.mock('../../../services/intelligence/learning-loop-service.js', () => ({ getCachedSignalReliability: h.reliability }));
 vi.mock('../../../services/intelligence/rim-interceptors.js', () => ({ interceptChatResponse: h.rim }));
-vi.mock('../../../services/ana-guidance-executor.js', () => ({ processResponseActions: h.guidance }));
+vi.mock('../../../services/ana-guidance-executor.js', () => ({ settleActionBlocks: h.guidance }));
 vi.mock('../../../services/ana-ri/command-executor.js', () => ({ processCommandsInResponse: h.commands }));
 vi.mock('../../../services/ana/artifactVersionStore.js', () => ({ upsertDocumentArtifactVersion: async () => ({ saved: false }) }));
 vi.mock('../../../db.js', () => ({ getPool: () => ({}), pool: {}, db: { tag: 'shared-db' } }));

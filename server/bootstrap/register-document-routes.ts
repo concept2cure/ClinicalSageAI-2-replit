@@ -267,13 +267,15 @@ export async function registerDocumentRoutes({
     { path: '/api/evidence-sufficiency', router: evidenceSufficiency, name: 'Evidence Sufficiency' },
     { path: '/api/q-sub', router: qSub, name: 'Q-Submissions (Pre-Sub / SIR / SRD)' },
     { path: '/api/capa-mdr', router: capaMdr, name: 'CAPA + complaint + MDR / vigilance triage' },
-    /* `/api/qms` (routes/qms.ts) was removed 2026-10-01 (DP-34, plan P1-31): a
-       second QMS write API no client called, guarded only by authentication.
-       A viewer could supersede an effective SOP, requalify a supplier or
-       disposition nonconforming product, most of it with no audit row. Every
-       capability is served, role-gated and audited, at `/api/mdx/qms/*`
-       (routes/mdx-qms.ts, mounted in register-inline-routes.ts), which the
-       launch QMS surfaces call. */
+    // Removed 2026-10-01 (P1-31 / DP-34): /api/qms (routes/qms.ts over
+    // services/qms/qms.service.ts). A second QMS write API behind
+    // authenticateToken alone: a viewer could supersede an effective document,
+    // requalify a supplier and disposition nonconforming product, the last two
+    // with no audit row. No client called it. The one QMS API is /api/mdx/qms
+    // (server/routes/mdx-qms.ts, mounted in register-inline-routes.ts), whose
+    // writes are editor-gated and audited and whose approve/retire are
+    // electronic signatures; qms-legacy-api-retired.test.ts pins both halves.
+    // Do not remount a second QMS router.
     { path: '/api/ivd-lifecycle', router: ivdLifecycle, name: 'IVD lifecycle calculators (analytical, software, change, registration)' },
     { path: '/api/ivd-knowledge', router: ivdKnowledge, name: 'IVD knowledge base (scientific / legal / regulatory intelligence corpus)' },
     { path: '/api/ivd-assessments', router: ivdAssessments, name: 'IVD assessment persistence (saved calculator results + generated documents)' },

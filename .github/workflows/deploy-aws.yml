@@ -81,6 +81,69 @@ env:
   CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
 
 jobs:
+  # ── Gate: the commit's own CI must have passed ────────────────────────────
+  # Security audit 2026-09-24 INF-09 (plan P1-12). A `v*` tag deployed whatever
+  # commit it named; nothing asked whether CI had passed there, or run at all.
+  # This job reads, for the exact SHA being deployed, the newest push run on
+  # concept2cure-v2 of each workflow a release depends on — CI (whose release-
+  # evidence gate also reads CodeQL, Semgrep and Tier 5), Semgrep and CodeQL —
+  # and refuses anything but `success`. A run still in progress is waited for,
+  # up to CI_VERDICT_WAIT_MINUTES; a verdict that cannot be read is a refusal.
+  # Every build, migrate and deploy job needs this one.
+  # Pinned by tests/ci/deploy-refuses-unproven-sha.contract.test.ts.
+  ci-verdict:
+    name: CI passed for this commit
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - name: Require a green CI, Semgrep and CodeQL run for this SHA
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        env:
+          CI_VERDICT_POLL_SECONDS: '60'
+          CI_VERDICT_WAIT_MINUTES: '90'
+        with:
+          script: |
+            const TRUNK = 'concept2cure-v2';
+            const REQUIRED = ['ci.yml', 'semgrep.yml', 'codeql.yml'];
+            const { owner, repo } = context.repo;
+            const own = `${owner}/${repo}`;
+            const sha = context.sha;
+            const pollMs = Number(process.env.CI_VERDICT_POLL_SECONDS) * 1000;
+            const deadline = Date.now() + Number(process.env.CI_VERDICT_WAIT_MINUTES) * 60000;
+            const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+            const newestRun = async (workflow_id) => {
+              const res = await github.rest.actions.listWorkflowRuns({ owner, repo, workflow_id, head_sha: sha, branch: TRUNK, event: 'push', per_page: 50 });
+              return (res.data.workflow_runs || [])
+                .filter((r) => r.head_sha === sha && r.head_branch === TRUNK && r.event === 'push' && r.head_repository && r.head_repository.full_name === own)
+                .sort((a, b) => b.id - a.id)[0];
+            };
+            for (;;) {
+              const pending = [];
+              for (const wf of REQUIRED) {
+                let run;
+                try {
+                  run = await newestRun(wf);
+                } catch (err) {
+                  return core.setFailed(`Could not read the ${wf} verdict for ${sha} (${err.status || err.message}). An unreadable verdict is not a pass.`);
+                }
+                if (!run) { pending.push(`${wf}: no run on ${TRUNK} for this commit`); continue; }
+                if (run.status !== 'completed') { pending.push(`${wf}: ${run.status}`); continue; }
+                if (run.conclusion !== 'success') {
+                  return core.setFailed(`${wf} ended ${run.conclusion} for ${sha} (${run.html_url}). Refusing to deploy a commit whose CI did not pass.`);
+                }
+                core.info(`${wf}: success for ${sha} (${run.html_url})`);
+              }
+              if (pending.length === 0) return core.info(`CI, Semgrep and CodeQL all passed for ${sha}.`);
+              if (Date.now() >= deadline) {
+                return core.setFailed(`No passing verdict for ${sha} in time — ${pending.join('; ')}. Refusing to deploy a commit whose CI has not passed.`);
+              }
+              core.info(`Waiting — ${pending.join('; ')}`);
+              await sleep(pollMs);
+            }
+
   # ── Gate: Run tests before deploying ──────────────────────────────────────
   test:
     name: Pre-deploy Tests
@@ -107,7 +170,8 @@ jobs:
   # Production deploys must not bypass the same security gates enforced on CI.
   # ci.yml runs these on PRs/pushes, but deploy-aws.yml is triggered by tags /
   # workflow_dispatch, so the relevant gates are re-run here and made a hard
-  # `needs:` dependency of the build/deploy jobs.
+  # `needs:` dependency of the build/deploy jobs. This job runs no SAST itself:
+  # the Semgrep and CodeQL verdicts for the deployed SHA are read by ci-verdict.
   security-gate:
     name: Pre-deploy Security Gate (SAST + Trivy + governance)
     runs-on: ubuntu-latest
@@ -193,7 +257,7 @@ jobs:
   # ── Build & Push container images ─────────────────────────────────────────
   build-push:
     name: Build & Push to ECR
-    needs: [test, security-gate]
+    needs: [ci-verdict, test, security-gate]
     runs-on: ubuntu-latest
     if: ${{ github.event.inputs.deploy_api == 'true' || startsWith(github.ref, 'refs/tags/v') }}
     outputs:
@@ -229,7 +293,55 @@ jobs:
           fi
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
-      - name: Build & push API image
+      # Build, scan, push — three steps (security audit 2026-09-24 INF-09, plan
+      # P1-12). The image went from `docker build` straight to ECR; the only
+      # Trivy runs (security-gate, ci.yml) read the source tree, never the OS
+      # packages and runtime the image actually ships. Now the built image is
+      # scanned before anything leaves the runner, and a HIGH or CRITICAL
+      # finding not excepted in .trivyignore (owner, reason, expiry) stops the
+      # push. Pinned by tests/ci/deploy-refuses-unproven-sha.contract.test.ts.
+      - name: Setup Node.js (for the Trivy exception checks)
+        if: ${{ github.event.inputs.deploy_api != 'false' }}
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+
+      - name: Trivy exceptions are attached, owned and dated (with selftests)
+        # The same checks security-gate runs before its scans, for the same
+        # reason: a scan cannot tell that an exception it was given is wrong.
+        if: ${{ !cancelled() && github.event.inputs.deploy_api != 'false' }}
+        run: |
+          node scripts/ci/check-trivy-inline-ignores.mjs --selftest
+          node scripts/ci/check-trivy-inline-ignores.mjs
+          node scripts/ci/check-trivyignore-hygiene.mjs --selftest
+          node scripts/ci/check-trivyignore-hygiene.mjs
+
+      - name: Build API image
+        if: ${{ github.event.inputs.deploy_api != 'false' }}
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          docker build -f Dockerfile.optimized --target production \
+            -t "$ECR_REGISTRY/$ECR_API_REPO:$IMAGE_TAG" \
+            .
+
+      - name: Trivy image scan (blocks the push on HIGH/CRITICAL)
+        # Runs after an earlier failed step too (INF-08), so a red job still says
+        # what the image carries; the push below runs only if every step passed.
+        # No ignore-unfixed: an exception is a .trivyignore entry with an owner,
+        # a reason and an expiry, not a blanket flag.
+        if: ${{ !cancelled() && github.event.inputs.deploy_api != 'false' }}
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: image
+          image-ref: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_API_REPO }}:${{ steps.meta.outputs.tag }}
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+          trivyignores: .trivyignore
+          format: table
+
+      - name: Push API image
         id: api-push
         if: ${{ github.event.inputs.deploy_api != 'false' }}
         env:
@@ -244,9 +356,6 @@ jobs:
         # its own pinned digest), which is the deterministic shape ECR /
         # ECS support.
         run: |
-          docker build -f Dockerfile.optimized --target production \
-            -t "$ECR_REGISTRY/$ECR_API_REPO:$IMAGE_TAG" \
-            .
           docker push "$ECR_REGISTRY/$ECR_API_REPO:$IMAGE_TAG"
           # `docker inspect` on the local tag returns RepoDigests like
           # "<registry>/<repo>@sha256:<hex>"; take the digest portion.
@@ -367,6 +476,10 @@ jobs:
         #                            this check only refuses a task definition that
         #                            has made none, before it rolls rather than at
         #                            boot (2026-09-23).
+        #   MCP_ENABLED              server/index.ts, server/mcp — the connector
+        #   MCP_PUBLIC_URL           for Claude: on, at an https origin, with a
+        #   MCP_CLIENT_REDIRECT_     registration allowlist (D8 decision P-2).
+        #     ALLOWLIST              Values checked below (2026-10-01).
         #   CLAMAV_HOST              server/middleware/uploadSafety.ts — not a
         #                            boot refusal: without it every upload is a
         #                            503. Checked below, API container only, with
@@ -393,7 +506,8 @@ jobs:
                      AI_SENSITIVE_DATA_POLICY_MODE AI_PROVIDER_PLACEMENT_APPROVALS \
                      CONCEPT2CURE_SIGNER_MODE STORAGE_PROVIDER AWS_S3_BUCKET \
                      SMTP_HOST SMTP_USER SMTP_PASS \
-                     AUDIT_TRAIL_ENABLED AUDIT_REQUIRE_ENFORCE; do
+                     AUDIT_TRAIL_ENABLED AUDIT_REQUIRE_ENFORCE \
+                     MCP_ENABLED MCP_PUBLIC_URL MCP_CLIENT_REDIRECT_ALLOWLIST; do
             if ! grep -qx "$VAR" <<< "$PRESENT"; then MISSING="$MISSING $VAR"; fi
           done
 
@@ -411,7 +525,7 @@ jobs:
           FAIL=0
           if [[ -n "$MISSING" ]]; then
             echo "::error::Task definition $ECS_API_TASK_FAMILY (container $ECS_API_CONTAINER_NAME) is missing required production env:$MISSING"
-            echo "::error::The app refuses to boot without each of these, with two exceptions it would boot through: without SMTP_* no one can sign in (login OTP is the mandatory second factor), and without AUDIT_TRAIL_ENABLED / AUDIT_REQUIRE_ENFORCE the tamper-proof audit trail is off or its checks only warn; without ANTHROPIC_API_KEY no model approved for regulatory drafting is enabled, so every Authoring draft is refused and /readyz reports AnA down. Add them to the task definition (terraform/stack) before deploying."
+            echo "::error::The app refuses to boot without each of these, with two exceptions it would boot through: without SMTP_* no one can sign in (login OTP is the mandatory second factor), and without AUDIT_TRAIL_ENABLED / AUDIT_REQUIRE_ENFORCE the tamper-proof audit trail is off or its checks only warn; without ANTHROPIC_API_KEY no model approved for regulatory drafting is enabled, so every Authoring draft is refused and /readyz reports AnA down. Without MCP_* the connector for Claude is not mounted, or admits no client. Add them to the task definition (terraform/stack) before deploying."
             FAIL=1
           fi
           if [[ "$NODE_ENV_VALUE" != "production" ]]; then
@@ -518,6 +632,32 @@ jobs:
             fi
           elif [[ "$APP_URL_SECRET" == "0" ]]; then
             echo "::error::APP_URL is missing from the task definition (environment or secrets). Password-reset and invitation links are built on it in production, never on the Host header."
+            FAIL=1
+          fi
+          # The connector for Claude ships on (D8, decision P-2 in
+          # docs/LAUNCH_DEFINITION_OF_DONE.md). It is mounted only when
+          # MCP_ENABLED is exactly `true` (server/index.ts); its OAuth issuer and
+          # token audience are MCP_PUBLIC_URL, an https origin; and with no
+          # redirect allowlist production refuses every client registration
+          # (server/mcp/index.ts), so a connector with none is one no client can
+          # connect to. Plain values, so they are checkable here.
+          MCP_VALUE() {
+            jq -r --arg c "$ECS_API_CONTAINER_NAME" --arg n "$1" '
+              .containerDefinitions[] | select(.name == $c)
+              | (.environment // []) | map(select(.name == $n)) | .[0].value // ""
+            ' /tmp/api-td-preflight.json | tr -d '[:space:]'
+          }
+          if [[ "$(MCP_VALUE MCP_ENABLED)" != "true" ]]; then
+            echo "::error::MCP_ENABLED must be exactly 'true' in the API environment (got '$(MCP_VALUE MCP_ENABLED)'): the connector for Claude ships at launch, and without it CloudFront routes the connector's paths to an API that does not serve them."
+            FAIL=1
+          fi
+          MCP_PUBLIC_URL_VALUE=$(MCP_VALUE MCP_PUBLIC_URL)
+          if [[ ! "${MCP_PUBLIC_URL_VALUE,,}" =~ ^https://[^/]+$ ]]; then
+            echo "::error::MCP_PUBLIC_URL must be the deployment's https origin, no path (got '${MCP_PUBLIC_URL_VALUE:-<unset>}'): it is the connector's OAuth issuer and the audience its tokens are bound to."
+            FAIL=1
+          fi
+          if [[ -z "$(MCP_VALUE MCP_CLIENT_REDIRECT_ALLOWLIST)" ]]; then
+            echo "::error::MCP_CLIENT_REDIRECT_ALLOWLIST is empty in the API environment: production refuses every connector client registration without it, so no client could connect."
             FAIL=1
           fi
           # Every upload is scanned before it is stored, and production refuses
@@ -762,10 +902,11 @@ jobs:
   # tests/schema-contract/deploy-frontend-after-api.contract.test.ts
   deploy-frontend:
     name: Deploy Frontend → S3/CloudFront
-    needs: [test, security-gate, deploy-api]
+    needs: [ci-verdict, test, security-gate, deploy-api]
     runs-on: ubuntu-latest
     if: >-
       ${{ always()
+      && needs.ci-verdict.result == 'success'
       && needs.test.result == 'success'
       && needs.security-gate.result == 'success'
       && github.event.inputs.deploy_frontend != 'false'

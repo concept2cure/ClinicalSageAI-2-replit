@@ -300,12 +300,44 @@ variable "smtp_from" {
 
 # Vault search embeds with OpenAI by default. An empty key used to deploy, and
 # the Vault then searched nothing (D1, docs/evidence/W2/2026-10-01-inventory-gaps/).
+variable "platform_owner_emails" {
+  description = <<-EOT
+    The platform owner(s), by the address each signs in with by password: named
+    in PLATFORM_ADMIN_EMAILS and BUSINESS_CENTER_EMAILS on the API (main.tf,
+    owner_environment). At least one, or nobody can reach Master Administration
+    or designate anyone. The first account itself is created through first-run
+    setup with the deployment's setup token (outputs.tf, first_run_setup).
+  EOT
+  type        = list(string)
+  validation {
+    condition     = length(var.platform_owner_emails) > 0
+    error_message = "platform_owner_emails must name at least one owner."
+  }
+  validation {
+    condition = alltrue([
+      for e in var.platform_owner_emails : can(regex("^[a-z0-9._%+-]+@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$", e))
+    ])
+    error_message = "Each platform_owner_emails entry must be a lower-case e-mail address: the allowlists compare lower-cased addresses, so any other entry could never match."
+  }
+}
+
+# OpenAI is a lane a tenant elects in writing (ADR-0014 §1; DPA Annex III;
+# security plan P0-11, DP-07). The gateway refuses it, before dispatch, for
+# every organisation that has not elected it (P1-45), so a key held for no
+# elected tenant serves nobody; it is provisioned exactly when one has.
+variable "openai_enabled" {
+  type        = bool
+  default     = false
+  description = "True when a tenant's Order Form elects OpenAI; then openai_api_key is required and provisioned."
+}
+
 variable "openai_api_key" {
   type      = string
   sensitive = true
+  default   = ""
   validation {
-    condition     = startswith(var.openai_api_key, "sk-") && !startswith(var.openai_api_key, "sk-ant-")
-    error_message = "openai_api_key must be an OpenAI API key (sk-…, not an Anthropic sk-ant- key): Vault search embeds with it."
+    condition     = var.openai_api_key == "" || (startswith(var.openai_api_key, "sk-") && !startswith(var.openai_api_key, "sk-ant-"))
+    error_message = "openai_api_key must be empty or an OpenAI API key (sk-…, not an Anthropic sk-ant- key)."
   }
 }
 

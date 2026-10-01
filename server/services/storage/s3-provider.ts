@@ -29,13 +29,15 @@ import {
 // throws, the catch reported the SDK as "not installed", and S3 could never be
 // selected in a deployed build (storage-provider-production-bundle.test.ts).
 import {
-  S3Client,
   PutObjectCommand,
   GetObjectCommand,
   DeleteObjectCommand,
   ListObjectsV2Command,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl as getSignedUrlFn } from '@aws-sdk/s3-request-presigner';
+// The client and its reads are shared with the audit-chain anchor
+// (services/audit/chain-anchor.ts): one construction, one listing, one read.
+import { createS3Client, listS3Keys, readS3Object } from './s3-client';
 
 /**
  * Does this stored object belong to the organization making the request?
@@ -62,14 +64,13 @@ export class S3StorageProvider implements IStorageProvider {
 
   constructor() {
     const bucket = process.env.AWS_S3_BUCKET;
-    const region = process.env.AWS_REGION || 'us-east-1';
 
     if (!bucket) {
       throw new Error('S3StorageProvider: AWS_S3_BUCKET environment variable required');
     }
 
     this.bucket = bucket;
-    this.client = new S3Client({ region });
+    this.client = createS3Client();
   }
 
   private keyPath(orgId: number, projectId: string, versionId: string, filename: string): string {
@@ -161,16 +162,11 @@ export class S3StorageProvider implements IStorageProvider {
       if (!ownsObject(meta, orgId)) return null;
       const projectId = meta.metadata.projectId;
 
-      const response = await this.client.send(new GetObjectCommand({
-        Bucket: this.bucket,
-        Key: this.keyPath(orgId, projectId, vaultVersionId, meta.filename),
-      }));
-
-      const chunks: Buffer[] = [];
-      for await (const chunk of response.Body) {
-        chunks.push(Buffer.from(chunk));
-      }
-      const bytes = Buffer.concat(chunks);
+      const bytes = await readS3Object(
+        this.client,
+        this.bucket,
+        this.keyPath(orgId, projectId, vaultVersionId, meta.filename),
+      );
 
       return {
         bytes,
@@ -240,15 +236,7 @@ export class S3StorageProvider implements IStorageProvider {
 
     for (const metaKey of metaFiles) {
       try {
-        const getResp = await this.client.send(new GetObjectCommand({
-          Bucket: this.bucket,
-          Key: metaKey,
-        }));
-        const chunks: Buffer[] = [];
-        for await (const chunk of getResp.Body) {
-          chunks.push(Buffer.from(chunk));
-        }
-        const meta = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+        const meta = await this.readJson(metaKey);
         results.push({
           vaultFileId: meta.vaultFileId,
           vaultVersionId: meta.vaultVersionId,
@@ -306,25 +294,11 @@ export class S3StorageProvider implements IStorageProvider {
 
   /** Every key under `prefix`, following S3's continuation tokens to the end. */
   private async listKeys(prefix: string): Promise<string[]> {
-    const keys: string[] = [];
-    let token: string | undefined;
-    do {
-      const page = await this.client.send(new ListObjectsV2Command({
-        Bucket: this.bucket,
-        Prefix: prefix,
-        ContinuationToken: token,
-      }));
-      for (const obj of page.Contents || []) if (obj.Key) keys.push(obj.Key);
-      token = page.IsTruncated ? page.NextContinuationToken : undefined;
-    } while (token);
-    return keys;
+    return listS3Keys(this.client, this.bucket, prefix);
   }
 
   private async readJson(key: string): Promise<any> {
-    const resp = await this.client.send(new GetObjectCommand({ Bucket: this.bucket, Key: key }));
-    const chunks: Buffer[] = [];
-    for await (const chunk of resp.Body) chunks.push(Buffer.from(chunk));
-    return JSON.parse(Buffer.concat(chunks).toString('utf8'));
+    return JSON.parse((await readS3Object(this.client, this.bucket, key)).toString('utf8'));
   }
 
   /**

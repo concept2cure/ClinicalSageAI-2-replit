@@ -1,0 +1,10 @@
+ × server/middleware/__tests__/token-class-every-verifier.test.ts > every JWT verifier applies the token-class rule (IAM-23) > no file calls verifyJwtWithRotation without requireAccessTokenReason / nonAccessTokenReason 361ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
++ Received
++ [
++   "middleware/tenantContext.ts",
++   "routes/approval-workflow.ts",
++   "routes/contentAssembly.routes.ts",
++   "routes/cortex-unified.ts",
++   "services/email-verification.ts",
++   "services/token-revocation.ts",

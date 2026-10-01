@@ -16,10 +16,25 @@
  * Mount point: /api/ana/platform
  */
 
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { anaPlatformController, AnaAction } from '../services/ana-platform-controller';
+import { requireRole } from '../middleware/auth';
 
 const router = Router();
+
+/*
+ * IAM-20 (security review 2026-10-01): every write below changes
+ * organisation-wide configuration (settings, AI configuration, compliance
+ * defaults, module toggles, onboarding) or creates a project outside the
+ * Projects app, and /execute dispatches any of them. Behind the session gate
+ * alone, any member could do all of it. Writes need the owner or admin role,
+ * as tenant-config's settings writes do; the role is the one requireRole reads
+ * from the membership on every request. Reads are unchanged.
+ */
+const requireConfigAdmin = requireRole('owner', 'admin');
+router.use((req: Request, res: Response, next: NextFunction) =>
+  req.method === 'GET' || req.method === 'HEAD' ? next() : requireConfigAdmin(req, res, next),
+);
 
 router.use((req: Request, res: Response, next) => {
   const correlationId =

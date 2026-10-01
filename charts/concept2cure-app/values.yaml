@@ -102,6 +102,11 @@ secret:
     REDIS_URL: ''
     ANTHROPIC_API_KEY: ''
     OPENAI_API_KEY: ''
+    # First-run setup's secret, 32+ characters (e.g. `openssl rand -hex 24`).
+    # With NODE_ENV=production, POST /api/setup/initialize creates the first
+    # admin only for a request carrying it in X-Setup-Token, and is closed
+    # without one (routes/setup.ts). See NOTES.txt step 3.
+    SETUP_TOKEN: ''
 
 # Optional DB migration init container. Runs before the app starts. Set the
 # command to your migration entrypoint (it receives the same env as the app).

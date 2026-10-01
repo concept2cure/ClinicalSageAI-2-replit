@@ -1,0 +1,17 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/routes/__tests__/vault-legal-holds-launch-scope.test.ts > Vault legal-hold routes under the production API gate > reads every route the router declares, the retention period included 3ms
+ ✓ server/routes/__tests__/vault-legal-holds-launch-scope.test.ts > Vault legal-hold routes under the production API gate > GET /api/vault/legal-holds reaches its route, not 403 LAUNCH_SCOPE 4ms
+ ✓ server/routes/__tests__/vault-legal-holds-launch-scope.test.ts > Vault legal-hold routes under the production API gate > POST /api/vault/legal-holds reaches its route, not 403 LAUNCH_SCOPE 1ms
+ ✓ server/routes/__tests__/vault-legal-holds-launch-scope.test.ts > Vault legal-hold routes under the production API gate > POST /api/vault/legal-holds/0b7c6a52-3f7e-4d4b-9a51-2c5e8f1d9a10/lift reaches its route, not 403 LAUNCH_SCOPE 1ms
+ ✓ server/routes/__tests__/vault-legal-holds-launch-scope.test.ts > Vault legal-hold routes under the production API gate > GET /api/vault/legal-holds/retention reaches its route, not 403 LAUNCH_SCOPE 1ms
+ ✓ server/routes/__tests__/vault-legal-holds-launch-scope.test.ts > Vault legal-hold routes under the production API gate > PUT /api/vault/legal-holds/retention reaches its route, not 403 LAUNCH_SCOPE 7ms
+ ✓ server/routes/__tests__/vault-legal-holds-launch-scope.test.ts > Vault legal-hold routes under the production API gate > attributes the retention period to Setup, which calls it, and the rest of the family to the Vault 2ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  07:14:52
+   Duration  1.42s (transform 462ms, setup 163ms, import 503ms, tests 24ms, environment 0ms)
+

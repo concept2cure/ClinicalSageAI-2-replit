@@ -57,6 +57,8 @@ import {
   DerivationError,
 } from '../services/protocol-development/design-derivation-service';
 import { redlineForProtocol, spiritForProtocol } from '../services/protocol-development/protocol-industry-service';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 // A viewer cannot sign (the router's writing-role gate below, 21 CFR 11.10(g)),
 // and the password behind a signature cannot be guessed without limit here any
@@ -66,6 +68,7 @@ const signingAttempts = signingAttemptLimiter('protocol-sign', {
 });
 
 const router = Router();
+const log = createScopedLogger('protocol-development');
 // A viewer reads a protocol and changes nothing on it (11.10(d), (g)).
 // 2026-09-28: gated by P11-C-1; the coverage-gap sweep's GP-P-1 is the same
 // finding and is closed here. The mount (register-inline-routes.ts) carries
@@ -93,7 +96,7 @@ function fail(res: Response, err: unknown): void {
     res.status(CODE_STATUS[code]).json({ error: { code, message: err instanceof Error ? err.message : 'Request failed.' } });
     return;
   }
-  res.status(500).json({ error: { code: 'INTERNAL', message: err instanceof Error ? err.message : 'Request failed.' } });
+  serverError(res, log, 'handling the protocol development request', err);
 }
 const reason = z.string().trim().min(8, 'Provide a reason of at least 8 characters.');
 const KIND = z.enum(['iacuc', 'irb', 'clinical', 'ibc']);

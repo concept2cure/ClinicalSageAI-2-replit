@@ -1,0 +1,13 @@
+--- a/shared/constants/ui-surface-registry.ts	2026-10-01 06:32:29.467909856 +0000
++++ b/shared/constants/ui-surface-registry.ts	2026-10-01 06:32:29.480265342 +0000
+@@ -864,7 +864,9 @@
+     group: 'admin',
+     uiKit: null,
+     // Launch-scope API (2026-09-25, ci:launch-scope-api): AdminSurfaces.tsx Setup reads the GAMP 5 validation kit.
+-    apiPrefixes: ['/api/setup', '/api/admin', '/api/users', '/api/api-keys', '/api/validation-kit'],
++    // 2026-10-01 (P1-22; ADR-0014 §6): Setup's Records retention card (RetentionPeriodCard.tsx)
++    // reads and sets the organisation's retention period.
++    apiPrefixes: ['/api/setup', '/api/admin', '/api/users', '/api/api-keys', '/api/validation-kit', '/api/vault/legal-holds/retention'],
+     anaToolFamilies: [],
+     sharedContract: null,
+     discoveryCatalog: null,

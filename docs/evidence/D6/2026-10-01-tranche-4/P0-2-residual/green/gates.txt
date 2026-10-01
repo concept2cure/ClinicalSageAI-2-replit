@@ -1,0 +1,48 @@
+# Gates — 2026-10-01T06:14:44Z, final working tree on HEAD 66e82a6d
+
+=== npm run check:security-patterns
+check-security-patterns: 0 violations across 2955 file(s).
+exit=0
+
+=== npm run ci:server-error-leaks
+[ci:server-error-leaks] OK — 48 baselined site(s) across 46 file(s); no file gained one.
+[ci:server-error-leaks] 48 site(s) fixed since the baseline — shrink it with --write-baseline.
+exit=0
+
+=== npm run ci:unauthenticated-fetch
+✅ ci:unauthenticated-fetch — 70 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined).
+exit=0
+
+=== npm run ci:tenant-entry-points
+[ci:tenant-entry-points] 14 entry point(s); 5 consider tenant entitlement, 9 do not (baseline 9)
+[ci:tenant-entry-points] OK — no unclassified tenant entry points.
+exit=0
+
+=== npm run ci:check-unrun-tests
+[ci:unrun-tests] 3270 test files · 13 vitest globs · 5 non-vitest runner globs · 0 unrun (0 allowlisted).
+[ci:unrun-tests] OK — every test file is reachable by a runner, or explained.
+exit=0
+
+=== npm run ci:committed-secrets
+[ci:committed-secrets] OK — no committed credential material found in tracked files.
+exit=0
+
+=== npx eslint server/middleware/enterprise-security.ts server/middleware/__tests__/delegated-credential-scope.dbtest.ts
+
+/home/user/ClinicalSageAI-2-replit/server/middleware/enterprise-security.ts
+   648:10  warning  'scrubSensitiveData' is defined but never used                                           @typescript-eslint/no-unused-vars
+   723:7   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+   900:1   warning  File has too many lines (635). Maximum allowed is 500                                    max-lines
+  1148:3   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+
+✖ 4 problems (0 errors, 4 warnings)
+
+exit=0
+
+=== the same ESLint on HEAD's enterprise-security.ts (git show HEAD:… to a temporary copy, linted, deleted)
+   648:10  warning  'scrubSensitiveData' is defined but never used                                           @typescript-eslint/no-unused-vars
+   723:7   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+   884:1   warning  File has too many lines (616). Maximum allowed is 500                                    max-lines
+  1094:3   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+✖ 4 problems (0 errors, 4 warnings)
+=> the four warnings are HEAD's; the change adds none (max-lines grows on a file already over the limit).

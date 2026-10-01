@@ -1,0 +1,131 @@
+# RED — the FINAL test files against the UNFIXED code (HEAD 0e58e794): server/jobs/auditChainIntegritySweep.ts at HEAD, server/services/audit/chain-anchor.ts absent (reconstructed in place for this run, then restored)
+# 2026-10-01T07:00:33.423032Z
+# PostgreSQL 16.13
+$ npx vitest run --config vitest.db.config.ts server/services/audit/__tests__/chain-anchor.dbtest.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 1. the chain walk alone passes a chain whose newest rows were removed (the defect) 23ms
+ × server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 2. an intact chain verifies against its anchor, and rows appended after it are fine 19ms
+   → Cannot find module '/server/services/audit/chain-anchor' imported from /home/user/ClinicalSageAI-2-replit/server/services/audit/__tests__/chain-anchor.dbtest.ts
+ × server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 3. removing the anchored head (truncation after an anchor) is reported broken 13ms
+   → Cannot find module '/server/services/audit/chain-anchor' imported from /home/user/ClinicalSageAI-2-replit/server/services/audit/__tests__/chain-anchor.dbtest.ts
+ × server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 4. a head rewritten and re-chained, so the walk still passes, is reported broken 27ms
+   → Cannot find module '/server/services/audit/chain-anchor' imported from /home/user/ClinicalSageAI-2-replit/server/services/audit/__tests__/chain-anchor.dbtest.ts
+ × server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 5. a row removed before an intact head is reported by the anchored row count 7ms
+   → Cannot find module '/server/services/audit/chain-anchor' imported from /home/user/ClinicalSageAI-2-replit/server/services/audit/__tests__/chain-anchor.dbtest.ts
+ × server/services/audit/__tests__/chain-anchor.dbtest.ts > the anchor never claims more than it can show (P0-8, DP-04) > 6. with no anchor written the chain head is not verified, never ok 7ms
+   → Cannot find module '/server/services/audit/chain-anchor' imported from /home/user/ClinicalSageAI-2-replit/server/services/audit/__tests__/chain-anchor.dbtest.ts
+ × server/services/audit/__tests__/chain-anchor.dbtest.ts > the anchor never claims more than it can show (P0-8, DP-04) > 7. rows the archive door removed since the anchor are unverifiable, not tampering; truncation still breaks 3ms
+   → Cannot find module '/server/services/audit/chain-anchor' imported from /home/user/ClinicalSageAI-2-replit/server/services/audit/__tests__/chain-anchor.dbtest.ts
+ × server/services/audit/__tests__/chain-anchor.dbtest.ts > the anchor never claims more than it can show (P0-8, DP-04) > 8. a tenant-scoped connection refuses to anchor or verify a subset of the chain 3ms
+   → Cannot find module '/server/services/audit/chain-anchor' imported from /home/user/ClinicalSageAI-2-replit/server/services/audit/__tests__/chain-anchor.dbtest.ts
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 1 passed (8)
+   Start at  07:00:37
+   Duration  1.40s (transform 266ms, setup 166ms, import 197ms, tests 449ms, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 2. an intact chain verifies against its anchor, and rows appended after it are fine
+Error: Cannot find module '/server/services/audit/chain-anchor' imported from /home/user/ClinicalSageAI-2-replit/server/services/audit/__tests__/chain-anchor.dbtest.ts
+ ❯ server/services/audit/__tests__/chain-anchor.dbtest.ts:179:84
+    177|
+    178|   it('2. an intact chain verifies against its anchor, and rows appende…
+    179|     const { writeAuditChainAnchor, verifyAuditChainAnchor, AUDIT_ANCHO…
+       |                                                                                    ^
+    180|     const { store, objects } = memoryStore();
+    181|     const seven = await writeChain(7, 3);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 3. removing the anchored head (truncation after an anchor) is reported broken
+Error: Cannot find module '/server/services/audit/chain-anchor' imported from /home/user/ClinicalSageAI-2-replit/server/services/audit/__tests__/chain-anchor.dbtest.ts
+ ❯ server/services/audit/__tests__/chain-anchor.dbtest.ts:200:63
+    198|
+    199|   it('3. removing the anchored head (truncation after an anchor) is re…
+    200|     const { writeAuditChainAnchor, verifyAuditChainAnchor } = await lo…
+       |                                                               ^
+    201|     const { store } = memoryStore();
+    202|     const seven = await writeChain(7, 4);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 4. a head rewritten and re-chained, so the walk still passes, is reported broken
+Error: Cannot find module '/server/services/audit/chain-anchor' imported from /home/user/ClinicalSageAI-2-replit/server/services/audit/__tests__/chain-anchor.dbtest.ts
+ ❯ server/services/audit/__tests__/chain-anchor.dbtest.ts:219:63
+    217|
+    218|   it('4. a head rewritten and re-chained, so the walk still passes, is…
+    219|     const { writeAuditChainAnchor, verifyAuditChainAnchor } = await lo…
+       |                                                               ^
+    220|     const { store } = memoryStore();
+    221|     const seven = await writeChain(7, 3);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/services/audit/__tests__/chain-anchor.dbtest.ts > the audit_logs chain head is anchored outside the database (P0-8, DP-04) > 5. a row removed before an intact head is reported by the anchored row count
+Error: Cannot find module '/server/services/audit/chain-anchor' imported from /home/user/ClinicalSageAI-2-replit/server/services/audit/__tests__/chain-anchor.dbtest.ts
+ ❯ server/services/audit/__tests__/chain-anchor.dbtest.ts:243:63
+    241|
+    242|   it('5. a row removed before an intact head is reported by the anchor…
+    243|     const { writeAuditChainAnchor, verifyAuditChainAnchor } = await lo…
+       |                                                               ^
+    244|     const { store } = memoryStore();
+    245|     const seven = await writeChain(7, 4);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/services/audit/__tests__/chain-anchor.dbtest.ts > the anchor never claims more than it can show (P0-8, DP-04) > 6. with no anchor written the chain head is not verified, never ok
+Error: Cannot find module '/server/services/audit/chain-anchor' imported from /home/user/ClinicalSageAI-2-replit/server/services/audit/__tests__/chain-anchor.dbtest.ts
+ ❯ server/services/audit/__tests__/chain-anchor.dbtest.ts:260:40
+    258| describe('the anchor never claims more than it can show (P0-8, DP-04)'…
+    259|   it('6. with no anchor written the chain head is not verified, never …
+    260|     const { verifyAuditChainAnchor } = await loadAnchor();
+       |                                        ^
+    261|     const { store } = memoryStore();
+    262|     await writeChain(7, 2);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  server/services/audit/__tests__/chain-anchor.dbtest.ts > the anchor never claims more than it can show (P0-8, DP-04) > 7. rows the archive door removed since the anchor are unverifiable, not tampering; truncation still breaks
+Error: Cannot find module '/server/services/audit/chain-anchor' imported from /home/user/ClinicalSageAI-2-replit/server/services/audit/__tests__/chain-anchor.dbtest.ts
+ ❯ server/services/audit/__tests__/chain-anchor.dbtest.ts:269:63
+    267|
+    268|   it('7. rows the archive door removed since the anchor are unverifiab…
+    269|     const { writeAuditChainAnchor, verifyAuditChainAnchor } = await lo…
+       |                                                               ^
+    270|     const { store } = memoryStore();
+    271|     const old = [];
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  server/services/audit/__tests__/chain-anchor.dbtest.ts > the anchor never claims more than it can show (P0-8, DP-04) > 8. a tenant-scoped connection refuses to anchor or verify a subset of the chain
+Error: Cannot find module '/server/services/audit/chain-anchor' imported from /home/user/ClinicalSageAI-2-replit/server/services/audit/__tests__/chain-anchor.dbtest.ts
+ ❯ server/services/audit/__tests__/chain-anchor.dbtest.ts:298:63
+    296|
+    297|   it('8. a tenant-scoped connection refuses to anchor or verify a subs…
+    298|     const { writeAuditChainAnchor, verifyAuditChainAnchor } = await lo…
+       |                                                               ^
+    299|     const { store, objects } = memoryStore();
+    300|     await writeChain(7, 1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+exit=1

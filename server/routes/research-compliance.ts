@@ -16,8 +16,11 @@ import { recordGovernedAction } from './c2c/actions';
 import { createPersonnelTx, addTrainingTx, listPersonnel, loadRosterForGate } from '../services/research-compliance/roster-service';
 import { resolveComplianceChecklist, evaluateTrainingGate, type ActivityProfile } from '../services/research-compliance/compliance-checklist';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('research-compliance');
 
 function resolveUserId(req: Request): number | null {
   const r = req as any;
@@ -38,7 +41,7 @@ function fail(res: Response, err: unknown): void {
     res.status(CODE_STATUS[code]).json({ error: { code, message: err instanceof Error ? err.message : 'Request failed.' } });
     return;
   }
-  res.status(500).json({ error: { code: 'INTERNAL', message: err instanceof Error ? err.message : 'Request failed.' } });
+  serverError(res, log, 'handling the research-compliance request', err);
 }
 const reason = z.string().trim().min(8, 'Provide a reason of at least 8 characters.');
 function today(): string { return new Date().toISOString().slice(0, 10); }

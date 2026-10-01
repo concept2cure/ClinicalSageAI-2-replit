@@ -1,0 +1,286 @@
+# Fix round GREEN — 2026-10-01T07:18:21Z, HEAD 0e58e794 + working tree
+# NODE_OPTIONS=--max-old-space-size=3072 npx vitest run server/services/ana-ri/__tests__/chat-turn-proposals.test.ts server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts
+{
+  "timestamp": "2026-10-01T07:12:15.368Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T07:12:15.371Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts
+{
+  "timestamp": "2026-10-01T07:12:15.372Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts
+Loaded 0 academic documents
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+Loaded 0 academic documents
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts
+Loaded 0 academic documents
+
+stderr | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts
+{
+  "timestamp": "2026-10-01T07:12:18.500Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+{
+  "timestamp": "2026-10-01T07:12:18.500Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts
+{
+  "timestamp": "2026-10-01T07:12:18.500Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+{
+  "timestamp": "2026-10-01T07:12:18.789Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T07:12:18.790Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+{
+  "timestamp": "2026-10-01T07:12:18.790Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts
+{
+  "timestamp": "2026-10-01T07:12:18.816Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T07:12:18.817Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts
+{
+  "timestamp": "2026-10-01T07:12:18.817Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+[AnA Command] Proposed create_artifact: HUMAN_CONFIRMATION_REQUIRED
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it
+[AnA action blocks] 1 block(s) → 1 put to the person
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > a reply with a command block and an action block carries both proposals
+[AnA Command] Proposed create_artifact: HUMAN_CONFIRMATION_REQUIRED
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > a reply with a command block and an action block carries both proposals
+[AnA action blocks] 1 block(s) → 1 put to the person
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > a reply with a command block and an action block carries both proposals
+[AnA Command] Proposed create_task: HUMAN_CONFIRMATION_REQUIRED
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a strong memo becomes a confirm-tier create_artifact proposal; no artifact is created
+[AnA Command] Proposed create_artifact: HUMAN_CONFIRMATION_REQUIRED
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a strong memo becomes a confirm-tier create_artifact proposal; no artifact is created
+[AnA action blocks] 1 block(s) → 1 put to the person
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > a reply with a command block and an action block carries both proposals
+[AnA RI Stream] Dispatched 1 command(s)
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > the stream’s answer never claims a run that did not happen > a reply of nothing but a provisional block, beside a navigation chip: the draft, marked not saved
+[AnA action blocks] 1 block(s) → 0 put to the person
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a reply of nothing but a strong block shows the draft the person is asked to confirm
+[AnA Command] Proposed create_artifact: HUMAN_CONFIRMATION_REQUIRED
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a reply of nothing but a strong block shows the draft the person is asked to confirm
+[AnA action blocks] 1 block(s) → 1 put to the person
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a review_thread block opens no thread and writes no comment in the person’s name
+[AnA Command] Proposed create_artifact: HUMAN_CONFIRMATION_REQUIRED
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a review_thread block opens no thread and writes no comment in the person’s name
+[AnA action blocks] 1 block(s) → 1 put to the person
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > provisional and uncertain blocks propose nothing and write nothing
+[AnA action blocks] 2 block(s) → 0 put to the person
+
+stderr | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > someone who may not create the artifact is told so, and is not asked to confirm it
+[AnA Command] Blocked create_artifact: RBAC_DENIED
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > someone who may not create the artifact is told so, and is not asked to confirm it
+[AnA action blocks] 1 block(s) → 0 put to the person
+
+stderr | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a refused block in a reply of nothing but blocks keeps the draft on screen
+[AnA Command] Blocked create_artifact: RBAC_DENIED
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a refused block in a reply of nothing but blocks keeps the draft on screen
+[AnA action blocks] 1 block(s) → 0 put to the person
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > without an integer project the block is not proposed against a guessed one
+[AnA action blocks] 1 block(s) → 0 put to the person
+
+stdout | server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > the stream’s answer never claims a run that did not happen > a strong block in a conversation scoped to a program UUID: not proposed, and the answer says why
+[AnA action blocks] 1 block(s) → 0 put to the person
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > the proposal is the canonical command, so a person’s yes runs the canonical handler > confirmed through the governed route’s context, create_artifact writes the proposed content
+[AnA Command] Proposed create_artifact: HUMAN_CONFIRMATION_REQUIRED
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > the proposal is the canonical command, so a person’s yes runs the canonical handler > confirmed through the governed route’s context, create_artifact writes the proposed content
+[AnA action blocks] 1 block(s) → 1 put to the person
+
+stdout | server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > the proposal is the canonical command, so a person’s yes runs the canonical handler > confirmed through the governed route’s context, create_artifact writes the proposed content
+[AnA Command] Executed create_artifact: OK — Created "Risk Memo: Accelerated Stability" in section 3.2.S.7 — ID: 501, status: draft.
+
+ ✓ server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > is a proposal on post_done, and nothing is written before a person confirms it 6105ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > an ana-action block on the live stream > a reply with a command block and an action block carries both proposals 8ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > the stream’s answer never claims a run that did not happen > a reply of nothing but a provisional block, beside a navigation chip: the draft, marked not saved 9ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > the stream’s answer never claims a run that did not happen > a strong block in a conversation scoped to a program UUID: not proposed, and the answer says why 4ms
+ ✓ server/routes/ana-ri/__tests__/post-processing-action-block-proposal.test.ts > the stream’s answer never claims a run that did not happen > an empty reply with only a navigation chip: nothing was changed 1ms
+ ✓ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a strong memo becomes a confirm-tier create_artifact proposal; no artifact is created 11ms
+ ✓ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a reply of nothing but a strong block shows the draft the person is asked to confirm 3ms
+ ✓ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a review_thread block opens no thread and writes no comment in the person’s name 2ms
+ ✓ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > provisional and uncertain blocks propose nothing and write nothing 1ms
+ ✓ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > someone who may not create the artifact is told so, and is not asked to confirm it 1ms
+ ✓ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > a refused block in a reply of nothing but blocks keeps the draft on screen 1ms
+ ✓ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > an ana-action block from the model writes nothing > without an integer project the block is not proposed against a guessed one 0ms
+ ✓ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > the proposal is the canonical command, so a person’s yes runs the canonical handler > confirmed through the governed route’s context, create_artifact writes the proposed content 3ms
+ ✓ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > there is one write path for an AnA artifact > the action-block module writes nothing itself 1ms
+ ✓ server/services/ana-ri/__tests__/ana-action-block-proposal.test.ts > there is one write path for an AnA artifact > both chat paths hand the proposals to the response the sign-off prompt reads 1ms
+ ✓ server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts > the prompts that ask for an ana-action block say a person confirms it > a document request is detected, so its prompt is checked 3ms
+ ✓ server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts > the prompts that ask for an ana-action block say a person confirms it > persona.ts (core prompt): nothing says the block saves, creates or executes on its own 1ms
+ ✓ server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts > the prompts that ask for an ana-action block say a person confirms it > the live stream’s assembled prompt (orchestrate): nothing says the block saves, creates or executes on its own 1ms
+ ✓ server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts > the prompts that ask for an ana-action block say a person confirms it > lumen-context/base-system-prompt.ts: nothing says the block saves, creates or executes on its own 1ms
+ ✓ server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts > the prompts that ask for an ana-action block say a person confirms it > document-routing.ts (draft request): nothing says the block saves, creates or executes on its own 0ms
+ ✓ server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts > the prompts that ask for an ana-action block say a person confirms it > persona.ts “Creating Artifacts”: the person confirms, and AnA does not say it was saved 1ms
+ ✓ server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts > the prompts that ask for an ana-action block say a person confirms it > base-system-prompt.ts “Guidance-to-Action Execution”: the person confirms, and AnA does not say it was created 1ms
+ ✓ server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts > the prompts that ask for an ana-action block say a person confirms it > document-routing.ts: the draft request asks for a proposal, not a save 0ms
+stdout | server/services/ana-ri/__tests__/chat-turn-proposals.test.ts
+{
+  "timestamp": "2026-10-01T07:12:21.829Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T07:12:21.830Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/chat-turn-proposals.test.ts
+{
+  "timestamp": "2026-10-01T07:12:21.831Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana-ri/__tests__/chat-turn-proposals.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana-ri/__tests__/chat-turn-proposals.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana-ri/__tests__/chat-turn-proposals.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > POST /api/chat: what the person reads after AnA’s ana-action blocks (settleActionBlocks) > a reply of nothing but a provisional block: the draft stays on screen, marked not saved
+[AnA action blocks] 1 block(s) → 0 put to the person
+
+stdout | server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > POST /api/chat: what the person reads after AnA’s ana-action blocks (settleActionBlocks) > a strong block in a conversation scoped to a program UUID: not proposed, and the answer says why
+[AnA action blocks] 1 block(s) → 0 put to the person
+
+stdout | server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > POST /api/chat: what the person reads after AnA’s ana-action blocks (settleActionBlocks) > prose and a provisional block: the prose is kept and the block’s fate is stated, without repeating the draft
+[AnA action blocks] 1 block(s) → 0 put to the person
+
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a platform-command proposal from the tool loop reaches the sign-off prompt > is lifted as the executor built it 4ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a platform-command proposal from the tool loop reaches the sign-off prompt > a Part 11 signature demand is lifted too 1ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a platform-command proposal from the tool loop reaches the sign-off prompt > a command that ran, or was refused, is not a prompt 1ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a platform-command proposal from the tool loop reaches the sign-off prompt > a proposal without the command to retry is not a prompt (nothing to confirm) 0ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a platform-command proposal from the tool loop reaches the sign-off prompt > a tool that writes on its own handler is not lifted: it is confirmable only from a held run 0ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a platform-command proposal from the tool loop reaches the sign-off prompt > an unreadable result is not a prompt 0ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > POST /api/chat returns the loop’s proposals beside the action-block proposals > collects them from the loop’s tool results 1ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > POST /api/chat returns the loop’s proposals beside the action-block proposals > puts them in executedCommands 1ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a reply that was only blocks says what happened > a proposal: nothing has changed yet 1ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a reply that was only blocks says what happened > only refusals: it does not say anything was executed 1ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > a reply that was only blocks says what happened > everything ran: it says so 0ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > nothing ran and nothing was proposed: the answer says so (fix round) > an empty list: nothing was changed 0ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > POST /api/chat: what the person reads after AnA’s ana-action blocks (settleActionBlocks) > a reply of nothing but a provisional block: the draft stays on screen, marked not saved 2ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > POST /api/chat: what the person reads after AnA’s ana-action blocks (settleActionBlocks) > a strong block in a conversation scoped to a program UUID: not proposed, and the answer says why 1ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > POST /api/chat: what the person reads after AnA’s ana-action blocks (settleActionBlocks) > prose and a provisional block: the prose is kept and the block’s fate is stated, without repeating the draft 1ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > POST /api/chat: what the person reads after AnA’s ana-action blocks (settleActionBlocks) > a reply without blocks is returned exactly as written 0ms
+ ✓ server/services/ana-ri/__tests__/chat-turn-proposals.test.ts > POST /api/chat: what the person reads after AnA’s ana-action blocks (settleActionBlocks) > send-message stores and returns what settleActionBlocks answers 2ms
+stdout | server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts > the platform-command bridge tells the model a proposal ran nothing > execute_platform_command: on a proposal, nothing ran, tell the person, do not re-issue
+[AnA Command] Proposed create_task: HUMAN_CONFIRMATION_REQUIRED
+
+ ✓ server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts > the platform-command bridge tells the model a proposal ran nothing > list_platform_commands: a write comes back as a proposal; a confirm flag is not a confirmation 4797ms
+ ✓ server/services/ana-ri/__tests__/action-prompts-propose-only.test.ts > the platform-command bridge tells the model a proposal ran nothing > execute_platform_command: on a proposal, nothing ran, tell the person, do not re-issue 4ms
+
+ Test Files  4 passed (4)
+      Tests  42 passed (42)
+   Start at  07:12:08
+   Duration  16.27s (transform 20.89s, setup 742ms, import 25.70s, tests 11.00s, environment 1ms)
+

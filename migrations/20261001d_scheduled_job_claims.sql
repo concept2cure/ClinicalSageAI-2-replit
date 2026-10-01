@@ -32,8 +32,16 @@ CREATE TABLE IF NOT EXISTS scheduled_job_claims (
   window_key       TEXT NOT NULL,
   claimed_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   finished_at      TIMESTAMPTZ,
+  result           JSONB,
   PRIMARY KEY (organization_id, job_name, window_key)
 );
+
+-- 2026-10-01 (same day, U19 follow-up): `result` holds what a run chose to
+-- record (runScheduledOncePerWindow { storeResult: true }), so a status every
+-- process serves — the audit-chain monitor's — comes from the run that did
+-- the work, not from each process's memory. Added to the CREATE above for a
+-- fresh database and here for one that already has the table. Additive only.
+ALTER TABLE scheduled_job_claims ADD COLUMN IF NOT EXISTS result JSONB;
 
 CREATE INDEX IF NOT EXISTS scheduled_job_claims_job_claimed_idx
   ON scheduled_job_claims (job_name, claimed_at);

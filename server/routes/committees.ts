@@ -7,8 +7,9 @@
  * Role-specific privileges are enforced with the platform RBAC engine
  * (can(orgId, role, {action, resourceType:'committee'})): assigning members /
  * convening / agenda needs 'assign'; voting needs 'review'; finalizing a
- * determination needs 'approve' AND current CITI training. Mounted at
- * /api/committees.
+ * determination needs 'approve' AND current CITI training, and is an electronic
+ * signature (password, enrolled second factor, meaning, reason;
+ * governed-signed-act.ts). Mounted at /api/committees.
  *
  * @module server/routes/committees
  */
@@ -17,6 +18,7 @@ import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import { pool } from '../db';
 import { recordGovernedAction } from './c2c/actions';
+import { signedActAttempts, signGovernedAct } from './governed-signed-act';
 import { can } from '../services/governance/permissions';
 import {
   addCommitteeMemberTx,
@@ -242,17 +244,15 @@ router.post('/agenda/:id/votes', async (req, res) => {
   });
 });
 
-// ─── Finalize (gated: approve privilege + CITI training) ─────────────────────
+// ─── Finalize (gated: approve privilege + CITI training + e-signature) ────────
 
-router.post('/agenda/:id/finalize', async (req, res) => {
+router.post('/agenda/:id/finalize', signedActAttempts, async (req, res) => {
   const orgId = resolveOrgId(req);
   const userId = resolveUserId(req);
   if (!orgId || !userId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   if (!(await ensureCan(req, res, orgId, 'approve'))) return;
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
-  const parsed = z.object({ reason }).safeParse(req.body ?? {});
-  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
   // CITI training gate — resolve the agenda item's committee type, then check the actor.
   try {
     const ct = await pool.query(`SELECT committee_type FROM committee_agenda_items WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`, [id, orgId]);
@@ -262,10 +262,18 @@ router.post('/agenda/:id/finalize', async (req, res) => {
       return res.status(403).json({ error: { code: 'NOT_TRAINED', message: `Cannot finalize: ${training.reason}` } });
     }
   } catch (err) { return fail(res, err); }
-  await governed(req, res, 'sign', parsed.data.reason, async (client, oid, uid) => {
-    const determination = await finalizeAgendaItemTx(client, oid, uid, id);
-    recordCommitteeDetermination(determination.outcome);
-    return { target: `committee-agenda:${id}`, payload: { outcome: determination.outcome }, body: { agendaItemId: id, ...determination } };
+  // The determination is an electronic signature (P0-10a): the one ceremony,
+  // after the privilege and training gates, so an unauthorized caller is never
+  // asked for a password.
+  await signGovernedAct(req, res, {
+    domain: 'committee',
+    codeStatus: CODE_STATUS,
+    tenantRole: resolveRole(req),
+    run: async (client, oid, uid) => {
+      const determination = await finalizeAgendaItemTx(client, oid, uid, id);
+      recordCommitteeDetermination(determination.outcome);
+      return { target: `committee-agenda:${id}`, payload: { outcome: determination.outcome }, body: { agendaItemId: id, ...determination } };
+    },
   });
 });
 

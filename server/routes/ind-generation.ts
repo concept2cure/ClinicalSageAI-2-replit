@@ -25,6 +25,8 @@ import {
   resolveCtdSectionsForDocType,
 } from '../services/ind/ctd/index.js';
 import { getGateway } from '../services/ai-gateway/index.js';
+import { serverError } from '../lib/api-response.js';
+import { createScopedLogger } from '../utils/logger.js';
 
 // Also import device registry
 let getDeviceSections: ((type: '510K' | 'PMA' | 'DE_NOVO' | 'CER') => Array<{ code: string; title: string; required: boolean; guidance: string }>) | null = null;
@@ -36,6 +38,7 @@ try {
 }
 
 const router = Router();
+const log = createScopedLogger('ind-generation');
 
 // ─── Unresolved-placeholder detection (fail-closed drafting) ──────────────────
 //
@@ -379,8 +382,10 @@ router.post('/generate-section', async (req: Request, res: Response) => {
           : `${title} content generated. Save it as an artifact to track in your submission.`,
       },
     });
-  } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message || 'Generation failed' });
+  } catch (error) {
+    // The gateway's text (provider error, model id, upstream host) goes to the
+    // log against the request id, not into the body (P1-17, IAM-18 (1)).
+    serverError(res, log, 'generating the section', error);
   }
 });
 
