@@ -290,6 +290,67 @@ export interface SequencePlan {
   /** Leaves unchanged since the last filing: they do not ship at all. */
   omitted: Array<{ ctdSection: string; fileName: string }>;
   summary: { new: number; replace: number; append: number; delete: number; unchanged: number };
+  /** Documents this sequence leaves current at the agency although the package
+   *  no longer files them where they sit (see `staleOnFile`). Empty for 0000. */
+  staleOnFile: StaleOnFile[];
+}
+
+/**
+ * A document on file that this sequence leaves current although the package no
+ * longer places it there. Withdrawal stays explicit, so the plan does not
+ * withdraw it; it names it, as the leaf a `withdraw` entry has to name.
+ */
+export interface StaleOnFile {
+  /** 'relocated': the same artifact is placed at another CTD section now, and
+   *  files there as a new document (sweep F12). 'placeholder': a generated
+   *  empty-section leaf, filed before an empty section stopped filing one
+   *  (sweep F11). */
+  reason: 'relocated' | 'placeholder';
+  ctdSection: string;
+  fileName: string;
+  /** The sequence that holds it. */
+  sequenceNumber?: string;
+  /** For 'relocated': where the artifact is placed now. */
+  movedTo?: { ctdSection: string; fileName: string };
+}
+
+/** `artifact:<id>@<code>` → the artifact id, or null for any other identity. */
+function artifactOf(leafKey: string | undefined): string | null {
+  if (!leafKey?.startsWith('artifact:')) return null;
+  const at = leafKey.lastIndexOf('@');
+  return at > 'artifact:'.length ? leafKey.slice('artifact:'.length, at) : null;
+}
+
+/**
+ * What this sequence leaves current on file that the package no longer files
+ * where it sits. 2026-10-01 (W5/D7, sweep F12): a document whose CTD section
+ * was corrected was filed `new` at its new heading — correctly, a move is never
+ * a replace across headings — while the copy at its old heading stayed current
+ * at the agency with no finding, and every later revision replaced only the
+ * new copy. A document deliberately filed at two headings is not a move: it is
+ * still desired at its old one. A leaf this sequence withdraws is not stale.
+ */
+function staleOnFile(
+  prior: readonly PriorLeaf[],
+  desired: ReadonlyArray<{ ctdSection: string; fileName: string; leafKey?: string }>,
+  withdraw: ReadonlyArray<{ ctdSection: string; fileName: string }>,
+): StaleOnFile[] {
+  const withdrawn = new Set(withdraw.map((w) => `${w.ctdSection}/${w.fileName}`));
+  const desiredKeys = new Set(desired.map((d) => d.leafKey).filter(Boolean));
+  const placedAt = new Map<string, { ctdSection: string; fileName: string }>();
+  for (const d of desired) {
+    const id = artifactOf(d.leafKey);
+    if (id && !placedAt.has(id)) placedAt.set(id, { ctdSection: d.ctdSection, fileName: d.fileName });
+  }
+  const stale: StaleOnFile[] = [];
+  for (const p of prior) {
+    if (withdrawn.has(`${p.ctdSection}/${p.fileName}`) || (p.leafKey && desiredKeys.has(p.leafKey))) continue;
+    const at = { ctdSection: p.ctdSection, fileName: p.fileName, ...(p.sequenceNumber ? { sequenceNumber: p.sequenceNumber } : {}) };
+    const movedTo = placedAt.get(artifactOf(p.leafKey) ?? '');
+    if (movedTo) stale.push({ reason: 'relocated', ...at, movedTo });
+    else if (p.leafKey?.startsWith('section:')) stale.push({ reason: 'placeholder', ...at });
+  }
+  return stale;
 }
 
 /**
@@ -364,6 +425,7 @@ export function planSequence(params: {
       leaves: desired.map((d) => ({ ctdSection: d.ctdSection, fileName: d.fileName, operation: 'new' })),
       omitted: [],
       summary: { new: desired.length, replace: 0, append: 0, delete: 0, unchanged: 0 },
+      staleOnFile: [],
     };
   }
 
@@ -493,5 +555,6 @@ export function planSequence(params: {
     })),
     omitted,
     summary,
+    staleOnFile: staleOnFile(prior, desired, params.withdraw ?? []),
   };
 }
