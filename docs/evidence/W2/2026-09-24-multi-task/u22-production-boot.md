@@ -144,3 +144,23 @@ literals up from client source.
 
 **Error-level log lines in the probe run:** only those nine. No fail-closed
 scope errors, no missing files, and no unhandled rejections on any path.
+
+## Writes: the core client flow on the production bundle
+
+Each call below was sent as the client sends it: the same paths and bodies,
+plus the CSRF Origin and the load balancer's headers.
+
+| Step | Call | Result |
+|---|---|---|
+| Create a project (Projects wizard) | `POST /api/c2c/projects` (IND, drug, FDA) | 201. The program was created. Its `meta` reports the governed document created with **92 scaffolded sections**, plus a submission and a project anchor. |
+| List projects | `GET /api/c2c/projects` | 200, listing it |
+| Create a document in the project (Authoring) | `POST /api/authoring/docs` with `client_program_id` | 201. It is bound to the project's governed document (`c2c_document_id`), with `tenant_id` 7. |
+| Read it back | `GET /api/authoring/docs/:id`, `/sections` | 200, 200 |
+| Create a controlled document (QMS) | `POST /api/mdx/qms/documents` (SOP-001) | 201. `meta.auditTrail`: `persisted: true, chained: true` |
+| List the controlled documents, and QMS readiness | `GET /api/mdx/qms/documents`, `/qms/readiness` | 200, 200 |
+| AnA Command's continuity briefing (U14) | `POST /api/orchestration/continuity` | 200: "readiness 0% (not_started) … 5 blocker(s). No baseline yet". |
+
+**Error-level log lines across the whole flow: none.**
+
+This ran as `app_service` with RLS enforcing, over verified database TLS, with
+no Redis.
