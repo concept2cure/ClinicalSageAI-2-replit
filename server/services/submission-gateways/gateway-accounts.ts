@@ -168,6 +168,37 @@ export interface GatewayAccountView {
   updatedBy: number | null;
 }
 
+/** One gateway × environment as chosen; no row is the platform account. */
+function accountView(
+  spec: GatewayAccountSpec,
+  environment: GatewayEnvironment,
+  row: Record<string, any> | undefined,
+  platformReady: boolean,
+): GatewayAccountView {
+  const mode: AccountMode = row?.account_mode === 'client' ? 'client' : 'platform';
+  const held: string[] = row?.credential_fields ?? [];
+  const senderIdentifier: string | null = row?.sender_identifier ?? null;
+  return {
+    region: spec.region,
+    gateway: spec.gateway,
+    agency: spec.agency,
+    label: spec.label,
+    identifierLabel: spec.identifierLabel,
+    environment,
+    mode,
+    clientTransmit: spec.clientTransmit,
+    clientFields: spec.clientFields,
+    senderIdentifier,
+    credentialFieldsHeld: held,
+    status:
+      mode === 'platform'
+        ? platformReady ? 'ready' : 'platform_not_configured'
+        : clientStatus(spec, senderIdentifier, held),
+    updatedAt: row?.updated_at ? new Date(row.updated_at).toISOString() : null,
+    updatedBy: row?.updated_by ?? null,
+  };
+}
+
 /**
  * Every gateway × environment for one organisation, with what is chosen and
  * whether it can send. `platformConfigured` answers for the platform account
@@ -189,36 +220,19 @@ export async function listGatewayAccounts(
   for (const spec of GATEWAY_ACCOUNT_SPECS) {
     for (const environment of GATEWAY_ENVIRONMENTS) {
       const row = byKey.get(`${spec.region}:${spec.gateway}:${environment}`);
-      const mode: AccountMode = row?.account_mode === 'client' ? 'client' : 'platform';
-      const held: string[] = row?.credential_fields ?? [];
-      let status: GatewayAccountStatus;
-      if (mode === 'platform') {
-        status = (await platformConfigured(spec, environment).catch(() => false)) ? 'ready' : 'platform_not_configured';
-      } else if (!spec.clientTransmit) {
-        status = 'client_not_supported';
-      } else {
-        const complete = !!row?.sender_identifier && spec.clientFields.every((f) => held.includes(f.name));
-        status = complete ? 'ready' : 'credentials_needed';
-      }
-      out.push({
-        region: spec.region,
-        gateway: spec.gateway,
-        agency: spec.agency,
-        label: spec.label,
-        identifierLabel: spec.identifierLabel,
-        environment,
-        mode,
-        clientTransmit: spec.clientTransmit,
-        clientFields: spec.clientFields,
-        senderIdentifier: row?.sender_identifier ?? null,
-        credentialFieldsHeld: held,
-        status,
-        updatedAt: row?.updated_at ? new Date(row.updated_at).toISOString() : null,
-        updatedBy: row?.updated_by ?? null,
-      });
+      const platformReady =
+        row?.account_mode === 'client' ? false : await platformConfigured(spec, environment).catch(() => false);
+      out.push(accountView(spec, environment, row, platformReady));
     }
   }
   return out;
+}
+
+/** Whether a client account, as held, can send: never from a gateway that cannot send under one. */
+function clientStatus(spec: GatewayAccountSpec, senderIdentifier: string | null, held: string[]): GatewayAccountStatus {
+  if (!spec.clientTransmit) return 'client_not_supported';
+  const complete = !!senderIdentifier && spec.clientFields.every((f) => held.includes(f.name));
+  return complete ? 'ready' : 'credentials_needed';
 }
 
 export class GatewayAccountInputError extends Error {
@@ -269,18 +283,20 @@ export function validateGatewayAccountChange(c: GatewayAccountChange): {
   if (typeof c.reason !== 'string' || c.reason.trim().length < 10) {
     throw new GatewayAccountInputError('REASON_REQUIRED', 'A reason of at least 10 characters is required: this changes whose identity submissions are sent under.');
   }
-  for (const [k, v] of Object.entries(c.credentials ?? {})) {
-    if (!spec.clientFields.some((f) => f.name === k)) {
-      throw new GatewayAccountInputError('UNKNOWN_FIELD', `${spec.label} takes no credential field '${k}'.`);
-    }
-    if (typeof v !== 'string' || !v.trim()) {
-      throw new GatewayAccountInputError('EMPTY_FIELD', `${k} is empty.`);
-    }
-    if (spec.clientFields.find((f) => f.name === k)?.pem && !/-----BEGIN [A-Z0-9 ]+-----[\s\S]+-----END [A-Z0-9 ]+-----/.test(v)) {
+  validateClientFields(spec, c.credentials ?? {});
+  return { spec, environment: c.environment, mode: c.mode };
+}
+
+/** Each credential field supplied is one the gateway takes, non-empty, and PEM where it must be. */
+function validateClientFields(spec: GatewayAccountSpec, credentials: Record<string, string>): void {
+  for (const [k, v] of Object.entries(credentials)) {
+    const field = spec.clientFields.find((f) => f.name === k);
+    if (!field) throw new GatewayAccountInputError('UNKNOWN_FIELD', `${spec.label} takes no credential field '${k}'.`);
+    if (typeof v !== 'string' || !v.trim()) throw new GatewayAccountInputError('EMPTY_FIELD', `${k} is empty.`);
+    if (field.pem && !/-----BEGIN [A-Z0-9 ]+-----[\s\S]+-----END [A-Z0-9 ]+-----/.test(v)) {
       throw new GatewayAccountInputError('NOT_PEM', `${k} must be PEM text (-----BEGIN … -----END …).`);
     }
   }
-  return { spec, environment: c.environment, mode: c.mode };
 }
 
 /**

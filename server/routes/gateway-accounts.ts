@@ -21,7 +21,7 @@ import { Router, type Request, type Response } from 'express';
 
 import { authenticateToken, requireRole } from '../middleware/auth';
 import { createRateLimiter } from '../middleware/rateLimiter';
-import { requestConnectable, requestPgClient } from '../db/requestDb';
+import { requestConnectable, requestPgClient, type RequestSqlClient } from '../db/requestDb';
 import { clientIpOf } from '../utils/client-ip';
 import { createScopedLogger } from '../utils/logger';
 import { writeChainedAuditRow } from '../services/auditService';
@@ -61,6 +61,49 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
+function credentialsOf(body: Record<string, any>): Record<string, string> | null {
+  const c = body.credentials;
+  return c && typeof c === 'object' && !Array.isArray(c) ? (c as Record<string, string>) : null;
+}
+
+/** The change and its chained audit row, on one connection, inside the caller's transaction. */
+async function writeAndAudit(client: RequestSqlClient, req: Request, orgId: number, userId: number) {
+  const body = (req.body ?? {}) as Record<string, any>;
+  const credentials = credentialsOf(body);
+  const written = await writeGatewayAccount(client, {
+    organizationId: orgId,
+    userId,
+    region: String(req.params.region),
+    gateway: String(req.params.gateway),
+    environment: String(req.params.environment),
+    mode: body.mode,
+    senderIdentifier: body.senderIdentifier === undefined ? undefined : body.senderIdentifier ?? null,
+    credentials,
+    reason: body.reason,
+  });
+  await writeChainedAuditRow(client, {
+    tenantId: orgId,
+    userId,
+    action: 'data_modify',
+    resourceType: 'organization_gateway_account',
+    resourceId: `${written.spec.region}:${written.spec.gateway}:${written.environment}`,
+    ipAddress: clientIpOf(req) ?? undefined,
+    userAgent: req.get('user-agent'),
+    details: {
+      orgAdminAction: 'gateway_account.change',
+      modeBefore: written.previousMode,
+      modeAfter: written.mode,
+      senderIdentifier: written.senderIdentifier,
+      // Names only: secret material is never copied into the log.
+      credentialFieldsChanged: Object.keys(credentials ?? {}).sort(),
+      credentialFieldsHeld: written.credentialFieldsHeld,
+      reason: String(body.reason).trim(),
+      reauthenticated: true,
+    },
+  });
+  return written;
+}
+
 router.put('/:region/:gateway/:environment', requireRole('admin', 'owner'), async (req: Request, res: Response) => {
   const orgId = orgOf(req);
   if (orgId === null) {
@@ -70,52 +113,16 @@ router.put('/:region/:gateway/:environment', requireRole('admin', 'owner'), asyn
   if (userId === null) {
     return res.status(401).json({ error: { code: 'NO_USER', message: 'A signed-in user is required.' } });
   }
-  const body = (req.body ?? {}) as Record<string, any>;
-  const reauth = await verifyReauth(userId, body.reauth);
+  const reauth = await verifyReauth(userId, req.body?.reauth);
   if (!reauth.ok) {
     return res.status(401).json({
       error: { code: reauth.error ?? 'REAUTH_REQUIRED', message: 'Confirm your password: this changes whose identity submissions go out under.' },
     });
   }
-  const credentials =
-    body.credentials && typeof body.credentials === 'object' && !Array.isArray(body.credentials)
-      ? (body.credentials as Record<string, string>)
-      : null;
-  const db = requestConnectable(req);
-  const client = await db.connect();
+  const client = await requestConnectable(req).connect();
   try {
     await client.query('BEGIN');
-    const written = await writeGatewayAccount(client, {
-      organizationId: orgId,
-      userId,
-      region: String(req.params.region),
-      gateway: String(req.params.gateway),
-      environment: String(req.params.environment),
-      mode: body.mode,
-      senderIdentifier: body.senderIdentifier === undefined ? undefined : body.senderIdentifier ?? null,
-      credentials,
-      reason: body.reason,
-    });
-    await writeChainedAuditRow(client, {
-      tenantId: orgId,
-      userId,
-      action: 'data_modify',
-      resourceType: 'organization_gateway_account',
-      resourceId: `${written.spec.region}:${written.spec.gateway}:${written.environment}`,
-      ipAddress: clientIpOf(req) ?? undefined,
-      userAgent: req.get('user-agent'),
-      details: {
-        orgAdminAction: 'gateway_account.change',
-        modeBefore: written.previousMode,
-        modeAfter: written.mode,
-        senderIdentifier: written.senderIdentifier,
-        // Names only: secret material is never copied into the log.
-        credentialFieldsChanged: Object.keys(credentials ?? {}).sort(),
-        credentialFieldsHeld: written.credentialFieldsHeld,
-        reason: String(body.reason).trim(),
-        reauthenticated: true,
-      },
-    });
+    const written = await writeAndAudit(client, req, orgId, userId);
     await client.query('COMMIT');
     return res.json({
       organizationId: orgId,

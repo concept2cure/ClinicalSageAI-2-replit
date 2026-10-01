@@ -197,9 +197,10 @@ describe('refusedBeforeWire — CredentialError and the proof-carrying Transport
       'server/services/submission-gateways/anvisa-gateway.ts': 1,
       'server/services/submission-gateways/cdsco-sugam-gateway.ts': 1,
       'server/services/submission-gateways/ema-cesp.ts': 2,
-      // loadFdaCredentials, resolveFdaEsgTransport, loadFdaRestCredentials,
+      // loadFdaCredentials, loadFdaClientCredentials (the organisation's own
+      // account, 2026-10-01), resolveFdaEsgTransport, loadFdaRestCredentials,
       // and transmitViaSftp's check before the client module loads or connects.
-      'server/services/submission-gateways/fda-esg.ts': 4,
+      'server/services/submission-gateways/fda-esg.ts': 5,
       // clientAccountRefusal: the organisation chose its own account and it
       // cannot send (gateway not supported yet / credentials missing). Thrown
       // inside the guard's pre-wire try in index.ts, before impl.transmit.

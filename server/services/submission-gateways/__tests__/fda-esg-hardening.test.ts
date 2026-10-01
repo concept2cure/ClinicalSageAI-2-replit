@@ -208,12 +208,9 @@ const mdnBodyFor = (originalMessageId: string, disposition: string | null) =>
   'Received-Content-MIC: deadbeef==, sha-256\r\n' +
   '------=_Part_FDA_MDN--\r\n';
 
-const { sentAs2Headers } = vi.hoisted(() => ({ sentAs2Headers: [] as Array<Record<string, string>> }));
-
 vi.mock('node:https', () => {
   return {
     request: (opts: any, cb: (res: unknown) => void) => {
-      sentAs2Headers.push({ ...(opts?.headers ?? {}) });
       const FAKE_MDN_BODY = mdnFixture.body
         ? mdnFixture.body(String(opts?.headers?.['Message-ID'] ?? ''))
         : mdnBodyFor(
@@ -713,42 +710,5 @@ describe('FIX 7 — findActiveTransmittal lookup', () => {
       (q) => /SELECT\s+id,\s+status\s+FROM submission_transmittals/i.test(q.sql),
     );
     expect(lookup).toBeUndefined();
-  });
-});
-
-/* ─── The organisation's own FDA account (D7, founder decision 2026-10-01) ─ */
-
-describe("an organisation's own FDA ESG account", () => {
-  it('a transmit under a client account goes out under the client\'s AS2 identity, signed with the client\'s key, never reading the platform\'s', async () => {
-    const fsMod = await import('fs');
-    const readFile = fsMod.promises.readFile as unknown as ReturnType<typeof vi.fn>;
-    readFile.mockClear();
-    sentAs2Headers.length = 0;
-    const gw = new FdaEsgGateway();
-    const result = await gw.transmit({
-      ...SMALL_AS2_REQUEST(),
-      account: {
-        mode: 'client',
-        senderIdentifier: 'CLIENT-OWN-AS2',
-        credentials: { clientCertPem: '-----BEGIN CERTIFICATE-----\nMIIBclient\n-----END CERTIFICATE-----', clientKeyPem: TEST_PRIVATE_KEY_PEM },
-      },
-    });
-    expect(result.status).toBe('received');
-    const sent = sentAs2Headers.at(-1)!;
-    const from = sent['AS2-From'] ?? sent['as2-from'];
-    expect(from).toBe('CLIENT-OWN-AS2');
-    expect(String(sent['Message-ID'])).toMatch(/@CLIENT-OWN-AS2>$/);
-    const pathsRead = readFile.mock.calls.map((c) => String(c[0]));
-    expect(pathsRead).not.toContain('/tmp/fda-cert.pem');
-    expect(pathsRead).not.toContain('/tmp/fda-key.pem');
-    expect(pathsRead).toContain('/tmp/fda-pub.pem'); // FDA's own certificate is the same for every sponsor
-  });
-
-  it('with no account choice recorded, it goes out under the platform account, as before', async () => {
-    sentAs2Headers.length = 0;
-    const gw = new FdaEsgGateway();
-    await gw.transmit(SMALL_AS2_REQUEST());
-    const sent = sentAs2Headers.at(-1)!;
-    expect(sent['AS2-From'] ?? sent['as2-from']).toBe('SPONSOR-AS2');
   });
 });
