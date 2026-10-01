@@ -386,6 +386,18 @@ export function DocumentCanvas({
      expanded (it stays mounted, hidden). Only an expanded editor is one the
      person can see the suggestion land in, so only then is it passed on. */
   const [bridge, setBridge] = useState<EditorBridge | null>(null);
+
+  /* A section not yet drafted is one ask away (2026-10-01). The ask opens
+     the editor at that section, so the turn names it and AnA's answer offers
+     to go into it, and lands in the composer for the person to send. The
+     wording asks for the text in the conversation: the document exists, and
+     a second one drafted from this ask would be a duplicate. */
+  const [focusSection, setFocusSection] = useState<{ id: string; nonce: number } | null>(null);
+  const askToDraft = (sec: SectionRow, title: string) => {
+    setFocusSection(prev => ({ id: sec.id, nonce: (prev?.nonce ?? 0) + 1 }));
+    onExpandedChange(true);
+    onAsk(`Draft the text for section ${sec.code} ${sec.title} of “${title}” here in the conversation, so I can insert it into the document.`);
+  };
   useEffect(() => {
     if (!onEditorBridge) return undefined;
     onEditorBridge(docId, expanded ? bridge : null);
@@ -485,7 +497,12 @@ export function DocumentCanvas({
                 {(sec.content ?? '').trim() ? (
                   <AuthoredHtml className="dcv-sec-body ed-full-sec-body" html={sec.content ?? ''} />
                 ) : (
-                  <p className="dcv-sec-empty">Not drafted yet.</p>
+                  <p className="dcv-sec-empty">
+                    Not drafted yet.
+                    <button type="button" className="nda-open" onClick={() => askToDraft(sec, title)}>
+                      {`Ask AnA to draft ${sec.code}`}
+                    </button>
+                  </p>
                 )}
               </article>
             ))}
@@ -591,7 +608,7 @@ export function DocumentCanvas({
               reloadDocs={reloadDoc}
               programId={programId}
               pinnedDocId={doc.id}
-              embedded={{ onBack: () => onExpandedChange(false), hostShowsBack: true, onEditorBridge: setBridge }}
+              embedded={{ onBack: () => onExpandedChange(false), hostShowsBack: true, onEditorBridge: setBridge, focusSection }}
               surfaceActionId={null}
               consumeDeepLinks={false}
               onAsk={onAsk}

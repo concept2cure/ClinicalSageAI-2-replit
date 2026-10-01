@@ -21,6 +21,12 @@ export interface QueryFilters {
   dateRange?: { start: Date; end: Date };
   /** No corpus has a column for this — accepted on the type, never applied. */
   domain?: string;
+  /**
+   * One program's documents only: the open project (PF-10 S7). A scope, not a
+   * hint: a corpus without a program column refuses it rather than searching
+   * wider. Never extracted from the query; only a caller sets it.
+   */
+  programId?: string;
 }
 
 /** The columns a corpus exposes for filtering (null when the corpus lacks one). */
@@ -28,6 +34,7 @@ export interface DocFilterColumns {
   documentType: string | null;
   source: string | null;
   date: string | null;
+  program: string | null;
 }
 
 /**
@@ -53,6 +60,13 @@ export function buildDocFilterClause(
     params.push(filters.source);
     clause += `\n          AND ${cols.source} ILIKE $${params.length}`;
   }
+  if (filters.programId != null) {
+    if (!cols.program) {
+      throw new Error('This corpus has no program column, so a search scoped to one project cannot be honoured. Nothing was searched.');
+    }
+    params.push(filters.programId);
+    clause += `\n          AND ${cols.program} = $${params.length}::uuid`;
+  }
   if (filters.dateRange && cols.date) {
     params.push(filters.dateRange.start);
     clause += `\n          AND ${cols.date} >= $${params.length}`;
@@ -67,11 +81,13 @@ export const VAULT_FILTER_COLUMNS: DocFilterColumns = {
   documentType: 'd.document_type',
   source: null,
   date: 'd.created_at',
+  program: 'd.program_id',
 };
 export const RAG_FILTER_COLUMNS: DocFilterColumns = {
   documentType: 'd.document_type',
   source: 'd.source',
   date: 'd.document_date',
+  program: null,
 };
 
 /**
@@ -86,6 +102,7 @@ export function mergeFilters(
   if (!extracted && !explicit) return undefined;
   const merged: QueryFilters = { ...extracted, ...explicit };
   const hasAny =
-    merged.atomType != null || merged.source != null || merged.dateRange != null || merged.domain != null;
+    merged.atomType != null || merged.source != null || merged.dateRange != null || merged.domain != null ||
+    merged.programId != null;
   return hasAny ? merged : undefined;
 }

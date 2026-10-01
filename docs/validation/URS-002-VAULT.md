@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document ID | URS-002 |
-| Version | 0.8 |
+| Version | 0.9 |
 | Status | **DRAFT — UNSIGNED** |
 | Parent | VMP-001 |
 | Verified by | OQ-002 (`tests/validation/oq/vault/run.mjs`) |
@@ -22,6 +22,7 @@
 | 0.6 | 2026-10-01 | `…01DiJJAk` (VR-11b) | URS-VAULT-015, confirming suggested filings together with one reason, and the count awaiting confirmation, verified by OQ-VAULT-16. Not yet executed (W3). |
 | 0.7 | 2026-10-01 | `…01DiJJAk` (critique 15) | URS-VAULT-016, comparing two versions of a document, verified by OQ-VAULT-17. Not yet executed (W3). |
 | 0.8 | 2026-10-01 | `…01DiJJAk` (critique 15) | URS-VAULT-017, the library search across the organisation's projects, verified by OQ-VAULT-18. Not yet executed (W3). |
+| 0.9 | 2026-10-01 | `…01DiJJAk` (critique 15) | URS-VAULT-018, re-proving every stored version against its recorded SHA-256, verified by OQ-VAULT-19. Not yet executed (W3). |
 
 ## 1. Intended use
 
@@ -48,6 +49,7 @@ The Vault is the program's document store: the regulatory user uploads source do
 | URS-VAULT-015 | A person confirms the suggested filings in one folder together, with one reason for change that is required, and is recorded on each document's filing and in its own audit row. Each document is confirmed on its own. A document whose folder or status changed since the person loaded the list is refused, and not touched. The answer names each document, and the batch reports when not every filing was confirmed. The Vault shows how many suggested filings await confirmation, counted over the whole program. | §11.10(e) | high | `server/services/vault/vault-placement-batch.ts`, `vault-placement.service.ts` (`expected`), `server/routes/c2c/project-vault.ts` (`POST /:id/file-batch`, `awaitingConfirmationCount`), `client/src/concept2cure/v2/surfaces/VaultConfirmSuggested.tsx` |
 | URS-VAULT-016 | Two versions of one document are compared: whether their bytes are the same (from the recorded SHA-256s), each recorded detail that differs, and the lines of their extracted text that changed, unchanged runs collapsed. A comparison that was capped says so. A version with no extracted text gets no text comparison and the answer names it. Versions of different documents are refused, and another organisation's document is not found. | none | medium | `server/services/vault/vault-version-compare.ts`, `server/routes/c2c/project-vault.ts` (`GET /:id/documents/:documentId/compare`), `client/src/concept2cure/v2/surfaces/VaultVersionCompare.tsx` |
 | URS-VAULT-017 | A search across every project the organisation holds finds documents by title, file name and content, each named with its project, ranked, paginated with a real total, current versions unless earlier ones are asked for. Another organisation's documents are never among them. An empty query answers no results, and a failed search is reported as a failure, not as no matches. A project's own search still searches only that project. | §11.10(d) | medium | `server/services/vault/vault-search.ts`, `server/routes/c2c/project-vault.ts` (`GET /search`, `GET /:id/search`), `client/src/concept2cure/v2/surfaces/VaultLibraryResults.tsx` |
+| URS-VAULT-018 | A person can re-prove every stored version of a program: each is re-read through the verifier downloads use and checked against the SHA-256 recorded at ingest. Each verdict (verified, altered, missing, unreadable, or unverifiable when no SHA-256 was recorded) is written to the audit chain against that version, naming the person. The answer gives the counts and names every version that was not verified, and says when the program has more versions than one check covers. A viewer is refused. | §11.10(c), §11.10(e) | high | `server/services/vault/vault-fixity.ts`, `server/routes/c2c/project-vault.ts` (`POST /:id/fixity`), `client/src/concept2cure/v2/surfaces/VaultFixityCheck.tsx` |
 
 ## 3. Assumptions and constraints
 

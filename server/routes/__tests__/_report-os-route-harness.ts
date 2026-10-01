@@ -6,6 +6,7 @@
  * vi.mock factories can return them; reset before every case.
  */
 import { vi } from 'vitest';
+import { getTableColumns } from 'drizzle-orm';
 
 export function createReportOsHarness() {
   const queued = { select: [] as unknown[][], insert: [] as unknown[][], update: [] as unknown[][] };
@@ -29,13 +30,18 @@ export function createReportOsHarness() {
   const statements: string[] = [];
   /** The parameters each statement was sent with, in the same order. */
   const params: unknown[][] = [];
-  /** Rows the connection answers a statement with (default: none). */
-  const respond = { fn: (_sql: string): unknown[] => [] };
+  /**
+   * Rows the connection answers a statement with (default: none). `arrayMode` is
+   * drizzle's: a query built by drizzle on this connection (routes/report-os.ts
+   * onTransaction) asks for its rows as arrays in the table's column order.
+   */
+  const respond = { fn: (_sql: string, _arrayMode?: boolean): unknown[] => [] };
   const client = {
-    query: async (sql: string, values?: unknown[]) => {
+    query: async (q: string | { text: string; rowMode?: string }, values?: unknown[]) => {
+      const sql = typeof q === 'string' ? q : q.text;
       statements.push(sql.replace(/\s+/g, ' ').trim());
       params.push(values ?? []);
-      return { rows: respond.fn(sql), rowCount: 1 };
+      return { rows: respond.fn(sql, typeof q !== 'string' && q.rowMode === 'array'), rowCount: 1 };
     },
     release: () => statements.push('<released>'),
   };
@@ -69,5 +75,17 @@ export function resetReportOsHarness(h: ReportOsHarness) {
   h.signature.mockReset().mockImplementation(async () => {
     h.statements.push('<signature row>');
     return { id: 'sig_1', signedAt: new Date('2026-10-01T09:00:00Z') };
+  });
+}
+
+/**
+ * A row as the driver returns it for a drizzle RETURNING on the connection: an
+ * array in the table's column order, timestamps in the driver's text form.
+ */
+export function driverRow(table: Parameters<typeof getTableColumns>[0], row: Record<string, unknown>): unknown[] {
+  return Object.entries(getTableColumns(table)).map(([key, col]) => {
+    const v = row[key];
+    if (!(v instanceof Date)) return v ?? null;
+    return (col as { withTimezone?: boolean }).withTimezone ? v.toISOString() : v.toISOString().replace('T', ' ').replace('Z', '');
   });
 }

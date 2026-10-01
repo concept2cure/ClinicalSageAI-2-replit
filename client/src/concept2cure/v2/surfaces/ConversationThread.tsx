@@ -173,7 +173,7 @@ interface InsertTarget {
  * a draft that is already there.
  */
 function InsertIntoOpenSection({ turn, target }: { turn: CtTurn; target?: InsertTarget }) {
-  if (!target || !turn.settled || !turn.answer?.trim()) return null;
+  if (!target?.bridge.editable || !turn.settled || !turn.answer?.trim()) return null;
   if (turn.authoringDoc?.docId === target.bridge.docId) return null;
   const { bridge, fireToast } = target;
   const insert = () => {
@@ -869,6 +869,17 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
     setEditorBridge(prev => bridge ?? (prev?.docId === docId ? null : prev));
   }, []);
   const insertTarget = editorBridge ? { bridge: editorBridge, fireToast } : undefined;
+  /* While a document is open beside the conversation, every turn sent from
+     here names it: the document, the section and its module, through the
+     same authoring context the editor's own chat sends (2026-10-01). The
+     shell's chat this thread runs on was created without one. */
+  const turnOpts = editorBridge?.authoringContext ? { authoringContext: editorBridge.authoringContext } : undefined;
+  /* With nothing open a turn is sent exactly as before; the third argument
+     only when there is a document to name. */
+  const sendTurn = (text: string, files?: Parameters<typeof anaChat.send>[1]) => {
+    if (turnOpts) return anaChat.send(text, files, turnOpts);
+    return files === undefined ? anaChat.send(text) : anaChat.send(text, files);
+  };
   const wasStreamingRef = useRef(false);
   useEffect(() => {
     if (wasStreamingRef.current && !anaChat.isStreaming) setTurnsSettled(n => n + 1);
@@ -1136,7 +1147,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
 
     setDraft('');
     clearAttachments();
-    void anaChat.send(body, files);
+    void sendTurn(body, files);
   };
 
   /* The person asking to start over — the one path on this screen that clears
@@ -1243,10 +1254,10 @@ export function ConversationThread({ onNav, liveDrive, shellChat }: OwnedSurface
                   <AnaTurn
                     key={i}
                     turn={t}
-                    onRefine={() => { void anaChat.send('Refine that — keep it tighter and more declarative.'); }}
+                    onRefine={() => { void sendTurn('Refine that — keep it tighter and more declarative.'); }}
                     onNav={onNav}
                     onStartDemo={liveDrive?.onStartDemo}
-                    onContinue={i === continueAt ? () => { void anaChat.send(CONTINUE_PROMPT); } : undefined}
+                    onContinue={i === continueAt ? () => { void sendTurn(CONTINUE_PROMPT); } : undefined}
                     insertTarget={insertTarget}
                     canvas={t.authoringDoc ? {
                       conversationId: anaChat.threadId ?? (isNew || isCurrent ? null : sel.id),

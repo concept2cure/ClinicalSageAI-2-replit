@@ -29,6 +29,7 @@ import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import { DataRoomFileBar, RoomPick, useDataRoomFiling, type DataRoomFiling } from './VaultDataRoomFiling';
 import { ConfirmSuggestedBar, useConfirmSuggested } from './VaultConfirmSuggested';
 import { VaultLibraryResults } from './VaultLibraryResults';
+import { VaultFixityCheck } from './VaultFixityCheck';
 import { downloadBlob, safeFileName } from '../download';
 import {
   EDITOR_TARGET_DOC_TYPES,
@@ -343,7 +344,12 @@ interface HistoryEntry {
 }
 interface HistoryShape {
   entries: HistoryEntry[];
-  chain: { ok: boolean; rowsChecked: number; legacyRows: number; brokenAt?: string };
+  /**
+   * The server's verdict (audit-trail-ledger.routes.ts AuditLedgerChainVerdict):
+   * `ok: null` with a reason when there was nothing to verify; a break names
+   * this organization's own row by id, or only says it is another's.
+   */
+  chain: { ok: boolean | null; rowsChecked: number; legacyRows: number; reason?: string; brokenAt?: { id?: string; row?: string } };
 }
 
 /** A body without an entries list and a chain verdict is a failed read, not an empty history. */
@@ -351,8 +357,14 @@ const isHistoryShape: ShapeGuard<HistoryShape> = (v): v is HistoryShape =>
   !!v && typeof v === 'object' && Array.isArray((v as HistoryShape).entries) &&
   !!(v as HistoryShape).chain && typeof (v as HistoryShape).chain === 'object';
 
+/** Where the chain breaks, as this organization may be told it. */
+function breakPlace(b: HistoryShape['chain']['brokenAt']): string {
+  if (typeof b?.id === 'string') return ` at entry ${b.id}`;
+  return b?.row ? ` at an entry of ${b.row}` : '';
+}
+
 function ChainVerdict({ chain }: { chain: HistoryShape['chain'] }) {
-  if (chain.ok) {
+  if (chain.ok === true) {
     return (
       <div className="vd-d-idx">
         <span className="vd-idx-dot" /> Audit chain verified — {chain.rowsChecked} rows checked
@@ -360,9 +372,16 @@ function ChainVerdict({ chain }: { chain: HistoryShape['chain'] }) {
       </div>
     );
   }
+  if (chain.ok !== false) {
+    return (
+      <div className="vd-d-idx">
+        Audit chain not verified: {chain.reason ?? 'the server gave no verdict on this read'}
+      </div>
+    );
+  }
   return (
     <div className="vd-dr-err" role="alert">
-      {I.alertTriangle} Audit chain check failed{chain.brokenAt ? ` at ${chain.brokenAt}` : ''}. The entries below
+      {I.alertTriangle} Audit chain check failed{breakPlace(chain.brokenAt)}. The entries below
       are what is recorded; the chain that should prove them has a break.
     </div>
   );
@@ -1465,6 +1484,8 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
               onOpen={openUpload}
             />
           )}
+          {/* Fixity (plan critique 15): re-prove every stored version on demand. */}
+          {!searching && vault ? <VaultFixityCheck projectId={projectId ?? null} /> : null}
           {filingNote && (
             <div
               className="scaf-note"

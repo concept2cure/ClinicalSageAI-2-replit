@@ -1,0 +1,357 @@
+ ✓ server/services/authoring/__tests__/investigator-brochure-view-assembler.pglite.integration.test.ts > assembleOrgIBSections > derives the BX-204 demo shape: nonclinical + clinical(ops) + safety(AE), product absent
+ ✓ server/services/authoring/__tests__/investigator-brochure-view-assembler.pglite.integration.test.ts > assembleOrgIBSections > lights up every domain when all four stores hold org rows (completeness 100)
+ ✓ server/services/authoring/__tests__/investigator-brochure-view-assembler.pglite.integration.test.ts > assembleOrgIBSections > treats an empty-default RMP as no safety evidence (mirrors resolveAvailability)
+ ✓ server/services/authoring/__tests__/investigator-brochure-view-assembler.pglite.integration.test.ts > assembleOrgIBSections > is soft-delete aware for the deleted_at stores
+ ✓ server/services/authoring/__tests__/investigator-brochure-view-assembler.pglite.integration.test.ts > assembleOrgIBSections > is strictly tenant-scoped
+ ✓ server/services/authoring/__tests__/investigator-brochure-view-assembler.pglite.integration.test.ts > assembleOrgIBSections > returns the honest all-absent skeleton for an org with no upstream evidence
+ ✓ server/services/c2c/__tests__/program-anchor-reader.pglite.test.ts > readProgramAnchorRow > two anchor rows: reads the lowest id of the organization and names both
+ ✓ server/services/c2c/__tests__/program-anchor-reader.pglite.test.ts > readProgramAnchorRow > another organization's anchor is never read: project 5 is the lowest id but organization 8's
+ ✓ server/services/c2c/__tests__/program-anchor-reader.pglite.test.ts > readProgramAnchorRow > one anchor row: read, nothing logged
+ ✓ server/services/authoring/__tests__/investigator-brochure-view-assembler.pglite.integration.test.ts > assembleOrgIBSections > guards each store with to_regclass — an unmigrated store is an absent domain, not a 42P01
+ ✓ server/services/c2c/__tests__/project-retention.pglite.test.ts > projectDeletionHolds > an anchor row names its program
+ ✓ server/services/c2c/__tests__/project-retention.pglite.test.ts > projectDeletionHolds > a project holding only drafts holds nothing
+ ✓ server/services/c2c/__tests__/project-retention.pglite.test.ts > projectDeletionHolds > approved and locked artifacts are counted; drafts are not
+ ✓ server/services/c2c/__tests__/project-retention.pglite.test.ts > projectDeletionHolds > an artifact in review is not a draft
+ ✓ server/services/c2c/__tests__/project-retention.pglite.test.ts > projectDeletionHolds > a workspace answers for every project the delete would take
+ ✓ server/services/c2c/__tests__/project-retention.pglite.test.ts > projectDeletionHolds > a project or workspace that does not exist holds nothing
+ ✓ server/services/c2c/__tests__/project-retention.pglite.test.ts > projectDeletionHolds > a deleted program's anchor is an ordinary project: drafts only, nothing held
+ ✓ server/services/c2c/__tests__/project-retention.pglite.test.ts > projectDeletionHolds > a draft that carries a signature, or a lock snapshot, is a record
+ ✓ server/services/c2c/__tests__/project-retention.pglite.test.ts > projectDeletionHolds > a draft with review comments is a record: the comments are its review record (D5, 2026-10-01)
+ ✓ server/services/c2c/__tests__/project-retention.pglite.test.ts > projectDeletionRefusal > an anchor row is refused first, naming the program, even with governed work too
+ ✓ server/services/c2c/__tests__/project-retention.pglite.test.ts > projectDeletionRefusal > governed work is refused with its count, and the remedy is archive
+ ✓ server/services/c2c/__tests__/project-retention.pglite.test.ts > projectDeletionRefusal > drafts only: no refusal
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > seeds every document creator as OWNER and AUTHOR atomically
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > allows the creator to edit and manage the document
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > denies a same-tenant user with no object permission
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > grants reviewer and approver authority explicitly, without edit escalation
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > does not let a permission on one section authorize a different section
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > rejects cross-tenant document and section permission links at the database boundary
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > blocks edits after the document becomes immutable
+ ✓ server/services/authoring/__tests__/authoring-object-permissions.integration.test.ts > authoring object permissions — real canonical DDL > prevents revocation of the final active owner
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: /api/authoring/images/../../tenant-export/full
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: /api/authoring/images/%2e%2e/%2e%2e/users/me
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: /api/authoring/images/..\..\tenant-export\full
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: /api/authoring/images/file_1_a?download=1
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: https://collector.example/p.png?d=secret
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: //collector.example/p.png
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: data:image/svg+xml;base64,PHN2Zz4=
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: data:text/html;base64,PHNjcmlwdD4=
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: data:image/webp;base64,UklGRg==
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: javascript:alert(1)
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > keeps a governed reference and an inline PNG exactly as written
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > finds the image wherever the parse puts it: inside a table cell, and in upper case
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > still strips scripts and handlers, and leaves the chat-safe rest alone
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > sanitizeAuthoringSectionHtml > does not leave its image rule on the shared DOMPurify instance
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names nothing in prose, a governed reference, an inline PNG, or an image with no src
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: /api/authoring/images/../../tenant-export/full
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: /api/authoring/images/%2e%2e/%2e%2e/users/me
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: /api/authoring/images/..\..\tenant-export\full
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: /api/authoring/images/file_1_a?download=1
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: https://collector.example/p.png?d=secret
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: //collector.example/p.png
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: data:image/svg+xml;base64,PHN2Zz4=
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: data:text/html;base64,PHNjcmlwdD4=
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: data:image/webp;base64,UklGRg==
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > names an image that is not a figure: javascript:alert(1)
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > reads the markup the way a browser does
+ ✓ server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — what the section save refuses > says which images, by position and kind, without echoing an application path
+ ✓ server/services/authoring/__tests__/doc-journey-view-assembler.pglite.integration.test.ts > assembleOrgDocJourney > reconstructs the full lifecycle into ordered, real-column-mapped stages
+ ✓ server/services/authoring/__tests__/doc-journey-view-assembler.pglite.integration.test.ts > assembleOrgDocJourney > emits only the created stage for a bare draft, marked active (in progress)
+ ✓ server/services/authoring/__tests__/doc-journey-view-assembler.pglite.integration.test.ts > assembleOrgDocJourney > omits milestones the store never recorded — never fabricates a stage
+ ✓ server/services/authoring/__tests__/doc-journey-view-assembler.pglite.integration.test.ts > assembleOrgDocJourney > is strictly tenant-scoped and never crosses orgs
+ ✓ server/services/authoring/__tests__/doc-journey-view-assembler.pglite.integration.test.ts > assembleOrgDocJourney > selects the org’s most-recently-updated document
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > defaultWorkspaceIdentity > names the workspace after the organisation, verbatim
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > defaultWorkspaceIdentity > prefers the organisation slug so the two agree wherever a human reads both
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > defaultWorkspaceIdentity > falls back to the name when the organisation carries no usable slug
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > defaultWorkspaceIdentity > always yields a non-empty slug, because the column is NOT NULL
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > ensureOrganizationDefaultWorkspace > writes the organisation its own workspace when it has none
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > ensureOrganizationDefaultWorkspace > is idempotent: a second call links to the first row and writes nothing
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > ensureOrganizationDefaultWorkspace > NEVER adds a second workspace to an organisation that has exactly one
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > ensureOrganizationDefaultWorkspace > leaves a CRO's several client workspaces exactly as they are
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > ensureOrganizationDefaultWorkspace > scopes to the organisation: another tenant having one is not this one having one
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > ensureOrganizationDefaultWorkspace > reports a lost insert race as not-created rather than as a write
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > ensureOrganizationDefaultWorkspace > records the platform, not a person, when no user created the organisation
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the mark on the row is what keeps a CRO anchoring > marks every workspace it writes as the organisation’s own
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the mark on the row is what keeps a CRO anchoring > spells the marker key exactly as the anchor reader queries it
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > every organisation creator writes the workspace > 'self-serve signup' calls ensureOrganizationDefaultWorkspace
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > every organisation creator writes the workspace > 'first-run setup' calls ensureOrganizationDefaultWorkspace
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > every organisation creator writes the workspace > 'boot seed' calls ensureOrganizationDefaultWorkspace
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > every organisation creator writes the workspace > is called by the organisation creators and no one else (it enters whatever tenant it is given)
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > every organisation creator writes the workspace > knows of no organisation creator that does not
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the organisation's own tenant > enters the organisation's tenant BEFORE counting and BEFORE writing
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the organisation's own tenant > enters it even when the organisation already has a workspace (the count is what it protects)
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the organisation's own tenant > fails closed: a refused scope reads nothing and writes nothing
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the organisation's own tenant > refuses orgId 0 before touching the store
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the organisation's own tenant > refuses orgId -1 before touching the store
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the organisation's own tenant > refuses orgId NaN before touching the store
+ ✓ server/services/c2c/__tests__/organization-default-workspace.test.ts > the organisation's own tenant > refuses orgId 1.5 before touching the store
+ ✓ server/services/authoring/__tests__/ctd-readiness-renderer.test.ts > renderCtdReadinessPdf > renders valid PDF bytes
+ ✓ server/services/authoring/__tests__/ctd-readiness-renderer.test.ts > renderCtdReadinessPdf > is deterministic for the same verdict
+ ✓ server/services/authoring/__tests__/ctd-readiness-renderer.test.ts > renderCtdReadinessPdf > renders a not-ready verdict without throwing
+ ✓ server/services/authoring/__tests__/ctd-readiness-renderer.test.ts > renderCtdReadinessPdf > handles an empty rollup (no modules / findings) — and never calls it ready
+ ✓ server/services/authoring/__tests__/m2-summary-renderer.test.ts > m2SummaryToSections > produces a narrative section, one section per table, and a gaps section
+ ✓ server/services/authoring/__tests__/m2-summary-renderer.test.ts > m2SummaryToSections > omits the gaps section when there are no gaps
+ ✓ server/services/authoring/__tests__/m2-summary-renderer.test.ts > renderM2SummaryPdf > renders a valid, navigable, deterministic PDF
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — verdict > ready for a complete ICH M3(R2) program with correct placement
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — coverage > warns (default) on a missing recommended study type, staying ready
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — coverage > blocks when requireCoverage makes a gap an error
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — sections > errors on a required section that is missing
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — sections > warns on a partially rendered required section
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — structure coverage > warns by default on an entirely absent required section (stays ready)
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — structure coverage > errors on an absent required section under requireFullStructure
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — placement, GLP, structure > errors when the CTD 4.2.x placement is wrong for the study type
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — placement, GLP, structure > errors on empty placement
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — placement, GLP, structure > warns on a non-GLP toxicology study
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — placement, GLP, structure > errors on a duplicate study id
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — placement beyond the first-tier sections > accepts secondary_pharmacodynamics filed at 4.2.1.2
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — placement beyond the first-tier sections > accepts pd_drug_interactions filed at 4.2.1.4
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — placement beyond the first-tier sections > accepts antigenicity filed at 4.2.3.7.1
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — placement beyond the first-tier sections > accepts immunotoxicity filed at 4.2.3.7.2
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — placement beyond the first-tier sections > accepts mechanistic_tox filed at 4.2.3.7.3
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — placement beyond the first-tier sections > accepts dependence filed at 4.2.3.7.4
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — placement beyond the first-tier sections > accepts metabolites filed at 4.2.3.7.5
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — placement beyond the first-tier sections > accepts impurities filed at 4.2.3.7.6
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — placement beyond the first-tier sections > does not claim a study type it cannot place belongs at the module root
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — placement beyond the first-tier sections > still refuses a study with no placement at all
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — placement beyond the first-tier sections > still catches a genuinely misplaced study
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — an empty program is unassessed, not clean > does not report ready over zero study reports
+ ✓ server/services/authoring/__tests__/m4-nonclinical-qc.test.ts > runM4NonclinicalQc — an empty program is unassessed, not clean > is assessed as soon as there is a report to assess
+ ✓ server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts > the tool gate puts each one to a person > each is a confirm-tier write in the tool register (P1-34 folded the list of five into it)
+ ✓ server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts > the tool gate puts each one to a person > save_document_to_vault is proposed to a person, carrying what it would do
+ ✓ server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts > the tool gate puts each one to a person > update_vault_document is proposed to a person, carrying what it would do
+ ✓ server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts > the tool gate puts each one to a person > file_chat_upload_to_vault is proposed to a person, carrying what it would do
+ ✓ server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts > the tool gate puts each one to a person > seed_tmf is proposed to a person, carrying what it would do
+ ✓ server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts > the tool gate puts each one to a person > save_report_definition is proposed to a person, carrying what it would do
+ ✓ server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts > the tool gate puts each one to a person > an unreadable call is refused, not proposed
+ ✓ server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts > the tool gate puts each one to a person > a read-only neighbour is not
+ ✓ server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts > the registry refuses to run one no person confirmed > on a path that cannot ask, the handler answers with a proposal and writes nothing
+ ✓ server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts > the registry refuses to run one no person confirmed > once a person has confirmed, it runs
+ ✓ server/services/ana/__tests__/direct-mutator-confirm-gate.test.ts > the registry refuses to run one no person confirmed > the confirmation is read from the context, never from what the model wrote
+ ✓ server/services/ana/__tests__/catalog-gated-tools.test.ts > CATALOG_GATED_TOOLS > names exactly the tools whose handlers call requireCatalog
+ ✓ server/services/authoring/__tests__/m5-clinical-qc.test.ts > runM5ClinicalQc — verdict > ready when CSRs are well-placed with drafted required sections
+ ✓ server/services/authoring/__tests__/m5-clinical-qc.test.ts > runM5ClinicalQc — sections > errors on a required section that is empty
+ ✓ server/services/authoring/__tests__/m5-clinical-qc.test.ts > runM5ClinicalQc — sections > warns (non-blocking) on a required section still drafting
+ ✓ server/services/authoring/__tests__/m5-clinical-qc.test.ts > runM5ClinicalQc — sections > ignores non-required sections
+ ✓ server/services/authoring/__tests__/m5-clinical-qc.test.ts > runM5ClinicalQc — placement > errors when not under Module 5.3.x
+ ✓ server/services/authoring/__tests__/m5-clinical-qc.test.ts > runM5ClinicalQc — placement > accepts the 5.3.x form without the m prefix
+ ✓ server/services/authoring/__tests__/m5-clinical-qc.test.ts > runM5ClinicalQc — placement > errors on empty placement
+ ✓ server/services/authoring/__tests__/m5-clinical-qc.test.ts > runM5ClinicalQc — structure coverage > warns by default on a required ICH E3 section that is entirely absent (stays ready)
+ ✓ server/services/authoring/__tests__/m5-clinical-qc.test.ts > runM5ClinicalQc — structure coverage > errors on an absent required section under requireFullStructure
+ ✓ server/services/authoring/__tests__/m5-clinical-qc.test.ts > runM5ClinicalQc — structure coverage > does not flag absence when all required top-level sections are represented
+ ✓ server/services/authoring/__tests__/m5-clinical-qc.test.ts > runM5ClinicalQc — coverage + structure > errors on a missing expected phase only when expectedPhases is supplied
+ ✓ server/services/authoring/__tests__/m5-clinical-qc.test.ts > runM5ClinicalQc — coverage + structure > errors on a duplicate study id
+ ✓ server/services/authoring/__tests__/m5-clinical-qc.test.ts > runM5ClinicalQc — an empty program is unassessed, not clean > does not report ready over zero clinical study reports
+ ✓ server/services/authoring/__tests__/m5-clinical-qc.test.ts > runM5ClinicalQc — an empty program is unassessed, not clean > is assessed as soon as there is a CSR to assess
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document — a chat upload id > is told it is the wrong store, and never that the file is missing
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document — a chat upload id > a genuinely unknown vault id still says plainly that the vault does not hold it
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > catalog_project_document — a chat upload id > is refused with the same honest reason, without a pointless lookup
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > files the upload through the SAME governed ingest the Vault surface uses
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > refuses a vault UUID — a document already in the vault needs no filing
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > with no project open it guesses none: the file is not filed, and the audited adopt is named
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > relays a governed refusal with its reason, claiming nothing
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > the read refusal now names a tool that exists
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document hands back what was already learned > returns the comprehension record for a cataloged document
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document hands back what was already learned > omits it entirely for a document nobody has studied
+ ✓ server/services/authoring/__tests__/ctd-authoring-readiness.test.ts > aggregateCtdAuthoringReadiness > ready when all supplied module verdicts are ready
+ ✓ server/services/authoring/__tests__/ctd-authoring-readiness.test.ts > aggregateCtdAuthoringReadiness > not ready when the Module 1 forms verdict is not ready
+ ✓ server/services/authoring/__tests__/ctd-authoring-readiness.test.ts > aggregateCtdAuthoringReadiness > not ready when the Module 5 verdict is not ready
+ ✓ server/services/authoring/__tests__/ctd-authoring-readiness.test.ts > aggregateCtdAuthoringReadiness > not ready when a module verdict is not ready
+ ✓ server/services/authoring/__tests__/ctd-authoring-readiness.test.ts > aggregateCtdAuthoringReadiness > rolls up errors from multiple not-ready modules
+ ✓ server/services/authoring/__tests__/ctd-authoring-readiness.test.ts > aggregateCtdAuthoringReadiness > warns (non-blocking) when a module QC verdict is absent
+ ✓ server/services/authoring/__tests__/ctd-authoring-readiness.test.ts > aggregateCtdAuthoringReadiness > is not ready when no module QC verdict was supplied at all
+ ✓ server/services/authoring/__tests__/ctd-authoring-readiness.test.ts > aggregateCtdAuthoringReadiness > M2.4 ← M4 feed-forward > passes when every cited 4.2.x section has a corresponding report
+ ✓ server/services/authoring/__tests__/ctd-authoring-readiness.test.ts > aggregateCtdAuthoringReadiness > M2.4 ← M4 feed-forward > errors when the overview cites a section with no Module 4 report
+ ✓ server/services/authoring/__tests__/ctd-authoring-readiness.test.ts > aggregateCtdAuthoringReadiness > M2.4 ← M4 feed-forward > a report at the module ROOT does not vouch for every 4.2.x citation
+ ✓ server/services/authoring/__tests__/ctd-authoring-readiness.test.ts > aggregateCtdAuthoringReadiness > M2.4 ← M4 feed-forward > a MORE SPECIFIC report still satisfies a broader citation
+ ✓ server/services/authoring/__tests__/ctd-authoring-readiness.test.ts > aggregateCtdAuthoringReadiness > M2.4 ← M4 feed-forward > matches on section boundaries, not on characters
+ ✓ server/services/authoring/__tests__/ctd-authoring-readiness.test.ts > aggregateCtdAuthoringReadiness > M2.4 ← M4 feed-forward > is skipped when the feed-forward inputs are not supplied
+ ✓ server/services/authoring/__tests__/ctd-authoring-readiness.test.ts > aggregateCtdAuthoringReadiness > M2.5/2.7 ← M5 feed-forward > passes when every cited CSR exists in the M5 program
+ ✓ server/services/authoring/__tests__/ctd-authoring-readiness.test.ts > aggregateCtdAuthoringReadiness > M2.5/2.7 ← M5 feed-forward > errors when a clinical summary cites a CSR with no Module 5 report
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it returns on a hit > hands back the passage with the document and locator that make it citable
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it returns on a hit > caps the requested limit rather than passing it through
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it finds nothing > states how much of the vault is NOT indexed, and refuses to call it absence
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it finds nothing > gives the RECORDED reason a document failed to index, not just a count
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it finds nothing > does not invent a reason when none was recorded
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it finds nothing > says the coverage is unknown rather than implying it searched everything
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it finds nothing > an EMPTY index is reported as empty, not as a provider failure or a miss
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it finds nothing > says plainly when the vault holds no documents at all
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says about the files that are not in this index at all > will not claim full coverage while chat uploads sit outside the corpus
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says about the files that are not in this index at all > marks the count as a floor when there are more than it probed for
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says about the files that are not in this index at all > says nothing extra when there is nothing outside
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says about the files that are not in this index at all > an uncounted probe is reported as unchecked, never as zero
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says about the files that are not in this index at all > covers an EMPTY vault too — no documents filed is not "nothing to search"
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it could not look > reports an unavailable index as unavailable, not as zero passages
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it could not look > turns an unexpected failure into a stated error, never a silent empty
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it could not look > refuses a query too short to retrieve on
+ ✓ server/services/ana/__tests__/document-passage-tools.test.ts > what it says when it could not look > requires an organization context
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 1 · project — a project of org A, created the way the Projects surface creates it
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > allows the program lead
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > allows every org manage role regardless of who leads the program
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > normalizes the org role, so SUPER_ADMIN is the same authority as super_admin
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies an unrelated org member
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies a viewer and an actor with no role at all
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies a non-manager when the program has no lead — unowned is not everyone-owned
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canMutateProgram > denies an unauthenticated actor even when the program is unowned
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canCreateProgram > denies read-only roles
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canCreateProgram > allows ordinary and elevated roles
+ ✓ server/services/c2c/__tests__/program-access.test.ts > canCreateProgram > allows an unrecognized role rather than locking it out
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramQuotaMode > defaults to WARN, unlike the authorization gate
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramQuotaMode > honours an explicit enforce
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramQuotaMode > falls back to warn on an unrecognized value
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > defaults to enforce when PROGRAM_AUTHZ_MODE is unset or empty
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > defaults to enforce outside production too
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > honours an explicit mode, case- and whitespace-insensitively
+ ✓ server/services/c2c/__tests__/program-access.test.ts > resolveProgramAuthzMode > falls back to enforce on an unrecognized value rather than opening up
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > asks regulatory_programs for a live program of this organization
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > is false when the query finds nothing
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > admits a deleted program only when the caller opts in by name
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses "not-a-uuid" without asking the database
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses "" without asking the database
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses 42 without asking the database
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses null without asking the database
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > refuses undefined without asking the database
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > reads a digit-string organization as that organization, and nothing else as one
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > throws VerificationUnavailableError, not false, when the query cannot run
+ ✓ server/services/c2c/__tests__/program-access.test.ts > programInOrganization — the one program check (D3, 2026-10-01) > resolves a connection given as a function inside the check, so "no pool" is "could not check"
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > a v2 project open: lists that project, not the whole organization
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > another project's documents are refused while a project is open, and nothing is listed
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > naming the open project itself is fine
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > list_project_documents > no project open: the organization, as today, or a program of the organization when named
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > file_chat_upload_to_vault > files into the open project
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > file_chat_upload_to_vault > never into another project while one is open: refused, and nothing is ingested
+ ✓ server/services/ana/__tests__/document-catalog-tools-project-scope.test.ts > file_chat_upload_to_vault > with no project open: refused, pointing to the audited adopt; nothing is ingested
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 4 · edit-save — a person edits the quoted section and saves it through the section save path
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 5 · seal — the document is frozen and approved under a Part 11 signature
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the comprehension gate > files a cataloged document and reports where it now lives
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the comprehension gate > refuses to file a document whose comprehension was never recorded
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the comprehension gate > refuses a document that has never been cataloged at all
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the comprehension gate > says a failed extraction leaves nothing to base a placement on
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the comprehension gate > allows unfiling an uncataloged document — it retracts a claim, not makes one
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > hands the service her provenance, so the write cannot pass for a person's decision
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > records a model it was not told about as unknown, never a guessed one
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > names the gateway request that proposed the placement, so the row joins its ledger row
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > refuses confirm_suggested — confirming a filing is a person's act, in the Vault
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > is described to the model as a suggestion a person confirms, not a filing
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > an AnA placement is a suggestion a person confirms, attributed to AnA > tells the model the placement awaits a person, not that the document is filed
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the inputs it will not act on > answers a chat-upload id with the wrong-store refusal, not absence
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the inputs it will not act on > requires a rationale — the audit trail records why, not just what
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the inputs it will not act on > requires a destination rather than guessing one
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the inputs it will not act on > reports a document this organization does not hold as unknown, with the discovery tool
+ ✓ server/services/ana/__tests__/document-placement-tools.test.ts > the inputs it will not act on > passes the service refusal through instead of claiming a move
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault
+ ✓ server/services/authoring/__tests__/m2-summary-qc.test.ts > runM2SummaryQc — verdict > ready when all expected summaries are present, traceable, and complete
+ ✓ server/services/authoring/__tests__/m2-summary-qc.test.ts > runM2SummaryQc — presence > flags a missing expected summary as an error and not ready
+ ✓ server/services/authoring/__tests__/m2-summary-qc.test.ts > runM2SummaryQc — presence > honors a custom expected set
+ ✓ server/services/authoring/__tests__/m2-summary-qc.test.ts > runM2SummaryQc — traceability > errors when a summary declares no upstream inputs
+ ✓ server/services/authoring/__tests__/m2-summary-qc.test.ts > runM2SummaryQc — traceability > errors on an orphan input when the upstream key set is supplied
+ ✓ server/services/authoring/__tests__/m2-summary-qc.test.ts > runM2SummaryQc — traceability > passes traceability when all declared inputs exist upstream
+ ✓ server/services/authoring/__tests__/m2-summary-qc.test.ts > runM2SummaryQc — content, completeness, gaps, structure > errors on an empty narrative
+ ✓ server/services/authoring/__tests__/m2-summary-qc.test.ts > runM2SummaryQc — content, completeness, gaps, structure > warns (not error) on low completeness, staying ready
+ ✓ server/services/authoring/__tests__/m2-summary-qc.test.ts > runM2SummaryQc — content, completeness, gaps, structure > surfaces each builder-reported gap as a warning
+ ✓ server/services/authoring/__tests__/m2-summary-qc.test.ts > runM2SummaryQc — content, completeness, gaps, structure > errors on a duplicate section key
+ ✓ server/services/authoring/__tests__/revision-ledger.test.ts > revision ledger verification > an honest history verifies intact
+ ✓ server/services/authoring/__tests__/revision-ledger.test.ts > revision ledger verification > CATCHES content altered after the fact (the §11.10(e) tamper)
+ ✓ server/services/authoring/__tests__/revision-ledger.test.ts > revision ledger verification > CATCHES a deleted revision (the chain no longer links)
+ ✓ server/services/authoring/__tests__/revision-ledger.test.ts > revision ledger verification > CATCHES a re-pointed link and a forged chain value
+ ✓ server/services/authoring/__tests__/revision-ledger.test.ts > revision ledger verification > CATCHES attribution rewritten under an intact content hash
+ ✓ server/services/authoring/__tests__/revision-ledger.test.ts > revision ledger verification > CATCHES a fork — two revisions extending the same head
+ ✓ server/services/authoring/__tests__/revision-ledger.test.ts > revision ledger verification > reports pre-ledger rows honestly, and refuses unchained rows after adoption
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > removes a denied tool from the surface the model is offered
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > returns everything when the tenant denies nothing
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > does NOT apply the allowlist — that would strip every search tool
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > skips the policy lookup entirely when there is no organization
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > ignores a non-numeric organization id rather than passing it to the query
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor > is default-allow when the policy cannot be read
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor — the catalog gate > does not offer the catalog tools to an organization whose catalog is off
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor — the catalog gate > offers them when the catalog is on
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor — the catalog gate > fails closed when the toggle cannot be read — a tool that would refuse is not offered
+ ✓ server/services/ana/__tests__/governed-toolset.test.ts > governedToolsetFor — the catalog gate > does not offer them to an org-less turn, which they refuse outright
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > IB section registry (ICH E6(R2) §7) > exposes the full ICH E6(R2) §7 section set in order
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > IB section registry (ICH E6(R2) §7) > covers every IB content domain via at least one section
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > IB section registry (ICH E6(R2) §7) > returns a deep copy from getIBStructure so the registry is immutable
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > IB section registry (ICH E6(R2) §7) > flattens parents and their children into a single ordered list
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > input availability resolution > flags every domain absent for a bare product-only request
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > input availability resolution > detects each domain from its respective inputs
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > gap detection and section verdict > reports no gaps and renders boilerplate sections regardless of inputs
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > gap detection and section verdict > marks a single-domain section MISSING when its input is absent
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > gap detection and section verdict > marks a single-domain section RENDERED when its input is present
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > gap detection and section verdict > marks a multi-domain section PARTIAL when only some inputs are present
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > buildInvestigatorBrochure (deterministic with mocked AI) > produces a result for every section, with verdicts driven by inputs
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > buildInvestigatorBrochure (deterministic with mocked AI) > uses deterministic templates (and embeds the product name) when templateOnly is set
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > buildInvestigatorBrochure (deterministic with mocked AI) > renders nonclinical/clinical/safety sections once their inputs are supplied
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > buildInvestigatorBrochure (deterministic with mocked AI) > drives completeness down when only some domains are present
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > IB template mode does not report un-drafted sections complete > §1 Summary is NOT rendered in template mode — it still carries the "to be drafted" placeholder
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > IB template mode does not report un-drafted sections complete > §5.3 Marketing Experience does not assert "not currently marketed" when unknown
+ ✓ server/services/authoring/__tests__/ib-builder.test.ts > IB template mode does not report un-drafted sections complete > a boilerplate section with an optional [Sponsor] placeholder still renders
+ ✓ server/services/authoring/__tests__/document-lock.test.ts > which statuses seal a record > locks FROZEN and APPROVED
+ ✓ server/services/authoring/__tests__/document-lock.test.ts > which statuses seal a record > does NOT lock IN_REVIEW — review is a state a document is edited during
+ ✓ server/services/authoring/__tests__/document-lock.test.ts > checkDocumentWritable refuses a sealed document > refuses FROZEN and says why
+ ✓ server/services/authoring/__tests__/document-lock.test.ts > checkDocumentWritable refuses a sealed document > refuses APPROVED and says why
+ ✓ server/services/authoring/__tests__/document-lock.test.ts > checkDocumentWritable refuses a sealed document > is case-insensitive, because the router writes both cases
+ ✓ server/services/authoring/__tests__/document-lock.test.ts > checkDocumentWritable refuses a sealed document > refuses when locked_at is set even if the status looks editable
+ ✓ server/services/authoring/__tests__/document-lock.test.ts > checkDocumentWritable refuses a sealed document > refuses a document that is not in the caller’s tenant
+ ✓ server/services/authoring/__tests__/document-lock.test.ts > checkDocumentWritable refuses a sealed document > allows an editable document
+ ✓ server/services/authoring/__tests__/document-lock.test.ts > checkDocumentWritable refuses a sealed document > reads through the executor it is given, so it can run inside the write’s transaction
+ ✓ server/services/authoring/__tests__/document-lock.test.ts > checkSectionWritable resolves the parent document > refuses a section whose document is frozen
+ ✓ server/services/authoring/__tests__/document-lock.test.ts > checkSectionWritable resolves the parent document > scopes the section by tenant, so a guessed id cannot reach another org
+ ✓ server/services/authoring/__tests__/document-lock.test.ts > checkSectionWritable resolves the parent document > refuses an unknown section
+ ✓ server/services/c2c/__tests__/commitSectionToFilingDraftSource.test.ts > commitSectionToFiling — draft_source > writes the caller-supplied draftSource — the AI-draft-accept route always passes one
+ ✓ server/services/c2c/__tests__/commitSectionToFilingDraftSource.test.ts > commitSectionToFiling — draft_source > defaults to NULL — never guesses "human" — when the caller passes nothing
+ ✓ server/services/c2c/__tests__/commitSectionToFilingDraftSource.test.ts > commitSectionToFiling — draft_source > writes NULL, not an empty string, when draftSource is explicitly null
+ ✓ server/services/c2c/__tests__/commitSectionToFilingDraftSource.test.ts > authoring.router.ts wiring — verified against the real source, not re-implemented > the manual-save route derives draftSource from contributors, never hardcodes a value
+ ✓ server/services/c2c/__tests__/commitSectionToFilingDraftSource.test.ts > authoring.router.ts wiring — verified against the real source, not re-implemented > the AI-draft-accept route passes draftSource unconditionally
+ ✓ server/services/c2c/__tests__/commitSectionToFilingDraftSource.test.ts > authoring.router.ts wiring — verified against the real source, not re-implemented > draft_source is no longer hardcoded to the SQL literal NULL
+ ✓ server/services/c2c/__tests__/project-ref.test.ts > integerProjectForRef > an integer is itself, with no read
+ ✓ server/services/c2c/__tests__/project-ref.test.ts > integerProjectForRef > a program UUID is its anchor row, read org-scoped, lower-cased; never the integer its digits spell
+ ✓ server/services/c2c/__tests__/project-ref.test.ts > integerProjectForRef > a program with no anchor row is no project
+ ✓ server/services/c2c/__tests__/project-ref.test.ts > integerProjectForRef > anything else is no project, with no read
+ ✓ server/services/c2c/__tests__/project-ref.test.ts > integerProjectForRef > loads the db only when an anchor read is needed
+ ✓ server/services/c2c/__tests__/program-project-anchor-strict.test.ts > resolveProgramProjectAnchor — strict > a lookup that could not complete throws in strict mode
+ ✓ server/services/c2c/__tests__/program-project-anchor-strict.test.ts > resolveProgramProjectAnchor — strict > without strict, the same failure is still null (degraded readers are unchanged)
+ ✓ server/services/c2c/__tests__/program-project-anchor-strict.test.ts > resolveProgramProjectAnchor — strict > an absent anchor column is null in both modes — a schema fact, not a failure
+ ✓ server/services/authoring/__tests__/create-document-program-anchor.test.ts > createDocument anchors to a project the organization owns > refuses another organization’s project, before anything is written
+ ✓ server/services/authoring/__tests__/create-document-program-anchor.test.ts > createDocument anchors to a project the organization owns > refuses a project that does not exist, before anything is written
+ ✓ server/services/authoring/__tests__/create-document-program-anchor.test.ts > createDocument anchors to a project the organization owns > refuses a deleted project, before anything is written
+ ✓ server/services/authoring/__tests__/create-document-program-anchor.test.ts > createDocument anchors to a project the organization owns > still refuses a malformed id with 400
+ ✓ server/services/authoring/__tests__/machine-contributors.test.ts > machineContributors > keeps a recognised machine author
+ ✓ server/services/authoring/__tests__/machine-contributors.test.ts > machineContributors > takes the display name from the server, never from the request
+ ✓ server/services/authoring/__tests__/machine-contributors.test.ts > machineContributors > drops ids it does not recognise, so a caller cannot invent an author
+ ✓ server/services/authoring/__tests__/machine-contributors.test.ts > machineContributors > records a human co-author as nothing — created_by already names them
+ ✓ server/services/authoring/__tests__/machine-contributors.test.ts > machineContributors > de-duplicates, so accepting six AnA suggestions names AnA once
+ ✓ server/services/authoring/__tests__/machine-contributors.test.ts > machineContributors > treats malformed input as no attribution rather than as a guess
+ ✓ server/services/authoring/__tests__/machine-contributors.test.ts > machineContributors > bounds the list so a save cannot carry an unbounded attribution payload
+ ✓ server/services/authoring/__tests__/machine-contributors.test.ts > the origin a save records > is decided by whether machine-authored text was incorporated
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > keeps an entry whose author is a known machine author and whose text is non-empty
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops an author id the server does not name, rather than letting a caller attribute text to anyone
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > drops empty, whitespace-only and non-string text
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > returns nothing for anything that is not an array
+ ✓ server/services/authoring/__tests__/accepted-machine-text.test.ts > acceptedMachineText > caps the list and drops an entry whose text exceeds the cap rather than truncating it
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > adopt · a conversation file becomes a project’s source only through one audited adopt
+ ✓ server/services/authoring/__tests__/section-validation.test.ts > validateDraftSection > returns a well-formed snapshot for empty / trivial text
+ ✓ server/services/authoring/__tests__/section-validation.test.ts > validateDraftSection > flags an unsupported absolute overclaim as not compliant
+ ✓ server/services/authoring/__tests__/section-validation.test.ts > validateDraftSection > exposes the full verdict (counts) for a UI to render
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the database the walk ran on held every table and column the code asked for
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, each with its verified finding and LX fix, and never grows
+ ✓ server/services/authoring/__tests__/nonclinical-study-report-builder.test.ts > NONCLINICAL_STUDY_REPORT_STRUCTURE > defines a non-empty, well-formed section registry
+ ✓ server/services/authoring/__tests__/nonclinical-study-report-builder.test.ts > NONCLINICAL_STUDY_REPORT_STRUCTURE > has unique section numbers
+ ✓ server/services/authoring/__tests__/nonclinical-study-report-builder.test.ts > NONCLINICAL_STUDY_REPORT_STRUCTURE > covers the standard study-report skeleton (summary, methods, results, conclusion)
+ ✓ server/services/authoring/__tests__/nonclinical-study-report-builder.test.ts > disciplineFor > maps pharmacology study types
+ ✓ server/services/authoring/__tests__/nonclinical-study-report-builder.test.ts > disciplineFor > maps PK/ADME study types
+ ✓ server/services/authoring/__tests__/nonclinical-study-report-builder.test.ts > disciplineFor > maps toxicology study types
+ ✓ server/services/authoring/__tests__/nonclinical-study-report-builder.test.ts > disciplineFor > returns a valid discipline for an unknown study type (deterministic default)
+ ✓ server/services/authoring/__tests__/nonclinical-study-report-builder.test.ts > normalizeStudy > normalizes a minimal study input without throwing, preserving the study type
+ ✓ server/services/authoring/__tests__/nonclinical-study-report-builder.test.ts > gap engine does not report a section complete over unfilled critical data > §4 Materials & Methods is partial (not rendered) when dose-group design is absent
+ ✓ server/services/authoring/__tests__/nonclinical-study-report-builder.test.ts > gap engine does not report a section complete over unfilled critical data > §4 becomes rendered once dose groups are present
+ ✓ server/services/authoring/__tests__/nonclinical-study-report-builder.test.ts > gap engine does not report a section complete over unfilled critical data > §6 Discussion & Conclusion is partial (not rendered) when NOAEL is absent, even with key findings
+ Test Files  33 passed (33)
+      Tests  352 passed (352)
+# real PostgreSQL 16 (vitest.db.config.ts), the catalog and vault dbtests:
+ Test Files  5 passed (5)
+      Tests  52 passed (52)

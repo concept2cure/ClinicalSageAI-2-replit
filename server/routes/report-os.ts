@@ -38,6 +38,7 @@ import type { RenderedReport } from '../services/report-os/render/types';
 import { buildSealedRecord } from '../services/report-os/sealing/seal';
 import { readRunSeal, readSealForExport, readVerifiedSealedDocument } from '../services/report-os/sealing/run-seal';
 import { buildRunPdf } from '../services/report-os/pdf/run-pdf';
+import { buildBundlePdf } from '../services/report-os/pdf/bundle-pdf';
 import type { SealedRecord } from '../services/report-os/sealing/types';
 import { decideDelivery } from '../services/report-os/scheduling/delivery';
 import {
@@ -46,7 +47,6 @@ import {
   type ReportRunStatus,
 } from '../services/report-os/truthfulness';
 import { authMiddleware } from '../auth';
-import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
 import { writeChainedAuditRow } from '../services/auditService';
@@ -61,7 +61,7 @@ import {
   type CeremonySignMeaning,
 } from '../services/part11/governed-signature-ceremony';
 import { requireGovernedReason } from './governed-reason';
-import { projectsInOrg, submissionInProject } from '../services/report-os/ownership';
+import { projectsInOrg, submissionInProject, workspaceIsOrganisations, WORKSPACE_NOT_IN_ORGANIZATION } from '../services/report-os/ownership';
 import { PREDICTION_NOT_A_RUN, isPredictionFamily } from '../services/report-os/prediction/report-types';
 import { REPORT_FINALIZE_ROLES } from '@shared/constants/permissions';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
@@ -279,10 +279,6 @@ function parseKeywordIssues(text: string) {
   return matches;
 }
 
-function sanitizePdfText(text: string): string {
-  return text.replace(/[^\x09\x0A\x0D\x20-\x7E]/g, ' ').slice(0, 1000);
-}
-
 function safeIso(value: unknown): string {
   if (value instanceof Date) return value.toISOString();
   if (typeof value === 'string') return value;
@@ -399,19 +395,9 @@ function refuseUnrecorded(res: Response, code: string, message: string, data?: R
   return res.status(503).json({ success: false, error: { code, message }, ...(data ? { data } : {}) });
 }
 
-/**
- * POST /runs' row, written after the run: the row says a run exists. The run's
- * writes share no transaction the row could join, so when the row cannot be
- * written the answer says so — the run exists and was not recorded — and this
- * returns false having sent the 503.
- */
-async function recordRunCreated(
-  req: Request,
-  res: Response,
-  run: typeof reportRuns.$inferSelect,
-  computed: { confidence: number; blockers: string[] }
-): Promise<boolean> {
-  const recorded = await recordReportEvent(req, {
+/** POST /runs' chain row: the run exists, as computed. */
+function runCreatedEvent(run: typeof reportRuns.$inferSelect, computed: { confidence: number; blockers: string[] }): ReportAuditEvent {
+  return {
     organizationId: run.organizationId,
     action: 'report_os.run_created',
     resourceType: 'report_run',
@@ -425,17 +411,45 @@ async function recordRunCreated(
       confidence: computed.confidence,
       blockerCount: computed.blockers.length,
     },
-  });
-  if (!recorded) {
-    refuseUnrecorded(
-      res,
-      'REPORT_RUN_NOT_RECORDED',
-      'The report run was created but could not be recorded in the audit trail. ' +
-        'Run the report again once the audit trail is available.',
-      { runId: run.id }
-    );
+  };
+}
+
+type NewRun = typeof reportRuns.$inferInsert;
+type NewSnapshot = Omit<typeof reportSnapshots.$inferInsert, 'runId'>;
+type NewDependency = Omit<typeof reportRunDependencies.$inferInsert, 'runId'>;
+
+/**
+ * The run, its first snapshot, its dependencies and its report_os.run_created
+ * chain row, in one tenant-stamped transaction: all land or none (reporting
+ * review 2026-10-01, SECURITY-10). The run's writes used to commit first and
+ * the row after them, so a refused row left a listed, bundlable, finalizable
+ * run that was never recorded, and a retry made a second. 'not-recorded' when
+ * the chain row was refused (everything rolled back); any earlier failure
+ * throws.
+ */
+async function createRunOnChain(
+  req: Request,
+  rows: { run: NewRun; snapshot: NewSnapshot; dependencies: NewDependency[] },
+  computed: { confidence: number; blockers: string[] },
+): Promise<{ run: typeof reportRuns.$inferSelect; snapshot: typeof reportSnapshots.$inferSelect } | 'not-recorded'> {
+  let recording = false;
+  try {
+    return await inTenantTransaction(rows.run.organizationId, async (client) => {
+      const tx = onTransaction(client);
+      const [run] = await tx.insert(reportRuns).values(rows.run).returning();
+      const [snapshot] = await tx.insert(reportSnapshots).values({ ...rows.snapshot, runId: run.id }).returning();
+      if (rows.dependencies.length > 0) {
+        await tx.insert(reportRunDependencies).values(rows.dependencies.map((d) => ({ ...d, runId: run.id })));
+      }
+      recording = true;
+      await writeReportEvent(client, req, runCreatedEvent(run, computed));
+      return { run, snapshot };
+    });
+  } catch (error) {
+    if (!recording) throw error;
+    logger.error('report run not recorded on the audit chain; rolled back', { error: (error as Error)?.message });
+    return 'not-recorded';
   }
-  return recorded;
 }
 
 /**
@@ -757,53 +771,6 @@ async function getReportTypeLabelMap(typeIds: string[]) {
   const map = new Map<string, string>();
   for (const row of rows) map.set(row.typeId, row.label);
   return map;
-}
-
-async function createBundlePdf(bundle: ReportBundleRecord): Promise<Buffer> {
-  const pdf = await PDFDocument.create();
-  const page = pdf.addPage([612, 792]);
-  const regular = await pdf.embedFont(StandardFonts.Helvetica);
-  const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
-  const left = 50;
-  let y = 750;
-
-  page.drawText('Concept2Cure Report Bundle', { x: left, y, size: 18, font: bold });
-  y -= 22;
-  page.drawText(sanitizePdfText(bundle.name), { x: left, y, size: 12, font: regular });
-  y -= 18;
-  page.drawText(`Bundle ID: ${bundle.bundleId}`, {
-    x: left,
-    y,
-    size: 9,
-    font: regular,
-    color: rgb(0.35, 0.35, 0.35),
-  });
-  y -= 16;
-  page.drawText(`Generated: ${bundle.createdAt}`, {
-    x: left,
-    y,
-    size: 9,
-    font: regular,
-    color: rgb(0.35, 0.35, 0.35),
-  });
-  y -= 20;
-
-  if (bundle.description) {
-    page.drawText(sanitizePdfText(bundle.description), { x: left, y, size: 10, font: regular });
-    y -= 20;
-  }
-
-  page.drawText('Included Reports', { x: left, y, size: 11, font: bold });
-  y -= 16;
-  for (const item of bundle.items) {
-    const line = `#${item.runId} ${item.reportTypeLabel} — ${item.scopeType}:${item.scopeId} — ${item.status} (confidence ${item.confidence ?? 'N/A'})`;
-    page.drawText(sanitizePdfText(line), { x: left + 6, y, size: 9, font: regular });
-    y -= 13;
-    if (y < 70) break;
-  }
-
-  const bytes = await pdf.save();
-  return Buffer.from(bytes);
 }
 
 function decodeRecordPayload<T>(input: string, key: string, schema: z.ZodType<T>): T | null {
@@ -1235,6 +1202,7 @@ router.post('/program-groups', async (req: Request, res: Response) => {
     }
     const { clientWorkspaceId, name, description, projectIds, metadata } = parsed.data;
     const createdBy = getUserId(req);
+    if (!(await workspaceIsOrganisations(orgId, clientWorkspaceId))) return res.status(403).json(WORKSPACE_NOT_IN_ORGANIZATION);
 
     const uniqueProjectIds = [...new Set(projectIds)];
     const owned = await projectsInOrg(orgId, uniqueProjectIds);
@@ -1427,6 +1395,7 @@ router.post('/runs', async (req: Request, res: Response) => {
     const { clientWorkspaceId, scopeType, scopeId, reportTypeId, registryId, submissionType } =
       parsed.data;
     const requestedBy = getUserId(req);
+    if (!(await workspaceIsOrganisations(orgId, clientWorkspaceId))) return res.status(403).json(WORKSPACE_NOT_IN_ORGANIZATION);
 
     const type = await db
       .select()
@@ -1547,70 +1516,66 @@ router.post('/runs', async (req: Request, res: Response) => {
       }
     }
 
-    const [run] = await db
-      .insert(reportRuns)
-      .values({
-        organizationId: orgId,
-        clientWorkspaceId,
-        scopeType,
-        scopeId,
-        reportTypeId,
-        requestedBy,
-        status: computed.blockers.length > 0 ? 'partial' : 'completed',
-        dependencySummary: {
-          providers: computed.providers,
-          scopeLineage: scope.lineage,
-          summary: computed.summary,
-          criticalBlockers: computed.criticalBlockers,
-          ...(lineageRendered ? { lineageRendered } : {}),
-        },
-        blockers: computed.blockers,
-        confidence: computed.confidence,
-        freshness: {
-          generatedAt: new Date().toISOString(),
-          freshnessBudgetMs: scope.freshnessBudgetMs,
-        },
-        completedAt: new Date(),
-      })
-      .returning();
-
-    const [snapshot] = await db
-      .insert(reportSnapshots)
-      .values({
-        runId: run.id,
-        organizationId: orgId,
-        scopeType,
-        scopeId,
-        snapshotVersion: 1,
-        isLatest: true,
-        snapshotMetadata: {
+    const created = await createRunOnChain(
+      req,
+      {
+        run: {
+          organizationId: orgId,
+          clientWorkspaceId,
+          scopeType,
+          scopeId,
           reportTypeId,
-          providers: computed.providers,
-          summary: computed.summary,
+          requestedBy,
+          status: computed.blockers.length > 0 ? 'partial' : 'completed',
+          dependencySummary: {
+            providers: computed.providers,
+            scopeLineage: scope.lineage,
+            summary: computed.summary,
+            criticalBlockers: computed.criticalBlockers,
+            ...(lineageRendered ? { lineageRendered } : {}),
+          },
+          blockers: computed.blockers,
           confidence: computed.confidence,
+          freshness: {
+            generatedAt: new Date().toISOString(),
+            freshnessBudgetMs: scope.freshnessBudgetMs,
+          },
+          completedAt: new Date(),
         },
-        createdBy: requestedBy,
-      })
-      .returning();
-
-    if (computed.providers.length > 0) {
-      await db.insert(reportRunDependencies).values(
-        computed.providers.map(p => ({
-          runId: run.id,
+        snapshot: {
+          organizationId: orgId,
+          scopeType,
+          scopeId,
+          snapshotVersion: 1,
+          isLatest: true,
+          snapshotMetadata: {
+            reportTypeId,
+            providers: computed.providers,
+            summary: computed.summary,
+            confidence: computed.confidence,
+          },
+          createdBy: requestedBy,
+        },
+        dependencies: computed.providers.map(p => ({
           organizationId: orgId,
           provider: p.provider,
           status: p.status,
           blocker: p.blocker,
           observedAt: new Date(p.observedAt),
-          payload: {
-            scopeType,
-            scopeId,
-          },
-        }))
+          payload: { scopeType, scopeId },
+        })),
+      },
+      computed,
+    );
+    if (created === 'not-recorded') {
+      return refuseUnrecorded(
+        res,
+        'REPORT_RUN_NOT_RECORDED',
+        'The report run was not created: it could not be recorded in the audit trail, so nothing was saved. ' +
+          'Run the report again once the audit trail is available.',
       );
     }
-
-    if (!(await recordRunCreated(req, res, run, computed))) return;
+    const { run, snapshot } = created;
 
     return res.status(201).json({
       data: {
@@ -2217,6 +2182,46 @@ router.get('/bundles', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * The bundle's governed PDF (services/report-os/pdf/bundle-pdf.ts), recorded
+ * before it is sent. Each report's status is read at export, beside the status
+ * it was bundled at; the bundler's name and the statuses come from one
+ * tenant-stamped read. The export id and time are printed on every page and
+ * recorded on the chain row with how many reports were final.
+ */
+async function sendBundlePdf(req: Request, res: Response, bundle: ReportBundleRecord) {
+  const { now, bundledBy } = await inTenantTransaction(bundle.organizationId, async (client) => {
+    const { rows } = await client.query('SELECT id, status FROM report_runs WHERE organization_id = $1 AND id = ANY($2::int[])', [
+      bundle.organizationId,
+      bundle.runIds,
+    ]);
+    const statuses = new Map((rows as Array<{ id: unknown; status: unknown }>).map((r) => [Number(r.id), String(r.status)]));
+    return { now: statuses, bundledBy: await actorName(client, bundle.createdBy ?? null) };
+  });
+  const items = bundle.items.map((i) => ({
+    runId: i.runId, label: i.reportTypeLabel, scopeType: i.scopeType, scopeId: i.scopeId,
+    bundledStatus: i.status, currentStatus: now.get(i.runId) ?? null, confidence: i.confidence,
+  }));
+  const exportId = randomUUID();
+  const exportedAt = new Date().toISOString();
+  const pdf = await buildBundlePdf({ bundle, bundledBy, items, exportId, exportedAt });
+  return sendRecordedPdf(
+    req,
+    res,
+    {
+      organizationId: bundle.organizationId,
+      action: 'report_os.bundle_exported',
+      resourceType: 'report_bundle',
+      resourceId: bundle.bundleId,
+      details: {
+        bundleId: bundle.bundleId, runIds: bundle.runIds, reportTypeIds: [...new Set(bundle.items.map((i) => i.reportTypeId))],
+        exportId, exportedAt, pages: pdf.pages, finalAtExport: items.filter((i) => i.currentStatus === 'final').length,
+      },
+    },
+    { filename: `report-bundle-${bundle.bundleId.slice(0, 8)}.pdf`, buffer: pdf.bytes }
+  );
+}
+
 router.get('/bundles/:bundleId/export.pdf', async (req: Request, res: Response) => {
   try {
     // SECURITY: JWT-bound; the legacy ?organizationId= query param is
@@ -2245,19 +2250,7 @@ router.get('/bundles/:bundleId/export.pdf', async (req: Request, res: Response) 
         tier: refusal.tier,
       });
     }
-    const buffer = await createBundlePdf(bundle);
-    return sendRecordedPdf(
-      req,
-      res,
-      {
-        organizationId,
-        action: 'report_os.bundle_exported',
-        resourceType: 'report_bundle',
-        resourceId: bundle.bundleId,
-        details: { bundleId: bundle.bundleId, runIds: bundle.runIds, reportTypeIds: [...new Set(bundle.items.map(i => i.reportTypeId))] },
-      },
-      { filename: `report-bundle-${bundle.bundleId.slice(0, 8)}.pdf`, buffer }
-    );
+    return await sendBundlePdf(req, res, bundle);
   } catch (error: any) {
     return serverError(res, logger, 'loading export.pdf', error);
   }
