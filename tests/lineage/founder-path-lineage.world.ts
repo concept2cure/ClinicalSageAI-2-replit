@@ -191,6 +191,8 @@ export interface Keys {
   sequenceId?: number;
   leafIds?: number[];
   transmittalId?: number;
+  /** A draft-only project the retention hop deleted (PF-13, PF-11). */
+  deletedProgramId?: string;
 }
 
 export interface World {

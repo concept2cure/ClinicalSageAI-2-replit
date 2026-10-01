@@ -99,3 +99,28 @@ the keys, and the keys file is applied twice.
     which `deploy-migrate` runs only with `APP_SERVICE_DB_PASSWORD` set. The
     local deploys had not set it. This file creates no function and grants
     nothing. Deploying as CI does, then re-running, passes everything.
+
+## Review (2026-10-01, `wf_191c57dc-c21`)
+
+The commit was reviewed adversarially before pushing, through two lenses, with a
+skeptic per finding.
+
+- **Migration safety:** no finding. Replay, locks, delete-action agreement on
+  both lineages, the tenant purge, RLS and the preflight change all held.
+- **Writer breakage:** six findings; five refuted.
+  - AnA guidance and command artifacts, cortex save-draft and the
+    knowledge-base routes are blocked earlier by the governed gate and never
+    reach their INSERT.
+  - `approve_import` is already refused by the tool registry's foreign-record
+    guard.
+  - The RTM and eSTAR/CER cases predate the commit, which only turns a silent
+    cross-organization row into a refusal.
+  - The one that held is informational: the remaining unchecked writers can
+    produce a mismatch only from misdirected input. The old behaviour there was
+    a defect, and no legitimate flow breaks. Those writers now answer a
+    23503-driven 500 where an honest 404 belongs, and each is that writer's own
+    fix.
+- **Pre-existing defect found, handed to the eSTAR owner on the board:**
+  `resolveProjectAnchor` (510(k)) and the CER export return
+  `fda_510k_projects.id` as the artifact's `project_id`, where that row's own
+  `project_id` belongs.

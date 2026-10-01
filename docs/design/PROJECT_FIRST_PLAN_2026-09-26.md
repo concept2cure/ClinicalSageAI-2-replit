@@ -813,7 +813,10 @@ The founder chose the plan's recommended option in each case:
 - **LX-22 part 1** landed as `041976f2`: `submissions.program_id`, the same-organization key (`ON DELETE SET NULL (program_id)`, so a tenant purge is not blocked) and the one-to-one backfill.
 - **The LX-20 red test (§5 item 5)** is fixed in `c0a95ede`, with a second suite the same sweep found.
 - **PF-05 and PF-06 (LX-22 part 2)** landed as `1706c05b` and `99862840`: every writer anchors a submission to its project, and readers take the anchored one; a name match is only for unanchored legacy rows.
-- **PF-11**, placement half, and LX-11: `39dfd9b7`. A cross-project placement is refused 409 `CROSS_PROJECT`, and the ledger names the document, its pin and both projects. Citations, pins, comments and the protocol→design binding are still open.
+- **PF-11**, placement half, and LX-11: `39dfd9b7`. A cross-project placement is refused 409 `CROSS_PROJECT`, and the ledger names the document, its pin and both projects.
+  - Comments: fixed in `63b43274` (SEC-A-2): a comment's `doc_id` must be its section's document.
+  - Citations, the source-change scope, Module 3 placement and the re-point ledger: done (`docs/evidence/D2-PLACEMENT-STAYS-IN-PROJECT/2026-10-01-citation-module3-repoint/`).
+  - Pins (`stream.ts`, handed to `…01KZK3jg`) and the protocol→design binding (needs a project column on `protocol_documents`) are still open.
 - **PF-02**: the upload route landed as `25ee228e`, and `/docs/from-draft` in `824f699c`. The AnA tool's legacy branch (precondition P2 of PF-04) goes with PF-04.
 - **PF-14**: `2564895a`. A study design is anchored to a live project of its organization, and never moved or overwritten across organizations.
 - **PF-17**: done.

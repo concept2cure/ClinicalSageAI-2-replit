@@ -2119,8 +2119,27 @@ export async function upsertLeaf(
 
   if (input.leafId) {
     const leafId = input.leafId;
+    const leafWhere = and(
+      eq(submissionLeaves.id, leafId),
+      eq(submissionLeaves.sequenceId, input.sequenceId),
+      eq(submissionLeaves.organizationId, ctx.organizationId)
+    );
     // Under the sequence row lock (2026-09-23, W5/D7, round-2 skeptic).
-    const [row] = await lockSequenceForLeafWrite(input.sequenceId, ctx, (tx) => tx
+    /* The document the leaf pointed at before this write (PF-11): the ledger
+       named only the new one, so a re-point left no record of what it replaced.
+       Read in the same locked transaction, by the UPDATE's own WHERE. */
+    const { previous, rows: updated } = await lockSequenceForLeafWrite(input.sequenceId, ctx, async (tx) => {
+      const [prev] = await tx
+        .select({
+          documentTable: submissionLeaves.documentTable,
+          documentId: submissionLeaves.documentId,
+          documentUuid: submissionLeaves.documentUuid,
+          documentContentSha256: submissionLeaves.documentContentSha256,
+        })
+        .from(submissionLeaves)
+        .where(leafWhere)
+        .for('update');
+      const rows = await tx
       .update(submissionLeaves)
       .set({
         sectionCode: input.sectionCode,
@@ -2141,15 +2160,26 @@ export async function upsertLeaf(
         documentPinnedAt: documentContentSha256 ? new Date() : null,
         updatedAt: new Date(),
       })
-      .where(
-        and(
-          eq(submissionLeaves.id, leafId),
-          eq(submissionLeaves.sequenceId, input.sequenceId),
-          eq(submissionLeaves.organizationId, ctx.organizationId)
-        )
-      )
-      .returning());
+      .where(leafWhere)
+      .returning();
+      return { previous: prev ?? null, rows };
+    });
+    const [row] = updated;
     if (!row) throw new SubmissionError('NOT_FOUND', 'Leaf not found for this organization/sequence.');
+    const previousDocument = previous
+      ? {
+          documentTable: previous.documentTable ?? null,
+          documentId: previous.documentId ?? null,
+          documentUuid: previous.documentUuid ?? null,
+          documentContentSha256: previous.documentContentSha256 ?? null,
+        }
+      : null;
+    const documentChanged =
+      previousDocument == null ||
+      previousDocument.documentTable !== placedDocument.documentTable ||
+      previousDocument.documentId !== placedDocument.documentId ||
+      previousDocument.documentUuid !== placedDocument.documentUuid ||
+      previousDocument.documentContentSha256 !== placedDocument.documentContentSha256;
     // Part 11 §11.10(e). The UPDATE above is committed (and NOT_FOUND has already
     // been thrown if it matched nothing), so the re-placement is never undone
     // over a lost log row — reverting the pointer would leave the leaf attesting
@@ -2165,6 +2195,8 @@ export async function upsertLeaf(
         sectionCode: input.sectionCode,
         lifecycleOp: input.lifecycleOp,
         ...placedDocument,
+        previousDocument,
+        documentChanged,
         ...(input.reason ? { reason: input.reason } : {}),
       },
     });

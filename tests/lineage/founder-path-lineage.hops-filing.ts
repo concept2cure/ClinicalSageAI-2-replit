@@ -457,6 +457,18 @@ export async function hopRetention(w: World): Promise<void> {
     expect(created.status).toBe(201);
     expect(deleted.status).toBe(200);
     expect(audit).toHaveLength(1);
+    k.deletedProgramId = id;
+  });
+  /* PF-11: the project's source-change report checked the program inline, with
+     no deleted_at, and sent a non-UUID id to a uuid column (a 500). */
+  await hop.check('source-changes-of-a-deleted-or-malformed-project', "a deleted project's source changes, and a malformed id's, are not found", async (observe) => {
+    const deleted = await as3(request(w.app).get(`/api/c2c/projects/${k.deletedProgramId}/source-changes`));
+    const malformed = await as3(request(w.app).get('/api/c2c/projects/not-a-project/source-changes'));
+    const live = await as3(request(w.app).get(`/api/c2c/projects/${k.programId}/source-changes`));
+    observe({ deleted: deleted.status, malformed: malformed.status, live: live.status });
+    expect(deleted.status).toBe(404);
+    expect(malformed.status).toBe(404);
+    expect(live.status).toBe(200);
   });
   hop.verdict();
 }
