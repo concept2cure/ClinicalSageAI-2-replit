@@ -68,10 +68,14 @@ const insertOf = (calls: Captured[]) => calls.find(c => /INSERT INTO audit_event
 /** Positional order of the INSERT: org, event_type, entity_type, entity_id, user_id, user_name, ... */
 const USER_NAME_PARAM = 5;
 
+/* An event type from the server's vocabulary, with its reason: since
+   2026-10-01 this route takes only what POST /api/audit/events takes
+   (DP-18, second door; audit-api-authority.ts). */
 const body = {
   entityType: 'document',
   entityId: '123',
-  action: 'create',
+  action: 'artifact.updated',
+  changeReason: 'Corrected the protocol number on the cover page',
   userName: 'Someone Else, QA Director',
 };
 
