@@ -7,7 +7,7 @@ applied on trunk; checked, not redone.
 
 ## R3: the enterprise second factor asks whether the account's sessions were ended
 
-**What was wrong.** `POST /api/v1/auth/enterprise/verify-mfa` (`server/routes/authEnterprise.ts`) completed a
+**What was wrong.** `POST /api/auth/enterprise/verify-mfa` (`server/routes/authEnterprise.ts`) completed a
 challenge with no question about what happened since the first factor, beyond the account's status. A password
 change, a sign-out everywhere or a removal from the organisation between the password and the code left the
 challenge able to become a session. `routes/auth.ts` `/mfa/verify` has asked since P0-4b
@@ -79,3 +79,12 @@ as "the other sessions were not ended; sign in again and retry", never as succes
 See `green/neighbours.txt` and the commit message for the suites run beside these (every unit suite under
 `server/routes/__tests__/auth*`, the audit-event suites and `client/src/services/portal/__tests__`), ESLint and the
 typecheck.
+
+## Corrections (2026-10-01, late evening, from the security-auditor review)
+
+- The enterprise router is mounted at `/api/auth/enterprise` only. The commit message of `5bbc4331` and the first
+  version of this README named `/api/v1/auth/enterprise/verify-mfa`, which does not exist; corrected above.
+- R4 is closed for the client contract only. No surface offers sign-out everywhere, so nothing reads
+  `everySessionEnded` yet; a person ends their other sessions by changing their password.
+- The enterprise second factor had a further gap this change did not see: no per-account bound on wrong codes
+  (IAM-30, closed by `92f2e001`, `docs/evidence/D6/2026-10-01-tranche-4/IAM-30-enterprise-second-factor/`).
