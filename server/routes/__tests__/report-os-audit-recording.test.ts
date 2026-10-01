@@ -76,10 +76,11 @@ vi.mock('../../services/auditService', async (importOriginal) => ({
 }));
 
 import reportOsRouter from '../report-os';
-import { resetReportOsHarness } from './_report-os-route-harness';
+import { driverRow, resetReportOsHarness } from './_report-os-route-harness';
 import { buildSealedRecord, verifySeal } from '../../services/report-os/sealing/seal';
 import type { RenderedReport } from '../../services/report-os/render/types';
 import { deriveChainHash } from '../../services/audit/chain';
+import { reportRuns, reportSnapshots } from '@shared/schema/report-os';
 
 const app = express();
 app.use(express.json());
@@ -133,19 +134,28 @@ describe('POST /runs never computes a prediction (reporting review 2026-10-01)',
   });
 });
 
-describe('POST /runs records the run on the audit chain', () => {
+/**
+ * Reporting review 2026-10-01, SECURITY-10: the run, its snapshot and its
+ * dependencies were three inserts committed before the chain row was tried, so
+ * a refused row left a run that was listed, bundlable and finalizable but never
+ * recorded, and a retry made a second. All four now share one transaction.
+ */
+describe('POST /runs records the run on the audit chain, in the same transaction as the run', () => {
   const post = () =>
     request(app).post('/api/report-os/runs').send({ scopeType: 'submission', scopeId: 'sub-1', reportTypeId: TYPE.typeId });
+  const INSERTS = [/^insert into "report_runs"/, /^insert into "report_snapshots"/];
 
   beforeEach(() => {
     h.queued.select.push([TYPE]);
-    h.queued.insert.push([RUN], [{ id: 9, runId: RUN.id }]);
+    const snapshot = { id: 9, runId: RUN.id, organizationId: 7, scopeType: 'submission', scopeId: 'sub-1', snapshotVersion: 1, isLatest: true };
+    h.respond.fn = (sql, arrayMode) =>
+      !arrayMode ? [] : /"report_runs"/.test(sql) ? [driverRow(reportRuns, RUN)] : /"report_snapshots"/.test(sql) ? [driverRow(reportSnapshots, snapshot)] : [];
   });
 
-  it('writes report_os.run_created for the run, on a tenant-stamped transaction, and answers 201', async () => {
+  it('writes the run, its snapshot and report_os.run_created on one tenant-stamped transaction, and answers 201', async () => {
     const res = await post();
     expect(res.status).toBe(201);
-    expect(h.audit).toHaveBeenCalledTimes(1);
+    expect(res.body.data.run).toMatchObject({ id: 41, runUuid: RUN.runUuid });
     expect(auditEntry()).toMatchObject({
       tenantId: 7,
       userId: 5,
@@ -154,17 +164,32 @@ describe('POST /runs records the run on the audit chain', () => {
       resourceId: '41',
       details: { runUuid: RUN.runUuid, reportTypeId: TYPE.typeId, scopeType: 'submission', scopeId: 'sub-1', status: 'completed' },
     });
-    expect(h.statements).toEqual(['BEGIN', STAMP, '<audit row>', 'COMMIT', '<released>']);
+    expect(h.statements.slice(0, 2)).toEqual(['BEGIN', STAMP]);
+    INSERTS.forEach((re, i) => expect(h.statements[2 + i]).toMatch(re));
+    expect(h.statements.slice(4)).toEqual(['<audit row>', 'COMMIT', '<released>']);
   });
 
-  it('answers 503 saying the run exists but was not recorded when the row cannot be written', async () => {
+  it('rolls the run back with the row when the row cannot be written: 503, nothing saved, no run id', async () => {
     auditFails();
     const res = await post();
     expect(res.status).toBe(503);
-    expect(res.body).toMatchObject({ success: false, error: { code: 'REPORT_RUN_NOT_RECORDED' }, data: { runId: 41 } });
-    expect(res.body.error.message).toMatch(/created but could not be recorded/i);
+    expect(res.body).toMatchObject({ success: false, error: { code: 'REPORT_RUN_NOT_RECORDED' } });
+    expect(res.body.data).toBeUndefined();
+    expect(res.body.error.message).toMatch(/was not created.*nothing was saved/i);
     expect(JSON.stringify(res.body)).not.toContain('audit_logs refused');
-    expect(h.statements).toEqual(['BEGIN', STAMP, '<audit row>', 'ROLLBACK', '<released>']);
+    INSERTS.forEach((re, i) => expect(h.statements[2 + i]).toMatch(re));
+    expect(h.statements.slice(-3)).toEqual(['<audit row>', 'ROLLBACK', '<released>']);
+  });
+
+  it('a failed insert is an error, not "not recorded": rolled back, nothing recorded', async () => {
+    h.respond.fn = (sql) => {
+      if (/insert into "report_snapshots"/.test(sql)) throw new Error('snapshot insert refused');
+      return /insert into "report_runs"/.test(sql) ? [driverRow(reportRuns, RUN)] : [];
+    };
+    const res = await post();
+    expect(res.status).toBe(500);
+    expect(h.audit).not.toHaveBeenCalled();
+    expect(h.statements.slice(-2)).toEqual(['ROLLBACK', '<released>']);
   });
 });
 
