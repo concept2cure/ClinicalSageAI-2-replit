@@ -33,3 +33,8 @@ output "engine_version_actual" {
   description = "The PostgreSQL version RDS is running (major pinned, minor chosen and patched by RDS). Recorded in the IQ evidence."
   value       = aws_db_instance.this.engine_version_actual
 }
+
+output "parameters" {
+  description = "The parameter group's settings, name => value, so the stack's tests can assert them (pgaudit preload, TLS)."
+  value       = { for p in aws_db_parameter_group.this.parameter : p.name => p.value }
+}

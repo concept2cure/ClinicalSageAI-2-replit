@@ -233,6 +233,42 @@ let _status: ChainMonitorStatus = {
 };
 
 /**
+ * Record a break in the audit trail of each organisation whose chain broke,
+ * naming only that organisation's links. Until 2026-10-01 one event went to
+ * organisation 1 (hard-coded) with every tenant's link details, and never to
+ * the organisation whose records were affected.
+ */
+async function recordChainFailureEvents(pool: Pool, brokenDetails: BrokenChainLink[]): Promise<void> {
+  const byOrg = new Map<number, BrokenChainLink[]>();
+  for (const link of brokenDetails) {
+    const list = byOrg.get(link.orgId) ?? [];
+    list.push(link);
+    byOrg.set(link.orgId, list);
+  }
+  for (const [orgId, links] of byOrg) {
+    try {
+      // entity_id is INTEGER per the schema. Use 0 as a sentinel for
+      // system-originated events (the entity is the chain itself, not a
+      // domain row). entity_type carries the human-readable scope.
+      await pool.query(
+        `INSERT INTO audit_events
+          (organization_id, event_type, entity_type, entity_id, user_id, user_name,
+           user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant)
+         VALUES ($1, 'audit.chain_integrity_failure', 'audit_chain.monitor', 0, 0, 'system',
+                 'system', '127.0.0.1', NOW(), $2, $3, true, true)`,
+        [
+          orgId,
+          `Chain integrity check failed: ${links.length} broken link(s) in this organisation's audit trail`,
+          JSON.stringify({ brokenLinks: links.slice(0, 20), brokenLinkCount: links.length }),
+        ]
+      );
+    } catch (logErr: any) {
+      logger.error('failed to log integrity failure event', { orgId, err: logErr?.message });
+    }
+  }
+}
+
+/**
  * Run a single integrity check.
  */
 async function runCheck(): Promise<ChainMonitorStatus> {
@@ -322,25 +358,7 @@ async function runCheck(): Promise<ChainMonitorStatus> {
           sample: brokenDetails.slice(0, 5),
         });
 
-        // Record the integrity failure as its own audit event
-        try {
-          // entity_id is INTEGER per the schema. Use 0 as a sentinel for
-          // system-originated events (the entity is the chain itself, not a
-          // domain row). entity_type carries the human-readable scope.
-          await _pool!.query(
-            `INSERT INTO audit_events
-              (organization_id, event_type, entity_type, entity_id, user_id, user_name,
-               user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant)
-             VALUES (1, 'audit.chain_integrity_failure', 'audit_chain.monitor', 0, 0, 'system',
-                     'system', '127.0.0.1', NOW(), $1, $2, true, true)`,
-            [
-              `Chain integrity check failed: ${brokenDetails.length} broken links detected`,
-              JSON.stringify({ brokenLinks: brokenDetails.slice(0, 20), totalEntries: rows.length }),
-            ]
-          );
-        } catch (logErr: any) {
-          logger.error('failed to log integrity failure event', { err: logErr?.message });
-        }
+        await recordChainFailureEvents(_pool!, brokenDetails);
       } else if (isHealthy) {
         // The §11.10(e) continuous-monitoring evidence line. It may only be
         // written when every one of `entries` rows actually carried a hash and
