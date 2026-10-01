@@ -1,0 +1,10 @@
+  run "database_level_audit_is_loaded_and_required"... fail
+Error: Test assertion failed
+  on tests/boot_contract.tftest.hcl line 705, in run "database_level_audit_is_loaded_and_required":
+pgaudit must be in shared_preload_libraries: pgaudit.log alone records
+Error: Test assertion failed
+  on tests/boot_contract.tftest.hcl line 709, in run "database_level_audit_is_loaded_and_required":
+must stay loaded.
+Error: Test assertion failed
+  on tests/boot_contract.tftest.hcl line 717, in run "database_level_audit_is_loaded_and_required":
+Every task must carry DB_AUDIT_REQUIRED=pgaudit, so the deploy refuses a

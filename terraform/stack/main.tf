@@ -235,6 +235,12 @@ locals {
     { name = "AUDIT_TRAIL_ENABLED", value = "true" },
     { name = "AUDIT_REQUIRE_ENFORCE", value = "true" },
     { name = "AI_SENSITIVE_DATA_POLICY_MODE", value = "enforce" },
+    # Database-level audit must be recording: deploy-migrate (a task derived
+    # from this definition) refuses to roll services otherwise. It records what
+    # the application's own trail cannot: statements that never went through
+    # the application (scripts/db/database-audit.mjs; the RDS module preloads
+    # pgaudit).
+    { name = "DB_AUDIT_REQUIRED", value = "pgaudit" },
     { name = "AI_PROVIDER_PLACEMENT_APPROVALS", value = var.ai_provider_placement_approvals },
     # Reset and invitation links are built on APP_URL and never on the Host
     # header. The public origin is the CloudFront custom domain.
