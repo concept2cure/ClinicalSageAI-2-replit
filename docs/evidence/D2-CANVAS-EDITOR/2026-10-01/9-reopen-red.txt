@@ -1,0 +1,5 @@
+# 9. AnA's answer reaches the document at any width — RED, the amended step-3 case against the unchanged thread and canvas
+ × client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — AnA’s answers go into the open document (2026-10-01) > when the editor closes, the offer reopens it: the suggestion still lands where the person sees it 6633ms
+   → Unable to find role="button" and name "Open 2.5.1 and insert as tracked suggestion"
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 17 skipped (18)

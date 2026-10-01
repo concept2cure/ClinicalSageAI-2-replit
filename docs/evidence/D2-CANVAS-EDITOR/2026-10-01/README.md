@@ -423,3 +423,46 @@ canvas, the workbench or read provenance pass 656/656.
 - `tsc`: clean.
 - The ESLint ratchet: unchanged.
 - `ci:canvas-path`, `ci:check-phantom-tokens`, `ci:undefined-css-classes`: OK.
+
+## 9. AnA's answer reaches the document at any width
+
+**Before.**
+- Step 3 withdrew "Insert into 2.5.1 as tracked suggestion" when the editor
+  closed, because a hidden editor is not somewhere the person can see a
+  suggestion land.
+- Below 1100px the conversation is hidden while the editor is open
+  (`screens/9-editor-at-1024.png`, from the same browser harness as
+  section 7). AnA's answers are on screen only while the editor is closed.
+- So below 1100px the offer and its target were never on screen together,
+  and the loop could not be used. That covers a 1024px laptop or a tablet in
+  landscape.
+
+**Now.**
+- While the editor is closed but still mounted, each settled answer offers
+  "Open 2.5.1 and insert as tracked suggestion". The click reopens the
+  editor and inserts, so the suggestion still lands where the person sees it.
+  Step 3's principle holds; only its means changed.
+- While the editor is open, the offer reads as in step 3.
+- The canvas reports its editor with an `open` flag instead of reporting
+  nothing when closed.
+- Turns still name the document only while the editor is on screen (step 5),
+  because the person is not looking at a closed one.
+- A document whose editor was never opened is offered nothing, as before.
+
+**Amended test.** Step 3's case "withdraws the offer when the editor closes"
+is replaced in place by "when the editor closes, the offer reopens it". The
+reason is in its comment. Its first half still asserts that the plain
+"Insert into" offer goes when the editor closes.
+
+**Failing first.** `9-reopen-red.txt`: the amended case failed against the
+unchanged thread and canvas.
+
+**Green:** `9-reopen-green.txt`, 18/18 in the thread suite. The 56 files
+that mount the thread, the canvas or the workbench, plus the editor's and
+`useAnaChat`'s suites, pass 556/556.
+
+**Also run.**
+- `tsc`: clean. It caught `AnaTurn`'s prop type still on the two-argument
+  callback; fixed.
+- The ESLint ratchet: unchanged.
+- `ci:canvas-path`, `ci:check-phantom-tokens`, `ci:undefined-css-classes`: OK.

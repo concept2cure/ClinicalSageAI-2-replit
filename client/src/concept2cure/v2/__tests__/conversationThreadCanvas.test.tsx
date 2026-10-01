@@ -259,7 +259,14 @@ describe('ConversationThread — AnA\u2019s answers go into the open document (2
     expect(ins.getAttribute('data-source-record')).toBe('rec-7');
   });
 
-  it('withdraws the offer when the editor closes: the workbench stays mounted, hidden, and a hidden editor is not a target', async () => {
+  /* Amended 2026-10-01 (step 9). Step 3 withdrew the offer when the editor
+     closed, because a hidden editor is not somewhere the person can see a
+     suggestion land. Below 1100px the conversation is hidden while the editor
+     is open, so the offer was never on screen at the same time as its target,
+     and the loop could not be used at all. A closed editor is now offered as
+     "Open <section> and insert": the click reopens it, so the suggestion
+     still lands where the person sees it. */
+  it('when the editor closes, the offer reopens it: the suggestion still lands where the person sees it', async () => {
     chatMessages.current = [USER, DRAFTED, FOLLOWUP];
     render(<ConversationThread {...OWNED_PROPS} />);
     const open = await screen.findByTestId('dc-open-editor');
@@ -268,9 +275,17 @@ describe('ConversationThread — AnA\u2019s answers go into the open document (2
     await screen.findByRole('button', { name: 'Insert into 2.5.1 as tracked suggestion' }, { timeout: 4000 });
 
     (await screen.findByTestId('dc-open-editor')).click();
-    await vi.waitFor(() =>
-      expect(screen.queryByRole('button', { name: /as tracked suggestion/ })).toBeNull(),
-    );
+    await vi.waitFor(() => expect(document.querySelector('.ct-main')?.getAttribute('data-canvas-open')).toBeNull());
+    expect(screen.queryByRole('button', { name: 'Insert into 2.5.1 as tracked suggestion' })).toBeNull();
+
+    (await screen.findByRole('button', { name: 'Open 2.5.1 and insert as tracked suggestion' })).click();
+    await vi.waitFor(() => expect(document.querySelector('.ct-main')?.getAttribute('data-canvas-open')).toBe('true'));
+    const ins = await vi.waitFor(() => {
+      const el = document.querySelector('.ct-canvas-pane ins[data-author-id="ana"]');
+      if (!el) throw new Error('no AnA suggestion in the reopened section');
+      return el as HTMLElement;
+    });
+    expect(ins.getAttribute('data-source-record')).toBe('rec-7');
   });
 });
 
