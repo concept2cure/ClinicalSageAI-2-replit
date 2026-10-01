@@ -2841,6 +2841,7 @@ export const C2C_MIGRATION_FILES = [
   // final pair because ci:migration-set-order pins those last.
   // Evidence docs/evidence/D2-REPORTING-LAUNCH-APP/2026-09-30/report-os/.
   'migrations/20260930_report_type_registry_seed.sql',
+  'migrations/20261001_domain_history_append_only.sql', // P1-24 (DP-15/16): append-only triggers on workflow_history, document_audit_logs, regulatory_audit_logs, c2c_ana_actions, authoring_signatures; after every creator; no table, no DROP
 
   // ── IND lifecycle and assessment tables reach every deployed database (2026-10-01, D1) ─
   // Five tables existed only on databases installed after their 20260615
