@@ -69,6 +69,8 @@ const PAYLOAD: CrossObjectReasoningPayload = {
     totalTasks: 2,
     blockedTasks: 1,
     overdueTasks: 1,
+    doneTasks: 0,
+    taskCountsPartial: false,
   },
   documents: [
     {

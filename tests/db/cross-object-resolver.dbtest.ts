@@ -83,6 +83,9 @@ function review(project: number | string) {
 
 async function cleanup(): Promise<void> {
   const orgs = [ORG, OTHER_ORG];
+  await owner.query('DELETE FROM project_tasks WHERE organization_id = ANY($1::int[])', [orgs]);
+  await owner.query('DELETE FROM unified_tasks WHERE organization_id = ANY($1::int[])', [orgs]);
+  await owner.query('DELETE FROM c2c_project_work_items WHERE org_id = ANY($1::int[])', [orgs]);
   await owner.query('DELETE FROM concept2cure_artifacts WHERE organization_id = ANY($1::int[])', [orgs]);
   await owner.query('DELETE FROM projects WHERE organization_id = ANY($1::int[])', [orgs]);
   await owner.query('DELETE FROM client_workspaces WHERE organization_id = ANY($1::int[])', [orgs]);
@@ -246,3 +249,52 @@ describe('what the review cannot read', () => {
     ).rejects.toMatchObject({ name: 'CrossObjectReadError', failedReads: ['project'] });
   });
 });
+
+/*
+ * D2, 2026-10-01: AnA Command showed "Tasks done 100%" for every project. The
+ * resolver hardcoded totalTasks/blockedTasks/overdueTasks to 0, and the
+ * continuity briefing turns a zero total into 100. The counts now come from
+ * the platform's cross-store work view (loadUnifiedWork): the schedule, the
+ * board and agency correspondence alike, with its caveat when a store could
+ * not be read.
+ */
+describe("the project's tasks, counted from every store", () => {
+  it('counts schedule, board and correspondence tasks, and how many are done, blocked and overdue', async () => {
+    const yesterday = new Date(Date.now() - 86_400_000).toISOString();
+    // Schedule of events (project_tasks): one done, one blocked and overdue.
+    await owner.query(
+      `INSERT INTO project_tasks (organization_id, project_id, name, status, due_date) VALUES
+         ($1, $2, '${TAG} draft the clinical overview', 'done', NULL),
+         ($1, $2, '${TAG} statistical analysis plan', 'blocked', $3)`,
+      [ORG, projectId, yesterday],
+    );
+    // The board (unified_tasks): one completed, one pending and overdue.
+    await owner.query(
+      `INSERT INTO unified_tasks (task_id, organization_id, module_type, title, status, project_id, due_date) VALUES
+         ($1, $3, 'ind', '${TAG} QC the module 2 summaries', 'completed', $4, NULL),
+         ($2, $3, 'ind', '${TAG} confirm the pre-IND meeting date', 'pending', $4, $5)`,
+      [`${TAG}-board-done-${RUN}`, `${TAG}-board-open-${RUN}`, ORG, projectId, yesterday],
+    );
+    // Agency correspondence (c2c_project_work_items): one open item held by the agency.
+    await owner.query(
+      `INSERT INTO c2c_project_work_items (work_item_id, org_id, project_id, source_type, source_id, title, status, blocker_type)
+       VALUES ($1, $2, $3, 'agency_correspondence', 1, '${TAG} answer the FDA information request', 'open', 'agency_hold')`,
+      [`${TAG}-wi-${RUN}`, ORG, projectId],
+    );
+    // Another organisation's task never counts.
+    await owner.query(
+      `INSERT INTO project_tasks (organization_id, project_id, name, status) VALUES ($1, $2, '${TAG} foreign task', 'blocked')`,
+      [OTHER_ORG, otherProjectId],
+    );
+
+    const payload = await asMember(() => resolver.assembleCrossObjectPayload({ organizationId: ORG, projectId }));
+    expect(payload.project).toMatchObject({
+      totalTasks: 5,
+      doneTasks: 2,
+      blockedTasks: 2,
+      overdueTasks: 2,
+      taskCountsPartial: false,
+    });
+  });
+});
+
