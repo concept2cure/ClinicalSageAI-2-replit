@@ -54,3 +54,7 @@ scratch copy of the repository so no `.terraform/` reached the tree. The AWS pro
   - the authoring door is queued to this session after them.
 - **The rest of U9, not done:** `/readyz` reporting the connector's state, and an explicit 404 on the connector's
   paths when it is off. The preflight now requires the connector on, so this stack cannot roll a task with it off.
+
+## Later the same day: the owners are named
+
+The founder named the platform owners: `jonmichaelpsmith@gmail.com` and `jmichaelpsmith@gmail.com`. They are in `terraform/environments/{production,staging}/platform-owners.auto.tfvars`. Evidence: `docs/evidence/D1/2026-10-01-platform-owners-named/`. Still owed: the apply and the one setup call.

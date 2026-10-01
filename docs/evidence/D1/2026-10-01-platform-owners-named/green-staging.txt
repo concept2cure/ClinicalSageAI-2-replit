@@ -1,0 +1,5 @@
+$ terraform console <<< var.platform_owner_emails   (staging; scratch copy, local backend override)
+tolist([
+  "jonmichaelpsmith@gmail.com",
+  "jmichaelpsmith@gmail.com",
+])
