@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-01T01:14:21.810Z",
+  "generatedAt": "2026-10-01T01:50:31.217Z",
   "git": {
-    "sha": "7fca9601f6fd07adbb01fb9a8dc9e59a4ee8117b",
+    "sha": "d14a873839941443f77bba70b53b62975dfd717c",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2125,7 +2125,7 @@
       },
       {
         "file": "server/services/submission-service/submission-service.ts",
-        "bytes": 109701
+        "bytes": 111167
       },
       {
         "file": "server/services/rwe/rwe-methodology-knowledge.ts",
@@ -2302,6 +2302,10 @@
         "lines": 2358
       },
       {
+        "file": "server/services/submission-service/submission-service.ts",
+        "lines": 2349
+      },
+      {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
         "lines": 2348
       },
@@ -2312,10 +2316,6 @@
       {
         "file": "services/regulatory/ind-ectd-sections.ts",
         "lines": 2320
-      },
-      {
-        "file": "server/services/submission-service/submission-service.ts",
-        "lines": 2317
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
@@ -2395,7 +2395,7 @@
       },
       {
         "file": "server/routes/c2c/projects.ts",
-        "lines": 1987
+        "lines": 1986
       },
       {
         "file": "client/src/concept2cure/v2/Shell.tsx",
