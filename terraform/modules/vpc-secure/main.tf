@@ -81,25 +81,45 @@ resource "aws_route_table_association" "private" {
   route_table_id = aws_route_table.private.id
 }
 
-# VPC Endpoints - S3 and KMS (interface endpoints for KMS)
+# VPC endpoints: private paths to S3 and KMS (D1, 2026-10-01,
+# docs/evidence/W2/2026-10-01-vpc-private-paths/). Until then both were declared
+# and neither could carry traffic: the S3 gateway endpoint was on no route table,
+# and the KMS endpoint admitted nothing and had private DNS off, so Vault bytes,
+# evidence and every release signature went out through the NAT gateway.
+# tests/private_paths.tftest.hcl holds each of these.
+
+# A gateway endpoint works only through the route tables it is associated with.
 resource "aws_vpc_endpoint" "s3" {
-  vpc_id       = aws_vpc.this.id
-  service_name = "com.amazonaws.${var.region}.s3"
+  vpc_id            = aws_vpc.this.id
+  service_name      = "com.amazonaws.${var.region}.s3"
   vpc_endpoint_type = "Gateway"
+  route_table_ids   = [aws_route_table.private.id]
+  tags              = merge(var.tags, { Name = "ros-part11-s3-endpoint" })
 }
 
+# Private DNS makes the SDK's ordinary kms.<region>.amazonaws.com resolve to this
+# endpoint inside the VPC, so no client configuration changes.
 resource "aws_vpc_endpoint" "kms" {
-  vpc_id       = aws_vpc.this.id
-  service_name = "com.amazonaws.${var.region}.kms"
-  vpc_endpoint_type = "Interface"
-  subnet_ids = aws_subnet.private[*].id
-  security_group_ids = [aws_security_group.endpoint.id]
+  vpc_id              = aws_vpc.this.id
+  service_name        = "com.amazonaws.${var.region}.kms"
+  vpc_endpoint_type   = "Interface"
+  subnet_ids          = aws_subnet.private[*].id
+  security_group_ids  = [aws_security_group.endpoint.id]
+  private_dns_enabled = true
+  tags                = merge(var.tags, { Name = "ros-part11-kms-endpoint" })
 }
 
 resource "aws_security_group" "endpoint" {
   name        = "ros-part11-endpoint-sg"
   description = "SG for interface endpoints"
   vpc_id      = aws_vpc.this.id
+  ingress {
+    description = "HTTPS from inside the VPC to the interface endpoints"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = [aws_vpc.this.cidr_block]
+  }
   egress {
     from_port   = 0
     to_port     = 0
