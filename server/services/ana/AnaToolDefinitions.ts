@@ -998,21 +998,22 @@ export const IND_GET_STATUS: AnaTool = {
 /** Rasterize a document page for visual inspection */
 export const RASTERIZE_PAGE: AnaTool = {
   name: 'rasterize_page',
-  description: 'Rasterize (render as image) a specific page of a DOCX or PDF document for visual inspection. Returns a PNG image of the page. Use when the user wants to preview, inspect, or visually verify a generated document page.',
+  description:
+    "Render one page of a PDF or DOCX in the organization's document workspace to a PNG file, for visual inspection. Returns the PNG's path, page count, pixel size and SHA-256 — or an error naming why no page was rendered. A DOCX is converted to PDF first.",
   input_schema: {
     type: 'object',
     properties: {
       document_path: {
         type: 'string',
-        description: 'Path to the DOCX or PDF document',
+        description: "Path of the PDF or DOCX in the organization's document workspace",
       },
       page_number: {
         type: 'number',
-        description: 'Page number to rasterize (1-based)',
+        description: 'Page to render (1-based, default 1)',
       },
       dpi: {
         type: 'number',
-        description: 'Resolution in DPI (default: 150)',
+        description: 'Resolution, 36–300 (default 150)',
       },
     },
     required: ['document_path'],
@@ -1022,7 +1023,8 @@ export const RASTERIZE_PAGE: AnaTool = {
 /** Overlay content onto a PDF template (forms, headers, signatures, stamps) */
 export const PDF_OVERLAY: AnaTool = {
   name: 'pdf_overlay',
-  description: 'Overlay text, images, or regulatory stamps onto specific coordinates of an existing PDF template. Use for form filling, adding signatures, watermarks, approval stamps, or finalizing templates with positioned content. Supports multi-page overlay.',
+  description:
+    'Currently unavailable: no PDF overlay engine is connected, so this applies nothing and returns status "unavailable". Do not use it to place text or stamps on a PDF; tell the user it cannot be done here yet.',
   input_schema: {
     type: 'object',
     properties: {

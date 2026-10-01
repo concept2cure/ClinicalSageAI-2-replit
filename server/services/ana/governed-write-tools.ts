@@ -45,7 +45,7 @@ export const GOVERNED_CONTENT_WRITE_TOOLS: Readonly<Record<string, string>> = {
   insert_document_content:
     'Writes model-authored insertions into an edited .docx that is an exportable deliverable, with no audit trail.',
   pdf_overlay:
-    'Its declared contract is to stamp model-authored text into a finalized PDF deliverable. It does no analysis, and it is a false-success stub, so it is gated as a write that fails closed rather than exempted as analysis.',
+    'Its declared contract is to stamp model-authored text into a finalized PDF deliverable. It does no analysis and today applies nothing (it answers unavailable), so it stays gated as a write that fails closed rather than exempted as analysis.',
   save_document_to_vault:
     'Stores model-authored content as a versioned, audited vault document.',
   update_biosketch_section:

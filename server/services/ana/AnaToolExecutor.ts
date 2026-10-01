@@ -7039,39 +7039,50 @@ registerToolHandler('ind_get_status', async (input: Record<string, unknown>) => 
   }
 });
 
-registerToolHandler('rasterize_page', async (input: Record<string, unknown>) => {
-  const documentPath = input.document_path as string;
-  const pageNumber = (input.page_number as number) || 1;
-  const dpi = (input.dpi as number) || 150;
-
-  // Rasterization requires Puppeteer or LibreOffice — return instructions
-  return JSON.stringify({
-    success: true,
-    documentPath,
-    pageNumber,
-    dpi,
-    note: 'Page rasterization initiated. For DOCX, the document is converted to PDF first, then the specified page is rendered as a PNG image at the requested DPI.',
-    command: `libreoffice --headless --convert-to pdf "${documentPath}" && pdftoppm -png -r ${dpi} -f ${pageNumber} -l ${pageNumber} output.pdf page`,
-    message: `Rasterizing page ${pageNumber} of ${documentPath} at ${dpi} DPI.`,
-  });
+registerToolHandler('rasterize_page', async (input, ctx) => {
+  /* Renders one page of a PDF or DOCX in the tenant's document workspace to a
+     PNG in its scratch area (page-render.ts) and succeeds only when that file
+     exists. It used to return `success: true` and a shell command it never
+     ran, for any path at all. */
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ success: false, error: 'rasterize_page requires tenant context (organizationId).' });
+  }
+  const confined = workspacePathOrRefusal(input.document_path, 'document_path', ctx.organizationId);
+  if (!confined.ok) return confined.refusal;
+  const page = Number.isInteger(input.page_number) && (input.page_number as number) >= 1 ? (input.page_number as number) : 1;
+  const dpi = Math.min(300, Math.max(36, Math.round(Number(input.dpi) || 150)));
+  try {
+    const { renderDocumentPage } = await import('./page-render.js');
+    const rendered = await renderDocumentPage({
+      documentPath: confined.path,
+      page,
+      dpi,
+      outputDir: anaScratchDir(ctx.organizationId, 'docbuilder'),
+    });
+    return JSON.stringify({
+      success: true,
+      ...rendered,
+      message: `Rendered page ${page} of ${rendered.pageCount} at ${dpi} dpi to ${rendered.pngPath} (${rendered.widthPx}×${rendered.heightPx} px).`,
+    });
+  } catch (err) {
+    return JSON.stringify({ success: false, error: err instanceof Error ? err.message : String(err) });
+  }
 });
 
-registerToolHandler('pdf_overlay', async (input: Record<string, unknown>) => {
-  const basePdfPath = input.base_pdf_path as string;
-  const overlays = input.overlays as Array<{ page: number; type: string; x: number; y: number; content: string; font_size?: number; color?: string }> || [];
-  const outputPath = input.output_path as string || basePdfPath.replace('.pdf', '_finalized.pdf');
-
-  // PDF overlay requires a PDF manipulation library (pdf-lib, PyPDF2, or reportlab)
-  return JSON.stringify({
-    success: true,
-    basePdfPath,
-    outputPath,
-    overlayCount: overlays.length,
-    overlays: overlays.map(o => ({ page: o.page, type: o.type, position: `(${o.x}, ${o.y})` })),
-    note: 'PDF overlay operations queued. Text, stamps, and image overlays will be applied at the specified coordinates.',
-    message: `${overlays.length} overlay operations will be applied to ${basePdfPath}.`,
-  });
-});
+registerToolHandler('pdf_overlay', async () =>
+  /* No overlay engine exists, so this applies nothing and says so. It used to
+     report overlays "queued" and "will be applied" — including approval
+     stamps and signatures — and write nothing. The planned replacement is the
+     deterministic bind engine (bind_pdf_package, plan WS13); whether to keep
+     this name until then or remove it is open founder decision 8. */
+  JSON.stringify({
+    success: false,
+    status: 'unavailable',
+    error:
+      'pdf_overlay is not available: no PDF overlay engine is connected, so nothing was applied or written. ' +
+      'Tell the user the overlay was not made.',
+  }),
+);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Precedent Engine handlers — exposes server/services/precedent-engine.ts.
