@@ -30,6 +30,8 @@
  * @module server/services/c2c/program-access
  */
 
+import { describeFailure, VerificationUnavailableError } from '../../lib/verification-outcome';
+
 export type ProgramAuthzMode = 'enforce' | 'warn';
 
 /** Org roles that carry program-management authority, mirroring the set
@@ -121,30 +123,70 @@ export function resolveProgramAuthzMode(
 
 const PROGRAM_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+export interface ProgramScopeOptions {
+  /**
+   * Admit a soft-deleted program. Only for an act that has to reach a deleted
+   * project's records: a legal hold preserves them whatever state the project
+   * is in. Everything else acts on live projects only, as the Projects
+   * surface does (a deleted project 404s on its own page).
+   */
+  includeDeleted?: boolean;
+}
+
 /**
  * TENANCY, the half canMutateProgram leaves to its caller: is `programId` a live
  * project (regulatory_programs, the one project identity the Projects surface
  * creates) of `organizationId`? False for a malformed id, another
  * organization's project, one that does not exist, and one that was deleted.
  *
- * Every chain of governed records starts at a project, so every writer that
- * anchors a record to one asks this, before it writes. Until 2026-09-25 (LX-20)
- * the question was asked in a dozen hand-written copies, most of which ignored
- * deleted_at, and several writers checked only that the id looked like a UUID —
- * so a record of one organization could be anchored to another's project, or to
- * none. `db` is anything with the pg `query` shape (a Pool, a PoolClient inside
- * the caller's transaction, a test double).
+ * This is the ONE answer to that question on the server, and
+ * `npm run ci:program-ownership-single-source` refuses a second. Every chain of
+ * governed records starts at a project, so every writer that anchors a record
+ * to one, and every read for one, asks this first. LX-20 (2026-09-25) replaced
+ * a dozen hand-written copies with it; by 2026-10-01 there were 51 again, and
+ * they disagreed: most admitted a deleted project; `innovation-routes.ts` also
+ * consulted `programs` and `core.programs`, which nothing writes (the second
+ * is keyed by uuid organization, which no tenant has); and the RBM site-risk
+ * read asked whether the caller had RBM records that mention the program
+ * rather than whether it owns it — a record that pointed at another tenant's
+ * program was enough to read that program's sites. D3, 2026-10-01, moved every
+ * copy here and put the gate on it.
+ *
+ * `db` is anything with the pg `query` shape: the shared pool (which applies
+ * the request's tenant scope under RLS_ENFORCE=on), the request's own client,
+ * a PoolClient inside the caller's transaction, a test double. Pass the
+ * connection the caller already reads on, or a function that returns it
+ * (`getPool`): it is then resolved inside the check, so "no pool" is "could
+ * not check" like any other failure to run. No row-level-security bypass is
+ * needed or used: the organization is a predicate of the query.
+ *
+ * A lookup that cannot run throws `VerificationUnavailableError`: "could not
+ * tell" is not "not yours", and a route that distinguishes the two answers 503.
  */
+type ProgramQueryable = { query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[] }> };
+
 export async function programInOrganization(
-  db: { query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[] }> },
+  db: ProgramQueryable | (() => ProgramQueryable),
   programId: unknown,
-  organizationId: number,
+  organizationId: number | string,
+  options: ProgramScopeOptions = {},
 ): Promise<boolean> {
   if (typeof programId !== 'string' || !PROGRAM_UUID_RE.test(programId)) return false;
-  if (!Number.isSafeInteger(organizationId) || organizationId <= 0) return false;
-  const { rows } = await db.query(
-    `SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
-    [programId, organizationId],
-  );
+  // An organization id that reached a caller untyped (`req.user.organizationId`
+  // is a string on some auth paths) is still that organization; anything that
+  // is not a positive integer is no organization at all.
+  const org = typeof organizationId === 'string' && /^\d+$/.test(organizationId) ? Number(organizationId) : organizationId;
+  if (typeof org !== 'number' || !Number.isSafeInteger(org) || org <= 0) return false;
+  const live = options.includeDeleted ? '' : ' AND deleted_at IS NULL';
+  let rows: unknown[];
+  try {
+    const q = typeof db === 'function' ? db() : db;
+    ({ rows } = await q.query(
+      `SELECT id FROM regulatory_programs WHERE id = $1 AND organization_id = $2${live} LIMIT 1`,
+      [programId, org],
+    ));
+  } catch (err) {
+    throw new VerificationUnavailableError('program ownership check', describeFailure(err));
+  }
   return rows.length > 0;
 }

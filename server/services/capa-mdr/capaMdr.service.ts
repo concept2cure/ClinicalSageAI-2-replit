@@ -27,7 +27,7 @@
 
 import { and, asc, desc, eq, like, sql } from 'drizzle-orm';
 
-import { db } from '../../db';
+import { db, pool } from '../../db';
 import auditService from '../auditService';
 import { regulatoryPrograms } from '../../../shared/schema/programs';
 import {
@@ -69,6 +69,7 @@ import {
   assertMdrTransition,
   assertActionTransition,
 } from './stateMachine';
+import { programInOrganization } from '../c2c/program-access';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Errors
@@ -93,17 +94,7 @@ export class NotFoundError extends Error {
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function assertProgramAccess(organizationId: number, programId: string): Promise<void> {
-  const [row] = await db
-    .select({ id: regulatoryPrograms.id })
-    .from(regulatoryPrograms)
-    .where(
-      and(
-        eq(regulatoryPrograms.id, sql`${programId}::uuid`),
-        eq(regulatoryPrograms.organizationId, organizationId)
-      )
-    )
-    .limit(1);
-  if (!row) {
+    if (!(await programInOrganization(pool, programId, organizationId))) {
     throw new TenantAccessError(
       `Program ${programId} not accessible by organization ${organizationId}`
     );
