@@ -38,7 +38,6 @@ import {
   GatewayAllProvidersFailedError,
 } from '../ai-gateway/gateway';
 import auditService from '../auditService';
-import { upsertLeaf, SubmissionError } from '../submission-service/submission-service';
 import { createScopedLogger } from '../../utils/logger';
 import { PROMPTS_DIR } from '../ai-gateway/prompts-dir';
 
@@ -85,12 +84,39 @@ export interface ClassificationResult {
    * was placed. 2026-09-23 (W5/D7, residual repair).
    */
   leafPlacement?: LeafPlacementOutcome;
+  /**
+   * The leaf a person would place, when a sequenceId was given and the model
+   * proposed a section. Classification places nothing (2026-10-01, D5,
+   * NEW-P11-B-1a): placing it is its own step, with the section in view.
+   */
+  proposedLeaf?: ProposedLeaf;
 }
 
 export interface LeafPlacementOutcome {
   placed: boolean;
   refusal: string | null;
 }
+
+export interface ProposedLeaf {
+  sequenceId: number;
+  sectionCode: string;
+  title: string;
+  granularity: string | null;
+  documentTable: string;
+  documentId: number;
+  documentType: string | null;
+}
+
+/**
+ * Why a classification placed nothing. 2026-10-01 (D5, NEW-P11-B-1a):
+ * classify wrote the model's section code into the document and placed a leaf
+ * under it, with no reason, while the person confirming AnA's call never saw
+ * that section. A placement is a person's act, with the section in view and
+ * their reason (the placement route requires one, PX-1).
+ */
+export const CLASSIFY_PLACES_NOTHING =
+  'Classification proposes a section; it does not place the document. Placing it is its own step, ' +
+  'with the section in view and a reason: place_into_sequence, or Place in the Submission Center.';
 
 export interface ExtractionResult {
   structure: Array<{ level: number; heading: string }>;
@@ -329,43 +355,41 @@ export async function classifyDocument(params: {
   // persisted or returned; only the one computed below is reported.
   delete (result as { leafPlacement?: unknown }).leafPlacement;
 
-  // Persist the proposal onto the document (sectionCode -> moduleNumber, full
-  // proposal into metadata) — only adopt a section code we are confident in.
-  const existingMeta = (doc.metadata as Record<string, unknown> | null) ?? {};
-  const adoptSection = Boolean(result.sectionCode) && result.confidence >= 0.5;
-  await db
-    .update(coauthorDocuments)
-    .set({
-      metadata: { ...existingMeta, classification: result },
-      updatedAt: new Date(),
-      ...(adoptSection ? { moduleNumber: result.sectionCode as string } : {}),
-    })
-    .where(
-      and(
-        eq(coauthorDocuments.id, documentId),
-        eq(coauthorDocuments.organizationId, organizationId)
-      )
-    );
+  /* 2026-10-01 (D5, NEW-P11-B-1a): nothing is written to the document. This
+     wrote the model's section code into module_number at confidence 0.5 or
+     more — on any row, an approved filing copy included, with no lock, no
+     reason and no audit event — and the proposal into its metadata, which
+     nothing reads. The proposal is returned, and recorded in the AI_GENERATE
+     audit row below; a person adopts a section by placing the document
+     (AuthoringPlaceIntoFiling, POST /api/coauthor/documents with a module) or
+     through PUT /api/ectd-documents/:id with a reason. */
 
-  // When a target sequence is supplied, draft a leaf placement.
+  // When a target sequence is supplied, the leaf a person would place.
   //
-  // 2026-09-23 (W5/D7, residual repair): through the canonical leaf writer.
-  // This block used to select the sequence and `db.insert(submissionLeaves)`
-  // itself — no status check and no sequence row lock — so a classify request
-  // wrote leaves into FROZEN and DISPATCHED sequences: a frozen sequence's
-  // leaves stopped being immutable, a draft leaf in a dispatched one made
-  // transmit refuse with no way back (removeLeaf refuses there), and a leaf
-  // added after dispatch never met the dispatch-time filing-order rule. It also
-  // skipped the section vocabulary, the tenancy/source pin and the Part 11
-  // audit every other placement gets. upsertLeaf enforces all of those, under
-  // the row lock the governed freeze/dispatch takes. Its refusal is reported,
-  // not swallowed and not thrown: the classification itself stands, and the
-  // caller is told the placement did not happen and why. A sequence that is not
-  // this organization's used to be skipped silently; it is now a NOT_FOUND
-  // refusal. Any error that is not a SubmissionError propagates.
+  // 2026-09-23 (W5/D7, residual repair): this drafted the leaf itself — first
+  // with its own insert, then through upsertLeaf.
+  // 2026-10-01 (D5, NEW-P11-B-1a): it places nothing. The placement went in
+  // under a model's section code with no reason, which the placement route
+  // requires (PX-1), and AnA's confirmation showed the person a document id
+  // and a sequence id, never the section. The proposal is returned so the
+  // placement can be made as its own step: AnA's place_into_sequence carries
+  // the section in the call a person confirms, and the Submission Center's
+  // PUT /api/submissions/sequences/:seqId/leaves asks for the reason.
   let leafPlacement: LeafPlacementOutcome | undefined;
+  let proposedLeaf: ProposedLeaf | undefined;
   if (sequenceId) {
-    leafPlacement = await placeClassifiedLeaf({ sequenceId, doc, documentId, result, organizationId, userId });
+    leafPlacement = { placed: false, refusal: CLASSIFY_PLACES_NOTHING };
+    if (result.sectionCode) {
+      proposedLeaf = {
+        sequenceId,
+        sectionCode: result.sectionCode,
+        title: doc.title,
+        granularity: result.granularity ?? null,
+        documentTable: CANONICAL_DOCUMENT_TABLE,
+        documentId,
+        documentType: result.documentType ?? null,
+      };
+    }
   }
 
   await auditService.logAction({
@@ -381,6 +405,7 @@ export async function classifyDocument(params: {
       confidence: result.confidence,
       sequenceId: sequenceId ?? null,
       leafPlacement: leafPlacement ?? null,
+      proposedLeaf: proposedLeaf ?? null,
     },
   });
 
@@ -394,43 +419,8 @@ export async function classifyDocument(params: {
     percentRead: bounded.percentRead,
   };
   if (leafPlacement) result.leafPlacement = leafPlacement;
+  if (proposedLeaf) result.proposedLeaf = proposedLeaf;
   return result;
-}
-
-/**
- * Draft the classified document's leaf into the requested sequence through the
- * canonical writer (upsertLeaf), reporting a refusal instead of placing.
- */
-async function placeClassifiedLeaf(p: {
-  sequenceId: number;
-  doc: { title: string };
-  documentId: number;
-  result: ClassificationResult;
-  organizationId: number;
-  userId: number;
-}): Promise<LeafPlacementOutcome> {
-  if (!p.result.sectionCode) {
-    return { placed: false, refusal: 'The classification proposed no section code, so there is nothing to place.' };
-  }
-  try {
-    await upsertLeaf(
-      {
-        sequenceId: p.sequenceId,
-        sectionCode: p.result.sectionCode,
-        title: p.doc.title,
-        granularity: p.result.granularity ?? null,
-        lifecycleOp: 'new',
-        documentTable: CANONICAL_DOCUMENT_TABLE,
-        documentId: p.documentId,
-        documentType: p.result.documentType ?? null,
-      },
-      { organizationId: p.organizationId, userId: p.userId },
-    );
-    return { placed: true, refusal: null };
-  } catch (err) {
-    if (!(err instanceof SubmissionError)) throw err;
-    return { placed: false, refusal: `${err.code}: ${err.message}` };
-  }
 }
 
 // ── extractStructure ──────────────────────────────────────────────────────────
@@ -500,20 +490,10 @@ export async function extractStructure(params: {
 
   const claims = Array.isArray(result.extractedClaims) ? result.extractedClaims : [];
 
-  // Persist the extraction onto the document metadata.
-  const existingMeta = (doc.metadata as Record<string, unknown> | null) ?? {};
-  await db
-    .update(coauthorDocuments)
-    .set({
-      metadata: { ...existingMeta, extraction: { ...result, sectionCode } },
-      updatedAt: new Date(),
-    })
-    .where(
-      and(
-        eq(coauthorDocuments.id, documentId),
-        eq(coauthorDocuments.organizationId, organizationId)
-      )
-    );
+  /* 2026-10-01 (D5, NEW-P11-B-1a): the extraction is not written into the
+     document. It was merged into the row's metadata — an approved filing copy
+     included, with no lock and no audit event — and nothing read it back. It
+     is returned, and recorded in the AI_GENERATE audit row below. */
 
   // Seed a provenance edge: the target section derives_from this source document.
   // confidence = fraction of extracted claims that carry a locator (a coarse

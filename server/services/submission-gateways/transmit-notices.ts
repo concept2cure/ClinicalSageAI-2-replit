@@ -28,8 +28,31 @@ export const CONTENT_CHANGED_DURING_TRANSMIT =
  * 2026-09-28 only the HTTP route built these; the AnA handler kept the ledger
  * failure in its own audit row and answered a plain success.
  */
+type FiledSequenceFacts = Pick<GovernedTransmitOutcome, 'filedSequenceReason' | 'filedSequenceConflict'>;
+
+/** Why the sequence is not in the filed history, after the shared first sentence. */
+function filedSequenceDetail(outcome: FiledSequenceFacts): string {
+  if (outcome.filedSequenceReason === 'no-usable-manifest') {
+    // Said plainly, because the next assembly will otherwise refuse with
+    // "file sequence 0000 first" — which the operator did.
+    return 'Its bundle descriptor carries no readable leaf inventory (it was assembled before the inventory was recorded, or the stored one is malformed), ' +
+      'so there is nothing to add. Re-assemble the package before the next sequence so it has a baseline to diff against.';
+  }
+  const conflict = outcome.filedSequenceConflict;
+  if (outcome.filedSequenceReason === 'sequence-conflict' && conflict) {
+    // 2026-10-01 (W5/D7, sweep F19): another bundle of this sequence was
+    // recorded while this one was in flight.
+    const by = conflict.filedTransmittalId == null ? 'an earlier transmittal' : `transmittal ${conflict.filedTransmittalId}`;
+    return `The history already holds sequence ${conflict.sequence} on file as a different bundle, sent by ${by}. ` +
+      'Two different bundles have now been sent under one sequence number: the agency will load at most one of them, ' +
+      'and this one was not added to the filed history, which still describes the other. Confirm with the agency which ' +
+      'bundle it loaded before assembling the next sequence.';
+  }
+  return 'Record it manually before assembling the next sequence, which derives each leaf operation from that history.';
+}
+
 export function transmitOutcomeNotices(
-  outcome: Pick<GovernedTransmitOutcome, 'ledgerWriteFailed' | 'contentAfterTransmit' | 'filedSequenceRecorded' | 'filedSequenceReason'>,
+  outcome: Pick<GovernedTransmitOutcome, 'ledgerWriteFailed' | 'contentAfterTransmit' | 'filedSequenceRecorded'> & FiledSequenceFacts,
 ): {
   filedSequenceWarning?: string;
   contentWarning?: string;
@@ -41,12 +64,7 @@ export function transmitOutcomeNotices(
       ? {
           filedSequenceWarning:
             'The transmission completed, but this sequence could not be added to the package filed history. ' +
-            (outcome.filedSequenceReason === 'no-usable-manifest'
-              // Said plainly, because the next assembly will otherwise refuse
-              // with "file sequence 0000 first" — which the operator did.
-              ? 'Its bundle descriptor carries no readable leaf inventory (it was assembled before the inventory was recorded, or the stored one is malformed), ' +
-                'so there is nothing to add. Re-assemble the package before the next sequence so it has a baseline to diff against.'
-              : 'Record it manually before assembling the next sequence, which derives each leaf operation from that history.'),
+            filedSequenceDetail(outcome),
         }
       : {}),
     ...(outcome.contentAfterTransmit === 'drift' ? { contentWarning: CONTENT_CHANGED_DURING_TRANSMIT } : {}),
