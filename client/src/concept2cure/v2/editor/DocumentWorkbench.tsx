@@ -77,7 +77,12 @@ import { AuthoringRevisionDiff } from '../surfaces/AuthoringRevisionDiff';
 import { AuthoringAiDraft, type AcceptedAttribution } from '../surfaces/AuthoringAiDraft';
 import { AuthoringExports } from '../surfaces/AuthoringExports';
 import { RichSectionEditor, type RichSectionEditorHandle } from './RichSectionEditor';
-import type { SuggestionAuthor, SuggestionDecision } from './suggestions';
+import type {
+  ProposeRefusal,
+  ReplacementProposal,
+  SuggestionAuthor,
+  SuggestionDecision,
+} from './suggestions';
 import type { CommentAnchorPayload } from './commentAnchor';
 import { citedSourceIdsInHtml } from './citationNode';
 import { captionedObjectsInHtml } from './captionNumbering';
@@ -674,6 +679,99 @@ export interface EditorBridge {
   authoringContext: AuthoringContextPack | null;
   /** Insert text as an attributed tracked suggestion; false when the section cannot take it. */
   insert: (text: string, author: SuggestionAuthor) => boolean;
+  /**
+   * Redline one quoted passage of the open section as an attributed tracked
+   * suggestion (the editor handle's `proposeReplacement`). Asynchronous: the
+   * base hash is checked over the loaded content with WebCrypto. Refuses
+   * `wrong-section`, `no-base`, `stale` and `not-editable` for itself (see
+   * EditorBridgeProposeResult); otherwise the editor's own refusals.
+   */
+  propose: (proposal: EditorBridgeProposal, author: SuggestionAuthor) => Promise<EditorBridgeProposeResult>;
+}
+
+/** An anchored proposal as the conversation hands it to the open section. */
+export interface EditorBridgeProposal extends ReplacementProposal {
+  /** The section the proposal is for. Only the open section takes it. */
+  sectionId: string;
+  /**
+   * The version of the section AnA read, as the section reader reports it
+   * (server/services/authoring/authoring-read.ts): `baseSha256` is the hex
+   * SHA-256 of the section's STORED content, `baseUpdatedAt` its
+   * `updated_at`. At least one is required, and every one given must be the
+   * section as this editor loaded it.
+   */
+  baseSha256?: string | null;
+  baseUpdatedAt?: string | null;
+}
+
+/**
+ * Why the bridge refused, beyond the editor's own reasons:
+ *   - wrong-section: the proposal is for a section that is not the open one,
+ *     so its quote was read from other text;
+ *   - no-base: it names no version of the section, so nothing shows the quote
+ *     was chosen against the text that is there now;
+ *   - stale: the section was saved (or reverted, or the editor reopened) after
+ *     AnA read it, so the quote was chosen against text that is no longer the
+ *     record.
+ */
+export type EditorBridgeProposeResult =
+  | { ok: true }
+  | { ok: false; reason: ProposeRefusal | 'stale' | 'wrong-section' | 'no-base' };
+
+/**
+ * Whether a proposal's base is the section version this editor loaded. Both
+ * are `updated_at` values, which reach the client through different
+ * serializers (a tool result, a route row), so the same instant may be written
+ * with or without milliseconds: compared as instants when both parse, as
+ * strings otherwise. A base with no loaded version to compare is not a match.
+ */
+function isLoadedVersion(base: string, loaded: string | null): boolean {
+  if (loaded == null) return false;
+  const a = Date.parse(base);
+  const b = Date.parse(loaded);
+  if (Number.isFinite(a) && Number.isFinite(b)) return a === b;
+  return base === loaded;
+}
+
+/**
+ * Hex SHA-256 of `text` as UTF-8 — what the section reader computes in SQL
+ * (`encode(sha256(convert_to(content, 'UTF8')), 'hex')`) — or null where
+ * WebCrypto is not available or fails, which the bridge treats as a base it
+ * cannot confirm.
+ */
+async function sha256Hex(text: string): Promise<string | null> {
+  const subtle = globalThis.crypto?.subtle;
+  if (!subtle) return null;
+  try {
+    const digest = await subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('');
+  } catch {
+    return null;
+  }
+}
+
+/** The section a bridge was built for, as its editor loaded it. */
+interface LoadedSection {
+  id: string;
+  updatedAt: string | null;
+  /** Hex SHA-256 of the stored content, computed once, on first need. */
+  sha256: () => Promise<string | null>;
+}
+
+/**
+ * Why a proposal's base is not the section as loaded — `no-base` when it
+ * names none, `stale` when any it names differs — or null when it is.
+ */
+async function baseRefusal(
+  proposal: EditorBridgeProposal,
+  loaded: LoadedSection,
+): Promise<'no-base' | 'stale' | null> {
+  const baseSha = proposal.baseSha256?.trim().toLowerCase() || null;
+  const baseAt = proposal.baseUpdatedAt?.trim() || null;
+  if (!baseSha && !baseAt) return 'no-base';
+  if (baseAt && !isLoadedVersion(baseAt, loaded.updatedAt)) return 'stale';
+  if (baseSha && (await loaded.sha256()) !== baseSha) return 'stale';
+  return null;
 }
 
 export interface DocumentWorkbenchProps {
@@ -1188,6 +1286,21 @@ export function DocumentWorkbench({
       onEditorBridge(null);
       return undefined;
     }
+    /* The section as this editor loaded it. The row is replaced on every
+       save (and a revert or a section switch replaces the editor), and each
+       of those re-runs this effect, so a bridge whose effect has been
+       cleaned up describes a section that may no longer be the record: it
+       refuses `stale`. (So does one rebuilt for another reason — a sealed
+       flag, a new authoring context — which costs the caller one re-read,
+       never a redline on the wrong text.) */
+    const content = activeSection.content ?? '';
+    let sha: Promise<string | null> | null = null;
+    const loaded: LoadedSection = {
+      id: activeSection.id,
+      updatedAt: activeSection.updated_at ?? null,
+      sha256: () => (sha ??= sha256Hex(content)),
+    };
+    let live = true;
     onEditorBridge({
       docId: activeDocId,
       sectionCode: activeSection.code,
@@ -1195,8 +1308,27 @@ export function DocumentWorkbench({
       editable: !docSealed,
       authoringContext,
       insert: (text, author) => editorRef.current?.insertSuggestion(text, author) ?? false,
+      /* A proposal is anchored to text AnA read, in one section. It must name
+         this section and the version of it AnA read; every base it gives is
+         checked against the section as this editor loaded it, so a section
+         saved since is refused rather than redlined on a guess. Sealed before
+         the base: re-reading would not make a frozen document take it. The
+         hash is WebCrypto's, so this is asynchronous — and the section is
+         checked again after it, since a save can land while it runs. */
+      propose: async (proposal, author) => {
+        if (!live) return { ok: false, reason: 'stale' };
+        if (proposal.sectionId !== loaded.id) return { ok: false, reason: 'wrong-section' };
+        if (docSealed) return { ok: false, reason: 'not-editable' };
+        const refused = await baseRefusal(proposal, loaded);
+        if (refused) return { ok: false, reason: refused };
+        if (!live) return { ok: false, reason: 'stale' };
+        return editorRef.current?.proposeReplacement(proposal, author) ?? { ok: false, reason: 'not-editable' };
+      },
     });
-    return () => onEditorBridge(null);
+    return () => {
+      live = false;
+      onEditorBridge(null);
+    };
   }, [onEditorBridge, activeDocId, activeSection, docSealed, authoringContext]);
 
   /* With no project open there is no AuthoringContextPack to build (it requires
