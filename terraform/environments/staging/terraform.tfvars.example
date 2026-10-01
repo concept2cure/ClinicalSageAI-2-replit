@@ -33,8 +33,9 @@ private_subnets = ["10.9.1.0/24", "10.9.2.0/24"]
 azs             = ["us-east-1a", "us-east-1b"]
 
 rds_instance_class = "db.t3.small"
-api_cpu            = 512
-api_memory         = 1024
+api_cpu            = 1024
+# 4096 MiB of it is the virus scanner beside the API; the stack refuses less than 6144.
+api_memory         = 6144
 api_desired_count  = 1
 worker_desired_count = 0
 

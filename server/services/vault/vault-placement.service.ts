@@ -87,6 +87,13 @@ export interface PlaceVaultDocumentArgs {
    * the agent acted, and that person — not the agent — confirms in the Vault.
    */
   agent?: Record<string, unknown>;
+  /**
+   * The placement the person saw (VR-11b, confirming in bulk). Checked under
+   * the row lock: a document whose folder or status changed since is refused
+   * CONFLICT and not touched, so a confirmation never lands on a placement the
+   * person did not see.
+   */
+  expected?: { folderId: string; placementStatus: string };
 }
 
 /** The placement as it stands after the write — the shape the Vault renders. */
@@ -260,6 +267,11 @@ export async function placeVaultDocument(
       placement_rationale: string | null;
     };
 
+    if (args.expected && (before.folder_id !== args.expected.folderId
+        || (before.placement_status ?? 'unfiled') !== args.expected.placementStatus)) {
+      await client.query('ROLLBACK');
+      return invalid('CONFLICT', 'Its filing changed since this list was loaded, so it was not confirmed. Reload and check it.', 409);
+    }
     const target = resolveTargetFolder(args, view, before.folder_id);
     if ('refusal' in target) {
       await client.query('ROLLBACK');

@@ -108,6 +108,31 @@ describe('assertUploadSafe — AV scan', () => {
   });
 });
 
+describe('assertUploadSafe — a file the scanner could not read whole', () => {
+  // The deployed scanner reports a file over its limits (AlertExceedsMax yes,
+  // terraform/modules/ecs-fargate). The person is told that, not that the file
+  // carries a virus and not that scanning is down: neither is true, and either
+  // would send them to the wrong remedy.
+  it('refuses it (422 FILE_SCAN_INCOMPLETE) with the cause, in every environment', async () => {
+    const server = await startMockClamd('stream: Heuristics.Limits.Exceeded.MaxFileSize FOUND');
+    process.env.CLAMAV_HOST = '127.0.0.1';
+    process.env.CLAMAV_PORT = String(server.port);
+    try {
+      for (const env of ['production', 'test']) {
+        process.env.NODE_ENV = env;
+        const err = await assertUploadSafe(PDF_BUF, 'application/pdf', 'x.pdf').catch(e => e);
+        expect(err).toBeInstanceOf(UploadSafetyError);
+        expect(err.status).toBe(422);
+        expect(err.code).toBe('FILE_SCAN_INCOMPLETE');
+        expect(err.message).toMatch(/could not be scanned completely/);
+        expect(err.message).not.toMatch(/virus|temporarily/i);
+      }
+    } finally {
+      await server.close();
+    }
+  });
+});
+
 describe('assertUploadSafe — fail-closed in production', () => {
   beforeEach(() => {
     delete process.env.CLAMAV_HOST;

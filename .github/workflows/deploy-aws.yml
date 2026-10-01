@@ -367,6 +367,11 @@ jobs:
         #                            this check only refuses a task definition that
         #                            has made none, before it rolls rather than at
         #                            boot (2026-09-23).
+        #   CLAMAV_HOST              server/middleware/uploadSafety.ts — not a
+        #                            boot refusal: without it every upload is a
+        #                            503. Checked below, API container only, with
+        #                            the scanner container it points at
+        #                            (2026-10-01).
         run: |
           set -euo pipefail
 
@@ -514,6 +519,35 @@ jobs:
           elif [[ "$APP_URL_SECRET" == "0" ]]; then
             echo "::error::APP_URL is missing from the task definition (environment or secrets). Password-reset and invitation links are built on it in production, never on the Host header."
             FAIL=1
+          fi
+          # Every upload is scanned before it is stored, and production refuses
+          # one the scanner did not see (server/middleware/uploadSafety.ts, 503
+          # FILE_SCAN_UNAVAILABLE). Without CLAMAV_HOST the server boots, reads
+          # ready, and refuses every Vault upload. On loopback, clamd must run
+          # in this task: an essential, health-checked container the API
+          # container waits on (dependsOn HEALTHY), which
+          # terraform/modules/ecs-fargate renders. Not in the name list above:
+          # the worker carries that list and has no scanner beside it.
+          CLAMAV_HOST_VALUE=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
+            .containerDefinitions[] | select(.name == $c)
+            | (.environment // []) | map(select(.name == "CLAMAV_HOST")) | .[0].value // ""
+          ' /tmp/api-td-preflight.json | tr -d '[:space:]')
+          if [[ -z "$CLAMAV_HOST_VALUE" ]]; then
+            echo "::error::CLAMAV_HOST is not set in the API container's environment. Production refuses every upload the virus scanner did not see, so no Vault upload would be accepted. terraform/modules/ecs-fargate runs clamd beside the API and sets it."
+            FAIL=1
+          elif [[ "$CLAMAV_HOST_VALUE" == "127.0.0.1" || "$CLAMAV_HOST_VALUE" == "localhost" || "$CLAMAV_HOST_VALUE" == "::1" ]]; then
+            SCANNER_CONTAINER=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
+              ([.containerDefinitions[] | select(.name == $c) | (.dependsOn // [])[]
+                | select(.condition == "HEALTHY") | .containerName]) as $waits
+              | [.containerDefinitions[]
+                  | select(.name != $c and .essential == true and (.healthCheck.command // null) != null)
+                  | .name as $n | select($waits | any(. == $n)) | $n]
+              | .[0] // ""
+            ' /tmp/api-td-preflight.json)
+            if [[ -z "$SCANNER_CONTAINER" ]]; then
+              echo "::error::CLAMAV_HOST is $CLAMAV_HOST_VALUE, but the task runs no scanner the API waits on: no essential, health-checked container that $ECS_API_CONTAINER_NAME depends on (condition HEALTHY). Every upload would be refused as unscanned."
+              FAIL=1
+            fi
           fi
           [[ "$FAIL" -eq 0 ]] || exit 1
 

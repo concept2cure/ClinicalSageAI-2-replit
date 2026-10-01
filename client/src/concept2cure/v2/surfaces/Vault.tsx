@@ -27,6 +27,7 @@ import {
 } from '../fixtures/vault-data';
 import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import { DataRoomFileBar, RoomPick, useDataRoomFiling, type DataRoomFiling } from './VaultDataRoomFiling';
+import { ConfirmSuggestedBar, useConfirmSuggested } from './VaultConfirmSuggested';
 import { downloadBlob, safeFileName } from '../download';
 import {
   EDITOR_TARGET_DOC_TYPES,
@@ -136,6 +137,8 @@ interface VaultDisplayShape {
    *  Counted over the whole programme by the server, NOT over `uploadsWindow` —
    *  a queue derived from the page below would shrink as the backlog grew. */
   unfiledCount?: number;
+  /** Suggested filings no person has confirmed, program-wide (VR-11b). Absent on an older server. */
+  awaitingConfirmationCount?: number;
   /** How much of the filing cabinet the tree actually carries. The server caps
    *  that read (the vault is unbounded), so rendering the page without saying
    *  so would state a partial cabinet as the whole one. */
@@ -698,6 +701,8 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
   /* The data room's "File into Vault" (VR-11): held here so its answer
      survives the re-read that follows a filing. */
   const roomFiling = useDataRoomFiling(projectId ?? null, () => setVaultEpoch((n) => n + 1));
+  /* Confirm N suggested (VR-11b): held here for the same reason. */
+  const confirmSuggested = useConfirmSuggested(projectId ?? null, () => setVaultEpoch((n) => n + 1));
 
   /* Live document tree — real VaultFolder/VaultDoc from the read-model. Stable
      EMPTY_TREE reference while loading/absent so the memo below is loop-safe. */
@@ -1111,6 +1116,8 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
         totalDocuments: vault?.documentCount ?? 0,
         documentCounts: vault?.documentCounts ?? null,
         unfiledUploads: vault?.unfiledCount ?? 0,
+        // Filed to a suggested folder that no person has confirmed (VR-11b); null from an older server.
+        awaitingConfirmation: vault?.awaitingConfirmationCount ?? null,
         // Required sections against confirmed filings (VR-15), as the server
         // counted them, or why there is no figure. Not a readiness figure.
         vaultCoverage: vault?.coverage ?? null,
@@ -1227,6 +1234,9 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
               ) : null}
               {vault && (vault.unfiledCount ?? 0) > 0 ? (
                 <> {I.dot} {vault.unfiledCount} unfiled — needs review</>
+              ) : null}
+              {vault && (vault.awaitingConfirmationCount ?? 0) > 0 ? (
+                <> {I.dot} {vault.awaitingConfirmationCount} awaiting confirmation</>
               ) : null}
             </span>
           </div>
@@ -1556,6 +1566,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                 Searching…
               </div>
             )}
+            {!searching ? <ConfirmSuggestedBar docs={folderDocs} state={confirmSuggested} /> : null}
             <div className="vd-cols">
               <span className="vd-col-name">Name</span>
               <span className="vd-col-type">Type</span>

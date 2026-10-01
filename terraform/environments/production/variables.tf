@@ -38,9 +38,11 @@ variable "api_cpu" {
   default = 1024
 }
 
+# The API task also runs the virus scanner (modules/ecs-fargate): 4096 MiB of
+# this is clamd's, 2048 the application's. The stack refuses less.
 variable "api_memory" {
   type    = number
-  default = 2048
+  default = 6144
 }
 
 variable "api_desired_count" {

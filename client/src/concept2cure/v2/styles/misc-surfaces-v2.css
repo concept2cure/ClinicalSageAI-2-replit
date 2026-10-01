@@ -463,6 +463,11 @@
   .vd-dr-file-result b{ font-weight:600; color:var(--text-100); }
   .vd-dr-file-partial{ font-size:11.5px; font-weight:600; color:var(--warning); }
   .vd-dr-file-refused{ color:var(--error); }
+  /* Confirm N suggested (VR-11b): above a folder's list, one reason for the set. */
+  .vd-confirm{ display:flex; flex-direction:column; gap:6px; margin:8px 0 4px; }
+  .vd-confirm-acts{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
+  .vd-confirm-form{ display:flex; flex-direction:column; gap:6px; max-width:560px; }
+  .vd-confirm-form textarea{ height:auto; padding:6px 9px; resize:vertical; }
 
   /* ── Dossier filing block (detail drawer, uploads) ── */
   .vd-d-filing{ display:flex; flex-direction:column; gap:6px; font-size:12px; }
