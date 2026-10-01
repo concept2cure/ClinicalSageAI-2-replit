@@ -36,6 +36,7 @@ import { computeInitialRun } from '../services/report-os/orchestrator';
 import { renderReport, gapsWereEvaluated, type RenderInput } from '../services/report-os/render/render';
 import type { RenderedReport } from '../services/report-os/render/types';
 import { buildSealedRecord } from '../services/report-os/sealing/seal';
+import { readRunSeal, readVerifiedSealedDocument } from '../services/report-os/sealing/run-seal';
 import type { SealedRecord } from '../services/report-os/sealing/types';
 import { decideDelivery } from '../services/report-os/scheduling/delivery';
 import {
@@ -478,17 +479,28 @@ function refuseAlreadyFinal(res: Response, runId: number) {
   });
 }
 
-type FinalizeOutcome = 'already-final' | 'not-found' | 'not-recorded';
+type FinalizeOutcome = 'already-final' | 'not-found' | 'no-snapshot' | 'not-recorded';
 
 /** Ends the finalize transaction without a write; rolled back, never committed. */
 class FinalizeStopped extends Error {
-  constructor(readonly outcome: 'already-final' | 'not-found') {
+  constructor(readonly outcome: 'already-final' | 'not-found' | 'no-snapshot') {
     super(outcome);
   }
 }
 
-/** The run's status, the seal on its latest snapshot: the two writes of a finalize, on `client`. */
-async function writeFinalize(client: PoolClient, run: typeof reportRuns.$inferSelect, seal: SealedRecord) {
+/**
+ * The run's status, and the seal on its latest snapshot with the exact document
+ * it was computed over: the two writes of a finalize, on `client`. The document
+ * is what makes the seal re-verifiable (GET /runs/:id/seal, reporting review
+ * 2026-10-01). A run with no snapshot has nowhere to hold its seal, and was
+ * finalized with the seal stored nowhere; it is now refused.
+ */
+async function writeFinalize(
+  client: PoolClient,
+  run: typeof reportRuns.$inferSelect,
+  seal: SealedRecord,
+  sealedDocument: RenderedReport
+) {
   const at = new Date().toISOString();
   await client.query(
     `UPDATE report_runs SET status = 'final', completed_at = $3, updated_at = $3
@@ -502,13 +514,12 @@ async function writeFinalize(client: PoolClient, run: typeof reportRuns.$inferSe
     [run.id, run.organizationId]
   );
   const latest = snapshot.rows[0] as { id: number; snapshot_metadata: Record<string, unknown> | null } | undefined;
-  if (latest) {
-    const merged = { ...(latest.snapshot_metadata ?? {}), seal, finalizedAt: at };
-    await client.query('UPDATE report_snapshots SET snapshot_metadata = $2::json WHERE id = $1', [
-      latest.id,
-      JSON.stringify(merged),
-    ]);
-  }
+  if (!latest) throw new FinalizeStopped('no-snapshot');
+  const merged = { ...(latest.snapshot_metadata ?? {}), seal, sealedDocument, finalizedAt: at };
+  await client.query('UPDATE report_snapshots SET snapshot_metadata = $2::json WHERE id = $1', [
+    latest.id,
+    JSON.stringify(merged),
+  ]);
 }
 
 /** The meanings a report finalize can carry: its requester issues it as author; anyone else approves it or takes responsibility. */
@@ -535,7 +546,7 @@ const finalizeSigningAttempts = signingAttemptLimiter('report-finalize', {
 async function finalizeOnChain(
   req: Request,
   run: typeof reportRuns.$inferSelect,
-  seal: SealedRecord,
+  sealed: { seal: SealedRecord; document: RenderedReport },
   signing: { userId: number; reason: string; meaning: unknown; reauth: unknown }
 ): Promise<FinalizeOutcome | { signed: Record<string, unknown> }> {
   let recording = false;
@@ -561,26 +572,29 @@ async function finalizeOnChain(
         const priorStatus = (locked.rows[0] as { status?: string } | undefined)?.status;
         if (priorStatus == null) throw new FinalizeStopped('not-found');
         if (priorStatus === 'final') throw new FinalizeStopped('already-final');
-        await writeFinalize(client, run, seal);
+        await writeFinalize(client, run, sealed.seal, sealed.document);
         recording = true;
-        const sealed = {
+        const facts = {
           runUuid: run.runUuid,
           reportTypeId: run.reportTypeId,
           priorStatus,
-          sealHash: seal.contentHash,
-          algorithm: seal.algorithm,
-          canonVersion: seal.canonVersion,
-          atomCount: seal.atomCount,
-          sealedAt: seal.sealedAt,
+          sealHash: sealed.seal.contentHash,
+          algorithm: sealed.seal.algorithm,
+          canonVersion: sealed.seal.canonVersion,
+          atomCount: sealed.seal.atomCount,
+          sealedAt: sealed.seal.sealedAt,
+          // The sealed document is stored beside the seal: a later read that
+          // finds it missing reads a removal, not a legacy record (run-seal.ts).
+          documentStored: true,
         };
         await writeReportEvent(client, req, {
           organizationId: run.organizationId,
           action: 'report_os.run_finalized',
           resourceType: 'report_run',
           resourceId: String(run.id),
-          details: { ...sealed, reason: signing.reason, meaning },
+          details: { ...facts, reason: signing.reason, meaning },
         });
-        return { act: { finalized: true, ...sealed }, body: {} };
+        return { act: { finalized: true, ...facts }, body: {} };
       },
     });
     return { signed };
@@ -1782,8 +1796,10 @@ function buildRenderedFromRun(
     : null;
   const criticalBlockers =
     storedCritical ?? (rules.forbidFinalIfMissingCritical ? blockers : []);
+  /* A final run renders as final: it read back as 'partial' (or 'draft')
+     after its seal (reporting review 2026-10-01). */
   const requestedStatus: ReportRunStatus =
-    forceRequestStatus ?? (run.status === 'completed' ? 'final' : 'partial');
+    forceRequestStatus ?? (run.status === 'completed' || run.status === 'final' ? 'final' : 'partial');
   const truthfulness = evaluateTruthfulness(
     {
       requestedStatus,
@@ -1816,6 +1832,10 @@ function buildRenderedFromRun(
         summary,
         status: truthfulness.allowedStatus,
         truthfulness,
+        // The run's computation time, not the moment of rendering: "No gaps
+        // detected as of" sealed the sealing time over data computed earlier,
+        // and no two renders of one run were the same document.
+        generatedAt: run.createdAt ? new Date(run.createdAt).toISOString() : undefined,
       });
   return { rendered, truthfulness };
 }
@@ -1852,10 +1872,58 @@ router.get('/runs/:id/rendered', async (req: Request, res: Response) => {
       .where(eq(reportTypeRegistry.typeId, run.reportTypeId))
       .limit(1);
 
+    // A final run is shown as what was sealed, not re-rendered, and only when
+    // the stored copy still verifies. A copy that no longer matches its seal is
+    // refused, never shown as the sealed record; so is a run the audit chain
+    // records as finalized whose status no longer says so.
+    const stored = await inTenantTransaction(run.organizationId, (client) => readVerifiedSealedDocument(client, run));
+    if (stored.verdict === 'intact' && stored.document) return res.json({ data: stored.document, sealed: true });
+    if (stored.verdict === 'mismatch') {
+      return res.status(409).json({
+        success: false,
+        error: {
+          code: 'SEALED_DOCUMENT_MISMATCH',
+          message: "This report's stored record no longer matches its finalization on the audit chain, so it is not shown. GET /runs/:id/seal states which check failed.",
+        },
+        data: { runId },
+      });
+    }
+
     const { rendered } = buildRenderedFromRun(run, reportType);
     return res.json({ data: rendered });
   } catch (error: any) {
     return serverError(res, logger, 'loading rendered', error);
+  }
+});
+
+/**
+ * GET /runs/:id/seal
+ *
+ * A finalized run's seal, read back and re-verified (reporting review
+ * 2026-10-01, Part 11): the stored sealed document is re-hashed and checked
+ * against the stored seal and the audit chain's record of the act, with the
+ * signer's printed name, time and meaning, the reason and the prior status.
+ * A run that is not final answers `sealed: false`. A read that fails is an
+ * error, never a verdict.
+ */
+router.get('/runs/:id/seal', async (req: Request, res: Response) => {
+  try {
+    const organizationId = requireSessionOrg(req, res);
+    if (organizationId == null) return;
+    const runId = Number(req.params.id);
+    if (!Number.isSafeInteger(runId) || runId <= 0) {
+      return res.status(400).json({ error: 'Invalid run id' });
+    }
+    const [run] = await db
+      .select({ id: reportRuns.id, organizationId: reportRuns.organizationId, status: reportRuns.status })
+      .from(reportRuns)
+      .where(and(eq(reportRuns.id, runId), eq(reportRuns.organizationId, organizationId)))
+      .limit(1);
+    if (!run) return res.status(404).json({ error: 'Run not found' });
+    const view = await inTenantTransaction(organizationId, (client) => readRunSeal(client, run));
+    return res.json({ data: view });
+  } catch (error: any) {
+    return serverError(res, logger, 'reading seal', error);
   }
 });
 
@@ -1914,6 +1982,16 @@ function sendFinalizeOutcome(
 ) {
   if (outcome === 'not-found') return res.status(404).json({ error: 'Run not found' });
   if (outcome === 'already-final') return refuseAlreadyFinal(res, runId);
+  if (outcome === 'no-snapshot') {
+    return res.status(409).json({
+      success: false,
+      error: {
+        code: 'RUN_HAS_NO_SNAPSHOT',
+        message: 'This run has no snapshot to hold its seal, so it cannot be finalized. Run the report again. Nothing was changed.',
+      },
+      data: { runId },
+    });
+  }
   if (outcome === 'not-recorded') {
     return refuseUnrecorded(
       res,
@@ -1966,7 +2044,7 @@ router.post('/runs/:id/finalize', requireRole(...REPORT_FINALIZE_ROLES), finaliz
     const seal = buildSealedRecord(rendered);
     let outcome: Awaited<ReturnType<typeof finalizeOnChain>>;
     try {
-      outcome = await finalizeOnChain(req, run, seal, {
+      outcome = await finalizeOnChain(req, run, { seal, document: rendered }, {
         userId,
         reason: asked.reason,
         meaning: req.body?.meaning,

@@ -33,6 +33,7 @@ import {
 import {
   ORG_B,
   owner,
+  tokenA,
   tokenB,
   userB,
   ids,
@@ -322,6 +323,95 @@ describe('finalize on the record (review round 1, DP-47)', () => {
     expect(res.body.error.code).toBe('RUN_ALREADY_FINAL');
     expect(await runState()).toEqual(before);
     expect(await finalizedRows()).toHaveLength(1);
+  });
+});
+
+/* Reporting review 2026-10-01 (Part 11): the seal is read back and re-verified.
+   Runs after the finalize cases above, over the run the admin sealed. */
+describe('the seal on the record', () => {
+  it('reads the seal back and re-verifies it, with the signer and the act (GET /runs/:id/seal)', async () => {
+    const res = await request(ro).get(`/api/report-os/runs/${runId}/seal`).set(auth(tokenB));
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.data).toMatchObject({
+      sealed: true,
+      signature: { signerName: expect.any(String), meaning: 'approval' },
+      finalization: { reason: SIGNED.reason, meaning: 'approval', priorStatus: 'completed' },
+      verification: { verdict: 'intact' },
+    });
+    // The chain row's json text hashes to its payload_hash on a real database.
+    expect(res.body.data.verification.checks[0]).toMatchObject({ check: 'audit-chain', ok: true });
+    expect(res.body.data.seal.contentHash).toBe((await runState()).seal_hash);
+  });
+
+  it("another organisation's session reads neither the seal nor the sealed document: 404, nothing in the body", async () => {
+    for (const path of ['seal', 'rendered']) {
+      const res = await request(ro).get(`/api/report-os/runs/${runId}/${path}`).set(auth(tokenA));
+      expect(res.status, path).toBe(404);
+      expect(JSON.stringify(res.body)).not.toMatch(/sealHash|contentHash|signerName|sections/);
+    }
+  });
+
+  it('shows the final run as the stored sealed document (GET /runs/:id/rendered)', async () => {
+    const res = await request(ro).get(`/api/report-os/runs/${runId}/rendered`).set(auth(tokenB));
+    expect(res.status).toBe(200);
+    expect(res.body.sealed).toBe(true);
+    expect(res.body.data.status).toBe('final');
+  });
+
+  it('a stored document changed after sealing reads as a mismatch, not intact', async () => {
+    const restore = (
+      await owner.query(
+        `SELECT id, snapshot_metadata::text AS meta FROM report_snapshots WHERE run_id = $1 AND is_latest`,
+        [runId]
+      )
+    ).rows[0] as { id: number; meta: string };
+    const meta = JSON.parse(restore.meta);
+    meta.sealedDocument.sections[0].title = 'Edited after sealing';
+    await owner.query('UPDATE report_snapshots SET snapshot_metadata = $2::json WHERE id = $1', [restore.id, JSON.stringify(meta)]);
+    try {
+      const res = await request(ro).get(`/api/report-os/runs/${runId}/seal`).set(auth(tokenB));
+      expect(res.status).toBe(200);
+      expect(res.body.data.verification.verdict).toBe('mismatch');
+      // ...and the changed copy is not shown as the sealed record.
+      const shown = await request(ro).get(`/api/report-os/runs/${runId}/rendered`).set(auth(tokenB));
+      expect(shown.status).toBe(409);
+      expect(shown.body.error.code).toBe('SEALED_DOCUMENT_MISMATCH');
+    } finally {
+      await owner.query('UPDATE report_snapshots SET snapshot_metadata = $2::json WHERE id = $1', [restore.id, restore.meta]);
+    }
+  });
+});
+
+/** GET /seal's verdict and GET /rendered's answer for the run, through the app role. */
+async function sealAndRendered() {
+  const seal = await request(ro).get(`/api/report-os/runs/${runId}/seal`).set(auth(tokenB));
+  const shown = await request(ro).get(`/api/report-os/runs/${runId}/rendered`).set(auth(tokenB));
+  return { verdict: seal.body.data?.verification?.verdict, rendered: [shown.status, shown.body.error?.code] };
+}
+
+describe('the seal on the record: what a rewrite of the mutable rows cannot hide', () => {
+  it('a sealed document removed from the snapshot reads as a mismatch, and nothing is re-rendered in its place', async () => {
+    const restore = (
+      await owner.query(`SELECT id, snapshot_metadata::text AS meta FROM report_snapshots WHERE run_id = $1 AND is_latest`, [runId])
+    ).rows[0] as { id: number; meta: string };
+    const meta = JSON.parse(restore.meta);
+    delete meta.sealedDocument;
+    await owner.query('UPDATE report_snapshots SET snapshot_metadata = $2::json WHERE id = $1', [restore.id, JSON.stringify(meta)]);
+    try {
+      expect(await sealAndRendered()).toEqual({ verdict: 'mismatch', rendered: [409, 'SEALED_DOCUMENT_MISMATCH'] });
+    } finally {
+      await owner.query('UPDATE report_snapshots SET snapshot_metadata = $2::json WHERE id = $1', [restore.id, restore.meta]);
+    }
+  });
+
+  it("a run whose status was rewritten after finalizing reads as a mismatch, not as a run never sealed", async () => {
+    await owner.query(`UPDATE report_runs SET status = 'completed' WHERE id = $1`, [runId]);
+    try {
+      expect(await sealAndRendered()).toEqual({ verdict: 'mismatch', rendered: [409, 'SEALED_DOCUMENT_MISMATCH'] });
+    } finally {
+      await owner.query(`UPDATE report_runs SET status = 'final' WHERE id = $1`, [runId]);
+    }
+    expect(await sealAndRendered()).toEqual({ verdict: 'intact', rendered: [200, undefined] });
   });
 });
 
