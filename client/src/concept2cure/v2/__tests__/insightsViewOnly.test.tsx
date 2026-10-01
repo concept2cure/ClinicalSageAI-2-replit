@@ -29,6 +29,8 @@ import { InsightsCanvas } from '../surfaces/Insights';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 
 const res = (status: number, obj: unknown) => ({ ok: status < 300, status, json: async () => obj }) as Response;
+/** How apiRequest delivers a non-OK status other than 401: it throws, carrying the status and the body. */
+const refusal = (status: number, payload: unknown) => Object.assign(new Error('refused'), { status, payload });
 const PROPS: OwnedSurfaceViewProps = {
   surface: { id: 'insights', label: 'Insights' } as OwnedSurfaceViewProps['surface'],
   segment: 'biotech',
@@ -49,15 +51,15 @@ const OVERVIEW = {
 
 const VIEWER = { id: 2, permissions: [] as string[] };
 const MEMBER = { id: 3, permissions: ['governed:write'] };
-let runsReply: Response;
+let runsReply: Error;
 
 beforeEach(() => {
   auth.user = VIEWER;
-  runsReply = res(403, { error: 'Insufficient permissions' });
+  runsReply = refusal(403, { error: 'Insufficient permissions' });
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (url.includes('/api/insights-canvas/overview')) return res(200, OVERVIEW);
-    if (method === 'POST' && url === '/api/report-os/runs') return runsReply;
+    if (method === 'POST' && url === '/api/report-os/runs') throw runsReply;
     return res(200, {});
   });
 });
@@ -117,7 +119,7 @@ describe('Insights canvas — a member', () => {
   });
 
   it('a 403 that names a required plan is still reported as one', async () => {
-    runsReply = res(403, { error: 'This report requires the enterprise plan.', requiredTier: 'enterprise' });
+    runsReply = refusal(403, { error: 'This report requires the enterprise plan.', requiredTier: 'enterprise' });
     await renderCanvas();
     ask('Generate the Executive Readiness Digest for BX204');
     await screen.findByText(/needs a higher plan \(enterprise\)/);

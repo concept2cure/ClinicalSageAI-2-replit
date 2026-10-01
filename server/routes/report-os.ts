@@ -48,6 +48,15 @@ import { writeChainedAuditRow } from '../services/auditService';
 import type { PoolClient } from 'pg';
 import { requireRole } from '../middleware/auth';
 import { requireEditorAccessForWrites } from '../middleware/orgMembership';
+import { signingAttemptLimiter } from '../middleware/signing-attempt-limiter';
+import {
+  GovernedSignatureRefusal,
+  signGovernedAct,
+  signerIpAddress,
+  type CeremonySignMeaning,
+} from '../services/part11/governed-signature-ceremony';
+import { requireGovernedReason } from './governed-reason';
+import { REPORT_FINALIZE_ROLES } from '@shared/constants/permissions';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
 
 const router = Router();
@@ -460,7 +469,7 @@ function refuseAlreadyFinal(res: Response, runId: number) {
   });
 }
 
-type FinalizeOutcome = 'finalized' | 'already-final' | 'not-found' | 'not-recorded';
+type FinalizeOutcome = 'already-final' | 'not-found' | 'not-recorded';
 
 /** Ends the finalize transaction without a write; rolled back, never committed. */
 class FinalizeStopped extends Error {
@@ -493,51 +502,82 @@ async function writeFinalize(client: PoolClient, run: typeof reportRuns.$inferSe
   }
 }
 
+/** The meanings a report finalize can carry: its requester issues it as author; anyone else approves it or takes responsibility. */
+const REPORT_FINALIZE_MEANINGS: readonly CeremonySignMeaning[] = ['authorship', 'approval', 'responsibility'];
+
+/** A signer cannot guess the password behind a seal without limit (11.300(d)). */
+const finalizeSigningAttempts = signingAttemptLimiter('report-finalize', {
+  success: false,
+  error: { code: 'TOO_MANY_ATTEMPTS', message: 'Too many signing attempts. Wait a few minutes and try again. Nothing was finalized.' },
+});
+
 /**
- * Finalize a run on ONE tenant-stamped transaction (review round 1, DP-47).
- * The run is re-read under a row lock, so a finalize that committed first is
- * refused rather than overwritten. Then the status, the seal and the chained
- * row land together or not at all: a chained row that cannot be written is
- * 'not-recorded', with nothing changed. Any other failure rolls back and is
- * thrown to the handler.
+ * Finalize a run as an electronic signature (reporting review 2026-10-01).
+ * Finalizing declares the report final under the signer's name, so it runs the
+ * platform's signature ceremony (signGovernedAct): the declared meaning,
+ * re-authentication, separation of duties against the run's requester, then
+ * this write, the ledger pair and the electronic_signatures row on one
+ * transaction. Inside it the run is re-read under a row lock, so a finalize
+ * that committed first is refused rather than overwritten (DP-47); the status,
+ * the seal and the chained row carry the reason, the meaning and the status the
+ * run held before. A chained row or signature that cannot be written is
+ * 'not-recorded', with nothing changed.
  */
 async function finalizeOnChain(
   req: Request,
   run: typeof reportRuns.$inferSelect,
-  seal: SealedRecord
-): Promise<FinalizeOutcome> {
+  seal: SealedRecord,
+  signing: { userId: number; reason: string; meaning: unknown; reauth: unknown }
+): Promise<FinalizeOutcome | { signed: Record<string, unknown> }> {
   let recording = false;
   try {
-    return await inTenantTransaction(run.organizationId, async (client) => {
-      const locked = await client.query(
-        'SELECT status FROM report_runs WHERE id = $1 AND organization_id = $2 FOR UPDATE',
-        [run.id, run.organizationId]
-      );
-      const status = (locked.rows[0] as { status?: string } | undefined)?.status;
-      if (status == null) throw new FinalizeStopped('not-found');
-      if (status === 'final') throw new FinalizeStopped('already-final');
-      await writeFinalize(client, run, seal);
-      recording = true;
-      await writeReportEvent(client, req, {
-        organizationId: run.organizationId,
-        action: 'report_os.run_finalized',
-        resourceType: 'report_run',
-        resourceId: String(run.id),
-        details: {
+    const signed = await signGovernedAct({
+      orgId: run.organizationId,
+      userId: signing.userId,
+      target: `report-run:${run.id}`,
+      domain: 'report_os',
+      surface: 'insights-canvas',
+      subject: 'report',
+      reason: signing.reason,
+      meaning: signing.meaning,
+      allowedMeanings: REPORT_FINALIZE_MEANINGS,
+      reauth: signing.reauth,
+      ipAddress: signerIpAddress(req),
+      role: String((req as any).userRole ?? (req as any).user?.role ?? ''),
+      write: async (client, meaning) => {
+        const locked = await client.query(
+          'SELECT status FROM report_runs WHERE id = $1 AND organization_id = $2 FOR UPDATE',
+          [run.id, run.organizationId]
+        );
+        const priorStatus = (locked.rows[0] as { status?: string } | undefined)?.status;
+        if (priorStatus == null) throw new FinalizeStopped('not-found');
+        if (priorStatus === 'final') throw new FinalizeStopped('already-final');
+        await writeFinalize(client, run, seal);
+        recording = true;
+        const sealed = {
           runUuid: run.runUuid,
           reportTypeId: run.reportTypeId,
+          priorStatus,
           sealHash: seal.contentHash,
           algorithm: seal.algorithm,
           canonVersion: seal.canonVersion,
           atomCount: seal.atomCount,
           sealedAt: seal.sealedAt,
-        },
-      });
-      return 'finalized' as const;
+        };
+        await writeReportEvent(client, req, {
+          organizationId: run.organizationId,
+          action: 'report_os.run_finalized',
+          resourceType: 'report_run',
+          resourceId: String(run.id),
+          details: { ...sealed, reason: signing.reason, meaning },
+        });
+        return { act: { finalized: true, ...sealed }, body: {} };
+      },
     });
+    return { signed };
   } catch (error) {
     if (error instanceof FinalizeStopped) return error.outcome;
-    if (!recording) throw error;
+    if (error instanceof GovernedSignatureRefusal || !recording) throw error;
     logger.error('report finalize not recorded on the audit chain; rolled back', {
       runId: run.id,
       error: (error as Error)?.message,
@@ -1834,17 +1874,70 @@ router.get('/runs/:id/rendered', async (req: Request, res: Response) => {
  * run already final is refused (409 RUN_ALREADY_FINAL): a seal is never
  * overwritten. The status, the seal and the chained audit row are written in
  * one tenant-stamped transaction (finalizeOnChain), so all land or none do.
+ *
+ * Reporting review 2026-10-01: finalizing is an electronic signature. It was a
+ * side effect of the canvas's Export button, with no reason, no meaning and no
+ * re-authentication. The body now carries `reason` (at least 8 characters,
+ * requireGovernedReason), `meaning` and `reauth` ({ password, totp? }); the
+ * ceremony in finalizeOnChain verifies them before anything is written.
  */
-router.post('/runs/:id/finalize', requireRole('owner', 'admin', 'manager'), async (req: Request, res: Response) => {
+/** A finalize's tenant, run, signer and reason, or null having sent the refusal. Nothing is read before these hold. */
+function finalizeRequest(
+  req: Request,
+  res: Response
+): { runId: number; organizationId: number; userId: number; reason: string } | null {
+  const runId = Number(req.params.id);
+  const organizationId = authedOrgId(req) ?? NaN;
+  const userId = getUserId(req);
+  const reason = requireGovernedReason(req.body?.reason);
+  if (!Number.isFinite(organizationId)) {
+    res.status(403).json({ error: 'Tenant context required' });
+  } else if (!Number.isFinite(runId) || runId <= 0) {
+    res.status(400).json({ error: 'Invalid run id' });
+  } else if (userId == null) {
+    res.status(401).json({ success: false, error: { code: 'AUTH_REQUIRED', message: 'Sign in to finalize a report.' } });
+  } else if (!reason.ok) {
+    res.status(400).json({ success: false, error: { code: 'REASON_REQUIRED', message: reason.error }, field: 'reason' });
+  } else {
+    return { runId, organizationId, userId, reason: reason.reason };
+  }
+  return null;
+}
+
+/** The answer for a finalize that reached the ceremony. */
+function sendFinalizeOutcome(
+  res: Response,
+  runId: number,
+  seal: SealedRecord,
+  outcome: Awaited<ReturnType<typeof finalizeOnChain>>
+) {
+  if (outcome === 'not-found') return res.status(404).json({ error: 'Run not found' });
+  if (outcome === 'already-final') return refuseAlreadyFinal(res, runId);
+  if (outcome === 'not-recorded') {
+    return refuseUnrecorded(
+      res,
+      'REPORT_FINALIZE_NOT_RECORDED',
+      'The report was not finalized because the finalization could not be recorded in the audit trail. ' +
+        'Nothing was changed.',
+      { runId }
+    );
+  }
+  const { signed } = outcome;
+  return res.json({
+    data: {
+      runId,
+      status: 'final',
+      seal,
+      signature: { signatureId: signed.signatureId, signedAt: signed.signedAt, meaning: signed.meaning },
+    },
+  });
+}
+
+router.post('/runs/:id/finalize', requireRole(...REPORT_FINALIZE_ROLES), finalizeSigningAttempts, async (req: Request, res: Response) => {
   try {
-    const runId = Number(req.params.id);
-    const organizationId = authedOrgId(req) ?? NaN;
-    if (!Number.isFinite(organizationId)) {
-      return res.status(403).json({ error: 'Tenant context required' });
-    }
-    if (!Number.isFinite(runId) || runId <= 0) {
-      return res.status(400).json({ error: 'Invalid run id' });
-    }
+    const asked = finalizeRequest(req, res);
+    if (!asked) return;
+    const { runId, organizationId, userId } = asked;
 
     const [run] = await db
       .select()
@@ -1870,20 +1963,19 @@ router.post('/runs/:id/finalize', requireRole('owner', 'admin', 'manager'), asyn
     }
 
     const seal = buildSealedRecord(rendered);
-    const outcome = await finalizeOnChain(req, run, seal);
-    if (outcome === 'not-found') return res.status(404).json({ error: 'Run not found' });
-    if (outcome === 'already-final') return refuseAlreadyFinal(res, runId);
-    if (outcome === 'not-recorded') {
-      return refuseUnrecorded(
-        res,
-        'REPORT_FINALIZE_NOT_RECORDED',
-        'The report was not finalized because the finalization could not be recorded in the audit trail. ' +
-          'Nothing was changed.',
-        { runId }
-      );
+    let outcome: Awaited<ReturnType<typeof finalizeOnChain>>;
+    try {
+      outcome = await finalizeOnChain(req, run, seal, {
+        userId,
+        reason: asked.reason,
+        meaning: req.body?.meaning,
+        reauth: req.body?.reauth,
+      });
+    } catch (error) {
+      if (!(error instanceof GovernedSignatureRefusal)) throw error;
+      return res.status(error.status).json({ success: false, error: { code: error.code, message: error.message } });
     }
-
-    return res.json({ data: { runId, status: 'final', seal } });
+    return sendFinalizeOutcome(res, runId, seal, outcome);
   } catch (error: any) {
     return serverError(res, logger, 'saving finalize', error);
   }
