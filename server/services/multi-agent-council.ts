@@ -351,7 +351,8 @@ export class MultiAgentCouncilService {
           'CIRCUIT_BREAKER_OPENED',
           `All LLM providers unavailable during ${operation}`,
           { operation, error: messageText },
-          { correlationId }
+          // The session's tenant on the row (DP-28); absent, the store takes the request's.
+          { correlationId, organizationId: options?.organizationId || undefined }
         )
         .catch(err => log.error('Failed to log LLM failure:', err));
 
@@ -729,7 +730,12 @@ export class MultiAgentCouncilService {
         tokensUsed: llmResponse.tokensUsed.total,
         latencyMs: llmResponse.latencyMs,
       },
-      { correlationId, resourceType: 'council_session', resourceId: sessionId }
+      {
+        correlationId,
+        resourceType: 'council_session',
+        resourceId: sessionId,
+        organizationId: Number(session.organization_id) || undefined,
+      }
     );
 
     // Log execution to council table
@@ -835,7 +841,12 @@ export class MultiAgentCouncilService {
           actualValue: actualValue,
           source: verification.source,
         },
-        { correlationId, resourceType: 'council_session', resourceId: sessionId }
+        {
+          correlationId,
+          resourceType: 'council_session',
+          resourceId: sessionId,
+          organizationId: Number(session.organization_id) || undefined,
+        }
       );
 
       log.debug(
@@ -1108,7 +1119,12 @@ export class MultiAgentCouncilService {
         finalTextLength: finalText.length,
         totalLatencyMs: latencyMs,
       },
-      { correlationId, resourceType: 'council_session', resourceId: sessionId }
+      {
+        correlationId,
+        resourceType: 'council_session',
+        resourceId: sessionId,
+        organizationId: Number(session.organization_id) || undefined,
+      }
     );
 
     // Log execution

@@ -1,0 +1,71 @@
+# working tree; the cortex tenant-key dbtests on the two-tenant fixture, PostgreSQL 16, RLS_ENFORCE=on
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T06:22:12.058Z","pid":384,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T06:22:12.064Z","pid":384,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T06:22:12.064Z","pid":384,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/cortex-query-tenant-header.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T06:22:13.103Z', poolSize: 1 }
+
+stdout | tests/db/cortex-query-tenant-header.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/cortex-query-tenant-header.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/cortex-query-tenant-header.dbtest.ts
+Loaded 0 academic documents
+
+stderr | tests/db/cortex-query-tenant-header.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+{"level":30,"time":"2026-10-01T06:22:26.019Z","pid":384,"hostname":"vm","context":{},"msg":"[cortex-unified] Mounted: /advisory (AI advisory)"}
+{"level":40,"time":"2026-10-01T06:22:26.020Z","pid":384,"hostname":"vm","context":{},"msg":"[cortex-unified] Cortex management routes require explicit initialization with database pool"}
+{"level":30,"time":"2026-10-01T06:22:26.020Z","pid":384,"hostname":"vm","context":{},"msg":"[cortex-unified] Mounted: /query (AI queries)"}
+stdout | tests/db/cortex-query-tenant-header.dbtest.ts
+✅ Unified Cortex Query API initialized
+
+{"level":30,"time":"2026-10-01T06:22:26.507Z","pid":384,"hostname":"vm","context":{},"msg":"[cortex-unified] Mounted: /ana (AnA 1.0 RI integration)"}
+stdout | tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > positive control: tenant A querying as itself finds its own atom and not B's
+[database] Database connection successful { timestamp: '2026-10-01T06:22:26.540Z', poolSize: 2 }
+
+stdout | tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > positive control: tenant A querying as itself finds its own atom and not B's
+✅ Enhanced Embedding Service initialized
+
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > positive control: tenant A querying as itself finds its own atom and not B's 132ms
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > tenant A naming tenant B in the header is served nothing of B's 59ms
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > …and is served its OWN atom: the header is ignored, not merely contained by RLS 26ms
+{"level":40,"time":"2026-10-01T06:22:26.766Z","pid":384,"hostname":"vm","context":{"userId":775,"organizationId":0},"msg":"[auth-middleware] Org membership revoked — rejecting authenticated request (fail-closed)"}
+{"level":40,"time":"2026-10-01T06:22:26.771Z","pid":384,"hostname":"vm","context":{"method":"POST","path":"/api/cortex/query/query","statusCode":403},"msg":"[auth-boundary] Unauthenticated request passed through auth boundary (mode=warn). This route would be rejected in enforce mode."}
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > with no header, the query is scoped to the session rather than to nothing 30ms
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > search mode asks for the session's tenant, whatever the header says 38ms
+ ✓ tests/db/cortex-query-tenant-header.dbtest.ts > the cortex query route takes the tenant from the session, never x-org-uuid (D3) > a session with no usable organization is refused, never served 20ms
+{"level":30,"time":"2026-10-01T06:22:30.557Z","pid":997,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T06:22:30.572Z","pid":997,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T06:22:30.572Z","pid":997,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/feature-toggle-workspace-header.dbtest.ts > requireFeature and the X-Client-ID workspace, on a real database (IAM-15, P1-7b) > positive control: B, naming its own workspace, reaches the feature enabled for it
+[database] Database connection successful
+
+stdout | tests/db/feature-toggle-workspace-header.dbtest.ts > requireFeature and the X-Client-ID workspace, on a real database (IAM-15, P1-7b) > positive control: B, naming its own workspace, reaches the feature enabled for it
+[database] Database connection successful { timestamp: '2026-10-01T06:22:31.120Z', poolSize: 1 }
+
+stdout | tests/db/feature-toggle-workspace-header.dbtest.ts > requireFeature and the X-Client-ID workspace, on a real database (IAM-15, P1-7b) > positive control: B, naming its own workspace, reaches the feature enabled for it
+[database] Database connection successful { timestamp: '2026-10-01T06:22:31.122Z', poolSize: 2 }
+
+ ✓ tests/db/feature-toggle-workspace-header.dbtest.ts > requireFeature and the X-Client-ID workspace, on a real database (IAM-15, P1-7b) > positive control: B, naming its own workspace, reaches the feature enabled for it 244ms
+{"level":40,"time":"2026-10-01T06:22:31.251Z","pid":997,"hostname":"vm","context":{"organizationId":90301,"clientWorkspaceId":221,"path":"/api/gated"},"msg":"[feature-toggle] X-Client-ID names a workspace outside the session's organisation; ignored"}
+{"level":40,"time":"2026-10-01T06:22:31.291Z","pid":997,"hostname":"vm","context":{"organizationId":90302,"clientWorkspaceId":220,"path":"/api/gated"},"msg":"[feature-toggle] X-Client-ID names a workspace outside the session's organisation; ignored"}
+ ✓ tests/db/feature-toggle-workspace-header.dbtest.ts > requireFeature and the X-Client-ID workspace, on a real database (IAM-15, P1-7b) > A, naming B's workspace, is answered 404: the toggle is B's and the header is a claim 25ms
+ ✓ tests/db/feature-toggle-workspace-header.dbtest.ts > requireFeature and the X-Client-ID workspace, on a real database (IAM-15, P1-7b) > A, naming its own workspace, is answered 404 while the toggle is B's alone 15ms
+ ✓ tests/db/feature-toggle-workspace-header.dbtest.ts > requireFeature and the X-Client-ID workspace, on a real database (IAM-15, P1-7b) > …and 200 once the toggle names A's workspace: the header counts when the workspace is the organisation's own 23ms
+ ✓ tests/db/feature-toggle-workspace-header.dbtest.ts > requireFeature and the X-Client-ID workspace, on a real database (IAM-15, P1-7b) > with no header, the feature resolves at organisation level 23ms
+ ✓ tests/db/feature-toggle-workspace-header.dbtest.ts > requireFeature and the X-Client-ID workspace, on a real database (IAM-15, P1-7b) > a non-numeric header is not a workspace 17ms
+ ✓ tests/db/feature-toggle-workspace-header.dbtest.ts > requireFeature and the X-Client-ID workspace, on a real database (IAM-15, P1-7b) > no token, no gate: the boundary answers first 4ms
+
+ Test Files  2 passed (2)
+      Tests  13 passed (13)
+   Start at  06:22:07
+   Duration  24.17s (transform 12.90s, setup 143ms, import 19.95s, tests 2.71s, environment 0ms)
+
+exit=0

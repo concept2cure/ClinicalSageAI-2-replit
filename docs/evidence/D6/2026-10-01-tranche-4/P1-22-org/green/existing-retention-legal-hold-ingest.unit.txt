@@ -1,0 +1,738 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionSweep — per-policy processing > applies each matched policy branch: a destroy policy is refused and reported, soft-delete and skip-archive apply
+{
+  "timestamp": "2026-10-01T06:34:59.800Z",
+  "level": "warn",
+  "message": "[retention-sweep] Expired document left untouched: its policy asks for destruction, which is refused",
+  "context": {
+    "documentId": "doc-purge",
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "retentionPolicy": "purge",
+    "retentionUntil": "2020-01-01"
+  }
+}
+
+stderr | server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionSweep — failure semantics > a per-document failure rolls that document back, counts one error, and the sweep continues
+{
+  "timestamp": "2026-10-01T06:34:59.826Z",
+  "level": "error",
+  "message": "[retention-sweep] Expired document not disposed of",
+  "context": {
+    "documentId": "doc-bad",
+    "error": "archive insert failed for doc-bad"
+  }
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionJob — orchestration > returns true on a clean sweep
+{
+  "timestamp": "2026-10-01T06:34:59.830Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep starting",
+  "context": {}
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionJob — orchestration > returns true on a clean sweep
+{
+  "timestamp": "2026-10-01T06:34:59.831Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep complete",
+  "context": {
+    "scanned": 1,
+    "archived": 1,
+    "softDeleted": 1,
+    "destructionRefused": 0,
+    "heldByLegalHold": 0,
+    "errors": 0
+  }
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionJob — orchestration > returns false, without throwing, when per-document errors occurred
+{
+  "timestamp": "2026-10-01T06:34:59.833Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep starting",
+  "context": {}
+}
+
+stderr | server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionJob — orchestration > returns false, without throwing, when per-document errors occurred
+{
+  "timestamp": "2026-10-01T06:34:59.833Z",
+  "level": "error",
+  "message": "[retention-sweep] Expired document not disposed of",
+  "context": {
+    "documentId": "doc-bad",
+    "error": "archive insert failed for doc-bad"
+  }
+}
+
+stderr | server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionJob — orchestration > returns false, without throwing, when per-document errors occurred
+{
+  "timestamp": "2026-10-01T06:34:59.834Z",
+  "level": "warn",
+  "message": "[retention-sweep] Document retention sweep complete with errors",
+  "context": {
+    "scanned": 2,
+    "archived": 1,
+    "softDeleted": 1,
+    "destructionRefused": 0,
+    "heldByLegalHold": 0,
+    "errors": 1
+  }
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionJob — orchestration > an enumeration-level failure aborts: returns false, raises the security alert, and skips notification
+{
+  "timestamp": "2026-10-01T06:34:59.834Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep starting",
+  "context": {}
+}
+
+stderr | server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionJob — orchestration > an enumeration-level failure aborts: returns false, raises the security alert, and skips notification
+{
+  "timestamp": "2026-10-01T06:34:59.835Z",
+  "level": "error",
+  "message": "[retention-sweep] Document retention sweep failed",
+  "context": {
+    "error": "relation vault.documents does not exist"
+  }
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > is skipped when recipients or SMTP credentials are unconfigured
+{
+  "timestamp": "2026-10-01T06:34:59.838Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep starting",
+  "context": {}
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > is skipped when recipients or SMTP credentials are unconfigured
+{
+  "timestamp": "2026-10-01T06:34:59.839Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep complete",
+  "context": {
+    "scanned": 1,
+    "archived": 1,
+    "softDeleted": 1,
+    "destructionRefused": 0,
+    "heldByLegalHold": 0,
+    "errors": 0
+  }
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > is skipped when recipients or SMTP credentials are unconfigured
+{
+  "timestamp": "2026-10-01T06:34:59.839Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep starting",
+  "context": {}
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > is skipped when recipients or SMTP credentials are unconfigured
+{
+  "timestamp": "2026-10-01T06:34:59.840Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep complete",
+  "context": {
+    "scanned": 1,
+    "archived": 1,
+    "softDeleted": 1,
+    "destructionRefused": 0,
+    "heldByLegalHold": 0,
+    "errors": 0
+  }
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > emails every configured recipient with the sweep summary
+{
+  "timestamp": "2026-10-01T06:34:59.840Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep starting",
+  "context": {}
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > emails every configured recipient with the sweep summary
+{
+  "timestamp": "2026-10-01T06:34:59.843Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep complete",
+  "context": {
+    "scanned": 1,
+    "archived": 1,
+    "softDeleted": 1,
+    "destructionRefused": 0,
+    "heldByLegalHold": 0,
+    "errors": 0
+  }
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > a notify failure raises the security alert and never makes the job fail
+{
+  "timestamp": "2026-10-01T06:34:59.844Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep starting",
+  "context": {}
+}
+
+stdout | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > a notify failure raises the security alert and never makes the job fail
+{
+  "timestamp": "2026-10-01T06:34:59.844Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep complete",
+  "context": {
+    "scanned": 1,
+    "archived": 1,
+    "softDeleted": 1,
+    "destructionRefused": 0,
+    "heldByLegalHold": 0,
+    "errors": 0
+  }
+}
+
+stderr | server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > a notify failure raises the security alert and never makes the job fail
+[RETENTION] Failed to send notification: smtp down
+
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionSweep — per-policy processing > falls back to archive + soft-delete for a document with no policy, and never hard-deletes it 32ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionSweep — per-policy processing > uses the default (archive + soft-delete) when the named policy is unknown or inactive 2ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionSweep — per-policy processing > applies each matched policy branch: a destroy policy is refused and reported, soft-delete and skip-archive apply 26ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionSweep — failure semantics > a per-document failure rolls that document back, counts one error, and the sweep continues 2ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionSweep — failure semantics > an enumeration-level failure makes the sweep itself throw, having disposed of nothing 2ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionJob — orchestration > returns true on a clean sweep 3ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionJob — orchestration > returns false, without throwing, when per-document errors occurred 2ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > runRetentionJob — orchestration > an enumeration-level failure aborts: returns false, raises the security alert, and skips notification 3ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > is skipped when recipients or SMTP credentials are unconfigured 3ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > emails every configured recipient with the sweep summary 3ms
+ ✓ server/jobs/__tests__/retentionCron.policies.test.ts > admin notification > a notify failure raises the security alert and never makes the job fail 2ms
+stderr | server/routes/__tests__/vault-file-authorization.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/vault-file-authorization.test.ts
+{
+  "timestamp": "2026-10-01T06:35:00.232Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document — a chat upload id > is told it is the wrong store, and never that the file is missing 5ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document — a chat upload id > a genuinely unknown vault id still says plainly that the vault does not hold it 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > catalog_project_document — a chat upload id > is refused with the same honest reason, without a pointless lookup 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > files the upload through the SAME governed ingest the Vault surface uses 3ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > refuses a vault UUID — a document already in the vault needs no filing 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > asks which program rather than guessing one 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > relays a governed refusal with its reason, claiming nothing 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > file_chat_upload_to_vault — the affordance the refusal names > the read refusal now names a tool that exists 0ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document hands back what was already learned > returns the comprehension record for a cataloged document 1ms
+ ✓ server/services/ana/__tests__/document-catalog-tools-id-space.test.ts > read_project_document hands back what was already learned > omits it entirely for a document nobody has studied 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > admits the delivered bytes through the canonical vault ingest 4ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > versions by content, so the same bytes are idempotent and new bytes are a new version 4ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > says plainly when a program has no vault to retain into 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when storage refused the bytes — an unretained submission artifact is not delivered 2ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when the program is not ours — an unretained submission artifact is not delivered 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when different bytes already hold this version — an unretained submission artifact is not delivered 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when the ingest itself fails, rather than reporting a retention 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > retainOfficialEstar > THROWS when the stored hash is not the delivered hash 0ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > listRetainedEstarArtifacts > reads this org only, only retained eSTARs, and only live rows 1ms
+ ✓ server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts > listRetainedEstarArtifacts > maps the row to what a signer needs to tell two eSTARs apart 1ms
+stdout | server/routes/__tests__/vault-file-authorization.test.ts
+{
+  "timestamp": "2026-10-01T06:35:01.062Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:35:01.063Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/vault-file-authorization.test.ts
+{
+  "timestamp": "2026-10-01T06:35:01.063Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > inserts the first upload 18ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > is idempotent for identical bytes — a retry still succeeds 3ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > returns NO row for different bytes, which the route turns into a 409 2ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > leaves the original hash and storage key untouched 2ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > re-upload at the same code and version > accepts the new bytes under a new version 2ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > the second unique constraint > raises 23505 for the same bytes under a different code 4ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > the second unique constraint > is handled by the route rather than falling through to INGEST_FAILED 0ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > a same-bytes retry keeps what was recorded (VR-05) > keeps the stored copy it names, its file name, retention policy and lineage 4ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > a same-bytes retry keeps what was recorded (VR-05) > a record with no storage handle takes the retry's as one unit 3ms
+ ✓ server/routes/__tests__/vault-ingest-conflict.pglite.integration.test.ts > the defect the predicate prevents is still demonstrable > WITHOUT the predicate, the same upload overwrites the recorded hash 4ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > a viewer cannot commit a filing decision > refuses with 403 and never reaches the governed write 43ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > a viewer cannot commit a filing decision > refuses whatever case the role arrives in 10ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > a viewer cannot commit a filing decision > refuses a caller with no role at all 17ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > the writing roles still get through > admits member 6ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > the writing roles still get through > admits manager 9ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > the writing roles still get through > admits admin 5ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > the writing roles still get through > admits owner 3ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > the writing roles still get through > admits super_admin 3ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > organization context is still required > refuses a writing role with no organization 8ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > POST /api/vault/ingest — who may put bytes in the vault > gates the role BEFORE the upload is parsed 195ms
+ ✓ server/routes/__tests__/vault-file-authorization.test.ts > POST /api/vault/ingest — who may put bytes in the vault > lets a writing role past the gate 4ms
+ ✓ server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > refuses a .exe with 400 FILE_TYPE_NOT_ALLOWED and stores nothing (F-4) 39ms
+ ✓ server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > refuses an upload under the wrong field name with 400, not 500 (multer LIMIT_UNEXPECTED_FILE) 9ms
+ ✓ server/routes/__tests__/vault-ingest-refusal-status.test.ts > POST /api/vault/ingest — refusals are 4xx with a reason, never 500 > still admits an allowed type to the governed ingest (the happy path is untouched) 19ms
+stderr | server/routes/__tests__/vault-ingest-type-binding.test.ts > POST /api/vault/ingest — the name binds the declared type > refuses HTML declared text/html under a .pdf name: 400 FILE_TYPE_MISMATCH, and nothing is stored
+{
+  "timestamp": "2026-10-01T06:35:02.448Z",
+  "level": "warn",
+  "message": "[upload-safety] Upload rejected: declared type does not match the file name",
+  "context": {
+    "filename": "report.pdf",
+    "declaredMime": "text/html",
+    "reason": "a .pdf file must be declared as application/pdf"
+  }
+}
+
+stderr | server/routes/__tests__/vault-ingest-type-binding.test.ts > POST /api/vault/ingest — the name binds the declared type > refuses HTML declared text/html under a .txt name — a binding, not a .pdf special case
+{
+  "timestamp": "2026-10-01T06:35:02.462Z",
+  "level": "warn",
+  "message": "[upload-safety] Upload rejected: declared type does not match the file name",
+  "context": {
+    "filename": "notes.txt",
+    "declaredMime": "text/html",
+    "reason": "a .txt file must be declared as text/plain"
+  }
+}
+
+stderr | server/routes/__tests__/vault-ingest-type-binding.test.ts > POST /api/vault/ingest — the name binds the declared type > admits a real PDF declared application/pdf, through to storage and a 201
+{
+  "timestamp": "2026-10-01T06:35:02.468Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "report.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | server/routes/__tests__/vault-ingest-type-binding.test.ts > POST /api/vault/ingest — the name binds the declared type > admits a real PDF declared application/pdf, through to storage and a 201
+{
+  "timestamp": "2026-10-01T06:35:02.470Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "doc-1",
+    "code": "RPT-1",
+    "size": 51,
+    "hasText": false
+  }
+}
+
+ ✓ server/routes/__tests__/vault-ingest-type-binding.test.ts > POST /api/vault/ingest — the name binds the declared type > refuses HTML declared text/html under a .pdf name: 400 FILE_TYPE_MISMATCH, and nothing is stored 42ms
+ ✓ server/routes/__tests__/vault-ingest-type-binding.test.ts > POST /api/vault/ingest — the name binds the declared type > refuses HTML declared text/html under a .txt name — a binding, not a .pdf special case 8ms
+ ✓ server/routes/__tests__/vault-ingest-type-binding.test.ts > POST /api/vault/ingest — the name binds the declared type > admits a real PDF declared application/pdf, through to storage and a 201 9ms
+ ✓ server/routes/__tests__/vault-ingest-lineage.test.ts > POST /api/vault/ingest — lineage is not set by an upload > refuses parentDocumentId with 400, before anything is stored 37ms
+ ✓ server/routes/__tests__/vault-ingest-lineage.test.ts > POST /api/vault/ingest — lineage is not set by an upload > refuses supersedesId with 400, before anything is stored 7ms
+ ✓ server/routes/__tests__/vault-ingest-lineage.test.ts > POST /api/vault/ingest — lineage is not set by an upload > admits an upload that names no lineage, as before 7ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > a member may not (403), and nothing is written 63ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > owner places a program hold: one transaction, the hold, then its chained audit row, then COMMIT (201) 14ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > admin places a program hold: one transaction, the hold, then its chained audit row, then COMMIT (201) 7ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > manager places a program hold: one transaction, the hold, then its chained audit row, then COMMIT (201) 6ms
+stderr | server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > rolls the hold back when its audit row cannot be written (500): a hold nobody can account for is not placed
+{
+  "timestamp": "2026-10-01T06:35:02.761Z",
+  "level": "error",
+  "message": "[vault-legal-holds] Legal hold could not be placed",
+  "context": {
+    "orgId": 7,
+    "error": "chain unavailable"
+  }
+}
+
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > refuses a program the organisation does not own (404) and writes nothing 9ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > refuses a body that names no target or no reason (400) 16ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > placing a hold > rolls the hold back when its audit row cannot be written (500): a hold nobody can account for is not placed 11ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > lifting a hold > records who lifted it and why, with its chained audit row (200) 8ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > lifting a hold > needs a reason (400), and a hold that is not active in this organisation is 404 with nothing committed 73ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > lifting a hold > a member may not (403) 39ms
+ ✓ server/routes/__tests__/vault-legal-holds.test.ts > listing holds > lists the organisation's holds for the same roles, and refuses a member 26ms
+stdout | server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold stops disposition > a DOCUMENT-scoped hold prevents the hard delete
+{
+  "timestamp": "2026-10-01T06:35:03.497Z",
+  "level": "info",
+  "message": "[retention-sweep] Expired document left in place: legal hold",
+  "context": {
+    "documentId": "22222222-2222-2222-2222-222222222222",
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "retentionUntil": "2020-01-01",
+    "heldBy": "document"
+  }
+}
+
+stdout | server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold stops disposition > a PROGRAM-scoped hold covers every document of that program
+{
+  "timestamp": "2026-10-01T06:35:03.501Z",
+  "level": "info",
+  "message": "[retention-sweep] Expired document left in place: legal hold",
+  "context": {
+    "documentId": "22222222-2222-2222-2222-222222222222",
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "retentionUntil": "2020-01-01",
+    "heldBy": "program"
+  }
+}
+{
+  "timestamp": "2026-10-01T06:35:03.501Z",
+  "level": "info",
+  "message": "[retention-sweep] Expired document left in place: legal hold",
+  "context": {
+    "documentId": "other-doc",
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "retentionUntil": "2020-01-01",
+    "heldBy": "program"
+  }
+}
+
+stdout | server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold stops disposition > is checked before the policy resolves, so no archive is written either
+{
+  "timestamp": "2026-10-01T06:35:03.503Z",
+  "level": "info",
+  "message": "[retention-sweep] Expired document left in place: legal hold",
+  "context": {
+    "documentId": "22222222-2222-2222-2222-222222222222",
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "retentionUntil": "2020-01-01",
+    "heldBy": "program"
+  }
+}
+
+stderr | server/jobs/__tests__/retentionCron.legal-hold.test.ts > a disposition is one transaction with its chained audit row (P1-22) > a deletion whose audit row cannot be written is rolled back and counted as an error
+{
+  "timestamp": "2026-10-01T06:35:03.512Z",
+  "level": "error",
+  "message": "[retention-sweep] Expired document not disposed of",
+  "context": {
+    "documentId": "22222222-2222-2222-2222-222222222222",
+    "error": "chain unavailable"
+  }
+}
+
+stderr | server/jobs/__tests__/retentionCron.legal-hold.test.ts > a disposition is one transaction with its chained audit row (P1-22) > a document with no organisation to chain the row under is left in place (nothing is committed unaudited)
+{
+  "timestamp": "2026-10-01T06:35:03.513Z",
+  "level": "error",
+  "message": "[retention-sweep] Expired document not disposed of",
+  "context": {
+    "documentId": "22222222-2222-2222-2222-222222222222",
+    "error": "no organisation for the document: the deletion cannot be audited, so it is not made"
+  }
+}
+
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold stops disposition > a DOCUMENT-scoped hold prevents the hard delete 5ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold stops disposition > a PROGRAM-scoped hold covers every document of that program 2ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold stops disposition > is checked before the policy resolves, so no archive is written either 2ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold that does not apply does not block > deletes when no hold exists — the guard is not a blanket stop 1ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold that does not apply does not block > deletes when the only hold covers a DIFFERENT program 0ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a hold that does not apply does not block > a LIFTED hold does not block — the query already excludes it 0ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > the sweep fails closed when holds cannot be read > aborts having deleted nothing, rather than proceeding as if none existed 2ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a disposition is one transaction with its chained audit row (P1-22) > soft delete: BEGIN, the organisation, the tombstone, the chained audit row, COMMIT — and the row names the document 1ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a disposition is one transaction with its chained audit row (P1-22) > archive then soft delete, in the same transaction, under the document's own organisation 1ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a disposition is one transaction with its chained audit row (P1-22) > a deletion whose audit row cannot be written is rolled back and counted as an error 1ms
+ ✓ server/jobs/__tests__/retentionCron.legal-hold.test.ts > a disposition is one transaction with its chained audit row (P1-22) > a document with no organisation to chain the row under is left in place (nothing is committed unaudited) 1ms
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > the bytes go to the storage provider > hands it the caller organization and the programme as the project
+{
+  "timestamp": "2026-10-01T06:35:03.857Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "doc-1",
+    "code": "CSR-201",
+    "size": 28,
+    "hasText": false
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > the bytes go to the storage provider > records the version id, the provider and the handle on the row
+{
+  "timestamp": "2026-10-01T06:35:03.864Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "doc-1",
+    "code": "CSR-201",
+    "size": 28,
+    "hasText": false
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > a storage failure refuses the upload > returns STORAGE_WRITE_FAILED and writes NO row
+{
+  "timestamp": "2026-10-01T06:35:03.866Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault file persistence failed — refusing to record the document",
+  "context": {
+    "reason": "bucket unreachable",
+    "contentHash": "f3c9d586682936c8987ce11239d2d886f1b9710840ddcf4d36211f4e6a3d3398"
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > the tenant guard still runs before any of this > refuses a programme the caller does not own, without touching storage
+{
+  "timestamp": "2026-10-01T06:35:03.870Z",
+  "level": "warn",
+  "message": "[vault-ingest] Vault ingest denied: program not owned by caller organization",
+  "context": {
+    "programId": "11111111-1111-4111-8111-111111111111",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > different bytes at an occupied (program, code, version): 409, and the copy is removed
+{
+  "timestamp": "2026-10-01T06:35:03.871Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > the same bytes under a second code: 409, and the copy is removed
+{
+  "timestamp": "2026-10-01T06:35:03.873Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest refused: content already recorded in this program",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > the same bytes under a second code: 409, and the copy is removed
+{
+  "timestamp": "2026-10-01T06:35:03.873Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a folder outside the program taxonomy: 400, and the copy is removed
+{
+  "timestamp": "2026-10-01T06:35:03.875Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a failed audit write rolls the record back, and the copy with it
+{
+  "timestamp": "2026-10-01T06:35:03.876Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest failed — nothing recorded",
+  "context": {
+    "err": "chain tip locked"
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a failed audit write rolls the record back, and the copy with it
+{
+  "timestamp": "2026-10-01T06:35:03.877Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > an error thrown before the transaction still removes the copy, and still propagates
+{
+  "timestamp": "2026-10-01T06:35:03.878Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest: a stored copy no record holds was removed",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > an admitted upload keeps its bytes
+{
+  "timestamp": "2026-10-01T06:35:03.880Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "doc-1",
+    "code": "CSR-201",
+    "size": 28,
+    "hasText": false
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a failed delete: the message no longer claims nothing was saved
+{
+  "timestamp": "2026-10-01T06:35:03.881Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest failed — nothing recorded",
+  "context": {
+    "err": "chain tip locked"
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a failed delete: the message no longer claims nothing was saved
+{
+  "timestamp": "2026-10-01T06:35:03.882Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest could not remove refused bytes from storage",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a delete that throws is reported the same way, not raised over the refusal
+{
+  "timestamp": "2026-10-01T06:35:03.883Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest could not remove refused bytes from storage",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7,
+    "err": "bucket unreachable"
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a record that refers to the stored version keeps it — bytes a record points at are never deleted
+{
+  "timestamp": "2026-10-01T06:35:03.884Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest failed — nothing recorded",
+  "context": {
+    "err": "connection reset"
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a record that refers to the stored version keeps it — bytes a record points at are never deleted
+{
+  "timestamp": "2026-10-01T06:35:03.885Z",
+  "level": "error",
+  "message": "[vault-ingest] Vault ingest reported a failure, but a record holds its stored bytes — kept",
+  "context": {
+    "versionId": "ver-abc",
+    "orgId": 7
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > the retention clock starts at admission (P1-22) > the INSERT computes retention_until from the named, active policy, bound to the same parameter as retention_policy, and a re-upload does not restart a clock that has started
+{
+  "timestamp": "2026-10-01T06:35:03.886Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "doc-1",
+    "code": "CSR-201",
+    "size": 28,
+    "hasText": false
+  }
+}
+
+stdout | server/services/vault/__tests__/vault-ingest-storage.test.ts > the retention clock starts at admission (P1-22) > dates from the organisation's own period, else the 25-year default, and never earlier than a named policy (ADR-0014 §6)
+{
+  "timestamp": "2026-10-01T06:35:03.887Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "doc-1",
+    "code": "CSR-201",
+    "size": 28,
+    "hasText": false
+  }
+}
+
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the bytes go to the storage provider > hands it the caller organization and the programme as the project 9ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the bytes go to the storage provider > records the version id, the provider and the handle on the row 3ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a storage failure refuses the upload > returns STORAGE_WRITE_FAILED and writes NO row 3ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a role that may not write the Vault is refused before anything is stored > a viewer: 403, nothing stored, nothing written 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a role that may not write the Vault is refused before anything is stored > no role at all: refused the same way 0ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the tenant guard still runs before any of this > refuses a programme the caller does not own, without touching storage 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the tenant guard still runs before any of this > refuses with no organization context at all 0ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > different bytes at an occupied (program, code, version): 409, and the copy is removed 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > the same bytes under a second code: 409, and the copy is removed 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a folder outside the program taxonomy: 400, and the copy is removed 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > a failed audit write rolls the record back, and the copy with it 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > an error thrown before the transaction still removes the copy, and still propagates 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > a refusal after the bytes were stored does not keep them > an admitted upload keeps its bytes 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a failed delete: the message no longer claims nothing was saved 2ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a delete that throws is reported the same way, not raised over the refusal 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > when the copy cannot be removed, the refusal says so > a record that refers to the stored version keeps it — bytes a record points at are never deleted 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the retention clock starts at admission (P1-22) > the INSERT computes retention_until from the named, active policy, bound to the same parameter as retention_policy, and a re-upload does not restart a clock that has started 1ms
+ ✓ server/services/vault/__tests__/vault-ingest-storage.test.ts > the retention clock starts at admission (P1-22) > dates from the organisation's own period, else the 25-year default, and never earlier than a named policy (ADR-0014 §6) 1ms
+stdout | server/jobs/__tests__/retentionCron.schedule.test.ts > startRetentionSchedule > schedules the nightly sweep in production with nothing else configured, at the default hour
+{
+  "timestamp": "2026-10-01T06:35:03.975Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep scheduled (30 3 * * *)",
+  "context": {
+    "enabled": true,
+    "controlledBy": "ENABLE_RETENTION_SWEEP",
+    "schedule": "30 3 * * *"
+  }
+}
+
+stdout | server/jobs/__tests__/retentionCron.schedule.test.ts > startRetentionSchedule > honours RETENTION_SWEEP_CRON and an explicit opt-in outside production
+{
+  "timestamp": "2026-10-01T06:35:03.977Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep scheduled (15 1 * * *)",
+  "context": {
+    "enabled": true,
+    "controlledBy": "ENABLE_RETENTION_SWEEP",
+    "schedule": "15 1 * * *"
+  }
+}
+
+stderr | server/jobs/__tests__/retentionCron.schedule.test.ts > startRetentionSchedule > does not schedule when explicitly disabled, even in production
+{
+  "timestamp": "2026-10-01T06:35:03.979Z",
+  "level": "warn",
+  "message": "[retention-sweep] Document retention sweep DISABLED in production: retention policies are not enforced",
+  "context": {
+    "enabled": false,
+    "controlledBy": "ENABLE_RETENTION_SWEEP",
+    "reason": "explicitly disabled (ENABLE_RETENTION_SWEEP=false)"
+  }
+}
+
+stdout | server/jobs/__tests__/retentionCron.schedule.test.ts > startRetentionSchedule > does not schedule outside production without an opt-in
+{
+  "timestamp": "2026-10-01T06:35:03.980Z",
+  "level": "info",
+  "message": "[retention-sweep] Document retention sweep disabled",
+  "context": {
+    "enabled": false,
+    "controlledBy": "ENABLE_RETENTION_SWEEP",
+    "reason": "opt-in outside production (set ENABLE_RETENTION_SWEEP=true)"
+  }
+}
+
+ ✓ server/jobs/__tests__/retentionCron.schedule.test.ts > resolveRetentionSweepPosture > explicit false disables, explicit true enables, production defaults on, otherwise opt-in 2ms
+ ✓ server/jobs/__tests__/retentionCron.schedule.test.ts > startRetentionSchedule > schedules the nightly sweep in production with nothing else configured, at the default hour 2ms
+ ✓ server/jobs/__tests__/retentionCron.schedule.test.ts > startRetentionSchedule > honours RETENTION_SWEEP_CRON and an explicit opt-in outside production 3ms
+ ✓ server/jobs/__tests__/retentionCron.schedule.test.ts > startRetentionSchedule > does not schedule when explicitly disabled, even in production 1ms
+ ✓ server/jobs/__tests__/retentionCron.schedule.test.ts > startRetentionSchedule > does not schedule outside production without an opt-in 1ms
+
+ Test Files  12 passed (12)
+      Tests  106 passed (106)
+   Start at  06:34:56
+   Duration  7.11s (transform 4.46s, setup 498ms, import 12.34s, tests 4.66s, environment 11ms)
+

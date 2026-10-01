@@ -31,6 +31,8 @@ import { usePathwayTabsData } from '../../hooks/usePathwayTabsData';
 import { useDossierHydration } from '../../hooks/useDossier';
 import { useSectionSave, type SaveState } from '../../hooks/useSectionSave';
 import { useElectronicSignature } from '../../hooks/useElectronicSignature';
+import { ESIGN_MEANINGS, isEsignMeaning } from '../../../_shared/esignMeanings';
+import type { EsigMeaning } from '../../../hooks/useEsignature';
 import type {
   Approval,
   AuditEvent,
@@ -563,11 +565,13 @@ function ApprovalsPane({ approvals, onOpenSection, currentUser = 'You' }: { appr
   );
 }
 
-function ApprovalCard({ a, mine, onOpenSection }: { a: Approval; mine: boolean; onOpenSection: OpenSection }) {
+export function ApprovalCard({ a, mine, onOpenSection }: { a: Approval; mine: boolean; onOpenSection: OpenSection }) {
   const [signing, setSigning] = React.useState(false);
   const [pwd, setPwd] = React.useState('');
   const [mfa, setMfa] = React.useState('');
-  const [meaning, setMeaning] = React.useState(a.meaning || '');
+  /* The meaning is one of the closed vocabulary the server accepts
+     (§11.50(a)(3)); free text from the approval feed is not a meaning. */
+  const [meaning, setMeaning] = React.useState<EsigMeaning>(isEsignMeaning(a.meaning) ? a.meaning : 'approval');
   const esig = useElectronicSignature();
 
   const days = daysUntil(a.due);
@@ -584,7 +588,7 @@ function ApprovalCard({ a, mine, onOpenSection }: { a: Approval; mine: boolean; 
     await esig.sign({
       documentId: a.document_id as number,
       versionId: a.version_id as number,
-      signatureMeaning: meaning.trim(),
+      signatureMeaning: meaning,
       signaturePurpose: 'approval',
       action: 'approved',
       password: pwd,
@@ -610,7 +614,7 @@ function ApprovalCard({ a, mine, onOpenSection }: { a: Approval; mine: boolean; 
         </div>
         <div className="ap-card-target">{a.target}</div>
         <div className="ap-card-meta">
-          Acknowledged: &quot;{meaning}&quot; · signature{' '}
+          Acknowledged: &quot;{ESIGN_MEANINGS.find((m) => m.id === meaning)?.label ?? meaning}&quot; · signature{' '}
           <span className="mono">#{esig.receipt.signatureId}</span> ·{' '}
           <span className="mono" title={esig.receipt.signatureHash}>
             {esig.receipt.signatureHash.slice(0, 12)}…
@@ -674,8 +678,19 @@ function ApprovalCard({ a, mine, onOpenSection }: { a: Approval; mine: boolean; 
       {mine && signing && (
         <div className="ap-sign-form">
           <div className="ap-sign-attest">
-            <span className="ap-sign-attest-label">Meaning of signature</span>
-            <input className="ap-sign-input" value={meaning} onChange={(e) => setMeaning(e.target.value)} placeholder="e.g. Reviewed and approved" />
+            <label className="ap-sign-attest-label" htmlFor={`ap-meaning-${a.id}`}>Meaning of signature</label>
+            <select
+              id={`ap-meaning-${a.id}`}
+              className="ap-sign-input"
+              value={meaning}
+              onChange={(e) => {
+                if (isEsignMeaning(e.target.value)) setMeaning(e.target.value);
+              }}
+            >
+              {ESIGN_MEANINGS.map((m) => (
+                <option key={m.id} value={m.id}>{m.label} — {m.desc}</option>
+              ))}
+            </select>
           </div>
           <div className="ap-sign-creds">
             <input
@@ -700,7 +715,7 @@ function ApprovalCard({ a, mine, onOpenSection }: { a: Approval; mine: boolean; 
             <button
               className="ap-sign-confirm"
               disabled={
-                esig.submitting || pwd.length < 6 || meaning.trim().length === 0
+                esig.submitting || pwd.length < 6
               }
               onClick={applySignature}
             >

@@ -1,0 +1,87 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > an 'approved' disposition whose release tests fail is held at pending-review, so it is not signed 'release'
+[CMC Batch] Release testing for batch 9: pending-review
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > refuses a declared 'release' on a batch the tests hold at pending-review, and writes nothing
+[CMC Batch] Release testing for batch 9: pending-review
+
+ ↓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' writes the electronic_signatures row with its ledger sign > records the signature row on the ledger's own client, before COMMIT
+ ↓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back
+ ↓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' writes the electronic_signatures row with its ledger sign > a request with no credentials is refused and writes nothing
+ ↓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' writes the electronic_signatures row with its ledger sign > records the signature row on the ledger's own client, before COMMIT
+ ↓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back
+ ↓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' writes the electronic_signatures row with its ledger sign > a request with no credentials is refused and writes nothing
+ ↓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' writes the electronic_signatures row with its ledger sign > records the signature row on the ledger's own client, before COMMIT
+ ↓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back
+ ↓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' writes the electronic_signatures row with its ledger sign > a request with no credentials is refused and writes nothing
+ ↓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' requires a signer with signing authority > refuses a viewer who knows their own password before re-authentication, and writes nothing
+ ↓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' requires a signer with signing authority > refuses a user with no membership row in the organization
+ ↓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' requires a signer with signing authority > refuses a viewer who knows their own password before re-authentication, and writes nothing
+ ↓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' requires a signer with signing authority > refuses a user with no membership row in the organization
+ ↓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' requires a signer with signing authority > refuses a viewer who knows their own password before re-authentication, and writes nothing
+ ↓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' requires a signer with signing authority > refuses a user with no membership row in the organization
+ ↓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a 'approved' disposition is signed with meaning 'release', on the ledger and the signature row
+ ↓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a 'conditional' disposition is signed with meaning 'responsibility', on the ledger and the signature row
+ ↓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a 'rejected' disposition is signed with meaning 'responsibility', on the ledger and the signature row
+ × server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > an 'approved' disposition whose release tests fail is held at pending-review, so it is not signed 'release' 45ms
+   → expected { meaning: 'release', …(2) } to match object { meaning: 'responsibility', …(1) }
+(1 matching property omitted from actual)
+ × server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > refuses a declared 'release' on a batch the tests hold at pending-review, and writes nothing 11ms
+   → {"success":true,"data":{"batchRecord":{"id":9,"status":"draft","approval_status":"draft","project_id":null,"tenant_id":"7","organization_id":7},"releaseEvaluation":{"decision":"approved","releasedBy":"QA Head","comments":null,"testResults":[{"test":"assay","result":"fail","passed":false,"evaluatedAt":"2026-10-01T08:46:20.367Z"}],"allTestsPassed":false,"releaseStatus":"pending-review","releasedAt":"2026-10-01T08:46:20.367Z"}},"governance":{"actionId":"act_1","sha256Chain":"chain_1"},"message":"Batch release decision recorded successfully","timestamp":"2026-10-01T08:46:20.368Z","module3Linked":true}: expected 200 to be 400 // Object.is equality
+ ↓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > refuses a declared 'release' on a rejected batch before re-authentication, and writes nothing
+ ↓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > refuses a declared meaning outside the closed vocabulary, and writes nothing
+ ↓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > accepts a declared meaning that agrees with the disposition
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > an 'approved' disposition whose release tests fail is held at pending-review, so it is not signed 'release'
+AssertionError: expected { meaning: 'release', …(2) } to match object { meaning: 'responsibility', …(1) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "meaning": "responsibility",
++   "meaning": "release",
+    "releaseStatus": "pending-review",
+  }
+
+ ❯ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts:244:59
+    242|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    243|     expect(res.body.data.releaseEvaluation.releaseStatus).toBe('pendin…
+    244|     expect(recordGovernedAction.mock.calls[0][1].payload).toMatchObjec…
+       |                                                           ^
+    245|     expect(persistGovernedActionSignature.mock.calls[0][1].payload.mea…
+    246|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > refuses a declared 'release' on a batch the tests hold at pending-review, and writes nothing
+AssertionError: {"success":true,"data":{"batchRecord":{"id":9,"status":"draft","approval_status":"draft","project_id":null,"tenant_id":"7","organization_id":7},"releaseEvaluation":{"decision":"approved","releasedBy":"QA Head","comments":null,"testResults":[{"test":"assay","result":"fail","passed":false,"evaluatedAt":"2026-10-01T08:46:20.367Z"}],"allTestsPassed":false,"releaseStatus":"pending-review","releasedAt":"2026-10-01T08:46:20.367Z"}},"governance":{"actionId":"act_1","sha256Chain":"chain_1"},"message":"Batch release decision recorded successfully","timestamp":"2026-10-01T08:46:20.368Z","module3Linked":true}: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts:250:50
+    248|   it("refuses a declared 'release' on a batch the tests hold at pendin…
+    249|     const res = await release({ decision: 'approved', releaseTesting: …
+    250|     expect(res.status, JSON.stringify(res.body)).toBe(400);
+       |                                                  ^
+    251|     expect(res.body.error).toBe('SIGNATURE_MEANING_CONFLICT');
+    252|     expect(verifyReauth).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 21 skipped (23)
+   Start at  08:46:17
+   Duration  3.30s (transform 1.73s, setup 119ms, import 2.69s, tests 62ms, environment 0ms)
+

@@ -2,9 +2,10 @@
 /**
  * AuthoringFilingBar — proves the freeze and e-sign filing actions are wired
  * to the real authoring store and honest on failure. C2CForm (tested
- * separately) is stubbed for the freeze dialog. The e-signature runs the REAL
- * shared EsignModal: it is the product's one signing dialog, and what it sends
- * (the password, the code when one is enrolled, the meaning) is the point.
+ * separately) is stubbed for the not-settled question. The freeze and the
+ * e-signature both run the REAL shared EsignModal: it is the product's one
+ * signing dialog, and what it sends (the password, the code when one is
+ * enrolled, the meaning) is the point.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -78,47 +79,86 @@ function stubSignerChecks(opts: { mfaRequired?: boolean } = {}) {
 
 const REASON = 'I approve this document for filing.';
 
+/** Open Freeze, fill the shared signing dialog and commit it. */
+async function signFreeze(opts: { password?: string; meaning?: RegExp } = {}) {
+  fireEvent.click(screen.getByRole('button', { name: /Freeze/ }));
+  const dialog = await screen.findByRole('dialog');
+  if (opts.meaning) fireEvent.click(within(dialog).getByRole('radio', { name: opts.meaning }));
+  fireEvent.change(within(dialog).getByLabelText(/Reason for this action/), { target: { value: REASON } });
+  fireEvent.change(within(dialog).getByLabelText(/Password/), { target: { value: opts.password ?? 'correct horse' } });
+  fireEvent.click(within(dialog).getByRole('button', { name: /Sign and commit/ }));
+  return dialog;
+}
+
+const freezeCalls = () => apiRequest.mock.calls.filter((c) => c[1] === '/api/authoring/docs/D1/freeze');
+
 describe('AuthoringFilingBar — real filing actions', () => {
-  it('freezes the document via the real endpoint and reports the server content hash', async () => {
-    apiRequest.mockResolvedValue(ok({ success: true, contentHash: 'abc123def456', version: 'v1.0.frozen' }));
+  /* DP-35 (2026-10-01): a frozen document counts as finalized for eCTD leaf
+     completeness and the IND checklist, so the freeze is a signature. It runs
+     through the product's one signing dialog — meaning, reason, password and
+     code — and the server re-verifies them in the freeze's own transaction.
+     It used to be a reason-only form. */
+  it('freezes through the shared signing dialog: meaning, reason and password go to the real endpoint', async () => {
+    const verify = stubSignerChecks();
+    apiRequest.mockResolvedValue(ok({ success: true, contentHash: 'abc123def456', version: 'v1.0.frozen', signatureId: 's0' }));
     const { onChanged, fireToast } = renderBar('draft');
 
-    fireEvent.click(screen.getByRole('button', { name: /Freeze/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
+    await signFreeze();
 
     await waitFor(() => {
-      const call = apiRequest.mock.calls.find((c) => c[1] === '/api/authoring/docs/D1/freeze');
-      expect(call).toBeTruthy();
-      expect((call![2] as any).reason).toBe('QA lock');
+      expect(freezeCalls()).toHaveLength(1);
+      expect(freezeCalls()[0][2]).toEqual({ reason: REASON, meaning: 'AUTHOR', password: 'correct horse' });
     });
+    expect(verify).toHaveBeenCalledWith('/api/esignature/verify-password', expect.anything());
     expect(fireToast).toHaveBeenCalledWith(expect.stringMatching(/frozen and sealed.*abc123def456/));
     expect(onChanged).toHaveBeenCalled();
   });
 
-  it('a 401 on freeze is reported as not sealed — never as "frozen and sealed"', async () => {
+  it('offers only the meanings a freeze carries — approval is E-sign', async () => {
+    renderBar('draft');
+    fireEvent.click(screen.getByRole('button', { name: /Freeze/ }));
+    const dialog = await screen.findByRole('dialog');
+    const offered = within(dialog).getAllByRole('radio').map((r) => (r.textContent ?? '').replace(/You .*/, '').trim());
+    expect(offered).toEqual(['Authorship', 'Review']);
+  });
+
+  it('sends the authenticator code with the freeze when one is enrolled, and a review meaning as REVIEWER', async () => {
+    stubSignerChecks({ mfaRequired: true });
+    apiRequest.mockResolvedValue(ok({ success: true, contentHash: 'h' }));
+    renderBar('draft');
+
+    const dialog = await signFreeze({ meaning: /Review/ });
+    const code = await within(dialog).findByLabelText(/code/i);
+    expect(freezeCalls()).toHaveLength(0);
+    fireEvent.change(code, { target: { value: '135790' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: /Sign and commit/ }));
+
+    await waitFor(() =>
+      expect(freezeCalls()[0]?.[2]).toEqual({ reason: REASON, meaning: 'REVIEWER', password: 'correct horse', mfaToken: '135790' }),
+    );
+  });
+
+  it('a 401 on freeze is shown in the dialog as not sealed — never as "frozen and sealed"', async () => {
     // apiRequest RETURNS a 401 rather than throwing it, so a handler that leans
     // on the throw alone falls through to its success branch. This is the case
     // that used to paint a seal claim over a refused freeze.
-    apiRequest.mockResolvedValue(ok({ message: 'expired' }, 401));
+    stubSignerChecks();
+    apiRequest.mockResolvedValue(ok({ error: 'Password verification failed.', code: 'PASSWORD_VERIFICATION_FAILED' }, 401));
     const { onChanged, fireToast } = renderBar('draft');
 
-    fireEvent.click(screen.getByRole('button', { name: /Freeze/ }));
-    fireEvent.click(screen.getByTestId('form-submit'));
+    const dialog = await signFreeze({ password: 'not it' });
 
-    await waitFor(() => expect(fireToast).toHaveBeenCalled());
-    expect(fireToast).toHaveBeenCalledWith(expect.stringMatching(/Not frozen/), 'error');
-    expect(fireToast).not.toHaveBeenCalledWith(expect.stringMatching(/frozen and sealed/));
+    const alert = await within(dialog).findByRole('alert');
+    expect(alert.textContent).toMatch(/Not frozen.*Nothing was sealed/);
+    expect(fireToast).not.toHaveBeenCalled();
     expect(onChanged).not.toHaveBeenCalled();
   });
 
   describe('when the server refuses because the document is not settled', () => {
-    /* The server now refuses to seal a document that still has open reviewer
-       comments or undecided tracked changes. A 409 the UI does not understand
-       would surface as a generic failure — and, since `apiRequest` throws and
-       the server answers `{ code, message }`, the old handler would have
-       rendered "[object Object]". The refusal is not a dead end: freezing a
-       draft with open comments is a real thing to want, so the dialog says
-       exactly what is outstanding and offers both ways forward. */
+    /* The server refuses to seal a document that still has open reviewer
+       comments or undecided tracked changes. The refusal is not a dead end:
+       freezing a draft with open comments is a real thing to want, so the bar
+       says exactly what is outstanding and offers both ways forward. */
     const notSettled = () => {
       const err: any = new Error('Not frozen — this document still has 2 unresolved comments.');
       err.name = 'ApiRequestError';
@@ -129,11 +169,11 @@ describe('AuthoringFilingBar — real filing actions', () => {
     };
 
     it('re-asks, naming what is outstanding, instead of reporting a failure', async () => {
+      stubSignerChecks();
       apiRequest.mockRejectedValue(notSettled());
       const { fireToast, onChanged } = renderBar('draft');
 
-      fireEvent.click(screen.getByRole('button', { name: /Freeze/ }));
-      fireEvent.click(screen.getByTestId('form-submit'));
+      await signFreeze();
 
       await waitFor(() => {
         expect(screen.getByTestId('form-title').textContent).toMatch(/not settled/i);
@@ -142,68 +182,61 @@ describe('AuthoringFilingBar — real filing actions', () => {
       expect(sub).toMatch(/2 unresolved comments/);
       expect(sub).toMatch(/3 tracked changes/);
       // It offers the choice rather than only stating the problem.
-      expect(screen.getByTestId('form-fields').textContent).toContain('acknowledge');
+      expect(screen.getByTestId('form-fields').textContent).toBe('acknowledge');
       // Not reported as an error, and nothing was sealed.
       expect(fireToast).not.toHaveBeenCalled();
       expect(onChanged).not.toHaveBeenCalled();
-    });
-
-    it('never renders the server payload as [object Object]', async () => {
-      /* The concrete regression: `error` used to be a string and is now an
-         object, so string-concatenating it produced that literal. */
-      apiRequest.mockRejectedValue(notSettled());
-      renderBar('draft');
-      fireEvent.click(screen.getByRole('button', { name: /Freeze/ }));
-      fireEvent.click(screen.getByTestId('form-submit'));
-      await waitFor(() => expect(screen.getByTestId('form-title').textContent).toMatch(/not settled/i));
       expect(document.body.textContent).not.toContain('[object Object]');
     });
 
-    it('sends the acknowledgement only when the user deliberately chooses to seal', async () => {
+    it('sends the acknowledgement only when the user deliberately chooses to seal, under a fresh signature', async () => {
+      stubSignerChecks();
       apiRequest.mockRejectedValueOnce(notSettled());
       const { onChanged } = renderBar('draft');
-      fireEvent.click(screen.getByRole('button', { name: /Freeze/ }));
-      fireEvent.click(screen.getByTestId('form-submit'));
-      await waitFor(() => expect(screen.getByTestId('form-fields').textContent).toContain('acknowledge'));
+      await signFreeze();
+      await waitFor(() => expect(screen.getByTestId('form-fields').textContent).toBe('acknowledge'));
 
       // First attempt carried no acknowledgement — it must never be a default.
-      const first = apiRequest.mock.calls.find((c) => c[1] === '/api/authoring/docs/D1/freeze');
-      expect((first![2] as any).acknowledgeUnresolved).toBeUndefined();
+      expect((freezeCalls()[0][2] as any).acknowledgeUnresolved).toBeUndefined();
 
       ackChoice.value = 'seal';
       apiRequest.mockResolvedValue(ok({ success: true, contentHash: 'sealedhash01' }));
       fireEvent.click(screen.getByTestId('form-submit'));
 
+      // The signature dialog opens again: the seal is re-signed, not re-sent.
+      const dialog = await screen.findByRole('dialog');
+      expect(dialog.textContent).toMatch(/as it stands/);
+      fireEvent.change(within(dialog).getByLabelText(/Reason for this action/), { target: { value: REASON } });
+      fireEvent.change(within(dialog).getByLabelText(/Password/), { target: { value: 'correct horse' } });
+      fireEvent.click(within(dialog).getByRole('button', { name: /Sign and commit/ }));
+
       await waitFor(() => expect(onChanged).toHaveBeenCalled());
-      const second = apiRequest.mock.calls.filter((c) => c[1] === '/api/authoring/docs/D1/freeze').pop();
-      expect((second![2] as any).acknowledgeUnresolved).toBe(true);
+      expect(freezeCalls()).toHaveLength(2);
+      expect(freezeCalls()[1][2]).toMatchObject({ acknowledgeUnresolved: true, meaning: 'AUTHOR', password: 'correct horse' });
     });
 
     it('sends nothing at all when the user chooses to go back and resolve', async () => {
-      /* Offering the choice and then ignoring half of it would be worse than
-         not offering it. */
+      stubSignerChecks();
       apiRequest.mockRejectedValueOnce(notSettled());
       renderBar('draft');
-      fireEvent.click(screen.getByRole('button', { name: /Freeze/ }));
-      fireEvent.click(screen.getByTestId('form-submit'));
-      await waitFor(() => expect(screen.getByTestId('form-fields').textContent).toContain('acknowledge'));
+      await signFreeze();
+      await waitFor(() => expect(screen.getByTestId('form-fields').textContent).toBe('acknowledge'));
       const callsBefore = apiRequest.mock.calls.length;
 
       ackChoice.value = 'resolve';
       fireEvent.click(screen.getByTestId('form-submit'));
 
       expect(apiRequest.mock.calls.length, 'a freeze was sent anyway').toBe(callsBefore);
-      expect(screen.queryByTestId('form-submit')).toBeNull(); // dialog closed
+      expect(screen.queryByTestId('form-submit')).toBeNull(); // closed
+      expect(screen.queryByRole('dialog')).toBeNull();
     });
 
-    it('leaves a settled document with the ordinary dialog', async () => {
-      /* The working path: a finished document must not have acquired a new
-         question to answer. */
-      apiRequest.mockResolvedValue(ok({ success: true, contentHash: 'abc123def456' }));
+    it('a settled document goes straight to the signature, with nothing to acknowledge', async () => {
       renderBar('draft');
       fireEvent.click(screen.getByRole('button', { name: /Freeze/ }));
-      expect(screen.getByTestId('form-title').textContent).toBe('Freeze document');
-      expect(screen.getByTestId('form-fields').textContent).not.toContain('acknowledge');
+      const dialog = await screen.findByRole('dialog');
+      expect(dialog.textContent).not.toMatch(/as it stands/);
+      expect(screen.queryByTestId('form-title')).toBeNull();
     });
   });
 

@@ -1,0 +1,8 @@
+# exemption removed from scripts/check-security-patterns.ts; server/routes/cortex-unified.ts still HEAD
+
+[workspace-trust-header] 1 violation(s)
+  Do not read the client workspace from request headers in route code — X-Client-ID is a claim, not context: the workspace must be one of the session organisation's own before it scopes a read, opens a feature or lands in a write. Consume req.tenantContext.clientWorkspaceId (set by server/middleware/tenantContext.ts) and verify it with FeatureToggleService.workspaceInOrganization or c2c/project-access resolveClientWorkspaceId. A direct read that IS verified on the lines that follow carries `// security-allow: workspace-claim …` (IAM-15, P1-7b).
+    server/routes/cortex-unified.ts:128:30  const clientWorkspaceId = (req.headers['x-client-workspace-id'] as string) || null;
+
+check-security-patterns: 1 violation(s) across 2955 file(s).
+exit=1

@@ -355,9 +355,13 @@ router.get('/:tenantId/users', async (req, res) => {
  *         can retry the same request once it satisfies the precondition.
  *   409 — the organization is in a state that conflicts with the request
  *         (already purged, not scheduled for deletion). Retrying will not help.
+ *   403 — the purge cannot be attributed to a person (no user id on the
+ *         request). The purge's audit row names who purged; a purge by nobody
+ *         is refused.
  */
 function offboardingHttpStatus(code: string): number {
   if (code === 'TENANT_NOT_FOUND') return 404;
+  if (code === 'PURGE_ACTOR_REQUIRED') return 403;
   if (code === 'EXPORT_EVIDENCE_REQUIRED' || code === 'RETENTION_WINDOW_OPEN') return 422;
   return 409;
 }
@@ -474,7 +478,10 @@ router.post('/:id/cancel-deletion', requirePlatformAdmin, async (req, res) => {
  * data-return obligation was discharged.
  *
  * The organization ROW survives in status `purged`, carrying the offboarding
- * evidence. Deleting it would delete the audit trail of the deletion.
+ * evidence. Deleting it would delete the audit trail of the deletion. The purge
+ * also writes one chained audit row in its own transaction — who, from where,
+ * on which export, what it deleted — and does not happen if that row cannot be
+ * written (services/tenant/tenant-purge-audit.ts).
  */
 router.post('/:id/purge', requirePlatformAdmin, async (req, res) => {
   try {
@@ -502,6 +509,7 @@ router.post('/:id/purge', requirePlatformAdmin, async (req, res) => {
       organizationId: tenantId,
       purgedByUserId: Number(req.user?.userId ?? req.user?.id ?? 0),
       preconditions: { finalExportDigest, overrideRetentionWindowReason: overrideReason },
+      auditContext: { ipAddress: req.ip, userAgent: req.get('user-agent') ?? undefined },
     });
 
     // Every membership in this org just vanished — revoke cached
@@ -514,6 +522,8 @@ router.post('/:id/purge', requirePlatformAdmin, async (req, res) => {
       organizationId: record.organizationId,
       status: record.status,
       purgedAt: record.purgedAt,
+      // Rows deleted per table: the counts the purge's audit row records.
+      deletedRows: record.deletedRows,
       // What happened to the vault's stored bytes, stated rather than implied.
       storageErasure: record.storageErasure,
       // The AnA turn records erased; each turn's chained audit row is kept.

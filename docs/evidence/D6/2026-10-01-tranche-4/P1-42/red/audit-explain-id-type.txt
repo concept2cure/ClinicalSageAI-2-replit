@@ -1,0 +1,11 @@
+-- audit_logs.id type
+ id_type 
+---------
+ uuid
+(1 row)
+
+-- the statement explainAuditRow runs, with the positive integer its validator requires (1842)
+PREPARE
+ERROR:  invalid input syntax for type uuid: "1842"
+LINE 1: EXECUTE explain_row('1842', 1);
+                            ^

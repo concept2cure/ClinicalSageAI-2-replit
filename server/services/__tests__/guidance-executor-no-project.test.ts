@@ -9,8 +9,8 @@
  * no project open) its callers skipped it, so the raw JSON block was saved as
  * the answer, shown to the person, replayed to the model, and the action's
  * "not created" was never said. Now the executor takes a null project: the
- * blocks are stripped, nothing is created, and each action is reported as not
- * created and why.
+ * blocks are stripped, nothing is proposed or created, and each block's line
+ * says it was not saved and why.
  */
 import { describe, expect, it, vi } from 'vitest';
 
@@ -22,14 +22,15 @@ const FENCE = '```ana-action\n{"type":"memo","title":"Endpoint memo","content":"
 const ANSWER = `PFS at 12 months.\n\n${FENCE}`;
 
 describe('processResponseActions with no project', () => {
-  it('strips the block, creates nothing, and says each action was not created and why', async () => {
+  it('strips the block, proposes nothing, and says it was not saved and why', async () => {
     const out = await processResponseActions(ANSWER, {
       projectId: null, organizationId: 61, userId: 7, userName: 'AnA', threadId: 'th_1',
     });
     expect(out.cleanedText).not.toContain('ana-action');
     expect(out.cleanedText).toContain('PFS at 12 months.');
-    expect(out.actions).toHaveLength(1);
-    expect(out.actions[0]).toMatchObject({ executed: false, success: false, actionType: 'memo' });
-    expect(out.actions[0].error).toMatch(/no project/i);
+    // Since the P0-12 residual a block is a proposal, never a write; with no
+    // project there is nothing to propose into, and the line says so.
+    expect(out.proposals).toEqual([]);
+    expect(out.cleanedText).toMatch(/Endpoint memo.*Not saved.*not scoped to a project/s);
   });
 });

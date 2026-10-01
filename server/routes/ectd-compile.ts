@@ -55,8 +55,11 @@ import {
   type RequiredSectionSet,
   type RequiredSectionProvenance,
 } from '../services/ectd/required-sections';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('ectd-compile');
 
 /** SHA-256 of a UTF-8 string, hex. Used for real content hashes in the backbone. */
 function sha256(input: string): string {
@@ -711,12 +714,8 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
     );
 
     res.json(result);
-  } catch (error: any) {
-    console.error('[eCTD Compile] Compilation failed:', error);
-    res.status(500).json({
-      error: 'Compilation failed',
-      message: error.message,
-    });
+  } catch (error) {
+    return serverError(res, log, 'compiling the eCTD submission', error, { projectIdent: ident });
   }
 });
 
@@ -1335,9 +1334,8 @@ router.get('/:projectIdent/status', async (req: Request, res: Response) => {
               .toISOString()
           : null,
     });
-  } catch (error: any) {
-    console.error('[eCTD Status] Error:', error);
-    res.status(500).json({ error: 'Failed to get compilation status', message: error.message });
+  } catch (error) {
+    return serverError(res, log, 'reading the compilation status', error, { projectIdent: ident });
   }
 });
 
@@ -1388,9 +1386,8 @@ router.get('/:projectIdent/history', async (req: Request, res: Response) => {
     }
 
     res.json({ projectId: anchor.numericProjectId, projectIdent: ident, programId: anchor.programId, compilations });
-  } catch (error: any) {
-    console.error('[eCTD History] Error:', error);
-    res.status(500).json({ error: 'Failed to get compilation history', message: error.message });
+  } catch (error) {
+    return serverError(res, log, 'reading the compilation history', error, { projectIdent: ident });
   }
 });
 
@@ -1461,9 +1458,8 @@ router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
       results,
       summary: { pass: passCount, warnings: warnCount, errors: errorCount },
     });
-  } catch (error: any) {
-    console.error('[eCTD Validate] Error:', error);
-    res.status(500).json({ error: 'Validation failed', message: error.message });
+  } catch (error) {
+    return serverError(res, log, 'validating the submission', error, { projectIdent: ident });
   }
 });
 

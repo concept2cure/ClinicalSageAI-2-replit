@@ -3,7 +3,9 @@
  *
  * Governed CRUD across the grant lifecycle: opportunities, proposals, awards,
  * milestones, invoices. Every mutation runs BEGIN → Tx → recordGovernedAction →
- * COMMIT, org-scoped. Awards thread proposal → award provenance. Read endpoints
+ * COMMIT, org-scoped. Closeout finalize, subaward execution and NCE approval are
+ * electronic signatures (governed-signed-act.ts). Awards thread proposal → award
+ * provenance. Read endpoints
  * surface deadline-urgency portfolios and federal reporting obligations. Mounted
  * at /api/grants.
  *
@@ -14,6 +16,7 @@ import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import { pool } from '../db';
 import { recordGovernedAction } from './c2c/actions';
+import { signedActAttempts, signGovernedAct } from './governed-signed-act';
 import {
   createOpportunityTx,
   createProposalTx,
@@ -281,15 +284,18 @@ router.patch('/awards/:id/closeout', async (req, res) => {
   });
 });
 
-router.post('/awards/:id/closeout/finalize', async (req, res) => {
+// Finalizing the closeout is an electronic signature (P0-10a): governed-signed-act.ts.
+router.post('/awards/:id/closeout/finalize', signedActAttempts, async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
-  const parsed = z.object({ reason }).safeParse(req.body ?? {});
-  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
-  await governed(req, res, 'sign', parsed.data.reason, async (client, orgId, userId) => {
-    const { closedAward } = await finalizeCloseoutTx(client, orgId, userId, id);
-    recordGrantCloseoutFinalized();
-    return { target: `grant-award:${id}`, payload: { closeout: 'completed', closedAward }, body: { awardId: id, status: 'completed', closedAward } };
+  await signGovernedAct(req, res, {
+    domain: 'grants',
+    codeStatus: CODE_STATUS,
+    run: async (client, orgId, userId) => {
+      const { closedAward } = await finalizeCloseoutTx(client, orgId, userId, id);
+      recordGrantCloseoutFinalized();
+      return { target: `grant-award:${id}`, payload: { closeout: 'completed', closedAward }, body: { awardId: id, status: 'completed', closedAward } };
+    },
   });
 });
 
@@ -394,15 +400,18 @@ router.patch('/subawards/:id/screen', async (req, res) => {
   });
 });
 
-router.post('/subawards/:id/execute', async (req, res) => {
+// Executing a subaward is an electronic signature (P0-10a): governed-signed-act.ts.
+router.post('/subawards/:id/execute', signedActAttempts, async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
-  const parsed = z.object({ reason }).safeParse(req.body ?? {});
-  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
-  await governed(req, res, 'sign', parsed.data.reason, async (client, orgId, userId) => {
-    await executeSubawardTx(client, orgId, userId, id);
-    recordGrantSubawardExecuted();
-    return { target: `grant-subaward:${id}`, payload: { status: 'executed' }, body: { id, status: 'executed' } };
+  await signGovernedAct(req, res, {
+    domain: 'grants',
+    codeStatus: CODE_STATUS,
+    run: async (client, orgId, userId) => {
+      await executeSubawardTx(client, orgId, userId, id);
+      recordGrantSubawardExecuted();
+      return { target: `grant-subaward:${id}`, payload: { status: 'executed' }, body: { id, status: 'executed' } };
+    },
   });
 });
 
@@ -494,16 +503,23 @@ router.post('/awards/:id/nce', async (req, res) => {
   });
 });
 
-const nceApproveSchema = z.object({ authority: z.enum(['grantee', 'sponsor']), reason });
-router.post('/nce/:id/approve', async (req, res) => {
+// Approving an NCE is an electronic signature (P0-10a): the authority is this
+// route's own field; the reason, meaning and credentials are the ceremony's
+// (governed-signed-act.ts).
+const nceApproveSchema = z.object({ authority: z.enum(['grantee', 'sponsor']) });
+router.post('/nce/:id/approve', signedActAttempts, async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   const parsed = nceApproveSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
-  await governed(req, res, 'sign', parsed.data.reason, async (client, orgId, userId) => {
-    const { newEndDate } = await approveNceTx(client, orgId, userId, id, parsed.data.authority);
-    recordGrantNceApproved();
-    return { target: `grant-nce:${id}`, payload: { status: 'approved', newEndDate }, body: { id, status: 'approved', newEndDate } };
+  await signGovernedAct(req, res, {
+    domain: 'grants',
+    codeStatus: CODE_STATUS,
+    run: async (client, orgId, userId) => {
+      const { newEndDate } = await approveNceTx(client, orgId, userId, id, parsed.data.authority);
+      recordGrantNceApproved();
+      return { target: `grant-nce:${id}`, payload: { status: 'approved', authority: parsed.data.authority, newEndDate }, body: { id, status: 'approved', newEndDate } };
+    },
   });
 });
 

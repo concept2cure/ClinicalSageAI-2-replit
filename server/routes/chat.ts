@@ -12,6 +12,7 @@
 import { Router, type NextFunction, type Request, type Response } from 'express';
 import multer from 'multer';
 import { makeUploadFileFilter } from '../middleware/uploadAllowlist';
+import { assertUploadSafe, UploadSafetyError } from '../middleware/uploadSafety';
 import { sendMessageHandler } from './chat/send-message.js';
 import { uploadHandler } from './chat/upload.js';
 import {
@@ -84,7 +85,35 @@ function uploadErrors(
   next(err);
 }
 
-router.post('/upload', uploadEvidence.single('file'), uploadErrors, uploadHandler);
+/**
+ * The bytes, held to their declared type and their NAME, and scanned —
+ * fail-CLOSED in production — before the handler stores anything (IAM-14,
+ * plan P1-5). The handler ran verifyFileSignature and the scan itself and read
+ * only `scan.clean`, which the scanner reports true when it did not run, so a
+ * production deployment with no reachable scanner stored every file unscanned;
+ * and `report.pdf` declared text/html with HTML bytes passed the text-shaped
+ * check and became evidence under a .pdf name. assertUploadSafe is the one
+ * implementation of all three; the handler's copy is removed.
+ *
+ * A request with no file passes through: the handler refuses it as
+ * NO_FILE_RECEIVED, in its own words.
+ */
+async function assertEvidenceSafe(req: Request, res: Response, next: NextFunction): Promise<void> {
+  const file = (req as Request & { file?: { buffer?: Buffer; mimetype?: string; originalname?: string } }).file;
+  if (!file?.buffer?.length) return next();
+  try {
+    await assertUploadSafe(file.buffer, file.mimetype || 'application/octet-stream', file.originalname || 'upload');
+    next();
+  } catch (err) {
+    if (err instanceof UploadSafetyError) {
+      res.status(err.status).json({ error: { code: err.code, message: err.body.error } });
+      return;
+    }
+    next(err);
+  }
+}
+
+router.post('/upload', uploadEvidence.single('file'), uploadErrors, assertEvidenceSafe, uploadHandler);
 
 router.get('/threads', listThreads);
 router.get('/threads/:threadId/messages', listThreadMessages);

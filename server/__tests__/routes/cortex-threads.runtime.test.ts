@@ -50,7 +50,7 @@ describe('cortex threads runtime contract', () => {
     // internally, so mocking jwt.verify here drives the route's auth at runtime.
     // The cast bridges the mock shape to the real jwt typing for TS.
     const jwt = (await import('jsonwebtoken')).default as unknown as { verify: ReturnType<typeof vi.fn> };
-    jwt.verify.mockReturnValue({ userId: 7 });
+    jwt.verify.mockReturnValue({ userId: 7, type: 'access' });
 
     queryMock.mockResolvedValue({
       rows: [
@@ -82,7 +82,7 @@ describe('cortex threads runtime contract', () => {
     // internally, so mocking jwt.verify here drives the route's auth at runtime.
     // The cast bridges the mock shape to the real jwt typing for TS.
     const jwt = (await import('jsonwebtoken')).default as unknown as { verify: ReturnType<typeof vi.fn> };
-    jwt.verify.mockReturnValue({ userId: 99 });
+    jwt.verify.mockReturnValue({ userId: 99, type: 'access' });
 
     queryMock.mockRejectedValueOnce(new Error('db unavailable'));
 
@@ -135,7 +135,7 @@ describe('cortex threads runtime contract', () => {
     // internally, so mocking jwt.verify here drives the route's auth at runtime.
     // The cast bridges the mock shape to the real jwt typing for TS.
     const jwt = (await import('jsonwebtoken')).default as unknown as { verify: ReturnType<typeof vi.fn> };
-    jwt.verify.mockReturnValue({ userId: 17 });
+    jwt.verify.mockReturnValue({ userId: 17, type: 'access' });
     queryMock.mockResolvedValue({ rows: [] });
 
     const router = (await import('../../routes/cortex-unified')).default;
@@ -157,7 +157,7 @@ describe('cortex threads runtime contract', () => {
     // internally, so mocking jwt.verify here drives the route's auth at runtime.
     // The cast bridges the mock shape to the real jwt typing for TS.
     const jwt = (await import('jsonwebtoken')).default as unknown as { verify: ReturnType<typeof vi.fn> };
-    jwt.verify.mockReturnValue({ userId: 17 });
+    jwt.verify.mockReturnValue({ userId: 17, type: 'access' });
     queryMock.mockResolvedValue({ rows: [] });
 
     const router = (await import('../../routes/cortex-unified')).default;

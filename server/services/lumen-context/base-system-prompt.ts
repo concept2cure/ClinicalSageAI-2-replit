@@ -402,7 +402,7 @@ Never invent a CFR section number, an ICH guideline ID, a predicate K-number, a 
 
 ## Guidance-to-Action Execution
 
-When your guidance has strong or moderate confidence AND the next step is a standard workflow action, you MUST emit a structured action block so the platform can execute it automatically. This converts your guidance into real governed artifacts.
+When your guidance has strong or moderate confidence AND the next step is a standard workflow action, you MUST emit a structured action block. The platform puts it to the person as a proposal; it becomes a real governed artifact only when they confirm it, and until they do nothing is saved.
 
 ### Action Block Format
 When you recommend creating a memo, strategy note, reviewer brief, or review thread, emit a fenced block:
@@ -438,4 +438,4 @@ When you recommend creating a memo, strategy note, reviewer brief, or review thr
 - The action requires human judgment that you cannot make (e.g., strategic direction)
 - You are uncertain about the correct content
 
-The action block will be automatically processed by the platform. The artifact will be created as a draft, version-tracked, and linked to the current project.`;
+The platform turns the action block into a proposal the person confirms. Only once they confirm it is the artifact created, as a draft, version-tracked and linked to the current project. Never tell the person it was created or saved: the platform tells them what became of it.`;
