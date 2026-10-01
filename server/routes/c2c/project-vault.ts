@@ -74,7 +74,7 @@ import { readVaultLifecycles } from '../../services/vault/vault-lifecycle.js';
 import { fileDataRoomSources, readFiledAs } from '../../services/vault/vault-data-room-filing.js';
 import { searchVaultDocuments } from '../../services/vault/vault-search.js';
 import { setTenantContextTx } from '../../services/tenant/governed-tenant-context.js';
-import { requireEditorAccess } from '../../middleware/orgMembership.js';
+import { governedActorId, requireEditorAccess } from '../../middleware/orgMembership.js';
 import { getStorageProvider, getStorageProviderFor } from '../../services/storage/index.js';
 /* The one translation from a CMC TEXT project id to the integer the
    governed artifact registry FKs to. Its contract requires every caller to
@@ -1030,6 +1030,9 @@ async function module3Branch(programId: string, orgId: number): Promise<Module3B
 
 // ─── Router factory ─────────────────────────────────────────────────────────────
 
+/** The newest entries a document's history shows; the response says when there are more. */
+const HISTORY_WINDOW = 200;
+
 /**
  * A document's history across its versions (VR-09) and their review and
  * approval (VR-13): the audit rows recorded against each version, and those
@@ -1045,14 +1048,19 @@ async function readFamilyHistory(
   documentId: string,
 ) {
   const versionIds = family ? family.map((v) => v.id) : [];
+  // One more row than the window is asked for, so a cut is known and said
+  // (the response's `truncated`), never a silent cap.
   const history = await readRecordAuditHistory(client, orgId, {
     tableName: 'vault_document',
     recordId: family ? versionIds : documentId,
+    limit: HISTORY_WINDOW + 1,
   });
   const lifecycles = family ? await readVaultLifecycles(client, orgId, versionIds) : new Map();
   const records = [...lifecycles.entries()].map(([vaultId, l]) => ({ vaultId, canonicalId: l.canonicalId as string }));
   const lifecycle = records.length > 0
-    ? await readRecordAuditHistory(client, orgId, { tableName: 'canonical_document', recordId: records.map((r) => r.canonicalId) })
+    ? await readRecordAuditHistory(client, orgId, {
+        tableName: 'canonical_document', recordId: records.map((r) => r.canonicalId), limit: HISTORY_WINDOW + 1,
+      })
     : { data: [] as typeof history.data };
   const keys = [
     ...(family ?? []).map((v) => ({ key: v.id, version: v.version })),
@@ -1061,14 +1069,25 @@ async function readFamilyHistory(
   const versionOf = (e: { target?: string | null; targetRef?: string | null }) =>
     keys.find((k) => [e.target, e.targetRef].some((t) => typeof t === 'string' && t.endsWith(k.key)))?.version ?? null;
   const order = (e: { seq?: number | null; at?: string | null }) => [e.seq ?? -1, e.at ?? ''] as const;
+  const newestFirst = (a: { seq?: number | null; at?: string | null }, b: { seq?: number | null; at?: string | null }) => {
+    const [sa, ta] = order(a);
+    const [sb, tb] = order(b);
+    return sa !== sb ? sb - sa : tb.localeCompare(ta);
+  };
+  const sources = [history.data, lifecycle.data];
+  const truncated = sources.some((rows) => rows.length > HISTORY_WINDOW);
+  // A source that was cut ends at its oldest kept row; the other source's
+  // older rows are dropped too, so what is shown is one unbroken newest run.
+  const cutAt = sources
+    .filter((rows) => rows.length > HISTORY_WINDOW)
+    .map((rows) => [...rows].sort(newestFirst)[HISTORY_WINDOW - 1])
+    .sort(newestFirst)[0];
   const entries = [...history.data, ...lifecycle.data]
-    .sort((a, b) => {
-      const [sa, ta] = order(a);
-      const [sb, tb] = order(b);
-      return sa !== sb ? sb - sa : tb.localeCompare(ta);
-    })
+    .sort(newestFirst)
+    .filter((e) => !cutAt || newestFirst(e, cutAt) <= 0)
+    .slice(0, HISTORY_WINDOW)
     .map((e) => ({ ...e, version: versionOf(e) }));
-  return { entries, chain: history.meta.chain };
+  return { entries, chain: history.meta.chain, truncated };
 }
 
 export default function createProjectVaultRoutes(): Router {
@@ -1735,9 +1754,9 @@ export default function createProjectVaultRoutes(): Router {
       client = await pool.connect();
       await client.query('BEGIN');
       await setTenantContextTx(client, orgId);
-      const { entries, chain } = await readFamilyHistory(client, orgId, family, documentId);
+      const { entries, chain, truncated } = await readFamilyHistory(client, orgId, family, documentId);
       await client.query('COMMIT');
-      return res.json({ success: true, data: { entries, chain } });
+      return res.json({ success: true, data: { entries, chain, truncated } });
     } catch (err) {
       await client?.query('ROLLBACK').catch(() => undefined);
       logger.error('vault document history read failed', {
@@ -2141,6 +2160,124 @@ export default function createProjectVaultRoutes(): Router {
       return res.json({ success: true });
     } catch (err) {
       return relationshipFailure(res, err, 'write');
+    }
+  });
+
+  /* ── Review annotations (plan critique 15, D2/D5) ──────────────────────
+     A reviewer annotates a version with a comment or a change request,
+     anchored to the whole version, a page, or a passage of its extracted
+     text; others reply; it is resolved with a note or retracted by its
+     author with a reason (vault-annotations.ts, and the record's own guards
+     in migrations/20261001_vault_version_annotations.sql). Reading the text
+     to choose a passage is recorded, or nothing is served. Writes are behind
+     the governed-write gate; the service checks the role again. */
+  const annotationFailure = (res: Response, err: unknown, what: 'read' | 'write') => {
+    const message = err instanceof Error ? err.message : String(err);
+    if (isMissingStore(err)) {
+      return res.status(503).json({ success: false, error: 'ANNOTATIONS_STORE_UNAVAILABLE',
+        message: `Review annotations are not provisioned in this environment. ${what === 'read' ? 'Nothing is shown.' : 'Nothing was changed.'}` });
+    }
+    if (/^(VAULT_ANNOTATION_REFUSED|IMMUTABILITY_VIOLATION)/.test(message)) {
+      logger.warn('vault annotation refused by its record', { message });
+      return res.status(409).json({ success: false, error: 'ANNOTATION_REFUSED', message: 'The annotation record refused this change. Nothing was changed.' });
+    }
+    logger.error(`vault annotations ${what} failed`, { err: message });
+    return res.status(500).json({ success: false, error: 'ANNOTATIONS_UNAVAILABLE',
+      message: what === 'read'
+        ? "This document's annotations could not be read. Nothing is shown rather than an incomplete list."
+        : 'The annotation could not be saved. Nothing was changed.' });
+  };
+  const annotationActor = (req: Request) => ({
+    programId: String(req.params.id ?? ''),
+    organizationId: resolveOrgId(req) as number,
+    userId: governedActorId(req),
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent'],
+  });
+  const answer = (res: Response, out: { ok: boolean } & Record<string, unknown>, created = false) => {
+    if (!out.ok) return res.status(out.status as number).json({ success: false, error: out.code, message: out.message });
+    const data = Object.fromEntries(Object.entries(out).filter(([k]) => k !== 'ok'));
+    return res.status(created ? 201 : 200).json({ success: true, data });
+  };
+
+  router.get('/:id/documents/:documentId/annotations', async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    try {
+      const { listAnnotations } = await import('../../services/vault/vault-annotations.js');
+      return answer(res, await listAnnotations(pool, {
+        programId: String(req.params.id ?? ''), organizationId: orgId, documentId: String(req.params.documentId ?? ''),
+      }));
+    } catch (err) {
+      return annotationFailure(res, err, 'read');
+    }
+  });
+
+  router.get('/:id/documents/:documentId/text', async (req: Request, res: Response) => {
+    if (!resolveOrgId(req)) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    try {
+      const { readAnnotatableText } = await import('../../services/vault/vault-annotations.js');
+      return answer(res, await readAnnotatableText({
+        ...annotationActor(req), documentId: String(req.params.documentId ?? ''), from: req.query.from, length: req.query.length,
+      }));
+    } catch (err) {
+      if ((err as { code?: unknown })?.code === 'AUDIT_WRITE_FAILED') {
+        logger.error('vault text read not recorded', { err: err instanceof Error ? err.message : String(err) });
+        return res.status(500).json({ success: false, error: 'AUDIT_WRITE_FAILED',
+          message: 'The text was not shown because the read could not be recorded in the audit trail. Nothing was sent.' });
+      }
+      return annotationFailure(res, err, 'read');
+    }
+  });
+
+  router.post('/:id/documents/:documentId/annotations', requireEditorAccess, async (req: Request, res: Response) => {
+    if (!resolveOrgId(req)) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    try {
+      const { postAnnotation } = await import('../../services/vault/vault-annotations.js');
+      return answer(res, await postAnnotation({
+        ...annotationActor(req), documentId: String(req.params.documentId ?? ''), kind: body.kind, body: body.body, anchor: body.anchor,
+      }), true);
+    } catch (err) {
+      return annotationFailure(res, err, 'write');
+    }
+  });
+
+  router.post('/:id/annotations/:annotationId/replies', requireEditorAccess, async (req: Request, res: Response) => {
+    if (!resolveOrgId(req)) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    try {
+      const { replyToAnnotation } = await import('../../services/vault/vault-annotations.js');
+      return answer(res, await replyToAnnotation({
+        ...annotationActor(req), annotationId: String(req.params.annotationId ?? ''), body: (req.body ?? {}).body,
+      }), true);
+    } catch (err) {
+      return annotationFailure(res, err, 'write');
+    }
+  });
+
+  router.post('/:id/annotations/:annotationId/resolve', requireEditorAccess, async (req: Request, res: Response) => {
+    if (!resolveOrgId(req)) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    try {
+      const { resolveAnnotation } = await import('../../services/vault/vault-annotations.js');
+      return answer(res, await resolveAnnotation({
+        ...annotationActor(req), annotationId: String(req.params.annotationId ?? ''), note: body.note,
+        addressedInVersionId: body.addressedInVersionId,
+      }));
+    } catch (err) {
+      return annotationFailure(res, err, 'write');
+    }
+  });
+
+  router.post('/:id/annotations/:annotationId/retract', requireEditorAccess, async (req: Request, res: Response) => {
+    if (!resolveOrgId(req)) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    try {
+      const { retractAnnotation } = await import('../../services/vault/vault-annotations.js');
+      return answer(res, await retractAnnotation({
+        ...annotationActor(req), annotationId: String(req.params.annotationId ?? ''), reason: (req.body ?? {}).reason,
+      }));
+    } catch (err) {
+      return annotationFailure(res, err, 'write');
     }
   });
 

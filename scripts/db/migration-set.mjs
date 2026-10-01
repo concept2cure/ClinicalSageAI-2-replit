@@ -2951,6 +2951,14 @@ export const C2C_MIGRATION_FILES = [
      CASCADE from regulatory_programs and vault.documents. Above the pair so
      the sweep gives it row security. No DROP. */
   'migrations/20261001_vault_document_relationships.sql',
+  /* Review annotations on a Vault version (plan critique 15, D2/D5,
+     2026-10-01): public, org-keyed (Rule 1), posted-open and checked in SQL
+     (version, organisation, content hash, body and passage SHA-256 in code
+     points, page against page count), frozen words and anchor, write-once
+     outcome, author-only retraction, DELETE only by the owner once the version
+     is gone, no TRUNCATE. Above the pair so the sweep gives it row security.
+     No DROP. */
+  'migrations/20261001_vault_version_annotations.sql',
 
   // ── Which account an organisation's submissions go out under (2026-10-01,
   //    D7, founder decision) ───────────────────────────────────────────────

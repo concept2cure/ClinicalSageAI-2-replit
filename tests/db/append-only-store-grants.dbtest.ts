@@ -60,6 +60,28 @@ const STORES = [
   'public.doc_revisions',
   'public.concept2cure_signatures',
   'public.concept2cure_submission_snapshots',
+  // DP-66 (plan P1-52), 2026-10-01: stores the census found written by INSERT
+  // only, on every path (docs/evidence/D6/2026-10-01-tranche-4/DP-66-store-ceiling/).
+  'public.proof_audit_logs',
+  'public.coauthor_validation_history',
+  'public.embedding_audit_log',
+  'public.ai_provider_audit_log',
+  'ai.gateway_audit_log',
+  'public.credit_ledger',
+  'public.document_audit_trail',
+  'public.ectd_submission_status_history',
+  'public.specification_audit_log',
+  'public.stab_audit',
+  'public.ivdr_validation_parameter_history',
+  'public.ivdr_evidence_result_history',
+  'public.ivdr_cdx_status_history',
+  'regulatory_harmonization.export_job_audit_log',
+  // P1-24's domain-history stores, under the ceiling since the same day (DP-66).
+  'public.workflow_history',
+  'public.document_audit_logs',
+  'public.regulatory_audit_logs',
+  'public.c2c_ana_actions',
+  'public.authoring_signatures',
 ] as const;
 const WITHHELD = ['UPDATE', 'DELETE', 'TRUNCATE'] as const;
 /**

@@ -31,6 +31,7 @@ import { ConfirmSuggestedBar, useConfirmSuggested } from './VaultConfirmSuggeste
 import { VaultLibraryResults } from './VaultLibraryResults';
 import { VaultFixityCheck } from './VaultFixityCheck';
 import { VaultRelationships } from './VaultRelationships';
+import { VaultAnnotations } from './VaultAnnotations';
 import { downloadBlob, safeFileName } from '../download';
 import {
   EDITOR_TARGET_DOC_TYPES,
@@ -351,6 +352,8 @@ interface HistoryShape {
    * this organization's own row by id, or only says it is another's.
    */
   chain: { ok: boolean | null; rowsChecked: number; legacyRows: number; reason?: string; brokenAt?: { id?: string; row?: string } };
+  /** The server cut the history to its newest entries; older ones exist. */
+  truncated?: boolean;
 }
 
 /** A body without an entries list and a chain verdict is a failed read, not an empty history. */
@@ -410,6 +413,11 @@ function DocumentHistory({ projectId, documentUuid }: { projectId: string; docum
     body = (
       <>
         <ChainVerdict chain={st.data.chain} />
+        {st.data.truncated === true ? (
+          <div className="vd-d-idx" role="status">
+            Only the newest {st.data.entries.length} entries are shown. Older entries exist and are not shown here.
+          </div>
+        ) : null}
         <div className="vd-vers">
           {st.data.entries.map((e) => (
             <div key={e.id} className="vd-ver">
@@ -1889,6 +1897,14 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                       />
                     ) : null}
                     {projectId && sel.docId ? (
+                      <VaultAnnotations
+                        key={`annotations-${sel.docId}-${vaultEpoch}`}
+                        projectId={projectId}
+                        documentId={sel.docId}
+                        onChanged={() => setVaultEpoch((n) => n + 1)}
+                      />
+                    ) : null}
+                    {projectId && sel.docId ? (
                       <VaultRelationships
                         key={`relationships-${sel.docId}`}
                         projectId={projectId}
@@ -1920,6 +1936,12 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                       onUploadNewVersion={(file, currentId) => void uploadNewVersion(file, sel, currentId)}
                       uploading={uploading}
                       onLifecycleChanged={() => setVaultEpoch((n) => n + 1)}
+                    />
+                    <VaultAnnotations
+                      key={`annotations-${sel.docId}-${vaultEpoch}`}
+                      projectId={projectId}
+                      documentId={sel.docId}
+                      onChanged={() => setVaultEpoch((n) => n + 1)}
                     />
                     <VaultRelationships
                       key={`relationships-${sel.docId}`}

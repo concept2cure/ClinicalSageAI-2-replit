@@ -96,9 +96,16 @@ async function asOwnerRolledBack(sql: string, params: unknown[] = []): Promise<O
   }
 }
 
+/*
+ * A refusal: the trigger's, or, for the runtime role, its missing privilege.
+ * Since 2026-10-01 (DP-66) these stores are under the grant recipe's
+ * append-only ceiling (scripts/db/provision-app-role.mjs APPEND_ONLY_TABLES),
+ * so a runtime UPDATE or DELETE is refused 42501 before the trigger fires.
+ * The owner's statements still meet the trigger.
+ */
 const refused = (r: Outcome) => {
   expect(r.ok ? `applied (${r.rowCount} row(s))` : r.message, 'the change was applied').toMatch(
-    /IMMUTABILITY_VIOLATION/,
+    /IMMUTABILITY_VIOLATION|permission denied for table/,
   );
 };
 

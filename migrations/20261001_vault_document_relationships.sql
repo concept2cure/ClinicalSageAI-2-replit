@@ -1,5 +1,13 @@
 -- Vault document relationships (plan critique 15, row D2, 2026-10-01).
 --
+-- Amended in place 2026-10-01 (review annotations, docs/evidence/D2-VAULT-ANNOTATIONS/2026-10-01/):
+-- the delete guard admitted any DELETE by the table owner. A foreign key's
+-- cascade runs as the owner, so a runtime-role DELETE of a regulatory_programs
+-- row cascaded here and erased relationships while both versions survived.
+-- DELETE is now admitted to the owner only once either end's version is gone
+-- (the purge's cascade from vault.documents). Function body only; no table,
+-- constraint or trigger change, no DROP.
+--
 -- A Vault document names the documents that support it, that it references,
 -- or that it is based on: Veeva's document relationships, and the replacement
 -- for `parentDocumentId`, which VR-05 refused on upload because it took any
@@ -15,9 +23,10 @@
 --   Frozen:      id, organization_id, program_id, from_document_id,
 --                to_document_id, relationship_type, note, created_by, created_at.
 --   Write-once:  removed_at, removed_by, removal_reason (NULL → value only).
---   DELETE:      the table's owner only. A foreign key's cascade runs as the
---                owner, so a program or document the tenant purge removes takes
---                its relationships with it. No session setting admits a DELETE.
+--   DELETE:      the table's owner only, and only once either end's version is
+--                gone: the tenant purge deletes the versions and their
+--                relationships follow by cascade. No session setting admits a
+--                DELETE, and a program DELETE that leaves the versions is refused.
 --   TRUNCATE:    refused.
 --
 -- public, organization_id INTEGER NOT NULL (CLAUDE.md, Rule 1): the final
@@ -92,11 +101,14 @@ BEGIN
   LANGUAGE plpgsql
   AS $fn$
   BEGIN
-    -- Only the table's owner. A foreign key's ON DELETE CASCADE runs its
-    -- DELETE as the owner of this table, so the purge removing a program or
-    -- its documents takes their relationships with it; a runtime-role DELETE
-    -- is refused. Nothing a session can set changes current_user here.
-    IF current_user = (SELECT pg_get_userbyid(relowner) FROM pg_class WHERE oid = TG_RELID) THEN
+    -- The table's owner, once either end's version is gone: the purge's
+    -- cascade from vault.documents. A foreign key's cascade runs as the owner,
+    -- so the version check is what refuses a runtime-role DELETE of the program
+    -- cascading here while both versions survive. Nothing a session can set
+    -- changes current_user or the versions' existence.
+    IF current_user = (SELECT pg_get_userbyid(relowner) FROM pg_class WHERE oid = TG_RELID)
+       AND (NOT EXISTS (SELECT 1 FROM vault.documents x WHERE x.id = OLD.from_document_id)
+            OR NOT EXISTS (SELECT 1 FROM vault.documents x WHERE x.id = OLD.to_document_id)) THEN
       RETURN OLD;
     END IF;
     RAISE EXCEPTION 'IMMUTABILITY_VIOLATION: relationship % is recorded and cannot be deleted (21 CFR 11.10(c)). Remove it, with a reason, instead.', OLD.id

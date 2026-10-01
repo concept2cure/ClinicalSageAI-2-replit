@@ -6,6 +6,7 @@ import { createRun, helpers } from '../../lib/harness.mjs';
 import { createProgram, ingestPdf, makePdfBuffer, sha256 } from '../../lib/fixtures.mjs';
 import { requireApprover, requireSigner, signerCode } from '../../lib/credentials.mjs';
 import { runFilingAndCompareSteps } from './steps-filing-compare.mjs';
+import { runAnnotationSteps } from './steps-annotations.mjs';
 
 const run = await createRun({
   app: 'VAULT',
@@ -451,6 +452,7 @@ await step(
 );
 
 await runFilingAndCompareSteps({ step, state, stamp });
+await runAnnotationSteps({ step, state, stamp });
 
 const result = await run.finish();
 process.exit(result.counts.fail > 0 ? 1 : 0);

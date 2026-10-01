@@ -1,0 +1,225 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > the list (1) > lists what the server returns, open by default, with the summary, the three anchors and stale notes 286ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > the list (1) > says when nothing is open on any version 10ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > a list that could not be read (2) > a 500 says so and never reads as no open annotations 14ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > a list that could not be read (2) > a 200 that is not the expected shape says so too 12ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > posting (3) > claims a whole-document comment only once the server answered 201 48ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > posting (3) > a 409 shows the server message, keeps the form and claims nothing 35ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > posting (3) > a returned 401 is not a success either 30ms
+ × client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > passages in code points (4) > codePointRange converts UTF-16 offsets and refuses a split character or an empty range 9ms
+   → expected { charStart: 4, quote: 'quick' } to deeply equal { charStart: 3, quote: 'quick' }
+ × client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > passages in code points (4) > posts the selected passage at its absolute code-point offset with the hash as read 71ms
+   → expected "vi.fn()" to be called with arguments: [ 'POST', …(2) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   "POST",
++   "GET",
+    "/api/c2c/project-vault/11111111-1111-4111-8111-111111111111/documents/22222222-2222-4222-8222-222222222222/annotations",
+-   {
+-     "anchor": {
+-       "charStart": 3,
+-       "kind": "text",
+-       "quote": "quick",
+-       "textSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+-     },
+-     "body": "Too vague.",
+-     "kind": "comment",
+-   },
++   undefined,
+  ]
+
+  2nd vi.fn() call:
+
+  [
+-   "POST",
+-   "/api/c2c/project-vault/11111111-1111-4111-8111-111111111111/documents/22222222-2222-4222-8222-222222222222/annotations",
+-   {
+-     "anchor": {
+-       "charStart": 3,
+-       "kind": "text",
+-       "quote": "quick",
+-       "textSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+-     },
+-     "body": "Too vague.",
+-     "kind": "comment",
+-   },
++   "GET",
++   "/api/c2c/project-vault/11111111-1111-4111-8111-111111111111/documents/22222222-2222-4222-8222-222222222222/text?from=0&length=200000",
++   undefined,
+  ]
+
+  3rd vi.fn() call:
+
+@@ -1,11 +1,11 @@
+  [
+    "POST",
+    "/api/c2c/project-vault/11111111-1111-4111-8111-111111111111/documents/22222222-2222-4222-8222-222222222222/annotations",
+    {
+      "anchor": {
+-       "charStart": 3,
++       "charStart": 4,
+        "kind": "text",
+        "quote": "quick",
+        "textSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      },
+      "body": "Too vague.",
+
+  4th vi.fn() call:
+
+  [
+-   "POST",
++   "GET",
+    "/api/c2c/project-vault/11111111-1111-4111-8111-111111111111/documents/22222222-2222-4222-8222-222222222222/annotations",
+-   {
+-     "anchor": {
+-       "charStart": 3,
+-       "kind": "text",
+-       "quote": "quick",
+-       "textSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+-     },
+-     "body": "Too vague.",
+-     "kind": "comment",
+-   },
++   undefined,
+  ]
+
+
+Number of calls: 4
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > acting on an annotation (5) > offers Retract only on the actor’s own annotations and replies 60ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > acting on an annotation (5) > a 422 on resolve shows the server message and keeps the form 65ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > acting on an annotation (5) > a retraction is claimed after the 200, with its reason sent 58ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > acting on an annotation (5) > a reply is claimed after the 201, and its form closes 64ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > page anchors (6) > offers the page input when the text read gives a page count 46ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > page anchors (6) > does not offer it when the version has no recorded page count 30ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > openAnnotationsSentence (7) > says what was open, or that it could not be read 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > passages in code points (4) > codePointRange converts UTF-16 offsets and refuses a split character or an empty range
+AssertionError: expected { charStart: 4, quote: 'quick' } to deeply equal { charStart: 3, quote: 'quick' }
+
+- Expected
++ Received
+
+  {
+-   "charStart": 3,
++   "charStart": 4,
+    "quote": "quick",
+  }
+
+ ❯ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx:192:47
+    190| describe('passages in code points (4)', () => {
+    191|   it('codePointRange converts UTF-16 offsets and refuses a split chara…
+    192|     expect(codePointRange('x𝛼 quick', 4, 9)).toEqual({ charStart: 3, …
+       |                                               ^
+    193|     expect(codePointRange('x𝛼', 2, 3)).toBeNull();
+    194|     expect(codePointRange('abc', 1, 1)).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > passages in code points (4) > posts the selected passage at its absolute code-point offset with the hash as read
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'POST', …(2) ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+-   "POST",
++   "GET",
+    "/api/c2c/project-vault/11111111-1111-4111-8111-111111111111/documents/22222222-2222-4222-8222-222222222222/annotations",
+-   {
+-     "anchor": {
+-       "charStart": 3,
+-       "kind": "text",
+-       "quote": "quick",
+-       "textSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+-     },
+-     "body": "Too vague.",
+-     "kind": "comment",
+-   },
++   undefined,
+  ]
+
+  2nd vi.fn() call:
+
+  [
+-   "POST",
+-   "/api/c2c/project-vault/11111111-1111-4111-8111-111111111111/documents/22222222-2222-4222-8222-222222222222/annotations",
+-   {
+-     "anchor": {
+-       "charStart": 3,
+-       "kind": "text",
+-       "quote": "quick",
+-       "textSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+-     },
+-     "body": "Too vague.",
+-     "kind": "comment",
+-   },
++   "GET",
++   "/api/c2c/project-vault/11111111-1111-4111-8111-111111111111/documents/22222222-2222-4222-8222-222222222222/text?from=0&length=200000",
++   undefined,
+  ]
+
+  3rd vi.fn() call:
+
+@@ -1,11 +1,11 @@
+  [
+    "POST",
+    "/api/c2c/project-vault/11111111-1111-4111-8111-111111111111/documents/22222222-2222-4222-8222-222222222222/annotations",
+    {
+      "anchor": {
+-       "charStart": 3,
++       "charStart": 4,
+        "kind": "text",
+        "quote": "quick",
+        "textSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      },
+      "body": "Too vague.",
+
+  4th vi.fn() call:
+
+  [
+-   "POST",
++   "GET",
+    "/api/c2c/project-vault/11111111-1111-4111-8111-111111111111/documents/22222222-2222-4222-8222-222222222222/annotations",
+-   {
+-     "anchor": {
+-       "charStart": 3,
+-       "kind": "text",
+-       "quote": "quick",
+-       "textSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+-     },
+-     "body": "Too vague.",
+-     "kind": "comment",
+-   },
++   undefined,
+  ]
+
+
+Number of calls: 4
+
+ ❯ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx:217:24
+    215|     fireEvent.click(within(form).getByTestId('vault-annotations-post')…
+    216|     await screen.findByRole('status');
+    217|     expect(apiRequest).toHaveBeenCalledWith('POST', ANN_URL,
+       |                        ^
+    218|       { kind: 'comment', body: 'Too vague.', anchor: { kind: 'text', q…
+    219|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 14 passed (16)
+   Start at  21:41:22
+   Duration  2.20s (transform 353ms, setup 194ms, import 368ms, tests 844ms, environment 603ms)
+
