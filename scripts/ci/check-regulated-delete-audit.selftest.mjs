@@ -31,7 +31,12 @@
  *   - an audited delete in one handler and an unaudited one in a handler far
  *     below it: the audit call covers its own window, not the file;
  *   - a delete AFTER a governedQmsWrite(...) call closes: the governed span is
- *     the helper call's argument list, not the rest of the file.
+ *     the helper call's argument list, not the rest of the file;
+ *   - an audit row that names no actor (2026-10-01, plan P1-30, DP-33): the
+ *     authoring UAT delete as it stood before 73153832 (auditService.logAction
+ *     with no user, which this gate accepted), a chained row with
+ *     `userId: undefined`, an audit_events INSERT with no user_id column, and a
+ *     writeMutation with null in the actor's position.
  *
  * Clean shapes, each the real writer the gate recognises: audit_events INSERT
  * (ind.ts), writeChainedAuditRow (authoring, 2026-10-01), recordCoauthorDocumentEvent
@@ -50,9 +55,9 @@
  *
  * Not asserted, because the gate does not do it today (pinning these would make
  * the limitation a requirement):
- *   - a commented-out audit CALL (`// await writeMutation(...)`) or a comment
- *     containing `auditService.` with the dot counts as an audit — AUDIT_RE is
- *     tested against comment lines too;
+ *   - a commented-out audit CALL (`// await writeMutation(..., userId, ...)`)
+ *     that names an actor counts as an audit — AUDIT_RE and the call scan are
+ *     applied to comment lines too;
  *   - routes outside server/routes/, and .js files, are not scanned;
  *   - an allow-list entry whose file no longer has a violation is not reported
  *     stale, and a non-string truthy entry (`true`) suppresses without a reason.
@@ -310,6 +315,84 @@ ${filler(30, 'g')}
 });
 `;
 
+/* P1-30 second half (DP-33, 2026-10-01): an audit row an inspector cannot
+   attribute is not an audit trail entry (11.10(e) asks for the operator). The
+   shapes below each write a row beside the delete that names no actor. */
+
+/** authoring.router.ts before 73153832, verbatim in shape: the UAT clean-up
+    delete logged through auditService.logAction with no user, and the gate
+    accepted it. */
+const AUTHORING_UAT_ACTORLESS = `router.delete('/docs/:docId', async (req, res) => {
+  try {
+    const doc = (
+      await getPool().query(
+        \`SELECT id as doc_id, product_code FROM authoring_documents WHERE id = $1\`,
+        [req.params.docId]
+      )
+    ).rows[0];
+    if (!doc) return res.status(404).json({ error: 'document not found' });
+    await auditService.logAction({
+      action: 'authoring_document.deleted',
+      resourceType: 'authoring_document',
+      resourceId: String(req.params.docId),
+      details: { productCode: doc.product_code, via: 'admin-uat-cleanup' },
+    });
+    await getPool().query(\`DELETE FROM authoring_documents WHERE id = $1\`, [req.params.docId]);
+    res.json({ ok: true, deleted: req.params.docId });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete document' });
+  }
+});
+`;
+
+/** The chained writer, with the actor key present and empty. */
+const CHAINED_UNDEFINED_ACTOR = `async function governedDelete(client, req, docId, tenantId, reason) {
+  await client.query('DELETE FROM authoring_documents WHERE id = $1 AND tenant_id = $2', [docId, tenantId]);
+  await writeChainedAuditRow(client, {
+    tenantId,
+    userId: undefined,
+    action: 'authoring.document.delete',
+    resourceType: 'authoring_document',
+    resourceId: docId,
+    details: { reason },
+  });
+  return { kind: 'deleted' };
+}
+`;
+
+/** The IND row with no user_id column. */
+const IND_NO_ACTOR_COLUMN = `router.delete('/applications/:id', async (req, res) => {
+  const deletedId = await transaction(async (client: any) => {
+    const del = await client.query('DELETE FROM ind_applications WHERE id = $1 AND organization_id = $2 RETURNING id', [id, organizationId]);
+    if (!del.rows.length) throw new Error('IND application not found');
+    await client.query(
+      \`INSERT INTO audit_events
+         (organization_id, event_type, entity_type, entity_id, reason, created_at)
+       VALUES ($1, 'ind_application.deleted', 'ind_application', $2, $3, NOW())\`,
+      [app.organization_id, Number(id), 'IND application deleted'],
+    );
+    return del.rows[0].id;
+  });
+  res.json({ success: true, deletedId });
+});
+`;
+
+/** writeMutation with null in the actor's position. */
+const WRITE_MUTATION_NULL_ACTOR = `router.delete('/:id/sections/:key/evidence/:evId', async (req, res) => {
+  await writeMutation(
+    'resolve',
+    { target: \`section:\${id}:\${key}\`, reason: 'evidence unlinked', payload: { evidenceId: evId } },
+    null,
+    orgId,
+    'api',
+    'documents',
+    client,
+  );
+  await client.query(\`DELETE FROM c2c_document_section_evidence WHERE id = $1\`, [evId]);
+  return res.status(204).send();
+});
+`;
+
 /* ------------------------------------------------------------------- cases */
 
 const REGULATED = [
@@ -472,6 +555,35 @@ const cases = [
       }
       return errs;
     },
+  },
+
+  {
+    name: 'FAILS on the DP-33 UAT delete: an auditService.logAction row that names no user is not attributable',
+    files: { 'authoring.router.ts': AUTHORING_UAT_ACTORLESS },
+    expectExit: 1,
+    expectIn: [
+      'FAIL — 1 unaudited',
+      site('authoring.router.ts', AUTHORING_UAT_ACTORLESS, 'DELETE FROM authoring_documents WHERE id = $1`'),
+      `the audit call at line ${lineOf(AUTHORING_UAT_ACTORLESS, 'auditService.logAction')} names no actor`,
+    ],
+  },
+  {
+    name: 'FAILS when the actor key is there and empty (userId: undefined)',
+    files: { 'authoring.router.ts': CHAINED_UNDEFINED_ACTOR },
+    expectExit: 1,
+    expectIn: ['FAIL — 1 unaudited', site('authoring.router.ts', CHAINED_UNDEFINED_ACTOR, 'DELETE FROM authoring_documents'), 'names no actor'],
+  },
+  {
+    name: 'FAILS on an audit_events INSERT with no user_id column',
+    files: { 'ind.ts': IND_NO_ACTOR_COLUMN },
+    expectExit: 1,
+    expectIn: ['FAIL — 1 unaudited', site('ind.ts', IND_NO_ACTOR_COLUMN, 'DELETE FROM ind_applications'), 'names no actor'],
+  },
+  {
+    name: "FAILS on writeMutation with null in the actor's position",
+    files: { 'c2c/documents.ts': WRITE_MUTATION_NULL_ACTOR },
+    expectExit: 1,
+    expectIn: ['FAIL — 1 unaudited', site('c2c/documents.ts', WRITE_MUTATION_NULL_ACTOR, 'DELETE FROM c2c_document_section_evidence'), 'names no actor'],
   },
 
   /* --------------------------------------------------------- ALLOW-LIST - */
