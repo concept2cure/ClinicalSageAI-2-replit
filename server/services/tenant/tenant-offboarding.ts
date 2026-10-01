@@ -715,6 +715,15 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
      Position is therefore free. */
   'assumption_records',
   'decision_records',
+  /* The lifecycle log of those governed decisions: every review, approval,
+     rejection and escalation, with the actor, reason and notes. The same
+     customer content as decision_records, one row per state change. A leaf
+     since 2026-09-28: its only FK is to organizations (which a purge updates,
+     never deletes), so with no cascade path nothing but this list reaches it.
+     It joined the deploy set that day and ci:purge-coverage first ran over it
+     on 2026-10-01 (CI run 12751), as the one new org-keyed table the purge
+     could not reach. */
+  'governed_decision_transitions',
   /* The CMC workflow subsystem. All five are org-keyed with organization_id
      NOT NULL, so every row belongs to exactly one tenant — there is no
      platform-template population here for a purge to spare. What they hold is

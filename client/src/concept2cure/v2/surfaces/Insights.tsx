@@ -808,9 +808,11 @@ function RODashboard({ dashboard, tier, onRun }: { dashboard: DashboardData; tie
  *  that is already final (RUN_ALREADY_FINAL: its seal stands); a 403 is a role
  *  the server does not let finalize. Null when the refusal is none of these. */
 function finalizeRefusalNote(status: unknown, payload: unknown): string | null {
-  const p = (payload ?? {}) as { reasons?: unknown; error?: { code?: unknown; message?: unknown } };
+  const p = (payload ?? {}) as { reasons?: unknown; error?: { code?: unknown } };
   if (status === 409 && p.error?.code === 'RUN_ALREADY_FINAL') {
-    return `Already sealed — ${typeof p.error.message === 'string' ? p.error.message : 'this run was finalized earlier.'}`;
+    // The message goes through the canonical reader, which keeps infrastructure
+    // text and enum tokens off the screen (ci:error-envelope).
+    return `Already sealed — ${serverMessage(payload) ?? 'this run was finalized earlier.'}`;
   }
   if (status === 409 && Array.isArray(p.reasons)) return `Not sealed — held below final: ${p.reasons.join('; ')}`;
   if (status === 403) return 'Not sealed — finalizing a report is for organisation owners, admins and managers.';
