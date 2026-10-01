@@ -43,6 +43,13 @@ export interface FiledLeaf {
    *  filed before 2026-09-29 (W5/D7); such a leaf cannot be acted on. */
   leafId?: string;
   backbone?: string;
+  /**
+   * md5 of the bytes the packager was HANDED, when it changed them (PDF/A
+   * normalization). The next sequence's "unchanged" decision compares against
+   * this, since the assemble route computes its md5 before the packager runs;
+   * `md5` is the checksum of what shipped. Absent when nothing was converted.
+   */
+  sourceMd5?: string;
 }
 
 /** One sequence this package actually transmitted. Append-only. */
@@ -60,6 +67,10 @@ export interface FiledSequence {
 
 const SEQUENCE_RE = /^\d{4}$/;
 
+/** Fields a filed leaf MAY carry, each a string when present. A field of any
+ *  other type makes the whole entry unreadable, like a missing required one. */
+const OPTIONAL_STRING_FIELDS = ['leafKey', 'leafId', 'backbone', 'sourceMd5'] as const;
+
 /**
  * Whether a value is a readable filed-leaf record. Exported because the WRITER
  * must apply it too: a manifest that only the reader rejects is written to the
@@ -74,9 +85,7 @@ export function isFiledLeaf(v: unknown): v is FiledLeaf {
     typeof l.fileName === 'string' && l.fileName.length > 0 &&
     typeof l.href === 'string' &&
     typeof l.md5 === 'string' &&
-    (l.leafKey === undefined || typeof l.leafKey === 'string') &&
-    (l.leafId === undefined || typeof l.leafId === 'string') &&
-    (l.backbone === undefined || typeof l.backbone === 'string')
+    OPTIONAL_STRING_FIELDS.every((f) => l[f] === undefined || typeof l[f] === 'string')
   );
 }
 
@@ -133,6 +142,7 @@ export function foldFiledState(filed: readonly FiledSequence[]): PriorLeaf[] {
         ctdSection: leaf.ctdSection,
         fileName: leaf.fileName,
         md5: leaf.md5,
+        ...(leaf.sourceMd5 ? { sourceMd5: leaf.sourceMd5 } : {}),
         href: leaf.href,
         title: leaf.title,
         operation: leaf.operation,

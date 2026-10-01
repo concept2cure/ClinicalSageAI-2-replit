@@ -95,6 +95,15 @@ describe('foldFiledState', () => {
     expect(fold.map((f) => f.fileName)).toEqual(['clinical-overview.pdf']);
   });
 
+  it('carries the pre-normalization digest into the prior state, and treats a malformed one as unreadable', () => {
+    const filed: FiledSequence = {
+      ...SEQ_0000, leaves: [leaf('2.5', 'clinical-overview.pdf', 'gs-output', { sourceMd5: 'rendered' })],
+    };
+    expect(foldFiledState([filed])[0]).toMatchObject({ md5: 'gs-output', sourceMd5: 'rendered' });
+    const bad = { ...SEQ_0000, leaves: [leaf('2.5', 'clinical-overview.pdf', 'm', { sourceMd5: 42 })] };
+    expect(readFiledSequences({ filedSequences: [bad] })).toEqual([]);
+  });
+
   it('folds in sequence order however the history is ordered', () => {
     const seq1: FiledSequence = { ...SEQ_0000, sequence: '0001', leaves: [leaf('2.5', 'clinical-overview.pdf', 'md5-co-v2')] };
     expect(foldFiledState([seq1, SEQ_0000]).find((f) => f.fileName === 'clinical-overview.pdf')!.md5).toBe('md5-co-v2');
