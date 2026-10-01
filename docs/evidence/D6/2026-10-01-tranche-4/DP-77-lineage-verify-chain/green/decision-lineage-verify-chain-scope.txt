@@ -1,0 +1,28 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/verify-chain (DP-77) > an anchor that cannot be read is no verdict (503 UNVERIFIABLE)
+{
+  "timestamp": "2026-10-01T21:10:27.297Z",
+  "level": "error",
+  "message": "[decision-lineage-api] chain verification could not run",
+  "context": {
+    "scope": "organization",
+    "reason": "the chain head could not be checked"
+  }
+}
+
+ ✓ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/verify-chain (DP-77) > a member gets their own organisation's chain verdict, and the estate verifier does not run 25ms
+ ✓ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/verify-chain (DP-77) > a break in the member's chain is reported, and another organisation's break is not named 6ms
+ ✓ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/verify-chain (DP-77) > an anchor that cannot be read is no verdict (503 UNVERIFIABLE) 5ms
+ ✓ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/verify-chain (DP-77) > a member with no organisation is refused, and nothing runs 4ms
+ ✓ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/verify-chain (DP-77) > control: a platform administrator gets the estate verdict 6ms
+ ✓ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/compliance-report (DP-77) > a member's report states their organisation's chain, and the estate verifier does not run 4ms
+ ✓ server/routes/__tests__/decision-lineage-verify-chain-scope.test.ts > GET /api/decision-lineage/compliance-report (DP-77) > a member with no organisation gets no report across every organisation 4ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  21:10:26
+   Duration  662ms (transform 171ms, setup 105ms, import 217ms, tests 58ms, environment 0ms)
+
