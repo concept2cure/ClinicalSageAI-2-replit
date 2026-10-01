@@ -68,11 +68,19 @@ const { TenantAccessError } = vi.hoisted(() => ({
   },
 }));
 
-const ownership = vi.hoisted(() => ({ check: vi.fn(async () => true) }));
+const ownership = vi.hoisted(() => ({ check: vi.fn(async (_programId: string, _orgId: number) => true) }));
 // The tool proves program ownership through the canonical guard (ledger L195);
 // these tests exercise what happens after it answers, so it answers yes unless a
 // case says otherwise.
-vi.mock('../../../routes/innovation-routes', () => ({ programBelongsToOrg: ownership.check }));
+// The one program check (server/services/c2c/program-access.ts), answered by the test.
+vi.mock('../../c2c/program-access', async importOriginal => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  programInOrganization: (_db: unknown, programId: string, orgId: number) => ownership.check(programId, orgId),
+}));
+vi.mock('../../c2c/program-access.js', async importOriginal => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  programInOrganization: (_db: unknown, programId: string, orgId: number) => ownership.check(programId, orgId),
+}));
 vi.mock('../../q-sub/q-sub.service', () => ({
   createQSubmission: (...a: any[]) => (svc.createQSubmission as any)(...a),
   setCommitmentRolledIn: (...a: any[]) => (svc.setCommitmentRolledIn as any)(...a),
@@ -84,16 +92,18 @@ vi.mock('../../../shared/schema/q-sub', () => ({
 }));
 vi.mock('../../auditService', () => ({ default: audit }));
 const { dbMockFactory } = vi.hoisted(() => ({
-  dbMockFactory: () => ({
-    pool: {
+  dbMockFactory: () => {
+    const pool = {
       query: vi.fn(async (sql: string) => {
         if (sql.includes('SELECT id, section_number')) {
           return { rows: [{ id: 1, section_number: '6.0', section_title: 'SE', status: 'todo' }] };
         }
         return { rows: [] };
       }),
-    },
-  }),
+    };
+    // getPool: the program check resolves its connection through it.
+    return { pool, getPool: () => pool };
+  },
 }));
 // The handler imports '../../db' from its own location
 // (server/services/ana-ri/mdx-command-handlers.ts), which resolves to

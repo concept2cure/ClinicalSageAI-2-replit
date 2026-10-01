@@ -62,6 +62,7 @@ import {
   isFolderInView,
   folderLabel,
 } from './vault-filing.service.js';
+import { programInOrganization } from '../c2c/program-access';
 
 const logger = createScopedLogger('vault-ingest');
 
@@ -209,11 +210,7 @@ async function admitVaultDocument(
       message: 'An authenticated organization context is required to ingest documents.' };
   }
   try {
-    const owns = await pool.query(
-        `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-      [args.programId, orgId],
-    );
-    if (owns.rowCount === 0) {
+    if (!(await programInOrganization(pool, args.programId, orgId))) {
       logger.warn('Vault ingest denied: program not owned by caller organization', {
         programId: args.programId,
         orgId,

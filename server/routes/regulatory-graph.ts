@@ -14,7 +14,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { and, eq } from 'drizzle-orm';
 
-import { db } from '../db';
+import { db, pool } from '../db';
 import { evidenceClaims } from '../../shared/schema';
 import { authenticateToken } from '../middleware/auth';
 import {
@@ -34,7 +34,6 @@ import {
   type StalenessReasonCode,
 } from '../services/regulatory-graph/defense-packet-staleness.service';
 import { defensePackets } from '../../shared/schema/defense-packets';
-import { regulatoryPrograms } from '../../shared/schema/programs';
 import {
   getSimulationRun,
   listProgramSimulations,
@@ -68,6 +67,7 @@ import {
 } from '../services/living-record/reconciliation-engine';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
+import { programInOrganization } from '../services/c2c/program-access';
 
 const router = Router();
 
@@ -389,12 +389,7 @@ async function requireUuidProgramAccess(
     res.status(403).json({ error: 'Organization context required' });
     return;
   }
-  const [row] = await db
-    .select({ id: regulatoryPrograms.id })
-    .from(regulatoryPrograms)
-    .where(and(eq(regulatoryPrograms.id, programId), eq(regulatoryPrograms.organizationId, orgId)))
-    .limit(1);
-  if (!row) {
+    if (!(await programInOrganization(pool, programId, orgId))) {
     res.status(403).json({ error: 'Access denied' });
     return;
   }
