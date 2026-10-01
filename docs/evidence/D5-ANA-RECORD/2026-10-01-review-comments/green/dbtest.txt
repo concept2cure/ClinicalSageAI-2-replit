@@ -1,0 +1,8 @@
+ ✓ tests/db/review-comments-record.dbtest.ts > posting > commits the comment with a chained row carrying its words and their sha256 147ms
+ ✓ tests/db/review-comments-record.dbtest.ts > posting > writes neither when the chained row cannot be written 58ms
+ ✓ tests/db/review-comments-record.dbtest.ts > posting > refuses another tenant's caller on this thread 23ms
+ ✓ tests/db/review-comments-record.dbtest.ts > the words are fixed > PATCH is refused with COMMENT_TEXT_FIXED, and the words are unchanged 43ms
+ ✓ tests/db/review-comments-record.dbtest.ts > the words are fixed > the database refuses a rewrite, a direct delete and a truncate from the owner 53ms
+ ✓ tests/db/review-comments-record.dbtest.ts > retraction > hides the comment, keeps its words, and chains who retracted it and why 91ms
+ ✓ tests/db/review-comments-record.dbtest.ts > a comment goes only with what it belongs to > deleting its thread removes it (the cascade), and the chained rows remain 55ms
+      Tests  7 passed (7)

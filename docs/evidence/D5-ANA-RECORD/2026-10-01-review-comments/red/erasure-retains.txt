@@ -1,0 +1,5 @@
+# ana-governed-command-signature.pglite.integration.test.ts with server/services/ana-ri/command-executor.ts as at HEAD (the erasure overwrites review comments)
+ × server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data > an absent table is reported as not applicable, not as zero, and the erasure completes 60ms
+ × server/services/ana-ri/__tests__/ana-governed-command-signature.pglite.integration.test.ts > erase_personal_data records the reason the person stated, and keeps the review record > retains the subject’s review comments, word for word, outside its scope (D5, 2026-10-01) 39ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 19 passed (21)
