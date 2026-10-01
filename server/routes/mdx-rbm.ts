@@ -41,10 +41,15 @@
  *                                                    from the governing RACT)
  *     PATCH /api/mdx/rbm-monitoring-plans/:id    (409 on an approved plan)
  *     POST  /api/mdx/rbm-monitoring-plans/:id/approve  (e-signed; archives the
- *                                                       version it supersedes)
+ *                                                       version it supersedes and
+ *                                                       moves its open actions)
  *     POST  /api/mdx/rbm-monitoring-plans/:id/amend    (opens the next version)
  *     GET   /api/mdx/rbm-monitoring-actions?plan_id=&program_id=
- *     POST  /api/mdx/rbm-monitoring-actions     (draft plans only)  PATCH .../:id
+ *     POST  /api/mdx/rbm-monitoring-actions     (logged against the plan in force:
+ *                                                the active plan, or a study's first
+ *                                                draft; 409 plan_superseded /
+ *                                                amendment_not_in_force otherwise)
+ *                                                PATCH .../:id
  *
  *   Program summary
  *     GET   /api/mdx/rbm-summary/:programId
@@ -869,7 +874,11 @@ router.patch('/rbm-signals/:id', async (req, res) => {
 
 /**
  * Record a signal investigation and, optionally, the follow-up action it
- * raises — in ONE transaction.
+ * raises — in ONE transaction. The action goes through createAction, so it is
+ * logged against the plan in force; when that refuses it (a superseded version
+ * or an amendment not yet in force) the notes are still saved and the response
+ * carries `action: null` with `actionRefused` { reason, message,
+ * governingPlanId } — never a created action.
  *
  * Doing this as two calls (PATCH the signal, then POST the action) can commit
  * the disposition and then fail to create the action, leaving a signal marked
@@ -914,28 +923,30 @@ router.post('/rbm-signals/:id/investigate', async (req, res) => {
     }
 
     let action = null;
+    let actionRefused: { reason: string; message: string; governingPlanId: number | null } | null = null;
     if (p.action) {
-      const own = await client.query(
-        `SELECT 1 FROM rbm_monitoring_plans WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
-        [p.action.planId, orgId],
-      );
-      if (own.rows.length === 0) {
-        // Fail the whole thing: the investigation must not land without the
-        // action it committed to.
+      // Same rule as POST /rbm-monitoring-actions and the AnA tool: one
+      // implementation, run inside this transaction.
+      const out = await createAction(client, orgId, { ...p.action, signalId: id });
+      if (!out.created && out.reason === 'plan_not_found') {
+        // A plan that is not this tenant's is a bad request, not a refusal:
+        // fail the whole thing rather than land the investigation alone.
         await client.query('ROLLBACK');
         return notFoundInTenant(res, 'Monitoring plan');
       }
-      const { rows } = await client.query(
-        `INSERT INTO rbm_monitoring_actions (organization_id, plan_id, signal_id, action_type, description, priority, owner, due_date, status)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'open') RETURNING *`,
-        [orgId, p.action.planId, id, p.action.actionType ?? 'issue', p.action.description,
-          p.action.priority ?? 'medium', p.action.owner ?? null, p.action.dueDate ?? null],
-      );
-      action = rows[0];
+      if (out.created) {
+        action = out.action;
+      } else {
+        // The plan exists but does not take new actions (superseded, or an
+        // amendment not yet in force). The investigation notes are still the
+        // record of what was found, so they are saved; the response says the
+        // action was NOT raised and names the plan in force.
+        actionRefused = { reason: out.reason, message: out.message, governingPlanId: out.governingPlanId };
+      }
     }
 
     await client.query('COMMIT');
-    return ok(res, { signal: sigRows[0], action });
+    return ok(res, { signal: sigRows[0], action, actionCreated: action != null, actionRefused });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});
     return serverError(res, log, 'investigate-signal', err);
@@ -1367,8 +1378,9 @@ router.patch('/rbm-monitoring-plans/:id', async (req, res) => {
 });
 
 /**
- * Open a versioned amendment to an approved monitoring plan — a new draft
- * carrying the unfinished actions forward, leaving the signed version intact.
+ * Open a versioned amendment to an approved monitoring plan — a new draft of
+ * the plan content, leaving the signed version intact. No actions are copied:
+ * they stay logged against the plan in force and move on approval.
  * See amendMonitoringPlan for why revision is a new version, not an edit.
  *
  * Opening an amendment is not itself a signed act, so it takes a reason for
@@ -1398,10 +1410,7 @@ router.post('/rbm-monitoring-plans/:id/amend', async (req, res) => {
         : 'Only an approved monitoring plan can be amended. This one is still a draft, so edit it directly.');
     }
     await client.query('COMMIT');
-    return created(res, { ...result.plan, actions: result.actions }, {
-      supersedes: result.supersedes,
-      actionsCopied: result.actions?.length ?? 0,
-    });
+    return created(res, result.plan, { supersedes: result.supersedes });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});
     return serverError(res, log, 'amend-plan', err);
@@ -1454,14 +1463,17 @@ router.post('/rbm-monitoring-actions', async (req, res) => {
   if (orgId === null) return orgRequired(res);
   const parsed = createActionBody.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
-  // One implementation with the AnA tool: createAction verifies the plan is
-  // this org's AND still a draft. An approved plan's actions are what its
-  // signature attests to, so a new one goes on an amendment (#1166).
+  // One implementation with the AnA tool and signal investigation:
+  // createAction verifies the plan is this org's AND the plan in force. A
+  // superseded version or an amendment not yet approved is a 409 naming the
+  // plan in force (governingPlanId).
   try {
     const out = await createAction(pool, orgId, parsed.data);
     if (!out.created) {
       if (out.reason === 'plan_not_found') return notFoundInTenant(res, 'Monitoring plan');
-      return clientError(res, 409, out.message, { reason: out.reason, planStatus: out.planStatus });
+      return clientError(res, 409, out.message, {
+        reason: out.reason, planStatus: out.planStatus, governingPlanId: out.governingPlanId,
+      });
     }
     return created(res, out.action);
   } catch (err) { return serverError(res, log, 'create-action', err); }
