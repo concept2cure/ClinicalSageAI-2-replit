@@ -61,7 +61,7 @@ import {
   type CeremonySignMeaning,
 } from '../services/part11/governed-signature-ceremony';
 import { requireGovernedReason } from './governed-reason';
-import { projectsInOrg, submissionInProject } from '../services/report-os/ownership';
+import { projectsInOrg, submissionInProject, workspaceIsOrganisations, WORKSPACE_NOT_IN_ORGANIZATION } from '../services/report-os/ownership';
 import { PREDICTION_NOT_A_RUN, isPredictionFamily } from '../services/report-os/prediction/report-types';
 import { REPORT_FINALIZE_ROLES } from '@shared/constants/permissions';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
@@ -1235,6 +1235,7 @@ router.post('/program-groups', async (req: Request, res: Response) => {
     }
     const { clientWorkspaceId, name, description, projectIds, metadata } = parsed.data;
     const createdBy = getUserId(req);
+    if (!(await workspaceIsOrganisations(orgId, clientWorkspaceId))) return res.status(403).json(WORKSPACE_NOT_IN_ORGANIZATION);
 
     const uniqueProjectIds = [...new Set(projectIds)];
     const owned = await projectsInOrg(orgId, uniqueProjectIds);
@@ -1427,6 +1428,7 @@ router.post('/runs', async (req: Request, res: Response) => {
     const { clientWorkspaceId, scopeType, scopeId, reportTypeId, registryId, submissionType } =
       parsed.data;
     const requestedBy = getUserId(req);
+    if (!(await workspaceIsOrganisations(orgId, clientWorkspaceId))) return res.status(403).json(WORKSPACE_NOT_IN_ORGANIZATION);
 
     const type = await db
       .select()

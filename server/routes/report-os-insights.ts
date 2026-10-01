@@ -17,7 +17,6 @@ import { authMiddleware } from '../auth';
 import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 import { authedOrgId } from '../utils/authedOrgId';
 import { authedUserId } from '../utils/authedActor';
-import { FeatureToggleService } from '../services/featureToggleService';
 import {
   summarizeQuality,
   freshnessRollup,
@@ -30,7 +29,7 @@ import {
 } from '../services/report-os/prediction/assembler';
 import type { PredictionInput } from '../services/report-os/prediction/types';
 import { runDeficiencyRiskForDraft } from '../services/report-os/prediction/model-adapters';
-import { projectsInOrg, submissionInProject } from '../services/report-os/ownership';
+import { projectsInOrg, submissionInProject, workspaceIsOrganisations, WORKSPACE_NOT_IN_ORGANIZATION } from '../services/report-os/ownership';
 import { requireReportEntitlement } from '../services/report-os/entitlement-map';
 import { REPORT_TYPE_SEED } from '../services/report-os/taxonomy';
 import {
@@ -404,11 +403,9 @@ router.post('/subscriptions', async (req: Request, res: Response) => {
     }
 
     // A workspace id in the body is a claim: it is stored only when it is this
-    // organisation's (IAM-15's P1-7b rule; DP-59). A foreign or unknown id is
-    // refused, the same answer either way.
-    const workspaceId = parsed.data.clientWorkspaceId;
-    if (workspaceId != null && !(await FeatureToggleService.workspaceInOrganization(workspaceId, organizationId))) {
-      return res.status(403).json({ error: 'That client workspace is not in your organization.', code: 'WORKSPACE_NOT_IN_ORGANIZATION' });
+    // organisation's (services/report-os/ownership.ts).
+    if (!(await workspaceIsOrganisations(organizationId, parsed.data.clientWorkspaceId))) {
+      return res.status(403).json(WORKSPACE_NOT_IN_ORGANIZATION);
     }
 
     // Org and creator are bound from the session, never the body.
