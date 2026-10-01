@@ -11,8 +11,9 @@
  * runtime issues tsc can't see (hook-order violations, data-shape mismatches,
  * missing icon refs) fail the build.
  *
- * Everything here is in-memory (PATHWAY_TABS_DATA + the dossierStore +
- * CORRESP_DETAIL); fetch is mocked to 404 only as a safety net. Since the
+ * Everything here is in-memory (PATHWAY_TABS_DATA + the dossierStore); fetch
+ * is mocked to 404 only as a safety net, and per case where a pane needs a live
+ * read (the drafter reads its letter from the correspondence route). Since the
  * data-honesty pass, fixtures are reachable ONLY in explicit sample mode —
  * with sample off and no live data the panes render DataGate's honest
  * loading / error / empty states. Tests that need populated panes cross the
@@ -160,23 +161,10 @@ describe('MDX pathway panes smoke', () => {
     }
   });
 
-  it('AnaDrafter renders a drafted response (rta-3)', () => {
-    const corr = PATHWAY_TABS_DATA.k510.correspondence.find((c) => c.id === 'rta-3')!;
-    const { container } = renderWithClient(
-      <AnaDrafter correspondence={corr} pathway="k510" onClose={onClose} onOpenSection={onOpenSection} />,
-    );
-    expect(container.querySelector('.ana-drafter')).toBeTruthy();
-    assertNoReactErrors();
-  });
-
-  it('AnaDrafter renders an unstarted response (rta-2)', () => {
-    const corr = PATHWAY_TABS_DATA.k510.correspondence.find((c) => c.id === 'rta-2')!;
-    const { container } = renderWithClient(
-      <AnaDrafter correspondence={corr} pathway="k510" onClose={onClose} onOpenSection={onOpenSection} />,
-    );
-    expect(container.querySelector('.drafter-unstarted')).toBeTruthy();
-    assertNoReactErrors();
-  });
+  /* The two cases here mounted AnaDrafter on fixture letters rta-3 and rta-2
+     from PATHWAY_TABS_DATA. Those letters were invented agency correspondence
+     and are deleted; the drafter now reads a live letter, and the
+     operational-flows block below mounts it on one. */
 
   // The pathway surfaces wrap their existing content as the Workspace tab.
   it('K510Surface mounts the pathway tab bar', () => {
@@ -404,38 +392,42 @@ describe('pathway panes — operational flows', () => {
     assertNoReactErrors();
   });
 
-  it('AnaDrafter fails closed on an unstarted item — it never authors a response itself', async () => {
-    /* This test used to expect a draft to APPEAR here. That draft was
-       fabricated in the browser — templated prose stamped `generated_by:
-       'AnA'` with four invented sign-off reviewers, no request ever made.
-       The fix made Generate adopt a persisted AnA draft or refuse with the
-       reason; for an unstarted letter with no persisted draft, refusal is
-       the only honest outcome. */
-    const corr = PATHWAY_TABS_DATA.k510.correspondence.find((c) => c.id === 'rta-2')!;
-    const { container } = renderWithClient(
-      <AnaDrafter correspondence={corr} pathway="k510" onClose={onClose} onOpenSection={onOpenSection} />,
-    );
-    expect(container.querySelector('.drafter-unstarted')).toBeTruthy();
-    const cta = container.querySelector('.du-cta') as HTMLElement | null;
-    expect(cta).toBeTruthy();
-    fireEvent.click(cta!); // "Generate draft"
-    await waitFor(() => expect(container.querySelector('.du-error')).toBeTruthy());
-    expect(container.querySelector('.du-error')!.textContent).toContain('cannot draft one');
-    // Nothing was authored: no drafted body, no invented reviewer roster.
-    expect(container.querySelector('.dr-body')).toBeNull();
-    assertNoReactErrors();
-  });
+  /* These two cases drove the drafter with fixture letters: rta-2 (no draft —
+     Generate refused) and rta-3 (a "persisted AnA draft" — adopted). The
+     persisted draft existed only in the fixture; no store holds per-issue
+     response prose for a letter, so there is nothing to adopt. The drafter
+     now reads the tenant's letter and hands drafting to AnA with that
+     letter's real text and issues. */
+  function serveLetter() {
+    const body = {
+      data: { id: 'live-1', sender: 'FDA CDRH', source_channel: 'CDRH Portal', received_at: '2026-09-01T10:00:00Z',
+        subject: 'AI request', parsed_text: 'Please provide the bench data.' },
+      issues: [{ id: 'i-1', category: 'performance', severity: 'high', source_excerpt: 'Provide the bench data.', mapped_ctd_sections: [] }],
+      responsePackages: [],
+    };
+    globalThis.fetch = vi.fn(() =>
+      Promise.resolve({ ok: true, status: 200, json: async () => body, text: async () => JSON.stringify(body) } as Response),
+    ) as unknown as typeof fetch;
+  }
+  const LIVE_LETTER = {
+    id: 'live-1', kind: 'Additional Information', channel: 'CDRH Portal', from: 'FDA CDRH',
+    received: '2026-09-01T10:00:00Z', due: '2026-10-15', status: 'open' as const,
+    subject: 'AI request', summary: 'Please provide the bench data.', refs: [],
+  };
 
-  it('AnaDrafter renders a persisted AnA draft — adoption, not authorship', () => {
-    /* rta-3 carries a draft AnA actually produced and persisted
-       (`generated_by: 'AnA'`, status drafted). The drafter's job is to
-       present it for review; it mounts straight into the drafted body. */
-    const corr = PATHWAY_TABS_DATA.k510.correspondence.find((c) => c.id === 'rta-3')!;
+  it('AnaDrafter mounts on a live letter and hands drafting to AnA — it authors nothing itself', async () => {
+    serveLetter();
+    const onAskAna = vi.fn();
     const { container } = renderWithClient(
-      <AnaDrafter correspondence={corr} pathway="k510" onClose={onClose} onOpenSection={onOpenSection} />,
+      <AnaDrafter correspondence={LIVE_LETTER} pathway="k510" onClose={onClose} onOpenSection={onOpenSection} onAskAna={onAskAna} />,
     );
-    expect(container.querySelector('.dr-body')).toBeTruthy();
-    expect(container.querySelector('.drafter-unstarted')).toBeNull();
+    await waitFor(() => expect(container.querySelector('.drafter-unstarted')).toBeTruthy());
+    expect(container.textContent).toContain('Please provide the bench data.');
+    fireEvent.click(container.querySelector('.du-cta') as HTMLElement);
+    expect(onAskAna).toHaveBeenCalledTimes(1);
+    expect(String(onAskAna.mock.calls[0][0])).toContain('Provide the bench data.');
+    // Nothing was authored: no drafted body, no reviewer roster.
+    expect(container.querySelector('.dr-body')).toBeNull();
     assertNoReactErrors();
   });
 });

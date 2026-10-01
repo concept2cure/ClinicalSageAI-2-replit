@@ -268,8 +268,13 @@ export interface Approval {
  * approvals, and they are gone (see data/pathwayTabs.ts). Their absence from
  * this type is the enforcement — `sample={fixtures.audit}` no longer compiles.
  */
+/* A pathway's correspondence tab label. The bundle used to carry example
+   letters too — an invented CDRH AI-Hold on "K-251401", a Day-100 letter on
+   "P250048", notified-body questions — reachable under sample mode. Those are
+   agency correspondence, the same class of record as a signature: there is no
+   honest example of one. The field is gone so `sample={fixtures.correspondence}`
+   cannot compile again. */
 export interface PathwayTabsBundle {
-  correspondence: Correspondence[];
   corrLabel: string;
 }
 

@@ -44,7 +44,9 @@ const OUTCOMES = [
   /Target product profile locked/i,
 ];
 
-beforeEach(() => apiRequest.mockReset());
+beforeEach(() => {
+  apiRequest.mockReset();
+});
 
 describe('BiopharmaJourney — no invented programme history', () => {
   it('states no interaction outcome or deliverable status on any of the nine stages', async () => {
