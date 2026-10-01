@@ -3940,6 +3940,11 @@
    "writes": "none",
    "site": "AnaToolExecutor.ts:2059"
   },
+  "verify_citations": {
+   "class": "read",
+   "writes": "none",
+   "site": "AnaToolExecutor.ts:4638"
+  },
   "verify_docx_against_source": {
    "class": "read",
    "writes": "none",
