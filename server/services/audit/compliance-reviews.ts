@@ -49,7 +49,7 @@
  * @module server/services/audit/compliance-reviews
  */
 import { z } from 'zod';
-import type { PoolClient } from 'pg';
+import type { Pool, PoolClient } from 'pg';
 
 import { writeChainedAuditRow } from '../auditService';
 import { sha256CanonicalJson } from '../part11/signature-persistence';
@@ -501,7 +501,9 @@ function storedDraft(row: ReviewContent): ReviewDraft {
  * on this transaction; the database records the signature id at COMMIT.
  */
 export function signReviewAct(reviewId: number) {
-  return async (client: PoolClient, orgId: number, userId: number) => {
+  // The ceremony's own connection (governed-signed-act.ts: the request's
+  // client since 1bb92a71), of which only `query` is used.
+  return async (client: Pick<Pool, 'query'>, orgId: number, userId: number) => {
     const { rows } = await client.query(
       `SELECT ${RECORD_COLUMNS} FROM compliance_review_records r WHERE r.id = $1 AND r.organization_id = $2 FOR UPDATE`,
       [reviewId, orgId],
