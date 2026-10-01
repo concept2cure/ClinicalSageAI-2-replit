@@ -142,6 +142,8 @@
     "ci:frontend-sync-coverage:selftest": "node scripts/ci/check-frontend-sync-coverage.mjs --self-test",
     "ci:image-runtime-assets": "node scripts/ci/check-image-runtime-assets.mjs",
     "ci:image-runtime-assets:selftest": "node scripts/ci/check-image-runtime-assets.selftest.mjs",
+    "ci:single-native-canvas": "node scripts/ci/check-single-native-canvas.mjs",
+    "ci:single-native-canvas:selftest": "node scripts/ci/check-single-native-canvas.mjs --self-test",
     "ci:required-workflow-concurrency": "node scripts/ci/check-required-workflow-concurrency.mjs",
     "ci:required-workflow-concurrency:self-test": "node scripts/ci/check-required-workflow-concurrency.mjs --self-test",
     "ci:workflow-targets:write-baseline": "node scripts/ci/check-workflow-targets.mjs --write-baseline",
@@ -426,7 +428,7 @@
     "@hookform/resolvers": "5.9.1",
     "@jridgewell/trace-mapping": "^0.3.25",
     "@modelcontextprotocol/sdk": "1.30.0",
-    "@napi-rs/canvas": "1.0.6",
+    "@napi-rs/canvas": "0.1.80",
     "@neondatabase/serverless": "^1.1.0",
     "@node-saml/node-saml": "5.1.0",
     "@radix-ui/react-accordion": "^1.2.20",
@@ -690,6 +692,7 @@
     "vitest": "4.1.7"
   },
   "overrides": {
+    "@napi-rs/canvas": "$@napi-rs/canvas",
     "tar": "7.5.7",
     "form-data": "4.0.6",
     "protobufjs": "7.6.4",
