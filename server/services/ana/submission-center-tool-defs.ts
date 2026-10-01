@@ -231,12 +231,12 @@ export const CHECK_ECTD_CROSS_REFERENCES: AnaTool = {
 export const CLASSIFY_SUBMISSION_DOCUMENT: AnaTool = {
   name: 'classify_submission_document',
   description:
-    'Classify a submission document to its CTD section through the ingestion pipeline, and optionally draft a leaf placement in a target sequence. The document, tenant, and acting user come from the active context — you pass only the document id and an optional sequence id. The proposal is persisted onto the document and the AI call is audited. Use this when a user uploads a document and asks where it belongs.',
+    'Classify a submission document to its CTD section through the ingestion pipeline. It PROPOSES and changes nothing: the document keeps its section and nothing is placed. With a sequence id the result also carries proposedLeaf, the leaf a person would place there; to place it, call place_into_sequence with that section, a separate step the person confirms with the section in view. The document, tenant, and acting user come from the active context. The AI call is audited. Use this when a user uploads a document and asks where it belongs.',
   input_schema: {
     type: 'object',
     properties: {
       document_id: { type: 'number', description: 'Id of the coauthor document to classify.' },
-      sequence_id: { type: 'number', description: 'Optional target sequence; when set and owned, a draft leaf is placed.' },
+      sequence_id: { type: 'number', description: 'Optional target sequence; the result then carries the leaf to place there. Nothing is placed.' },
     },
     required: ['document_id'],
   },
@@ -245,7 +245,7 @@ export const CLASSIFY_SUBMISSION_DOCUMENT: AnaTool = {
 export const EXTRACT_SUBMISSION_DOCUMENT: AnaTool = {
   name: 'extract_submission_document',
   description:
-    "Extract a submission document's structure, claims, and referenced sources through the ingestion pipeline, and record a provenance link from the target section to the document. You pass the document id, the CTD section it maps to, and the submission id; tenant and acting user come from the active context. The result is persisted and audited. Use this after classification to capture what a document supports.",
+    "Extract a submission document's structure, claims, and referenced sources through the ingestion pipeline, and record a provenance link from the target section to the document. You pass the document id, the CTD section it maps to, and the submission id; tenant and acting user come from the active context. The result is returned and audited, and the provenance link is recorded; the document itself is not changed. Use this after classification to capture what a document supports.",
   input_schema: {
     type: 'object',
     properties: {
