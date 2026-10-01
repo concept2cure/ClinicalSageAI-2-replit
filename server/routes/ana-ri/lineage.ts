@@ -19,18 +19,21 @@ import type { Request, Response, Router } from 'express';
 import { extractRequestContext } from './shared.js';
 import { buildDocumentLineageDossier } from '../../services/ana/lineage-dossier.js';
 import { serializeDocumentLineageDossierXml } from '../../services/ana/lineage-dossier-xml.js';
+import { isUnauditedExportRefusal, sendAuditedDownload } from '../../services/export/governedExportConsequence.js';
 
 export function mountLineageRoutes(router: Router): void {
   /**
    * XML representation — registered before the JSON path so the `.xml` suffix
-   * is matched as its own literal route.
+   * is matched as its own literal route. A file that leaves the system, so it
+   * is recorded before it is delivered (2026-10-01): an EXPORT_GENERATED row
+   * with the SHA-256 of the exact bytes, and nothing delivered without it.
    */
   router.get(
     '/documents/:artifactId/lineage-dossier.xml',
     async (req: Request, res: Response) => {
-      const { orgId } = extractRequestContext(req);
-      if (!orgId) {
-        return res.status(401).json({ error: 'Organization context required' });
+      const { orgId, userId } = extractRequestContext(req);
+      if (!orgId || !userId) {
+        return res.status(401).json({ error: 'Organization and user context required' });
       }
       const artifactId = String(req.params.artifactId);
       try {
@@ -39,13 +42,25 @@ export function mountLineageRoutes(router: Router): void {
           return res.status(404).json({ error: 'Document not found' });
         }
         const xml = serializeDocumentLineageDossierXml(dossier);
-        res.setHeader('Content-Type', 'application/xml; charset=utf-8');
-        res.setHeader(
-          'Content-Disposition',
-          `inline; filename="lineage-dossier-${artifactId}.xml"`,
-        );
-        return res.status(200).send(xml);
+        await sendAuditedDownload(res, {
+          organizationId: orgId,
+          userId,
+          sourceType: 'export_xml',
+          backendRoute: '/api/ana-ri/documents/:artifactId/lineage-dossier.xml',
+          resourceType: 'ana_lineage_dossier',
+          resourceId: artifactId,
+          programUuid: null,
+          filename: `lineage-dossier-${artifactId}.xml`,
+          mimeType: 'application/xml; charset=utf-8',
+          buffer: Buffer.from(xml, 'utf8'),
+        });
       } catch (err: any) {
+        if (isUnauditedExportRefusal(err)) {
+          return res.status(503).json({
+            error: 'The file was not delivered because its record could not be written. Try again.',
+            code: 'UNAUDITED_EXPORT_REFUSED',
+          });
+        }
         console.error('[AnA lineage-dossier.xml] failed:', err?.message);
         return res.status(500).json({ error: 'Failed to assemble lineage dossier' });
       }

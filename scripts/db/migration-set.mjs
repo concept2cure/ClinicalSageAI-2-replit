@@ -2320,6 +2320,10 @@ export const C2C_MIGRATION_FILES = [
   // VR-03 (D5): the lifecycle trail only grows, signatures are written once,
   // nothing is deleted. Triggers only, created when absent; no table, no DROP.
   'migrations/20260925_canonical_documents_append_only.sql',
+  // VR-13 (D5): one lifecycle record per Vault version. A unique index on the
+  // version a record names, created only when no version already has two
+  // (NOTICE otherwise). After the table's own file; no table, no column, no DROP.
+  'migrations/20261001_canonical_documents_vault_version.sql',
 
   // The three IVDR append-only history tables carry no tenant column of their
   // own — their tenant is their parent's, reached by foreign key — so BOTH
