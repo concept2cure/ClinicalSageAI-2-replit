@@ -371,3 +371,32 @@ One more user, `dbtest-p130-signer@c2c.test`, an admin of
 a seal, and all four carry a section, so the existing teardown retires them by
 title. After the fix-round runs, `dbtest-p130 %` documents total 57, all
 retired.
+
+## Follow-up (2026-10-01, evening): the delete gate requires an attributable actor (P1-30, second half)
+
+**What was wrong.** P1-30's acceptance has two halves: the route (closed above) and
+"`ci:regulated-delete-audit` extended to require an attributable actor on the audit call it accepts". The gate
+accepted any audit call within 25 lines of a regulated delete, including `auditService.logAction({...})` with no
+user: the very row DP-33 was about. A delete could come back with an audit row no inspector could attribute and the
+gate would stay green.
+
+**What changed** (`scripts/ci/check-regulated-delete-audit.mjs`). An audit call beside a regulated delete counts only
+when its own argument list names an actor (`userId`, `actorId`, `actor`, `user_id`, …), and for a raw
+`INSERT INTO audit_events` when its column list carries `user_id`. An actor written as `null` or `undefined` is no
+actor; `auditService.` with no call after it is no call. A delete inside `governedQmsWrite(...)` stays covered by
+construction: the helper's `opts.userId` is a required number. Each violation now says which: "no audit call within 25
+lines" or "the audit call at line N names no actor".
+
+**Red first** (`actor-gate/red/selftest-at-head-gate.txt`): four new selftest cases, run against the gate as it
+stood, 4 of 23 failed: the authoring UAT delete as it was before `73153832` (`auditService.logAction` with no user),
+a chained row with `userId: undefined`, an `audit_events` INSERT with no `user_id` column, and a `writeMutation` with
+`null` in the actor's position. Each passed the old gate.
+
+**Green** (`actor-gate/green/selftest.txt`): 23 passed. `actor-gate/green/gate-on-tree.txt`: the real tree passes;
+its six regulated delete sites (authoring, c2c evidence, IND, coauthor, and the two inside `governedQmsWrite`) each
+name their actor.
+
+**The guard is load-bearing** (`actor-gate/red/mutant-no-null-guard.txt`): with the `null`/`undefined` guard taken
+out of the actor pattern, the selftest fails 1 of 23 (`userId: undefined` passes as an actor).
+
+ESLint: both scripts 1 warning, as at head.
