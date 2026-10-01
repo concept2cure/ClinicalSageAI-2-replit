@@ -2863,6 +2863,21 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20260615_regulatory_assessments.sql',
   'migrations/20260615_tmf_artifact_filings.sql',
 
+  // ── Shared state across API tasks: continuity baseline and presence roster
+  //    (2026-10-01, D1, audit W2 fix units U14 + U16) ───────────────────────
+  // Production runs two API tasks behind an ALB with no stickiness. AnA
+  // Command's continuity baseline and the Authoring presence roster each lived
+  // in one task's memory, so the trend verdict and the roster depended on
+  // which task answered and reset on every deploy. Each file creates one table
+  // in public keyed by organization_id INTEGER NOT NULL (CREATE TABLE/INDEX IF
+  // NOT EXISTS only, no DROP), so the sweep below gives it its tenant policy.
+  // collab_presence sits in db/migrations beside its precedent,
+  // 20260807_collab_section_locks.sql. Above the final pair because
+  // ci:migration-set-order pins the tail. Evidence
+  // docs/evidence/W2/2026-09-24-multi-task/u14-u16-shared-state.md.
+  'migrations/20261001_project_continuity_snapshots.sql',
+  'db/migrations/20261001_collab_presence.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)
