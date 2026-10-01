@@ -255,16 +255,31 @@ async function readOne(pool: AuthoringReadQueryable, scope: ProgramScope, input:
   if (!sectionId) return JSON.stringify({ error: 'section_id is required: take it from list_authoring_outline or search_authoring_sections.' });
   const loaded = await loadSection(pool, { ...scope, sectionId });
   if (!loaded.ok) return refusal(loaded);
-  // Quotes, backslashes and newlines grow when serialized, so a full window of
-  // such text can overrun the budget. The window shrinks until the result fits;
+  // Quotes, backslashes, newlines and control characters grow when serialized
+  // (a control character to six bytes), so a full window of such text can
+  // overrun the budget. The window is then the largest that fits, found by
+  // bisecting its size; cutting one character per byte over, as this did,
+  // dropped a control-character-heavy section to 1-character windows.
   // nextOffset is computed from the window actually delivered, so nothing the
   // shrink left out is skipped — the next call starts there.
-  let maxChars = Math.min(READ_MAX_CHARS, Math.max(1, Math.floor(optionalNumber(input.max_chars) ?? READ_MAX_CHARS)));
-  for (;;) {
-    const out = renderWindow(sectionWindow(loaded.value, optionalNumber(input.offset), maxChars));
-    if (out.length <= RESULT_BUDGET || maxChars <= 1) return out;
-    maxChars = Math.max(1, Math.min(maxChars - 1, maxChars - (out.length - RESULT_BUDGET)));
+  const asked = Math.min(READ_MAX_CHARS, Math.max(1, Math.floor(optionalNumber(input.max_chars) ?? READ_MAX_CHARS)));
+  const at = (size: number): string => renderWindow(sectionWindow(loaded.value, optionalNumber(input.offset), size));
+  const full = at(asked);
+  if (full.length <= RESULT_BUDGET) return full;
+  // A window of 1 always delivers (at least one code point), even in the unreachable case that it does not fit.
+  let lo = 1;
+  let best = at(1);
+  if (best.length > RESULT_BUDGET) return best;
+  let hi = asked - 1;
+  while (lo < hi) {
+    const mid = Math.ceil((lo + hi) / 2);
+    const out = at(mid);
+    if (out.length <= RESULT_BUDGET) {
+      lo = mid;
+      best = out;
+    } else hi = mid - 1;
   }
+  return best;
 }
 
 function renderSearch(r: SectionSearch, hitCount: number): string {
