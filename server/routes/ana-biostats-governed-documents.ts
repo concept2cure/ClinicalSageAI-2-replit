@@ -49,6 +49,7 @@ import { db } from '../db.js';
 import { concept2cureArtifacts, projects } from '../../shared/schema.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { createScopedLogger } from '../utils/logger.js';
+import { resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor.js';
 
 const logger = createScopedLogger('ana-biostats-governed-documents');
 
@@ -117,13 +118,13 @@ export default function createAnaBiostatsGovernedDocumentsRoutes(): Router {
         if (!UUID_RE.test(programId)) {
           return res.status(400).json({ success: false, error: 'programId must be a UUID' });
         }
-        const [project] = await db
-          .select({ id: projects.id })
-          .from(projects)
-          .where(and(eq(projects.regulatoryProgramId, programId), eq(projects.organizationId, orgId)))
-          .limit(1);
-        if (!project) return res.json({ success: true, data: [], total: 0, programId, unresolvedProgram: true });
-        projectId = project.id;
+        // The one anchor reader (PF-08), strict: a failed read is the route's
+        // 500, never an empty list. Two anchors read the lowest id, the row intake links.
+        const anchored = await resolveProgramProjectAnchor(db, {
+          programId, orgId, context: 'ana-biostats-governed-documents', strict: true,
+        });
+        if (anchored === null) return res.json({ success: true, data: [], total: 0, programId, unresolvedProgram: true });
+        projectId = anchored;
       }
 
       // Bounded result size.
