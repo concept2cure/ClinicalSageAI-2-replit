@@ -17,7 +17,7 @@ const router = Router();
 
 import { createScopedLogger } from '../utils/logger.js';
 import { queryableFromDrizzle } from '../db/drizzle-queryable';
-import { ProjectDeletionRefused, projectDeletionHolds, projectDeletionRefusal } from '../services/c2c/project-retention';
+import { ProjectDeletionRefused, projectDeleteBlockedRefusal, projectDeletionHolds, projectDeletionRefusal } from '../services/c2c/project-retention';
 import { governedActorId, requireEditorAccess } from '../middleware/orgMembership';
 import { recordAuditRow } from '../services/audit/audit-write-outcome';
 import { mapWithConcurrency } from '../services/ana/agentic-loop';
@@ -961,6 +961,12 @@ router.delete('/:id', requireEditorAccess, async (req, res) => {
   } catch (error: any) {
     if (error instanceof ProjectDeletionRefused) {
       return res.status(error.refusal.status).json({ success: false, ...error.refusal.body });
+    }
+    // A store keeps records under one of its projects, or under the workspace; the delete rolled back (PF-13).
+    const blocked = projectDeleteBlockedRefusal(error, 'workspace');
+    if (blocked) {
+      log.warn(`Client ${req.params.id} delete refused by the database: a store keeps records under it`, blocked.heldBy);
+      return res.status(blocked.status).json({ success: false, ...blocked.body });
     }
     log.error(`Error deleting client ${req.params.id}:`, error);
 

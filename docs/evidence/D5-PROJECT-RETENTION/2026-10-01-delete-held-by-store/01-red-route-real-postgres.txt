@@ -1,0 +1,11 @@
+# project-delete-held-by-store.dbtest.ts against HEAD 4c9a73fd0, PostgreSQL 16 (c2c_dbtest)
+  "message": "[projects-management] Error deleting project:",
+ × tests/db/project-delete-held-by-store.dbtest.ts > a draft-only project whose conversation AnA summarized > is deleted, and the summary stays, detached from it
+   → {"error":"Failed to delete project"}: expected 500 to be 200 // Object.is equality
+  "message": "[projects-management] Error deleting project:",
+ × tests/db/project-delete-held-by-store.dbtest.ts > a project another store holds a record of > is refused 409 PROJECT_HOLDS_RECORDS, telling the person to archive, and nothing is deleted
+   → {"error":"Failed to delete project"}: expected 500 to be 409 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: {"error":"Failed to delete project"}: expected 500 to be 200 // Object.is equality
+AssertionError: {"error":"Failed to delete project"}: expected 500 to be 409 // Object.is equality
+      Tests  2 failed (2)

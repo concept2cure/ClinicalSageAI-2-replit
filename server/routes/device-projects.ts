@@ -39,7 +39,7 @@ import { db } from '../db';
 import { governedActorId, requireEditorAccess } from '../middleware/orgMembership';
 import { recordAuditRow, setAuditRowHeaders } from '../services/audit/audit-write-outcome';
 import { queryableFromDrizzle } from '../db/drizzle-queryable';
-import { projectDeletionHolds, projectDeletionRefusal } from '../services/c2c/project-retention';
+import { projectDeleteBlockedRefusal, projectDeletionHolds, projectDeletionRefusal } from '../services/c2c/project-retention';
 
 const router = Router();
 
@@ -434,6 +434,12 @@ router.delete('/:id', requireEditorAccess, async (req: Request, res: Response) =
     console.log('✅ Deleted device project:', projectId, `(org=${organization_id})`);
     res.json({ success: true, id: projectId, auditTrail });
   } catch (error: any) {
+    // Another store keeps a record under the project; the delete rolled back (PF-13).
+    const blocked = projectDeleteBlockedRefusal(error, 'project');
+    if (blocked) {
+      console.warn('Device project delete refused by the database: a store keeps records under it', blocked.heldBy);
+      return res.status(blocked.status).json(blocked.body);
+    }
     console.error('Failed to delete device project:', error);
     res.status(500).json({ error: 'Failed to delete device project' });
   }

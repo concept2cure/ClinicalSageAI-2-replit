@@ -7,7 +7,7 @@ import { getRequestActor, getTenantContext } from '../utils/tenantContext';
 import { emitRuleEvent } from '../services/rules-engine';
 import { createScopedLogger } from '../utils/logger.js';
 import { queryableFromDrizzle } from '../db/drizzle-queryable';
-import { projectDeletionHolds, projectDeletionRefusal } from '../services/c2c/project-retention';
+import { projectDeleteBlockedRefusal, projectDeletionHolds, projectDeletionRefusal } from '../services/c2c/project-retention';
 import { requireEditorAccess } from '../middleware/orgMembership';
 
 const log = createScopedLogger('projects-management');
@@ -415,6 +415,12 @@ router.delete('/:projectId', requireEditorAccess, async (req, res) => {
     log.debug(`Deleted project ${projectId} (${existingProject.name})`);
     res.json({ message: 'Project deleted successfully', projectId });
   } catch (error) {
+    // Another store keeps a record under the project; the delete rolled back (PF-13).
+    const blocked = projectDeleteBlockedRefusal(error, 'project');
+    if (blocked) {
+      log.warn('Project delete refused by the database: a store keeps records under it', blocked.heldBy);
+      return res.status(blocked.status).json(blocked.body);
+    }
     log.error('Error deleting project:', error);
     res.status(500).json({ error: 'Failed to delete project' });
   }
