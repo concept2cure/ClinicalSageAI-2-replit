@@ -25,6 +25,12 @@ import {
 import { createScopedLogger } from '../utils/logger';
 import { respondVerificationUnavailable } from '../lib/verification-outcome';
 import { serverError } from '../lib/api-response';
+import { authedUserId } from '../utils/authedActor';
+import {
+  isUnauditedExportRefusal,
+  sendAuditedDownload,
+  type ExportSourceType,
+} from '../services/export/governedExportConsequence';
 import { clientIpOf } from '../utils/client-ip';
 import { reverifySigner, type SignerReverified } from '../services/part11/reverify-signer';
 import { signerReverificationDeps } from '../services/part11/reverify-signer-deps';
@@ -3841,6 +3847,48 @@ router.post(
   }
 );
 
+/**
+ * A citation download, delivered only once its EXPORT_GENERATED row persists:
+ * the SHA-256 of the exact bytes, who took it and when (decided 2026-10-01: an
+ * export of an existing record is recorded like a generated document). Answers
+ * 401 without an identified user and 503 when the row cannot be written; in
+ * both cases nothing is delivered.
+ */
+async function deliverRecordedCitationExport(
+  req: Request,
+  res: Response,
+  organizationId: number,
+  file: {
+    sourceType: ExportSourceType;
+    backendRoute: string;
+    resourceId: string;
+    filename: string;
+    mimeType: string;
+    buffer: Buffer;
+  },
+): Promise<void> {
+  const userId = authedUserId(req);
+  if (!userId) {
+    res.status(401).json({ error: 'Authenticated user required', code: 'AUTH_REQUIRED' });
+    return;
+  }
+  try {
+    await sendAuditedDownload(res, {
+      organizationId: Number(organizationId),
+      userId,
+      resourceType: 'ana_citation_export',
+      programUuid: null,
+      ...file,
+    });
+  } catch (err) {
+    if (!isUnauditedExportRefusal(err)) throw err;
+    res.status(503).json({
+      error: 'The file was not delivered because its record could not be written. Try again.',
+      code: 'UNAUDITED_EXPORT_REFUSED',
+    });
+  }
+}
+
 // Document-Embedded Audit Ledger — export an artifact as .docx with the
 // AnALedger XML embedded as a custom XML part (Open XML customXml/).
 const docxExportSchema = z.object({
@@ -3897,23 +3945,16 @@ router.post(
           .status(404)
           .json({ error: 'Artifact not found', code: 'ARTIFACT_NOT_FOUND' });
       }
-      res.setHeader(
-        'Content-Type',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-      );
-      res.setHeader(
-        'Content-Disposition',
-        `attachment; filename="${result.filename}"`
-      );
-      res.setHeader(
-        'X-AnALedger-Bytes',
-        String(result.ledgerXmlByteLength)
-      );
-      res.setHeader(
-        'X-AnALedger-Schema',
-        result.ledger.schemaVersion
-      );
-      return res.send(result.buffer);
+      res.setHeader('X-AnALedger-Bytes', String(result.ledgerXmlByteLength));
+      res.setHeader('X-AnALedger-Schema', result.ledger.schemaVersion);
+      return deliverRecordedCitationExport(req, res, organizationId, {
+        sourceType: 'export_docx',
+        backendRoute: '/api/ana/citations/:artifactId/export.docx',
+        resourceId: artifactId,
+        filename: result.filename,
+        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        buffer: result.buffer,
+      });
     } catch (err: any) {
       if (err?.name === 'VerificationUnavailableError') {
         // WO-16B finding 10: the ledger's audit or signature query could not
@@ -4357,12 +4398,14 @@ router.get(
         await import('../services/ana/citation-export');
       const rows = await exportProjectCitations(parsed.data, organizationId);
       if (formatParsed.data === 'csv') {
-        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-        res.setHeader(
-          'Content-Disposition',
-          `attachment; filename="project-${parsed.data}-citations.csv"`
-        );
-        return res.send(formatCitationsCsv(rows));
+        return deliverRecordedCitationExport(req, res, organizationId, {
+          sourceType: 'export_csv',
+          backendRoute: '/api/ana/citations/projects/:projectId/export',
+          resourceId: `project:${parsed.data}`,
+          filename: `project-${parsed.data}-citations.csv`,
+          mimeType: 'text/csv; charset=utf-8',
+          buffer: Buffer.from(formatCitationsCsv(rows), 'utf8'),
+        });
       }
       return res.json({
         projectId: parsed.data,
@@ -4416,12 +4459,14 @@ router.get(
           .json({ error: 'Artifact not found', code: 'ARTIFACT_NOT_FOUND' });
       }
       if (formatParsed.data === 'csv') {
-        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-        res.setHeader(
-          'Content-Disposition',
-          `attachment; filename="${artifactId}-citations.csv"`
-        );
-        return res.send(formatCitationsCsv(rows));
+        return deliverRecordedCitationExport(req, res, organizationId, {
+          sourceType: 'export_csv',
+          backendRoute: '/api/ana/citations/:artifactId/export',
+          resourceId: artifactId,
+          filename: `${artifactId}-citations.csv`,
+          mimeType: 'text/csv; charset=utf-8',
+          buffer: Buffer.from(formatCitationsCsv(rows), 'utf8'),
+        });
       }
       return res.json({
         artifactId,
