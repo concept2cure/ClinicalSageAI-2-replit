@@ -84,6 +84,7 @@
 import { promises as fs } from 'fs';
 import { randomUUID } from 'crypto';
 import { pool } from '../../db';
+import { resolveGatewayAccount, type ResolvedGatewayAccount } from './gateway-accounts';
 import { readVerifiedBundle } from './bundle-integrity';
 import { platformTransmittalRecord } from './acknowledgement';
 import { usableIdentifier } from '../ectd/regulatory-identifiers';
@@ -121,27 +122,54 @@ function envFor(env: 'staging' | 'production', key: string): string | undefined 
   return process.env[prefix + key];
 }
 
+/**
+ * The credentials a transmit goes out under. `account` is the organisation's
+ * choice (gateway-accounts.ts, founder decision 2026-10-01): in client mode the
+ * sponsor side — the AS2 identifier FDA assigned the client, and the client's
+ * own certificate and key — is the client's; FDA's side (endpoint, FDA's AS2
+ * identifier, FDA's public certificate) is the same for every sponsor and stays
+ * the platform's configuration. Platform mode is the server's env, as before.
+ */
 async function loadFdaCredentials(
   organizationId: number,
   environment: 'staging' | 'production',
+  account: ResolvedGatewayAccount | null = null,
 ): Promise<FdaEsgCredentials> {
+  const client = account?.mode === 'client' ? account : null;
   const missing: string[] = [];
   const endpointUrl = envFor(environment, 'URL');
-  const as2From     = envFor(environment, 'AS2_FROM');
+  const as2From     = client ? client.senderIdentifier ?? undefined : envFor(environment, 'AS2_FROM');
   const as2To       = envFor(environment, 'AS2_TO');
-  const certPath    = envFor(environment, 'CERT_PATH');
-  const keyPath     = envFor(environment, 'KEY_PATH');
+  const certPath    = client ? undefined : envFor(environment, 'CERT_PATH');
+  const keyPath     = client ? undefined : envFor(environment, 'KEY_PATH');
   const fdaCertPath = envFor(environment, 'FDA_CERT_PATH');
   if (!endpointUrl)    missing.push(`FDA_ESG${environment === 'staging' ? '_STAGING' : ''}_URL`);
-  if (!as2From)        missing.push(`FDA_ESG${environment === 'staging' ? '_STAGING' : ''}_AS2_FROM`);
+  if (!as2From)        missing.push(client ? "AS2 identifier assigned by FDA (your organisation's own account)" : `FDA_ESG${environment === 'staging' ? '_STAGING' : ''}_AS2_FROM`);
   // FDA's AS2 identifier is a credential like the others, never defaulted —
   // as the ICSR transport's agency id is not (icsr-gateway-transport.ts).
   if (!as2To)          missing.push(`FDA_ESG${environment === 'staging' ? '_STAGING' : ''}_AS2_TO`);
-  if (!certPath)       missing.push(`FDA_ESG${environment === 'staging' ? '_STAGING' : ''}_CERT_PATH`);
-  if (!keyPath)        missing.push(`FDA_ESG${environment === 'staging' ? '_STAGING' : ''}_KEY_PATH`);
+  if (client) {
+    if (!client.credentials?.clientCertPem) missing.push("Your ESG certificate (PEM) (your organisation's own account)");
+    if (!client.credentials?.clientKeyPem)  missing.push("Its private key (PEM) (your organisation's own account)");
+  } else {
+    if (!certPath)     missing.push(`FDA_ESG${environment === 'staging' ? '_STAGING' : ''}_CERT_PATH`);
+    if (!keyPath)      missing.push(`FDA_ESG${environment === 'staging' ? '_STAGING' : ''}_KEY_PATH`);
+  }
   if (!fdaCertPath)    missing.push(`FDA_ESG${environment === 'staging' ? '_STAGING' : ''}_FDA_CERT_PATH`);
   if (missing.length > 0) {
     throw new CredentialError('fda', 'esg', environment, missing);
+  }
+  if (client) {
+    // The organisation's own account is recorded in organization_gateway_accounts;
+    // the platform's identity is not written against it.
+    return {
+      endpointUrl: endpointUrl!,
+      as2From: as2From!,
+      as2To: as2To!,
+      clientCertPem: client.credentials!.clientCertPem,
+      clientKeyPem: client.credentials!.clientKeyPem,
+      fdaCertPem: await fs.readFile(fdaCertPath!, 'utf8'),
+    };
   }
   /* Verify the credential row is recorded for this org × environment so
      audit can answer "why did this org's submission go through?". */
@@ -587,7 +615,11 @@ export class FdaEsgGateway implements SubmissionGateway {
         loadFdaRestCredentials(environment);
         return true;
       }
-      await loadFdaCredentials(organizationId, environment);
+      await loadFdaCredentials(
+        organizationId,
+        environment,
+        await resolveGatewayAccount(pool, organizationId, 'fda', 'esg', environment),
+      );
       return true;
     } catch {
       // Any failure to load the credentials — a missing variable, or a cert
@@ -633,7 +665,11 @@ export class FdaEsgGateway implements SubmissionGateway {
     let sent: SentBundle | null = null;
 
     try {
-      const creds = await loadFdaCredentials(req.organizationId, req.environment);
+      // The guard resolved the organisation's account; resolved here again only
+      // when a caller reached this implementation without it (tests drive it
+      // unguarded), so no path sends under an account nobody chose.
+      const account = req.account ?? await resolveGatewayAccount(pool, req.organizationId, 'fda', 'esg', req.environment);
+      const creds = await loadFdaCredentials(req.organizationId, req.environment, account);
       await updateTransmittal(transmittalId, { status: 'in_transit' });
 
       if (sftpTarget) {
