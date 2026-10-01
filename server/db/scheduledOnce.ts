@@ -149,7 +149,7 @@ export async function runScheduledOncePerWindow<T>(
   jobName: string,
   windowKey: string,
   fn: () => Promise<T>,
-  opts: { organizationId?: number } = {},
+  opts: { organizationId?: number; storeResult?: boolean } = {},
 ): Promise<ScheduledOncePerWindowResult<T>> {
   if (!windowKey.trim()) throw new Error('runScheduledOncePerWindow: windowKey is required');
   const organizationId = opts.organizationId ?? 0;
@@ -193,12 +193,36 @@ export async function runScheduledOncePerWindow<T>(
       throw err;
     }
     await pool.query(
-      'UPDATE scheduled_job_claims SET finished_at = NOW() WHERE organization_id = $1 AND job_name = $2 AND window_key = $3',
-      [organizationId, jobName, windowKey],
+      `UPDATE scheduled_job_claims SET finished_at = NOW(), result = $4::jsonb
+        WHERE organization_id = $1 AND job_name = $2 AND window_key = $3`,
+      [organizationId, jobName, windowKey, opts.storeResult ? JSON.stringify(value ?? null) : null],
     );
     return { claimed: true as const, value };
   });
   if (!outcome.ran) return outcome;
   if (!outcome.value.claimed) return { ran: false, reason: 'already_ran_this_window' };
   return { ran: true, value: outcome.value.value };
+}
+
+/**
+ * The most recent finished run of a job and what it recorded (null result
+ * unless it ran with `storeResult`), or null when it has never finished. For a
+ * status every process serves, read from the run that did the work rather
+ * than from this process's memory. Throws when the claims cannot be read: a
+ * status that could not be read is not "never ran".
+ */
+export async function readLatestWindowResult<T>(
+  jobName: string,
+  organizationId = 0,
+): Promise<{ result: T | null; finishedAt: string } | null> {
+  return runWithSystemTenantScope(`scheduled-once:read:${jobName}`, async () => {
+    const { rows } = await getPool().query<{ result: T | null; finished_at: Date }>(
+      `SELECT result, finished_at FROM scheduled_job_claims
+        WHERE organization_id = $1 AND job_name = $2 AND finished_at IS NOT NULL
+        ORDER BY finished_at DESC LIMIT 1`,
+      [organizationId, jobName],
+    );
+    const row = rows[0];
+    return row ? { result: row.result ?? null, finishedAt: new Date(row.finished_at).toISOString() } : null;
+  });
 }

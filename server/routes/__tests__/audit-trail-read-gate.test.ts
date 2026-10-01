@@ -31,7 +31,7 @@ import request from 'supertest';
 // connect() is what tells "reached the export" from "refused before it".
 vi.mock('../../services/tenant/governed-tenant-context.js', () => ({ setTenantContextTx: vi.fn(async () => undefined) }));
 vi.mock('../../services/audit/tenant-chain-verdict.js', () => ({ verifyTenantChainOnAdminScope: vi.fn(async () => ({ ok: true })) }));
-const monitor = vi.hoisted(() => ({ runOnDemandCheck: vi.fn(async () => ({ lastRun: 'now', broken: 0 })), getChainMonitorStatus: vi.fn(() => ({ running: true })) }));
+const monitor = vi.hoisted(() => ({ runOnDemandCheck: vi.fn(async () => ({ lastRun: 'now', broken: 0 })), getChainMonitorStatus: vi.fn(() => ({ running: true })), getSharedChainMonitorStatus: vi.fn(async () => ({ running: true })) }));
 vi.mock('../../services/audit/chainIntegrityMonitor.js', () => monitor);
 // The chain monitor is estate-wide: only a platform administrator may read or run it. The harness marks one with user.platformAdmin.
 vi.mock('../../middleware/requirePlatformAdmin.js', () => ({ isPlatformAdmin: (req: any) => req.user?.platformAdmin === true }));
