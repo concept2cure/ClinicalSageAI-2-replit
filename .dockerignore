@@ -12,6 +12,8 @@ tmp
 .vscode
 .devcontainer
 docs
+# The GAMP 5 validation kit, listed and served by server/routes/validation-kit.ts.
+!docs/validation
 tests
 scripts/audits
 storybook-static

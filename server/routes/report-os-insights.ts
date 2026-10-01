@@ -14,6 +14,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { authMiddleware } from '../auth';
+import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 import { authedOrgId } from '../utils/authedOrgId';
 import {
   summarizeQuality,
@@ -60,6 +61,12 @@ const router = Router();
 
 const logger = createScopedLogger('report-os-insights');
 router.use(authMiddleware);
+/* Reporting review 2026-10-01: a read-only 'viewer' could run a live
+   prediction (which records a calibration row) and create or toggle the org's
+   report subscriptions. Every write now needs a writing role. The pure
+   POST /predictions assembly persists nothing but has no caller; it is gated
+   with the rest rather than carved out. */
+router.use(requireEditorAccessForWrites);
 
 /** Roles allowed to read the cross-prediction calibration / quality view. */
 const ADMIN_ROLES = new Set(['admin', 'super_admin']);
