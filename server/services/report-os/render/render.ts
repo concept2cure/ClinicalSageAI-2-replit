@@ -48,6 +48,17 @@ function asRecord(value: unknown): Record<string, unknown> | undefined {
  * Pure and deterministic given a fixed `generatedAt`. Sections are built
  * generically so the renderer works for any report type.
  */
+/**
+ * Whether a gap evaluation ran for this run. The regional gap evaluation sets
+ * `summary.regulatory.missingArtifacts` (orchestrator.ts, project scope with a
+ * registry); any other scope has none. An empty list is "no gaps"; no list is
+ * "not evaluated", and the two may never print the same sentence.
+ */
+export function gapsWereEvaluated(summary: Record<string, unknown> | null | undefined): boolean {
+  const regulatory = asRecord(summary?.regulatory);
+  return Array.isArray(regulatory?.missingArtifacts);
+}
+
 export function renderReport(input: RenderInput): RenderedReport {
   const generatedAt = input.generatedAt ?? new Date().toISOString();
   const sections: ReportSection[] = [];
@@ -135,7 +146,7 @@ export function renderReport(input: RenderInput): RenderedReport {
         },
       ],
     });
-  } else {
+  } else if (gapsWereEvaluated(input.summary)) {
     sections.push({
       id: 'gaps',
       title: 'Gaps',
@@ -143,6 +154,15 @@ export function renderReport(input: RenderInput): RenderedReport {
         { kind: 'gap-list', items: [] },
         { kind: 'summary', text: `No gaps detected as of ${generatedAt}.` },
       ],
+    });
+  } else {
+    /* "No gaps detected" printed for every scope no gap evaluation covers
+       (every program-scoped canvas report among them), and sealed in final
+       records (reporting review 2026-10-01). Nothing was checked; say so. */
+    sections.push({
+      id: 'gaps',
+      title: 'Gaps',
+      blocks: [{ kind: 'summary', text: 'Gaps were not evaluated for this scope.' }],
     });
   }
 
