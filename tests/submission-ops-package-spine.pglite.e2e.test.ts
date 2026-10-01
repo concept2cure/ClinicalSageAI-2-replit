@@ -355,6 +355,35 @@ describe('an empty section files nothing (sweep F11)', () => {
   });
 });
 
+describe('a document moved to another CTD section (sweep F12)', () => {
+  it('blocks the sequence that files it at the new section while the copy at the old one stays current, naming the withdrawal', async () => {
+    expect((await assemble()).status).toBe(200);
+    await fileTheStoredBundle('original');
+    const old = (await storedMetadata()).filedSequences[0].leaves.find((l: any) => l.ctdSection === '2.5');
+    // The clinical overview's declared section is corrected to 2.7.3.
+    await pg.query(`UPDATE concept2cure_artifacts SET ctd_section = '2.7.3' WHERE id = 2`);
+
+    const res = await assemble({ sequence: '0001', submissionType: 'Efficacy Supplement' });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.data.bundle.lifecycle.summary).toMatchObject({ new: 1, delete: 0 });
+    const { bundle } = await storedBundle();
+    const relocated = bundle.validation.findings.filter((f: any) => f.ruleId === 'LEAF-RELOCATED-OLD-COPY-CURRENT');
+    expect(relocated).toHaveLength(1);
+    expect(relocated[0].severity).toBe('error');
+    expect(relocated[0].message).toContain(`withdraw: [{ ctdSection: '2.5', fileName: '${old.fileName}' }]`);
+
+    // The move done whole: the new filing and the withdrawal in one sequence.
+    const whole = await assemble({
+      sequence: '0001', submissionType: 'Efficacy Supplement',
+      withdraw: [{ ctdSection: '2.5', fileName: old.fileName }],
+    });
+    expect(whole.status, JSON.stringify(whole.body)).toBe(200);
+    expect(whole.body.data.bundle.lifecycle.summary).toMatchObject({ new: 1, delete: 1 });
+    const after = (await storedBundle()).bundle;
+    expect(after.validation.findings.some((f: any) => f.ruleId === 'LEAF-RELOCATED-OLD-COPY-CURRENT')).toBe(false);
+  });
+});
+
 /*
  * 2026-10-01 (W5/D7, sweep F19). recordFiledSequence answered `true` for a
  * DIFFERENT bundle sent under a sequence already on file, and kept the first

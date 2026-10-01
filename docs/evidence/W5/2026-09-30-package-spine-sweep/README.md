@@ -43,7 +43,7 @@ both finders, and every verifier, were cut off by account usage limits
 | F09 | lifecycle | high | `modified-file` names a content file, not a leaf (`../0000/index.xml#<leafId>`). | **fixed upstream** in `09c4c15d` (IND lane, 2026-09-29) |
 | F10 | lifecycle | high | A filed withdrawal never leaves the filed state: the delete entry carries no `leafKey`, so the fold keyed on `leafKey` drops nothing; the document can be withdrawn twice, replaced after withdrawal, and is refused ("already on file") when re-filed. | **confirmed** 2026-10-01; **fixed** — see "Fixed after verification" |
 | F11 | lifecycle | medium | An empty-section placeholder PDF ("[EMPTY SECTION] …") is filed to the agency and never superseded: the real document later files as `new` beside it. | **confirmed** 2026-10-01 (medium); **fixed** — an empty section files nothing |
-| F12 | lifecycle | medium | A document moved to another CTD section is filed `new` there while the filed copy stays current at the old section, with no finding. | **confirmed** 2026-10-01 (medium: a missing operator finding and a stale current copy, not a validation error) |
+| F12 | lifecycle | medium | A document moved to another CTD section is filed `new` there while the filed copy stays current at the old section, with no finding. | **confirmed** 2026-10-01 (medium); **fixed** — a move names the withdrawal it needs |
 | F13 | lifecycle | medium | Cover letters and forms are diffed like dossier content: an unchanged cover letter is left out of a follow-up, and an edited one replaces sequence 0000's. | **confirmed** 2026-10-01 (medium; the IND 1571 half is firm, the cover-letter half is an FDA "should") |
 | F14 | transmit | high | A send to FDA's ESG **test** environment (`staging`) is recorded as the package's real filed sequence. | **confirmed** 2026-10-01 (high); **fixed** — see "Fixed after verification" |
 | F15 | transmit | high | The duplicate-send lock is keyed on the bundle's bytes, not its sequence; re-assembling while an earlier send of 0000 is unconfirmed sends 0000 a second time. | **partially confirmed** 2026-10-01 (medium); **fixed** (sequence lock) |
@@ -352,6 +352,24 @@ WITHOUT the fixes (same tree, fixes absent): 8 failed
 WITH the fixes: 12 files, 367 tests passed (lifecycle unit, package-spine e2e,
   assemble, identifiers, preflight, section and transmit-guard routes, gateway
   routes, AnA handlers, structural validator, bundle-invalidation contract, client)
+```
+
+**F12 — a moved document left its old copy current with no finding.** The
+sequence plan now reports `staleOnFile`: each document this sequence leaves
+current although the package no longer files it there. A document whose artifact
+is placed at another CTD section now is `LEAF-RELOCATED-OLD-COPY-CURRENT`, an
+error that blocks transmit and names the exact `withdraw` entry; filing at two
+sections on purpose is not a move. A placeholder filed before F11 is
+`PLACEHOLDER-ON-FILE`, a warning naming its `withdraw` entry. The move done
+whole — new filing plus withdrawal in one sequence — carries neither.
+
+```
+WITHOUT the fix: 4 failed
+  × moving a document to a DIFFERENT CTD section … the copy left on file is named → expected undefined to deeply equal [ { reason: 'relocated', … } ]
+  × a document filed at TWO sections on purpose is not a move
+  × names an empty-section placeholder still on file …
+  × e2e: blocks the sequence that files it at the new section … → expected [] to have a length of 1
+WITH the fix: lifecycle unit, package-spine e2e and assemble routes: 106 passed
 ```
 
 ## What this sweep produced that is already fixed
