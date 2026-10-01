@@ -70,6 +70,7 @@ import { normalizeCtdCode, compareSectionCode } from '../../../shared/regulatory
 import { writeChainedAuditRow } from '../../services/auditService.js';
 import { readRecordAuditHistory } from '../audit-trail-ledger.routes.js';
 import { readVersionFamily, supersededSql, versionCountLateral } from '../../services/vault/vault-version-family.js';
+import { readVaultLifecycles } from '../../services/vault/vault-lifecycle.js';
 import { setTenantContextTx } from '../../services/tenant/governed-tenant-context.js';
 import { requireEditorAccess } from '../../middleware/orgMembership.js';
 import { getStorageProvider, getStorageProviderFor } from '../../services/storage/index.js';
@@ -115,6 +116,8 @@ interface VaultDoc {
   versionCount?: number;
   /** vault.documents.document_code (uploads only): a 409 at this code offers a check-in (VR-09). */
   documentCode?: string | null;
+  /** This version's lifecycle stage (uploads only, VR-13): null when it has no record, i.e. not reviewed. */
+  lifecycleStage?: string | null;
 }
 
 /** The placement block for an uploaded document — mirrors vault-ingest. */
@@ -449,6 +452,8 @@ export interface UploadRow {
   owner_name: string | null;
   /** Versions back through valid predecessors, this one included (VR-09). */
   version_count?: number | null;
+  /** This version's lifecycle stage; null when it has no record: not reviewed (VR-13). */
+  lifecycle_stage?: string | null;
 }
 
 /**
@@ -480,6 +485,15 @@ function uploadTypeLabel(row: UploadRow): string {
     return vaultIngestTypeLabel(row.document_type);
   }
   return 'File';
+}
+
+/** Where the leaf sits among its document's versions (VR-09) and in review (VR-13). */
+function versionFacts(row: UploadRow): Pick<VaultDoc, 'versionCount' | 'documentCode' | 'lifecycleStage'> {
+  return {
+    versionCount: row.version_count ?? 1,
+    documentCode: row.document_code,
+    lifecycleStage: row.lifecycle_stage ?? null,
+  };
 }
 
 /** An uploaded vault.documents row → a VaultDoc leaf (all real columns).
@@ -522,8 +536,7 @@ export function uploadLeaf(view: VaultViewId, row: UploadRow): VaultDoc {
       documentType: row.document_type,
       classification: row.classification ?? null,
     },
-    versionCount: row.version_count ?? 1,
-    documentCode: row.document_code,
+    ...versionFacts(row),
   };
   if (placementStatus === 'unfiled') {
     leaf.flag = row.placement_rationale ?? 'Not filed into the dossier yet.';
@@ -1007,6 +1020,47 @@ async function module3Branch(programId: string, orgId: number): Promise<Module3B
 
 // ─── Router factory ─────────────────────────────────────────────────────────────
 
+/**
+ * A document's history across its versions (VR-09) and their review and
+ * approval (VR-13): the audit rows recorded against each version, and those
+ * recorded against each version's lifecycle record (its transitions and
+ * sign-offs), as one list, newest first. Each entry names the version it was
+ * recorded against. A deleted version has no live family, so its own trail is
+ * read, as before.
+ */
+async function readFamilyHistory(
+  client: PoolClient,
+  orgId: number,
+  family: Awaited<ReturnType<typeof readVersionFamily>>,
+  documentId: string,
+) {
+  const versionIds = family ? family.map((v) => v.id) : [];
+  const history = await readRecordAuditHistory(client, orgId, {
+    tableName: 'vault_document',
+    recordId: family ? versionIds : documentId,
+  });
+  const lifecycles = family ? await readVaultLifecycles(client, orgId, versionIds) : new Map();
+  const records = [...lifecycles.entries()].map(([vaultId, l]) => ({ vaultId, canonicalId: l.canonicalId as string }));
+  const lifecycle = records.length > 0
+    ? await readRecordAuditHistory(client, orgId, { tableName: 'canonical_document', recordId: records.map((r) => r.canonicalId) })
+    : { data: [] as typeof history.data };
+  const keys = [
+    ...(family ?? []).map((v) => ({ key: v.id, version: v.version })),
+    ...records.map((r) => ({ key: r.canonicalId, version: family?.find((v) => v.id === r.vaultId)?.version ?? null })),
+  ];
+  const versionOf = (e: { target?: string | null; targetRef?: string | null }) =>
+    keys.find((k) => [e.target, e.targetRef].some((t) => typeof t === 'string' && t.endsWith(k.key)))?.version ?? null;
+  const order = (e: { seq?: number | null; at?: string | null }) => [e.seq ?? -1, e.at ?? ''] as const;
+  const entries = [...history.data, ...lifecycle.data]
+    .sort((a, b) => {
+      const [sa, ta] = order(a);
+      const [sb, tb] = order(b);
+      return sa !== sb ? sb - sa : tb.localeCompare(ta);
+    })
+    .map((e) => ({ ...e, version: versionOf(e) }));
+  return { entries, chain: history.meta.chain };
+}
+
 export default function createProjectVaultRoutes(): Router {
   const router = Router();
 
@@ -1182,10 +1236,17 @@ export default function createProjectVaultRoutes(): Router {
                   d.placement_status, d.placement_confidence, d.placement_rationale,
                   d.updated_at,
                   COALESCE(u.name, u.email) AS owner_name,
-                  vc.version_count
+                  vc.version_count,
+                  lc.stage AS lifecycle_stage
              FROM vault.documents d
              LEFT JOIN LATERAL public.actor_name(d.created_by) u ON TRUE
              ${versionCountLateral('d')}
+             LEFT JOIN LATERAL (
+               SELECT c.stage FROM canonical_documents c
+                WHERE c.organization_id = $2 AND c.source_refs ? 'vault_documents'
+                  AND c.source_refs -> 'vault_documents' ->> 'nativeId' = d.id::text
+                ORDER BY c.created_at, c.canonical_id LIMIT 1
+             ) lc ON TRUE
             WHERE ${headsWhere}
             ORDER BY d.updated_at DESC
             LIMIT $3`,
@@ -1583,8 +1644,13 @@ export default function createProjectVaultRoutes(): Router {
       return res.status(404).json({ success: false, error: 'NOT_FOUND' });
     }
     try {
-      const versions = await readVersionFamily(pool, { programId: id, organizationId: orgId, documentId });
-      if (!versions) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+      const family = await readVersionFamily(pool, { programId: id, organizationId: orgId, documentId });
+      if (!family) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+      // Each version's review and approval (VR-13): its lifecycle record's stage
+      // and sign-offs, or none (not reviewed). An unreadable stage fails the
+      // read: "not reviewed" would be a claim about a record not read.
+      const lifecycles = await readVaultLifecycles(pool, orgId, family.map((v) => v.id));
+      const versions = family.map((v) => ({ ...v, lifecycle: lifecycles.get(v.id) ?? null }));
       return res.json({ success: true, data: { versions } });
     } catch (err) {
       if (isMissingStore(err)) {
@@ -1634,17 +1700,9 @@ export default function createProjectVaultRoutes(): Router {
       client = await pool.connect();
       await client.query('BEGIN');
       await setTenantContextTx(client, orgId);
-      const history = await readRecordAuditHistory(client, orgId, {
-        tableName: 'vault_document',
-        recordId: family ? family.map(v => v.id) : documentId,
-      });
+      const { entries, chain } = await readFamilyHistory(client, orgId, family, documentId);
       await client.query('COMMIT');
-      // Which version each event was recorded against (VR-09): the family's
-      // trail is one list, and a download of v1.0 must read as v1.0's.
-      const versionOf = (e: { target?: string | null; targetRef?: string | null }) =>
-        family?.find((v) => [e.target, e.targetRef].some((t) => typeof t === 'string' && t.endsWith(v.id)))?.version ?? null;
-      const entries = history.data.map((e) => ({ ...e, version: versionOf(e) }));
-      return res.json({ success: true, data: { entries, chain: history.meta.chain } });
+      return res.json({ success: true, data: { entries, chain } });
     } catch (err) {
       await client?.query('ROLLBACK').catch(() => undefined);
       logger.error('vault document history read failed', {

@@ -133,3 +133,28 @@ export async function readVersionFamily(
     link: r.link,
   }));
 }
+
+/**
+ * The versions before `documentId` in its family, newest first: its valid
+ * predecessors, back to the first. What an approval of it supersedes (VR-13).
+ */
+export async function readPredecessorIds(
+  q: FamilyQueryable,
+  p: { organizationId: number; documentId: string },
+): Promise<string[]> {
+  const { rows } = await q.query(
+    `WITH RECURSIVE back AS (
+       SELECT d.id, d.supersedes_id, d.program_id, d.document_code, d.organization_id, d.deleted_at, 0 AS n
+         FROM vault.documents d
+        WHERE d.id = $1::uuid AND d.organization_id = $2 AND d.deleted_at IS NULL
+       UNION ALL
+       SELECT x.id, x.supersedes_id, x.program_id, x.document_code, x.organization_id, x.deleted_at, b.n + 1
+         FROM back b JOIN vault.documents x ON ${VALID_LINK('b', 'x')}
+        WHERE b.n < 1000
+     )
+     SELECT id::text AS id FROM back WHERE n > 0 ORDER BY n`,
+    [p.documentId, p.organizationId],
+  );
+  return rows.map((r) => r.id);
+}
+
