@@ -417,12 +417,11 @@ export function createAuditTrailRoutes(pool: Pool): Router {
           // results.length + skipped.length === total always holds, and count it
           // as an insert failure so the response reports a partial/failed batch
           // rather than 201 success — a GxP event lost with no client signal is
-          // an §11.10(e) gap.
-          console.error('Failed to insert batch audit event:', err);
-          skipped.push({
-            index: i,
-            reason: 'insert_failed: ' + (err instanceof Error ? err.message : String(err)),
-          });
+          // an §11.10(e) gap. The database's text (constraint, column and
+          // table names) stays in the server log; the caller gets a fixed
+          // reason (reporting review 2026-10-01, DP-63).
+          log.error('Failed to insert batch audit event', { index: i, error: err instanceof Error ? err.message : String(err) });
+          skipped.push({ index: i, reason: 'insert_failed' });
           insertFailures++;
         }
       }

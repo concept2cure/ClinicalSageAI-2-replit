@@ -16,6 +16,8 @@ import { z } from 'zod';
 import { authMiddleware } from '../auth';
 import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 import { authedOrgId } from '../utils/authedOrgId';
+import { authedUserId } from '../utils/authedActor';
+import { FeatureToggleService } from '../services/featureToggleService';
 import {
   summarizeQuality,
   freshnessRollup,
@@ -197,7 +199,8 @@ const createSubscriptionSchema = z.object({
   channel: z.enum(['platform', 'external']).optional(),
   persona: z.string().nullable().optional(),
   enabled: z.boolean().optional(),
-  createdBy: z.number().int().positive().nullable().optional(),
+  // No createdBy: the creator is the session's user, never the body's
+  // (reporting review 2026-10-01, DP-59; report-os.ts did the same for runs).
 });
 
 const setEnabledSchema = z.object({
@@ -400,10 +403,19 @@ router.post('/subscriptions', async (req: Request, res: Response) => {
       return res.status(400).json({ error: parsed.error.flatten() });
     }
 
-    // Org is bound from the JWT, never the body — prevents cross-tenant writes.
+    // A workspace id in the body is a claim: it is stored only when it is this
+    // organisation's (IAM-15's P1-7b rule; DP-59). A foreign or unknown id is
+    // refused, the same answer either way.
+    const workspaceId = parsed.data.clientWorkspaceId;
+    if (workspaceId != null && !(await FeatureToggleService.workspaceInOrganization(workspaceId, organizationId))) {
+      return res.status(403).json({ error: 'That client workspace is not in your organization.', code: 'WORKSPACE_NOT_IN_ORGANIZATION' });
+    }
+
+    // Org and creator are bound from the session, never the body.
     const row = await createSubscription({
       ...parsed.data,
       organizationId,
+      createdBy: authedUserId(req),
     });
     return res.status(201).json({ data: row });
   } catch (error: any) {

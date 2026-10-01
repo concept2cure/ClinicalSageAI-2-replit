@@ -72,6 +72,7 @@ import { readRecordAuditHistory } from '../audit-trail-ledger.routes.js';
 import { readVersionFamily, supersededSql, versionCountLateral } from '../../services/vault/vault-version-family.js';
 import { readVaultLifecycles } from '../../services/vault/vault-lifecycle.js';
 import { fileDataRoomSources, readFiledAs } from '../../services/vault/vault-data-room-filing.js';
+import { searchVaultDocuments } from '../../services/vault/vault-search.js';
 import { setTenantContextTx } from '../../services/tenant/governed-tenant-context.js';
 import { requireEditorAccess } from '../../middleware/orgMembership.js';
 import { getStorageProvider, getStorageProviderFor } from '../../services/storage/index.js';
@@ -1074,6 +1075,43 @@ export default function createProjectVaultRoutes(): Router {
   const router = Router();
 
   /**
+   * GET /api/c2c/project-vault/search?q=&limit=&offset=&includeSuperseded=
+   * Library search (plan critique 15): the project search's query across every
+   * program the organisation holds (vault-search.ts), each hit naming its
+   * program. Registered before GET /:id, which would otherwise take "search"
+   * for a project id. An empty query is not "match everything"; an error is
+   * never an empty result.
+   */
+  router.get('/search', async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+    const limit = Math.min(Math.max(parseInt(String(req.query.limit ?? '25'), 10) || 25, 1), 100);
+    const offset = Math.max(parseInt(String(req.query.offset ?? '0'), 10) || 0, 0);
+    const includeSuperseded = req.query.includeSuperseded === 'true';
+    if (!q) {
+      return res.json({ success: true, data: { query: '', results: [], total: 0, limit, offset, reason: 'EMPTY_QUERY' } });
+    }
+    try {
+      const found = await searchVaultDocuments(pool, { organizationId: orgId, programId: null, q, limit, offset, includeSuperseded });
+      return res.json({
+        success: true,
+        data: {
+          query: q, total: found.total, limit, offset, includeSuperseded,
+          results: found.results.map((r) => ({ ...r, size: prettySize(r.sizeBytes) })),
+        },
+      });
+    } catch (err) {
+      logger.error('vault library search failed', { err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({
+        success: false,
+        error: 'SEARCH_FAILED',
+        message: 'The library could not be searched. This is not an empty result — nothing was searched.',
+      });
+    }
+  });
+
+  /**
    * GET /api/c2c/project-vault/:id
    * The Vault (DMS) surface display shape for one project, from real data.
    */
@@ -1536,84 +1574,29 @@ export default function createProjectVaultRoutes(): Router {
       // the same guard the read and download routes apply.
       if (!(await programInOrganization(pool, id, orgId))) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
 
-      /* `websearch_to_tsquery` rather than `to_tsquery`: it accepts arbitrary
-         user text (quotes, OR, -negation) and never raises a syntax error, so a
-         stray colon in a search box is a query, not a 500. */
-      const MATCH = `vault.document_search_vector(d.document_title, d.file_name, left(d.extracted_text, 900000))
-                     @@ websearch_to_tsquery('english', $3)`;
-
-      /** The program+tenant+match predicate, shared by the page and its count for
-       *  the same reason `uploadsWhere` above is shared: a total taken over a
-       *  different set than the rows is a wrong number, not a display detail.
-       *
-       *  The EXISTS carries the tenant boundary IN the statement. The route does
-       *  prove ownership first (the regulatory_programs SELECT above 404s when
-       *  the program is not this org's), so these reads were already scoped —
-       *  but `vault.documents` has no organization_id to filter on directly, its
-       *  own RLS is program-scoped through core.can_access_program(program_id),
-       *  and relying on a check twenty lines up means the next edit that moves
-       *  or copies this query loses the boundary silently. `ci:tenant-isolation`
-       *  flags raw SQL against a tenant-scoped table with no org reference in the
-       *  same statement, and it was right to: this is the shape that decays. */
-      const searchWhere = `d.program_id = $1 AND d.deleted_at IS NULL
-              AND EXISTS (
-                SELECT 1 FROM regulatory_programs rp
-                 WHERE rp.id = d.program_id
-                   AND rp.organization_id = $2
-                   AND rp.deleted_at IS NULL
-              )
-              AND ${MATCH}${includeSuperseded ? '' : `
-              AND NOT ${supersededSql('d')}`}`;
-
-      const counted = await pool.query(
-        `SELECT count(*)::int AS total
-           FROM vault.documents d
-          WHERE ${searchWhere}`,
-        [id, orgId, q],
-      );
-
-      const rows = await pool.query(
-        `SELECT d.id, d.document_title, d.file_name, d.document_type, d.file_size,
-                d.folder_id, d.ctd_section, d.placement_status, d.created_at, d.version,
-                NOT ${supersededSql('d')} AS current,
-                ts_rank_cd(
-                  vault.document_search_vector(d.document_title, d.file_name, left(d.extracted_text, 900000)),
-                  websearch_to_tsquery('english', $3)
-                ) AS rank,
-                -- A snippet from the body so a hit on content is legible as one.
-                -- ts_headline is expensive, so it runs on the returned page only.
-                ts_headline('english', COALESCE(left(d.extracted_text, 900000), ''),
-                            websearch_to_tsquery('english', $3),
-                            'MaxFragments=1, MaxWords=28, MinWords=8, ShortWord=2') AS snippet
-           FROM vault.documents d
-          WHERE ${searchWhere}
-          ORDER BY rank DESC, d.created_at DESC
-          LIMIT $4 OFFSET $5`,
-        [id, orgId, q, limit, offset],
-      );
-
+      // The one search query (vault-search.ts), here scoped to this program; the
+      // library search below asks the same query across the organisation.
+      const found = await searchVaultDocuments(pool, { organizationId: orgId, programId: id, q, limit, offset, includeSuperseded });
       return res.json({
         success: true,
         data: {
           query: q,
-          total: counted.rows[0]?.total ?? 0,
+          total: found.total,
           limit,
           offset,
           includeSuperseded,
-          results: rows.rows.map(r => ({
+          results: found.results.map((r) => ({
             id: r.id,
-            title: r.document_title || r.file_name || 'Untitled',
-            fileName: r.file_name,
-            documentType: r.document_type,
-            size: prettySize(r.file_size),
-            folderId: r.folder_id,
-            ctdSection: r.ctd_section,
-            placementStatus: r.placement_status,
-            version: r.version ?? null,
-            current: Boolean(r.current),
-            // Only offered when the match was in the body; a snippet echoing the
-            // title back is noise.
-            snippet: typeof r.snippet === 'string' && r.snippet.trim() ? r.snippet : null,
+            title: r.title,
+            fileName: r.fileName,
+            documentType: r.documentType,
+            size: prettySize(r.sizeBytes),
+            folderId: r.folderId,
+            ctdSection: r.ctdSection,
+            placementStatus: r.placementStatus,
+            version: r.version,
+            current: r.current,
+            snippet: r.snippet,
           })),
         },
       });
@@ -1665,6 +1648,41 @@ export default function createProjectVaultRoutes(): Router {
       logger.error('vault versions read failed', { documentId, err: err instanceof Error ? err.message : String(err) });
       return res.status(500).json({ success: false, error: 'VERSIONS_UNAVAILABLE',
         message: "This document's versions could not be read. Nothing is shown rather than an incomplete list." });
+    }
+  });
+
+  /* ── GET /:id/documents/:documentId/compare?against=<versionId> ──────────
+     What changed between two versions of one document (plan critique 15):
+     the changed lines of their extracted text, unchanged runs collapsed, and
+     the recorded details that differ (vault-version-compare.ts). Both must be
+     in the same family; another document's version is refused, another
+     organisation's document reads as not found. */
+  router.get('/:id/documents/:documentId/compare', async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    const id = String(req.params.id ?? '');
+    const documentId = String(req.params.documentId ?? '');
+    const against = typeof req.query.against === 'string' ? req.query.against : '';
+    if (!UUID_RE.test(id) || !UUID_RE.test(documentId)) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+    if (!UUID_RE.test(against)) {
+      return res.status(400).json({ success: false, error: 'AGAINST_REQUIRED', message: 'Name the version to compare with (?against=<version id>).' });
+    }
+    try {
+      const { compareVaultVersions } = await import('../../services/vault/vault-version-compare.js');
+      const out = await compareVaultVersions(pool, { programId: id, organizationId: orgId, documentId, againstId: against });
+      if (!out.ok) return res.status(out.status).json({ success: false, error: out.code, message: out.message });
+      return res.json({
+        success: true,
+        data: { from: out.from, to: out.to, sameBytes: out.sameBytes, details: out.details, text: out.text },
+      });
+    } catch (err) {
+      if (isMissingStore(err)) {
+        return res.status(503).json({ success: false, error: 'STORE_UNAVAILABLE',
+          message: 'The vault uploads store is not provisioned in this environment.' });
+      }
+      logger.error('vault version compare failed', { documentId, err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({ success: false, error: 'COMPARE_UNAVAILABLE',
+        message: 'The two versions could not be compared. Nothing is shown rather than a partial comparison.' });
     }
   });
 

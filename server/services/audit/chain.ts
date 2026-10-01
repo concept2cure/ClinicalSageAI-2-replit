@@ -66,7 +66,7 @@ import { getTenantScope } from '../../db/tenantStore.js';
  * before chain_seq existed have none and the seal recipe cannot change under
  * them. The writer and verifier both use this constant so they never drift.
  */
-const AUDIT_SEAL_SEQ = 0;
+export const AUDIT_SEAL_SEQ = 0;
 
 /** pg_advisory_xact_lock class for the per-tenant chain lock (0x0C2C). */
 export const AUDIT_CHAIN_LOCK_CLASS = 3116;
@@ -87,7 +87,7 @@ export const AUDIT_CHAIN_ORDER_ASC_SQL = 'chain_seq ASC NULLS FIRST, occurred_at
 export const AUDIT_CHAIN_HEAD_ORDER_SQL = 'chain_seq DESC NULLS LAST, occurred_at DESC, id DESC';
 
 /** The order the pre-fix recipe used and legacy rows are still walked in. */
-const LEGACY_HEAD_ORDER_SQL = 'occurred_at DESC, id DESC';
+export const LEGACY_HEAD_ORDER_SQL = 'occurred_at DESC, id DESC';
 
 export interface ChainRow {
   action:       string;

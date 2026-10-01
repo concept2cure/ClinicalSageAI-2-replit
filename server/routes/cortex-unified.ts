@@ -1126,6 +1126,7 @@ router.post('/save-draft', requireAuth, async (req: Request, res: Response) => {
         details: {
           persistenceStatus: execution.persistenceStatus,
           decisionReference: execution.decisionReference,
+          ...(execution.persistenceRefusal && { refusal: execution.persistenceRefusal }),
         },
       });
     }

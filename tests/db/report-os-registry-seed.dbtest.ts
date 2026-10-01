@@ -25,6 +25,11 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import reportOsRouter from '../../server/routes/report-os';
+import { getPool } from '../../server/db/runtime';
+import { runWithTenantScope } from '../../server/db/tenantStore';
+import { setTenantContextTx } from '../../server/services/tenant/governed-tenant-context';
+import { buildSealedRecord } from '../../server/services/report-os/sealing/seal';
+import type { RenderedReport } from '../../server/services/report-os/render/types';
 import { applyMigrationFiles } from '../../scripts/db/migration-set.mjs';
 import {
   REPORT_TYPE_REGISTRY_SEED,
@@ -33,6 +38,7 @@ import {
 import {
   ORG_B,
   owner,
+  tokenA,
   tokenB,
   userB,
   ids,
@@ -322,6 +328,169 @@ describe('finalize on the record (review round 1, DP-47)', () => {
     expect(res.body.error.code).toBe('RUN_ALREADY_FINAL');
     expect(await runState()).toEqual(before);
     expect(await finalizedRows()).toHaveLength(1);
+  });
+});
+
+/* Reporting review 2026-10-01 (Part 11): the seal is read back and re-verified.
+   Runs after the finalize cases above, over the run the admin sealed. */
+describe('the seal on the record', () => {
+  it('reads the seal back and re-verifies it, with the signer and the act (GET /runs/:id/seal)', async () => {
+    const res = await request(ro).get(`/api/report-os/runs/${runId}/seal`).set(auth(tokenB));
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.data).toMatchObject({
+      sealed: true,
+      signature: { signerName: expect.any(String), meaning: 'approval' },
+      finalization: { reason: SIGNED.reason, meaning: 'approval', priorStatus: 'completed' },
+      verification: { verdict: 'intact' },
+    });
+    // The chain row's json text hashes to its payload_hash on a real database.
+    expect(res.body.data.verification.checks[0]).toMatchObject({ check: 'audit-chain', ok: true });
+    expect(res.body.data.seal.contentHash).toBe((await runState()).seal_hash);
+  });
+
+  it("another organisation's session reads neither the seal nor the sealed document: 404, nothing in the body", async () => {
+    for (const path of ['seal', 'rendered']) {
+      const res = await request(ro).get(`/api/report-os/runs/${runId}/${path}`).set(auth(tokenA));
+      expect(res.status, path).toBe(404);
+      expect(JSON.stringify(res.body)).not.toMatch(/sealHash|contentHash|signerName|sections/);
+    }
+  });
+
+  it('shows the final run as the stored sealed document (GET /runs/:id/rendered)', async () => {
+    const res = await request(ro).get(`/api/report-os/runs/${runId}/rendered`).set(auth(tokenB));
+    expect(res.status).toBe(200);
+    expect(res.body.sealed).toBe(true);
+    expect(res.body.data.status).toBe('final');
+  });
+
+  it('a stored document changed after sealing reads as a mismatch, not intact', async () => {
+    const restore = (
+      await owner.query(
+        `SELECT id, snapshot_metadata::text AS meta FROM report_snapshots WHERE run_id = $1 AND is_latest`,
+        [runId]
+      )
+    ).rows[0] as { id: number; meta: string };
+    const meta = JSON.parse(restore.meta);
+    meta.sealedDocument.sections[0].title = 'Edited after sealing';
+    await owner.query('UPDATE report_snapshots SET snapshot_metadata = $2::json WHERE id = $1', [restore.id, JSON.stringify(meta)]);
+    try {
+      const res = await request(ro).get(`/api/report-os/runs/${runId}/seal`).set(auth(tokenB));
+      expect(res.status).toBe(200);
+      expect(res.body.data.verification.verdict).toBe('mismatch');
+      // ...and the changed copy is not shown as the sealed record.
+      const shown = await request(ro).get(`/api/report-os/runs/${runId}/rendered`).set(auth(tokenB));
+      expect(shown.status).toBe(409);
+      expect(shown.body.error.code).toBe('SEALED_DOCUMENT_MISMATCH');
+    } finally {
+      await owner.query('UPDATE report_snapshots SET snapshot_metadata = $2::json WHERE id = $1', [restore.id, restore.meta]);
+    }
+  });
+});
+
+/** GET /seal's verdict and GET /rendered's answer for the run, through the app role. */
+async function sealAndRendered() {
+  const seal = await request(ro).get(`/api/report-os/runs/${runId}/seal`).set(auth(tokenB));
+  const shown = await request(ro).get(`/api/report-os/runs/${runId}/rendered`).set(auth(tokenB));
+  return { verdict: seal.body.data?.verification?.verdict, rendered: [shown.status, shown.body.error?.code] };
+}
+
+describe('the seal on the record: what a rewrite of the mutable rows cannot hide', () => {
+  it('a sealed document removed from the snapshot reads as a mismatch, and nothing is re-rendered in its place', async () => {
+    const restore = (
+      await owner.query(`SELECT id, snapshot_metadata::text AS meta FROM report_snapshots WHERE run_id = $1 AND is_latest`, [runId])
+    ).rows[0] as { id: number; meta: string };
+    const meta = JSON.parse(restore.meta);
+    delete meta.sealedDocument;
+    await owner.query('UPDATE report_snapshots SET snapshot_metadata = $2::json WHERE id = $1', [restore.id, JSON.stringify(meta)]);
+    try {
+      expect(await sealAndRendered()).toEqual({ verdict: 'mismatch', rendered: [409, 'SEALED_DOCUMENT_MISMATCH'] });
+    } finally {
+      await owner.query('UPDATE report_snapshots SET snapshot_metadata = $2::json WHERE id = $1', [restore.id, restore.meta]);
+    }
+  });
+
+  it("a run whose status was rewritten after finalizing reads as a mismatch, not as a run never sealed", async () => {
+    await owner.query(`UPDATE report_runs SET status = 'completed' WHERE id = $1`, [runId]);
+    try {
+      expect(await sealAndRendered()).toEqual({ verdict: 'mismatch', rendered: [409, 'SEALED_DOCUMENT_MISMATCH'] });
+    } finally {
+      await owner.query(`UPDATE report_runs SET status = 'final' WHERE id = $1`, [runId]);
+    }
+    expect(await sealAndRendered()).toEqual({ verdict: 'intact', rendered: [200, undefined] });
+  });
+});
+
+describe('the export of the sealed record', () => {
+  it('exports the final run as its sealed document, signed and verified, and records the export id it prints', async () => {
+    const res = await request(ro)
+      .get(`/api/report-os/runs/${runId}/export.pdf`)
+      .set(auth(tokenB))
+      .buffer(true)
+      .parse((r, done) => {
+        const chunks: Buffer[] = [];
+        r.on('data', (c: Buffer) => chunks.push(c));
+        r.on('end', () => done(null, Buffer.concat(chunks)));
+      });
+    expect(res.status).toBe(200);
+    const { PDFParse } = (await import('pdf-parse')) as unknown as { PDFParse: new (o: { data: Buffer }) => { getText(): Promise<{ text: string }> } };
+    const text = (await new PDFParse({ data: res.body as Buffer }).getText()).text.replace(/\s+/g, ' ');
+    const recorded = (
+      await owner.query(
+        `SELECT new_values::jsonb AS details FROM audit_logs
+          WHERE tenant_id = $1 AND record_id = $2 AND action = 'report_os.run_exported' ORDER BY occurred_at DESC LIMIT 1`,
+        [ORG_B, String(runId)]
+      )
+    ).rows[0]?.details as Record<string, unknown>;
+    expect(recorded).toMatchObject({ status: 'final', sealVerdict: 'intact', sha256: createHash('sha256').update(res.body as Buffer).digest('hex') });
+    expect(text).toContain(`Export ${recorded.exportId}`);
+    expect(text).toMatch(/Final\. Signed by .+ as approval/);
+    expect(text).toContain(`Reason: ${SIGNED.reason}`);
+    expect(text).toContain('Seal verification at export: intact.');
+    expect(text).not.toMatch(/NOT FINAL/);
+  });
+});
+
+/**
+ * The forgery the second review found: the app role can write report_runs,
+ * report_snapshots and audit_logs, so in three writes it could make a run that
+ * was never finalized read "intact" over a document it wrote. A finalization row
+ * inserted without a chain position (the trigger lets an unchained row through as
+ * legacy) is not the record.
+ */
+describe('the seal on the record: a forgery by the app role is not the record', () => {
+  it('a run given final status, a forged sealed document and an unchained finalization row reads as a mismatch', async () => {
+    const created = await request(ro).post('/api/report-os/runs').set(auth(tokenB)).send({ scopeType: 'project', scopeId: ids.B.projects, reportTypeId: RUN_TYPE });
+    expect(created.status, JSON.stringify(created.body)).toBe(201);
+    const forgedRun = created.body.data.run.id as number;
+    const forged: RenderedReport = {
+      reportTypeId: RUN_TYPE, scopeType: 'project', scopeId: String(ids.B.projects), generatedAt: new Date().toISOString(), status: 'final',
+      sections: [{ id: 's', title: 'Summary', blocks: [{ kind: 'summary', text: 'FORGED: ready to file.' }] }],
+    };
+    const seal = buildSealedRecord(forged, new Date().toISOString());
+    const nv = JSON.stringify({ sealHash: seal.contentHash, algorithm: seal.algorithm, canonVersion: seal.canonVersion, atomCount: seal.atomCount, sealedAt: seal.sealedAt, documentStored: true });
+    await runWithTenantScope({ tenantId: String(ORG_B), role: 'member', source: 'test', caller: 'report-seal-forgery' }, async () => {
+      const app = await getPool().connect();
+      try {
+        await app.query('BEGIN');
+        await setTenantContextTx(app, ORG_B);
+        await app.query(`UPDATE report_runs SET status = 'final' WHERE id = $1`, [forgedRun]);
+        await app.query('UPDATE report_snapshots SET snapshot_metadata = $2::json WHERE run_id = $1 AND is_latest', [forgedRun, JSON.stringify({ seal, sealedDocument: forged })]);
+        await app.query(
+          `INSERT INTO audit_logs (tenant_id, action, table_name, record_id, new_values, payload_hash)
+           VALUES ($1, 'report_os.run_finalized', 'report_run', $2, $3::json, $4)`,
+          [ORG_B, String(forgedRun), nv, createHash('sha256').update(nv).digest('hex')]
+        );
+        await app.query('COMMIT');
+      } finally {
+        app.release();
+      }
+    });
+    const seen = await request(ro).get(`/api/report-os/runs/${forgedRun}/seal`).set(auth(tokenB));
+    expect(seen.body.data.verification.verdict).toBe('mismatch');
+    expect(seen.body.data.verification.checks[0].detail).toMatch(/no position on the audit chain/);
+    const shown = await request(ro).get(`/api/report-os/runs/${forgedRun}/rendered`).set(auth(tokenB));
+    expect(shown.status).toBe(409);
+    expect(JSON.stringify(shown.body)).not.toContain('FORGED');
   });
 });
 
