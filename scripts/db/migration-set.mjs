@@ -2789,6 +2789,15 @@ export const C2C_MIGRATION_FILES = [
   // (cdisc_prm_studies.program_id) to an existing table. No DROP.
   'migrations/20260926b_program_same_org_keys.sql',
 
+  // ── The same rule for the integer project key (PF-03, D3, 2026-10-01) ─────
+  // (project_id, org) → projects (id, organization_id) on concept2cure_artifacts
+  // and c2c_submission_packages, on a unique index it creates when absent.
+  // NOT VALID (legacy rows listed by program-same-org-preflight.mjs), ON DELETE
+  // CASCADE like each table's existing project_id key, so a project delete is
+  // unchanged. After every creator: 0000 (artifacts), 0002 (packages). Creates
+  // no table; adds one index and two keys. No DROP.
+  'migrations/20261001_integer_project_same_org_keys.sql',
+
   // ── RBQM: signed records stay signed; QTLs bite in their direction; a
   //    duplicate metric load is refused (2026-09-30) ─────────────────────────
   // Ported from the abandoned #1120 / #1123 / #1130 (+ #1166's UNIQUE replay
