@@ -1,7 +1,7 @@
 /**
- * OQ-002 steps OQ-VAULT-15 to OQ-VAULT-17: filing from the data room (VR-11a),
- * confirming suggestions together (VR-11b) and comparing two versions
- * (plan critique 15). Run by ./run.mjs after OQ-VAULT-14, in this order.
+ * OQ-002 steps OQ-VAULT-15 to OQ-VAULT-18: filing from the data room (VR-11a),
+ * confirming suggestions together (VR-11b), comparing two versions and the
+ * library search (plan critique 15). Run by ./run.mjs after OQ-VAULT-14, in this order.
  * Kept in their own module so the runner stays within the file-length limit.
  */
 import { ingestPdf, makePdfBuffer } from '../../lib/fixtures.mjs';
@@ -145,9 +145,42 @@ async function compareVersionsStep({ step, state, stamp }) {
   );
 }
 
+async function librarySearchStep({ step, state, stamp }) {
+  await step(
+    {
+      id: 'OQ-VAULT-18',
+      urs: ['URS-VAULT-017'],
+      title: 'The library search finds a document in another project of the organisation, named with its project',
+      action:
+        'Create a second program; ingest a PDF into it with a unique word in its title; GET /api/c2c/project-vault/search?q=<that word>; ' +
+        'GET /api/c2c/project-vault/<first program>/search?q=<that word>; GET /api/c2c/project-vault/search?q=',
+      expected:
+        'The library search answers 200 with the document, named with the second program. The first program\'s search does not list it. ' +
+        'The empty query answers no results with reason EMPTY_QUERY.',
+      dependsOn: ['OQ-VAULT-00'],
+    },
+    async ({ api, expect }) => {
+      const word = `oqlibrary${stamp.replace(/\W+/g, '').toLowerCase()}`;
+      const p = await api('POST', '/api/c2c/projects', { name: `OQ-002 Library program ${stamp}`, programType: 'ind', primaryAgency: 'FDA', indication: 'Validation exercise', priority: 'medium' });
+      expect(p.status === 201, `second program: expected 201, got ${p.status}`, p.json);
+      const other = p.json.data;
+      const doc = await ingestPdf(api, expect, { programId: other.id, title: `OQ-002 ${word} report` });
+      const lib = await api('GET', `/api/c2c/project-vault/search?q=${word}`);
+      const found = (lib.json?.data?.results ?? []).find((h) => h.id === doc.document.id);
+      expect(lib.status === 200 && found?.program?.id === other.id, 'the library search did not find the document in its project', lib.json);
+      const own = await api('GET', `/api/c2c/project-vault/${state.programId}/search?q=${word}`);
+      expect(own.status === 200 && !(own.json?.data?.results ?? []).some((h) => h.id === doc.document.id), 'the first program\'s search listed another program\'s document', own.json);
+      const empty = await api('GET', '/api/c2c/project-vault/search?q=');
+      expect(empty.status === 200 && empty.json?.data?.reason === 'EMPTY_QUERY', 'an empty library query was not answered EMPTY_QUERY', empty.json);
+      return `found ${doc.document.id} in ${found.program.name}; not in the first program's search; empty query → EMPTY_QUERY`;
+    },
+  );
+}
+
 /** @param {{ step: Function, state: Record<string, any>, stamp: string }} run */
 export async function runFilingAndCompareSteps(run) {
   await fileFromRoomStep(run);
   await confirmTogetherStep(run);
   await compareVersionsStep(run);
+  await librarySearchStep(run);
 }

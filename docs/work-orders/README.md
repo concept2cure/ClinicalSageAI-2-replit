@@ -1165,10 +1165,18 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
 
 In `.github/workflows/ci.yml`, `integration-tests` (the real-database suites, RLS on), `blank-db-provisioning`, `production-boot-smoke` (RLS on, non-superuser), `coverage`, `ana-readiness-tests` and `aios-audit-assets` each `needs: lint` with no `if:`, so a red guardrail step skips all of them. Every completed trunk CI run listed on 2026-10-01 (12708–12726) failed in Lint, and in run 12726 every one of those jobs shows `skipped`. `test` already carries `if: ${{ !cancelled() }}` for this reason. The same line on the six jobs would let them run after a red Lint while `build` (which `needs` them all) and the release-evidence gate stay strict. Not edited here: `ci.yml` was changed at 09-30 23:36 (`5e1a7204a`), inside its 24 h window. Why it matters: the connector could not issue a grant under enforced RLS from 2026-09-20 until `3bdb50458`, and the production-shape jobs are where such a defect is first visible.
 
+### Three Lint-gate reds on trunk, 2026-10-01 ~15:00 UTC, from `…01DiJJAk`. Each is inside its lane's window; none is in `.husky/pre-push`.
+
+- **→ `…0194UQPx`, `ae36f2c81`** (P0-10, DP-02): `audit-requestdb-coverage --strict-no-regression` reports 1 new route on the shared pool above its baseline of 228: `server/routes/governed-signed-act.ts`. A new tenant-facing route uses `requestDb(req)`.
+- **→ `…0194UQPx`, `8dab6c8f3`** (tamper_proof_log names its tenant): `ci:unkeyed-request-tables` reports a stale baseline entry, `audit.tamper_proof_log`, which is no longer unkeyed-and-read. The gate's remedy is `npm run ci:unkeyed-request-tables:write-baseline`.
+- **→ `…01WcyqbqWn`, likely `52697e0c4`** (AnA's answers go into the document open beside the conversation): `ci:ana-surface-context` reports two things. Surface-id coverage rose to 116, so `ID_BASELINE` should be raised to match. And `conversation-thread` is exempted as needing no context while its `useAnaChat` now forwards a `moduleContext`, so the exemption should be deleted.
+
 ### Two DB-tier reds on trunk, 2026-10-01 ~14:30 UTC, from `…01DiJJAk`. Both are inside their lanes' windows and both fail on trunk's code alone.
 
 - **→ The IAM lane (`…0194UQPx`), `9fbc9aa8f`** (IAM-20: the AnA platform controller's writes need the owner or admin role). Two cases in `tests/db/project-scope-boundary.dbtest.ts` still PATCH `/api/ana/platform/projects/:id` as a member, and now get 403 where they expect 200: "AnA's project update cannot hang a project from another tenant's project or workspace" and "…cannot move a project to another tenant". The rule stands; the test's actor needs the admin role. The tenant assertion before the status check still passes.
 - **→ The purge lane (`…01T2wooC`), `2ab30c93e`**. In `tests/db/tenant-purge-artifact-records.dbtest.ts:178` ("is purged: its signatures, lock snapshots and artifacts are erased…"), one `ana_turn_records` row survives the purge: expected 0, got 1. The data-room and Vault tables in the same suite are erased.
+
+**Both since fixed on trunk** (green in `npm run test:db` at ~15:20 UTC).
 
 ### For the first-account lane (`…01SuVLo2`), 2026-10-01, from `…01DiJJAk`: `ci:tenant-isolation:no-regression` is red after `b221cd641`
 
@@ -1177,6 +1185,7 @@ In `.github/workflows/ci.yml`, `integration-tests` (the real-database suites, RL
 ### For the audit-read lane (`…015oLV2v`), 2026-10-01, from `…01DiJJAk`: `tests/db/actor-displays.dbtest.ts` is red after `4f74b0f18`
 
 `4f74b0f18` (DP-18, second doors: the audit trail is recorded and read through one rule) put `GET /api/mdx/audit` behind the audit-reader rule. "the MDx audit list names the leaver's audit entries" (`tests/db/actor-displays.dbtest.ts:235`) still requests as a `member`, and now gets `403 AUDIT_READ_RESTRICTED` where it expects 200. The test, not the rule, is what needs to change: request as an admin or manager, as the other audit-read suites do. Not changed here, because the commit is inside that lane's 24 h window. It is 1 failure in `npm run test:db` (1006 of 1007), so the Integration job will show it.
+**Since fixed on trunk** (green in `npm run test:db` at ~15:20 UTC). The activity-feed case in the same file still fails only when the full tier runs, and passes alone: order-dependent, not this rule.
 
 ### For the D6 P0 lane (`…0194UQPx`), 2026-10-01, from `…01T2wooC`: a newer anchor hides an earlier truncation (P0-8, `735ba0a74`)
 

@@ -28,6 +28,7 @@ import {
 import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import { DataRoomFileBar, RoomPick, useDataRoomFiling, type DataRoomFiling } from './VaultDataRoomFiling';
 import { ConfirmSuggestedBar, useConfirmSuggested } from './VaultConfirmSuggested';
+import { VaultLibraryResults } from './VaultLibraryResults';
 import { downloadBlob, safeFileName } from '../download';
 import {
   EDITOR_TARGET_DOC_TYPES,
@@ -797,14 +798,15 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
   /* Reported in the SAME banner the upload path uses, rather than a second
      notification mechanism on one surface. */
   const [downloadNote, setDownloadNote] = useState<{ text: string; tone: 'ok' | 'error' } | null>(null);
-  const downloadVaultDoc = async (docId: string, title: string) => {
-    if (!projectId || downloading) return;
+  /* `programId`: a library hit downloads through the project that holds it. */
+  const downloadVaultDoc = async (docId: string, title: string, programId: string | null = projectId) => {
+    if (!programId || downloading) return;
     setDownloading(docId);
     setDownloadNote(null);
     try {
       const res = await apiRequest(
         'GET',
-        `/api/c2c/project-vault/${encodeURIComponent(projectId)}/documents/${encodeURIComponent(docId)}/download`,
+        `/api/c2c/project-vault/${encodeURIComponent(programId)}/documents/${encodeURIComponent(docId)}/download`,
       );
       if (!res.ok) {
         const j = await res.json().catch(() => null);
@@ -1052,8 +1054,12 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
   /* Current versions only unless asked (VR-09): an earlier version is the same
      document, and listing it beside its successor reads as two. */
   const [includeEarlier, setIncludeEarlier] = useState(false);
+  /* Library search (plan critique 15): every project's Vault. While it is on,
+     the project search does not run; VaultLibraryResults reads the library. */
+  const [allProjects, setAllProjects] = useState(false);
+  const libraryMode = Boolean(trimmedQ) && allProjects;
   const searchPath =
-    projectId && trimmedQ ? '/api/c2c/project-vault/' + encodeURIComponent(projectId) +
+    projectId && trimmedQ && !allProjects ? '/api/c2c/project-vault/' + encodeURIComponent(projectId) +
       '/search?q=' + encodeURIComponent(trimmedQ) + '&limit=100' +
       (includeEarlier ? '&includeSuperseded=true' : '') : null;
   const searchState = useLiveData<VaultSearchShape>(searchPath, [searchPath]);
@@ -1551,6 +1557,14 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                 />{' '}
                 Include earlier versions
               </label>
+              <label className="vd-search">
+                <input
+                  type="checkbox"
+                  checked={allProjects}
+                  onChange={(e) => setAllProjects(e.target.checked)}
+                />{' '}
+                All projects
+              </label>
             </div>
             {searching && searchState.error && (
               /* An error is not an empty result. Without this the screen reads
@@ -1567,6 +1581,15 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
               </div>
             )}
             {!searching ? <ConfirmSuggestedBar docs={folderDocs} state={confirmSuggested} /> : null}
+            {libraryMode ? (
+              <VaultLibraryResults
+                query={trimmedQ}
+                includeEarlier={includeEarlier}
+                currentProjectId={projectId ?? null}
+                onDownload={(docId, title, programId) => void downloadVaultDoc(docId, title, programId)}
+                downloadingId={downloading}
+              />
+            ) : (<>
             <div className="vd-cols">
               <span className="vd-col-name">Name</span>
               <span className="vd-col-type">Type</span>
@@ -1618,6 +1641,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                 </div>
               )}
             </div>
+            </>)}
           </section>
 
           <aside className="vd-detail">
