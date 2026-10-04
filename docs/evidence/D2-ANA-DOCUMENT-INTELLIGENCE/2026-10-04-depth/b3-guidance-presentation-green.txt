@@ -1,0 +1,21 @@
+# b3-guidance-presentation GREEN run (after code change), 2026-10-04
+# new test, per-test:
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > Pre-NDA / Pre-BLA briefing components place the ISS/ISE in 5.3.5.3 > pre_nda_meeting MTG-EFF 2ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > Pre-NDA / Pre-BLA briefing components place the ISS/ISE in 5.3.5.3 > pre_nda_meeting MTG-SAFETY 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > Pre-NDA / Pre-BLA briefing components place the ISS/ISE in 5.3.5.3 > pre_bla_meeting MTG-EFF 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > Pre-NDA / Pre-BLA briefing components place the ISS/ISE in 5.3.5.3 > pre_bla_meeting MTG-SAFETY 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > 2.7.1–2.7.4 do not depend on the 2.5 sections that are drafted after them > 2.7.1 1ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > 2.7.1–2.7.4 do not depend on the 2.5 sections that are drafted after them > 2.7.2 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > 2.7.1–2.7.4 do not depend on the 2.5 sections that are drafted after them > 2.7.3 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > 2.7.1–2.7.4 do not depend on the 2.5 sections that are drafted after them > 2.7.4 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > 2.5.6 follows the ICH M4E(R2) benefit-risk headings > names every heading in the content elements and the generation prompt 1ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > 2.5.6 follows the ICH M4E(R2) benefit-risk headings > ties the headings to FDA's Benefit-Risk Framework and fits the brief's caps 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > 2.5.6 follows the ICH M4E(R2) benefit-risk headings > warns against product data in the Therapeutic Context 0ms
+ ✓ tests/regulatory/ctd-guidance-presentation.test.ts > 2.5.6 follows the ICH M4E(R2) benefit-risk headings > reaches the section brief with every heading, including from a child code 1ms
+      Tests  12 passed (12)
+# new test + every test file importing the changed modules (directly or via ctd/index, section-brief):
+# tests/regulatory/ctd-guidance-presentation.test.ts server/services/ana/__tests__/regulatory-knowledge-tools.test.ts server/services/authoring/__tests__/section-generation-requirements.test.ts tests/regulatory/ana-ctd-section-truth.test.ts tests/regulatory/citation-accuracy.test.ts tests/regulatory/csr-e3-overlay.test.ts tests/regulatory/ctd-authoring-depth.test.ts tests/regulatory/ctd-guidance-correctness.test.ts tests/regulatory/fda-module1-numbering.test.ts tests/regulatory/plr-format-rules.test.ts tests/regulatory/submission-chain.test.ts tests/regulatory/template-library-truth.test.ts tests/schema-contract/one-normalize-ctd-code.contract.test.ts
+ Test Files  13 passed (13)
+      Tests  291 passed (291)
+ Test Files  13 passed (13)
+      Tests  291 passed (291)

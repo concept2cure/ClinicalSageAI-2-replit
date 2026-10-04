@@ -795,7 +795,9 @@ step "25. Triage: DRAFTED with a LINKED response draft, then CLOSED — the row 
 # The response draft is a real governed authoring document; the link is
 # refused unless the doc exists in THIS org (a dangling "Open draft" would be
 # a door that opens nothing).
-CODE=$(req rdoc POST /api/authoring/docs '{"title":"[SIM] Response to agency question — §3.2.P.7","module":"M3"}')
+# A document belongs to a project (PF-07): the response draft is created in
+# the program the CMC module is working in.
+CODE=$(req rdoc POST /api/authoring/docs "{\"title\":\"[SIM] Response to agency question — §3.2.P.7\",\"module\":\"M3\",\"client_program_id\":\"$PROGRAM\"}")
 RDOC=$(cat "$OUT/rdoc.json" | JQ '.document.id // empty')
 [ "$CODE" = 200 -o "$CODE" = 201 ] && [ -n "$RDOC" ] && ok "response draft created ($RDOC)" || bad "response draft create: $CODE $(head -c150 "$OUT/rdoc.json")"
 # A bogus link is refused outright — nothing recorded.

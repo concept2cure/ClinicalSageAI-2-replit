@@ -356,7 +356,7 @@ export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
     ],
     "contentType": "mixed",
     "guidance": "This section addresses the applicant's pediatric obligations: the initial Pediatric Study Plan (iPSP) submitted during development and the pediatric assessment, waiver, or deferral request in the marketing application under the Pediatric Research Equity Act (PREA). It documents how pediatric use will be studied or why studies are waived/deferred.",
-    "authoringGuidance": "Pediatric obligations are governed by the Pediatric Research Equity Act, codified at Section 505B of the FD&C Act (21 U.S.C. 355c), with the initial Pediatric Study Plan (iPSP) required generally no later than 60 days after an end-of-Phase-2 meeting. In the marketing application the applicant must contain a pediatric assessment for the same indication being sought in adults, or a request for a partial/full waiver or deferral with justification. The reviewer and the Pediatric Review Committee (PeRC) evaluate whether the pediatric plan adequately addresses each pediatric age group, whether requested waivers meet the statutory criteria (e.g., studies impossible/impracticable, product does not represent a meaningful therapeutic benefit and is unlikely to be used in a substantial number of pediatric patients, or evidence the product would be unsafe/ineffective in pediatrics), and whether deferrals are justified with timelines. Acceptability requires alignment with the agreed iPSP, coverage of all relevant pediatric age groups, proposed pediatric formulation considerations, and clearly justified waiver/deferral requests with milestone dates. Note any orphan-designation interplay (PREA does not apply to orphan-designated indications) and any BPCA (pediatric exclusivity) considerations.",
+    "authoringGuidance": "Pediatric obligations are governed by the Pediatric Research Equity Act, codified at Section 505B of the FD&C Act (21 U.S.C. 355c), with the initial Pediatric Study Plan (iPSP) required generally no later than 60 days after an end-of-Phase-2 meeting. In the marketing application the applicant must contain a pediatric assessment for the same indication being sought in adults, or a request for a partial/full waiver or deferral with justification. The reviewer and the Pediatric Review Committee (PeRC) evaluate whether the pediatric plan adequately addresses each pediatric age group, whether requested waivers meet the statutory criteria (e.g., studies impossible/impracticable, product does not represent a meaningful therapeutic benefit and is unlikely to be used in a substantial number of pediatric patients, or evidence the product would be unsafe/ineffective in pediatrics), and whether deferrals are justified with timelines. Acceptability requires alignment with the agreed iPSP, coverage of all relevant pediatric age groups, proposed pediatric formulation considerations, and clearly justified waiver/deferral requests with milestone dates. Note any orphan-designation interplay and any BPCA (pediatric exclusivity) considerations. PREA generally does not apply to an indication with orphan designation (505B(k)(1)), except under 505B(k)(2) with (a)(1)(B)/(a)(3): an original NDA/BLA submitted on or after 2020-08-18 for a new active ingredient, intended for an adult cancer and directed at a molecular target FDA considers substantially relevant to a pediatric cancer, must contain the molecularly targeted pediatric cancer investigation reports, or a waiver or deferral, even with orphan designation (FDA, FDARA Implementation Guidance for Pediatric Studies of Molecularly Targeted Oncology Drugs, fda.gov/media/133440).",
     "keyContentElements": [
       "Statement of the applicant's PREA obligations for the indication under review and the pediatric age groups implicated",
       "Reference to the agreed initial Pediatric Study Plan (iPSP) and any agreed amendments",
@@ -365,10 +365,10 @@ export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
       "Requests for deferral with justification and proposed study completion milestone dates",
       "Pediatric formulation development plan or justification for why a pediatric formulation is/is not needed",
       "Extrapolation strategy from adult (or older pediatric) efficacy where scientifically justified",
-      "Interaction history with FDA/PeRC and any orphan-designation or BPCA (pediatric exclusivity) considerations",
+      "Interaction history with FDA/PeRC, orphan-designation status and whether the 505B(a)(1)(B) molecularly targeted pediatric cancer investigation applies, and any BPCA (pediatric exclusivity) considerations",
       "Cross-reference to any pediatric data in Module 5 and to labeling Section 8.4"
     ],
-    "generationPrompt": "Prepare the PREA pediatric content for {{SPONSOR}}'s {{PRODUCT_NAME}} marketing application for {{INDICATION}}. State the Section 505B obligations and the pediatric age groups implicated by the adult indication; reference the agreed initial Pediatric Study Plan; and present either the pediatric assessment or the requested full/partial waiver and/or deferral with the specific statutory basis and dated milestones. Include the pediatric formulation plan, any efficacy-extrapolation strategy, a table mapping pediatric age groups to studies and waiver/deferral status, and cross-references to Module 5 pediatric data and labeling Section 8.4. Note orphan-designation and BPCA considerations. Use bracketed placeholders for dates and study identifiers; do not fabricate results.",
+    "generationPrompt": "Prepare the PREA pediatric content for {{SPONSOR}}'s {{PRODUCT_NAME}} marketing application for {{INDICATION}}. State the Section 505B obligations and the pediatric age groups implicated by the adult indication; reference the agreed initial Pediatric Study Plan; and present either the pediatric assessment or the requested full/partial waiver and/or deferral with the specific statutory basis and dated milestones. Include the pediatric formulation plan, any efficacy-extrapolation strategy, a table mapping pediatric age groups to studies and waiver/deferral status, and cross-references to Module 5 pediatric data and labeling Section 8.4. Note orphan-designation status and whether the 505B(a)(1)(B) molecularly targeted pediatric cancer investigation applies despite it (505B(k)(2)), and BPCA considerations. Use bracketed placeholders for dates and study identifiers; do not fabricate results.",
     "parentCode": "1",
     "expectedData": [
       "Table of pediatric age groups mapped to planned/completed studies, waiver/deferral status, and milestone dates"
@@ -378,7 +378,7 @@ export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
       "Failing to address all relevant pediatric age groups or omitting a required pediatric formulation plan",
       "Deferral requests lacking justified, dated completion milestones",
       "Marketing-application pediatric plan inconsistent with the previously agreed iPSP",
-      "Overlooking that PREA does not apply to orphan-designated indications, or conflating PREA obligations with BPCA voluntary incentives"
+      "Assuming orphan designation exempts the application from PREA when 505B(k)(2) applies (molecularly targeted adult-cancer drug, new active ingredient, original application on or after 2020-08-18), or conflating PREA obligations with BPCA voluntary incentives"
     ],
     "wordCountRange": [
       500,
@@ -544,19 +544,19 @@ export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
       "IND"
     ],
     "contentType": "narrative",
-    "guidance": "In the FDA regional module the Investigator's Brochure (IB) is referenced under 1.4.1 as one of the references/cross-references for the submission. The IB compiles the clinical and nonclinical information relevant to the study drug for the investigators; the submitted IND must include a current IB and each amendment must reference the version in effect.",
-    "authoringGuidance": "The Investigator's Brochure is required by 21 CFR 312.23(a)(5), which enumerates its content; 21 CFR 312.55 separately obligates the sponsor to furnish the current IB to each participating investigator. ICH E6(R2)/E6(R3) Good Clinical Practice Section 7 defines the standard IB structure. In the US eCTD regional backbone the IB appears at 1.4.1 as a reference document that gives investigators and the FDA reviewer a consolidated, current summary of the physical/chemical/pharmaceutical properties, nonclinical pharmacology and toxicology, pharmacokinetics, and available clinical safety and efficacy data — plus guidance for the investigator on possible risks and adverse-reaction management. Acceptability requires that the version referenced matches the version supporting the current protocol, that the safety information (including a summary of known and potential risks) is current as of the submission, and that the IB is internally consistent with the protocol, the 1571, and Module 4/5 data. A stale IB that does not reflect new safety findings is a common information-amendment trigger.",
+    "guidance": "In the FDA regional module the current Investigator's Brochure (IB) is filed at heading 1.14.4.1 (Investigator's brochure); heading 1.4.1 is the letter of authorization, a different document. The IB compiles the clinical and nonclinical information relevant to the study drug for the investigators; the submitted IND must include a current IB and each amendment must reference the version in effect.",
+    "authoringGuidance": "The Investigator's Brochure is required by 21 CFR 312.23(a)(5), which enumerates its content; 21 CFR 312.55 separately obligates the sponsor to furnish the current IB to each participating investigator. ICH E6(R3) Appendix A (published by FDA as guidance, fda.gov/media/169090; formerly E6(R2) section 7) defines the IB content. In the US eCTD regional backbone the IB is filed at 1.14.4.1; it gives investigators and the FDA reviewer a consolidated, current summary of the physical/chemical/pharmaceutical properties, nonclinical pharmacology and toxicology, pharmacokinetics, and available clinical safety and efficacy data — plus guidance for the investigator on possible risks and adverse-reaction management. Acceptability requires that the version referenced matches the version supporting the current protocol, that the safety information (including a summary of known and potential risks) is current as of the submission, and that the IB is internally consistent with the protocol, the 1571, and Module 4/5 data. A stale IB that does not reflect new safety findings is a common information-amendment trigger.",
     "keyContentElements": [
       "Title page with product identifier, IB version/edition number, and date",
       "Summary of physical, chemical, and pharmaceutical properties and formulation",
       "Summary of nonclinical pharmacology, toxicology, and pharmacokinetics/ADME",
       "Summary of available clinical pharmacokinetics, safety, and efficacy data",
       "A guidance-for-the-investigator section describing known and potential risks and adverse-reaction management",
-      "Reference safety information (expected/listed adverse events) used for expedited-reporting assessments",
+      "Reference safety information: the expected serious adverse reactions with their frequency and nature, used to assess expectedness for expedited reporting (ICH E6(R3) Appendix A)",
       "Clear version control and identification of the edition supporting the current protocol",
       "Cross-reference to the underlying nonclinical (Module 4) and clinical (Module 5) data sources"
     ],
-    "generationPrompt": "Prepare the 1.4.1 Investigator's Brochure reference content and version-control guidance for {{SPONSOR}}'s {{PHASE}} IND for {{PRODUCT_NAME}} in {{INDICATION}}. Describe the IB edition/date being referenced and confirm it supports the current protocol; summarize the required IB sections (physicochemical/pharmaceutical properties, nonclinical pharmacology/toxicology/PK, available clinical safety and efficacy, guidance for the investigator on known and potential risks, and reference safety information for expectedness assessments); and specify the cross-references to Module 4 and Module 5. Emphasize version control and consistency with the 1571 and protocol. Use bracketed placeholders for edition numbers, dates, and specific findings; do not fabricate data.",
+    "generationPrompt": "Draft the Investigator's Brochure for {{SPONSOR}}'s {{PHASE}} IND for {{PRODUCT_NAME}} in {{INDICATION}}, filed at FDA Module 1 heading 1.14.4.1 and structured per 21 CFR 312.23(a)(5) and ICH E6(R3) Appendix A: title page with edition number and date; summary; introduction; physical, chemical, and pharmaceutical properties and formulation; nonclinical pharmacology, toxicology, and pharmacokinetics/ADME; effects in humans (available clinical pharmacokinetics, safety, and efficacy); and a summary of data and guidance for the investigator on known and potential risks and adverse-reaction management, including the reference safety information (expected serious adverse reactions with their frequency and nature) used for expectedness assessments. Identify the edition supporting the current protocol, keep it consistent with the 1571 and the protocol, and cross-reference the underlying Module 4 and Module 5 data. Use bracketed placeholders for edition numbers, dates, and specific findings; do not fabricate data.",
     "parentCode": "1.14.4",
     "expectedData": [
       "Summary tables of nonclinical toxicology findings and exposure margins",
@@ -568,10 +568,6 @@ export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
       "Version/date on the IB not matching the protocol it is meant to support",
       "Summaries that overstate efficacy or understate risk relative to the underlying Module 4/5 data",
       "Failing to update or re-reference the IB when an amendment changes the risk profile"
-    ],
-    "wordCountRange": [
-      300,
-      800
     ],
     "dependencies": [
       "1.1.1"
@@ -1302,18 +1298,16 @@ export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
     ],
     "contentType": "narrative",
     "guidance": "Subsection 2.5.6 is the culminating benefit-risk assessment — the sponsor's integrated conclusion that, for the proposed indication and population, the benefits outweigh the risks. It synthesizes efficacy (2.5.4) and safety (2.5.5) in the context of the disease and available therapies, and states how risks are managed. FDA reviewers and the signatory authority read it as the bottom-line justification for approval; acceptability depends on a balanced, evidence-anchored conclusion that acknowledges uncertainties and aligns with the proposed labeling and any risk-management commitments.",
-    "authoringGuidance": "Frame the benefit-risk in the context of the disease severity, the unmet need, and the current treatment options. Concisely restate the key benefits (magnitude, durability, clinical meaningfulness) and the key risks (severity, frequency, reversibility, manageability), then weigh them for the proposed population. Address residual uncertainties and how they are mitigated through labeling, monitoring, pharmacovigilance, or a REMS/risk-management plan. Use a structured benefit-risk framework where appropriate (consistent with FDA's Benefit-Risk Assessment framework and ICH M4E(R2)). Keep it concise and free of new data. Conclusions must follow logically from 2.5.4 and 2.5.5 and align exactly with the proposed indication and labeling.",
+    "authoringGuidance": "Follow the ICH M4E(R2) headings: 2.5.6.1 Therapeutic Context (2.5.6.1.1 Disease or Condition; 2.5.6.1.2 Current Therapies), 2.5.6.2 Benefits, 2.5.6.3 Risks, 2.5.6.4 Benefit-Risk Assessment, and 2.5.6.5 Appendix. These headings align (a platform reading) with FDA's Benefit-Risk Framework: Analysis of Condition, Current Treatment Options, Benefit, and Risk and Risk Management. Keep the product's own benefits and risks out of 2.5.6.1; state them factually in 2.5.6.2 and 2.5.6.3. Open 2.5.6.4 with a succinct explanation of the reasoning, then weigh benefits against risks for the proposed population and address residual uncertainties and how they are managed. A descriptive approach is acceptable; quantitative methods are optional, with their detail in 2.5.6.5. Introduce no new data; conclusions must follow from 2.5.4 and 2.5.5 and align exactly with the proposed indication and labeling.",
     "keyContentElements": [
-      "Disease context: severity, unmet need, and current treatment landscape",
-      "Concise restatement of key benefits with magnitude, durability, and clinical meaningfulness",
-      "Concise restatement of key risks with severity, frequency, reversibility, and manageability",
-      "Integrated weighing of benefits against risks for the specific proposed population",
-      "Discussion of residual uncertainties and their mitigation",
-      "Risk-management strategy (labeling, monitoring, pharmacovigilance, REMS if applicable)",
-      "Use of a structured benefit-risk framework (FDA BR framework / ICH M4E(R2))",
+      "2.5.6.1 Therapeutic Context — 2.5.6.1.1 Disease or Condition (severity, intended population, unmet need); 2.5.6.1.2 Current Therapies (their benefits, risks and uncertainties)",
+      "2.5.6.2 Benefits — factual summary of the key benefits (magnitude, durability, clinical meaningfulness)",
+      "2.5.6.3 Risks — factual summary of the key risks (severity, frequency, reversibility, manageability)",
+      "2.5.6.4 Benefit-Risk Assessment — the applicant's conclusion, opening with a succinct explanation of the reasoning; weighing for the proposed population, residual uncertainties, risk management (labeling, monitoring, pharmacovigilance, REMS if applicable)",
+      "2.5.6.5 Appendix — detailed benefit-risk methods/results when used (e.g., effects table, value tree, forest plot)",
       "Overall conclusion aligned with the proposed indication and labeling"
     ],
-    "generationPrompt": "Draft CTD Module 2.5.6 Benefits and Risks Conclusions for {{PRODUCT_NAME}} ({{SPONSOR}}) in {{INDICATION}}. Frame the disease severity, unmet need, and current therapies; concisely restate the key benefits (magnitude, durability, clinical meaningfulness) and key risks (severity, frequency, reversibility, manageability); and integrate them into a weighed conclusion for the proposed population using a structured benefit-risk framework (FDA BR framework / ICH M4E(R2)). Address residual uncertainties and the risk-management strategy (labeling, monitoring, pharmacovigilance, REMS if applicable). Introduce no new data; ensure the conclusion follows from 2.5.4 and 2.5.5 and aligns with the proposed indication and labeling.",
+    "generationPrompt": "Draft CTD Module 2.5.6 Benefits and Risks Conclusions for {{PRODUCT_NAME}} ({{SPONSOR}}) in {{INDICATION}} under the ICH M4E(R2) headings, in order: 2.5.6.1 Therapeutic Context, with 2.5.6.1.1 Disease or Condition (severity, intended population, unmet need) and 2.5.6.1.2 Current Therapies (their benefits, risks and uncertainties), keeping the product's own data out of it; 2.5.6.2 Benefits, a factual summary of the key benefits (magnitude, durability, clinical meaningfulness); 2.5.6.3 Risks, a factual summary of the key risks (severity, frequency, reversibility, manageability); 2.5.6.4 Benefit-Risk Assessment, opening with a succinct explanation of the reasoning, then weighing benefits against risks for the proposed population, residual uncertainties, and the risk-management strategy (labeling, monitoring, pharmacovigilance, REMS if applicable); and 2.5.6.5 Appendix, only when detailed benefit-risk methods or results are used. Introduce no new data; ensure the conclusion follows from 2.5.4 and 2.5.5 and aligns with the proposed indication and labeling.",
     "parentCode": "2.5",
     "expectedData": [
       "Structured benefit-risk summary table (optional)"
@@ -1321,10 +1315,10 @@ export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
     "commonPitfalls": [
       "Restating efficacy and safety separately without an integrated weighing",
       "Conclusion not grounded in disease context, unmet need, and available therapies",
-      "Ignoring or under-stating residual uncertainties and how they are managed",
+      "Product benefit or risk data placed in 2.5.6.1 Therapeutic Context instead of 2.5.6.2 / 2.5.6.3",
       "Introducing new data or analyses not presented in 2.5.4/2.5.5 or 2.7",
       "Benefit-risk conclusion broader than, or inconsistent with, the proposed indication/labeling",
-      "No risk-management or pharmacovigilance framing when the safety profile warrants it"
+      "Residual uncertainties, or the risk-management and pharmacovigilance approach the safety profile warrants, not addressed"
     ],
     "wordCountRange": [
       1000,
@@ -1705,7 +1699,6 @@ export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
       4000
     ],
     "dependencies": [
-      "2.5.2",
       "2.7.2",
       "2.3.P"
     ]
@@ -1755,7 +1748,6 @@ export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
       6000
     ],
     "dependencies": [
-      "2.5.3",
       "2.7.1",
       "2.7.3",
       "2.7.4"
@@ -1785,7 +1777,7 @@ export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
       "Analyses relevant to dosing recommendations and dose-response for efficacy",
       "Persistence/durability of effect and any tolerance/loss of effect over time"
     ],
-    "generationPrompt": "Draft CTD Module 2.7.3 Summary of Clinical Efficacy for {{PRODUCT_NAME}} ({{SPONSOR}}) in {{INDICATION}} — this houses the Integrated Summary of Efficacy (ISE). Following ICH M4E, provide the background/overview, an inventory of all efficacy-relevant studies, the integrated/pooled efficacy analyses with pre-specified vs. post hoc identification, primary and secondary endpoint results with effect sizes and CIs, cross-study and subgroup analyses (age, sex, race, region, severity) with forest plots, statistical methodology (multiplicity, estimands, and missing-data handling per ICH E9/E9(R1)), dosing-relevant analyses and dose-response, and persistence/durability of effect. Include the pooled demographic/baseline table and support the substantial-evidence basis under 21 CFR 314.50/314.126. Keep it factual (interpretation is in 2.5.4) and reconcile with Module 5. Do not fabricate results — describe structure and placeholders.",
+    "generationPrompt": "Draft CTD Module 2.7.3 Summary of Clinical Efficacy for {{PRODUCT_NAME}} ({{SPONSOR}}) in {{INDICATION}}. The integrated efficacy analyses 21 CFR 314.50(d)(5)(v) requires (the ISE) are filed in 5.3.5.3; summarise them here, and where the ISE's narrative portion suits Module 2 it is placed once in 2.7.3 and referenced from 5.3.5.3. Following ICH M4E, provide the background/overview, an inventory of all efficacy-relevant studies, the integrated/pooled efficacy analyses with pre-specified vs. post hoc identification, primary and secondary endpoint results with effect sizes and CIs, cross-study and subgroup analyses (age, sex, race, region, severity) with forest plots, statistical methodology (multiplicity, estimands, and missing-data handling per ICH E9/E9(R1)), dosing-relevant analyses and dose-response, and persistence/durability of effect. Include the pooled demographic/baseline table and support the substantial-evidence basis under 21 CFR 314.50/314.126. Keep it factual (interpretation is in 2.5.4) and reconcile with Module 5. Do not fabricate results — describe structure and placeholders.",
     "parentCode": "2.7",
     "expectedData": [
       "Efficacy study inventory table",
@@ -1807,7 +1799,6 @@ export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
       12000
     ],
     "dependencies": [
-      "2.5.4",
       "2.7.2",
       "2.7.6",
       "2.7.4"
@@ -1837,7 +1828,7 @@ export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
       "Safety in special populations and situations (organ impairment, pregnancy/lactation, overdose, withdrawal, abuse potential)",
       "Post-marketing safety data (if available) and any immunogenicity data for biologics"
     ],
-    "generationPrompt": "Draft CTD Module 2.7.4 Summary of Clinical Safety for {{PRODUCT_NAME}} ({{SPONSOR}}) in {{INDICATION}} — this houses the Integrated Summary of Safety (ISS). Following ICH M4E, define and justify the pooling strategy, then summarize extent of exposure (subjects, patient-years, dose/duration/demographics); adverse events (common, deaths, serious, discontinuations; analyses by organ system, dose, time, and subgroup, MedDRA-coded); clinical laboratory evaluations including a rigorous hepatotoxicity/Hy's Law (eDISH) analysis; vital signs and ECG/QT; adverse events of special interest and important identified/potential risks; and safety in special populations and situations (organ impairment, pregnancy/lactation, overdose, withdrawal, abuse potential, and immunogenicity for biologics). Support the integrated safety analyses expected under 21 CFR 314.50, include the required pooled tables, and cross-reference deaths/SAE narratives to 2.7.6. Keep it factual (risk framing is in 2.5.5) and reconcile with Module 5. Do not fabricate rates — describe structure and placeholders.",
+    "generationPrompt": "Draft CTD Module 2.7.4 Summary of Clinical Safety for {{PRODUCT_NAME}} ({{SPONSOR}}) in {{INDICATION}}. The integrated safety analyses 21 CFR 314.50(d)(5)(vi) requires (the ISS) are filed in 5.3.5.3; summarise them here, and where the ISS's narrative portion suits Module 2 it is placed once in 2.7.4 and referenced from 5.3.5.3. Following ICH M4E, define and justify the pooling strategy, then summarize extent of exposure (subjects, patient-years, dose/duration/demographics); adverse events (common, deaths, serious, discontinuations; analyses by organ system, dose, time, and subgroup, MedDRA-coded); clinical laboratory evaluations including a rigorous hepatotoxicity/Hy's Law (eDISH) analysis; vital signs and ECG/QT; adverse events of special interest and important identified/potential risks; and safety in special populations and situations (organ impairment, pregnancy/lactation, overdose, withdrawal, abuse potential, and immunogenicity for biologics). Support the integrated safety analyses expected under 21 CFR 314.50, include the required pooled tables, and reference the location of the narratives of deaths, other serious adverse events and other significant adverse events (ICH M4E 2.7.4.2.2): they sit in each study's CSR (ICH E3 12.3.2 / 14.3.3) or, for pooled studies without an individual report, in 5.3.5.3; do not reproduce them here except an abbreviated narrative critical to the assessment. Keep it factual (risk framing is in 2.5.5) and reconcile with Module 5. Do not fabricate rates — describe structure and placeholders.",
     "parentCode": "2.7",
     "expectedData": [
       "Integrated exposure table (patient-years by dose/duration/demographics)",
@@ -1849,7 +1840,7 @@ export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
     ],
     "commonPitfalls": [
       "Pooling strategy undefined or inappropriate (combining incompatible studies), a top FDA IR trigger",
-      "Incomplete accounting of deaths and serious adverse events, or narratives not cross-referenced (2.7.6)",
+      "Incomplete accounting of deaths and serious adverse events, or the locations of their narratives (CSRs / 5.3.5.3) not referenced in 2.7.4.2.2",
       "Hepatotoxicity not rigorously evaluated (no Hy's Law/eDISH analysis)",
       "Adverse events of special interest and important risks not analyzed with dedicated pooled analyses",
       "MedDRA coding inconsistencies or rates that do not reconcile with Module 5",
@@ -1861,7 +1852,6 @@ export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
       14000
     ],
     "dependencies": [
-      "2.5.5",
       "2.7.3",
       "2.7.6",
       "2.7.2"
@@ -1921,28 +1911,24 @@ export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
       "BLA"
     ],
     "contentType": "mixed",
-    "guidance": "Section 2.7.6 provides a consistent set of study synopses for the individual clinical studies, giving the reviewer a standardized one-to-several-page abstract of each study's design, population, treatments, endpoints, and results. Per ICH M4E it typically references the tabular listing of all clinical studies and presents ICH E3-style synopses. It is the bridge between the integrated summaries (2.7.3/2.7.4) and the full study reports in Module 5; acceptability depends on synopses that are complete, uniformly structured, and exactly consistent with the corresponding Clinical Study Reports.",
-    "authoringGuidance": "Include a synopsis for each clinical study, ideally in a consistent format based on the ICH E3 synopsis (Clinical Study Report guideline), covering: study identifier and title, objectives, design, population and key eligibility, treatments and duration, endpoints, statistical methods, subject disposition, key efficacy results, and key safety results. Reference or reproduce the tabular listing of all clinical studies that maps each study to its Module 5 location. Ensure each synopsis reconciles exactly with its full Clinical Study Report (CSR) and with the pooled analyses in 2.7.3/2.7.4. Keep synopses concise and uniform so the reviewer can compare studies at a glance. Include SAE/death narratives cross-references where relevant.",
+    "guidance": "Section 2.7.6 opens with the Listing of Clinical Studies (the tabular listing of all clinical studies, each mapped to its Module 5 location) and then gives the reviewer access to each study's ICH E3 synopsis. In eCTD the ICH specification (as published by FDA, M2 eCTD, fda.gov/media/71513) says the synopses are already in the Clinical Study Reports in Module 5 and should not, therefore, be repeated in Module 2: it is sufficient to hyperlink each study in the listing to its synopsis in Module 5. EU harmonised eCTD guidance accepts either copies of the synopses here or those hyperlinks, and paper-CTD ICH M4E places the synopses after the listing in this section. It is the bridge between the integrated summaries (2.7.3/2.7.4) and the full study reports in Module 5; acceptability depends on a complete listing whose every study resolves to its CSR synopsis, and on any synopsis text shown being exactly the CSR's.",
+    "authoringGuidance": "Lead with the Listing of Clinical Studies: one row per clinical study with study identifier, title, design, population, treatments, and its Module 5 location. For a US eCTD, hyperlink each listed study to the synopsis inside its Clinical Study Report (ICH E3 synopsis) in the Module 5 sequence rather than repeating the synopsis text in Module 2; where the region accepts copies (EU harmonised eCTD guidance) or the dossier is a paper CTD (ICH M4E), the synopses may follow the listing in a uniform ICH E3 synopsis format covering identifier and title, objectives, design, population and key eligibility, treatments and duration, endpoints, statistical methods, subject disposition, and key efficacy and safety results. Any synopsis text shown must reconcile exactly with its CSR and with the pooled analyses in 2.7.3/2.7.4. Narratives of deaths and serious adverse events are not routed through this section; their locations are referenced in 2.7.4.2.2.",
     "keyContentElements": [
-      "Tabular listing of all clinical studies mapped to Module 5 locations",
-      "Per-study synopsis in a consistent ICH E3-based format",
-      "Study identifier, title, objectives, and design (randomization, blinding, control)",
-      "Population, key eligibility criteria, and subject disposition",
-      "Treatments, doses, and duration",
-      "Primary/secondary endpoints and statistical methods",
-      "Key efficacy and safety results per study",
+      "Listing of Clinical Studies (tabular listing of all clinical studies) mapped to Module 5 locations",
+      "eCTD: a hyperlink from each listed study to the synopsis in its Module 5 Clinical Study Report (not repeated in Module 2); where copies are accepted (EU, paper CTD), a uniform ICH E3-based synopsis per study",
+      "Where synopsis copies are given: identifier, title, objectives, design (randomization, blinding, control), population and disposition, treatments and duration, endpoints and statistical methods, and key efficacy and safety results, each identical to the CSR synopsis",
       "Cross-references to the corresponding Clinical Study Reports and to 2.7.3/2.7.4"
     ],
-    "generationPrompt": "Compile CTD Module 2.7.6 Synopses of Individual Studies for {{PRODUCT_NAME}} ({{SPONSOR}}) in {{INDICATION}}. Provide a tabular listing of all clinical studies mapped to their Module 5 locations, then a uniform ICH E3-based synopsis for each study covering identifier/title, objectives, design (randomization, blinding, control), population and eligibility, treatments and duration, endpoints, statistical methods, subject disposition, and key efficacy and safety results. Ensure each synopsis reconciles exactly with its Clinical Study Report and with the pooled analyses in 2.7.3/2.7.4, and cross-reference SAE/death narratives. Do not fabricate results — describe the synopsis structure and placeholders.",
+    "generationPrompt": "Compile CTD Module 2.7.6 Synopses of Individual Studies for {{PRODUCT_NAME}} ({{SPONSOR}}) in {{INDICATION}}. Lead with the Listing of Clinical Studies: every clinical study with identifier, title, design, population, treatments, and its Module 5 location. For a US eCTD, hyperlink each listed study to the synopsis in its Clinical Study Report in Module 5 instead of repeating the synopsis text in Module 2 (ICH eCTD specification); only where the region accepts copies (EU) or for a paper CTD, follow the listing with a uniform ICH E3-based synopsis per study covering identifier/title, objectives, design (randomization, blinding, control), population and eligibility, treatments and duration, endpoints, statistical methods, subject disposition, and key efficacy and safety results. Any synopsis text must reconcile exactly with its Clinical Study Report and with the pooled analyses in 2.7.3/2.7.4. Do not fabricate results — describe the listing, hyperlink targets, and placeholders.",
     "parentCode": "2.7",
     "expectedData": [
       "Tabular listing of all clinical studies",
-      "Individual study synopsis tables/abstracts (ICH E3 format)"
+      "Hyperlink targets: the synopsis page of each study's CSR in Module 5 (or synopsis copies in ICH E3 format where the region accepts them)"
     ],
     "commonPitfalls": [
       "Synopses inconsistent with the corresponding Clinical Study Reports or with the pooled 2.7.3/2.7.4 analyses",
       "Non-uniform synopsis formats making cross-study comparison difficult",
-      "Missing synopses for some studies, or the study-listing table not mapping to Module 5 locations",
+      "Studies missing from the listing, or listed studies without a working hyperlink to their CSR synopsis in Module 5",
       "Omitting subject disposition or key safety results from a synopsis",
       "Discrepancies in endpoint definitions or results versus the CSR"
     ],

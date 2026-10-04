@@ -118,11 +118,11 @@ export const LIST_FDA_TECHNICAL_RULES: AnaTool = {
     'adverse-event withdrawals, Module 2 length, refuse-to-file) — each with what missing it costs, its source, and ' +
     'whether this platform checks it today. Also what FDA has said about Elsa, its AI review assistant. Use it for ' +
     '"will this pass FDA technical validation", "is our dossier ready for Elsa", "what are FDA’s PDF requirements", ' +
-    'or "why would the gateway reject this". Pass `area` (pdf, ectd, study-data, content) for one area in full.',
+    'or "why would the gateway reject this". Pass `area` (pdf, ectd, study-data, content, labeling) for one area in full; labeling holds the PLR format rules for a US Prescribing Information.',
   input_schema: {
     type: 'object',
     properties: {
-      area: { type: 'string', enum: ['pdf', 'ectd', 'study-data', 'content'], description: 'One area in full. Omit for every rule in brief.' },
+      area: { type: 'string', enum: ['pdf', 'ectd', 'study-data', 'content', 'labeling'], description: 'One area in full. Omit for every rule in brief.' },
     },
     required: [],
   },
@@ -275,7 +275,7 @@ export function fdaTechnicalRules(input: Record<string, unknown>): string {
   const area = str(input.area).toLowerCase();
   const rules = rulesByArea(area || null);
   if (area && rules.length === 0) {
-    return JSON.stringify({ error: `No area "${area}". Areas: pdf, ectd, study-data, content.` });
+    return JSON.stringify({ error: `No area "${area}". Areas: pdf, ectd, study-data, content, labeling.` });
   }
   const full = Boolean(area);
   return JSON.stringify({
