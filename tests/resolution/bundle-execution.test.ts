@@ -106,8 +106,7 @@ vi.mock('../../server/db', () => {
     return Promise.resolve(route ? route.rows : { rows: [] });
   });
 
-  return {
-    db: {
+  const db: Record<string, any> = {
       insert: vi.fn().mockImplementation((table: any) => {
         const tableName = table?.name || table?.[Symbol.for('drizzle:Name')] || 'unknown';
         const chain = createChainedMock();
@@ -195,13 +194,14 @@ vi.mock('../../server/db', () => {
         return createChainedMock();
       }),
       execute: mockExec,
-      /* stageRewrite wraps its version write and its lineage in one
-         transaction (ledger L177). No real transaction to give it here, so
-         the callback runs against the same execute — enough for these
-         outcome-level tests. */
-      transaction: async (fn: (tx: any) => any) => fn({ execute: mockExec }),
-    },
   };
+  /* stageRewrite (ledger L177) and executeSupersede each run inside
+     db.transaction, and a Drizzle transaction exposes the same surface as db.
+     No real transaction to give here, so the callback gets the same mock —
+     enough for these outcome-level tests (the atomicity is proven against
+     the real schema in supersede-fails-closed.pglite.test.ts). */
+  db.transaction = async (fn: (tx: any) => any) => fn(db);
+  return { db };
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════

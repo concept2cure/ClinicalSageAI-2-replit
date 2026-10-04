@@ -21,6 +21,7 @@
  */
 
 import type { LabelFormat } from './labeling-structure';
+import { PLR_FORMAT_RULES } from '../ind/ctd/fda-technical-rules.js';
 
 export type LabelingMode = 'us' | 'eu';
 
@@ -45,12 +46,28 @@ export interface LabelingModeSpec {
   requiredSections: RequiredLabelSection[];
 }
 
+/** The fixed text a 21 CFR 201.57 rule requires word for word; PLR_FORMAT_RULES is its one source. */
+function plrVerbatim(id: string): string {
+  const v = PLR_FORMAT_RULES.find((r) => r.id === id)?.verbatim;
+  if (!v) throw new Error(`PLR format rule ${id} has no verbatim text`);
+  return v;
+}
+
 /**
- * US PLR mandatory full-text sections (21 CFR 201.57(c)). Highlights + Table of
- * Contents are required wrappers but are derived from the full-text sections, so
- * the section guard checks the numbered full-text headers a draft must carry.
+ * US PLR mandatory sections, in document order: Highlights with the verbatim
+ * statements every label carries (21 CFR 201.57(a)(1), (a)(3), (a)(11)),
+ * Contents (201.57(b), required whatever the length), then the numbered
+ * full-text sections (201.57(c)). The conditional Highlights items — boxed
+ * warning, Recent Major Changes — are not required here. Until 2026-10-04 this
+ * list held only the full-text sections, so a PI with no Highlights or Contents
+ * passed the guard.
  */
 const US_REQUIRED: RequiredLabelSection[] = [
+  { number: 'HL', header: 'HIGHLIGHTS OF PRESCRIBING INFORMATION' },
+  { number: 'HL_A1', header: plrVerbatim('plr-hl-limitation-statement') },
+  { number: 'HL_A3', header: plrVerbatim('plr-hl-initial-approval') },
+  { number: 'HL_A11', header: plrVerbatim('plr-hl-ae-reporting') },
+  { number: 'TOC', header: plrVerbatim('plr-contents').toUpperCase() },
   { number: '1', header: '1 INDICATIONS AND USAGE' },
   { number: '2', header: '2 DOSAGE AND ADMINISTRATION' },
   { number: '3', header: '3 DOSAGE FORMS AND STRENGTHS' },

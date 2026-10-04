@@ -11,7 +11,6 @@ import { compiledRecordOf, composeProjectModule3, persistComposedSection } from 
 import { detectContradictions, deriveImpactTasks } from '../../services/cmc-impact-contradiction-engine';
 import { syncContradictionTasks } from '../../services/cmc/contradiction-tasks';
 import { readContradictionRegisters } from '../../services/cmc/contradiction-registers';
-import { buildCanonicalGovernedState } from '../../services/governed-ana-execution.js';
 import { evaluateFinalExportGate, evaluateModule3GovernedState } from '../../services/cmc/final-export-gate';
 import {
   parsedDeterministicJson,
@@ -32,6 +31,8 @@ import { SIGNATURE_MEANINGS, signatureMeaningSchema, resolveActorUserId } from '
 import { serverError } from '../../lib/api-response';
 import { guardModule3Project, module3OrgId } from './module3-project-guard';
 import { createScopedLogger } from '../../utils/logger';
+import { refusedWithoutSigningAuthority } from './cmc-signer';
+import { describeDrift, findSectionDrift } from '../../services/cmc/section-drift';
 import { clientIpOf } from '../../utils/client-ip';
 
 /** The §11.50(a)(3) meanings a signature may carry. */
@@ -598,6 +599,43 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
     if (!actorId) {
       return res.status(401).json({ success: false, error: 'AUTH_REQUIRED' });
     }
+
+    /* §11.50(a)(3): the signed record must show the MEANING of the signature.
+       An unrecognised value used to fall back to the constant 'approval',
+       which recorded a meaning the signer did not declare: a caller sending
+       'TECHNICAL_APPROVAL' — a token the GCC signature-role vocabulary in
+       db/migrations/080 and client/src/concept2cure/v2/registryModel.ts both
+       carry — got 'approval' written into electronic_signatures and into the
+       hash-chained ledger, and nothing said so. Substituting a meaning is
+       fabricating the one field §11.50(a)(3) exists to preserve, so this
+       refuses instead, exactly as the sibling specification-approve and
+       batch-release endpoints do through the same schema. SIGNATURE_MEANINGS
+       is the regulation's own list (review, approval, responsibility,
+       authorship) and is what the CMC signature form offers.
+       Checked FIRST: it used to run after the version row, the state flip and
+       the provenance event were written, and its 400 returned without a
+       ROLLBACK — handing a connection with an open transaction back to the
+       pool. */
+    const meaningParse = signatureMeaningSchema.safeParse((req.body ?? {}).meaning);
+    if (!meaningParse.success) {
+      return res.status(400).json({
+        success: false,
+        error: 'INVALID_SIGNATURE_MEANING',
+        detail:
+          `A signature meaning must be one of ${SIGNATURE_MEANINGS.join(', ')} ` +
+          '(21 CFR 11.50(a)(3)). The signature was not recorded.',
+      });
+    }
+    const signMeaning: SignatureMeaning = meaningParse.data;
+
+    /* §11.10(g): identity is not authority. Batch release, specification
+       approval and register qualification each ask whether the signer may
+       sign (cmc-signer.ts); this, the signature over the text that is filed
+       in Module 3, did not — any member of the organisation who knew their own
+       password, a read-only viewer included, could approve a section. Asked
+       before the password, so a signer who may not sign spends no guess. */
+    if (await refusedWithoutSigningAuthority(res, { userId: actorId, orgId })) return;
+
     const reauthResult = await verifyReauth(actorId, (req.body ?? {}).reauth);
     if (!reauthResult.ok) {
       res.setHeader('WWW-Authenticate', 'ReAuth required');
@@ -618,35 +656,6 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
         .json({ success: false, error: 'Critical contradictions must be resolved before approval.' });
     }
 
-    let canonicalGovernedState: Record<string, any> | null = null;
-    try {
-      const unresolvedContradictions = blocking.rows.length; // already queried above
-      canonicalGovernedState = await buildCanonicalGovernedState({
-        context: {
-          organizationId: String(orgId),
-          projectId: String(projectId),
-          actorId: (req as any).user?.id || 'system',
-          intendedAction: 'approve',
-          documentType: 'cmc_module3',
-          ctdSection: sectionKey,
-        },
-        documentState: {
-          hasContent: true,
-          hasEvidence: true,
-          hasBeenReviewed: true,
-          hasApproval: false, // not yet approved — that is what we are doing
-          hasPlacement: true,
-          placementValid: true,
-          hasProvenance: true,
-          unresolvedContradictionCount: unresolvedContradictions,
-          criticalContradictionCount: unresolvedContradictions,
-          isStale: false,
-        },
-      });
-    } catch {
-      canonicalGovernedState = { error: 'Canonical governed-state evaluation failed', degraded: true };
-    }
-
     // The version snapshot + section flip + provenance event + the hash-chained
     // governed-action record are one atomic transaction: approval either lands
     // as a complete §11 signature (audit chain included) or not at all —
@@ -657,7 +666,7 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
       await client.query('BEGIN');
 
       const sectionRes = await client.query(
-        `SELECT id, deterministic_json, approval_state
+        `SELECT id, deterministic_json, narrative_text, approval_state, stale, stale_reason
          FROM cmc_module3_sections
          WHERE organization_id = $1 AND project_id = $2 AND section_key = $3`,
         [orgId, projectId, sectionKey]
@@ -686,6 +695,37 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
         });
       }
 
+      /* An approval is a signature over what the sources say NOW. This route
+         used to approve a stale section and clear its stale flag in the same
+         UPDATE, without recompiling — signing text the system had already
+         recorded as out of date. Stale (the flag) or drifted (the lineage:
+         a source it read changed or is gone, or a newer source of a type it
+         reads was recorded) is refused, and nothing is written. */
+      if (section.stale) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({
+          success: false,
+          error: 'SECTION_STALE',
+          detail:
+            `§${sectionKey} is out of date: ${section.stale_reason ?? 'its source data changed after compile'}. ` +
+            'Recompile it, review the result, then approve. Nothing was signed.',
+        });
+      }
+      const drift = await findSectionDrift(client, orgId, projectId, { sectionKey });
+      if (drift.length > 0) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({
+          success: false,
+          error: 'SECTION_DRIFTED',
+          detail: `${describeDrift(drift)}. Recompile it, review the result, then approve. Nothing was signed.`,
+        });
+      }
+
+      /* What is signed is what is filed: the compiled record AND the narrative
+         placement renders from it. The snapshot carried deterministic_json
+         only, so the §11.70 digest did not cover a word of the filed prose. */
+      const approvedSnapshot = { ...(section.deterministic_json ?? {}), narrativeText: section.narrative_text ?? '' };
+
       const verRes = await client.query(
         `SELECT COALESCE(MAX(version_number), 0) as max_version
          FROM cmc_module3_section_versions
@@ -702,7 +742,7 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
           section.id,
           projectId,
           versionNumber,
-          JSON.stringify(section.deterministic_json),
+          JSON.stringify(approvedSnapshot),
           JSON.stringify({ approvedFromState: section.approval_state }),
           String(actorId),
         ]
@@ -710,7 +750,7 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
       const approvedVersionId = insertedVersion.rows[0].id;
       await client.query(
         `UPDATE cmc_module3_sections
-         SET approval_state = 'approved', approved_version_id = $1, stale = false, stale_reason = null, updated_at = NOW()
+         SET approval_state = 'approved', approved_version_id = $1, updated_at = NOW()
          WHERE id = $2`,
         [approvedVersionId, section.id]
       );
@@ -731,30 +771,6 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
         typeof (req.body ?? {}).reason === 'string' && (req.body as any).reason.trim()
           ? (req.body as any).reason.trim()
           : `Approved Module 3 section ${sectionKey}`;
-      /* §11.50(a)(3): the signed record must show the MEANING of the signature.
-         An unrecognised value used to fall back to the constant 'approval',
-         which recorded a meaning the signer did not declare: a caller sending
-         'TECHNICAL_APPROVAL' — a token the GCC signature-role vocabulary in
-         db/migrations/080 and client/src/concept2cure/v2/registryModel.ts both
-         carry — got 'approval' written into electronic_signatures and into the
-         hash-chained ledger, and nothing said so. Substituting a meaning is
-         fabricating the one field §11.50(a)(3) exists to preserve, so this
-         refuses instead, exactly as the sibling specification-approve and
-         batch-release endpoints do through the same schema. SIGNATURE_MEANINGS
-         is the regulation's own list (review, approval, responsibility,
-         authorship) and is what the CMC signature form offers. */
-      const meaningParse = signatureMeaningSchema.safeParse((req.body ?? {}).meaning);
-      if (!meaningParse.success) {
-        return res.status(400).json({
-          success: false,
-          error: 'INVALID_SIGNATURE_MEANING',
-          detail:
-            `A signature meaning must be one of ${SIGNATURE_MEANINGS.join(', ')} ` +
-            '(21 CFR 11.50(a)(3)). The signature was not recorded.',
-        });
-      }
-      const signMeaning: SignatureMeaning = meaningParse.data;
-
       // §11.10(e) hash-chained governed-action record (audit_logs + c2c_ana_actions),
       // the same ledger the specification-approve and batch-release endpoints write.
       const governance = await recordGovernedAction(client, {
@@ -796,10 +812,10 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
             sectionKey,
             versionNumber,
             approvedVersionId,
-            snapshot: section.deterministic_json,
+            snapshot: approvedSnapshot,
           }),
           basis: BINDING_BASIS.CMC_MODULE3_SECTION_VERSION,
-          note: 'sha256 over the canonical JSON of the approved cmc_module3_section_versions snapshot (organization, project, section key, version number, version id and the frozen deterministic_json) at approval time.',
+          note: 'sha256 over the canonical JSON of the approved cmc_module3_section_versions snapshot (organization, project, section key, version number, version id, the frozen deterministic_json and the narrative filed with it) at approval time.',
         },
         complianceStatement:
           'Module 3 section approval applied under 21 CFR Part 11 §11.50/§11.70/§11.200; ledger-chained to the audit_logs sha256 chain.',
@@ -811,7 +827,6 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
         sectionKey,
         versionNumber,
         approvedVersionId,
-        canonicalGovernedState,
         governance: { actionId: governance.actionId, sha256Chain: governance.sha256Chain },
       };
     } catch (txErr) {

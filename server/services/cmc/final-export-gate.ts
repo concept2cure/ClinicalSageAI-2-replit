@@ -28,6 +28,7 @@ import { buildCanonicalGovernedState } from '../governed-ana-execution.js';
    section listing and the board, so an approval can never accept what this
    gate will refuse. */
 import { compiledRecordIsComplete, parsedDeterministicJson, readSectionTables } from './compiled-record';
+import { describeDrift, findSectionDrift, type SectionDrift } from './section-drift';
 
 export interface Module3GovernedState {
   totalSections: number;
@@ -53,6 +54,13 @@ export interface Module3GovernedState {
    * gate, so the preview and the operation agree.
    */
   unplaceableApprovedSections: string[];
+  /**
+   * Approved sections whose lineage no longer matches their sources: a source
+   * they read changed or is gone, or a newer source of a type they read was
+   * recorded. Derived from cmc_section_lineage (section-drift.ts), because the
+   * `stale` flag is set by only one of the three writers of source objects.
+   */
+  driftedApprovedSections: SectionDrift[];
   canonicalGovernedState: Record<string, unknown> | null;
   /**
    * Did the governed-decision fabric actually produce a verdict? False when the
@@ -101,7 +109,7 @@ export async function evaluateModule3GovernedState(params: {
   const { orgId, projectId, actorId } = params;
   const pool = getPool();
 
-  const [sectionsRes, contradictionsRes, lineageRes] = await Promise.all([
+  const [sectionsRes, contradictionsRes, lineageRes, drift] = await Promise.all([
     pool.query(
       `SELECT section_key, approval_state, stale, deterministic_json FROM cmc_module3_sections WHERE organization_id = $1 AND project_id = $2`,
       [orgId, projectId]
@@ -123,6 +131,7 @@ export async function evaluateModule3GovernedState(params: {
           )`,
       [orgId, projectId]
     ),
+    findSectionDrift(pool, orgId, projectId),
   ]);
 
   const sections = sectionsRes.rows;
@@ -148,6 +157,10 @@ export async function evaluateModule3GovernedState(params: {
     .filter((s: any) => s.approval_state === 'approved')
     .filter((s: any) => readSectionTables(parsedDeterministicJson(s)) === undefined)
     .map((s: any) => String(s.section_key ?? s.sectionKey ?? 'unknown section'));
+  const approvedKeys = new Set(
+    sections.filter((s: any) => s.approval_state === 'approved').map((s: any) => String(s.section_key)),
+  );
+  const driftedApprovedSections = drift.filter((d) => approvedKeys.has(d.sectionKey));
   // Derived, never asserted: with no sections there is no provenance chain to
   // be complete, and a section with no lineage row breaks it.
   const provenanceComplete = totalSections > 0 && sectionsWithoutProvenance === 0;
@@ -176,7 +189,7 @@ export async function evaluateModule3GovernedState(params: {
         hasProvenance: provenanceComplete,
         unresolvedContradictionCount: unresolvedCount,
         criticalContradictionCount: openCritical,
-        isStale: staleSections > 0,
+        isStale: staleSections > 0 || driftedApprovedSections.length > 0,
         completenessScore: totalSections > 0 ? approvedSections / totalSections : 0,
       },
       exportState: {
@@ -212,6 +225,7 @@ export async function evaluateModule3GovernedState(params: {
       sectionsWithoutProvenance,
       incompleteApprovedSections,
       unplaceableApprovedSections,
+      driftedApprovedSections,
       canonicalGovernedState,
       governedStateEvaluated,
       fabricBlocks,
@@ -245,6 +259,7 @@ export async function evaluateFinalExportGate(params: {
     data.fabricBlocks ||
     data.governedDecisionsBlock ||
     data.staleSections > 0 ||
+    data.driftedApprovedSections.length > 0 ||
     data.sectionsWithoutProvenance > 0 ||
     data.incompleteApprovedSections.length > 0 ||
     data.unplaceableApprovedSections.length > 0
@@ -261,6 +276,9 @@ export async function evaluateFinalExportGate(params: {
           `and cannot be filed: ${data.unplaceableApprovedSections.join(', ')}. Recompile them, then re-approve.`
         : data.staleSections > 0
         ? `${data.staleSections} section(s) went stale after approval and must be re-approved before final export`
+        : data.driftedApprovedSections.length > 0
+        ? `${data.driftedApprovedSections.length} approved section(s) no longer match their source data and must be ` +
+          `recompiled and re-approved before final export: ${describeDrift(data.driftedApprovedSections)}`
         : data.sectionsWithoutProvenance > 0
           ? `${data.sectionsWithoutProvenance} section(s) have no recorded source lineage, so the audit trail required for export is incomplete`
           : !data.governedStateEvaluated

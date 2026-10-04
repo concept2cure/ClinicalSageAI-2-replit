@@ -1,9 +1,8 @@
 import express from 'express';
 import { z } from 'zod';
-import crypto from 'crypto';
 import regulatoryAIPhase3 from '../../services/regulatoryAIServicePhase3.js';
 import { db } from '../../db.js';
-import { components, documentVersions, organizationUsers } from '../../../shared/schema.js';
+import { components, organizationUsers } from '../../../shared/schema.js';
 import { eq, and, sql } from 'drizzle-orm';
 import { authedOrgId } from '../../utils/authedOrgId.js';
 import { serverError } from '../../lib/api-response.js';
@@ -283,7 +282,7 @@ router.post('/ai/ner-extract', async (req, res) => {
       });
     }
 
-    const { componentText, changeContext, componentUDI } = validationResult.data;
+    const { componentText, changeContext } = validationResult.data;
 
     // Check feature flag
     const flags = regulatoryAIPhase3.getFeatureFlags();
@@ -296,29 +295,12 @@ router.post('/ai/ner-extract', async (req, res) => {
     }
 
     // Extract named entities
+    // The entities are returned to the caller and written nowhere. Until
+    // 2026-10-04 they were also written onto the component as
+    // `components.metadata.ner_entities` — a column the table has never had,
+    // so every write failed and the failure was swallowed. A model's
+    // extraction is not recorded onto governed content without review.
     const result = await regulatoryAIPhase3.extractNamedEntities(componentText, changeContext);
-
-    // If successful and componentUDI provided, update component metadata with tenant isolation
-    if (result.success && componentUDI && req.organizationId) {
-      try {
-        await db
-          .update(components)
-          .set({
-            metadata: sql`jsonb_set(
-              COALESCE(metadata, '{}'),
-              '{ner_entities}',
-              ${JSON.stringify(result.data)}::jsonb
-            )`,
-            updated_at: new Date(),
-          })
-          .where(
-            and(eq(components.udi, componentUDI), eq(components.organizationId, req.organizationId))
-          );
-      } catch (dbError) {
-        console.error('Failed to update component metadata:', dbError);
-        // Don't fail the request if metadata update fails
-      }
-    }
 
     res.json({
       success: result.success,
@@ -361,7 +343,7 @@ router.post('/ai/generate-embedding', async (req, res) => {
       });
     }
 
-    const { text, documentVersionId, chunkIndex } = validationResult.data;
+    const { text } = validationResult.data;
 
     // Check feature flag
     const flags = regulatoryAIPhase3.getFeatureFlags();
@@ -373,39 +355,12 @@ router.post('/ai/generate-embedding', async (req, res) => {
       });
     }
 
-    // Generate embedding
+    // The vector is returned and stored nowhere. Until 2026-10-04 it was also
+    // written onto document_versions — embedding, chunk_text, chunk_index,
+    // semantic_metadata, filtered on organization_id — none of which that
+    // table has, keyed by a uuid against its integer id. Every write failed
+    // and the failure was swallowed.
     const result = await regulatoryAIPhase3.generateEmbedding(text);
-
-    // If successful and documentVersionId provided, update database
-    if (result.success && documentVersionId) {
-      try {
-        // Store embedding in database (requires pgvector extension)
-        // CRITICAL: Include organizationId filter to prevent cross-tenant writes
-        await db
-          .update(documentVersions)
-          .set({
-            embedding: result.embedding,
-            chunk_text: text,
-            chunk_index: chunkIndex || 0,
-            semantic_metadata: {
-              generated_at: new Date(),
-              model: 'text-embedding-3-large',
-              dimensions: 1536,
-              tokens_used: result.tokens_used,
-            },
-            updated_at: new Date(),
-          })
-          .where(
-            and(
-              eq(documentVersions.id, documentVersionId),
-              eq(documentVersions.organizationId, req.organizationId)
-            )
-          );
-      } catch (dbError) {
-        console.error('Failed to store embedding:', dbError);
-        // Return embedding even if storage fails
-      }
-    }
 
     res.json({
       success: result.success,
@@ -522,50 +477,45 @@ router.post('/ai/global-change/initiate', async (req, res) => {
       });
     }
 
-    // Find all affected components with tenant isolation
+    // Find all affected components with tenant isolation. `content` is json,
+    // which has no ILIKE: it is matched as text, with the caller's value
+    // matched literally rather than as a LIKE pattern.
+    const literal = original_value.replace(/[\\%_]/g, ch => `\\${ch}`);
     const affectedComponents = await db
       .select()
       .from(components)
       .where(
         and(
           eq(components.organizationId, organizationId),
-          sql`content ILIKE ${`%${original_value}%`}`
+          sql`${components.content}::text ILIKE ${`%${literal}%`}`
         )
       );
 
-    const changeRequest = {
-      id: crypto.randomUUID(),
+    // A preview only. No change request is stored, so none is identified:
+    // until 2026-10-04 this answered a fresh transaction_id that named
+    // nothing, for an execute step that does not exist (below).
+    const preview = {
       entity_type,
       original_value,
       new_value,
-      affected_udis: affectedComponents.map(c => c.udi),
-      initiated_by: req.userId || 'system',
-      organization_id: organizationId,
-      status: 'pending',
-      created_at: new Date(),
-    };
-
-    // Generate preview
-    const preview = {
       total_affected: affectedComponents.length,
       components: affectedComponents.map(c => ({
         udi: c.udi,
         type: c.type,
-        module: c.module,
-        current_version: c.version,
+        module: c.moduleContext,
+        lifecycle_state: c.lifecycleState,
       })),
       estimated_impact: {
         level: affectedComponents.length > 10 ? 'critical' : 'moderate',
-        modules_affected: [...new Set(affectedComponents.map(c => c.module))].filter(Boolean),
+        modules_affected: [...new Set(affectedComponents.map(c => c.moduleContext))].filter(Boolean),
         regulatory_review_required: affectedComponents.length > 10,
       },
     };
 
     res.json({
       success: true,
-      transaction_id: changeRequest.id,
+      preview_only: true,
       preview,
-      requires_approval: true,
       message: `Found ${affectedComponents.length} components that would be affected by this change`,
     });
   } catch (error) {
@@ -591,8 +541,6 @@ router.post('/ai/global-change/execute', async (req, res) => {
       });
     }
 
-    const { transaction_id, digital_signature, approval_notes } = validationResult.data;
-
     // Check feature flag
     const flags = regulatoryAIPhase3.getFeatureFlags();
     if (!flags.ENABLE_ECTD_4_AUTOMATION) {
@@ -603,15 +551,18 @@ router.post('/ai/global-change/execute', async (req, res) => {
       });
     }
 
-    // For demo purposes, return success
-    // In production, this would execute the actual changes
-    res.json({
-      success: true,
-      transaction_id,
-      message: 'Global change execution would be performed here with full audit trail',
-      digital_signature_verified: true,
-      executed_by: req.userId || 'system',
-      executed_at: new Date(),
+    // Not implemented, and answered as such. Until 2026-10-04 this returned
+    // success with `digital_signature_verified: true` and an execution time
+    // without checking the signature or changing anything — a Part 11
+    // signature manifestation for an act that did not happen. A global change
+    // to governed content is a signed, audited act; it is offered when one
+    // exists, and nothing here claims otherwise.
+    const code = 'GLOBAL_CHANGE_NOT_IMPLEMENTED';
+    return res.status(501).json({
+      success: false,
+      code,
+      error: 'Global change execution is not available. Nothing was changed and nothing was signed.',
+      details: { code },
     });
   } catch (error) {
     console.error('Global change execution error:', error);
