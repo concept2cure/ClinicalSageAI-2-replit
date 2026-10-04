@@ -1,0 +1,60 @@
+     90|     expect(r.findings).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/12]⎯
+
+ FAIL  server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > raises no finding on a randomization ratio or a parenthetical that is not an arm list
+TypeError: checkFigureArithmetic is not a function
+ ❯ server/services/ana/__tests__/clinical-arithmetic.test.ts:99:14
+     97|       '612 subjects were randomized (306 to Drug X).',
+     98|     ]) {
+     99|       expect(checkFigureArithmetic(text).findings, text).toEqual([]);
+       |              ^
+    100|     }
+    101|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/12]⎯
+
+ FAIL  server/services/ana/__tests__/clinical-arithmetic.test.ts > checkTerminologyConsistency — arithmetic > fails a draft whose percentage does not match its own n/N
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ana/__tests__/clinical-arithmetic.test.ts:107:23
+    105|   it('fails a draft whose percentage does not match its own n/N', () =…
+    106|     const report = checkTerminologyConsistency(STALE);
+    107|     expect(report.ok).toBe(false);
+       |                       ^
+    108|     expect(report.arithmeticInconsistencies).toBe(1);
+    109|     expect(report.findings).toContainEqual({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/12]⎯
+
+ FAIL  server/services/ana/__tests__/clinical-arithmetic.test.ts > checkTerminologyConsistency — arithmetic > stays ok on arithmetic that holds
+AssertionError: expected undefined to be +0 // Object.is equality
+
+- Expected:
+0
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/clinical-arithmetic.test.ts:121:46
+    119|     const report = checkTerminologyConsistency('Headache 8% (24/305).'…
+    120|     expect(report.ok).toBe(true);
+    121|     expect(report.arithmeticInconsistencies).toBe(0);
+       |                                              ^
+    122|     expect(report.percentPairsChecked).toBe(1);
+    123|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/12]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  12 failed (12)
+   Start at  20:37:35
+   Duration  2.07s (transform 915ms, setup 106ms, import 1.58s, tests 23ms, environment 0ms)
+
