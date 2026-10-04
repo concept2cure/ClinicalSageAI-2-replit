@@ -1,0 +1,162 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T18:37:40.074Z","pid":17044,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T18:37:40.075Z","pid":17044,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T18:37:40.075Z","pid":17044,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-where-used.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T18:37:40.138Z', poolSize: 1 }
+
+stdout | tests/db/vault-where-used.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/vault-where-used.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-01T18:37:40.676Z","pid":17044,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+(node:17044) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-01T18:37:40.785Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 29,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-01T18:37:40.856Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "f3029f5c-1d40-4151-ba91-d0dfe54e1362",
+    "code": "DBTEST-VWHERE-STAB",
+    "type": "OTHER",
+    "size": 29,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T18:37:40.869Z","pid":17044,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-01T18:37:40.877Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 29,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-01T18:37:40.889Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "c1827110-7b78-4f18-897e-565de365de13",
+    "code": "DBTEST-VWHERE-STAB",
+    "type": "OTHER",
+    "size": 29,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T18:37:40.896Z","pid":17044,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-01T18:37:40.896Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 18,
+    "wordCount": 2,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-01T18:37:40.905Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "ee7102be-0280-4067-ac88-0622c2d9677e",
+    "code": "DBTEST-VWHERE-CO",
+    "type": "OTHER",
+    "size": 18,
+    "hasText": true
+  }
+}
+
+{"level":30,"time":"2026-10-01T18:37:41.050Z","pid":17044,"hostname":"vm","context":{"userId":4102,"tenantId":1327,"resourceId":"81"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-01T18:37:41.071Z","pid":17044,"hostname":"vm","context":{"userId":4102,"tenantId":1327,"resourceId":"82"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-01T18:37:41.092Z","pid":17044,"hostname":"vm","context":{"userId":4102,"tenantId":1327,"resourceId":"83"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-01T18:37:41.114Z","pid":17044,"hostname":"vm","context":{"userId":4102,"tenantId":1327,"resourceId":"84"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > each version lists the live leaves that name it 33ms
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > a removed leaf is not a placement 16ms
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > another organisation's leaf naming this version is not listed, and another organisation reads nothing 25ms
+ ✓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > the read's own organisation filter holds without row security 2ms
+{"level":30,"time":"2026-10-01T18:37:41.624Z","pid":17044,"hostname":"vm","context":{"userId":4102,"tenantId":1327,"resourceId":"f58e4794-266d-407c-bf85-e113adb883b2"},"msg":"[audit-service] [AUDIT] EXPORT_GENERATED estar_official_pdf"}
+{"level":30,"time":"2026-10-01T18:37:41.649Z","pid":17044,"hostname":"vm","context":{"userId":4102,"tenantId":1327,"resourceId":"f58e4794-266d-407c-bf85-e113adb883b2"},"msg":"[audit-service] [AUDIT] EXPORT_GENERATED estar_official_pdf"}
+{"level":30,"time":"2026-10-01T18:37:41.655Z","pid":17044,"hostname":"vm","context":{"userId":4102,"tenantId":1328,"resourceId":"af3f5b4d-b63c-436e-85a4-8339602e9185"},"msg":"[audit-service] [AUDIT] EXPORT_GENERATED estar_official_pdf"}
+ × tests/db/vault-where-used.dbtest.ts > official eSTAR exports that attached a version (VR-14c) > lists each export whose record names the version, from either store 20ms
+   → expected [] to deeply equal [ ObjectContaining{…} ]
+ × tests/db/vault-where-used.dbtest.ts > official eSTAR exports that attached a version (VR-14c) > a record that names no source is not inferred, and another organisation's is not listed 4ms
+   → Target cannot be null or undefined.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/vault-where-used.dbtest.ts > official eSTAR exports that attached a version (VR-14c) > lists each export whose record names the version, from either store
+AssertionError: expected [] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+- [
+-   ObjectContaining {
+-     "record": "artifact",
+-     "retainedAs": {
+-       "documentCode": "eSTAR-510k-device",
+-       "documentId": "ee7102be-0280-4067-ac88-0622c2d9677e",
+-       "version": "1.0",
+-     },
+-   },
+- ]
++ []
+
+ ❯ tests/db/vault-where-used.dbtest.ts:289:49
+    287|       record: 'audit', slot: 'root.CoverLetter', chapter: '/CHAPTER 1/…
+    288|     })]);
+    289|     expect((byId.get(ids.v2) as any).estarUses).toEqual([expect.object…
+       |                                                 ^
+    290|   });
+    291|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/db/vault-where-used.dbtest.ts > official eSTAR exports that attached a version (VR-14c) > a record that names no source is not inferred, and another organisation's is not listed
+AssertionError: Target cannot be null or undefined.
+ ❯ tests/db/vault-where-used.dbtest.ts:297:31
+    295|     const found = await readVaultEstarUses(owner, mine.orgId, [ids.v1,…
+    296|     expect(found.get(ids.v1)).toHaveLength(1);
+    297|     expect(found.get(ids.v2)).toHaveLength(1);
+       |                               ^
+    298|     expect(found.has(ids.other)).toBe(false);
+    299|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 4 passed (6)
+   Start at  18:37:38
+   Duration  3.41s (transform 1.62s, setup 68ms, import 124ms, tests 2.97s, environment 0ms)
+

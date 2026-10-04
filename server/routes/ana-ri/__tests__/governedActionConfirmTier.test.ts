@@ -24,6 +24,12 @@ const audits: Array<{ action: string; details: Record<string, unknown> }> = [];
 const decisions: Array<{ runId: string; orgId: number; decided: string; error?: string }> = [];
 let pending: unknown = null;
 let auditPersists = true;
+/** Whether the post-execution row lands; the sign-off row follows auditPersists. */
+let executedRowPersists = true;
+/** How the mocked command comes back: ran, refused by its own gate, or threw. */
+let commandOutcome: 'ok' | 'refused' | 'throw' = 'ok';
+/** What each release handed the waiting run. */
+const released: Array<{ result?: unknown; error?: string }> = [];
 const reverify = vi.fn(async () => ({ ok: true, secondFactorVerified: false }));
 
 vi.mock('../../../db/requestDb', async importOriginal => ({
@@ -34,8 +40,9 @@ vi.mock('../../../services/ana/run-control.js', async importOriginal => ({
   ...(await importOriginal<Record<string, unknown>>()),
   readPendingApproval: vi.fn(async () => pending),
   recordApprovalDecision: vi.fn(
-    async (_c: unknown, runId: string, orgId: number, d: { decided: string; error?: string }) => {
+    async (_c: unknown, runId: string, orgId: number, d: { decided: string; error?: string; result?: unknown }) => {
       decisions.push({ runId, orgId, decided: d.decided, ...(d.error ? { error: d.error } : {}) });
+      released.push({ result: d.result, error: d.error });
       return true;
     },
   ),
@@ -45,13 +52,16 @@ vi.mock('../../../services/auditService.js', () => ({
   default: {
     logAction: vi.fn(async (entry: { action: string; details: Record<string, unknown> }) => {
       audits.push({ action: entry.action, details: entry.details });
-      return auditPersists ? { persisted: true } : { persisted: false, error: 'store down' };
+      const lands = auditPersists && (entry.action !== 'ana.governed_action.executed' || executedRowPersists);
+      return lands ? { persisted: true, chained: true } : { persisted: false, chained: false, error: 'store down' };
     }),
   },
 }));
 vi.mock('../../../services/ana-ri/command-executor.js', () => ({
   executeCommands: vi.fn(async (commands: unknown[], ctx: Record<string, unknown>) => {
     executed.push({ commands, ctx });
+    if (commandOutcome === 'throw') throw new Error('the command store refused the write');
+    if (commandOutcome === 'refused') return [{ success: false, message: 'Refused: the project is locked.' }];
     return [{ success: true, message: 'Task created.' }];
   }),
 }));
@@ -86,6 +96,9 @@ beforeEach(() => {
   decisions.length = 0;
   pending = null;
   auditPersists = true;
+  executedRowPersists = true;
+  commandOutcome = 'ok';
+  released.length = 0;
   reverify.mockClear();
   toolCalls.length = 0;
 });
@@ -100,7 +113,7 @@ describe('the confirm tier runs on a yes', () => {
     expect(reverify).not.toHaveBeenCalled();
     expect(executed).toHaveLength(1);
     expect(executed[0].ctx.humanConfirmed).toBe(true);
-    expect(audits.map(a => a.action)).toEqual(['ana.governed_action.confirm']);
+    expect(audits.map(a => a.action)).toEqual(['ana.governed_action.confirm', 'ana.governed_action.executed']);
   });
 
   it('does not run without an explicit yes', async () => {
@@ -147,6 +160,36 @@ describe('a live prompt', () => {
     expect(decisions).toEqual([{ runId: 'run-1', orgId: ORG, decided: 'approved' }]);
   });
 
+  it('a yes on a held command runs it with the model call that proposed it, from the ROW (D6)', async () => {
+    // Every agent write command is propose-only and runs only here, so this is
+    // where its Part 11 row gets the gateway request id (agentAuditDetails).
+    // Until 2026-09-26 the context carried no serving model, and the row named
+    // no model call.
+    const proposedBy = { provider: 'anthropic', model: 'claude-opus-5-5', requestId: 'req-held-1' };
+    pending = { toolUseId: 'tu-1', command: 'update_artifact', params: { artifactId: 7, title: 'SAP v2' }, proposedBy };
+    const res = await post({
+      runId: 'run-1',
+      toolUseId: 'tu-1',
+      confirm: true,
+      servingModel: { provider: 'openai', model: 'forged', requestId: 'req-forged' },
+    });
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(executed[0].ctx.servingModel).toEqual(proposedBy);
+  });
+
+  it('a command posted without its run names no model call: null, never the body\'s claim (D6)', async () => {
+    const res = await post({
+      command: 'create_task',
+      params: { title: 'Chase the CoA' },
+      confirm: true,
+      servingModel: { provider: 'anthropic', model: 'claude-opus-5-5', requestId: 'req-forged' },
+    });
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(executed[0].ctx.servingModel).toBeNull();
+  });
+
   it('a decline records the decision, runs nothing, and releases the run at once', async () => {
     pending = { toolUseId: 'tu-1', command: 'update_artifact', params: { artifactId: 7 } };
     const res = await post({ runId: 'run-1', toolUseId: 'tu-1', decision: 'decline' });
@@ -187,7 +230,7 @@ describe('a live prompt', () => {
     const reasoned = await post({ runId: 'run-1', toolUseId: 'tu-1', reasonForChange: 'Section reviewed against M4Q' });
     expect(reasoned.status, JSON.stringify(reasoned.body)).toBe(200);
     expect(executed).toHaveLength(1);
-    expect(audits.at(-1)?.action).toBe('ana.governed_action.reason');
+    expect(audits.slice(-2).map(a => a.action)).toEqual(['ana.governed_action.reason', 'ana.governed_action.executed']);
   });
 });
 
@@ -199,10 +242,12 @@ describe('a live prompt', () => {
  * the browser could be trusted to supply.
  */
 describe('a confirmed tool', () => {
+  // A write that records no reason for change: confirmed with a yes. (seed_tmf,
+  // which records one, is put at the reason tier — see the describe below.)
   const heldTool = () => ({
     toolUseId: 'tu-9',
-    command: 'seed_tmf',
-    params: { reason: 'Seeding the TMF for the Phase 1 study' },
+    command: 'save_report_definition',
+    params: { title: 'Weekly enrolment report' },
     tier: 'confirm',
     toolContext: {
       projectId: 5,
@@ -219,8 +264,8 @@ describe('a confirmed tool', () => {
     expect(executed).toHaveLength(0); // not a command
     expect(toolCalls).toHaveLength(1);
     expect(toolCalls[0]).toMatchObject({
-      name: 'seed_tmf',
-      input: { reason: 'Seeding the TMF for the Phase 1 study' },
+      name: 'save_report_definition',
+      input: { title: 'Weekly enrolment report' },
       ctx: {
         humanConfirmed: true,
         organizationId: ORG,
@@ -230,7 +275,15 @@ describe('a confirmed tool', () => {
       },
     });
     expect(decisions).toEqual([{ runId: 'run-1', orgId: ORG, decided: 'approved' }]);
-    expect(audits.map(a => a.action)).toEqual(['ana.governed_action.confirm']);
+    expect(audits.map(a => a.action)).toEqual(['ana.governed_action.confirm', 'ana.governed_action.executed']);
+  });
+
+  it('runs as the conversation and turn that proposed it, under the model that served it (PF-10 S5)', async () => {
+    pending = { ...heldTool(), toolContext: { ...heldTool().toolContext, threadId: 'ana-ri_7', turnId: 'run-1' } };
+    const res = await post({ runId: 'run-1', toolUseId: 'tu-9', confirm: true });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    // A document a confirmed tool creates records these as its provenance.
+    expect(toolCalls[0].ctx).toMatchObject({ threadId: 'ana-ri_7', turnId: 'run-1', model: 'claude-opus-5-5' });
   });
 
   it('is not run without an explicit yes', async () => {
@@ -241,7 +294,7 @@ describe('a confirmed tool', () => {
   });
 
   it('is not run from a body alone — there is no held run to take its context from', async () => {
-    const res = await post({ command: 'seed_tmf', params: { reason: 'x'.repeat(20) }, confirm: true });
+    const res = await post({ command: 'save_report_definition', params: { title: 'x'.repeat(20) }, confirm: true });
     expect(res.status).toBe(400);
     expect(toolCalls).toHaveLength(0);
   });
@@ -280,6 +333,60 @@ describe('a confirmed tool', () => {
 });
 
 /*
+ * A tool that records the person's reason for change runs with the reason the
+ * PERSON confirmed (D5, 2026-09-29). The model writes a reason into the call;
+ * the person sees it on the card, types their own or adopts that wording, and
+ * what they submit is what the tool records — the sign-off row keeps both.
+ */
+describe('a tool that records a reason for change', () => {
+  const MODEL_REASON = 'Seeding the TMF for the Phase 1 study';
+  const heldReasonTool = () => ({
+    toolUseId: 'tu-7',
+    command: 'seed_tmf',
+    params: { study_id: 12, reason: MODEL_REASON },
+    tier: 'reason',
+    toolContext: { projectId: 5, projectRef: '5', servingModel: { provider: 'anthropic', model: 'claude-opus-5-5' } },
+  });
+
+  it('is not run on a bare yes: the person states the reason', async () => {
+    pending = heldReasonTool();
+    const res = await post({ runId: 'run-1', toolUseId: 'tu-7', confirm: true });
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('REASON_REQUIRED');
+    expect(toolCalls).toHaveLength(0);
+  });
+
+  it('runs with the person\'s reason in place of the model\'s, and records both', async () => {
+    pending = heldReasonTool();
+    const mine = 'Phase 1 TMF set up per the sponsor SOP-114 index.';
+    const res = await post({ runId: 'run-1', toolUseId: 'tu-7', reasonForChange: mine });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(toolCalls).toHaveLength(1);
+    expect(toolCalls[0].input).toEqual({ study_id: 12, reason: mine });
+    const signoff = audits.find(a => a.action === 'ana.governed_action.reason')!;
+    expect(signoff.details).toMatchObject({ reasonForChange: mine, proposedReason: MODEL_REASON, reasonAsProposed: false });
+  });
+
+  it('a person who adopts AnA\'s wording is recorded as having done so', async () => {
+    pending = heldReasonTool();
+    const res = await post({ runId: 'run-1', toolUseId: 'tu-7', reasonForChange: MODEL_REASON });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(toolCalls[0].input).toMatchObject({ reason: MODEL_REASON });
+    const signoff = audits.find(a => a.action === 'ana.governed_action.reason')!;
+    expect(signoff.details).toMatchObject({ proposedReason: MODEL_REASON, reasonAsProposed: true });
+  });
+
+  it('a tool whose reason input is reason_for_change gets the person\'s reason there', async () => {
+    pending = { ...heldReasonTool(), command: 'commit_document_revision', params: { title: 'CSR 2.7.3', content: 'x', reason_for_change: 'model text here' } };
+    const mine = 'Corrected the efficacy table per the SAP amendment.';
+    const res = await post({ runId: 'run-1', toolUseId: 'tu-7', reasonForChange: mine });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(toolCalls[0].input).toMatchObject({ reason_for_change: mine });
+    expect(toolCalls[0].input).not.toHaveProperty('reason');
+  });
+});
+
+/*
  * The e-signature tier carries the meaning the signer declared (§11.50(a)(3);
  * coverage-gap sweep 2026-09-28, GP-P-2).
  *
@@ -311,7 +418,7 @@ describe('the e-signature tier records the declared §11.50 meaning', () => {
     expect(signoff.signaturePurpose).toBe('authorship');
     expect(signoff.signaturePurpose).not.toBe('approval');
 
-    expect(audits.map(a => a.action)).toEqual(['ana.governed_action.esign']);
+    expect(audits.map(a => a.action)).toEqual(['ana.governed_action.esign', 'ana.governed_action.executed']);
     expect(audits[0].details.signatureMeaning).toBe('authorship');
   });
 
@@ -420,5 +527,104 @@ describe('the e-signature sign-off carries the verified factors', () => {
     const signoff = executed[0].ctx.signoff as Record<string, unknown>;
     expect(signoff.secondFactorVerified).toBe(true);
     expect(signoff.authenticationMethod).toBe('password+mfa');
+  });
+});
+
+/*
+ * A governed action's audit rows name what a person authorised and what came of
+ * it (D5/D6, 2026-09-29). Until then the sign-off row carried the command, the
+ * tier and the reason only: not the run or the tool call it answered, not the
+ * model call that proposed it, not the params it authorised; and nothing was
+ * written after the action ran, so a Part 11 reader could not tell an action
+ * that ran from one that failed. MCP, by contrast, records each call's outcome
+ * (server/mcp/tools/runtime.ts).
+ */
+describe("a governed action's audit rows", () => {
+  const proposedBy = { provider: 'anthropic', model: 'claude-opus-5-5', requestId: 'req-held-7' };
+  const held = () => ({
+    toolUseId: 'tu-7',
+    command: 'update_artifact',
+    params: { title: 'SAP v2', artifactId: 7 },
+    proposedBy,
+  });
+  const run = () => post({ runId: 'run-7', toolUseId: 'tu-7', confirm: true });
+  const executedRow = () => audits.find(a => a.action === 'ana.governed_action.executed');
+
+  it('the sign-off names the run, the tool call, the model call and a hash of the params authorised', async () => {
+    const { canonicalJson, sha256Hex } = await import('../../../services/ana/turn-record.js');
+    pending = held();
+    const res = await run();
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(audits[0]).toMatchObject({
+      action: 'ana.governed_action.confirm',
+      details: {
+        runId: 'run-7',
+        toolUseId: 'tu-7',
+        gatewayRequestId: 'req-held-7',
+        servingModel: { provider: 'anthropic', model: 'claude-opus-5-5' },
+        // The turn record's canonical hash, so the row joins the turn's step.
+        paramsSha256: sha256Hex(canonicalJson({ artifactId: 7, title: 'SAP v2' })),
+      },
+    });
+  });
+
+  it('an executed row follows, with the outcome, the duration and the same trace', async () => {
+    pending = held();
+    await run();
+
+    expect(audits.map(a => a.action)).toEqual(['ana.governed_action.confirm', 'ana.governed_action.executed']);
+    expect(executedRow()?.details).toMatchObject({
+      outcome: 'ok',
+      durationMs: expect.any(Number),
+      resultSha256: expect.stringMatching(/^[0-9a-f]{64}$/),
+      runId: 'run-7',
+      toolUseId: 'tu-7',
+      gatewayRequestId: 'req-held-7',
+    });
+  });
+
+  it('a command its own gate refused is recorded refused, not ok', async () => {
+    pending = held();
+    commandOutcome = 'refused';
+    await run();
+
+    expect(executedRow()?.details.outcome).toBe('refused');
+  });
+
+  it('a failed execution is recorded failed, with what failed', async () => {
+    pending = held();
+    commandOutcome = 'throw';
+    const res = await run();
+
+    expect(res.status).toBe(500);
+    expect(executedRow()?.details).toMatchObject({ outcome: 'failed', error: 'the command store refused the write' });
+  });
+
+  it('a failed execution whose row did not persist says that too', async () => {
+    pending = held();
+    commandOutcome = 'throw';
+    executedRowPersists = false;
+    const res = await run();
+
+    expect(res.status).toBe(500);
+    expect(JSON.stringify(res.body)).toMatch(/AUDIT_ROW_NOT_PERSISTED/);
+  });
+
+  it('an executed row that did not persist is said, to the person and to the waiting run', async () => {
+    pending = held();
+    executedRowPersists = false;
+    const res = await run();
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(JSON.stringify(res.body)).toMatch(/AUDIT_ROW_NOT_PERSISTED/);
+    expect(JSON.stringify(released[0]?.result)).toMatch(/AUDIT_ROW_NOT_PERSISTED/);
+  });
+
+  it('a command posted without its run still gets both rows, with no run and no model call', async () => {
+    await post({ command: 'create_task', params: { title: 'Chase the CoA' }, confirm: true });
+
+    expect(audits.map(a => a.action)).toEqual(['ana.governed_action.confirm', 'ana.governed_action.executed']);
+    expect(audits[0].details).toMatchObject({ runId: null, toolUseId: null, gatewayRequestId: null, servingModel: null });
   });
 });

@@ -92,7 +92,7 @@ function isModelNotApprovedError(error: unknown): boolean {
 
 /**
  * Is this the gateway refusing production high-risk drafting because no
- * approved model has passed its PQ (ModelNotQualifiedError, ADR-0014 §3)?
+ * approved model has passed its PQ (ModelNotQualifiedError, ADR-0015 §3)?
  * Matched by code, for the reason above.
  */
 function isModelNotPqQualifiedError(error: unknown): boolean {
@@ -121,7 +121,7 @@ export type FallbackReason =
   /**
    * The gateway REFUSED in production: the models are approved, but none has
    * passed its PQ, so none may serve high-risk regulatory drafting there
-   * (ADR-0014 §3). Not `model_not_approved`: the audit reader would count an
+   * (ADR-0015 §3). Not `model_not_approved`: the audit reader would count an
    * approved model as unapproved. Nothing changes until a PQ is executed.
    */
   | 'model_not_pq_qualified'
@@ -550,7 +550,7 @@ export interface BuildModule3Result {
   modelNotApprovedFallbackCount: number;
   /**
    * Count of sections the gateway refused in production because no approved
-   * model has passed its PQ (ADR-0014 §3). Not folded into the count above:
+   * model has passed its PQ (ADR-0015 §3). Not folded into the count above:
    * the models are approved, and what would change it is a PQ run, not an
    * approval.
    */

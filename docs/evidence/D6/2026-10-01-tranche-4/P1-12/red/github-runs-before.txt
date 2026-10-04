@@ -1,0 +1,25 @@
+Read through the GitHub Actions API (GitHub MCP: actions_list / get_job_logs), 2026-10-01 ~06:20 UTC.
+
+1. The pull-request p/ci scan (pr-checks.yml, job "Semgrep (SAST)") scanned nothing and reported success.
+   Run 35982180716 (dependabot PR, 2026-09-24), job 107576429656, conclusion: success.
+     versions    - semgrep 1.36.0 on python 3.11.4
+     invalid rule severity value: MEDIUM
+     Traceback (most recent call last):
+       ...
+     ValueError: invalid rule severity value: MEDIUM
+   Step "Run Semgrep (SAST)": conclusion success.
+
+2. The trunk Semgrep scan (semgrep.yml) found 719 things and passed.
+   Run 36822692650 (push to concept2cure-v2 at 9a0c1117, 2026-10-01), job 110241489861,
+   image semgrep/semgrep:latest (= 1.177.0, sha256:acaac22f… on Docker Hub that day):
+     Scanning 13991 files tracked by git with 1074 Code rules
+     • Findings: 719 (719 blocking)
+     Ran 647 rules on 13991 files: 719 findings.
+   Step "Run Semgrep": conclusion success (the step ends `exit 0`; the job is continue-on-error).
+   The SARIF artifact (11144009846) could not be fetched from this machine: its blob host is
+   denied by the egress proxy, as is semgrep.dev. That is why the blocking scan is diff-aware
+   against a baseline commit rather than a committed list of the 719.
+
+3. CI on the trunk: the eight completed push runs of ci.yml on the first page the API returned
+   (2026-09-19..20, e.g. 35526698599 at 4e899187) all concluded failure. Before this change a
+   `v*` tag on any of those SHAs would have built and pushed an image; ci-verdict now refuses it.

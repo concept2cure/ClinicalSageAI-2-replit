@@ -13,7 +13,7 @@
  * with the dossier; with nothing compared it is a false negative. Those paths
  * now report 'not_assessed' with the reason.
  *
- * 2026-09-28 (row 74, track NC; ADR-0014 §7): the same decision for the two
+ * 2026-09-28 (row 74, track NC; ADR-0015 §7): the same decision for the two
  * other deterministic figure checks, which said 'clean' over nothing compared.
  * checkInternalNumericalIntegrity ("No numerical inconsistencies detected.")
  * did so for a draft with no labelled figure, or with every quantity stated

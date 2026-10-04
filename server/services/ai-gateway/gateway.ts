@@ -72,9 +72,11 @@ import {
 } from './providers/placement';
 import {
   getOrgPlacementResolver,
+  isProviderExcludedInEnvironment,
   mergeOrgPolicyDefaults,
+  providerElectionRefusal,
 } from './providers/org-placement';
-import { governServerTools } from './server-tool-policy';
+import { governServerTools, webToolsForModel } from './server-tool-policy';
 import { isTerminalGatewayError } from './gateway-outcome';
 import { assertDeterministicServingAllowed, isDeterministicModeRequested } from './deterministic-mode';
 import { modelCallRefusal, type ModelCallRefusalScope } from './model-call-scope.js';
@@ -88,7 +90,14 @@ import { recordApiUsageSafe, usdToCents } from '../usage-recorder.js';
 import { getTenantScope } from '../../db/tenantStore.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { getContentClassifier } from '../ai-governance/classification/index.js';
-import { APPROVED_MODELS, approvedEntryFor, type ApprovedModel } from '../ai-governance/approved-models.js';
+import { currentRunScope } from './run-scope';
+import {
+  APPROVED_MODELS,
+  approvedEntryFor,
+  isApprovedForHighRisk,
+  isHighRiskRequest,
+  type ApprovedModel,
+} from '../ai-governance/approved-models.js';
 import {
   extractRequestText,
   getPiiEnforcement,
@@ -185,6 +194,8 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'claude-opus-4',
     provider: 'anthropic',
     model: 'claude-opus-5-5',
+    // Opus 4.6+ / Sonnet 4.6+: the _20260209 web tools (dynamic filtering).
+    webToolVariant: 'dynamic_filtering',
     maxApiEffort: 'max',
     defaultApiEffort: 'medium',
     thinkingMode: 'adaptive',
@@ -230,6 +241,8 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'claude-opus-5',
     provider: 'anthropic',
     model: 'claude-opus-5',
+    // Opus 4.6+ / Sonnet 4.6+: the _20260209 web tools (dynamic filtering).
+    webToolVariant: 'dynamic_filtering',
     maxApiEffort: 'max',
     thinkingMode: 'adaptive',
     supportsSamplingParams: false,
@@ -262,6 +275,8 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'claude-opus-4-legacy',
     provider: 'anthropic',
     model: 'claude-opus-4-8',
+    // Opus 4.6+ / Sonnet 4.6+: the _20260209 web tools (dynamic filtering).
+    webToolVariant: 'dynamic_filtering',
     maxApiEffort: 'max',
     thinkingMode: 'adaptive',
     supportsSamplingParams: false,
@@ -289,6 +304,8 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'claude-sonnet-4',
     provider: 'anthropic',
     model: 'claude-sonnet-5',
+    // Opus 4.6+ / Sonnet 4.6+: the _20260209 web tools (dynamic filtering).
+    webToolVariant: 'dynamic_filtering',
     maxApiEffort: 'max',
     supportsStructuredOutputs: true,
     // Sonnet 5 shares the flagship's reasoning-only surface: adaptive
@@ -325,6 +342,8 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'claude-sonnet-4-legacy',
     provider: 'anthropic',
     model: 'claude-sonnet-4-6',
+    // Opus 4.6+ / Sonnet 4.6+: the _20260209 web tools (dynamic filtering).
+    webToolVariant: 'dynamic_filtering',
     maxApiEffort: 'max',
     thinkingMode: 'budget',
     supportsSamplingParams: true,
@@ -352,6 +371,8 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     // stale-prior artifact. Haiku keeps the 200K window — unlike the Opus and
     // Sonnet entries above, that figure is correct here.
     model: 'claude-haiku-4-5',
+    // Basic web tools only (web_search_20250305 / web_fetch_20250910).
+    webToolVariant: 'basic',
     // null, not omitted: Haiku 4.5 rejects effort with a 400, and every
     // Fast turn routes here. Declared explicitly so the reason is on the
     // entry rather than implied by an absence.
@@ -1280,7 +1301,7 @@ export class AIGateway {
   private roundRobinIndex = 0;
 
   constructor(config?: Partial<GatewayConfig>) {
-    this.config = this.buildConfig(config);
+    this.config = withoutExcludedProviders(this.buildConfig(config));
     this.models = this.buildModelRegistry();
     this.providerHealth = new Map();
     this.auditLogger = new GatewayAuditLogger(this.config.dbPool);
@@ -1399,7 +1420,7 @@ export class AIGateway {
     if (!policyResult.allowed) {
       // Every refusal here that is a compliance event leaves an audit trace:
       // a content-security block (injection) through logContentPolicyBlock, a
-      // rate-limit refusal through logRateLimitRefusal (ADR-0014 §5 — until
+      // rate-limit refusal through logRateLimitRefusal (ADR-0015 §5 — until
       // 2026-09-28 it was left unrecorded to avoid "audit spam"). A token-budget
       // denial is the caller's own request shape and stays unrecorded.
       await this.logContentPolicyBlock(
@@ -1443,7 +1464,7 @@ export class AIGateway {
 
     // Deterministic mode. In production it is not a way around governance:
     // selection runs first, so every refusal it makes — the PQ refusal of
-    // high-risk drafting above all (ADR-0014 §3, "no bypass in production") —
+    // high-risk drafting above all (ADR-0015 §3, "no bypass in production") —
     // is raised and ledgered before any fixture text is returned. Until
     // 2026-09-28 (track GW review [2]/[11]) AI_GATEWAY_DETERMINISTIC=true
     // returned DETERMINISTIC_RESPONSES.document_drafting here in production.
@@ -1530,6 +1551,7 @@ export class AIGateway {
         if (error instanceof GatewayAbortedError) throw error;
         lastError = error;
         triedModels.push(selectedModel.id);
+        await this.endOnTerminalDecline(error, selectedModel, { request, requestId, startTime, strategy, triedModels, contentPolicy });
         this.noteRungFailure(selectedModel, error, declines);
         log.warn(
           `[AI Gateway] ${selectedModel.provider}/${selectedModel.model} failed: ${error.message}`
@@ -1559,6 +1581,7 @@ export class AIGateway {
         if (error instanceof GatewayAbortedError) throw error;
         lastError = error;
         triedModels.push(fallback.id);
+        await this.endOnTerminalDecline(error, fallback, { request, requestId, startTime, strategy, triedModels, contentPolicy });
         this.noteRungFailure(fallback, error, declines);
         log.warn(
           `[AI Gateway] Fallback ${fallback.provider}/${fallback.model} failed: ${error.message}`
@@ -1567,17 +1590,7 @@ export class AIGateway {
     }
 
     // All providers failed — log and throw
-    const errorResponse: GatewayResponse = {
-      content: '',
-      provider: selectedModel.provider,
-      model: selectedModel.model,
-      usage: { inputTokens: 0, outputTokens: 0, totalTokens: 0, estimatedCostUsd: 0 },
-      latencyMs: Date.now() - startTime,
-      requestId,
-      cached: false,
-      deterministic: false,
-      finishReason: 'error',
-    };
+    const errorResponse = failedCallResponse(selectedModel, requestId, startTime);
     // When every candidate was refused for size, no provider was ever called.
     // That is not "all providers failed" — it is "this request cannot be served
     // in one call" — and it is reported as such, with the numbers the caller
@@ -1635,7 +1648,7 @@ export class AIGateway {
     provider: 'openai' | 'local';
     texts: string[];
     requestId?: string;
-  }): Promise<void> {
+  }): Promise<EmbeddingAuthorization> {
     const requestId = input.requestId ?? randomUUID();
     const startTime = Date.now();
 
@@ -1714,11 +1727,46 @@ export class AIGateway {
 
     // (b) The last-mile sensitive-dispatch gate, exactly as executeProvider
     // applies it before a chat SDK call, with intended use 'embedding'.
-    await this.assertSensitiveDispatchAllowed(
+    const placementReasonCode = await this.assertSensitiveDispatchAllowed(
       { provider: input.provider } as ModelConfig,
       request,
       requestId,
       startTime,
+    );
+    return { requestId, startTime, request, placementReasonCode };
+  }
+
+  /**
+   * Record an embedding call once the provider has answered: a served row, or
+   * a failure row with the error. authorizeEmbedding decides and records only a
+   * refusal; the call itself is made outside route(), so until 2026-09-29 an
+   * allowed embedding left no ledger row at all (D6). Written through logAudit,
+   * like a chat row: the provenance, placement decision, region and prompt hash
+   * of the authorised request, and never its text. Never throws.
+   */
+  async recordEmbeddingCall(
+    authorization: EmbeddingAuthorization,
+    call: { provider: ProviderName; model: string; inputTokens?: number; error?: string },
+  ): Promise<void> {
+    const inputTokens = call.inputTokens ?? 0;
+    await this.logAudit(
+      authorization.request,
+      {
+        content: '',
+        provider: call.provider,
+        model: call.model,
+        usage: { inputTokens, outputTokens: 0, totalTokens: inputTokens, estimatedCostUsd: 0 },
+        latencyMs: Date.now() - authorization.startTime,
+        requestId: authorization.requestId,
+        cached: false,
+        deterministic: false,
+        ...(call.error ? { finishReason: 'error' } : {}),
+        ...(authorization.placementReasonCode ? { placementReasonCode: authorization.placementReasonCode } : {}),
+      },
+      authorization.request.strategy || this.config.defaultStrategy,
+      !call.error,
+      call.error,
+      [call.provider],
     );
   }
 
@@ -1884,6 +1932,8 @@ export class AIGateway {
     // them; the rest are removed here, for the primary and every fallback, so
     // no door that skipped governedToolsetFor can send one (server-tool-policy.ts).
     const governed = governServerTools(modelConfig.provider, request);
+    // …and in the version this model accepts.
+    governed.request = webToolsForModel(governed.request, modelConfig.webToolVariant);
     if (governed.withheld.length > 0) {
       log.info('[ai-gateway] server tools withheld for this lane', {
         requestId,
@@ -1987,18 +2037,29 @@ export class AIGateway {
       });
       approvals = {};
     }
-    const region = request.dataResidency && request.dataResidency !== 'any'
-      ? request.dataResidency
-      : placement.regions[0];
+    // A self-hosted placement satisfies any tenant residency (ADR-0014 §1.5,
+    // amended 2026-10-01; isPlacementCompliant): the data stays in the region
+    // the deployment runs in, and that residency is enforced for it by the
+    // tenant floor (requestPlacementDenial), before this gate. So its decision
+    // is made at its own region, `on_prem`, against the approval's, with no
+    // tenant region to compare. Until P1-54 round 2 the tenant's residency was
+    // compared, as a string, with the approval's `on_prem`, and every PII or
+    // PHI embedding of an EU- or US-resident tenant through the in-VPC lane was
+    // refused. Every other substrate is still held to the tenant's region here.
+    const selfHosted = placement.substrate === 'self_hosted';
+    const tenantRegion = request.dataResidency && request.dataResidency !== 'any' ? request.dataResidency : undefined;
+    const region = selfHosted ? placement.regions[0] : (tenantRegion ?? placement.regions[0]);
     const approval = approvals[modelConfig.provider];
     const decision = decideSensitivePlacement({
       environment: process.env.NODE_ENV || 'development',
       detectedDataClass,
       tenantPolicy: {
         resolution: request.sensitiveTenantPolicy?.resolution ?? 'absent',
-        requiredRegion: request.sensitiveTenantPolicy?.residency && request.sensitiveTenantPolicy.residency !== 'any'
-          ? request.sensitiveTenantPolicy.residency
-          : request.dataResidency && request.dataResidency !== 'any' ? request.dataResidency : undefined,
+        requiredRegion: selfHosted
+          ? undefined
+          : request.sensitiveTenantPolicy?.residency && request.sensitiveTenantPolicy.residency !== 'any'
+            ? request.sensitiveTenantPolicy.residency
+            : tenantRegion,
         requireZeroRetention: request.sensitiveTenantPolicy?.zeroDataRetention ?? request.zeroDataRetention,
         allowedProviders: request.sensitiveTenantPolicy?.allowedSubstrates &&
           !request.sensitiveTenantPolicy.allowedSubstrates.includes(placement.substrate)
@@ -3198,7 +3259,7 @@ export class AIGateway {
    * to strategy selection when every row it names is disabled or outside the
    * tenant's placement (as it always has); a terminal refusal otherwise.
    *
-   * A name that matches no registry row is refused, naming it (ADR-0014 §4).
+   * A name that matches no registry row is refused, naming it (ADR-0015 §4).
    * Until 2026-09-28 it matched nothing and fell through to strategy
    * selection: the caller asked for one model and silently got another.
    */
@@ -3334,7 +3395,7 @@ export class AIGateway {
         // models failed: a degraded answer from a model the registry says is
         // not approved for the work, delivered as if nothing had happened. It
         // is also where production drafting would walk from a PQ-passed model
-        // to a PQ-pending one (ADR-0014 §3).
+        // to a PQ-pending one (ADR-0015 §3).
         this.approvedForTask(m, request, gov),
     );
     const samePriority = eligible.filter(m => m.provider === primaryProvider);
@@ -3349,7 +3410,7 @@ export class AIGateway {
    * True when this model may serve this request here: the single predicate
    * behind every selection point — explicit, strategy (eligible and relaxed)
    * and the fallback ladder — so they cannot disagree. model-governance.ts
-   * selectionRefusal (ADR-0014 §3, §4): the row is its own approved-models
+   * selectionRefusal (ADR-0015 §3, §4): the row is its own approved-models
    * entry at every risk level; in production its entry pins a concrete
    * artifact; on high-risk work its entry is `approvedForHighRisk`; and in
    * production, high-risk drafting needs a passed PQ.
@@ -3393,14 +3454,17 @@ export class AIGateway {
    * Order matters and is fail-closed:
    *  1. An unknown tenant policy (lookup failed, or nothing bound the call to a
    *     tenant) refuses a non-public payload wherever placement is enforced.
-   *  2. A request residency that contradicts the tenant's refuses.
-   *  3. The tenant's vendor and substrate allow-lists — for EVERY data class.
+   *  2. In production, the provider election (ADR-0014 §1, P1-45): Moonshot
+   *     never; OpenAI, Azure and Vertex only when the tenant's policy names
+   *     them. Every payload, public included; no organization = default set.
+   *  3. A request residency that contradicts the tenant's refuses.
+   *  4. The tenant's vendor and substrate allow-lists — for EVERY data class.
    *     Content the PHI/PII screen classes `none` (CMC, unpublished efficacy)
    *     is exactly what these lists exist to keep off a shared frontier API.
-   *  4. The request's residency / zero retention, with the tenant's floor
+   *  5. The request's residency / zero retention, with the tenant's floor
    *     already merged in by applyOrgPlacementDefaults.
-   * A `public` payload skips 1, and skips 2–3 when the tenant opted in to
-   * public-source frontier use.
+   * A `public` payload skips 1, and skips 3–4 when the tenant opted in to
+   * public-source frontier use. Nothing skips 2.
    */
   private tenantPlacementVerdict(
     provider: ProviderName,
@@ -3409,6 +3473,7 @@ export class AIGateway {
     const placement = resolvePlacement(provider);
     return (
       unknownTenantPolicyDenial(request, this.isPlacementEnforced()) ??
+      providerElectionDenial(provider, request) ??
       tenantAllowListDenial(provider, placement, request) ??
       requestPlacementDenial(provider, placement, request) ?? { allowed: true }
     );
@@ -3439,7 +3504,7 @@ export class AIGateway {
    * their tenant's policy was never applied. The ambient binding does not
    * rewrite `organizationId`; it is recorded on `sensitiveTenantPolicy`, and
    * placement, audit attribution, the per-org rate limit and usage metering
-   * all read the tenant from there (since 2026-09-28, ADR-0014 §5, the rate
+   * all read the tenant from there (since 2026-09-28, ADR-0015 §5, the rate
    * limit and metering too).
    *
    * A system or pre-auth scope (tenant '0') is platform work and carries no
@@ -3508,7 +3573,7 @@ export class AIGateway {
   /**
    * A call with no tenant at all — no organizationId, no tenant scope, not
    * even the platform's system scope — is refused in production before it is
-   * charged to anything (ADR-0014 §5). Until 2026-09-28 it was counted against
+   * charged to anything (ADR-0015 §5). Until 2026-09-28 it was counted against
    * the shared '__global__' rate bucket first, then refused at selection for a
    * tenant payload and served for a public one.
    *
@@ -3579,15 +3644,13 @@ export class AIGateway {
         ...request,
         metadata: {
           ...(request.metadata ?? {}),
+          // Only what has no typed column: the reason code, resolution, binding
+          // and provenance are columns (ledgerProvenance), written once.
           tenantPlacement: {
-            reasonCode: error.reasonCode,
             detail: error.detail,
             stage: error.stage,
             providers,
-            resolution: tenant?.resolution,
             unknownReason: tenant?.unknownReason,
-            boundFrom: tenant?.boundFrom,
-            payloadProvenance: request.payloadProvenance ?? 'tenant_governed',
           },
         },
       },
@@ -3720,6 +3783,36 @@ export class AIGateway {
    * that may not run elsewhere ends the walk. Anything else is a provider
    * failure as before.
    */
+  /**
+   * A decline no other model may run ends the call. It is recorded before it is
+   * rethrown: the provider received the payload, and until 2026-09-26 such a
+   * call left no ledger row (noteRungFailure threw past both audit writes).
+   */
+  private async endOnTerminalDecline(
+    error: unknown,
+    model: ModelConfig,
+    call: {
+      request: GatewayRequest;
+      requestId: string;
+      startTime: number;
+      strategy: RoutingStrategy;
+      triedModels: string[];
+      contentPolicy?: { action: ContentPolicyAction; findings: PolicyFinding[] };
+    },
+  ): Promise<void> {
+    if (!(error instanceof GatewayModelDeclinedError) || error.retryable) return;
+    await this.logAudit(
+      call.request,
+      failedCallResponse(model, call.requestId, call.startTime),
+      call.strategy,
+      false,
+      error.message,
+      call.triedModels,
+      call.contentPolicy,
+    );
+    throw error;
+  }
+
   private noteRungFailure(
     model: ModelConfig,
     error: Error,
@@ -3869,14 +3962,13 @@ export class AIGateway {
         // rather than asserting a value the provider never saw. Exactly the
         // rule the temperature field above follows.
         seed: response.effectiveSeed,
-        promptHash: this.hashPrompt(request.messages),
+        promptHash: this.hashPrompt(request),
         promptVersion,
         triedModels: triedModels && triedModels.length > 0 ? triedModels : undefined,
         // Placement / residency evidence.
         substrate: placement.substrate,
-        region: servingRegion(placement, request),
         retentionPolicy: placement.zeroDataRetention ? 'zero_retention' : 'standard',
-        ...ledgerProvenance(request, response),
+        ...ledgerServedFields(placement, request, response, success),
         // Content-policy findings carry only detector names, classes and
         // classifier-redacted excerpts — never raw content (the prompt itself
         // is represented by promptHash alone).
@@ -3939,7 +4031,7 @@ export class AIGateway {
   }
 
   /**
-   * Audit a rate-limit refusal like any other refused call (ADR-0014 §5):
+   * Audit a rate-limit refusal like any other refused call (ADR-0015 §5):
    * which limit, its window, and the count that crossed it. Does nothing when
    * the denial was not a rate limit.
    */
@@ -3986,7 +4078,7 @@ export class AIGateway {
         error: code,
         cached: false,
         deterministic: false,
-        promptHash: this.hashPrompt(request.messages),
+        promptHash: this.hashPrompt(request),
         ...ledgerProvenance(request),
         metadata: { ...(request.metadata ?? {}), ...detail },
       });
@@ -4035,7 +4127,7 @@ export class AIGateway {
         error: reason,
         cached: false,
         deterministic: false,
-        promptHash: this.hashPrompt(request.messages),
+        promptHash: this.hashPrompt(request),
         ...ledgerProvenance(request),
         // A placement refusal's reason code; other content blocks keep theirs in `error`.
         ...(reason && /^DENY_/.test(reason) ? { placementReasonCode: reason } : {}),
@@ -4061,7 +4153,7 @@ export class AIGateway {
    * (auditOrganizationId). Until 2026-09-28 (track GW review [12]) it was the
    * explicit organizationId alone, so the ~40 call sites bound through the
    * ambient scope were never metered, and the per-organisation limits that
-   * read this table (ADR-0014: "the per-organisation cost caps remain the
+   * read this table (ADR-0015: "the per-organisation cost caps remain the
    * control") could not see them.
    */
   private recordTenantUsage(
@@ -4096,19 +4188,20 @@ export class AIGateway {
     });
   }
 
-  /** SHA-256 of the canonicalized prompt messages, for reproducibility audit. */
   /**
    * SHA-256 over the prompt: each message's role and text, and — when it has
-   * them — a digest of each image or document block's source. Until 2026-09-26
-   * the blocks were left out, so two requests differing only in the scan or
-   * PDF they carried hashed the same. A text-only prompt hashes exactly as
-   * before, so existing ledger rows stay comparable.
+   * them — a digest of each image or document block's source, including the
+   * request-level imageContent the executor attaches to the user turn. Until
+   * 2026-09-26 the blocks were left out, so two requests differing only in the
+   * scan or PDF they carried hashed the same. A text-only prompt hashes exactly
+   * as before, so existing ledger rows stay comparable.
    */
-  private hashPrompt(messages: GatewayMessage[]): string {
-    const canonical = messages
+  private hashPrompt(request: Pick<GatewayRequest, 'messages' | 'imageContent'>): string {
+    const canonical = request.messages
       .map(m => `${m.role}:${m.content}${contentBlocksDigest(m.contentBlocks)}`)
       .join('\n');
-    return createHash('sha256').update(canonical, 'utf8').digest('hex');
+    const images = contentBlocksDigest(request.imageContent);
+    return createHash('sha256').update(images ? `${canonical}\nimageContent${images}` : canonical, 'utf8').digest('hex');
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -4326,7 +4419,7 @@ export class ModelNotApprovedError extends GatewayPolicyError {
 
 /**
  * In production, high-risk regulatory drafting and no model whose entry
- * records a passed PQ may serve it (ADR-0014 §3; CLAUDE.md RULE 2). Its
+ * records a passed PQ may serve it (ADR-0015 §3; CLAUDE.md RULE 2). Its
  * message is the plain statement {@link NO_PQ_QUALIFIED_MODEL}, and nothing
  * else: the person is told that no performance-qualified model is available,
  * never that a model is "not approved" (five are) or that it may pass "right
@@ -4358,7 +4451,7 @@ export class ModelNotQualifiedError extends GatewayPolicyError {
 
 /**
  * A model that is not an approved-models entry was the only thing that could
- * serve the request (ADR-0014 §4). CLAUDE.md RULE 2: a model is selectable
+ * serve the request (ADR-0015 §4). CLAUDE.md RULE 2: a model is selectable
  * only as an approved-models entry with a pinned version.
  *
  * - `unknown-model`: the caller named a model that is no registry row (of the
@@ -4411,7 +4504,7 @@ function modelNotGovernedMessage(
 }
 
 /**
- * A rate limit refused the request (ADR-0014 §5). Carries its code and the
+ * A rate limit refused the request (ADR-0015 §5). Carries its code and the
  * limit that refused it, so the route answers 429 and the author reads that
  * the organization is making too many requests — the same event the ledger
  * row records — rather than "blocked by AI gateway policy" at 503 (track GW
@@ -4509,6 +4602,41 @@ function unknownTenantPolicyDenial(request: GatewayRequest, enforced: boolean): 
       ? 'the request is not bound to an organization'
       : "the organization's placement policy could not be read",
   );
+}
+
+/**
+ * The production provider election (ADR-0014 §1, P1-45): which vendors may
+ * receive anything of this organization's at all. Read from the resolved
+ * policy's stored list; an absent, unreadable or unbound policy elects nothing
+ * beyond the default set. Not lifted by a public-source opt-in. Allows
+ * everything outside production (org-placement.ts::providerElectionRefusal).
+ */
+function providerElectionDenial(provider: ProviderName, request: GatewayRequest): PlacementDenial | null {
+  const tenant = request.sensitiveTenantPolicy;
+  const elected = tenant?.resolution === 'resolved' ? tenant.allowedProviders : undefined;
+  const refusal = providerElectionRefusal(provider, elected);
+  return refusal ? placementDenial('DENY_TENANT_POLICY', refusal) : null;
+}
+
+/**
+ * Moonshot is not a production lane (ADR-0014 §1.3): in production its
+ * provider entry is switched off whatever the key or the override says, so no
+ * client is built and no model is enabled. The dispatch predicate refuses it
+ * again (providerElectionDenial), in case anything enables a model later.
+ */
+function withoutExcludedProviders(config: GatewayConfig): GatewayConfig {
+  const excluded = config.providers.filter(p => p.enabled && isProviderExcludedInEnvironment(p.name));
+  if (excluded.length === 0) return config;
+  log.warn(
+    `[AI Gateway] ${excluded.map(p => p.name).join(', ')} is not a production AI service (ADR-0014 §1); ` +
+      'its lane is disabled and its key is not used',
+  );
+  return {
+    ...config,
+    providers: config.providers.map(p =>
+      isProviderExcludedInEnvironment(p.name) ? { ...p, enabled: false, apiKey: undefined } : p,
+    ),
+  };
 }
 
 /**
@@ -4625,12 +4753,11 @@ function ledgerProvenance(
   const used = (served as { serverToolUses?: Array<{ name: string }> } | undefined)?.serverToolUses;
   return {
     payloadProvenance: request.payloadProvenance ?? 'tenant_governed',
-    dataClass: request.sensitiveDataClass,
+    dataClass: ledgerDataClass(request),
     tenantPolicyResolution: tenant?.resolution,
     tenantBoundFrom: tenant?.boundFrom,
     riskTier: request.riskTier,
-    runId: request.runId,
-    parentRunId: request.parentRunId,
+    ...ledgerRun(request),
     ...(served
       ? {
           placementReasonCode: served.placementReasonCode,
@@ -4641,6 +4768,68 @@ function ledgerProvenance(
           serverToolsWithheld: served.withheldServerTools,
         }
       : {}),
+  };
+}
+
+/** What authorizeEmbedding decided, for the row recordEmbeddingCall writes once the provider answers. */
+export interface EmbeddingAuthorization {
+  requestId: string;
+  startTime: number;
+  /** The governed request: the tenant's floor merged in, the content classified. */
+  request: GatewayRequest;
+  placementReasonCode?: string;
+}
+
+/**
+ * A row's region and provenance. Only a lane that served the call has a region
+ * to record: a failed or size-refused row names no region and carries no
+ * served-model governance (2026-09-26 review).
+ */
+function ledgerServedFields(
+  placement: ProviderPlacement,
+  request: GatewayRequest,
+  response: GatewayResponse,
+  success: boolean,
+): Partial<AuditLogEntry> {
+  if (!success) return { region: undefined, ...ledgerProvenance(request) };
+  return { region: servingRegion(placement, request), ...ledgerProvenance(request, response) };
+}
+
+/** The request's own run, else the run a tool call inside it belongs to (run-scope.ts). */
+function ledgerRun(request: GatewayRequest): Pick<AuditLogEntry, 'runId' | 'parentRunId'> {
+  if (request.runId) return { runId: request.runId, parentRunId: request.parentRunId };
+  const scope = currentRunScope();
+  return { runId: scope?.runId, parentRunId: request.parentRunId ?? scope?.parentRunId };
+}
+
+/**
+ * The payload's class as the ledger states it. The screen reads text only
+ * (pii-screen.ts), so a payload that also carried an image or a document body
+ * is 'unscreened_media' where the text alone found nothing: 'none' would claim
+ * a screen of content nothing read (2026-09-26 review). A PII or PHI hit in
+ * the text stands.
+ */
+function ledgerDataClass(request: GatewayRequest): string | undefined {
+  const cls = request.sensitiveDataClass;
+  if (cls && cls !== 'none') return cls;
+  const media =
+    (request.imageContent?.length ?? 0) > 0 ||
+    request.messages.some(m => (m.contentBlocks ?? []).some(b => b?.type !== 'text'));
+  return media ? 'unscreened_media' : cls;
+}
+
+/** The response a call nothing served is recorded with. */
+function failedCallResponse(model: ModelConfig, requestId: string, startTime: number): GatewayResponse {
+  return {
+    content: '',
+    provider: model.provider,
+    model: model.model,
+    usage: { inputTokens: 0, outputTokens: 0, totalTokens: 0, estimatedCostUsd: 0 },
+    latencyMs: Date.now() - startTime,
+    requestId,
+    cached: false,
+    deterministic: false,
+    finishReason: 'error',
   };
 }
 
@@ -4655,7 +4844,9 @@ function servingRegion(placement: ProviderPlacement, request: GatewayRequest): s
   if (placement.substrate === 'self_hosted') return 'on_prem';
   const requested = request.dataResidency && request.dataResidency !== 'any' ? request.dataResidency : null;
   if (requested && placement.regions.includes(requested)) return requested;
-  return placement.regions.join(',').slice(0, 16);
+  // Every region the lane claims, whole: the list is of known codes only
+  // (placement.ts envRegions), so it fits the VARCHAR(64) column.
+  return placement.regions.join(',');
 }
 
 /** A digest of each non-text block's source, appended to its message in the prompt hash. */
@@ -4663,10 +4854,14 @@ function contentBlocksDigest(blocks: GatewayMessage['contentBlocks']): string {
   if (!blocks || blocks.length === 0) return '';
   return blocks
     .map(b => {
-      if (b.type === 'text') return `|text:${createHash('sha256').update(b.text, 'utf8').digest('hex')}`;
-      const src = b.source as Record<string, unknown>;
+      // Total over malformed blocks: a throw here dropped the whole ledger row.
+      if (b?.type === 'text') {
+        const text = typeof b.text === 'string' ? b.text : String(b.text ?? '');
+        return `|text:${createHash('sha256').update(text, 'utf8').digest('hex')}`;
+      }
+      const src = ((b as { source?: unknown } | undefined)?.source ?? {}) as Record<string, unknown>;
       const body = String(src.data ?? src.file_id ?? src.url ?? '');
-      return `|${b.type}:${String(src.type)}:${createHash('sha256').update(body, 'utf8').digest('hex')}`;
+      return `|${String(b?.type)}:${String(src.type)}:${createHash('sha256').update(body, 'utf8').digest('hex')}`;
     })
     .join('');
 }
@@ -4682,7 +4877,7 @@ export class TenantPlacementError extends GatewayPolicyError {
     readonly reasonCode: PlacementReasonCode | 'DENY_NO_TENANT_BINDING',
     readonly detail: string,
     /**
-     * `admission`: the call carries no tenant at all, in production (ADR-0014
+     * `admission`: the call carries no tenant at all, in production (ADR-0015
      * §5). `selection`: no candidate was permitted. `dispatch`: the last-mile
      * re-check refused. `embedding`.
      */

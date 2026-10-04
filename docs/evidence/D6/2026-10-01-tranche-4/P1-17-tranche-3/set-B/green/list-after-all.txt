@@ -1,0 +1,12 @@
+server/routes/cortex-unified.ts:1044  [500]
+server/routes/export-control.ts:44  [500]
+server/routes/grants.ts:77  [500]
+server/routes/iacuc.ts:51  [500]
+server/routes/ibc.ts:50  [500]
+server/routes/irb.ts:67  [500]
+server/routes/other-support.ts:55  [500]
+server/routes/protocol-consent.ts:55  [500]
+server/routes/protocol-deviations.ts:66  [500]
+server/routes/research-agreements.ts:42  [500]
+
+10 server-error leak site(s).

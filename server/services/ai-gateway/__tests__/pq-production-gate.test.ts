@@ -1,5 +1,5 @@
 /**
- * ADR-0014 §3: in production, PQ is a serving rule, not a label.
+ * ADR-0015 §3: in production, PQ is a serving rule, not a label.
  *
  * CLAUDE.md RULE 2: "only PQ-passed models serve high-risk regulatory
  * drafting." Until this change nothing enforced it: every approved entry

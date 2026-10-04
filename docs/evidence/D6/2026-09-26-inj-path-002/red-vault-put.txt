@@ -1,0 +1,23 @@
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > one tenant cannot read another tenant’s stored bytes > returns a tenant its OWN file 7ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > one tenant cannot read another tenant’s stored bytes > returns NULL for another tenant’s version id 2ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > one tenant cannot read another tenant’s stored bytes > reports a foreign id exactly like an id that never existed 2ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > one tenant cannot destroy another tenant’s stored bytes > refuses a cross-tenant delete AND leaves the file readable 2ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > one tenant cannot destroy another tenant’s stored bytes > allows a tenant to delete its own file 2ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > the version id cannot escape the org subtree > rejects parent traversal 2ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > the version id cannot escape the org subtree > rejects absolute path 2ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > the version id cannot escape the org subtree > rejects empty 1ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > the version id cannot escape the org subtree > rejects not a uuid 2ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > the version id cannot escape the org subtree > rejects uuid with a suffix 1ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > the version id cannot escape the org subtree > rejects a nonsense organization id rather than searching 2ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > a tampered or misplaced sidecar cannot widen a read > refuses a version directory whose recorded owner is a different org 2ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > a tampered or misplaced sidecar cannot widen a read > refuses to DELETE a relocated directory it does not own 2ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > a tampered or misplaced sidecar cannot widen a read > refuses a filename that is not its own basename 2ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > a tampered or misplaced sidecar cannot widen a read > returns null on a corrupt sidecar rather than throwing 3ms
+ × server/services/storage/__tests__/storage-tenant-isolation.test.ts > put writes only inside the version directory > refuses a traversal into another tenant and writes nothing 14ms
+ × server/services/storage/__tests__/storage-tenant-isolation.test.ts > put writes only inside the version directory > refuses an absolute path and writes nothing 4ms
+ × server/services/storage/__tests__/storage-tenant-isolation.test.ts > put writes only inside the version directory > refuses the ownership sidecar and writes nothing 8ms
+ × server/services/storage/__tests__/storage-tenant-isolation.test.ts > put writes only inside the version directory > refuses a windows-style traversal and writes nothing 5ms
+ × server/services/storage/__tests__/storage-tenant-isolation.test.ts > put writes only inside the version directory > refuses a bare parent and writes nothing 4ms
+ ✓ server/services/storage/__tests__/storage-tenant-isolation.test.ts > put writes only inside the version directory > still stores an ordinary name 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed | 16 passed (21)

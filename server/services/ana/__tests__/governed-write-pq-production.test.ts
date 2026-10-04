@@ -1,5 +1,5 @@
 /**
- * ADR-0014 §3 at the point where content becomes a record (track GW review
+ * ADR-0015 §3 at the point where content becomes a record (track GW review
  * [1]/[9]/[19], blocker).
  *
  * AnA's governed drafting never reaches the gateway as `document_drafting`: the
@@ -66,6 +66,9 @@ describe('the governed-write gate, in production', () => {
 
   it('refuses every governed-write tool the same way', async () => {
     process.env.NODE_ENV = 'production';
+    // A tool outside the launch catalog is refused even earlier, by launch
+    // scope (trunk, after this test was written); either way nothing is stored.
+    const refusals = new Map<string, string>();
     for (const tool of Object.keys(GOVERNED_CONTENT_WRITE_TOOLS)) {
       const r = JSON.parse(
         await getToolHandler(tool)!({ title: 't', content: 'c', reason: 'reason for change' }, {
@@ -73,8 +76,11 @@ describe('the governed-write gate, in production', () => {
           organizationId: 1,
         } as never),
       );
-      expect(r.error, tool).toBe('MODEL_NOT_APPROVED_FOR_GOVERNED_WRITE');
+      expect(['MODEL_NOT_APPROVED_FOR_GOVERNED_WRITE', 'LAUNCH_SCOPE'], tool).toContain(r.error ?? r.code);
+      refusals.set(tool, r.error ?? r.code);
     }
+    expect([...refusals.values()]).toContain('MODEL_NOT_APPROVED_FOR_GOVERNED_WRITE');
+    expect(inner).not.toHaveBeenCalled();
   });
 
   it('control: outside production the same confirmed write reaches its handler', async () => {

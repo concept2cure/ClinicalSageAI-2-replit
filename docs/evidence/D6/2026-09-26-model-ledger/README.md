@@ -3,7 +3,7 @@
 **Row:** D6, W2 gateway scope. **Workstream:** WS3 of the AnA local-safe-AI plan (the model ledger; OQ-PL-10 in §9).
 **Builds on:** `../2026-09-25-tenant-boundary/`, `../2026-09-26-egress-tools/`, `../2026-09-26-refusals-are-final/`.
 
-`ai.gateway_audit_log` is the ledger of every AI call on the platform. A residency- or retention-constrained tenant asks
+`ai.gateway_audit_log` is the ledger of the platform's AI calls (served embeddings are not yet in it; see "Not done"). A residency- or retention-constrained tenant asks
 it one question: *where did my data go, and why was that allowed?* Before this change it could not answer.
 
 ## What was wrong (at `1500beca`)
@@ -99,3 +99,64 @@ The first wide run caught two regressions in this change, both fixed before comm
 - **The ledger is still mutable and can be switched off** (`auditEnabled`), by design (see the migration's "Why this
   table is NOT immutable"). The Part 11 record is the chained `audit_logs` row, which now carries the gateway request
   id (plan open decision 9).
+
+## Review round (2026-09-26 to 2026-09-29)
+
+An adversarial review of `213fbebc` ran seven lenses: ledger write fit, Rule 1, provenance truth, Part 11 linkage, runs and
+council, hash and privacy, and test strength. It found 22 findings. Three independent skeptics then tried to refute each
+one, and a finding survived only with a majority. Every surviving finding is fixed in the change that follows `213fbebc`,
+and each was first shown red against `213fbebc`: `review/red/` holds the red runs and `review/green/` the green ones.
+
+**What `213fbebc` claimed that was not true, and what is true now:**
+
+- **The Part 11 linkage was null where agent writes actually run.** Every agent write command is propose-only and executes
+  only through `POST /api/ana-ri/governed-action`. That route's command context carried no serving model, so the
+  `gatewayRequestId` this change added was null on exactly the rows it was meant for.
+  - The held approval now records `proposedBy`: the model call whose `tool_use` proposed the action.
+  - The route runs the action with that value, read from the row and never from the request body.
+  - A command posted without its run records null, not a claim.
+- **Command blocks were attributed to the last round**, although post-processing runs the blocks of the whole answer. Each
+  block is now attributed to the round whose own text held it (`command-attribution.ts`). When several rounds wrote
+  blocks, the record says no single call can be named: every field is null.
+- **A failed or size-refused row carried served-model governance** (approved entry, pinned version, PQ status) and a region,
+  for a model that served nothing. Those fields are now written on served rows only.
+- **`data_class` said `none` for content no screen had read.** The screen reads text only. A payload that also carried a
+  document or an image, with text that classified `none`, is now recorded `unscreened_media`.
+- **Some calls that reached a provider left no row.**
+  - A decline that no other model may run now writes a failure row.
+  - A malformed content block made the prompt hash throw, which dropped the row; the digest now handles any block.
+  - Request-level `imageContent` is now part of the prompt hash.
+- **Tool calls inside a run were missing from it.** The model calls a tool makes inside an AnA run now carry the run id,
+  through an async-local run scope (`ai-gateway/run-scope.ts`) that the stream opens around each tool handler. Outside a run,
+  no run id is invented.
+- **Two kinds of turn that end before the loop were closed as `finished` / `no_more_tools`:** a fast-path answer that came
+  back as an error, and a refused thread. Both now close as failed.
+- **Other ledger defects:**
+  - The readiness probe re-ran on every AI call when a column was missing; it now latches, as it does for a missing table.
+  - Refusal rows repeated the typed columns in `metadata`, so "one definition" was false; they no longer do.
+  - `region` was `VARCHAR(16)`, so a lane claiming `us,eu,apac,global` was cut mid-code. It is now `VARCHAR(64)`, amended in
+    place with a dated note and a conditional `ALTER` (Rule 1).
+  - A lane's regions are now known residency codes only, and an unknown `AI_AZURE_RESIDENCY` token is reported.
+  - The code comment claimed `ci:insert-columns-declared` checks this INSERT. It cannot (its pattern admits only `public.`
+    tables), and the comment now says so.
+- **The INSERT's bindings were untested.** A test now reads the parameters the INSERT is handed against `LEDGER_COLUMNS`.
+  `review/red/binding-mutation.txt` shows it failing when two parameters are swapped.
+- **The real-database test checked 29 of the 42 columns.** It now:
+  - reads its column list from `LEDGER_COLUMNS`;
+  - round-trips every provenance column at the longest values the gateway writes;
+  - upgrades a table from its pre-2026-09-26 shape (columns added, region widened, rows kept, a second run a no-op).
+
+  Against the `213fbebc` migration the round-trip row is simply absent (`review/red/dbtest.txt`): PostgreSQL refused the
+  17-character region, and the writer's catch swallowed the error. That silent loss is what this row exists to prevent.
+
+**Refuted or not in scope:**
+
+- A type-equality check between the migration's `CREATE TABLE` and `ADD COLUMN` blocks (1 of 3 skeptics); the
+  real-database upgrade case now covers that behaviour.
+- A backfill of the WS1–WS3 rows (2 of 3 skeptics accepted a note instead). No deployed database holds such rows, and the
+  migration's header now says rows written before this change leave the new columns NULL.
+
+**Not done, added by this round:** (closed 2026-09-29, `../2026-09-29-embedding-ledger/`) served embeddings still write no ledger row. `authorizeEmbedding` decides placement and
+returns, and the embedding call is made outside the gateway's dispatch, so the gateway never learns that it was served.
+Recording that call needs a write from the embedding provider after `embeddings.create`. It is left for the next change.
+Refused embeddings were always recorded.

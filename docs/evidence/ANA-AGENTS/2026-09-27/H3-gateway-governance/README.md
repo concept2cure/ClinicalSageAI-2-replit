@@ -1,6 +1,6 @@
 # H3 (track GW): the gateway serves only governed models, production drafting needs a passed PQ, and a call is charged to its own tenant
 
-**Decision:** ADR-0014 §3 (PQ is a production gate), §4 (every model served is
+**Decision:** ADR-0015 §3 (PQ is a production gate), §4 (every model served is
 an approved entry, at every risk level) and the gateway items of §5 (tenants
 are isolated in capacity). The ADR was accepted 2026-09-28 and binds this work.
 **Row:** 74 in `docs/work-orders/README.md` (founder-directed 2026-09-27; it
@@ -29,7 +29,7 @@ with a reason ([8], [17], [18], [20]). Stated plainly:
   answer without storing it. So §3 is reported **partial**, not done.
 - **In production today, high-risk drafting is refused.** No approved model has
   passed PQ (0 of 5 approved for high risk; `ga-readiness-report.mjs` row
-  `high-risk-model-pq` is still blocked). This is ADR-0014's accepted
+  `high-risk-model-pq` is still blocked). This is ADR-0015's accepted
   consequence.
 - **Not shown here:** a live capture (this container has no database and no
   model key); the PQ itself; the governed-write refusal's wording in
@@ -377,7 +377,7 @@ It does not see:
   `document_drafting` (their owning lanes). Production will then refuse them
   until PQ, which is the ADR's stated consequence.
 - **Every `document_drafting` call is refused in production until the D4 PQ
-  runs** (ADR-0014, Negative consequences). About 40 call sites, including
+  runs** (ADR-0015, Negative consequences). About 40 call sites, including
   `AnaDocumentDraftingService.ts`, `csr-builder.ts`, `authoring/ib-builder.ts`,
   `section-generation-service.ts`, `cmc/module3-narrative-builder.ts`,
   `indCopilot.js`, `api/cmc/*`, `api/drafting/routes.ts`,
@@ -391,7 +391,7 @@ It does not see:
   production for this control). `scripts/deploy-staging.sh` is the hosted
   validation environment. For the D4 owner.
 - **LiteLLM (founder-level; owner: `server/services/ai/LiteLLMAdapter.ts`).**
-  The product owner's position, for the ADR owner to record: ADR-0014 §3 says
+  The product owner's position, for the ADR owner to record: ADR-0015 §3 says
   "no bypass in production", and `LITELLM_UNGOVERNED_ACK` is exactly the
   switch Rule 0 warns about. It should not be accepted in production. No
   deploy configuration in the repository sets `LITELLM_ENABLED`, so refusing

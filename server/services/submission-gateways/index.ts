@@ -31,7 +31,10 @@ import {
   CredentialError, TransmitAuthorizationError, TransportError, UnverifiedTransportError, ValidationError,
 } from './types';
 import { evaluatePreTransmit } from './pre-transmit-check';
+import { resolvePdfARequirement } from '../ectd/pdfa-requirement';
 import { assertBundleLeafSecurity } from './bundle-leaf-security';
+import { pool } from '../../db';
+import { clientAccountRefusal, resolveGatewayAccount, specFor, type ResolvedGatewayAccount } from './gateway-accounts';
 
 export * from './types';
 export { evaluatePreTransmit } from './pre-transmit-check';
@@ -164,6 +167,12 @@ export function refusedBeforeWire(err: unknown): boolean {
 export { preTransmitFindings } from './pre-transmit-findings';
 export type { PreTransmitFindings } from './pre-transmit-findings';
 
+/** A production transmit whose packager grade lists PDF leaves shipped as plain PDF. */
+function carriesPlainPdf(req: GatewayTransmitRequest): boolean {
+  const notConverted = req?.bundle?.submissionGrade?.notConverted;
+  return req?.environment === 'production' && Array.isArray(notConverted) && notConverted.length > 0;
+}
+
 /**
  * Resolve the gateway implementation for (region, gateway).
  *
@@ -200,6 +209,7 @@ export function getGateway(region: Region, gateway: GatewayName): SubmissionGate
       // __tests__/refused-before-wire.test.ts.
       let pre: ReturnType<typeof evaluatePreTransmit>;
       let leafSecurity: Awaited<ReturnType<typeof assertBundleLeafSecurity>>;
+      let account: ResolvedGatewayAccount;
       try {
         assertTransmitAuthorized(impl.region, impl.gateway, req?.authorization);
         // Package-fitness preconditions (belt-and-suspenders alongside the human
@@ -212,6 +222,12 @@ export function getGateway(region: Region, gateway: GatewayName): SubmissionGate
           bundle: req.bundle,
           environment: req.environment,
           enforceExternal: false,
+          // PDF/A only where the deployment or the organisation chose it
+          // (ectd/pdfa-requirement.ts, decided 2026-10-01). A setting that
+          // cannot be read refuses here rather than sending plain PDF.
+          // Read only where it can decide something: a production transmit
+          // carrying plain-PDF leaves. A test transmit is never refused for PDF/A.
+          pdfa: carriesPlainPdf(req) ? await resolvePdfARequirement(pool, req.organizationId) : undefined,
         });
         if (!pre.cleared) {
           throw new ValidationError(
@@ -222,13 +238,35 @@ export function getGateway(region: Region, gateway: GatewayName): SubmissionGate
         // Leaf security, re-established from the signed bundle's own bytes in
         // every environment (bundle-leaf-security.ts). 2026-09-22 W5/D7.
         leafSecurity = await assertBundleLeafSecurity(req.bundle, impl.region);
+        // Whose account this goes out under: the organisation's choice for this
+        // gateway and environment (gateway-accounts.ts; founder decision
+        // 2026-10-01). A client account that cannot send — not available for
+        // this gateway yet, or missing credentials — is refused here, before the
+        // wire, never sent under the platform's identity instead.
+        account = await resolveGatewayAccount(pool, req.organizationId, impl.region, impl.gateway, req.environment);
+        const spec = specFor(impl.region, impl.gateway);
+        const refusal = spec ? clientAccountRefusal(spec, account, req.environment) : null;
+        if (refusal) throw refusal;
       } catch (err) {
         throw markRefusedBeforeWire(err);
       }
-      const result = await impl.transmit(req);
+      // Stamped server-side, after the caller's metadata, so the record of which
+      // account sent it cannot be supplied by a caller.
+      const result = await impl.transmit({
+        ...req,
+        account,
+        metadata: {
+          ...(req.metadata ?? {}),
+          gatewayAccount: { mode: account.mode, senderIdentifier: account.senderIdentifier },
+        },
+      });
       // What was checked travels with the result — including checks that
       // failed without blocking, which used to be computed and dropped here.
-      return { ...result, preTransmit: { checks: pre.checks, warnings: pre.warnings, leafSecurity } };
+      return {
+        ...result,
+        gatewayAccount: { mode: account.mode, senderIdentifier: account.senderIdentifier },
+        preTransmit: { checks: pre.checks, warnings: pre.warnings, leafSecurity },
+      };
     },
     checkStatus: (transmittalId: number) => impl.checkStatus(transmittalId),
     downloadAcknowledgment: (transmittalId: number) => impl.downloadAcknowledgment(transmittalId),

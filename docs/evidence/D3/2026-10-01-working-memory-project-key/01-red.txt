@@ -1,0 +1,22 @@
+# integer-project-same-org-keys.pglite.test.ts (working-memory cases added) against HEAD 4b29f5539
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > 20261001 on the applier > runs after the program keys and before the tenant sweep
+ × tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > 20261001 on the applier > a replay adds nothing: one NOT VALID key per table, each with its existing key's delete action
+   → expected [ { …(4) }, { …(4) }, { …(4) } ] to deeply equal [ { …(4) }, { …(4) }, { …(4) }, …(1) ]
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > concept2cure_artifacts: (project_id, org) → projects (id, organization_id) > a row under a project of its own organization is written
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > concept2cure_artifacts: (project_id, org) → projects (id, organization_id) > a row under another organization's project is refused by the database
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > c2c_submission_packages: (project_id, org) → projects (id, organization_id) > a row under a project of its own organization is written
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > c2c_submission_packages: (project_id, org) → projects (id, organization_id) > a row under another organization's project is refused by the database
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > concept2cure_conversations: (project_id, org) → projects (id, organization_id) > a row under a project of its own organization is written
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > concept2cure_conversations: (project_id, org) → projects (id, organization_id) > a row under another organization's project is refused by the database
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > conversation_working_memory: (project_id, org) → projects (id, organization_id) > a row under a project of its own organization is written
+ × tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > conversation_working_memory: (project_id, org) → projects (id, organization_id) > a row under another organization's project is refused by the database
+   → expected 'ok' to be '23503' // Object.is equality
+ × tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > legacy rows and the existing behaviour > the legacy cross-organization rows did not fail the deploy, and are listed by the preflight
+   → expected undefined to be false // Object.is equality
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > legacy rows and the existing behaviour > working memory with no project is written, as for a conversation held in none
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > legacy rows and the existing behaviour > a legacy row still takes a change that is neither its project nor its organization
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > legacy rows and the existing behaviour > a project with records of its organization under it cannot be moved to another organization
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > legacy rows and the existing behaviour > a project delete still cascades its own artifacts, packages and conversations, as before
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > conversation_working_memory: (project_id, org) → projects (id, organization_id) > a row under another organization's project is refused by the database
+      Tests  3 failed | 12 passed (15)

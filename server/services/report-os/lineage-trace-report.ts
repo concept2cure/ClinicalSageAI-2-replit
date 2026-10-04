@@ -51,6 +51,11 @@ function truncate(text: string, max: number): string {
  * renders as a viewable `partial` that cannot be sealed. Pure; clamped to the
  * pipeline's [30, 95] band so it never fabricates certainty.
  */
+/** A decision a person resolved: approved, executed or rejected, not merely recommended. */
+function decidedByAPerson(d: DocumentLineageDossier['decisions'][number]): boolean {
+  return d.actionState === 'approved' || d.actionState === 'executed' || d.actionState === 'rejected';
+}
+
 export function computeLineageConfidence(dossier: DocumentLineageDossier): number {
   /* A dossier whose decision read FAILED is not a thin dossier — it is an
      unmeasured one, and it must not clear the sealing threshold. Withholding
@@ -60,14 +65,18 @@ export function computeLineageConfidence(dossier: DocumentLineageDossier): numbe
      instead. */
   if (dossier.decisionSummary.unavailable) return 30;
 
+  /* Reporting review 2026-10-01 (PROVENANCE-5): a decision counted toward the
+     sealing threshold whatever its state, a recommendation nobody had acted on
+     included, and the model's own reasoning turns added five. What a person
+     decided counts: an approved, executed or rejected decision. The model's
+     reasoning is shown in the report and no longer scores. */
   let score = 30;
   if (dossier.versionHistory.length >= 1) score += 25;
-  if (dossier.decisions.length >= 1) score += 15;
+  if (dossier.decisions.some(decidedByAPerson)) score += 15;
   if (dossier.provenanceEvents.length >= 1) score += 10;
   const hasCitations =
     !!dossier.ledger.citations && (dossier.ledger.citations as any).totalSentences > 0;
   if (dossier.dataLineage.length >= 1 || hasCitations) score += 10;
-  if (dossier.reasoning.length >= 1) score += 5;
   if (dossier.ledger.signatures.length >= 1) score += 5;
   return Math.max(30, Math.min(95, Math.round(score)));
 }
@@ -252,14 +261,19 @@ export function dossierToRenderedReport(
       id: 'data-lineage',
       title: `Evidence data-lineage (${dossier.dataLineage.length})`,
       blocks: [
+        /* The figure is what the writer recorded: a bucketed retrieval
+           relevance, or a level a tool asserted. It printed as a bare
+           "Confidence" percentage in a sealable record (reporting review
+           2026-10-01); it now names itself and its basis. */
         table(
-          ['Linkage', 'Source', 'Source type', 'Transformation', 'Confidence', 'Model'],
+          ['Linkage', 'Source', 'Source type', 'Transformation', 'Recorded confidence', 'Confidence basis', 'Model'],
           dossier.dataLineage.map((l) => [
             l.linkageType,
             l.sourceTitle ?? l.sourceObjectId,
             l.sourceObjectType,
             l.transformationType ?? '',
             l.confidenceScore != null ? `${l.confidenceScore}%` : '',
+            l.confidenceScore != null ? (l.confidenceBasis ?? 'not recorded') : '',
             l.aiModelUsed ?? '',
           ]),
           dossier.dataLineage.map(dataLineageRef),

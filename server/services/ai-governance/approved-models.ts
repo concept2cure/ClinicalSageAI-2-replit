@@ -276,7 +276,7 @@ export const APPROVED_MODELS: ApprovedModel[] = [
 ];
 
 /*
- * Frozen at load, with every entry and its PQ record (ADR-0014 §3/§4; track GW
+ * Frozen at load, with every entry and its PQ record (ADR-0015 §3/§4; track GW
  * review [15], 2026-09-28). The gateway reads `approvedForHighRisk` and
  * `pq.status` live at every selection point, so a runtime write — flipping a
  * PQ to 'passed', pushing an entry — would switch the production controls off
@@ -335,8 +335,8 @@ export const DRAFTING_TASK_TYPES: ReadonlySet<TaskType> = new Set<TaskType>(['do
 /**
  * Whether THIS request is high-risk regulatory DRAFTING: high-risk work
  * ({@link isHighRiskRequest}) of a drafting task type. CLAUDE.md RULE 2 and
- * ADR-0014 §3: in production only a model whose entry records a passed PQ
- * serves it. Review is not drafting — ADR-0014 §3 lets read and review run on a
+ * ADR-0015 §3: in production only a model whose entry records a passed PQ
+ * serves it. Review is not drafting — ADR-0015 §3 lets read and review run on a
  * PQ-pending approved model — so this is `document_drafting` at every declared
  * tier and nothing else.
  */
@@ -357,7 +357,7 @@ const WEIGHTS_DIGEST = /(^|@)sha256:[0-9a-f]{64}$/;
  * entry's name is resolved by the operator's own server (the vLLM / LiteLLM
  * model map), so only a weights digest pins it. `local-default` pins the
  * placeholder 'local-default': its rationale says "The concrete weights are
- * resolved by the self-hosted server / LiteLLM model map." ADR-0014 §4: such
+ * resolved by the self-hosted server / LiteLLM model map." ADR-0015 §4: such
  * an entry is not selected in production until it pins a concrete artifact.
  * Pinning one lifts the exclusion with no code change.
  */
@@ -368,7 +368,7 @@ export function isNominalPin(entry: Pick<ApprovedModel, 'provider' | 'pinnedVers
 /**
  * Whether an approved entry may author governed high-risk regulatory content
  * here, as CLAUDE.md RULE 2 defines it: `approvedForHighRisk`, and — in
- * production — a passed PQ (ADR-0014 §3). Outside production a PQ-pending
+ * production — a passed PQ (ADR-0015 §3). Outside production a PQ-pending
  * approved model qualifies, and the ledger records its PQ status.
  *
  * The one statement of that rule. The gateway applies it to a request labelled
@@ -444,7 +444,7 @@ export function approvedEntryFor(
  * caller's pin (effort.ts resolveModelOverride), the picker
  * (projectModelsForPicker) and the cost-tier default (reasoning.ts
  * resolveTierModel), the pin and the tier through {@link governedMatch} — and,
- * since ADR-0014 §4 (2026-09-28), for every gateway selection point, through
+ * since ADR-0015 §4 (2026-09-28), for every gateway selection point, through
  * ai-gateway/model-governance.ts selectionRefusal.
  *
  * Identity, not the served-model lookup ({@link approvedEntryFor}). That lookup
@@ -495,7 +495,7 @@ export function governingEntry(
  * What a caller hands the gateway is the served row's `{ provider, model }`,
  * not the row. The gateway looks the row up again: the first enabled row with
  * that provider whose wire model or id is that model (placement and health
- * aside). Since ADR-0014 §4 it serves only a row that is its own entry, at
+ * aside). Since ADR-0015 §4 it serves only a row that is its own entry, at
  * every risk level, and the lockfile invariant
  * (approved-models-invariant.test.ts) forbids two entries of one provider
  * sharing a pinned version or one's id being another's pinned version — so
@@ -520,7 +520,7 @@ export function governedMatch<T extends Pick<ModelConfig, 'id' | 'provider' | 'm
 /**
  * The approved entry a registry row IS ({@link governingEntry}), when it may be
  * selected here: in production, not an entry that pins a placeholder
- * ({@link isNominalPin}; ADR-0014 §4). The resolvers' form of the gateway's
+ * ({@link isNominalPin}; ADR-0015 §4). The resolvers' form of the gateway's
  * rule (ai-gateway/model-governance.ts selectionRefusal), so a tier, a pin or
  * the picker never hands the gateway a model it refuses on every call. Until
  * 2026-09-28 (track GW review [4]) they used `governingEntry` alone, and

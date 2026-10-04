@@ -1,0 +1,7 @@
+# scripts/db/rls-coverage-check.sql with the tamper-proof carve-out, same blank database (install-fresh + one deploy-migrate)
+$ psql "$DATABASE_URL" -tA -f scripts/db/rls-coverage-check.sql
+rows: []
+
+# The carve-out is exact: an org-keyed table beside it in the audit schema, and one whose name only begins with it, are still flagged
+rows with two probe tables: [audit.dp28_probe (organization_id);audit.tamper_proof_log_copy (organization_id);]
+probes dropped; rows: []

@@ -1,0 +1,32 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <scratch>/review-figure
+
+stdout | swap-regression.probe.test.ts > duplicate src attribute, second written in upper case > parent vs HEAD
+SWAP canvas shows=["60e6kgAAAABJRU5ErkJggg=="] block.src=X8jx0gAAAABJRU5ErkJggg== parentKeys=["60e6kgAAAABJRU5ErkJggg=="] (block resolves at parent: false) headKeys=["X8jx0gAAAABJRU5ErkJggg=="] headFiled=["X8jx0gAAAABJRU5ErkJggg=="]
+
+ × swap-regression.probe.test.ts > duplicate src attribute, second written in upper case > parent vs HEAD 73ms
+   → expected false to be true // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  swap-regression.probe.test.ts > duplicate src attribute, second written in upper case > parent vs HEAD
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ swap-regression.probe.test.ts:47:56
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  18:00:36
+   Duration  1.63s (transform 242ms, setup 117ms, import 1.25s, tests 77ms, environment 0ms)
+

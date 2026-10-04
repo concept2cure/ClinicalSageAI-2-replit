@@ -1,0 +1,9 @@
+mutant M-kind-old-pattern: server/services/authoring/authoring-html-sanitizer.ts
+- /^data:([a-z]+\/[a-z0-9.+-]{1,40})[;,]/i
++ /^data:([a-z0-9.+/-]{1,40})/i
+
+ × server/export/__tests__/authoring-images-figure-rule.test.ts > a typeless data: URI is named without its payload > 0 6ms
+   → expected 'inline ivborw0kggoaaaansuheugaaaaeaaa…' to be 'inline data' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 38 passed (39)

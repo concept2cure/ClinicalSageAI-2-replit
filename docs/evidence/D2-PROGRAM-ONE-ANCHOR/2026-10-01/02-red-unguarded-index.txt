@@ -1,0 +1,10 @@
+# Mutation: 20261001b replaced by an unguarded CREATE UNIQUE INDEX (restored after)
+ ✓ tests/schema-contract/projects-one-anchor-per-program.pglite.test.ts > 20261001b on the applier > runs after the anchor column it indexes and before the tenant sweep
+ × tests/schema-contract/projects-one-anchor-per-program.pglite.test.ts > a program has at most one anchor row > with two anchors for one program, every replay skips the index and names both rows
+   → could not create unique index "projects_one_anchor_per_program"
+ × tests/schema-contract/projects-one-anchor-per-program.pglite.test.ts > a program has at most one anchor row > once the duplicate is resolved, the next replay creates a partial unique index
+   → expected [ Array(1) ] to deeply equal []
+ ✓ tests/schema-contract/projects-one-anchor-per-program.pglite.test.ts > a program has at most one anchor row > a second anchor for the program is refused, from any organization; unanchored rows and other programs are not
+ ✓ tests/schema-contract/projects-one-anchor-per-program.pglite.test.ts > a program has at most one anchor row > the 20260814 backfill, replayed after the index, still runs and links no second row
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 3 passed (5)

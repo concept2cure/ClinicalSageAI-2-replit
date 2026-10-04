@@ -33,9 +33,10 @@ import { Router, Request, Response } from 'express';
 import { authMiddleware } from '../../auth';
 import { requirePlatformAdmin } from '../../middleware/requirePlatformAdmin';
 import { isBusinessAdmin } from '../../middleware/requireBusinessAdmin';
-import { query } from '../../db';
+import { query, transaction } from '../../db';
 import { createScopedLogger } from '../../utils/logger';
-import auditService from '../../services/auditService';
+import { writeChainedAuditRow } from '../../services/auditService';
+import { recordAuditRow } from '../../services/audit/audit-write-outcome';
 
 const logger = createScopedLogger('admin-access-management');
 const router = Router();
@@ -72,6 +73,55 @@ router.get('/grants', async (_req: Request, res: Response) => {
     return res.status(500).json({ error: 'Failed to load access grants.' });
   }
 });
+
+type GrantClient = { query: (sql: string, params?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }> };
+
+/**
+ * DP-75 (2026-10-01): the grant and its chained record commit together, or
+ * neither does. The grant used to be written first and recorded after,
+ * best-effort, so a platform role (owner and super_admin among them) could
+ * stand with no record of who granted it. 'not-recorded' when the record was
+ * refused (the grant rolled back with it); a failed grant write throws. A
+ * revocation stands without its record, as a suspension does (master-admin.ts).
+ */
+async function grantOnRecord(
+  req: Request,
+  g: { userId: number; role: string; actor: string | null; reason: string },
+): Promise<Record<string, unknown> | 'not-recorded'> {
+  let recording = false;
+  try {
+    return await transaction(async (client: GrantClient) => {
+      const result = await client.query(
+        `INSERT INTO platform_role_grants (user_id, role, granted_by, granted_at, reason, revoked_at, revoked_by)
+         VALUES ($1, $2, $3, now(), $4, NULL, NULL)
+         ON CONFLICT (user_id, role) DO UPDATE
+           SET revoked_at = NULL,
+               revoked_by = NULL,
+               granted_by = EXCLUDED.granted_by,
+               granted_at = now(),
+               reason = EXCLUDED.reason
+         RETURNING id, user_id, role, granted_by, granted_at, reason`,
+        [g.userId, g.role, g.actor, g.reason]
+      );
+      recording = true;
+      await writeChainedAuditRow(client, {
+        tenantId: 0, // platform-level: no single tenant
+        userId: req.userId,
+        action: 'data_modify',
+        resourceType: 'platform_role_grant',
+        resourceId: `${g.userId}:${g.role}`,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'] as string,
+        details: { accessAction: 'role.grant', role: g.role, reason: g.reason },
+      });
+      return result.rows[0];
+    });
+  } catch (err) {
+    if (!recording) throw err;
+    logger.error('Grant not recorded; rolled back', { userId: g.userId, role: g.role, error: (err as Error)?.message });
+    return 'not-recorded';
+  }
+}
 
 // ─── Grant (or re-activate) a platform role for a user ───────────────────────
 
@@ -124,31 +174,15 @@ router.post('/grants', async (req: Request, res: Response) => {
 
     const actor = req.userEmail ?? null;
 
-    const result = await query(
-      `INSERT INTO platform_role_grants (user_id, role, granted_by, granted_at, reason, revoked_at, revoked_by)
-       VALUES ($1, $2, $3, now(), $4, NULL, NULL)
-       ON CONFLICT (user_id, role) DO UPDATE
-         SET revoked_at = NULL,
-             revoked_by = NULL,
-             granted_by = EXCLUDED.granted_by,
-             granted_at = now(),
-             reason = EXCLUDED.reason
-       RETURNING id, user_id, role, granted_by, granted_at, reason`,
-      [userId, role, actor, reason]
-    );
+    const granted = await grantOnRecord(req, { userId, role, actor, reason });
+    if (granted === 'not-recorded') {
+      return res.status(503).json({
+        error: 'The role was not granted: the grant could not be recorded in the audit trail. Nothing was changed.',
+        code: 'GRANT_NOT_RECORDED',
+      });
+    }
 
-    await auditService.logAction({
-      tenantId: 0,
-      userId: req.userId,
-      action: 'data_modify',
-      resourceType: 'platform_role_grant',
-      resourceId: `${userId}:${role}`,
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent'] as string,
-      details: { accessAction: 'role.grant', role, reason },
-    });
-
-    return res.json(result.rows[0]);
+    return res.json(granted);
   } catch (err) {
     logger.error('Grant create failed', err as Record<string, unknown>);
     return res.status(500).json({ error: 'Failed to grant role.' });
@@ -182,7 +216,9 @@ router.delete('/grants/:id', async (req: Request, res: Response) => {
     }
 
     const revoked = result.rows[0];
-    await auditService.logAction({
+    // Withdrawing a platform role does not wait on the audit trail; the
+    // answer says whether its row was written (DP-75).
+    const auditTrail = await recordAuditRow({
       tenantId: 0,
       userId: req.userId,
       action: 'data_modify',
@@ -193,7 +229,7 @@ router.delete('/grants/:id', async (req: Request, res: Response) => {
       details: { accessAction: 'role.revoke', role: revoked.role, reason },
     });
 
-    return res.json(revoked);
+    return res.json({ ...revoked, auditTrail });
   } catch (err) {
     logger.error('Grant revoke failed', err as Record<string, unknown>);
     return res.status(500).json({ error: 'Failed to revoke grant.' });

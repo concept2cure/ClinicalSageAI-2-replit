@@ -5,7 +5,6 @@ import { templateService } from '../../services/templateService';
 import multer from 'multer';
 import path from 'path';
 import fs from 'node:fs';
-import crypto from 'node:crypto';
 import { assertUploadSafe, UploadSafetyError } from '../../middleware/uploadSafety';
 import { db } from '../../db';
 import { ectdTemplates } from '../../../shared/schema';
@@ -14,21 +13,12 @@ import { SOP_TEMPLATES } from '../../services/qms/sopTemplates';
 import { resolveUserId } from '../../types/auth-request';
 import { serverError } from '../../lib/api-response';
 import { createScopedLogger } from '../../utils/logger';
+import { requireUploadOrganization, storage, tenantTemplateDir } from './template-storage';
 
 const router = Router();
 const log = createScopedLogger('templates-routes');
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/templates/'); // Make sure this directory exists
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + crypto.randomBytes(8).toString('hex');
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  },
-});
-
+// Configure multer for file uploads (storage is per tenant: ./template-storage)
 const upload = multer({
   storage: storage,
   fileFilter: (req, file, cb) => {
@@ -417,7 +407,7 @@ async function unlinkUploadedFile(filePath: string): Promise<void> {
  * POST /api/templates/upload
  * Upload template file
  */
-router.post('/upload', upload.single('file'), async (req: Request, res: Response) => {
+router.post('/upload', requireUploadOrganization, upload.single('file'), async (req: Request, res: Response) => {
   try {
     const organizationId = Number((req as any).tenantId || (req as any).tenantContext?.organizationId);
     if (!organizationId) {
@@ -467,7 +457,10 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
       module,
       description,
       type: 'uploaded',
-      fileUrl: `/uploads/templates/${req.file.filename}`,
+      // Relative to the working directory, the form the document workspace
+      // guard resolves. (It was `/uploads/templates/…` — a filesystem-root path
+      // nothing could open.)
+      fileUrl: path.join(tenantTemplateDir(organizationId), req.file.filename),
       fileSize: req.file.size,
       fileType: path.extname(req.file.originalname).substring(1),
       version: '1.0.0',

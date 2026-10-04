@@ -1,0 +1,22 @@
+diff --git a<scratchpad>/placedialog/VaultPlaceIntoSubmission.impl.tsx b/client/src/concept2cure/v2/surfaces/VaultPlaceIntoSubmission.tsx
+index c97221e55..236a62fe3 100644
+--- a<scratchpad>/placedialog/VaultPlaceIntoSubmission.impl.tsx
++++ b/client/src/concept2cure/v2/surfaces/VaultPlaceIntoSubmission.tsx
+@@ -152,7 +152,7 @@ const TRANSMIT_RULE = 'Only an approved, current version is transmitted.';
+ 
+ /** The server's reason this leaf would not be transmitted, or null. A Delete leaf ships no content. */
+ function refusalFor(read: StageRead, op: string): string | null {
+-  return read.kind === 'read' && op !== 'delete' ? read.refusal : null;
++  return read.kind === 'read' ? read.refusal : null;
+ }
+ 
+ /** The success verdict: the leaf the server wrote, and — when the server would refuse it — that it will not be transmitted. */
+@@ -184,8 +184,6 @@ function StageNotice({ read, op }: { read: StageRead; op: string }) {
+         {`This version's review stage could not be read, so whether it would be transmitted is not shown. ${TRANSMIT_RULE}`}
+       </div>
+     );
+-  } else if (op === 'delete') {
+-    body = <div className="de-desc">{"A Delete leaf ships no content, so this version's approval is not checked for it."}</div>;
+   } else if (read.refusal === null) {
+     body = <div className="de-desc">{`Review and approval: ${stageLabel(read.stage)}. This is the approved, current version.`}</div>;
+   } else {

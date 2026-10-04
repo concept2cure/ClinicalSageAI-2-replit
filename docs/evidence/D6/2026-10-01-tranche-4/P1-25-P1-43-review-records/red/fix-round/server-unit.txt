@@ -1,0 +1,75 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/audit/__tests__/compliance-reviews.test.ts > a review draft > an access review with a keep, a reduce and a remove, each as the policy asks, is accepted 5ms
+ ✓ server/services/audit/__tests__/compliance-reviews.test.ts > a review draft > a reduce names the role it leaves, and a reduce or remove names the change that carried it out 2ms
+ × server/services/audit/__tests__/compliance-reviews.test.ts > a review draft > a reduce leaves a different role than the one reviewed (fix round, DP-69) 7ms
+   → expected [] to deeply equal [ Array(1) ]
+ × server/services/audit/__tests__/compliance-reviews.test.ts > a review draft > a access review names the report run it read, by export id and data hash (fix round, DP-69) 2ms
+   → expected [] to deeply equal [ …(2) ]
+ × server/services/audit/__tests__/compliance-reviews.test.ts > a review draft > a audit_trail review names the report run it read, by export id and data hash (fix round, DP-69) 1ms
+   → expected [] to deeply equal [ …(2) ]
+ ✓ server/services/audit/__tests__/compliance-reviews.test.ts > a review draft > one line per account, at least one line, and no decision outside keep, reduce, remove 2ms
+ ✓ server/services/audit/__tests__/compliance-reviews.test.ts > a review draft > a period that ends before it starts, or in the future, or is not a calendar date, is refused 1ms
+ ✓ server/services/audit/__tests__/compliance-reviews.test.ts > a review draft > an audit-trail review carries findings, may carry none, and takes no field it does not define 1ms
+ ✓ server/services/audit/__tests__/compliance-reviews.test.ts > the content hash > is sha256 hex, and the same content in any key order hashes the same 2ms
+ ✓ server/services/audit/__tests__/compliance-reviews.test.ts > the content hash > changes when the outcome changes 0ms
+ ✓ server/services/audit/__tests__/compliance-reviews.test.ts > the content hash > changes when a decision changes 0ms
+ ✓ server/services/audit/__tests__/compliance-reviews.test.ts > the content hash > changes when the period changes 0ms
+ ✓ server/services/audit/__tests__/compliance-reviews.test.ts > the content hash > changes when the reviewer changes 0ms
+ ✓ server/services/audit/__tests__/compliance-reviews.test.ts > the content hash > changes when the organisation changes 0ms
+ ✓ server/services/audit/__tests__/compliance-reviews.test.ts > the content hash > changes when the record changes 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/audit/__tests__/compliance-reviews.test.ts > a review draft > a reduce leaves a different role than the one reviewed (fix round, DP-69)
+AssertionError: expected [] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+- [
+-   "decisions.0.reducedTo: a reduce leaves a different role than the one reviewed",
+- ]
++ []
+
+ ❯ server/services/audit/__tests__/compliance-reviews.test.ts:52:122
+     50|
+     51|   it('a reduce leaves a different role than the one reviewed (fix roun…
+     52|     expect(issues(access([{ userId: 2, role: 'admin', decision: 'reduc…
+       |                                                                                                                          ^
+     53|       'decisions.0.reducedTo: a reduce leaves a different role than th…
+     54|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/services/audit/__tests__/compliance-reviews.test.ts > a review draft > a access review names the report run it read, by export id and data hash (fix round, DP-69)
+ FAIL  server/services/audit/__tests__/compliance-reviews.test.ts > a review draft > a audit_trail review names the report run it read, by export id and data hash (fix round, DP-69)
+AssertionError: expected [] to deeply equal [ …(2) ]
+
+- Expected
++ Received
+
+- [
+-   "scope.reportExportId: a review names the report run it read (its export id)",
+-   "scope.reportDataHash: a review names the report run it read (its data hash, 64 hex characters)",
+- ]
++ []
+
+ ❯ server/services/audit/__tests__/compliance-reviews.test.ts:59:62
+     57|   it.each(['access', 'audit_trail'])('a %s review names the report run…
+     58|     const body = { ...access(kind === 'access' ? [{ userId: 1, role: '…
+     59|     expect(issues({ ...body, scope: { description: 'd' } })).toEqual([
+       |                                                              ^
+     60|       'scope.reportExportId: a review names the report run it read (it…
+     61|       'scope.reportDataHash: a review names the report run it read (it…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 12 passed (15)
+   Start at  15:09:48
+   Duration  2.13s (transform 1.07s, setup 100ms, import 1.64s, tests 28ms, environment 0ms)
+

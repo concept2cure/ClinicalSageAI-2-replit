@@ -119,6 +119,18 @@ describe('what the audit ledger shows for an event', () => {
     );
   });
 
+  // Plan P0-4b: a sign-out everywhere, and a second factor for a sign-in begun
+  // before the account's sessions were ended (either door), have their own
+  // sentences rather than the fallback form.
+  it('names a sign-out of every session, and a sign-in begun before the sessions were ended', () => {
+    expect(describeAuthEvent({ action: 'user_logout', outcome: 'success', reason: 'signed out of every session' })).toBe(
+      'Signed out of every session of the account',
+    );
+    expect(
+      describeAuthEvent({ action: 'user_login', outcome: 'failure', reason: 'sign_in_begun_before_sessions_ended' }),
+    ).toBe("Sign-in refused: begun before the account's sessions were ended");
+  });
+
   // routes/sso.ts records every SAML outcome as an auth event in the tenant that
   // owns the IdP configuration (security audit 2026-09-24, IAM-03, P0-3). Each
   // has its own sentence, so the ledger does not show the generic

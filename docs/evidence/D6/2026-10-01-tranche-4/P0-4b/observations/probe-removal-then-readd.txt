@@ -1,0 +1,75 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T06:25:24.287Z","pid":8320,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T06:25:24.292Z","pid":8320,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T06:25:24.292Z","pid":8320,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/session-termination.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T06:25:25.477Z', poolSize: 1 }
+
+stdout | tests/db/session-termination.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/session-termination.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/session-termination.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/session-termination.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 848
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 849
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 850
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 851
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 852
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 853
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 854
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 855
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 856
+
+{"level":30,"time":"2026-10-01T06:36:05.000Z","pid":8320,"hostname":"vm","context":{"userId":855,"tenantId":93330,"resourceId":"855"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+ ↓ tests/db/session-termination.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing
+ ↓ tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a change from one session ends the other, access and refresh, at every door including the enterprise one
+ ↓ tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a reset by emailed token ends the sessions the account held
+ ↓ tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a refresh token minted in the same second as the change, before it, mints nothing after it
+ ↓ tests/db/session-termination.dbtest.ts > (2) signing out everywhere ends every session of the account > logout with terminateAllSessions ends the other sessions, access and refresh, at every door
+ ↓ tests/db/session-termination.dbtest.ts > (2) signing out everywhere ends every session of the account > a sign-out everywhere from a session that has already ended ends nothing, and says so
+ ↓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a session suspended and then reactivated stays ended
+ ↓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a session deprovisioned by the identity provider and then reactivated stays ended
+ ↓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a reactivated account signs in afresh
+ ↓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a member removed from the organisation is refused at the next request and mints nothing
+{"level":30,"time":"2026-10-01T06:36:05.000Z","pid":8320,"hostname":"vm","context":{"userId":855,"tenantId":"93330","resourceId":"855"},"msg":"[audit-service] [AUDIT] user_login user"}
+stdout | tests/db/session-termination.dbtest.ts > PROBE (not committed): removal then re-adding > measures whether a session held across a removal and re-add is admitted again
+[database] Database connection successful { timestamp: '2026-10-01T06:36:05.000Z', poolSize: 2 }
+
+stdout | tests/db/session-termination.dbtest.ts > PROBE (not committed): removal then re-adding > measures whether a session held across a removal and re-add is admitted again
+PROBE-RESULT {"during":401,"gate":200,"routerGate":200,"probe":200,"refresh":200}
+
+ ✓ tests/db/session-termination.dbtest.ts > PROBE (not committed): removal then re-adding > measures whether a session held across a removal and re-add is admitted again 495ms
+ ↓ tests/db/session-termination.dbtest.ts > (4) a role change is read on the next request > a demotion is the role the global gate and every successor token carry
+ ↓ tests/db/session-termination.dbtest.ts > (5) the stamp itself (migrations/20261001_users_sessions_ended_at.sql, endEverySessionOf) > a confirmed sign-up ends nothing, leaving active stamps it, and no writer moves it backwards
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 12 skipped (13)
+   Start at  06:25:20
+   Duration  9.81s (transform 3.81s, setup 117ms, import 394ms, tests 8.43s, environment 0ms)
+

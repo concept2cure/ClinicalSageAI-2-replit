@@ -1,10 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import {
   CORPUS_POLICY,
+  SELF_HOSTED_EMBEDDING_MODEL,
   assertModelMatchesCorpus,
+  findVectorsFromAnotherModel,
   getPolicyForCorpus,
   getPolicyForTable,
   listCorpora,
+  writtenEmbedding,
 } from '../embedding-corpus-policy';
 
 describe('embedding-corpus-policy', () => {
@@ -100,5 +103,126 @@ describe('embedding-corpus-policy', () => {
         assertModelMatchesCorpus('vaultDocumentChunks', 'text-embedding-ada-002')
       ).toThrow(/silent retrieval misses/);
     });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// What each lane writes (ADR-0014 §1.5, amended 2026-10-01; P1-54 round 2).
+//
+// Every organisation embeds through the self-hosted lane: BAAI/bge-m3, whose
+// 1024 values are zero-padded to the corpus width. A reader must be able to tell
+// which model wrote a column, so the policy names it per lane rather than only
+// the OpenAI model the runtime's callers name.
+
+describe('the model each lane writes into a corpus', () => {
+  it('the self-hosted lane writes BAAI/bge-m3, native width 1024', () => {
+    expect(SELF_HOSTED_EMBEDDING_MODEL).toEqual({ model: 'BAAI/bge-m3', nativeDimensions: 1024 });
+  });
+
+  it('through the self-hosted lane every corpus holds bge-m3, stored at the corpus width, zero-padded', () => {
+    expect(writtenEmbedding('vaultDocumentChunks', 'local')).toEqual({
+      corpus: 'vaultDocumentChunks',
+      lane: 'local',
+      model: 'BAAI/bge-m3',
+      nativeDimensions: 1024,
+      storedDimensions: 1536,
+      zeroPadded: true,
+    });
+    expect(writtenEmbedding('documentVectors', 'local')).toMatchObject({
+      model: 'BAAI/bge-m3',
+      nativeDimensions: 1024,
+      storedDimensions: 3072,
+      zeroPadded: true,
+    });
+    for (const policy of CORPUS_POLICY) {
+      expect(writtenEmbedding(policy.corpus, 'local').model).toBe('BAAI/bge-m3');
+    }
+  });
+
+  it('through the OpenAI lane a corpus holds the model its callers name, at its own width', () => {
+    expect(writtenEmbedding('ragChunks', 'openai')).toEqual({
+      corpus: 'ragChunks',
+      lane: 'openai',
+      model: 'text-embedding-3-small',
+      nativeDimensions: 1536,
+      storedDimensions: 1536,
+      zeroPadded: false,
+    });
+    expect(writtenEmbedding('documentVectors', 'openai')).toMatchObject({
+      model: 'text-embedding-3-large',
+      storedDimensions: 3072,
+      zeroPadded: false,
+    });
+  });
+
+  it('every corpus names the vector column its rows are written to', () => {
+    for (const policy of CORPUS_POLICY) expect(policy.column).toMatch(/^[a-z_][a-z0-9_]*$/);
+  });
+
+  it('registers lumen_data_atoms, the corpus the embedding runtime itself writes (embedAtom)', () => {
+    expect(getPolicyForTable('lumen_data_atoms')).toMatchObject({ dimensions: 1536, model: 'text-embedding-3-small' });
+  });
+});
+
+describe('findVectorsFromAnotherModel: the check the readiness probe uses', () => {
+  // The rows do not say which model wrote them: the writers record the model
+  // name their caller asked for (vault/document-chunking.service.ts,
+  // enhancedEmbeddingService.embedAtom), whichever lane served it. So the check
+  // reads the vectors. A bge-m3 vector padded to 1536 is zero from position
+  // 1025 on; one written by any 1536- or 3072-wide model is not.
+  type Call = { text: string; params?: unknown[] };
+
+  function fakeDb(counts: Record<string, number>, absent: string[] = []) {
+    const calls: Call[] = [];
+    return {
+      calls,
+      query: async (text: string, params?: unknown[]) => {
+        calls.push({ text, params });
+        if (/FROM public\.organizations/.test(text)) return { rows: [{ id: 7, uuid: '00000000-0000-4000-8000-000000000007' }] };
+        if (/to_regclass/.test(text)) {
+          return { rows: [{ present: !absent.some(t => String(params?.[0]).endsWith(t)) }] };
+        }
+        const table = Object.keys(counts).find(t => text.includes(t.split('.').map(p => `"${p}"`).join('.')));
+        return { rows: [{ rows: table ? counts[table] : 0 }] };
+      },
+    };
+  }
+
+  it('reads, past the model\'s 1024 values, whether anything is not zero, in every corpus table', async () => {
+    const db = fakeDb({});
+    const report = await findVectorsFromAnotherModel(db);
+    expect(report).toMatchObject({ model: 'BAAI/bge-m3', nativeDimensions: 1024, findings: [] });
+    const scans = db.calls.filter(c => /count\(\*\)/.test(c.text));
+    // Every corpus, in the platform scope and in each organization's.
+    expect(scans).toHaveLength(CORPUS_POLICY.length * 2);
+    expect(scans[0].text).toContain('[1025:]');
+    expect(scans.find(c => c.text.includes('"vault"."document_chunks"'))?.text).toContain('"embedding"');
+  });
+
+  it('names each corpus holding vectors the self-hosted model did not write, and who could see them', async () => {
+    const db = fakeDb({ 'vault.document_chunks': 4 });
+    const report = await findVectorsFromAnotherModel(db);
+    expect(report.findings).toEqual([
+      { corpus: 'vaultDocumentChunks', table: 'vault.document_chunks', rows: 4, scopes: ['platform', 'organization 7'] },
+    ]);
+  });
+
+  it('a corpus whose table this database does not have holds nothing, and is reported as absent', async () => {
+    const db = fakeDb({}, ['biostat_knowledge_nodes']);
+    const report = await findVectorsFromAnotherModel(db);
+    expect(report.absent).toEqual(['biostat_knowledge_nodes']);
+    expect(report.examined).not.toContain('biostat_knowledge_nodes');
+    expect(db.calls.some(c => c.text.includes('"biostat_knowledge_nodes"'))).toBe(false);
+  });
+
+  it('a query that fails is an error, never an empty finding', async () => {
+    const db = {
+      query: async (text: string) => {
+        if (/count\(\*\)/.test(text)) throw new Error('permission denied for table rag_chunks');
+        if (/to_regclass/.test(text)) return { rows: [{ present: true }] };
+        return { rows: [] };
+      },
+    };
+    await expect(findVectorsFromAnotherModel(db)).rejects.toThrow(/permission denied/);
   });
 });

@@ -84,15 +84,15 @@ const STABILITY_BODY =
  * with the words they share. Crude, and exactly enough for "does retrieval pick
  * the right passage" — which a constant vector cannot answer.
  */
-function bagOfWords(text: string): number[] {
-  const v = new Array(1536).fill(0);
+function bagOfWords(text: string, width = 1536): number[] {
+  const v = new Array(width).fill(0);
   for (const token of text.toLowerCase().match(/[a-z0-9]+/g) ?? []) {
     let h = 2166136261;
     for (let i = 0; i < token.length; i += 1) {
       h ^= token.charCodeAt(i);
       h = Math.imul(h, 16777619);
     }
-    v[Math.abs(h) % 1536] += 1;
+    v[Math.abs(h) % width] += 1;
   }
   const norm = Math.sqrt(v.reduce((s, x) => s + x * x, 0)) || 1;
   return v.map(x => x / norm);
@@ -126,7 +126,10 @@ function startEmbeddingStub(): Promise<string> {
             object: 'list',
             model: parsed.model ?? 'stub-embedder',
             data: inputs.map((text, index) => {
-              const embedding = bagOfWords(text);
+              // In the width asked for, as Text Embeddings Inference answers:
+              // the self-hosted lane asks for its model's own width and
+              // zero-pads to the corpus's (embedding-provider.ts, P1-54 round 2).
+              const embedding = bagOfWords(text, Number(parsed.dimensions) || 1536);
               return {
                 object: 'embedding',
                 index,
@@ -159,14 +162,20 @@ async function inTenantScope<T>(org: { id: number; uuid: string }, fn: () => Pro
 
 async function callSearch(
   input: Record<string, unknown>,
-  ctx?: { organizationId: number; organizationUuid?: string },
+  ctx?: { organizationId: number; organizationUuid?: string; projectRef?: string },
 ) {
   const { getToolHandler } = await import('../../server/services/ana/AnaToolExecutor');
   const handler = getToolHandler('search_document_passages');
   if (!handler) throw new Error('search_document_passages is not registered');
   const scope = ctx ?? { organizationId: orgId, organizationUuid: orgUuid };
   const raw = await inTenantScope({ id: scope.organizationId, uuid: scope.organizationUuid ?? orgUuid }, () =>
-    handler(input, { organizationId: scope.organizationId, organizationUuid: scope.organizationUuid, userId }),
+    handler(input, {
+      organizationId: scope.organizationId,
+      organizationUuid: scope.organizationUuid,
+      userId,
+      projectRef: scope.projectRef ?? null,
+      projectId: null,
+    }),
   );
   return JSON.parse(raw);
 }
@@ -214,13 +223,20 @@ async function cleanupProbeRows(): Promise<void> {
     [`${PROBE_CODE}%`],
   );
   await owner.query('DELETE FROM vault.documents WHERE document_code LIKE $1', [`${PROBE_CODE}%`]);
+  // Each deploy's backfill (migrations/20260529_phase9_backfill.sql) gives every
+  // program a document, so a probe program an interrupted run left behind can
+  // carry one by the next run.
+  await owner.query(
+    'DELETE FROM c2c_documents WHERE project_id IN (SELECT id FROM regulatory_programs WHERE name LIKE $1)',
+    [`${PROBE_PREFIX}%`],
+  );
   await owner.query('DELETE FROM regulatory_programs WHERE name LIKE $1', [`${PROBE_PREFIX}%`]);
 }
 
-async function upload(code: string, title: string, body: string): Promise<string> {
+async function upload(code: string, title: string, body: string, program?: string): Promise<string> {
   const res = await request(app)
     .post('/api/vault/ingest')
-    .field('programId', actingOrg().id === orgId ? programId : otherProgramId)
+    .field('programId', program ?? (actingOrg().id === orgId ? programId : otherProgramId))
     .field('documentCode', code)
     .field('documentTitle', title)
     .field('documentType', 'REPORT')
@@ -436,4 +452,54 @@ describe('a retrieved passage can be cited', () => {
     // satisfy the per-chunk check on a document whose chunks all began there.
     expect(new Set(rows.map(r => Number(r.page_number)))).toEqual(new Set([1, 2, 3]));
   }, 120_000);
+});
+
+describe('with a project open, only that project\'s passages (PF-10 S7)', () => {
+  /* Runs after the coverage and citation cases: it adds a second project to
+     the organization, with a tox study of its own. The two studies share most
+     of their words, so an organization-wide search ranks them together, and
+     only the scope can keep one out. */
+  const TOX_QUERY = 'NOAEL and hepatocellular hypertrophy in rats';
+  let secondProgramId: string;
+
+  beforeAll(async () => {
+    const r = await owner.query(
+      `INSERT INTO regulatory_programs
+         (name, code, organization_id, program_type, product_type, primary_agency, product_name)
+       VALUES ($1, $2, $3, 'IND', 'drug', 'FDA', $4) RETURNING id`,
+      [`${PROBE_PREFIX}second program`, 'DBTEST-PASSAGE-A2', orgId, 'Secondin 5mg'],
+    );
+    secondProgramId = String(r.rows[0].id);
+    await upload(
+      `${PROBE_CODE}-TOX-2`,
+      'Second project TOX-91-B 28-day rat study',
+      TOX_BODY.replace('TOX-77-A', 'TOX-91-B').replace('50 mg', '30 mg'),
+      secondProgramId,
+    );
+  }, 120_000);
+
+  const titles = (out: { passages: Array<{ documentTitle: string }> }) => out.passages.map(p => p.documentTitle);
+
+  it('with no project open, the organization: both projects\' studies are found', async () => {
+    const out = await callSearch({ query: TOX_QUERY });
+    expect(out.ok).toBe(true);
+    expect(titles(out).some(t => t.includes('TOX-77-A'))).toBe(true);
+    expect(titles(out).some(t => t.includes('Second project'))).toBe(true);
+  }, 60_000);
+
+  it('the open project\'s study, never the other project\'s', async () => {
+    const out = await callSearch({ query: TOX_QUERY }, { organizationId: orgId, organizationUuid: orgUuid, projectRef: programId });
+    expect(out.ok).toBe(true);
+    expect(titles(out).some(t => t.includes('TOX-77-A'))).toBe(true);
+    expect(titles(out).some(t => t.includes('Second project'))).toBe(false);
+  }, 60_000);
+
+  it('and the other way round, with the coverage of the open project alone', async () => {
+    const out = await callSearch({ query: TOX_QUERY }, { organizationId: orgId, organizationUuid: orgUuid, projectRef: secondProgramId });
+    expect(out.ok).toBe(true);
+    expect(out.passages.length).toBeGreaterThan(0);
+    expect(titles(out).every(t => t.includes('Second project'))).toBe(true);
+    expect(out.coverage.total).toBe(1);
+    expect(out.coverage.indexed).toBe(1);
+  }, 60_000);
 });

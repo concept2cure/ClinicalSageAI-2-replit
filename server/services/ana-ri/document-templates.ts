@@ -13,6 +13,8 @@
  * @module server/services/ana-ri/document-templates
  */
 
+import { e3TopLevel, e3Children, type E3Section } from '../ind/ctd/index.js';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Document Template Registry Types
 // ─────────────────────────────────────────────────────────────────────────────
@@ -55,6 +57,14 @@ export interface RegulatoryDocumentTemplate {
 // ─────────────────────────────────────────────────────────────────────────────
 // Template Registry
 // ─────────────────────────────────────────────────────────────────────────────
+
+/** One ICH E3 top-level heading as a template section: its purpose, or what it carries, or the headings under it. */
+function e3TemplateSection(s: E3Section): TemplateSection {
+  const children = e3Children(s.number);
+  const guidance = s.purpose
+    ?? (s.contains?.length ? s.contains.join('; ') : `Covers ${children.map((c) => `${c.number} ${c.title}`).join('; ')}.`);
+  return { heading: `${s.number}. ${s.title}`, required: s.applies === 'always', guidance };
+}
 
 export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
 
@@ -165,27 +175,31 @@ export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
       { heading: '2.5.3 Overview of Clinical Pharmacology', required: true, code: '2.5.3', targetWords: [300, 600], guidance: 'PK characterization (dose-proportionality, accumulation, variability), PD, DDI, special populations, PK/PD relationships supporting the proposed dose and label.' },
       { heading: '2.5.4 Overview of Efficacy', required: true, code: '2.5.4', targetWords: [600, 1200], guidance: 'Pivotal trial results with confidence intervals and p-values, primary and key secondary endpoints, subgroup consistency, clinical meaningfulness, and comparison to active comparators if applicable.' },
       { heading: '2.5.5 Overview of Safety', required: true, code: '2.5.5', targetWords: [600, 1200], guidance: 'Overall exposure dataset, adverse events by severity/relatedness, deaths, serious AEs, discontinuations, lab abnormalities, vital signs, special population safety, and identified safety signals.' },
-      { heading: '2.5.6 Summary of Benefits and Risks', required: true, code: '2.5.6', targetWords: [400, 800], guidance: 'Integrated benefit-risk assessment. Explicitly weigh efficacy benefits against identified risks for the proposed indication and population. Address uncertainties and how they are managed.' },
+      { heading: '2.5.6 Benefits and Risks Conclusions', required: true, code: '2.5.6', targetWords: [400, 800], guidance: 'Integrated benefit-risk assessment. Explicitly weigh efficacy benefits against identified risks for the proposed indication and population. Address uncertainties and how they are managed.' },
       { heading: '2.5.7 Literature References', required: false, code: '2.5.7', targetWords: [50, 100], guidance: 'Key published literature cited in this overview.' },
     ],
   },
 
-  ctd_2_7_4_efficacy_summary: {
-    id: 'ctd_2_7_4_efficacy_summary',
-    displayName: 'Clinical Efficacy Summary (2.7.4)',
+  // ICH M4E numbers the clinical summaries 2.7.3 efficacy, 2.7.4 safety, 2.7.5
+  // literature references. These two templates were filed one section late
+  // (2.7.4 efficacy, 2.7.5 safety) until 2026-10-04, so "section 2.7.4"
+  // fetched the efficacy template (tests/regulatory/ana-ctd-section-truth.test.ts).
+  ctd_2_7_3_efficacy_summary: {
+    id: 'ctd_2_7_3_efficacy_summary',
+    displayName: 'Summary of Clinical Efficacy (2.7.3)',
     chipLabel: 'Clinical Efficacy Summary',
-    primaryCode: '2.7.4',
+    primaryCode: '2.7.3',
     authority: 'ICH',
     submissionFamily: 'NDA/BLA/MAA',
     detectionPatterns: [
       /\b(?:clinical\s+)?efficacy\s+summary\b/i,
-      /\bsection\s+2\.7\.4\b/i,
-      /\bctd\s+2\.7\.4\b/i,
-      /\bmodule\s+2\.7\.4\b/i,
+      /\bsection\s+2\.7\.3\b/i,
+      /\bctd\s+2\.7\.3\b/i,
+      /\bmodule\s+2\.7\.3\b/i,
       /\bsummary\s+of\s+(?:clinical\s+)?efficacy\b/i,
     ],
     minConfidence: 0.6,
-    draftingInstructions: 'Draft an ICH CTD Section 2.7.4 Summary of Clinical Efficacy. Cover all studies that contribute to the efficacy claim. For each pivotal study, include: design, population, primary/key secondary results (with CIs and p-values), consistency across subgroups, and comparison to relevant standards of care. Conclusions must align with the proposed indication in Section 2.5.',
+    draftingInstructions: 'Draft an ICH CTD Section 2.7.3 Summary of Clinical Efficacy. Cover all studies that contribute to the efficacy claim. For each pivotal study, include: design, population, primary/key secondary results (with CIs and p-values), consistency across subgroups, and comparison to relevant standards of care. Section 2.7.3 summarises; the integrated analyses themselves (the ISE, 21 CFR 314.50(d)(5)(v)) are filed in 5.3.5.3 and cross-referenced. Conclusions must align with the Overview of Efficacy in Section 2.5.4.',
     regulatoryReferences: ['ICH M4E(R2)', 'ICH E9(R1) (estimands)', 'ICH E17 (multi-regional trials)'],
     sections: [
       { heading: 'Background and Overview of Clinical Efficacy Studies', required: true, targetWords: [200, 400], guidance: 'List of clinical studies providing efficacy data, organized by study type (dose-finding, pivotal, supportive).' },
@@ -197,24 +211,24 @@ export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
     ],
   },
 
-  ctd_2_7_5_safety_summary: {
-    id: 'ctd_2_7_5_safety_summary',
-    displayName: 'Clinical Safety Summary (2.7.5)',
+  ctd_2_7_4_safety_summary: {
+    id: 'ctd_2_7_4_safety_summary',
+    displayName: 'Summary of Clinical Safety (2.7.4)',
     chipLabel: 'Clinical Safety Summary',
-    primaryCode: '2.7.5',
+    primaryCode: '2.7.4',
     authority: 'ICH',
     submissionFamily: 'NDA/BLA/MAA',
     detectionPatterns: [
       /\b(?:clinical\s+)?safety\s+summary\b/i,
-      /\bsection\s+2\.7\.5\b/i,
-      /\bctd\s+2\.7\.5\b/i,
-      /\bmodule\s+2\.7\.5\b/i,
+      /\bsection\s+2\.7\.4\b/i,
+      /\bctd\s+2\.7\.4\b/i,
+      /\bmodule\s+2\.7\.4\b/i,
       /\bsummary\s+of\s+(?:clinical\s+)?safety\b/i,
       /\baggregate\s+safety\b/i,
     ],
     minConfidence: 0.6,
-    draftingInstructions: 'Draft an ICH CTD Section 2.7.5 Summary of Clinical Safety. Aggregate safety data from all clinical studies. Present data as overall exposure → AEs → deaths → serious AEs → discontinuations → lab abnormalities → vital signs → special populations → identified safety signals → benefit-risk. Use ICH E2E-consistent MedDRA terminology.',
-    regulatoryReferences: ['ICH M4E(R2)', 'ICH E2E (pharmacovigilance)', 'ICH E2C(R2) (PSUR)', 'MedDRA coding'],
+    draftingInstructions: 'Draft an ICH CTD Section 2.7.4 Summary of Clinical Safety. Aggregate safety data from all clinical studies. Present data as overall exposure → AEs → deaths → serious AEs → discontinuations → lab abnormalities → vital signs → special populations → identified safety signals. Section 2.7.4 summarises; the integrated analyses themselves (the ISS, 21 CFR 314.50(d)(5)(vi)) are filed in 5.3.5.3 and cross-referenced, and the benefit-risk weighing belongs in 2.5.6. Code events in MedDRA, one MedDRA version across every pooled study.',
+    regulatoryReferences: ['ICH M4E(R2)', 'ICH E1 (extent of population exposure)', 'ICH E2A (clinical safety data management)', 'MedDRA (ICH M1)'],
     sections: [
       { heading: 'Exposure to the Drug', required: true, targetWords: [200, 400], guidance: 'Overall safety database: total subjects exposed, exposure duration, dose groups, special populations. Comparison of safety population to efficacy population.' },
       { heading: 'Adverse Events', required: true, targetWords: [600, 1200], guidance: 'Overall incidence of AEs, deaths, SAEs, and discontinuations due to AEs. Common AEs (≥X%) by MedDRA SOC and PT. Dose-response and dose-duration relationships. Relationship to treatment.' },
@@ -421,23 +435,11 @@ export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
       /\bwrite\s+(?:a\s+)?clinical\s+study\s+report\b/i,
     ],
     minConfidence: 0.65,
-    draftingInstructions: 'Draft a Clinical Study Report (CSR) per ICH E3 guidelines. The CSR must be comprehensive: a self-contained document enabling a regulatory agency to independently evaluate the trial\'s conduct, results, and reliability without reference to the protocol or other documents. Follow ICH E3 section numbering exactly.',
+    draftingInstructions: 'Draft a Clinical Study Report (CSR) per ICH E3: one integrated report of the study\'s clinical and statistical description, presentations and analyses, which a reviewer can evaluate on its own, with the protocol, the statistical methods and the patient listings in its appendices. Keep E3\'s headings and order where they fit and adapt them where the study calls for it, saying so (ICH E3 Q&A (R1): E3 is a guideline, not a template). Every number comes from the section 14 outputs and the analysis datasets; where a value is not yet available, leave a clearly marked placeholder rather than a figure.',
     regulatoryReferences: ['ICH E3 (Structure and Content of CSRs)', 'ICH E6(R3) (GCP)', 'ICH E9(R1) (statistical considerations)', 'ICH E19 (safety data collection optimization)'],
-    sections: [
-      { heading: '1. Title Page', required: true, guidance: 'Protocol title, study code, phase, drug name, indication, investigators, dates, sponsor, sponsor reference number.' },
-      { heading: '2. Synopsis', required: true, targetWords: [600, 1200], guidance: 'Concise structured summary of the complete report: objectives, design, patients, efficacy results, safety results, conclusions.' },
-      { heading: '3. Table of Contents', required: true, guidance: 'Complete TOC with page numbers.' },
-      { heading: '4. List of Abbreviations and Definitions of Terms', required: true, guidance: 'All abbreviations and specialized terms used in the report.' },
-      { heading: '5. Ethics', required: true, targetWords: [150, 300], guidance: 'IRB/IEC review and approval, GCP compliance statement, patient consent process.' },
-      { heading: '6. Investigators and Study Administrative Structure', required: true, targetWords: [150, 300], guidance: 'List of investigators, sites, and administrative/coordinating functions.' },
-      { heading: '7. Introduction', required: true, targetWords: [300, 600], guidance: 'Disease background, drug development rationale, nonclinical support for clinical use, prior clinical experience with the compound, and this study\'s objectives within the development program.' },
-      { heading: '8. Study Objectives', required: true, targetWords: [100, 200], guidance: 'Primary and secondary objectives stated precisely as they appear in the protocol.' },
-      { heading: '9. Investigational Plan', required: true, targetWords: [500, 1000], guidance: 'Overall design (phase, type, blinding, allocation), selection of subjects, treatments administered, dosing, assessment schedule, statistical methodology, data quality assurance, protocol deviations.' },
-      { heading: '10. Study Patients', required: true, targetWords: [300, 600], guidance: 'Disposition of all randomized patients (treated, discontinued, completed). Deviations. Demographic and baseline characteristics.' },
-      { heading: '11. Efficacy Evaluation', required: true, targetWords: [800, 1500], guidance: 'Data sets analyzed (ITT, PP, safety). Efficacy results — primary endpoint (with 95% CI and p-value), key secondary endpoints, subgroup analyses, interaction tests. Statistical methods applied.' },
-      { heading: '12. Safety Evaluation', required: true, targetWords: [600, 1200], guidance: 'Exposure, AEs (all grades and ≥Grade 3 by MedDRA SOC/PT), deaths, SAEs, discontinuations. Laboratory, vital signs, ECG. Clinical assessment of safety signals.' },
-      { heading: '13. Discussion and Conclusions', required: true, targetWords: [400, 800], guidance: 'Integrated interpretation of efficacy and safety. Context vs. prior results and standard of care. What the study establishes, what remains uncertain, and implications for the development program.' },
-    ],
+    // ICH E3 §1–§16, read from the overlay (ind/ctd/csr-e3-guidance.ts). This was
+    // a hand-kept §1–§13, with demographics under §10 (E3: §11.2).
+    sections: e3TopLevel().map(e3TemplateSection),
   },
 
   // ── FDA Safety ────────────────────────────────────────────────────────────

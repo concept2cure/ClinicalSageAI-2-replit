@@ -1,5 +1,5 @@
 /**
- * A real AIGateway for the ADR-0014 §3/§4/§5 cases, with only the network call
+ * A real AIGateway for the ADR-0015 §3/§4/§5 cases, with only the network call
  * replaced. Selection, the policy pass, tenant binding and the ledger are the
  * gateway's own; `executeProvider` is stubbed so a case can see which registry
  * row was actually dispatched, and in what order.

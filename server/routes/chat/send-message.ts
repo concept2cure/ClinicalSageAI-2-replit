@@ -21,7 +21,8 @@ import {
 } from '../../services/chat-thread-helpers.js';
 import { getEmbeddingService } from '../../services/enhancedEmbeddingService.js';
 import { getIntelligencePrefix } from '../../services/lumen-context-builder.js';
-import { processResponseActions } from '../../services/ana-guidance-executor.js';
+import { pendingSignoffFromToolResult, settleActionBlocks } from '../../services/ana-guidance-executor.js';
+import type { CommandResult } from '../../services/ana-ri/command-executor.js';
 import { logKernelDecision } from '../../services/kernel-decision-record.js';
 import { planKernelExecution } from '../../services/kernel-router.js';
 import {
@@ -74,6 +75,7 @@ import {
 import { ensureGateway, normalizeBody } from './shared.js';
 import { sha256, stableStringify } from './provenance.js';
 import { verifyClaim, type VerifierFlag } from './verifier.js';
+import { evidencePromptBlock, type RetrievalStatus } from './retrieval-evidence-block';
 
 // ── Retrieval + generation tuning (externalized for runtime changes) ────────
 const RETRIEVAL_TOP_K = parseInt(process.env.ANA_RETRIEVAL_TOP_K ?? '5', 10);
@@ -288,9 +290,24 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     const normalizedProjectId = project_id
       ? String(project_id).replace(/^proj_/, '')
       : undefined;
+    // The integer project this turn's project names, resolved ONCE (PF-10
+    // S10b): an integer as itself, a program UUID through its anchor row,
+    // anything else as none. Each step below used to parseInt on its own, and
+    // parseInt('7abb1c22-…') is 7, a valid, wrong project of the same
+    // organization (services/c2c/project-ref.ts).
+    const turnProjectId =
+      numericOrgId && project_id
+        ? await (await import('../../services/c2c/project-ref.js')).integerProjectForRef(
+            async () => (await import('../../db.js')).db,
+            { ref: project_id, orgId: numericOrgId, context: 'chat.send-message' },
+          )
+        : null;
 
     // ── STEP 4: RETRIEVE (org-scoped + project-scoped when available) ───
     let sources: Array<{ id: string; title: string; content: string; score: number }> = [];
+    // 'unavailable' when the search could not run (P1-54): told to the model and
+    // returned in retrievalMeta, never rendered as "no sources found".
+    let retrievalStatus: RetrievalStatus = 'searched';
     let confidence: number | null = null;
     let retrievalRunId: string | null = null;
     let snapshotHashSha256: string | null = null;
@@ -394,7 +411,8 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         }
       }
     } catch (srcErr: any) {
-      // Non-fatal — chat still works, just without grounded evidence
+      // Non-fatal — chat still works, without grounded evidence, and says so.
+      retrievalStatus = 'unavailable';
       console.warn('[AnA] Source retrieval failed:', srcErr.message);
     }
 
@@ -405,14 +423,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     let memoryAtomCount = 0;
     let memoryBlockChars = 0;
     let memoryDiagnostics: MemoryAssemblyDiagnostics | null = null;
-    if (sources.length > 0) {
-      evidenceBlock =
-        '\n\n--- RETRIEVED EVIDENCE (cite as [SRC-n]) ---\n' +
-        sources.map((s, i) => `[SRC-${i + 1}] "${s.title}"\n${s.content}`).join('\n\n') +
-        '\n--- END EVIDENCE ---\n\n' +
-        'When your answer relies on information from the evidence above, cite it inline using [SRC-n]. ' +
-        'If the evidence does not contain relevant information, answer from your training knowledge and state that no knowledge-base sources were found.';
-    }
+    evidenceBlock = evidencePromptBlock(sources, retrievalStatus);
 
     let assistantMessage: string;
     let model: string;
@@ -433,6 +444,11 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     // offer-chips here too (this route never applies anything live).
     const collectedSurfaceActions: SurfaceActionDirective[] = [];
     const collectedDemoStarts: DemoStartDirective[] = [];
+    // The platform-command proposals the loop's execute_platform_command came
+    // back with. This route cannot hold the turn and ask, as the stream does;
+    // until P0-12's residual (2026-10-01) the proposal reached only the model,
+    // and the person had nothing to confirm. Returned as executedCommands.
+    const loopProposals: CommandResult[] = [];
     // The turn's retained record (services/ana/turn-record-loop.ts): the tool
     // calls as the loop reports them, filed when the turn answers or fails.
     const loopCalls = loopToolCollector();
@@ -581,14 +597,10 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         const { sessionBootstrapBlockFor } = await import(
           '../../services/ana-session-bootstrap.js'
         );
-        const pid =
-          typeof project_id === 'string'
-            ? parseInt(project_id.replace(/^proj_/, ''), 10)
-            : project_id;
         const block = await sessionBootstrapBlockFor({
           priorMessageCount: previousMessages.length,
           organizationId: numericOrgId ?? null,
-          projectId: Number.isFinite(pid) && (pid as number) > 0 ? (pid as number) : undefined,
+          projectId: turnProjectId ?? undefined,
           threadId,
           atomLimit: 6,
         });
@@ -655,12 +667,9 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       // corpus. Off by default → zero extra work and no behaviour change. The
       // mode itself is surfaced separately by GET /projects/:id/knowledge.
       let projectKnowledgeCorpusBlock = '';
-      if (INCONTEXT_INJECTION_ENABLED && project_id && numericOrgId) {
-        const pidNum =
-          typeof project_id === 'string'
-            ? parseInt(project_id.replace(/^proj_/, ''), 10)
-            : project_id;
-        if (Number.isFinite(pidNum) && pidNum > 0) {
+      if (INCONTEXT_INJECTION_ENABLED && turnProjectId !== null && numericOrgId) {
+        const pidNum = turnProjectId;
+        {
           try {
             const modeState = await getProjectRetrievalMode(pidNum, numericOrgId);
             if (modeState.mode === 'in_context') {
@@ -699,7 +708,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
             : 'NONE'
         }\n` +
         `- Memory: working=${workingMemoryPresent ? 'yes' : 'no'}, semantic atoms=${semanticMemoryCount}\n` +
-        `- Retrieved sources: ${sources.length}\n` +
+        `- Retrieved sources: ${retrievalStatus === 'unavailable' ? 'UNAVAILABLE (the knowledge-base search could not run)' : sources.length}\n` +
         `- User role: ${snapshotUserRole}\n\n`;
 
       const systemPrompt =
@@ -833,8 +842,10 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         toolContext: {
           organizationId: numericOrgId,
           userId: numericUserId || null,
-          projectId:
-            typeof project_id === 'string' ? parseInt(project_id, 10) || null : project_id || null,
+          projectId: turnProjectId,
+          // The project as the client sent it: a v2 program's UUID, which the
+          // tools that resolve the open project read (PF-10 S7, as the stream).
+          projectRef: project_id ? String(project_id).replace(/^proj_/, '') : null,
           // Tenant UUID so the project_knowledge_search tool can scope retrieval.
           organizationUuid: orgUuid,
           // Situational context (surface/project/document type) — same signal the
@@ -857,6 +868,9 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
           // A demonstration fetched without Live Drive becomes a start chip.
           const demoStart = demoStartFromToolResult(toolName, result);
           if (demoStart) collectedDemoStarts.push(demoStart);
+          // A write the partition turned into a proposal: put it to the person.
+          const proposal = pendingSignoffFromToolResult(toolName, result);
+          if (proposal) loopProposals.push(proposal);
           // Persist the invocation for usage analytics. Latency is 0 here
           // because the agentic-loop hook fires post-success without a
           // start timestamp; the streaming path captures real latency.
@@ -864,7 +878,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
           // AnaToolExecutor.executeAgenticLoop's catch branch.
           void logToolRun({
             threadId,
-            projectId: typeof project_id === 'string' ? parseInt(project_id, 10) || null : project_id || null,
+            projectId: turnProjectId,
             userId: numericUserId || null,
             organizationId: numericOrgId,
             toolName,
@@ -897,7 +911,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         route: '/api/chat',
         organizationId: numericOrgId ?? null,
         userId: numericUserId,
-        projectId: typeof project_id === 'string' ? parseInt(project_id, 10) : project_id || null,
+        projectId: turnProjectId,
         plannerVersion: routingPlan.plannerVersion,
         orchestratorName: routingPlan.orchestratorName,
         intentLens: orchestratorResult.detectedIntent.lens,
@@ -927,7 +941,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         route: '/api/chat',
         organizationId: numericOrgId ?? null,
         userId: numericUserId,
-        projectId: typeof project_id === 'string' ? parseInt(project_id, 10) : project_id || null,
+        projectId: turnProjectId,
         orchestratorName: 'kernel-router-v1',
         selectedTaskType: 'chat',
         routingStrategy: 'quality_optimized',
@@ -944,50 +958,41 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       });
     }
 
-    // ── STEP 6b: GUIDANCE-TO-ACTION EXECUTION ──────────────────────────
-    // Process AnA's response for action signals and execute governed actions.
-    // Only runs when project context is available (org + project scoped).
-    let executedActions: Array<
-      | {
-          actionType: string;
-          executed: boolean;
-          confidence: string;
-          artifactId: string | null;
-          threadId: string | null;
-          error: string | null;
-        }
-      | NavigationAction
-      | SurfaceActionChip
-      | DemoStartChip
-    > = [];
+    // ── STEP 6b: AnA's ana-action blocks, as proposals ────────────────
+    // Each block AnA is confident in becomes a create_artifact PROPOSAL through
+    // the command partition — never a write (P0-12 residual, 2026-10-01; until
+    // then this created the artifact, and a review thread in the person's name,
+    // unasked). The proposals are returned as `executedCommands`, the envelope
+    // the sign-off prompt reads (extractPendingSignoffs); a person's yes goes to
+    // POST /api/ana-ri/governed-action, which runs the command.
+    let executedActions: Array<NavigationAction | SurfaceActionChip | DemoStartChip> = [];
+    let actionBlockProposals: CommandResult[] = [];
 
-    if (numericOrgId && project_id) {
+    if (numericOrgId && numericUserId) {
       try {
-        const actionResult = await processResponseActions(assistantMessage, {
-          projectId: typeof project_id === 'string' ? parseInt(project_id, 10) : project_id,
-          organizationId: numericOrgId,
-          userId: numericUserId,
-          userName: (req as any).user?.name || (req as any).user?.email || 'System',
-          threadId,
-        });
-
-        // Replace message with cleaned text (action blocks stripped)
-        if (actionResult.actions.length > 0) {
-          assistantMessage = actionResult.cleanedText;
-          executedActions = actionResult.actions.map(a => ({
-            actionType: a.actionType,
-            executed: a.executed,
-            confidence: a.confidence,
-            artifactId: a.artifactId,
-            threadId: a.threadId,
-            error: a.error,
-          }));
-        }
+        // The blocks are the platform's, not the answer: taken out when there
+        // were any, and the answer says what became of each (settleActionBlocks).
+        const settled = await settleActionBlocks(
+          assistantMessage,
+          {
+            // The project resolved once for the turn (PF-10 S10b).
+            projectId: turnProjectId,
+            organizationId: numericOrgId,
+            userId: numericUserId,
+            userName: (req as any).user?.name || (req as any).user?.email || undefined,
+            threadId,
+          },
+          loopProposals,
+        );
+        actionBlockProposals = settled.proposals;
+        assistantMessage = settled.answer;
       } catch (actionErr: any) {
-        // Non-fatal — chat still works, actions just don't execute
-        console.warn('[AnA RI] Guidance action processing failed:', actionErr?.message);
+        // Non-fatal — the answer returns as AnA wrote it, blocks included;
+        // nothing was written.
+        console.warn('[AnA RI] Action-block proposals failed:', actionErr?.message);
       }
     }
+    const turnProposals: CommandResult[] = [...loopProposals, ...actionBlockProposals];
 
     // Navigation chips AFTER guidance actions — same ordering rationale as the
     // SSE path's post-processing: an artifact the turn actually created still
@@ -1225,7 +1230,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     if (numericOrgId) {
       interceptChatResponse({
         organizationId: numericOrgId,
-        projectId: parseInt(String(normalizedProjectId || '0'), 10),
+        projectId: turnProjectId ?? 0,
         userId: (req as any).user?.id,
         sectionCode: (req as any).body?.section_code,
         assistantMessage,
@@ -1238,9 +1243,9 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
 
     // ── Cached reliability lookup (5-min TTL, surfaced in response) ─────
     let reliability: SignalReliability | null = null;
-    if (numericOrgId && normalizedProjectId) {
-      const projectIdNum = parseInt(String(normalizedProjectId), 10);
-      if (Number.isFinite(projectIdNum) && projectIdNum > 0) {
+    if (numericOrgId && turnProjectId !== null) {
+      const projectIdNum = turnProjectId;
+      {
         try {
           reliability = await getCachedSignalReliability(projectIdNum, numericOrgId);
         } catch {
@@ -1266,9 +1271,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         threadId,
         organizationId: numericOrgId,
         messages: writebackMessages,
-        projectId: normalizedProjectId
-          ? parseInt(String(normalizedProjectId), 10) || null
-          : null,
+        projectId: turnProjectId,
       });
     }
 
@@ -1276,10 +1279,9 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     if (numericOrgId && generationRunId && sources.length > 0) {
       try {
         const { recordLineageBatch } = await import('../../services/data-lineage-service');
-        const projectIdNum = parseInt(String(normalizedProjectId || '0'), 10);
         const entries = sources.filter((_s, i) => citedRefs.has(i)).map((s, _i) => ({
           organizationId: numericOrgId,
-          projectId: projectIdNum || undefined,
+          projectId: turnProjectId ?? undefined,
           sourceObjectType: 'retrieval_chunk' as const,
           sourceObjectId: s.id || `src-${_i}`,
           sourceTitle: s.title,
@@ -1315,6 +1317,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       citations,
       confidence,
       retrievalMeta: {
+        status: retrievalStatus,
         retrievedCount: sources.length,
         citedCount: citedRefs.size,
         orgScoped: !!orgUuid,
@@ -1339,8 +1342,11 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         suggestedActions: orchestratorResult!.suggestedActions,
         meta: orchestratorResult!.orchestrationMeta,
       },
-      // AnA 1.0 RI — Executed guidance actions
+      // Offer-chips (navigation, surface actions, demonstrations).
       executedActions: executedActions.length > 0 ? executedActions : undefined,
+      // AnA's proposals awaiting a person's confirmation — the loop's and the
+      // action blocks' — in the stream's post_done.executedCommands envelope.
+      executedCommands: turnProposals.length > 0 ? turnProposals : undefined,
       turnRecord,
     });
   } catch (error: any) {

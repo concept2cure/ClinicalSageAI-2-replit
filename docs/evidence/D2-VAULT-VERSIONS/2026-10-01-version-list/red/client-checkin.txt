@@ -1,0 +1,16 @@
+# vaultCheckInVersion.test.tsx against trunk's Vault.tsx, useVaultUpload.ts and vault-data.ts
+ × client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > is one row and one header, saying how many versions it has 5067ms
+   → Unable to find an element with the text: /v2\.0, 2 versions/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > lists every version with its SHA-256 prefix and uploader, each downloadable 5034ms
+   → Unable to find an element by: [data-testid="vault-versions"]
+ × client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > says so when the versions cannot be read 5017ms
+   → Unable to find an element by: [data-testid="vault-versions"]
+ × client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > 'Upload new version' names the document and sends no document code 5022ms
+   → Unable to find an element by: [data-testid="vault-versions"]
+ × client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > offers a refused same-name file as the next version, instead of a dead end 5020ms
+   → Unable to find an element by: [data-testid="vault-versions"]
+ × client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > search includes earlier versions only when asked 76ms
+   → Unable to find a label with the text of: Include earlier versions
+ × client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > the empty state claims only what the product does 20ms
+   → expected 'Documents  project vaultVault (DMS)IN…' not to match /version-tracked/
+      Tests  7 failed (7)

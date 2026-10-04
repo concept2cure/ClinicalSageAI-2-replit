@@ -43,6 +43,7 @@
 
 import DOMPurifyImport from 'isomorphic-dompurify';
 import type { JSDOM } from 'jsdom';
+import { parseSectionHtml } from '../../export/section-html-parse';
 import { isFigureSrc } from '@shared/authoring/figure-refs';
 
 type PurifyHook = (node: Element) => void;
@@ -101,6 +102,9 @@ export function sanitizeAuthoringSectionHtml(html: string): string {
 export interface RefusedFigure {
   position: number;
   src: string;
+  /** Set when the image is refused because a browser and the export read it
+   *  differently, not because of what its src is. */
+  reason?: 'read-differently';
 }
 
 type HtmlParser = InstanceType<JSDOM['window']['DOMParser']>;
@@ -129,22 +133,98 @@ function parser(): Promise<HtmlParser> {
 export async function refusedFigures(html: string): Promise<RefusedFigure[]> {
   // An image element comes only from a start tag named `img` or `image`, and
   // a tag name is never written with character references.
-  if (!html || !/<im/i.test(html)) return [];
+  if (!html || !/<(im|source)/i.test(html)) return [];
   const doc = (await parser()).parseFromString(html, 'text/html');
   const refused: RefusedFigure[] = [];
-  doc.querySelectorAll('img').forEach((img, i) => {
+  const images = Array.from(doc.querySelectorAll('img'));
+  images.forEach((img, i) => {
     const src = img.getAttribute('src');
     if (src !== null && !isFigureSrc(src)) refused.push({ position: i + 1, src });
+    /* A srcset is a second set of sources a reader may load instead. The
+       editor writes none, and the check never read it, so an image from
+       another site could be stored behind a src-less <img> (refute-review of
+       the figure rule, round 3: D6). */
+    const srcset = img.getAttribute('srcset');
+    if (srcset !== null) refused.push({ position: i + 1, src: srcset });
   });
+  // The same for the sources a reader loads that are not <img>: a <source>
+  // (picture, video, audio) and an SVG <image>. The editor writes neither.
+  doc.querySelectorAll('source, image').forEach((el) => {
+    for (const attr of ['src', 'srcset', 'href', 'xlink:href']) {
+      const url = el.getAttribute(attr);
+      if (url !== null && !isFigureSrc(url)) refused.push({ position: images.length + 1, src: url });
+    }
+  });
+  if (refused.length > 0) return refused;
+  /* An image the export would file differently from what a reader is shown,
+     or that only the export sees (inside a comment, a text area or a
+     <template>): the export files none of the section's images then
+     (server/export/authoring-images.ts), so the section is refused here,
+     where the author can still mend it (round 3: D1, D3, D6). */
+  const differsAt = await imageReadingsDiffer(html);
+  if (differsAt !== null) {
+    const exported = exportImageSrcs(html);
+    refused.push({ position: differsAt + 1, src: exported[differsAt] ?? '', reason: 'read-differently' });
+  }
   return refused;
+}
+
+/**
+ * The src of every image a browser builds from `html`, in document order: the
+ * first of two duplicated attributes, and nothing inside a comment, a raw-text
+ * element or a <template>. Null for an image with no src.
+ */
+export async function browserImageSrcs(html: string): Promise<Array<string | null>> {
+  if (!html || !/<im/i.test(html)) return [];
+  const doc = (await parser()).parseFromString(html, 'text/html');
+  return Array.from(doc.querySelectorAll('img'), (img) => img.getAttribute('src'));
+}
+
+/**
+ * The src of every image the export's parser (node-html-parser, which
+ * sectionContentToBlocks reads sections with) finds in `html`, in document
+ * order. Null for an image with no src.
+ */
+export function exportImageSrcs(html: string | null | undefined): Array<string | null> {
+  if (!html || !/<im/i.test(html)) return [];
+  return parseSectionHtml(String(html))
+    .querySelectorAll('img')
+    .map((img) => img.getAttribute('src') ?? null);
+}
+
+/**
+ * Where the export's reading of `html`'s images first differs from a
+ * browser's, as an index into the two lists, or null when they agree.
+ *
+ * They differ on a duplicated attribute (a browser keeps the first, the
+ * parser the last: `<img src=A SRC=B>` is shown as A and was filed as B) and
+ * on markup a browser builds no image from, inside a comment, a raw-text
+ * element or a <template>, which the parser reads as images. The export files
+ * no image from such a section, and the section save, create and accept doors
+ * refuse one (refute-review of the figure rule, 2026-10-04, round 3: D1, D3).
+ */
+export async function imageReadingsDiffer(html: string): Promise<number | null> {
+  const exported = exportImageSrcs(html);
+  const shown = await browserImageSrcs(html);
+  const n = Math.max(exported.length, shown.length);
+  for (let i = 0; i < n; i++) if (exported[i] !== shown[i]) return i;
+  return null;
 }
 
 /** What kind of src it is, in words an author can act on. Never the src
  *  itself: an application path in a message makes the client hide the whole
- *  message (redactInternals), and the src is returned alongside it anyway. */
-function refusedKind(src: string): string {
+ *  message (redactInternals), and the src is returned alongside it anyway.
+ *  Exported for the other places that name such an image: a template's
+ *  refusal and, through unfiledFigureLabel (server/export/authoring-images.ts),
+ *  every figure with no alt text that a rendering prints as words: the
+ *  export's "[Figure not exported: …]" placeholder and the eCTD leaf and
+ *  fallback PDFs' "[Figure: …]", valid inline figures included. */
+export function refusedKind(src: string): string {
   if (!src.trim()) return 'an empty reference';
-  const dataType = /^data:([a-z0-9.+/-]{1,40})/i.exec(src);
+  // A media type is `type/subtype` followed by `;` or `,`. Any 40 characters
+  // after `data:` used to pass, so a URI with no type had 40 characters of its
+  // payload printed as one (refute-review of the figure rule, round 3: D5).
+  const dataType = /^data:([a-z]+\/[a-z0-9.+-]{1,40})[;,]/i.exec(src);
   if (dataType) return `inline ${dataType[1].toLowerCase()} data`;
   if (/^data:/i.test(src)) return 'inline data';
   if (/^([a-z][a-z0-9+.-]*:)?\/\//i.test(src.trim())) return 'from another site';
@@ -153,14 +233,30 @@ function refusedKind(src: string): string {
 
 /** The sentence a refused save carries: which images, and what to do. */
 export function describeRefusedFigures(refused: RefusedFigure[]): string {
-  const named = refused.map((r, i) => `${i === 0 ? 'Image' : 'image'} ${r.position} (${refusedKind(r.src)})`);
-  const list =
-    named.length === 1 ? named[0] : `${named.slice(0, -1).join(', ')} and ${named[named.length - 1]}`;
-  const one = refused.length === 1;
+  const notFigures = refused.filter((r) => r.reason !== 'read-differently');
+  const misread = refused.find((r) => r.reason === 'read-differently');
+  const sentences: string[] = [];
+  if (notFigures.length > 0) {
+    const named = notFigures.map((r, i) => `${i === 0 ? 'Image' : 'image'} ${r.position} (${refusedKind(r.src)})`);
+    const list =
+      named.length === 1 ? named[0] : `${named.slice(0, -1).join(', ')} and ${named[named.length - 1]}`;
+    const one = notFigures.length === 1;
+    sentences.push(
+      `${list} ${one ? 'is not an uploaded figure' : 'are not uploaded figures'}. ` +
+        'A section can only hold images uploaded to the document (PNG, JPEG or GIF), because only ' +
+        'those are shown to every reader as stored and filed with the document. ' +
+        `Upload ${one ? 'the image' : 'each image'} or remove it, then save again.`,
+    );
+  }
+  if (misread) sentences.push(misreadSentence(misread.position));
+  return sentences.join(' ');
+}
+
+/** Why an image read differently is refused, and what the author can do. */
+export function misreadSentence(position: number): string {
   return (
-    `${list} ${one ? 'is not an uploaded figure' : 'are not uploaded figures'}. ` +
-    'A section can only hold images uploaded to the document (PNG, JPEG or GIF), because only ' +
-    'those are shown to every reader as stored and filed with the document. ' +
-    `Upload ${one ? 'the image' : 'each image'} or remove it, then save again.`
+    `Image ${position} is written in a way the editor and the filed document would read differently: ` +
+    'a repeated attribute, or an image inside a comment, a text box or a template. ' +
+    'Remove it, or insert the figure again from the editor, then save again.'
   );
 }

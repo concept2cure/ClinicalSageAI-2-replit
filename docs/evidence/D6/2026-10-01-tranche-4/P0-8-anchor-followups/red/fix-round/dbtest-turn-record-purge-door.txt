@@ -1,0 +1,120 @@
+# Red: tests/db/turn-record-purge-door.dbtest.ts before its fix (PostgreSQL, c2c_testdb), 2026-10-01T15:47:21Z
+# TEST_DATABASE_URL=...c2c_testdb APP_DATABASE_URL=app_service@...c2c_testdb RLS_ENFORCE=on npx vitest run --config vitest.db.config.ts tests/db/turn-record-purge-door.dbtest.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × tests/db/turn-record-purge-door.dbtest.ts > P0-8: the runtime role can read and append to a record table, never rewrite it > holds SELECT and INSERT, and no UPDATE, DELETE or TRUNCATE, on every append-only table present 21ms
+   → relations the runtime role may rewrite or cannot append to: expected [ 'public.audit_log_archives' ] to deeply equal []
+{"level":30,"time":"2026-10-01T15:47:24.408Z","pid":6323,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T15:47:24.414Z","pid":6323,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T15:47:24.414Z","pid":6323,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > P0-8: the runtime role can read and append to a record table, never rewrite it > refuses the runtime role an UPDATE, DELETE or TRUNCATE as a privilege, before any trigger runs 35ms
+stderr | tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > refuses an organization that is not pending deletion, a tenant scope and an active hold
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > refuses a plain DELETE and a TRUNCATE from the table owner too 113ms
+ × tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > refuses an organization that is not pending deletion, a tenant scope and an active hold 38ms
+   → expected [Function] to throw error matching /not pending deletion \(status active\)/ but got 'function public.purge_tenant_turn_rec…'
+ × tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > is not executable by PUBLIC, and is owned by the NOLOGIN purger role 8ms
+   → function "public.purge_tenant_turn_records(integer)" does not exist
+ × tests/db/turn-record-purge-door.dbtest.ts > a purge returns the records first, erases them, and keeps their audit trail > exports the turn records, erases them with the tenant, leaves the other tenant’s, and keeps each chained row 942ms
+   → This database has ana_turn_records and ana_record_blobs but not public.purge_tenant_turn_records; run node scripts/db/deploy-migrate.mjs. Nothing was purged.
+ × tests/db/turn-record-purge-door.dbtest.ts > a purge returns the records first, erases them, and keeps their audit trail > refuses a database that has the tables but not the door, and erases nothing 17ms
+   → function public.purge_tenant_turn_records(integer) does not exist
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/turn-record-purge-door.dbtest.ts > P0-8: the runtime role can read and append to a record table, never rewrite it > holds SELECT and INSERT, and no UPDATE, DELETE or TRUNCATE, on every append-only table present
+AssertionError: relations the runtime role may rewrite or cannot append to: expected [ 'public.audit_log_archives' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "public.audit_log_archives",
++ ]
+
+ ❯ tests/db/turn-record-purge-door.dbtest.ts:120:81
+    118|     expect(rows.length, 'the record tables exist on a deployed databas…
+    119|     const wrong = rows.filter((r) => !r.s || !r.i || r.u || r.d || r.t…
+    120|     expect(wrong, 'relations the runtime role may rewrite or cannot ap…
+       |                                                                                 ^
+    121|   });
+    122|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > refuses an organization that is not pending deletion, a tenant scope and an active hold
+AssertionError: expected [Function] to throw error matching /not pending deletion \(status active\)/ but got 'function public.purge_tenant_turn_rec…'
+
+- Expected:
+/not pending deletion \(status active\)/
+
++ Received:
+"function public.purge_tenant_turn_records(unknown) does not exist"
+
+ ❯ tests/db/turn-record-purge-door.dbtest.ts:150:63
+    148|     await recordTurn(KEEP, 'kept');
+    149|     const door = (c: PoolClient, org: number) => c.query('SELECT * FRO…
+    150|     await expect(asRuntimeRole(PLATFORM, (c) => door(c, KEEP))).reject…
+       |                                                               ^
+    151|     await expect(asRuntimeRole(TENANT, (c) => door(c, ORG))).rejects.t…
+    152|     await owner.query(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  tests/db/turn-record-purge-door.dbtest.ts > the turn-record purge door > is not executable by PUBLIC, and is owned by the NOLOGIN purger role
+error: function "public.purge_tenant_turn_records(integer)" does not exist
+ ❯ node_modules/pg-pool/index.js:45:11
+ ❯ tests/db/turn-record-purge-door.dbtest.ts:162:22
+    160|
+    161|   it('is not executable by PUBLIC, and is owned by the NOLOGIN purger …
+    162|     const { rows } = await owner.query(
+       |                      ^
+    163|       `SELECT pg_get_userbyid(p.proowner) AS owner, p.prosecdef,
+    164|               has_function_privilege('public', p.oid, 'EXECUTE') AS pu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 132, severity: 'ERROR', code: '42883', detail: undefined, hint: undefined, position: '280', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'regproc.c', routine: 'regprocedurein' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  tests/db/turn-record-purge-door.dbtest.ts > a purge returns the records first, erases them, and keeps their audit trail > exports the turn records, erases them with the tenant, leaves the other tenant’s, and keeps each chained row
+OffboardingStateError: This database has ana_turn_records and ana_record_blobs but not public.purge_tenant_turn_records; run node scripts/db/deploy-migrate.mjs. Nothing was purged.
+ ❯ eraseThroughDoor server/services/tenant/tenant-offboarding.ts:591:11
+    589|   if (!present.rows[0]?.present) return zero;
+    590|   if (!present.rows[0]?.door) {
+    591|     throw new OffboardingStateError(
+       |           ^
+    592|       door.unavailable,
+    593|       `This database has ${door.tables.join(' and ')} but not public.$…
+ ❯ deleteTenantRows server/services/tenant/tenant-offboarding.ts:654:24
+ ❯ purgeInOneTransaction server/services/tenant/tenant-offboarding.ts:734:21
+ ❯ purgeTenant server/services/tenant/tenant-offboarding.ts:799:17
+ ❯ tests/db/turn-record-purge-door.dbtest.ts:195:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'TURN_RECORD_PURGE_UNAVAILABLE' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  tests/db/turn-record-purge-door.dbtest.ts > a purge returns the records first, erases them, and keeps their audit trail > refuses a database that has the tables but not the door, and erases nothing
+error: function public.purge_tenant_turn_records(integer) does not exist
+ ❯ node_modules/pg-pool/index.js:45:11
+ ❯ tests/db/turn-record-purge-door.dbtest.ts:223:5
+    221|     await recordTurn(ORG, 'door missing probe');
+    222|     const before = await count('ana_turn_records', ORG);
+    223|     await owner.query('ALTER FUNCTION public.purge_tenant_turn_records…
+       |     ^
+    224|     try {
+    225|       await expect(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 133, severity: 'ERROR', code: '42883', detail: undefined, hint: undefined, position: undefined, internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_func.c', routine: 'LookupFuncWithArgs' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 2 passed (7)
+   Start at  15:47:22
+   Duration  3.49s (transform 1.16s, setup 96ms, import 1.80s, tests 1.25s, environment 0ms)
+

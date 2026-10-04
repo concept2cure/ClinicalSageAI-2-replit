@@ -1,0 +1,17 @@
+== server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+now:  0 errors, 0 warnings []
+HEAD: 0 errors, 0 warnings []
+== server/routes/batch-draft-routes.ts
+now:  0 errors, 3 warnings ["max-lines-per-function@271: Function 'createBatchDraftRoutes' has too many lines (243). Maximum allowed is 100.","max-lines-per-function@409: Async arrow function has too many lines (163). Maximum allowed is 100.","complexity@409: Async arrow function has a complexity of 34. Maximum allowed is 15."]
+HEAD: 0 errors, 3 warnings ["max-lines-per-function@214: Function 'createBatchDraftRoutes' has too many lines (235). Maximum allowed is 100.","max-lines-per-function@352: Async arrow function has too many lines (155). Maximum allowed is 100.","complexity@352: Async arrow function has a complexity of 34. Maximum allowed is 15."]
+== server/routes/ana-intelligence.ts
+now:  0 errors, 2 warnings ["@typescript-eslint/no-unused-vars@567: 'framework' is assigned a value but never used.","no-console@632: Unexpected console statement. Only these console methods are allowed: warn, error, info."]
+HEAD: 0 errors, 2 warnings ["@typescript-eslint/no-unused-vars@538: 'framework' is assigned a value but never used.","no-console@603: Unexpected console statement. Only these console methods are allowed: warn, error, info."]
+== client/src/concept2cure/v2/surfaces/BatchDraft.tsx
+now:  0 errors, 7 warnings ["max-lines-per-function@164: Function 'BatchDraft' has too many lines (518). Maximum allowed is 100.","complexity@164: Function 'BatchDraft' has a complexity of 50. Maximum allowed is 15.","@typescript-eslint/no-unused-vars@164: 'onNav' is defined but never used. Allowed unused args must match /^_/u.","complexity@440: Async arrow function has a complexity of 22. Maximum allowed is 15.","react-hooks/exhaustive-deps@534: React Hook useMemo has a missing dependency: 'selList'. Either include it or remove the de","complexity@785: Arrow function has a complexity of 23. Maximum allowed is 15.","max-lines@788: File has too many lines (588). Maximum allowed is 500."]
+HEAD: 0 errors, 7 warnings ["max-lines-per-function@157: Function 'BatchDraft' has too many lines (515). Maximum allowed is 100.","complexity@157: Function 'BatchDraft' has a complexity of 50. Maximum allowed is 15.","@typescript-eslint/no-unused-vars@157: 'onNav' is defined but never used. Allowed unused args must match /^_/u.","complexity@430: Async arrow function has a complexity of 22. Maximum allowed is 15.","react-hooks/exhaustive-deps@522: React Hook useMemo has a missing dependency: 'selList'. Either include it or remove the de","complexity@773: Arrow function has a complexity of 23. Maximum allowed is 15.","max-lines@781: File has too many lines (583). Maximum allowed is 500."]
+== client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx
+now:  0 errors, 0 warnings []
+HEAD: 0 errors, 0 warnings []
+== server/services/authoring/machine-claim-verify.ts (new)
+0 errors, 0 warnings

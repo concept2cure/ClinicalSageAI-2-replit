@@ -1,5 +1,5 @@
 /**
- * Track GW review follow-through (ADR-0014 §3, §4, §5): the objections to the
+ * Track GW review follow-through (ADR-0015 §3, §4, §5): the objections to the
  * first build that were real, each pinned here against the gateway itself.
  *
  * - [2]/[11] An environment variable must not switch the §3 refusal off in
@@ -153,10 +153,13 @@ describe('[21]/[22] the PQ refusal has its own code, and its ledger row says why
     production();
     const gw = governedGateway();
     stubDispatch(gw);
-    const err = await gw.route(drafting({ provider: 'openai', model: 'gpt-4o' })).catch((e) => e);
+    // Pinned to a model production can place (Anthropic): since trunk's P1-45
+    // (d29275b1b) OpenAI is not a production candidate without the tenant's
+    // election, so a gpt-4o pin never reached this check.
+    const err = await gw.route(drafting({ provider: 'anthropic', model: 'claude-sonnet-5' })).catch((e) => e);
     expect(err.message).toBe(PLAIN);
     expect(ledgerRows(gw)[0].metadata.modelGovernance.withheld).toEqual([
-      { id: 'gpt-4o', pinnedVersion: 'gpt-4o', pqStatus: 'pending', reason: 'not-approved-for-high-risk' },
+      { id: 'claude-sonnet-4', pinnedVersion: 'claude-sonnet-5', pqStatus: 'pending', reason: 'not-approved-for-high-risk' },
     ]);
   });
 

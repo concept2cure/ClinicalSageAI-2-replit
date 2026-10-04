@@ -181,6 +181,8 @@ export interface DossierDataLineage {
   linkageType: string;
   transformationType: string | null;
   confidenceScore: number | null;
+  /** What the recorded confidence is (data_lineage_records.confidence_basis), or null when none was recorded. */
+  confidenceBasis: string | null;
   aiModelUsed: string | null;
   createdAt: string;
 }
@@ -584,7 +586,7 @@ async function loadDataLineage(
       `SELECT source_object_type, source_object_id, source_title,
               source_content_hash, target_object_type, target_object_id,
               linkage_type, transformation_type, confidence_score,
-              ai_model_used, created_at
+              confidence_basis, ai_model_used, created_at
        FROM data_lineage_records
        WHERE organization_id = $1 AND target_object_id = ANY($2)
        ORDER BY created_at ASC
@@ -601,6 +603,7 @@ async function loadDataLineage(
       linkageType: r.linkage_type ?? 'unknown',
       transformationType: r.transformation_type ?? null,
       confidenceScore: r.confidence_score != null ? Number(r.confidence_score) : null,
+      confidenceBasis: r.confidence_basis ?? null,
       aiModelUsed: r.ai_model_used ?? null,
       createdAt: toIso(r.created_at),
     }));

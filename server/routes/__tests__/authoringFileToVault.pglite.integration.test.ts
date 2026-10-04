@@ -10,8 +10,9 @@
  * Proves: the vault row exists with the SHA-256 of the rendered bytes, filed
  * in the CTD module folder; the export is in the document's export history;
  * ONE governed action `authoring.document.file_to_vault` sits in the tenant's
- * hash chain and the chain verifies; a document with no program and a
- * document mid-freeze are refused 409; and a failure after the vault row was
+ * hash chain and the chain verifies; a document with no program (a pre-PF-07
+ * org-wide row — the create route no longer makes one) and a document
+ * mid-freeze are refused 409; and a failure after the vault row was
  * admitted reverts it (never a partial write).
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
@@ -108,17 +109,39 @@ afterAll(async () => {
   await jdb?.close();
 });
 
-async function draftDocument(title: string, programId: string | null = PROGRAM): Promise<string> {
-  if (programId) {
-    const res = await author(request(app).post('/api/authoring/docs/from-draft')).send({
-      programId, title, module: 'M2', sections: M25_SECTIONS, provenance: { source: 'ana' },
-    });
-    expect(res.status, JSON.stringify(res.body)).toBe(201);
-    return res.body.data.doc.id;
-  }
-  const res = await author(request(app).post('/api/authoring/docs')).send({ title, module: 'M2' });
+async function draftDocument(title: string): Promise<string> {
+  const res = await author(request(app).post('/api/authoring/docs/from-draft')).send({
+    programId: PROGRAM, title, module: 'M2', sections: M25_SECTIONS, provenance: { source: 'ana' },
+  });
   expect(res.status, JSON.stringify(res.body)).toBe(201);
-  return res.body.document.id;
+  return res.body.data.doc.id;
+}
+
+/*
+ * An org-wide (project-less) document, as a row written BEFORE PF-07 has one.
+ * PF-07 (founder decision 2026-09-26): a document belongs to a project, so
+ * POST /docs now refuses a create with no client_program_id (400
+ * PROJECT_REQUIRED) — the route can no longer make this row. Rows it made
+ * before that decision still sit in deployed tenants, and file-to-vault's 409
+ * DOCUMENT_HAS_NO_PROGRAM is what guards them. So the document is created IN
+ * the project, through the same POST /docs route the case used before, and
+ * then unscoped directly — client_program_id and the governed binding both
+ * NULL, exactly the state a pre-PF-07 org-wide create left behind.
+ */
+async function legacyOrgWideDocument(title: string): Promise<string> {
+  const refused = await author(request(app).post('/api/authoring/docs')).send({ title, module: 'M2' });
+  expect(refused.status, JSON.stringify(refused.body)).toBe(400);
+  expect(refused.body.code).toBe('PROJECT_REQUIRED');
+  const res = await author(request(app).post('/api/authoring/docs')).send({ title, module: 'M2', client_program_id: PROGRAM });
+  expect(res.status, JSON.stringify(res.body)).toBe(201);
+  const docId: string = res.body.document.id;
+  await jdb.pool.query(
+    `UPDATE authoring_documents SET client_program_id = NULL, c2c_document_id = NULL WHERE id = $1 AND tenant_id = $2`,
+    [docId, ORG],
+  );
+  const row = await jdb.pool.query(`SELECT client_program_id FROM authoring_documents WHERE id = $1`, [docId]);
+  expect(row.rows).toEqual([{ client_program_id: null }]);
+  return docId;
 }
 
 describe('POST /docs/:docId/file-to-vault', () => {
@@ -183,7 +206,7 @@ describe('POST /docs/:docId/file-to-vault', () => {
   });
 
   it('refuses 409 DOCUMENT_HAS_NO_PROGRAM for an org-wide document — nothing filed', async () => {
-    const docId = await draftDocument('Org-wide working notes', null);
+    const docId = await legacyOrgWideDocument('Org-wide working notes');
     const before = await jdb.pool.query('SELECT COUNT(*)::int AS n FROM vault.documents');
     const res = await author(request(app).post(`/api/authoring/docs/${docId}/file-to-vault`)).send({ format: 'pdf' });
     expect(res.status).toBe(409);

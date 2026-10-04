@@ -1,0 +1,164 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > daily > returns today at the scheduled time when still ahead 2ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > daily > rolls to tomorrow when the time has already passed 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > daily > rolls forward when exactly at the scheduled time (strictly after) 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > weekly > lands on the correct dayOfWeek at the correct hour 1ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > weekly > can land today when the scheduled time is still ahead 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > weekly > rolls a full week when same weekday but time has passed 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > monthly > uses this month when the day is still ahead 1ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > monthly > rolls to next month when the day has passed 1ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > monthly > clamps dayOfMonth 31 to 28 1ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > DEFAULT_WEEKLY_SCHEDULE yields a Monday 07:00 UTC 1ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > isDue > is true when now is at or past the next run after lastRunAt 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > isDue > is false just before the next run 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > isDue > is due when there has been no prior run 0ms
+ × server/services/report-os/scheduling/__tests__/scheduling.test.ts > decideDelivery > external + final with the signature it was finalized under is allowed, not watermarked, and names that signature 7ms
+   → expected undefined to be 900 // Object.is equality
+ × server/services/report-os/scheduling/__tests__/scheduling.test.ts > decideDelivery > external + final without a signature is refused: the e-signature rule is the gate, not advice to the caller 3ms
+   → expected true to be false // Object.is equality
+ × server/services/report-os/scheduling/__tests__/scheduling.test.ts > decideDelivery > a null signature is no signature 1ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > decideDelivery > external + partial is watermarked and does not require e-signature 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > decideDelivery > external + draft is watermarked and does not require e-signature 0ms
+ × server/services/report-os/scheduling/__tests__/scheduling.test.ts > decideDelivery > sealed flag forces e-signature on external even when not final 1ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > decideDelivery > platform + final has no watermark and no e-signature 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > decideDelivery > platform + non-final is watermarked but needs no e-signature 0ms
+ × server/services/report-os/scheduling/__tests__/scheduling.test.ts > describeDeliveryAudit > returns the expected normalized keys 3ms
+   → expected { subscriptionId: 42, …(9) } to deeply equal { subscriptionId: 42, …(10) }
+ × server/services/report-os/scheduling/__tests__/scheduling.test.ts > describeDeliveryAudit > defaults subscriptionId and reason to null when absent 1ms
+   → expected undefined to be null
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/report-os/scheduling/__tests__/scheduling.test.ts > decideDelivery > external + final with the signature it was finalized under is allowed, not watermarked, and names that signature
+AssertionError: expected undefined to be 900 // Object.is equality
+
+- Expected:
+900
+
++ Received:
+undefined
+
+ ❯ server/services/report-os/scheduling/__tests__/scheduling.test.ts:132:34
+    130|     expect(decision.allowed).toBe(true);
+    131|     expect(decision.requiresESignature).toBe(true);
+    132|     expect(decision.signatureId).toBe(900);
+       |                                  ^
+    133|     expect(decision.watermark).toBe(false);
+    134|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/services/report-os/scheduling/__tests__/scheduling.test.ts > decideDelivery > external + final without a signature is refused: the e-signature rule is the gate, not advice to the caller
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/report-os/scheduling/__tests__/scheduling.test.ts:138:30
+    136|   it('external + final without a signature is refused: the e-signature…
+    137|     const decision = decideDelivery({ status: 'final' }, 'external');
+    138|     expect(decision.allowed).toBe(false);
+       |                              ^
+    139|     expect(decision.requiresESignature).toBe(true);
+    140|     expect(decision.signatureId).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/services/report-os/scheduling/__tests__/scheduling.test.ts > decideDelivery > a null signature is no signature
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/report-os/scheduling/__tests__/scheduling.test.ts:145:88
+    143|
+    144|   it('a null signature is no signature', () => {
+    145|     expect(decideDelivery({ status: 'final', signatureId: null }, 'ext…
+       |                                                                                        ^
+    146|   });
+    147|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/services/report-os/scheduling/__tests__/scheduling.test.ts > decideDelivery > sealed flag forces e-signature on external even when not final
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/report-os/scheduling/__tests__/scheduling.test.ts:165:30
+    163|     const decision = decideDelivery({ status: 'draft', sealed: true },…
+    164|     expect(decision.requiresESignature).toBe(true);
+    165|     expect(decision.allowed).toBe(false);
+       |                              ^
+    166|     expect(decision.watermark).toBe(false);
+    167|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/services/report-os/scheduling/__tests__/scheduling.test.ts > describeDeliveryAudit > returns the expected normalized keys
+AssertionError: expected { subscriptionId: 42, …(9) } to deeply equal { subscriptionId: 42, …(10) }
+
+- Expected
++ Received
+
+@@ -8,9 +8,8 @@
+      "a@example.com",
+      "b@example.com",
+    ],
+    "reportTypeId": "readiness_summary",
+    "requiresESignature": true,
+-   "signatureId": 900,
+    "subscriptionId": 42,
+    "watermark": false,
+  }
+
+ ❯ server/services/report-os/scheduling/__tests__/scheduling.test.ts:194:19
+    192|       at: '2026-06-15T00:00:00.000Z',
+    193|     });
+    194|     expect(audit).toEqual({
+       |                   ^
+    195|       subscriptionId: 42,
+    196|       reportTypeId: 'readiness_summary',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/services/report-os/scheduling/__tests__/scheduling.test.ts > describeDeliveryAudit > defaults subscriptionId and reason to null when absent
+AssertionError: expected undefined to be null
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ server/services/report-os/scheduling/__tests__/scheduling.test.ts:219:31
+    217|     expect(audit.subscriptionId).toBeNull();
+    218|     expect(audit.reason).toBeNull();
+    219|     expect(audit.signatureId).toBeNull();
+       |                               ^
+    220|     expect(audit.recipientCount).toBe(0);
+    221|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 17 passed (23)
+   Start at  14:06:48
+   Duration  538ms (transform 129ms, setup 98ms, import 63ms, tests 28ms, environment 0ms)
+

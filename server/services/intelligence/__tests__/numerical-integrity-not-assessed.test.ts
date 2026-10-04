@@ -1,6 +1,6 @@
 /**
  * The within-document numerical integrity check does not say "clean" when
- * nothing was compared (row 74, track NC; ADR-0014 §7).
+ * nothing was compared (row 74, track NC; ADR-0015 §7).
  *
  * checkInternalNumericalIntegrity looks for one labelled quantity (N =, a dose,
  * a NOAEL, a p-value …) stated with two different values in the same draft.

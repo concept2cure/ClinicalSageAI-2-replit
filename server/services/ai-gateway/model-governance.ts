@@ -1,12 +1,12 @@
 /**
  * Which registry rows may serve a request: the one predicate behind every
  * gateway selection point — the explicit path, strategy selection (`eligible`
- * and `relaxed`) and the fallback ladder (ADR-0014 §3 and §4).
+ * and `relaxed`) and the fallback ladder (ADR-0015 §3 and §4).
  *
  * A row may serve only when:
  *   1. it IS an approved-models entry — its id, provider and wire model are the
  *      entry's id, provider and pinned version (`governingEntry`) — at every
- *      risk level. Until ADR-0014 the gateway checked approval on high-risk
+ *      risk level. Until ADR-0015 the gateway checked approval on high-risk
  *      work only, and by registry id alone; on every other request any enabled
  *      row served, and only a CI drift test kept today's registry aligned;
  *   2. in production, its entry pins a concrete artifact (`isNominalPin`), so
@@ -52,7 +52,7 @@ import {
 import { isProductionEnv } from './pii-screen.js';
 import type { GatewayRequest, ModelConfig } from './types';
 
-/** What a production refusal of high-risk drafting says, in these words (ADR-0014 §3). */
+/** What a production refusal of high-risk drafting says, in these words (ADR-0015 §3). */
 export const NO_PQ_QUALIFIED_MODEL =
   'No performance-qualified model is available for high-risk regulatory drafting in this environment.';
 
@@ -155,7 +155,7 @@ function withheldRow(m: RowIdentity, request: RiskFields, gov: SelectionGovernan
  *
  * Production high-risk drafting is the PQ refusal whichever rule withheld the
  * rows: its plain statement — no performance-qualified model is available —
- * is true of every one of them, and it is what the person is told (ADR-0014
+ * is true of every one of them, and it is what the person is told (ADR-0015
  * §3). The ledger keeps each row's own reason. {@link pqRefusalWhenNothingCapable}
  * covers the case where no row was capable at all.
  */

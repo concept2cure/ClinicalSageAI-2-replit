@@ -4,6 +4,7 @@
  * on a real archive on disk.
  */
 
+import path from 'node:path';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express from 'express';
 import request from 'supertest';
@@ -61,6 +62,13 @@ describe('auth gate', () => {
   });
 });
 
+/* sourcePath is confined to the caller's own upload prefix (INJ-PATH-002,
+   930fe7b4c). These cases posted `/tmp/archive.zip` and `/tmp/bad.zip`, which
+   was the unconfined host read that commit closed, so both started getting 400
+   before the detector ran. The harness org is 99, so the archive lives under
+   `uploads/org-99/`. */
+const OWN_ARCHIVE = 'uploads/org-99/archive.zip';
+
 describe('POST /imports', () => {
   it('rejects missing sourcePath', async () => {
     const res = await request(makeApp()).post('/api/mdx/imports').send({});
@@ -102,9 +110,16 @@ describe('POST /imports', () => {
 
     const res = await request(makeApp())
       .post('/api/mdx/imports')
-      .send({ sourcePath: '/tmp/archive.zip' });
-    expect(res.status).toBe(201);
+      .send({ sourcePath: OWN_ARCHIVE });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
     expect(res.body.data.id).toBe(42);
+
+    /* The detector and the job row both get the resolved path, not the body
+       string: a relative body value would otherwise be re-resolved against
+       whatever the worker's cwd happens to be. */
+    const resolved = path.resolve(OWN_ARCHIVE);
+    expect(detectFn).toHaveBeenCalledWith(resolved);
+    expect(queryFn.mock.calls[0][1][2]).toBe(resolved);
   });
 
   it('marks job failed when detector throws', async () => {
@@ -113,9 +128,34 @@ describe('POST /imports', () => {
     queryFn.mockResolvedValue({ rows: [{ id: 99 }] }); // update-failed query
     const res = await request(makeApp())
       .post('/api/mdx/imports')
-      .send({ sourcePath: '/tmp/bad.zip' });
-    expect(res.status).toBe(500);
+      .send({ sourcePath: 'uploads/org-99/bad.zip' });
+    expect(res.status, JSON.stringify(res.body)).toBe(500);
     expect(res.body.error).toBeDefined();
+
+    /* The name promised this and nothing checked it: a job left in
+       'detecting' after the detector threw polls forever. */
+    const failed = queryFn.mock.calls.find((c) => /SET status = 'failed'/.test(String(c[0])));
+    expect(failed, 'the job was never marked failed').toBeDefined();
+    expect(failed?.[1]).toEqual([99, 'zip corrupt']);
+  });
+
+  /* INJ-PATH-002: the detector reads, hashes and lists every entry of the
+     archive, and that listing is stored in this tenant's job. A host path read
+     any file on the box; another tenant's prefix copied their eCTD inventory
+     into our rows. `org-999` and the `..` climb are the two ways a string check
+     passes what containment refuses. Refusal must come before the job INSERT,
+     or a refused request still leaves a row carrying the foreign path. */
+  it.each([
+    ['a host path outside every root', '/tmp/archive.zip'],
+    ['another tenant\'s upload prefix', 'uploads/org-2/archive.zip'],
+    ['a prefix that only string-matches ours', 'uploads/org-999/archive.zip'],
+    ['a climb out of our prefix', 'uploads/org-99/../org-2/archive.zip'],
+    ['the tenant vault', 'storage/vault/2/1/versions/1/archive.zip'],
+  ])('400s %s, and neither persists nor reads it', async (_label, sourcePath) => {
+    const res = await request(makeApp()).post('/api/mdx/imports').send({ sourcePath });
+    expect(res.status, JSON.stringify(res.body)).toBe(400);
+    expect(queryFn, 'nothing may be written').not.toHaveBeenCalled();
+    expect(detectFn, 'the path must never be opened').not.toHaveBeenCalled();
   });
 });
 

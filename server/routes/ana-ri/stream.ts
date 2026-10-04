@@ -55,6 +55,7 @@ import { getKernelPolicyHint } from '../../services/kernel-adaptive-policy.js';
 import { buildMemoryContextForChat } from '../../services/memory-context-assembler.js';
 import { governedToolsetFor } from '../../services/ana/governed-toolset.js';
 import { getToolHandler, servedModelOf } from '../../services/ana/AnaToolExecutor.js';
+import { commandBlockProposer } from '../../services/ana/command-attribution.js';
 import { requestsGovernedDraft } from '../../services/ana/governed-write-tools.js';
 import { getUnhealthyTools } from '../../services/ana/tool-telemetry.js';
 import {
@@ -112,6 +113,7 @@ import {
   turnStopWarning,
   type ToolTraceEntry,
 } from '../../services/ana/tool-trace.js';
+import { runWithRunScope } from '../../services/ai-gateway/run-scope.js';
 import { runStreamPostProcessing } from './post-processing.js';
 import {
   canonicalJson,
@@ -186,7 +188,8 @@ import {
 } from '../../services/ana/run-status.js';
 import { createRunHold, type RunHold } from '../../services/ana/run-hold.js';
 import { TurnPolicy } from '../../services/ana/turn-run-policy.js';
-import { classifyToolCall, PLATFORM_COMMAND_TOOL } from '../../services/ana/governed-tool-gate.js';
+import { classifyToolCall } from '../../services/ana/governed-tool-gate.js';
+import { heldToolContext, turnToolContext } from '../../services/ana/turn-tool-context.js';
 import { buildHumanConfirmationRequiredResult } from '../../services/ana-ri/part11-governance.js';
 import {
   describeServerToolStep,
@@ -206,6 +209,14 @@ const dbPool = {
     values?: unknown[]
   ): Promise<QueryResult<R>> => getPool().query<R>(text, values as unknown[]),
 };
+
+/** A command block's opening fence, as parseCommandBlocks reads it. */
+const COMMAND_FENCE = /```command\s*\n/;
+
+/** The round's model call, if the round's own text holds a command block (commandBlockProposer). */
+function commandRoundOf<T>(roundText: string, served: T): T[] {
+  return COMMAND_FENCE.test(roundText) ? [served] : [];
+}
 
 /**
  * Frame a screen report as the operator-channel turn AnA reads next round.
@@ -275,24 +286,6 @@ export function buildUnconfirmedMovesTurn(moves: string[]): GatewayMessage | nul
 
 /** Register POST /stream on the given router. */
 /**
- * For a tool that writes on its own handler (anything but the command carrier),
- * the context the loop would have run it with — recorded on the held run so
- * the governed-action route runs the tool from it, never from the browser's
- * body. Undefined for a platform command, which JSON drops from the row.
- */
-function heldToolContext(
-  toolName: string,
-  projectId: unknown,
-  servingModel: { provider?: string | null; model?: string | null } | null | undefined,
-) {
-  if (toolName === PLATFORM_COMMAND_TOOL) return undefined;
-  return {
-    projectId: projectId ? Number(projectId) || null : null,
-    projectRef: projectId ? String(projectId) : null,
-    servingModel: servingModel ?? null,
-  };
-}
-
 /**
  * Why an approval nobody answered was refused — the approval gate's timeout
  * branch returns it, and the run policy reads it AFTER the gate, from outside
@@ -347,8 +340,9 @@ export function mountStreamRoute(router: Router): void {
     // the request carried no resolvable tenant, in which case no run was opened
     // and the client was given no control strip to press.
     let runHandle: RunHandle | undefined;
-    // Set in the catch so the finally can close the run honestly. A turn that
-    // threw is `failed`, not `finished`.
+    // Set wherever the turn fails, so the finally can close the run honestly:
+    // a turn that threw, a fast-path answer that came back as an error, and a
+    // refused thread are `failed`, not `finished` (2026-09-26 review).
     let streamFailed = false;
     // Why the agentic loop stopped, when it ran; endRun records it. A turn
     // whose first answer called no tools never enters the loop, and ends for
@@ -834,6 +828,7 @@ export function mountStreamRoute(router: Router): void {
           turnRecorder?.warn(`The answer could not be processed: ${String(err?.message ?? err).slice(0, 500)}`);
           say(`Error processing intelligence answer: ${err?.message}`);
         }
+        streamFailed = fastOutcome === 'failed';
         await closeFastPath(fastOutcome);
         return;
       }
@@ -1022,6 +1017,7 @@ export function mountStreamRoute(router: Router): void {
             // Refused before any model ran — still a turn someone attempted,
             // and recorded as one.
             turnRecorder?.warn('Refused: the conversation named in this turn belongs to another user.');
+            streamFailed = true;
             const turnRecord = await fileTurnRecord('failed');
             res.write(
               `data: ${JSON.stringify({
@@ -1738,6 +1734,10 @@ export function mountStreamRoute(router: Router): void {
          model is approved for high-risk work. Updated after every round,
          because each round's calls come from that round's response. */
       let lastServedModel = servedModelOf(gwResponse);
+      // Each round whose own text holds a command block, with the model call
+      // that wrote it: post-processing runs the blocks from the whole answer,
+      // which joins every round's text (commandBlockProposer).
+      const commandRounds = commandRoundOf(fullContent, lastServedModel);
       turnRecorder?.addServed(1, lastServedModel);
       recordCacheUsage(gwResponse);
       // The first model call is round 1's call; its server tools ran inside it.
@@ -1892,7 +1892,13 @@ export function mountStreamRoute(router: Router): void {
             rationale: typeof (verdict.params as any)?.reason === 'string'
               ? String((verdict.params as any).reason)
               : undefined,
-            toolContext: heldToolContext(toolUse.name, streamProjectId, lastServedModel),
+            toolContext: heldToolContext(toolUse.name, streamProjectId, {
+              threadId,
+              turnId: runId,
+              servingModel: lastServedModel,
+            }),
+            // The model call that proposed it, for the Part 11 row (D6).
+            proposedBy: lastServedModel,
           }).catch(() => false);
           if (!opened) {
             return refused(
@@ -1907,7 +1913,7 @@ export function mountStreamRoute(router: Router): void {
           // the tier and what it asks for are said one way. GovernedActionSignoff
           // opens on it. runId + toolUseId are what let the decision
           // come back to THIS waiting turn instead of running on its own.
-          const proposal = buildHumanConfirmationRequiredResult(verdict.command, verdict.params);
+          const proposal = buildHumanConfirmationRequiredResult(verdict.command, verdict.params, verdict.tier);
           emitControl({
             type: 'approval_required',
             round,
@@ -2086,19 +2092,23 @@ export function mountStreamRoute(router: Router): void {
                   // between a stop that lands in a second and one that waits
                   // out a forty-second search.
                   resultStr = await Promise.race([
+                    // Inside the run's scope, so the gateway calls the tool makes
+                    // are listed under this run on the ledger (D6).
+                    runWithRunScope({ runId }, () =>
                     handler(toolUse.input, {
-                      servingModel: lastServedModel,
                       organizationId: orgId,
                       userId: userId || null,
-                      projectId: streamProjectId ? Number(streamProjectId) || null : null,
-                      projectRef: streamProjectId ? String(streamProjectId) : null,
+                      // The project, and the conversation, turn and model this
+                      // call serves (PF-10 S5): a document a tool creates
+                      // records them as its provenance.
+                      ...turnToolContext(streamProjectId, { threadId, turnId: runId, servingModel: lastServedModel }),
                       // Lets navigate_to tell the model the truth about what its
                       // directive does this turn (applied live vs offered chip).
                       liveDrive: driveState.enabled,
                       lockedScreens,
                       turnState: driveTurnState,
                       signal: runSignal,
-                    }),
+                    })),
                     abortRace(runSignal),
                   ]);
                 } catch (toolErr: any) {
@@ -2653,6 +2663,7 @@ export function mountStreamRoute(router: Router): void {
           emitServerToolSteps(roundResponse, round);
           recordServerToolEvidence(roundResponse);
           lastServedModel = servedModelOf(roundResponse);
+          commandRounds.push(...commandRoundOf(roundText, lastServedModel));
           recordServed(round, lastServedModel);
           const nextUses = (roundResponse as AnaGatewayResponse).toolUses;
           return { text: roundText, toolCalls: (nextUses ?? []).map(toToolCall) };
@@ -2997,8 +3008,8 @@ export function mountStreamRoute(router: Router): void {
         messages,
         model: gwResponse.model,
         provider: gwResponse.provider,
-        // The last round wrote the final answer, and with it any command blocks.
-        servingModel: lastServedModel,
+        // The model call that wrote the answer's command blocks (D6).
+        servingModel: commandBlockProposer(commandRounds, lastServedModel),
         enrichment,
         turnRecorder,
         // Stop ends the loop at a round boundary, and the turn still closes

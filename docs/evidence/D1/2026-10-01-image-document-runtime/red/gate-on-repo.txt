@@ -1,0 +1,15 @@
+# red at 1a314819: the gate against the repository as it is
+[ci:image-document-runtime] FAIL — the production image cannot run AnA's document runtimes:
+  - workers/artifact-compute/docx-insert-runtime.py is spawned by the server but not copied into the production stage
+  - workers/artifact-compute/docx-python-runtime.py is spawned by the server but not copied into the production stage
+  - workers/artifact-compute/docx-validate-runtime.py is spawned by the server but not copied into the production stage
+  - workers/artifact-compute/docx-xml-runtime.py is spawned by the server but not copied into the production stage
+  - the production stage does not pip-install python-docx into /opt/docx-runtime
+  - the production stage has no build-time import probe for "docx"
+  - the production stage does not pip-install lxml into /opt/docx-runtime
+  - the production stage has no build-time import probe for "lxml"
+  - the production stage does not take its versions from requirements.txt, so it can drift from CI
+  - the production stage does not set ENV ANA_DOCX_PYTHON=/opt/docx-runtime/bin/python
+  - server/services/compute/scriptWorker.ts does not spawn the interpreter ANA_DOCX_PYTHON names
+  - server/services/compute/workerClient.ts does not spawn the interpreter ANA_DOCX_PYTHON names
+exit 1

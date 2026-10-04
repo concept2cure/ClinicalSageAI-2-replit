@@ -31,7 +31,7 @@ function deterministicGateway(): AIGateway {
 }
 
 /* Bound to a tenant, so each case tests the deterministic acceptance and not
-   ADR-0014 §5's refusal of an unbound call in production, which would
+   ADR-0015 §5's refusal of an unbound call in production, which would
    otherwise answer first (added 2026-09-29, row 74, when the two production
    refusals met in one tree). The last case pins that ordering. */
 const TENANT = { organizationId: 7 };

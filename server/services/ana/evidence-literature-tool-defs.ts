@@ -1700,19 +1700,19 @@ export const ASSEMBLE_CRL_PREMORTEM_ARTIFACT: AnaTool = {
 export const ASSEMBLE_BRIEFING_BOOK: AnaTool = {
   name: 'assemble_briefing_book',
   description:
-    "Assemble a Pre-IND / End-of-Phase-2 (or other Type A/B/C) regulatory-agency MEETING BRIEFING BOOK from a RegAgencyMeeting and stress-test the sponsor's questions against anticipated FDA pushback. Produces the four mandatory sections (Background, Product Development Objectives, Questions for the Agency, Supporting-Data Summary) as markdown ready for author_docx_native, plus the required_strings (the mandatory section headers AND each enumerated sponsor question, verbatim) to pass to verify_docx_against_source. When run_premortem is set, it also surfaces the anticipated reviewer pushback per sponsor question by folding in simulate_reviewer_challenges + run_submission_premortem — labelled ANTICIPATED, never an actual agency position. Honest by construction: a book assembled from sample/fixture meeting data (no live meeting id supplied) is marked not_assessed and is NOT sealable or exportable. Tenant context is injected from the request.",
+    "Assemble a Pre-IND / End-of-Phase-2 (or other Type A/B/C) regulatory-agency MEETING BRIEFING BOOK from a RegAgencyMeeting and stress-test the sponsor's questions against anticipated FDA pushback. Produces the four mandatory sections (Background, Product Development Objectives, Questions for the Agency, Supporting-Data Summary) as markdown ready for author_docx_native, plus the required_strings (the mandatory section headers AND each enumerated sponsor question, verbatim) to pass to verify_docx_against_source. When run_premortem is set, it also surfaces the anticipated reviewer pushback per sponsor question by folding in simulate_reviewer_challenges + run_submission_premortem — labelled ANTICIPATED, never an actual agency position. The book is built ONLY from what you supply: meeting_type and key_questions are required, and background, objectives and supporting data come from the sponsor or are stated as not yet supplied — no sample meeting, sponsor or clinical history is ever substituted. Tenant context is injected from the request.",
   input_schema: {
     type: 'object',
     properties: {
       meeting_id: {
         type: 'string',
         description:
-          'Optional id of a live RegAgencyMeeting to build from. When omitted, a labelled fixture EOP2 meeting is used and the resulting book is marked sample / not_assessed.',
+          'Optional identifier of the meeting this book is for. It is carried as an identifier; meeting content is not loaded from it.',
       },
       meeting_type: {
         type: 'string',
         enum: ['pre_ind', 'eop1', 'eop2', 'pre_nda', 'pre_bla', 'type_a', 'type_b', 'type_c', 'type_d'],
-        description: 'Meeting type. Defaults to the fixture meeting type (eop2) when no live meeting is supplied.',
+        description: 'Meeting type. Required.',
       },
       key_questions: {
         type: 'array',
@@ -1722,6 +1722,11 @@ export const ASSEMBLE_BRIEFING_BOOK: AnaTool = {
       product_name: { type: 'string', description: 'Investigational product name for the title and narrative.' },
       indication: { type: 'string', description: 'Indication / therapeutic area.' },
       sponsor: { type: 'string', description: 'Sponsor name.' },
+      division: { type: 'string', description: 'FDA review division, if known.' },
+      meeting_date: { type: 'string', description: 'Requested or scheduled meeting date, if known.' },
+      background: { type: 'array', items: { type: 'string' }, description: "Background paragraphs, in the sponsor's words. Omit rather than invent." },
+      objectives: { type: 'array', items: { type: 'string' }, description: 'Development objectives for the meeting.' },
+      supporting_data: { type: 'array', items: { type: 'string' }, description: 'Supporting-data summary bullets, from the sponsor\'s actual data. Omit rather than invent.' },
       run_premortem: {
         type: 'boolean',
         description:
@@ -1730,7 +1735,7 @@ export const ASSEMBLE_BRIEFING_BOOK: AnaTool = {
       package_id: { type: 'number', description: 'Submission package id for simulate_reviewer_challenges (optional).' },
       assessment_id: { type: 'number', description: 'Submission-twin assessment id for simulate_reviewer_challenges (optional).' },
     },
-    required: [],
+    required: ['meeting_type', 'key_questions'],
   },
 };
 

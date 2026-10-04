@@ -1,6 +1,6 @@
 /**
  * Cross-document figure reconciliation does not say "clean" when nothing was
- * compared across documents (row 74, track NC; ADR-0014 §7).
+ * compared across documents (row 74, track NC; ADR-0015 §7).
  *
  * reconcileDossierNumbers (the structured engine behind
  * reconcile_extracted_figures) groups figures by quantity and flags values that
@@ -36,6 +36,14 @@ vi.mock('../../../db', async importOriginal => {
   };
   return { ...real, db: { ...(real.db as object), select: () => chain } };
 });
+
+// Program ownership is one shared check since 38a9417c6 (program-access.ts);
+// the program belongs to the caller's organization here unless a case says not.
+const ownership = vi.hoisted(() => ({ ours: true }));
+vi.mock('../../c2c/program-access.js', async importOriginal => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  programInOrganization: async () => ownership.ours,
+}));
 
 import { reconcileDossierNumbers, type ExtractedFigure } from '../dossier-number-reconciler';
 import { reconcileDeviceDocuments } from '../device-document-reconciler';
@@ -296,6 +304,19 @@ describe('reconcileDeviceDocuments: only current documents are compared (review 
 });
 
 describe('reconcile_device_documents: the tool says nothing was compared', () => {
+  it('a program that is not the caller organization\'s is still refused, before anything is read', async () => {
+    ownership.ours = false;
+    try {
+      dbState.rows = [NO_FIGURES_DOC];
+      const before = dbState.reads;
+      const out = await tool('reconcile_device_documents', { programId: 'p-1' });
+      expect(out.code).toBe('PROGRAM_NOT_IN_ORGANIZATION');
+      expect(dbState.reads).toBe(before);
+    } finally {
+      ownership.ours = true;
+    }
+  });
+
   it('no figures: not_assessed, and the instruction says nothing was reconciled instead of "report each conflict"', async () => {
     dbState.rows = [NO_FIGURES_DOC];
     const out = await tool('reconcile_device_documents', { programId: 'p-1' });

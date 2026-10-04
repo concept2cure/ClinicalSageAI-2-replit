@@ -1,0 +1,511 @@
+# red, review round 1: 4a64aac0 sources, review-round tests
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > returns all known ICH guidelines when no filters are provided 3ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > filters by category Q 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > filters by category E 0ms
+ × server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > filters by category M 8ms
+   → expected 2 to be 1 // Object.is equality
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > filters by since date 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > dates M11 as the verified currency registry does 0ms
+ × server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > dates Q12 and Q14 at their Step 4, and carries no undated M4 revision 2ms
+   → expected '2023-01' to be '2019-11' // Object.is equality
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > combines category and since filters 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > returns empty when category has no results 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness > flags stale guidance when citedDate predates effectiveDate 2ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness > marks current guidance as current 1ms
+ × server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness > flags void guidance from the currency registry 1ms
+   → expected null to be false // Object.is equality
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness > reports a guidance it cannot identify as unverified, never as current 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > reports a superseded ICH revision as not current, naming its successor 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not read another ICH guideline as E6(R3) because both titles say "ICH" 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not match a registry keyword found inside another word 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not date a 510(k) guidance by the eSTAR mandate because both mention 510(k) 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > refuses to identify a fact from another jurisdiction than the one cited 0ms
+ × server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not identify "IVD" — a retrieval keyword, not the name of a dated fact 1ms
+   → expected false to be null
+ × server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not identify "MDR" — a retrieval keyword, not the name of a dated fact 1ms
+   → expected false to be null
+ × server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not identify "IVDR" — a retrieval keyword, not the name of a dated fact 3ms
+   → expected false to be null
+ × server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not identify "CTR" — a retrieval keyword, not the name of a dated fact 1ms
+   → expected false to be null
+ × server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not identify "SaMD" — a retrieval keyword, not the name of a dated fact 1ms
+   → expected false to be null
+ × server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not identify "510(k)" — a retrieval keyword, not the name of a dated fact 1ms
+   → expected false to be null
+ × server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not identify "De Novo" — a retrieval keyword, not the name of a dated fact 1ms
+   → expected false to be null
+ × server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not identify "Real-world data" — a retrieval keyword, not the name of a dated fact 1ms
+   → expected false to be null
+ × server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not identify "clinical trials" — a retrieval keyword, not the name of a dated fact 1ms
+   → expected false to be null
+ × server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > identifies a fact by a name it is cited by 4ms
+   → expected { …(4) } to match object { current: false, …(1) }
+(3 matching properties omitted from actual)
+ × server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > dates "ICH E6(R3) Annex 2" by Annex 2, not by the base guideline 1ms
+   → expected 'ich-e6r3-gcp-step4' to be 'ich-e6r3-annex2-step4' // Object.is equality
+ × server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not call a title superseded when it also names what superseded it 1ms
+   → expected { …(6) } to match object { current: true, …(1) }
+(4 matching properties omitted from actual)
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > names the registry entry and source every identified verdict rests on 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > throws when citedGuidances is missing 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > checks multiple guidances at once 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchFdaGuidanceList > says no FDA guidance index is connected, and makes no request 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchFdaGuidanceList > never throws 1ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > statusAsOf > keeps a future obligation upcoming before its date 2ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > statusAsOf > promotes to in_force on the effective date itself 1ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > statusAsOf > promotes to in_force after the effective date 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > statusAsOf > never expires a vacated or rescinded rule 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > statusAsOf > leaves in_force untouched 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > statusAsOf > falls back to the stored status when asOf is unusable 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > statusAsOf > falls back when the fact itself has no usable effective date 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > statusAsOf > compares dates lexicographically, immune to timezone drift 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > factAsOf > returns the same object when nothing changed 1ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > factAsOf > returns a copy with the resolved status, leaving the original intact 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > findFacts with asOf > reports EUDAMED as in force today, not upcoming 2ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > findFacts with asOf > reports PMDA eCTD v4.0 as in force today 1ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > findFacts with asOf > still reports genuinely future obligations as upcoming 1ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > findFacts with asOf > leaves the vacated LDT rule void regardless of date 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > findFacts with asOf > returns stored statuses unchanged when asOf is omitted 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > findFacts with asOf > does not mutate the shared registry across calls 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > verificationAgeDays > counts whole days since the fact was last verified 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > verificationAgeDays > is zero on the verification date itself 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > verificationAgeDays > returns null rather than a guess when a date is unusable 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > verificationAgeDays > surfaces a future lastVerified as negative rather than clamping 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > verificationAgeDays > is timezone-independent across a month boundary 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > isVerificationStale > is fresh inside the re-verification window 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > isVerificationStale > is stale past the window 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > isVerificationStale > is not stale exactly on the boundary 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > isVerificationStale > treats an unreadable verification date as stale, not fresh 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > isVerificationStale > honours a caller-supplied window 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > isVerificationStale > reports every shipped fact as currently verified 1ms
+ × server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > topic search matches whole words, plurals included > finds the void LDT rule for the plural spellings people write 6ms
+   → laboratory developed tests: expected [] to include 'us-ldt-final-rule-void'
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > topic search matches whole words, plurals included > does not match a keyword inside another word 1ms
+stdout | server/services/ana/__tests__/generate-citation-honest.test.ts
+{
+  "timestamp": "2026-10-01T00:41:01.032Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T00:41:01.033Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/generate-citation-honest.test.ts
+{
+  "timestamp": "2026-10-01T00:41:01.034Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/generate-citation-honest.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/generate-citation-honest.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/generate-citation-honest.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ × server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > resolves each reference against the outlines of the tenant's own documents 35ms
+   → Cannot read properties of undefined (reading 'map')
+ × server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > does not assess table and figure numbers, and does not pass them 1ms
+   → out.results is not iterable
+ ✓ server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > refuses a document outside the organization, and says the same as for one that does not exist 1ms
+ ✓ server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > refuses without a tenant, and asks for the references it is to check 1ms
+ × server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > matches a section by its code, not by a longer code that starts the same 1ms
+   → Cannot read properties of undefined (reading '0')
+ × server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > reads its own outline when the document belongs to no project 1ms
+   → Cannot read properties of undefined (reading '0')
+ × server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > does not count an archived document of the project 1ms
+   → Cannot read properties of undefined (reading '0')
+ × server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > reads the most specific section a reference names 1ms
+   → Cannot read properties of undefined (reading '0')
+ × server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > reports a section that is only a template heading as outline_only, not found 1ms
+   → Cannot read properties of undefined (reading '0')
+ ✓ server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > describes what it checks, not a table or figure check it does not do 1ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > formats a journal article from the record PubMed returned for its PMID 52ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > looks a DOI up as a DOI 1ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > returns no citation when the article is not_found — never a placeholder 1ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > returns no citation when the article is unverifiable — never a placeholder 0ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > returns no citation when the article is error — never a placeholder 0ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > carries a retraction with the citation 1ms
+ × server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > keeps PubMed author names as PubMed gives them, a collective author included 8ms
+   → expected 'Group RC, Horby P, Lim WS. T. J. 2021.' to be 'RECOVERY Collaborative Group, Horby P…' // Object.is equality
+ × server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > formats Crossref authors from their family and given names, particles and organisations included 2ms
+   → expected 'Smet PD, Beethoven LV. T. J. 2020.' to be 'De Smet P, van Beethoven L, WHO Worki…' // Object.is equality
+ × server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > looks a reference up by its PMID when it carries both, so a retraction is seen 4ms
+   → expected "vi.fn()" to be called with arguments: [ [ { pmid: '9500320' } ] ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    [
+      {
+-       "pmid": "9500320",
++       "doi": "10.1016/S0140-6736(97)11096-0",
+      },
+    ],
+  ]
+
+
+Number of calls: 1
+
+ × server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > says retraction status was not checked when only Crossref verified it 1ms
+   → expected undefined to be false // Object.is equality
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > takes an ICH guideline's title from the ICH corpus 1ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > formats an ICH code the corpus does not hold, and says it is not in the corpus 1ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > formats a 21cfr citation from the identifier given and labels it not verified 1ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > formats a fda_guidance citation from the identifier given and labels it not verified 0ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > formats a eu_mdr citation from the identifier given and labels it not verified 0ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > formats a iso_standard citation from the identifier given and labels it not verified 0ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > applies the style it names, and says when it cannot apply the one asked for 1ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > asks for what is missing instead of formatting nothing 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 27 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > keeps PubMed author names as PubMed gives them, a collective author included
+AssertionError: expected 'Group RC, Horby P, Lim WS. T. J. 2021.' to be 'RECOVERY Collaborative Group, Horby P…' // Object.is equality
+
+Expected: "RECOVERY Collaborative Group, Horby P, Lim WS. T. J. 2021."
+Received: "Group RC, Horby P, Lim WS. T. J. 2021."
+
+ ❯ server/services/ana/__tests__/generate-citation-honest.test.ts:70:26
+     68|     verifyCitations.mockResolvedValue(verified({ title: 'T', authors: …
+     69|     const out = await run({ source_type: 'journal_article', source_ide…
+     70|     expect(out.citation).toBe('RECOVERY Collaborative Group, Horby P, …
+       |                          ^
+     71|   });
+     72|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/27]⎯
+
+ FAIL  server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > formats Crossref authors from their family and given names, particles and organisations included
+AssertionError: expected 'Smet PD, Beethoven LV. T. J. 2020.' to be 'De Smet P, van Beethoven L, WHO Worki…' // Object.is equality
+
+Expected: "De Smet P, van Beethoven L, WHO Working Group. T. J. 2020."
+Received: "Smet PD, Beethoven LV. T. J. 2020."
+
+ ❯ server/services/ana/__tests__/generate-citation-honest.test.ts:80:26
+     78|     }));
+     79|     const out = await run({ source_type: 'journal_article', source_ide…
+     80|     expect(out.citation).toBe('De Smet P, van Beethoven L, WHO Working…
+       |                          ^
+     81|   });
+     82|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/27]⎯
+
+ FAIL  server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > looks a reference up by its PMID when it carries both, so a retraction is seen
+AssertionError: expected "vi.fn()" to be called with arguments: [ [ { pmid: '9500320' } ] ]
+
+Received:
+
+  1st vi.fn() call:
+
+  [
+    [
+      {
+-       "pmid": "9500320",
++       "doi": "10.1016/S0140-6736(97)11096-0",
+      },
+    ],
+  ]
+
+
+Number of calls: 1
+
+ ❯ server/services/ana/__tests__/generate-citation-honest.test.ts:86:29
+     84|     verifyCitations.mockResolvedValue(verified({ title: 'T', authors: …
+     85|     const out = await run({ source_type: 'journal_article', source_ide…
+     86|     expect(verifyCitations).toHaveBeenCalledWith([{ pmid: '9500320' }]…
+       |                             ^
+     87|     expect(out.retracted).toBe(true);
+     88|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/27]⎯
+
+ FAIL  server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > says retraction status was not checked when only Crossref verified it
+AssertionError: expected undefined to be false // Object.is equality
+
+- Expected:
+false
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/generate-citation-honest.test.ts:93:35
+     91|     verifyCitations.mockResolvedValue(verified({ source: 'crossref', t…
+     92|     const out = await run({ source_type: 'journal_article', source_ide…
+     93|     expect(out.retractionChecked).toBe(false);
+       |                                   ^
+     94|     expect(out.note).toMatch(/retraction status was not checked/i);
+     95|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/27]⎯
+
+ FAIL  server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > resolves each reference against the outlines of the tenant's own documents
+TypeError: Cannot read properties of undefined (reading 'map')
+ ❯ server/services/ana/__tests__/validate-cross-references-honest.test.ts:64:50
+     62|       section_references: ['Section 2.5.4', 'Module 2.5.6', 'Section 3…
+     63|     });
+     64|     const byRef = Object.fromEntries(out.results.map((r: { reference: …
+       |                                                  ^
+     65|     expect(byRef['Section 2.5.4']).toMatchObject({ status: 'found_in_d…
+     66|     expect(byRef['Module 2.5.6']).toMatchObject({ status: 'found_in_do…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/27]⎯
+
+ FAIL  server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > does not assess table and figure numbers, and does not pass them
+TypeError: out.results is not iterable
+ ❯ server/services/ana/__tests__/validate-cross-references-honest.test.ts:77:25
+     75|     wire();
+     76|     const out = await run({ document_id: 'doc_a', section_references: …
+     77|     for (const r of out.results) expect(r.status).toBe('not_assessed');
+       |                         ^
+     78|     expect(out.summary.found).toBe(0);
+     79|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/27]⎯
+
+ FAIL  server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > matches a section by its code, not by a longer code that starts the same
+TypeError: Cannot read properties of undefined (reading '0')
+ ❯ server/services/ana/__tests__/validate-cross-references-honest.test.ts:100:16
+     98|     wire({ sections: [{ ...SECTIONS[0], section_key: '2.5.10' }] });
+     99|     const out = await run({ document_id: 'doc_a', section_references: …
+    100|     expect(out.results[0].status).toBe('not_found');
+       |                ^
+    101|   });
+    102|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/27]⎯
+
+ FAIL  server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > reads its own outline when the document belongs to no project
+TypeError: Cannot read properties of undefined (reading '0')
+ ❯ server/services/ana/__tests__/validate-cross-references-honest.test.ts:106:16
+    104|     wire({ doc: { ...DOC, project_id: null }, sections: SECTIONS.map((…
+    105|     const out = await run({ document_id: 'doc_a', section_references: …
+    106|     expect(out.results[0].status).toBe('found_in_document');
+       |                ^
+    107|     expect(out.results[1].status).toBe('not_found');
+    108|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/27]⎯
+
+ FAIL  server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > does not count an archived document of the project
+TypeError: Cannot read properties of undefined (reading '0')
+ ❯ server/services/ana/__tests__/validate-cross-references-honest.test.ts:113:16
+    111|     wire({ sections: SECTIONS.map((r) => (r.document_id === 'doc_q' ? …
+    112|     const out = await run({ document_id: 'doc_a', section_references: …
+    113|     expect(out.results[0].status).toBe('not_found');
+       |                ^
+    114|   });
+    115|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/27]⎯
+
+ FAIL  server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > reads the most specific section a reference names
+TypeError: Cannot read properties of undefined (reading '0')
+ ❯ server/services/ana/__tests__/validate-cross-references-honest.test.ts:122:16
+    120|       section_references: ['Module 3, Section 3.2.P.5.6', 'Module 2 (S…
+    121|     });
+    122|     expect(out.results[0]).toMatchObject({ section: '3.2.P.5.6', statu…
+       |                ^
+    123|     expect(out.results[1]).toMatchObject({ section: '2.5.4', status: '…
+    124|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/27]⎯
+
+ FAIL  server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > reports a section that is only a template heading as outline_only, not found
+TypeError: Cannot read properties of undefined (reading '0')
+ ❯ server/services/ana/__tests__/validate-cross-references-honest.test.ts:129:16
+    127|     wire({ sections: [{ ...SECTIONS[0], section_key: 'm2.5.6', status:…
+    128|     const out = await run({ document_id: 'doc_a', section_references: …
+    129|     expect(out.results[0]).toMatchObject({ status: 'outline_only', sec…
+       |                ^
+    130|     expect(out.summary).toMatchObject({ found: 0, outlineOnly: 1 });
+    131|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/27]⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > topic search matches whole words, plurals included > finds the void LDT rule for the plural spellings people write
+AssertionError: laboratory developed tests: expected [] to include 'us-ldt-final-rule-void'
+ ❯ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts:213:60
+    211|   it('finds the void LDT rule for the plural spellings people write', …
+    212|     for (const topic of ['laboratory developed tests', 'LDTs', 'LDT'])…
+    213|       expect(findFacts({ topic }).map((f) => f.id), topic).toContain('…
+       |                                                            ^
+    214|     }
+    215|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/27]⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > filters by category M
+AssertionError: expected 2 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts:62:38
+     60|     expect(result.status).toBe('fetched');
+     61|     // M11 only: the "M4(R4), Step 2, 2025-06" entry was not M4(R4) at…
+     62|     expect(result.guidelines.length).toBe(1);
+       |                                      ^
+     63|     for (const g of result.guidelines) {
+     64|       expect(g.category).toBe('M');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/27]⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > dates Q12 and Q14 at their Step 4, and carries no undated M4 revision
+AssertionError: expected '2023-01' to be '2019-11' // Object.is equality
+
+Expected: "2019-11"
+Received: "2023-01"
+
+ ❯ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts:93:31
+     91|     // said 2023-01 and 2024-01, so a correct 2019 citation of Q12 rea…
+     92|     const byCode = new Map(fetchIchGuidelineUpdates().guidelines.map((…
+     93|     expect(byCode.get('Q12')).toBe('2019-11');
+       |                               ^
+     94|     expect(byCode.get('Q14')).toBe('2023-11');
+     95|     expect(byCode.has('M4(R4)')).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/27]⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness > flags void guidance from the currency registry
+AssertionError: expected null to be false // Object.is equality
+
+- Expected:
+false
+
++ Received:
+null
+
+ ❯ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts:158:23
+    156|     const r = result.results[0];
+    157|     // LDT rule has status 'void', so current should be false
+    158|     expect(r.current).toBe(false);
+       |                       ^
+    159|     expect(r.warning).toBeDefined();
+    160|     expect(r.warning).toMatch(/void/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/27]⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not identify "IVD" — a retrieval keyword, not the name of a dated fact
+ FAIL  server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not identify "MDR" — a retrieval keyword, not the name of a dated fact
+ FAIL  server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not identify "IVDR" — a retrieval keyword, not the name of a dated fact
+ FAIL  server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not identify "CTR" — a retrieval keyword, not the name of a dated fact
+ FAIL  server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not identify "SaMD" — a retrieval keyword, not the name of a dated fact
+ FAIL  server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not identify "510(k)" — a retrieval keyword, not the name of a dated fact
+ FAIL  server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not identify "De Novo" — a retrieval keyword, not the name of a dated fact
+ FAIL  server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not identify "Real-world data" — a retrieval keyword, not the name of a dated fact
+ FAIL  server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not identify "clinical trials" — a retrieval keyword, not the name of a dated fact
+AssertionError: expected false to be null
+
+- Expected:
+null
+
++ Received:
+false
+
+ ❯ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts:235:25
+    233|     (title) => {
+    234|       const [r] = checkGuidanceFreshness({ citedGuidances: [{ title, c…
+    235|       expect(r.current).toBeNull();
+       |                         ^
+    236|       expect(r.basis).toBeUndefined();
+    237|     },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/27]⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > identifies a fact by a name it is cited by
+AssertionError: expected { …(4) } to match object { current: false, …(1) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "basis": {
+-     "id": "fda-estar-510k-mandatory",
+-   },
+-   "current": false,
++   "current": null,
+  }
+
+ ❯ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts:249:19
+    247|       ],
+    248|     }).results;
+    249|     expect(estar).toMatchObject({ current: false, basis: { id: 'fda-es…
+       |                   ^
+    250|     expect(ldt).toMatchObject({ current: false, basis: { id: 'us-ldt-f…
+    251|     expect(ai.basis?.id).toBe('eu-ai-act-high-risk');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/27]⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > dates "ICH E6(R3) Annex 2" by Annex 2, not by the base guideline
+AssertionError: expected 'ich-e6r3-gcp-step4' to be 'ich-e6r3-annex2-step4' // Object.is equality
+
+Expected: "ich-e6r3-annex2-step4"
+Received: "ich-e6r3-gcp-step4"
+
+ ❯ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts:258:25
+    256|       citedGuidances: [{ title: 'ICH E6(R3) Annex 2', citedDate: '2025…
+    257|     }).results;
+    258|     expect(r.basis?.id).toBe('ich-e6r3-annex2-step4');
+       |                         ^
+    259|     expect(r.current).toBe(false);
+    260|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/27]⎯
+
+ FAIL  server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not call a title superseded when it also names what superseded it
+AssertionError: expected { …(6) } to match object { current: true, …(1) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "basis": {
+      "id": "ich-e6r3-gcp-step4",
+    },
+-   "current": true,
++   "current": false,
+  }
+
+ ❯ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts:270:17
+    268|       ],
+    269|     }).results;
+    270|     expect(gcp).toMatchObject({ current: true, basis: { id: 'ich-e6r3-…
+       |                 ^
+    271|     expect(ctis).toMatchObject({ current: true, basis: { id: 'eu-ctis-…
+    272|     expect(eudract.current).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/27]⎯
+
+
+ Test Files  4 failed (4)
+      Tests  27 failed | 65 passed (92)
+   Start at  00:40:58
+   Duration  6.95s (transform 9.57s, setup 663ms, import 12.98s, tests 198ms, environment 0ms)
+

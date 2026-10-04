@@ -1369,6 +1369,9 @@
     display: grid;
     gap: 14px;
   }
+  .dcv-body[hidden] {
+    display: none;
+  }
   .dcv-sec {
     display: grid;
     gap: 2px;
@@ -1416,6 +1419,12 @@
     color: var(--text-400);
     font-style: italic;
     margin: 0;
+  }
+  /* "Ask AnA to draft <code>" beside a section's empty state (2026-10-01):
+     the action, not the italic note, so it reads upright. */
+  .dcv-sec-empty .nda-open {
+    margin-left: 8px;
+    font-style: normal;
   }
   .dcv-showall {
     justify-self: start;
@@ -1507,6 +1516,125 @@
     border-radius: var(--radius-sm);
     padding: 1px 5px;
     flex-shrink: 0;
+  }
+  /* ── The outline and the refresh line (2026-10-01) ──
+     Every section, drafted or not, so the card says how far along the
+     document is; choosing one shows it below. */
+  .dcv-outline {
+    list-style: none;
+    margin: 0 0 10px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 4px;
+  }
+  .dcv-outline > li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+  .dcv-outline-item {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    padding: 4px 6px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--text-100);
+    font: inherit;
+    font-size: 12.5px;
+    text-align: left;
+    cursor: pointer;
+  }
+  .dcv-outline-item:hover,
+  .dcv-outline-item[aria-current] {
+    background: var(--bg-050);
+  }
+  .dcv-outline-code {
+    font-family: var(--font-mono);
+    color: var(--text-300);
+    flex-shrink: 0;
+  }
+  .dcv-outline-t {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .dcv-outline-state {
+    flex-shrink: 0;
+    font-size: 11.5px;
+    color: var(--text-300);
+    padding-right: 6px;
+  }
+  .dcv-outline > li[data-drafted='false'] .dcv-outline-t {
+    color: var(--text-300);
+  }
+  .dcv-outline > li[data-updated] .dcv-outline-state {
+    color: var(--accent-strong);
+    font-weight: 600;
+  }
+  .dcv-updated {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--text-200);
+  }
+  .dcv-updated[data-tone='err'] {
+    color: var(--error);
+  }
+  /* ── Beside the conversation (2026-10-01) ──
+     The founder's ask: AnA builds the document while she and the client keep
+     talking, as one builds with Claude. The thread portals the expanded editor
+     into `.ct-canvas-pane`, after its conversation column: the conversation
+     keeps a reading column with its answers and composer, and the document
+     takes the rest. Too narrow for two columns, the document takes the screen
+     and "Back to conversation" is the way out, as before. */
+  .ct-main[data-canvas-open] > .ct-conv {
+    flex: 0 0 clamp(340px, 34%, 520px);
+    border-right: 1px solid var(--border);
+  }
+  .ct-canvas-pane {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    background: var(--bg-050);
+  }
+  .ct-canvas-pane[hidden] {
+    display: none;
+  }
+  .ct-canvas-pane > .dcv-expanded {
+    flex: 1;
+    height: auto;
+    min-height: 0;
+  }
+  /* The card that opened the editor stays in the thread, marked, so the
+     conversation still says which document is open beside it. */
+  .dcv-card[data-open-beside] {
+    border-color: var(--accent-muted);
+    box-shadow: inset 3px 0 0 var(--accent);
+  }
+  .dcv-open-note {
+    align-self: center;
+    font-size: 12px;
+    color: var(--text-300);
+  }
+  @media (max-width: 1100px) {
+    .ct-main[data-canvas-open] > .ct-conv {
+      display: none;
+    }
+    .ct-canvas-pane {
+      padding: 0;
+    }
   }
   .dcv-workbench {
     flex: 1;

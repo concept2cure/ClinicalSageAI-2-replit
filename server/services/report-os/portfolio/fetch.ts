@@ -46,10 +46,21 @@ export function riskFromBlockers(criticalBlockerCount: number): RiskLevel {
 
 /**
  * PURE: map a computed run for one member project into a ProgramMemberInsight.
- * readinessScore = the run's confidence (0–100); status is derived from
- * confidence + critical blockers so it never claims "ready" with a critical
- * gap open. topBlockers are the (non-critical) blockers surfaced for themes.
+ * readinessScore = the evaluated readiness the run carries
+ * (summary.regulatory.readinessScore, evaluateReadiness), or null when the run
+ * evaluated none. It was the run's confidence, a blocker count clamped to
+ * [25, 95], so a program with nothing in it read "25% ready" (reporting review
+ * 2026-10-01). Status is still derived from confidence + critical blockers so it
+ * never claims "ready" with a critical gap open. topBlockers are the
+ * (non-critical) blockers surfaced for themes.
  */
+/** The run's evaluated readiness (0–100), or null when it evaluated none. */
+function evaluatedReadiness(computed: RunComputationResult): number | null {
+  const regulatory = (computed.summary as { regulatory?: { readinessScore?: unknown } } | undefined)?.regulatory;
+  const score = regulatory?.readinessScore;
+  return typeof score === 'number' && Number.isFinite(score) ? Math.max(0, Math.min(100, Math.round(score))) : null;
+}
+
 export function toMemberInsight(
   projectId: number,
   name: string,
@@ -68,7 +79,7 @@ export function toMemberInsight(
     name,
     code: extra?.code ?? null,
     indication: extra?.indication ?? null,
-    readinessScore: confidence,
+    readinessScore: evaluatedReadiness(computed),
     confidence,
     status,
     criticalBlockerCount,

@@ -4,9 +4,12 @@
  * THE DEFECT THIS CLOSES. The packager writes `m1/<cc>/<cc>-regional.xml` for all
  * twelve regions, but only ONE of them — FDA — is built to the agency's Module 1
  * structure: its leaves are grouped under the published FDA Module 1 heading
- * table (controlled-vocab/fda-regional-sections.ts) inside the us-regional DTD's
- * element tree. The other eleven fall into two classes, and both used to be
- * reported as if they were conformant:
+ * table (controlled-vocab/fda-regional-sections.ts). Even FDA is conformant only
+ * build by build: its builder reports what it cannot stand behind (a heading that
+ * belongs inside a parent whose element name is not recorded, an undeclared form,
+ * an applicant with no contact), and any such gap makes that backbone
+ * non-conformant (2026-10-01, sweep F06). The other eleven fall into two
+ * classes, and both used to be reported as if they were conformant:
  *
  *   - ema / pmda / ca have their OWN root element and DOCTYPE, but their
  *     builders file every Module 1 leaf FLAT directly under the Module 1
@@ -31,8 +34,18 @@
 
 import type { Region } from '../submission-gateways/types';
 
-/** Regions whose backbone is built to the agency's own Module 1 structure. */
-const CONFORMANT_REGIONS: ReadonlySet<Region> = new Set<Region>(['fda']);
+/**
+ * Regions whose builder writes the agency's own Module 1 structure AND reports
+ * what in it it cannot stand behind. Membership is not conformance: since
+ * 2026-10-01 (package-spine sweep F06) a backbone from one of these regions is
+ * conformant only when its builder's report for THAT build is empty. Before
+ * that, every FDA package was stamped conformant by region alone, including one
+ * whose 1.3.3 heading sat directly under <m1-regional> instead of inside 1.3.
+ */
+const STRUCTURE_REPORTING_REGIONS: ReadonlySet<Region> = new Set<Region>(['fda']);
+
+/** How many of a builder's gaps the status spells out before counting the rest. */
+const GAPS_SPELLED_OUT = 4;
 
 /** Regions with their own root element whose Module 1 is nevertheless FLAT
  *  (leaves directly under the container) and whose envelope is not the agency
@@ -68,9 +81,37 @@ export interface RegionalBackboneStatus {
   conformanceGap?: string;
 }
 
-/** Classify a region's regional backbone. Pure. */
-export function classifyRegionalBackbone(region: Region, file: string): RegionalBackboneStatus {
-  if (CONFORMANT_REGIONS.has(region)) return { region, file, regionConformant: true };
+/** One `conformanceGap` sentence from a builder's gaps: the first few, then a count. */
+function summariseBuildGaps(gaps: readonly string[]): string {
+  const shown = gaps.slice(0, GAPS_SPELLED_OUT).join('; ');
+  const rest = gaps.length - GAPS_SPELLED_OUT;
+  return rest > 0 ? `${shown}; and ${rest} more` : shown;
+}
+
+/**
+ * Classify a region's regional backbone. Pure.
+ *
+ * `buildGaps` is what the region's builder reported it could not stand behind
+ * in the backbone it wrote (FDA: `fdaBackboneGaps` in regional-packager.ts).
+ * For a structure-reporting region, no report means no claim: the region alone
+ * never made a backbone conformant. Other regions' builders report nothing, and
+ * their status does not depend on it.
+ */
+export function classifyRegionalBackbone(
+  region: Region,
+  file: string,
+  buildGaps?: readonly string[],
+): RegionalBackboneStatus {
+  if (STRUCTURE_REPORTING_REGIONS.has(region)) {
+    if (!buildGaps) {
+      return {
+        region, file, regionConformant: false,
+        conformanceGap: 'its builder reported nothing about the Module 1 structure it wrote, so conformance cannot be claimed for the region alone',
+      };
+    }
+    if (!buildGaps.length) return { region, file, regionConformant: true };
+    return { region, file, regionConformant: false, conformanceGap: summariseBuildGaps(buildGaps) };
+  }
   const gap = FLAT_MODULE1_GAP[region];
   if (gap) return { region, file, regionConformant: false, conformanceGap: gap };
   return { region, file, regionConformant: false, placeholderOf: PLACEHOLDER_OF[region] ?? 'ema' };

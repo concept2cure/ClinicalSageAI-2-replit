@@ -1,0 +1,2 @@
+[ci:migration-reachability] 1345 durably-created tables; 0 server-referenced table(s) created only by a deploy-dead migration; 0 baselined
+[ci:migration-reachability] ✅ no new unreachable table references.

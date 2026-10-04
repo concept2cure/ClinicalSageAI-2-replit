@@ -1,5 +1,5 @@
 /**
- * ADR-0014 §4: `local-default` pins a placeholder, so production does not
+ * ADR-0015 §4: `local-default` pins a placeholder, so production does not
  * select it — and the resolvers that hand the gateway a model agree (track GW
  * review [4]).
  *

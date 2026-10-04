@@ -1,0 +1,27 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-29T20:39:41.231Z","pid":10742,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-29T20:39:41.232Z","pid":10742,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-29T20:39:41.232Z","pid":10742,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-filing-vocabulary.dbtest.ts > the placement service holds a filing to the vocabulary (POST /:id/file, AnA) > refuses a word that is not a section with 422, and writes nothing
+[database] Database connection successful { timestamp: '2026-09-29T20:39:41.307Z', poolSize: 1 }
+
+stdout | tests/db/vault-filing-vocabulary.dbtest.ts > the placement service holds a filing to the vocabulary (POST /:id/file, AnA) > refuses a word that is not a section with 422, and writes nothing
+[database] Database connection successful
+
+stderr | tests/db/vault-filing-vocabulary.dbtest.ts > the placement service holds a filing to the vocabulary (POST /:id/file, AnA) > refuses a word that is not a section with 422, and writes nothing
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/vault-filing-vocabulary.dbtest.ts > the placement service holds a filing to the vocabulary (POST /:id/file, AnA) > refuses a word that is not a section with 422, and writes nothing 1683ms
+ ✓ tests/db/vault-filing-vocabulary.dbtest.ts > the placement service holds a filing to the vocabulary (POST /:id/file, AnA) > refuses a bare module, which is a container with 422, and writes nothing 3ms
+ ✓ tests/db/vault-filing-vocabulary.dbtest.ts > the placement service holds a filing to the vocabulary (POST /:id/file, AnA) > refuses an evidence kind outside the list with 422, and writes nothing 3ms
+ ✓ tests/db/vault-filing-vocabulary.dbtest.ts > the placement service holds a filing to the vocabulary (POST /:id/file, AnA) > files a decision inside the vocabulary, as before 41ms
+ ✓ tests/db/vault-filing-vocabulary.dbtest.ts > the governed ingest holds a filing to the vocabulary (POST /api/vault/ingest) > refuses a CTD section that is not one with 400, before any byte is stored 214ms
+ ✓ tests/db/vault-filing-vocabulary.dbtest.ts > the governed ingest holds a filing to the vocabulary (POST /api/vault/ingest) > refuses an evidence kind outside the list with 400, before any byte is stored 1ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  20:39:39
+   Duration  2.39s (transform 1.11s, setup 67ms, import 29ms, tests 2.02s, environment 0ms)
+

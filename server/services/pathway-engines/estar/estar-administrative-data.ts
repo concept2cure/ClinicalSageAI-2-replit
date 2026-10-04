@@ -49,12 +49,12 @@
  * @module server/services/pathway-engines/estar/estar-administrative-data
  */
 
-import { and, asc, eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { clientWorkspaces, fda510kProjects, organizations, projects } from '../../../../shared/schema';
 import { regulatoryPrograms, type PredicateDevice } from '../../../../shared/schema/programs';
 import { estarRegistrations } from '../../../../shared/schema/estar-registration';
 import type { RequestDb } from '../../../db/requestDb';
-import { isMissingAnchorColumn } from '../../c2c/program-project-anchor';
+import { isMissingAnchorColumn, readProgramAnchorRow, type ProgramAnchorRow } from '../../c2c/program-project-anchor';
 import type { OfficialPdfFieldMap } from '../../forms/fill-official-pdf';
 import {
   ESTAR_TEMPLATE_RECOMPUTED_FIELDS,
@@ -637,42 +637,6 @@ export interface LoadEstarAdministrativeInputsParams {
   fda510kProjectId: number | null;
 }
 
-interface AnchorProjectRow {
-  id: number;
-  clientWorkspaceId: number | null;
-}
-
-/**
- * The PM-spine project anchored to a program, org-scoped. Null when there is no
- * anchor — including when `projects.regulatory_program_id` is not present in
- * this database (42703), which is "no anchor", not a failure.
- *
- * ORDER BY id: `projects.regulatory_program_id` is not unique, so `LIMIT 1`
- * alone would let Postgres hand back whichever row it reached first. The
- * intake writer (ensureProgramProjectAnchor) links to the lowest id
- * (`ORDER BY id LIMIT 1`), so this loader reads the workspace of the same row
- * that intake considers THE anchor, and the same row on every call — the
- * governed values on the form cannot flip between two exports of one program.
- */
-async function findAnchorProjectByProgram(
-  db: RequestDb,
-  programUuid: string,
-  organizationId: number,
-): Promise<AnchorProjectRow | null> {
-  try {
-    const [row] = await db
-      .select({ id: projects.id, clientWorkspaceId: projects.clientWorkspaceId })
-      .from(projects)
-      .where(and(eq(projects.regulatoryProgramId, programUuid), eq(projects.organizationId, organizationId)))
-      .orderBy(asc(projects.id))
-      .limit(1);
-    return row ?? null;
-  } catch (err) {
-    if (isMissingAnchorColumn(err)) return null;
-    throw err;
-  }
-}
-
 /** The program a PM-spine project anchors, org-scoped; null without the anchor column. */
 async function readProjectProgramId(
   db: RequestDb,
@@ -717,7 +681,7 @@ const FDA_COLUMNS = {
 async function resolveAnchorRecords(
   db: RequestDb,
   { organizationId, programUuid, fda510kProjectId }: LoadEstarAdministrativeInputsParams,
-): Promise<{ programId: string | null; fda: Fda510kRow | null; anchor: AnchorProjectRow | null }> {
+): Promise<{ programId: string | null; fda: Fda510kRow | null; anchor: ProgramAnchorRow | null }> {
   if (fda510kProjectId !== null) {
     const [fda] = await db
       .select(FDA_COLUMNS)
@@ -735,7 +699,14 @@ async function resolveAnchorRecords(
     return { programId, fda, anchor: anchor ?? null };
   }
   if (!programUuid) return { programId: null, fda: null, anchor: null };
-  const anchor = await findAnchorProjectByProgram(db, programUuid, organizationId);
+  // The one anchor reader (PF-08): the lowest-id row, the one intake links.
+  let anchor: ProgramAnchorRow | null;
+  try {
+    anchor = await readProgramAnchorRow(db, { programId: programUuid, orgId: organizationId, context: 'estar-administrative-data' });
+  } catch (err) {
+    if (!isMissingAnchorColumn(err)) throw err;
+    anchor = null;
+  }
   if (!anchor) return { programId: programUuid, fda: null, anchor: null };
   const [fda] = await db
     .select(FDA_COLUMNS)

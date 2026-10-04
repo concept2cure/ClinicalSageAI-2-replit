@@ -1,0 +1,7 @@
+# 4. Mutation A — the earlier-copy check fails OPEN (`if (!list.ok) return null`): a failed check would create a possible duplicate
+ × client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > openDraftAsDocument — once per turn > creates nothing when the earlier-copy check cannot run 9ms
+   → expected [ { method: 'POST', …(2) } ] to have a length of +0 but got 1
+ × client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — every AnA draft opens as a document (2026-10-01) > creates nothing when it cannot check for an earlier copy, and says so 5188ms
+   → Unable to find an element with the text: /Couldn’t check whether this draft is already a document/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 24 passed (26)

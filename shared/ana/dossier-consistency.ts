@@ -23,7 +23,7 @@
  * in this codebase it means "the requirement does not apply", and at least one
  * reader (submission-readiness-twin-service.ts) counts it as compliant.
  *
- * 2026-09-28 (row 74, track NC; ADR-0014 §7): the same rule for the two other
+ * 2026-09-28 (row 74, track NC; ADR-0015 §7): the same rule for the two other
  * deterministic figure checks, which answered 'clean' when they had compared
  * nothing. Cross-document figure reconciliation (reconcile_extracted_figures,
  * reconcile_device_documents) uses DOSSIER_CONSISTENCY_VERDICTS, the same

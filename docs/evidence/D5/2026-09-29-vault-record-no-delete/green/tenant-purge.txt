@@ -1,0 +1,33 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge is one transaction > leaves the tenant exactly as it was when a table fails part-way 48ms
+{"level":40,"time":"2026-09-29T20:03:29.209Z","pid":27119,"hostname":"vm","context":{"organizationId":90601,"purgedByUserId":1,"retentionOverride":null,"finalExportDigest":"purge_27119_mun3tbjx-digest"},"msg":"[tenant-offboarding] Tenant purged"}
+{"level":20,"time":"2026-09-29T20:03:29.234Z","pid":27119,"hostname":"vm","context":{"table":"purge_probe_no_such_table"},"msg":"[tenant-offboarding] Purge skipped a table not present in this schema"}
+{"level":40,"time":"2026-09-29T20:03:29.236Z","pid":27119,"hostname":"vm","context":{"organizationId":90601,"purgedByUserId":1,"retentionOverride":null,"finalExportDigest":"purge_27119_mun3tbjx-digest"},"msg":"[tenant-offboarding] Tenant purged"}
+{"level":40,"time":"2026-09-29T20:03:29.270Z","pid":27119,"hostname":"vm","context":{"organizationId":90601,"purgedByUserId":1,"retentionOverride":null,"finalExportDigest":"purge_27119_mun3tbjx-digest"},"msg":"[tenant-offboarding] Tenant purged"}
+{"level":40,"time":"2026-09-29T20:03:29.286Z","pid":27119,"hostname":"vm","context":{"organizationId":90601,"digest":"purge_27119_mun3tbjx-truncated","tablesFailed":[],"truncatedTables":["vault.documents"]},"msg":"[tenant-full-export] Tenant export incomplete — no receipt recorded; this digest cannot authorize a purge"}
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge is one transaction > removes every listed table’s rows and marks the tenant purged when nothing fails 45ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge is one transaction > still skips a table this deployment’s schema does not have 17ms
+ ✓ tests/db/tenant-purge.dbtest.ts > a legal hold stops the purge > refuses while any hold on the tenant is active, and destroys nothing 15ms
+ ✓ tests/db/tenant-purge.dbtest.ts > a legal hold stops the purge > proceeds once the hold is lifted, by someone, for a reason 19ms
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records no receipt for a truncated export, so its digest opens nothing 16ms
+{"level":40,"time":"2026-09-29T20:03:29.301Z","pid":27119,"hostname":"vm","context":{"organizationId":90601,"digest":"purge_27119_mun3tbjx-partial","tablesFailed":["projects"],"truncatedTables":[]},"msg":"[tenant-full-export] Tenant export incomplete — no receipt recorded; this digest cannot authorize a purge"}
+{"level":40,"time":"2026-09-29T20:03:29.362Z","pid":27119,"hostname":"vm","context":{"organizationId":90601,"purgedByUserId":1,"retentionOverride":null,"finalExportDigest":"purge_27119_mun3tbjx-digest"},"msg":"[tenant-offboarding] Tenant purged"}
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records no receipt for an export in which a table failed to read 13ms
+ ✓ tests/db/tenant-purge.dbtest.ts > only a complete export authorizes a purge > records one for a complete export 19ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > deletes each object from the store it was saved in, after the purge commits 43ms
+{"level":30,"time":"2026-09-29T20:03:30.566Z","pid":27119,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-29T20:03:30.566Z","pid":27119,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-29T20:03:30.566Z","pid":27119,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":40,"time":"2026-09-29T20:03:30.659Z","pid":27119,"hostname":"vm","context":{"organizationId":90601,"purgedByUserId":1,"retentionOverride":null,"finalExportDigest":"purge_27119_mun3tbjx-digest"},"msg":"[tenant-offboarding] Tenant purged"}
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > erases the vault through the route's own connection: the runtime role in the platform scope (VR-07) 1299ms
+{"level":40,"time":"2026-09-29T20:03:30.724Z","pid":27119,"hostname":"vm","context":{"organizationId":90601,"purgedByUserId":1,"retentionOverride":null,"finalExportDigest":"purge_27119_mun3tbjx-digest"},"msg":"[tenant-offboarding] Tenant purged"}
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > keeps the bytes, and their record, when the purge fails part-way 40ms
+ ✓ tests/db/tenant-purge.dbtest.ts > the purge erases the vault's stored bytes, and only once it has committed > leaves the bytes of records a purge does not remove 23ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  20:03:28
+   Duration  2.46s (transform 822ms, setup 71ms, import 324ms, tests 1.80s, environment 0ms)
+

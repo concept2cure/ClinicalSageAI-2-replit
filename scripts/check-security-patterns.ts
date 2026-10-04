@@ -122,7 +122,11 @@ const PATTERNS: Pattern[] = [
     // rule matched only the integer-id headers, so nine route reads of
     // `tenantContext?.organizationUuid || req.headers['x-org-uuid']` passed it.
     // docs/evidence/D3/2026-09-24-atom-search-tenant-key/.
-    regex: /\breq\.headers\s*\[\s*['"]x-(?:(?:organization|tenant)-id|org-uuid)['"]\s*\]/i,
+    // req.header('x-…') / req.get('x-…') added 2026-10-01: middleware/tenantAuth.ts
+    // admitted on req.header('x-tenant-id') with no session, and the rule only
+    // matched the req.headers[...] spelling. x-tenant is the same header, shortened.
+    regex:
+      /\breq\.(?:headers\s*\[\s*['"]|(?:header|get)\s*\(\s*['"])x-(?:(?:organization|tenant)-id|org-uuid|tenant)['"]/i,
     message:
       'Do not read org / tenant identity from request headers — validateTenantContext ' +
       'sources it from the JWT and emits a tenant_impersonation_attempt audit ' +
@@ -179,12 +183,10 @@ const PATTERNS: Pattern[] = [
       // (project-hierarchy.ts, projects-management.ts) or verify it against
       // the project's own workspace (project-module-bridge.ts). No write.
       /(?:^|\/)server\/utils\/tenantContext\.ts$/,
-      // DEFERRED, not legitimate: cortex-unified.ts:128 copies
-      // x-client-workspace-id into its router's tenantContext. The file was
-      // inside another lane's 24-hour window when this rule landed
-      // (2026-09-26; window closes 2026-09-27 04:43 UTC). Remove this line
-      // when that read is verified or dropped — P1-7b README, "Left open".
-      /(?:^|\/)server\/routes\/cortex-unified\.ts$/,
+      // server/routes/cortex-unified.ts was exempt here until 2026-10-01 as a
+      // dated deferral (its router copied x-client-workspace-id into its own
+      // tenantContext). The read is gone; so is the exemption
+      // (docs/evidence/D6/2026-10-01-tranche-4/P1-7-P1-27-residuals/).
     ],
   },
   {

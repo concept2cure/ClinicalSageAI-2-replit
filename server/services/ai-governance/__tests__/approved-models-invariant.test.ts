@@ -1,5 +1,5 @@
 /**
- * ADR-0014 §4: the lockfile names each served model one way.
+ * ADR-0015 §4: the lockfile names each served model one way.
  *
  * The ledger attributes a call to its entry through `approvedEntryFor`
  * (provider, then pinned version OR id), which takes the first hit. Two

@@ -1,0 +1,299 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the vault copy is filed as itself > names the vault document by uuid, on the vault_documents table 326ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the vault copy is filed as itself > writes NO snapshot — that is the whole point of the uuid column 101ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the vault copy is filed as itself > reports the leaf the server actually wrote 101ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > refusals are refusals > surfaces the server verdict verbatim and never claims a placement 97ms
+stderr | client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > shows each version's stage and sign-offs, apart from its filing
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > refusals are refusals > writes nothing for a section code no document can be filed at 69ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > renders the filing cabinet with the upload inside its suggested folder 160ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the target picker is the shared one > offers the draft sequence and disables the frozen one, saying why 79ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is judged in the submission type's vocabulary > files a vault document into an IRB package at an IRB slot 81ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is judged in the submission type's vocabulary > refuses a CTD code in an IRB package, naming the IRB vocabulary 77ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > shows the unfiled queue and the header review count 100ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — uploads are visible in the tree they were uploaded into > a failed vault read is an error, never "no documents" 33ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is judged in the submission type's vocabulary > files into a 510(k) at an eSTAR section 64ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the section code is judged in the submission type's vocabulary > stays strict for an eCTD submission: an IRB slot is not a CTD section 75ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > a non-PDF is refused before anything is written > says why, and offers no placement 7ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > reports the derived pipeline stages and lists sources on demand 162ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an unavailable data room renders as a failure, never an empty room 70ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > a non-PDF is refused before anything is written > a PDF is filed as before 58ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the placement carries its reason > keeps Place disabled until a reason meets the floor, and says why 110ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmission.test.tsx > the placement carries its reason > sends the trimmed reason with the leaf 48ms
+stderr | client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > sends a version nobody started for review, after saying what that means: starts its record, then moves it to In review
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an empty data room says it is empty 98ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — the data room lane > an unavailable branch is said, never silently omitted from the tree 27ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a suggestion is attributed to whoever made it > labels the classifier's proposal as the classifier's, with its confidence 51ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a suggestion is attributed to whoever made it > does not label AnA's suggestion as the classifier's 44ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — filing decisions are governed commits, not local patches > confirming a suggested filing POSTs to /file and re-reads the tree 107ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — filing decisions are governed commits, not local patches > a rejected filing (expired session) is reported as refused, never as recorded 62ms
+stderr | client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > sends a version nobody started for review, after saying what that means: starts its record, then moves it to In review
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > shows each version's stage and sign-offs, apart from its filing 682ms
+stderr | client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > sends a version nobody started for review, after saying what that means: starts its record, then moves it to In review
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > renders a search input the human can actually use 74ms
+stderr | client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > signs the review through the e-signature dialog: meaning, reason and password go to the lifecycle route
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > sends a version nobody started for review, after saying what that means: starts its record, then moves it to In review 340ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > searches on the server and shows the hits, not a substring filter 116ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > reports a FAILED search as a failure, never as zero matches 319ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — search > says how many of the total are shown when the page is not all of them 100ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > states the window and the real total when the server truncated the page 76ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > says nothing when the whole cabinet fits — no note on the common case 89ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — a truncated filing cabinet says so > leaves the unfiled queue alone — it is programme-wide, not a page count 69ms
+stderr | client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > a refused approval shows the server's reason, in the dialog
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > signs the review through the e-signature dialog: meaning, reason and password go to the lifecycle route 726ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurface.test.tsx > Vault — placing a document into a submission > offers the action on an uploaded document and files it by BARE uuid 542ms
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > is one row and one header, saying how many versions it has
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > lists every version with its SHA-256 prefix and uploader, each downloadable
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > is one row and one header, saying how many versions it has 197ms
+stderr | client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > says before signing that the reviewer, and the uploader, do not approve
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > a refused approval shows the server's reason, in the dialog 592ms
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > says so when the versions cannot be read
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > lists every version with its SHA-256 prefix and uploader, each downloadable 148ms
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > exports the signed history of every version, and says when the role may not
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > says so when the versions cannot be read 99ms
+Not implemented: navigation to another Document
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > 'Upload new version' names the document and sends no document code
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > 'Upload new version' names the document and sends no document code
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > 'Upload new version' names the document and sends no document code
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > a document with versions in the Vault (VR-09) > exports the signed history of every version, and says when the role may not 222ms
+stderr | client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > says before signing that the reviewer, and the uploader, do not approve
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > offers a refused same-name file as the next version, instead of a dead end
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > offers a refused same-name file as the next version, instead of a dead end
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > offers a refused same-name file as the next version, instead of a dead end
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > 'Upload new version' names the document and sends no document code 110ms
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > offers a refused same-name file as the next version, instead of a dead end
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > offers a refused same-name file as the next version, instead of a dead end
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-1`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > search includes earlier versions only when asked
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > search includes earlier versions only when asked
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > search includes earlier versions only when asked
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > offers a refused same-name file as the next version, instead of a dead end 247ms
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > search includes earlier versions only when asked
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > search includes earlier versions only when asked
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > an earlier version found by search says so, and shows its versions and history
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > an earlier version found by search says so, and shows its versions and history
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > says who sent it for review, and a role without authoring rights, may not act
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > search includes earlier versions only when asked 141ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > says before signing that the reviewer, and the uploader, do not approve 953ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > an earlier version found by search says so, and shows its versions and history 230ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCheckInVersion.test.tsx > adding and finding a version in the Vault (VR-09) > the empty state claims only what the product does 19ms
+stderr | client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > says who sent it for review, and a role without authoring rights, may not act
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > names the earlier approved version an approval supersedes
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > says who sent it for review, and a role without authoring rights, may not act 791ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > File into Vault from the data room (VR-11) > offers a checkbox only for sources not yet filed 187ms
+stderr | client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > a dropped connection says the outcome is not known, never that nothing happened
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > File into Vault from the data room (VR-11) > files the chosen sources and answers for each one, saying the batch was not complete 419ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > names the earlier approved version an approval supersedes 394ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > File into Vault from the data room (VR-11) > a refusal of the whole request says nothing was filed, and gives the reason 198ms
+stderr | client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > the list row says the stage beside the filing
+Encountered two children with the same key, `22222222-2222-4222-8222-222222222222-0`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > a dropped connection says the outcome is not known, never that nothing happened 475ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > who may take the next step, and what each step says (VR-13) > the list row says the stage beside the filing 62ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > what counts as settled in a folder (VR-13, FD4) > an upload counts only once approved; a confirmed filing is not an approval 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > File into Vault from the data room (VR-11) > a dropped connection says the outcome is not known 188ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > File into Vault from the data room (VR-11) > can select every source not yet filed in one step 128ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > the words for each outcome > already in the Vault names the version and what replaced it 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > the words for each outcome > a source the classifier could not place says it is not in a folder yet 0ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomFile.test.tsx > the words for each outcome > a complete batch has no caveat 0ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > lists both directions in their own words, with the project and a later version named 156ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > a list that could not be read says so, and never reads as no related documents 280ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > finds a document in the library, relates it, and claims it only once the server recorded it 192ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > a refused relate says so and claims nothing 121ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > removing one needs a reason of the required length, sends it, and then re-reads the list 154ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultConfirmSuggested.test.tsx > Confirm N suggested (VR-11b) > the header counts what awaits confirmation, as the server counted it 136ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > the list (1) > lists what the server returns, open by default, with the summary, the three anchors and stale notes 373ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > the list (1) > says when nothing is open on any version 8ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > a list that could not be read (2) > a 500 says so and never reads as no open annotations 15ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > a list that could not be read (2) > a 200 that is not the expected shape says so too 20ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > posting (3) > claims a whole-document comment only once the server answered 201 48ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > posting (3) > a 409 shows the server message, keeps the form and claims nothing 54ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > posting (3) > a returned 401 is not a success either 34ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > passages in code points (4) > codePointRange converts UTF-16 offsets and refuses a split character or an empty range 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > passages in code points (4) > posts the selected passage at its absolute code-point offset with the hash as read 66ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > acting on an annotation (5) > offers Retract only on the actor’s own annotations and replies 63ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultConfirmSuggested.test.tsx > Confirm N suggested (VR-11b) > holds the action back until a reason is given, sends one reason for the set, and answers per document 395ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultConfirmSuggested.test.tsx > Confirm N suggested (VR-11b) > a refused request says nothing was confirmed, with the reason 163ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultConfirmSuggested.test.tsx > which documents are offered > only uploads suggested into a folder; unfiled, confirmed and folderless suggestions are not 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > acting on an annotation (5) > a 422 on resolve shows the server message and keeps the form 98ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > acting on an annotation (5) > a retraction is claimed after the 200, with its reason sent 66ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > acting on an annotation (5) > a reply is claimed after the 201, and its form closes 101ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > page anchors (6) > offers the page input when the text read gives a page count 44ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > page anchors (6) > does not offer it when the version has no recorded page count 29ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > openAnnotationsSentence (7) > says what was open, or that it could not be read 0ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault document history > lists who did what to this document, newest first, with the chain verdict 201ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault document history > a failed read says so, and does not read as a document with no history 100ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault document history > a broken chain is reported, not hidden, at the entry the server names 97ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault document history > a break in another organisation's row is reported without naming it 106ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDocumentHistory.test.tsx > Vault document history > nothing to verify reads as not verified, with the reason: neither verified nor failed 81ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > the dialog is styled by the design system, not by invented names > uses no class that no stylesheet defines 265ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > the dialog is styled by the design system, not by invented names > renders the shared dialog shell the other dialogs use 35ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > is labelled by its own title 38ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > moves focus into the dialog on open 24ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — header document count > states no count when no project is open and nothing was read 90ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > returns focus to whatever opened it 25ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > closes on Escape 33ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultPlaceIntoSubmissionDialog.test.tsx > it behaves like a modal dialog > closes on a click outside, but not on a click inside 24ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — header document count > states no count over a FAILED read 42ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — header document count > states the count once the read succeeds 39ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — a refused read is a refusal > a 403 says access was refused, not that the store did not respond 38ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — a refused read is a refusal > a 5xx says the store did not respond, and offers a retry 232ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — upload controls > names document types for a reader, not by wire token 22ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultHeaderHonesty.test.tsx > Vault — upload controls > with no project open, Upload is disabled and says why 29ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > shows the counts and the rule pack they come from, and no percentage 136ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > tells AnA the same counts the page shows 60ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > says when the list is the ICH baseline and not the program's own 86ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > files an existing document at a missing section through the filing call 134ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > shows why when there is no figure, and never "0 of" 137ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultFixityCheck.test.tsx > check stored files (critique 15) > runs the check and names every version that could not be proven 340ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultFixityCheck.test.tsx > check stored files (critique 15) > a check that did not run says so, with the reason, and shows no result 100ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultFixityCheck.test.tsx > check stored files (critique 15) > all intact, and a capped run, read as such 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > lists hits from every project, each with its project, and downloads through that project 419ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > a failed library search says nothing was searched 114ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > a page short of the total says how many are shown 0ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultVersionCompare.test.tsx > compare two versions (critique 15) > an earlier version compares with the current one: bytes, details and the changed lines 431ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultVersionCompare.test.tsx > compare two versions (critique 15) > the current version offers no comparison with itself 59ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultVersionCompare.test.tsx > compare two versions (critique 15) > a comparison that could not be read is an error, not an empty difference 71ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultVersionCompare.test.tsx > compare two versions (critique 15) > text that could not be compared says why; a capped comparison says so 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceLabels.test.tsx > Vault — document types are named in words > names a search hit's document type in words, not the stored wire token 188ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceLabels.test.tsx > Vault — document types are named in words > the upload type picker offers the shared labels, not the wire tokens with underscores swapped for spaces 78ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceLabels.test.tsx > Vault — an evidence kind is named in words (VR-04) > the detail pane's 'Looks like' says 'Clinical study report', not 'csr' 108ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceLabels.test.tsx > Vault — what AnA is told about a selected file > a search hit is not "0% complete": no authoring completion was assessed 159ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > publishes the selected section on the editor deep-link channel before navigating 153ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > carries the section but NOT an invented family for a dossier the channel cannot name 73ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > leaves no stale target behind for the next, unrelated visit to the editor 74ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchSelection.test.tsx > Vault search — selection > clicking the second hit shows the second hit, not the first 221ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSearchSelection.test.tsx > Vault search — selection > a hit for a filed document keeps its filing actions 161ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomCounts.test.tsx > Vault data room lane > a full window reads as a floor, says so, and AnA is told 135ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomCounts.test.tsx > Vault data room lane > a refused source is shown as needing review, not as classified 121ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultDataRoomCounts.test.tsx > Vault data room lane > a classified source's suggestion names its kind in words, not the stored token (VR-04) 80ms
+stderr | client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — a document filed through the API is on the page > the row opens the cabinet folder the document sits in and selects it
+An update to VaultVersions inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentHistory inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to VaultAnnotations inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to VaultRelationships inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — a document filed through the API is on the page > shows the filed document by title once the read settles, with the spine still the open folder 134ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — a document filed through the API is on the page > the row opens the cabinet folder the document sits in and selects it 96ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultFiledDocumentVisible.test.tsx > Vault — a document filed through the API is on the page > a vault with no uploads says so in the lane rather than rendering nothing 44ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — what AnA is told about the selected document > an upload has no completion figure — null, not 0% complete 131ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultSurfaceAnaContext.test.tsx > Vault — "N documents" counts documents, not tree entries > one authored document with three sections is "1 document", to the user and to AnA 85ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultEditDetails.test.tsx > Edit details > shows the recorded title, type and classification 32ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultEditDetails.test.tsx > Edit details > will not save without a change and a reason of the required length 31ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultEditDetails.test.tsx > Edit details > sends only the changed fields with the reason, and says it was recorded once the server says so 27ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultEditDetails.test.tsx > Edit details > reports a refusal as a refusal, keeps the form, and claims nothing 33ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultEditDetails.test.tsx > Edit details > says nothing changed when the values were already recorded, and does not reload 27ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > names each sequence and section that carries a version, with the operation 58ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > a version placed nowhere says so, and a row the server said nothing about claims nothing 14ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > names each official eSTAR export that attached a version, and claims nothing when there is none 13ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > several placements read as one list 0ms
+
+ Test Files  23 passed (23)
+      Tests  145 passed (145)
+   Start at  21:43:24
+   Duration  18.75s (transform 3.90s, setup 2.65s, import 12.23s, tests 19.81s, environment 16.03s)
+

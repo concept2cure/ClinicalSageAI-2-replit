@@ -383,6 +383,9 @@ describe('Journey C — HAQ correction loop (service level, canonical DDL)', () 
         intendedAction: 'promote' as const,
         actorRole: 'author',
       };
+      // Placed at 2.7.3 (Summary of Clinical Efficacy, a Module 2 clinical
+      // summary), so the ledger attributes this decision to 'clinical'. The
+      // empty document below is unplaced. See the domain_track check further down.
       const ready = evaluateGovernedDocument({
         context: { ...base, artifactId: 'journey-ready-doc', ctdSection: '2.7.3' },
         documentState: {
@@ -419,7 +422,7 @@ describe('Journey C — HAQ correction loop (service level, canonical DDL)', () 
 
       const rows = await jdb.pool.query(
         `SELECT action_state, domain_track, recommendation_type,
-                decision_context->>'outcome' AS outcome
+                decision_context->>'outcome' AS outcome, decision_context->>'artifactId' AS artifact
            FROM decision_records
           WHERE organization_id = $1 AND project_id = $2
             AND decision_context->>'kind' = $3`,
@@ -431,14 +434,28 @@ describe('Journey C — HAQ correction loop (service level, canonical DDL)', () 
       // A machine record of a concluded evaluation must never be filed as
       // 'proposed' — the queue of decisions a human still owes an answer on.
       const expected: Record<string, string> = {
-        allow: 'executed',
-        block: 'rejected',
-        review: 'under_review',
-        degraded: 'under_review',
+        allow: 'executed', block: 'rejected', review: 'under_review', degraded: 'under_review',
+      };
+      // domain_track is the DISCIPLINE of the governed document, taken from its
+      // CTD placement (domainTrackForCtdSection in server/services/domain-track.ts),
+      // not one flat literal. So each row is checked against what its own
+      // fixture's placement means:
+      //   journey-ready-doc  ctdSection 2.7.3, a Module 2 clinical summary -> clinical
+      //   journey-empty-doc  unplaced (no section, hasPlacement false)     -> regulatory,
+      //                      the documented track for a governed act with no placement
+      // This used to expect 'regulatory' on every row. That was right while the
+      // writer wrote that value flat (f55dfcec9). 91e45bcbe replaced the flat value
+      // with the CTD attribution, and merge 651306ca8 kept the attribution but not
+      // this expectation. Checking each artifact's row catches a regression either
+      // way: back to a flat value, or an unplaced document picking up a discipline.
+      // A row with no artifact id, or one this journey did not evaluate, has no
+      // expected track and fails the lookup.
+      const expectedTrack: Record<string, string> = {
+        'journey-ready-doc': 'clinical', 'journey-empty-doc': 'regulatory',
       };
       for (const r of fabric) {
         expect(r.action_state, `outcome ${r.outcome}`).toBe(expected[r.outcome]);
-        expect(r.domain_track).toBe('regulatory');
+        expect(r.domain_track, `artifact ${r.artifact}`).toBe(expectedTrack[r.artifact]);
         expect(r.recommendation_type).toBe('regulatory_strategy');
       }
 
@@ -491,7 +508,7 @@ describe('Journey C — HAQ correction loop (service level, canonical DDL)', () 
       return {
         outcomes,
         persisted: fabric.length,
-        states: fabric.map((r) => `${r.outcome}->${r.action_state}`),
+        states: fabric.map((r) => `${r.artifact}: ${r.outcome}->${r.action_state} [${r.domain_track}]`),
         reopenedToUnderReview: reopened?.actionState,
         relockAllowed: relock.allowed,
       };

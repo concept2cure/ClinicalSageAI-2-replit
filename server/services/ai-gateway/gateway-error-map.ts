@@ -113,13 +113,29 @@ function classifyPolicyRefusal(err: unknown): ClassifiedGatewayError | null {
   if (governance) return governance;
   // Before the general policy branch: it is a GatewayPolicyError subclass, and
   // "blocked by AI gateway policy" would tell the author nothing they can act on.
-  // Not "try again shortly": nothing changes until a model is approved for it.
+  //
+  // Neither message says "try again shortly". Until 2026-09-24 both did, and it
+  // was false: this refusal is configuration, not load, and on an OpenAI-only
+  // deployment (every approvedForHighRisk model is Claude) it answered every
+  // draft the same way forever (U3a). /readyz now reports that posture as
+  // ana 'no_high_risk_model'; this is what the author sees if it serves anyway.
   if (err instanceof ModelNotApprovedError) {
+    // `reason` is read defensively: route tests mock this class bare, and a
+    // refusal without one is treated as the configuration case.
+    if ((err as { reason?: unknown }).reason === 'explicit') {
+      return {
+        code: 'PROVIDER_UNAVAILABLE',
+        message:
+          'The model requested is not approved for regulatory drafting and review, so this ' +
+          'request was not sent to it.',
+      };
+    }
     return {
       code: 'MODEL_NOT_QUALIFIED',
       message:
-        'No model approved for regulatory drafting and review is available here, ' +
-        'so this request was not sent to one that is not approved for it.',
+        'No model approved for regulatory drafting and review is configured on this deployment ' +
+        'for this request, so it was not sent to one that is not approved for it. Retrying will ' +
+        'not change this; an administrator needs to enable an approved model.',
     };
   }
   if (err instanceof GatewayPolicyError && (err as { code?: unknown }).code === 'RATE_LIMIT_EXCEEDED') {
@@ -164,13 +180,13 @@ function classifyPolicyRefusal(err: unknown): ClassifiedGatewayError | null {
 }
 
 /**
- * The two model-governance refusals ADR-0014 added, matched by code (the
+ * The two model-governance refusals ADR-0015 added, matched by code (the
  * reason given above for MEDIA_NOT_CARRIED). Null for anything else. Both are
  * MODEL_NOT_QUALIFIED at 403: a governance decision, not an outage, so no
  * "try again shortly" and no 5xx on a dashboard (track GW review [5]/[23]).
  *
  * - MODEL_NOT_PQ_QUALIFIED: production high-risk drafting with no PQ-passed
- *   model. ADR-0014 §3 says what the person is told, in these words.
+ *   model. ADR-0015 §3 says what the person is told, in these words.
  * - MODEL_NOT_GOVERNED: the request named a model the platform does not have
  *   (`unknown-model`); or the only model that could serve is not an approved
  *   entry (`no-entry`), or, in production, pins no concrete artifact

@@ -1,5 +1,5 @@
 /**
- * ADR-0014 §4: every model the gateway serves is an approved-models entry, at
+ * ADR-0015 §4: every model the gateway serves is an approved-models entry, at
  * every selection point and every risk level.
  *
  * Until this change the gateway checked approval only on high-risk work, and

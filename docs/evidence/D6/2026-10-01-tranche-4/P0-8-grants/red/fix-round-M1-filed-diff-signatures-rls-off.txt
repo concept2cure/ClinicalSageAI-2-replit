@@ -1,0 +1,125 @@
+# 2026-10-01T08:32:43Z variant=filed-diff (HEAD file + proposed-tenant-proof-routes.diff) (M1: RLS disabled on public.electronic_signatures); database c2c_p08_scratch (pg_restore of c2c_testdb), runtime role app_service
+# tenant-proof-routes.ts sha256 838bcae768b857b7
+
+ RUN  v4.1.7 /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/54adf5a4-792f-5e11-8798-ae17682e5284/scratchpad/p08fix-filed
+
+{"level":30,"time":"2026-10-01T08:32:47.118Z","pid":10405,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T08:32:47.122Z","pid":10405,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T08:32:47.122Z","pid":10405,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/two-tenant-application-rls.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/two-tenant-application-rls.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T08:32:47.588Z', poolSize: 1 }
+
+stdout | tests/db/two-tenant-application-rls.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T08:32:47.594Z', poolSize: 2 }
+
+stdout | tests/db/two-tenant-application-rls.dbtest.ts
+[database] Database connection successful
+
+ × tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > catalog and live session prove RLS is active for the runtime role 21ms
+   → expected { enabled: false, forced: true, …(1) } to match object { enabled: true, forced: true }
+(1 matching property omitted from actual)
+stdout | tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > normal project-context endpoint cannot resolve Tenant B profile as Tenant A
+[database] Database connection successful { timestamp: '2026-10-01T08:32:48.215Z', poolSize: 3 }
+
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > normal project-context endpoint cannot resolve Tenant B profile as Tenant A 189ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > normal regulatory-content CRUD endpoints hide and protect Tenant B rows 166ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: list/filter, direct read and existence probe hide tenant B from A 52ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: update and delete of tenant B are indistinguishable not-found 28ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > projects: WITH CHECK rejects planting a row into tenant B without leaking details 11ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > documents: list/filter, direct read and existence probe hide tenant B from A 45ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > documents: update and delete of tenant B are indistinguishable not-found 40ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > documents: WITH CHECK rejects planting a row into tenant B without leaking details 17ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: list/filter, direct read and existence probe hide tenant B from A 40ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: update and delete of tenant B are indistinguishable not-found 25ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: WITH CHECK rejects planting a row into tenant B without leaking details 13ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > design_controls: list/filter, direct read and existence probe hide tenant B from A 54ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > design_controls: update and delete of tenant B are indistinguishable not-found 39ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > design_controls: WITH CHECK rejects planting a row into tenant B without leaking details 11ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > risk_items: list/filter, direct read and existence probe hide tenant B from A 41ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > risk_items: update and delete of tenant B are indistinguishable not-found 40ms
+stdout | tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > signatures: WITH CHECK rejects planting a row into tenant B without leaking details
+[database] Database connection successful { timestamp: '2026-10-01T08:32:48.952Z', poolSize: 4 }
+
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > risk_items: WITH CHECK rejects planting a row into tenant B without leaking details 12ms
+ × tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > signatures: list/filter, direct read and existence probe hide tenant B from A 19ms
+   → expected [ '1', '100', '101', '102', …(256) ] to not include '2'
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > signatures: update and delete of tenant B are indistinguishable not-found 37ms
+ × tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > signatures: WITH CHECK rejects planting a row into tenant B without leaking details 24ms
+   → expected 404 "Not Found", got 201 "Created"
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > orchestrator_runs: list/filter, direct read and existence probe hide tenant B from A 52ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > orchestrator_runs: update and delete of tenant B are indistinguishable not-found 32ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > orchestrator_runs: WITH CHECK rejects planting a row into tenant B without leaking details 15ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > pooled session context is reset and the wrong-context negative control is observable 26ms
+{"level":30,"time":"2026-10-01T08:32:49.142Z","pid":10405,"hostname":"vm","context":{"code":"governed-fabric:8e6efe0f-b1e3-46a3-aa4e-c352dd5130e7","project":903010},"msg":"[decision-record] Creating decision record"}
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the recording evaluator persists the caller's own decision through the app role 1509ms
+{"level":30,"time":"2026-10-01T08:32:50.619Z","pid":10405,"hostname":"vm","context":{"code":"governed-fabric:53cf705d-49d4-4a25-ad00-9b848dd35629","project":903010},"msg":"[decision-record] Creating decision record"}
+{"level":40,"time":"2026-10-01T08:32:50.668Z","pid":10405,"hostname":"vm","context":{"operation":"recordGovernedDecision","error":"new row violates row-level security policy for table \"decision_records\""},"msg":"[governance-observability] Governance persistence failure"}
+{"level":40,"time":"2026-10-01T08:32:50.669Z","pid":10405,"hostname":"vm","context":{"decisionId":"53cf705d-49d4-4a25-ad00-9b848dd35629","error":"new row violates row-level security policy for table \"decision_records\""},"msg":"[governed-decision-ledger] Governed decision durable write failed"}
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > WITH CHECK refuses a decision the recorder files for another tenant 1505ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the simulate route records nothing, for any tenant 1516ms
+ ✓ tests/db/two-tenant-application-rls.dbtest.ts > WO-03 governed decisions under RLS (D3, 2026-09-24) > the reads show tenant A its decision and tenant B nothing of it 103ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > catalog and live session prove RLS is active for the runtime role
+AssertionError: expected { enabled: false, forced: true, …(1) } to match object { enabled: true, forced: true }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "enabled": true,
++   "enabled": false,
+    "forced": true,
+  }
+
+ ❯ tests/db/two-tenant-application-rls.dbtest.ts:96:23
+     94|         `${domain}: no pg_class row for ${tableFor[domain]} — the post…
+     95|       ).toBeDefined();
+     96|       expect(rows[0]).toMatchObject({ enabled: true, forced: true });
+       |                       ^
+     97|       expect(rows[0].policies).toBeGreaterThan(0);
+     98|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > signatures: list/filter, direct read and existence probe hide tenant B from A
+AssertionError: expected [ '1', '100', '101', '102', …(256) ] to not include '2'
+ ❯ tests/db/two-tenant-application-rls.dbtest.ts:146:33
+    144|       const list = await request(app).get(`/proof/${domain}`).set(auth…
+    145|       expect(list.body.ids).toContain(ids.A[domain]);
+    146|       expect(list.body.ids).not.toContain(ids.B[domain]);
+       |                                 ^
+    147|       const filter = await request(app)
+    148|         .get(`/proof/${domain}?q=${ids.B[domain]}`)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > signatures: WITH CHECK rejects planting a row into tenant B without leaking details
+Error: expected 404 "Not Found", got 201 "Created"
+ ❯ tests/db/two-tenant-application-rls.dbtest.ts:175:10
+    173|         .set(auth(tokenA))
+    174|         .send({ organizationId: ORG_B })
+    175|         .expect(404);
+       |          ^
+    176|       expect(response.body).toEqual({ error: { code: 'NOT_FOUND' } });
+    177|       expect(JSON.stringify(response.body)).not.toMatch(/row-level|pol…
+ ❯ Test._assertStatus ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/supertest/lib/test.js:309:14
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/supertest/lib/test.js:365:13
+ ❯ Test._assertFunction ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/supertest/lib/test.js:342:13
+ ❯ Test.assert ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/supertest/lib/test.js:195:23
+ ❯ localAssert ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/supertest/lib/test.js:138:14
+ ❯ Server.<anonymous> ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/supertest/lib/test.js:152:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 26 passed (29)
+   Start at  08:32:44
+   Duration  9.86s (transform 2.07s, setup 134ms, import 3.30s, tests 6.16s, environment 0ms)
+

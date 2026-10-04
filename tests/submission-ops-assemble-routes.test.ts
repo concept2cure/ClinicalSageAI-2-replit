@@ -185,8 +185,19 @@ function makeApp() {
 }
 
 /** Real agency identifiers recorded on the package — without them the eCTD
- *  branch records a blocking REGULATORY-IDENTIFIER-MISSING finding. */
-const REGULATORY = { applicationNumber: 'IND123456', applicantId: 'DUNS-123456789', applicantName: 'Acme Biologics Inc' };
+ *  branch records a blocking REGULATORY-IDENTIFIER-MISSING finding. The package
+ *  is an IND, so they are in FDA's form (sweep F05, F07b): the six digits FDA
+ *  assigned, the nine-digit D-U-N-S number, and the regulatory contact the
+ *  us-regional backbone names. */
+const REGULATORY = {
+  applicationNumber: '123456',
+  applicantId: '123456789',
+  applicantName: 'Acme Biologics Inc',
+  contact: { name: 'Jane Q. Regulatory', phone: '+1 301 555 0100', email: 'regulatory@acme.example' },
+};
+/** The identifiers with no regulatory contact recorded. */
+const withoutContact = ({ applicationNumber, applicantId, applicantName }: typeof REGULATORY) =>
+  ({ applicationNumber, applicantId, applicantName });
 const lockedPkg = (metadata: Record<string, unknown> = { foo: 'bar', regulatory: REGULATORY }) => ({
   id: 5, packageId: 'pkg_locked', orgId: 99, status: 'locked', packageFamily: 'ind', metadata,
 });
@@ -222,6 +233,11 @@ const findings = (res: any): Array<{ ruleId: string; severity: string; message: 
  *  letter the fixtures build (placement '1.2', leafFileName('cover-letter',
  *  'cover')); an md5 that is merely different from the rendered one, so this
  *  fixture is a `replace`. For an `unchanged` baseline use `filedFrom`. */
+/** An IND follow-up as FDA files it: an amendment to the Original Application
+ *  activity sequence 0000 opened (sweep F04). These posts used 'Efficacy
+ *  Supplement', which no IND can file, and which the route now refuses. */
+const IND_AMENDMENT = { submissionType: 'Original Application', submissionSubType: 'Amendment', submissionId: '0000' };
+
 const FILED_0000 = {
   sequence: '0000', submissionType: 'original', sha256: 'a'.repeat(64), transmittalId: 1,
   filedAt: '2026-01-01T00:00:00.000Z',
@@ -360,7 +376,7 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(res.status).toBe(409);
     expect(res.body.code).toBe('STALE_ASSEMBLY');
     expect(dbState.updateSet).toBeNull(); // nothing written: the newer identifiers stand
-    expect(packageLeafBytesFn.mock.calls[0][0].applicationId).toBe('IND123456'); // the backbone carried the OLD ones
+    expect(packageLeafBytesFn.mock.calls[0][0].applicationId).toBe('123456'); // the backbone carried the OLD ones
     // The zip built with the old identifiers is removed, and the discard is recorded.
     expect(unlinkFn).toHaveBeenCalledTimes(1);
     expect(res.body.ledgerWriteFailed).toBe(false);
@@ -526,7 +542,7 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
       // The CRITICAL case: two artifacts in ONE section placed at DIFFERENT CTD
       // sections. They must ship as two leaves — never merged under one code.
       [art('ds', '3.2.S.1', 2), art('dp', '3.2.P.1', 3)],
-      [], // empty CTD-coded section -> a placeholder leaf at 2.5 (warning)
+      [], // an empty CTD-coded section files nothing (sweep F11) — a warning says so
     ];
 
     const res = await post();
@@ -538,9 +554,11 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(res.body.data.bundle.format).toBe('ectd');
 
     // No errors (identifiers recorded, everything placeable); the empty 2.5
-    // placeholder yields a warning.
+    // section ships no placeholder leaf and yields a warning naming it.
     expect(res.body.data.bundle.validation.errorCount).toBe(0);
-    expect(res.body.data.bundle.validation.warningCount).toBeGreaterThanOrEqual(1);
+    expect(findings(res)).toContainEqual(expect.objectContaining({
+      ruleId: 'SECTION-EMPTY', severity: 'warning', message: expect.stringContaining('Clinical Overview (2.5)'),
+    }));
 
     // Built by the CANONICAL packager — never by the legacy flat builder.
     expect(buildECTDZipFn).not.toHaveBeenCalled();
@@ -549,15 +567,16 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(opts.region).toBe('fda');
     expect(opts.sequence).toBe('0000');
     // Real identifiers reach the backbone — not an internal package id.
-    expect(opts.applicationId).toBe('IND123456');
-    expect(opts.sponsorId).toBe('DUNS-123456789');
+    expect(opts.applicationId).toBe('123456');
+    expect(opts.sponsorId).toBe('123456789');
     expect(opts.sponsorName).toBe('Acme Biologics Inc');
-    // Four leaves, each at a PLACEABLE terminal heading; the drug-substance and
-    // drug-product artifacts are separate leaves at their own sections.
-    expect(opts.leaves.map((l: any) => l.ctdSection)).toEqual(['1.2', '3.2.S.1', '3.2.P.1', '2.5']);
+    // Three leaves, each at a PLACEABLE terminal heading; the drug-substance and
+    // drug-product artifacts are separate leaves at their own sections, and the
+    // empty section contributes none.
+    expect(opts.leaves.map((l: any) => l.ctdSection)).toEqual(['1.2', '3.2.S.1', '3.2.P.1']);
     expect(opts.leaves[1].bytes.subarray(0, 5).toString('utf8')).toBe('%PDF-');
-    // leafCount describes what SHIPPED (4 leaves), not the section count (3).
-    expect(res.body.data.bundle.leafCount).toBe(4);
+    // leafCount describes what SHIPPED (3 leaves), not the section count (3).
+    expect(res.body.data.bundle.leafCount).toBe(3);
 
     expect(mkdirFn).toHaveBeenCalledTimes(1);
     expect(writeFileFn).toHaveBeenCalledTimes(1);
@@ -566,7 +585,7 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     const bundle = dbState.updateSet.metadata.bundle;
     expect(dbState.updateSet.metadata.foo).toBe('bar');
     expect(bundle.sha256).toMatch(/^[0-9a-f]{64}$/);
-    expect(bundle.leafCount).toBe(4);
+    expect(bundle.leafCount).toBe(3);
     expect(bundle.validation.errorCount).toBe(0);
     expect(Array.isArray(bundle.validation.findings)).toBe(true);
     expect(bundle.storage.provider).toBe('local');
@@ -584,7 +603,10 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
       { id: 12, sectionKey: 'misc-attachment', sectionLabel: 'Misc', sortOrder: 0 }, // nothing inferable
       { id: 13, sectionKey: 'module3_cmc', sectionLabel: 'Module 3 CMC', sortOrder: 0 }, // bare module: NOT a heading
     ];
-    dbState.mappedByCall = [[art('cover', null)], [], []];
+    // Each holds an artifact that declares no CTD section, so the section key is
+    // all there is to place it by. (These were empty sections, placed as
+    // placeholders; an empty section now files nothing — sweep F11.)
+    dbState.mappedByCall = [[art('cover', null)], [art('misc', null, 2)], [art('m3', null, 3)]];
 
     const res = await post();
     expect(res.status).toBe(200);
@@ -707,6 +729,68 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(packageLeafBytesFn.mock.calls[0][0].applicationId).toMatch(/^UNASSIGNED-/);
   });
 
+  /* FDA's own forms (package-spine sweep F05, F07b, 2026-10-01). The identifiers
+     route refuses these now; a package recorded before it is caught here, by the
+     same rule, inside the ONE identifiers finding. */
+  const identifierFindings = (res: any) => findings(res).filter((f) => f.ruleId === 'REGULATORY-IDENTIFIER-MISSING');
+  const oneCoverLetter = () => {
+    dbState.sections = [{ id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 }];
+    dbState.mappedByCall = [[art('cover', null)]];
+  };
+
+  it('BLOCKS an IND package whose recorded application number carries a prefix, naming FDA’s six-digit form — and never rewrites it', async () => {
+    dbState.pkg = lockedPkg({ regulatory: { ...REGULATORY, applicationNumber: 'IND123456' } });
+    oneCoverLetter();
+    const res = await post();
+    const f = identifierFindings(res);
+    expect(f).toHaveLength(1);
+    expect(f[0].severity).toBe('error');
+    expect(f[0].message).toMatch(/six digits FDA assigned, with leading zeros and no IND\/NDA\/BLA prefix/);
+    expect(res.body.data.bundle.validation.errorCount).toBe(1);
+    expect(packageLeafBytesFn.mock.calls[0][0].applicationId).toBe('IND123456');
+  });
+
+  it('hands the recorded regulatory contact to the packager as the us-regional applicant contact', async () => {
+    dbState.pkg = lockedPkg();
+    oneCoverLetter();
+    const res = await post();
+    expect(identifierFindings(res)).toEqual([]);
+    expect(packageLeafBytesFn.mock.calls[0][0].fda.contacts).toEqual([{ type: 'Regulatory', ...REGULATORY.contact }]);
+  });
+
+  it('BLOCKS an IND package that records no regulatory contact, naming it after the missing paths', async () => {
+    const noContact = withoutContact(REGULATORY);
+    dbState.pkg = lockedPkg({ regulatory: { ...noContact, applicantId: undefined } });
+    oneCoverLetter();
+    const res = await post();
+    const f = identifierFindings(res);
+    expect(f).toHaveLength(1);
+    expect(f[0].message).toMatch(/missing or malformed package metadata: regulatory\.applicantId\)\. .*regulatory contact.*name, telephone and e-mail/);
+    expect(res.body.data.bundle.validation.errorCount).toBe(1);
+    expect(packageLeafBytesFn.mock.calls[0][0].fda.contacts ?? []).toEqual([]);
+  });
+
+  it('a contact recorded while the bundle was being assembled makes it stale (STALE_ASSEMBLY)', async () => {
+    dbState.pkg = lockedPkg();
+    oneCoverLetter();
+    packageLeafBytesFn.mockImplementationOnce(async () => {
+      dbState.pkg = lockedPkg({ foo: 'bar', regulatory: { ...REGULATORY, contact: { ...REGULATORY.contact, phone: '+1 301 555 0199' } } });
+      return { path: '/tmp/c2c-assemble-test/pkg.zip', sha256: 'f'.repeat(64), sizeBytes: 14, format: 'ectd', ...PACKAGER_EVIDENCE };
+    });
+    const res = await post();
+    expect(res.status).toBe(409);
+    expect(res.body).toMatchObject({ code: 'STALE_ASSEMBLY', gate: 'identifiers_changed' });
+    expect(dbState.updateSet).toBeNull();
+  });
+
+  it('holds only an FDA backbone to FDA’s forms: the same IND package assembled for Health Canada is not', async () => {
+    const noContact = withoutContact(REGULATORY);
+    dbState.pkg = lockedPkg({ regulatory: { ...noContact, applicationNumber: 'IND123456' } });
+    oneCoverLetter();
+    const res = await post({ region: 'CA' });
+    expect(identifierFindings(res)).toEqual([]);
+  });
+
   it('400s on a sequence that is not four digits (path-traversal vector) and never reaches the packager', async () => {
     dbState.pkg = lockedPkg();
     dbState.sections = [{ id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 }];
@@ -724,13 +808,15 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     });
     dbState.sections = [{ id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 }];
     dbState.mappedByCall = [[art('cover', null)]];
-    const res = await post({ sequence: '0003', submissionType: 'Annual Report' });
+    const res = await post({ sequence: '0003', submissionType: 'Annual Report', submissionSubType: 'Report' });
     expect(res.status).toBe(200);
     const opts = packageLeafBytesFn.mock.calls[0][0];
     expect(opts.sequence).toBe('0003');
-    // The backbone is told what is being filed — only 0000 is an original.
+    // The backbone is told what is being filed — only 0000 is an original —
+    // as the codes the term resolves to EXACTLY (sweep F04, F08): an IND annual
+    // report, sub-type Report, opening its own activity.
     expect(opts.submissionType).toBe('Annual Report');
-    expect(opts.fda.submissionType).toBe('Annual Report');
+    expect(opts.fda).toMatchObject({ submissionType: 'fdast5', submissionSubType: 'fdasst6', submissionId: '0003' });
   });
 
   it("REFUSES a submission type the region has no code for — 'amendment' reached the packager and 500'd", async () => {
@@ -765,16 +851,44 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     // 0000; without modified-file the superseded version stays current at the
     // agency. Both are properties of what the packager is HANDED, so that is
     // what this asserts — a router that dropped either passed the old suite.
-    dbState.pkg = lockedPkg({ regulatory: REGULATORY, filedSequences: [FILED_0000] });
-    dbState.sections = [{ id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 }];
-    dbState.mappedByCall = [[art('cover', null)]];
-    const res = await post({ sequence: '0001', submissionType: 'Efficacy Supplement' });
+    // (A dossier document, not a cover letter: an FDA submission's own cover
+    // letter is never a replace of the one on file — sweep F13, below.)
+    const coSection = [{ id: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 0 }];
+    dbState.pkg = lockedPkg();
+    dbState.sections = coSection;
+    dbState.mappedByCall = [[art('co', null, 2)]];
+    expect((await post()).status).toBe(200);
+    const filed = filedFrom('0000');
+
+    packageLeafBytesFn.mockClear();
+    (dbState as any)._pkgResolved = false;
+    dbState.pkg = lockedPkg({ regulatory: REGULATORY, filedSequences: [filed] });
+    dbState.sections = coSection;
+    dbState.mappedByCall = [[{ ...art('co', null, 2), content: 'Real content co, revised' }]];
+    const res = await post({ sequence: '0001', ...IND_AMENDMENT });
     expect(res.status).toBe(200);
     const sent = packageLeafBytesFn.mock.calls[0][0].leaves;
     expect(sent).toHaveLength(1);
-    expect(sent[0]).toMatchObject({ ctdSection: '1.2', fileName: 'cover-letter-cover.pdf', operation: 'replace' });
+    expect(sent[0]).toMatchObject({ ctdSection: '2.5', fileName: filed.leaves[0].fileName, operation: 'replace' });
     expect(sent[0].modifiedFile).toContain('0000');
     expect(res.body.data.bundle.lifecycle.summary).toMatchObject({ replace: 1, new: 0, unchanged: 0 });
+  });
+
+  it('an FDA cover letter is never a replace: a revised one files NEW, beside the one on file (sweep F13)', async () => {
+    // Each FDA submission carries its own cover letter. Diffed like dossier
+    // content, a revised letter was filed as a replace of 0000's — telling the
+    // agency the original submission's letter had been superseded.
+    dbState.pkg = lockedPkg({ regulatory: REGULATORY, filedSequences: [FILED_0000] });
+    dbState.sections = [{ id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 }];
+    dbState.mappedByCall = [[art('cover', null)]];
+    const res = await post({ sequence: '0001', ...IND_AMENDMENT });
+    expect(res.status).toBe(200);
+    const sent = packageLeafBytesFn.mock.calls[0][0].leaves;
+    expect(sent).toHaveLength(1);
+    expect(sent[0]).toMatchObject({ ctdSection: '1.2', fileName: 'cover-letter-cover.pdf', operation: 'new' });
+    expect(sent[0]).not.toHaveProperty('modifiedFile');
+    // 0000's letter stays on file, unchanged.
+    expect(res.body.data.bundle.lifecycle.summary).toMatchObject({ new: 1, replace: 0, unchanged: 1 });
   });
 
   it('a leaf byte-identical to the one on file is NOT handed to the packager — a sequence carries what changed', async () => {
@@ -792,7 +906,7 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     const filed = filedFrom('0000');
     expect(filed.leaves).toHaveLength(2);
 
-    // Second sequence: the cover letter is edited, the clinical overview is not.
+    // Second sequence: the clinical overview is edited, the cover letter is not.
     packageLeafBytesFn.mockClear();
     (dbState as any)._pkgResolved = false;
     dbState.pkg = lockedPkg({ regulatory: REGULATORY, filedSequences: [filed] });
@@ -801,13 +915,14 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
       { id: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 1 },
     ];
     dbState.mappedByCall = [
-      [{ ...art('cover', null), content: 'Real content cover, revised' }],
-      [art('co', null, 2)],
+      [art('cover', null)],
+      [{ ...art('co', null, 2), content: 'Real content co, revised' }],
     ];
-    const res = await post({ sequence: '0001', submissionType: 'Efficacy Supplement' });
+    const res = await post({ sequence: '0001', ...IND_AMENDMENT });
     expect(res.status).toBe(200);
     const sent = packageLeafBytesFn.mock.calls[0][0].leaves;
-    expect(sent.map((l: any) => l.fileName)).toEqual(['cover-letter-cover.pdf']);
+    const coFile = (filed.leaves as Array<{ ctdSection: string; fileName: string }>).find((l) => l.ctdSection === '2.5')!.fileName;
+    expect(sent.map((l: any) => l.fileName)).toEqual([coFile]);
     expect(sent[0].operation).toBe('replace');
     expect(res.body.data.bundle.lifecycle).toMatchObject({
       summary: { replace: 1, unchanged: 1, new: 0 }, omittedCount: 1,
@@ -823,12 +938,12 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     dbState.sections = [
       { id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 },
       { id: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 1 },
-      { id: 14, sectionKey: '3.2.P.1', sectionLabel: 'Description', sortOrder: 2 }, // no artifact → placeholder
+      { id: 14, sectionKey: '3.2.P.1', sectionLabel: 'Description', sortOrder: 2 }, // no artifact → files nothing (sweep F11)
     ];
     dbState.mappedByCall = [[art('cover', null)], [art('co', null, 2)], []];
     expect((await post()).status).toBe(200);
-    expect(dbState.updateSet.metadata.bundle.leafCount).toBe(3);
-    expect(dbState.updateSet.metadata.bundle.emptyLeafCount).toBe(1);
+    expect(dbState.updateSet.metadata.bundle.leafCount).toBe(2);
+    expect(dbState.updateSet.metadata.bundle.emptyLeafCount).toBe(0);
     const filed = filedFrom('0000');
 
     // 0001: only the cover letter changed. The other two are byte-identical.
@@ -841,13 +956,13 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
       { id: 14, sectionKey: '3.2.P.1', sectionLabel: 'Description', sortOrder: 2 },
     ];
     dbState.mappedByCall = [[{ ...art('cover', null), content: 'revised' }], [art('co', null, 2)], []];
-    const res = await post({ sequence: '0001', submissionType: 'Efficacy Supplement' });
+    const res = await post({ sequence: '0001', ...IND_AMENDMENT });
     expect(res.status).toBe(200);
     const stored = dbState.updateSet.metadata.bundle;
     expect(stored.leafCount).toBe(1);                 // one leaf is in the zip
     expect(stored.leafManifest).toHaveLength(1);
     expect(res.body.data.bundle.leafCount).toBe(1);
-    // The unshipped placeholder is not an empty section OF THIS SEQUENCE.
+    // No placeholder leaf exists to count (sweep F11).
     expect(stored.emptyLeafCount).toBe(0);
     // And nothing validation says names a leaf that is not in the bundle.
     for (const f of stored.validation.findings as Array<{ message: string }>) {
@@ -868,7 +983,7 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     dbState.pkg = lockedPkg({ regulatory: REGULATORY, filedSequences: [filed] });
     dbState.sections = [{ id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 }];
     dbState.mappedByCall = [[art('cover', null)]];
-    const res = await post({ sequence: '0001', submissionType: 'Efficacy Supplement' });
+    const res = await post({ sequence: '0001', ...IND_AMENDMENT });
     expect(res.status).toBe(409);
     expect(res.body).toMatchObject({ code: 'NOTHING_TO_FILE', gate: 'sequence_lifecycle' });
     expect(packageLeafBytesFn).not.toHaveBeenCalled();
@@ -883,7 +998,7 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
       dbState.pkg = lockedPkg({ foo: 'bar', regulatory: REGULATORY, filedSequences: filedTwo });
       dbState.sections = [{ id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 }];
       dbState.mappedByCall = [[art('cover', null)]];
-      const res = await post({ sequence, submissionType: 'Efficacy Supplement' });
+      const res = await post({ sequence, ...IND_AMENDMENT });
       expect(res.status, sequence).toBe(409);
       expect(res.body.error, sequence).toMatch(expected);
     }
@@ -919,7 +1034,7 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     dbState.pkg = lockedPkg({ regulatory: REGULATORY, filedSequences: [filed] });
     dbState.sections = [{ id: 13, sectionKey: 'clinical-overview-summary', sectionLabel: 'Clinical Overview', sortOrder: 0 }];
     dbState.mappedByCall = [[{ ...art('co', '2.5'), content: 'Real content co, revised' }]];
-    const res = await post({ sequence: '0001', submissionType: 'Efficacy Supplement' });
+    const res = await post({ sequence: '0001', ...IND_AMENDMENT });
     expect(res.status).toBe(200);
     const sent = packageLeafBytesFn.mock.calls[0][0].leaves;
     expect(sent).toHaveLength(1);
@@ -951,7 +1066,7 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     dbState.sections = [{ id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 }];
     dbState.mappedByCall = [[{ ...art('cover', null), content: 'revised' }]];
     const res = await post({
-      sequence: '0001', submissionType: 'Efficacy Supplement',
+      sequence: '0001', ...IND_AMENDMENT,
       withdraw: [{ ctdSection: doomed.ctdSection, fileName: doomed.fileName }],
     });
     expect(res.status).toBe(200);
@@ -961,7 +1076,8 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(gone.operation).toBe('delete');
     expect(gone.bytes).toBeUndefined();          // a withdrawal ships no file
     expect(gone.modifiedFile).toContain('0000'); // it points at the one on file
-    expect(res.body.data.bundle.lifecycle.summary).toMatchObject({ delete: 1, replace: 1 });
+    // The revised cover letter files new: it is this submission's own (sweep F13).
+    expect(res.body.data.bundle.lifecycle.summary).toMatchObject({ delete: 1, new: 1, replace: 0 });
     // It is not a file, so it is neither validated as one nor counted as one.
     expect(dbState.updateSet.metadata.bundle.leafCount).toBe(1);
   });
@@ -971,7 +1087,7 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     dbState.sections = [{ id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 }];
     dbState.mappedByCall = [[art('cover', null)]];
     const res = await post({
-      sequence: '0001', submissionType: 'Efficacy Supplement',
+      sequence: '0001', ...IND_AMENDMENT,
       withdraw: [{ ctdSection: '5.3.5.1', fileName: 'never-filed.pdf' }],
     });
     expect(res.status).toBe(409);
@@ -1314,7 +1430,7 @@ describe('only approved documents reach the agency on the package spine (LEAF-UN
       [{ ...art('cover', null, 1, 'draft'), content: 'Real content cover, revised' }],
       [art('co', null, 2, 'draft')],
     ];
-    const res = await post({ sequence: '0001', submissionType: 'Efficacy Supplement' });
+    const res = await post({ sequence: '0001', ...IND_AMENDMENT });
     expect(res.status).toBe(200);
     expect(packageLeafBytesFn.mock.calls[0][0].leaves.map((l: any) => l.fileName)).toEqual(['cover-letter-cover.pdf']);
     const f = unapproved(res);

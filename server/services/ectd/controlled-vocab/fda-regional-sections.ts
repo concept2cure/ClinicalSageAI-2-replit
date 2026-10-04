@@ -53,6 +53,68 @@ export function nearestUsRegionalHeading(ctdSection: string): string | null {
   return null;
 }
 
+/** Where a Module 1 leaf files in us-regional.xml, and whether this code can stand behind it. */
+export interface UsRegionalHeadingPlacement {
+  /** The heading section the leaf files under ('1.1.1' → '1.1'); the leaf's own section when none is published. */
+  heading: string;
+  /** The element written for that heading. */
+  element: string;
+  /** Why this placement is not one the backbone builder can stand behind; absent when it is. */
+  gap?: string;
+}
+
+/** True when a heading element's name encodes its own section ('1.3.4' → 'm1-3-4-…'). */
+function encodesSection(element: string, section: string): boolean {
+  return /^m(\d+(?:-\d+)*)(?=-[a-z]|$)/.exec(element)?.[1] === section.replace(/\./g, '-');
+}
+
+/** The headings between <m1-regional> and a heading: '1.14.4.1' → ['1.14', '1.14.4']. */
+function parentHeadings(heading: string): string[] {
+  const parts = heading.split('.');
+  return parts.slice(2).map((_, i) => parts.slice(0, i + 2).join('.'));
+}
+
+/**
+ * Where a Module 1 section's leaf is written, and what about that placement the
+ * backbone builder cannot stand behind.
+ *
+ * 2026-10-01 (package-spine sweep F06): the builder writes every heading
+ * directly under `<m1-regional>`. That is right only for a top-level heading
+ * (1.1, 1.2, 1.19, 1.20). A deeper one belongs inside its parent heading, and
+ * the parent's element name is not recorded here: this table is the v4.0
+ * context-of-use list, which names only the headings leaves file under. 1.18 is
+ * the one parent the list carries, and its description reads 'm1.18.1 naming',
+ * so the name derived for it encodes 1.18.1, not 1.18. Nesting is therefore not
+ * built (the names would be invented), and the gap says so, so that
+ * regionConformant cannot be read off the region alone
+ * (ectd/regional-backbone-readiness.ts).
+ */
+export function usRegionalHeadingPlacement(ctdSection: string): UsRegionalHeadingPlacement {
+  const section = ctdSection.replace(/^m/i, '');
+  const heading = nearestUsRegionalHeading(section);
+  if (!heading) {
+    const element = `m${section.replace(/\./g, '-')}`;
+    return { heading: section, element, gap: `${section} has no published FDA heading, so <${element}> is not an FDA heading element` };
+  }
+  const element = SECTION_ELEMENT.get(heading)!;
+  if (!encodesSection(element, heading)) {
+    return { heading, element, gap: `${heading} is written as <${element}>, a recorded name that does not encode ${heading}` };
+  }
+  const parents = parentHeadings(heading);
+  if (!parents.length) return { heading, element };
+  const unusable = parents.filter((p) => !encodesSection(SECTION_ELEMENT.get(p) ?? '', p));
+  const named = parents.map((p) => (SECTION_ELEMENT.has(p) ? `${p} (recorded as <${SECTION_ELEMENT.get(p)}>)` : p));
+  return {
+    heading,
+    element,
+    gap:
+      `${heading} is written directly under <m1-regional>, not inside its parent heading ${named.join(', ')}: ` +
+      (unusable.length
+        ? `no element name this code can stand behind is recorded for ${unusable.join(', ')}`
+        : 'this builder does not nest headings'),
+  };
+}
+
 /**
  * Resolve the FDA us-regional heading element name for a CTD section.
  *
@@ -68,10 +130,7 @@ export function nearestUsRegionalHeading(ctdSection: string): string | null {
  * (so an unknown section still nests under a syntactically valid element).
  */
 export function usRegionalSectionElement(ctdSection: string): string {
-  const section = ctdSection.replace(/^m/i, '');
-  const heading = nearestUsRegionalHeading(section);
-  if (heading) return SECTION_ELEMENT.get(heading)!;
-  return `m${section.replace(/\./g, '-')}`;
+  return usRegionalHeadingPlacement(ctdSection).element;
 }
 
 /** True when the section is a recognized FDA Module-1 US regional section. */

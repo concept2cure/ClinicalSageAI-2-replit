@@ -226,7 +226,8 @@ describe('clients-routes — fetch-by-id tenant guard', () => {
 
   it('rejects DELETE /:id on foreign workspace (cascade would wipe another tenants data)', async () => {
     nextSelectRows = [];
-    const token = tokenFor(1, 7);
+    // A writing role: DELETE is role-gated first (PF-08), and this case is the tenant guard's.
+    const token = tokenFor(1, 7, 'admin');
     const res = await request(app).delete('/api/clients/42').set('Authorization', token);
     expect(res.status).toBe(404);
   });

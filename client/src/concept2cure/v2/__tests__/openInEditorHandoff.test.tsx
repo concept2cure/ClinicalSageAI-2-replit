@@ -25,7 +25,10 @@
  *     that would show an empty document is the same silent loss in a new hat;
  *   • a thrown request does not navigate;
  *   • a double click creates ONE document, not two;
- *   • the retired localStorage note is never written again.
+ *   • the retired localStorage note is never written again;
+ *   • the document is created in the open project (client_program_id), and
+ *     with no project open nothing is created at all — no request, no
+ *     navigation, and the refusal says to open a project first (PF-07).
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -69,14 +72,25 @@ function wireStore(over: (m: string, u: string, b?: any) => Response | null = ()
   });
 }
 
+/* A document is created in the open project and nowhere else (PF-07, founder
+   decision 2026-09-26: every governed record belongs to a project). So every
+   case opens one — without it saveToAuthoring refuses before any request, and
+   each failure case below would pass for that reason alone rather than for the
+   one it names. The no-project cases at the bottom clear it on purpose. */
+const PROGRAM = '6d2f8a41-3c7e-4b9a-8e15-2a4c6f0b9d73';
+const setProject = (p: unknown) => {
+  (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = p;
+};
+
 afterEach(() => {
   cleanup();
-  delete (window as any).C2C_PROJECT;
+  setProject(undefined);
 });
 beforeEach(() => {
   apiRequest.mockReset();
   wireStore();
   setItem = vi.spyOn(Storage.prototype, 'setItem');
+  setProject({ id: PROGRAM });
 });
 
 const props = (id: string, onNav: () => void) => ({
@@ -102,7 +116,7 @@ describe('Biostatistics — Open in editor', () => {
     await waitFor(() => expect(secCalls()).toHaveLength(1));
 
     const doc = docCalls()[0][2];
-    expect(doc).toMatchObject({ title: 'Sample Size Rationale', module: 'M5' });
+    expect(doc).toMatchObject({ title: 'Sample Size Rationale', module: 'M5', client_program_id: PROGRAM });
 
     const sec = secCalls()[0][2];
     expect(sec).toMatchObject({
@@ -134,7 +148,9 @@ describe('Biostatistics — Open in editor', () => {
   });
 
   it('scopes the document to the open project, like every project-aware surface', async () => {
-    (window as any).C2C_PROJECT = { id: '11111111-2222-3333-4444-555555555555' };
+    // A different project from the default: the id is read live from the
+    // shell channel at click time, not fixed at import.
+    setProject({ id: '11111111-2222-3333-4444-555555555555' });
     const onNav = vi.fn();
     render(<Biostatistics {...props('biostatistics', onNav)} />);
     fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
@@ -204,7 +220,7 @@ describe('Biostatistics — Open in editor', () => {
     fireEvent.click(screen.getByRole('button', { name: 'DSMB / DMC Charter' }));
     fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
     await waitFor(() => expect(secCalls()).toHaveLength(1));
-    expect(docCalls()[0][2]).toMatchObject({ title: 'DSMB / DMC Charter' });
+    expect(docCalls()[0][2]).toMatchObject({ title: 'DSMB / DMC Charter', client_program_id: PROGRAM });
     expect(secCalls()[0][2]).toMatchObject({ code: 'dsmb_charter' });
     expect(secCalls()[0][2].content).toMatch(/DSMB|Data Monitoring/i);
   });
@@ -238,7 +254,7 @@ describe('ReportEngine — Open in editor', () => {
     expect(onNav).not.toHaveBeenCalled();
 
     await waitFor(() => expect(secCalls()).toHaveLength(1));
-    expect(docCalls()[0][2]).toMatchObject({ title: 'Design Recommendations', module: 'M5' });
+    expect(docCalls()[0][2]).toMatchObject({ title: 'Design Recommendations', module: 'M5', client_program_id: PROGRAM });
     expect(secCalls()[0][2]).toMatchObject({ doc_id: 'D-77', code: 'recommendations' });
     expect(secCalls()[0][2].content).toMatch(/# Protocol Design Recommendations/);
     expect(secCalls()[0][2].content).toMatch(/Sickle cell disease/);
@@ -304,6 +320,7 @@ describe('CmcModule change simulator — Open in editor', () => {
       // Quality documentation files under Module 3, not the server's M3-by-
       // default accident — it is sent explicitly.
       module: 'M3',
+      client_program_id: PROGRAM,
     });
     expect(secCalls()[0][2]).toMatchObject({ doc_id: 'D-77', code: 'regulatory_change_impact_assessment' });
     expect(secCalls()[0][2].content).toMatch(/# Regulatory Change Impact Assessment/);
@@ -334,5 +351,58 @@ describe('CmcModule change simulator — Open in editor', () => {
 
     expect(await screen.findByText(/its text didn’t save/)).toBeTruthy();
     expect(onNav).not.toHaveBeenCalled();
+  });
+});
+
+/* ══════════════════════ No project open (PF-07) ══════════════════════ */
+
+/**
+ * With no project open the handoff refuses before any request: a document
+ * belongs to a project, and the org-wide document it used to create was one no
+ * project ever listed. So the same click must write nothing, claim nothing —
+ * no navigation, no "saved to the authoring store" — say why, and leave the
+ * work where the user can still see it.
+ */
+async function expectRefusedWithoutProject(onNav: () => void, workSelector: string, work: RegExp) {
+  expect(await screen.findByText(/open a project first/i)).toBeTruthy();
+  expect(posts()).toHaveLength(0);
+  expect(docCalls()).toHaveLength(0);
+  expect(secCalls()).toHaveLength(0);
+  expect(onNav).not.toHaveBeenCalled();
+  expect(document.body.textContent ?? '').not.toMatch(/Saved to the authoring store/i);
+  expect(document.querySelector(workSelector)?.textContent).toMatch(work);
+}
+
+describe('Open in editor with no project open — nothing is created (PF-07)', () => {
+  it('Biostatistics posts nothing, stays put, and says to open a project', async () => {
+    setProject(undefined);
+    const onNav = vi.fn();
+    render(<Biostatistics {...props('biostatistics', onNav)} />);
+    fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
+    await expectRefusedWithoutProject(onNav, '.bs-doc-render', /Sample Size Determination/);
+  });
+
+  it('a legacy numeric workspace id is not a project — Biostatistics still posts nothing', async () => {
+    setProject({ id: 42 });
+    const onNav = vi.fn();
+    render(<Biostatistics {...props('biostatistics', onNav)} />);
+    fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
+    await expectRefusedWithoutProject(onNav, '.bs-doc-render', /Sample Size Determination/);
+  });
+
+  it('ReportEngine posts nothing, stays put, and says to open a project', async () => {
+    setProject(undefined);
+    const onNav = vi.fn();
+    analyzed(onNav);
+    fireEvent.click(await screen.findByRole('button', { name: /Open in editor/ }));
+    await expectRefusedWithoutProject(onNav, '.ra-doc', /Protocol Design Recommendations/);
+  });
+
+  it('CmcModule change simulator posts nothing, stays put, and says to open a project', async () => {
+    setProject(undefined);
+    const onNav = vi.fn();
+    const btn = await simulated(onNav);
+    fireEvent.click(btn);
+    await expectRefusedWithoutProject(onNav, '.cm-doc-render', /Comparability Requirement/);
   });
 });

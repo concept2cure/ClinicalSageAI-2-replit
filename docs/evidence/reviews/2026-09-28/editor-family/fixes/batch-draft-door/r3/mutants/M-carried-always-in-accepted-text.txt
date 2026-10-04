@@ -1,0 +1,11 @@
+mutant M-carried-always-in-accepted-text: server/services/clinical-regulatory-evidence/machine-attribution.ts
+- inAcceptedText: needle !== null && haystacks.some((h) => h.norm.includes(needle)),
++ inAcceptedText: true,
+
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > inAcceptedText: what this save accepted, not what the content carries > a clause carried forward and not accepted again is not; a one-word claim accepts no clause 10ms
+   → expected [ [ …(3) ] ] to deeply equal [ [ …(3) ] ]
+ × server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > the accept names AnA only when the lineage credited AnA's words > a later accept that verifies nothing does not name AnA, though AnA's earlier clauses carry forward 50ms
+   → expected 'AnA batch draft accepted into document' to be 'Batch-draft text accepted into docume…' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  2 failed | 57 passed (59)

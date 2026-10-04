@@ -31,10 +31,11 @@ import {
   isGatewayError,
   GATEWAY_ERROR_HTTP_STATUS,
 } from '../services/ai-gateway/gateway-error-map';
-import { isBatchDraftFailure } from '../services/ana/batch-draft-result';
+import { isBatchDraftFailure, type BatchDraftResult } from '../services/ana/batch-draft-result';
 import type { DocumentDraftResponse } from '../services/ana/AnaDocumentDraftingService';
 import { requestConnectable } from '../db/requestDb.js';
 import { loopToolCollector, recordLoopTurn, type LoopToolCall } from '../services/ana/turn-record-loop.js';
+import { canonicalJson, openTurnRecorder, writeTurnRecordSafely } from '../services/ana/turn-record.js';
 import { resolveOrgId, resolveUserId } from '../types/auth-request.js';
 
 const router = Router();
@@ -410,6 +411,33 @@ router.post('/vision', async (req: Request, res: Response) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * One turn record for a batch: what was asked for, and every draft produced
+ * (periodic review 2026-09-28, editor family, the batch-draft accept). Each
+ * draft is returned naming the record. The accept (routes/batch-draft-routes.ts)
+ * believes a claim that a card's text is AnA's only when this record holds it,
+ * and takes the model from here: the one model the drafts report, or none when
+ * they report more than one. Never throws; a batch not recorded says so.
+ */
+async function recordBatchTurn(req: Request, requests: unknown[], results: BatchDraftResult[]) {
+  const { organizationId, userId } = identityOf(req);
+  const recorder = openTurnRecorder({ orgId: organizationId, userId, typed: canonicalJson(requests), surface: 'api:claude/batch' });
+  const drafts: Array<{ title: string; content: string }> = [];
+  const models = new Set<string>();
+  results.forEach((r, i) => {
+    const title = String((requests[i] as { sectionType?: unknown } | undefined)?.sectionType ?? `Section ${i + 1}`);
+    if (isBatchDraftFailure(r)) return recorder?.warn(`${title} was not drafted: ${r.message}`);
+    drafts.push({ title, content: r.content });
+    if (r.model) models.add(r.model);
+  });
+  recorder?.setModel({ model: models.size === 1 ? [...models][0] : null });
+  if (models.size > 1) recorder?.warn(`The drafts were served by more than one model: ${[...models].join(', ')}.`);
+  recorder?.setOutputs({ drafts });
+  recorder?.warn('This turn ran through the batch drafting door, which reports each section\'s request and its draft but not the messages each model call was sent.');
+  const turnRecord = await writeTurnRecordSafely(requestConnectable(req), recorder, drafts.length > 0 ? 'answered' : 'failed', { ipAddress: req.ip, userAgent: req.get('user-agent') ?? undefined });
+  return results.map((r) => (isBatchDraftFailure(r) ? r : { ...r, turnRecord }));
+}
+
+/**
  * POST /api/claude/batch
  * Batch draft multiple document sections.
  */
@@ -452,7 +480,8 @@ router.post('/batch', async (req: Request, res: Response) => {
     res.json({
       success: true,
       data: {
-        results,
+        // Each draft names the turn record that holds it; the accept sends that id back.
+        results: await recordBatchTurn(req, requests, results),
         summary: {
           total: results.length,
           drafted: drafted.length,

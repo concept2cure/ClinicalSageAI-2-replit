@@ -1,0 +1,193 @@
+MUTANT 9: section generation stores the model body as it came back
+file: server/services/authoring/section-generation-service.ts
+--- mutation diff vs the fix ---
+122c122
+<   const body = sanitizeAuthoringSectionHtml(modelBody);
+---
+>   const body = modelBody;
+--- test run ---
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 ./
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores model output through the authoring sanitizer > an external address: the stored draft holds no <img>, and the result is what was stored
+{
+  "timestamp": "2026-09-28T18:26:58.654Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores model output through the authoring sanitizer > dot segments out of the image route: the stored draft holds no <img>, and the result is what was stored
+{
+  "timestamp": "2026-09-28T18:26:58.661Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores model output through the authoring sanitizer > an inline SVG: the stored draft holds no <img>, and the result is what was stored
+{
+  "timestamp": "2026-09-28T18:26:58.662Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores model output through the authoring sanitizer > removes script the model emits, like any other markup outside the authoring allowlist
+{
+  "timestamp": "2026-09-28T18:26:58.664Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores model output through the authoring sanitizer > a markdown body with comparisons is stored as HTML that reads the same (guard)
+{
+  "timestamp": "2026-09-28T18:26:58.666Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores model output through the authoring sanitizer > stores clean prose, and a figure the rule admits, unchanged (guard)
+{
+  "timestamp": "2026-09-28T18:26:58.669Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores model output through the authoring sanitizer > an external address: the stored draft holds no <img>, and the result is what was stored 15ms
+   → expected '<p>The product is stable for 24 month…' not to match /<img/i
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores model output through the authoring sanitizer > dot segments out of the image route: the stored draft holds no <img>, and the result is what was stored 1ms
+   → expected '<p>The product is stable for 24 month…' not to match /<img/i
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores model output through the authoring sanitizer > an inline SVG: the stored draft holds no <img>, and the result is what was stored 1ms
+   → expected '<p>The product is stable for 24 month…' not to match /<img/i
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores model output through the authoring sanitizer > removes script the model emits, like any other markup outside the authoring allowlist 2ms
+   → expected '<p>Summary.</p><script>fetch("https:/…' to be '<p>Summary.</p>' // Object.is equality
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores model output through the authoring sanitizer > a markdown body with comparisons is stored as HTML that reads the same (guard) 3ms
+   → expected 'Mean change 2.1 (p < 0.05) & sustaine…' to be 'Mean change 2.1 (p &lt; 0.05) &amp; s…' // Object.is equality
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores model output through the authoring sanitizer > stores clean prose, and a figure the rule admits, unchanged (guard) 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores model output through the authoring sanitizer > an external address: the stored draft holds no <img>, and the result is what was stored
+AssertionError: expected '<p>The product is stable for 24 month…' not to match /<img/i
+
+- Expected:
+/<img/i
+
++ Received:
+"<p>The product is stable for 24 months.</p><img src=\"https://collector.example/p.png?d=1\" alt=\"Figure 1\">"
+
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:69:24
+     67|     expect(h.inserted).toHaveLength(1);
+     68|     const stored = String(h.inserted[0].content);
+     69|     expect(stored).not.toMatch(/<img/i);
+       |                        ^
+     70|     expect(stored).toBe('<p>The product is stable for 24 months.</p>');
+     71|     expect(result.body).toBe(stored);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores model output through the authoring sanitizer > dot segments out of the image route: the stored draft holds no <img>, and the result is what was stored
+AssertionError: expected '<p>The product is stable for 24 month…' not to match /<img/i
+
+- Expected:
+/<img/i
+
++ Received:
+"<p>The product is stable for 24 months.</p><img src=\"/api/authoring/images/../../tenant-export/full\" alt=\"Figure 1\">"
+
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:69:24
+     67|     expect(h.inserted).toHaveLength(1);
+     68|     const stored = String(h.inserted[0].content);
+     69|     expect(stored).not.toMatch(/<img/i);
+       |                        ^
+     70|     expect(stored).toBe('<p>The product is stable for 24 months.</p>');
+     71|     expect(result.body).toBe(stored);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores model output through the authoring sanitizer > an inline SVG: the stored draft holds no <img>, and the result is what was stored
+AssertionError: expected '<p>The product is stable for 24 month…' not to match /<img/i
+
+- Expected:
+/<img/i
+
++ Received:
+"<p>The product is stable for 24 months.</p><img src=\"data:image/svg+xml;base64,PHN2Zz4=\" alt=\"Figure 1\">"
+
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:69:24
+     67|     expect(h.inserted).toHaveLength(1);
+     68|     const stored = String(h.inserted[0].content);
+     69|     expect(stored).not.toMatch(/<img/i);
+       |                        ^
+     70|     expect(stored).toBe('<p>The product is stable for 24 months.</p>');
+     71|     expect(result.body).toBe(stored);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores model output through the authoring sanitizer > removes script the model emits, like any other markup outside the authoring allowlist
+AssertionError: expected '<p>Summary.</p><script>fetch("https:/…' to be '<p>Summary.</p>' // Object.is equality
+
+Expected: "<p>Summary.</p>"
+Received: "<p>Summary.</p><script>fetch("https://collector.example")</script>"
+
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:78:43
+     76|   it('removes script the model emits, like any other markup outside th…
+     77|     await generate('<p>Summary.</p><script>fetch("https://collector.ex…
+     78|     expect(String(h.inserted[0].content)).toBe('<p>Summary.</p>');
+       |                                           ^
+     79|   });
+     80|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores model output through the authoring sanitizer > a markdown body with comparisons is stored as HTML that reads the same (guard)
+AssertionError: expected 'Mean change 2.1 (p < 0.05) & sustaine…' to be 'Mean change 2.1 (p &lt; 0.05) &amp; s…' // Object.is equality
+
+Expected: "Mean change 2.1 (p &lt; 0.05) &amp; sustained; &gt; 90% of subjects responded."
+Received: "Mean change 2.1 (p < 0.05) & sustained; > 90% of subjects responded."
+
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:87:20
+     85|     await generate(text);
+     86|     const stored = String(h.inserted[0].content);
+     87|     expect(stored).toBe('Mean change 2.1 (p &lt; 0.05) &amp; sustained…
+       |                    ^
+     88|     expect(htmlToPlainText(stored)).toBe(text);
+     89|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 1 passed (6)
+   Start at  18:26:56
+   Duration  1.77s (transform 795ms, setup 91ms, import 1.49s, tests 27ms, environment 0ms)
+

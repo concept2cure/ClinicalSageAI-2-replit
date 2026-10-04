@@ -1,0 +1,535 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 ./
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an external address: the stored draft holds no image, and the result is what was stored
+{
+  "timestamp": "2026-09-28T23:48:12.257Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > dot segments out of the image route: the stored draft holds no image, and the result is what was stored
+{
+  "timestamp": "2026-09-28T23:48:12.366Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an inline SVG: the stored draft holds no image, and the result is what was stored
+{
+  "timestamp": "2026-09-28T23:48:12.377Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > script the model emits is stored as text, never as an element
+{
+  "timestamp": "2026-09-28T23:48:12.386Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a limit of quantitation: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-09-28T23:48:12.433Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an upper limit of normal: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-09-28T23:48:12.455Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an external address: the stored draft holds no image, and the result is what was stored 113ms
+   → expected [ 'p', 'img' ] to not include 'img'
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > dot segments out of the image route: the stored draft holds no image, and the result is what was stored 11ms
+   → expected [ 'p', 'img' ] to not include 'img'
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an inline SVG: the stored draft holds no image, and the result is what was stored 9ms
+   → expected [ 'p', 'img' ] to not include 'img'
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > script the model emits is stored as text, never as an element 47ms
+   → export: contentLooksLikeHtml: expected false to be true // Object.is equality
+   → editor: looksLikeHtml: expected false to be true // Object.is equality
+   → elements besides p and br: expected [ 'script' ] to deeply equal []
+   → the eCTD leaf reads: expected 'Summary.' to be 'Summary.<script>fetch("https://collec…' // Object.is equality
+   → expected 'Summary.<script>fetch("https://collec…' to be '<p>Summary.&lt;script&gt;fetch("https…' // Object.is equality
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a limit of quantitation: every reader reads back every word the model wrote 22ms
+   → export: contentLooksLikeHtml: expected false to be true // Object.is equality
+   → editor: looksLikeHtml: expected false to be true // Object.is equality
+   → elements besides p and br: expected [ 'loq' ] to deeply equal []
+   → the eCTD leaf reads: expected 'Impurity B was' to be 'Impurity B was <LOQ in all 3 batches;…' // Object.is equality
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a markdown autolink: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-09-28T23:48:12.477Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a plain comparison: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-09-28T23:48:12.505Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an ampersand: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-09-28T23:48:12.544Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > character references written as text: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-09-28T23:48:12.565Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an upper limit of normal: every reader reads back every word the model wrote 23ms
+   → export: contentLooksLikeHtml: expected false to be true // Object.is equality
+   → editor: looksLikeHtml: expected false to be true // Object.is equality
+   → elements besides p and br: expected [ 'uln' ] to deeply equal []
+   → the eCTD leaf reads: expected 'ALT remained' to be 'ALT remained <ULN (n=40) & no Hy\'s l…' // Object.is equality
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a markdown autolink: every reader reads back every word the model wrote 28ms
+   → export: contentLooksLikeHtml: expected false to be true // Object.is equality
+   → editor: looksLikeHtml: expected false to be true // Object.is equality
+   → elements besides p and br: expected [ 'https:' ] to deeply equal []
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a plain comparison: every reader reads back every word the model wrote 39ms
+   → export: contentLooksLikeHtml: expected false to be true // Object.is equality
+   → editor: looksLikeHtml: expected false to be true // Object.is equality
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an ampersand: every reader reads back every word the model wrote 21ms
+   → export: contentLooksLikeHtml: expected false to be true // Object.is equality
+   → editor: looksLikeHtml: expected false to be true // Object.is equality
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > paragraphs and line breaks: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-09-28T23:48:12.580Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > escapes exactly <, > and &, inside one paragraph (guard)
+{
+  "timestamp": "2026-09-28T23:48:12.600Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > stores a markdown body as its paragraphs and line breaks, words unchanged (guard)
+{
+  "timestamp": "2026-09-28T23:48:12.602Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > character references written as text: every reader reads back every word the model wrote 15ms
+   → export: contentLooksLikeHtml: expected false to be true // Object.is equality
+   → editor: looksLikeHtml: expected false to be true // Object.is equality
+   → the eCTD leaf reads: expected 'The source prints the limit as "<LOQ"…' to be 'The source prints the limit as "&lt;L…' // Object.is equality
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > paragraphs and line breaks: every reader reads back every word the model wrote 20ms
+   → export: contentLooksLikeHtml: expected false to be true // Object.is equality
+   → editor: looksLikeHtml: expected false to be true // Object.is equality
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > escapes exactly <, > and &, inside one paragraph (guard) 1ms
+   → expected 'Mean change 2.1 (p < 0.05) & sustaine…' to be '<p>Mean change 2.1 (p &lt; 0.05) &amp…' // Object.is equality
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > stores a markdown body as its paragraphs and line breaks, words unchanged (guard) 8ms
+   → expected '## 2.3.P.8 Stability\n\nNo trend was …' to be '<p>## 2.3.P.8 Stability</p><p>No tren…' // Object.is equality
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > the editor converts plain text with the function that stores it (one implementation) 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an external address: the stored draft holds no image, and the result is what was stored
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > dot segments out of the image route: the stored draft holds no image, and the result is what was stored
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an inline SVG: the stored draft holds no image, and the result is what was stored
+AssertionError: expected [ 'p', 'img' ] to not include 'img'
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:164:36
+    162|
+    163|     const stored = storedContent();
+    164|     expect(elementsIn(stored)).not.toContain('img');
+       |                                    ^
+    165|     expectEveryReaderReads(stored, modelBody);
+    166|     expect(result.body).toBe(stored);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/30]⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > script the model emits is stored as text, never as an element
+AssertionError: export: contentLooksLikeHtml: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ expectEveryReaderReads server/services/authoring/__tests__/section-generation-figures.test.ts:136:77
+    134|   // Both known-tag rules take the stored value as HTML, whose only ma…
+    135|   // the paragraphs and line breaks that carry the text.
+    136|   expect.soft(contentLooksLikeHtml(stored), 'export: contentLooksLikeH…
+       |                                                                             ^
+    137|   expect.soft(looksLikeHtml(stored), 'editor: looksLikeHtml').toBe(tru…
+    138|   expect
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:175:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/30]⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > script the model emits is stored as text, never as an element
+AssertionError: editor: looksLikeHtml: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ expectEveryReaderReads server/services/authoring/__tests__/section-generation-figures.test.ts:137:63
+    135|   // the paragraphs and line breaks that carry the text.
+    136|   expect.soft(contentLooksLikeHtml(stored), 'export: contentLooksLikeH…
+    137|   expect.soft(looksLikeHtml(stored), 'editor: looksLikeHtml').toBe(tru…
+       |                                                               ^
+    138|   expect
+    139|     .soft(elementsIn(stored).filter((tag) => tag !== 'p' && tag !== 'b…
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:175:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/30]⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > script the model emits is stored as text, never as an element
+AssertionError: elements besides p and br: expected [ 'script' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "script",
++ ]
+
+ ❯ expectEveryReaderReads server/services/authoring/__tests__/section-generation-figures.test.ts:140:6
+    138|   expect
+    139|     .soft(elementsIn(stored).filter((tag) => tag !== 'p' && tag !== 'b…
+    140|     .toEqual([]);
+       |      ^
+    141|
+    142|   expect.soft(coauthorEditorShows(stored), 'the co-author editor shows…
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:175:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/30]⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > script the model emits is stored as text, never as an element
+AssertionError: the eCTD leaf reads: expected 'Summary.' to be 'Summary.<script>fetch("https://collec…' // Object.is equality
+
+Expected: "Summary.<script>fetch("https://collector.example")</script>"
+Received: "Summary."
+
+ ❯ expectEveryReaderReads server/services/authoring/__tests__/section-generation-figures.test.ts:146:63
+    144|   expect.soft(kinds.filter((kind) => kind !== 'paragraph'), 'export bl…
+    145|   expect.soft(exportReads(stored), 'the export reads').toBe(linesOf(mo…
+    146|   expect.soft(htmlToPlainText(stored), 'the eCTD leaf reads').toBe(mod…
+       |                                                               ^
+    147| }
+    148|
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:175:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/30]⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > script the model emits is stored as text, never as an element
+AssertionError: expected 'Summary.<script>fetch("https://collec…' to be '<p>Summary.&lt;script&gt;fetch("https…' // Object.is equality
+
+Expected: "<p>Summary.&lt;script&gt;fetch("https://collector.example")&lt;/script&gt;</p>"
+Received: "Summary.<script>fetch("https://collector.example")</script>"
+
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:176:20
+    174|     const stored = storedContent();
+    175|     expectEveryReaderReads(stored, modelBody);
+    176|     expect(stored).toBe('<p>Summary.&lt;script&gt;fetch("https://colle…
+       |                    ^
+    177|   });
+    178|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/30]⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a limit of quantitation: every reader reads back every word the model wrote
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an upper limit of normal: every reader reads back every word the model wrote
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a markdown autolink: every reader reads back every word the model wrote
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a plain comparison: every reader reads back every word the model wrote
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an ampersand: every reader reads back every word the model wrote
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > character references written as text: every reader reads back every word the model wrote
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > paragraphs and line breaks: every reader reads back every word the model wrote
+AssertionError: export: contentLooksLikeHtml: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ expectEveryReaderReads server/services/authoring/__tests__/section-generation-figures.test.ts:136:77
+    134|   // Both known-tag rules take the stored value as HTML, whose only ma…
+    135|   // the paragraphs and line breaks that carry the text.
+    136|   expect.soft(contentLooksLikeHtml(stored), 'export: contentLooksLikeH…
+       |                                                                             ^
+    137|   expect.soft(looksLikeHtml(stored), 'editor: looksLikeHtml').toBe(tru…
+    138|   expect
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:194:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/30]⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a limit of quantitation: every reader reads back every word the model wrote
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an upper limit of normal: every reader reads back every word the model wrote
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a markdown autolink: every reader reads back every word the model wrote
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a plain comparison: every reader reads back every word the model wrote
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an ampersand: every reader reads back every word the model wrote
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > character references written as text: every reader reads back every word the model wrote
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > paragraphs and line breaks: every reader reads back every word the model wrote
+AssertionError: editor: looksLikeHtml: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ expectEveryReaderReads server/services/authoring/__tests__/section-generation-figures.test.ts:137:63
+    135|   // the paragraphs and line breaks that carry the text.
+    136|   expect.soft(contentLooksLikeHtml(stored), 'export: contentLooksLikeH…
+    137|   expect.soft(looksLikeHtml(stored), 'editor: looksLikeHtml').toBe(tru…
+       |                                                               ^
+    138|   expect
+    139|     .soft(elementsIn(stored).filter((tag) => tag !== 'p' && tag !== 'b…
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:194:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/30]⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a limit of quantitation: every reader reads back every word the model wrote
+AssertionError: elements besides p and br: expected [ 'loq' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "loq",
++ ]
+
+ ❯ expectEveryReaderReads server/services/authoring/__tests__/section-generation-figures.test.ts:140:6
+    138|   expect
+    139|     .soft(elementsIn(stored).filter((tag) => tag !== 'p' && tag !== 'b…
+    140|     .toEqual([]);
+       |      ^
+    141|
+    142|   expect.soft(coauthorEditorShows(stored), 'the co-author editor shows…
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:194:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/30]⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a limit of quantitation: every reader reads back every word the model wrote
+AssertionError: the eCTD leaf reads: expected 'Impurity B was' to be 'Impurity B was <LOQ in all 3 batches;…' // Object.is equality
+
+Expected: "Impurity B was <LOQ in all 3 batches; assay was 99.1%."
+Received: "Impurity B was"
+
+ ❯ expectEveryReaderReads server/services/authoring/__tests__/section-generation-figures.test.ts:146:63
+    144|   expect.soft(kinds.filter((kind) => kind !== 'paragraph'), 'export bl…
+    145|   expect.soft(exportReads(stored), 'the export reads').toBe(linesOf(mo…
+    146|   expect.soft(htmlToPlainText(stored), 'the eCTD leaf reads').toBe(mod…
+       |                                                               ^
+    147| }
+    148|
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:194:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/30]⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an upper limit of normal: every reader reads back every word the model wrote
+AssertionError: elements besides p and br: expected [ 'uln' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "uln",
++ ]
+
+ ❯ expectEveryReaderReads server/services/authoring/__tests__/section-generation-figures.test.ts:140:6
+    138|   expect
+    139|     .soft(elementsIn(stored).filter((tag) => tag !== 'p' && tag !== 'b…
+    140|     .toEqual([]);
+       |      ^
+    141|
+    142|   expect.soft(coauthorEditorShows(stored), 'the co-author editor shows…
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:194:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/30]⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an upper limit of normal: every reader reads back every word the model wrote
+AssertionError: the eCTD leaf reads: expected 'ALT remained' to be 'ALT remained <ULN (n=40) & no Hy\'s l…' // Object.is equality
+
+Expected: "ALT remained <ULN (n=40) & no Hy's law case was seen."
+Received: "ALT remained"
+
+ ❯ expectEveryReaderReads server/services/authoring/__tests__/section-generation-figures.test.ts:146:63
+    144|   expect.soft(kinds.filter((kind) => kind !== 'paragraph'), 'export bl…
+    145|   expect.soft(exportReads(stored), 'the export reads').toBe(linesOf(mo…
+    146|   expect.soft(htmlToPlainText(stored), 'the eCTD leaf reads').toBe(mod…
+       |                                                               ^
+    147| }
+    148|
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:194:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/30]⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a markdown autolink: every reader reads back every word the model wrote
+AssertionError: elements besides p and br: expected [ 'https:' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "https:",
++ ]
+
+ ❯ expectEveryReaderReads server/services/authoring/__tests__/section-generation-figures.test.ts:140:6
+    138|   expect
+    139|     .soft(elementsIn(stored).filter((tag) => tag !== 'p' && tag !== 'b…
+    140|     .toEqual([]);
+       |      ^
+    141|
+    142|   expect.soft(coauthorEditorShows(stored), 'the co-author editor shows…
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:194:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/30]⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > character references written as text: every reader reads back every word the model wrote
+AssertionError: the eCTD leaf reads: expected 'The source prints the limit as "<LOQ"…' to be 'The source prints the limit as "&lt;L…' // Object.is equality
+
+Expected: "The source prints the limit as "&lt;LOQ" and the sponsor as "R&amp;D"."
+Received: "The source prints the limit as "<LOQ" and the sponsor as "R&D"."
+
+ ❯ expectEveryReaderReads server/services/authoring/__tests__/section-generation-figures.test.ts:146:63
+    144|   expect.soft(kinds.filter((kind) => kind !== 'paragraph'), 'export bl…
+    145|   expect.soft(exportReads(stored), 'the export reads').toBe(linesOf(mo…
+    146|   expect.soft(htmlToPlainText(stored), 'the eCTD leaf reads').toBe(mod…
+       |                                                               ^
+    147| }
+    148|
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:194:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/30]⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > escapes exactly <, > and &, inside one paragraph (guard)
+AssertionError: expected 'Mean change 2.1 (p < 0.05) & sustaine…' to be '<p>Mean change 2.1 (p &lt; 0.05) &amp…' // Object.is equality
+
+Expected: "<p>Mean change 2.1 (p &lt; 0.05) &amp; sustained; &gt; 90% of subjects responded.</p>"
+Received: "Mean change 2.1 (p < 0.05) & sustained; > 90% of subjects responded."
+
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:200:29
+    198|   it('escapes exactly <, > and &, inside one paragraph (guard)', async…
+    199|     await generate('Mean change 2.1 (p < 0.05) & sustained; > 90% of s…
+    200|     expect(storedContent()).toBe(
+       |                             ^
+    201|       '<p>Mean change 2.1 (p &lt; 0.05) &amp; sustained; &gt; 90% of s…
+    202|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/30]⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > stores a markdown body as its paragraphs and line breaks, words unchanged (guard)
+AssertionError: expected '## 2.3.P.8 Stability\n\nNo trend was …' to be '<p>## 2.3.P.8 Stability</p><p>No tren…' // Object.is equality
+
+- Expected
++ Received
+
+- <p>## 2.3.P.8 Stability</p><p>No trend was observed at 25 °C/60% RH [E1].</p><p>- Assay: 98.7–101.2%<br>- **Total impurities**: 0.4%</p><p>| Batch | Assay |<br>|---|---|<br>| 1 | 99.1% |</p>
++ ## 2.3.P.8 Stability
++
++ No trend was observed at 25 °C/60% RH [E1].
++
++ - Assay: 98.7–101.2%
++ - **Total impurities**: 0.4%
++
++ | Batch | Assay |
++ |---|---|
++ | 1 | 99.1% |
+
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:211:20
+    209|     const result = await generate(prose);
+    210|     const stored = storedContent();
+    211|     expect(stored).toBe(
+       |                    ^
+    212|       '<p>## 2.3.P.8 Stability</p><p>No trend was observed at 25 °C/60…
+    213|         '<p>- Assay: 98.7–101.2%<br>- **Total impurities**: 0.4%</p>' +
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/30]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  13 failed | 1 passed (14)
+   Start at  23:48:09
+   Duration  2.94s (transform 1.02s, setup 83ms, import 2.30s, tests 365ms, environment 0ms)
+

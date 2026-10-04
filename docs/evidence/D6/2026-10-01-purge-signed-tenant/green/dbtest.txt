@@ -1,0 +1,4 @@
+ ✓ tests/db/tenant-purge-artifact-records.dbtest.ts > a tenant that signed and locked an artifact > is purged: its signatures, lock snapshots and artifacts are erased, and each signing’s ledger row stays 293ms
+ ✓ tests/db/tenant-purge-artifact-records.dbtest.ts > outside the purge, a signature still cannot go > a direct DELETE, and deleting its project, are refused for the owner 61ms
+ ✓ tests/db/tenant-purge-artifact-records.dbtest.ts > outside the purge, a signature still cannot go > the door refuses an organization that is not pending deletion, and erases nothing 16ms
+      Tests  3 passed (3)

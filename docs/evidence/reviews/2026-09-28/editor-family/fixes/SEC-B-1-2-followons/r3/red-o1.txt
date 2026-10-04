@@ -1,0 +1,4 @@
+ × renderLeafPdf — content with no known tag is read as the editor reads it > the Module 3 placement's markdown keeps every character 15ms
+   → words were swallowed as a tag: expected 'm3.2.S.3.2 Module 3  ## Impurities (D…' to contain 'Impurity B was <LOQ in all 3 batches;…'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 51 passed (52)

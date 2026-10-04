@@ -16,7 +16,7 @@
  * numeric, so they are out of scope here — numeric performance/risk quantities
  * are where reviewer-relevant drift lives.
  *
- * 2026-09-28 (row 74, track NC; ADR-0014 §7): nothing compared is no longer
+ * 2026-09-28 (row 74, track NC; ADR-0015 §7): nothing compared is no longer
  * 'clean'. Documents that state no labelled figure used to short-circuit to a
  * hand-built 'clean' report with figuresReconciled 0, and a programme whose
  * figures all sit in one document was 'clean' from the engine. They now report

@@ -1,7 +1,7 @@
 /**
  * POST /api/change-propagation/programs/:programId/reconcile-device-documents
  * passes the reconciler's verdict through unchanged (row 74, track NC;
- * ADR-0014 §7).
+ * ADR-0015 §7).
  *
  * The route is the reconciler's one HTTP consumer. Before track NC, a device
  * programme whose documents state no labelled figure came back 200 with
@@ -21,6 +21,9 @@ vi.mock('../../middleware/auth', async importOriginal => {
     ...real,
     authenticateToken: (req: any, _res: unknown, next: () => void) => {
       req.user = { id: 3, organizationId: 7 };
+      // The request-scoped client the ownership check is handed (requestDb.ts);
+      // the check itself is stubbed below.
+      req.dbClient = { query: async () => ({ rows: [] }) };
       next();
     },
   };
@@ -35,6 +38,14 @@ vi.mock('../../db/requestDb', async importOriginal => {
   };
   return { ...real, requestDb: () => ({ select: () => programChain }) };
 });
+
+// Program ownership is one shared check since 38a9417c6 (program-access.ts);
+// the program belongs to the caller's organization here unless a case says not.
+const ownership = vi.hoisted(() => ({ ours: true }));
+vi.mock('../../services/c2c/program-access', async importOriginal => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  programInOrganization: async () => ownership.ours,
+}));
 
 vi.mock('../../db', async importOriginal => {
   const real = await importOriginal<Record<string, unknown>>();

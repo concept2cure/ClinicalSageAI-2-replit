@@ -13,7 +13,7 @@ import { createScopedLogger } from '../utils/logger.js';
 const log = createScopedLogger('audit-trail-routes');
 import type { Pool } from 'pg';
 import type { Request, Response } from 'express';
-import { requireAuthedOrgId } from '../utils/authedOrgId';
+import { requireAuthedOrgId, usableOrgId } from '../utils/authedOrgId';
 import { requireAuditReader, requireAuditRecorder, clientEventRefusal } from '../services/audit/audit-api-authority.js';
 import { isPlatformAdmin } from '../middleware/requirePlatformAdmin.js';
 import { clientIpOf } from '../utils/client-ip';
@@ -191,6 +191,22 @@ function formatAuditRow(row: any) {
 // ---------------------------------------------------------------------------
 // Factory
 // ---------------------------------------------------------------------------
+/**
+ * The session's organisation for an audit-trail route, or a 403. 0 or a
+ * negative id is not a tenant here (usableOrgId): requireAuthedOrgId accepts
+ * any finite number, which its other callers rely on, and organization_id = 0
+ * is a global carve-out (reporting review 2026-10-01, SECURITY-9).
+ */
+function requireAuditOrg(req: Request, res: Response): { ok: true; orgId: number } | { ok: false } {
+  const guard = requireAuthedOrgId(req, res);
+  if (!guard.ok) return guard;
+  if (usableOrgId(guard.orgId) == null) {
+    res.status(403).json({ error: 'Tenant context required' });
+    return { ok: false };
+  }
+  return guard;
+}
+
 export function createAuditTrailRoutes(pool: Pool): Router {
   /* The export reads inside a transaction stamped with the caller's org, the
      way the audit-trail ledger reads (audit-trail-ledger.routes.ts): under
@@ -221,7 +237,7 @@ export function createAuditTrailRoutes(pool: Pool): Router {
   // GET /api/audit/logs — paginated audit logs
   router.get('/audit/logs', async (req: Request, res: Response) => {
     try {
-      const guard = requireAuthedOrgId(req, res);
+      const guard = requireAuditOrg(req, res);
       if (!guard.ok) return;
       if (!requireAuditReader(req, res)) return;
       const limit = Math.max(1, parseInt(String(req.query.limit || '10'), 10));
@@ -243,7 +259,7 @@ export function createAuditTrailRoutes(pool: Pool): Router {
   // GET /api/audit-logs — legacy alias with page/pageSize
   router.get('/audit-logs', async (req: Request, res: Response) => {
     try {
-      const guard = requireAuthedOrgId(req, res);
+      const guard = requireAuditOrg(req, res);
       if (!guard.ok) return;
       if (!requireAuditReader(req, res)) return;
       const page = Math.max(1, parseInt(String(req.query.page || '1'), 10));
@@ -267,7 +283,7 @@ export function createAuditTrailRoutes(pool: Pool): Router {
   // GET /api/audit/events — event listing
   router.get('/audit/events', async (req: Request, res: Response) => {
     try {
-      const guard = requireAuthedOrgId(req, res);
+      const guard = requireAuditOrg(req, res);
       if (!guard.ok) return;
       if (!requireAuditReader(req, res)) return;
       const { rows, total } = await queryAuditEvents(pool, guard.orgId, req.query, 50, 0);
@@ -299,7 +315,7 @@ export function createAuditTrailRoutes(pool: Pool): Router {
   // POST /api/audit/events — create audit event
   router.post('/audit/events', async (req: Request, res: Response) => {
     try {
-      const guard = requireAuthedOrgId(req, res);
+      const guard = requireAuditOrg(req, res);
       if (!guard.ok) return;
       if (!requireAuditRecorder(req, res)) return;
       const body = req.body || {};
@@ -355,7 +371,7 @@ export function createAuditTrailRoutes(pool: Pool): Router {
   // POST /api/audit/events/batch — batch create (up to 50)
   router.post('/audit/events/batch', async (req: Request, res: Response) => {
     try {
-      const guard = requireAuthedOrgId(req, res);
+      const guard = requireAuditOrg(req, res);
       if (!guard.ok) return;
       const { events } = req.body || {};
       if (!Array.isArray(events) || events.length === 0) {
@@ -417,12 +433,11 @@ export function createAuditTrailRoutes(pool: Pool): Router {
           // results.length + skipped.length === total always holds, and count it
           // as an insert failure so the response reports a partial/failed batch
           // rather than 201 success — a GxP event lost with no client signal is
-          // an §11.10(e) gap.
-          console.error('Failed to insert batch audit event:', err);
-          skipped.push({
-            index: i,
-            reason: 'insert_failed: ' + (err instanceof Error ? err.message : String(err)),
-          });
+          // an §11.10(e) gap. The database's text (constraint, column and
+          // table names) stays in the server log; the caller gets a fixed
+          // reason (reporting review 2026-10-01, DP-63).
+          log.error('Failed to insert batch audit event', { index: i, error: err instanceof Error ? err.message : String(err) });
+          skipped.push({ index: i, reason: 'insert_failed' });
           insertFailures++;
         }
       }
@@ -476,7 +491,7 @@ export function createAuditTrailRoutes(pool: Pool): Router {
   //     write one on the tenant guard alone.
   router.post('/audit/signatures', async (req: Request, res: Response) => {
     try {
-      const guard = requireAuthedOrgId(req, res);
+      const guard = requireAuditOrg(req, res);
       if (!guard.ok) return;
       if (!requireAuditRecorder(req, res)) return;
       const body = req.body || {};
@@ -547,7 +562,7 @@ export function createAuditTrailRoutes(pool: Pool): Router {
   // GET /api/audit/signatures/:signatureId/verify — verify signature
   router.get('/audit/signatures/:signatureId/verify', async (req: Request, res: Response) => {
     try {
-      const guard = requireAuthedOrgId(req, res);
+      const guard = requireAuditOrg(req, res);
       if (!guard.ok) return;
       if (!requireAuditReader(req, res)) return;
       const sigId = String(req.params.signatureId).replace('SIG_', '');
@@ -587,7 +602,7 @@ export function createAuditTrailRoutes(pool: Pool): Router {
   // GET /api/audit — paginated audit with pagination object
   router.get('/audit', async (req: Request, res: Response) => {
     try {
-      const guard = requireAuthedOrgId(req, res);
+      const guard = requireAuditOrg(req, res);
       if (!guard.ok) return;
       if (!requireAuditReader(req, res)) return;
       const page = Math.max(1, parseInt(String(req.query.page || '1'), 10));
@@ -613,7 +628,7 @@ export function createAuditTrailRoutes(pool: Pool): Router {
   // GET /api/audit/export — signed export (CSV/JSON)
   router.get('/audit/export', async (req: Request, res: Response) => {
     try {
-      const orgGuard = requireAuthedOrgId(req, res);
+      const orgGuard = requireAuditOrg(req, res);
       if (!orgGuard.ok) return;
       if (!requireAuditReader(req, res)) return;
       // Use signed export service for tamper-evident audit packages
@@ -667,7 +682,7 @@ export function createAuditTrailRoutes(pool: Pool): Router {
    */
   router.get('/audit/export/signed', async (req: Request, res: Response) => {
     try {
-      const orgGuard = requireAuthedOrgId(req, res);
+      const orgGuard = requireAuditOrg(req, res);
       if (!orgGuard.ok) return;
       if (!requireAuditReader(req, res)) return;
       const filters = exportRecordFilters(req.query);
@@ -696,8 +711,11 @@ export function createAuditTrailRoutes(pool: Pool): Router {
           manifest: signedExport.manifest,
           signature: signedExport.signature,
           verification: {
+            // The manifest names the key that sealed it (P1-19b); a rotated-out
+            // key stays verifiable under its own id.
+            signingKeyId: signedExport.manifest.signingKeyId ?? null,
             instruction:
-              'To verify: compute HMAC-SHA256 of the canonical manifest JSON using the server signing key, then compare to the signature field. Also verify SHA-256(data) === manifest.dataHash.',
+              'To verify: compute HMAC-SHA256 of the canonical manifest JSON using the audit export key named by manifest.signingKeyId, then compare to the signature field. Also verify SHA-256(data) === manifest.dataHash. POST /api/audit/export/verify performs both checks with the named key.',
             algorithm: 'HMAC-SHA256',
             hashAlgorithm: 'SHA-256',
           },
@@ -735,6 +753,8 @@ export function createAuditTrailRoutes(pool: Pool): Router {
         verification: {
           valid: result.valid,
           errors: result.errors,
+          // Which key vouched (P1-19b); null for a manifest from before key ids.
+          signingKeyId: result.signingKeyId,
           verifiedAt: new Date().toISOString(),
           compliance: {
             standard: '21 CFR Part 11 §11.10(e)',
@@ -761,8 +781,10 @@ export function createAuditTrailRoutes(pool: Pool): Router {
       return res.status(403).json({ error: 'PLATFORM_ADMIN_REQUIRED', message: 'The chain-integrity monitor is a platform administrator surface.' });
     }
     try {
-      const { getChainMonitorStatus } = await import('../services/audit/chainIntegrityMonitor.js');
-      const status = getChainMonitorStatus();
+      // The status of the latest check any process ran (U19): each of the
+      // three processes used to answer with its own last check.
+      const { getSharedChainMonitorStatus } = await import('../services/audit/chainIntegrityMonitor.js');
+      const status = await getSharedChainMonitorStatus();
       res.json({ success: true, data: status });
     } catch (error) {
       // §11.10(e): the chain-integrity monitor's status IS compliance evidence.

@@ -5,9 +5,9 @@
  * the localStorage admin blob, and the un-persisted onboarding step. Mounted at /api/mdx:
  *
  *   GET   /api/mdx/industry-profile                          org profile
- *   PATCH /api/mdx/industry-profile                          upsert org profile (audited)
+ *   PATCH /api/mdx/industry-profile                          upsert org profile (audited; admin roles)
  *   GET   /api/mdx/projects/:programId/industry-profile      project profile
- *   PATCH /api/mdx/projects/:programId/industry-profile      upsert project profile (audited)
+ *   PATCH /api/mdx/projects/:programId/industry-profile      upsert project profile (audited; admin roles)
  *   GET   /api/mdx/effective-context?programId=              resolved context
  *
  * Every write is tenant-scoped and audit-logged. Reads return null-safe
@@ -19,16 +19,16 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { and, eq } from 'drizzle-orm';
 
-import { requestDb } from '../db/requestDb';
+import { requestDb, requestPgClient } from '../db/requestDb';
 import {
   organizationIndustryProfiles,
   projectIndustryProfiles,
 } from '../../shared/schema';
-import { regulatoryPrograms } from '../../shared/schema/programs';
 import { ok, clientError, orgRequired, notFoundInTenant, serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
 import { recordAuditRow } from '../services/audit/audit-write-outcome';
 import { resolveEffectiveProjectContext } from '../services/industry-context/resolver';
+import { programInOrganization } from '../services/c2c/program-access';
 
 const router = Router();
 const log = createScopedLogger('mdx-industry-context');
@@ -47,6 +47,30 @@ function getUserId(req: Request): number | null {
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Roles permitted to change what regulatory instruments the workspace — or a
+ * project in it — is offered (#1136). Both PATCH routes below were reachable by
+ * any authenticated member of the organization.
+ *
+ * Checked here rather than with the shared requireRole middleware, on purpose:
+ * server/middleware/auth has a .js shadow with an INCOMPATIBLE signature (the
+ * .ts twin takes varargs, the .js one a single role and ignores the rest), so
+ * `requireRole('owner', 'admin', …)` checks a different set depending on which
+ * twin the import resolves to. An authorization decision must not depend on a
+ * bundler. Exact match, no case folding: folding would make this route MORE
+ * permissive than the rest of the platform.
+ */
+const PROFILE_ADMIN_ROLES = new Set(['owner', 'admin', 'org_admin', 'super_admin']);
+
+function isProfileAdmin(req: Request): boolean {
+  const u = (req as any).user ?? {};
+  const claims: unknown[] = [
+    u.role,
+    ...(Array.isArray(u.roles) ? u.roles : []),
+  ];
+  return claims.some(r => typeof r === 'string' && PROFILE_ADMIN_ROLES.has(r));
+}
 
 const PRIMARY_INDUSTRY = [
   'medical_device_diagnostics', 'biotech_pharma', 'cro',
@@ -108,6 +132,12 @@ function reasonForChange(body: Record<string, unknown>): string | null {
 router.patch('/industry-profile', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
+  // Checked before the body is read, so a refused caller never reaches
+  // validation or the database.
+  if (!isProfileAdmin(req)) {
+    return clientError(res, 403,
+      'Changing the organization industry profile requires an organization administrator role.');
+  }
   const body = (req.body ?? {}) as Record<string, unknown>;
   const parsed = orgPatch.safeParse(body);
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
@@ -190,6 +220,10 @@ router.get('/projects/:programId/industry-profile', async (req: Request, res: Re
 router.patch('/projects/:programId/industry-profile', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
+  if (!isProfileAdmin(req)) {
+    return clientError(res, 403,
+      'Changing a project industry profile requires an organization administrator role.');
+  }
   const programId = String(req.params.programId);
   if (!UUID_RE.test(programId)) return clientError(res, 422, 'programId must be a UUID');
   const body = (req.body ?? {}) as Record<string, unknown>;
@@ -202,15 +236,7 @@ router.patch('/projects/:programId/industry-profile', async (req: Request, res: 
     // Ownership: the program must belong to the caller's org. program_id has no
     // FK to regulatory_programs, so without this a caller could squat or
     // overwrite a profile for another tenant's program id.
-    const [prog] = await db
-      .select({ id: regulatoryPrograms.id })
-      .from(regulatoryPrograms)
-      .where(and(
-        eq(regulatoryPrograms.id, programId),
-        eq(regulatoryPrograms.organizationId, orgId),
-      ))
-      .limit(1);
-    if (!prog) return notFoundInTenant(res, 'Program');
+    if (!(await programInOrganization(requestPgClient(req), programId, orgId))) return notFoundInTenant(res, 'Program');
 
     // Partial update: only fields present in the body are written.
     const fields: Record<string, unknown> = {};

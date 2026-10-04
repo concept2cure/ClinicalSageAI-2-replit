@@ -66,7 +66,16 @@ interface EctdLeaf {
  */
 export function validateEctdLeafs(
   leafs: EctdLeaf[],
-  opts: { region: string; emptyLeafPaths?: string[]; enforceFileNames?: boolean },
+  opts: {
+    region: string;
+    emptyLeafPaths?: string[];
+    /** Sections that ship no leaf because nothing is mapped to them (eCTD, since
+     *  2026-10-01, sweep F11: an empty section files nothing rather than a
+     *  placeholder leaf). Counted in the summary, which would otherwise report
+     *  0 empty sections for a package that has some. */
+    emptySectionsFilingNothing?: number;
+    enforceFileNames?: boolean;
+  },
 ): EctdValidationResult {
   const findings: EctdFinding[] = [];
   const emptySet = new Set(opts.emptyLeafPaths ?? []);
@@ -153,7 +162,7 @@ export function validateEctdLeafs(
   findings.push({
     severity: 'info',
     ruleId: 'SUMMARY',
-    message: `${leafs.length} leaf(s), ${emptyLeafCount} empty section(s), region ${opts.region}.`,
+    message: `${leafs.length} leaf(s), ${emptyLeafCount + (opts.emptySectionsFilingNothing ?? 0)} empty section(s), region ${opts.region}.`,
   });
 
   let errorCount = 0;

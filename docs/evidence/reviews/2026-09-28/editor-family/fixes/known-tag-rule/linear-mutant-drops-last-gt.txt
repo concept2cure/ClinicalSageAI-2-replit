@@ -1,0 +1,4 @@
+   → differs from the frozen rule on "av1i=v<dd\"bv \nlx=x\"b<>/": expected false to be true // Object.is equality
+ ✓ shared/authoring/__tests__/looks-like-html.test.ts > looksLikeHtml answers as the frozen rule does > "<p>Text.</p>" → true 0ms
+ ✓ shared/authoring/__tests__/looks-like-html.test.ts > looksLikeHtml answers as the frozen rule does > "<dl><dt>AE</dt><dd>Adverse Event</dd></dl>" → true 0ms
+ ✓ shared/authoring/__tests__/looks-like-html.test.ts > looksLikeHtml answers as the frozen rule does > "temperature <critical> threshold exceeded" → false 0ms

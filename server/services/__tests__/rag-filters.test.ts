@@ -54,6 +54,26 @@ describe('buildDocFilterClause', () => {
   });
 });
 
+describe('a program scope (PF-10 S7)', () => {
+  const PROGRAM = '7abb1c22-1111-4222-8333-444455556666';
+
+  it('the vault corpus filters on the document\'s program, as a bound uuid', () => {
+    const params: unknown[] = ['q'];
+    const clause = buildDocFilterClause({ programId: PROGRAM }, params, VAULT_FILTER_COLUMNS);
+    expect(clause).toContain('AND d.program_id = $2::uuid');
+    expect(params).toEqual(['q', PROGRAM]);
+  });
+
+  it('a corpus with no program column refuses the scope rather than searching wider', () => {
+    expect(() => buildDocFilterClause({ programId: PROGRAM }, [], RAG_FILTER_COLUMNS)).toThrow(/no program column/);
+  });
+
+  it('survives the merge with self-query filters, alone or beside them', () => {
+    expect(mergeFilters(undefined, { programId: PROGRAM })).toEqual({ programId: PROGRAM });
+    expect(mergeFilters({ atomType: 'protocol' }, { programId: PROGRAM })).toEqual({ atomType: 'protocol', programId: PROGRAM });
+  });
+});
+
 describe('mergeFilters', () => {
   it('returns undefined when neither side contributes anything', () => {
     expect(mergeFilters(undefined, undefined)).toBeUndefined();

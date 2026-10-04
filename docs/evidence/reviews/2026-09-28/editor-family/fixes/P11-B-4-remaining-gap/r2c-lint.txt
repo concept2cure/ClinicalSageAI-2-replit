@@ -1,0 +1,25 @@
+== client/src/concept2cure/v2/editor/suggestions.ts NOW
+   760:8   warning  Function 'rememberAcceptedAuthor' has too many parameters (6). Maximum allowed is 5  max-params
+   882:1   warning  File has too many lines (747). Maximum allowed is 500                                max-lines
+  1075:3   warning  Method 'addProseMirrorPlugins' has too many lines (106). Maximum allowed is 100      max-lines-per-function
+  1094:9   warning  Method 'appendTransaction' has a complexity of 17. Maximum allowed is 15             complexity
+  1155:19  warning  Blocks are nested too deeply (5). Maximum allowed is 4                               max-depth
+  1161:21  warning  Blocks are nested too deeply (6). Maximum allowed is 4                               max-depth
+  1166:23  warning  Blocks are nested too deeply (7). Maximum allowed is 4                               max-depth
+  1181:19  warning  Blocks are nested too deeply (5). Maximum allowed is 4                               max-depth
+✖ 8 problems (0 errors, 8 warnings)
+== client/src/concept2cure/v2/editor/suggestions.ts HEAD
+   627:8   warning  Function 'rememberAcceptedAuthor' has too many parameters (6). Maximum allowed is 5  max-params
+   817:1   warning  File has too many lines (703). Maximum allowed is 500                                max-lines
+   943:3   warning  Method 'addProseMirrorPlugins' has too many lines (104). Maximum allowed is 100      max-lines-per-function
+   960:9   warning  Method 'appendTransaction' has a complexity of 17. Maximum allowed is 15             complexity
+  1021:19  warning  Blocks are nested too deeply (5). Maximum allowed is 4                               max-depth
+  1027:21  warning  Blocks are nested too deeply (6). Maximum allowed is 4                               max-depth
+  1032:23  warning  Blocks are nested too deeply (7). Maximum allowed is 4                               max-depth
+  1047:19  warning  Blocks are nested too deeply (5). Maximum allowed is 4                               max-depth
+✖ 8 problems (0 errors, 8 warnings)
+== client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx NOW
+   (0 errors, 0 warnings)
+== client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx HEAD
+   (0 errors, 0 warnings)
+== test file lines as max-lines counts them (max 500): too many lines (499)

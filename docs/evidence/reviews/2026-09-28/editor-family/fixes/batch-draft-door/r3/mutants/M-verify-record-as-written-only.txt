@@ -1,0 +1,9 @@
+mutant M-verify-record-as-written-only: server/services/authoring/machine-claim-verify.ts
+- outputs.push(comparableText(text), comparableText(text, { markdown: true }));
++ outputs.push(comparableText(text));
+
+ × server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim not inside what AnA wrote > a draft recorded as markdown verifies as the text it shows 39ms
+   → expected [] to deeply equal [ ObjectContaining{…} ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 50 passed (51)

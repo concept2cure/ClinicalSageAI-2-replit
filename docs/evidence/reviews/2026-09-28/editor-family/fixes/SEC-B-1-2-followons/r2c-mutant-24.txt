@@ -1,0 +1,224 @@
+R2C MUTANT 24: the editor keeps a second, identical plainTextToHtml instead of re-exporting the shared one
+file: client/src/concept2cure/v2/editor/roundTrip.ts
+sha256 before: fb1357c5513a3fd13289e62aa51af810d450d089c8c561cfae994a9d821d6600
+sha256 after restore: fb1357c5513a3fd13289e62aa51af810d450d089c8c561cfae994a9d821d6600
+--- mutation (diff vs the fix) ---
+--- <scratch>/fixes2/figure-writers/r2c/mutant-tmp-roundTrip.ts	2026-09-28 23:50:18.612131749 +0000
++++ ./client/src/concept2cure/v2/editor/roundTrip.ts	2026-09-28 23:50:18.612692034 +0000
+@@ -374,7 +374,14 @@
+  * on the server stores a model's text with the same function, and re-exported
+  * here for the editor and its tests.
+  */
+-export { plainTextToHtml } from '@shared/authoring/plain-text-html';
++export function plainTextToHtml(text: string): string {
++  const esc = (s: string) =>
++    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
++  const paras = text.replace(/\r\n/g, '\n').split(/\n{2,}/);
++  return paras
++    .map((p) => `<p>${esc(p).replace(/\n/g, '<br>')}</p>`)
++    .join('');
++}
+ 
+ /**
+  * How many of the clipboard's words the parse kept.
+
+--- test run ---
+
+ RUN  v4.1.7 ./
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an external address: the stored draft holds no image, and the result is what was stored
+{
+  "timestamp": "2026-09-28T23:50:22.411Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > dot segments out of the image route: the stored draft holds no image, and the result is what was stored
+{
+  "timestamp": "2026-09-28T23:50:22.512Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an inline SVG: the stored draft holds no image, and the result is what was stored
+{
+  "timestamp": "2026-09-28T23:50:22.545Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > script the model emits is stored as text, never as an element
+{
+  "timestamp": "2026-09-28T23:50:22.571Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a limit of quantitation: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-09-28T23:50:22.588Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an upper limit of normal: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-09-28T23:50:22.610Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an external address: the stored draft holds no image, and the result is what was stored 104ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > dot segments out of the image route: the stored draft holds no image, and the result is what was stored 33ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an inline SVG: the stored draft holds no image, and the result is what was stored 26ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > script the model emits is stored as text, never as an element 17ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a limit of quantitation: every reader reads back every word the model wrote 22ms
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a markdown autolink: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-09-28T23:50:22.624Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a plain comparison: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-09-28T23:50:22.636Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an ampersand: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-09-28T23:50:22.649Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > character references written as text: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-09-28T23:50:22.670Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > paragraphs and line breaks: every reader reads back every word the model wrote
+{
+  "timestamp": "2026-09-28T23:50:22.685Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > escapes exactly <, > and &, inside one paragraph (guard)
+{
+  "timestamp": "2026-09-28T23:50:22.704Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+stdout | server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > stores a markdown body as its paragraphs and line breaks, words unchanged (guard)
+{
+  "timestamp": "2026-09-28T23:50:22.705Z",
+  "level": "info",
+  "message": "[section-generation-service] Generated section draft",
+  "context": {
+    "documentId": 901,
+    "sectionCode": "2.3.P.8",
+    "organizationId": 7
+  }
+}
+
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an upper limit of normal: every reader reads back every word the model wrote 14ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a markdown autolink: every reader reads back every word the model wrote 12ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > a plain comparison: every reader reads back every word the model wrote 13ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > an ampersand: every reader reads back every word the model wrote 21ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > character references written as text: every reader reads back every word the model wrote 14ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > paragraphs and line breaks: every reader reads back every word the model wrote 19ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > escapes exactly <, > and &, inside one paragraph (guard) 1ms
+ ✓ server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > stores a markdown body as its paragraphs and line breaks, words unchanged (guard) 18ms
+ × server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > the editor converts plain text with the function that stores it (one implementation) 11ms
+   → expected [Function plainTextToHtml] to be [Function plainTextToHtml] // Object.is equality
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 passed (14)
+   Start at  23:50:19
+   Duration  2.95s (transform 953ms, setup 122ms, import 2.28s, tests 331ms, environment 0ms)
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/authoring/__tests__/section-generation-figures.test.ts > generateSection stores the model body as text > the editor converts plain text with the function that stores it (one implementation)
+AssertionError: expected [Function plainTextToHtml] to be [Function plainTextToHtml] // Object.is equality
+
+Compared values have no visual difference.
+
+ ❯ server/services/authoring/__tests__/section-generation-figures.test.ts:225:35
+    223|
+    224|   it('the editor converts plain text with the function that stores it …
+    225|     expect(editorPlainTextToHtml).toBe(storedFormOf);
+       |                                   ^
+    226|   });
+    227| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

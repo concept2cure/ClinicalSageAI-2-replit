@@ -1,0 +1,288 @@
+# command: TEST_DATABASE_URL=... APP_DATABASE_URL=...app_service... RLS_ENFORCE=on npx vitest run --config vitest.db.config.ts tests/db/role-config-change-audit.dbtest.ts
+# tree: unchanged server code (HEAD c81212ac), new test only; run 2026-10-01T09:01:25Z
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T09:01:15.640Z","pid":14383,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T09:01:15.642Z","pid":14383,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T09:01:15.642Z","pid":14383,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/role-config-change-audit.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":50,"time":"2026-10-01T09:01:16.653Z","pid":14383,"hostname":"vm","context":{"error":"probe: the audit store refused the event","stack":"Error: probe: the audit store refused the event\n    at refusal (/home/user/ClinicalSageAI-2-replit/tests/db/role-config-change-audit.dbtest.ts:44:40)\n    at query (/home/user/ClinicalSageAI-2-replit/tests/db/role-config-change-audit.dbtest.ts:48:65)\n    at auditScim (/home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:299:11)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:896:13\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"},"msg":"[scim] SCIM audit write failed"}
+{"level":50,"time":"2026-10-01T09:01:16.677Z","pid":14383,"hostname":"vm","context":{"error":"probe: the audit store refused the event","stack":"Error: probe: the audit store refused the event\n    at refusal (/home/user/ClinicalSageAI-2-replit/tests/db/role-config-change-audit.dbtest.ts:44:40)\n    at query (/home/user/ClinicalSageAI-2-replit/tests/db/role-config-change-audit.dbtest.ts:48:65)\n    at auditScim (/home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:299:11)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:724:15\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"},"msg":"[scim] SCIM audit write failed"}
+ × tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > when its audit row cannot be written, the role stays as it was 56ms
+   → expected 200 to be 500 // Object.is equality
+ × tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > an added member: one chained row on the organisation's chain, written by the change's own transaction 17ms
+   → one row for one change: expected [] to have a length of 1 but got +0
+ × tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > a member already in the group: nothing changes, nothing is recorded 10ms
+   → expected [] to have a length of 1 but got +0
+ × tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > a removed member is set to member, with the role it held recorded 11ms
+   → expected [] to have a length of 2 but got +0
+ × tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > removal from a group the member is not in changes nothing and records nothing 13ms
+   → expected [] to have a length of 2 but got +0
+ × tests/db/role-config-change-audit.dbtest.ts > SCIM account writes record their event in the same transaction (auditScim) > DELETE: a refused event leaves the account active; otherwise status and event share a transaction 17ms
+   → expected 204 to be 500 // Object.is equality
+{"level":50,"time":"2026-10-01T09:01:16.697Z","pid":14383,"hostname":"vm","context":{"error":"probe: the audit store refused the event","stack":"Error: probe: the audit store refused the event\n    at refusal (/home/user/ClinicalSageAI-2-replit/tests/db/role-config-change-audit.dbtest.ts:44:40)\n    at query (/home/user/ClinicalSageAI-2-replit/tests/db/role-config-change-audit.dbtest.ts:48:65)\n    at auditScim (/home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:299:11)\n    at removeMembership (/home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:420:9)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:850:11"},"msg":"[scim] SCIM audit write failed"}
+{"level":50,"time":"2026-10-01T09:01:16.716Z","pid":14383,"hostname":"vm","context":{"error":"probe: the audit store refused the event","stack":"Error: probe: the audit store refused the event\n    at refusal (/home/user/ClinicalSageAI-2-replit/tests/db/role-config-change-audit.dbtest.ts:44:40)\n    at query (/home/user/ClinicalSageAI-2-replit/tests/db/role-config-change-audit.dbtest.ts:48:65)\n    at auditScim (/home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:299:11)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:680:11\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)"},"msg":"[scim] SCIM audit write failed"}
+stdout | tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > when its audit row cannot be written, the settings stay as they were
+[database] Database connection successful { timestamp: '2026-10-01T09:01:16.760Z', poolSize: 1 }
+
+stdout | tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > when its audit row cannot be written, the settings stay as they were
+[database] Database connection successful
+
+ × tests/db/role-config-change-audit.dbtest.ts > SCIM account writes record their event in the same transaction (auditScim) > PUT active=false: a refused event leaves the account active 27ms
+   → expected 200 to be 500 // Object.is equality
+ × tests/db/role-config-change-audit.dbtest.ts > SCIM account writes record their event in the same transaction (auditScim) > PATCH active=false on a shared account: a refused event leaves this organisation's membership 19ms
+   → expected 200 to be 500 // Object.is equality
+ × tests/db/role-config-change-audit.dbtest.ts > SCIM account writes record their event in the same transaction (auditScim) > POST: a refused event provisions nobody; otherwise membership and event share a transaction 23ms
+   → expected 201 to be 500 // Object.is equality
+{"level":30,"time":"2026-10-01T09:01:16.899Z","pid":14383,"hostname":"vm","context":{"userId":1234,"tenantId":94900,"resourceId":"94900"},"msg":"[audit-service] [AUDIT] ana:update_settings organizations"}
+stdout | tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > a settings change writes the record the tenant configuration route writes, and keeps what it does not name
+[database] Database connection successful { timestamp: '2026-10-01T09:01:16.996Z', poolSize: 2 }
+
+{"level":30,"time":"2026-10-01T09:01:17.017Z","pid":14383,"hostname":"vm","context":{"userId":1234,"tenantId":94900,"resourceId":"94900"},"msg":"[audit-service] [AUDIT] ana:update_settings organizations"}
+ × tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > when its audit row cannot be written, the settings stay as they were 198ms
+   → expected 200 to be 500 // Object.is equality
+{"level":30,"time":"2026-10-01T09:01:17.061Z","pid":14383,"hostname":"vm","context":{"tenantId":94900,"resourceId":"94900"},"msg":"[audit-service] [AUDIT] ana:update_settings organizations"}
+ × tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > a settings change writes the record the tenant configuration route writes, and keeps what it does not name 113ms
+   → the controller wrote no tenant_settings_changed row: expected undefined to be defined
+ × tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > a module toggle is recorded by the same writer 45ms
+   → expected { sections: [ 'security' ], …(2) } to match object { sections: [ …(2) ] }
+(4 matching properties omitted from actual)
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > when its audit row cannot be written, the role stays as it was
+AssertionError: expected 200 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 200
+
+ ❯ tests/db/role-config-change-audit.dbtest.ts:262:24
+    260|   it('when its audit row cannot be written, the role stays as it was',…
+    261|     const res = await refusing('refuseChained', () => groupPatch('admi…
+    262|     expect(res.status).toBe(500);
+       |                        ^
+    263|     expect(JSON.stringify(res.body)).not.toContain('probe');
+    264|     expect(await roleOf(user.member), 'the role change outlived its mi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > an added member: one chained row on the organisation's chain, written by the change's own transaction
+AssertionError: one row for one change: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/db/role-config-change-audit.dbtest.ts:273:44
+    271|     expect(await roleOf(user.member)).toBe('admin');
+    272|     const rows = await auditRows('member_role_changed', String(user.me…
+    273|     expect(rows, 'one row for one change').toHaveLength(1);
+       |                                            ^
+    274|     expect(rows[0]).toMatchObject({
+    275|       table_name: 'organization_users',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > a member already in the group: nothing changes, nothing is recorded
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/db/role-config-change-audit.dbtest.ts:288:73
+    286|     const res = await groupPatch('admin', 'add', [user.member]);
+    287|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    288|     expect(await auditRows('member_role_changed', String(user.member))…
+       |                                                                         ^
+    289|   });
+    290|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > a removed member is set to member, with the role it held recorded
+AssertionError: expected [] to have a length of 2 but got +0
+
+- Expected
++ Received
+
+- 2
++ 0
+
+ ❯ tests/db/role-config-change-audit.dbtest.ts:296:18
+    294|     expect(await roleOf(user.member)).toBe('member');
+    295|     const rows = await auditRows('member_role_changed', String(user.me…
+    296|     expect(rows).toHaveLength(2);
+       |                  ^
+    297|     expect(rows[1].new_values).toMatchObject({ previousRole: 'admin', …
+    298|     expect(rows[1].xmin).toBe(await membershipXmin(user.member));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > removal from a group the member is not in changes nothing and records nothing
+AssertionError: expected [] to have a length of 2 but got +0
+
+- Expected
++ Received
+
+- 2
++ 0
+
+ ❯ tests/db/role-config-change-audit.dbtest.ts:306:73
+    304|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    305|     expect(await roleOf(user.member)).toBe('member');
+    306|     expect(await auditRows('member_role_changed', String(user.member))…
+       |                                                                         ^
+    307|   });
+    308| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  tests/db/role-config-change-audit.dbtest.ts > SCIM account writes record their event in the same transaction (auditScim) > DELETE: a refused event leaves the account active; otherwise status and event share a transaction
+AssertionError: expected 204 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 204
+
+ ❯ tests/db/role-config-change-audit.dbtest.ts:315:28
+    313|       request(app).delete(`/scim/v2/Users/${user.leaver}`).set(scim())
+    314|     );
+    315|     expect(refused.status).toBe(500);
+       |                            ^
+    316|     expect(await statusOf(user.leaver), 'the deactivation outlived its…
+    317|     expect(await events('scim.user.deactivated', user.leaver)).toHaveL…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+ FAIL  tests/db/role-config-change-audit.dbtest.ts > SCIM account writes record their event in the same transaction (auditScim) > PUT active=false: a refused event leaves the account active
+AssertionError: expected 200 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 200
+
+ ❯ tests/db/role-config-change-audit.dbtest.ts:332:28
+    330|       request(app).put(`/scim/v2/Users/${user.putLeaver}`).set(scim())…
+    331|     );
+    332|     expect(refused.status).toBe(500);
+       |                            ^
+    333|     expect(await statusOf(user.putLeaver)).toBe('active');
+    334|     const res = await request(app).put(`/scim/v2/Users/${user.putLeave…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/12]⎯
+
+ FAIL  tests/db/role-config-change-audit.dbtest.ts > SCIM account writes record their event in the same transaction (auditScim) > PATCH active=false on a shared account: a refused event leaves this organisation's membership
+AssertionError: expected 200 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 200
+
+ ❯ tests/db/role-config-change-audit.dbtest.ts:346:59
+    344|         .set(scim())
+    345|         .send({ schemas: [PATCH_OP], Operations: [{ op: 'replace', pat…
+    346|     expect((await refusing('refuseEvents', send)).status).toBe(500);
+       |                                                           ^
+    347|     expect(await roleOf(user.shared), 'the removal outlived its missin…
+    348|     const res = await send();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/12]⎯
+
+ FAIL  tests/db/role-config-change-audit.dbtest.ts > SCIM account writes record their event in the same transaction (auditScim) > POST: a refused event provisions nobody; otherwise membership and event share a transaction
+AssertionError: expected 201 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 201
+
+ ❯ tests/db/role-config-change-audit.dbtest.ts:358:59
+    356|     const email = `dbp149-provisioned-${RUN}@example.invalid`;
+    357|     const send = () => request(app).post('/scim/v2/Users').set(scim())…
+    358|     expect((await refusing('refuseEvents', send)).status).toBe(500);
+       |                                                           ^
+    359|     expect(await one('SELECT id FROM users WHERE email = $1', [email])…
+    360|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/12]⎯
+
+ FAIL  tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > when its audit row cannot be written, the settings stay as they were
+AssertionError: expected 200 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 200
+
+ ❯ tests/db/role-config-change-audit.dbtest.ts:378:24
+    376|       request(app).patch('/api/ana/platform/settings').set(asAdmin()).…
+    377|     );
+    378|     expect(res.status).toBe(500);
+       |                        ^
+    379|     expect(JSON.stringify(res.body)).not.toContain('probe');
+    380|     expect(await settingsOf()).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/12]⎯
+
+ FAIL  tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > a settings change writes the record the tenant configuration route writes, and keeps what it does not name
+AssertionError: the controller wrote no tenant_settings_changed row: expected undefined to be defined
+ ❯ tests/db/role-config-change-audit.dbtest.ts:397:79
+    395|
+    396|     const [route, controller] = await auditRows('tenant_settings_chang…
+    397|     expect(controller, 'the controller wrote no tenant_settings_change…
+       |                                                                               ^
+    398|     for (const key of ['action', 'table_name', 'record_id', 'actor_id'…
+    399|       expect(controller[key], key).toEqual(route[key]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/12]⎯
+
+ FAIL  tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > a module toggle is recorded by the same writer
+AssertionError: expected { sections: [ 'security' ], …(2) } to match object { sections: [ …(2) ] }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "sections": [
+-     "disabledModules",
+-     "enabledModules",
++     "security",
+    ],
+  }
+
+ ❯ tests/db/role-config-change-audit.dbtest.ts:426:46
+    424|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    425|     const rows = await auditRows('tenant_settings_changed');
+    426|     expect(rows[rows.length - 1].new_values).toMatchObject({ sections:…
+       |                                              ^
+    427|     expect((await settingsOf()).disabledModules).toEqual(['cmc_bluepri…
+    428|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/12]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  12 failed (12)
+   Start at  09:01:12
+   Duration  4.79s (transform 1.86s, setup 106ms, import 3.04s, tests 1.16s, environment 0ms)
+

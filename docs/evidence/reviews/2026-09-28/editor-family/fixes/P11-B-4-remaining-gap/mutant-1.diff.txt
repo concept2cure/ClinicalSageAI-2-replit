@@ -1,0 +1,5 @@
+MUTANT 1 diff:
+642c642
+<   return undoDepth(state) > (trackKey.getState(state) ?? 0);
+---
+>   return true; // MUTANT 1: floor check removed

@@ -1,0 +1,13 @@
+ ✓ tests/db/cross-object-resolver.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing
+ ✓ tests/db/cross-object-resolver.dbtest.ts > a project the organisation holds > is assembled from reads that all succeed, and names the project
+ ✓ tests/db/cross-object-resolver.dbtest.ts > a project the organisation holds > is reviewed to completion, and the review says which project it read
+ ✓ tests/db/cross-object-resolver.dbtest.ts > what the review cannot read > a program uuid fails the payload, naming every read it broke
+ ✓ tests/db/cross-object-resolver.dbtest.ts > what the review cannot read > a program uuid ends the review run as failed, with no step completed and the reason recorded
+ ✓ tests/db/cross-object-resolver.dbtest.ts > what the review cannot read > a project another organisation holds is refused, not assessed as empty
+ ✓ tests/db/cross-object-resolver.dbtest.ts > the project's tasks, counted from every store > counts schedule, board and correspondence tasks, and how many are done, blocked and overdue
+ × tests/db/cross-object-resolver.dbtest.ts > the project's tasks reach the readiness review and the recommendations > lists every store's open work by its real id, flags what is blocked and overdue, and the counts agree
+   → expected [] to deeply equal ArrayContaining{…}
+ × tests/db/cross-object-resolver.dbtest.ts > the project's tasks reach the readiness review and the recommendations > the readiness review raises the blocked work, and the recommendations name the overdue work
+   → expected [ 'missing_document', …(3) ] to include 'blocked_task'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 7 passed (9)

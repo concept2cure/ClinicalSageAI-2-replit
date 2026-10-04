@@ -1,0 +1,32 @@
+client/src/concept2cure/components/ana/BriefingBookPanel.tsx(20,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/CrlPremortemPanel.tsx(28,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/GovernedActionSignoff.tsx(20,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/mdx/lib/sampleMode.ts(37,24): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+client/src/concept2cure/v2/surfaceActions.ts(282,19): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+server/middleware/orgMembership.ts(331,11): error TS2339: Property 'user' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/orgMembership.ts(332,10): error TS2339: Property 'user' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/orgMembership.ts(342,11): error TS2339: Property 'user' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/orgMembership.ts(343,10): error TS2339: Property 'user' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/orgMembership.ts(365,37): error TS2339: Property 'user' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/orgMembership.ts(366,45): error TS2339: Property 'user' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/ana/AnaToolExecutor.ts(41,28): error TS7016: Could not find a declaration file for module '../../fda_maude_client.js'. './server/fda_maude_client.js' implicitly has an 'any' type.
+server/services/ana/AnaToolExecutor.ts(156,28): error TS7016: Could not find a declaration file for module '../../fda_faers_client.js'. './server/fda_faers_client.js' implicitly has an 'any' type.
+server/services/authoring/authoring-permissions.ts(104,21): error TS2339: Property 'user' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/authoring/authoring-permissions.ts(104,37): error TS2339: Property 'user' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/authoring/authoring-permissions.ts(107,24): error TS2339: Property 'user' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/authoring/authoring-permissions.ts(107,43): error TS2339: Property 'user' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/authoring/authoring-permissions.ts(114,16): error TS2339: Property 'user' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/authoring/authoring-permissions.ts(114,41): error TS2339: Property 'user' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/cmc/link-to-module3.ts(34,32): error TS7016: Could not find a declaration file for module '../../metrics.js'. './server/metrics.js' implicitly has an 'any' type.
+server/services/concept2cure/governedDocumentContractService.ts(254,66): error TS2339: Property 'userRole' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/concept2cure/governedDocumentContractService.ts(551,38): error TS2339: Property 'userId' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/concept2cure/governedDocumentContractService.ts(551,60): error TS2339: Property 'userEmail' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/concept2cure/governedDocumentContractService.ts(608,30): error TS2339: Property 'userRole' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/concept2cure/governedDocumentContractService.ts(674,30): error TS2339: Property 'userRole' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/memory/document-text-extraction.ts(41,54): error TS2339: Property 'default' does not exist on type 'typeof import("./node_modules/pdf-parse/dist/pdf-parse/esm/index")'.
+server/services/mfaService.ts(15,17): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. './node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`
+server/services/mfaService.ts(16,25): error TS7016: Could not find a declaration file for module 'qrcode'. './node_modules/qrcode/lib/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/qrcode` if it exists or add a new declaration (.d.ts) file containing `declare module 'qrcode';`
+server/utils/jwtVerify.ts(24,41): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. './node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`

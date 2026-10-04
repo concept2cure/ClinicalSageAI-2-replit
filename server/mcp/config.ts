@@ -44,8 +44,9 @@ export interface McpClientRegistrationPolicy {
   /**
    * Origins (scheme://host[:port], lower-case) a registered redirect URI may
    * belong to, from MCP_CLIENT_REDIRECT_ALLOWLIST. `null` when the variable is
-   * unset or blank: registration is then open to any origin that passes the
-   * scheme and fragment rules.
+   * unset or blank: outside production, registration is then open to any
+   * origin that passes the scheme and fragment rules; in production it is
+   * closed (closedInProduction).
    */
   redirectOriginAllowlist: string[] | null;
   /**
@@ -55,10 +56,18 @@ export interface McpClientRegistrationPolicy {
    */
   requireHttpsRedirects: boolean;
   /**
-   * True when NODE_ENV is production and no allowlist is set. The router logs
-   * one warning naming the control when this is true; nothing else changes.
+   * True when NODE_ENV is production and no allowlist is set: every registration
+   * is then refused, and the router logs one warning naming the control.
+   *
+   * Product decision 2026-10-01 (docs/LAUNCH_DEFINITION_OF_DONE.md). Until then
+   * this state was "open, warned once": any https origin could register a client
+   * that the consent page then presented to a signed-in user by the name it
+   * chose. A connector to regulated records registers clients only from the
+   * origins its operator names (for launch, https://claude.ai and
+   * https://claude.com); a missing list is a configuration fault, and it fails
+   * closed. Clients already registered are unaffected.
    */
-  openInProduction: boolean;
+  closedInProduction: boolean;
 }
 
 export interface McpConfig {
@@ -136,7 +145,7 @@ export function resolveMcpConfig(env: NodeJS.ProcessEnv = process.env): McpConfi
     clientRegistration: {
       redirectOriginAllowlist,
       requireHttpsRedirects: !(nodeEnv === 'development' || nodeEnv === 'test'),
-      openInProduction: nodeEnv === 'production' && redirectOriginAllowlist === null,
+      closedInProduction: nodeEnv === 'production' && redirectOriginAllowlist === null,
     },
   };
 }

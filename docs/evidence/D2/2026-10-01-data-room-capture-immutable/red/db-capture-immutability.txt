@@ -1,0 +1,14 @@
+## RED: tests/db/cre-capture-immutability.dbtest.ts on a database without the VR-16 guard (trunk's migration set), 2026-10-01
+ × tests/db/cre-capture-immutability.dbtest.ts > the capture record cannot be rewritten (VR-16) > a recorded checksum cannot be changed or cleared; a missing one can be set once 2184ms
+   → promise resolved "Result{ command: 'UPDATE', …(9) }" instead of rejecting
+ × tests/db/cre-capture-immutability.dbtest.ts > the capture record cannot be rewritten (VR-16) > a revision link, a project scope, the organization and the source type do not change 15ms
+   → promise resolved "Result{ command: 'UPDATE', …(9) }" instead of rejecting
+ × tests/db/cre-capture-immutability.dbtest.ts > the capture record cannot be rewritten (VR-16) > a superseded capture cannot be made current again 13ms
+   → promise resolved "Result{ command: 'UPDATE', …(9) }" instead of rejecting
+ × tests/db/cre-capture-immutability.dbtest.ts > the capture record cannot be rewritten (VR-16) > a capture cannot be deleted, and the record cannot be truncated 12ms
+   → promise resolved "Result{ command: 'DELETE', …(9) }" instead of rejecting
+ ✓ tests/db/cre-capture-immutability.dbtest.ts > the writers still work (VR-16 controls) > createSupersedingSource retires the predecessor and links the revision 72ms
+ ✓ tests/db/cre-capture-immutability.dbtest.ts > the writers still work (VR-16 controls) > a mutable column still changes 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  4 failed | 2 passed (6)

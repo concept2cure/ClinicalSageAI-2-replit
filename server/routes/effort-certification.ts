@@ -1,5 +1,6 @@
 /**
  * Effort Certification API (add-on) — governed CRUD + certify (2 CFR 200.430).
+ * Certifying is an electronic signature (governed-signed-act.ts).
  * Mounted at /api/effort-certification.
  * @module server/routes/effort-certification
  */
@@ -7,6 +8,8 @@ import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import { pool } from '../db';
 import { recordGovernedAction } from './c2c/actions';
+import { signedActAttempts, signGovernedAct } from './governed-signed-act';
+import { DECISION_ACT_MEANINGS } from '../services/part11/signature-meanings';
 import { createCertificationTx, addLineTx, certifyTx, loadStatement, listCertifications } from '../services/effort-certification/effort-service';
 import { validateEffort } from '../services/effort-certification/effort-logic';
 import { recordEffortStatementCreated, recordEffortLineAdded, recordEffortCertified } from '../services/effort-metrics';
@@ -34,7 +37,22 @@ router.post('/:id/lines', async (req, res) => { const id = Number(req.params.id)
 
 router.get('/:id/validation', async (req, res) => { const o = oid(req); if (!o) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } }); const id = Number(req.params.id); if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } }); const c = await pool.connect(); try { const { lines } = await loadStatement(c, o, id); res.json(validateEffort(lines)); } catch (e) { fail(res, e); } finally { c.release(); } });
 
-const certifySchema = z.object({ reason });
-router.post('/:id/certify', async (req, res) => { const id = Number(req.params.id); if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } }); const p = certifySchema.safeParse(req.body ?? {}); if (!p.success) return res.status(400).json({ error: { code: 'VALIDATION', details: p.error.flatten() } }); await governed(req, res, 'sign', p.data.reason, async (c, o, u) => { const { contentHash, needsRecertification } = await certifyTx(c, o, u, id); recordEffortCertified(needsRecertification); return { target: `effort-certification:${id}`, payload: { contentHash, needsRecertification }, body: { id, status: 'certified', contentHash, needsRecertification } }; }); });
+// Certifying is an electronic signature (P0-10a): password, enrolled second
+// factor, meaning and reason, through the one ceremony (governed-signed-act.ts).
+router.post('/:id/certify', signedActAttempts, async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  await signGovernedAct(req, res, {
+    domain: 'effort_certification',
+    target: `effort-certification:${id}`,
+    meanings: DECISION_ACT_MEANINGS,
+    codeStatus: CODE,
+    run: async (c, o, u) => {
+      const { contentHash, needsRecertification } = await certifyTx(c, o, u, id);
+      recordEffortCertified(needsRecertification);
+      return { target: `effort-certification:${id}`, payload: { contentHash, needsRecertification }, body: { id, status: 'certified', contentHash, needsRecertification } };
+    },
+  });
+});
 
 export default router;

@@ -1,0 +1,43 @@
+R2C DIFFERENTIAL PROBE (scratch file r2c-probe/differential.test.ts, not in the repo) on the final suggestions.ts: every press against a labelled model of history's two stacks (cut 21 past 120); depths, decisionFloorAllows, and can() && decisionFloorAllows checked at every step. 4 seeds per tracking mode.
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 ./
+
+stdout | ../../..<scratch>/fixes2/undo-floor/r2c-probe/differential.test.ts > differential: Undo/Redo against a labelled model of history > seed 1, tracking on
+seed=1 tracked=true {"pre":117,"decisions":5,"cutsDone":14,"undo":292,"undoRefused":36,"redo":23,"redoRefused":43,"typed":680,"ms":1210}
+
+stdout | ../../..<scratch>/fixes2/undo-floor/r2c-probe/differential.test.ts > differential: Undo/Redo against a labelled model of history > seed 2, tracking on
+seed=2 tracked=true {"pre":148,"decisions":4,"cutsDone":13,"undo":300,"undoRefused":66,"redo":15,"redoRefused":31,"typed":657,"ms":2366}
+
+ ✓ ../../..<scratch>/fixes2/undo-floor/r2c-probe/differential.test.ts > differential: Undo/Redo against a labelled model of history > seed 1, tracking on 1213ms
+stdout | ../../..<scratch>/fixes2/undo-floor/r2c-probe/differential.test.ts > differential: Undo/Redo against a labelled model of history > seed 3, tracking on
+seed=3 tracked=true {"pre":161,"decisions":3,"cutsDone":11,"undo":393,"undoRefused":99,"redo":31,"redoRefused":24,"typed":655,"ms":2837}
+
+ ✓ ../../..<scratch>/fixes2/undo-floor/r2c-probe/differential.test.ts > differential: Undo/Redo against a labelled model of history > seed 2, tracking on 2367ms
+stdout | ../../..<scratch>/fixes2/undo-floor/r2c-probe/differential.test.ts > differential: Undo/Redo against a labelled model of history > seed 4, tracking on
+seed=4 tracked=true {"pre":15,"decisions":2,"cutsDone":13,"undo":250,"undoRefused":105,"redo":8,"redoRefused":60,"typed":614,"ms":4627}
+
+ ✓ ../../..<scratch>/fixes2/undo-floor/r2c-probe/differential.test.ts > differential: Undo/Redo against a labelled model of history > seed 3, tracking on 2837ms
+stdout | ../../..<scratch>/fixes2/undo-floor/r2c-probe/differential.test.ts > differential: Undo/Redo against a labelled model of history > seed 1, tracking off
+seed=1 tracked=false {"pre":28,"decisions":1,"cutsDone":3,"undo":291,"undoRefused":22,"redo":22,"redoRefused":29,"typed":429,"ms":4612}
+
+ ✓ ../../..<scratch>/fixes2/undo-floor/r2c-probe/differential.test.ts > differential: Undo/Redo against a labelled model of history > seed 4, tracking on 4628ms
+stdout | ../../..<scratch>/fixes2/undo-floor/r2c-probe/differential.test.ts > differential: Undo/Redo against a labelled model of history > seed 2, tracking off
+seed=2 tracked=false {"pre":57,"decisions":1,"cutsDone":9,"undo":240,"undoRefused":91,"redo":7,"redoRefused":59,"typed":524,"ms":6169}
+
+ ✓ ../../..<scratch>/fixes2/undo-floor/r2c-probe/differential.test.ts > differential: Undo/Redo against a labelled model of history > seed 1, tracking off 4613ms
+stdout | ../../..<scratch>/fixes2/undo-floor/r2c-probe/differential.test.ts > differential: Undo/Redo against a labelled model of history > seed 3, tracking off
+seed=3 tracked=false {"pre":68,"decisions":1,"cutsDone":2,"undo":359,"undoRefused":87,"redo":58,"redoRefused":20,"typed":438,"ms":6764}
+
+ ✓ ../../..<scratch>/fixes2/undo-floor/r2c-probe/differential.test.ts > differential: Undo/Redo against a labelled model of history > seed 2, tracking off 6170ms
+stdout | ../../..<scratch>/fixes2/undo-floor/r2c-probe/differential.test.ts > differential: Undo/Redo against a labelled model of history > seed 4, tracking off
+seed=4 tracked=false {"pre":141,"decisions":1,"cutsDone":7,"undo":268,"undoRefused":193,"redo":22,"redoRefused":59,"typed":493,"ms":10132}
+
+ ✓ ../../..<scratch>/fixes2/undo-floor/r2c-probe/differential.test.ts > differential: Undo/Redo against a labelled model of history > seed 3, tracking off 6765ms
+ ✓ ../../..<scratch>/fixes2/undo-floor/r2c-probe/differential.test.ts > differential: Undo/Redo against a labelled model of history > seed 4, tracking off 10133ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  00:23:12
+   Duration  39.88s (transform 176ms, setup 181ms, import 140ms, tests 38.73s, environment 581ms)
+

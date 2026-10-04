@@ -1,0 +1,22 @@
+ci:tenant-isolation:no-regression rc=0 :: [ci:tenant-isolation] OK — no new findings above baseline (8 current, 8 baseline)
+ci:vault-document-writers rc=0 :: [ci:vault-document-writers] OK: every writer is a named one.
+ci:launch-scope-api rc=0 :: ci:launch-scope-api: 270 API paths named by launch and shell screens; none refused. {"launch":228,"never-gated":40,"infrastructure":2}
+ci:check-client-api-calls rc=0 :: ✅ every client /api call has a server route behind it.
+ci:undefined-css-classes rc=0 :: [ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+ci:internals-in-copy rc=0 :: check-internals-in-copy: no new occurrences. 0 baselined across 0 file(s).
+ci:action-overclaim rc=0 :: check-action-overclaim: no new occurrences. 0 baselined.
+ci:success-before-ok rc=0 :: check-success-before-ok: no occurrences across 186 file(s).
+ci:design-system rc=0 :: [design-system] OK — no icon-library, spring/bounce or inline <style> violations on live concept2cure surfaces.
+ci:ana-surface-context rc=0 ::   (77 surface file(s) hold a call).
+ci:fixture-fallback rc=0 :: ✅ no new ungated fixture fallback. 0 baselined.
+ci:unauthenticated-fetch rc=0 :: ✅ ci:unauthenticated-fetch — 70 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined).
+ci:runtime-ddl rc=0 :: [ci:runtime-ddl] ✅ no new runtime DDL.
+ci:unkeyed-request-tables rc=0 :: [ci:unkeyed-request-tables] ✅ no new tables read without a tenant key.
+ci:tenant-entry-points rc=0 :: [ci:tenant-entry-points] OK — no unclassified tenant entry points.
+ci:sign-ceremony rc=0 :: [ci:sign-ceremony] OK — no new sign write without the ceremony. 24 baselined site(s) remain, exactly as baselined.
+ci:migration-set-order rc=0 :: [ci:migration-set-order] OK — 329 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+ci:migration-drop-safety rc=0 :: [ci:migration-drop-safety] OK — 329 migrations, 35 DROP(s), none re-created by the set; 4 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 17 dynamic DROP(s) in 17 file(s) (names unresolvable —
+ci:column-reachability rc=0 :: [ci:column-reachability] OK — 3194 column add(s) on no applier, 0 queried by the server.
+ci:validation-traceability rc=0 :: ✓ validation traceability: every file cited by 6 URS document(s) resolves; every OQ step carries its protocol's kind
+ci:validation-traceability:selftest rc=0 :: ✓ self-test: 15 cases, every mutation caught and the controls clean
+audit-requestdb-coverage :: [ci:requestdb-coverage] OK — no new shared-pool routes (228 current, 228 baseline)

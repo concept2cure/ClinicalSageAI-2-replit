@@ -20,7 +20,7 @@
  * Reuses {@link DivergenceSeverity} from the cross-artifact-consistency service
  * so severities speak the same language across the consistency toolset.
  *
- * 2026-09-28 (row 74, track NC; ADR-0014 §7): nothing compared is no longer
+ * 2026-09-28 (row 74, track NC; ADR-0015 §7): nothing compared is no longer
  * 'clean'. A figure set in which no quantity is stated in two different
  * documents compared nothing across documents, yet reported 'clean' — for a
  * single figure, or for every figure from one document. It now reports verdict

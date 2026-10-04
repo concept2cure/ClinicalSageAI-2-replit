@@ -1,0 +1,9 @@
+[ci:insert-columns-declared] columns written vs columns declared
+  Drizzle models parsed        : 702
+  static INSERTs examined      : 705
+  skipped (unjudgeable)        : 7
+  migration lineage tables     : 1410
+  tables unknown to BOTH       : 9
+  baselined (known, unfixed)   : 47
+
+✅ no new violations. 47 baselined and awaiting burn-down.

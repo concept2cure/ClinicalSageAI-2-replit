@@ -35,6 +35,7 @@ import { z } from 'zod';
 import { createScopedLogger } from '../utils/logger';
 import { ok, clientError, orgRequired, notFoundInTenant, serverError } from '../lib/api-response';
 import { pool } from '../db';
+import { readAuditEvents } from './mdx-audit';
 
 const router = Router();
 const log = createScopedLogger('mdx-vault');
@@ -124,8 +125,10 @@ router.get('/vault', async (req: Request, res: Response) => {
 
      EXISTS rather than a JOIN: an artifact must not be duplicated or dropped
      by the bridge, and the org predicate is repeated on `projects` so a
-     mis-anchored row (the anchor is deliberately FK-free — see the migration)
-     can never pull another tenant's project into the predicate. */
+     mis-anchored row can never pull another tenant's project into the
+     predicate. (The anchor is held to the project's organization by a key since
+     migrations/20260926b_program_same_org_keys.sql, but NOT VALID: a row written
+     before it may still name another organization's program.) */
   /* a.organization_id lives in the SQL literal below (not this array) so the
      tenant-isolation CI gate can verify the scope statically. */
   const filters: string[] = [`a.status != 'archived'`];
@@ -388,6 +391,50 @@ router.get('/vault/:artifactId/versions', async (req: Request, res: Response) =>
       return ok(res, [], { count: 0 });
     }
     return serverError(res, log, 'list-versions', err);
+  }
+});
+
+/* ─── GET /api/mdx/vault/:artifactId/audit ─────────────────────────── */
+
+/* The selected artifact's own audit trail, for the Vault drawer. The drawer
+   read GET /api/mdx/audit?record=<id>, which production refuses (the org-wide
+   audit log is not a launch surface), so on a deployed Vault the block could
+   only say the read failed; with no selection it fetched the org's latest
+   events unfiltered. This read is the artifact's trail only: the artifact must
+   be this organization's before anything is read, and the rows are the ones
+   recorded against either of its ids. Same reader and payload as the audit
+   surface (readAuditEvents). */
+const auditQuery = z.object({
+  limit: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().min(1).max(50)).optional(),
+});
+
+router.get('/vault/:artifactId/audit', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const artifactId = String(req.params.artifactId);
+  const parsed = auditQuery.safeParse(req.query);
+  if (!parsed.success) return clientError(res, 422, 'Invalid query', parsed.error.flatten().fieldErrors);
+
+  try {
+    const found = await pool.query<{ id: number; artifact_id: string | null }>(
+      `SELECT id, artifact_id FROM concept2cure_artifacts
+        WHERE organization_id = $1 AND (id::text = $2 OR artifact_id = $2)
+        LIMIT 1`,
+      [orgId, artifactId],
+    );
+    if (found.rows.length === 0) return notFoundInTenant(res, 'Artifact');
+    const { id, artifact_id } = found.rows[0];
+    const payload = await readAuditEvents(orgId, {
+      record: [String(id), ...(artifact_id ? [artifact_id] : [])],
+      limit: parsed.data.limit ?? 5,
+    });
+    return ok(res, payload, { count: payload.events.length });
+  } catch (err: unknown) {
+    if ((err as { code?: string }).code === '42P01') {
+      // No audit store: say so, never an empty trail read as "nothing happened".
+      return res.status(503).json({ error: 'Audit log store not provisioned' });
+    }
+    return serverError(res, log, 'artifact-audit', err);
   }
 });
 

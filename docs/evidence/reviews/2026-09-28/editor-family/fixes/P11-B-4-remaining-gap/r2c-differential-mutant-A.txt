@@ -1,0 +1,72 @@
+R2C DIFFERENTIAL PROBE under MUTANT A (no cut adjustment), seeds 1 and 2 with tracking on
+667c667
+<   return Math.max(0, floor.undo - (floor.seen + 1 - depth));
+---
+>   return floor.undo; // MUTANT A: no cut adjustment
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 ./
+
+ × ../../..<scratch>/fixes2/undo-floor/r2c-probe/differential.test.ts > differential: Undo/Redo against a labelled model of history > seed 1, tracking on 474ms
+   → undo press: expected false to be true // Object.is equality
+ × ../../..<scratch>/fixes2/undo-floor/r2c-probe/differential.test.ts > differential: Undo/Redo against a labelled model of history > seed 2, tracking on 997ms
+   → op 43 allows undo: expected false to be true // Object.is equality
+ ↓ ../../..<scratch>/fixes2/undo-floor/r2c-probe/differential.test.ts > differential: Undo/Redo against a labelled model of history > seed 3, tracking on
+ ↓ ../../..<scratch>/fixes2/undo-floor/r2c-probe/differential.test.ts > differential: Undo/Redo against a labelled model of history > seed 4, tracking on
+ ↓ ../../..<scratch>/fixes2/undo-floor/r2c-probe/differential.test.ts > differential: Undo/Redo against a labelled model of history > seed 1, tracking off
+ ↓ ../../..<scratch>/fixes2/undo-floor/r2c-probe/differential.test.ts > differential: Undo/Redo against a labelled model of history > seed 2, tracking off
+ ↓ ../../..<scratch>/fixes2/undo-floor/r2c-probe/differential.test.ts > differential: Undo/Redo against a labelled model of history > seed 3, tracking off
+ ↓ ../../..<scratch>/fixes2/undo-floor/r2c-probe/differential.test.ts > differential: Undo/Redo against a labelled model of history > seed 4, tracking off
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  ../../..<scratch>/fixes2/undo-floor/r2c-probe/differential.test.ts > differential: Undo/Redo against a labelled model of history > seed 1, tracking on
+AssertionError: undo press: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ press ../../..<scratch>/fixes2/undo-floor/r2c-probe/differential.test.ts:46:56
+     44|     const from = redo ? undone : done, to = redo ? done : undone;
+     45|     const allowed = top(from) === 'post';
+     46|     expect(changed, `${redo ? 'redo' : 'undo'} press`).toBe(allowed);
+       |                                                        ^
+     47|     expect(live, `${redo ? 'redo' : 'undo'} can() && decisionFloorAllo…
+     48|     if (allowed) { to.push(from.pop()!); if (to.length > 120) { to.spl…
+ ❯ run ../../..<scratch>/fixes2/undo-floor/r2c-probe/differential.test.ts:68:51
+ ❯ ../../..<scratch>/fixes2/undo-floor/r2c-probe/differential.test.ts:81:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  ../../..<scratch>/fixes2/undo-floor/r2c-probe/differential.test.ts > differential: Undo/Redo against a labelled model of history > seed 2, tracking on
+AssertionError: op 43 allows undo: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ check ../../..<scratch>/fixes2/undo-floor/r2c-probe/differential.test.ts:28:79
+     26|     expect(redoDepth(editor.state), `${where} redo depth`).toBe(undone…
+     27|     // False only when history holds a step and the floor refuses it.
+     28|     expect(decisionFloorAllows(editor.state, 'undo'), `${where} allows…
+       |                                                                               ^
+     29|     expect(decisionFloorAllows(editor.state, 'redo'), `${where} allows…
+     30|   };
+ ❯ run ../../..<scratch>/fixes2/undo-floor/r2c-probe/differential.test.ts:70:5
+ ❯ ../../..<scratch>/fixes2/undo-floor/r2c-probe/differential.test.ts:81:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 skipped (8)
+   Start at  00:24:02
+   Duration  2.55s (transform 160ms, setup 179ms, import 141ms, tests 1.47s, environment 562ms)
+
+RESTORED: suggestions.ts matches the final copy byte for byte

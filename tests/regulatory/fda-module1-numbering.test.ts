@@ -43,6 +43,7 @@ import { getRequiredArtifacts } from '../../server/services/regulatory/requiredA
 import { getModule1Structure, type CtdSectionDef } from '../../server/services/regulatory/ctd-module-structure';
 import { FDA_TEMPLATE, type CTDSection } from '../../server/services/regional-ctd-templates';
 import { FALLBACK_REQUIRED_MODULES, requiredSectionsFromPack } from '../../server/services/ectd/required-sections';
+import { getWorkflow } from '../../server/services/ana-ri/workflow-orchestration';
 
 const ROOT = path.resolve(__dirname, '../..');
 
@@ -243,6 +244,22 @@ describe('FDA Module 1 numbering — one published heading list, every tree agre
     for (const required of ['1.1', '1.2', '1.20', '1.14.4.1', '1.12.14']) {
       const present = [...codes].some((c) => c === required || c.startsWith(`${required}.`));
       expect(present, `ind:fda ${pack.version} has no section at ${required}`).toBe(true);
+    }
+  });
+
+  // The submission workflows AnA is given every turn a submission type is
+  // known (ana-ri/context-enrichment.ts → buildWorkflowContext). Added
+  // 2026-10-04 (D2): the IND workflow filed the pre-IND meeting request under
+  // 1.1, Form 1572 under 1.3.1 and the IB under 1.14, and paired the cover
+  // letter with Form 1571 under one code.
+  it('the submission workflows AnA is guided by file Module 1 where FDA does', () => {
+    for (const type of ['ind', 'nda', 'bla']) {
+      const wf = getWorkflow(type)!;
+      const nodes = wf.phases
+        .flatMap((p) => p.steps)
+        .filter((s) => s.ctdSection)
+        .map((s) => ({ code: s.ctdSection as string, title: s.title }));
+      expect(violationsFor(nodes), `${type} workflow`).toEqual([]);
     }
   });
 

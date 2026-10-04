@@ -9,6 +9,7 @@
  */
 
 import type { AnaTool } from '../ai-gateway/types';
+import { STATED_REASON_INPUT } from './stated-reason-input';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // QMS + Labeling + Search + Analytics tools (migration 20260511).
@@ -26,6 +27,7 @@ export const CREATE_QMS_DOCUMENT: AnaTool = {
       doc_type:   { type: 'string', enum: ['sop', 'wi', 'form', 'spec', 'policy', 'manual', 'protocol'] },
       category:   { type: 'string', description: "e.g. design / production / capa / training." },
       version:    { type: 'string' },
+      reason:     STATED_REASON_INPUT,
     },
     required: ['doc_number', 'title', 'doc_type'],
   },
@@ -68,7 +70,7 @@ export const REVISE_QMS_DOCUMENT: AnaTool = {
     type: 'object',
     properties: {
       document_id: { type: 'number' },
-      reason:      { type: 'string', description: 'Reason for change (required).' },
+      reason:      STATED_REASON_INPUT,
     },
     required: ['document_id', 'reason'],
   },
@@ -137,7 +139,7 @@ export const QMS_CHANGE_CREATE: AnaTool = {
       change_type:                { type: 'string', enum: ['document', 'process', 'equipment', 'material', 'supplier', 'method', 'facility', 'computer_system', 'specification', 'other'] },
       classification:             { type: 'string', enum: ['minor', 'major', 'critical'] },
       risk_level:                 { type: 'string', enum: ['low', 'medium', 'high'] },
-      reason:                     { type: 'string', description: 'Reason for the change (captured for 21 CFR Part 11).' },
+      reason:                     STATED_REASON_INPUT,
       impact_assessment:          { type: 'string' },
       implementation_plan:        { type: 'string' },
       target_implementation_date: { type: 'string', description: 'ISO date (YYYY-MM-DD).' },
@@ -156,7 +158,7 @@ export const QMS_CHANGE_TRANSITION: AnaTool = {
     properties: {
       change_id:            { type: 'number' },
       to:                   { type: 'string', enum: ['proposed', 'under_assessment', 'rejected', 'in_implementation', 'verification', 'closed', 'cancelled'] },
-      reason:               { type: 'string', description: 'Reason-for-change for this governed transition.' },
+      reason:               STATED_REASON_INPUT,
       effectiveness_review: { type: 'string', description: 'Effectiveness-check outcome — provide when moving to closed.' },
     },
     required: ['change_id', 'to'],

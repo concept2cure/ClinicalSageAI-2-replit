@@ -329,6 +329,12 @@ describe('Vault — search', () => {
           data: { entries: [], chain: { store: 'audit_logs', ok: true, rowsChecked: 0, legacyRows: 0, sequencedRows: 0 } },
         });
       }
+      // The same for the version list (VR-09), whose failed read is an alert too.
+      if (url.endsWith('/versions')) return ok({ success: true, data: { versions: [] } });
+      // And for related documents (plan critique 15), whose failed read is an alert.
+      if (url.endsWith('/relationships')) return ok({ success: true, data: { relationships: [] } });
+      // And for review annotations, whose failed read is an alert too.
+      if (url.endsWith('/annotations')) return ok({ success: true, data: { annotations: [], openByVersion: [] } });
       return ok({});
     });
   }

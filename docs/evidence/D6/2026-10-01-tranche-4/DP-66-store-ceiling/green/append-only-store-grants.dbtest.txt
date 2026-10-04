@@ -1,0 +1,23 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the stores exist on this database > every append-only store this file names is present (a missing one would make the rest vacuous) 7ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > withholds UPDATE, DELETE and TRUNCATE on every append-only store, and keeps SELECT and INSERT 8ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > electronic_signatures: the supersession columns stay updatable (revocation), the attested ones do not 1ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > the privilege refuses first: UPDATE/DELETE that reach no row, and TRUNCATE, are 42501 on every store 80ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > the governed revocation statement still runs (its columns only) 7ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the grant recipe (provisionAppServiceRole) on a per-run role > a re-run of the recipe takes a hand GRANT of DELETE on audit_logs back 336ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the deploy grant audit (auditRuntimeRoleGrants → readiness contract, deploy-migrate 5/5) > reports the per-run role clean on every store: nothing beyond the ceiling, nothing denied 32ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > the deploy grant audit (auditRuntimeRoleGrants → readiness contract, deploy-migrate 5/5) > refuses a hand GRANT of DELETE, TRUNCATE or an attested column on a store, by name 50ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > holds no UPDATE, DELETE or TRUNCATE on any append-only store 2ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > as app_service, in its own tenant: DELETE and UPDATE of an audit row are refused by the privilege (42501), before the trigger 11ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > with the trigger out of the way (replica mode), app_service still cannot remove or rewrite an audit row 5ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > cannot append to the archive ledger itself: the forged row of DP-68 is refused by the privilege (42501) 3ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > the archive door still deletes for app_service, and records the batch in its ledger 6ms
+ ✓ tests/db/append-only-store-grants.dbtest.ts > app_service, as deploy-migrate step 4/5 leaves it > the deploy grant audit agrees with the catalog for app_service: nothing beyond the ceiling on any store 21ms
+
+ Test Files  1 passed (1)
+      Tests  14 passed (14)
+   Start at  21:58:50
+   Duration  1.62s (transform 153ms, setup 93ms, import 108ms, tests 1.07s, environment 0ms)
+

@@ -29,6 +29,7 @@
 
 import * as React from 'react';
 import { useEsignature, type EsigMeaning } from '../../hooks/useEsignature';
+import { ESIGN_MEANINGS } from '../esignMeanings';
 import { GovernedTimestamp } from './GovernedTimestamp';
 import './EsignModal.css';
 
@@ -78,13 +79,7 @@ const IconShield = () => (
 
 // ── Signature meanings (§11.50 closed enum) ──────────────────────────────────
 
-const MEANINGS: ReadonlyArray<{ id: EsigMeaning; label: string; desc: string }> = [
-  { id: 'authorship', label: 'Authorship', desc: 'You authored this content' },
-  { id: 'review', label: 'Review', desc: 'You reviewed this content' },
-  { id: 'approval', label: 'Approval', desc: 'You approve this content for use' },
-  { id: 'responsibility', label: 'Responsibility', desc: 'You take responsibility for this content' },
-  { id: 'release', label: 'Release', desc: 'You authorize release or submission' },
-];
+const MEANINGS = ESIGN_MEANINGS;
 
 const MIN_REASON = 8;
 const MIN_PASSWORD = 6;

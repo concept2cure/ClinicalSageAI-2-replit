@@ -35,7 +35,9 @@ export * from './cv-v4-data';
 export * from './cv-v3-data';
 export {
   usRegionalSectionElement,
+  usRegionalHeadingPlacement,
   isKnownUsRegionalSection,
+  type UsRegionalHeadingPlacement,
 } from './fda-regional-sections';
 
 /** Semantic id of a v4.0 genericode list. */
@@ -135,6 +137,58 @@ function resolveV3(id: V3ListId, value: string): string | null {
   const norm = raw.toLowerCase().replace(/[\s_-]+/g, ' ').trim();
   const hit = list.find((c) => c.description.toLowerCase().includes(norm) || norm.includes(c.description.toLowerCase().split(' (')[0]));
   return hit?.code ?? null;
+}
+
+/**
+ * The strict form of resolveV3, for a value an OPERATOR typed: the exact code,
+ * or the exact description compared case-insensitively with runs of space, '_'
+ * and '-' collapsed — and nothing else.
+ *
+ * 2026-10-01 (W5/D7, sweep F08): resolveV3 matches by substring in both
+ * directions and takes the FIRST hit, so on the package spine 'IND' resolved to
+ * IND Safety Reports (fdast9), 'report' to Annual Report and 'supplement' to
+ * Efficacy Supplement — a guess, filed as if the operator had chosen it, while
+ * the record kept the operator's word. resolveV3 stays loose for the callers
+ * that feed it internal keys (core-to-packager's 'ind_safety_report').
+ */
+function resolveV3Strict(id: V3ListId, value: string | null | undefined): { code: string; description: string } | null {
+  if (!value) return null;
+  const norm = (v: string) => v.toLowerCase().replace(/[\s_-]+/g, ' ').trim();
+  const raw = value.trim();
+  const list = V3_CODE_LISTS[id];
+  const hit = list.find((c) => c.code === raw) ?? list.find((c) => norm(c.description) === norm(raw));
+  return hit ? { code: hit.code, description: hit.description } : null;
+}
+/** A submission type an operator typed, exactly: its `fdastN` code and canonical term. */
+export function resolveSubmissionTypeStrict(value: string | null | undefined): { code: string; description: string } | null {
+  return resolveV3Strict('submissionType', value);
+}
+/** A submission sub-type an operator typed, exactly: its `fdasstN` code and canonical term. */
+export function resolveSubmissionSubTypeStrict(value: string | null | undefined): { code: string; description: string } | null {
+  return resolveV3Strict('submissionSubType', value);
+}
+/** The sub-type terms the us-regional backbone can carry. */
+export function submissionSubTypeTerms(): readonly string[] {
+  return V3_CODE_LISTS.submissionSubType.map((c) => c.description);
+}
+
+/**
+ * Why an application of this type cannot file this submission type, or null.
+ * Only pairs that cannot exist are refused — a list of every valid pair is not
+ * recorded here and is not invented: supplements (efficacy, CMC, labeling,
+ * REMS) are to an approved NDA or BLA (21 CFR 314.70, 601.12), so an IND or a
+ * master file has none; IND safety reports belong to an IND (21 CFR 312.32).
+ * 2026-10-01 (W5/D7, sweep F04): an IND package accepted 'Efficacy Supplement'.
+ */
+export function fdaSubmissionTypeRefusal(applicationTypeCode: string | null, submissionTypeCode: string): string | null {
+  const SUPPLEMENTS = new Set(['fdast2', 'fdast3', 'fdast4', 'fdast11']);
+  if ((applicationTypeCode === 'fdaat4' || applicationTypeCode === 'fdaat5') && SUPPLEMENTS.has(submissionTypeCode)) {
+    return 'A supplement is filed to an approved NDA or BLA (21 CFR 314.70, 601.12); an IND or a master file has none.';
+  }
+  if (submissionTypeCode === 'fdast9' && applicationTypeCode !== 'fdaat4') {
+    return 'IND safety reports are filed to an IND (21 CFR 312.32).';
+  }
+  return null;
 }
 
 /** Resolve an application-type value to its us-regional `fdaatN` code. */

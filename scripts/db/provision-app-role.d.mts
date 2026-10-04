@@ -23,8 +23,25 @@ export declare const SCHEMA_PRIVILEGE_OVERRIDES: Readonly<Record<string, string[
 /** Full DML — the default granted on every application schema without an override. */
 export declare const DEFAULT_TABLE_PRIVILEGES: readonly string[];
 
-/** Relations the runtime role must never own nor hold more than the override on. */
-export declare const APPEND_ONLY_TABLES: readonly { schema: string; name: string }[];
+/**
+ * The append-only audit stores: the runtime role holds SELECT, INSERT on each
+ * (plus UPDATE on `updatableColumns`, the revocation carve-out; SELECT alone
+ * where the store's `ceiling` says so, the archive ledger) and never UPDATE,
+ * DELETE, TRUNCATE or ownership.
+ */
+export declare const APPEND_ONLY_TABLES: readonly {
+  readonly schema: string;
+  readonly name: string;
+  readonly updatableColumns?: readonly string[];
+  /** The store's own ceiling where narrower than SELECT, INSERT. */
+  readonly ceiling?: readonly string[];
+}[];
+
+/** The ceiling on an append-only store: SELECT, INSERT, unless the store's own `ceiling` narrows it. */
+export declare const APPEND_ONLY_PRIVILEGES: readonly string[];
+
+/** Withheld on every append-only store from PUBLIC and the runtime role: UPDATE, DELETE, TRUNCATE. */
+export declare const WITHHELD_APPEND_ONLY_PRIVILEGES: readonly string[];
 
 /** Resolve and validate the runtime role name (APP_SERVICE_DB_ROLE, default app_service). */
 /**
@@ -106,6 +123,18 @@ export declare function ensureRuntimeRole(
   db: { query: QueryFn },
   options?: ProvisionAppServiceRoleOptions,
 ): Promise<EnsureRuntimeRoleResult>;
+
+/**
+ * REVOKE UPDATE, DELETE, TRUNCATE on each append-only store present (and INSERT
+ * where its `ceiling` is SELECT), from PUBLIC and the role (`roleIdent`, already
+ * quote_ident-ed), then GRANT UPDATE on its carve-out columns. Part of the grant recipe; runs inside the caller's
+ * transaction. Returns the stores withheld on, as `schema.name`.
+ */
+export declare function withholdAppendOnlyPrivileges(
+  db: { query: QueryFn },
+  roleIdent: string,
+  options?: { stores?: typeof APPEND_ONLY_TABLES; log?: (message: string) => void },
+): Promise<string[]>;
 
 export interface RuntimeRoleGrantAudit {
   role: string;

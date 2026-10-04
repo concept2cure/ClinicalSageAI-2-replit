@@ -2,7 +2,7 @@
  * When do two statements of one labelled figure agree? One rule for the two
  * checks that compare labelled figures in prose: the within-document numerical
  * integrity check and the dossier consistency check (row 74, track NC review;
- * ADR-0014 §7).
+ * ADR-0015 §7).
  *
  * Before the review both checks compared figures loosely, and the counted
  * 'clean' copy the track added presented the result as verified agreement:

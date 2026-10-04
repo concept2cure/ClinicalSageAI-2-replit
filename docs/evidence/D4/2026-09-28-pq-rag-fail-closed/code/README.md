@@ -4,7 +4,7 @@
 
 Repo: /home/user/ClinicalSageAI-2-replit, branch concept2cure-v2, HEAD eb62b566c. **Nothing is committed.**
 
-The work follows the founder decisions of 2026-09-28, made by the product owner under the delegation recorded in ADR-0014:
+The work follows the founder decisions of 2026-09-28, made by the product owner under the delegation recorded in ADR-0015:
 - The PQ rag corpus is the official guidance texts the gold questions ask about. It is ingested through the existing Vault ingest path into a dedicated evaluation organization, and every document has a manifest entry.
 - The gold set grows to 30-50 items, keyed by `document_code` + `version` and resolved to ids at run time.
 - The PQ runs retrieval strategy `basic` with reranking off.

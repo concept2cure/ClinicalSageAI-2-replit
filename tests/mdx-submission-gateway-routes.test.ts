@@ -183,6 +183,7 @@ describe('submission gateway routes — auth gate', () => {
     ['GET',  '/api/mdx/gateways/transmittals/1/ack'],
     ['POST', '/api/mdx/gateways/transmittals/1/findings'],
     ['PATCH', '/api/mdx/gateways/findings/1/resolve'],
+    ['POST', '/api/mdx/gateways/transmittals/1/technical-rejection'],
   ])('%s %s returns 403 without org context', async (method, url) => {
     const req = request(makeApp({ withAuth: false }));
     const res = await (method === 'GET' ? req.get(url)
@@ -212,6 +213,7 @@ describe('submission gateway routes — role gate', () => {
   const MUTATIONS: Array<[string, string, Record<string, unknown>]> = [
     ['POST', '/api/mdx/gateways/fda/esg/transmit', { ...REAUTH, environment: 'production', submissionType: 'estar', bundle: { hash: 'h' } }],
     ['POST', '/api/mdx/gateways/transmittals/1/rollback', { ...REAUTH }],
+    ['POST', '/api/mdx/gateways/transmittals/1/technical-rejection', { ...REAUTH }],
     ['POST', '/api/mdx/gateways/transmittals/1/findings', { code: 'X', message: 'y' }],
     ['PATCH', '/api/mdx/gateways/findings/1/resolve', { resolution: 'done' }],
   ];

@@ -32,7 +32,7 @@
  * (`draftCopiesSetAside`): comparing the draft with itself agrees by
  * construction, and used to read as 'clean'.
  *
- * 2026-09-28 (row 74, track NC; ADR-0014 §7): the within-document check
+ * 2026-09-28 (row 74, track NC; ADR-0015 §7): the within-document check
  * (checkInternalNumericalIntegrity, behind check_numerical_integrity) said
  * 'clean' — "No numerical inconsistencies detected." — for a draft with no
  * labelled figure, and for one whose every quantity is stated once, where no

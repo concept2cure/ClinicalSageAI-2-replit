@@ -1,0 +1,29 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-29T19:28:53.675Z","pid":7562,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-29T19:28:53.677Z","pid":7562,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-29T19:28:53.677Z","pid":7562,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/correspondence-work-items.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-29T19:28:54.042Z', poolSize: 1 }
+
+stdout | tests/db/correspondence-work-items.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/correspondence-work-items.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":30,"time":"2026-09-29T19:28:54.705Z","pid":7562,"hostname":"vm","context":{"userId":15,"tenantId":91860,"resourceId":"0bc6ee5d-0bed-47ce-b3f3-a449f60f3201"},"msg":"[audit-service] [AUDIT] correspondence.ingest regulatory_correspondence"}
+ ✓ tests/db/correspondence-work-items.dbtest.ts > an agency letter becomes one work item per issue > a letter raising several issues is recorded whole: 201, one work item for each 218ms
+{"level":30,"time":"2026-09-29T19:28:54.770Z","pid":7562,"hostname":"vm","context":{"userId":15,"tenantId":91860,"resourceId":"75bc56b5-f5ad-4eac-b82a-81976fd74f30"},"msg":"[audit-service] [AUDIT] correspondence.ingest regulatory_correspondence"}
+{"level":50,"time":"2026-09-29T19:28:54.832Z","pid":7562,"hostname":"vm","context":{"correspondenceId":"23053995-c0de-47fa-84ba-8381b28d6c82","projectId":5,"submissionId":"7e1ad823-7f3d-426c-a9c7-73cfe952643f","err":"permission denied for table c2c_correspondence_issues","correlationId":null,"code":"42501"},"msg":"[regulatory-correspondence] ingesting agency correspondence failed"}
+ ✓ tests/db/correspondence-work-items.dbtest.ts > an agency letter becomes one work item per issue > the organisation's next letter is recorded too 49ms
+ ✓ tests/db/correspondence-work-items.dbtest.ts > the key still deduplicates what it was added to deduplicate > two work items for the same integer-keyed source in one organisation are refused 6ms
+ ✓ tests/db/correspondence-work-items.dbtest.ts > the key still deduplicates what it was added to deduplicate > the same correspondence issue cannot be written twice 18ms
+ ✓ tests/db/correspondence-work-items.dbtest.ts > a failed intake says so without shipping the database error > answers 500 with no PostgreSQL text in the body 31ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  19:28:48
+   Duration  7.29s (transform 2.41s, setup 106ms, import 272ms, tests 6.53s, environment 0ms)
+

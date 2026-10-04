@@ -1,0 +1,14 @@
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > names each sequence and section that carries a version, with the operation 68ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > a version placed nowhere says so, and a row the server said nothing about claims nothing 14ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > names each official eSTAR export that attached a version, and claims nothing when there is none 12ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > where each version is placed (VR-14a) > several placements read as one list 0ms
+ × client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > the check-in warning names the open sequences the current version is placed in > W1 names the submission, the sequence and its status when that sequence is not yet sent 5014ms
+   → Unable to find an element by: [data-testid="vault-checkin-warning"]
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > the check-in warning names the open sequences the current version is placed in > W2 says nothing when the agency already holds that sequence 16ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > the check-in warning names the open sequences the current version is placed in > W3 says nothing when the only leaf is a Delete, which carries no content 13ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > the check-in warning names the open sequences the current version is placed in > W4 says nothing when only an earlier version is placed 16ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/vaultWhereUsed.test.tsx > the check-in warning names the open sequences the current version is placed in > W1 names the submission, the sequence and its status when that sequence is not yet sent
+TestingLibraryElementError: Unable to find an element by: [data-testid="vault-checkin-warning"]
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)

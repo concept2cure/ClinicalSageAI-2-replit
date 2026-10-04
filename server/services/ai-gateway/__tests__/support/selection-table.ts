@@ -1,6 +1,6 @@
 /**
  * What the gateway serves, path by path, over the real registry: the parity
- * oracle for ADR-0014 §4. Each cell drives the real `route()` on a fresh
+ * oracle for ADR-0015 §4. Each cell drives the real `route()` on a fresh
  * gateway with the network call stubbed, and records the registry id that was
  * dispatched (or, for the fallback ladder, every id in the order it was
  * tried), or the terminal refusal's code.

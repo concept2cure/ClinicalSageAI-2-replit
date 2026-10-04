@@ -92,6 +92,12 @@ describe('the signed export carries audit_logs', () => {
     expect(rowsOf(out.data).every((r) => Number(r.organization_id) === ORG)).toBe(true);
   });
 
+  it.each([0, -1, undefined])('refuses an export for organisation %s before reading anything: it never widens to every tenant (SECURITY-9)', async (organizationId) => {
+    const before = (await pg.query<{ n: number }>('SELECT count(*)::int AS n FROM audit_events')).rows[0].n;
+    await expect(generateSignedAuditExport(pool, { ...base, organizationId: organizationId as never }, { verifyAuditLogsChain: ok })).rejects.toThrow(/usable organisation id/);
+    expect((await pg.query<{ n: number }>('SELECT count(*)::int AS n FROM audit_events')).rows[0].n, 'no export row was recorded').toBe(before);
+  });
+
   it('still carries the audit_events rows it always did', async () => {
     const out = await generateSignedAuditExport(pool, base, { verifyAuditLogsChain: ok });
     expect(rowsOf(out.data).filter((r) => r.source === 'audit_events').map((r) => r.event_type)).toEqual(['scim.user.provisioned']);

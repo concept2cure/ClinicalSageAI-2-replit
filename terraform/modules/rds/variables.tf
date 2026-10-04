@@ -4,8 +4,13 @@ variable "identifier" {
 }
 
 variable "engine_version" {
-  type    = string
-  default = "15.4"
+  type        = string
+  default     = "15"
+  description = "PostgreSQL major version. Major only: see the validation."
+  validation {
+    condition     = can(regex("^[0-9]+$", var.engine_version))
+    error_message = "RDS PostgreSQL MAJOR version only, e.g. \"15\". RDS creates the instance on its current minor and applies minor patches in the maintenance window. A pinned minor is retired by AWS on a schedule (15.4 was) and a retired minor cannot be created, so the first apply and every rebuild of the database would fail."
+  }
 }
 
 variable "instance_class" {
@@ -66,8 +71,8 @@ variable "multi_az" {
 
 variable "kms_key_id" {
   type        = string
-  description = "KMS key ARN for storage encryption (leave empty for default key)"
-  default     = ""
+  description = "Customer-managed KMS key ARN for storage, snapshots, backups and Performance Insights. Null: the AWS-managed aws/rds key."
+  default     = null
 }
 
 variable "deletion_protection" {

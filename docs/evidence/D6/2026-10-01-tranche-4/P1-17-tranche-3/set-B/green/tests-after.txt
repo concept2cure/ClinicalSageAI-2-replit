@@ -1,0 +1,630 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/__tests__/cortexQueryRoutes-error-containment.test.ts > POST /api/cortex/query/query: the 500 body is contained > answers a failure inside the query with INTERNAL_ERROR and the request id, never the thrown text
+✅ Unified Cortex Query API initialized
+
+stderr | server/routes/__tests__/cortexQueryRoutes-error-containment.test.ts > POST /api/cortex/query/query: the 500 body is contained > answers a failure inside the query with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:08:53.241Z",
+  "level": "error",
+  "message": "[cortex-query] answering the Cortex query failed",
+  "context": {
+    "processingTimeMs": 0,
+    "err": "SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+stdout | server/routes/__tests__/cortexQueryRoutes-error-containment.test.ts > POST /api/cortex/query/query: the 500 body is contained > leaves the no-tenant 403 exactly as it was
+✅ Unified Cortex Query API initialized
+
+ ✓ server/routes/__tests__/cortexQueryRoutes-error-containment.test.ts > POST /api/cortex/query/query: the 500 body is contained > answers a failure inside the query with INTERNAL_ERROR and the request id, never the thrown text 33ms
+ ✓ server/routes/__tests__/cortexQueryRoutes-error-containment.test.ts > POST /api/cortex/query/query: the 500 body is contained > leaves the no-tenant 403 exactly as it was 9ms
+stderr | server/routes/__tests__/ha-interactions-error-containment.test.ts > GET /api/ha-interactions/interactions: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:08:53.291Z",
+  "level": "error",
+  "message": "[ha-interactions] handling the health-authority interaction request failed",
+  "context": {
+    "err": "SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/ha-interactions-error-containment.test.ts > GET /api/ha-interactions/interactions: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 37ms
+ ✓ server/routes/__tests__/ha-interactions-error-containment.test.ts > GET /api/ha-interactions/interactions: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 13ms
+stderr | tests/routes/inline-endpoints-shadow-health-containment.test.ts > GET /api/shadow/health: the 502 body is contained > answers an unreachable shadow service with the static sentence, never the transport text
+{
+  "timestamp": "2026-10-01T08:08:53.651Z",
+  "level": "error",
+  "message": "[inline-endpoints] shadow health probe failed",
+  "context": {
+    "err": "connect ECONNREFUSED 10.9.8.xxx:8001 SENTINEL-TRANSPORT-DETAIL",
+    "correlationId": null
+  }
+}
+
+ ✓ tests/routes/inline-endpoints-shadow-health-containment.test.ts > GET /api/shadow/health: the 502 body is contained > answers an unreachable shadow service with the static sentence, never the transport text 107ms
+ ✓ tests/routes/inline-endpoints-shadow-health-containment.test.ts > GET /api/shadow/health: the 502 body is contained > leaves the pass-through of the upstream non-OK answer exactly as it was 59ms
+stderr | server/routes/__tests__/protocol-export-error-containment.test.ts > GET /api/protocol-export/:id: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:08:53.759Z",
+  "level": "error",
+  "message": "[protocol-export] handling the protocol export request failed",
+  "context": {
+    "err": "SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/protocol-export-error-containment.test.ts > GET /api/protocol-export/:id: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 29ms
+ ✓ server/routes/__tests__/protocol-export-error-containment.test.ts > GET /api/protocol-export/:id: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 5ms
+stderr | server/routes/__tests__/validate-completeness-error-containment.test.ts > POST /api/validate-completeness/validate: the 500 body is contained > answers an engine failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:08:53.964Z",
+  "level": "error",
+  "message": "[validate-completeness-routes] validating submission completeness failed",
+  "context": {
+    "err": "SENTINEL-ENGINE-DETAIL: relation \"set_b_secret_table\" does not exist",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/validate-completeness-error-containment.test.ts > POST /api/validate-completeness/validate: the 500 body is contained > answers an engine failure with INTERNAL_ERROR and the request id, never the thrown text 43ms
+ ✓ server/routes/__tests__/validate-completeness-error-containment.test.ts > POST /api/validate-completeness/validate: the 500 body is contained > leaves the validation 400 exactly as it was 8ms
+stderr | server/routes/__tests__/document-understanding-error-containment.test.ts > POST /api/document-understanding/analyze: the 500 body is contained > answers a failure inside the analysis with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:08:54.442Z",
+  "level": "error",
+  "message": "[document-understanding] analysing the document failed",
+  "context": {
+    "err": "SENTINEL-FS-DETAIL: EACCES: permission denied, open '/app/storage/org-7/secret.txt'",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+stdout | server/routes/__tests__/firecrawl-error-containment.test.ts > POST /api/firecrawl/scrape: the 502 body is contained > answers a provider failure with provider_error, the static sentence and the correlation id, never the thrown text
+[firecrawl.scrape.request] {
+  correlationId: 'fc-corr-set-b',
+  tenantId: 7,
+  url: 'https://example.org/label.pdf',
+  route: '/api/firecrawl/scrape'
+}
+
+stderr | server/routes/__tests__/firecrawl-error-containment.test.ts > POST /api/firecrawl/scrape: the 502 body is contained > answers a provider failure with provider_error, the static sentence and the correlation id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:08:54.454Z",
+  "level": "error",
+  "message": "[firecrawl-routes] scrape failed",
+  "context": {
+    "correlationId": "fc-corr-set-b",
+    "err": "provider_error:500:SENTINEL-UPSTREAM-BODY {\"error\":\"invalid key fc-set-b-secret\"}"
+  }
+}
+
+ ✓ server/routes/__tests__/firecrawl-error-containment.test.ts > POST /api/firecrawl/scrape: the 502 body is contained > answers a provider failure with provider_error, the static sentence and the correlation id, never the thrown text 84ms
+ ✓ server/routes/__tests__/document-understanding-error-containment.test.ts > POST /api/document-understanding/analyze: the 500 body is contained > answers a failure inside the analysis with INTERNAL_ERROR and the request id, never the thrown text 94ms
+ ✓ server/routes/__tests__/firecrawl-error-containment.test.ts > POST /api/firecrawl/scrape: the 502 body is contained > leaves the quota 429 exactly as it was 16ms
+ ✓ server/routes/__tests__/document-understanding-error-containment.test.ts > POST /api/document-understanding/analyze: the 500 body is contained > leaves the no-source 400 exactly as it was 8ms
+stderr | server/routes/__tests__/harmonize-error-containment.test.ts > POST /api/harmonize/check: the 500 body is contained > answers an engine failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:08:56.193Z",
+  "level": "error",
+  "message": "[harmonize-routes] running the harmonization check failed",
+  "context": {
+    "err": "SENTINEL-ENGINE-DETAIL: relation \"set_b_secret_table\" does not exist",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/harmonize-error-containment.test.ts > POST /api/harmonize/check: the 500 body is contained > answers an engine failure with INTERNAL_ERROR and the request id, never the thrown text 47ms
+ ✓ server/routes/__tests__/harmonize-error-containment.test.ts > POST /api/harmonize/check: the 500 body is contained > leaves the validation 400 exactly as it was 10ms
+stderr | server/routes/__tests__/lifecycle-error-containment.test.ts > GET /api/lifecycle/obligations: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:08:57.371Z",
+  "level": "error",
+  "message": "[lifecycle] handling the lifecycle-obligation request failed",
+  "context": {
+    "err": "SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/lifecycle-error-containment.test.ts > GET /api/lifecycle/obligations: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 48ms
+ ✓ server/routes/__tests__/lifecycle-error-containment.test.ts > GET /api/lifecycle/obligations: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 22ms
+stdout | server/routes/__tests__/seed-demo-error-containment.test.ts > POST /api/demo/seed: the 500 body is contained > answers a seeding failure with INTERNAL_ERROR and the request id, never the thrown text
+🌱 Starting demo project seeding...
+
+stderr | server/routes/__tests__/seed-demo-error-containment.test.ts > POST /api/demo/seed: the 500 body is contained > answers a seeding failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:08:58.064Z",
+  "level": "error",
+  "message": "[seed-demo] seeding the demo projects failed",
+  "context": {
+    "err": "SENTINEL-DB-DETAIL: duplicate key value violates unique constraint \"projects_set_b_secret_key\"",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/seed-demo-error-containment.test.ts > POST /api/demo/seed: the 500 body is contained > answers a seeding failure with INTERNAL_ERROR and the request id, never the thrown text 94ms
+stderr | server/routes/__tests__/knowledge-error-containment.test.ts > GET /api/knowledge/validation-rules: the 500 body is contained > answers a corpus failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:08:58.305Z",
+  "level": "error",
+  "message": "[knowledge] loading the validation-rule corpus failed",
+  "context": {
+    "err": "SENTINEL-FS-DETAIL: Cannot find module '/app/server/services/ectd/validation-rule-corpus.js'",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/knowledge-error-containment.test.ts > GET /api/knowledge/validation-rules: the 500 body is contained > answers a corpus failure with INTERNAL_ERROR and the request id, never the thrown text 38ms
+ ✓ server/routes/__tests__/knowledge-error-containment.test.ts > GET /api/knowledge/validation-rules: the 500 body is contained > leaves the unknown-region 422 exactly as it was 10ms
+stderr | server/routes/__tests__/grdheRoutes-error-containment.test.ts > /api/grdhe: the 500 body is contained > POST /exports/:jobId/execute answers an export failure with INTERNAL_ERROR, never the thrown text
+{
+  "timestamp": "2026-10-01T08:08:59.505Z",
+  "level": "error",
+  "message": "[grdhe-routes] executing the export job failed",
+  "context": {
+    "jobId": "job-1",
+    "err": "SENTINEL-DB-DETAIL: relation \"grdhe_set_b_secret\" does not exist",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/grdheRoutes-error-containment.test.ts > /api/grdhe: the 500 body is contained > the router error handler answers an uncaught failure with INTERNAL_ERROR, never the thrown text
+{
+  "timestamp": "2026-10-01T08:08:59.525Z",
+  "level": "error",
+  "message": "[grdhe-routes] handling the GRDHE request failed",
+  "context": {
+    "err": "SENTINEL-DB-DETAIL: relation \"grdhe_set_b_secret\" does not exist",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/grdheRoutes-error-containment.test.ts > /api/grdhe: the 500 body is contained > the router error handler leaves an error that carries a 4xx status exactly as it was
+[GRDHE ERROR] Error: The status filter is not one this store knows.
+    at /home/user/ClinicalSageAI-2-replit/server/routes/__tests__/grdheRoutes-error-containment.test.ts:91:21
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64 {
+  status: 400,
+  code: 'BAD_FILTER'
+}
+
+stderr | server/routes/__tests__/ind-generation-error-containment.test.ts > POST /api/ind-generation/generate-section: the 500 body is contained > answers a gateway failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:08:59.538Z",
+  "level": "error",
+  "message": "[ind-generation] generating the section failed",
+  "context": {
+    "err": "SENTINEL-PROVIDER-DETAIL: 401 invalid x-api-key for model claude-set-b at api.example.internal",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/grdheRoutes-error-containment.test.ts > /api/grdhe: the 500 body is contained > POST /exports/:jobId/execute answers an export failure with INTERNAL_ERROR, never the thrown text 47ms
+ ✓ server/routes/__tests__/grdheRoutes-error-containment.test.ts > /api/grdhe: the 500 body is contained > the router error handler answers an uncaught failure with INTERNAL_ERROR, never the thrown text 9ms
+ ✓ server/routes/__tests__/grdheRoutes-error-containment.test.ts > /api/grdhe: the 500 body is contained > the router error handler leaves an error that carries a 4xx status exactly as it was 7ms
+ ✓ server/routes/__tests__/ind-generation-error-containment.test.ts > POST /api/ind-generation/generate-section: the 500 body is contained > answers a gateway failure with INTERNAL_ERROR and the request id, never the thrown text 45ms
+ ✓ server/routes/__tests__/ind-generation-error-containment.test.ts > POST /api/ind-generation/generate-section: the 500 body is contained > leaves the unknown-section 400 exactly as it was 7ms
+stderr | server/routes/__tests__/protocol-risks-error-containment.test.ts > GET /api/protocol-risks/documents/:id/register: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:09:00.189Z",
+  "level": "error",
+  "message": "[protocol-risks] handling the protocol risk request failed",
+  "context": {
+    "err": "SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/protocol-risks-error-containment.test.ts > GET /api/protocol-risks/documents/:id/register: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 30ms
+ ✓ server/routes/__tests__/protocol-risks-error-containment.test.ts > GET /api/protocol-risks/documents/:id/register: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 6ms
+stderr | server/routes/__tests__/protocol-development-error-containment.test.ts > GET /api/protocol-development/documents: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:09:00.220Z",
+  "level": "error",
+  "message": "[protocol-development] handling the protocol development request failed",
+  "context": {
+    "err": "SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/preclinical-error-containment.test.ts > POST /api/preclinical/ingest: the 5xx bodies are contained > answers an ingest failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:09:00.232Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/preclinical-error-containment.test.ts > POST /api/preclinical/ingest: the 5xx bodies are contained > answers an ingest failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:09:00.234Z",
+  "level": "error",
+  "message": "[preclinical-routes] ingesting the preclinical study failed",
+  "context": {
+    "sourcePdfId": "pdf-46c3e67a-e7d7-402d-90fa-c986a16b54d3",
+    "err": "SENTINEL-DB-DETAIL: relation \"preclinical_set_b_secret\" does not exist",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/protocol-development-error-containment.test.ts > GET /api/protocol-development/documents: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 37ms
+ ✓ server/routes/__tests__/protocol-development-error-containment.test.ts > GET /api/protocol-development/documents: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 8ms
+stderr | server/routes/__tests__/preclinical-error-containment.test.ts > POST /api/preclinical/ingest: the 5xx bodies are contained > answers a disabled ingest with its code and a static sentence, never the thrown text
+{
+  "timestamp": "2026-10-01T08:09:00.250Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/preclinical-error-containment.test.ts > POST /api/preclinical/ingest: the 5xx bodies are contained > answers a disabled ingest with its code and a static sentence, never the thrown text
+{
+  "timestamp": "2026-10-01T08:09:00.252Z",
+  "level": "warn",
+  "message": "[preclinical-routes] Preclinical ingest refused: disabled",
+  "context": {
+    "sourcePdfId": "pdf-5983e26b-9b27-44e4-a036-fad006f801dc",
+    "err": "SENTINEL-ENV-DETAIL (PRECLINICAL_INGEST_ENABLED=false)"
+  }
+}
+
+stderr | server/routes/__tests__/preclinical-error-containment.test.ts > POST /api/preclinical/ingest: the 5xx bodies are contained > leaves the validation-shaped 422 exactly as it was
+{
+  "timestamp": "2026-10-01T08:09:00.259Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/preclinical-error-containment.test.ts > POST /api/preclinical/ingest: the 5xx bodies are contained > leaves the validation-shaped 422 exactly as it was
+{
+  "timestamp": "2026-10-01T08:09:00.259Z",
+  "level": "error",
+  "message": "[preclinical-routes] Preclinical ingest failed",
+  "context": {
+    "sourcePdfId": "pdf-624f16e8-75b0-42a3-8c4d-b40e58bc48ab",
+    "message": "Invalid study: expected a dose table"
+  }
+}
+
+ ✓ server/routes/__tests__/preclinical-error-containment.test.ts > POST /api/preclinical/ingest: the 5xx bodies are contained > answers an ingest failure with INTERNAL_ERROR and the request id, never the thrown text 39ms
+ ✓ server/routes/__tests__/preclinical-error-containment.test.ts > POST /api/preclinical/ingest: the 5xx bodies are contained > answers a disabled ingest with its code and a static sentence, never the thrown text 10ms
+ ✓ server/routes/__tests__/preclinical-error-containment.test.ts > POST /api/preclinical/ingest: the 5xx bodies are contained > leaves the validation-shaped 422 exactly as it was 7ms
+stderr | server/routes/__tests__/research-compliance-error-containment.test.ts > GET /api/research-compliance/personnel: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:09:00.738Z",
+  "level": "error",
+  "message": "[research-compliance] handling the research-compliance request failed",
+  "context": {
+    "err": "SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/research-compliance-error-containment.test.ts > GET /api/research-compliance/personnel: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 37ms
+ ✓ server/routes/__tests__/research-compliance-error-containment.test.ts > GET /api/research-compliance/personnel: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 7ms
+stderr | server/routes/__tests__/grant-finder-error-containment.test.ts > GET /api/grant-finder/profile: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:09:00.782Z",
+  "level": "error",
+  "message": "[grant-finder] handling the grant-finder request failed",
+  "context": {
+    "err": "SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/grant-finder-error-containment.test.ts > GET /api/grant-finder/profile: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 37ms
+ ✓ server/routes/__tests__/grant-finder-error-containment.test.ts > GET /api/grant-finder/profile: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 5ms
+stderr | server/routes/__tests__/protocol-budget-error-containment.test.ts > GET /api/protocol-budget/documents/:id/summary: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:09:01.384Z",
+  "level": "error",
+  "message": "[protocol-budget] handling the protocol budget request failed",
+  "context": {
+    "err": "SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/protocol-budget-error-containment.test.ts > GET /api/protocol-budget/documents/:id/summary: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 28ms
+ ✓ server/routes/__tests__/protocol-budget-error-containment.test.ts > GET /api/protocol-budget/documents/:id/summary: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 5ms
+stderr | server/routes/__tests__/protocol-templates-error-containment.test.ts > GET /api/protocol-templates/templates: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:09:02.018Z",
+  "level": "error",
+  "message": "[protocol-templates] handling the protocol template request failed",
+  "context": {
+    "err": "SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/protocol-templates-error-containment.test.ts > GET /api/protocol-templates/templates: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 34ms
+ ✓ server/routes/__tests__/protocol-templates-error-containment.test.ts > GET /api/protocol-templates/templates: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 13ms
+stdout | server/routes/__tests__/document-lifecycle-error-containment.test.ts
+{
+  "timestamp": "2026-10-01T08:09:02.225Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T08:09:02.226Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/document-lifecycle-error-containment.test.ts
+{
+  "timestamp": "2026-10-01T08:09:02.226Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/document-lifecycle-error-containment.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/document-lifecycle-error-containment.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/document-lifecycle-error-containment.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/routes/__tests__/predicate-intelligence-error-containment.test.ts
+{
+  "timestamp": "2026-10-01T08:09:02.738Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db.js\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/routes/__tests__/predicate-intelligence-error-containment.test.ts > POST /api/predicate-intelligence/se-discussion/author: the 500 body is contained > answers an authoring failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:09:02.818Z",
+  "level": "error",
+  "message": "[predicate-intelligence] authoring the SE discussion failed",
+  "context": {
+    "err": "SENTINEL-DB-DETAIL: relation \"se_set_b_secret\" does not exist",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/protocol-soa-error-containment.test.ts > GET /api/protocol-soa/documents/:id/matrix: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:09:02.829Z",
+  "level": "error",
+  "message": "[protocol-soa] handling the schedule-of-assessments request failed",
+  "context": {
+    "err": "SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/predicate-intelligence-error-containment.test.ts > POST /api/predicate-intelligence/se-discussion/author: the 500 body is contained > answers an authoring failure with INTERNAL_ERROR and the request id, never the thrown text 56ms
+ ✓ server/routes/__tests__/predicate-intelligence-error-containment.test.ts > POST /api/predicate-intelligence/se-discussion/author: the 500 body is contained > leaves the no-matrix 422 exactly as it was 13ms
+ ✓ server/routes/__tests__/protocol-soa-error-containment.test.ts > GET /api/protocol-soa/documents/:id/matrix: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 39ms
+ ✓ server/routes/__tests__/protocol-soa-error-containment.test.ts > GET /api/protocol-soa/documents/:id/matrix: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 7ms
+stderr | server/routes/__tests__/document-lifecycle-error-containment.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/document-lifecycle-error-containment.test.ts
+{
+  "timestamp": "2026-10-01T08:09:02.923Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/external-evidence-error-containment.test.ts > POST /api/external-evidence/route: the 502 body is contained > answers a provider failure with provider_error and the static sentence, never the thrown text
+{
+  "timestamp": "2026-10-01T08:09:04.047Z",
+  "level": "error",
+  "message": "[external-evidence] evidence routing failed",
+  "context": {
+    "err": "provider_error:FIRECRAWL_API_KEY missing SENTINEL-UPSTREAM-DETAIL",
+    "correlationId": null
+  }
+}
+
+ ✓ server/routes/__tests__/external-evidence-error-containment.test.ts > POST /api/external-evidence/route: the 502 body is contained > answers a provider failure with provider_error and the static sentence, never the thrown text 107ms
+ ✓ server/routes/__tests__/external-evidence-error-containment.test.ts > POST /api/external-evidence/route: the 502 body is contained > leaves the missing-message 400 exactly as it was 10ms
+stderr | server/routes/__tests__/financial-disclosures-error-containment.test.ts > GET /api/financial-disclosures/investigators: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:09:04.905Z",
+  "level": "error",
+  "message": "[financial-disclosures] handling the financial-disclosure request failed",
+  "context": {
+    "err": "SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/financial-disclosures-error-containment.test.ts > GET /api/financial-disclosures/investigators: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 113ms
+ ✓ server/routes/__tests__/financial-disclosures-error-containment.test.ts > GET /api/financial-disclosures/investigators: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 7ms
+stderr | server/routes/__tests__/document-lifecycle-error-containment.test.ts > GET /api/regulatory/documents/:id: the 500 body is contained > answers a store failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:09:05.325Z",
+  "level": "error",
+  "message": "[document-lifecycle] handling the document lifecycle request failed",
+  "context": {
+    "err": "SENTINEL-DB-DETAIL: Failed query: select \"set_b_secret_column\" from \"canonical_documents\"",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/invention-disclosure-error-containment.test.ts > GET /api/invention-disclosures/disclosures: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:09:05.357Z",
+  "level": "error",
+  "message": "[invention-disclosure] handling the invention-disclosure request failed",
+  "context": {
+    "err": "SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/document-lifecycle-error-containment.test.ts > GET /api/regulatory/documents/:id: the 500 body is contained > answers a store failure with INTERNAL_ERROR and the request id, never the thrown text 56ms
+ ✓ server/routes/__tests__/document-lifecycle-error-containment.test.ts > GET /api/regulatory/documents/:id: the 500 body is contained > leaves the no-organization 403 exactly as it was 14ms
+ ✓ server/routes/__tests__/invention-disclosure-error-containment.test.ts > GET /api/invention-disclosures/disclosures: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 58ms
+ ✓ server/routes/__tests__/invention-disclosure-error-containment.test.ts > GET /api/invention-disclosures/disclosures: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 11ms
+stderr | server/routes/__tests__/escalate-error-containment.test.ts > POST /api/escalate/evaluate: the 500 body is contained > answers an engine failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:09:06.218Z",
+  "level": "error",
+  "message": "[escalate-routes] evaluating the escalation failed",
+  "context": {
+    "err": "SENTINEL-ENGINE-DETAIL: relation \"set_b_secret_table\" does not exist",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/escalate-error-containment.test.ts > POST /api/escalate/evaluate: the 500 body is contained > answers an engine failure with INTERNAL_ERROR and the request id, never the thrown text 131ms
+ ✓ server/routes/__tests__/escalate-error-containment.test.ts > POST /api/escalate/evaluate: the 500 body is contained > leaves the validation 400 exactly as it was 13ms
+stderr | server/routes/__tests__/protocol-portfolio-error-containment.test.ts > GET /api/protocol-portfolio/analytics: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:09:07.008Z",
+  "level": "error",
+  "message": "[protocol-portfolio] handling the protocol portfolio request failed",
+  "context": {
+    "err": "SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/protocol-portfolio-error-containment.test.ts > GET /api/protocol-portfolio/analytics: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 100ms
+stderr | server/routes/__tests__/inspections-error-containment.test.ts > GET /api/inspections: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:09:07.476Z",
+  "level": "error",
+  "message": "[inspections] handling the inspection request failed",
+  "context": {
+    "err": "SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/inspections-error-containment.test.ts > GET /api/inspections: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 133ms
+ ✓ server/routes/__tests__/inspections-error-containment.test.ts > GET /api/inspections: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 30ms
+stderr | server/routes/__tests__/protocol-milestones-error-containment.test.ts > GET /api/protocol-milestones/documents/:id/milestones: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:09:08.721Z",
+  "level": "error",
+  "message": "[protocol-milestones] handling the protocol milestone request failed",
+  "context": {
+    "err": "SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/protocol-milestones-error-containment.test.ts > GET /api/protocol-milestones/documents/:id/milestones: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 130ms
+ ✓ server/routes/__tests__/protocol-milestones-error-containment.test.ts > GET /api/protocol-milestones/documents/:id/milestones: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 54ms
+stderr | server/routes/__tests__/protocol-reviews-error-containment.test.ts > GET /api/protocol-reviews/documents/:id/summary: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:09:08.957Z",
+  "level": "error",
+  "message": "[protocol-reviews] handling the protocol review request failed",
+  "context": {
+    "err": "SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/protocol-reviews-error-containment.test.ts > GET /api/protocol-reviews/documents/:id/summary: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 71ms
+ ✓ server/routes/__tests__/protocol-reviews-error-containment.test.ts > GET /api/protocol-reviews/documents/:id/summary: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 42ms
+stderr | server/routes/__tests__/protocol-amendments-error-containment.test.ts > GET /api/protocol-amendments/amendments: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:09:09.670Z",
+  "level": "error",
+  "message": "[protocol-amendments] handling the protocol amendment request failed",
+  "context": {
+    "err": "SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/protocol-amendments-error-containment.test.ts > GET /api/protocol-amendments/amendments: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 161ms
+ ✓ server/routes/__tests__/protocol-amendments-error-containment.test.ts > GET /api/protocol-amendments/amendments: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 14ms
+stderr | server/routes/__tests__/etmf-error-containment.test.ts > GET /api/etmf/files: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:09:10.315Z",
+  "level": "error",
+  "message": "[etmf] handling the eTMF request failed",
+  "context": {
+    "err": "SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist",
+    "correlationId": "req-p117-set-b",
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/etmf-error-containment.test.ts > GET /api/etmf/files: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 73ms
+ ✓ server/routes/__tests__/etmf-error-containment.test.ts > GET /api/etmf/files: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 8ms
+ ✓ tests/routes/monitoring-error-tracker-containment.test.ts > errorTrackerMiddleware: the 500 body is contained > answers with the static sentence and the errorId, never the message or the stack 9ms
+
+ Test Files  34 passed (34)
+      Tests  67 passed (67)
+   Start at  08:08:52
+   Duration  19.12s (transform 11.62s, setup 1.33s, import 35.50s, tests 3.11s, environment 10ms)
+

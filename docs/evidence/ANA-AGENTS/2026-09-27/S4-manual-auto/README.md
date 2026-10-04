@@ -14,7 +14,7 @@ filed; `tree.sha256` hashes every S4 file.
 `git pull --ff-only` was refused at the start of this pass: that session's
 then-uncommitted `AnaToolExecutor.ts` conflicted with upstream `6e719d2cc`.
 The upstream commits touch no S4 file, and nothing was forced or stashed.
-ADR-0014 (`39b3027cc`) records Auto as the default run policy.
+ADR-0015 (`39b3027cc`) records Auto as the default run policy.
 
 ## Status: blocked on the live capture
 
@@ -224,7 +224,7 @@ the private ConversationThread chat and every non-stream door.
 | 2, 26 | Replaced steps were never shown or kept | **Fixed.** A note on the turn, carried by `activityPropsFor` and hydrated from `policyHolds` on reload. Red first. Mutations R17, R18 |
 | 3, 17, 25 | A Stop or disconnect at a hold left no record, and a reload read as a plain Stop | **Fixed:** outcomes `stopped` and `disconnected`, `not_run` steps, `pendingSteps`, and the reload note. Red first: route (4b) and unit `turn-run-policy.test.ts`. Mutations R05, R06, R19. **Declined:** reporting `client_disconnected` as the turn's stop reason. `TurnStoppedReason` excludes it by S1's design (`run-status.ts`). The client has no words for it, and `readTurnEnding` would drop it, so a reload would read "Finished". The run row already records `client_disconnected` (`stopRunInternally`), and the `disconnected` hold now says it in the record and the dossier |
 | 4 | Auto silently overrode Quick ask's 4 rounds | **Fixed by disclosure**, where the engine and the policy are chosen, plus the `ANA_MODES` docblock. The spec's `resolveRoundBudget` (S3, pinned `fast`/`auto` → 4+16) is kept. Mutation R32 |
-| 5, 40 | The description was only in a `title`, and bloated the menu radio's name | **Fixed.** `aria-describedby` in both variants, the label as the name, and a visible short line in the foot. Mutations R27, R28. **Not built:** a one-time notice for migrated users. It is a new surface under RULE 2. The Auto default is the spec's, declared on row 74 and decided in ADR-0014. The notice is left to the founder there |
+| 5, 40 | The description was only in a `title`, and bloated the menu radio's name | **Fixed.** `aria-describedby` in both variants, the label as the name, and a visible short line in the foot. Mutations R27, R28. **Not built:** a one-time notice for migrated users. It is a new surface under RULE 2. The Auto default is the spec's, declared on row 74 and decided in ADR-0015. The notice is left to the founder there |
 | 7, 8 | The chip said "Working", and the panel said "Still working", during and after a hold | **Fixed.** Mutations R15, R16 |
 | 9 | A person's pause at a due hold hid Next | **Fixed.** Announced as hers, with Next; their Resume is Run this step, and `continued` is filed. Red first. Mutation R03 |
 | 10, 32 | The unavailable sentence was said twice, and "try again" could not work | **Fixed.** The warning is not copied into `message.warnings` (the note carries it), and the note says to switch to Auto, then Continue. Mutations R20, R21 |

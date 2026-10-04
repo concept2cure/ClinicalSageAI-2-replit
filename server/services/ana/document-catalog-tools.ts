@@ -22,9 +22,11 @@
  *                              summary / key data), REFUSED until the receipts
  *                              cover the entire text. A sampled page cannot be
  *                              recorded as "reviewed".
- *   search_project_documents — semantic search over the comprehension records
- *                              (document-catalog-search.ts), fail-closed when
- *                              the index is unavailable.
+ *   search_project_documents — AnA's own Vault search. Always the key-free
+ *                              Postgres full-text search users have
+ *                              (vault-search.ts), plus the semantic catalog
+ *                              arm (document-catalog-search.ts) when the
+ *                              catalog is on and an embedding provider answers.
  *
  * Handlers are registered via the inject-and-sibling pattern
  * (registerDocumentCatalogHandlers) to avoid an import cycle with
@@ -32,9 +34,10 @@
  * are imported by AnaToolDefinitions, so the registry-consistency suite holds
  * def ↔ handler parity automatically.
  *
- * Feature-gated per tenant on 'ana.document_catalog' (FeatureToggleService,
- * off by default, fails closed) with the ANA_DOCUMENT_CATALOG_FORCE_ON env
- * override — the same rollout shape as the document stack.
+ * list, read and search need no flag and no key (D2, 2026-10-01): every
+ * organisation's AnA can find and read its Vault. Cataloging and filing stay
+ * gated per tenant on 'ana.document_catalog' (FeatureToggleService, off by
+ * default, fails closed; ANA_DOCUMENT_CATALOG_FORCE_ON overrides).
  */
 
 import type { ToolContext } from './AnaToolExecutor.js';
@@ -42,6 +45,7 @@ import type { ProjectDocumentPage } from '../vault/document-catalog.service.js';
 import {
   CHAT_UPLOAD_ID,
   requireCatalog,
+  requireDocumentAccess,
   unknownDocumentRefusal,
   withCaughtErrors,
   type CatalogService,
@@ -50,6 +54,7 @@ import {
 import { registerDocumentPlacementHandlers } from './document-placement-tools.js';
 import { registerDocumentPassageHandlers } from './document-passage-tools.js';
 import { vaultWriteRefusal } from '../vault/vault-write-authority.js';
+import { catalogScope, documentScopeRefusal } from './catalog-scope.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Handlers
@@ -124,14 +129,18 @@ async function handleListProjectDocuments(
   input: Record<string, unknown>,
   ctx?: ToolContext,
 ): Promise<string> {
-  const gate = await requireCatalog(ctx, 'list_project_documents');
+  const gate = await requireDocumentAccess(ctx, 'list_project_documents');
   if ('refusal' in gate) return JSON.stringify({ error: gate.refusal });
   const { svc, orgId } = gate;
 
-  let programId = typeof input.program_id === 'string' && input.program_id ? input.program_id : null;
-  if (!programId && typeof ctx?.projectId === 'number') {
-    programId = await svc.resolveProgramForProject(ctx.projectId, orgId);
-  }
+  const scope = await catalogScope(
+    ctx,
+    orgId,
+    typeof input.program_id === 'string' && input.program_id ? input.program_id : null,
+    'read',
+  );
+  if ('error' in scope) return JSON.stringify({ ok: false, error: scope.error, code: scope.code });
+  const { programId } = scope;
   const limit = typeof input.limit === 'number' ? input.limit : undefined;
   const page = await svc.listProjectDocuments(orgId, { programId, limit });
   const chat = await chatUploadsFor(svc, orgId, programId, limit);
@@ -276,7 +285,7 @@ async function handleReadProjectDocument(
   input: Record<string, unknown>,
   ctx?: ToolContext,
 ): Promise<string> {
-  const gate = await requireCatalog(ctx, 'read_project_document');
+  const gate = await requireDocumentAccess(ctx, 'read_project_document');
   if ('refusal' in gate) return JSON.stringify({ error: gate.refusal });
   const { svc, orgId } = gate;
 
@@ -288,6 +297,9 @@ async function handleReadProjectDocument(
   if (!doc) {
     return unknownDocumentRefusal(documentId, 'read_project_document');
   }
+  // The open project's documents only (PF-10 S7): checked before any text is served or receipt written.
+  const outOfScope = await documentScopeRefusal(ctx, orgId, doc.programId);
+  if (outOfScope) return outOfScope;
 
   const text = doc.extractedText ?? '';
   const unreadable = await ensureReadable(svc, doc, text);
@@ -403,6 +415,12 @@ async function handleCatalogProjectDocument(
   if (CHAT_UPLOAD_ID.test(parsed.documentId)) {
     return unknownDocumentRefusal(parsed.documentId, 'catalog_project_document');
   }
+  // The open project's documents only (PF-10 S7), before the shared record is written.
+  const target = await svc.loadDocumentForOrg(parsed.documentId, orgId);
+  if (target) {
+    const outOfScope = await documentScopeRefusal(ctx, orgId, target.programId);
+    if (outOfScope) return outOfScope;
+  }
   const result = await svc.completeCatalog({
     ...parsed,
     organizationId: orgId,
@@ -435,54 +453,51 @@ async function handleSearchProjectDocuments(
   input: Record<string, unknown>,
   ctx?: ToolContext,
 ): Promise<string> {
-  const gate = await requireCatalog(ctx, 'search_project_documents');
+  const gate = await requireDocumentAccess(ctx, 'search_project_documents');
   if ('refusal' in gate) return JSON.stringify({ error: gate.refusal });
-  const { orgId } = gate;
+  const { svc, orgId } = gate;
 
   const query = typeof input.query === 'string' ? input.query.trim() : '';
   if (query.length < 3) {
     return JSON.stringify({ error: 'search_project_documents requires a query of at least 3 characters.' });
   }
-  const { searchCatalog, CatalogSearchUnavailableError } = await import(
-    '../vault/document-catalog-search.js'
-  );
-  try {
-    const result = await searchCatalog(orgId, query, {
-      limit: typeof input.limit === 'number' ? input.limit : undefined,
-    });
-    const unsearchable =
-      result.unsearchableCount > 0
-        ? ` ${result.unsearchableCount} document(s) exist but are not searchable yet (not cataloged) — absence here does not mean absence; use list_project_documents.`
-        : '';
-    return JSON.stringify({
-      ok: true,
-      query,
-      hits: result.hits,
-      searchedCount: result.searchedCount,
-      unsearchableCount: result.unsearchableCount,
-      message:
-        result.hits.length === 0
-          ? `No cataloged document matched across the ${result.searchedCount} searched.${unsearchable}`
-          : `${result.hits.length} match(es) across ${result.searchedCount} cataloged document(s).${unsearchable}`,
-    });
-  } catch (err) {
-    if (err instanceof CatalogSearchUnavailableError) {
-      // Unavailable is not "no matches" — say it, and route to discovery.
-      return JSON.stringify({
-        ok: false,
-        unavailable: true,
-        error: err.message,
-        message: 'Fall back to list_project_documents + read_project_document; do not report "nothing found".',
-      });
-    }
-    throw err;
-  }
+  const limit = Math.min(Math.max(typeof input.limit === 'number' ? Math.floor(input.limit) : 8, 1), 25);
+  // The open project's documents only (PF-10 S7); the organization's with no project open.
+  const scope = await catalogScope(ctx, orgId, null, 'read');
+  if ('error' in scope) return JSON.stringify({ ok: false, error: scope.error, code: scope.code });
+
+  // Text always (no key, no flag); meaning when the catalog and an embedding provider allow.
+  const { pool } = await import('../../db.js');
+  const { searchVaultForAssistant } = await import('../vault/vault-assistant-search.js');
+  const result = await searchVaultForAssistant(pool, {
+    organizationId: orgId,
+    programId: scope.programId,
+    query,
+    limit,
+    catalogEnabled: await svc.isDocumentCatalogEnabled(orgId),
+  });
+
+  const list = result.hits;
+  return JSON.stringify({
+    ok: true,
+    query,
+    hits: list,
+    textMatches: result.textMatches,
+    semantic: result.semantic,
+    message:
+      list.length === 0
+        ? 'No Vault document matched by its title, file name or text. Absence here means no word of the query ' +
+          'appears in a current document; try other terms, or list_project_documents to browse.'
+        : `${list.length} document(s) matched. Text matching finds documents that use the query's words; ` +
+          'read_project_document before relying on one.',
+  });
 }
 
 
 /**
  * File a chat upload into the project vault, through the SAME governed ingest
- * the Vault surface uses (ingestVaultDocument) — never a second admission path.
+ * the Vault surface uses (ingestVaultDocument, via fileUploadIntoVault) — never
+ * a second admission path.
  *
  * This is the affordance the id-space refusal above points at: a chat upload
  * has no vault row, so it can be reopened but never cataloged, chunked or
@@ -513,20 +528,6 @@ function parseFilingInput(input: Record<string, unknown>): FilingInput | { error
   return { fileId, documentTitle, documentType, documentCode, folderId, programId };
 }
 
-/**
- * A stable per-program code derived from the file name when none is given —
- * the ingest upserts on (program, code, version), so filing the same file
- * twice updates one row instead of growing duplicates.
- */
-function derivedDocumentCode(fileName: string, fallback: string): string {
-  return (
-    fileName
-      .replace(/\.[^.]+$/, '')
-      .replace(/[^A-Za-z0-9._-]+/g, '-')
-      .slice(0, 64) || fallback
-  );
-}
-
 /** What the user is told about where the file landed — never merely "done". */
 function filedMessage(documentCode: string, filing: { placementStatus: string; folderLabel?: string | null; folderId?: string | null }): string {
   const where =
@@ -555,7 +556,7 @@ async function handleFileChatUploadToVault(
 ): Promise<string> {
   const gate = await requireCatalog(ctx, 'file_chat_upload_to_vault');
   if ('refusal' in gate) return JSON.stringify({ error: gate.refusal });
-  const { svc, orgId } = gate;
+  const { orgId } = gate;
 
   const parsed = parseFilingInput(input);
   if ('error' in parsed) return JSON.stringify(parsed);
@@ -569,35 +570,22 @@ async function handleFileChatUploadToVault(
     });
   }
 
-  const programId =
-    parsed.programId ??
-    (typeof ctx?.projectId === 'number'
-      ? await svc.resolveProgramForProject(ctx.projectId, orgId)
-      : null);
-  if (!programId) {
-    return JSON.stringify({
-      ok: false,
-      error:
-        'No regulatory program to file this into: none was given and the active project is not anchored to one. ' +
-        'Ask which program it belongs to, or pass program_id.',
-    });
-  }
+  const scope = await catalogScope(ctx, orgId, parsed.programId, 'file');
+  if ('error' in scope) return JSON.stringify({ ok: false, error: scope.error, code: scope.code });
+  const programId = scope.programId!;
 
-  const { loadUploadedFile } = await import('./uploaded-file-access.js');
-  const file = await loadUploadedFile(parsed.fileId, orgId);
-
-  const { ingestVaultDocument } = await import('../vault/vault-ingest.service.js');
-  const result = await ingestVaultDocument({
+  // The one upload-to-Vault orchestration (VR-11): the data room's "File into
+  // Vault" calls the same function, so the two cannot drift apart.
+  const { fileUploadIntoVault } = await import('../vault/vault-file-upload-to-vault.js');
+  const result = await fileUploadIntoVault({
     organizationId: orgId,
     userId: ctx?.userId ?? null,
     programId,
-    documentCode: parsed.documentCode ?? derivedDocumentCode(file.fileName, parsed.fileId),
+    fileId: parsed.fileId,
+    documentCode: parsed.documentCode,
     documentTitle: parsed.documentTitle,
     documentType: parsed.documentType,
     folderId: parsed.folderId,
-    fileBuffer: file.buffer,
-    fileName: file.fileName,
-    mimeType: file.mimeType,
   });
 
   if (!result.ok) {

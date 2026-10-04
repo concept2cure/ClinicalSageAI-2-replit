@@ -1,0 +1,278 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T16:23:46.489Z","pid":4667,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T16:23:46.491Z","pid":4667,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T16:23:46.491Z","pid":4667,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-document-relationships.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T16:23:46.561Z', poolSize: 1 }
+
+stdout | tests/db/vault-document-relationships.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/vault-document-relationships.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-01T16:23:47.187Z","pid":4667,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+(node:4667) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:23:47.278Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 16,
+    "wordCount": 2,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:23:47.360Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "68f2b5c6-ce35-421e-8313-d7e95e3b138c",
+    "code": "DBTEST-VREL-PROT",
+    "type": "OTHER",
+    "size": 16,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T16:23:47.374Z","pid":4667,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:23:47.375Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 22,
+    "wordCount": 3,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:23:47.389Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "0fb73ae7-a95d-4171-a3f4-2c50083524c0",
+    "code": "DBTEST-VREL-CSR",
+    "type": "OTHER",
+    "size": 22,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T16:23:47.399Z","pid":4667,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:23:47.400Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 30,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:23:47.412Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "8f429c19-95a8-4ce9-972e-64102bfa055c",
+    "code": "DBTEST-VREL-SAP",
+    "type": "OTHER",
+    "size": 30,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T16:23:47.420Z","pid":4667,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:23:47.428Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 30,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:23:47.444Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "2924ab12-eed3-49e0-8e51-187cc030e0b3",
+    "code": "DBTEST-VREL-SAP",
+    "type": "OTHER",
+    "size": 30,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T16:23:47.455Z","pid":4667,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:23:47.455Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 22,
+    "wordCount": 2,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:23:47.463Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "66bc58de-34e1-4930-8c46-07c91345a3f9",
+    "code": "DBTEST-VREL-IB",
+    "type": "OTHER",
+    "size": 22,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T16:23:47.470Z","pid":4667,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:23:47.471Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 15,
+    "wordCount": 2,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:23:47.479Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "2ffc2834-79bb-4a7d-b1e0-af84aca03ec3",
+    "code": "DBTEST-VREL-THEIRS",
+    "type": "OTHER",
+    "size": 15,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T16:23:47.487Z","pid":4667,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:23:47.487Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 22,
+    "wordCount": 5,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:23:47.497Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "07617334-97f9-4e81-98cc-63c16fb637b5",
+    "code": "DBTEST-VREL-GA",
+    "type": "OTHER",
+    "size": 22,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T16:23:47.503Z","pid":4667,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:23:47.504Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 28,
+    "wordCount": 5,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-document-relationships.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:23:47.513Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "5fc9bc8e-9e27-42bb-a10c-fe27495e7d7b",
+    "code": "DBTEST-VREL-GB",
+    "type": "OTHER",
+    "size": 28,
+    "hasText": true
+  }
+}
+
+ ✓ tests/db/vault-document-relationships.dbtest.ts > document relationships (critique 15) > relates two versions, and both ends list it in their own words 77ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > document relationships (critique 15) > relates to a version in another project of the organisation, and names that project 28ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > document relationships (critique 15) > says when the related version has since been superseded 31ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > document relationships (critique 15) > refuses a self relationship, two versions of one document, a duplicate and an unknown kind 30ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > document relationships (critique 15) > refuses another organisation's document, a viewer, and another organisation's project 18ms
+stdout | tests/db/vault-document-relationships.dbtest.ts > document relationships (critique 15) > each relate and unrelate is a chained row on both documents' histories
+[database] Database connection successful { timestamp: '2026-10-01T16:23:47.758Z', poolSize: 2 }
+
+ ✓ tests/db/vault-document-relationships.dbtest.ts > document relationships (critique 15) > removing one requires a reason, keeps the row, and cannot be done twice 32ms
+ × tests/db/vault-document-relationships.dbtest.ts > document relationships (critique 15) > each relate and unrelate is a chained row on both documents' histories 68ms
+   → expected [ 'Vault Document Ingest' ] to deeply equal ArrayContaining{…}
+ ✓ tests/db/vault-document-relationships.dbtest.ts > document relationships (critique 15) > the table refuses every other change, for every role, and another organisation reads none of it 22ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > document relationships (critique 15) > the tenant purge takes an organisation's relationships with its documents, and no one else's 41ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/vault-document-relationships.dbtest.ts > document relationships (critique 15) > each relate and unrelate is a chained row on both documents' histories
+AssertionError: expected [ 'Vault Document Ingest' ] to deeply equal ArrayContaining{…}
+
+- Expected
++ Received
+
+- ArrayContaining [
+-   "Related: supports Clinical study report v1.0",
+-   "Relationship removed: supports Clinical study report v1.0",
++ [
++   "Vault Document Ingest",
+  ]
+
+ ❯ tests/db/vault-document-relationships.dbtest.ts:264:53
+    262|       'Relationship removed: supported by Protocol v1.0',
+    263|     ]));
+    264|     expect(await historyEvents(mine, ids.protocol)).toEqual(expect.arr…
+       |                                                     ^
+    265|       'Related: supports Clinical study report v1.0',
+    266|       'Relationship removed: supports Clinical study report v1.0',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 passed (9)
+   Start at  16:23:44
+   Duration  3.47s (transform 1.40s, setup 81ms, import 193ms, tests 2.90s, environment 0ms)
+

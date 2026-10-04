@@ -1,0 +1,327 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | tests/regulatory/csr-e3-overlay.test.ts
+{
+  "timestamp": "2026-10-04T19:09:13.504Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-04T19:09:13.505Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/regulatory/csr-e3-overlay.test.ts
+{
+  "timestamp": "2026-10-04T19:09:13.505Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/regulatory/csr-e3-overlay.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | tests/regulatory/csr-e3-overlay.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/regulatory/csr-e3-overlay.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > carries exactly the headings E3 numbers, in report order 4ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > every heading sits under a heading that exists 3ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §16.1 has its 12 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §16.2 has its 8 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §16.3 has its 2 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §14.3 has its 4 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §11.4.2 has its 8 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §12.2 has its 4 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §12.3.1 has its 3 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §9.4 has its 8 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > §9.5 has its 4 numbered headings 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > every heading cites its own E3 number; every checked source names its URL and date 3ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > a heading that names data sources says they are practice, not a requirement 4ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > E3 §16.2.7 and §12.2.4 name both the preferred and the investigator’s term; §16.3.1 names 314.50(f)(2) 0ms
+ ✓ tests/regulatory/csr-e3-overlay.test.ts > the overlay is ICH E3’s tree > resolves a number however it is written, and answers nothing for one E3 does not have 0ms
+ × tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > csr-builder's ICH_E3_STRUCTURE uses E3's numbers and headings 6ms
+   → ICH_E3_STRUCTURE 3: expected 'Table of Contents' to be 'Table of Contents for the Individual …' // Object.is equality
+ × tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the CSR scaffold behind get_csr_template carries every E3 heading 12ms
+   → scaffold missing 3: expected 'CLINICAL STUDY REPORT (ICH E3)\n\nSTU…' to contain '3. TABLE OF CONTENTS FOR THE INDIVIDU…'
+ × tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the CSR template injected into AnA's prompt covers §1–§16 with E3's headings 3ms
+   → expected [ '1. Title Page', …(12) ] to deeply equal [ '1. Title Page', …(15) ]
+ × tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the medical-writing base outlines the CSR with E3's sixteen headings 2ms
+   → expected [ 'Title page & synopsis', …(12) ] to deeply equal [ '1. Title Page', …(15) ]
+ × tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the stream's 5.3.5 playbook lists E3's sixteen headings 6ms
+   → 3: expected '## Drafting: Module 5.3.5 — Clinical …' to contain '3. Table of Contents for the Individu…'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > csr-builder's ICH_E3_STRUCTURE uses E3's numbers and headings
+AssertionError: ICH_E3_STRUCTURE 3: expected 'Table of Contents' to be 'Table of Contents for the Individual …' // Object.is equality
+
+Expected: "Table of Contents for the Individual Clinical Study Report"
+Received: "Table of Contents"
+
+ ❯ tests/regulatory/csr-e3-overlay.test.ts:110:55
+    108|       const e3 = getE3Section(n.number);
+    109|       expect(e3, `ICH_E3_STRUCTURE ${n.number} is not an E3 heading`).…
+    110|       expect(n.title, `ICH_E3_STRUCTURE ${n.number}`).toBe(e3!.title);
+       |                                                       ^
+    111|     }
+    112|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the CSR scaffold behind get_csr_template carries every E3 heading
+AssertionError: scaffold missing 3: expected 'CLINICAL STUDY REPORT (ICH E3)\n\nSTU…' to contain '3. TABLE OF CONTENTS FOR THE INDIVIDU…'
+
+- Expected
++ Received
+
+- 3. TABLE OF CONTENTS FOR THE INDIVIDUAL CLINICAL STUDY REPORT
++ CLINICAL STUDY REPORT (ICH E3)
++
++ STUDY TITLE: [STUDY_TITLE]
++ STUDY NUMBER: [STUDY_NUMBER]    PROTOCOL VERSION/DATE: [PROTOCOL_VERSION]
++ INVESTIGATIONAL PRODUCT: [DRUG_NAME]    INDICATION: [INDICATION]
++ PHASE: [PHASE]    SPONSOR: [SPONSOR]
++ DEVELOPMENT PHASE / GCP STATEMENT (ICH E6): [GCP_STATEMENT]
++
++ 1. TITLE PAGE
++ [TITLE_PAGE]
++
++ 2. SYNOPSIS
++ [SYNOPSIS]   (See the standalone 5.3.5.1 synopsis template for the structured form.)
++
++ 3. TABLE OF CONTENTS
++ [TOC]
++
++ 4. LIST OF ABBREVIATIONS AND DEFINITIONS OF TERMS
++ [ABBREVIATIONS]
++
++ 5. ETHICS
++ 5.1 Independent Ethics Committee (IEC) / Institutional Review Board (IRB): [IEC_IRB]
++ 5.2 Ethical conduct of the study: [ETHICAL_CONDUCT]
++ 5.3 Patient information and consent: [INFORMED_CONSENT]
++
++ 6. INVESTIGATORS AND STUDY ADMINISTRATIVE STRUCTURE
++ [ADMIN_STRUCTURE]
++
++ 7. INTRODUCTION
++ [INTRODUCTION]
++
++ 8. STUDY OBJECTIVES
++ Primary objective: [PRIMARY_OBJECTIVE]
++ Secondary objectives: [SECONDARY_OBJECTIVES]
++
++ 9. INVESTIGATIONAL PLAN
++ 9.1 Overall study design and plan: [STUDY_DESIGN]
++ 9.2 Discussion of study design, including choice of control groups: [DESIGN_RATIONALE]
++ 9.3 Selection of study population: [POPULATION_SELECTION]
++   9.3.1 Inclusion criteria: [INCLUSION_CRITERIA]
++   9.3.2 Exclusion criteria: [EXCLUSION_CRITERIA]
++   9.3.3 Removal of patients from therapy or assessment: [WITHDRAWAL_CRITERIA]
++ 9.4 Treatments: [TREATMENTS]
++   9.4.x Identity / dose / blinding / randomization / prior & concomitant therapy / compliance: [TREATMENT_DETAILS]
++ 9.5 Efficacy and safety variables: [VARIABLES]
++   9.5.1 Efficacy and safety measurements assessed and flow chart: [MEASUREMENTS]
++   9.5.2 Appropriateness of measurements: [MEASUREMENT_APPROPRIATENESS]
++   9.5.3 Primary efficacy variable(s): [PRIMARY_ENDPOINT]
++ 9.6 Data quality assurance: [DATA_QA]
++ 9.7 Statistical methods and determination of sample size: [STATISTICAL_METHODS]
++ 9.8 Changes in the conduct of the study or planned analyses: [PROTOCOL_CHANGES]
++
++ 10. STUDY PATIENTS
++ 10.1 Disposition of patients: [PATIENT_DISPOSITION]
++ 10.2 Protocol deviations: [PROTOCOL_DEVIATIONS]
++
++ 11. EFFICACY EVALUATION
++ 11.1 Data sets analysed: [ANALYSIS_SETS]
++ 11.2 Demographic and other baseline characteristics: [BASELINE_CHARACTERISTICS]
++ 11.3 Measurements of treatment compliance: [COMPLIANCE]
++ 11.4 Efficacy results and tabulations of individual patient data: [EFFICACY_RESULTS]
++   11.4.1 Analysis of efficacy: [PRIMARY_ANALYSIS]
++   11.4.2 Statistical/analytical issues: [STATISTICAL_ISSUES]
++   11.4.x Subgroup, dose-response, and by-patient analyses: [SUBGROUP_ANALYSES]
++ 11.5 Efficacy conclusions: [EFFICACY_CONCLUSIONS]
++
++ 12. SAFETY EVALUATION
++ 12.1 Extent of exposure: [EXPOSURE]
++ 12.2 Adverse events (AEs): [ADVERSE_EVENTS]
++   12.2.x Display, analysis, and listing by patient: [AE_ANALYSIS]
++ 12.3 Deaths, other serious adverse events, and other significant AEs: [DEATHS_SAES]
++   12.3.x Narratives of deaths and SAEs: [SAE_NARRATIVES]
++ 12.4 Clinical laboratory evaluation: [LAB_EVALUATION]
++ 12.5 Vital signs, physical findings, and other observations: [VITAL_SIGNS]
++ 12.6 Safety conclusions: [SAFETY_CONCLUSIONS]
++
++ 13. DISCUSSION AND OVERALL CONCLUSIONS
++ [OVERALL_CONCLUSIONS]
++
++ 14. TABLES, FIGURES, AND GRAPHS REFERRED TO BUT NOT INCLUDED IN THE TEXT
++ [IN_TEXT_TABLES]
++
++ 15. REFERENCE LIST
++ [REFERENCES]
++
++ 16. APPENDICES (ICH E3 §16.1)
++ 16.1 Study information (protocol, sample CRF, IEC list, signatures, randomization, audit certificates, SAP): [APPENDIX_STUDY_INFO]
++ 16.2 Patient data listings: [APPENDIX_PATIENT_LISTINGS]
++ 16.3 Case report forms (deaths, SAEs, withdrawals): [APPENDIX_CRFS]
++ 16.4 Individual patient data listings: [APPENDIX_INDIVIDUAL_DATA]
+
+ ❯ tests/regulatory/csr-e3-overlay.test.ts:118:55
+    116|     for (const s of ICH_E3_GUIDANCE) {
+    117|       const heading = s.number.includes('.') ? `${s.number} ${s.title}…
+    118|       expect(content, `scaffold missing ${s.number}`).toContain(headin…
+       |                                                       ^
+    119|     }
+    120|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the CSR template injected into AnA's prompt covers §1–§16 with E3's headings
+AssertionError: expected [ '1. Title Page', …(12) ] to deeply equal [ '1. Title Page', …(15) ]
+
+- Expected
++ Received
+
+  [
+    "1. Title Page",
+    "2. Synopsis",
+-   "3. Table of Contents for the Individual Clinical Study Report",
++   "3. Table of Contents",
+    "4. List of Abbreviations and Definitions of Terms",
+    "5. Ethics",
+    "6. Investigators and Study Administrative Structure",
+    "7. Introduction",
+    "8. Study Objectives",
+    "9. Investigational Plan",
+    "10. Study Patients",
+    "11. Efficacy Evaluation",
+    "12. Safety Evaluation",
+-   "13. Discussion and Overall Conclusions",
+-   "14. Tables, Figures and Graphs Referred to But Not Included in the Text",
+-   "15. Reference List",
+-   "16. Appendices",
++   "13. Discussion and Conclusions",
+  ]
+
+ ❯ tests/regulatory/csr-e3-overlay.test.ts:124:22
+    122|   it("the CSR template injected into AnA's prompt covers §1–§16 with E…
+    123|     const headings = DOCUMENT_TEMPLATES.clinical_study_report.sections…
+    124|     expect(headings).toEqual(e3TopLevel().map((s) => `${s.number}. ${s…
+       |                      ^
+    125|   });
+    126|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the medical-writing base outlines the CSR with E3's sixteen headings
+AssertionError: expected [ 'Title page & synopsis', …(12) ] to deeply equal [ '1. Title Page', …(15) ]
+
+- Expected
++ Received
+
+  [
+-   "1. Title Page",
+-   "2. Synopsis",
+-   "3. Table of Contents for the Individual Clinical Study Report",
+-   "4. List of Abbreviations and Definitions of Terms",
+-   "5. Ethics",
+-   "6. Investigators and Study Administrative Structure",
+-   "7. Introduction",
+-   "8. Study Objectives",
+-   "9. Investigational Plan",
+-   "10. Study Patients",
+-   "11. Efficacy Evaluation",
+-   "12. Safety Evaluation",
+-   "13. Discussion and Overall Conclusions",
+-   "14. Tables, Figures and Graphs Referred to But Not Included in the Text",
+-   "15. Reference List",
+-   "16. Appendices",
++   "Title page & synopsis",
++   "Ethics",
++   "Investigators & administrative structure",
++   "Introduction",
++   "Objectives",
++   "Investigational plan (design, methods)",
++   "Study patients (disposition, deviations)",
++   "Efficacy evaluation",
++   "Safety evaluation (exposure, AEs, deaths/SAEs, labs)",
++   "Discussion & overall conclusions",
++   "Tables/figures",
++   "Reference list",
++   "Appendices (16.x)",
+  ]
+
+ ❯ tests/regulatory/csr-e3-overlay.test.ts:129:23
+    127|   it("the medical-writing base outlines the CSR with E3's sixteen head…
+    128|     const structure = composeMedicalWritingGuidance({ documentType: 'c…
+    129|     expect(structure).toEqual(e3TopLevel().map((s) => `${s.number}. ${…
+       |                       ^
+    130|   });
+    131|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  tests/regulatory/csr-e3-overlay.test.ts > every CSR outline on the platform is read from the overlay > the stream's 5.3.5 playbook lists E3's sixteen headings
+AssertionError: 3: expected '## Drafting: Module 5.3.5 — Clinical …' to contain '3. Table of Contents for the Individu…'
+
+- Expected
++ Received
+
+- 3. Table of Contents for the Individual Clinical Study Report
++ ## Drafting: Module 5.3.5 — Clinical Study Reports
++ You are assisting with CSR formatting per ICH E3.
++
++ ### ICH E3 CSR Structure:
++ 1. Title Page
++ 2. Synopsis
++ 3. Table of Contents
++ 4. List of Abbreviations
++ 5. Ethics (IRB/IEC, consent, regulatory compliance)
++ 6. Investigators and Study Administrative Structure
++ 7. Introduction
++ 8. Study Objectives
++ 9. Investigational Plan (study design, endpoints, statistics)
++ 10. Study Patients (disposition, demographics, protocol deviations)
++ 11. Efficacy Evaluation
++ 12. Safety Evaluation
++ 13. Discussion and Overall Conclusions
++ 14. Tables, Figures, Graphs (referenced by section)
++ 15. Reference List
++ 16. Appendices (protocol, amendments, sample CRF, listing of patients, etc.)
++
++ ### FDA Expectations:
++ - Synopsis must be stand-alone
++ - Individual patient data listings in appendices
++ - Statistical analysis plan (SAP) as an appendix
++ - Follow ICH E9(R1) estimands framework for efficacy endpoints
+
+ ❯ tests/regulatory/csr-e3-overlay.test.ts:134:60
+    132|   it("the stream's 5.3.5 playbook lists E3's sixteen headings", () => {
+    133|     const prompt = buildSectionSpecificPrompt('5.3.5')!;
+    134|     for (const s of e3TopLevel()) expect(prompt, s.number).toContain(`…
+       |                                                            ^
+    135|   });
+    136| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 15 passed (20)
+   Start at  19:09:11
+   Duration  2.92s (transform 1.61s, setup 89ms, import 2.47s, tests 51ms, environment 0ms)
+

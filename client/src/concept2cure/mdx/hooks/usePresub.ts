@@ -28,6 +28,7 @@ import type {
   DossierLink,
 } from '../data/presub';
 import { useFetchJson } from './useFetchJson';
+import { shapeMismatch } from '../lib/payloadShape';
 
 interface ServerQSubListRow {
   id: string;
@@ -231,11 +232,16 @@ export function usePresubList(): UsePresubListResult {
     })) : null),
     [data],
   );
+  /* A 200 whose body is not `{ data: { rows } }` used to return `list: null`
+     with no error — which reads as "still loading" forever. While a fixture
+     stood in for null nobody saw it; now the manager renders null as a
+     spinner, so an unreadable body has to say so. */
+  const failed = error ?? (data != null && list === null ? shapeMismatch('/api/q-sub') : null);
   return {
     list,
     kpis: list ? deriveKpis(list) : null,
     loading,
-    error,
+    error: failed,
     refresh,
   };
 }

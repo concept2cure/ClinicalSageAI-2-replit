@@ -19,6 +19,7 @@ import { z } from 'zod';
 import { autoDraftModule3 } from '../../services/cmc/auto-draft-composer';
 import { serverError } from '../../lib/api-response';
 import { createScopedLogger } from '../../utils/logger';
+import { module3OrgId } from './module3-project-guard';
 
 const router = express.Router();
 const log = createScopedLogger('module3-auto-draft');
@@ -57,20 +58,12 @@ const autoDraftSchema = z.object({
   persist: z.boolean().optional().default(false),
 });
 
-function getOrgId(req: express.Request): number {
-  const orgId = parseInt(
-    String((req as any).tenantId || (req as any).tenantContext?.organizationId || 0),
-    10,
-  );
-  if (!orgId || Number.isNaN(orgId)) throw new Error('Organization context required');
-  return orgId;
-}
 
 // ── POST /auto-draft/:projectId ────────────────────────────────────────────────
 
 router.post('/auto-draft/:projectId', async (req, res) => {
   try {
-    const orgId = getOrgId(req);
+    const orgId = module3OrgId(req);
     const projectIdRaw = req.params.projectId;
     const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : projectIdRaw ?? '';
     const data = autoDraftSchema.parse(req.body);

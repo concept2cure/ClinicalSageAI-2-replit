@@ -1,0 +1,912 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/preclinical-error-containment.test.ts > POST /api/preclinical/ingest: the 5xx bodies are contained > answers an ingest failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:02:55.035Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/preclinical-error-containment.test.ts > POST /api/preclinical/ingest: the 5xx bodies are contained > answers an ingest failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:02:55.038Z",
+  "level": "error",
+  "message": "[preclinical-routes] Preclinical ingest failed",
+  "context": {
+    "sourcePdfId": "pdf-0e0c377a-afae-41cb-979d-268a7f81106c",
+    "message": "SENTINEL-DB-DETAIL: relation \"preclinical_set_b_secret\" does not exist"
+  }
+}
+
+stdout | server/routes/__tests__/cortexQueryRoutes-error-containment.test.ts > POST /api/cortex/query/query: the 500 body is contained > answers a failure inside the query with INTERNAL_ERROR and the request id, never the thrown text
+✅ Unified Cortex Query API initialized
+
+stderr | server/routes/__tests__/preclinical-error-containment.test.ts > POST /api/preclinical/ingest: the 5xx bodies are contained > answers a disabled ingest with its code and a static sentence, never the thrown text
+{
+  "timestamp": "2026-10-01T08:02:55.064Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/preclinical-error-containment.test.ts > POST /api/preclinical/ingest: the 5xx bodies are contained > leaves the validation-shaped 422 exactly as it was
+{
+  "timestamp": "2026-10-01T08:02:55.073Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "study.pdf",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stderr | server/routes/__tests__/preclinical-error-containment.test.ts > POST /api/preclinical/ingest: the 5xx bodies are contained > leaves the validation-shaped 422 exactly as it was
+{
+  "timestamp": "2026-10-01T08:02:55.073Z",
+  "level": "error",
+  "message": "[preclinical-routes] Preclinical ingest failed",
+  "context": {
+    "sourcePdfId": "pdf-ed043769-c496-4912-9a47-ec91d959ddc2",
+    "message": "Invalid study: expected a dose table"
+  }
+}
+
+ × server/routes/__tests__/preclinical-error-containment.test.ts > POST /api/preclinical/ingest: the 5xx bodies are contained > answers an ingest failure with INTERNAL_ERROR and the request id, never the thrown text 60ms
+   → the thrown text reached the client: expected '{"success":false,"error":"SENTINEL-DB…' not to contain 'SENTINEL-DB-DETAIL'
+ × server/routes/__tests__/preclinical-error-containment.test.ts > POST /api/preclinical/ingest: the 5xx bodies are contained > answers a disabled ingest with its code and a static sentence, never the thrown text 15ms
+   → the thrown text reached the client: expected '{"success":false,"error":"SENTINEL-EN…' not to contain 'SENTINEL-ENV-DETAIL'
+ ✓ server/routes/__tests__/preclinical-error-containment.test.ts > POST /api/preclinical/ingest: the 5xx bodies are contained > leaves the validation-shaped 422 exactly as it was 7ms
+stderr | server/routes/__tests__/cortexQueryRoutes-error-containment.test.ts > POST /api/cortex/query/query: the 500 body is contained > answers a failure inside the query with INTERNAL_ERROR and the request id, never the thrown text
+Cortex query error: Error: SENTINEL-DB-DETAIL: relation "set_b_secret_table" does not exist
+    at /home/user/ClinicalSageAI-2-replit/server/routes/__tests__/cortexQueryRoutes-error-containment.test.ts:48:38
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+stdout | server/routes/__tests__/cortexQueryRoutes-error-containment.test.ts > POST /api/cortex/query/query: the 500 body is contained > leaves the no-tenant 403 exactly as it was
+✅ Unified Cortex Query API initialized
+
+ × server/routes/__tests__/ha-interactions-error-containment.test.ts > GET /api/ha-interactions/interactions: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 153ms
+   → the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+ ✓ server/routes/__tests__/ha-interactions-error-containment.test.ts > GET /api/ha-interactions/interactions: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 19ms
+ × server/routes/__tests__/cortexQueryRoutes-error-containment.test.ts > POST /api/cortex/query/query: the 500 body is contained > answers a failure inside the query with INTERNAL_ERROR and the request id, never the thrown text 202ms
+   → the thrown text reached the client: expected '{"success":false,"error":"SENTINEL-DB…' not to contain 'SENTINEL-DB-DETAIL'
+ ✓ server/routes/__tests__/cortexQueryRoutes-error-containment.test.ts > POST /api/cortex/query/query: the 500 body is contained > leaves the no-tenant 403 exactly as it was 21ms
+stderr | server/routes/__tests__/grdheRoutes-error-containment.test.ts > /api/grdhe: the 500 body is contained > the router error handler answers an uncaught failure with INTERNAL_ERROR, never the thrown text
+[GRDHE ERROR] Error: SENTINEL-DB-DETAIL: relation "grdhe_set_b_secret" does not exist
+    at /home/user/ClinicalSageAI-2-replit/server/routes/__tests__/grdheRoutes-error-containment.test.ts:84:46
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+stderr | server/routes/__tests__/grdheRoutes-error-containment.test.ts > /api/grdhe: the 500 body is contained > the router error handler leaves an error that carries a 4xx status exactly as it was
+[GRDHE ERROR] Error: The status filter is not one this store knows.
+    at /home/user/ClinicalSageAI-2-replit/server/routes/__tests__/grdheRoutes-error-containment.test.ts:91:21
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64 {
+  status: 400,
+  code: 'BAD_FILTER'
+}
+
+ × server/routes/__tests__/grdheRoutes-error-containment.test.ts > /api/grdhe: the 500 body is contained > POST /exports/:jobId/execute answers an export failure with INTERNAL_ERROR, never the thrown text 76ms
+   → the thrown text reached the client: expected '{"success":false,"error":{"code":"EXP…' not to contain 'SENTINEL-DB-DETAIL'
+ × server/routes/__tests__/grdheRoutes-error-containment.test.ts > /api/grdhe: the 500 body is contained > the router error handler answers an uncaught failure with INTERNAL_ERROR, never the thrown text 15ms
+   → the thrown text reached the client: expected '{"success":false,"error":{"code":"INT…' not to contain 'SENTINEL-DB-DETAIL'
+ ✓ server/routes/__tests__/grdheRoutes-error-containment.test.ts > /api/grdhe: the 500 body is contained > the router error handler leaves an error that carries a 4xx status exactly as it was 7ms
+ × server/routes/__tests__/ind-generation-error-containment.test.ts > POST /api/ind-generation/generate-section: the 500 body is contained > answers a gateway failure with INTERNAL_ERROR and the request id, never the thrown text 80ms
+   → the thrown text reached the client: expected '{"success":false,"error":"SENTINEL-PR…' not to contain 'SENTINEL-PROVIDER-DETAIL'
+ ✓ server/routes/__tests__/ind-generation-error-containment.test.ts > POST /api/ind-generation/generate-section: the 500 body is contained > leaves the unknown-section 400 exactly as it was 17ms
+ × tests/routes/inline-endpoints-shadow-health-containment.test.ts > GET /api/shadow/health: the 502 body is contained > answers an unreachable shadow service with the static sentence, never the transport text 111ms
+   → the thrown text reached the client: expected '{"error":"Shadow service unavailable"…' not to contain 'SENTINEL-TRANSPORT-DETAIL'
+ ✓ tests/routes/inline-endpoints-shadow-health-containment.test.ts > GET /api/shadow/health: the 502 body is contained > leaves the pass-through of the upstream non-OK answer exactly as it was 73ms
+ × server/routes/__tests__/invention-disclosure-error-containment.test.ts > GET /api/invention-disclosures/disclosures: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 56ms
+   → the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+ ✓ server/routes/__tests__/invention-disclosure-error-containment.test.ts > GET /api/invention-disclosures/disclosures: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 10ms
+ × server/routes/__tests__/protocol-risks-error-containment.test.ts > GET /api/protocol-risks/documents/:id/register: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 71ms
+   → the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+ ✓ server/routes/__tests__/protocol-risks-error-containment.test.ts > GET /api/protocol-risks/documents/:id/register: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 12ms
+stderr | server/routes/__tests__/document-understanding-error-containment.test.ts > POST /api/document-understanding/analyze: the 500 body is contained > answers a failure inside the analysis with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:02:58.936Z",
+  "level": "error",
+  "message": "[document-understanding] Analysis failed",
+  "context": {
+    "err": "SENTINEL-FS-DETAIL: EACCES: permission denied, open '/app/storage/org-7/secret.txt'"
+  }
+}
+
+ × server/routes/__tests__/document-understanding-error-containment.test.ts > POST /api/document-understanding/analyze: the 500 body is contained > answers a failure inside the analysis with INTERNAL_ERROR and the request id, never the thrown text 96ms
+   → the thrown text reached the client: expected '{"success":false,"error":"Error: SENT…' not to contain 'SENTINEL-FS-DETAIL'
+ ✓ server/routes/__tests__/document-understanding-error-containment.test.ts > POST /api/document-understanding/analyze: the 500 body is contained > leaves the no-source 400 exactly as it was 12ms
+ × server/routes/__tests__/protocol-export-error-containment.test.ts > GET /api/protocol-export/:id: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 140ms
+   → the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+ ✓ server/routes/__tests__/protocol-export-error-containment.test.ts > GET /api/protocol-export/:id: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 17ms
+ × server/routes/__tests__/protocol-soa-error-containment.test.ts > GET /api/protocol-soa/documents/:id/matrix: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 67ms
+   → the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+ ✓ server/routes/__tests__/protocol-soa-error-containment.test.ts > GET /api/protocol-soa/documents/:id/matrix: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 6ms
+ × server/routes/__tests__/protocol-templates-error-containment.test.ts > GET /api/protocol-templates/templates: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 43ms
+   → the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+ ✓ server/routes/__tests__/protocol-templates-error-containment.test.ts > GET /api/protocol-templates/templates: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 10ms
+ × server/routes/__tests__/protocol-portfolio-error-containment.test.ts > GET /api/protocol-portfolio/analytics: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 44ms
+   → the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+ × server/routes/__tests__/protocol-milestones-error-containment.test.ts > GET /api/protocol-milestones/documents/:id/milestones: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 28ms
+   → the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+ ✓ server/routes/__tests__/protocol-milestones-error-containment.test.ts > GET /api/protocol-milestones/documents/:id/milestones: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 14ms
+ × server/routes/__tests__/grant-finder-error-containment.test.ts > GET /api/grant-finder/profile: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 50ms
+   → the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+ ✓ server/routes/__tests__/grant-finder-error-containment.test.ts > GET /api/grant-finder/profile: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 9ms
+ × server/routes/__tests__/lifecycle-error-containment.test.ts > GET /api/lifecycle/obligations: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 78ms
+   → the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+ ✓ server/routes/__tests__/lifecycle-error-containment.test.ts > GET /api/lifecycle/obligations: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 11ms
+stdout | server/routes/__tests__/seed-demo-error-containment.test.ts > POST /api/demo/seed: the 500 body is contained > answers a seeding failure with INTERNAL_ERROR and the request id, never the thrown text
+🌱 Starting demo project seeding...
+
+stderr | server/routes/__tests__/seed-demo-error-containment.test.ts > POST /api/demo/seed: the 500 body is contained > answers a seeding failure with INTERNAL_ERROR and the request id, never the thrown text
+Error seeding demo projects: Error: SENTINEL-DB-DETAIL: duplicate key value violates unique constraint "projects_set_b_secret_key"
+    at Object.insert (/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/seed-demo-error-containment.test.ts:25:13)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/seed-demo.ts:61:31
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at next (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/route.js:117:3)
+    at handle (/home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:435:11)
+    at Layer.handleRequest (/home/user/ClinicalSageAI-2-replit/node_modules/router/lib/layer.js:152:17)
+    at /home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:295:15
+    at processParams (/home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:582:12)
+    at next (/home/user/ClinicalSageAI-2-replit/node_modules/router/index.js:291:5)
+
+ × server/routes/__tests__/seed-demo-error-containment.test.ts > POST /api/demo/seed: the 500 body is contained > answers a seeding failure with INTERNAL_ERROR and the request id, never the thrown text 121ms
+   → the thrown text reached the client: expected '{"success":false,"message":"Failed to…' not to contain 'SENTINEL-DB-DETAIL'
+ × server/routes/__tests__/protocol-budget-error-containment.test.ts > GET /api/protocol-budget/documents/:id/summary: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 59ms
+   → the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+ ✓ server/routes/__tests__/protocol-budget-error-containment.test.ts > GET /api/protocol-budget/documents/:id/summary: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 14ms
+ × server/routes/__tests__/research-compliance-error-containment.test.ts > GET /api/research-compliance/personnel: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 74ms
+   → the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+ ✓ server/routes/__tests__/research-compliance-error-containment.test.ts > GET /api/research-compliance/personnel: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 15ms
+ × server/routes/__tests__/financial-disclosures-error-containment.test.ts > GET /api/financial-disclosures/investigators: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 60ms
+   → the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+ ✓ server/routes/__tests__/financial-disclosures-error-containment.test.ts > GET /api/financial-disclosures/investigators: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 8ms
+stdout | server/routes/__tests__/firecrawl-error-containment.test.ts > POST /api/firecrawl/scrape: the 502 body is contained > answers a provider failure with provider_error, the static sentence and the correlation id, never the thrown text
+[firecrawl.scrape.request] {
+  correlationId: 'fc-corr-set-b',
+  tenantId: 7,
+  url: 'https://example.org/label.pdf',
+  route: '/api/firecrawl/scrape'
+}
+
+ × server/routes/__tests__/firecrawl-error-containment.test.ts > POST /api/firecrawl/scrape: the 502 body is contained > answers a provider failure with provider_error, the static sentence and the correlation id, never the thrown text 133ms
+   → the thrown text reached the client: expected '{"success":false,"error":{"code":"pro…' not to contain 'SENTINEL-UPSTREAM-BODY'
+ ✓ server/routes/__tests__/firecrawl-error-containment.test.ts > POST /api/firecrawl/scrape: the 502 body is contained > leaves the quota 429 exactly as it was 10ms
+ × server/routes/__tests__/protocol-amendments-error-containment.test.ts > GET /api/protocol-amendments/amendments: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 28ms
+   → the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+ ✓ server/routes/__tests__/protocol-amendments-error-containment.test.ts > GET /api/protocol-amendments/amendments: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 6ms
+ × server/routes/__tests__/inspections-error-containment.test.ts > GET /api/inspections: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 45ms
+   → the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+ ✓ server/routes/__tests__/inspections-error-containment.test.ts > GET /api/inspections: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 7ms
+stderr | server/routes/__tests__/escalate-error-containment.test.ts > POST /api/escalate/evaluate: the 500 body is contained > answers an engine failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:03:06.638Z",
+  "level": "error",
+  "message": "[escalate-routes] ESCALATE evaluation failed: SENTINEL-ENGINE-DETAIL: relation \"set_b_secret_table\" does not exist",
+  "context": {}
+}
+
+ × server/routes/__tests__/escalate-error-containment.test.ts > POST /api/escalate/evaluate: the 500 body is contained > answers an engine failure with INTERNAL_ERROR and the request id, never the thrown text 45ms
+   → the thrown text reached the client: expected '{"success":false,"error":"SENTINEL-EN…' not to contain 'SENTINEL-ENGINE-DETAIL'
+ ✓ server/routes/__tests__/escalate-error-containment.test.ts > POST /api/escalate/evaluate: the 500 body is contained > leaves the validation 400 exactly as it was 11ms
+stderr | server/routes/__tests__/harmonize-error-containment.test.ts > POST /api/harmonize/check: the 500 body is contained > answers an engine failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:03:07.686Z",
+  "level": "error",
+  "message": "[harmonize-routes] HARMONIZE check failed: SENTINEL-ENGINE-DETAIL: relation \"set_b_secret_table\" does not exist",
+  "context": {}
+}
+
+ × server/routes/__tests__/harmonize-error-containment.test.ts > POST /api/harmonize/check: the 500 body is contained > answers an engine failure with INTERNAL_ERROR and the request id, never the thrown text 102ms
+   → the thrown text reached the client: expected '{"success":false,"error":"SENTINEL-EN…' not to contain 'SENTINEL-ENGINE-DETAIL'
+ ✓ server/routes/__tests__/harmonize-error-containment.test.ts > POST /api/harmonize/check: the 500 body is contained > leaves the validation 400 exactly as it was 13ms
+ × server/routes/__tests__/knowledge-error-containment.test.ts > GET /api/knowledge/validation-rules: the 500 body is contained > answers a corpus failure with INTERNAL_ERROR and the request id, never the thrown text 80ms
+   → the thrown text reached the client: expected '{"error":"Validation-rule corpus unav…' not to contain 'SENTINEL-FS-DETAIL'
+ ✓ server/routes/__tests__/knowledge-error-containment.test.ts > GET /api/knowledge/validation-rules: the 500 body is contained > leaves the unknown-region 422 exactly as it was 16ms
+ × server/routes/__tests__/protocol-development-error-containment.test.ts > GET /api/protocol-development/documents: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 81ms
+   → the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+ ✓ server/routes/__tests__/protocol-development-error-containment.test.ts > GET /api/protocol-development/documents: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 19ms
+ × server/routes/__tests__/etmf-error-containment.test.ts > GET /api/etmf/files: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 26ms
+   → the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+ ✓ server/routes/__tests__/etmf-error-containment.test.ts > GET /api/etmf/files: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 5ms
+stderr | server/routes/__tests__/validate-completeness-error-containment.test.ts > POST /api/validate-completeness/validate: the 500 body is contained > answers an engine failure with INTERNAL_ERROR and the request id, never the thrown text
+{
+  "timestamp": "2026-10-01T08:03:09.351Z",
+  "level": "error",
+  "message": "[validate-completeness-routes] VALIDATE-COMPLETENESS failed: SENTINEL-ENGINE-DETAIL: relation \"set_b_secret_table\" does not exist",
+  "context": {}
+}
+
+ × server/routes/__tests__/validate-completeness-error-containment.test.ts > POST /api/validate-completeness/validate: the 500 body is contained > answers an engine failure with INTERNAL_ERROR and the request id, never the thrown text 122ms
+   → the thrown text reached the client: expected '{"success":false,"error":"SENTINEL-EN…' not to contain 'SENTINEL-ENGINE-DETAIL'
+ ✓ server/routes/__tests__/validate-completeness-error-containment.test.ts > POST /api/validate-completeness/validate: the 500 body is contained > leaves the validation 400 exactly as it was 19ms
+ × server/routes/__tests__/external-evidence-error-containment.test.ts > POST /api/external-evidence/route: the 502 body is contained > answers a provider failure with provider_error and the static sentence, never the thrown text 58ms
+   → the thrown text reached the client: expected '{"success":false,"error":{"code":"pro…' not to contain 'SENTINEL-UPSTREAM-DETAIL'
+ ✓ server/routes/__tests__/external-evidence-error-containment.test.ts > POST /api/external-evidence/route: the 502 body is contained > leaves the missing-message 400 exactly as it was 8ms
+stdout | server/routes/__tests__/document-lifecycle-error-containment.test.ts
+{
+  "timestamp": "2026-10-01T08:03:11.085Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T08:03:11.086Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/document-lifecycle-error-containment.test.ts
+{
+  "timestamp": "2026-10-01T08:03:11.086Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/document-lifecycle-error-containment.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/routes/__tests__/document-lifecycle-error-containment.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/routes/__tests__/document-lifecycle-error-containment.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | server/routes/__tests__/predicate-intelligence-error-containment.test.ts
+{
+  "timestamp": "2026-10-01T08:03:11.746Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../db.js\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+
+stderr | server/routes/__tests__/document-lifecycle-error-containment.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/document-lifecycle-error-containment.test.ts
+{
+  "timestamp": "2026-10-01T08:03:11.762Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/routes/__tests__/protocol-reviews-error-containment.test.ts > GET /api/protocol-reviews/documents/:id/summary: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text 48ms
+   → the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+ ✓ server/routes/__tests__/protocol-reviews-error-containment.test.ts > GET /api/protocol-reviews/documents/:id/summary: the 500 body is contained > leaves a coded 4xx exactly as it was (the refusal is the user's to read) 5ms
+ × server/routes/__tests__/predicate-intelligence-error-containment.test.ts > POST /api/predicate-intelligence/se-discussion/author: the 500 body is contained > answers an authoring failure with INTERNAL_ERROR and the request id, never the thrown text 57ms
+   → the thrown text reached the client: expected '{"error":"SE discussion authoring fai…' not to contain 'SENTINEL-DB-DETAIL'
+ ✓ server/routes/__tests__/predicate-intelligence-error-containment.test.ts > POST /api/predicate-intelligence/se-discussion/author: the 500 body is contained > leaves the no-matrix 422 exactly as it was 10ms
+ × server/routes/__tests__/document-lifecycle-error-containment.test.ts > GET /api/regulatory/documents/:id: the 500 body is contained > answers a store failure with INTERNAL_ERROR and the request id, never the thrown text 65ms
+   → the thrown text reached the client: expected '{"ok":false,"error":"internal_error",…' not to contain 'SENTINEL-DB-DETAIL'
+ ✓ server/routes/__tests__/document-lifecycle-error-containment.test.ts > GET /api/regulatory/documents/:id: the 500 body is contained > leaves the no-organization 403 exactly as it was 8ms
+ × tests/routes/monitoring-error-tracker-containment.test.ts > errorTrackerMiddleware: the 500 body is contained > answers with the static sentence and the errorId, never the message or the stack 14ms
+   → the thrown text reached the client: expected '{"status":"error","message":"SENTINEL…' not to contain 'SENTINEL-DB-DETAIL'
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 36 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/routes/inline-endpoints-shadow-health-containment.test.ts > GET /api/shadow/health: the 502 body is contained > answers an unreachable shadow service with the static sentence, never the transport text
+AssertionError: the thrown text reached the client: expected '{"error":"Shadow service unavailable"…' not to contain 'SENTINEL-TRANSPORT-DETAIL'
+
+Expected: "SENTINEL-TRANSPORT-DETAIL"
+Received: "{"error":"Shadow service unavailable","message":"connect ECONNREFUSED 10.9.8.7:8001 SENTINEL-TRANSPORT-DETAIL"}"
+
+ ❯ tests/routes/inline-endpoints-shadow-health-containment.test.ts:55:60
+     53|     expect(r.status).toBe(502);
+     54|     const body = JSON.stringify(r.body);
+     55|     expect(body, 'the thrown text reached the client').not.toContain('…
+       |                                                            ^
+     56|     expect(body).not.toContain('ECONNREFUSED');
+     57|     expect(body).not.toContain('10.9.8.7');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/36]⎯
+
+ FAIL  tests/routes/monitoring-error-tracker-containment.test.ts > errorTrackerMiddleware: the 500 body is contained > answers with the static sentence and the errorId, never the message or the stack
+AssertionError: the thrown text reached the client: expected '{"status":"error","message":"SENTINEL…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"status":"error","message":"SENTINEL-DB-DETAIL: relation \"monitoring_set_b_secret\" does not exist","stack":"Error: SENTINEL-DB-DETAIL: relation \"monitoring_set_b_secret\" does not exist\n    at /home/user/ClinicalSageAI-2-replit/tests/routes/monitoring-error-tracker-containment.test.ts:42:17\n    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11\n    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26\n    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20\n    at new Promise (<anonymous>)\n    at runWithCancel (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)\n    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20\n    at new Promise (<anonymous>)\n    at runWithTimeout (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)\n    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64","errorId":"err-1790841793156-9iafgr0g0"}"
+
+ ❯ tests/routes/monitoring-error-tracker-containment.test.ts:47:60
+     45|     expect(state.status).toBe(500);
+     46|     const body = JSON.stringify(state.body);
+     47|     expect(body, 'the thrown text reached the client').not.toContain('…
+       |                                                            ^
+     48|     expect(body).not.toContain('monitoring_set_b_secret');
+     49|     expect(state.body.stack).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/36]⎯
+
+ FAIL  server/routes/__tests__/cortexQueryRoutes-error-containment.test.ts > POST /api/cortex/query/query: the 500 body is contained > answers a failure inside the query with INTERNAL_ERROR and the request id, never the thrown text
+AssertionError: the thrown text reached the client: expected '{"success":false,"error":"SENTINEL-DB…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"success":false,"error":"SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist","metadata":{"processingTimeMs":25}}"
+
+ ❯ server/routes/__tests__/cortexQueryRoutes-error-containment.test.ts:52:60
+     50|     expect(r.status).toBe(500);
+     51|     const body = JSON.stringify(r.body);
+     52|     expect(body, 'the thrown text reached the client').not.toContain('…
+       |                                                            ^
+     53|     expect(body).not.toContain('set_b_secret_table');
+     54|     expect(r.body).toMatchObject({ error: 'INTERNAL_ERROR', correlatio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/36]⎯
+
+ FAIL  server/routes/__tests__/document-lifecycle-error-containment.test.ts > GET /api/regulatory/documents/:id: the 500 body is contained > answers a store failure with INTERNAL_ERROR and the request id, never the thrown text
+AssertionError: the thrown text reached the client: expected '{"ok":false,"error":"internal_error",…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"ok":false,"error":"internal_error","detail":"SENTINEL-DB-DETAIL: Failed query: select \"set_b_secret_column\" from \"canonical_documents\""}"
+
+ ❯ server/routes/__tests__/document-lifecycle-error-containment.test.ts:52:60
+     50|     expect(r.status).toBe(500);
+     51|     const body = JSON.stringify(r.body);
+     52|     expect(body, 'the thrown text reached the client').not.toContain('…
+       |                                                            ^
+     53|     expect(body).not.toContain('set_b_secret_column');
+     54|     expect(body).not.toMatch(/Failed query/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/36]⎯
+
+ FAIL  server/routes/__tests__/document-understanding-error-containment.test.ts > POST /api/document-understanding/analyze: the 500 body is contained > answers a failure inside the analysis with INTERNAL_ERROR and the request id, never the thrown text
+AssertionError: the thrown text reached the client: expected '{"success":false,"error":"Error: SENT…' not to contain 'SENTINEL-FS-DETAIL'
+
+Expected: "SENTINEL-FS-DETAIL"
+Received: "{"success":false,"error":"Error: SENTINEL-FS-DETAIL: EACCES: permission denied, open '/app/storage/org-7/secret.txt'"}"
+
+ ❯ server/routes/__tests__/document-understanding-error-containment.test.ts:50:60
+     48|     expect(r.status).toBe(500);
+     49|     const body = JSON.stringify(r.body);
+     50|     expect(body, 'the thrown text reached the client').not.toContain('…
+       |                                                            ^
+     51|     expect(body).not.toContain('/app/storage');
+     52|     expect(body).not.toContain('EACCES');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/36]⎯
+
+ FAIL  server/routes/__tests__/escalate-error-containment.test.ts > POST /api/escalate/evaluate: the 500 body is contained > answers an engine failure with INTERNAL_ERROR and the request id, never the thrown text
+AssertionError: the thrown text reached the client: expected '{"success":false,"error":"SENTINEL-EN…' not to contain 'SENTINEL-ENGINE-DETAIL'
+
+Expected: "SENTINEL-ENGINE-DETAIL"
+Received: "{"success":false,"error":"SENTINEL-ENGINE-DETAIL: relation \"set_b_secret_table\" does not exist"}"
+
+ ❯ server/routes/__tests__/escalate-error-containment.test.ts:46:60
+     44|     expect(r.status).toBe(500);
+     45|     const body = JSON.stringify(r.body);
+     46|     expect(body, 'the thrown text reached the client').not.toContain('…
+       |                                                            ^
+     47|     expect(body).not.toContain('set_b_secret_table');
+     48|     expect(r.body).toMatchObject({ error: 'INTERNAL_ERROR', correlatio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/36]⎯
+
+ FAIL  server/routes/__tests__/etmf-error-containment.test.ts > GET /api/etmf/files: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+AssertionError: the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"error":{"code":"INTERNAL","message":"SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist"}}"
+
+ ❯ server/routes/__tests__/etmf-error-containment.test.ts:53:60
+     51|     expect(r.status).toBe(500);
+     52|     const body = JSON.stringify(r.body);
+     53|     expect(body, 'the thrown text reached the client').not.toContain('…
+       |                                                            ^
+     54|     expect(body).not.toContain('set_b_secret_table');
+     55|     expect(r.body).toMatchObject({ error: 'INTERNAL_ERROR', correlatio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/36]⎯
+
+ FAIL  server/routes/__tests__/external-evidence-error-containment.test.ts > POST /api/external-evidence/route: the 502 body is contained > answers a provider failure with provider_error and the static sentence, never the thrown text
+AssertionError: the thrown text reached the client: expected '{"success":false,"error":{"code":"pro…' not to contain 'SENTINEL-UPSTREAM-DETAIL'
+
+Expected: "SENTINEL-UPSTREAM-DETAIL"
+Received: "{"success":false,"error":{"code":"provider_error","message":"provider_error:FIRECRAWL_API_KEY missing SENTINEL-UPSTREAM-DETAIL"}}"
+
+ ❯ server/routes/__tests__/external-evidence-error-containment.test.ts:47:60
+     45|     expect(r.status).toBe(502);
+     46|     const body = JSON.stringify(r.body);
+     47|     expect(body, 'the thrown text reached the client').not.toContain('…
+       |                                                            ^
+     48|     expect(body).not.toContain('FIRECRAWL_API_KEY');
+     49|     expect(r.body).toMatchObject({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/36]⎯
+
+ FAIL  server/routes/__tests__/financial-disclosures-error-containment.test.ts > GET /api/financial-disclosures/investigators: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+AssertionError: the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"error":{"code":"INTERNAL","message":"SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist"}}"
+
+ ❯ server/routes/__tests__/financial-disclosures-error-containment.test.ts:54:60
+     52|     expect(r.status).toBe(500);
+     53|     const body = JSON.stringify(r.body);
+     54|     expect(body, 'the thrown text reached the client').not.toContain('…
+       |                                                            ^
+     55|     expect(body).not.toContain('set_b_secret_table');
+     56|     expect(r.body).toMatchObject({ error: 'INTERNAL_ERROR', correlatio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/36]⎯
+
+ FAIL  server/routes/__tests__/firecrawl-error-containment.test.ts > POST /api/firecrawl/scrape: the 502 body is contained > answers a provider failure with provider_error, the static sentence and the correlation id, never the thrown text
+AssertionError: the thrown text reached the client: expected '{"success":false,"error":{"code":"pro…' not to contain 'SENTINEL-UPSTREAM-BODY'
+
+Expected: "SENTINEL-UPSTREAM-BODY"
+Received: "{"success":false,"error":{"code":"provider_error","message":"provider_error:500:SENTINEL-UPSTREAM-BODY {\"error\":\"invalid key fc-set-b-secret\"}"}}"
+
+ ❯ server/routes/__tests__/firecrawl-error-containment.test.ts:59:60
+     57|     expect(r.status).toBe(502);
+     58|     const body = JSON.stringify(r.body);
+     59|     expect(body, 'the thrown text reached the client').not.toContain('…
+       |                                                            ^
+     60|     expect(body).not.toContain('fc-set-b-secret');
+     61|     expect(body).not.toContain('provider_error:500');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/36]⎯
+
+ FAIL  server/routes/__tests__/grant-finder-error-containment.test.ts > GET /api/grant-finder/profile: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+AssertionError: the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"error":{"code":"INTERNAL","message":"SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist"}}"
+
+ ❯ server/routes/__tests__/grant-finder-error-containment.test.ts:53:60
+     51|     expect(r.status).toBe(500);
+     52|     const body = JSON.stringify(r.body);
+     53|     expect(body, 'the thrown text reached the client').not.toContain('…
+       |                                                            ^
+     54|     expect(body).not.toContain('set_b_secret_table');
+     55|     expect(r.body).toMatchObject({ error: 'INTERNAL_ERROR', correlatio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/36]⎯
+
+ FAIL  server/routes/__tests__/grdheRoutes-error-containment.test.ts > /api/grdhe: the 500 body is contained > POST /exports/:jobId/execute answers an export failure with INTERNAL_ERROR, never the thrown text
+AssertionError: the thrown text reached the client: expected '{"success":false,"error":{"code":"EXP…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"success":false,"error":{"code":"EXPORT_FAILED","message":"SENTINEL-DB-DETAIL: relation \"grdhe_set_b_secret\" does not exist"}}"
+
+ ❯ expectContained server/routes/__tests__/grdheRoutes-error-containment.test.ts:68:58
+     66|   expect(r.status).toBe(500);
+     67|   const body = JSON.stringify(r.body);
+     68|   expect(body, 'the thrown text reached the client').not.toContain('SE…
+       |                                                          ^
+     69|   expect(body).not.toContain('grdhe_set_b_secret');
+     70|   expect(body).not.toMatch(/\bat \S+ \(/); // no stack frame
+ ❯ server/routes/__tests__/grdheRoutes-error-containment.test.ts:78:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/36]⎯
+
+ FAIL  server/routes/__tests__/grdheRoutes-error-containment.test.ts > /api/grdhe: the 500 body is contained > the router error handler answers an uncaught failure with INTERNAL_ERROR, never the thrown text
+AssertionError: the thrown text reached the client: expected '{"success":false,"error":{"code":"INT…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"success":false,"error":{"code":"INTERNAL_ERROR","message":"SENTINEL-DB-DETAIL: relation \"grdhe_set_b_secret\" does not exist"}}"
+
+ ❯ expectContained server/routes/__tests__/grdheRoutes-error-containment.test.ts:68:58
+     66|   expect(r.status).toBe(500);
+     67|   const body = JSON.stringify(r.body);
+     68|   expect(body, 'the thrown text reached the client').not.toContain('SE…
+       |                                                          ^
+     69|   expect(body).not.toContain('grdhe_set_b_secret');
+     70|   expect(body).not.toMatch(/\bat \S+ \(/); // no stack frame
+ ❯ server/routes/__tests__/grdheRoutes-error-containment.test.ts:86:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/36]⎯
+
+ FAIL  server/routes/__tests__/ha-interactions-error-containment.test.ts > GET /api/ha-interactions/interactions: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+AssertionError: the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"error":{"code":"INTERNAL","message":"SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist"}}"
+
+ ❯ server/routes/__tests__/ha-interactions-error-containment.test.ts:53:60
+     51|     expect(r.status).toBe(500);
+     52|     const body = JSON.stringify(r.body);
+     53|     expect(body, 'the thrown text reached the client').not.toContain('…
+       |                                                            ^
+     54|     expect(body).not.toContain('set_b_secret_table');
+     55|     expect(r.body).toMatchObject({ error: 'INTERNAL_ERROR', correlatio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/36]⎯
+
+ FAIL  server/routes/__tests__/harmonize-error-containment.test.ts > POST /api/harmonize/check: the 500 body is contained > answers an engine failure with INTERNAL_ERROR and the request id, never the thrown text
+AssertionError: the thrown text reached the client: expected '{"success":false,"error":"SENTINEL-EN…' not to contain 'SENTINEL-ENGINE-DETAIL'
+
+Expected: "SENTINEL-ENGINE-DETAIL"
+Received: "{"success":false,"error":"SENTINEL-ENGINE-DETAIL: relation \"set_b_secret_table\" does not exist"}"
+
+ ❯ server/routes/__tests__/harmonize-error-containment.test.ts:46:60
+     44|     expect(r.status).toBe(500);
+     45|     const body = JSON.stringify(r.body);
+     46|     expect(body, 'the thrown text reached the client').not.toContain('…
+       |                                                            ^
+     47|     expect(body).not.toContain('set_b_secret_table');
+     48|     expect(r.body).toMatchObject({ error: 'INTERNAL_ERROR', correlatio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/36]⎯
+
+ FAIL  server/routes/__tests__/ind-generation-error-containment.test.ts > POST /api/ind-generation/generate-section: the 500 body is contained > answers a gateway failure with INTERNAL_ERROR and the request id, never the thrown text
+AssertionError: the thrown text reached the client: expected '{"success":false,"error":"SENTINEL-PR…' not to contain 'SENTINEL-PROVIDER-DETAIL'
+
+Expected: "SENTINEL-PROVIDER-DETAIL"
+Received: "{"success":false,"error":"SENTINEL-PROVIDER-DETAIL: 401 invalid x-api-key for model claude-set-b at api.example.internal"}"
+
+ ❯ server/routes/__tests__/ind-generation-error-containment.test.ts:47:60
+     45|     expect(r.status).toBe(500);
+     46|     const body = JSON.stringify(r.body);
+     47|     expect(body, 'the thrown text reached the client').not.toContain('…
+       |                                                            ^
+     48|     expect(body).not.toContain('x-api-key');
+     49|     expect(r.body).toMatchObject({ error: 'INTERNAL_ERROR', correlatio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/36]⎯
+
+ FAIL  server/routes/__tests__/inspections-error-containment.test.ts > GET /api/inspections: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+AssertionError: the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"error":{"code":"INTERNAL","message":"SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist"}}"
+
+ ❯ server/routes/__tests__/inspections-error-containment.test.ts:53:60
+     51|     expect(r.status).toBe(500);
+     52|     const body = JSON.stringify(r.body);
+     53|     expect(body, 'the thrown text reached the client').not.toContain('…
+       |                                                            ^
+     54|     expect(body).not.toContain('set_b_secret_table');
+     55|     expect(r.body).toMatchObject({ error: 'INTERNAL_ERROR', correlatio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/36]⎯
+
+ FAIL  server/routes/__tests__/invention-disclosure-error-containment.test.ts > GET /api/invention-disclosures/disclosures: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+AssertionError: the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"error":{"code":"INTERNAL","message":"SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist"}}"
+
+ ❯ server/routes/__tests__/invention-disclosure-error-containment.test.ts:53:60
+     51|     expect(r.status).toBe(500);
+     52|     const body = JSON.stringify(r.body);
+     53|     expect(body, 'the thrown text reached the client').not.toContain('…
+       |                                                            ^
+     54|     expect(body).not.toContain('set_b_secret_table');
+     55|     expect(r.body).toMatchObject({ error: 'INTERNAL_ERROR', correlatio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/36]⎯
+
+ FAIL  server/routes/__tests__/knowledge-error-containment.test.ts > GET /api/knowledge/validation-rules: the 500 body is contained > answers a corpus failure with INTERNAL_ERROR and the request id, never the thrown text
+AssertionError: the thrown text reached the client: expected '{"error":"Validation-rule corpus unav…' not to contain 'SENTINEL-FS-DETAIL'
+
+Expected: "SENTINEL-FS-DETAIL"
+Received: "{"error":"Validation-rule corpus unavailable","detail":"SENTINEL-FS-DETAIL: Cannot find module '/app/server/services/ectd/validation-rule-corpus.js'"}"
+
+ ❯ server/routes/__tests__/knowledge-error-containment.test.ts:46:60
+     44|     expect(r.status).toBe(500);
+     45|     const body = JSON.stringify(r.body);
+     46|     expect(body, 'the thrown text reached the client').not.toContain('…
+       |                                                            ^
+     47|     expect(body).not.toContain('/app/server');
+     48|     expect(r.body).toMatchObject({ error: 'INTERNAL_ERROR', correlatio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/36]⎯
+
+ FAIL  server/routes/__tests__/lifecycle-error-containment.test.ts > GET /api/lifecycle/obligations: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+AssertionError: the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"error":{"code":"INTERNAL","message":"SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist"}}"
+
+ ❯ server/routes/__tests__/lifecycle-error-containment.test.ts:53:60
+     51|     expect(r.status).toBe(500);
+     52|     const body = JSON.stringify(r.body);
+     53|     expect(body, 'the thrown text reached the client').not.toContain('…
+       |                                                            ^
+     54|     expect(body).not.toContain('set_b_secret_table');
+     55|     expect(r.body).toMatchObject({ error: 'INTERNAL_ERROR', correlatio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/36]⎯
+
+ FAIL  server/routes/__tests__/preclinical-error-containment.test.ts > POST /api/preclinical/ingest: the 5xx bodies are contained > answers an ingest failure with INTERNAL_ERROR and the request id, never the thrown text
+AssertionError: the thrown text reached the client: expected '{"success":false,"error":"SENTINEL-DB…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"success":false,"error":"SENTINEL-DB-DETAIL: relation \"preclinical_set_b_secret\" does not exist","code":"PRECLINICAL_INGEST_ERROR"}"
+
+ ❯ server/routes/__tests__/preclinical-error-containment.test.ts:70:60
+     68|     expect(r.status).toBe(500);
+     69|     const body = JSON.stringify(r.body);
+     70|     expect(body, 'the thrown text reached the client').not.toContain('…
+       |                                                            ^
+     71|     expect(body).not.toContain('preclinical_set_b_secret');
+     72|     expect(r.body).toMatchObject({ error: 'INTERNAL_ERROR', correlatio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/36]⎯
+
+ FAIL  server/routes/__tests__/preclinical-error-containment.test.ts > POST /api/preclinical/ingest: the 5xx bodies are contained > answers a disabled ingest with its code and a static sentence, never the thrown text
+AssertionError: the thrown text reached the client: expected '{"success":false,"error":"SENTINEL-EN…' not to contain 'SENTINEL-ENV-DETAIL'
+
+Expected: "SENTINEL-ENV-DETAIL"
+Received: "{"success":false,"error":"SENTINEL-ENV-DETAIL (PRECLINICAL_INGEST_ENABLED=false)","code":"PRECLINICAL_INGEST_DISABLED"}"
+
+ ❯ server/routes/__tests__/preclinical-error-containment.test.ts:80:60
+     78|     expect(r.status).toBe(503);
+     79|     const body = JSON.stringify(r.body);
+     80|     expect(body, 'the thrown text reached the client').not.toContain('…
+       |                                                            ^
+     81|     expect(body).not.toContain('PRECLINICAL_INGEST_ENABLED');
+     82|     expect(r.body).toEqual({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/36]⎯
+
+ FAIL  server/routes/__tests__/predicate-intelligence-error-containment.test.ts > POST /api/predicate-intelligence/se-discussion/author: the 500 body is contained > answers an authoring failure with INTERNAL_ERROR and the request id, never the thrown text
+AssertionError: the thrown text reached the client: expected '{"error":"SE discussion authoring fai…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"error":"SE discussion authoring failed","detail":"SENTINEL-DB-DETAIL: relation \"se_set_b_secret\" does not exist"}"
+
+ ❯ server/routes/__tests__/predicate-intelligence-error-containment.test.ts:73:60
+     71|     expect(r.status).toBe(500);
+     72|     const body = JSON.stringify(r.body);
+     73|     expect(body, 'the thrown text reached the client').not.toContain('…
+       |                                                            ^
+     74|     expect(body).not.toContain('se_set_b_secret');
+     75|     expect(r.body).toMatchObject({ error: 'INTERNAL_ERROR', correlatio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/36]⎯
+
+ FAIL  server/routes/__tests__/protocol-amendments-error-containment.test.ts > GET /api/protocol-amendments/amendments: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+AssertionError: the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"error":{"code":"INTERNAL","message":"SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist"}}"
+
+ ❯ server/routes/__tests__/protocol-amendments-error-containment.test.ts:53:60
+     51|     expect(r.status).toBe(500);
+     52|     const body = JSON.stringify(r.body);
+     53|     expect(body, 'the thrown text reached the client').not.toContain('…
+       |                                                            ^
+     54|     expect(body).not.toContain('set_b_secret_table');
+     55|     expect(r.body).toMatchObject({ error: 'INTERNAL_ERROR', correlatio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/36]⎯
+
+ FAIL  server/routes/__tests__/protocol-budget-error-containment.test.ts > GET /api/protocol-budget/documents/:id/summary: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+AssertionError: the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"error":{"code":"INTERNAL","message":"SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist"}}"
+
+ ❯ server/routes/__tests__/protocol-budget-error-containment.test.ts:53:60
+     51|     expect(r.status).toBe(500);
+     52|     const body = JSON.stringify(r.body);
+     53|     expect(body, 'the thrown text reached the client').not.toContain('…
+       |                                                            ^
+     54|     expect(body).not.toContain('set_b_secret_table');
+     55|     expect(r.body).toMatchObject({ error: 'INTERNAL_ERROR', correlatio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/36]⎯
+
+ FAIL  server/routes/__tests__/protocol-development-error-containment.test.ts > GET /api/protocol-development/documents: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+AssertionError: the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"error":{"code":"INTERNAL","message":"SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist"}}"
+
+ ❯ server/routes/__tests__/protocol-development-error-containment.test.ts:53:60
+     51|     expect(r.status).toBe(500);
+     52|     const body = JSON.stringify(r.body);
+     53|     expect(body, 'the thrown text reached the client').not.toContain('…
+       |                                                            ^
+     54|     expect(body).not.toContain('set_b_secret_table');
+     55|     expect(r.body).toMatchObject({ error: 'INTERNAL_ERROR', correlatio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/36]⎯
+
+ FAIL  server/routes/__tests__/protocol-export-error-containment.test.ts > GET /api/protocol-export/:id: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+AssertionError: the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"error":{"code":"INTERNAL","message":"SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist"}}"
+
+ ❯ server/routes/__tests__/protocol-export-error-containment.test.ts:53:60
+     51|     expect(r.status).toBe(500);
+     52|     const body = JSON.stringify(r.body);
+     53|     expect(body, 'the thrown text reached the client').not.toContain('…
+       |                                                            ^
+     54|     expect(body).not.toContain('set_b_secret_table');
+     55|     expect(r.body).toMatchObject({ error: 'INTERNAL_ERROR', correlatio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/36]⎯
+
+ FAIL  server/routes/__tests__/protocol-milestones-error-containment.test.ts > GET /api/protocol-milestones/documents/:id/milestones: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+AssertionError: the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"error":{"code":"INTERNAL","message":"SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist"}}"
+
+ ❯ server/routes/__tests__/protocol-milestones-error-containment.test.ts:53:60
+     51|     expect(r.status).toBe(500);
+     52|     const body = JSON.stringify(r.body);
+     53|     expect(body, 'the thrown text reached the client').not.toContain('…
+       |                                                            ^
+     54|     expect(body).not.toContain('set_b_secret_table');
+     55|     expect(r.body).toMatchObject({ error: 'INTERNAL_ERROR', correlatio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/36]⎯
+
+ FAIL  server/routes/__tests__/protocol-portfolio-error-containment.test.ts > GET /api/protocol-portfolio/analytics: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+AssertionError: the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"error":{"code":"INTERNAL","message":"SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist"}}"
+
+ ❯ server/routes/__tests__/protocol-portfolio-error-containment.test.ts:50:60
+     48|     expect(r.status).toBe(500);
+     49|     const body = JSON.stringify(r.body);
+     50|     expect(body, 'the thrown text reached the client').not.toContain('…
+       |                                                            ^
+     51|     expect(body).not.toContain('set_b_secret_table');
+     52|     expect(r.body).toMatchObject({ error: 'INTERNAL_ERROR', correlatio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/36]⎯
+
+ FAIL  server/routes/__tests__/protocol-reviews-error-containment.test.ts > GET /api/protocol-reviews/documents/:id/summary: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+AssertionError: the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"error":{"code":"INTERNAL","message":"SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist"}}"
+
+ ❯ server/routes/__tests__/protocol-reviews-error-containment.test.ts:53:60
+     51|     expect(r.status).toBe(500);
+     52|     const body = JSON.stringify(r.body);
+     53|     expect(body, 'the thrown text reached the client').not.toContain('…
+       |                                                            ^
+     54|     expect(body).not.toContain('set_b_secret_table');
+     55|     expect(r.body).toMatchObject({ error: 'INTERNAL_ERROR', correlatio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/36]⎯
+
+ FAIL  server/routes/__tests__/protocol-risks-error-containment.test.ts > GET /api/protocol-risks/documents/:id/register: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+AssertionError: the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"error":{"code":"INTERNAL","message":"SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist"}}"
+
+ ❯ server/routes/__tests__/protocol-risks-error-containment.test.ts:53:60
+     51|     expect(r.status).toBe(500);
+     52|     const body = JSON.stringify(r.body);
+     53|     expect(body, 'the thrown text reached the client').not.toContain('…
+       |                                                            ^
+     54|     expect(body).not.toContain('set_b_secret_table');
+     55|     expect(r.body).toMatchObject({ error: 'INTERNAL_ERROR', correlatio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/36]⎯
+
+ FAIL  server/routes/__tests__/protocol-soa-error-containment.test.ts > GET /api/protocol-soa/documents/:id/matrix: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+AssertionError: the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"error":{"code":"INTERNAL","message":"SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist"}}"
+
+ ❯ server/routes/__tests__/protocol-soa-error-containment.test.ts:53:60
+     51|     expect(r.status).toBe(500);
+     52|     const body = JSON.stringify(r.body);
+     53|     expect(body, 'the thrown text reached the client').not.toContain('…
+       |                                                            ^
+     54|     expect(body).not.toContain('set_b_secret_table');
+     55|     expect(r.body).toMatchObject({ error: 'INTERNAL_ERROR', correlatio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/36]⎯
+
+ FAIL  server/routes/__tests__/protocol-templates-error-containment.test.ts > GET /api/protocol-templates/templates: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+AssertionError: the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"error":{"code":"INTERNAL","message":"SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist"}}"
+
+ ❯ server/routes/__tests__/protocol-templates-error-containment.test.ts:53:60
+     51|     expect(r.status).toBe(500);
+     52|     const body = JSON.stringify(r.body);
+     53|     expect(body, 'the thrown text reached the client').not.toContain('…
+       |                                                            ^
+     54|     expect(body).not.toContain('set_b_secret_table');
+     55|     expect(r.body).toMatchObject({ error: 'INTERNAL_ERROR', correlatio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/36]⎯
+
+ FAIL  server/routes/__tests__/research-compliance-error-containment.test.ts > GET /api/research-compliance/personnel: the 500 body is contained > answers an uncoded failure with INTERNAL_ERROR and the request id, never the thrown text
+AssertionError: the thrown text reached the client: expected '{"error":{"code":"INTERNAL","message"…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"error":{"code":"INTERNAL","message":"SENTINEL-DB-DETAIL: relation \"set_b_secret_table\" does not exist"}}"
+
+ ❯ server/routes/__tests__/research-compliance-error-containment.test.ts:53:60
+     51|     expect(r.status).toBe(500);
+     52|     const body = JSON.stringify(r.body);
+     53|     expect(body, 'the thrown text reached the client').not.toContain('…
+       |                                                            ^
+     54|     expect(body).not.toContain('set_b_secret_table');
+     55|     expect(r.body).toMatchObject({ error: 'INTERNAL_ERROR', correlatio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/36]⎯
+
+ FAIL  server/routes/__tests__/seed-demo-error-containment.test.ts > POST /api/demo/seed: the 500 body is contained > answers a seeding failure with INTERNAL_ERROR and the request id, never the thrown text
+AssertionError: the thrown text reached the client: expected '{"success":false,"message":"Failed to…' not to contain 'SENTINEL-DB-DETAIL'
+
+Expected: "SENTINEL-DB-DETAIL"
+Received: "{"success":false,"message":"Failed to seed demo projects","error":"SENTINEL-DB-DETAIL: duplicate key value violates unique constraint \"projects_set_b_secret_key\""}"
+
+ ❯ server/routes/__tests__/seed-demo-error-containment.test.ts:48:60
+     46|     expect(r.status).toBe(500);
+     47|     const body = JSON.stringify(r.body);
+     48|     expect(body, 'the thrown text reached the client').not.toContain('…
+       |                                                            ^
+     49|     expect(body).not.toContain('projects_set_b_secret_key');
+     50|     expect(r.body).toMatchObject({ error: 'INTERNAL_ERROR', correlatio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/36]⎯
+
+ FAIL  server/routes/__tests__/validate-completeness-error-containment.test.ts > POST /api/validate-completeness/validate: the 500 body is contained > answers an engine failure with INTERNAL_ERROR and the request id, never the thrown text
+AssertionError: the thrown text reached the client: expected '{"success":false,"error":"SENTINEL-EN…' not to contain 'SENTINEL-ENGINE-DETAIL'
+
+Expected: "SENTINEL-ENGINE-DETAIL"
+Received: "{"success":false,"error":"SENTINEL-ENGINE-DETAIL: relation \"set_b_secret_table\" does not exist"}"
+
+ ❯ server/routes/__tests__/validate-completeness-error-containment.test.ts:46:60
+     44|     expect(r.status).toBe(500);
+     45|     const body = JSON.stringify(r.body);
+     46|     expect(body, 'the thrown text reached the client').not.toContain('…
+       |                                                            ^
+     47|     expect(body).not.toContain('set_b_secret_table');
+     48|     expect(r.body).toMatchObject({ error: 'INTERNAL_ERROR', correlatio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/36]⎯
+
+
+ Test Files  34 failed (34)
+      Tests  36 failed | 31 passed (67)
+   Start at  08:02:53
+   Duration  20.12s (transform 14.65s, setup 1.92s, import 37.62s, tests 3.45s, environment 9ms)
+

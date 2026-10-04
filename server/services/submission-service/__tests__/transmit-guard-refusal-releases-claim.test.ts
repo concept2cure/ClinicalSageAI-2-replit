@@ -168,6 +168,8 @@ const REST_ENV = {
 const AS2_ENV: Record<string, string> = {
   FDA_ESG_STAGING_URL: 'https://esg.example.invalid',
   FDA_ESG_STAGING_AS2_FROM: 'SPONSOR',
+  // FDA's AS2 identifier has no default (2026-10-01, W5/D7, sweep F16).
+  FDA_ESG_STAGING_AS2_TO: 'FDA-AS2-ID-TEST',
 };
 beforeAll(async () => {
   const d = await fs.mkdtemp(path.join(os.tmpdir(), 'fda-as2-pem-'));
@@ -308,6 +310,7 @@ describe('the FDA AS2 POST, classified by the delivery classifier', () => {
   const mtlsEnv = (client: 'trusted' | 'rogue'): Record<string, string> => ({
     FDA_ESG_STAGING_URL: `https://127.0.0.1:${server.port}/as2`,
     FDA_ESG_STAGING_AS2_FROM: 'SPONSOR-AS2',
+    FDA_ESG_STAGING_AS2_TO: 'FDA-AS2-ID-TEST',
     FDA_ESG_STAGING_CERT_PATH: client === 'trusted' ? pki.paths.clientCert : pki.paths.rogueCert,
     FDA_ESG_STAGING_KEY_PATH: client === 'trusted' ? pki.paths.clientKey : pki.paths.rogueKey,
     FDA_ESG_STAGING_FDA_CERT_PATH: pki.paths.ca,

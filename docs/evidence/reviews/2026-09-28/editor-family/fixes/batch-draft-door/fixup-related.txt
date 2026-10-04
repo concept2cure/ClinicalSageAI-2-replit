@@ -1,0 +1,263 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 ./
+
+ ✓ tests/security/batch-draft-xss.test.ts > layer 1 — derivePreview does not re-arm escaped markup > never emits an angle bracket from entity-escaped input 2ms
+ ✓ tests/security/batch-draft-xss.test.ts > layer 1 — derivePreview does not re-arm escaped markup > strips raw angle brackets too, not just entity-encoded ones 0ms
+ ✓ tests/security/batch-draft-xss.test.ts > layer 1 — derivePreview does not re-arm escaped markup > double-encoding cannot smuggle a bracket through 0ms
+ ✓ tests/security/batch-draft-xss.test.ts > layer 1 — derivePreview does not re-arm escaped markup > still decodes the entities that matter for readability 0ms
+ ✓ tests/security/batch-draft-xss.test.ts > layer 1 — derivePreview does not re-arm escaped markup > returns null rather than a fabricated summary for empty content 0ms
+ ✓ tests/security/batch-draft-xss.test.ts > layer 2 — bdSample escapes interpolated server data > renders a hostile preview as visible text, not markup 0ms
+ ✓ tests/security/batch-draft-xss.test.ts > layer 2 — bdSample escapes interpolated server data > escapes the ampersand first so escaping is not itself bypassable 0ms
+ ✓ tests/security/batch-draft-xss.test.ts > layer 2 — bdSample escapes interpolated server data > handles null and undefined without emitting "null" 0ms
+ ✓ tests/security/batch-draft-xss.test.ts > layer 3 — the dangerouslySetInnerHTML sink sanitizes > strips an event handler that reached the sink unescaped 13ms
+ ✓ tests/security/batch-draft-xss.test.ts > layer 3 — the dangerouslySetInnerHTML sink sanitizes > strips script tags 3ms
+ ✓ tests/security/batch-draft-xss.test.ts > layer 3 — the dangerouslySetInnerHTML sink sanitizes > strips javascript: URLs 3ms
+ ✓ tests/security/batch-draft-xss.test.ts > layer 3 — the dangerouslySetInnerHTML sink sanitizes > leaves legitimate draft markup intact, including citation spans 4ms
+ ✓ tests/security/batch-draft-xss.test.ts > layer 3 — the dangerouslySetInnerHTML sink sanitizes > renders the placeholder unchanged 2ms
+ ✓ tests/security/batch-draft-xss.test.ts > end to end — stored payload cannot reach the DOM as markup > survives the full stored -> preview -> bdSample -> sink path inert 13ms
+ ✓ tests/security/batch-draft-xss.test.ts > end to end — stored payload cannot reach the DOM as markup > is closed even if the preview layer alone were reverted 4ms
+ ✓ tests/security/batch-draft-xss.test.ts > end to end — stored payload cannot reach the DOM as markup > is closed even if the escaping layer alone were reverted 4ms
+ ✓ tests/security/batch-draft-xss.test.ts > end to end — stored payload cannot reach the DOM as markup > the assertion itself is not vacuous — it fails on genuinely live markup 4ms
+stdout | server/routes/__tests__/ana-intelligence-identity.test.ts
+{
+  "timestamp": "2026-09-28T19:35:52.209Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T19:35:52.210Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/ana-intelligence-identity.test.ts
+{
+  "timestamp": "2026-09-28T19:35:52.211Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/ana-intelligence-identity.test.ts
+[database] Database connection successful
+
+stdout | server/services/ana/__tests__/turn-record.pglite.test.ts
+{
+  "timestamp": "2026-09-28T19:35:52.293Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T19:35:52.294Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/turn-record.pglite.test.ts
+{
+  "timestamp": "2026-09-28T19:35:52.295Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/turn-record.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/turn-record.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/turn-record.pglite.test.ts
+{
+  "timestamp": "2026-09-28T19:35:52.354Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/ana-intelligence-identity.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/ana-intelligence-identity.test.ts
+{
+  "timestamp": "2026-09-28T19:35:52.422Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/ana-intelligence-identity.test.ts > /api/claude takes identity from the server > /batch overwrites an organizationId and userId named in the body
+[turn-record] could not write the turn record: Request-scoped database context is required
+
+ ✓ server/routes/__tests__/ana-intelligence-identity.test.ts > /api/claude takes identity from the server > /batch overwrites an organizationId and userId named in the body 74ms
+ ✓ server/routes/__tests__/ana-intelligence-identity.test.ts > /api/claude takes identity from the server > /draft passes the tenant the auth chain attached 10ms
+ ✓ server/routes/__tests__/ana-intelligence-identity.test.ts > /api/claude takes identity from the server > /quick passes it too, and files its provenance under the tenant 45ms
+stdout | server/services/ana/__tests__/batch-draft-settles-per-item.test.ts
+{
+  "timestamp": "2026-09-28T19:35:52.716Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T19:35:52.717Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/batch-draft-settles-per-item.test.ts
+{
+  "timestamp": "2026-09-28T19:35:52.717Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/batch-draft-settles-per-item.test.ts
+[database] Database connection successful
+
+stdout | server/routes/__tests__/batch-draft-accept.test.ts
+{
+  "timestamp": "2026-09-28T19:35:53.743Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T19:35:53.744Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept.test.ts
+{
+  "timestamp": "2026-09-28T19:35:53.745Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/batch-draft-accept.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/batch-draft-accept.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/batch-draft-accept.test.ts
+{
+  "timestamp": "2026-09-28T19:35:53.926Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > a turn record is written whole, or not at all > commits the record, every text it references and a chain row carrying its hash 41ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > a turn record is written whole, or not at all > leaves nothing behind when the chain write fails 20ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > a turn record is written whole, or not at all > stores a repeated text once — turn 40 references the history, it does not copy it 16ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > UPDATE ana_turn_records SET outcome = 'failed' 15ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > DELETE FROM ana_turn_records 10ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > TRUNCATE ana_turn_records 14ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > UPDATE ana_record_blobs SET chars = 0 12ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > DELETE FROM ana_record_blobs 17ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > TRUNCATE ana_record_blobs 12ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > refuses a record or a text stored under a hash that is not its own 4ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > tampering is caught even past the triggers > a record rewritten with a consistent hash no longer matches the chain 20ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > tampering is caught even past the triggers > a text that is missing is named 1ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > what the record will not claim > controls that could not be read are recorded as unknown, not as none 1ms
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > what the record will not claim > numbers model calls in order, and gives each later call the input staged for it 1ms
+stderr | server/services/ana/__tests__/batch-draft-settles-per-item.test.ts > AnaDocumentDraftingService.batchDraft > reports a fault that is not the gateway's as a failure result too — without leaking the internals
+{
+  "timestamp": "2026-09-28T19:35:55.582Z",
+  "level": "error",
+  "message": "[ana-drafting-batch] batch section failed",
+  "context": {
+    "sectionType": "broken",
+    "err": "relation \"prompt_versions\" does not exist"
+  }
+}
+
+ ✓ server/services/ana/__tests__/batch-draft-settles-per-item.test.ts > AnaDocumentDraftingService.batchDraft > returns a result for every section, keeping the successful drafts when one section cannot be drafted 18ms
+ ✓ server/services/ana/__tests__/batch-draft-settles-per-item.test.ts > AnaDocumentDraftingService.batchDraft > reports a fault that is not the gateway's as a failure result too — without leaking the internals 1ms
+ ✓ server/routes/__tests__/batch-draft-accept.test.ts > deriveFramework — a preset framework must be a remembered fact > returns the framework when every document that records one agrees 2ms
+ ✓ server/routes/__tests__/batch-draft-accept.test.ts > deriveFramework — a preset framework must be a remembered fact > returns null when two documents disagree — a mixed dossier has no single answer 0ms
+ ✓ server/routes/__tests__/batch-draft-accept.test.ts > deriveFramework — a preset framework must be a remembered fact > ignores documents that record nothing — a half-drafted dossier still has one filing type 0ms
+ ✓ server/routes/__tests__/batch-draft-accept.test.ts > deriveFramework — a preset framework must be a remembered fact > returns null for a dossier that has never been drafted 0ms
+ ✓ server/routes/__tests__/batch-draft-accept.test.ts > deriveFramework — a preset framework must be a remembered fact > ignores non-string and blank values rather than coercing them 0ms
+ ✓ server/routes/__tests__/batch-draft-accept.test.ts > deriveFramework — a preset framework must be a remembered fact > trims, so a stored " ich_clinical " matches the picker option 0ms
+ ✓ server/routes/__tests__/batch-draft-accept.test.ts > deriveFramework — a preset framework must be a remembered fact > tolerates a metadata column that is not an object at all 0ms
+ ✓ server/routes/__tests__/batch-draft-accept.test.ts > the framework allowlist has not drifted from the drafting service > matches RegulatoryFramework exactly 2ms
+ ✓ server/routes/__tests__/batch-draft-accept.test.ts > the framework allowlist has not drifted from the drafting service > rejects a value the drafting service has no expectations for 1ms
+ ✓ server/routes/__tests__/batch-draft-accept.test.ts > the acceptance write stays reversible, attributable, and atomic > is a real route, not a placeholder 1ms
+ ✓ server/routes/__tests__/batch-draft-accept.test.ts > the acceptance write stays reversible, attributable, and atomic > snapshots the replaced content into coauthor_document_versions 0ms
+ ✓ server/routes/__tests__/batch-draft-accept.test.ts > the acceptance write stays reversible, attributable, and atomic > locks the row it is about to read-then-overwrite 0ms
+ ✓ server/routes/__tests__/batch-draft-accept.test.ts > the acceptance write stays reversible, attributable, and atomic > writes an audit event for the change, in the same transaction 1ms
+ ✓ server/routes/__tests__/batch-draft-accept.test.ts > the acceptance write stays reversible, attributable, and atomic > rolls back rather than leaving a half-applied acceptance 0ms
+ ✓ server/routes/__tests__/batch-draft-accept.test.ts > the acceptance write stays reversible, attributable, and atomic > scopes both the read and the write to the authenticated organization 0ms
+ ✓ server/routes/__tests__/batch-draft-accept.test.ts > the acceptance write stays reversible, attributable, and atomic > merges metadata instead of replacing it 0ms
+ ✓ server/routes/__tests__/batch-draft-accept.test.ts > the acceptance write stays reversible, attributable, and atomic > never takes the actor from the request body 0ms
+stdout | server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts
+{
+  "timestamp": "2026-09-28T19:35:56.238Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-28T19:35:56.239Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts
+{
+  "timestamp": "2026-09-28T19:35:56.240Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts
+[database] Database connection successful
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts
+{
+  "timestamp": "2026-09-28T19:35:56.298Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > two accepted insertions from the same machine author, in one save > attributes BOTH to the machine, not just the one in the first accepted text 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > two accepted insertions from the same machine author, in one save > still leaves a genuinely human clause alone 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > two accepted insertions from the same machine author, in one save > bounds by occurrence WITHIN each accepted text, so one repeated clause is not over-claimed 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > two accepted insertions from the same machine author, in one save > claims two when the author genuinely accepted it twice 1ms
+
+ Test Files  6 passed (6)
+      Tests  57 passed (57)
+   Start at  19:35:50
+   Duration  6.31s (transform 4.78s, setup 399ms, import 11.50s, tests 3.31s, environment 667ms)
+
+[ci:lineage-save-gate] ok  server/services/resolution/bundle-executor.ts
+[ci:lineage-save-gate] ok  server/services/protocol-templates/protocol-templates-service.ts
+[ci:lineage-save-gate] OK — 21 guarded path(s) enforce lineage on save.

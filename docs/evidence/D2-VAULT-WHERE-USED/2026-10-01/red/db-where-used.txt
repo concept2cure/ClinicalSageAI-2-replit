@@ -1,0 +1,196 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T18:07:31.375Z","pid":7077,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T18:07:31.376Z","pid":7077,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T18:07:31.376Z","pid":7077,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-where-used.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T18:07:31.440Z', poolSize: 1 }
+
+stdout | tests/db/vault-where-used.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/vault-where-used.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-01T18:07:32.023Z","pid":7077,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+(node:7077) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-01T18:07:32.118Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 29,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-01T18:07:32.203Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "ecee6aff-093f-400c-939f-8b6a4a4e6e1a",
+    "code": "DBTEST-VWHERE-STAB",
+    "type": "OTHER",
+    "size": 29,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T18:07:32.216Z","pid":7077,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-01T18:07:32.225Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 29,
+    "wordCount": 4,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-01T18:07:32.242Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "d3f492f3-0a62-4b37-8eb0-14a8cfabadd6",
+    "code": "DBTEST-VWHERE-STAB",
+    "type": "OTHER",
+    "size": 29,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T18:07:32.251Z","pid":7077,"hostname":"vm","context":{"filename":"record.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-01T18:07:32.252Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 18,
+    "wordCount": 2,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-where-used.dbtest.ts
+{
+  "timestamp": "2026-10-01T18:07:32.264Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "f6385144-51cc-4dd8-b003-6b215bad84bc",
+    "code": "DBTEST-VWHERE-CO",
+    "type": "OTHER",
+    "size": 18,
+    "hasText": true
+  }
+}
+
+{"level":30,"time":"2026-10-01T18:07:32.447Z","pid":7077,"hostname":"vm","context":{"userId":4102,"tenantId":1327,"resourceId":"59"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-01T18:07:32.484Z","pid":7077,"hostname":"vm","context":{"userId":4102,"tenantId":1327,"resourceId":"60"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-01T18:07:32.510Z","pid":7077,"hostname":"vm","context":{"userId":4102,"tenantId":1327,"resourceId":"61"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-01T18:07:32.529Z","pid":7077,"hostname":"vm","context":{"userId":4102,"tenantId":1327,"resourceId":"62"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+ × tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > each version lists the live leaves that name it 27ms
+   → expected undefined to deeply equal [ ObjectContaining{…} ]
+ × tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > a removed leaf is not a placement 13ms
+   → expected undefined to deeply equal []
+ × tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > another organisation's leaf naming this version is not listed, and another organisation reads nothing 13ms
+   → Cannot read properties of undefined (reading 'map')
+ × tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > the read's own organisation filter holds without row security 10ms
+   → Cannot find module '/server/services/vault/vault-where-used' imported from tests/db/vault-where-used.dbtest.ts
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > each version lists the live leaves that name it
+AssertionError: expected undefined to deeply equal [ ObjectContaining{…} ]
+
+- Expected:
+[
+  ObjectContaining {
+    "applicationType": "ind",
+    "leafTitle": "Leaf 3.2.P.8.1",
+    "operation": "new",
+    "region": "fda",
+    "sectionCode": "3.2.P.8.1",
+    "sequenceId": 52,
+    "sequenceNumber": "0000",
+    "sequenceStatus": "draft",
+    "submissionId": 38,
+    "submissionTitle": "dbtest-vwhere IND 123456",
+  },
+]
+
++ Received:
+undefined
+
+ ❯ tests/db/vault-where-used.dbtest.ts:184:50
+    182|     expect(res.status, JSON.stringify(res.body).slice(0, 300)).toBe(20…
+    183|     const byId = new Map(res.body.data.versions.map((v: { id: string }…
+    184|     expect((byId.get(ids.v1) as any).placements).toEqual([expect.objec…
+       |                                                  ^
+    185|       submissionId, submissionTitle: `${PROBE}IND 123456`, application…
+    186|       sequenceId: seq.first, sequenceNumber: '0000', region: 'fda', se…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > a removed leaf is not a placement
+AssertionError: expected undefined to deeply equal []
+
+- Expected:
+[]
+
++ Received:
+undefined
+
+ ❯ tests/db/vault-where-used.dbtest.ts:197:50
+    195|     const res = await versions(mine, ids.other);
+    196|     expect(res.status).toBe(200);
+    197|     expect(res.body.data.versions[0].placements).toEqual([]);
+       |                                                  ^
+    198|   });
+    199|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > another organisation's leaf naming this version is not listed, and another organisation reads nothing
+TypeError: Cannot read properties of undefined (reading 'map')
+ ❯ tests/db/vault-where-used.dbtest.ts:203:26
+    201|     const res = await versions(mine, ids.v1);
+    202|     const v1 = res.body.data.versions.find((v: { id: string }) => v.id…
+    203|     expect(v1.placements.map((p: { sequenceId: number }) => p.sequence…
+       |                          ^
+    204|     expect((await versions(mine, ids.v1, theirs)).status).toBe(404);
+    205|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > the read's own organisation filter holds without row security
+Error: Cannot find module '/server/services/vault/vault-where-used' imported from tests/db/vault-where-used.dbtest.ts
+ ❯ tests/db/vault-where-used.dbtest.ts:210:37
+    208|     // As the table owner, whom row security does not bind: only the S…
+    209|     // organisation filter keeps the other organisation's leaf out.
+    210|     const { readVaultPlacements } = await import('../../server/service…
+       |                                     ^
+    211|     const found = await readVaultPlacements(owner, mine.orgId, [ids.v1…
+    212|     expect(found.get(ids.v1)?.map((p) => p.sequenceId)).toEqual([seq.f…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  18:07:29
+   Duration  3.17s (transform 1.44s, setup 72ms, import 132ms, tests 2.71s, environment 0ms)
+

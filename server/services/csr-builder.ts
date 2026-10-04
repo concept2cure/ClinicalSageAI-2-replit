@@ -100,6 +100,11 @@ function isSectionDataComplete(section: CSRSection): boolean {
   return section.status === 'drafted' || section.status === 'reviewed' || section.status === 'approved';
 }
 
+// Numbers and titles are ICH E3's, as the overlay states them
+// (server/services/ind/ctd/csr-e3-guidance.ts); tests/regulatory/
+// csr-e3-overlay.test.ts holds every heading here to it. The synopsis (§2) and
+// objectives (§8) children are this builder's own decomposition, which E3 does
+// not number. Twelve titles were the builder's paraphrases until 2026-10-04.
 export const ICH_E3_STRUCTURE: CSRSection[] = [
   { number: '1', title: 'Title Page', required: true, status: 'empty', description: 'Study title, protocol number, sponsor, investigators' },
   {
@@ -117,8 +122,8 @@ export const ICH_E3_STRUCTURE: CSRSection[] = [
       { number: '2.10', title: 'Conclusions', required: true, status: 'empty', description: 'Key study conclusions' },
     ],
   },
-  { number: '3', title: 'Table of Contents', required: true, status: 'empty', description: 'Auto-generated table of contents' },
-  { number: '4', title: 'List of Abbreviations', required: true, status: 'empty', description: 'Abbreviations and special terms' },
+  { number: '3', title: 'Table of Contents for the Individual Clinical Study Report', required: true, status: 'empty', description: 'Auto-generated table of contents' },
+  { number: '4', title: 'List of Abbreviations and Definitions of Terms', required: true, status: 'empty', description: 'Abbreviations and special terms' },
   { number: '5', title: 'Ethics', required: true, status: 'empty', description: 'IRB/IEC review, informed consent, compliance with GCP' },
   { number: '6', title: 'Investigators and Study Administrative Structure', required: true, status: 'empty', description: 'List of investigators, study sites, CRO involvement' },
   { number: '7', title: 'Introduction', required: true, status: 'empty', description: 'Background, rationale, study objectives' },
@@ -132,13 +137,13 @@ export const ICH_E3_STRUCTURE: CSRSection[] = [
   {
     number: '9', title: 'Investigational Plan', required: true, status: 'empty', description: 'Study design and methodology',
     childSections: [
-      { number: '9.1', title: 'Overall Study Design', required: true, status: 'empty', description: 'Study design, randomization, blinding' },
-      { number: '9.2', title: 'Discussion of Study Design', required: true, status: 'empty', description: 'Design rationale and considerations' },
+      { number: '9.1', title: 'Overall Study Design and Plan — Description', required: true, status: 'empty', description: 'Study design, randomization, blinding' },
+      { number: '9.2', title: 'Discussion of Study Design, Including the Choice of Control Groups', required: true, status: 'empty', description: 'Design rationale and considerations' },
       { number: '9.3', title: 'Selection of Study Population', required: true, status: 'empty', description: 'Inclusion/exclusion criteria' },
       { number: '9.4', title: 'Treatments', required: true, status: 'empty', description: 'Study treatments, dosing, drug accountability' },
       { number: '9.5', title: 'Efficacy and Safety Variables', required: true, status: 'empty', description: 'Endpoint definitions and assessment schedule' },
       { number: '9.6', title: 'Data Quality Assurance', required: true, status: 'empty', description: 'Monitoring, data management, quality control' },
-      { number: '9.7', title: 'Statistical Methods', required: true, status: 'empty', description: 'Analysis populations, statistical methods, sample size' },
+      { number: '9.7', title: 'Statistical Methods Planned in the Protocol and Determination of Sample Size', required: true, status: 'empty', description: 'Analysis populations, statistical methods, sample size' },
       { number: '9.8', title: 'Changes in the Conduct of the Study or Planned Analyses', required: true, status: 'empty', description: 'Protocol amendments, SAP changes and other departures from the planned conduct or analyses, with timing (before/after unblinding) and rationale' },
     ],
   },
@@ -152,25 +157,25 @@ export const ICH_E3_STRUCTURE: CSRSection[] = [
   {
     number: '11', title: 'Efficacy Evaluation', required: true, status: 'empty', description: 'Efficacy data and analysis',
     childSections: [
-      { number: '11.1', title: 'Data Sets Analyzed', required: true, status: 'empty', description: 'ITT, mITT, PP populations' },
-      { number: '11.2', title: 'Demographics and Baseline', required: true, status: 'empty', description: 'Baseline characteristics' },
+      { number: '11.1', title: 'Data Sets Analysed', required: true, status: 'empty', description: 'ITT, mITT, PP populations' },
+      { number: '11.2', title: 'Demographic and Other Baseline Characteristics', required: true, status: 'empty', description: 'Baseline characteristics' },
       { number: '11.3', title: 'Measurements of Treatment Compliance', required: true, status: 'empty', description: 'Drug exposure, compliance' },
-      { number: '11.4', title: 'Efficacy Results and Tabulations', required: true, status: 'empty', description: 'Primary and secondary endpoint results' },
+      { number: '11.4', title: 'Efficacy Results and Tabulations of Individual Patient Data', required: true, status: 'empty', description: 'Primary and secondary endpoint results' },
     ],
   },
   {
     number: '12', title: 'Safety Evaluation', required: true, status: 'empty', description: 'Safety data and analysis',
     childSections: [
       { number: '12.1', title: 'Extent of Exposure', required: true, status: 'empty', description: 'Drug exposure duration and dose' },
-      { number: '12.2', title: 'Adverse Events', required: true, status: 'empty', description: 'AE incidence, preferred terms, by SOC' },
-      { number: '12.3', title: 'Deaths, SAEs, Other Significant AEs', required: true, status: 'empty', description: 'Narratives for deaths, SAEs' },
+      { number: '12.2', title: 'Adverse Events (AEs)', required: true, status: 'empty', description: 'AE incidence, preferred terms, by SOC' },
+      { number: '12.3', title: 'Deaths, Other Serious Adverse Events, and Other Significant Adverse Events', required: true, status: 'empty', description: 'Narratives for deaths, SAEs' },
       { number: '12.4', title: 'Clinical Laboratory Evaluation', required: true, status: 'empty', description: 'Lab results, shifts, clinically significant values' },
-      { number: '12.5', title: 'Vital Signs, Physical Findings, Other Safety', required: true, status: 'empty', description: 'Vital signs, ECG, other safety data' },
+      { number: '12.5', title: 'Vital Signs, Physical Findings and Other Observations Related to Safety', required: true, status: 'empty', description: 'Vital signs, ECG, other safety data' },
       { number: '12.6', title: 'Safety Conclusions', required: true, status: 'empty', description: 'Overall safety evaluation integrating exposure, adverse events, deaths and SAEs, laboratory and vital-sign findings' },
     ],
   },
   { number: '13', title: 'Discussion and Overall Conclusions', required: true, status: 'empty', description: 'Efficacy discussion, safety discussion, benefit-risk assessment' },
-  { number: '14', title: 'Tables, Figures, and Graphs Referred to But Not Included in the Text', required: false, status: 'empty', description: 'Supplementary tables and figures' },
+  { number: '14', title: 'Tables, Figures and Graphs Referred to But Not Included in the Text', required: false, status: 'empty', description: 'Supplementary tables and figures' },
   { number: '15', title: 'Reference List', required: false, status: 'empty', description: 'Literature references cited in the report' },
   { number: '16', title: 'Appendices', required: false, status: 'empty', description: 'Study protocol, SAP, CRFs, individual patient data, technical reports' },
 ];

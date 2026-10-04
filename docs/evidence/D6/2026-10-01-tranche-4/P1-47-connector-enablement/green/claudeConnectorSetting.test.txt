@@ -1,0 +1,32 @@
+# git HEAD: 0812a990 + the P1-47 working-tree change
+# command: npx vitest run client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > second factor — one answer on one screen > labels the count as authenticator enrolment and a member without one as "Emailed code" 181ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > second factor — one answer on one screen > shows the sign-in policy row as a fact, not a setting to change 94ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — real admin estate renders (no fixture) > renders the REAL members and audit, with no provenance pill or fixture 312ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > a facet the server could not read is not rendered as empty > API keys: "--" and "Couldn't load", not "0" and "No API keys" 100ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — real admin estate renders (no fixture) > derives every KPI from the real rows (not hardcoded, not a fixture) 87ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — real admin estate renders (no fixture) > adopts the real API-keys and SSO panels on tab switch 156ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — honest empty state > shows an EmptyState — never a fixture — when the org has no admin data 29ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — honest error state > says "no access" — not "didn't respond" — when the caller is not an org admin (403) 26ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessNoFixtures.test.tsx > AdminAccess — honest error state > shows an error state — never a fixture — when the read fails (500) 28ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > a facet the server could not read is not rendered as empty > audit: "Couldn't load the admin audit", not "No admin audit entries yet" 157ms
+ ✓ client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx > Connector for Claude on Admin → Settings > the owner turns it on after confirming, and the stored value is read back 766ms
+ ✓ client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx > Connector for Claude on Admin → Settings > cancel sends nothing 204ms
+ ✓ client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx > Connector for Claude on Admin → Settings > anyone but the owner sees the state, no switch, and who can change it 56ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > a facet the server could not read is not rendered as empty > settings and SSO: say they could not be read 151ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > a facet the server could not read is not rendered as empty > retries the read from the error 463ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > names and times, not ids and ISO strings > renders the audit band and Last seen for a reader 53ms
+ ✓ client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx > Connector for Claude on Admin → Settings > a read that fails is "Could not be read", never "Off" 63ms
+ ✓ client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx > Connector for Claude on Admin → Settings > a read that answers in a shape the page does not know is "Could not be read", never "Off" 40ms
+ ✓ client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx > Connector for Claude on Admin → Settings > a refused change says it was not changed, and the state stays as stored 198ms
+ ✓ client/src/concept2cure/v2/__tests__/adminAccessHonesty.test.tsx > names and times, not ids and ISO strings > shows an API key by prefix and owner name, and revokes it by its numeric id 215ms
+
+ Test Files  3 passed (3)
+      Tests  20 passed (20)
+   Start at  14:21:17
+   Duration  4.85s (transform 2.70s, setup 1.13s, import 4.39s, tests 3.40s, environment 3.36s)
+

@@ -28,6 +28,9 @@
  */
 import {
   pgSchema,
+  pgTable,
+  serial,
+  check,
   uuid,
   text,
   timestamp,
@@ -42,6 +45,9 @@ import {
   index,
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
+// The same lazy, cyclic import csr-knowledge-db.ts and submissions.ts use: read
+// only inside the .references() thunk, after both modules have evaluated.
+import { organizations } from '../schema';
 
 const vault = pgSchema('vault');
 
@@ -266,6 +272,53 @@ export const vaultRetentionPolicies = vault.table('retention_policies', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
+
+/**
+ * ADR-0014 §6: by default a governed record and its audit trail are kept 25
+ * years from finalization. The ONE place the number is written in code; the
+ * CHECK in migrations/20261001_organization_retention_settings.sql states the
+ * same number for rows written by any path.
+ */
+export const DEFAULT_RETENTION_YEARS = 25;
+
+/**
+ * An organisation's own retention period (P1-22 remainder; ADR-0014 §6).
+ *
+ * Longer than DEFAULT_RETENTION_YEARS needs nothing more; shorter needs a
+ * reason and the governing rule that permits it, which the database refuses
+ * to record without. Admission dates a document by this period, or the
+ * default when the organisation has set none, unless a named policy above
+ * keeps it longer (server/services/vault/vault-ingest.service.ts). A legal
+ * hold overrides either.
+ *
+ * PUBLIC, unlike the vault tables in this file: an organisation-keyed public
+ * table is what the integer tenant sweep gives RLS to, and `drizzle-kit push`
+ * creates it on a fresh install — the checks are declared here for that reason,
+ * under the names the migration adds them by on the deploy path. One row per
+ * organisation; each change's before/after is its chained audit row.
+ */
+export const organizationRetentionSettings = pgTable(
+  'organization_retention_settings',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .unique()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    retentionYears: integer('retention_years').notNull(),
+    reason: text('reason'),
+    governingRule: text('governing_rule'),
+    setBy: integer('set_by').notNull(),
+    setAt: timestamp('set_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    check('organization_retention_settings_years_range', sql`${t.retentionYears} BETWEEN 1 AND 100`),
+    check(
+      'organization_retention_settings_shorter_is_reasoned',
+      sql`${t.retentionYears} >= 25 OR (${t.reason} IS NOT NULL AND length(btrim(${t.reason})) >= 10 AND ${t.governingRule} IS NOT NULL AND length(btrim(${t.governingRule})) >= 3)`,
+    ),
+  ],
+);
 
 /**
  * Legal holds — a litigation, investigation or inspection hold that suspends

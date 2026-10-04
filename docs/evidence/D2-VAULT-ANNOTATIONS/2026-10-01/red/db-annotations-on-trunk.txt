@@ -1,0 +1,410 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T21:45:23.103Z","pid":1661,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T21:45:23.104Z","pid":1661,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T21:45:23.104Z","pid":1661,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-version-annotations.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T21:45:23.203Z', poolSize: 1 }
+
+stdout | tests/db/vault-version-annotations.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/vault-version-annotations.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":40,"time":"2026-10-01T21:45:24.034Z","pid":1661,"hostname":"vm","context":{"filename":"notes.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+(node:1661) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/db/vault-version-annotations.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:45:24.154Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 44,
+    "wordCount": 9,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-version-annotations.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:45:24.257Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "f400947e-8ded-4027-8c98-db7b214c3129",
+    "code": "DBTEST-VANNO-TXT",
+    "type": "OTHER",
+    "size": 46,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T21:45:24.274Z","pid":1661,"hostname":"vm","context":{"filename":"notes.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-version-annotations.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:45:24.283Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 53,
+    "wordCount": 10,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-version-annotations.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:45:24.298Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "9e398d9d-5cbc-4140-b9b2-a0b84026a196",
+    "code": "DBTEST-VANNO-TXT",
+    "type": "OTHER",
+    "size": 55,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T21:45:24.455Z","pid":1661,"hostname":"vm","context":{"filename":"three-pages.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+{"level":30,"time":"2026-10-01T21:45:25.277Z","pid":1661,"hostname":"vm","context":{"pages":3,"dpi":200,"region":"full"},"msg":"[pdf-rasterizer] Rasterized PDF"}
+(node:1661) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+{"level":30,"time":"2026-10-01T21:45:26.122Z","pid":1661,"hostname":"vm","context":{"languages":"eng","chars":0,"confidence":0,"durationMs":495},"msg":"[tesseract-ocr] OCR completed"}
+{"level":30,"time":"2026-10-01T21:45:26.504Z","pid":1661,"hostname":"vm","context":{"languages":"eng","chars":0,"confidence":0,"durationMs":382},"msg":"[tesseract-ocr] OCR completed"}
+{"level":30,"time":"2026-10-01T21:45:26.804Z","pid":1661,"hostname":"vm","context":{"languages":"eng","chars":0,"confidence":0,"durationMs":299},"msg":"[tesseract-ocr] OCR completed"}
+stdout | tests/db/vault-version-annotations.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:45:26.805Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 44,
+    "wordCount": 15,
+    "pagesMapped": 3
+  }
+}
+
+{"level":30,"time":"2026-10-01T21:45:26.805Z","pid":1661,"hostname":"vm","context":{"pages":3,"confidence":0,"durationMs":2093},"msg":"[ocr-service] PDF text OCR completed"}
+stdout | tests/db/vault-version-annotations.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:45:26.819Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "fe751e18-502a-4e00-a455-a776ddaf6116",
+    "code": "DBTEST-VANNO-PDF",
+    "type": "OTHER",
+    "size": 598,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T21:45:26.828Z","pid":1661,"hostname":"vm","context":{"filename":"notes.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-version-annotations.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:45:26.829Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 20,
+    "wordCount": 5,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-version-annotations.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:45:26.839Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "8111991b-ff5a-4524-9f00-4ebb86ce1af7",
+    "code": "DBTEST-VANNO-NOTEXT",
+    "type": "OTHER",
+    "size": 20,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T21:45:26.847Z","pid":1661,"hostname":"vm","context":{"filename":"notes.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-version-annotations.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:45:26.848Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 16,
+    "wordCount": 2,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-version-annotations.dbtest.ts
+{
+  "timestamp": "2026-10-01T21:45:26.858Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "1d8cfb51-3541-48de-9005-008e9da2f9cb",
+    "code": "DBTEST-VANNO-ELSE",
+    "type": "OTHER",
+    "size": 16,
+    "hasText": true
+  }
+}
+
+stdout | tests/db/vault-version-annotations.dbtest.ts > posting an annotation (critique 15) > each post is a chained row on the version's history, with the words and their SHA-256
+[database] Database connection successful { timestamp: '2026-10-01T21:45:26.942Z', poolSize: 2 }
+
+ × tests/db/vault-version-annotations.dbtest.ts > posting an annotation (critique 15) > anchors to the whole version, a page, or a passage, and lists each with the open counts 29ms
+   → {}: expected 404 to be 201 // Object.is equality
+ × tests/db/vault-version-annotations.dbtest.ts > posting an annotation (critique 15) > each post is a chained row on the version's history, with the words and their SHA-256 71ms
+   → expected [ 'Vault Document Ingest', …(1) ] to deeply equal ArrayContaining{…}
+ × tests/db/vault-version-annotations.dbtest.ts > posting an annotation (critique 15) > counts a passage in characters, not UTF-16 units 8ms
+   → expected [ 404, undefined ] to deeply equal [ 409, 'QUOTE_MISMATCH' ]
+ × tests/db/vault-version-annotations.dbtest.ts > posting an annotation (critique 15) > refuses a page out of range, a page without a page count, missing text, and text that changed 9ms
+   → expected [ 404, undefined, undefined ] to deeply equal [ 422, 'PAGE_OUT_OF_RANGE', …(1) ]
+ × tests/db/vault-version-annotations.dbtest.ts > posting an annotation (critique 15) > reads the text in character windows, and records each read 7ms
+   → {}: expected 404 to be 200 // Object.is equality
+ × tests/db/vault-version-annotations.dbtest.ts > the thread: replies, resolution and retraction (critique 15) > a reply goes under its annotation; a reply to a reply is refused 5ms
+   → {}: expected 404 to be 201 // Object.is equality
+ × tests/db/vault-version-annotations.dbtest.ts > the thread: replies, resolution and retraction (critique 15) > resolving needs a note, can name the version that addressed it, and happens once 15ms
+   → expected [ 404, undefined ] to deeply equal [ 422, 'RESOLUTION_NOTE_REQUIRED' ]
+ × tests/db/vault-version-annotations.dbtest.ts > the thread: replies, resolution and retraction (critique 15) > only the author retracts, with a reason; the words stay; a retracted one is not resolved, a resolved one not retracted 6ms
+   → Cannot read properties of undefined (reading 'id')
+ × tests/db/vault-version-annotations.dbtest.ts > who may annotate (critique 15) > a viewer is refused at the route and at the service 17ms
+   → expected 404 to be 403 // Object.is equality
+ × tests/db/vault-version-annotations.dbtest.ts > who may annotate (critique 15) > another organisation neither reads nor changes this organisation's annotations 9ms
+   → expected [ 404, undefined ] to deeply equal [ 404, 'ANNOTATION_NOT_FOUND' ]
+ × tests/db/vault-version-annotations.dbtest.ts > a stale anchor says so (critique 15) > when the text or the page count changes, the anchor reads not current and the quote stays 10ms
+   → Cannot read properties of undefined (reading 'annotations')
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/vault-version-annotations.dbtest.ts > posting an annotation (critique 15) > anchors to the whole version, a page, or a passage, and lists each with the open counts
+AssertionError: {}: expected 404 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 404
+
+ ❯ tests/db/vault-version-annotations.dbtest.ts:85:54
+     83|   it('anchors to the whole version, a page, or a passage, and lists ea…
+     84|     const whole = await post(ids.txt, { kind: 'comment', body: 'Overal…
+     85|     expect(whole.status, JSON.stringify(whole.body)).toBe(201);
+       |                                                      ^
+     86|     ann.whole = whole.body.data.id;
+     87|     const page = await post(ids.pdf, { kind: 'request_changes', body: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  tests/db/vault-version-annotations.dbtest.ts > posting an annotation (critique 15) > each post is a chained row on the version's history, with the words and their SHA-256
+AssertionError: expected [ 'Vault Document Ingest', …(1) ] to deeply equal ArrayContaining{…}
+
+- Expected
++ Received
+
+- ArrayContaining [
+-   "Comment posted on the whole document",
+-   "Change request posted on a passage: “the dosing table”",
++ [
++   "Vault Document Ingest",
++   "Vault Document Ingest",
+  ]
+
+ ❯ tests/db/vault-version-annotations.dbtest.ts:111:36
+    109|
+    110|   it("each post is a chained row on the version's history, with the wo…
+    111|     expect(await history(ids.txt)).toEqual(expect.arrayContaining([
+       |                                    ^
+    112|       'Comment posted on the whole document',
+    113|       `Change request posted on a passage: “${QUOTE}”`,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  tests/db/vault-version-annotations.dbtest.ts > posting an annotation (critique 15) > counts a passage in characters, not UTF-16 units
+AssertionError: expected [ 404, undefined ] to deeply equal [ 409, 'QUOTE_MISMATCH' ]
+
+- Expected
++ Received
+
+  [
+-   409,
+-   "QUOTE_MISMATCH",
++   404,
++   undefined,
+  ]
+
+ ❯ tests/db/vault-version-annotations.dbtest.ts:131:46
+    129|     expect(utf16).not.toBe(CHAR_START);
+    130|     const wrong = await post(ids.txt, { kind: 'comment', body: 'Off by…
+    131|     expect([wrong.status, wrong.body.error]).toEqual([409, 'QUOTE_MISM…
+       |                                              ^
+    132|   });
+    133|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  tests/db/vault-version-annotations.dbtest.ts > posting an annotation (critique 15) > refuses a page out of range, a page without a page count, missing text, and text that changed
+AssertionError: expected [ 404, undefined, undefined ] to deeply equal [ 422, 'PAGE_OUT_OF_RANGE', …(1) ]
+
+- Expected
++ Received
+
+  [
+-   422,
+-   "PAGE_OUT_OF_RANGE",
+-   "This version has 3 pages.",
++   404,
++   undefined,
++   undefined,
+  ]
+
+ ❯ tests/db/vault-version-annotations.dbtest.ts:136:60
+    134|   it('refuses a page out of range, a page without a page count, missin…
+    135|     const far = await post(ids.pdf, { kind: 'comment', body: 'Page fou…
+    136|     expect([far.status, far.body.error, far.body.message]).toEqual([42…
+       |                                                            ^
+    137|     const noPages = await post(ids.txt, { kind: 'comment', body: 'Page…
+    138|     expect([noPages.status, noPages.body.error]).toEqual([422, 'PAGES_…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  tests/db/vault-version-annotations.dbtest.ts > posting an annotation (critique 15) > reads the text in character windows, and records each read
+AssertionError: {}: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ tests/db/vault-version-annotations.dbtest.ts:151:50
+    149|   it('reads the text in character windows, and records each read', asy…
+    150|     const one = await (await as(u.author)).get(`${base(mine)}/document…
+    151|     expect(one.status, JSON.stringify(one.body)).toBe(200);
+       |                                                  ^
+    152|     expect(one.body.data).toEqual(expect.objectContaining({ text: '𝛼'…
+    153|     const tooLong = await (await as(u.author)).get(`${base(mine)}/docu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  tests/db/vault-version-annotations.dbtest.ts > the thread: replies, resolution and retraction (critique 15) > a reply goes under its annotation; a reply to a reply is refused
+AssertionError: {}: expected 404 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 404
+
+ ❯ tests/db/vault-version-annotations.dbtest.ts:164:46
+    162|   it('a reply goes under its annotation; a reply to a reply is refused…
+    163|     const r = await act(ann.passage, 'replies', { body: 'Agreed: mg/kg…
+    164|     expect(r.status, JSON.stringify(r.body)).toBe(201);
+       |                                              ^
+    165|     ann.reply = r.body.data.id;
+    166|     const nested = await act(ann.reply, 'replies', { body: 'Nested?' }…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  tests/db/vault-version-annotations.dbtest.ts > the thread: replies, resolution and retraction (critique 15) > resolving needs a note, can name the version that addressed it, and happens once
+AssertionError: expected [ 404, undefined ] to deeply equal [ 422, 'RESOLUTION_NOTE_REQUIRED' ]
+
+- Expected
++ Received
+
+  [
+-   422,
+-   "RESOLUTION_NOTE_REQUIRED",
++   404,
++   undefined,
+  ]
+
+ ❯ tests/db/vault-version-annotations.dbtest.ts:178:44
+    176|   it('resolving needs a note, can name the version that addressed it, …
+    177|     const bare = await act(ann.passage, 'resolve', {}, u.reviewer);
+    178|     expect([bare.status, bare.body.error]).toEqual([422, 'RESOLUTION_N…
+       |                                            ^
+    179|     const foreign = await act(ann.passage, 'resolve', { note: 'Fixed i…
+    180|     expect([foreign.status, foreign.body.error]).toEqual([422, 'NOT_IN…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  tests/db/vault-version-annotations.dbtest.ts > the thread: replies, resolution and retraction (critique 15) > only the author retracts, with a reason; the words stay; a retracted one is not resolved, a resolved one not retracted
+TypeError: Cannot read properties of undefined (reading 'id')
+ ❯ tests/db/vault-version-annotations.dbtest.ts:197:39
+    195|   it('only the author retracts, with a reason; the words stay; a retra…
+    196|     const created = await post(ids.txt, { kind: 'comment', body: 'Post…
+    197|     ann.toRetract = created.body.data.id;
+       |                                       ^
+    198|     const notAuthor = await act(ann.toRetract, 'retract', { reason: 'N…
+    199|     expect([notAuthor.status, notAuthor.body.error]).toEqual([403, 'NO…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  tests/db/vault-version-annotations.dbtest.ts > who may annotate (critique 15) > a viewer is refused at the route and at the service
+AssertionError: expected 404 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 404
+
+ ❯ tests/db/vault-version-annotations.dbtest.ts:222:25
+    220|       await act(ann.whole, 'resolve', { note: 'Viewer resolving it.' }…
+    221|       await act(ann.whole, 'retract', { reason: 'Viewer retracting it.…
+    222|     ]) expect(r.status).toBe(403);
+       |                         ^
+    223|     const { runWithTenantScope } = await import('../../server/db/tenan…
+    224|     const svc = await import('../../server/services/vault/vault-annota…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+ FAIL  tests/db/vault-version-annotations.dbtest.ts > who may annotate (critique 15) > another organisation neither reads nor changes this organisation's annotations
+AssertionError: expected [ 404, undefined ] to deeply equal [ 404, 'ANNOTATION_NOT_FOUND' ]
+
+- Expected
++ Received
+
+  [
+    404,
+-   "ANNOTATION_NOT_FOUND",
++   undefined,
+  ]
+
+ ❯ tests/db/vault-version-annotations.dbtest.ts:243:46
+    241|     const write = await (await as(u.other, 'admin', theirs)).post(`/ap…
+    242|       .send({ note: 'From another organisation.' });
+    243|     expect([write.status, write.body.error]).toEqual([404, 'ANNOTATION…
+       |                                              ^
+    244|     const rls = await h.asRuntime('SELECT count(*)::int AS n FROM publ…
+    245|     expect(rls).toEqual({ ok: true, rows: [{ n: 0 }] });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+
+ FAIL  tests/db/vault-version-annotations.dbtest.ts > a stale anchor says so (critique 15) > when the text or the page count changes, the anchor reads not current and the quote stays
+TypeError: Cannot read properties of undefined (reading 'annotations')
+ ❯ tests/db/vault-version-annotations.dbtest.ts:253:49
+    251|     await h.state.owner.query(`UPDATE vault.documents SET extracted_te…
+    252|     await h.state.owner.query('UPDATE vault.documents SET page_count =…
+    253|     const txt = (await list(ids.txt)).body.data.annotations.find((x: {…
+       |                                                 ^
+    254|     expect(txt.anchorCurrent).toBe(false);
+    255|     expect(txt.anchor.quote).toBe(QUOTE);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/11]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  11 failed (11)
+   Start at  21:45:20
+   Duration  6.44s (transform 1.78s, setup 84ms, import 227ms, tests 5.81s, environment 0ms)
+

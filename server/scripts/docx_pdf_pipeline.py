@@ -48,15 +48,22 @@ def convert_docx_to_pdf(input_docx: Path, output_pdf: Path | None = None) -> Pat
 
     if output_pdf is None:
         output_pdf = input_docx.with_suffix(".pdf")
-    outdir = output_pdf.parent
-    outdir.mkdir(parents=True, exist_ok=True)
+    output_pdf.parent.mkdir(parents=True, exist_ok=True)
 
     # Give each conversion its own LibreOffice user profile. Without this,
     # concurrent `soffice` invocations collide on the shared default profile
     # lock (one silently no-ops and produces no PDF), and a non-writable HOME
     # makes headless conversion fail silently. A per-call temp profile makes
     # server-side conversion concurrency-safe and deterministic.
-    with tempfile.TemporaryDirectory(prefix="lo_profile_") as profile_dir:
+    #
+    # And its own OUTPUT directory. soffice names its output after the input
+    # (`<stem>.pdf`) in --outdir, so converting straight into the destination's
+    # directory overwrote whatever file of that name already sat beside the
+    # requested output — a second write the caller never asked for
+    # (INJ-PATH-002). It writes into a private directory now, and only the
+    # requested path is replaced.
+    with tempfile.TemporaryDirectory(prefix="lo_profile_") as profile_dir, \
+            tempfile.TemporaryDirectory(prefix="lo_out_") as outdir:
         run_cmd(
             [
                 soffice,
@@ -65,16 +72,15 @@ def convert_docx_to_pdf(input_docx: Path, output_pdf: Path | None = None) -> Pat
                 "--convert-to",
                 "pdf",
                 "--outdir",
-                str(outdir),
+                outdir,
                 str(input_docx),
             ]
         )
 
-    generated = outdir / f"{input_docx.stem}.pdf"
-    if not generated.exists():
-        raise RuntimeError("DOCX→PDF conversion did not produce output PDF.")
-    if generated != output_pdf:
-        generated.replace(output_pdf)
+        generated = Path(outdir) / f"{input_docx.stem}.pdf"
+        if not generated.exists():
+            raise RuntimeError("DOCX→PDF conversion did not produce output PDF.")
+        shutil.move(str(generated), str(output_pdf))
     return output_pdf
 
 

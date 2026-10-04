@@ -129,23 +129,19 @@ beforeAll(async () => {
 
   const org = await owner.query(
     `INSERT INTO organizations (name, slug) VALUES ($1, $2)
-       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
+       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id, uuid`,
     [`${PROBE_PREFIX}tenant`, 'dbtest-catalog-tenant'],
   );
   orgId = Number(org.rows[0].id);
-  orgUuid = String(
-    (await owner.query('SELECT uuid FROM organizations WHERE id = $1', [orgId])).rows[0].uuid,
-  );
+  orgUuid = String(org.rows[0].uuid);
 
   const other = await owner.query(
     `INSERT INTO organizations (name, slug) VALUES ($1, $2)
-       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
+       ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name RETURNING id, uuid`,
     [`${PROBE_PREFIX}other tenant`, 'dbtest-catalog-other'],
   );
   otherOrgId = Number(other.rows[0].id);
-  otherOrgUuid = String(
-    (await owner.query('SELECT uuid FROM organizations WHERE id = $1', [otherOrgId])).rows[0].uuid,
-  );
+  otherOrgUuid = String(other.rows[0].uuid);
 
   const user = await owner.query(
     `INSERT INTO users (email, name, password_hash) VALUES ($1, $2, $3)
@@ -153,6 +149,11 @@ beforeAll(async () => {
     ['dbtest-catalog@example.test', `${PROBE_PREFIX}actor`, 'not-a-real-hash'],
   );
   userId = Number(user.rows[0].id);
+  // AnA's tool dispatch reads the caller's role live from organization_users
+  // before any confirmed write (AnaToolExecutor.ts writeRoleRefusal, 2026-09-28),
+  // not from the tenant scope, so the actor is a member of the organization.
+  await owner.query(`INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, 'admin')
+     ON CONFLICT (user_id, organization_id) DO UPDATE SET role = EXCLUDED.role`, [orgId, userId]);
 
   await cleanupProbeRows();
 
@@ -462,8 +463,11 @@ describe('the read-coverage gate, end to end through the tool handlers', () => {
       { program_id: programId },
       { id: otherOrgId, uuid: otherOrgUuid },
     );
-    expect(listed.ok).toBe(true);
-    expect(listed.documents).toHaveLength(0);
+    // Refused before any read (d8214c170), and answered exactly as a program id
+    // naming nothing anywhere is, so the refusal is no existence oracle.
+    expect(listed.code, JSON.stringify(listed)).toBe('PROGRAM_NOT_IN_ORGANIZATION');
+    const nowhere = { program_id: '00000000-0000-4000-8000-000000000000' };
+    expect(await callTool('list_project_documents', nowhere, { id: otherOrgId, uuid: otherOrgUuid })).toEqual(listed);
 
     const read = await callTool(
       'read_project_document',

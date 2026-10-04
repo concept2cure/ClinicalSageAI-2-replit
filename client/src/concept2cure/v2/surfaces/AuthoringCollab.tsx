@@ -132,12 +132,16 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
       // A hidden tab does not claim presence — the server's idle sweep then
       // ages it out honestly instead of a background tab looking "present".
       if (typeof document !== 'undefined' && document.hidden) return;
-      const res = await apiCall<{ connectedUsers?: RoomUser[] }>(
+      const res = await apiCall<{ connectedUsers?: RoomUser[]; roomKnown?: boolean }>(
         'PUT', `/api/realtime-collab/rooms/${encodeURIComponent(documentId)}/awareness`,
         { sectionId: sectionId || undefined, focusedField: sectionId || null, isTyping: false },
       );
-      // Roster keeps its last server value on failure.
-      if (!cancelled && res.ok && Array.isArray(res.body?.connectedUsers)) {
+      // Roster keeps its last server value on failure, and when the answering
+      // server says it did not know the room (`roomKnown: false`, only sent on
+      // its not-durable fallback). That empty list is not "nobody is here":
+      // behind two API tasks it was the other task answering, and adopting it
+      // made co-authors vanish on every other heartbeat (audit U16).
+      if (!cancelled && res.ok && res.body?.roomKnown !== false && Array.isArray(res.body?.connectedUsers)) {
         setPeers(res.body.connectedUsers);
       }
     };

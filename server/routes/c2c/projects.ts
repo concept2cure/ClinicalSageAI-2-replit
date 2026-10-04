@@ -34,6 +34,7 @@ import {
 import {
   canCreateProgram,
   canMutateProgram,
+  programInOrganization,
   resolveProgramAuthzMode,
   resolveProgramQuotaMode,
 } from '../../services/c2c/program-access.js';
@@ -1025,12 +1026,7 @@ router.get('/:id/workstreams', async (req: Request, res: Response) => {
   if (!orgId) return send403(res);
 
   try {
-    // Verify project access.
-    const check = await pool.query(
-      `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-      [req.params.id, orgId],
-    );
-    if (check.rows.length === 0) return send404(res);
+    if (!(await programInOrganization(pool, req.params.id, orgId))) return send404(res);
 
     const { rows } = await pool.query(
       `SELECT
@@ -1072,11 +1068,7 @@ router.get('/:id/drafts', async (req: Request, res: Response) => {
   const limit = Math.min(parseInt(String((req.query as any).limit ?? '7'), 10) || 7, 50);
 
   try {
-    const check = await pool.query(
-      `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-      [req.params.id, orgId],
-    );
-    if (check.rows.length === 0) return send404(res);
+    if (!(await programInOrganization(pool, req.params.id, orgId))) return send404(res);
 
     const { rows } = await pool.query(
       `SELECT
@@ -1184,11 +1176,7 @@ router.get('/:id/evidence', async (req: Request, res: Response) => {
   if (!orgId) return send403(res);
 
   try {
-    const check = await pool.query(
-      `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-      [req.params.id, orgId],
-    );
-    if (check.rows.length === 0) return send404(res);
+    if (!(await programInOrganization(pool, req.params.id, orgId))) return send404(res);
 
     const { rows } = await pool.query(
       `SELECT
@@ -1298,11 +1286,7 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
   if (!UUID_RE.test(String(req.params.id))) return send404(res);
 
   try {
-    const check = await pool.query(
-      `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-      [req.params.id, orgId],
-    );
-    if (check.rows.length === 0) return send404(res);
+    if (!(await programInOrganization(pool, req.params.id, orgId))) return send404(res);
 
     // Columns aliased from what audit_logs ACTUALLY has (table_name /
     // record_id / new_values — see migrations/0000_sweet_joseph.sql plus the
@@ -1395,11 +1379,7 @@ router.get('/:id/records', async (req: Request, res: Response) => {
   const id = String(req.params.id);
   if (!UUID_RE.test(id)) return send404(res);
   try {
-    const check = await pool.query(
-      `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
-      [id, orgId],
-    );
-    if (check.rows.length === 0) return send404(res);
+    if (!(await programInOrganization(pool, id, orgId))) return send404(res);
     const records: Record<string, RecordSection> = {};
     for (const [section, sql] of PROJECT_RECORD_READS) records[section] = await readRecordSection(sql, id, orgId);
     return res.json({ projectId: id, records });
@@ -1488,6 +1468,51 @@ router.post('/:id/adopt', async (req: Request, res: Response) => {
     return serverError(res, logger, 'adopting the file into the project', err, { programId });
   } finally {
     client.release();
+  }
+});
+
+// ── GET /api/c2c/projects/:id/conversation-files ─────────────────────────────
+//
+// The caller's own chat files that are in no project's Data Room (PF-07). A
+// file attached with no project open records no source; this is where a
+// project offers it, and POST /:id/adopt brings it in. Only the caller's own
+// uploads: a colleague's chat attachment is theirs to bring in. A file whose
+// bytes are already a source of some project is not listed — adopt is from no
+// project. One past the window, so a full one says so.
+
+const CONVERSATION_FILES_WINDOW = 50;
+
+router.get('/:id/conversation-files', async (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  const userId = resolveUserId(req);
+  if (!orgId || !userId) return send403(res);
+  const programId = String(req.params.id);
+  if (!UUID_RE.test(programId)) return send404(res);
+  try {
+    if (!(await programInOrganization(pool, programId, orgId))) return send404(res);
+    const { rows } = await pool.query(
+      `SELECT f.id, f.original_name, f.mime_type, f.file_size, f.created_at
+         FROM file_uploads f
+        WHERE f.organization_id = $1 AND f.user_id = $2 AND f.checksum_sha256 IS NOT NULL
+          AND NOT EXISTS (
+                SELECT 1 FROM cre_evidence_sources s
+                 WHERE s.organization_id = $1 AND s.checksum = f.checksum_sha256
+                   AND (s.client_program_id IS NOT NULL OR s.client_workspace_id IS NOT NULL))
+        ORDER BY f.created_at DESC
+        LIMIT $3`,
+      [orgId, userId, CONVERSATION_FILES_WINDOW + 1],
+    );
+    const truncated = rows.length > CONVERSATION_FILES_WINDOW;
+    const files = (truncated ? rows.slice(0, CONVERSATION_FILES_WINDOW) : rows).map((f) => ({
+      id: String(f.id),
+      name: f.original_name ?? null,
+      mimeType: f.mime_type ?? null,
+      fileSize: f.file_size == null ? null : Number(f.file_size),
+      uploadedAt: f.created_at ?? null,
+    }));
+    return res.json({ projectId: programId, files, window: { shown: files.length, truncated } });
+  } catch (err: unknown) {
+    return serverError(res, logger, 'listing conversation files', err, { programId });
   }
 });
 
@@ -1642,12 +1667,7 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
   if (!orgId) return send403(res);
 
   try {
-    // Verify project access before reading anything scoped to it.
-    const check = await pool.query(
-      `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-      [req.params.id, orgId],
-    );
-    if (check.rows.length === 0) return send404(res);
+    if (!(await programInOrganization(pool, req.params.id, orgId))) return send404(res);
 
     const { listClientDocuments } = await import(
       '../../services/clinical-regulatory-evidence/evidence-spine.service.js'
@@ -1736,11 +1756,9 @@ router.get('/:id/source-changes', async (req: Request, res: Response) => {
   if (!orgId) return send403(res);
 
   try {
-    const check = await pool.query(
-      `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-      [req.params.id, orgId],
-    );
-    if (check.rows.length === 0) return send404(res);
+    /* The canonical program check (PF-11): it refuses a deleted program, and a
+       non-UUID id, which the inline query sent to a uuid column. */
+    if (!(await programInOrganization(pool, req.params.id, orgId))) return send404(res);
 
     const { listChangedSourceUsages } = await import(
       '../../services/clinical-regulatory-evidence/source-usage.service.js'

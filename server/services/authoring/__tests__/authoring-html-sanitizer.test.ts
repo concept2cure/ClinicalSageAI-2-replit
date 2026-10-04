@@ -129,3 +129,47 @@ describe('refusedFigures — what the section save refuses', () => {
     );
   });
 });
+
+/* Round 3 (2026-10-04), the figure rule's refute-review: D1, D3, D6. The save
+   read a section's images only as a browser does. The export reads them with
+   its own parser, which keeps the last of two duplicated attributes and reads
+   images inside a comment, a text box or a <template>; and nothing read a
+   srcset, a <source> or an SVG <image>. Such markup is refused now, where the
+   author can mend it; the export files no image from it either. */
+describe('refusedFigures — markup the editor and the filed document would read differently', () => {
+  const PNG2 = `${PNG.slice(0, -4)}AA==`;
+
+  it.each([
+    ['a duplicated src: shown as the first, filed as the second', `<img src="${PNG}" SRC="${PNG2}">`, PNG2],
+    ['an image inside a template', `<p>x</p><template><img src="https://x.example/p.png"></template>`, 'https://x.example/p.png'],
+    ['an image inside a bogus comment', `<p>x</p><!x<img src="${PNG}">`, PNG],
+    ['an image inside a text box', `<textarea><img src="https://y.example/p.png"></textarea>`, 'https://y.example/p.png'],
+  ])('%s', async (_, html, src) => {
+    expect(await refusedFigures(html)).toEqual([{ position: 1, src, reason: 'read-differently' }]);
+  });
+
+  it.each([
+    ['a srcset on an image with no src', '<img srcset="https://a.example/p.png 1x">', 'https://a.example/p.png 1x'],
+    ['a picture source', `<picture><source srcset="https://b.example/p.png"><img src="${PNG}"></picture>`, 'https://b.example/p.png'],
+    ['an SVG image', '<svg><image href="https://c.example/p.png"></image></svg>', 'https://c.example/p.png'],
+  ])('a source a reader loads that is not a figure: %s', async (_, html, src) => {
+    expect((await refusedFigures(html)).map((r) => r.src)).toEqual([src]);
+  });
+
+  it('two figures written plainly are refused for nothing (guard)', async () => {
+    expect(await refusedFigures(`<p>x</p><img src="${PNG}"><table><tbody><tr><td><IMG SRC=${REF}></td></tr></tbody></table>`)).toEqual([]);
+  });
+
+  it('says what to do about a misread image, without the not-a-figure advice', () => {
+    const message = describeRefusedFigures([{ position: 2, src: PNG, reason: 'read-differently' }]);
+    expect(message).toMatch(/^Image 2 is written in a way the editor and the filed document would read differently/);
+    expect(message).toMatch(/insert the figure again from the editor, then save again\.$/);
+    expect(message).not.toContain('base64');
+  });
+});
+
+describe('refusedFigures — a figure inside a <pre> is read alike by both readers (D2)', () => {
+  it('is not refused', async () => {
+    expect(await refusedFigures(`<pre><img src="${PNG}" alt="Figure 1"></pre>`)).toEqual([]);
+  });
+});

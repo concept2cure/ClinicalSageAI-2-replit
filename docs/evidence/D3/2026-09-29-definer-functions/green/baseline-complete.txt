@@ -1,0 +1,6 @@
+# c2c_d3c (provisioned from empty at 8b9d18c6d), with the baseline
+ ✓ tests/db/security-definer-functions.dbtest.ts > SECURITY DEFINER functions the runtime role can call are reviewed (D3) > the runtime role exists, so the privilege check means something 7ms
+ ✓ tests/db/security-definer-functions.dbtest.ts > SECURITY DEFINER functions the runtime role can call are reviewed (D3) > every baseline entry carries a status and a reason 0ms
+ ✓ tests/db/security-definer-functions.dbtest.ts > SECURITY DEFINER functions the runtime role can call are reviewed (D3) > self-test: a definer function planted in a rolled-back transaction is caught 8ms
+ ✓ tests/db/security-definer-functions.dbtest.ts > SECURITY DEFINER functions the runtime role can call are reviewed (D3) > no callable definer function is missing from the reviewed baseline 2ms
+      Tests  4 passed (4)

@@ -1,0 +1,78 @@
+# RED (unfixed code), 2026-10-01T15:56:56Z: TEST_DATABASE_URL=postgresql://postgres@127.0.0.1:5432/c2c_testdb APP_DATABASE_URL=postgresql://app_service:***@127.0.0.1:5432/c2c_testdb RLS_ENFORCE=on npx vitest run --config vitest.db.config.ts server/services/__tests__/embedding-corpus-policy.dbtest.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T15:56:59.145Z","pid":13669,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T15:56:59.147Z","pid":13669,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T15:56:59.147Z","pid":13669,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ server/services/__tests__/embedding-corpus-policy.dbtest.ts > findVectorsFromAnotherModel, as the runtime role under RLS > runs as a role RLS applies to (not the owner, not BYPASSRLS) 1656ms
+ ✓ server/services/__tests__/embedding-corpus-policy.dbtest.ts > findVectorsFromAnotherModel, as the runtime role under RLS > the platform scope cannot see a Vault chunk: reading it alone would report the Vault clean 11ms
+ × server/services/__tests__/embedding-corpus-policy.dbtest.ts > findVectorsFromAnotherModel, as the runtime role under RLS > finds organization A's Vault chunk from another model, in organization A's own scope 12ms
+   → findVectorsFromAnotherModel is not a function
+ × server/services/__tests__/embedding-corpus-policy.dbtest.ts > findVectorsFromAnotherModel, as the runtime role under RLS > finds the platform knowledge entry from another model, in the platform scope 1ms
+   → findVectorsFromAnotherModel is not a function
+ × server/services/__tests__/embedding-corpus-policy.dbtest.ts > findVectorsFromAnotherModel, as the runtime role under RLS > does not count the padded vector the self-hosted lane wrote: organization B's corpus is clean 1ms
+   → findVectorsFromAnotherModel is not a function
+ × server/services/__tests__/embedding-corpus-policy.dbtest.ts > findVectorsFromAnotherModel, as the runtime role under RLS > and finds organization B as soon as it holds one vector from another model 11ms
+   → findVectorsFromAnotherModel is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/embedding-corpus-policy.dbtest.ts > findVectorsFromAnotherModel, as the runtime role under RLS > finds organization A's Vault chunk from another model, in organization A's own scope
+TypeError: findVectorsFromAnotherModel is not a function
+ ❯ check server/services/__tests__/embedding-corpus-policy.dbtest.ts:110:10
+    108|   const { getPool } = await import('../../db/runtime');
+    109|   const { findVectorsFromAnotherModel } = await import('../embedding-c…
+    110|   return findVectorsFromAnotherModel(getPool());
+       |          ^
+    111| }
+    112|
+ ❯ server/services/__tests__/embedding-corpus-policy.dbtest.ts:136:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/__tests__/embedding-corpus-policy.dbtest.ts > findVectorsFromAnotherModel, as the runtime role under RLS > finds the platform knowledge entry from another model, in the platform scope
+TypeError: findVectorsFromAnotherModel is not a function
+ ❯ check server/services/__tests__/embedding-corpus-policy.dbtest.ts:110:10
+    108|   const { getPool } = await import('../../db/runtime');
+    109|   const { findVectorsFromAnotherModel } = await import('../embedding-c…
+    110|   return findVectorsFromAnotherModel(getPool());
+       |          ^
+    111| }
+    112|
+ ❯ server/services/__tests__/embedding-corpus-policy.dbtest.ts:145:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/__tests__/embedding-corpus-policy.dbtest.ts > findVectorsFromAnotherModel, as the runtime role under RLS > does not count the padded vector the self-hosted lane wrote: organization B's corpus is clean
+TypeError: findVectorsFromAnotherModel is not a function
+ ❯ check server/services/__tests__/embedding-corpus-policy.dbtest.ts:110:10
+    108|   const { getPool } = await import('../../db/runtime');
+    109|   const { findVectorsFromAnotherModel } = await import('../embedding-c…
+    110|   return findVectorsFromAnotherModel(getPool());
+       |          ^
+    111| }
+    112|
+ ❯ server/services/__tests__/embedding-corpus-policy.dbtest.ts:151:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/__tests__/embedding-corpus-policy.dbtest.ts > findVectorsFromAnotherModel, as the runtime role under RLS > and finds organization B as soon as it holds one vector from another model
+TypeError: findVectorsFromAnotherModel is not a function
+ ❯ check server/services/__tests__/embedding-corpus-policy.dbtest.ts:110:10
+    108|   const { getPool } = await import('../../db/runtime');
+    109|   const { findVectorsFromAnotherModel } = await import('../embedding-c…
+    110|   return findVectorsFromAnotherModel(getPool());
+       |          ^
+    111| }
+    112|
+ ❯ server/services/__tests__/embedding-corpus-policy.dbtest.ts:158:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 2 passed (6)
+   Start at  15:56:57
+   Duration  2.25s (transform 850ms, setup 77ms, import 35ms, tests 1.85s, environment 0ms)
+

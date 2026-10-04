@@ -722,7 +722,7 @@ ${documentContent}`,
    * system turn is the framework's drafting persona (resolveSystemPrompt), so
    * it goes to the gateway as `document_drafting` with no model pinned. An
    * approved model drafts it; in production the gateway refuses it until a
-   * model passes PQ (ADR-0014 §3). Until 2026-09-28 (track GW review [10]) it
+   * model passes PQ (ADR-0015 §3). Until 2026-09-28 (track GW review [10]) it
    * was sent as `general` pinned to claude-sonnet-4 — not approved for
    * high-risk work, PQ pending — so neither rule applied: a label bypass on
    * POST /api/claude/quick. With no framework it is still a quick `general`

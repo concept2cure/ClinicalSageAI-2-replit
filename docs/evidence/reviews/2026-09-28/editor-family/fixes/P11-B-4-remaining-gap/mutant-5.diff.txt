@@ -1,0 +1,8 @@
+MUTANT 5 diff:
+932,933c932,934
+<           // Every decision here was reported too — see resolveSuggestion.
+<           markRecordedDecision(tr);
+---
+>           // MUTANT 5: resolveAll keeps only the old flags
+>           tr.setMeta(SUGGESTION_ACTION_META, true);
+>           tr.setMeta('addToHistory', false);

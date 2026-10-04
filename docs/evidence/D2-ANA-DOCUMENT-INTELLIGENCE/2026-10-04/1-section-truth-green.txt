@@ -1,0 +1,169 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > has at least 10 registered document types 1ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > ctd_2_2_introduction — required fields present 1ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > ctd_2_3_qos — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > ctd_2_4_nonclinical_overview — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > ctd_2_5_clinical_overview — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > ctd_2_7_3_efficacy_summary — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > ctd_2_7_4_safety_summary — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > ind_investigator_brochure — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > ind_phase1_protocol — required fields present 1ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > cmc_drug_substance — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > cmc_drug_product — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > fda_510k_se_statement — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > pma_summary_safety_effectiveness — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > clinical_study_report — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > dsur — required fields present 1ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > fda_type_b_meeting_package — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > psur_pbrer — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > safety_narrative — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > fda_information_request_response — required fields present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > DOCUMENT_TEMPLATES registry integrity > every template has at least one required section with heading and guidance 7ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Clinical Overview 5ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Clinical Overview section 3ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > QOS 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > QOS section ref 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Nonclinical Overview 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Efficacy Summary 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Efficacy Summary section 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Safety Summary 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Safety Summary section 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > CMC Drug Substance 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > CMC 3.2.S 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > CMC Drug Product 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > CMC 3.2.P 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Investigator's Brochure 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Phase 1 Protocol 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > FIH Protocol 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > 510(k) SE 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > PMA SSED 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > CSR 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > DSUR 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Type B Meeting 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > EOP2 meeting 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > PBRER 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > Safety Narrative 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — positive matches > FDA IR Response 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — no match for generic messages > no match: What are the risks of this drug? 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — no match for generic messages > no match: Can you audit my submission? 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — no match for generic messages > no match: Help me improve this section 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — no match for generic messages > no match: Run a war game on this protocol 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — no match for generic messages > no match: What is the regulatory strategy for our IND? 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — no match for generic messages > no match: section 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — no match for generic messages > no match: draft 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — no match for generic messages > no match: clinical 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — specificity > clinical overview wins when section 2.5 is mentioned 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — specificity > efficacy summary wins when section 2.7.3 is mentioned 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — specificity > CMC drug substance wins when 3.2.S is mentioned 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > detectDocumentTemplate — specificity > CMC drug product wins when 3.2.P is mentioned 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > buildDocumentTemplateBlock > returns a non-empty block with required structural elements 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > buildDocumentTemplateBlock > includes all required section headings for the matched template 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > buildDocumentTemplateBlock > includes regulatory references when present 0ms
+ ✓ server/services/ana-ri/__tests__/document-templates.test.ts > buildDocumentTemplateBlock > includes word count targets in the section outline 0ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > IND initial · Introductory Statement: country-withdrawal disclosure cites 312.23(a)(3)(iii), not (a)(3)(iv) 2ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > IND Annual Report · safety summary: cites 312.33(b)(1)-(4), not (b)(1)-(2) 0ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > IND Annual Report · IND changes: cites (b)(6) preclinical, (b)(7) manufacturing, (e) Phase 1 mods — not (b)(3)-(5) 1ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > IND Annual Report · admin section: no Part 56 obligation asserted; cites 312.33(f) and (g) 1ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > IND Annual Report · regulatoryBasis: no phantom Part 56 element 0ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > Pre-NDA meeting · 312.47(b)(2) is glossed as "Other meetings", not end-of-Phase-2 0ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > CTD 1.2 · is the cover letter, and no Module 1 guidance claims a table-of-contents heading (the eCTD backbone is the index) 0ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > CTD 1.20 · general investigational plan cites 312.23(a)(3) and files at FDA heading 1.20 0ms
+ ✓ tests/regulatory/citation-accuracy.test.ts > citation-accuracy regression guard — 21 CFR / ICH corrections > CTD 1.14.4.1 · IB: 312.23(a)(5) enumerates content; 312.55 is the separate furnishing duty 1ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — leaf-level guidance > registers guidance for every core CTD leaf section 2ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — leaf-level guidance > every guidance entry is industry-grade (real prose + concrete content elements) 7ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — leaf-level guidance > drug-substance and drug-product sections require CMC across IND/NDA/BLA 2ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — marketing blueprint is deep > an NDA blueprint exposes drug-substance and clinical leaves as first-class sections 10ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — lifecycle document types > covers the full IND->NDA/BLA lifecycle spine 0ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — lifecycle document types > every document type carries real components and regulatory basis 1ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — lifecycle document types > the NDA document type resolves deep CTD sections from the shared overlay 2ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — lifecycle document types > links document types to the canonical taxonomy so the catalog can reach deep guidance 0ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — lifecycle document types > meeting packages are flagged and the ISS/ISE integrated summaries exist 1ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — prompt generation > drafts a deep leaf code against its real guidance 1ms
+ ✓ tests/regulatory/ctd-authoring-depth.test.ts > CTD authoring depth — prompt generation > every registered guidance code has a non-empty title and module 1-5 5ms
+stdout | tests/regulatory/ana-ctd-section-truth.test.ts
+{
+  "timestamp": "2026-10-04T18:51:59.444Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-04T18:51:59.446Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/regulatory/ana-ctd-section-truth.test.ts
+{
+  "timestamp": "2026-10-04T18:51:59.447Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/regulatory/ana-ctd-section-truth.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | tests/regulatory/ana-ctd-section-truth.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/regulatory/ana-ctd-section-truth.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | tests/regulatory/ana-ctd-section-truth.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/regulatory/ana-ctd-section-truth.test.ts
+{
+  "timestamp": "2026-10-04T18:52:00.036Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/regulatory/ana-ctd-section-truth.test.ts
+Loaded 0 academic documents
+
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 2.7.3 is Summary of Clinical Efficacy 2ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 2.7.4 is Summary of Clinical Safety 1ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 2.7.5 is Literature References 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 1.2 is Cover Letter 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 1.12.14 is Environmental Assessment 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 1.14 is labeling, not the environmental assessment 1ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > a sub-section is briefed as its nearest registered section, and says so 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > a parent is briefed by the sections it contains, not as its first child 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > a code nothing registers gets no line rather than a guessed one 1ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > agrees with the canonical overlay on every registered code 4ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.1 carries Form FDA 1571 1ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.2 carries Cover Letter 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.3.3 carries Debarment Certification 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.14.4.1 carries Investigator's Brochure 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 5.2 carries Tabular Listing 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 5.3.5.1 holds the reports of controlled clinical studies, not a protocol playbook 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > opens with the canonical code and title for every registered code 4ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > keeps the module playbooks the overlay does not model 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "summary of clinical efficacy" → 2.7.3 5ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "draft section 2.7.3" → 2.7.3 3ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "summary of clinical safety" → 2.7.4 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "section 2.7.4" → 2.7.4 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "section 2.7.4 summary of clinical safety" → 2.7.4 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > every template with a CTD primary code is named for that code 1ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > every coded 2.5.x / 2.7.x sub-heading carries its ICH M4E title 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > 2.7.3 and 2.7.4 summarise; the ISE and ISS are the analyses filed in 5.3.5.3 > 2.7.3 does not claim to be the ISE 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > 2.7.3 and 2.7.4 summarise; the ISE and ISS are the analyses filed in 5.3.5.3 > 2.7.4 does not claim to be the ISS 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > 2.7.3 and 2.7.4 summarise; the ISE and ISS are the analyses filed in 5.3.5.3 > 2.7.3 states FDA’s own description of the summary 0ms
+
+ Test Files  4 passed (4)
+      Tests  109 passed (109)
+   Start at  18:51:56
+   Duration  7.27s (transform 5.09s, setup 308ms, import 7.60s, tests 115ms, environment 0ms)
+

@@ -1,0 +1,1516 @@
+# RED: new proposal tests run against the UNCHANGED editor (suggestions.ts, RichSectionEditor.tsx, DocumentWorkbench.tsx at HEAD) — (a) fails on its assertion (selected text deleted untracked), (b)-(g) fail as 'not a function'
+# (b)-(g) red here is only 'not a function' (the export, handle method and bridge field did not exist yet); the meaningful reds, by mutation of the finished code with each mutation restored, are in 2-propose-mutation-red.txt
+# command: npx vitest run client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx
+# git HEAD: d10de752c9; run 2026-10-01
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection > leaves the selected text as AnA’s tracked deletion, then the insertion 120ms
+   → the selected text left the record untracked: expected [] to deeply equal [ '18 months' ]
+ ✓ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection > a collapsed caret still inserts with nothing struck (the shipped behaviour) 33ms
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — one quoted place, redlined > strikes the single match and inserts the replacement after it, both AnA’s 14ms
+   → proposeReplacement is not a function
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — one quoted place, redlined > reads the replacement as the markdown subset insertSuggestedContent reads 15ms
+   → proposeReplacement is not a function
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — one quoted place, redlined > refuses not-found when the quote is not in the section, and changes nothing 18ms
+   → proposeReplacement is not a function
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — one quoted place, redlined > refuses ambiguous when the quote occurs twice, and changes nothing 17ms
+   → proposeReplacement is not a function
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — one quoted place, redlined > lets a suffix pick the occurrence it follows 9ms
+   → proposeReplacement is not a function
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — one quoted place, redlined > lets a prefix pick the occurrence it precedes, across a paragraph break 8ms
+   → proposeReplacement is not a function
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — one quoted place, redlined > an empty replacement is a deletion proposal only 11ms
+   → proposeReplacement is not a function
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — one quoted place, redlined > refuses rather than restrike text that is already a pending suggestion 11ms
+   → proposeReplacement is not a function
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — one quoted place, redlined > refuses not-editable on an editor that is not editable 9ms
+   → proposeReplacement is not a function
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > RichSectionEditorHandle.proposeReplacement > redlines an editable rich section 111ms
+   → ref.current?.proposeReplacement is not a function
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > RichSectionEditorHandle.proposeReplacement > refuses not-editable on a frozen section 20ms
+   → ref.current?.proposeReplacement is not a function
+ × client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > RichSectionEditorHandle.proposeReplacement > refuses not-editable in source mode, where the editor is not the document 19ms
+   → ref.current?.proposeReplacement is not a function
+stderr | client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose > refuses stale when the section was saved after AnA read it, and changes nothing
+An update to PureEditorContent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Presence inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Popper inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentAttributionBar inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentCanvas inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose > refuses stale when the section was saved after AnA read it, and changes nothing
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentAttributionBar inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose > refuses stale when the section was saved after AnA read it, and changes nothing
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose > redlines the open section when the base is the section as loaded
+An update to PureEditorContent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Presence inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Popper inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentAttributionBar inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentCanvas inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose > redlines the open section when the base is the section as loaded
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentAttributionBar inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose > redlines the open section when the base is the section as loaded
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose > redlines the open section when the base is the section as loaded
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose > refuses stale when the section was saved after AnA read it, and changes nothing 277ms
+   → bridge(...).propose is not a function
+stderr | client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose > passes the editor’s own refusal through, and keeps the existing fields
+An update to PureEditorContent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Presence inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Popper inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentAttributionBar inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentCanvas inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose > passes the editor’s own refusal through, and keeps the existing fields
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentAttributionBar inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose > passes the editor’s own refusal through, and keeps the existing fields
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose > passes the editor’s own refusal through, and keeps the existing fields
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose > redlines the open section when the base is the section as loaded 98ms
+   → bridge(...).propose is not a function
+stderr | client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose > refuses not-editable on a frozen document
+An update to PureEditorContent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Presence inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Popper inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentAttributionBar inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentCanvas inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose > refuses not-editable on a frozen document
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentAttributionBar inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose > refuses not-editable on a frozen document
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose > refuses not-editable on a frozen document
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose > passes the editor’s own refusal through, and keeps the existing fields 107ms
+   → bridge(...).propose is not a function
+ × client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose > refuses not-editable on a frozen document 93ms
+   → bridge(...).propose is not a function
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 17 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose > refuses stale when the section was saved after AnA read it, and changes nothing
+TypeError: bridge(...).propose is not a function
+ ❯ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx:142:21
+    140|   it('refuses stale when the section was saved after AnA read it, and …
+    141|     const bridge = await openBridge();
+    142|     expect(bridge().propose({ ...PROPOSAL, baseUpdatedAt: '2026-09-29T…
+       |                     ^
+    143|       ok: false,
+    144|       reason: 'stale',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/17]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose > redlines the open section when the base is the section as loaded
+TypeError: bridge(...).propose is not a function
+ ❯ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx:153:21
+    151|     const bridge = await openBridge();
+    152|     // The same instant written with milliseconds is the same base.
+    153|     expect(bridge().propose({ ...PROPOSAL, baseUpdatedAt: '2026-09-30T…
+       |                     ^
+    154|       ok: true,
+    155|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/17]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose > passes the editor’s own refusal through, and keeps the existing fields
+TypeError: bridge(...).propose is not a function
+ ❯ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx:165:21
+    163|   it('passes the editor’s own refusal through, and keeps the existing …
+    164|     const bridge = await openBridge();
+    165|     expect(bridge().propose({ quote: '36 months', replacement: '24 mon…
+       |                     ^
+    166|       ok: false,
+    167|       reason: 'not-found',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/17]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx > EditorBridge.propose > refuses not-editable on a frozen document
+TypeError: bridge(...).propose is not a function
+ ❯ client/src/concept2cure/v2/editor/__tests__/editorBridgePropose.test.tsx:177:21
+    175|     const bridge = await openBridge();
+    176|     expect(bridge().editable).toBe(false);
+    177|     expect(bridge().propose({ ...PROPOSAL, baseUpdatedAt: SAVED_AT }, …
+       |                     ^
+    178|       ok: false,
+    179|       reason: 'not-editable',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/17]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > insertSuggestedContent over a selection > leaves the selected text as AnA’s tracked deletion, then the insertion
+AssertionError: the selected text left the record untracked: expected [] to deeply equal [ '18 months' ]
+
+- Expected
++ Received
+
+- [
+-   "18 months",
+- ]
++ []
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx:114:91
+    112|     const html = ed.getHTML();
+    113|     const dels = els(html, 'del');
+    114|     expect(dels.map((d) => d.textContent), 'the selected text left the…
+       |                                                                                           ^
+    115|       '18 months',
+    116|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/17]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — one quoted place, redlined > strikes the single match and inserts the replacement after it, both AnA’s
+TypeError: proposeReplacement is not a function
+ ❯ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx:148:20
+    146|   it('strikes the single match and inserts the replacement after it, b…
+    147|     const ed = makeEditor('<p>The product is stable for 18 months at 2…
+    148|     const result = proposeReplacement(ed, { quote: '18 months', replac…
+       |                    ^
+    149|     expect(result).toEqual({ ok: true });
+    150|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/17]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — one quoted place, redlined > reads the replacement as the markdown subset insertSuggestedContent reads
+TypeError: proposeReplacement is not a function
+ ❯ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx:172:7
+    170|     const ed = makeEditor('<p>Shelf life is 18 months.</p>');
+    171|     expect(
+    172|       proposeReplacement(ed, { quote: '18 months', replacement: '**24 …
+       |       ^
+    173|     ).toEqual({ ok: true });
+    174|     const [ins] = els(ed.getHTML(), 'ins');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/17]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — one quoted place, redlined > refuses not-found when the quote is not in the section, and changes nothing
+TypeError: proposeReplacement is not a function
+ ❯ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx:183:7
+    181|     const before = ed.getHTML();
+    182|     expect(
+    183|       proposeReplacement(ed, { quote: '36 months', replacement: '24 mo…
+       |       ^
+    184|     ).toEqual({ ok: false, reason: 'not-found' });
+    185|     // Exact matching: a quote is the words, not a case-folded guess a…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/17]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — one quoted place, redlined > refuses ambiguous when the quote occurs twice, and changes nothing
+TypeError: proposeReplacement is not a function
+ ❯ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx:200:7
+    198|     const before = ed.getHTML();
+    199|     expect(
+    200|       proposeReplacement(ed, { quote: 'Assay is', replacement: 'Assay …
+       |       ^
+    201|     ).toEqual({ ok: false, reason: 'ambiguous' });
+    202|     // Context that matches neither occurrence does not pick one eithe…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/17]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — one quoted place, redlined > lets a suffix pick the occurrence it follows
+TypeError: proposeReplacement is not a function
+ ❯ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx:217:7
+    215|     const ed = makeEditor('<p>Assay is 98.0%.</p><p>Assay is 99.1%.</p…
+    216|     expect(
+    217|       proposeReplacement(ed, {
+       |       ^
+    218|         quote: 'Assay is',
+    219|         replacement: 'Assay was',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/17]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — one quoted place, redlined > lets a prefix pick the occurrence it precedes, across a paragraph break
+TypeError: proposeReplacement is not a function
+ ❯ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx:233:7
+    231|     const ed = makeEditor('<p>Assay is 98.0%.</p><p>Assay is 99.1%.</p…
+    232|     expect(
+    233|       proposeReplacement(ed, {
+       |       ^
+    234|         quote: 'Assay is',
+    235|         replacement: 'Assay was',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/17]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — one quoted place, redlined > an empty replacement is a deletion proposal only
+TypeError: proposeReplacement is not a function
+ ❯ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx:248:7
+    246|     const ed = makeEditor('<p>Stable for 18 months, provisionally, at …
+    247|     expect(
+    248|       proposeReplacement(ed, { quote: ', provisionally,', replacement:…
+       |       ^
+    249|     ).toEqual({ ok: true });
+    250|     const html = ed.getHTML();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/17]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — one quoted place, redlined > refuses rather than restrike text that is already a pending suggestion
+TypeError: proposeReplacement is not a function
+ ❯ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx:266:7
+    264|     const before = ed.getHTML();
+    265|     expect(
+    266|       proposeReplacement(ed, { quote: '18 months', replacement: '24 mo…
+       |       ^
+    267|     ).toEqual({ ok: false, reason: 'overlaps-suggestion' });
+    268|     expect(ed.getHTML()).toBe(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/17]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > proposeReplacement — one quoted place, redlined > refuses not-editable on an editor that is not editable
+TypeError: proposeReplacement is not a function
+ ❯ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx:275:7
+    273|     const before = ed.getHTML();
+    274|     expect(
+    275|       proposeReplacement(ed, { quote: '18 months', replacement: '24 mo…
+       |       ^
+    276|     ).toEqual({ ok: false, reason: 'not-editable' });
+    277|     expect(ed.getHTML()).toBe(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/17]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > RichSectionEditorHandle.proposeReplacement > redlines an editable rich section
+TypeError: ref.current?.proposeReplacement is not a function
+ ❯ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx:295:25
+    293|     const ref = React.createRef<RichSectionEditorHandle>();
+    294|     render(<RichSectionEditor {...base} ref={ref} />);
+    295|     expect(ref.current?.proposeReplacement(PROPOSAL, ANA)).toEqual({ o…
+       |                         ^
+    296|     expect(document.querySelector('.tiptap del[data-author-id="ana"]')…
+    297|     expect(document.querySelector('.tiptap ins[data-author-id="ana"]')…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/17]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > RichSectionEditorHandle.proposeReplacement > refuses not-editable on a frozen section
+TypeError: ref.current?.proposeReplacement is not a function
+ ❯ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx:304:25
+    302|     const ref = React.createRef<RichSectionEditorHandle>();
+    303|     render(<RichSectionEditor {...base} ref={ref} readOnly />);
+    304|     expect(ref.current?.proposeReplacement(PROPOSAL, ANA)).toEqual({ o…
+       |                         ^
+    305|     expect(document.querySelector('.tiptap del')).toBeNull();
+    306|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/17]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx > RichSectionEditorHandle.proposeReplacement > refuses not-editable in source mode, where the editor is not the document
+TypeError: ref.current?.proposeReplacement is not a function
+ ❯ client/src/concept2cure/v2/editor/__tests__/suggestionsPropose.test.tsx:312:25
+    310|     const value = '<p>The product is stable for 18 months.</p><figure>…
+    311|     render(<RichSectionEditor {...base} ref={ref} value={value} />);
+    312|     expect(ref.current?.proposeReplacement(PROPOSAL, ANA)).toEqual({ o…
+       |                         ^
+    313|     expect(ref.current?.getContent()).toBe(value);
+    314|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/17]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  17 failed | 1 passed (18)
+   Start at  18:29:28
+   Duration  4.25s (transform 2.00s, setup 437ms, import 3.01s, tests 999ms, environment 1.74s)
+

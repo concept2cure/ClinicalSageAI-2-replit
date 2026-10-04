@@ -67,7 +67,14 @@ import { coauthorDocuments } from '../../shared/schema';
 import { createScopedLogger } from '../utils/logger.js';
 
 import { acceptedMachineText } from '../services/authoring/revision-ledger';
+import {
+  verifyMachineText,
+  type MachineClaimVerdict,
+  type VerifiedMachineClaim,
+} from '../services/authoring/machine-claim-verify';
+import { refusedFigures, describeRefusedFigures } from '../services/authoring/authoring-html-sanitizer';
 import { coauthorReadOnlyRefusal, isCoauthorVerdictStatus } from '../services/coauthor/coauthor-status-write';
+import { versionReplacedCoauthorContent } from '../services/coauthor/coauthor-audit';
 
 const logger = createScopedLogger('batch-draft-routes');
 
@@ -209,6 +216,81 @@ export function deriveFramework(metadatas: Array<unknown>): string | null {
   return found;
 }
 
+/**
+ * The refusal for accepted content holding an image that is not an uploaded
+ * figure, or null when every image is one (periodic review 2026-09-28, editor
+ * family, SEC-B-FO-b4). This route stored any `<img src>` the card held, and
+ * the co-author canvas opens this content. The rule and the sentence are the
+ * section save's (shared/authoring/figure-refs.ts): refused before anything is
+ * written, never rewritten.
+ */
+async function refuseNonFigures(content: string): Promise<Record<string, unknown> | null> {
+  const refused = await refusedFigures(content);
+  if (refused.length === 0) return null;
+  return {
+    success: false,
+    code: 'FIGURE_NOT_UPLOADED',
+    error: describeRefusedFigures(refused),
+    field: 'content',
+    refusedImages: refused.map(({ position, src }) => ({
+      position,
+      src: src.length > 200 ? `${src.slice(0, 200)}…` : src,
+    })),
+  };
+}
+
+/** What the audit row says about each claim of machine text: which the turn
+ *  record holds, and which it does not and why. The words themselves are in
+ *  the document; the row carries their hash and length. */
+function machineTextDisclosure(verdict: MachineClaimVerdict) {
+  return {
+    verified: verdict.verified.map((v) => ({
+      authorId: v.authorId,
+      turnRecordId: v.turnRecordId,
+      turnActorUserId: v.turnActorUserId,
+      chars: v.text.length,
+    })),
+    unverified: verdict.unverified.map((u) => ({
+      authorId: u.authorId,
+      turnRecordId: u.turnRecordId,
+      reason: u.reason,
+      textSha256: u.textSha256,
+      chars: u.chars,
+    })),
+  };
+}
+
+/** The model the verified claims' turn records name: one, or null when they
+ *  name none or disagree. Never the request's. */
+function recordedModel(verified: VerifiedMachineClaim[]): string | null {
+  const models = new Set(verified.map((v) => v.model).filter((m): m is string => Boolean(m)));
+  return models.size === 1 ? [...models][0] : null;
+}
+
+/**
+ * What the accept says about itself: the audit reason, the superseded
+ * version's summary and the document's lastDraftSource. They say AnA's draft
+ * was accepted only when the lineage credited AnA with at least one clause of
+ * the saved content, from text this accept verified (`credited`). A verified
+ * claim is not enough: a claim of one word verifies and credits no clause.
+ * Otherwise they say what is true of this accept, which is that it credits
+ * none of its text to AnA; a clause an earlier accept credited keeps its own
+ * attribution in the lineage, and these do not deny it.
+ */
+function acceptWording(credited: boolean) {
+  return credited
+    ? {
+        reason: 'AnA batch draft accepted into document',
+        changeSummary: 'Superseded by an accepted AnA batch draft',
+        lastDraftSource: 'ana-batch',
+      }
+    : {
+        reason: 'Batch-draft text accepted into document; this accept credits none of it to AnA',
+        changeSummary: 'Superseded by batch-draft text this accept does not credit to AnA',
+        lastDraftSource: 'batch-not-ana',
+      };
+}
+
 // ─── Router Factory ─────────────────────────────────────────────────────────────
 
 export default function createBatchDraftRoutes(): Router {
@@ -331,17 +413,20 @@ export default function createBatchDraftRoutes(): Router {
   // real generated regulatory prose that the surface discarded on unmount. A
   // drafting service whose output cannot be kept is not a drafting service.
   //
-  // WHY NOT `PUT /api/coauthor/documents/:id`. That route accepts content, but
-  // it neither snapshots the content it replaces nor records who replaced it.
-  // Overwriting the body of a regulated document with machine-generated prose
-  // and keeping no prior copy is not a save we can offer. This route makes the
-  // write reversible and attributable:
+  // WHY NOT `PUT /api/coauthor/documents/:id`. When this route was written,
+  // that one neither snapshotted the content it replaced nor recorded who
+  // replaced it. Overwriting the body of a regulated document with
+  // machine-generated prose and keeping no prior copy is not a save we can
+  // offer. (2026-10-01, D5: the PUT now keeps the replaced text and records an
+  // audit event too, through the same writers; it still records no machine
+  // authorship, which is what this route adds.) This route makes the write
+  // reversible and attributable:
   //
   //   1. the content being REPLACED is snapshotted into
   //      coauthor_document_versions (a table the schema has always declared and
   //      no code has ever written to) — so the accept can be undone;
   //   2. the new content, the framework it was drafted against, and the model
-  //      that produced it are written to the document;
+  //      its turn record names are written to the document;
   //   3. an audit_events row records the acceptance (21 CFR Part 11 §11.10(e)).
   //
   // All three happen in ONE transaction on the request-scoped, RLS-bound
@@ -378,6 +463,9 @@ export default function createBatchDraftRoutes(): Router {
       });
     }
 
+    const figureRefusal = await refuseNonFigures(content);
+    if (figureRefusal) return res.status(400).json(figureRefusal);
+
     // A framework outside the service's own union is not recorded. It would be
     // handed straight back to the next batch as the default, so an unrecognised
     // value would silently become the expectations the next drafts are written
@@ -413,8 +501,6 @@ export default function createBatchDraftRoutes(): Router {
       });
     }
 
-    const model = typeof body.model === 'string' ? body.model.slice(0, 120) : null;
-
     const actor = getActor(req);
     /* The accepted text becomes this person's to answer for; the lineage gate
        below records every clause as their assertion, and a placeholder is not
@@ -429,6 +515,21 @@ export default function createBatchDraftRoutes(): Router {
     let inTransaction = false;
 
     try {
+      /* WHO WROTE THE TEXT IS THE RECORD'S TO SAY (periodic review 2026-09-28,
+         editor family, the batch-draft accept). The body's acceptedMachineText
+         and model were recorded as fact, so a member could record their own
+         words as AnA's, or AnA's under a model that never wrote them. A claim
+         now counts only when the turn record /api/claude/batch wrote holds the
+         words (machine-claim-verify.ts); the model is the record's, and the
+         body's is not read. A claim that does not verify is not refused: its
+         words are the accepter's own, and the claim and its reason go on the
+         audit row. Read before BEGIN: the record is append-only. */
+      const machineText = await verifyMachineText(
+        queryableFromDrizzle(rdb),
+        organizationId,
+        acceptedMachineText(body.acceptedMachineText).map((entry) => ({ ...entry, turnRecordId: body.turnRecordId })),
+      );
+
       await rdb.execute(sql`BEGIN`);
       inTransaction = true;
 
@@ -466,30 +567,52 @@ export default function createBatchDraftRoutes(): Router {
 
       const previousContent = (docRows[0] as { content: string | null }).content;
 
+      /* Lineage in the same transaction as the content (ledger L160); a gap
+         rolls the accept back.
+         The batch drafts carry no parked Data Room sources, but they ARE AnA's
+         prose: recording every clause as the accepting person's own assertion
+         named them as the author of words a model wrote. The surface sends the
+         draft as AnA returned it alongside the (possibly edited) content, so a
+         clause still verbatim in the draft is recorded as AnA's, accepted by
+         this person, and a clause they rewrote in the card is recorded as
+         theirs. Only drafts the turn record holds (verified above) count.
+         It runs first, before anything else is written, because what the
+         accept says about itself follows what it credited (periodic review
+         2026-09-28, editor family, the batch-draft accept, round 3): a
+         verified claim of one word ("primary") credits no clause, and the
+         version summary, the metadata and the audit reason all said AnA's
+         draft had been accepted. The lineage reads and writes span rows only,
+         never the document row, so it can run before the content is written;
+         every write after it is in the same transaction. */
+      const client = queryableFromDrizzle(rdb);
+      const lineage = await enforceAuthorLineage(
+        client,
+        organizationId,
+        { documentTable: 'coauthor_documents', documentId: String(documentId) },
+        content,
+        String(actor.userId),
+        { acceptedMachineText: machineText.verified.map(({ authorId, text }) => ({ authorId, text })) },
+      );
+      const credited = lineage.clausesInAcceptedText > 0;
+      const wording = acceptWording(credited);
+      const model = credited ? recordedModel(machineText.verified) : null;
+
       // Snapshot only when there is something to lose. A section that has never
       // carried content has no prior state, and writing an empty version row
       // would put a version in the history that never existed as a document.
-      let versionNumber: number | null = null;
-      if (previousContent && previousContent.trim()) {
-        const { rows: versionRows } = await rdb.execute(sql`
-          INSERT INTO coauthor_document_versions
-            (document_id, version_number, content, created_by, change_summary)
-          SELECT ${documentId},
-                 COALESCE(MAX(version_number), 0) + 1,
-                 ${previousContent},
-                 ${actor.userLabel},
-                 'Superseded by an accepted AnA batch draft'
-            FROM coauthor_document_versions
-           WHERE document_id = ${documentId}
-          RETURNING version_number
-        `);
-        versionNumber = Number((versionRows[0] as { version_number: number }).version_number);
-      }
+      // 2026-10-01 (D5, P11-B-1): through the one writer of
+      // coauthor_document_versions, which the co-author PUTs now use too.
+      const versionNumber = await versionReplacedCoauthorContent(client, {
+        documentId,
+        previousContent,
+        createdBy: actor.userLabel,
+        changeSummary: wording.changeSummary,
+      });
 
       // `metadata` is merged, never replaced — other writers keep their keys.
       // The double cast works whether the deployed column is json or jsonb.
       const metadataPatch: Record<string, unknown> = {
-        lastDraftSource: 'ana-batch',
+        lastDraftSource: wording.lastDraftSource,
         lastDraftModel: model,
       };
       if (framework) metadataPatch.regulatoryFramework = framework;
@@ -504,26 +627,6 @@ export default function createBatchDraftRoutes(): Router {
          WHERE id = ${documentId} AND organization_id = ${organizationId}
       `);
 
-      /* Lineage in the same transaction as the content (ledger L160); a gap
-         rolls the accept back.
-         The batch drafts carry no parked Data Room sources, but they ARE AnA's
-         prose: recording every clause as the accepting person's own assertion
-         named them as the author of words a model wrote. The surface sends the
-         draft as AnA returned it alongside the (possibly edited) content, so a
-         clause still verbatim in the draft is recorded as AnA's, accepted by
-         this person, and a clause they rewrote in the card is recorded as
-         theirs. Validated here against the server's own machine-author
-         vocabulary — an id it does not name is discarded. */
-      const client = queryableFromDrizzle(rdb);
-      await enforceAuthorLineage(
-        client,
-        organizationId,
-        { documentTable: 'coauthor_documents', documentId: String(documentId) },
-        content,
-        String(actor.userId),
-        { acceptedMachineText: acceptedMachineText(body.acceptedMachineText) },
-      );
-
       // 21 CFR Part 11 §11.10(e) — same transaction as the change it describes,
       // so an acceptance can never exist without its audit record.
       await rdb.execute(sql`
@@ -533,12 +636,14 @@ export default function createBatchDraftRoutes(): Router {
            regulatory_significant, gxp_relevant, created_at)
         VALUES (${organizationId}, 'coauthor_document.draft_accepted', 'coauthor_document',
                 ${documentId}, ${actor.userId}, ${actor.userLabel}, ${actor.userRole},
-                ${req.ip ?? ''}, NOW(), 'AnA batch draft accepted into document',
+                ${req.ip ?? ''}, NOW(), ${wording.reason},
                 ${JSON.stringify({
                   framework: framework || null,
                   model,
                   supersededVersion: versionNumber,
                   contentChars: content.length,
+                  machineText: machineTextDisclosure(machineText),
+                  clausesInAcceptedText: lineage.clausesInAcceptedText,
                 })},
                 true, true, NOW())
       `);

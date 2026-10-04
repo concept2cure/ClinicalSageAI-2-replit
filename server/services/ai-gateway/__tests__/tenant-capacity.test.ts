@@ -1,5 +1,5 @@
 /**
- * ADR-0014 §5 (gateway items): tenants are isolated in capacity as well as in
+ * ADR-0015 §5 (gateway items): tenants are isolated in capacity as well as in
  * data.
  *
  * - A gateway call with no tenant at all — no organizationId and no tenant

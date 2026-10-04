@@ -41,13 +41,7 @@
  */
 
 import type { AnaTool } from '../ai-gateway/types';
-
-/** The reason-for-change every governed tool in this file captures (21 CFR Part 11). */
-const REASON_PROPERTY = {
-  type: 'string' as const,
-  description:
-    'Reason for change, in the human\'s own words, recorded on the 21 CFR Part 11 audit row. Ask for it; do not invent one.',
-};
+import { STATED_REASON_INPUT } from './stated-reason-input';
 
 const DOCUMENT_ID_PROPERTY = {
   type: 'number' as const,
@@ -74,7 +68,7 @@ export const BIND_PROTOCOL_TO_STUDY_DESIGN: AnaTool = {
         description:
           'cdisc_prm_studies.study_id for the design to bind. Must belong to the same organization; a guessed or copied id is refused.',
       },
-      reason: REASON_PROPERTY,
+      reason: STATED_REASON_INPUT,
     },
     required: ['document_id', 'study_design_id'],
   },
@@ -128,7 +122,7 @@ export const APPLY_PROTOCOL_DESIGN_DERIVATION: AnaTool = {
           '"endpoints", "population.eligibility", "scheduleOfActivities.visits"). Paths only — the engine supplies the values. ' +
           'At least one is required; a path the derivation does not offer is rejected with its reason.',
       },
-      reason: REASON_PROPERTY,
+      reason: STATED_REASON_INPUT,
     },
     required: ['document_id', 'accepted_paths'],
   },

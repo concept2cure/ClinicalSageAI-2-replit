@@ -250,7 +250,7 @@ describe('tenant placement boundary (D6) — the tenant is bound even when the c
     const gateway = buildGateway(['anthropic']);
     const dispatch = stubDispatch(gateway);
 
-    // Since ADR-0014 §5 (track GW review [24]) it is refused at admission with
+    // Since ADR-0015 §5 (track GW review [24]) it is refused at admission with
     // its own code: a lost binding is a platform fault, not the tenant's policy.
     await expect(gateway.route(chat())).rejects.toMatchObject({
       name: GatewayPolicyError.name,
@@ -411,11 +411,19 @@ describe('tenant placement boundary (D6) — what the ledger records', () => {
       success: false,
       organizationId: ORG,
       callerModule: 'test:refusal',
+      // Typed columns since 2026-09-26; metadata keeps only what has none.
+      placementReasonCode: 'DENY_TENANT_POLICY',
+      tenantPolicyResolution: 'resolved',
+      tenantBoundFrom: 'explicit',
       metadata: {
-        tenantPlacement: { reasonCode: 'DENY_TENANT_POLICY', stage: 'selection', resolution: 'resolved', boundFrom: 'explicit' },
+        tenantPlacement: { stage: 'selection' },
         contentPolicy: { findings: [expect.objectContaining({ detector: 'tenant_placement_policy', action: 'block' })] },
       },
     });
+    // One place per fact: the columns hold these, so metadata does not repeat them.
+    expect(Object.keys(rows[0].metadata.tenantPlacement).sort()).toEqual(
+      expect.not.arrayContaining(['reasonCode', 'resolution', 'boundFrom', 'payloadProvenance']),
+    );
     expect(JSON.stringify(rows[0])).not.toContain('unpublished 12-month stability');
   });
 

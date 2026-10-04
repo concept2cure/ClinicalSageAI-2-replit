@@ -18,6 +18,23 @@
  *             FDA IND/NDA Module 5 organization (21 CFR 314.50).
  */
 
+import { renderE3Scaffold } from '../ind/ctd/index.js';
+
+/**
+ * The CSR body is the ICH E3 overlay's scaffold (ind/ctd/csr-e3-guidance.ts),
+ * not a hand-kept outline. The hand-kept one stopped at second-level headings,
+ * had no §11.4.2.x, §12.2.x, §12.3.x, §12.4.x, §14.x, §16.1.x or §16.2.x, and
+ * labelled §14 "[IN_TEXT_TABLES]" — E3 §14 is the tables NOT included in the
+ * text (tests/regulatory/csr-e3-overlay.test.ts).
+ */
+const CSR_HEADER = `CLINICAL STUDY REPORT (ICH E3)
+
+STUDY TITLE: [STUDY_TITLE]
+STUDY NUMBER: [STUDY_NUMBER]    PROTOCOL VERSION/DATE: [PROTOCOL_VERSION]
+INVESTIGATIONAL PRODUCT: [DRUG_NAME]    INDICATION: [INDICATION]
+PHASE: [PHASE]    SPONSOR: [SPONSOR]
+DEVELOPMENT PHASE / GCP STATEMENT (ICH E6): [GCP_STATEMENT]`;
+
 export interface ClinicalTemplate {
   id: string;
   name: string;
@@ -42,101 +59,12 @@ export const clinicalTemplates: ClinicalTemplate[] = [
     region: 'ICH',
     version: '4.0',
     description:
-      'Full ICH E3 Clinical Study Report body — the 16 numbered sections for a controlled clinical study (efficacy/safety). Use for the pivotal study reports under 5.3.5.1.',
+      'Full ICH E3 Clinical Study Report body — every heading E3 numbers (§1–§16, to 16.1.12 and 16.2.8), one placeholder per heading. Use for the pivotal study reports under 5.3.5.1; get_document_section_requirements gives what belongs under each heading.',
     module_number: '5',
     sectionCode: '5.3.5.1',
     granule_id: 'm5-3-5-1-csr',
     category: 'clinical',
-    content: `CLINICAL STUDY REPORT (ICH E3)
-
-STUDY TITLE: [STUDY_TITLE]
-STUDY NUMBER: [STUDY_NUMBER]    PROTOCOL VERSION/DATE: [PROTOCOL_VERSION]
-INVESTIGATIONAL PRODUCT: [DRUG_NAME]    INDICATION: [INDICATION]
-PHASE: [PHASE]    SPONSOR: [SPONSOR]
-DEVELOPMENT PHASE / GCP STATEMENT (ICH E6): [GCP_STATEMENT]
-
-1. TITLE PAGE
-[TITLE_PAGE]
-
-2. SYNOPSIS
-[SYNOPSIS]   (See the standalone 5.3.5.1 synopsis template for the structured form.)
-
-3. TABLE OF CONTENTS
-[TOC]
-
-4. LIST OF ABBREVIATIONS AND DEFINITIONS OF TERMS
-[ABBREVIATIONS]
-
-5. ETHICS
-5.1 Independent Ethics Committee (IEC) / Institutional Review Board (IRB): [IEC_IRB]
-5.2 Ethical conduct of the study: [ETHICAL_CONDUCT]
-5.3 Patient information and consent: [INFORMED_CONSENT]
-
-6. INVESTIGATORS AND STUDY ADMINISTRATIVE STRUCTURE
-[ADMIN_STRUCTURE]
-
-7. INTRODUCTION
-[INTRODUCTION]
-
-8. STUDY OBJECTIVES
-Primary objective: [PRIMARY_OBJECTIVE]
-Secondary objectives: [SECONDARY_OBJECTIVES]
-
-9. INVESTIGATIONAL PLAN
-9.1 Overall study design and plan: [STUDY_DESIGN]
-9.2 Discussion of study design, including choice of control groups: [DESIGN_RATIONALE]
-9.3 Selection of study population: [POPULATION_SELECTION]
-  9.3.1 Inclusion criteria: [INCLUSION_CRITERIA]
-  9.3.2 Exclusion criteria: [EXCLUSION_CRITERIA]
-  9.3.3 Removal of patients from therapy or assessment: [WITHDRAWAL_CRITERIA]
-9.4 Treatments: [TREATMENTS]
-  9.4.x Identity / dose / blinding / randomization / prior & concomitant therapy / compliance: [TREATMENT_DETAILS]
-9.5 Efficacy and safety variables: [VARIABLES]
-  9.5.1 Efficacy and safety measurements assessed and flow chart: [MEASUREMENTS]
-  9.5.2 Appropriateness of measurements: [MEASUREMENT_APPROPRIATENESS]
-  9.5.3 Primary efficacy variable(s): [PRIMARY_ENDPOINT]
-9.6 Data quality assurance: [DATA_QA]
-9.7 Statistical methods and determination of sample size: [STATISTICAL_METHODS]
-9.8 Changes in the conduct of the study or planned analyses: [PROTOCOL_CHANGES]
-
-10. STUDY PATIENTS
-10.1 Disposition of patients: [PATIENT_DISPOSITION]
-10.2 Protocol deviations: [PROTOCOL_DEVIATIONS]
-
-11. EFFICACY EVALUATION
-11.1 Data sets analysed: [ANALYSIS_SETS]
-11.2 Demographic and other baseline characteristics: [BASELINE_CHARACTERISTICS]
-11.3 Measurements of treatment compliance: [COMPLIANCE]
-11.4 Efficacy results and tabulations of individual patient data: [EFFICACY_RESULTS]
-  11.4.1 Analysis of efficacy: [PRIMARY_ANALYSIS]
-  11.4.2 Statistical/analytical issues: [STATISTICAL_ISSUES]
-  11.4.x Subgroup, dose-response, and by-patient analyses: [SUBGROUP_ANALYSES]
-11.5 Efficacy conclusions: [EFFICACY_CONCLUSIONS]
-
-12. SAFETY EVALUATION
-12.1 Extent of exposure: [EXPOSURE]
-12.2 Adverse events (AEs): [ADVERSE_EVENTS]
-  12.2.x Display, analysis, and listing by patient: [AE_ANALYSIS]
-12.3 Deaths, other serious adverse events, and other significant AEs: [DEATHS_SAES]
-  12.3.x Narratives of deaths and SAEs: [SAE_NARRATIVES]
-12.4 Clinical laboratory evaluation: [LAB_EVALUATION]
-12.5 Vital signs, physical findings, and other observations: [VITAL_SIGNS]
-12.6 Safety conclusions: [SAFETY_CONCLUSIONS]
-
-13. DISCUSSION AND OVERALL CONCLUSIONS
-[OVERALL_CONCLUSIONS]
-
-14. TABLES, FIGURES, AND GRAPHS REFERRED TO BUT NOT INCLUDED IN THE TEXT
-[IN_TEXT_TABLES]
-
-15. REFERENCE LIST
-[REFERENCES]
-
-16. APPENDICES (ICH E3 §16.1)
-16.1 Study information (protocol, sample CRF, IEC list, signatures, randomization, audit certificates, SAP): [APPENDIX_STUDY_INFO]
-16.2 Patient data listings: [APPENDIX_PATIENT_LISTINGS]
-16.3 Case report forms (deaths, SAEs, withdrawals): [APPENDIX_CRFS]
-16.4 Individual patient data listings: [APPENDIX_INDIVIDUAL_DATA]`,
+    content: `${CSR_HEADER}\n\n${renderE3Scaffold()}`,
   },
   {
     id: 'tmpl-m5-3-5-1-csr-synopsis',

@@ -1,0 +1,584 @@
+# command: TEST_DATABASE_URL=... APP_DATABASE_URL=...app_service... RLS_ENFORCE=on npx vitest run --config vitest.db.config.ts tests/db/role-config-change-audit.dbtest.ts tests/db/admin-change-audit.dbtest.ts tests/db/organizations-writes.dbtest.ts tests/db/memberships.dbtest.ts tests/db/account-standing.dbtest.ts tests/db/compliance-reports.dbtest.ts tests/db/invitation-acceptance.dbtest.ts tests/db/project-scope-boundary.dbtest.ts tests/db/session-termination.dbtest.ts tests/db/users-rls.dbtest.ts server/mcp/__tests__/mcp-account-standing.dbtest.ts
+# tree: this item's changes applied; other lanes' uncommitted work (P0-4b sessions) also in the working tree; run 2026-10-01T13:58:11Z
+# 4 failures, none this item's: project-scope-boundary x2 = the IAM-20 owner/admin gate (9fbc9aa8) refusing the fixture's member token on /api/ana/platform/projects/:id, a route this item does not change; mcp-account-standing x2 = 'This session has ended' from P0-4b's in-flight sessions_ended_at work. See README.
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T13:58:15.235Z","pid":11489,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T13:58:15.238Z","pid":11489,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T13:58:15.238Z","pid":11489,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-10-01T13:58:15.598Z","pid":11489,"hostname":"vm","context":{"resource":"http://localhost:37411/mcp","issuer":"http://localhost:37411/","resourceMetadataUrl":"http://localhost:37411/.well-known/oauth-protected-resource/mcp"},"msg":"[mcp] Concept2Cure MCP connector mounted"}
+stdout | server/mcp/__tests__/mcp-account-standing.dbtest.ts
+[database] Database connection successful
+
+stdout | server/mcp/__tests__/mcp-account-standing.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T13:58:15.871Z', poolSize: 1 }
+
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 5ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > the posture is the one production runs in > the accounts are in the states the admin route and SCIM leave them in 2ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > its session opens /mcp, authorises a client, and the grant opens /mcp and refreshes 172ms
+{"level":30,"time":"2026-10-01T13:58:16.383Z","pid":11489,"hostname":"vm","context":{"userId":1669,"tenantId":355,"resourceId":"c2c_list_projects"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+stderr | server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > the grant runs a tool as the runtime role, not only the handshake
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > an account in use connects (the control every refusal below is read against) > the grant runs a tool as the runtime role, not only the handshake 349ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session no longer opens /mcp, and says why 8ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > suspended: the session cannot authorise a new client at the consent page, and is told why 10ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session no longer opens /mcp, and says why 9ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session the account held before it was taken out of use (finding #6) > deprovisioned: the session cannot authorise a new client at the consent page, and is told why 13ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session its holder signed out > no longer opens /mcp 5ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a session its holder signed out > cannot authorise a new client at the consent page 8ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is suspended: the access token, the refresh token and an unredeemed code 140ms
+ × server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is deprovisioned: the access token, the refresh token and an unredeemed code 19ms
+   → consent refused an account in use: {"error":"invalid_token","error_description":"This session has ended. Sign in again."}: expected 401 to be 302 // Object.is equality
+ × server/mcp/__tests__/mcp-account-standing.dbtest.ts > a password change ends the connector grants authorised before it > refuses the access token, the refresh token and an unredeemed code, says why, and a fresh sign-in connects again 12ms
+   → consent refused an account in use: {"error":"invalid_token","error_description":"This session has ended. Sign in again."}: expected 401 to be 302 // Object.is equality
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector token is not a platform session (IAM-02, P0-2 part a) > the first-party session opens both /api authenticators (control) 29ms
+ ✓ server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector token is not a platform session (IAM-02, P0-2 part a) > a token the connector issued for c2c:read opens neither 53ms
+{"level":30,"time":"2026-10-01T13:58:18.588Z","pid":11570,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T13:58:18.590Z","pid":11570,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T13:58:18.590Z","pid":11570,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/project-scope-boundary.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T13:58:19.374Z', poolSize: 1 }
+
+stdout | tests/db/project-scope-boundary.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/project-scope-boundary.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > a project intelligence profile cannot be filed against another tenant's project
+[database] Database connection successful { timestamp: '2026-10-01T13:58:20.316Z', poolSize: 2 }
+
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > a project intelligence profile cannot be filed against another tenant's project 104ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > another tenant's project intelligence profile cannot be read 15ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > the caller's own project profile is still written and read 42ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > another tenant's client memory entry cannot be archived 14ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > another tenant's client memory entry cannot be marked verified 11ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > the caller's own memory entry is still archived 11ms
+ × tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > AnA's project update cannot hang a project from another tenant's project or workspace 18ms
+   → expected 403 to be 200 // Object.is equality
+ × tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > AnA's project update cannot move a project to another tenant 16ms
+   → expected 403 to be 200 // Object.is equality
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > a resolution bundle cannot be linked to another tenant's plan 16ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > a resolution bundle is still linked to the caller's own plan 23ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > a corpus ingest cannot take over another org's report of the same study 20ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > a corpus re-ingest still updates the org's own report in place 18ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > /api/users/me refuses a password-only token awaiting its second factor 11ms
+ ✓ tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > /api/users/me still answers an access token 15ms
+{"level":30,"time":"2026-10-01T13:58:22.261Z","pid":11635,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T13:58:22.263Z","pid":11635,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T13:58:22.263Z","pid":11635,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/session-termination.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T13:58:22.396Z', poolSize: 1 }
+
+stdout | tests/db/session-termination.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/session-termination.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/session-termination.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/session-termination.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 1679
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 1680
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 1681
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 1682
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 1683
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 1684
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 1685
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 1686
+
+stdout | tests/db/session-termination.dbtest.ts
+[mfa] MFA enabled for user 1687
+
+{"level":30,"time":"2026-10-01T12:58:35.000Z","pid":11635,"hostname":"vm","context":{"userId":1679,"tenantId":93330,"resourceId":"1679"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T12:58:35.000Z","pid":11635,"hostname":"vm","context":{"userId":1679,"tenantId":"93330","resourceId":"1679"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T12:59:05.000Z","pid":11635,"hostname":"vm","context":{"userId":1679,"tenantId":93330,"resourceId":"1679"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T12:59:05.000Z","pid":11635,"hostname":"vm","context":{"userId":1679,"tenantId":"93330","resourceId":"1679"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T12:59:35.000Z","pid":11635,"hostname":"vm","context":{"userId":1679,"tenantId":93330,"resourceId":"1679"},"msg":"[audit-service] [AUDIT] user_password_changed user"}
+stdout | tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a change from one session ends the other, access and refresh, at every door including the enterprise one
+[database] Database connection successful { timestamp: '2026-10-01T12:59:35.000Z', poolSize: 2 }
+
+{"level":30,"time":"2026-10-01T13:00:05.000Z","pid":11635,"hostname":"vm","context":{"userId":1679,"tenantId":93330,"resourceId":"1679"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T13:00:05.000Z","pid":11635,"hostname":"vm","context":{"userId":1679,"tenantId":"93330","resourceId":"1679"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/session-termination.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 5ms
+ ✓ tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a change from one session ends the other, access and refresh, at every door including the enterprise one 1051ms
+{"level":30,"time":"2026-10-01T13:00:35.000Z","pid":11635,"hostname":"vm","context":{"userId":1680,"tenantId":93330,"resourceId":"1680"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T13:00:35.000Z","pid":11635,"hostname":"vm","context":{"userId":1680,"tenantId":"93330","resourceId":"1680"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T13:01:05.000Z","pid":11635,"hostname":"vm","context":{"userId":1680,"tenantId":93330,"resourceId":"1680"},"msg":"[audit-service] [AUDIT] user_password_changed user"}
+stdout | tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a reset by emailed token ends the sessions the account held
+{
+  "timestamp": "2026-10-01T13:01:05.000Z",
+  "level": "info",
+  "message": "[auth] Password reset completed",
+  "context": {
+    "userId": 1680
+  }
+}
+
+{"level":30,"time":"2026-10-01T13:01:35.000Z","pid":11635,"hostname":"vm","context":{"userId":1681,"tenantId":93330,"resourceId":"1681"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T13:01:35.000Z","pid":11635,"hostname":"vm","context":{"userId":1681,"tenantId":"93330","resourceId":"1681"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T13:02:05.000Z","pid":11635,"hostname":"vm","context":{"userId":1681,"tenantId":93330,"resourceId":"1681"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+ ✓ tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a reset by emailed token ends the sessions the account held 471ms
+{"level":30,"time":"2026-10-01T13:02:05.000Z","pid":11635,"hostname":"vm","context":{"userId":1681,"tenantId":"93330","resourceId":"1681"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T13:02:35.700Z","pid":11635,"hostname":"vm","context":{"userId":1681,"tenantId":93330,"resourceId":"1681"},"msg":"[audit-service] [AUDIT] user_password_changed user"}
+ ✓ tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a refresh token minted in the same second as the change, before it, mints nothing after it 509ms
+{"level":30,"time":"2026-10-01T13:03:05.000Z","pid":11635,"hostname":"vm","context":{"userId":1682,"tenantId":93330,"resourceId":"1682"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T13:03:05.000Z","pid":11635,"hostname":"vm","context":{"userId":1682,"tenantId":"93330","resourceId":"1682"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T13:03:35.000Z","pid":11635,"hostname":"vm","context":{"userId":1682,"tenantId":93330,"resourceId":"1682"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T13:03:35.000Z","pid":11635,"hostname":"vm","context":{"userId":1682,"tenantId":"93330","resourceId":"1682"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T13:04:05.000Z","pid":11635,"hostname":"vm","context":{"userId":1682,"tenantId":"93330","resourceId":"1682"},"msg":"[audit-service] [AUDIT] user_logout user"}
+{"level":30,"time":"2026-10-01T13:04:35.000Z","pid":11635,"hostname":"vm","context":{"userId":1682,"tenantId":93330,"resourceId":"1682"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T13:04:35.000Z","pid":11635,"hostname":"vm","context":{"userId":1682,"tenantId":"93330","resourceId":"1682"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/session-termination.dbtest.ts > (2) signing out everywhere ends every session of the account > logout with terminateAllSessions ends the other sessions, access and refresh, at every door 259ms
+{"level":30,"time":"2026-10-01T13:05:05.000Z","pid":11635,"hostname":"vm","context":{"userId":1683,"tenantId":93330,"resourceId":"1683"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T13:05:05.000Z","pid":11635,"hostname":"vm","context":{"userId":1683,"tenantId":"93330","resourceId":"1683"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T13:05:35.000Z","pid":11635,"hostname":"vm","context":{"userId":1683,"tenantId":93330,"resourceId":"1683"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T13:05:35.000Z","pid":11635,"hostname":"vm","context":{"userId":1683,"tenantId":"93330","resourceId":"1683"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T13:06:05.000Z","pid":11635,"hostname":"vm","context":{"userId":"1683","tenantId":"93330","resourceId":"1683"},"msg":"[audit-service] [AUDIT] user_logout user"}
+{"level":30,"time":"2026-10-01T13:06:35.000Z","pid":11635,"hostname":"vm","context":{"userId":1684,"tenantId":93330,"resourceId":"1684"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T13:06:35.000Z","pid":11635,"hostname":"vm","context":{"userId":1684,"tenantId":"93330","resourceId":"1684"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/session-termination.dbtest.ts > (2) signing out everywhere ends every session of the account > a sign-out everywhere from a session that has already ended ends nothing, and says so 124ms
+ ✓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a session suspended and then reactivated stays ended 94ms
+{"level":30,"time":"2026-10-01T13:07:05.000Z","pid":11635,"hostname":"vm","context":{"userId":1685,"tenantId":93330,"resourceId":"1685"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T13:07:05.000Z","pid":11635,"hostname":"vm","context":{"userId":1685,"tenantId":"93330","resourceId":"1685"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T14:09:05.000Z","pid":11635,"hostname":"vm","context":{"userId":1684,"tenantId":93330,"resourceId":"1684"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+ ✓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a session deprovisioned by the identity provider and then reactivated stays ended 74ms
+{"level":30,"time":"2026-10-01T14:09:05.000Z","pid":11635,"hostname":"vm","context":{"userId":1684,"tenantId":"93330","resourceId":"1684"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T14:09:35.000Z","pid":11635,"hostname":"vm","context":{"userId":1686,"tenantId":93330,"resourceId":"1686"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T14:09:35.000Z","pid":11635,"hostname":"vm","context":{"userId":1686,"tenantId":"93330","resourceId":"1686"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":40,"time":"2026-10-01T14:09:35.000Z","pid":11635,"hostname":"vm","context":{"userId":1686,"organizationId":93330},"msg":"[auth-middleware] Org membership revoked — rejecting authenticated request (fail-closed)"}
+ ✓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a reactivated account signs in afresh 56ms
+ ✓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a member removed from the organisation is refused at the next request and mints nothing 99ms
+{"level":30,"time":"2026-10-01T14:10:05.000Z","pid":11635,"hostname":"vm","context":{"userId":1687,"tenantId":93330,"resourceId":"1687"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T14:10:05.000Z","pid":11635,"hostname":"vm","context":{"userId":1687,"tenantId":"93330","resourceId":"1687"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/session-termination.dbtest.ts > (4) a role change is read on the next request > a demotion is the role the global gate, a router gate behind it, and every successor token carry 128ms
+ ✓ tests/db/session-termination.dbtest.ts > (5) the stamp itself (migrations/20261001_users_sessions_ended_at.sql, endEverySessionOf) > a confirmed sign-up ends nothing, leaving active stamps it, and no writer moves it backwards 16ms
+{"level":30,"time":"2026-10-01T13:58:28.943Z","pid":11652,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T13:58:28.944Z","pid":11652,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T13:58:28.944Z","pid":11652,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/account-standing.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T13:58:29.082Z', poolSize: 1 }
+
+stdout | tests/db/account-standing.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/account-standing.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/account-standing.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/account-standing.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 1689
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 1690
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 1691
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 1692
+
+{"level":30,"time":"2026-10-01T13:59:35.000Z","pid":11652,"hostname":"vm","context":{"userId":1689,"tenantId":92100,"resourceId":"1689"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T13:59:35.000Z","pid":11652,"hostname":"vm","context":{"userId":1689,"tenantId":"92100","resourceId":"1689"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/account-standing.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 5ms
+ ✓ tests/db/account-standing.dbtest.ts > the posture is the one production runs in > the accounts are in the states the admin route and SCIM leave them in 2ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > an active account signs 40ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a suspended account cannot sign, with the right password and code 3ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a guess against a suspended account is neither compared nor counted 4ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a deprovisioned account cannot sign 3ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > an active account signs in 149ms
+{"level":30,"time":"2026-10-01T13:59:35.000Z","pid":11652,"hostname":"vm","context":{"userId":1690,"tenantId":92100,"resourceId":"1690"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T13:59:35.000Z","pid":11652,"hostname":"vm","context":{"userId":1691,"tenantId":92100,"resourceId":"1691"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T14:00:05.000Z","pid":11652,"hostname":"vm","context":{"userId":1692,"tenantId":92100,"resourceId":"1692"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T14:00:05.000Z","pid":11652,"hostname":"vm","context":{"userId":1692,"tenantId":"92100","resourceId":"1692"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T14:00:35.000Z","pid":11652,"hostname":"vm","context":{"userId":1692,"tenantId":92100,"resourceId":"1692"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > a suspended account is refused at the password, and no challenge is issued 24ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > a deprovisioned account is refused at the password, and no challenge is issued 18ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > a challenge issued before the suspension does not become a session after it 42ms
+{"level":30,"time":"2026-10-01T14:00:35.000Z","pid":11652,"hostname":"vm","context":{"userId":1692,"tenantId":"92100","resourceId":"1692"},"msg":"[audit-service] [AUDIT] user_login user"}
+stdout | tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > ends at the gate once the account is suspended, and says why
+[database] Database connection successful { timestamp: '2026-10-01T14:00:35.000Z', poolSize: 2 }
+
+ ✓ tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > ends at the gate once the account is suspended, and says why 144ms
+{"level":30,"time":"2026-10-01T14:01:05.000Z","pid":11652,"hostname":"vm","context":{"userId":1692,"tenantId":92100,"resourceId":"1692"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T14:01:05.000Z","pid":11652,"hostname":"vm","context":{"userId":1692,"tenantId":"92100","resourceId":"1692"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T14:01:35.000Z","pid":11652,"hostname":"vm","context":{"userId":1692,"tenantId":92100,"resourceId":"1692"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T14:01:35.000Z","pid":11652,"hostname":"vm","context":{"userId":1692,"tenantId":"92100","resourceId":"1692"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > ends once the identity provider deprovisions the account 93ms
+ ✓ tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > works again when the account is reactivated 104ms
+{"level":30,"time":"2026-10-01T13:58:31.951Z","pid":11701,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T13:58:31.953Z","pid":11701,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T13:58:31.953Z","pid":11701,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/memberships.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/memberships.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/memberships.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/memberships.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > positive control: the route admits A into its own organization
+[database] Database connection successful { timestamp: '2026-10-01T13:58:32.652Z', poolSize: 1 }
+
+{"level":40,"time":"2026-10-01T13:58:32.708Z","pid":11701,"hostname":"vm","context":{"userId":1693,"organizationId":90302},"msg":"[auth-middleware] Org membership revoked — rejecting authenticated request (fail-closed)"}
+{"level":40,"time":"2026-10-01T13:58:32.708Z","pid":11701,"hostname":"vm","context":{"method":"GET","path":"/api/organizations/90302","statusCode":403},"msg":"[auth-boundary] Unauthenticated request passed through auth boundary (mode=warn). This route would be rejected in enforce mode."}
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > positive control: the route admits A into its own organization 80ms
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > cannot place its user in B, so the gate never admits a token for B 29ms
+stdout | tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > self-serve signup gives the new organization its first admin
+{
+  "timestamp": "2026-10-01T13:58:33.273Z",
+  "level": "info",
+  "message": "[launch-scope] launch catalog provisioned",
+  "context": {
+    "organizationId": 356,
+    "granted": 20
+  }
+}
+
+{"level":30,"time":"2026-10-01T13:58:33.279Z","pid":11701,"hostname":"vm","context":{"userId":1699,"tenantId":356,"resourceId":"1699"},"msg":"[audit-service] [AUDIT] user_signup user"}
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > cannot change or remove B's members 12ms
+ ✓ tests/db/memberships.dbtest.ts > no tenant can mint a platform-staff role, not even in its own organization (D3) > its own member cannot be made super_admin, platform_admin or app_super_admin 16ms
+ ✓ tests/db/memberships.dbtest.ts > the legitimate writers still write (D3) > an organization manages its own members' ordinary roles 14ms
+ ✓ tests/db/memberships.dbtest.ts > the legitimate writers still write (D3) > the platform scope writes any organization, staff roles included 7ms
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > self-serve signup gives the new organization its first admin 784ms
+stdout | tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into
+[database] Database connection successful { timestamp: '2026-10-01T13:58:33.651Z', poolSize: 2 }
+
+stderr | tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into
+{
+  "timestamp": "2026-10-01T13:58:33.685Z",
+  "level": "warn",
+  "message": "[email-service] SMTP not configured — invitation email not sent",
+  "context": {
+    "to": "w***@example.invalid"
+  }
+}
+
+{"level":30,"time":"2026-10-01T13:58:33.686Z","pid":11701,"hostname":"vm","context":{"userId":1698,"tenantId":90302,"resourceId":"1700"},"msg":"[audit-service] [AUDIT] user_invited user"}
+{"level":50,"time":"2026-10-01T13:58:33.696Z","pid":11701,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)\n    at issueInvitation (/home/user/ClinicalSageAI-2-replit/server/services/tenant/invitation-delivery.ts:114:17)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/tenant-users.ts:512:22"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+stderr | tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into
+{
+  "timestamp": "2026-10-01T13:58:33.698Z",
+  "level": "warn",
+  "message": "[tenant-users] Audit log write failed (non-fatal)",
+  "context": {
+    "action": "user_invited",
+    "err": "new row violates row-level security policy for table \"audit_logs\""
+  }
+}
+
+{"level":50,"time":"2026-10-01T13:58:33.697Z","pid":11701,"hostname":"vm","context":{"error":"retrieval refused: tenant 90302 was requested inside tenant 90301's session","stack":"TenantScopeMismatchError: retrieval refused: tenant 90302 was requested inside tenant 90301's session\n    at assertTenantIsCurrent (/home/user/ClinicalSageAI-2-replit/server/db/currentTenant.ts:101:11)\n    at resolveAuditOrganization (/home/user/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:323:9)\n    at TamperProofAuditLog.log (/home/user/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:469:34)\n    at AuditService.logAction (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:473:21)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at issueInvitation (/home/user/ClinicalSageAI-2-replit/server/services/tenant/invitation-delivery.ts:114:17)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/tenant-users.ts:512:22"},"msg":"[audit-service] Failed to write tamper-proof audit entry"}
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > a member sets their own persona (a write to their own membership row) 28ms
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into 243ms
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations changes a member's role in the one they are not signed into 44ms
+{"level":30,"time":"2026-10-01T13:58:35.201Z","pid":11794,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T13:58:35.202Z","pid":11794,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T13:58:35.202Z","pid":11794,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/compliance-reports.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > a member who is not an audit reader is refused before anything is read
+[database] Database connection successful
+
+stdout | tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > a member who is not an audit reader is refused before anything is read
+[database] Database connection successful { timestamp: '2026-10-01T13:58:35.847Z', poolSize: 1 }
+
+stdout | tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > a member who is not an audit reader is refused before anything is read
+[database] Database connection successful { timestamp: '2026-10-01T13:58:35.848Z', poolSize: 2 }
+
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > a member who is not an audit reader is refused before anything is read 118ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > access-review runs as organisation A, verifies, and carries only A rows 44ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > authentication-events runs as organisation A, verifies, and carries only A rows 27ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > administrative-changes runs as organisation A, verifies, and carries only A rows 36ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > electronic-signatures runs as organisation A, verifies, and carries only A rows 27ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > audit-trail-integrity runs as organisation A, verifies, and carries only A rows 59ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > retention-legal-holds runs as organisation A, verifies, and carries only A rows 47ms
+ ✓ tests/db/compliance-reports.dbtest.ts > compliance reports on a real database, as app_service with RLS enforcing > controlled-documents runs as organisation A, verifies, and carries only A rows 45ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > access review: A members only, with the last sign-in read from the sign-in audit row 22ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > sign-in events and administrative changes: A rows are there, B rows are not 38ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > signature register: the A fixture signature, never the B one 14ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > retention and holds: the vault is reached under its own policy, A hold and disposition only 17ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > with no organisation UUID in the session scope (the degraded membership path), the vault is still read as A, not read as empty 8ms
+ ✓ tests/db/compliance-reports.dbtest.ts > each report as organisation A, section by section > controlled documents: the A document only 20ms
+ ✓ tests/db/compliance-reports.dbtest.ts > administrator changes, as their writers record them, appear in the administrative changes report (P1-41) > a role change, a removal and a security settings change each appear, with what changed and why 135ms
+ ✓ tests/db/compliance-reports.dbtest.ts > the integrity attestation and the record of a run > integrity attestation: A's stores counted as the owner counts them, and each check a stated verdict 25ms
+ ✓ tests/db/compliance-reports.dbtest.ts > the integrity attestation and the record of a run > each run writes exactly one compliance.report_run row on A's chain, and none on B's 21ms
+{"level":30,"time":"2026-10-01T13:58:38.011Z","pid":11813,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T13:58:38.014Z","pid":11813,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T13:58:38.014Z","pid":11813,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/users-rls.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/users-rls.dbtest.ts > tenant A's scope cannot reach tenant B's users (D3) > reads none of B's user rows, by id, by email, or by scanning 10ms
+ ✓ tests/db/users-rls.dbtest.ts > tenant A's scope cannot reach tenant B's users (D3) > cannot rewrite B's password hash, MFA secret or reset token, nor delete B's user 5ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > reads its own organization's members, the caller included 3ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > updates its own member's profile 6ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > INSERT … RETURNING of a non-member is refused, so tenant-users takes the id first 7ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > user_id_for_email answers an existing account’s id, and nothing else 3ms
+ ✓ tests/db/users-rls.dbtest.ts > the tenant-less scopes keep the whole table (D3) > pre-auth: the sign-in lookup by email finds any tenant’s user, and writes it 6ms
+ ✓ tests/db/users-rls.dbtest.ts > the tenant-less scopes keep the whole table (D3) > system: SCIM and platform administration read and write every tenant’s users 6ms
+stdout | tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account
+[database] Database connection successful
+
+stdout | tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account
+[database] Database connection successful { timestamp: '2026-10-01T13:58:38.516Z', poolSize: 1 }
+
+stdout | tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account
+[database] Database connection successful { timestamp: '2026-10-01T13:58:38.517Z', poolSize: 2 }
+
+{"level":30,"time":"2026-10-01T13:58:38.589Z","pid":11813,"hostname":"vm","context":{"userId":1722,"tenantId":90301,"resourceId":"1724"},"msg":"[audit-service] [AUDIT] user_invited user"}
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account 384ms
+{"level":30,"time":"2026-10-01T13:58:38.875Z","pid":11813,"hostname":"vm","context":{"userId":1722,"tenantId":90302,"resourceId":"1725"},"msg":"[audit-service] [AUDIT] user_invited user"}
+{"level":50,"time":"2026-10-01T13:58:38.887Z","pid":11813,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:304:3)\n    at AuditService.logAction (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:438:11)\n    at issueInvitation (/home/user/ClinicalSageAI-2-replit/server/services/tenant/invitation-delivery.ts:114:17)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/tenant-users.ts:512:22"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+stderr | tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator of both organizations lists and invites into the one they are not signed into
+{
+  "timestamp": "2026-10-01T13:58:38.889Z",
+  "level": "warn",
+  "message": "[tenant-users] Audit log write failed (non-fatal)",
+  "context": {
+    "action": "user_invited",
+    "err": "new row violates row-level security policy for table \"audit_logs\""
+  }
+}
+
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > adding another tenant's account asks for its consent instead of failing or duplicating it 32ms
+{"level":50,"time":"2026-10-01T13:58:38.889Z","pid":11813,"hostname":"vm","context":{"error":"retrieval refused: tenant 90302 was requested inside tenant 90301's session","stack":"TenantScopeMismatchError: retrieval refused: tenant 90302 was requested inside tenant 90301's session\n    at assertTenantIsCurrent (/home/user/ClinicalSageAI-2-replit/server/db/currentTenant.ts:101:11)\n    at resolveAuditOrganization (/home/user/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:323:9)\n    at TamperProofAuditLog.log (/home/user/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts:469:34)\n    at AuditService.logAction (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:473:21)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at issueInvitation (/home/user/ClinicalSageAI-2-replit/server/services/tenant/invitation-delivery.ts:114:17)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/tenant-users.ts:512:22"},"msg":"[audit-service] Failed to write tamper-proof audit entry"}
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator of both organizations lists and invites into the one they are not signed into 203ms
+{"level":30,"time":"2026-10-01T13:58:40.576Z","pid":11898,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T13:58:40.578Z","pid":11898,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T13:58:40.578Z","pid":11898,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/admin-change-audit.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > without a reason: 400, the role unchanged, nothing recorded
+[database] Database connection successful
+
+stdout | tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > without a reason: 400, the role unchanged, nothing recorded
+[database] Database connection successful { timestamp: '2026-10-01T13:58:40.913Z', poolSize: 1 }
+
+stdout | tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > without a reason: 400, the role unchanged, nothing recorded
+[database] Database connection successful { timestamp: '2026-10-01T13:58:40.916Z', poolSize: 2 }
+
+stderr | tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > when its audit row cannot be written, the role change is rolled back
+{
+  "timestamp": "2026-10-01T13:58:40.961Z",
+  "level": "error",
+  "message": "[tenant-users] Error updating user role:",
+  "context": {}
+}
+
+ ✓ tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > without a reason: 400, the role unchanged, nothing recorded 105ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > when its audit row cannot be written, the role change is rolled back 18ms
+stderr | tests/db/admin-change-audit.dbtest.ts > a member's removal (DP-49) > when its audit row cannot be written, the member stays
+{
+  "timestamp": "2026-10-01T13:58:41.004Z",
+  "level": "error",
+  "message": "[tenant-users] Error removing user from organization:",
+  "context": {}
+}
+
+ ✓ tests/db/admin-change-audit.dbtest.ts > a member's role change (DP-49) > writes exactly one chained row on the organisation's chain, with the roles, the member and the reason 25ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a member's removal (DP-49) > when its audit row cannot be written, the member stays 18ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a member's removal (DP-49) > writes one chained row with the role the member held 23ms
+{"level":50,"time":"2026-10-01T13:58:41.089Z","pid":11898,"hostname":"vm","context":{"error":"probe: the audit store refused the row","stack":"Error: probe: the audit store refused the row\n    at writeChainedAuditRow (/home/user/ClinicalSageAI-2-replit/tests/db/admin-change-audit.dbtest.ts:28:36)\n    at writeTenantSettings (/home/user/ClinicalSageAI-2-replit/server/services/tenant/tenant-settings-writer.ts:114:11)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/tenant-config.ts:387:22"},"msg":"[tenant-config-api] Error updating security settings for tenant 90301"}
+ ✓ tests/db/admin-change-audit.dbtest.ts > a tenant configuration change (DP-57) > when its audit row cannot be written, the settings stay as they were 63ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a tenant configuration change (DP-57) > a security change writes one chained row with the values before and after 86ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a tenant configuration change (DP-57) > a notifications change names the webhook field and never records its address 52ms
+ ✓ tests/db/admin-change-audit.dbtest.ts > a tenant configuration change (DP-57) > a reset writes one tenant_settings_reset row with the retention values 42ms
+{"level":30,"time":"2026-10-01T13:58:42.759Z","pid":11972,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T13:58:42.761Z","pid":11972,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T13:58:42.761Z","pid":11972,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/role-config-change-audit.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":50,"time":"2026-10-01T13:58:43.065Z","pid":11972,"hostname":"vm","context":{"error":"probe: the audit store refused the row","stack":"Error: probe: the audit store refused the row\n    at writeChainedAuditRow (/home/user/ClinicalSageAI-2-replit/tests/db/role-config-change-audit.dbtest.ts:36:38)\n    at recordMembershipChange (/home/user/ClinicalSageAI-2-replit/server/services/tenant/membership-change.ts:53:9)\n    at changeMemberRole (/home/user/ClinicalSageAI-2-replit/server/services/tenant/membership-change.ts:96:9)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:1078:27\n    at Module.transaction (/home/user/ClinicalSageAI-2-replit/server/db/runtime.ts:199:20)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:1069:21"},"msg":"[scim] SCIM patch group failed"}
+{"level":50,"time":"2026-10-01T13:58:43.168Z","pid":11972,"hostname":"vm","context":{"error":"probe: the audit store refused the event","stack":"Error: probe: the audit store refused the event\n    at refusal (/home/user/ClinicalSageAI-2-replit/tests/db/role-config-change-audit.dbtest.ts:44:40)\n    at Object.query (/home/user/ClinicalSageAI-2-replit/tests/db/role-config-change-audit.dbtest.ts:51:74)\n    at auditScim (/home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:310:16)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:930:15\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at Module.transaction (/home/user/ClinicalSageAI-2-replit/server/db/runtime.ts:199:20)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:926:5"},"msg":"[scim] SCIM delete user failed"}
+ ✓ tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > when its audit row cannot be written, the role stays as it was 59ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > an added member: one chained row on the organisation's chain, written by the change's own transaction 29ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > a member already in the group: nothing changes, nothing is recorded 11ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > a removed member is set to member, with the role it held recorded 20ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > a role change through a SCIM group (DP-58) > removal from a group the member is not in changes nothing and records nothing 15ms
+{"level":50,"time":"2026-10-01T13:58:43.208Z","pid":11972,"hostname":"vm","context":{"error":"probe: the audit store refused the event","stack":"Error: probe: the audit store refused the event\n    at refusal (/home/user/ClinicalSageAI-2-replit/tests/db/role-config-change-audit.dbtest.ts:44:40)\n    at Object.query (/home/user/ClinicalSageAI-2-replit/tests/db/role-config-change-audit.dbtest.ts:51:74)\n    at auditScim (/home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:310:16)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:734:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at Module.transaction (/home/user/ClinicalSageAI-2-replit/server/db/runtime.ts:199:20)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:727:7"},"msg":"[scim] SCIM replace user failed"}
+{"level":50,"time":"2026-10-01T13:58:43.240Z","pid":11972,"hostname":"vm","context":{"error":"probe: the audit store refused the event","stack":"Error: probe: the audit store refused the event\n    at refusal (/home/user/ClinicalSageAI-2-replit/tests/db/role-config-change-audit.dbtest.ts:44:40)\n    at Object.query (/home/user/ClinicalSageAI-2-replit/tests/db/role-config-change-audit.dbtest.ts:51:74)\n    at auditScim (/home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:310:16)\n    at removeMembership (/home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:427:9)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at Module.transaction (/home/user/ClinicalSageAI-2-replit/server/db/runtime.ts:199:20)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:875:11"},"msg":"[scim] SCIM patch user failed"}
+{"level":50,"time":"2026-10-01T13:58:43.271Z","pid":11972,"hostname":"vm","context":{"error":"probe: the audit store refused the event","stack":"Error: probe: the audit store refused the event\n    at refusal (/home/user/ClinicalSageAI-2-replit/tests/db/role-config-change-audit.dbtest.ts:44:40)\n    at Object.query (/home/user/ClinicalSageAI-2-replit/tests/db/role-config-change-audit.dbtest.ts:51:74)\n    at auditScim (/home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:310:16)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:670:13\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at Module.transaction (/home/user/ClinicalSageAI-2-replit/server/db/runtime.ts:199:20)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/scim.ts:638:21"},"msg":"[scim] SCIM create user failed"}
+ ✓ tests/db/role-config-change-audit.dbtest.ts > SCIM account writes record their event in the same transaction (auditScim) > DELETE: a refused event leaves the account active; otherwise status and event share a transaction 35ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > SCIM account writes record their event in the same transaction (auditScim) > PUT active=false: a refused event leaves the account active 39ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > SCIM account writes record their event in the same transaction (auditScim) > PATCH active=false on a shared account: a refused event leaves this organisation's membership 31ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > SCIM account writes record their event in the same transaction (auditScim) > POST: a refused event provisions nobody; otherwise membership and event share a transaction 27ms
+stdout | tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > when its audit row cannot be written, the settings stay as they were
+[database] Database connection successful
+
+stdout | tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > when its audit row cannot be written, the settings stay as they were
+[database] Database connection successful { timestamp: '2026-10-01T13:58:43.336Z', poolSize: 1 }
+
+stdout | tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > when its audit row cannot be written, the settings stay as they were
+[database] Database connection successful { timestamp: '2026-10-01T13:58:43.338Z', poolSize: 2 }
+
+{"level":50,"time":"2026-10-01T13:58:43.379Z","pid":11972,"hostname":"vm","context":{"error":"probe: the audit store refused the row","stack":"Error: probe: the audit store refused the row\n    at writeChainedAuditRow (/home/user/ClinicalSageAI-2-replit/tests/db/role-config-change-audit.dbtest.ts:36:38)\n    at writeTenantSettings (/home/user/ClinicalSageAI-2-replit/server/services/tenant/tenant-settings-writer.ts:114:11)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at AnaPlatformController.writeSettings (/home/user/ClinicalSageAI-2-replit/server/services/ana-platform-controller.ts:255:20)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/ana-platform-control.ts:94:20"},"msg":"[ana-platform-control] AnA platform update_settings failed"}
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > when its audit row cannot be written, the settings stay as they were 95ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > a settings change writes the record the tenant configuration route writes, and keeps what it does not name 101ms
+ ✓ tests/db/role-config-change-audit.dbtest.ts > the AnA platform controller writes settings through the tenant settings writer (DP-58) > a module toggle is recorded by the same writer 37ms
+{"level":30,"time":"2026-10-01T13:58:45.300Z","pid":12012,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T13:58:45.302Z","pid":12012,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T13:58:45.303Z","pid":12012,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/invitation-acceptance.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/invitation-acceptance.dbtest.ts > the invitee, signed into their own organization (D3) > sees the invitation to the other organization
+[database] Database connection successful { timestamp: '2026-10-01T13:58:45.680Z', poolSize: 1 }
+
+stdout | tests/db/invitation-acceptance.dbtest.ts > the invitee, signed into their own organization (D3) > sees the invitation to the other organization
+[database] Database connection successful
+
+stdout | tests/db/invitation-acceptance.dbtest.ts > the invitee, signed into their own organization (D3) > sees the invitation to the other organization
+[database] Database connection successful { timestamp: '2026-10-01T13:58:45.687Z', poolSize: 2 }
+
+ ✓ tests/db/invitation-acceptance.dbtest.ts > the invitee, signed into their own organization (D3) > sees the invitation to the other organization 184ms
+ ✓ tests/db/invitation-acceptance.dbtest.ts > the invitee, signed into their own organization (D3) > accepts it: the membership is written, and the token for B is then admitted 82ms
+ ✓ tests/db/invitation-acceptance.dbtest.ts > the invitee, signed into their own organization (D3) > declines it: no membership, the invitation kept as declined 35ms
+ ✓ tests/db/invitation-acceptance.dbtest.ts > nobody else can see or answer it (D3) > another member of A cannot see, accept or decline an invitation that is not theirs 59ms
+ ✓ tests/db/invitation-acceptance.dbtest.ts > nobody else can see or answer it (D3) > the lookup answers only about the calling organization's own members 23ms
+ ✓ tests/db/invitation-acceptance.dbtest.ts > nobody else can see or answer it (D3) > B's scope reads none of A's invitations directly (the table's own policy, unchanged) 5ms
+{"level":30,"time":"2026-10-01T13:58:47.334Z","pid":12079,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T13:58:47.336Z","pid":12079,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T13:58:47.336Z","pid":12079,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/organizations-writes.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > an org admin still updates its own organization's settings
+[database] Database connection successful
+
+stdout | tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > an org admin still updates its own organization's settings
+[database] Database connection successful { timestamp: '2026-10-01T13:58:47.666Z', poolSize: 1 }
+
+{"level":30,"time":"2026-10-01T13:58:47.705Z","pid":12079,"hostname":"vm","context":{"userId":1750,"tenantId":90301,"resourceId":"90301"},"msg":"[audit-service] [AUDIT] data_modify organization_settings"}
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > a tenant scope cannot write another organization at the database 5ms
+{"level":20,"time":"2026-10-01T13:58:47.772Z","pid":12079,"hostname":"vm","context":{"caller":"system:PATCH /api/organizations/90302/settings"},"msg":"[establish-tenant-scope] Nesting system scope over an existing request scope"}
+{"level":30,"time":"2026-10-01T13:58:47.780Z","pid":12079,"hostname":"vm","context":{"userId":1749,"tenantId":90302,"resourceId":"90302"},"msg":"[audit-service] [AUDIT] data_modify organization_settings"}
+{"level":20,"time":"2026-10-01T13:58:47.820Z","pid":12079,"hostname":"vm","context":{"caller":"system:PATCH /api/organizations/90302/profile"},"msg":"[establish-tenant-scope] Nesting system scope over an existing request scope"}
+{"level":30,"time":"2026-10-01T13:58:47.829Z","pid":12079,"hostname":"vm","context":{"userId":1749,"tenantId":90302,"resourceId":"90302"},"msg":"[audit-service] [AUDIT] data_modify organization"}
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > an org admin still updates its own organization's settings 118ms
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > an org admin still cannot touch another organization's settings 20ms
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > platform staff edit another organization's settings, and the change is really there 46ms
+{"level":20,"time":"2026-10-01T13:58:47.861Z","pid":12079,"hostname":"vm","context":{"caller":"system:PATCH /api/tenant-config/90302/settings"},"msg":"[establish-tenant-scope] Nesting system scope over an existing request scope"}
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > platform staff edit another organization's profile 47ms
+ ✓ tests/db/organizations-writes.dbtest.ts > an organization's row is written by that organization or the platform (D3) > platform staff update another tenant's configuration through tenant-config 49ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > AnA's project update cannot hang a project from another tenant's project or workspace
+AssertionError: expected 403 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 403
+
+ ❯ tests/db/project-scope-boundary.dbtest.ts:325:24
+    323|       "tenant A's project must not point at tenant B's workspace or pr…
+    324|     ).toEqual({ client_workspace_id: workspaceA, parent_project_id: nu…
+    325|     expect(res.status).toBe(200);
+       |                        ^
+    326|     expect(row.description, 'the configuration the update may write is…
+    327|       `${TAG} reconfigured`
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/db/project-scope-boundary.dbtest.ts > A project-scoped request acts on the caller's own project, plan and session (D3, L195) > AnA's project update cannot move a project to another tenant
+AssertionError: expected 403 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 403
+
+ ❯ tests/db/project-scope-boundary.dbtest.ts:338:24
+    336|     const row = await one('SELECT organization_id, description FROM pr…
+    337|     expect(row.organization_id, "tenant A's project must stay in tenan…
+    338|     expect(res.status).toBe(200);
+       |                        ^
+    339|     expect(row.description).toBe(`${TAG} moved?`);
+    340|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/mcp/__tests__/mcp-account-standing.dbtest.ts > a connector grant made while the account was in use > ends when the account is deprovisioned: the access token, the refresh token and an unredeemed code
+AssertionError: consent refused an account in use: {"error":"invalid_token","error_description":"This session has ended. Sign in again."}: expected 401 to be 302 // Object.is equality
+
+- Expected
++ Received
+
+- 302
++ 401
+
+ ❯ codeFor server/mcp/__tests__/mcp-account-standing.dbtest.ts:164:75
+    162|   const { verifier, challenge } = pkce();
+    163|   const c = await consent(await authorize(challenge), m.session);
+    164|   expect(c.status, `consent refused an account in use: ${shown(c.body)…
+       |                                                                           ^
+    165|   expect(c.code).toBeTruthy();
+    166|   return { code: c.code!, verifier };
+ ❯ grant server/mcp/__tests__/mcp-account-standing.dbtest.ts:171:30
+ ❯ server/mcp/__tests__/mcp-account-standing.dbtest.ts:471:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/mcp/__tests__/mcp-account-standing.dbtest.ts > a password change ends the connector grants authorised before it > refuses the access token, the refresh token and an unredeemed code, says why, and a fresh sign-in connects again
+AssertionError: consent refused an account in use: {"error":"invalid_token","error_description":"This session has ended. Sign in again."}: expected 401 to be 302 // Object.is equality
+
+- Expected
++ Received
+
+- 302
++ 401
+
+ ❯ codeFor server/mcp/__tests__/mcp-account-standing.dbtest.ts:164:75
+    162|   const { verifier, challenge } = pkce();
+    163|   const c = await consent(await authorize(challenge), m.session);
+    164|   expect(c.status, `consent refused an account in use: ${shown(c.body)…
+       |                                                                           ^
+    165|   expect(c.code).toBeTruthy();
+    166|   return { code: c.code!, verifier };
+ ❯ grant server/mcp/__tests__/mcp-account-standing.dbtest.ts:171:30
+ ❯ server/mcp/__tests__/mcp-account-standing.dbtest.ts:522:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed | 9 passed (11)
+      Tests  4 failed | 121 passed (125)
+   Start at  13:58:12
+   Duration  36.08s (transform 4.08s, setup 484ms, import 11.72s, tests 21.69s, environment 1ms)
+

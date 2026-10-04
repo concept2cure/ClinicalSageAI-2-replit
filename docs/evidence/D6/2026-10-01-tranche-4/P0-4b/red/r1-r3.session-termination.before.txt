@@ -1,0 +1,121 @@
+# tests/db/session-termination.dbtest.ts with the R1 and R3 cases, against the code BEFORE the R1/R3 change (role fix of item 2 in place). Run 2026-10-01T14:01:17Z
+ ✓ tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a reset by emailed token ends the sessions the account held 438ms
+{"level":30,"time":"2026-10-01T13:05:35.700Z","pid":14304,"hostname":"vm","context":{"userId":1769,"tenantId":93330,"resourceId":"1769"},"msg":"[audit-service] [AUDIT] user_password_changed user"}
+ ✓ tests/db/session-termination.dbtest.ts > (1) a password change or reset ends every other session at its next request > a refresh token minted in the same second as the change, before it, mints nothing after it 482ms
+{"level":30,"time":"2026-10-01T13:06:05.000Z","pid":14304,"hostname":"vm","context":{"userId":1770,"tenantId":93330,"resourceId":"1770"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T13:06:05.000Z","pid":14304,"hostname":"vm","context":{"userId":1770,"tenantId":"93330","resourceId":"1770"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T13:06:35.000Z","pid":14304,"hostname":"vm","context":{"userId":1770,"tenantId":93330,"resourceId":"1770"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T13:06:35.000Z","pid":14304,"hostname":"vm","context":{"userId":1770,"tenantId":"93330","resourceId":"1770"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T13:07:05.000Z","pid":14304,"hostname":"vm","context":{"userId":1770,"tenantId":"93330","resourceId":"1770"},"msg":"[audit-service] [AUDIT] user_logout user"}
+{"level":30,"time":"2026-10-01T13:07:35.000Z","pid":14304,"hostname":"vm","context":{"userId":1770,"tenantId":93330,"resourceId":"1770"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T13:07:35.000Z","pid":14304,"hostname":"vm","context":{"userId":1770,"tenantId":"93330","resourceId":"1770"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/session-termination.dbtest.ts > (2) signing out everywhere ends every session of the account > logout with terminateAllSessions ends the other sessions, access and refresh, at every door 225ms
+{"level":30,"time":"2026-10-01T13:08:05.000Z","pid":14304,"hostname":"vm","context":{"userId":1771,"tenantId":93330,"resourceId":"1771"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T13:08:05.000Z","pid":14304,"hostname":"vm","context":{"userId":1771,"tenantId":"93330","resourceId":"1771"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T13:08:35.000Z","pid":14304,"hostname":"vm","context":{"userId":1771,"tenantId":93330,"resourceId":"1771"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T13:08:35.000Z","pid":14304,"hostname":"vm","context":{"userId":1771,"tenantId":"93330","resourceId":"1771"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T13:09:05.000Z","pid":14304,"hostname":"vm","context":{"userId":"1771","tenantId":"93330","resourceId":"1771"},"msg":"[audit-service] [AUDIT] user_logout user"}
+ ✓ tests/db/session-termination.dbtest.ts > (2) signing out everywhere ends every session of the account > a sign-out everywhere from a session that has already ended ends nothing, and says so 115ms
+{"level":30,"time":"2026-10-01T13:09:35.000Z","pid":14304,"hostname":"vm","context":{"userId":1772,"tenantId":93330,"resourceId":"1772"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T13:09:35.000Z","pid":14304,"hostname":"vm","context":{"userId":1772,"tenantId":"93330","resourceId":"1772"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T13:10:05.000Z","pid":14304,"hostname":"vm","context":{"userId":1773,"tenantId":93330,"resourceId":"1773"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+ ✓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a session suspended and then reactivated stays ended 82ms
+{"level":30,"time":"2026-10-01T13:10:05.000Z","pid":14304,"hostname":"vm","context":{"userId":1773,"tenantId":"93330","resourceId":"1773"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T14:12:05.000Z","pid":14304,"hostname":"vm","context":{"userId":1772,"tenantId":93330,"resourceId":"1772"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T14:12:05.000Z","pid":14304,"hostname":"vm","context":{"userId":1772,"tenantId":"93330","resourceId":"1772"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a session deprovisioned by the identity provider and then reactivated stays ended 82ms
+ ✓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a reactivated account signs in afresh 66ms
+{"level":30,"time":"2026-10-01T14:12:35.000Z","pid":14304,"hostname":"vm","context":{"userId":1774,"tenantId":93330,"resourceId":"1774"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T14:12:35.000Z","pid":14304,"hostname":"vm","context":{"userId":1774,"tenantId":"93330","resourceId":"1774"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":40,"time":"2026-10-01T14:12:35.000Z","pid":14304,"hostname":"vm","context":{"userId":1774,"organizationId":93330},"msg":"[auth-middleware] Org membership revoked — rejecting authenticated request (fail-closed)"}
+{"level":30,"time":"2026-10-01T14:13:05.000Z","pid":14304,"hostname":"vm","context":{"userId":1776,"tenantId":93330,"resourceId":"1776"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T14:13:05.000Z","pid":14304,"hostname":"vm","context":{"userId":1776,"tenantId":"93330","resourceId":"1776"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a member removed from the organisation is refused at the next request and mints nothing 99ms
+{"level":30,"time":"2026-10-01T14:14:05.000Z","pid":14304,"hostname":"vm","context":{"userId":1775,"tenantId":93330,"resourceId":"1775"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T14:14:05.000Z","pid":14304,"hostname":"vm","context":{"userId":1775,"tenantId":"93330","resourceId":"1775"},"msg":"[audit-service] [AUDIT] user_login user"}
+ × tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a member removed and re-added holds nothing from before: the session is over at every door, and they sign in again (R1) 107ms
+   → a session held across a removal and a re-add: the /api gate still admitted it: {"userId":1776,"role":"admin"}: expected 200 to be 401 // Object.is equality
+ ✓ tests/db/session-termination.dbtest.ts > (4) a role change is read on the next request > a demotion is the role the global gate, a router gate behind it, and every successor token carry 132ms
+{"level":30,"time":"2026-10-01T14:14:35.000Z","pid":14304,"hostname":"vm","context":{"userId":1777,"tenantId":93330,"resourceId":"1777"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T14:14:35.000Z","pid":14304,"hostname":"vm","context":{"userId":1777,"tenantId":"93330","resourceId":"1777"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T14:15:05.100Z","pid":14304,"hostname":"vm","context":{"userId":1777,"tenantId":93330,"resourceId":"1777"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T14:15:05.100Z","pid":14304,"hostname":"vm","context":{"userId":1777,"tenantId":"93330","resourceId":"1777"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T14:15:05.600Z","pid":14304,"hostname":"vm","context":{"userId":1777,"tenantId":93330,"resourceId":"1777"},"msg":"[audit-service] [AUDIT] user_password_changed user"}
+{"level":30,"time":"2026-10-01T14:15:35.000Z","pid":14304,"hostname":"vm","context":{"userId":1778,"tenantId":93330,"resourceId":"1778"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T14:15:35.000Z","pid":14304,"hostname":"vm","context":{"userId":1778,"tenantId":"93330","resourceId":"1778"},"msg":"[audit-service] [AUDIT] user_login user"}
+ × tests/db/session-termination.dbtest.ts > (6) the second a password change lands in (R3) > a session begun in the same second as the change, before it, is over at every door 496ms
+   → a session begun in the second of the password change, before it: the /api gate still admitted it: {"userId":1777,"role":"admin"}: expected 200 to be 401 // Object.is equality
+{"level":30,"time":"2026-10-01T14:16:05.000Z","pid":14304,"hostname":"vm","context":{"userId":1778,"tenantId":93330,"resourceId":"1778"},"msg":"[audit-service] [AUDIT] user_password_changed user"}
+{"level":30,"time":"2026-10-01T14:16:35.000Z","pid":14304,"hostname":"vm","context":{"userId":1779,"tenantId":93330,"resourceId":"1779"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-10-01T14:16:35.000Z","pid":14304,"hostname":"vm","context":{"userId":1779,"tenantId":"93330","resourceId":"1779"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-10-01T14:17:05.100Z","pid":14304,"hostname":"vm","context":{"userId":1779,"tenantId":93330,"resourceId":"1779"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+ × tests/db/session-termination.dbtest.ts > (6) the second a password change lands in (R3) > the change stamps the first whole second after it, answers once that second has begun, and the sign-in that follows is current 408ms
+   → the stamp is not the first whole second after the change: expected 1790864165 to be 1790864166 // Object.is equality
+{"level":30,"time":"2026-10-01T14:17:05.600Z","pid":14304,"hostname":"vm","context":{"userId":1779,"tenantId":93330,"resourceId":"1779"},"msg":"[audit-service] [AUDIT] user_password_changed user"}
+{"level":30,"time":"2026-10-01T14:17:35.000Z","pid":14304,"hostname":"vm","context":{"userId":1779,"tenantId":"93330","resourceId":"1779"},"msg":"[audit-service] [AUDIT] user_login user"}
+ × tests/db/session-termination.dbtest.ts > (6) the second a password change lands in (R3) > a sign-in begun with the old password before the change and completed after it opens nothing 425ms
+   → a sign-in begun before the password change became a session after it: {"success":true,"accessToken":"<token>","refreshToken":"<token>","expiresIn":86400,"user":{"id":"1779","email":"dbste-halfway-14304_muplra40@example.invalid","firstName":"Lane","lastName":"Termination halfway","displayName":"Lane Termination halfway","roles":["admin","user"],"permissions":["governed:write","report:finalize"],"organizationId":"93330","organizationName":"dbste-93330-14304_muplra40","organizationUuid":"9e44fcf0-5bd5-40d1-81ab-4a6169d289bd","mfaEnabled":true,"mfaMethods":[{"type":"totp","isEnabled":true,"isPrimary":true}],"mustChangePassword":false},"mfaRequired":false}: expected 200 to be 401 // Object.is equality
+ ✓ tests/db/session-termination.dbtest.ts > (5) the stamp itself (migrations/20261001_users_sessions_ended_at.sql, endEverySessionOf) > a confirmed sign-up ends nothing, leaving active stamps it, and no writer moves it backwards 12ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/session-termination.dbtest.ts > (3) suspending, deprovisioning or removing an account ends its sessions > a member removed and re-added holds nothing from before: the session is over at every door, and they sign in again (R1)
+AssertionError: a session held across a removal and a re-add: the /api gate still admitted it: {"userId":1776,"role":"admin"}: expected 200 to be 401 // Object.is equality
+- Expected
++ Received
+- 401
++ 200
+ ❯ expectEnded tests/db/session-termination.dbtest.ts:150:92
+    148|
+    149| function expectEnded(d: Awaited<ReturnType<typeof doors>>, what: strin…
+    150|   expect(d.gate.status, `${what}: the /api gate still admitted it: ${s…
+       |                                                                                            ^
+    151|   expect(d.routerGate.status, `${what}: a router's own gate still admi…
+    152|   expect(d.probe.status, `${what}: the session probe still reported it…
+ ❯ tests/db/session-termination.dbtest.ts:485:5
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+ FAIL  tests/db/session-termination.dbtest.ts > (6) the second a password change lands in (R3) > a session begun in the same second as the change, before it, is over at every door
+AssertionError: a session begun in the second of the password change, before it: the /api gate still admitted it: {"userId":1777,"role":"admin"}: expected 200 to be 401 // Object.is equality
+- Expected
++ Received
+- 401
++ 200
+ ❯ expectEnded tests/db/session-termination.dbtest.ts:150:92
+    148|
+    149| function expectEnded(d: Awaited<ReturnType<typeof doors>>, what: strin…
+    150|   expect(d.gate.status, `${what}: the /api gate still admitted it: ${s…
+       |                                                                                            ^
+    151|   expect(d.routerGate.status, `${what}: a router's own gate still admi…
+    152|   expect(d.probe.status, `${what}: the session probe still reported it…
+ ❯ tests/db/session-termination.dbtest.ts:554:5
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+ FAIL  tests/db/session-termination.dbtest.ts > (6) the second a password change lands in (R3) > the change stamps the first whole second after it, answers once that second has begun, and the sign-in that follows is current
+AssertionError: the stamp is not the first whole second after the change: expected 1790864165 to be 1790864166 // Object.is equality
+- Expected
++ Received
+- 1790864166
++ 1790864165
+ ❯ tests/db/session-termination.dbtest.ts:572:93
+    570|     const answeredAfterMs = performance.now() - started;
+    571|     expect(change.status, shown(change.body)).toBe(200);
+    572|     expect(await stampOf(m.id), 'the stamp is not the first whole seco…
+       |                                                                                             ^
+    573|     expect(answeredAfterMs, 'the change answered before the second its…
+    574|     // The holder signs in again the moment the answer arrives, in the…
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+ FAIL  tests/db/session-termination.dbtest.ts > (6) the second a password change lands in (R3) > a sign-in begun with the old password before the change and completed after it opens nothing
+AssertionError: a sign-in begun before the password change became a session after it: {"success":true,"accessToken":"<token>","refreshToken":"<token>","expiresIn":86400,"user":{"id":"1779","email":"dbste-halfway-14304_muplra40@example.invalid","firstName":"Lane","lastName":"Termination halfway","displayName":"Lane Termination halfway","roles":["admin","user"],"permissions":["governed:write","report:finalize"],"organizationId":"93330","organizationName":"dbste-93330-14304_muplra40","organizationUuid":"9e44fcf0-5bd5-40d1-81ab-4a6169d289bd","mfaEnabled":true,"mfaMethods":[{"type":"totp","isEnabled":true,"isPrimary":true}],"mustChangePassword":false},"mfaRequired":false}: expected 200 to be 401 // Object.is equality
+- Expected
++ Received
+- 401
++ 200
+ ❯ tests/db/session-termination.dbtest.ts:600:122
+    598|       .post('/api/auth/mfa/verify')
+    599|       .send({ challengeId: login.body.challengeId, code: totp(m.secret…
+    600|     expect(verify.status, `a sign-in begun before the password change …
+       |                                                                                                                          ^
+    601|     expect(verify.body.accessToken).toBeUndefined();
+    602|     expect(verify.body.refreshToken).toBeUndefined();
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+ Test Files  1 failed (1)
+      Tests  4 failed | 12 passed (16)
+   Start at  14:01:18
+   Duration  9.34s (transform 1.88s, setup 97ms, import 332ms, tests 8.55s, environment 0ms)

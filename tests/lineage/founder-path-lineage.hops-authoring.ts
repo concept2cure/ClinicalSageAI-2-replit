@@ -107,11 +107,19 @@ export async function hopCapture(w: World): Promise<void> {
 }
 
 /**
- * The call stream.ts:1731-1744 makes, field for field: the registered (gated)
- * handler, with the stream's ctx. projectId is Number(uuid) || null — null for a
- * UUID program — and the stream passes no threadId, turnId or model
- * (AnaToolExecutor.ts:228-236).
+ * The path draft_authoring_document takes in production, field for field: it is
+ * confirm-class, so the stream holds it with heldToolContext and the
+ * governed-action route runs it, once the person says yes, with
+ * confirmedToolContext (routes/ana-ri/utility.ts runConfirmedTool). Both come
+ * from services/ana/turn-tool-context.ts, the builders the stream uses (PF-10
+ * S5), so the builders cannot drift; what the stream hands the hold is pinned
+ * by stream-run-hold.test.ts. projectId is null for a UUID program; the
+ * conversation, the turn (the run id) and the model are named.
  */
+/** The conversation and the run (its turn) the walk's draft is proposed in. */
+const WALK_THREAD_ID = 'ana-ri_walk_thread';
+const WALK_RUN_ID = 'run_walk_draft';
+
 async function draftUnderStreamCtx(w: World): Promise<Record<string, unknown>> {
   const { getToolHandler } = await import('../../server/services/ana/AnaToolExecutor');
   const handler = getToolHandler('draft_authoring_document');
@@ -131,20 +139,15 @@ async function draftUnderStreamCtx(w: World): Promise<Record<string, unknown>> {
        LX-06 adds it — if it lands under another name, this input follows it. */
     sources: [{ evidence_source_id: w.k.sourceId, excerpt: QUOTE }],
   };
-  const ctx = {
+  const { heldToolContext, confirmedToolContext } = await import('../../server/services/ana/turn-tool-context');
+  const held = heldToolContext('draft_authoring_document', streamProjectId, {
+    threadId: WALK_THREAD_ID,
+    turnId: WALK_RUN_ID,
     servingModel: SERVED_MODEL,
-    organizationId: ORG_A,
-    userId: 3,
-    projectId: streamProjectId ? Number(streamProjectId) || null : null,
-    projectRef: streamProjectId ? String(streamProjectId) : null,
-    liveDrive: false,
-    lockedScreens: [],
-    turnState: {},
-    signal: new AbortController().signal,
-    // draft_authoring_document is a write in the tool register (P1-34): on the
-    // founder path it runs when the person confirms the draft AnA proposed.
-    humanConfirmed: true,
-  };
+  });
+  // As the run row stores it, then as the person's yes runs it (the route
+  // stamps humanConfirmed; utility.ts runConfirmedTool).
+  const ctx = { ...confirmedToolContext(JSON.parse(JSON.stringify(held)), ORG_A, 3), humanConfirmed: true };
   return JSON.parse(await handler!(input, ctx as never));
 }
 
@@ -257,7 +260,10 @@ export async function hopEditSave(w: World): Promise<void> {
 export async function hopSeal(w: World): Promise<void> {
   const { k, q } = w;
   const hop = new Hop('seal');
-  const fr = await w.asAuthor(request(w.app).post(`/api/authoring/docs/${k.docId}/freeze`)).send({ reason: 'Sealed for the C2C-101 IND original sequence.' });
+  // DP-35 (2026-10-01): the freeze is signed — its meaning and the author's re-verified password.
+  const fr = await w.asAuthor(request(w.app).post(`/api/authoring/docs/${k.docId}/freeze`)).send({
+    reason: 'Sealed for the C2C-101 IND original sequence.', meaning: 'AUTHOR', password: PASSWORD,
+  });
   expect(fr.status, JSON.stringify(fr.body)).toBe(200);
   k.freezeHash = String(fr.body.contentHash);
   const es = await w.asApprover(request(w.app).post(`/api/authoring/docs/${k.docId}/e-sign`)).send({
@@ -304,6 +310,13 @@ export async function hopFileToVault(w: World): Promise<void> {
   const res = await w.asAuthor(request(w.app).post(`/api/authoring/docs/${k.docId}/file-to-vault`)).send({ format: 'pdf' });
   expect(res.status, JSON.stringify(res.body)).toBe(201);
   k.vaultDocumentId = String(res.body.data.vaultDocumentId);
+
+  await hop.check('approval-carry-decided', 'approved in Authoring with no independent review, so the approval does not carry, and the filing says why (FD5 (c))', async (observe) => {
+    const approval = res.body.data.approval as { carried?: boolean; reason?: string } | undefined;
+    observe(approval?.carried);
+    expect(approval).toMatchObject({ carried: false });
+    expect(approval?.reason).toMatch(/No review signature covers this content/);
+  });
 
   await hop.check('vault-row-in-project', 'vault.documents holds the filed bytes in the same project, under their content hash', async (observe) => {
     const [v] = await q<{ program_id: string; content_hash: string; storage_version_id: string; deleted_at: unknown }>(
@@ -364,6 +377,20 @@ export async function hopAdopt(w: World): Promise<void> {
     expect(upload.body.dataRoom.recorded).toBe(false);
     expect(sources).toHaveLength(0);
   });
+  await hop.check('project-offers-the-conversation-file', 'the project lists the caller\'s conversation file for adoption, and only the caller\'s', async (observe) => {
+    // A colleague's chat attachment in the same organization: theirs to bring in.
+    await q(
+      `INSERT INTO file_uploads (id, user_id, original_name, mime_type, file_size, storage_path, organization_id, checksum_sha256)
+       VALUES ('colleague-file', 99, 'colleague.txt', 'text/plain', 3, 'uploads/colleague.txt', $1, $2)`,
+      [ORG_A, sha256(Buffer.from('colleague'))],
+    );
+    const mine = await asPrincipal(ORG_A, 3)(request(w.app).get(`/api/c2c/projects/${k.programId}/conversation-files`));
+    const ids = (mine.body?.files ?? []).map((f: { id: string }) => f.id);
+    observe({ status: mine.status, listed: ids.includes(fileId), colleagueListed: ids.includes('colleague-file') });
+    expect(mine.status).toBe(200);
+    expect(ids).toContain(fileId);
+    expect(ids).not.toContain('colleague-file');
+  });
   await hop.check('adopt-makes-it-the-projects-source', 'one audited adopt makes the file a source of the project, keyed to it', async (observe) => {
     const res = await asPrincipal(ORG_A, 3)(request(w.app).post(`/api/c2c/projects/${k.programId}/adopt`)).send({ fileUploadId: fileId });
     const [src] = await q<{ client_program_id: string; organization_id: number; checksum: string }>(
@@ -382,6 +409,13 @@ export async function hopAdopt(w: World): Promise<void> {
     expect(again.status).toBe(200);
     expect(sources).toHaveLength(1);
     expect(audit).toHaveLength(1);
+  });
+  await hop.check('adopted-file-is-no-longer-offered', 'once in a project\'s Data Room, the file is not offered as a conversation file', async (observe) => {
+    const after = await asPrincipal(ORG_A, 3)(request(w.app).get(`/api/c2c/projects/${k.programId}/conversation-files`));
+    const ids = (after.body?.files ?? []).map((f: { id: string }) => f.id);
+    observe({ status: after.status, listed: ids.includes(fileId) });
+    expect(after.status).toBe(200);
+    expect(ids).not.toContain(fileId);
   });
   hop.verdict();
 }

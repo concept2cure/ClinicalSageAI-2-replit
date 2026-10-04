@@ -1,5 +1,5 @@
 /**
- * ADR-0014 §4 changes nothing on today's registry: every one of its rows is
+ * ADR-0015 §4 changes nothing on today's registry: every one of its rows is
  * its own approved-models entry, so holding every selection point to that
  * turns a CI coincidence into a runtime guarantee without moving a single
  * request.
@@ -16,6 +16,13 @@
  * selected (gateway-model-governance.test.ts) — so the production table
  * leaves out drafting and the self-hosted lane and must match the rest
  * exactly.
+ *
+ * The production half was re-recorded on 2026-10-04 from trunk's own gateway
+ * (origin at the merge, without §3–§5): trunk's P1-45 (d29275b1b) stopped
+ * serving OpenAI and Moonshot in production without the tenant's election,
+ * which moved 198 production cells. The merged gateway reproduced trunk's
+ * table in all 856 cells, so §3–§5 still change nothing outside drafting and
+ * the self-hosted lane.
  */
 import { readFileSync } from 'node:fs';
 import path from 'node:path';

@@ -113,7 +113,7 @@ const RATE_WINDOW_MS = 60_000;
  *
  * Until 2026-09-28 this read `organizationId` alone, so every ambient-bound
  * call of every tenant shared one '__global__' bucket, and one tenant's burst
- * refused another's calls (ADR-0014 §5); and a malformed id ('', 0,
+ * refused another's calls (ADR-0015 §5); and a malformed id ('', 0,
  * 'undefined') was a bucket of its own, shared by every such call (track GW
  * review [13]). '__global__' now holds only calls with no tenant: platform
  * work in an explicit system scope, and — outside production only — calls

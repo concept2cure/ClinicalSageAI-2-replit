@@ -1,0 +1,16 @@
+ ✓ server/routes/__tests__/research-compliance-viewer-writes.test.ts > a viewer writes none of the research-compliance records > IRB create submission: viewer → 403, before the handler 56ms
+ ✓ server/routes/__tests__/research-compliance-viewer-writes.test.ts > a viewer writes none of the research-compliance records > IRB status: viewer → 403, before the handler 7ms
+ ✓ server/routes/__tests__/research-compliance-viewer-writes.test.ts > a viewer writes none of the research-compliance records > IRB add site: viewer → 403, before the handler 5ms
+ ✓ server/routes/__tests__/research-compliance-viewer-writes.test.ts > a viewer writes none of the research-compliance records > IACUC create protocol: viewer → 403, before the handler 5ms
+ ✓ server/routes/__tests__/research-compliance-viewer-writes.test.ts > a viewer writes none of the research-compliance records > IACUC status: viewer → 403, before the handler 6ms
+ ✓ server/routes/__tests__/research-compliance-viewer-writes.test.ts > a viewer writes none of the research-compliance records > IBC create registration: viewer → 403, before the handler 4ms
+ ✓ server/routes/__tests__/research-compliance-viewer-writes.test.ts > a viewer writes none of the research-compliance records > IBC add agent: viewer → 403, before the handler 5ms
+ ✓ server/routes/__tests__/research-compliance-viewer-writes.test.ts > a viewer writes none of the research-compliance records > RIM create product: viewer → 403, before the handler 4ms
+ ✓ server/routes/__tests__/research-compliance-viewer-writes.test.ts > a viewer writes none of the research-compliance records > RIM registrations: viewer → 403, before the handler 11ms
+ ✓ server/routes/__tests__/research-compliance-viewer-writes.test.ts > a viewer writes none of the research-compliance records > BLA assessment that saves: viewer → 403, before the handler 17ms
+ ✓ server/routes/__tests__/research-compliance-viewer-writes.test.ts > a viewer writes none of the research-compliance records > a member passes the gate (the handler answers, not the gate) 7ms
+ ✓ server/routes/__tests__/research-compliance-viewer-writes.test.ts > a viewer still reads, and still runs a computation that saves nothing > GET /api/irb/submissions passes the gate 4ms
+ ✓ server/routes/__tests__/research-compliance-viewer-writes.test.ts > a viewer still reads, and still runs a computation that saves nothing > GET /api/rim/products passes the gate 3ms
+ ✓ server/routes/__tests__/research-compliance-viewer-writes.test.ts > a viewer still reads, and still runs a computation that saves nothing > a BLA computation with nothing to save passes the gate 9ms
+ Test Files  1 passed (1)
+      Tests  14 passed (14)
