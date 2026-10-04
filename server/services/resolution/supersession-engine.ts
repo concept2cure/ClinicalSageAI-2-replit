@@ -9,6 +9,14 @@
  */
 
 import { db } from '../../db';
+
+/**
+ * Where a supersession write runs: the shared connection by default, or a
+ * caller's transaction. bundle-executor's supersede records, confirms and
+ * archives in one transaction, because three separate commits let a confirmed
+ * supersession record stand beside an artifact that was never archived.
+ */
+export type SupersessionExecutor = Pick<typeof db, 'select' | 'insert' | 'update'>;
 import { eq, and, desc } from 'drizzle-orm';
 import {
   supersessionRecords,
@@ -31,7 +39,8 @@ import type {
 export async function recordSupersession(
   organizationId: number,
   userId: number,
-  request: CreateSupersessionRequest
+  request: CreateSupersessionRequest,
+  executor: SupersessionExecutor = db,
 ): Promise<SupersessionRecord> {
   // Validate: cannot supersede itself
   if (
@@ -45,7 +54,9 @@ export async function recordSupersession(
   const existingChain = await getSupersessionChain(
     organizationId,
     request.successorObjectType,
-    request.successorObjectId
+    request.successorObjectId,
+    20,
+    executor,
   );
   const wouldCreateCycle = existingChain.some(
     r => r.supersededObjectType === request.supersededObjectType &&
@@ -56,7 +67,7 @@ export async function recordSupersession(
   }
 
   // Check if already superseded by the same successor
-  const existing = await db
+  const existing = await executor
     .select()
     .from(supersessionRecords)
     .where(and(
@@ -89,7 +100,7 @@ export async function recordSupersession(
     createdById: userId,
   };
 
-  const [result] = await db.insert(supersessionRecords).values(record).returning();
+  const [result] = await executor.insert(supersessionRecords).values(record).returning();
   return result;
 }
 
@@ -103,9 +114,10 @@ export async function recordSupersession(
 export async function confirmSupersession(
   organizationId: number,
   userId: number,
-  supersessionId: string
+  supersessionId: string,
+  executor: SupersessionExecutor = db,
 ): Promise<SupersessionRecord> {
-  const [record] = await db
+  const [record] = await executor
     .select()
     .from(supersessionRecords)
     .where(and(
@@ -121,7 +133,7 @@ export async function confirmSupersession(
     throw new Error(`Cannot confirm supersession in state ${record.state}`);
   }
 
-  const [updated] = await db
+  const [updated] = await executor
     .update(supersessionRecords)
     .set({
       state: 'confirmed' as const,
@@ -213,14 +225,20 @@ export async function getSupersessionChain(
   organizationId: number,
   objectType: string,
   objectId: string,
-  maxDepth: number = 20
+  maxDepth: number = 20,
+  /* Read on the caller's connection when there is one. recordSupersession
+     calls this from inside the supersede transaction, and reading through the
+     shared `db` there takes a SECOND connection while the first holds the
+     transaction — on single-connection PGlite that deadlocks outright, and on a
+     real pool it competes for a slot the transaction is waiting on. */
+  executor: Pick<typeof db, 'select'> = db,
 ): Promise<SupersessionRecord[]> {
   const chain: SupersessionRecord[] = [];
   let currentType = objectType;
   let currentId = objectId;
 
   for (let depth = 0; depth < maxDepth; depth++) {
-    const [predecessor] = await db
+    const [predecessor] = await executor
       .select()
       .from(supersessionRecords)
       .where(and(
