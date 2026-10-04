@@ -67,6 +67,79 @@ export const LEGACY_NO_TABLES_SKIP_REASON =
      for the second reason — not approved. */
   'Compiled before section tables were carried; recompile the section AND re-approve it before placing.';
 
+/** A section approved before the signature covered its narrative. */
+export const PRE_NARRATIVE_SIGNATURE_SKIP_REASON =
+  'Approved before the signature covered the narrative that is filed; re-approve the section before placing.';
+
+/** A section whose live record or narrative is not the text that was signed. */
+export const CHANGED_SINCE_APPROVAL_SKIP_REASON =
+  'Changed since it was approved — the filed text would not be the signed text. Recompile and re-approve before placing.';
+
+/** An approved, non-stale section as placement reads it. */
+export interface PlaceableSectionRow {
+  sectionKey: string;
+  narrativeText: string | null;
+  deterministicJson: unknown;
+  /** The approved version's snapshot carries the narrative (approved since the signature covered it). */
+  snapshotCoversNarrative: boolean | null;
+  /** The live record and narrative are exactly the approved snapshot. */
+  signedAsIs: boolean | null;
+}
+
+/**
+ * What is filed is what was signed. The approve route freezes the compiled
+ * record and its narrative into cmc_module3_section_versions and binds the
+ * signature to that snapshot; placement read the LIVE row, so anything that
+ * changed the row after the signature (a write that did not reset approval)
+ * would have been filed under a signature over other text. `signedAsIs` is
+ * true only when the live record and narrative equal the approved snapshot.
+ */
+export async function readPlaceableSections(
+  pool: { query: (sql: string, p: unknown[]) => Promise<{ rows: any[] }> },
+  orgId: number,
+  cmcProjectId: string,
+): Promise<PlaceableSectionRow[]> {
+  const { rows } = await pool.query(
+    `SELECT s.section_key AS "sectionKey", s.narrative_text AS "narrativeText",
+            s.deterministic_json AS "deterministicJson",
+            (v.snapshot_json ? 'narrativeText') AS "snapshotCoversNarrative",
+            (v.snapshot_json ? 'narrativeText'
+               AND (v.snapshot_json - 'narrativeText') = s.deterministic_json
+               AND v.snapshot_json->>'narrativeText' IS NOT DISTINCT FROM COALESCE(s.narrative_text, ''))
+              AS "signedAsIs"
+     FROM cmc_module3_sections s
+     LEFT JOIN cmc_module3_section_versions v
+       ON v.id = s.approved_version_id AND v.organization_id = s.organization_id
+     WHERE s.organization_id = $1 AND s.project_id = $2
+       AND s.approval_state = 'approved' AND s.stale = false
+     ORDER BY s.section_key`,
+    [orgId, cmcProjectId],
+  );
+  return rows as PlaceableSectionRow[];
+}
+
+/**
+ * Whether one approved section can be filed, and what is filed when it can:
+ * the reason it is skipped, or its narrative and tables.
+ */
+export function placeableContent(s: PlaceableSectionRow): { skip: string } | { narrative: string; tables: GeneratedTable[] } {
+  if (!s.snapshotCoversNarrative) return { skip: PRE_NARRATIVE_SIGNATURE_SKIP_REASON };
+  if (!s.signedAsIs) return { skip: CHANGED_SINCE_APPROVAL_SKIP_REASON };
+  const narrative = (s.narrativeText ?? '').trim();
+  // An approved section with no compiled narrative has nothing to render
+  // into the package. Say so instead of filing an empty leaf whose pin
+  // would be NULL and whose PDF would be a title page.
+  if (!narrative) return { skip: 'No compiled narrative to place.' };
+  /* The composer writes a narrative that CITES its tables. A section whose
+     stored payload predates tables being carried cannot be rendered
+     faithfully — placing it would file prose saying "see the change history
+     table" into a document with no table in it. Fail closed and name the
+     remedy; a plain recompile restores placement. */
+  const tables = readSectionTables(s.deterministicJson);
+  if (tables === undefined) return { skip: LEGACY_NO_TABLES_SKIP_REASON };
+  return { narrative, tables };
+}
+
 /* The tables reader moved to ./compiled-record: the export gate applies the
    same refusal (an approved section with no `tables` key is unplaceable), and
    this module imports the gate, so keeping it here would have made a cycle.
@@ -399,44 +472,19 @@ export async function placeModule3IntoSubmission(input: PlaceModule3Input): Prom
 
   // 3. Approved sections with their compiled narrative.
   const pool = getPool();
-  const { rows: sections } = await pool.query(
-    `SELECT section_key AS "sectionKey", narrative_text AS "narrativeText",
-            deterministic_json AS "deterministicJson"
-     FROM cmc_module3_sections
-     WHERE organization_id = $1 AND project_id = $2
-       AND approval_state = 'approved' AND stale = false
-     ORDER BY section_key`,
-    [orgId, cmcProjectId],
-  );
+  const sections = await readPlaceableSections(pool, orgId, cmcProjectId);
 
   const labels = getSectionLabels();
   const placements: PlacedSection[] = [];
   const skipped: SkippedSection[] = [];
 
-  for (const s of sections as Array<{
-    sectionKey: string;
-    narrativeText: string | null;
-    deterministicJson: unknown;
-  }>) {
-    const narrative = (s.narrativeText ?? '').trim();
-    if (!narrative) {
-      // An approved section with no compiled narrative has nothing to render
-      // into the package. Say so instead of filing an empty leaf whose pin
-      // would be NULL and whose PDF would be a title page.
-      skipped.push({ sectionKey: s.sectionKey, reason: 'No compiled narrative to place.' });
+  for (const s of sections) {
+    const verdict = placeableContent(s);
+    if ('skip' in verdict) {
+      skipped.push({ sectionKey: s.sectionKey, reason: verdict.skip });
       continue;
     }
-
-    /* The composer writes a narrative that CITES its tables. A section whose
-       stored payload predates tables being carried cannot be rendered
-       faithfully — placing it would file prose saying "see the change history
-       table" into a document with no table in it. Fail closed and name the
-       remedy; a plain recompile restores placement. */
-    const tables = readSectionTables(s.deterministicJson);
-    if (tables === undefined) {
-      skipped.push({ sectionKey: s.sectionKey, reason: LEGACY_NO_TABLES_SKIP_REASON });
-      continue;
-    }
+    const { narrative, tables } = verdict;
 
     placements.push(
       await fileSectionAsLeaf({

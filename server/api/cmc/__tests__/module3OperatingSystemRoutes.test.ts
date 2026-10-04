@@ -7,6 +7,11 @@ const mockVerifyReauth = vi.fn();
 // The project guard's own refusals are in module3ProjectScope.test.ts.
 vi.mock('../../../services/cmc/project-membership', () => ({ projectBelongsToTenant: async () => true }));
 const mockRecordGoverned = vi.fn();
+// §11.10(g) gate; its role read is proven in cmc-sign-signature-row.test.ts.
+const mockRefusedAuthority = vi.fn();
+vi.mock('../cmc-signer', () => ({
+  refusedWithoutSigningAuthority: (...a: unknown[]) => mockRefusedAuthority(...a),
+}));
 
 vi.mock('../../../db', () => ({
   getPool: () => ({
@@ -62,6 +67,9 @@ describe('module3OperatingSystemRoutes', () => {
 
   beforeEach(() => {
     mockQuery.mockReset();
+    mockQuery.mockResolvedValue({ rows: [] }); // unscripted reads (lineage drift): nothing found
+    mockRefusedAuthority.mockReset();
+    mockRefusedAuthority.mockResolvedValue(false);
     mockVerifyReauth.mockReset();
     mockVerifyReauth.mockResolvedValue({ ok: true });
     mockRecordGoverned.mockReset();
@@ -113,7 +121,7 @@ describe('module3OperatingSystemRoutes', () => {
 
     const res = await request(app)
       .post('/api/cmc/module3-os/sections/proj-1/3.2.P.5/approve')
-      .send({ reason: 'approve for filing', reauth: { password: 'wrong' } });
+      .send({ reason: 'approve for filing', meaning: 'approval', reauth: { password: 'wrong' } });
 
     expect(res.status).toBe(401);
     expect(res.body.error).toBe('REAUTH_REQUIRED');
@@ -128,7 +136,7 @@ describe('module3OperatingSystemRoutes', () => {
 
     const res = await request(app)
       .post('/api/cmc/module3-os/sections/proj-1/3.2.P.5/approve')
-      .send({ reason: 'approve for filing', reauth: { password: 'right', totp: '123456' } });
+      .send({ reason: 'approve for filing', meaning: 'approval', reauth: { password: 'right', totp: '123456' } });
 
     expect(mockVerifyReauth).toHaveBeenCalledWith(1, { password: 'right', totp: '123456' });
     expect(res.status).toBe(409);
@@ -140,7 +148,11 @@ describe('module3OperatingSystemRoutes', () => {
     mockQuery
       .mockResolvedValueOnce({ rows: [] }) // contradiction check: none critical
       .mockResolvedValueOnce({}) // BEGIN
-      .mockResolvedValueOnce({ rows: [{ id: 'sec-1', deterministic_json: COMPLETE, approval_state: 'draft' }] }) // section
+      .mockResolvedValueOnce({
+        rows: [{ id: 'sec-1', deterministic_json: COMPLETE, narrative_text: 'The drug product is a tablet.', approval_state: 'draft', stale: false }],
+      }) // section
+      .mockResolvedValueOnce({ rows: [] }) // drift: lineage against live sources
+      .mockResolvedValueOnce({ rows: [] }) // drift: sources of the project
       .mockResolvedValueOnce({ rows: [{ max_version: 2 }] }) // version max
       .mockResolvedValueOnce({ rows: [{ id: 'ver-3' }] }) // insert version
       .mockResolvedValueOnce({}) // update section
@@ -250,7 +262,7 @@ describe('module3OperatingSystemRoutes', () => {
 
     const res = await request(app)
       .post('/api/cmc/module3-os/sections/proj-1/3.2.S.1/approve')
-      .send({ reason: 'approve', reauth: { password: 'ok' } });
+      .send({ reason: 'approve', meaning: 'approval', reauth: { password: 'ok' } });
 
     expect(res.status).toBe(409);
     expect(res.body.error).toContain('3.2.S.1');
