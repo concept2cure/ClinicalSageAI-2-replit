@@ -165,27 +165,31 @@ export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
       { heading: '2.5.3 Overview of Clinical Pharmacology', required: true, code: '2.5.3', targetWords: [300, 600], guidance: 'PK characterization (dose-proportionality, accumulation, variability), PD, DDI, special populations, PK/PD relationships supporting the proposed dose and label.' },
       { heading: '2.5.4 Overview of Efficacy', required: true, code: '2.5.4', targetWords: [600, 1200], guidance: 'Pivotal trial results with confidence intervals and p-values, primary and key secondary endpoints, subgroup consistency, clinical meaningfulness, and comparison to active comparators if applicable.' },
       { heading: '2.5.5 Overview of Safety', required: true, code: '2.5.5', targetWords: [600, 1200], guidance: 'Overall exposure dataset, adverse events by severity/relatedness, deaths, serious AEs, discontinuations, lab abnormalities, vital signs, special population safety, and identified safety signals.' },
-      { heading: '2.5.6 Summary of Benefits and Risks', required: true, code: '2.5.6', targetWords: [400, 800], guidance: 'Integrated benefit-risk assessment. Explicitly weigh efficacy benefits against identified risks for the proposed indication and population. Address uncertainties and how they are managed.' },
+      { heading: '2.5.6 Benefits and Risks Conclusions', required: true, code: '2.5.6', targetWords: [400, 800], guidance: 'Integrated benefit-risk assessment. Explicitly weigh efficacy benefits against identified risks for the proposed indication and population. Address uncertainties and how they are managed.' },
       { heading: '2.5.7 Literature References', required: false, code: '2.5.7', targetWords: [50, 100], guidance: 'Key published literature cited in this overview.' },
     ],
   },
 
-  ctd_2_7_4_efficacy_summary: {
-    id: 'ctd_2_7_4_efficacy_summary',
-    displayName: 'Clinical Efficacy Summary (2.7.4)',
+  // ICH M4E numbers the clinical summaries 2.7.3 efficacy, 2.7.4 safety, 2.7.5
+  // literature references. These two templates were filed one section late
+  // (2.7.4 efficacy, 2.7.5 safety) until 2026-10-04, so "section 2.7.4"
+  // fetched the efficacy template (tests/regulatory/ana-ctd-section-truth.test.ts).
+  ctd_2_7_3_efficacy_summary: {
+    id: 'ctd_2_7_3_efficacy_summary',
+    displayName: 'Summary of Clinical Efficacy (2.7.3)',
     chipLabel: 'Clinical Efficacy Summary',
-    primaryCode: '2.7.4',
+    primaryCode: '2.7.3',
     authority: 'ICH',
     submissionFamily: 'NDA/BLA/MAA',
     detectionPatterns: [
       /\b(?:clinical\s+)?efficacy\s+summary\b/i,
-      /\bsection\s+2\.7\.4\b/i,
-      /\bctd\s+2\.7\.4\b/i,
-      /\bmodule\s+2\.7\.4\b/i,
+      /\bsection\s+2\.7\.3\b/i,
+      /\bctd\s+2\.7\.3\b/i,
+      /\bmodule\s+2\.7\.3\b/i,
       /\bsummary\s+of\s+(?:clinical\s+)?efficacy\b/i,
     ],
     minConfidence: 0.6,
-    draftingInstructions: 'Draft an ICH CTD Section 2.7.4 Summary of Clinical Efficacy. Cover all studies that contribute to the efficacy claim. For each pivotal study, include: design, population, primary/key secondary results (with CIs and p-values), consistency across subgroups, and comparison to relevant standards of care. Conclusions must align with the proposed indication in Section 2.5.',
+    draftingInstructions: 'Draft an ICH CTD Section 2.7.3 Summary of Clinical Efficacy. Cover all studies that contribute to the efficacy claim. For each pivotal study, include: design, population, primary/key secondary results (with CIs and p-values), consistency across subgroups, and comparison to relevant standards of care. Section 2.7.3 summarises; the integrated analyses themselves (the ISE, 21 CFR 314.50(d)(5)(v)) are filed in 5.3.5.3 and cross-referenced. Conclusions must align with the Overview of Efficacy in Section 2.5.4.',
     regulatoryReferences: ['ICH M4E(R2)', 'ICH E9(R1) (estimands)', 'ICH E17 (multi-regional trials)'],
     sections: [
       { heading: 'Background and Overview of Clinical Efficacy Studies', required: true, targetWords: [200, 400], guidance: 'List of clinical studies providing efficacy data, organized by study type (dose-finding, pivotal, supportive).' },
@@ -197,24 +201,24 @@ export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
     ],
   },
 
-  ctd_2_7_5_safety_summary: {
-    id: 'ctd_2_7_5_safety_summary',
-    displayName: 'Clinical Safety Summary (2.7.5)',
+  ctd_2_7_4_safety_summary: {
+    id: 'ctd_2_7_4_safety_summary',
+    displayName: 'Summary of Clinical Safety (2.7.4)',
     chipLabel: 'Clinical Safety Summary',
-    primaryCode: '2.7.5',
+    primaryCode: '2.7.4',
     authority: 'ICH',
     submissionFamily: 'NDA/BLA/MAA',
     detectionPatterns: [
       /\b(?:clinical\s+)?safety\s+summary\b/i,
-      /\bsection\s+2\.7\.5\b/i,
-      /\bctd\s+2\.7\.5\b/i,
-      /\bmodule\s+2\.7\.5\b/i,
+      /\bsection\s+2\.7\.4\b/i,
+      /\bctd\s+2\.7\.4\b/i,
+      /\bmodule\s+2\.7\.4\b/i,
       /\bsummary\s+of\s+(?:clinical\s+)?safety\b/i,
       /\baggregate\s+safety\b/i,
     ],
     minConfidence: 0.6,
-    draftingInstructions: 'Draft an ICH CTD Section 2.7.5 Summary of Clinical Safety. Aggregate safety data from all clinical studies. Present data as overall exposure → AEs → deaths → serious AEs → discontinuations → lab abnormalities → vital signs → special populations → identified safety signals → benefit-risk. Use ICH E2E-consistent MedDRA terminology.',
-    regulatoryReferences: ['ICH M4E(R2)', 'ICH E2E (pharmacovigilance)', 'ICH E2C(R2) (PSUR)', 'MedDRA coding'],
+    draftingInstructions: 'Draft an ICH CTD Section 2.7.4 Summary of Clinical Safety. Aggregate safety data from all clinical studies. Present data as overall exposure → AEs → deaths → serious AEs → discontinuations → lab abnormalities → vital signs → special populations → identified safety signals. Section 2.7.4 summarises; the integrated analyses themselves (the ISS, 21 CFR 314.50(d)(5)(vi)) are filed in 5.3.5.3 and cross-referenced, and the benefit-risk weighing belongs in 2.5.6. Code events in MedDRA, one MedDRA version across every pooled study.',
+    regulatoryReferences: ['ICH M4E(R2)', 'ICH E1 (extent of population exposure)', 'ICH E2A (clinical safety data management)', 'MedDRA (ICH M1)'],
     sections: [
       { heading: 'Exposure to the Drug', required: true, targetWords: [200, 400], guidance: 'Overall safety database: total subjects exposed, exposure duration, dose groups, special populations. Comparison of safety population to efficacy population.' },
       { heading: 'Adverse Events', required: true, targetWords: [600, 1200], guidance: 'Overall incidence of AEs, deaths, SAEs, and discontinuations due to AEs. Common AEs (≥X%) by MedDRA SOC and PT. Dose-response and dose-duration relationships. Relationship to treatment.' },

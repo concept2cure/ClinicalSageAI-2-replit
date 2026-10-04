@@ -1,0 +1,569 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | tests/regulatory/ana-ctd-section-truth.test.ts
+{
+  "timestamp": "2026-10-04T18:30:32.494Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-04T18:30:32.496Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/regulatory/ana-ctd-section-truth.test.ts
+{
+  "timestamp": "2026-10-04T18:30:32.496Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/regulatory/ana-ctd-section-truth.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | tests/regulatory/ana-ctd-section-truth.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/regulatory/ana-ctd-section-truth.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | tests/regulatory/ana-ctd-section-truth.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/regulatory/ana-ctd-section-truth.test.ts
+{
+  "timestamp": "2026-10-04T18:30:33.095Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 2.7.3 is Summary of Clinical Efficacy 8ms
+   → expected 'Summary of Clinical Pharmacodynamics:…' to contain 'Summary of Clinical Efficacy'
+ × tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 2.7.4 is Summary of Clinical Safety 1ms
+   → expected 'Summary of Clinical Efficacy: pivotal…' to contain 'Summary of Clinical Safety'
+ × tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 2.7.5 is Literature References 1ms
+   → expected 'Summary of Clinical Safety: adverse e…' to contain 'Literature References'
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 1.2 is Cover Letter 1ms
+ × tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 1.12.14 is Environmental Assessment 1ms
+   → no section line for 1.12.14: expected null to be truthy
+ × tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 1.14 is labeling, not the environmental assessment 1ms
+   → expected 'Environmental Assessment: required fo…' to match /label/i
+ × tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > a sub-section is briefed as its nearest registered section, and says so 1ms
+   → expected 'Summary of Clinical Pharmacodynamics:…' to contain '2.7.3'
+ × tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > a parent is briefed by the sections it contains, not as its first child 2ms
+   → expected 'Clinical Summary: detailed clinical d…' to contain '2.7.3 Summary of Clinical Efficacy'
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > a code nothing registers gets no line rather than a guessed one 1ms
+ × tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > agrees with the canonical overlay on every registered code 1ms
+   → no section line for 1.1.1: expected null to be truthy
+ × tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.1 carries Form FDA 1571 3ms
+   → expected '## Drafting: Module 1.1 — Cover Lette…' to contain 'Form FDA 1571'
+ × tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.2 carries Cover Letter 1ms
+   → expected '## Drafting: Module 1.2 — Table of Co…' to contain 'Cover Letter'
+ × tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.3.3 carries Debarment Certification 3ms
+   → expected '## Drafting: Module 1.3.3 — Investiga…' to contain 'Debarment Certification'
+ × tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.14.4.1 carries Investigator's Brochure 2ms
+   → expected '## Module 1 — Administrative Informat…' to contain 'Investigator\'s Brochure'
+ × tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 5.2 carries Tabular Listing 1ms
+   → expected '## Drafting: Module 5.2 — Tabular Lis…' not to match /per ICH E3/i
+ × tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 5.3.5.1 holds the reports of controlled clinical studies, not a protocol playbook 3ms
+   → expected '## Drafting: Module 5.3.5.1 — Clinica…' to contain 'Study Reports of Controlled Clinical …'
+ × tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > opens with the canonical code and title for every registered code 1ms
+   → 1.1.1: expected '## Drafting: Module 1.1 — Cover Lette…' to contain '1.1.1 — Form FDA 1571 — Investigation…'
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > keeps the module playbooks the overlay does not model 0ms
+ × tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "summary of clinical efficacy" → 2.7.3 6ms
+   → expected '2.7.4' to be '2.7.3' // Object.is equality
+ × tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "draft section 2.7.3" → 2.7.3 3ms
+   → nothing detected for "draft section 2.7.3": expected null to be truthy
+ × tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "summary of clinical safety" → 2.7.4 1ms
+   → expected '2.7.5' to be '2.7.4' // Object.is equality
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "section 2.7.4" → 2.7.4 0ms
+ ✓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "section 2.7.4 summary of clinical safety" → 2.7.4 0ms
+ × tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > every template with a CTD primary code is named for that code 1ms
+   → ctd_2_7_4_efficacy_summary: expected 'Clinical Efficacy Summary (2.7.4)' to contain 'Summary of Clinical Safety'
+ × tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > every coded 2.5.x / 2.7.x sub-heading carries its ICH M4E title 1ms
+   → ctd_2_5_clinical_overview 2.5.6: expected '2.5.6 Summary of Benefits and Risks' to contain 'Benefits and Risks Conclusions'
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 20 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 2.7.3 is Summary of Clinical Efficacy
+AssertionError: expected 'Summary of Clinical Pharmacodynamics:…' to contain 'Summary of Clinical Efficacy'
+
+Expected: "Summary of Clinical Efficacy"
+Received: "Summary of Clinical Pharmacodynamics: PD biomarkers, dose-response relationships, PK/PD modeling."
+
+ ❯ tests/regulatory/ana-ctd-section-truth.test.ts:46:19
+     44|     const line = getSectionGuidance(code);
+     45|     expect(line, `no section line for ${code}`).toBeTruthy();
+     46|     expect(line!).toContain(title);
+       |                   ^
+     47|     if (String(wrong) !== '/^$/') expect(line!).not.toMatch(wrong);
+     48|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/20]⎯
+
+ FAIL  tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 2.7.4 is Summary of Clinical Safety
+AssertionError: expected 'Summary of Clinical Efficacy: pivotal…' to contain 'Summary of Clinical Safety'
+
+Expected: "Summary of Clinical Safety"
+Received: "Summary of Clinical Efficacy: pivotal trial results, endpoints, statistical analyses. Must align with the benefit claim in 2.5."
+
+ ❯ tests/regulatory/ana-ctd-section-truth.test.ts:46:19
+     44|     const line = getSectionGuidance(code);
+     45|     expect(line, `no section line for ${code}`).toBeTruthy();
+     46|     expect(line!).toContain(title);
+       |                   ^
+     47|     if (String(wrong) !== '/^$/') expect(line!).not.toMatch(wrong);
+     48|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/20]⎯
+
+ FAIL  tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 2.7.5 is Literature References
+AssertionError: expected 'Summary of Clinical Safety: adverse e…' to contain 'Literature References'
+
+Expected: "Literature References"
+Received: "Summary of Clinical Safety: adverse events, deaths, lab abnormalities, vital signs, special populations. Aggregate across all studies."
+
+ ❯ tests/regulatory/ana-ctd-section-truth.test.ts:46:19
+     44|     const line = getSectionGuidance(code);
+     45|     expect(line, `no section line for ${code}`).toBeTruthy();
+     46|     expect(line!).toContain(title);
+       |                   ^
+     47|     if (String(wrong) !== '/^$/') expect(line!).not.toMatch(wrong);
+     48|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/20]⎯
+
+ FAIL  tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 1.12.14 is Environmental Assessment
+AssertionError: no section line for 1.12.14: expected null to be truthy
+
+- Expected:
+true
+
++ Received:
+null
+
+ ❯ tests/regulatory/ana-ctd-section-truth.test.ts:45:49
+     43|   ])('%s is %s', (code, title, wrong) => {
+     44|     const line = getSectionGuidance(code);
+     45|     expect(line, `no section line for ${code}`).toBeTruthy();
+       |                                                 ^
+     46|     expect(line!).toContain(title);
+     47|     if (String(wrong) !== '/^$/') expect(line!).not.toMatch(wrong);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/20]⎯
+
+ FAIL  tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 1.14 is labeling, not the environmental assessment
+AssertionError: expected 'Environmental Assessment: required fo…' to match /label/i
+
+- Expected:
+/label/i
+
++ Received:
+"Environmental Assessment: required for NDAs. Justify categorical exclusion or provide full EA."
+
+ ❯ tests/regulatory/ana-ctd-section-truth.test.ts:53:19
+     51|     const line = getSectionGuidance('1.14');
+     52|     expect(line, 'no section line for 1.14').toBeTruthy();
+     53|     expect(line!).toMatch(/label/i);
+       |                   ^
+     54|     expect(line!).not.toMatch(/environmental/i);
+     55|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/20]⎯
+
+ FAIL  tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > a sub-section is briefed as its nearest registered section, and says so
+AssertionError: expected 'Summary of Clinical Pharmacodynamics:…' to contain '2.7.3'
+
+Expected: "2.7.3"
+Received: "Summary of Clinical Pharmacodynamics: PD biomarkers, dose-response relationships, PK/PD modeling."
+
+ ❯ tests/regulatory/ana-ctd-section-truth.test.ts:59:18
+     57|   it('a sub-section is briefed as its nearest registered section, and …
+     58|     const line = getSectionGuidance('2.7.3.1');
+     59|     expect(line).toContain('2.7.3');
+       |                  ^
+     60|     expect(line).toContain('Summary of Clinical Efficacy');
+     61|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/20]⎯
+
+ FAIL  tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > a parent is briefed by the sections it contains, not as its first child
+AssertionError: expected 'Clinical Summary: detailed clinical d…' to contain '2.7.3 Summary of Clinical Efficacy'
+
+Expected: "2.7.3 Summary of Clinical Efficacy"
+Received: "Clinical Summary: detailed clinical data summaries. 2.7.1 (biopharmaceutics), 2.7.2 (PK), 2.7.3 (PD), 2.7.4 (efficacy), 2.7.5 (safety), 2.7.6 (individual studies)."
+
+ ❯ tests/regulatory/ana-ctd-section-truth.test.ts:65:18
+     63|   it('a parent is briefed by the sections it contains, not as its firs…
+     64|     const line = getSectionGuidance('2.7');
+     65|     expect(line).toContain('2.7.3 Summary of Clinical Efficacy');
+       |                  ^
+     66|     expect(line).toContain('2.7.4 Summary of Clinical Safety');
+     67|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/20]⎯
+
+ FAIL  tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > agrees with the canonical overlay on every registered code
+AssertionError: no section line for 1.1.1: expected null to be truthy
+
+- Expected:
+true
+
++ Received:
+null
+
+ ❯ tests/regulatory/ana-ctd-section-truth.test.ts:77:53
+     75|     for (const g of CANONICAL) {
+     76|       const line = getSectionGuidance(g.code);
+     77|       expect(line, `no section line for ${g.code}`).toBeTruthy();
+       |                                                     ^
+     78|       expect(line!.startsWith(`${g.code} ${g.title}`), `${g.code}: "${…
+     79|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/20]⎯
+
+ FAIL  tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.1 carries Form FDA 1571
+AssertionError: expected '## Drafting: Module 1.1 — Cover Lette…' to contain 'Form FDA 1571'
+
+- Expected
++ Received
+
+- Form FDA 1571
++ ## Drafting: Module 1.1 — Cover Letter / FDA Form 1571
++ You are drafting the IND Cover Letter and FDA Form 1571.
++
++ ### Required Content:
++ - Sponsor name, address, and contact information
++ - Drug name (proposed proprietary name, chemical name, code designation)
++ - IND number (if amendment or annual report; "NEW" for initial)
++ - Cross-reference to any related INDs, NDAs, or DMFs
++ - Phase of clinical investigation proposed
++ - Description of protocol(s) included
++ - Identification of the serial number
++ - Signature of sponsor or authorized representative
++
++ ### FDA Expectations:
++ - Must list ALL components being submitted in this package
++ - Cross-reference table to prior submissions if amending
++ - eSignature must comply with 21 CFR Part 11
++ - Include statement of commitment per 21 CFR 312.23(a)(1)
++
++ ### Common Deficiencies:
++ - Missing serial numbers on amendments
++ - Incomplete cross-reference to master files
++ - Ambiguous identification of clinical phases
+
+ ❯ tests/regulatory/ana-ctd-section-truth.test.ts:93:21
+     91|     const prompt = buildSectionSpecificPrompt(code);
+     92|     expect(prompt, `no playbook for ${code}`).toBeTruthy();
+     93|     expect(prompt!).toContain(expected);
+       |                     ^
+     94|     if (String(wrong) !== '/^$/') expect(prompt!).not.toMatch(wrong);
+     95|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/20]⎯
+
+ FAIL  tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.2 carries Cover Letter
+AssertionError: expected '## Drafting: Module 1.2 — Table of Co…' to contain 'Cover Letter'
+
+- Expected
++ Received
+
+- Cover Letter
++ ## Drafting: Module 1.2 — Table of Contents
++ You are generating the Table of Contents for the CTD.
++
++ ### Requirements:
++ - Must reflect the actual eCTD structure per ICH M4
++ - Hyperlink every entry to the corresponding document/section
++ - Include volume/page references for paper submissions
++ - Use eCTD 4.0 lifecycle operations for amendments
++ - Automatically generated from the eCTD backbone.xml in electronic submissions
++
++ ### Best Practice:
++ - Use the eCTD Module structure as the organizational backbone
++ - Cross-reference CTD triangle diagram for completeness check
+
+ ❯ tests/regulatory/ana-ctd-section-truth.test.ts:93:21
+     91|     const prompt = buildSectionSpecificPrompt(code);
+     92|     expect(prompt, `no playbook for ${code}`).toBeTruthy();
+     93|     expect(prompt!).toContain(expected);
+       |                     ^
+     94|     if (String(wrong) !== '/^$/') expect(prompt!).not.toMatch(wrong);
+     95|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/20]⎯
+
+ FAIL  tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.3.3 carries Debarment Certification
+AssertionError: expected '## Drafting: Module 1.3.3 — Investiga…' to contain 'Debarment Certification'
+
+- Expected
++ Received
+
+- Debarment Certification
++ ## Drafting: Module 1.3.3 — Investigator's Brochure (IB)
++ You are drafting the Investigator's Brochure per ICH E6(R2) Section 7.
++
++ ### Required Sections (per ICH E6):
++ 1. Title page (drug name, IND number, edition date)
++ 2. Confidentiality statement
++ 3. Table of Contents
++ 4. Summary (1-2 pages; nonclinical + clinical overview)
++ 5. Introduction (rationale, target population)
++ 6. Physical, Chemical, and Pharmaceutical Properties
++ 7. Nonclinical Studies: pharmacology, pharmacokinetics, toxicology
++ 8. Effects in Humans: PK, safety, efficacy, post-marketing
++ 9. Summary of Data and Guidance for the Investigator
++ 10. References
++
++ ### FDA Review Focus:
++ - Summary section must allow rapid risk-benefit assessment
++ - Nonclinical safety data presentation should match ICH M4 organization
++ - Known/expected adverse reactions must be clearly presented
++ - Dosing rationale derived from nonclinical/PK data
++ - Must be updated at least annually per 21 CFR 312.55
++
++ ### Common Deficiencies:
++ - Missing sections (especially effects in humans for FIH)
++ - Inadequate dose-response characterization
++ - Safety margin calculations absent or poorly presented
++ - No clear guidance section for investigators
+
+ ❯ tests/regulatory/ana-ctd-section-truth.test.ts:93:21
+     91|     const prompt = buildSectionSpecificPrompt(code);
+     92|     expect(prompt, `no playbook for ${code}`).toBeTruthy();
+     93|     expect(prompt!).toContain(expected);
+       |                     ^
+     94|     if (String(wrong) !== '/^$/') expect(prompt!).not.toMatch(wrong);
+     95|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/20]⎯
+
+ FAIL  tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.14.4.1 carries Investigator's Brochure
+AssertionError: expected '## Module 1 — Administrative Informat…' to contain 'Investigator\'s Brochure'
+
+- Expected
++ Received
+
+- Investigator's Brochure
++ ## Module 1 — Administrative Information
++ You are working on Module 1 (Administrative and Prescribing Information) section 1.14.4.1.
++ This module contains region-specific administrative documents, forms, and cover letters.
++ Reference 21 CFR 312.23 for IND requirements or other relevant regional guidance.
+
+ ❯ tests/regulatory/ana-ctd-section-truth.test.ts:93:21
+     91|     const prompt = buildSectionSpecificPrompt(code);
+     92|     expect(prompt, `no playbook for ${code}`).toBeTruthy();
+     93|     expect(prompt!).toContain(expected);
+       |                     ^
+     94|     if (String(wrong) !== '/^$/') expect(prompt!).not.toMatch(wrong);
+     95|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/20]⎯
+
+ FAIL  tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 5.2 carries Tabular Listing
+AssertionError: expected '## Drafting: Module 5.2 — Tabular Lis…' not to match /per ICH E3/i
+
+- Expected:
+/per ICH E3/i
+
++ Received:
+"## Drafting: Module 5.2 — Tabular Listing of All Clinical Studies
+You are generating the Tabular Listing per ICH E3.
+
+### Required Columns:
+- Study Number
+- Study Title
+- Study Design (randomized, blinded, etc.)
+- Study Population
+- Treatment Groups and Dosing
+- Number of Subjects
+- Study Duration
+- Study Status
+- CSR Section Reference
+
+### For Initial IND:
+- Include the PROPOSED clinical study protocol
+- Reference any published or foreign clinical data
+- Include any PK bridging studies if applicable"
+
+ ❯ tests/regulatory/ana-ctd-section-truth.test.ts:94:55
+     92|     expect(prompt, `no playbook for ${code}`).toBeTruthy();
+     93|     expect(prompt!).toContain(expected);
+     94|     if (String(wrong) !== '/^$/') expect(prompt!).not.toMatch(wrong);
+       |                                                       ^
+     95|   });
+     96|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/20]⎯
+
+ FAIL  tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 5.3.5.1 holds the reports of controlled clinical studies, not a protocol playbook
+AssertionError: expected '## Drafting: Module 5.3.5.1 — Clinica…' to contain 'Study Reports of Controlled Clinical …'
+
+- Expected
++ Received
+
+- Study Reports of Controlled Clinical Studies Pertinent to the Claimed Indication
++ ## Drafting: Module 5.3.5.1 — Clinical Protocol
++ You are drafting a Clinical Study Protocol per ICH E6(R2).
++
++ ### Standard Protocol Sections:
++ 1. Protocol Summary/Synopsis
++ 2. Introduction and Background/Rationale
++ 3. Study Objectives and Endpoints
++ 4. Study Design (including schema figure)
++ 5. Study Population (inclusion/exclusion criteria)
++ 6. Study Treatments (drug, dose, route, schedule, duration)
++ 7. Study Assessments and Procedures
++ 8. Statistical Considerations (sample size, analysis populations, methods)
++ 9. Adverse Event Reporting
++ 10. Data Management and Quality Assurance
++ 11. Ethics and Regulatory Considerations
++ 12. References
++ 13. Appendices (schedule of assessments table, lab normals, etc.)
++
++ ### ICH E6(R2) Requirements:
++ - Risk-Based Monitoring plan
++ - Protocol amendments process
++ - IMP accountability procedures
++ - Investigator responsibilities
++
++ ### ICH E8(R3) Considerations:
++ - Quality by Design approach to clinical studies
++ - Critical to Quality factors identification
++ - Stakeholder engagement framework
++
++ ### FDA Phase 1 Specifics:
++ - Starting dose justification (MRSD per FDA Guidance)
++ - Dose escalation scheme with stopping rules
++ - Safety monitoring (DSMB/SMC charter reference)
++ - Sentinel dosing requirements
++ - Biomarker or PD endpoint rationale
+
+ ❯ tests/regulatory/ana-ctd-section-truth.test.ts:99:20
+     97|   it('5.3.5.1 holds the reports of controlled clinical studies, not a …
+     98|     const prompt = buildSectionSpecificPrompt('5.3.5.1')!;
+     99|     expect(prompt).toContain(CTD_AUTHORING_GUIDANCE['5.3.5.1'].title);
+       |                    ^
+    100|     expect(prompt).not.toMatch(/Clinical Protocol/);
+    101|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/20]⎯
+
+ FAIL  tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > opens with the canonical code and title for every registered code
+AssertionError: 1.1.1: expected '## Drafting: Module 1.1 — Cover Lette…' to contain '1.1.1 — Form FDA 1571 — Investigation…'
+
+Expected: "1.1.1 — Form FDA 1571 — Investigational New Drug Application"
+Received: "## Drafting: Module 1.1 — Cover Letter / FDA Form 1571"
+
+ ❯ tests/regulatory/ana-ctd-section-truth.test.ts:108:33
+    106|       expect(prompt, `no playbook for ${g.code}`).toBeTruthy();
+    107|       const firstLine = prompt!.split('\n')[0];
+    108|       expect(firstLine, g.code).toContain(`${g.code} — ${g.title}`);
+       |                                 ^
+    109|     }
+    110|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/20]⎯
+
+ FAIL  tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "summary of clinical efficacy" → 2.7.3
+AssertionError: expected '2.7.4' to be '2.7.3' // Object.is equality
+
+Expected: "2.7.3"
+Received: "2.7.4"
+
+ ❯ tests/regulatory/ana-ctd-section-truth.test.ts:128:39
+    126|     const hit = detectDocumentTemplate(message);
+    127|     expect(hit, `nothing detected for "${message}"`).toBeTruthy();
+    128|     expect(hit!.template.primaryCode).toBe(code);
+       |                                       ^
+    129|   });
+    130|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/20]⎯
+
+ FAIL  tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "draft section 2.7.3" → 2.7.3
+AssertionError: nothing detected for "draft section 2.7.3": expected null to be truthy
+
+- Expected:
+true
+
++ Received:
+null
+
+ ❯ tests/regulatory/ana-ctd-section-truth.test.ts:127:54
+    125|   ])('"%s" → %s', (message, code) => {
+    126|     const hit = detectDocumentTemplate(message);
+    127|     expect(hit, `nothing detected for "${message}"`).toBeTruthy();
+       |                                                      ^
+    128|     expect(hit!.template.primaryCode).toBe(code);
+    129|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/20]⎯
+
+ FAIL  tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "summary of clinical safety" → 2.7.4
+AssertionError: expected '2.7.5' to be '2.7.4' // Object.is equality
+
+Expected: "2.7.4"
+Received: "2.7.5"
+
+ ❯ tests/regulatory/ana-ctd-section-truth.test.ts:128:39
+    126|     const hit = detectDocumentTemplate(message);
+    127|     expect(hit, `nothing detected for "${message}"`).toBeTruthy();
+    128|     expect(hit!.template.primaryCode).toBe(code);
+       |                                       ^
+    129|   });
+    130|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/20]⎯
+
+ FAIL  tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > every template with a CTD primary code is named for that code
+AssertionError: ctd_2_7_4_efficacy_summary: expected 'Clinical Efficacy Summary (2.7.4)' to contain 'Summary of Clinical Safety'
+
+Expected: "Summary of Clinical Safety"
+Received: "Clinical Efficacy Summary (2.7.4)"
+
+ ❯ tests/regulatory/ana-ctd-section-truth.test.ts:135:35
+    133|       const g = t.primaryCode ? CTD_AUTHORING_GUIDANCE[t.primaryCode] …
+    134|       if (!g) continue;
+    135|       expect(t.displayName, t.id).toContain(coreTitle(g.title));
+       |                                   ^
+    136|       expect(t.draftingInstructions, t.id).toContain(t.primaryCode!);
+    137|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/20]⎯
+
+ FAIL  tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > every coded 2.5.x / 2.7.x sub-heading carries its ICH M4E title
+AssertionError: ctd_2_5_clinical_overview 2.5.6: expected '2.5.6 Summary of Benefits and Risks' to contain 'Benefits and Risks Conclusions'
+
+Expected: "Benefits and Risks Conclusions"
+Received: "2.5.6 Summary of Benefits and Risks"
+
+ ❯ tests/regulatory/ana-ctd-section-truth.test.ts:145:48
+    143|         const g = s.code && /^2\.(5|7)\./.test(s.code) ? CTD_AUTHORING…
+    144|         if (!g) continue;
+    145|         expect(s.heading, `${t.id} ${s.code}`).toContain(g.title);
+       |                                                ^
+    146|       }
+    147|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/20]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  20 failed | 5 passed (25)
+   Start at  18:30:29
+   Duration  9.39s (transform 5.54s, setup 101ms, import 8.90s, tests 48ms, environment 0ms)
+

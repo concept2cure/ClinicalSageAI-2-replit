@@ -58,9 +58,10 @@ describe('detectDocumentTemplate — positive matches', () => {
     ['QOS', 'draft the quality overall summary', 'ctd_2_3_qos'],
     ['QOS section ref', 'ctd section 2.3', 'ctd_2_3_qos'],
     ['Nonclinical Overview', 'draft the nonclinical overview 2.4', 'ctd_2_4_nonclinical_overview'],
-    ['Efficacy Summary', 'summary of clinical efficacy', 'ctd_2_7_4_efficacy_summary'],
-    ['Efficacy Summary section', 'section 2.7.4', 'ctd_2_7_4_efficacy_summary'],
-    ['Safety Summary', 'summary of clinical safety', 'ctd_2_7_5_safety_summary'],
+    ['Efficacy Summary', 'summary of clinical efficacy', 'ctd_2_7_3_efficacy_summary'],
+    ['Efficacy Summary section', 'section 2.7.3', 'ctd_2_7_3_efficacy_summary'],
+    ['Safety Summary', 'summary of clinical safety', 'ctd_2_7_4_safety_summary'],
+    ['Safety Summary section', 'section 2.7.4', 'ctd_2_7_4_safety_summary'],
     ['CMC Drug Substance', 'cmc drug substance section', 'cmc_drug_substance'],
     ['CMC 3.2.S', 'module 3.2.s drug substance narrative', 'cmc_drug_substance'],
     ['CMC Drug Product', 'cmc drug product section', 'cmc_drug_product'],
@@ -115,9 +116,11 @@ describe('detectDocumentTemplate — specificity', () => {
       .toBe('ctd_2_5_clinical_overview');
   });
 
-  it('efficacy summary wins when section 2.7.4 is mentioned', () => {
-    expect(detectDocumentTemplate('section 2.7.4 summary of clinical efficacy')!.template.id)
-      .toBe('ctd_2_7_4_efficacy_summary');
+  // ICH M4E: 2.7.3 is the Summary of Clinical Efficacy (this case pinned 2.7.4
+  // until 2026-10-04; tests/regulatory/ana-ctd-section-truth.test.ts).
+  it('efficacy summary wins when section 2.7.3 is mentioned', () => {
+    expect(detectDocumentTemplate('section 2.7.3 summary of clinical efficacy')!.template.id)
+      .toBe('ctd_2_7_3_efficacy_summary');
   });
 
   it('CMC drug substance wins when 3.2.S is mentioned', () => {

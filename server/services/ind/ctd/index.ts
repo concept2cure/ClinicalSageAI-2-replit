@@ -32,6 +32,14 @@ export type {
 } from './types.js';
 export { CTD_AUTHORING_GUIDANCE } from './authoring-guidance.js';
 export { LIFECYCLE_DOCUMENT_TYPES } from './lifecycle-document-types.js';
+export {
+  renderSectionBrief,
+  sectionIdentityLine,
+  resolveSectionBriefSource,
+  SECTION_BRIEF_MAX_CHARS,
+  type SectionBriefKind,
+  type SectionBriefSource,
+} from './section-brief.js';
 
 /**
  * The key a section code's authoring guidance is stored under: strip a leading
