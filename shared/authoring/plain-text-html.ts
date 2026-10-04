@@ -63,7 +63,15 @@
 const KNOWN_HTML_TAG =
   /<\/?(p|div|br|h[1-6]|ul|ol|li|dl|dt|dd|b|strong|i|em|u|s|strike|ins|del|span|table|caption|thead|tbody|tfoot|tr|td|th|blockquote|pre|a|img|hr|sub|sup|mark|code|font|section|article|figure|figcaption)\b[^>]*>/i;
 export function looksLikeHtml(stored: string): boolean {
-  return KNOWN_HTML_TAG.test(stored);
+  /* Tested on the prefix that ends at the last `>`, and the answer is the
+     same: a tag needs a `>` after its name, so nothing after the last one can
+     start a match. On the whole string, `[^>]*` re-scanned the rest from every
+     opener with no `>` after it: quadratic, about seventy seconds for a
+     400,000-character section, on the server's event loop. In the prefix
+     every scan stops at a `>` (looks-like-html.test.ts). */
+  const lastGt = stored.lastIndexOf('>');
+  if (lastGt === -1) return false;
+  return KNOWN_HTML_TAG.test(lastGt === stored.length - 1 ? stored : stored.slice(0, lastGt + 1));
 }
 
 /**

@@ -39,3 +39,19 @@ had.
 
 Self-reviewed in this lane. The independent refute-review of the batch-draft
 round covers this change with it.
+
+## And in linear time
+
+Found while wiring the rule into the lineage: its pattern ends in `[^>]*>`,
+and every opener with no `>` after it re-scanned the rest of the string. One
+call on 400,000 characters of `<a`, the batch-draft accept's limit, took
+72.6 seconds (`linear-red.txt`). That is on the server's event loop in the
+export today, and would have been on every save that carries machine text.
+
+The pattern now runs on the prefix that ends at the last `>`. A tag needs a
+`>` after its name, so the answer is the same: asserted against a frozen copy
+of the old pattern over 200,000 generated strings, plus named cases
+(`shared/authoring/__tests__/looks-like-html.test.ts`). Green:
+`linear-green.txt`, each pathological case under a millisecond. A wrong cut
+(a prefix that drops the last `>`) is caught by the generated strings:
+`linear-mutant-drops-last-gt.txt`.
