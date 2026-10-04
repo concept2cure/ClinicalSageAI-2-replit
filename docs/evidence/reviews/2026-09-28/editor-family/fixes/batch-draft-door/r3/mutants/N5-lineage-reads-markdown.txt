@@ -1,0 +1,13 @@
+mutant N5-lineage-reads-markdown: server/services/clinical-regulatory-evidence/machine-attribution.ts
+- const needle = comparableText(candidates[i].text);
++ const needle = comparableText(candidates[i].text, { markdown: true });
+
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > content read as plain text shows every `<…>` > an asterisk added to the machine's clause makes it not the machine's: content is never read as markdown (N5) 7ms
+   → expected [ Array(1) ] to deeply equal []
+ × server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-D: an honest, unedited draft accepted exactly as the card sends it > HTML with a footnote asterisk: verifies, and its words are AnA's 33ms
+   → AnA's words recorded as the accepter's: expected false to be true // Object.is equality
+ × server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-D: an honest, unedited draft accepted exactly as the card sends it > a markdown table with an escaped pipe: verifies, and its words are AnA's 31ms
+   → AnA's words recorded as the accepter's: expected false to be true // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  3 failed | 56 passed (59)

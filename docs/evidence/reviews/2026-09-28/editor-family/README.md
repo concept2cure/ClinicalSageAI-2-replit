@@ -186,9 +186,42 @@ below takes it up.
 ## Round 3 (2026-10-04)
 
 The lane resumed after five days, with 1,170 commits on trunk. It carried
-two lanes onto trunk (above) and withdrew one. Still open in this lane: the
-batch-draft door, and the round-3 list of held-file findings whose holds have
-now lapsed.
+two lanes onto trunk (above) and withdrew one.
+
+- **The batch-draft door: closed** (`fixes/batch-draft-door/`). The round-2c
+  reviewer's three blockers are fixed, and its two gaps are pinned, each red
+  first against round 2c's code:
+  - the blockers: a raw-text element split from its opener, an honest
+    markdown draft refused, and surviving mutants N1 and N5;
+  - the gaps: a one-word claim naming AnA, and the empty-needle guard (N8).
+
+  Two more were found while fixing them, and are closed too:
+  - content read as plain text shows every `<…>`;
+  - a carried-forward clause inside a later raw-text region kept AnA's name.
+
+  The known-tag rule became one shared copy, in linear time
+  (`fixes/known-tag-rule/`). 15 of 15 mutants are killed. Self-reviewed;
+  independent review to follow.
+- **Independent refute-reviews of the two lanes landed above**, by agents
+  told to refute them, at the merge `25740b97c`:
+  - **P11-B-4 undo floor.** The floor held: a model-based fuzz of 300 seeds ×
+    500 steps found nothing, and that fuzz kills 5 of 5 mutants. The defects
+    are in its wiring:
+    - the ribbon's Undo and Redo stay enabled at a floor (medium, already on
+      this lane's list);
+    - live co-editing's Yjs undo has no floor. That path is behind
+      `ENABLE_LIVE_COEDITING`, which is off, but this is a blocker before
+      the flag is turned on.
+  - **SEC-B-1/2 figure rule.** Defect found:
+    - one high this commit introduced: an image with a duplicated `src`
+      attribute is filed by the export as the second value, while the canvas
+      shows the first;
+    - mediums and lows in the same rule;
+    - a high in another door: the CMC Module 3 placement stores markdown the
+      eCTD leaf renderer reads as HTML, so "Impurity B was <LOQ in all 3
+      batches" is filed as "Impurity B was 98.0%)".
+
+  Both reviews are being taken up in this round.
 
 ## Files
 

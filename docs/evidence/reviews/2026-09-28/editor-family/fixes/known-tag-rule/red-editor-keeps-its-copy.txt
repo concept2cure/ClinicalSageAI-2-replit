@@ -1,0 +1,6 @@
+ × client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > one allowlist > the editor and the export read section content by the shared rule, and neither keeps a copy 13ms
+   → the editor keeps its own allowlist: expected 'import{getSchema,typeJSONContent,type…' not to match /<\\\/\?\(([…/\?\(([a-z0-9|[\]{}\-^]+)\)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > one allowlist > the editor and the export read section content by the shared rule, and neither keeps a copy
+AssertionError: the editor keeps its own allowlist: expected 'import{getSchema,typeJSONContent,type…' not to match /<\\\/\?\(([…/\?\(([a-z0-9|[\]{}\-^]+)\)
+    172|       expect(src.replace(/\s+/g, ''), `${reader} keeps its own allowli…

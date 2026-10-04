@@ -1,0 +1,6 @@
+mutant N1-tag-lookahead: server/services/clinical-regulatory-evidence/machine-attribution.ts
+- (?!(?:${RAW_TEXT_ELEMENTS})[\\s/>])[a-z]
++ (?!(?:${RAW_TEXT_ELEMENTS})>)[a-z]
+
+ Test Files  2 passed (2)
+      Tests  59 passed (59)

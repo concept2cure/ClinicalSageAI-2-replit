@@ -1,0 +1,16 @@
+ ✓ shared/authoring/__tests__/looks-like-html.test.ts > looksLikeHtml answers as the frozen rule does > "<P CLASS=\"x\">" → true 0ms
+ ✓ shared/authoring/__tests__/looks-like-html.test.ts > looksLikeHtml answers as the frozen rule does > "" → false 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > definition list 2ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > definition term 1ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > definition detail 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > table caption 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > figure 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > figure caption 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > markup the record can hold is recognised as markup > still refuses to treat a tag-shaped prose token as markup 0ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > the gate does not affirm a corruption it caused > does not report a glossary as faithfully editable in rich mode 17ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > the gate does not affirm a corruption it caused > reads a glossary as the words a reviewer sees, not as its tags 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > the gate does not affirm a corruption it caused > still passes content the editor genuinely represents 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > the gate does not affirm a corruption it caused > still catches real text loss 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/roundTripFidelity.test.ts > one allowlist > the editor and the export read section content by the shared rule, and neither keeps a copy 2ms
+ Test Files  2 passed (2)
+      Tests  24 passed (24)

@@ -1,0 +1,11 @@
+mutant M-cdata-not-an-opener: server/services/clinical-regulatory-evidence/machine-attribution.ts
+- |<!\\[CDATA\\[`, 'i');
++ `, 'i');
+
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > rawTextFrom: where a browser may first read `<…>` as text > finds a CDATA section 7ms
+   → expected -1 to be 2 // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > CDATA in SVG, paragraph breaks: the clause holding the shown words is not the machine's 2ms
+   → words a reader is shown were credited to the machine: expected [ Array(1) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 41 passed (43)

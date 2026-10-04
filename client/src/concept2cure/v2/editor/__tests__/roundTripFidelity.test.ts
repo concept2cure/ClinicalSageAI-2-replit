@@ -138,16 +138,20 @@ describe('the gate does not affirm a corruption it caused', () => {
   });
 });
 
-describe('the two allowlists agree', () => {
-  it('the server parser recognises exactly what the client does', async () => {
-    /* `contentLooksLikeHtml` in server/export/authoring-section-content.ts is
-       the same decision on the export side, and its comment says to keep the
-       two in agreement. They had drifted — which is how the same content could
-       be escaped by one and parsed by the other, so the section a reviewer read
-       on screen and the section in the exported DOCX disagreed about whether
-       its own tags were text.
+describe('one allowlist', () => {
+  it('the editor and the export read section content by the shared rule, and neither keeps a copy', async () => {
+    /* `looksLikeHtml` here and `contentLooksLikeHtml` in
+       server/export/authoring-section-content.ts were two copies of one
+       allowlist, held equal by this test comparing their source. They had
+       drifted before, which is how the same content could be escaped by one
+       and parsed by the other, so the section a reviewer read on screen and
+       the section in the exported DOCX disagreed about whether its own tags
+       were text. Both are now the one rule in
+       shared/authoring/plain-text-html.ts, which the lineage's machine
+       attribution reads too (periodic review 2026-09-28, editor family, the
+       batch-draft accept, round 3).
 
-       Compared as SOURCE rather than by importing the server module: this suite
+       Read as SOURCE rather than by importing the server module: this suite
        runs in jsdom under the client config, and the server module pulls in
        node-html-parser and a chain of server-only imports. */
     const fs = await import('node:fs');
@@ -155,16 +159,18 @@ describe('the two allowlists agree', () => {
     const read = (p: string) =>
       fs.readFileSync(path.resolve(__dirname, p), 'utf8');
 
-    const tagsOf = (src: string) => {
-      const m = /<\\\/\?\(([a-z0-9|[\]{}\-^]+)\)/.exec(src.replace(/\s+/g, ''));
-      return new Set((m?.[1] ?? '').split('|'));
-    };
-    const client = tagsOf(read('../roundTrip.ts'));
-    const server = tagsOf(
-      read('../../../../../../server/export/authoring-section-content.ts'),
-    );
-    expect(client.size, 'could not read the client allowlist').toBeGreaterThan(10);
-    expect(server.size, 'could not read the server allowlist').toBeGreaterThan(10);
-    expect([...server].sort()).toEqual([...client].sort());
+    /** The shape of a tag allowlist literal: `<\/?(p|div|…)`. */
+    const allowlist = /<\\\/\?\(([a-z0-9|[\]{}\-^]+)\)/;
+    const readsShared = /import \{[^}]*\blooksLikeHtml\b[^}]*\} from '@shared\/authoring\/plain-text-html'/;
+    const shared = read('../../../../../../shared/authoring/plain-text-html.ts');
+    expect(allowlist.exec(shared.replace(/\s+/g, ''))?.[1].split('|').length, 'could not read the shared allowlist').toBeGreaterThan(10);
+
+    for (const [reader, src] of [
+      ['the editor', read('../roundTrip.ts')],
+      ['the export', read('../../../../../../server/export/authoring-section-content.ts')],
+    ] as const) {
+      expect(src.replace(/\s+/g, ''), `${reader} keeps its own allowlist`).not.toMatch(allowlist);
+      expect(src, `${reader} does not read the shared rule`).toMatch(readsShared);
+    }
   });
 });

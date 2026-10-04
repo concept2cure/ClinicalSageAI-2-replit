@@ -1,0 +1,15 @@
+mutant M-verify-record-markdown-only: server/services/authoring/machine-claim-verify.ts
+- outputs.push(comparableText(text), comparableText(text, { markdown: true }));
++ outputs.push(comparableText(text, { markdown: true }));
+
+ × server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-D: an honest, unedited draft accepted exactly as the card sends it > markdown bold: verifies, and its words are AnA's 69ms
+   → AnA's own unedited draft did not verify: expected [ { chars: 149, …(4) } ] to deeply equal []
+ × server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-D: an honest, unedited draft accepted exactly as the card sends it > a markdown bullet list: verifies, and its words are AnA's 96ms
+   → AnA's own unedited draft did not verify: expected [ { chars: 163, …(4) } ] to deeply equal []
+ × server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-D: an honest, unedited draft accepted exactly as the card sends it > HTML with a footnote asterisk: verifies, and its words are AnA's 78ms
+   → AnA's own unedited draft did not verify: expected [ { chars: 113, …(4) } ] to deeply equal []
+ × server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > PROBE-D: an honest, unedited draft accepted exactly as the card sends it > a markdown table with an escaped pipe: verifies, and its words are AnA's 47ms
+   → AnA's own unedited draft did not verify: expected [ { chars: 116, …(4) } ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 1 passed (2)
+      Tests  4 failed | 47 passed (51)

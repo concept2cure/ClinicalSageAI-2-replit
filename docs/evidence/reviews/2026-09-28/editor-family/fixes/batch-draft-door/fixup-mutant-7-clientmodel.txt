@@ -1,0 +1,60 @@
+{
+ "mutant": "7-clientmodel",
+ "file": "client/src/concept2cure/v2/surfaces/BatchDraft.tsx",
+ "what": "the client sends the model instead of the turn record id",
+ "old": "        turnRecordId: card.turnRecordId || undefined,",
+ "new": "        model: card.model || undefined,",
+ "test": "client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx"
+}
+
+
+ RUN  v4.1.7 ./
+
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > a draft belongs to one document, even when sections share a number > selects numberless sections independently 80ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > a draft belongs to one document, even when sections share a number > renders one card per document, not one card for the shared number 65ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > a draft belongs to one document, even when sections share a number > accepts each card into its OWN document 55ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > "accepted" means the write came back, not that it was attempted > marks the card accepted and reports the version its content superseded 35ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > "accepted" means the write came back, not that it was attempted > does NOT mark the card accepted when the write fails, and says why 36ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > "accepted" means the write came back, not that it was attempted > does not treat a 200 carrying success:false as a write 33ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > "accepted" means the write came back, not that it was attempted > does not send a second write while the first is in flight 32ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > "accepted" means the write came back, not that it was attempted > records the framework the prose was actually drafted against 33ms
+ × client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > the accept names the turn record the draft came from, not a model > sends the turn record id the batch returned, and no model 33ms
+   → expected undefined to be '3f2b8c1e-5d4a-4e6f-9a7b-1c2d3e4f5a6b' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > an unreachable drafting service renders as unreachable, not as prose > refuses to draft, and says why, instead of producing sample cards 9ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > an unreachable drafting service renders as unreachable, not as prose > produces no cards and sends no drafting request even when run() is invoked 913ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > an unreachable drafting service renders as unreachable, not as prose > never renders the fabricated prose, by any label 915ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > an unreachable drafting service renders as unreachable, not as prose > does not offer acceptance, and does not call anything accepted 916ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > an unreachable drafting service renders as unreachable, not as prose > says the service is unreachable in the header, not that this is a preview 9ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > the framework picker is remembered or stated — never guessed > presets the framework the documents recorded 10ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > the framework picker is remembered or stated — never guessed > stays blank when the documents record nothing 11ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > the framework picker is remembered or stated — never guessed > stays blank for a framework this build has no option for 10ms
+ ✓ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > the framework picker is remembered or stated — never guessed > renders a spine with no framework field at all — an older server is not an error 9ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 17 passed (18)
+   Start at  19:32:48
+   Duration  4.49s (transform 306ms, setup 157ms, import 443ms, tests 3.21s, environment 516ms)
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx > the accept names the turn record the draft came from, not a model > sends the turn record id the batch returned, and no model
+AssertionError: expected undefined to be '3f2b8c1e-5d4a-4e6f-9a7b-1c2d3e4f5a6b' // Object.is equality
+
+- Expected:
+"3f2b8c1e-5d4a-4e6f-9a7b-1c2d3e4f5a6b"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx:332:31
+    330|
+    331|     const body = acceptCalls()[0].body;
+    332|     expect(body.turnRecordId).toBe(TURN_RECORD_ID);
+       |                               ^
+    333|     expect('model' in body, 'the accept still tells the server which m…
+    334|     expect(body.acceptedMachineText).toEqual([{ authorId: 'ana', text:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
