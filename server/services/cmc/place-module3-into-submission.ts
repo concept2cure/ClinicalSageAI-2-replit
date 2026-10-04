@@ -53,6 +53,7 @@ import {
 import { evaluateFinalExportGate, type FinalExportGateVerdict } from './final-export-gate';
 import { getSectionLabels } from '../module3-convergence-service';
 import { renderComposedSectionMarkdown, type GeneratedTable } from '../module3Composer';
+import { MODULE3_PLACED_FROM } from './module3-placement-marker';
 
 /**
  * Wording for the one refusal this seam adds: a section whose stored
@@ -237,7 +238,7 @@ async function fileSectionAsLeaf(params: {
       moduleName: label,
       createdBy: String(userId),
       metadata: {
-        placedFrom: 'cmc-module3-os',
+        placedFrom: MODULE3_PLACED_FROM,
         cmcProjectId,
         sectionKey,
       },

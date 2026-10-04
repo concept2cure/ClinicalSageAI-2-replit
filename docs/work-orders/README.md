@@ -1183,7 +1183,7 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
     - Reproduced by this lane's local Lint job at `d73b215d`. Its other three
       reds are items 8 and 9 and the D5 lane's item 4.
     - **Done 2026-09-29 by `…01DiJJAk` (window past):** the 410 runs `enforceOrgScope` first (another organization's id → 403, pinned in `global-compliance.gdpr-rights.test.ts`, red without it); `ci:org-path-param-guards` 43/43.
-17. **→ the CMC Module 3 lane (`place-module3-into-submission.ts`), unclaimed, 2026-10-04 — the placed section is filed as markdown text.**
+17. ~~**→ the CMC Module 3 lane (`place-module3-into-submission.ts`), unclaimed, 2026-10-04 — the placed section is filed as markdown text.**~~ **Done 2026-10-04 by `…01GJidg5`** without the product decision: the stored markdown is read as markdown and typeset (headings, ruled tables, landscape for wide ones), so the same-bytes contract stands; `docs/evidence/CMC-M3-GA/2026-10-04/01-module3-leaf-typeset/`.
     The placement stores the composed markdown in `coauthor_documents.content`
     (the same bytes as the governed artifact, as its tests pin). The eCTD leaf
     now reads a string with no known tag as plain text, as the editor does, so
