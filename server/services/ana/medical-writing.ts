@@ -108,7 +108,7 @@ const DOCUMENT_TYPES: DocumentTypeStandard[] = [
     id: 'csr',
     label: 'Clinical Study Report (CSR)',
     segment: 'drug',
-    governingStandards: ['ICH E3', 'CORE Reference 2016'],
+    governingStandards: ['ICH E3', 'ICH E3 Q&A (R1)', 'CORE Reference 2016'],
     purpose: 'Report the methods and results of a single clinical study completely and without spin.',
     defaultAudience: 'regulator',
     structure: [
@@ -118,7 +118,10 @@ const DOCUMENT_TYPES: DocumentTypeStandard[] = [
       'Discussion & overall conclusions', 'Tables/figures', 'Reference list', 'Appendices (16.x)',
     ],
     keyRequirements: [
-      'Follow ICH E3 numbering exactly; synopsis is self-contained.',
+      // E3 Q&A (R1), 2012: E3 is a guideline, not a set of rigid requirements or
+      // a template; flexibility is inherent in its use. This line said "follow
+      // ICH E3 numbering exactly" until 2026-10-04.
+      'ICH E3 is a guideline, not a template (ICH E3 Q&A (R1)): keep its headings and order where they fit, adapt them where the study calls for it (e.g. a PK or quality-of-life study) and say so; the synopsis is self-contained.',
       'Disposition (CONSORT-style flow), protocol deviations, and analysis-set definitions are explicit.',
       'Safety told completely: exposure, common AEs by SOC/PT (MedDRA), deaths/SAEs/discontinuations with narratives.',
     ],

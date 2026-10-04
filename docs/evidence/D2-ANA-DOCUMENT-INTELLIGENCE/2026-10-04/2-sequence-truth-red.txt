@@ -1,0 +1,526 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | tests/regulatory/ana-submission-sequence-truth.test.ts
+{
+  "timestamp": "2026-10-04T18:41:34.214Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-04T18:41:34.215Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/regulatory/ana-submission-sequence-truth.test.ts
+{
+  "timestamp": "2026-10-04T18:41:34.215Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/regulatory/fda-module1-numbering.test.ts
+{
+  "timestamp": "2026-10-04T18:41:34.217Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-04T18:41:34.218Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/regulatory/fda-module1-numbering.test.ts
+{
+  "timestamp": "2026-10-04T18:41:34.219Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/regulatory/ana-submission-sequence-truth.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stderr | tests/regulatory/fda-module1-numbering.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | tests/regulatory/fda-module1-numbering.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/regulatory/fda-module1-numbering.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | tests/regulatory/ana-submission-sequence-truth.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/regulatory/ana-submission-sequence-truth.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ × tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > ind: an overview depends on its written summary, never the reverse 8ms
+   → ind: 2.4 should depend on 2.6: expected false to be true // Object.is equality
+ × tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > nda: an overview depends on its written summary, never the reverse 1ms
+   → nda: 2.4 should depend on 2.6: expected false to be true // Object.is equality
+ × tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > bla: an overview depends on its written summary, never the reverse 1ms
+   → bla: 2.5 should depend on 2.7: expected false to be true // Object.is equality
+ × tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > nda: the clinical summary depends on every study report and integrated analysis 1ms
+   → nda: 2.7 should depend on Pivotal CSR(s): expected false to be true // Object.is equality
+ × tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > bla: the clinical summary depends on every study report and integrated analysis 1ms
+   → bla: 2.7 should depend on Pivotal CSRs: expected false to be true // Object.is equality
+ × tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > ind: the quality overall summary depends on the Module 3 it summarises 1ms
+   → ind: 2.3 should depend on Drug Substance (3.2.S): expected false to be true // Object.is equality
+ × tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > nda: the quality overall summary depends on the Module 3 it summarises 1ms
+   → nda: 2.3 should depend on Drug Substance (3.2.S): expected false to be true // Object.is equality
+ × tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > bla: the quality overall summary depends on the Module 3 it summarises 1ms
+   → bla: 2.3 should depend on Drug Substance (3.2.S) — Biologics: expected false to be true // Object.is equality
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > ind: phase order is a valid order of its own dependencies 1ms
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > nda: phase order is a valid order of its own dependencies 1ms
+ ✓ tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > bla: phase order is a valid order of its own dependencies 0ms
+ × tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > nda: once planning is done, the first document AnA names is not a Module 2 summary 3ms
+   → nda: first document "Quality Overall Summary (2.3)": expected '2.3' not to match /^2\.\d/
+ × tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > bla: once planning is done, the first document AnA names is not a Module 2 summary 1ms
+   → bla: first document "Quality Overall Summary (2.3)": expected '2.3' not to match /^2\.\d/
+ × tests/regulatory/ana-submission-sequence-truth.test.ts > the US NDA task blueprint names the pre-NDA meeting as FDA classifies it > pre-NDA is a Type B meeting 2ms
+   → expected 'Pre-NDA Meeting (Type A)' to contain 'Type B'
+ × tests/regulatory/ana-submission-sequence-truth.test.ts > the medical-writing base agrees with ICH E3 Q&A (R1) > does not require ICH E3 numbering exactly 1ms
+   → expected '# Medical-writing guidance: Clinical …' not to match /numbering exactly/i
+ × tests/regulatory/ana-submission-sequence-truth.test.ts > the medical-writing base agrees with ICH E3 Q&A (R1) > says E3 is a guideline, not a template, and cites the Q&A 0ms
+   → expected '# Medical-writing guidance: Clinical …' to match /not a template/i
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the FDA context-of-use list carries the Module 1 headings this contract is derived from 4ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the deep IND eCTD map (project bootstrap / readiness / checklist) files Module 1 where FDA does 3ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the IND section registry (AnA plans, coverage, chat) files Module 1 where FDA does 1ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the CTD authoring guidance (AnA drafting prompts) files Module 1 where FDA does 1ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the live ind:fda rule pack (the editor outline) files Module 1 where FDA does 19ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the live ind:fda rule pack carries the Module 1 content an initial IND must file 26ms
+ × tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the submission workflows AnA is guided by file Module 1 where FDA does 12ms
+   → ind workflow: expected [ …(4) ] to deeply equal []
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the global-RI FDA Module 1 requirements file where FDA does 0ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the reference FDA backbone template files Module 1 where FDA does 1ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the required-artifact matrix (IND / NDA / BLA project bootstrap) files Module 1 where FDA does 1ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the Module 1 authoring-surface structure (M1/M2 build state) files Module 1 where FDA does 1ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the FDA regional template (dispatch-readiness required sections) files Module 1 where FDA does 0ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the FDA regional template requires of an IND only what an IND files, and of an NDA only what an NDA files 1ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the compile gate baseline (unknown program type) files Module 1 where FDA does 1ms
+ ✓ tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > what the compile gate requires of an IND (the live rule pack) is what the seeded IND tree creates 26ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > ind: an overview depends on its written summary, never the reverse
+AssertionError: ind: 2.4 should depend on 2.6: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/regulatory/ana-submission-sequence-truth.test.ts:64:93
+     62|       const s = withCode(wf, (c) => c === summary)[0];
+     63|       if (!o || !s) continue;
+     64|       expect(dependsOn(wf, o.id, s.id), `${type}: ${overview} should d…
+       |                                                                                             ^
+     65|       expect(dependsOn(wf, s.id, o.id), `${type}: ${summary} must not …
+     66|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
+
+ FAIL  tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > nda: an overview depends on its written summary, never the reverse
+AssertionError: nda: 2.4 should depend on 2.6: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/regulatory/ana-submission-sequence-truth.test.ts:64:93
+     62|       const s = withCode(wf, (c) => c === summary)[0];
+     63|       if (!o || !s) continue;
+     64|       expect(dependsOn(wf, o.id, s.id), `${type}: ${overview} should d…
+       |                                                                                             ^
+     65|       expect(dependsOn(wf, s.id, o.id), `${type}: ${summary} must not …
+     66|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯
+
+ FAIL  tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > bla: an overview depends on its written summary, never the reverse
+AssertionError: bla: 2.5 should depend on 2.7: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/regulatory/ana-submission-sequence-truth.test.ts:64:93
+     62|       const s = withCode(wf, (c) => c === summary)[0];
+     63|       if (!o || !s) continue;
+     64|       expect(dependsOn(wf, o.id, s.id), `${type}: ${overview} should d…
+       |                                                                                             ^
+     65|       expect(dependsOn(wf, s.id, o.id), `${type}: ${summary} must not …
+     66|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/14]⎯
+
+ FAIL  tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > nda: the clinical summary depends on every study report and integrated analysis
+AssertionError: nda: 2.7 should depend on Pivotal CSR(s): expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/regulatory/ana-submission-sequence-truth.test.ts:76:91
+     74|     expect(reports.length, `${type} has Module 5 report steps`).toBeGr…
+     75|     for (const r of reports) {
+     76|       expect(dependsOn(wf, summary.id, r.id), `${type}: 2.7 should dep…
+       |                                                                                           ^
+     77|     }
+     78|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/14]⎯
+
+ FAIL  tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > bla: the clinical summary depends on every study report and integrated analysis
+AssertionError: bla: 2.7 should depend on Pivotal CSRs: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/regulatory/ana-submission-sequence-truth.test.ts:76:91
+     74|     expect(reports.length, `${type} has Module 5 report steps`).toBeGr…
+     75|     for (const r of reports) {
+     76|       expect(dependsOn(wf, summary.id, r.id), `${type}: 2.7 should dep…
+       |                                                                                           ^
+     77|     }
+     78|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/14]⎯
+
+ FAIL  tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > ind: the quality overall summary depends on the Module 3 it summarises
+AssertionError: ind: 2.3 should depend on Drug Substance (3.2.S): expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/regulatory/ana-submission-sequence-truth.test.ts:84:89
+     82|     const qos = withCode(wf, (c) => c === '2.3')[0];
+     83|     for (const m3 of withCode(wf, (c) => c.startsWith('3.2.'))) {
+     84|       expect(dependsOn(wf, qos.id, m3.id), `${type}: 2.3 should depend…
+       |                                                                                         ^
+     85|     }
+     86|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/14]⎯
+
+ FAIL  tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > nda: the quality overall summary depends on the Module 3 it summarises
+AssertionError: nda: 2.3 should depend on Drug Substance (3.2.S): expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/regulatory/ana-submission-sequence-truth.test.ts:84:89
+     82|     const qos = withCode(wf, (c) => c === '2.3')[0];
+     83|     for (const m3 of withCode(wf, (c) => c.startsWith('3.2.'))) {
+     84|       expect(dependsOn(wf, qos.id, m3.id), `${type}: 2.3 should depend…
+       |                                                                                         ^
+     85|     }
+     86|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/14]⎯
+
+ FAIL  tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > bla: the quality overall summary depends on the Module 3 it summarises
+AssertionError: bla: 2.3 should depend on Drug Substance (3.2.S) — Biologics: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/regulatory/ana-submission-sequence-truth.test.ts:84:89
+     82|     const qos = withCode(wf, (c) => c === '2.3')[0];
+     83|     for (const m3 of withCode(wf, (c) => c.startsWith('3.2.'))) {
+     84|       expect(dependsOn(wf, qos.id, m3.id), `${type}: 2.3 should depend…
+       |                                                                                         ^
+     85|     }
+     86|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/14]⎯
+
+ FAIL  tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > nda: once planning is done, the first document AnA names is not a Module 2 summary
+AssertionError: nda: first document "Quality Overall Summary (2.3)": expected '2.3' not to match /^2\.\d/
+
+- Expected:
+/^2\.\d/
+
++ Received:
+"2.3"
+
+ ❯ tests/regulatory/ana-submission-sequence-truth.test.ts:108:102
+    106|       .map((s) => steps(getWorkflow(type)!).find((x) => x.id === s.id)…
+    107|       .find((s) => s.ctdSection);
+    108|     expect(firstDocument?.ctdSection ?? '', `${type}: first document "…
+       |                                                                                                      ^
+    109|   });
+    110| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/14]⎯
+
+ FAIL  tests/regulatory/ana-submission-sequence-truth.test.ts > the workflows AnA is guided by put each document after what it is written from > bla: once planning is done, the first document AnA names is not a Module 2 summary
+AssertionError: bla: first document "Quality Overall Summary (2.3)": expected '2.3' not to match /^2\.\d/
+
+- Expected:
+/^2\.\d/
+
++ Received:
+"2.3"
+
+ ❯ tests/regulatory/ana-submission-sequence-truth.test.ts:108:102
+    106|       .map((s) => steps(getWorkflow(type)!).find((x) => x.id === s.id)…
+    107|       .find((s) => s.ctdSection);
+    108|     expect(firstDocument?.ctdSection ?? '', `${type}: first document "…
+       |                                                                                                      ^
+    109|   });
+    110| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/14]⎯
+
+ FAIL  tests/regulatory/ana-submission-sequence-truth.test.ts > the US NDA task blueprint names the pre-NDA meeting as FDA classifies it > pre-NDA is a Type B meeting
+AssertionError: expected 'Pre-NDA Meeting (Type A)' to contain 'Type B'
+
+Expected: "Type B"
+Received: "Pre-NDA Meeting (Type A)"
+
+ ❯ tests/regulatory/ana-submission-sequence-truth.test.ts:117:20
+    115|     const preNda = titles.find((t) => /pre-nda/i.test(t));
+    116|     expect(preNda).toBeTruthy();
+    117|     expect(preNda).toContain('Type B');
+       |                    ^
+    118|     expect(preNda).not.toContain('Type A');
+    119|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/14]⎯
+
+ FAIL  tests/regulatory/ana-submission-sequence-truth.test.ts > the medical-writing base agrees with ICH E3 Q&A (R1) > does not require ICH E3 numbering exactly
+AssertionError: expected '# Medical-writing guidance: Clinical …' not to match /numbering exactly/i
+
+- Expected:
+/numbering exactly/i
+
++ Received:
+"# Medical-writing guidance: Clinical Study Report (CSR) (Global (ICH-aligned); audience: Health authority / regulator)
+
+**Purpose.** Report the methods and results of a single clinical study completely and without spin.
+
+**Governing standards.** ICH E3; CORE Reference 2016
+
+### Document structure
+- Title page & synopsis
+- Ethics
+- Investigators & administrative structure
+- Introduction
+- Objectives
+- Investigational plan (design, methods)
+- Study patients (disposition, deviations)
+- Efficacy evaluation
+- Safety evaluation (exposure, AEs, deaths/SAEs, labs)
+- Discussion & overall conclusions
+- Tables/figures
+- Reference list
+- Appendices (16.x)
+
+### Key requirements
+- Follow ICH E3 numbering exactly; synopsis is self-contained.
+- Disposition (CONSORT-style flow), protocol deviations, and analysis-set definitions are explicit.
+- Safety told completely: exposure, common AEs by SOC/PT (MedDRA), deaths/SAEs/discontinuations with narratives.
+
+### Common pitfalls to avoid
+- Efficacy spin / underplayed safety
+- Mismatch between in-text values and source tables
+- Missing or thin AE narratives
+
+## Region/market: Global (ICH-aligned)
+**Dossier standard.** CTD/eCTD common technical document
+
+### Regional style
+- Write the common core once; localize Module 1 + labeling per region
+- Default to ICH conventions when no single region is specified
+
+## Audience: Health authority / regulator
+**Tone.** Precise, neutral, defensible — argue benefit–risk on the data  
+**Reading level.** Expert
+
+### Emphasize
+- Compliance with the governing standard
+- Traceability to source data
+- Even-handed benefit–risk
+
+### Avoid
+- Promotional language
+- Unsupported superiority claims
+
+### Universal craft rules (always apply)
+- Lead with the conclusion; structure top-down (BLUF). Every section answers a regulatory or scientific question.
+- One claim per sentence; prefer the active voice and past tense for completed methods/results.
+- Quantify everything: effect sizes with 95% CIs and p-values, denominators with every percentage, absolute not just relative risk.
+- Define each abbreviation at first use; keep a single abbreviation list; do not abbreviate terms used <3 times.
+- Numbers: numerals for data; consistent decimal places justified by the measurement precision; SI units (with conventional units where the region expects them).
+- Never overstate: distinguish statistical significance from clinical relevance; label post-hoc and exploratory analyses as such; do not imply causation from association.
+- Every data statement is traceable to a source table/figure/listing (source-data verification) — no orphan numbers.
+- Consistency is law: a value, term, or claim must be identical everywhere it appears (cross-reference integrity).
+- Benefit–risk is framed explicitly and even-handedly; limitations are stated, not buried.
+- GPP 2022: disclose authorship, contributorship, funding, and medical-writing support; follow ICMJE authorship criteria for manuscripts.
+
+## How to use the evidence
+Ground every clinical claim in retrieved evidence: use search_literature (PubMed), search_clinical_evidence (ClinicalTrials.gov), search_drug_labels / search_drug_approvals / search_device_recalls (FDA), and assess_regulatory_landscape, then cite each source with its identifier and URL per the citation protocol."
+
+ ❯ tests/regulatory/ana-submission-sequence-truth.test.ts:126:23
+    124|
+    125|   it('does not require ICH E3 numbering exactly', () => {
+    126|     expect(brief).not.toMatch(/numbering exactly/i);
+       |                       ^
+    127|   });
+    128|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/14]⎯
+
+ FAIL  tests/regulatory/ana-submission-sequence-truth.test.ts > the medical-writing base agrees with ICH E3 Q&A (R1) > says E3 is a guideline, not a template, and cites the Q&A
+AssertionError: expected '# Medical-writing guidance: Clinical …' to match /not a template/i
+
+- Expected:
+/not a template/i
+
++ Received:
+"# Medical-writing guidance: Clinical Study Report (CSR) (Global (ICH-aligned); audience: Health authority / regulator)
+
+**Purpose.** Report the methods and results of a single clinical study completely and without spin.
+
+**Governing standards.** ICH E3; CORE Reference 2016
+
+### Document structure
+- Title page & synopsis
+- Ethics
+- Investigators & administrative structure
+- Introduction
+- Objectives
+- Investigational plan (design, methods)
+- Study patients (disposition, deviations)
+- Efficacy evaluation
+- Safety evaluation (exposure, AEs, deaths/SAEs, labs)
+- Discussion & overall conclusions
+- Tables/figures
+- Reference list
+- Appendices (16.x)
+
+### Key requirements
+- Follow ICH E3 numbering exactly; synopsis is self-contained.
+- Disposition (CONSORT-style flow), protocol deviations, and analysis-set definitions are explicit.
+- Safety told completely: exposure, common AEs by SOC/PT (MedDRA), deaths/SAEs/discontinuations with narratives.
+
+### Common pitfalls to avoid
+- Efficacy spin / underplayed safety
+- Mismatch between in-text values and source tables
+- Missing or thin AE narratives
+
+## Region/market: Global (ICH-aligned)
+**Dossier standard.** CTD/eCTD common technical document
+
+### Regional style
+- Write the common core once; localize Module 1 + labeling per region
+- Default to ICH conventions when no single region is specified
+
+## Audience: Health authority / regulator
+**Tone.** Precise, neutral, defensible — argue benefit–risk on the data  
+**Reading level.** Expert
+
+### Emphasize
+- Compliance with the governing standard
+- Traceability to source data
+- Even-handed benefit–risk
+
+### Avoid
+- Promotional language
+- Unsupported superiority claims
+
+### Universal craft rules (always apply)
+- Lead with the conclusion; structure top-down (BLUF). Every section answers a regulatory or scientific question.
+- One claim per sentence; prefer the active voice and past tense for completed methods/results.
+- Quantify everything: effect sizes with 95% CIs and p-values, denominators with every percentage, absolute not just relative risk.
+- Define each abbreviation at first use; keep a single abbreviation list; do not abbreviate terms used <3 times.
+- Numbers: numerals for data; consistent decimal places justified by the measurement precision; SI units (with conventional units where the region expects them).
+- Never overstate: distinguish statistical significance from clinical relevance; label post-hoc and exploratory analyses as such; do not imply causation from association.
+- Every data statement is traceable to a source table/figure/listing (source-data verification) — no orphan numbers.
+- Consistency is law: a value, term, or claim must be identical everywhere it appears (cross-reference integrity).
+- Benefit–risk is framed explicitly and even-handedly; limitations are stated, not buried.
+- GPP 2022: disclose authorship, contributorship, funding, and medical-writing support; follow ICMJE authorship criteria for manuscripts.
+
+## How to use the evidence
+Ground every clinical claim in retrieved evidence: use search_literature (PubMed), search_clinical_evidence (ClinicalTrials.gov), search_drug_labels / search_drug_approvals / search_device_recalls (FDA), and assess_regulatory_landscape, then cite each source with its identifier and URL per the citation protocol."
+
+ ❯ tests/regulatory/ana-submission-sequence-truth.test.ts:130:19
+    128|
+    129|   it('says E3 is a guideline, not a template, and cites the Q&A', () =…
+    130|     expect(brief).toMatch(/not a template/i);
+       |                   ^
+    131|     expect(brief).toContain('E3 Q&A (R1)');
+    132|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/14]⎯
+
+ FAIL  tests/regulatory/fda-module1-numbering.test.ts > FDA Module 1 numbering — one published heading list, every tree agrees > the submission workflows AnA is guided by file Module 1 where FDA does
+AssertionError: ind workflow: expected [ …(4) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "1.1 \"Pre-IND meeting request\" — meeting materials files under 1.6",
++   "1.1 \"Cover letter & Form 1571\" — cover letter files under 1.2",
++   "1.3.1 \"Form 1572 (Investigators)\" — FDA transmittal form files under 1.1",
++   "1.14 \"Investigator brochure\" — investigator's brochure files under 1.14.4.1",
++ ]
+
+ ❯ tests/regulatory/fda-module1-numbering.test.ts:262:56
+    260|         .filter((s) => s.ctdSection)
+    261|         .map((s) => ({ code: s.ctdSection as string, title: s.title })…
+    262|       expect(violationsFor(nodes), `${type} workflow`).toEqual([]);
+       |                                                        ^
+    263|     }
+    264|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/14]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  14 failed | 17 passed (31)
+   Start at  18:41:30
+   Duration  3.44s (transform 2.98s, setup 204ms, import 5.84s, tests 129ms, environment 0ms)
+
