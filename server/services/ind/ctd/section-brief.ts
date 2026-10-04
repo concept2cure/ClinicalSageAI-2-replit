@@ -37,6 +37,7 @@
 
 import { normalizeCtdCode, compareSectionCode } from '../../../../shared/regulatory/section-code';
 import { CTD_AUTHORING_GUIDANCE } from './authoring-guidance.js';
+import { LIFECYCLE_DOCUMENT_TYPES } from './lifecycle-document-types.js';
 import type { CtdSection } from './types.js';
 
 export type SectionBriefKind = 'exact' | 'ancestor' | 'parent';
@@ -167,4 +168,29 @@ export function renderSectionBrief(
     text += `\n\n${block}`;
   }
   return text;
+}
+
+/**
+ * A lifecycle document type (an NDA, an ISS, a DSUR, a pre-NDA briefing
+ * package) as a brief: what it is, its regulatory basis, its components, and
+ * the CTD sections it draws on. Null for an id the library does not register.
+ */
+export function renderLifecycleBrief(id: string | null | undefined, maxChars: number = SECTION_BRIEF_MAX_CHARS): string | null {
+  const dt = LIFECYCLE_DOCUMENT_TYPES.find((d) => d.id === String(id ?? '').trim().toLowerCase());
+  if (!dt) return null;
+  const blocks: string[] = [`## ${dt.label}`, clip(dt.description, 700)];
+  if (dt.timing) blocks.push(`Timing: ${dt.timing}`);
+  blocks.push(`### Regulatory basis\n${dt.regulatoryBasis.map((b) => `- ${b}`).join('\n')}`);
+  blocks.push(
+    `### Components\n${dt.components
+      .map((c) => `- ${c.code} ${c.title}${c.required ? '' : ' (when applicable)'} — ${clip(firstSentence(c.guidance), 180)}`)
+      .join('\n')}`,
+  );
+  if (dt.ctdSectionCodes?.length) blocks.push(`### CTD sections it draws on\n${dt.ctdSectionCodes.join(', ')}`);
+  return clip(blocks.join('\n\n'), maxChars);
+}
+
+/** The lifecycle document types the library registers, by id. */
+export function listLifecycleIds(): string[] {
+  return LIFECYCLE_DOCUMENT_TYPES.map((d) => d.id);
 }

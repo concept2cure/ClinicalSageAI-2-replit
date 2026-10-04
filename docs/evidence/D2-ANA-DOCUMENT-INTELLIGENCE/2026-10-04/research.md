@@ -54,10 +54,17 @@ check.
 | E21 | FDA ISE guidance: 2.7.3 provides "data summaries, not a complete exposition". | [fda.gov/media/72335](https://www.fda.gov/media/72335/download) | CTD 2.7.3 fix |
 | E22 | 21 CFR 314.50(f)(2): the CRFs of each patient who died, or did not complete because of an adverse event (drug-related or not, including reference drug and placebo), unless FDA waives them. 314.50(f)(1): case report tabulations. | [eCFR 314 subpart B](https://www.ecfr.gov/current/title-21/chapter-I/subchapter-D/part-314/subpart-B) | E3 §16.3.1, §16.4 |
 | E23 | E3: copies of important publications are attached in 16.1.11 and 16.1.12. | [fda.gov/media/84857](https://www.fda.gov/media/84857/download) | E3 §15 |
+| E24 | FDA PDF specifications: submit PDFs in a text-searchable format and avoid image-based PDFs whenever possible. A scanned document is made text searchable, and the OCR output is checked for complete and accurate conversion. | [fda.gov/media/76797](https://www.fda.gov/media/76797/download); [fda.gov/media/85816](https://www.fda.gov/media/85816/download) | rules registry (`pdf-text`) |
+
+E14 is not a row. FDA's Comprehensive Table of Contents Headings and Hierarchy
+(v2.3.3, [fda.gov/media/76444](https://www.fda.gov/media/76444/download)) was
+located, but nothing in code rests on it. The US Module 1 numbering pins
+(`tests/regulatory/fda-module1-numbering.test.ts`) should be re-read against it
+once it can be opened.
 
 ## Owed
 
-- Re-read E5, E6, E8, E11–E13, E15–E17 and E21–E23 in the PDFs themselves,
+- Re-read E5, E6, E8, E11–E13, E15–E17 and E21–E24 in the PDFs themselves,
   and record the verbatim clause with its page. The same is owed for every
   `recall` heading in the E3 overlay. Any one of these makes it possible:
   - re-authorise the Lawstronaut connector;

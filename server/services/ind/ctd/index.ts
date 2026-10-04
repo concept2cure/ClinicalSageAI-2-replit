@@ -34,6 +34,8 @@ export { CTD_AUTHORING_GUIDANCE } from './authoring-guidance.js';
 export { LIFECYCLE_DOCUMENT_TYPES } from './lifecycle-document-types.js';
 export {
   renderSectionBrief,
+  renderLifecycleBrief,
+  listLifecycleIds,
   sectionIdentityLine,
   resolveSectionBriefSource,
   SECTION_BRIEF_MAX_CHARS,
@@ -54,6 +56,26 @@ export {
   renderE3Scaffold,
   e3PlaceholderToken,
 } from './csr-e3-guidance.js';
+export {
+  SUBMISSION_CHAIN,
+  getChainNode,
+  evaluateChain,
+  type ChainNode,
+  type ChainStage,
+  type ChainEvidence,
+  type ChainVerdict,
+  type NodeState,
+  type NodeVerdict,
+  type VaultSectionFact,
+} from './submission-chain.js';
+export {
+  FDA_TECHNICAL_RULES,
+  ELSA_NOTE,
+  rulesByArea,
+  type TechnicalRule,
+  type RuleArea,
+  type PlatformCheck,
+} from './fda-technical-rules.js';
 
 /**
  * The key a section code's authoring guidance is stored under: strip a leading

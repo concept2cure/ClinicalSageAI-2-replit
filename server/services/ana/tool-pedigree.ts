@@ -156,6 +156,11 @@ export const DETERMINISTIC_REGISTRY_EXTRA: string[] = [
   // fetch_ich_guideline_updates reads a static curated list in
   // guidance-ingestion-service.ts; it was labelled a live ich.org fetch.
   'fetch_ich_guideline_updates',
+  // Regulatory knowledge (regulatory-knowledge-tools.ts): pure reads of the
+  // canonical guidance in server/services/ind/ctd — the CTD overlay, the
+  // lifecycle document types, the ICH E3 overlay and FDA's technical rules.
+  'get_document_section_requirements',
+  'list_fda_technical_rules',
 ];
 
 const REGISTRY_NAME_SET: ReadonlySet<string> = new Set<string>([
@@ -177,6 +182,9 @@ export const DETERMINISTIC_QUERY_NAMES: ReadonlySet<string> = new Set<string>([
   // reports is a deterministic function of the data, generalizing the milestone
   // evaluators.
   'get_client_journey',
+  // The database-lock-to-submission chain evaluated against the open project's
+  // Vault (regulatory-knowledge-tools.ts): a pure function of the filed documents.
+  'plan_submission_from_database_lock',
   'code_meddra',
   'code_whodrug',
   'generate_spl_xml',

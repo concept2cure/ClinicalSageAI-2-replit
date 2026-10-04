@@ -209,6 +209,7 @@ import { registerBiotechProgramHandlers } from './biotech-program.js';
 import { registerDocumentSpineHandlers } from './document-spine.js';
 import { registerDocumentCatalogHandlers } from './document-catalog-tools.js';
 import { registerAuthoringReadHandlers } from './authoring-read-tools.js';
+import { registerRegulatoryKnowledgeHandlers } from './regulatory-knowledge-tools.js';
 import { GOVERNED_REASON_MIN, ReasonNotStatedError, gatedReason, reasonFieldOf, statedReason, type StatedReasonField, REASON_REQUIRED_TOOLS } from './stated-reason-input.js';
 // Re-exported: the set's home is the pure module, so the tool gate and the
 // confirmation route read it without loading this executor.
@@ -15648,6 +15649,8 @@ registerDocumentCatalogHandlers(registerToolHandler);
 // The authoring store, read-only (outline / one section windowed / search),
 // scoped to the open project — same injected-register pattern.
 registerAuthoringReadHandlers(registerToolHandler);
+// The canonical regulatory record (ind/ctd), read-only — same injected-register pattern.
+registerRegulatoryKnowledgeHandlers(registerToolHandler);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Agentic Execution Loop

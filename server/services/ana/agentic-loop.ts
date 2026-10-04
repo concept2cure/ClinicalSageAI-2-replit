@@ -673,6 +673,11 @@ function humanizeToolName(name: string): string {
 
 /** Friendly per-tool step labels for surfacing the investigation plan. */
 const TOOL_LABELS: Record<string, (input: Record<string, unknown>) => string> = {
+  get_document_section_requirements: i =>
+    i.section ? `Reading the requirements for ${quoteArg(i.document)} section ${quoteArg(i.section)}` : `Reading the requirements for ${quoteArg(i.document)}`,
+  plan_submission_from_database_lock: i =>
+    i.step ? `Reading the submission step ${quoteArg(i.step)}` : 'Checking where the submission stands, from database lock to filing',
+  list_fda_technical_rules: i => (i.area ? `Reading FDA's ${String(i.area)} rules` : "Reading FDA's technical submission rules"),
   extract_document_structure: () => 'Analyzing the document structure',
   search_document: i => `Searching the document for ${quoteArg(i.query)}`,
   compare_document_versions: () => 'Comparing the two document versions',

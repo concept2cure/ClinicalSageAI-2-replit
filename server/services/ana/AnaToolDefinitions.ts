@@ -46,6 +46,10 @@ import {
 // (authoring_documents + authoring_sections). Handlers registered from
 // authoring-read-tools.ts (inject-and-sibling).
 import { AUTHORING_READ_TOOLS } from './authoring-read-tools.js';
+// What a document or section must contain, the database-lock-to-submission
+// chain and where the open project stands, FDA's technical rules — read from
+// server/services/ind/ctd. Handlers registered from regulatory-knowledge-tools.ts.
+import { REGULATORY_KNOWLEDGE_TOOLS } from './regulatory-knowledge-tools.js';
 // BLA biologics + CTD nonclinical/clinical tool definitions extracted to their
 // own module (decomposition tranche 2). Imported so the enabled-tools array can
 // reference them exactly as before.
@@ -2273,6 +2277,7 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   SEARCH_PROJECT_DOCUMENTS,
   SEARCH_DOCUMENT_PASSAGES,
   ...AUTHORING_READ_TOOLS,
+  ...REGULATORY_KNOWLEDGE_TOOLS,
   CHECK_DOSSIER_CONSISTENCY,
   CHECK_NUMERICAL_INTEGRITY,
   COMPUTE_SAMPLE_SIZE,

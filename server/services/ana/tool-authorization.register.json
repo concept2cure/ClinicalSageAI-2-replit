@@ -2125,6 +2125,11 @@
    "writes": "none",
    "site": "AnaToolExecutor.ts:9690"
   },
+  "get_document_section_requirements": {
+   "class": "read",
+   "writes": "none",
+   "site": "regulatory-knowledge-tools.ts:295"
+  },
   "get_document_template": {
    "class": "read",
    "writes": "none",
@@ -2434,6 +2439,11 @@
    "class": "read",
    "writes": "none",
    "site": "AnaToolExecutor.ts:410"
+  },
+  "list_fda_technical_rules": {
+   "class": "read",
+   "writes": "none",
+   "site": "regulatory-knowledge-tools.ts:297"
   },
   "list_governed_documents": {
    "class": "read",
@@ -2756,6 +2766,11 @@
    "class": "read",
    "writes": "none",
    "site": "AnaToolExecutor.ts:9228"
+  },
+  "plan_submission_from_database_lock": {
+   "class": "read",
+   "writes": "none",
+   "site": "regulatory-knowledge-tools.ts:296"
   },
   "plan_vaccine_special_populations": {
    "class": "read",
