@@ -18,6 +18,8 @@
  * @module server/services/ana/medical-writing
  */
 
+import { e3TopLevel } from '../ind/ctd/index.js';
+
 export interface DocumentTypeStandard {
   id: string;
   label: string;
@@ -111,12 +113,10 @@ const DOCUMENT_TYPES: DocumentTypeStandard[] = [
     governingStandards: ['ICH E3', 'ICH E3 Q&A (R1)', 'CORE Reference 2016'],
     purpose: 'Report the methods and results of a single clinical study completely and without spin.',
     defaultAudience: 'regulator',
-    structure: [
-      'Title page & synopsis', 'Ethics', 'Investigators & administrative structure', 'Introduction',
-      'Objectives', 'Investigational plan (design, methods)', 'Study patients (disposition, deviations)',
-      'Efficacy evaluation', 'Safety evaluation (exposure, AEs, deaths/SAEs, labs)',
-      'Discussion & overall conclusions', 'Tables/figures', 'Reference list', 'Appendices (16.x)',
-    ],
+    // ICH E3's sixteen headings, from the overlay (ind/ctd/csr-e3-guidance.ts);
+    // thirteen paraphrases until 2026-10-04. get_document_section_requirements
+    // gives what belongs under each.
+    structure: e3TopLevel().map((s) => `${s.number}. ${s.title}`),
     keyRequirements: [
       // E3 Q&A (R1), 2012: E3 is a guideline, not a set of rigid requirements or
       // a template; flexibility is inherent in its use. This line said "follow

@@ -85,7 +85,7 @@ function firstSentence(text: string): string {
 }
 
 /** At most `max` characters, cut at a sentence end when one is in reach. */
-function clip(text: string, max: number): string {
+export function clip(text: string, max: number): string {
   const t = text.trim();
   if (t.length <= max) return t;
   const window = t.slice(0, max);

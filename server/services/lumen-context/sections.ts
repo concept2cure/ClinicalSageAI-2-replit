@@ -26,7 +26,10 @@
  */
 
 import { normalizeCtdCode } from '../../../shared/regulatory/section-code';
-import { renderSectionBrief, resolveSectionBriefSource } from '../ind/ctd/index.js';
+import { renderSectionBrief, resolveSectionBriefSource, e3TopLevel } from '../ind/ctd/index.js';
+
+/** ICH E3's sixteen headings, from the overlay (ind/ctd/csr-e3-guidance.ts). */
+const E3_OUTLINE = e3TopLevel().map((s) => `${s.number}. ${s.title}`).join('\n');
 
 const SECTION_PROMPTS: Record<string, string> = {
   // ── MODULE 2: Summaries ───────────────────────────────────────────────────
@@ -224,27 +227,13 @@ You are organizing the Toxicology study reports.
 You are assisting with CSR formatting per ICH E3.
 
 ### ICH E3 CSR Structure:
-1. Title Page
-2. Synopsis
-3. Table of Contents
-4. List of Abbreviations
-5. Ethics (IRB/IEC, consent, regulatory compliance)
-6. Investigators and Study Administrative Structure
-7. Introduction
-8. Study Objectives
-9. Investigational Plan (study design, endpoints, statistics)
-10. Study Patients (disposition, demographics, protocol deviations)
-11. Efficacy Evaluation
-12. Safety Evaluation
-13. Discussion and Overall Conclusions
-14. Tables, Figures, Graphs (referenced by section)
-15. Reference List
-16. Appendices (protocol, amendments, sample CRF, listing of patients, etc.)
+${E3_OUTLINE}
 
 ### FDA Expectations:
 - Synopsis must be stand-alone
 - Individual patient data listings in appendices
-- Statistical analysis plan (SAP) as an appendix
+- Statistical analysis plan (SAP) as appendix 16.1.9
+- Case report forms for every patient who died or left the study because of an adverse event (21 CFR 314.50(f)(2)), in 16.3.1
 - Follow ICH E9(R1) estimands framework for efficacy endpoints`,
 
   // ── DEVICE: 510(k) Substantial Equivalence ────────────────────────────────

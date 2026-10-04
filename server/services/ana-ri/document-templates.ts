@@ -13,6 +13,8 @@
  * @module server/services/ana-ri/document-templates
  */
 
+import { e3TopLevel, e3Children, type E3Section } from '../ind/ctd/index.js';
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Document Template Registry Types
 // ─────────────────────────────────────────────────────────────────────────────
@@ -55,6 +57,14 @@ export interface RegulatoryDocumentTemplate {
 // ─────────────────────────────────────────────────────────────────────────────
 // Template Registry
 // ─────────────────────────────────────────────────────────────────────────────
+
+/** One ICH E3 top-level heading as a template section: its purpose, or what it carries, or the headings under it. */
+function e3TemplateSection(s: E3Section): TemplateSection {
+  const children = e3Children(s.number);
+  const guidance = s.purpose
+    ?? (s.contains?.length ? s.contains.join('; ') : `Covers ${children.map((c) => `${c.number} ${c.title}`).join('; ')}.`);
+  return { heading: `${s.number}. ${s.title}`, required: s.applies === 'always', guidance };
+}
 
 export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
 
@@ -425,23 +435,11 @@ export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
       /\bwrite\s+(?:a\s+)?clinical\s+study\s+report\b/i,
     ],
     minConfidence: 0.65,
-    draftingInstructions: 'Draft a Clinical Study Report (CSR) per ICH E3 guidelines. The CSR must be comprehensive: a self-contained document enabling a regulatory agency to independently evaluate the trial\'s conduct, results, and reliability without reference to the protocol or other documents. Follow ICH E3 section numbering exactly.',
+    draftingInstructions: 'Draft a Clinical Study Report (CSR) per ICH E3: one integrated report of the study\'s clinical and statistical description, presentations and analyses, which a reviewer can evaluate on its own, with the protocol, the statistical methods and the patient listings in its appendices. Keep E3\'s headings and order where they fit and adapt them where the study calls for it, saying so (ICH E3 Q&A (R1): E3 is a guideline, not a template). Every number comes from the section 14 outputs and the analysis datasets; where a value is not yet available, leave a clearly marked placeholder rather than a figure.',
     regulatoryReferences: ['ICH E3 (Structure and Content of CSRs)', 'ICH E6(R3) (GCP)', 'ICH E9(R1) (statistical considerations)', 'ICH E19 (safety data collection optimization)'],
-    sections: [
-      { heading: '1. Title Page', required: true, guidance: 'Protocol title, study code, phase, drug name, indication, investigators, dates, sponsor, sponsor reference number.' },
-      { heading: '2. Synopsis', required: true, targetWords: [600, 1200], guidance: 'Concise structured summary of the complete report: objectives, design, patients, efficacy results, safety results, conclusions.' },
-      { heading: '3. Table of Contents', required: true, guidance: 'Complete TOC with page numbers.' },
-      { heading: '4. List of Abbreviations and Definitions of Terms', required: true, guidance: 'All abbreviations and specialized terms used in the report.' },
-      { heading: '5. Ethics', required: true, targetWords: [150, 300], guidance: 'IRB/IEC review and approval, GCP compliance statement, patient consent process.' },
-      { heading: '6. Investigators and Study Administrative Structure', required: true, targetWords: [150, 300], guidance: 'List of investigators, sites, and administrative/coordinating functions.' },
-      { heading: '7. Introduction', required: true, targetWords: [300, 600], guidance: 'Disease background, drug development rationale, nonclinical support for clinical use, prior clinical experience with the compound, and this study\'s objectives within the development program.' },
-      { heading: '8. Study Objectives', required: true, targetWords: [100, 200], guidance: 'Primary and secondary objectives stated precisely as they appear in the protocol.' },
-      { heading: '9. Investigational Plan', required: true, targetWords: [500, 1000], guidance: 'Overall design (phase, type, blinding, allocation), selection of subjects, treatments administered, dosing, assessment schedule, statistical methodology, data quality assurance, protocol deviations.' },
-      { heading: '10. Study Patients', required: true, targetWords: [300, 600], guidance: 'Disposition of all randomized patients (treated, discontinued, completed). Deviations. Demographic and baseline characteristics.' },
-      { heading: '11. Efficacy Evaluation', required: true, targetWords: [800, 1500], guidance: 'Data sets analyzed (ITT, PP, safety). Efficacy results — primary endpoint (with 95% CI and p-value), key secondary endpoints, subgroup analyses, interaction tests. Statistical methods applied.' },
-      { heading: '12. Safety Evaluation', required: true, targetWords: [600, 1200], guidance: 'Exposure, AEs (all grades and ≥Grade 3 by MedDRA SOC/PT), deaths, SAEs, discontinuations. Laboratory, vital signs, ECG. Clinical assessment of safety signals.' },
-      { heading: '13. Discussion and Conclusions', required: true, targetWords: [400, 800], guidance: 'Integrated interpretation of efficacy and safety. Context vs. prior results and standard of care. What the study establishes, what remains uncertain, and implications for the development program.' },
-    ],
+    // ICH E3 §1–§16, read from the overlay (ind/ctd/csr-e3-guidance.ts). This was
+    // a hand-kept §1–§13, with demographics under §10 (E3: §11.2).
+    sections: e3TopLevel().map(e3TemplateSection),
   },
 
   // ── FDA Safety ────────────────────────────────────────────────────────────

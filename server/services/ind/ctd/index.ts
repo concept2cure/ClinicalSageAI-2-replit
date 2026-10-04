@@ -40,6 +40,20 @@ export {
   type SectionBriefKind,
   type SectionBriefSource,
 } from './section-brief.js';
+export type { E3Section, E3Basis, E3Confidence, E3Applicability } from './types.js';
+export {
+  ICH_E3_GUIDANCE,
+  E3_REPORT_NOTES,
+  normalizeE3Number,
+  getE3Section,
+  e3ParentNumber,
+  e3Children,
+  e3TopLevel,
+  e3BasisFor,
+  renderE3Brief,
+  renderE3Scaffold,
+  e3PlaceholderToken,
+} from './csr-e3-guidance.js';
 
 /**
  * The key a section code's authoring guidance is stored under: strip a leading
