@@ -108,7 +108,8 @@ Mocked suites updated for the fourth variable and the definer lookups:
 
 ## Results
 
-- `green/db-tier.txt`: the whole real-database tier at this head.
+- `green/after.txt`: this contract with `user-presence-rls`, `users-rls` and `pre-auth-user-lookup`.
+- `green/db-tier.txt`: the whole real-database tier at this head, **1,550 of 1,550** in 147 files.
 - Trunk baseline: 1,537 of 1,537 passed. The first narrowed run failed 16:
   signup and reset (the `app.current_user_id` collision), the two tests that
   ran sign-out unbound, `users-rls`' old case, and the definer allowlist. All
