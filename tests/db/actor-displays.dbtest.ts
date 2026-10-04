@@ -65,6 +65,56 @@ async function leave(user: number) {
   ]);
 }
 
+/** The leaver on a project ownership team, in a section's revision history,
+ *  and as a dossier section's author — seeded while they are still a member. */
+async function seedRecordsAcrossSurfaces() {
+  const sp = await owner.query(
+    `INSERT INTO projects (organization_id, client_workspace_id, name, type, status, owner_id, settings)
+     VALUES ($1, $2, $3, 'regulatory', 'active', $4, $5::jsonb) RETURNING id`,
+    [
+      ORG_A,
+      workspaceA,
+      `${TAG}-displays-shared`,
+      userA,
+      JSON.stringify({ ownership: { ownershipTeam: [{ userId: leaver, permission: 'can_edit' }] } }),
+    ]
+  );
+  sharedProject = Number(sp.rows[0].id);
+  // doc_revisions is an append-only ledger with no foreign key to the
+  // organization, so these rows stay behind in the disposable database.
+  const doc = await owner.query(
+    `INSERT INTO authoring_documents (id, title, created_by, tenant_id, updated_at)
+     VALUES (gen_random_uuid(), $1, $2, $3, now() + interval '1 day') RETURNING id`,
+    [`${TAG}-displays-doc`, String(leaver), ORG_A]
+  );
+  const sec = await owner.query(
+    `INSERT INTO authoring_sections (id, doc_id, tenant_id) VALUES (gen_random_uuid(), $1, $2) RETURNING id`,
+    [doc.rows[0].id, ORG_A]
+  );
+  revisedSection = sec.rows[0].id;
+  await owner.query(
+    `INSERT INTO doc_revisions (id, section_id, tenant_id, created_by, content, created_at)
+     VALUES (gen_random_uuid(), $1, $2, $3, 'by the leaver', now() - interval '1 minute'),
+            (gen_random_uuid(), $1, $2, 'system', 'by a non-numeric author', now())`,
+    [revisedSection, ORG_A, String(leaver)]
+  );
+  await owner.query(
+    `INSERT INTO c2c_documents (id, org_id, doc_type, agency, rule_pack_version, title)
+     VALUES ($1, $2, 'ind', 'fda', 'ich-m4-v2.0', 'Dossier')`,
+    [dossierDoc, ORG_A]
+  );
+  const ds = await owner.query(
+    `INSERT INTO c2c_document_sections (document_id, section_key, label, path_order)
+     VALUES ($1, 'm2.5', 'Clinical overview', 1) RETURNING id`,
+    [dossierDoc]
+  );
+  await owner.query(
+    `INSERT INTO c2c_document_section_versions (section_id, version, content, author_id, reason)
+     VALUES ($1, 1, '{}'::jsonb, $2, 'first draft by the leaver')`,
+    [ds.rows[0].id, leaver]
+  );
+}
+
 beforeAll(async () => {
   await provisionTwoTenantFixture();
   project = Number(ids.A.projects);
@@ -129,51 +179,7 @@ beforeAll(async () => {
      VALUES ($1, $2, 'data_modify', 'regulatory_programs', $3, now() - interval '1 minute')`,
     [ORG_A, silentLeaver, program]
   );
-  const sp = await owner.query(
-    `INSERT INTO projects (organization_id, client_workspace_id, name, type, status, owner_id, settings)
-     VALUES ($1, $2, $3, 'regulatory', 'active', $4, $5::jsonb) RETURNING id`,
-    [
-      ORG_A,
-      workspaceA,
-      `${TAG}-displays-shared`,
-      userA,
-      JSON.stringify({ ownership: { ownershipTeam: [{ userId: leaver, permission: 'can_edit' }] } }),
-    ]
-  );
-  sharedProject = Number(sp.rows[0].id);
-  // doc_revisions is an append-only ledger with no foreign key to the
-  // organization, so these rows stay behind in the disposable database.
-  const doc = await owner.query(
-    `INSERT INTO authoring_documents (id, title, created_by, tenant_id, updated_at)
-     VALUES (gen_random_uuid(), $1, $2, $3, now() + interval '1 day') RETURNING id`,
-    [`${TAG}-displays-doc`, String(leaver), ORG_A]
-  );
-  const sec = await owner.query(
-    `INSERT INTO authoring_sections (id, doc_id, tenant_id) VALUES (gen_random_uuid(), $1, $2) RETURNING id`,
-    [doc.rows[0].id, ORG_A]
-  );
-  revisedSection = sec.rows[0].id;
-  await owner.query(
-    `INSERT INTO doc_revisions (id, section_id, tenant_id, created_by, content, created_at)
-     VALUES (gen_random_uuid(), $1, $2, $3, 'by the leaver', now() - interval '1 minute'),
-            (gen_random_uuid(), $1, $2, 'system', 'by a non-numeric author', now())`,
-    [revisedSection, ORG_A, String(leaver)]
-  );
-  await owner.query(
-    `INSERT INTO c2c_documents (id, org_id, doc_type, agency, rule_pack_version, title)
-     VALUES ($1, $2, 'ind', 'fda', 'ich-m4-v2.0', 'Dossier')`,
-    [dossierDoc, ORG_A]
-  );
-  const ds = await owner.query(
-    `INSERT INTO c2c_document_sections (document_id, section_key, label, path_order)
-     VALUES ($1, 'm2.5', 'Clinical overview', 1) RETURNING id`,
-    [dossierDoc]
-  );
-  await owner.query(
-    `INSERT INTO c2c_document_section_versions (section_id, version, content, author_id, reason)
-     VALUES ($1, 1, '{}'::jsonb, $2, 'first draft by the leaver')`,
-    [ds.rows[0].id, leaver]
-  );
+  await seedRecordsAcrossSurfaces();
   await leave(leaver);
   await leave(silentLeaver);
 
