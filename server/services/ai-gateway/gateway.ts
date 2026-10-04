@@ -94,8 +94,6 @@ import { currentRunScope } from './run-scope';
 import {
   APPROVED_MODELS,
   approvedEntryFor,
-  isApprovedForHighRisk,
-  isHighRiskRequest,
   type ApprovedModel,
 } from '../ai-governance/approved-models.js';
 import {

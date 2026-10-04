@@ -131,11 +131,11 @@ const HOLD_OUTCOME_WORDS: Record<DossierPolicyHold['outcome'], string> = {
   disconnected: 'The page was closed while she waited; not run',
 };
 
-/** "AnA's own holds (Manual)": one row per hold, by turn and round, or null when there were none. */
-function policyHoldsSection(dossier: DocumentLineageDossier): ReportSection | null {
+/** "AnA's own holds (Manual)": one row per hold, by turn and round; no section when there were none. */
+function policyHoldsSections(dossier: DocumentLineageDossier): ReportSection[] {
   const holds = dossier.policyHolds ?? [];
   const unreadable = dossier.policyHoldsUnreadable ?? 0;
-  if (holds.length === 0 && unreadable === 0) return null;
+  if (holds.length === 0 && unreadable === 0) return [];
   const blocks: ReportSection['blocks'] = [
     table(
       ['Turn', 'Round', 'Next step', 'Outcome', 'When'],
@@ -144,7 +144,7 @@ function policyHoldsSection(dossier: DocumentLineageDossier): ReportSection | nu
   ];
   // Counted, never dropped in silence: a corrupt record must not read as fewer holds.
   if (unreadable > 0) blocks.push(metric('Stored hold records that could not be read (not shown)', unreadable));
-  return { id: 'policy-holds', title: `AnA's own holds (Manual) (${holds.length})`, blocks };
+  return [{ id: 'policy-holds', title: `AnA's own holds (Manual) (${holds.length})`, blocks }];
 }
 
 export interface LineageReportMeta {
@@ -345,8 +345,7 @@ export function dossierToRenderedReport(
 
   // 7b. AnA's own holds under Manual (row 74), kept apart from the human
   // controls: the pause was the run policy's; the resume after it, a person's.
-  const holds = policyHoldsSection(dossier);
-  if (holds) sections.push(holds);
+  sections.push(...policyHoldsSections(dossier));
 
   // 8. Gaps — pending decisions + absent lineage (honest, non-fabricated).
   const gapItems: Array<{ title: string; severity?: 'critical' | 'high' | 'medium' | 'low'; message?: string }> = [];

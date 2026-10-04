@@ -7,6 +7,7 @@
  * @module server/services/ana/lineage-dossier-holds
  */
 import { isPolicyHoldOutcome, stepLabels, type PolicyHoldOutcome } from '@shared/ana/run-policy';
+import type { DossierHumanControl } from './lineage-dossier.js';
 
 /**
  * One of AnA's OWN holds under Manual (row 74): she stopped before a step and
@@ -62,4 +63,30 @@ export function policyHoldsOf(
     });
   }
   return { holds, unreadable: stored.length - holds.length };
+}
+
+/**
+ * The human control actions one assistant message recorded (its
+ * `metadata.humanControls`), numbered with the turn. An entry without an
+ * action is skipped; a missing time is the message's own. Moved here from
+ * lineage-dossier.ts beside policyHoldsOf, which reads the same metadata.
+ */
+export function humanControlsOf(
+  meta: Record<string, unknown>,
+  turn: number,
+  createdAt: string | null,
+): DossierHumanControl[] {
+  if (!Array.isArray(meta.humanControls)) return [];
+  const out: DossierHumanControl[] = [];
+  for (const c of meta.humanControls as Array<Record<string, unknown> | null>) {
+    if (!c || typeof c.action !== 'string') continue;
+    out.push({
+      turn,
+      action: c.action as DossierHumanControl['action'],
+      message: typeof c.message === 'string' ? c.message : null,
+      round: typeof c.round === 'number' ? c.round : null,
+      at: typeof c.at === 'string' ? c.at : createdAt,
+    });
+  }
+  return out;
 }

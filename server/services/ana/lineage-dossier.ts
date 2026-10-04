@@ -33,7 +33,7 @@
  */
 import { getPool } from '../../db/runtime.js';
 import { listTurnRecords } from './turn-record-verify.js';
-import { policyHoldsOf, type DossierPolicyHold } from './lineage-dossier-holds.js';
+import { humanControlsOf, policyHoldsOf, type DossierPolicyHold } from './lineage-dossier-holds.js';
 
 export type { DossierPolicyHold } from './lineage-dossier-holds.js';
 import {
@@ -543,18 +543,7 @@ async function loadTurnRecords(
         });
       }
 
-      if (Array.isArray(meta.humanControls)) {
-        for (const c of meta.humanControls as any[]) {
-          if (!c || typeof c.action !== 'string') continue;
-          humanControls.push({
-            turn,
-            action: c.action,
-            message: typeof c.message === 'string' ? c.message : null,
-            round: typeof c.round === 'number' ? c.round : null,
-            at: typeof c.at === 'string' ? c.at : createdAt,
-          });
-        }
-      }
+      humanControls.push(...humanControlsOf(meta, turn, createdAt));
       const held = policyHoldsOf(meta, turn);
       policyHolds.push(...held.holds);
       policyHoldsUnreadable += held.unreadable;
