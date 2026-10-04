@@ -9,17 +9,22 @@
  * can gate a draft in the Writing Precision Gate.
  *
  * Ported from abandoned PR #1003 (dc25698fb) onto v2, with the value check
- * narrowed to document-level quantities — see checkValueConsistency.
+ * narrowed to document-level quantities — see checkValueConsistency. The
+ * arithmetic a text states about itself (x% against its own n/N, arm counts
+ * against their total) is recomputed by checkFigureArithmetic and reported here
+ * as 'arithmetic' findings.
  *
  * @module server/services/ana/terminology-consistency
  */
 
 import { extractNumericalFacts } from '../intelligence/cross-artifact-consistency';
+import { checkFigureArithmetic } from './dossierReconciliation';
 
 export interface ConsistencyFinding {
-  kind: 'value_inconsistency' | 'abbreviation_conflict' | 'term_inconsistency';
+  kind: 'value_inconsistency' | 'abbreviation_conflict' | 'term_inconsistency' | 'arithmetic';
+  /** For 'arithmetic': 'percent_of' or 'arm_sum'. */
   label: string;
-  /** The distinct competing values/expansions/terms found for this label. */
+  /** The distinct competing values/expansions/terms found for this label; for 'arithmetic', [stated, recomputed]. */
   variants: string[];
   /** Short surrounding snippets so the writer can locate each occurrence. */
   evidence: string[];
@@ -31,6 +36,11 @@ export interface ConsistencyReport {
   valueInconsistencies: number;
   abbreviationConflicts: number;
   termInconsistencies: number;
+  /** Stated figures that their own counts contradict. */
+  arithmeticInconsistencies: number;
+  /** How many percent/n/N pairs and arm lists were recomputed (0 means none were stated in a checkable form). */
+  percentPairsChecked: number;
+  armSumsChecked: number;
   ok: boolean;
 }
 
@@ -190,12 +200,26 @@ export function checkTerminologyConsistency(text: string): ConsistencyReport {
   const value = checkValueConsistency(text);
   const abbr = checkAbbreviationConsistency(text);
   const term = checkPreferredTermConsistency(text);
-  const findings = [...value, ...abbr, ...term];
+  const arithmetic = checkFigureArithmetic(text);
+  const arith: ConsistencyFinding[] = arithmetic.findings.map(f => {
+    const unit = f.kind === 'percent_of' ? '%' : '';
+    return {
+      kind: 'arithmetic',
+      label: f.kind,
+      variants: [`${f.stated}${unit}`, `${f.recomputed}${unit}`],
+      evidence: [f.clause],
+      severity: 'high', // a figure its own counts contradict is a reviewer red flag
+    };
+  });
+  const findings = [...value, ...abbr, ...term, ...arith];
   return {
     findings,
     valueInconsistencies: value.length,
     abbreviationConflicts: abbr.length,
     termInconsistencies: term.length,
+    arithmeticInconsistencies: arith.length,
+    percentPairsChecked: arithmetic.percentPairsChecked,
+    armSumsChecked: arithmetic.armSumsChecked,
     ok: findings.length === 0,
   };
 }
