@@ -118,3 +118,49 @@ export function assertNoUnsupportedClaims(text: string): void {
 export function isEvidentiallySound(text: string): boolean {
   return detectUnsupportedClaims(text).length === 0;
 }
+
+// ─── 3. Verdicts stated in generated text ─────────────────────────────────────
+
+/**
+ * Verdicts: that a package is ready to file, that a section complies, that a
+ * submission is approvable. Rule 2 (CLAUDE.md): numbers and verdicts come from
+ * deterministic engines and the model narrates, so a verdict in an answer is
+ * named to the person, who can see which engine, if any, gave it
+ * (services/ana/answer-grounding.ts).
+ *
+ * A separate set from the §14 prohibitions above, on purpose: those refuse
+ * retrieval atoms (retrieval-atoms.service.ts), and source text that records
+ * a finding ("the site was found compliant") is evidence, not a claim to
+ * refuse. A verdict the answer declines to give ("is not ready to file") is
+ * not named.
+ */
+const VERDICT_CLAIM_PATTERNS: { pattern: RegExp; reason: string }[] = [
+  { pattern: /\b(?:is|are)\s+(?!not\b)(?:now\s+|fully\s+)?(?:ready|fit)\s+(?:to\s+(?:file|submit)|for\s+(?:filing|submission))\b/gi,
+    reason: 'States a readiness verdict.' },
+  { pattern: /\bsubmission[-\s]ready\b/gi,
+    reason: 'States a readiness verdict.' },
+  { pattern: /\b(?:is|are)\s+(?!not\b)(?:now\s+)?(?:fully\s+|completely\s+)?compliant\b/gi,
+    reason: 'States a compliance verdict.' },
+  { pattern: /\b(?:fully\s+|completely\s+)complies\b/gi,
+    reason: 'States a compliance verdict.' },
+  { pattern: /\bmeets?\s+all\s+(?:the\s+|applicable\s+|regulatory\s+)?requirements\b/gi,
+    reason: 'States a compliance verdict.' },
+  { pattern: /\b(?:is|are)\s+(?!not\b)approvable\b/gi,
+    reason: 'States an approvability verdict.' },
+  { pattern: /\b(?:FDA|EMA|PMDA|the\s+agency|the\s+reviewers?)\s+will\s+accept\b/gi,
+    reason: 'Predicts an agency decision.' },
+];
+
+/** Every verdict the text states, in order. */
+export function detectVerdictClaims(text: string): ClaimViolation[] {
+  if (!text) return [];
+  const out: ClaimViolation[] = [];
+  for (const { pattern, reason } of VERDICT_CLAIM_PATTERNS) {
+    pattern.lastIndex = 0;
+    let m: RegExpExecArray | null;
+    while ((m = pattern.exec(text)) !== null) {
+      out.push({ match: m[0].replace(/\s+/g, ' '), reason, index: m.index });
+    }
+  }
+  return out.sort((a, b) => a.index - b.index);
+}

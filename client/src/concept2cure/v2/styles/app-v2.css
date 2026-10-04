@@ -2880,10 +2880,6 @@
 .c2c-v2 .ct-ground{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding-top:2px;}
 .c2c-v2 .ct-ground-l{font-size:10.5px;color:var(--text-500);text-transform:uppercase;letter-spacing:.04em;margin-right:2px;}
 .c2c-v2 .ct-ground-chip{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;color:var(--text-400);background:var(--bg-050);border:1px solid var(--border);border-radius:var(--radius-md);padding:3px 7px;}
-.c2c-v2 .ct-ground-chip svg{width:11px;height:11px;}
-.c2c-v2 .ct-ground-chip[data-ok="true"] svg{color:var(--success);}
-.c2c-v2 .ct-ground-chip[data-ok="false"]{color:var(--warning);border-color:var(--warning);}
-.c2c-v2 .ct-ground-chip[data-ok="false"] svg{color:var(--warning);}
 
 .c2c-v2 .ct-work{border:1px solid var(--border);border-radius:12px;background:var(--bg-050);padding:14px 16px;margin-top:4px;}
 .c2c-v2 .ct-work-h{display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:600;color:var(--text-300);text-transform:uppercase;letter-spacing:.04em;margin-bottom:11px;}

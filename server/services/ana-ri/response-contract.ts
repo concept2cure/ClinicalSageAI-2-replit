@@ -8,6 +8,8 @@
  * @module server/services/ana-ri/response-contract
  */
 
+import type { AnswerCheck } from '../ana/answer-grounding.js';
+
 // ── Evidence Verdict ──────────────────────────────────────────────────────────
 
 /**
@@ -25,15 +27,21 @@ export interface EvidenceVerdict {
   attempted: boolean;
   /** Whether evidence passed validation */
   validated: boolean;
-  /** Number of real evidence sources consulted */
+  /**
+   * [KNOWN] and [INFERRED] labels in the answer. These are AnA's own labels,
+   * not sources anything read: the sources a claim was compared with are in
+   * the answer check (services/ana/answer-grounding.ts).
+   */
   source_count: number;
-  /** Types of sources (e.g., 'regulatory_reference', 'project_memory', 'persisted_evidence') */
+  /** The kinds of support the labels claim ('regulatory_reference', 'analytical_inference') */
   source_types: string[];
-  /** Number of claims with grounded evidence */
+  /** The labels AnA wrote, by kind. */
+  label_counts?: { known: number; inferred: number; missing: number };
+  /** Claims with a [KNOWN] or [INFERRED] label nearby */
   grounded_claim_count: number;
-  /** Claims with weak or no evidence */
+  /** Claims with no label nearby, and overclaims */
   weak_or_ungrounded_claim_count: number;
-  /** Claims that need evidence but have none */
+  /** Claims AnA herself marked [MISSING]: support she says is absent */
   missing_support_count: number;
   /** Evidence provider used */
   provider: 'ana-ri' | 'enterprise-bridge' | 'none' | 'fallback';
@@ -220,32 +228,55 @@ export function buildEmptyEvidenceVerdict(): EvidenceVerdict {
   };
 }
 
-/**
- * Pure: render a compact, human-readable trust summary from an evidence verdict
- * so the end user can gauge an answer's reliability at a glance (21 CFR Part 11
- * verifiability). Honest by construction — it only restates the verdict's own
- * counts; it never upgrades confidence. Returns a short single line.
- */
-export function buildTrustSummary(verdict?: EvidenceVerdict): string {
-  if (!verdict || !verdict.attempted) {
-    return 'Evidence check not run for this response — verify any regulatory claims before relying on them.';
+/** "1 claim" / "2 claims". */
+const claimsWord = (n: number) => `${n} claim${n === 1 ? '' : 's'}`;
+
+/** The engine's check, in one sentence. */
+function checkSentence(check: AnswerCheck): string {
+  let line: string;
+  if (check.basis === 'no_sources') {
+    line =
+      check.unchecked.length > 0
+        ? `No source consulted this turn: ${claimsWord(check.unchecked.length)} unchecked.`
+        : 'No source consulted this turn.';
+  } else if (check.claims === 0) {
+    line = "No specific claims to check against this turn's sources.";
+  } else if (check.notFound.length === 0) {
+    line = `Checked against this turn's sources: all ${claimsWord(check.claims)} found.`;
+  } else {
+    line = `⚠ Checked against this turn's sources: ${check.notFound.length} of ${claimsWord(check.claims)} not found.`;
   }
-  const grounded = verdict.grounded_claim_count;
+  if (check.verdicts.length > 0) {
+    line += ` States ${check.verdicts.length === 1 ? 'a verdict' : `${check.verdicts.length} verdicts`}; verdicts come from engines.`;
+  }
+  return line;
+}
+
+/**
+ * Pure: one human-readable line saying what was checked about an answer, so a
+ * person can gauge its reliability at a glance (21 CFR Part 11
+ * verifiability). Honest by construction: it restates the check's and the
+ * labels' own counts and never upgrades confidence.
+ *
+ * The check (the engine's comparison with what AnA consulted) leads. The
+ * labels follow as hers: a [KNOWN] label is the model describing its own
+ * claim, so a clean set of labels is not "Verified", and a label is not a
+ * source (2026-10-04, AnA reasoning).
+ */
+export function buildTrustSummary(verdict?: EvidenceVerdict, check?: AnswerCheck | null): string {
+  const lead = check ? checkSentence(check) : null;
+  if (!verdict || !verdict.attempted) {
+    return lead ?? 'Evidence check not run for this response — verify any regulatory claims before relying on them.';
+  }
+  const labelled = verdict.grounded_claim_count;
   const weak = verdict.weak_or_ungrounded_claim_count;
   const missing = verdict.missing_support_count;
-  const sources = verdict.source_count;
   const clean = verdict.validated && weak === 0 && missing === 0;
-  const label = clean
-    ? 'Verified'
-    : verdict.validated
-      ? '⚠ Verified with caveats'
-      : '⚠ Unverified — reviewer check recommended';
-  const counts = `${grounded} grounded · ${weak} inferred/weak · ${missing} missing · ${sources} source${sources === 1 ? '' : 's'}`;
-  let line = `${label} · ${counts}`;
+  let line = `${clean ? '' : '⚠ '}AnA's labels: ${labelled} labelled · ${weak} unlabelled or overclaimed · ${missing} marked missing`;
   if (verdict.reviewer_risk_summary && verdict.reviewer_risk_summary.trim()) {
     line += `. ${verdict.reviewer_risk_summary.trim()}`;
   } else if (weak > 0) {
     line += `. ${weak} claim${weak === 1 ? '' : 's'} need${weak === 1 ? 's' : ''} verification before reviewer-facing use.`;
   }
-  return line;
+  return lead ? `${lead} ${line}` : line;
 }

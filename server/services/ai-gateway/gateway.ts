@@ -90,6 +90,7 @@ import { getTenantScope } from '../../db/tenantStore.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { getContentClassifier } from '../ai-governance/classification/index.js';
 import { currentRunScope } from './run-scope';
+import { noteGeneration } from './generation-capture';
 import { approvedEntryFor, isApprovedForHighRisk, isHighRiskRequest } from '../ai-governance/approved-models.js';
 import {
   extractRequestText,
@@ -1431,7 +1432,7 @@ export class AIGateway {
 
     // Deterministic mode
     if (this.config.deterministicMode) {
-      return this.buildDeterministicResponse(request, requestId, startTime);
+      return this.notedDeterministicResponse(request, requestId, startTime);
     }
 
     // Select model — fall back to deterministic if no providers available
@@ -1467,7 +1468,7 @@ export class AIGateway {
       log.warn(
         '[AI Gateway] No providers available — falling back to demo mode. Set ANTHROPIC_API_KEY in .env to enable live AI.'
       );
-      return this.buildDeterministicResponse(request, requestId, startTime);
+      return this.notedDeterministicResponse(request, requestId, startTime);
     }
 
     // Execute with fallback. Track tried MODELS (not just providers) so
@@ -1515,6 +1516,9 @@ export class AIGateway {
         this.recordSuccess(selectedModel.provider, response.latencyMs);
         this.recordTenantUsage(request, response, true);
         await this.logAudit(request, response, strategy, true, undefined, triedModels, contentPolicy);
+        // A tool that asked a model for part of its result: AnA's answer check
+        // must not credit what this generation wrote (generation-capture.ts).
+        noteGeneration(response);
         return response;
       } catch (error: any) {
         // Policy denials are terminal. Never retry or cross-provider fallback:
@@ -1551,6 +1555,7 @@ export class AIGateway {
         this.recordSuccess(fallback.provider, response.latencyMs);
         this.recordTenantUsage(request, response, true);
         await this.logAudit(request, response, strategy, true, undefined, triedModels, contentPolicy);
+        noteGeneration(response);
         return response;
       } catch (error: any) {
         if (error instanceof GatewayPolicyError) throw error;
@@ -3583,6 +3588,17 @@ export class AIGateway {
    * a fixed string with no generation latency to simulate, and splitting it
    * would invent a progressive arrival that nothing here is actually doing.
    */
+  /** A demo or test response is written text too: noted like any generation. */
+  private notedDeterministicResponse(
+    request: GatewayRequest,
+    requestId: string,
+    startTime: number
+  ): GatewayResponse {
+    const response = this.buildDeterministicResponse(request, requestId, startTime);
+    noteGeneration(response);
+    return response;
+  }
+
   private buildDeterministicResponse(
     request: GatewayRequest,
     requestId: string,

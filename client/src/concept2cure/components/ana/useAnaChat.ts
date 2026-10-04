@@ -73,6 +73,7 @@ import {
   CLIENT_PHASE_LABELS,
 } from './anaProgress';
 import { getAnaLockedScreens } from './anaLockedScreens';
+import { readGroundingStrip, readStoredVerification } from './anaAnswerCheck';
 
 import type {
   AnaChatAction,
@@ -633,6 +634,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
             plan?: unknown;
             stoppedReason?: unknown;
             rounds?: unknown;
+            verification?: unknown;
           } | null;
         }>;
       };
@@ -672,6 +674,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           // Why the turn stopped, when it was not because she was done — so a
           // turn the round limit cut short does not reopen as a finished one.
           const ending = m.role === 'assistant' ? readTurnEnding(m.metadata) : {};
+          // What was checked about the answer, as the person was shown it.
+          // A message stored before checks were kept has none, and shows none.
+          const evidence = m.role === 'assistant' ? readStoredVerification(m.metadata) : undefined;
           return {
             id: `t-${threadId}-${idx}`,
             role: m.role as 'user' | 'assistant',
@@ -681,6 +686,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
             ...(reasoning ? { thinking: reasoning } : {}),
             ...(toolCalls.length > 0 ? { toolCalls } : {}),
             ...(interjections.length > 0 ? { interjections } : {}),
+            ...(evidence ? { evidence } : {}),
           };
         });
       threadIdRef.current = threadId;
@@ -1235,46 +1241,10 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 })
               );
             } else if (event.type === 'grounding_strip') {
-              // Evidence verdict — store as a compact summary for chip rendering.
-              const ev = event.evidence || {};
-              setMessages(prev =>
-                prev.map(m =>
-                  m.id === assistantId
-                    ? {
-                        ...m,
-                        evidence: {
-                          validated: Boolean(ev.validated),
-                          sourceCount: typeof ev.source_count === 'number' ? ev.source_count : 0,
-                          groundedClaims:
-                            typeof ev.grounded_claim_count === 'number' ? ev.grounded_claim_count : 0,
-                          weakClaims:
-                            typeof ev.weak_or_ungrounded_claim_count === 'number'
-                              ? ev.weak_or_ungrounded_claim_count
-                              : 0,
-                          missingSupport:
-                            typeof ev.missing_support_count === 'number' ? ev.missing_support_count : 0,
-                          riskSummary:
-                            typeof ev.reviewer_risk_summary === 'string'
-                              ? ev.reviewer_risk_summary
-                              : undefined,
-                          flaggedClaims: Array.isArray(ev.flagged_claims)
-                            ? ev.flagged_claims
-                                .filter(
-                                  (c: unknown): c is { kind: string; text: string } =>
-                                    !!c &&
-                                    typeof (c as { text?: unknown }).text === 'string' &&
-                                    typeof (c as { kind?: unknown }).kind === 'string'
-                                )
-                                .map((c: { kind: string; text: string }) => ({
-                                  kind: c.kind as 'ungrounded' | 'overclaim' | 'contradiction',
-                                  text: c.text,
-                                }))
-                            : undefined,
-                        },
-                      }
-                    : m
-                )
-              );
+              // What was checked about the answer: the engine's check and
+              // AnA's labels, read by the one reader the reload uses too.
+              const evidence = readGroundingStrip(event);
+              setMessages(prev => prev.map(m => (m.id === assistantId ? { ...m, evidence } : m)));
             } else if (
               event.type === 'drive_state' ||
               event.type === 'drive_navigation' ||

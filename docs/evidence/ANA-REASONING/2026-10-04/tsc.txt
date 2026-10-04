@@ -1,0 +1,4 @@
+npm run typecheck:fast (tsc --noEmit; tsconfig.check.json extends tsconfig.json, incremental cache only) on the merged tree, trunk d8fbec61d plus this change, 2026-10-04:
+
+exit 0
+(no error lines: the whole tree typechecks)
