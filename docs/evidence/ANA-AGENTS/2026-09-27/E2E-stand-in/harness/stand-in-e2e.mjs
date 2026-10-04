@@ -286,6 +286,20 @@ function replyContent(body, p, n) {
 
 // ── What the server sent, one JSON line per request ─────────────────────────
 
+/** The request's own settings, as the log records them. */
+function requestShape(body) {
+  return {
+    stream: !!body.stream,
+    model: body.model,
+    effort: body.output_config?.effort ?? null,
+    thinking: body.thinking?.type ?? null,
+    max_tokens: body.max_tokens,
+    tools: (body.tools || []).length,
+    tool_choice: body.tool_choice?.type ?? null,
+    msgs: (body.messages || []).length,
+  };
+}
+
 function describe(n, body, p) {
   const { ctx } = p;
   const all = (body.messages || []).map(m => textOf(m.content)).join('\n');
@@ -296,14 +310,7 @@ function describe(n, body, p) {
   return {
     n,
     scenario: p.scenario,
-    stream: !!body.stream,
-    model: body.model,
-    effort: body.output_config?.effort ?? null,
-    thinking: body.thinking?.type ?? null,
-    max_tokens: body.max_tokens,
-    tools: (body.tools || []).length,
-    tool_choice: body.tool_choice?.type ?? null,
-    msgs: (body.messages || []).length,
+    ...requestShape(body),
     ask: ctx.ask.slice(0, 80),
     resultsThisTurn: ctx.k,
     lastResult: last ? { name: last.name, json: last.json ? JSON.stringify(last.json).slice(0, 220) : last.raw.slice(0, 220) } : null,

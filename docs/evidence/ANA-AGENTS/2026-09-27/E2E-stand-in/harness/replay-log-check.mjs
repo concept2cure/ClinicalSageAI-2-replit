@@ -62,7 +62,7 @@ for (let n = from; n <= to; n++) {
   const a = logged.get(n);
   const b = replayed.get(n - from + 1); // the scratch stand-in numbers from 1
   if (!a || !b) { differ.push({ n, why: !a ? 'not in the capture log' : 'not replayed' }); continue; }
-  const strip = o => { const { n: _n, ...rest } = o; return JSON.stringify(rest); };
+  const strip = o => JSON.stringify({ ...o, n: undefined });
   if (strip(a) === strip(b)) same++;
   else {
     const fields = Object.keys({ ...a, ...b }).filter(k => k !== 'n' && JSON.stringify(a[k]) !== JSON.stringify(b[k]));

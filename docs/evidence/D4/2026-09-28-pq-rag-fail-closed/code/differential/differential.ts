@@ -85,54 +85,52 @@ const statuses: Array<[string, Any]> = [
 let total = 0, parityScope = 0, parityDiffs = 0, intendedScope = 0, intendedDiffs = 0, newPassWhereHeadDidNot = 0;
 const diffSamples: string[] = [];
 const intendedByShape = new Map<string, number>();
-for (const [sName, st] of statuses)
-  for (const ragReq of [true, false])
-    for (const ragExec of [true, false])
-      for (const extReq of [true, false])
-        for (const extExec of [true, false])
-          for (const [cName, crit] of ragCriteria)
-            for (const [xName, extra] of extras)
-              for (const [gName, g] of generations)
-                for (const [eName, e] of extractions)
-                  for (const [rName, r] of rags) {
-                    const p: Any = clone(REAL);
-                    Object.assign(p, st);
-                    p.components.rag.required = ragReq;
-                    p.components.rag.executable = ragExec;
-                    p.components.rag.criteria = clone(crit);
-                    p.components.extraction.required = extReq;
-                    p.components.extraction.executable = extExec;
-                    if (extra) p.components.classification = clone(extra);
-                    total++;
-                    const h = HEAD.computeVerdict(p, g, e);
-                    const n = NOW.computeVerdict(p, g, e, r);
-                    const same = JSON.stringify(h) === JSON.stringify(n);
-                    const label = `${sName} | rag req=${ragReq} exec=${ragExec} | ext req=${extReq} exec=${extExec} | ${cName} | ${xName} | ${gName} | ${eName} | ${rName}`;
-                    const inParity = !(ragReq && ragExec) && !(extra && extra.required && extra.executable);
-                    if (n.verdict === 'PASS' && h.verdict !== 'PASS') {
-                      newPassWhereHeadDidNot++;
-                      if (diffSamples.length < 10) diffSamples.push(`NEW PASS where HEAD ${h.verdict}: ${label}`);
-                    }
-                    if (inParity) {
-                      parityScope++;
-                      if (!same) {
-                        parityDiffs++;
-                        if (diffSamples.length < 10) diffSamples.push(`PARITY DIFF: ${label}\n  HEAD ${JSON.stringify(h)}\n  NOW  ${JSON.stringify(n)}`);
-                      }
-                    } else {
-                      intendedScope++;
-                      if (!same) {
-                        intendedDiffs++;
-                        const shape = `${h.verdict} -> ${n.verdict}`;
-                        intendedByShape.set(shape, (intendedByShape.get(shape) ?? 0) + 1);
-                      }
-                    }
-                  }
+/** Every combination of the lists, in order (the matrix, without nested loops). */
+function product(lists: Any[][]): Any[][] {
+  return lists.reduce<Any[][]>((acc, list) => acc.flatMap((prefix) => list.map((x) => [...prefix, x])), [[]]);
+}
+const TF = [true, false];
 
-console.log(`combinations: ${total}`);
-console.log(`parity scope (rag not required+executable, no unknown required+executable component): ${parityScope}, differences: ${parityDiffs}`);
-console.log(`intended-change scope: ${intendedScope}, differing: ${intendedDiffs}`);
-for (const [shape, c] of [...intendedByShape].sort()) console.log(`  HEAD ${shape}: ${c}`);
-console.log(`the changed verdict PASSes where HEAD did not: ${newPassWhereHeadDidNot}`);
-for (const d of diffSamples) console.log(d);
+function compare(combo: Any[]): void {
+  const [[sName, st], ragReq, ragExec, extReq, extExec, [cName, crit], [xName, extra], [gName, g], [eName, e], [rName, r]] = combo;
+  const p: Any = clone(REAL);
+  Object.assign(p, st);
+  p.components.rag.required = ragReq;
+  p.components.rag.executable = ragExec;
+  p.components.rag.criteria = clone(crit);
+  p.components.extraction.required = extReq;
+  p.components.extraction.executable = extExec;
+  if (extra) p.components.classification = clone(extra);
+  total++;
+  const h = HEAD.computeVerdict(p, g, e);
+  const n = NOW.computeVerdict(p, g, e, r);
+  const same = JSON.stringify(h) === JSON.stringify(n);
+  const label = `${sName} | rag req=${ragReq} exec=${ragExec} | ext req=${extReq} exec=${extExec} | ${cName} | ${xName} | ${gName} | ${eName} | ${rName}`;
+  const inParity = !(ragReq && ragExec) && !(extra && extra.required && extra.executable);
+  if (n.verdict === 'PASS' && h.verdict !== 'PASS') {
+    newPassWhereHeadDidNot++;
+    if (diffSamples.length < 10) diffSamples.push(`NEW PASS where HEAD ${h.verdict}: ${label}`);
+  }
+  if (inParity) {
+    parityScope++;
+    if (same) return;
+    parityDiffs++;
+    if (diffSamples.length < 10) diffSamples.push(`PARITY DIFF: ${label}\n  HEAD ${JSON.stringify(h)}\n  NOW  ${JSON.stringify(n)}`);
+    return;
+  }
+  intendedScope++;
+  if (same) return;
+  intendedDiffs++;
+  const shape = `${h.verdict} -> ${n.verdict}`;
+  intendedByShape.set(shape, (intendedByShape.get(shape) ?? 0) + 1);
+}
+
+for (const combo of product([statuses, TF, TF, TF, TF, ragCriteria, extras, generations, extractions, rags])) compare(combo);
+
+console.info(`combinations: ${total}`);
+console.info(`parity scope (rag not required+executable, no unknown required+executable component): ${parityScope}, differences: ${parityDiffs}`);
+console.info(`intended-change scope: ${intendedScope}, differing: ${intendedDiffs}`);
+for (const [shape, c] of [...intendedByShape].sort()) console.info(`  HEAD ${shape}: ${c}`);
+console.info(`the changed verdict PASSes where HEAD did not: ${newPassWhereHeadDidNot}`);
+for (const d of diffSamples) console.info(d);
 process.exitCode = parityDiffs || newPassWhereHeadDidNot ? 1 : 0;

@@ -84,6 +84,19 @@ function streamTee() {
         const reader = res.clone().body.getReader();
         const dec = new TextDecoder();
         let buf = '';
+        // One SSE event: count text deltas, keep every other frame with its time.
+        const eatChunk = (chunk) => {
+          for (const line of chunk.split('\n')) {
+            if (!line.startsWith('data: ')) continue;
+            try {
+              const f = JSON.parse(line.slice(6));
+              if (f.type === 'text' || f.type === 'token' || f.type === 'content' || f.type === 'delta' || f.type === 'thinking') rec.deltas++;
+              else rec.frames.push({ ms: Date.now() - rec.t0, ...f });
+            } catch {
+              /* keepalive or partial */
+            }
+          }
+        };
         (async () => {
           for (;;) {
             const { value, done } = await reader.read();
@@ -93,16 +106,7 @@ function streamTee() {
             while ((i = buf.indexOf('\n\n')) >= 0) {
               const chunk = buf.slice(0, i);
               buf = buf.slice(i + 2);
-              for (const line of chunk.split('\n')) {
-                if (!line.startsWith('data: ')) continue;
-                try {
-                  const f = JSON.parse(line.slice(6));
-                  if (f.type === 'text' || f.type === 'token' || f.type === 'content' || f.type === 'delta' || f.type === 'thinking') rec.deltas++;
-                  else rec.frames.push({ ms: Date.now() - rec.t0, ...f });
-                } catch {
-                  /* keepalive or partial */
-                }
-              }
+              eatChunk(chunk);
             }
           }
           rec.ended = Date.now() - rec.t0;
@@ -247,7 +251,7 @@ const SCENARIOS = {
     await setPolicy(page, 'Manual');
     await snap(page, id, '0-home-manual', { full: false });
     await ask(page, 'Check three readiness sources for BX-512, one at a time.');
-    let s = await waitFor(page, x => count(x, 'paused', f => f.reason === 'manual') >= 1, { timeout: 120000, what: 'first manual hold' });
+    await waitFor(page, x => count(x, 'paused', f => f.reason === 'manual') >= 1, { timeout: 120000, what: 'first manual hold' });
     await page.locator('text=Waiting for you before the next step').first().waitFor({ timeout: 20000 });
     await sleep(800);
     await snap(page, id, '1-hold-before-round-2');
@@ -261,7 +265,7 @@ const SCENARIOS = {
     fs.writeFileSync(path.join(OUT, 'frames', `${id}-hold-surfaces.json`), JSON.stringify(surfaces, null, 1));
     await page.locator('button:has-text("Run this step"):visible').first().click();
     say('pressed Run this step');
-    s = await waitFor(page, x => count(x, 'paused', f => f.reason === 'manual') >= 2, { timeout: 120000, what: 'second manual hold' });
+    await waitFor(page, x => count(x, 'paused', f => f.reason === 'manual') >= 2, { timeout: 120000, what: 'second manual hold' });
     await page.locator('text=Waiting for you before the next step').first().waitFor({ timeout: 20000 });
     await sleep(800);
     await snap(page, id, '2-hold-before-round-3');
@@ -270,7 +274,7 @@ const SCENARIOS = {
     await snap(page, id, '3-typed-do-this-instead', { full: false });
     await page.locator('button:has-text("Do this instead"):visible').first().click();
     say('pressed Do this instead');
-    s = await waitFor(page, x => has(x, 'post_done') || (x.ended !== null && has(x, 'done')), { timeout: 120000, what: 'manual done' });
+    await waitFor(page, x => has(x, 'post_done') || (x.ended !== null && has(x, 'done')), { timeout: 120000, what: 'manual done' });
     await sleep(2500);
     await snap(page, id, '4-after-redirect');
     await visibleText(page, id, '4-after-redirect');

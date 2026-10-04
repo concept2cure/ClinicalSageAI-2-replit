@@ -28,8 +28,8 @@ const run = (script, seed, args) => {
 for (const [label, script] of [['HEAD', process.argv[2]], ['NOW ', `${REPO}/scripts/verify-rag-corpus.mjs`]]) {
   for (const [scen, seed] of [['empty eval org', SEED], ['eval org with 1 embedded chunk', SEED + EVAL]]) {
     const r = run(script, seed, ['--org-uuid', ORG_A]);
-    console.log(`\n===== ${label}  --org-uuid ${ORG_A}  [${scen}]  exit=${r.status}`);
-    console.log(r.stdout.trim().split('\n').filter((l) => l.trim()).join('\n'));
-    if (r.stderr.trim()) console.log('stderr:', r.stderr.trim());
+    console.info(`\n===== ${label}  --org-uuid ${ORG_A}  [${scen}]  exit=${r.status}`);
+    console.info(r.stdout.trim().split('\n').filter((l) => l.trim()).join('\n'));
+    if (r.stderr.trim()) console.info('stderr:', r.stderr.trim());
   }
 }

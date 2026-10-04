@@ -87,4 +87,4 @@ for (const [name, file, from, to, [cmd, args]] of mutations) {
   for (const l of summary) out.push(`   ${l}`);
 }
 out.push('', `${mutations.length} mutations, ${mutations.length - survived} killed, ${survived} survived`);
-console.log(out.join('\n'));
+console.info(out.join('\n'));
