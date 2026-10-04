@@ -240,6 +240,10 @@ beforeAll(async () => {
       // against a real table instead of a 42P01 the schema-gap check would
       // (rightly) reject. The document stays unbound, as it was before PF-07.
       'migrations/20260527_mutation_primitives.sql',
+      // public.actor_name (D3, 2026-09-29): the revision history names its
+      // author through it; after mutation primitives, which adds the
+      // audit_logs.actor_id it reads.
+      'migrations/20260929_actor_names.sql',
       'migrations/20260528_phase9_document_schema.sql',
       'db/migrations/20260725_authoring_document_loop_tables.sql',
       // authoring_documents.client_program_id — the column the project anchor

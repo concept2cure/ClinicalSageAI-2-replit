@@ -2228,11 +2228,14 @@ router.get('/sections/:sectionId/history', async (req: Request, res: Response) =
        -- on every call regardless of how many revisions existed, and the client
        -- rendered that failure as "No prior revisions".
        --
-       -- Comparing as text is the codebase's established shape for joining a
-       -- typed id to a free-text reference column (see the sources ↔ citations
-       -- join): it cannot raise 22P02 on a non-numeric created_by, it simply
-       -- fails to match and the LEFT JOIN yields a null name.
-       LEFT JOIN users u ON u.id::text = r.created_by
+       -- The name comes from public.actor_name, not users: since users took
+       -- row-level security (D3, 2026-09-28) a join on users found no one who
+       -- had left the organization (docs/evidence/D3/2026-09-29-actor-names/).
+       -- The cast is guarded so a non-numeric created_by cannot raise 22P02;
+       -- it simply names nobody and the LEFT JOIN yields a null name.
+       LEFT JOIN LATERAL public.actor_name(
+         CASE WHEN r.created_by ~ '^[0-9]{1,9}$' THEN r.created_by::int END
+       ) u ON TRUE
        WHERE r.section_id = $1 AND r.tenant_id = $2
        ORDER BY r.created_at DESC
        LIMIT $3`,

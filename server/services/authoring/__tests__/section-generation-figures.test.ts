@@ -282,7 +282,7 @@ describe('generateSection stores an empty body as an empty draft', () => {
     expect(result.citations).toEqual(citations);
     expect(result.ungrounded).toEqual(ungrounded);
     expect(h.inserted[0].metadata).toEqual({
-      authoring: { promptVersion: 'section-generation@v1.0', citations, ungrounded, submissionId: 11 },
+      authoring: { promptVersion: 'section-generation@v1.1', requirementsSource: 'ancestor', citations, ungrounded, submissionId: 11 },
     });
     // Every reader reads it as an empty draft.
     expect(coauthorEditorShows(stored)).toEqual({ text: '', lossy: false });
