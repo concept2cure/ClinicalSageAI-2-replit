@@ -1,0 +1,76 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/ui/one-shell.test.ts > one shell > no module outside v2 renders a rail 147ms
+ ✓ tests/ui/one-shell.test.ts > one shell > no route mounts a second application 1ms
+ ✓ tests/ui/one-shell.test.ts > one shell > no surface navigates out of the shell to reach a kit 2ms
+ ✓ tests/ui/one-shell.test.ts > one shell > the v2 shell root is the only one that lays out a rail column 360ms
+ ✓ tests/ui/one-shell.test.ts > one shell > every device surface the kit can render is one the shell can route to 3ms
+ ✓ tests/ui/one-shell.test.ts > one shell > only the shell and its named-thread surfaces start a conversation 356ms
+ ✓ tests/ui/one-shell.test.ts > one shell > no surface takes the AnA rail column and still calls the shell onAsk 323ms
+ ✓ tests/ui/one-shell.test.ts > one shell > no surface bypasses the ownsConversation union with a cast 2ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > ReportGovernance — the register publishes itself honestly > a loaded register publishes real seal counts 101ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > ReportGovernance — the register publishes itself honestly > a FAILED register read publishes the failure, never an empty org 65ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > IdentityConsole — the forbidden state grounds AnA without a single secret > a 403 publishes "cannot administer" — and no token, CIDR or org id ever enters facts 66ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > Orchestration — a dead checkpoint store is NEVER "zero gates pending" > publishes the gates failure in the reviewer-protecting words 100ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > BiopharmaJourney — the journey publishes real program identity > a loaded journey names the program, its stage count and readiness 158ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > security: identity-console never leaks a SCIM token, CIDR or org id > publishes counts from a populated directory — and no label, CIDR or org id 72ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > security: access-requests never leaks a requester email, name, note or reason > publishes the requested module (allowed) but no third-party PII or free text 64ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > audit: task board — a failed read is a failure, never a clean empty board > publishes "could not be read", not "0 tasks", when the board read fails 64ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > audit: doc-journey never publishes the actor name/email > publishes the active stage label but not its who (a name-or-email field) 64ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > audit: projects never publishes the lead email > publishes the program code but not its lead (a COALESCE(name,email) field) 77ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > the registry says which surfaces claim the rail column > the four fixed surfaces no longer hide the rail they were writing to 3ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > audit: audit-trail never publishes an actor name or a reason free-text > publishes the event meaning and hasReason boolean, not the actor or the reason text 70ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > audit: the ledger row names the account that acted (F-42) > shows each entry's account reference beside a display name two accounts share 93ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > audit2: review queue — a dead my-queue read is a failure, not "0 threads" > publishes "could not be read", not "0 open threads", when the queue read fails 57ms
+ ✓ client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx > audit2: clinical-ops never publishes a subject-scoped deviation narrative > publishes the deviation category/study but not its free-text description or CAPA 149ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > admin-console — governed mutations reach the rail that draws the sign-off > "Invite member" opens the invite form rather than asking the rail 351ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > admin-console — governed mutations reach the rail that draws the sign-off > a member-level grant is a governed ask, not a local mutation 338ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > csr-workflow — its section rows reach the rail > opens a section through the shell conversation 20ms
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > the audit rail reports each row’s chain verdict > shows the note only on the row whose verdict is intact: false, naming the fields 1435ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx > Insights — Export report produces a file > seals the run AND fetches the governed PDF for the same run, handing the bytes to downloadBlob 161ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx > Insights — Export report produces a file > still exports a report the truthfulness gate holds below final, and says both things 62ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > protocol-dev — "Ask AnA" reaches the rail > hands the completeness question to the shell conversation 1772ms
+ ✓ client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx > insights — no button hands a question to a rail it hides > renders the canvas with no "Ask AnA about this report" affordance 28ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx > Insights — Export report produces a file > reads the gate’s reasons off the THROWN 409 too — which is how production sees it 59ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx > Insights — Export report produces a file > hands over NO file when the export is refused, and reports it as a failure 65ms
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > the audit rail reports each row’s chain verdict > describes a comment row by the passage it quoted 699ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx > Insights — Export report produces a file > reports a browser that refuses the download rather than claiming a saved file 79ms
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > Download the record > GETs the export with the bearer token and saves the package as a file 840ms
+ ✓ client/src/concept2cure/v2/__tests__/noFabricatedProgramIdentity.test.tsx > v2 surfaces carry no fabricated programme identity > finds the surface directory (guards against this test silently covering nothing) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/noFabricatedProgramIdentity.test.tsx > v2 surfaces carry no fabricated programme identity > no surface renders BX-204 / BX204 (demo programme) 42ms
+ ✓ client/src/concept2cure/v2/__tests__/noFabricatedProgramIdentity.test.tsx > v2 surfaces carry no fabricated programme identity > no surface renders rezatinib (demo molecule) 40ms
+ ✓ client/src/concept2cure/v2/__tests__/noFabricatedProgramIdentity.test.tsx > v2 surfaces carry no fabricated programme identity > no surface renders BLA 761xyz (demo application number) 37ms
+ ✓ client/src/concept2cure/v2/__tests__/noFabricatedProgramIdentity.test.tsx > v2 surfaces carry no fabricated programme identity > no surface renders AltexaTab (demo programme) 39ms
+ ✓ client/src/concept2cure/v2/__tests__/noFabricatedProgramIdentity.test.tsx > v2 surfaces carry no fabricated programme identity > no surface renders Aurora CGM (demo programme) 44ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsNotAna.test.tsx > Insights reporting pane — identity > does not present itself as AnA 109ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsNotAna.test.tsx > Insights reporting pane — identity > does not claim the suggested pack was derived from the readiness figure 19ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsNotAna.test.tsx > Insights reporting pane — identity > states that the pane routes rather than answers 21ms
+ ✓ client/src/concept2cure/v2/__tests__/noFabricatedProgramIdentity.test.tsx > v2 surfaces carry no fabricated programme identity > no surface renders CARC-701 (demo study) 40ms
+ ✓ client/src/concept2cure/v2/__tests__/noFabricatedProgramIdentity.test.tsx > v2 surfaces carry no fabricated programme identity > no surface renders Libre 3 (named competitor in invented advice) 40ms
+ ✓ client/src/concept2cure/v2/__tests__/noFabricatedProgramIdentity.test.tsx > v2 surfaces carry no fabricated programme identity > no surface renders Concept2Cure Biosciences, Inc. (sponsor printed on tenant documents) 39ms
+ ✓ client/src/concept2cure/v2/__tests__/noFabricatedProgramIdentity.test.tsx > v2 surfaces carry no fabricated programme identity > no surface renders AUD-77xx (invented Part 11 audit ids) 39ms
+ ✓ client/src/concept2cure/v2/__tests__/noFabricatedProgramIdentity.test.tsx > the audit panel fails closed > renders no entries rather than inventing a Part 11 history 1ms
+ ✓ client/src/concept2cure/v2/__tests__/noFabricatedProgramIdentity.test.tsx > the programme select reads the org’s own portfolio > AgencyMeetings builds its Program options from a live read, not a literal list 0ms
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > Download the record > shows the server’s refusal on the rail when the export cannot be recorded (503), and saves nothing 564ms
+ ✓ client/src/concept2cure/v2/__tests__/auditTrailHeadersAndCopy.test.ts > finding 47 — one meaning for .ct-head > is defined only as the table grid header 5ms
+ ✓ client/src/concept2cure/v2/__tests__/auditTrailHeadersAndCopy.test.ts > finding 47 — one meaning for .ct-head > is not the conversation thread header 1ms
+ ✓ client/src/concept2cure/v2/__tests__/auditTrailHeadersAndCopy.test.ts > findings 53 and 54 — the audit trail and Apps catalog in words > cites § sections, never "ss11.10(e)" or "ss11.50", and never writes "entry(ies)" 1ms
+ ✓ client/src/concept2cure/v2/__tests__/auditTrailHeadersAndCopy.test.ts > findings 53 and 54 — the audit trail and Apps catalog in words > shows no API route as the Apps catalog eyebrow 0ms
+ ✓ client/src/concept2cure/v2/__tests__/auditTrailHeadersAndCopy.test.ts > finding 129 — no empty breadcrumb > draws the tier crumb and its separator only when there is a tier 1ms
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > Download the record > a person without access to the record is told so — not shown a failed read or an empty trail 402ms
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > Download the record > says so when the session is not authenticated (401), rather than nothing 503ms
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > auditIntegrityNote > speaks only for intact: false on a chained row 1ms
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > describeAuditMetadata — comments and bulk decisions recorded whole > describes a comment or reply by its quoted passage, capped at 80 characters 1ms
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > describeAuditMetadata — comments and bulk decisions recorded whole > samples the first three texts of a bulk act and claims no omission when none was recorded 1ms
+ ✓ client/src/concept2cure/v2/__tests__/auditTrailSignedRow.test.tsx > Audit trail — a signed act > shows the signed mark on the signed row only, named for a reader 249ms
+ ✓ client/src/concept2cure/v2/__tests__/auditTrailSignedRow.test.tsx > Audit trail — a signed act > the drawer keeps the record’s reference and names the signature record 62ms
+ ✓ client/src/concept2cure/v2/__tests__/auditTrailSignedRow.test.tsx > Audit trail — a signed act > finds the row by its record reference, though the table shows its name 36ms
+
+ Test Files  9 passed (9)
+      Tests  65 passed (65)
+   Start at  00:18:13
+   Duration  9.59s (transform 5.88s, setup 1.11s, import 7.03s, tests 10.70s, environment 5.51s)
+
+exit=0

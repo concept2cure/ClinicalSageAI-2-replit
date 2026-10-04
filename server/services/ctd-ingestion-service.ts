@@ -245,61 +245,77 @@ export async function uploadCTDDocument(
 // SECTION DETECTION
 // ============================================================================
 
-const SECTION_PATTERNS: Array<{ pattern: RegExp; module: number; section: string; title: string; docType: string }> = [
-  { pattern: /cover.?letter/i, module: 1, section: '1.1', title: 'Cover Letter', docType: 'cover_letter' },
-  { pattern: /application.?form|356h|form.?1571/i, module: 1, section: '1.2', title: 'Application Form', docType: 'form' },
-  { pattern: /patent/i, module: 1, section: '1.3.1', title: 'Patent Information', docType: 'patent_info' },
-  { pattern: /quality.?overall|qos/i, module: 2, section: '2.3', title: 'Quality Overall Summary', docType: 'summary' },
-  { pattern: /nonclinical.?overview/i, module: 2, section: '2.4', title: 'Nonclinical Overview', docType: 'summary' },
-  { pattern: /clinical.?overview/i, module: 2, section: '2.5', title: 'Clinical Overview', docType: 'summary' },
-  { pattern: /drug.?substance|api.?characterization/i, module: 3, section: '3.2.S', title: 'Drug Substance', docType: 'specification' },
-  { pattern: /drug.?product|formulation/i, module: 3, section: '3.2.P', title: 'Drug Product', docType: 'specification' },
-  { pattern: /stability/i, module: 3, section: '3.2.P.8', title: 'Stability', docType: 'study_report' },
-  { pattern: /pharmacology/i, module: 4, section: '4.2.1', title: 'Pharmacology', docType: 'study_report' },
-  { pattern: /toxicology|tox.?study|carcinogenicity|genotox/i, module: 4, section: '4.2.3', title: 'Toxicology', docType: 'study_report' },
-  { pattern: /pk.?study|pharmacokinetic|adme/i, module: 4, section: '4.2.2', title: 'Pharmacokinetics', docType: 'study_report' },
-  { pattern: /biopharmaceutic|bioavailability|bioequivalence/i, module: 5, section: '5.3.1', title: 'Biopharmaceutic Studies', docType: 'study_report' },
-  { pattern: /pk.?report|clinical.?pharmacology/i, module: 5, section: '5.3.3', title: 'Clinical Pharmacology', docType: 'study_report' },
-  { pattern: /efficacy|pivotal|phase.?3|phase.?iii/i, module: 5, section: '5.3.5', title: 'Efficacy and Safety Studies', docType: 'study_report' },
-  { pattern: /safety|adverse|csr/i, module: 5, section: '5.3.5', title: 'Efficacy and Safety Studies', docType: 'study_report' },
-  { pattern: /iss|integrated.?summary.?safety/i, module: 5, section: '5.3.5.3', title: 'Integrated Summary of Safety', docType: 'summary' },
-  { pattern: /ise|integrated.?summary.?efficacy/i, module: 5, section: '5.3.5.3', title: 'Integrated Summary of Efficacy', docType: 'summary' },
-  { pattern: /risk.?management|rmp/i, module: 1, section: '1.5.1', title: 'Risk Management Plan', docType: 'risk_management' },
-];
-
-export function detectCTDSection(fileName: string): {
+/*
+ * VR-04 (row D4, docs/evidence/D4/2026-09-29-vault-classifier-anchoring/).
+ * Every pattern is anchored on word boundaries: unanchored, 'Permission' was
+ * ISS and 'Otherwise' was ISE. First match wins, so the specific patterns come
+ * before the generic ones (ISS/ISE before efficacy and safety, clinical
+ * pharmacology before pharmacology). A generic safety word alone is a
+ * medium-confidence signal, and a safety data sheet is not a CTD document.
+ */
+const SECTION_PATTERNS: Array<{
+  pattern: RegExp;
   module: number;
   section: string;
+  title: string;
+  docType: string;
+  confidence?: number;
+}> = [
+  { pattern: /\bcover ?letter\b/, module: 1, section: '1.1', title: 'Cover Letter', docType: 'cover_letter' },
+  { pattern: /\b(application ?form|356h|form ?1571)\b/, module: 1, section: '1.2', title: 'Application Form', docType: 'form' },
+  { pattern: /\bpatent\b/, module: 1, section: '1.3.1', title: 'Patent Information', docType: 'patent_info' },
+  { pattern: /\b(quality ?overall ?summary|qos)\b/, module: 2, section: '2.3', title: 'Quality Overall Summary', docType: 'summary' },
+  { pattern: /\bnonclinical ?overview\b/, module: 2, section: '2.4', title: 'Nonclinical Overview', docType: 'summary' },
+  { pattern: /\bclinical ?overview\b/, module: 2, section: '2.5', title: 'Clinical Overview', docType: 'summary' },
+  { pattern: /\b(drug ?substance|api ?characterization)\b/, module: 3, section: '3.2.S', title: 'Drug Substance', docType: 'specification' },
+  { pattern: /\b(drug ?product|formulation)\b/, module: 3, section: '3.2.P', title: 'Drug Product', docType: 'specification' },
+  { pattern: /\bstability\b/, module: 3, section: '3.2.P.8', title: 'Stability', docType: 'study_report' },
+  { pattern: /\b(pk ?report|clinical ?pharmacology)\b/, module: 5, section: '5.3.3', title: 'Clinical Pharmacology', docType: 'study_report' },
+  { pattern: /\bpharmacology\b/, module: 4, section: '4.2.1', title: 'Pharmacology', docType: 'study_report' },
+  { pattern: /\b(toxicology|tox ?study|carcinogenicity|genotox\w*)\b/, module: 4, section: '4.2.3', title: 'Toxicology', docType: 'study_report' },
+  { pattern: /\b(pk ?study|pharmacokinetics?|adme)\b/, module: 4, section: '4.2.2', title: 'Pharmacokinetics', docType: 'study_report' },
+  { pattern: /\b(biopharmaceutics?|bioavailability|bioequivalence)\b/, module: 5, section: '5.3.1', title: 'Biopharmaceutic Studies', docType: 'study_report' },
+  { pattern: /\b(iss|integrated ?summary ?(of ?)?safety)\b/, module: 5, section: '5.3.5.3', title: 'Integrated Summary of Safety', docType: 'summary' },
+  { pattern: /\b(ise|integrated ?summary ?(of ?)?efficacy)\b/, module: 5, section: '5.3.5.3', title: 'Integrated Summary of Efficacy', docType: 'summary' },
+  { pattern: /\b(efficacy|pivotal|phase ?(3|iii))\b/, module: 5, section: '5.3.5', title: 'Efficacy and Safety Studies', docType: 'study_report' },
+  { pattern: /\bcsr\b/, module: 5, section: '5.3.5', title: 'Clinical Study Report', docType: 'study_report' },
+  { pattern: /\b(safety|adverse)\b/, module: 5, section: '5.3.5', title: 'Efficacy and Safety Studies', docType: 'study_report', confidence: 0.6 },
+  { pattern: /\b(risk ?management|rmp)\b/, module: 1, section: '1.5.1', title: 'Risk Management Plan', docType: 'risk_management' },
+];
+
+/** Names that look like CTD content and are not: a chemical safety data sheet. */
+const NOT_CTD = /\b(safety ?data ?sheet|m?sds)\b/;
+
+/**
+ * Propose a CTD placement from a file name.
+ *
+ * `section` is null when only the module is named ('Module 3 notes.pdf',
+ * 'M4 summary.pdf'): a bare module is a container, not a place a document can
+ * go (validateSectionCode). It used to be the invented section 'N.0'.
+ */
+export function detectCTDSection(fileName: string): {
+  module: number;
+  section: string | null;
   title: string;
   documentType: string;
   confidence: number;
 } | null {
-  const name = fileName.toLowerCase();
+  // Hyphens, underscores and dots separate words in file names; '_' is a word
+  // character to \b, so they become spaces before the anchored patterns run.
+  const name = fileName.toLowerCase().replace(/[-_.]+/g, ' ');
+  if (NOT_CTD.test(name)) return null;
 
-  for (const { pattern, module, section, title, docType } of SECTION_PATTERNS) {
+  for (const { pattern, module, section, title, docType, confidence } of SECTION_PATTERNS) {
     if (pattern.test(name)) {
-      return {
-        module,
-        section,
-        title,
-        documentType: docType,
-        confidence: 0.8,
-      };
+      return { module, section, title, documentType: docType, confidence: confidence ?? 0.8 };
     }
   }
 
-  // Fallback: try to detect module number from filename
-  const moduleMatch = name.match(/module.?(\d)|m(\d)/);
+  const moduleMatch = name.match(/\bmodule ?(\d)\b|\bm(\d)\b/);
   if (moduleMatch) {
     const mod = parseInt(moduleMatch[1] || moduleMatch[2], 10);
     if (mod >= 1 && mod <= 5) {
-      return {
-        module: mod,
-        section: `${mod}.0`,
-        title: `Module ${mod} Document`,
-        documentType: 'general',
-        confidence: 0.4,
-      };
+      return { module: mod, section: null, title: `Module ${mod} Document`, documentType: 'general', confidence: 0.4 };
     }
   }
 

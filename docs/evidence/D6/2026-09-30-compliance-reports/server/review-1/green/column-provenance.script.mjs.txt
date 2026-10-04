@@ -1,0 +1,44 @@
+// Every table.column the compliance-report SQL names, checked against what a deployment durably creates.
+import fs from 'node:fs';
+import { durableSurface } from '/home/user/ClinicalSageAI-2-replit/scripts/ci/check-migration-reachability.mjs';
+import { migrationSources } from '/home/user/ClinicalSageAI-2-replit/scripts/ci/check-column-reachability.mjs';
+import { columnsAddedIn, columnsCreatedIn, drizzleColumns } from '/home/user/ClinicalSageAI-2-replit/scripts/ci/lib/sql-columns.mjs';
+
+const USED = {
+  users: ['id','name','email','status','mfa_enabled','mfa_method','mfa_verified_at','mfa_backup_codes','locked_until','password_changed_at'],
+  organization_users: ['organization_id','user_id','role','persona','created_at'],
+  platform_role_grants: ['user_id','role','revoked_at'],
+  organizations: ['id','uuid'],
+  audit_logs: ['id','tenant_id','user_id','actor_id','action','table_name','record_id','new_values','reason','ip_address','user_agent','occurred_at','created_at','chain_seq','sha256_chain','hmac_seal'],
+  audit_events: ['organization_id','event_type','entity_type','entity_id','user_id','user_name','ip_address','reason','metadata','timestamp','created_at','record_hash','hmac_seal'],
+  electronic_signatures: ['id','organization_id','signed_at','created_at','signer_id','signer_name','signer_email','signer_title','signature_meaning','signature_type','signed_target','version_id','document_id','signature_hash','bound_payload_digest','binding_basis','authentication_method','second_factor_verified','is_valid','verification_status','superseded_by','signature_manifest','signature_purpose'],
+  'vault.documents': ['organization_id','program_id','retention_policy','retention_until','deleted_at'],
+  'vault.retention_policies': ['id','policy_name','retention_days','archive_before_delete','hard_delete','active'],
+  'vault.legal_holds': ['id','organization_id','reference','scope','program_id','document_id','reason','placed_at','placed_by','lifted_at','lifted_by','lift_reason'],
+  'vault.document_archives': ['id','original_document_id','archive_reason','archived_at'],
+  regulatory_programs: ['id','organization_id'],
+  qms_documents: ['id','organization_id','doc_number','title','doc_type','version','status','effective_date','next_review_date','author_id','approver_id','approved_at','metadata','created_at','deleted_at','superseded_by_id'],
+  qms_change_controls: ['id','organization_id','change_number','title','change_type','classification','risk_level','status','created_at','proposed_by','approved_at','approved_by','implemented_at','verified_at','closed_at','qms_document_id','deleted_at','description','reason'],
+};
+
+const surface = durableSurface();
+const where = new Map();
+const note = (k, f) => { if (!where.has(k)) where.set(k, []); if (!where.get(k).includes(f)) where.get(k).push(f); };
+for (const { rel, sql } of migrationSources()) {
+  if (surface.applyIndex(rel) === null) continue;
+  for (const { table, column } of [...columnsAddedIn(sql), ...columnsCreatedIn(sql)]) note(`${table}.${column}`, rel);
+}
+for (const f of surface.drizzleFiles) {
+  for (const { table, column } of drizzleColumns(fs.readFileSync(f, 'utf8')).columns) {
+    if (!table.includes('.')) note(`${table}.${column}`, 'drizzle push: ' + f.replace('/home/user/ClinicalSageAI-2-replit/', ''));
+  }
+}
+let missing = 0;
+for (const [table, cols] of Object.entries(USED)) {
+  for (const c of cols) {
+    const files = where.get(`${table}.${c}`);
+    if (!files) { missing++; console.log(`MISSING  ${table}.${c}`); continue; }
+    console.log(`${table}.${c}  <-  ${files.slice(0, 2).join(' ; ')}${files.length > 2 ? ` (+${files.length - 2})` : ''}`);
+  }
+}
+console.log(`\n${missing} column(s) with no durable creator`);

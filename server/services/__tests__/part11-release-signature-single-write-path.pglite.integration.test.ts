@@ -156,7 +156,8 @@ CREATE TABLE audit_logs (
   old_values    JSONB,
   new_values    JSON,
   ip_address    TEXT,
-  user_agent    TEXT
+  user_agent    TEXT,
+  reason        TEXT
 );
 
 CREATE TABLE device_audit_trail (

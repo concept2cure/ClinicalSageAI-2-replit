@@ -130,14 +130,14 @@ describe('GA demo seed → service reads (real Postgres)', () => {
     expect(links.find((l) => l.linked_ref === 'DEV-2026-041')!.relationship).toBe('triggered_by');
   });
 
-  it('training compliance has a real (partial) roster number', async () => {
-    // One member is intentionally left short, so an effective trainable doc is < roster.
-    const r = await pglite.query(
-      `SELECT count(DISTINCT user_id)::int AS n FROM qms_training_records t
-         JOIN qms_documents d ON d.id = t.document_id
-        WHERE d.doc_number = 'SOP-820-100'`,
-    );
-    expect((r.rows[0] as { n: number }).n).toBe(2); // 3 in roster, 1 left short
+  it('seeds no effective document and no training against one: approval is a signature the seed cannot give', async () => {
+    // P0-18 (2026-10-01): a document becomes effective only with a signed
+    // approval in the same transaction. The seed has no signer, so every
+    // document is in review and nothing is acknowledged as read yet.
+    const effective = await pglite.query(`SELECT count(*)::int AS n FROM qms_documents WHERE status = 'effective'`);
+    expect((effective.rows[0] as { n: number }).n).toBe(0);
+    const trained = await pglite.query(`SELECT count(*)::int AS n FROM qms_training_records`);
+    expect((trained.rows[0] as { n: number }).n).toBe(0);
   });
 });
 

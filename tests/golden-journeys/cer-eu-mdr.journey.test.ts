@@ -109,6 +109,7 @@ const R = new JourneyRecorder(
     'migrations/0000_sweet_joseph.sql (extractTableDdl)',
     'db/migrations/20260801_consolidated_tree_reconciliation.sql#literature_entries (extractTableDdl)',
     'migrations/20260527_mutation_primitives.sql',
+    'migrations/20260929_actor_names.sql',
     'migrations/20260609_audit_hmac_seal.sql',
     'migrations/20260524_program_workbench_schema.sql',
     // regulatory_programs.application_number (WO-9 Click 1): the column the
@@ -150,6 +151,7 @@ beforeAll(async () => {
   const baseline = extractTableDdl('migrations/0000_sweet_joseph.sql', [
     'organizations',
     'users',
+    'organization_users',
     'client_workspaces',
     'projects',
     'audit_logs',
@@ -173,6 +175,10 @@ beforeAll(async () => {
       // The Part 11 tamper-evident store (ledger L145) — cross-cutting.
       'db/migrations/20260813_audit_tamper_proof_log.sql',
       'migrations/20260527_mutation_primitives.sql',
+      // public.actor_name (D3, 2026-09-29): the program list names its lead
+      // through it since users took row-level security; after mutation
+      // primitives, which adds the audit_logs.actor_id it reads.
+      'migrations/20260929_actor_names.sql',
       'migrations/20260609_audit_hmac_seal.sql',
       'migrations/20260524_program_workbench_schema.sql',
       // regulatory_programs.application_number (WO-9 Click 1): the column the

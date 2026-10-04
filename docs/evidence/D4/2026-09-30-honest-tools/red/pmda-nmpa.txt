@@ -1,0 +1,313 @@
+# red at fe749b1a with only the test added
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/connectors/__tests__/pmda-nmpa-honest.test.ts
+{
+  "timestamp": "2026-10-01T00:21:35.703Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T00:21:35.704Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/connectors/__tests__/pmda-nmpa-honest.test.ts
+{
+  "timestamp": "2026-10-01T00:21:35.705Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/connectors/__tests__/pmda-nmpa-honest.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/connectors/__tests__/pmda-nmpa-honest.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/connectors/__tests__/pmda-nmpa-honest.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ × server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > refuses a search instead of returning the query as a scored result 8ms
+   → promise resolved "[ { id: 'pmda:search:NSCLC', …(6) } ]" instead of rejecting
+ × server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > refuses a fetch instead of returning a placeholder document 3ms
+   → promise resolved "{ id: 'anything', …(7) }" instead of rejecting
+ × server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > reports itself unavailable, without reaching out to test a web page 120ms
+   → expected 'degraded' to be 'unavailable' // Object.is equality
+ × server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > does not promise search, scraping or translation in the catalog 2ms
+   → expected '{"id":"pmda_reviews","name":"PMDA Rev…' not to match /machine translation|machine-translat…/i
+ × server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > is reported as skipped by the repository search, never as a document 2ms
+   → expected [ { connector: 'pmda_reviews', …(4) } ] to deeply equal []
+ × server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > refuses a search instead of returning the query as a scored result 2ms
+   → promise resolved "[ { id: 'nmpa:search:NSCLC', …(6) } ]" instead of rejecting
+ × server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > refuses a fetch instead of returning a placeholder document 2ms
+   → promise resolved "{ id: 'anything', …(7) }" instead of rejecting
+ × server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > reports itself unavailable, without reaching out to test a web page 104ms
+   → expected 'degraded' to be 'unavailable' // Object.is equality
+ × server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > does not promise search, scraping or translation in the catalog 1ms
+   → expected '{"id":"nmpa_cde","name":"NMPA / CDE A…' not to match /machine translation|machine-translat…/i
+ × server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > is reported as skipped by the repository search, never as a document 1ms
+   → expected [ { connector: 'nmpa_cde', …(4) } ] to deeply equal []
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > refuses a search instead of returning the query as a scored result
+AssertionError: promise resolved "[ { id: 'pmda:search:NSCLC', …(6) } ]" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+[
+  {
+    "id": "pmda:search:NSCLC",
+    "metadata": {
+      "agency": "PMDA",
+      "market": "Japan",
+      "searchTerm": "NSCLC",
+    },
+    "relevanceScore": 0.8,
+    "sourceConnector": "pmda_reviews",
+    "summary": "Search PMDA for approved drugs related to \"NSCLC\". Review reports available in Japanese with English summaries for select products.",
+    "title": "PMDA Approved Drugs: NSCLC",
+    "url": "https://www.pmda.go.jp/english/review-services/reviews/approved-information/drugs/0002.html",
+  },
+]
+
+ ❯ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts:25:85
+     23| ])('%s connector', (_name, make, id, url) => {
+     24|   it('refuses a search instead of returning the query as a scored resu…
+     25|     await expect(make().search({ keywords: ['pembrolizumab'], indicati…
+       |                                                                                     ^
+     26|     await expect(make().search({ keywords: ['pembrolizumab'] })).rejec…
+     27|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > refuses a fetch instead of returning a placeholder document
+AssertionError: promise resolved "{ id: 'anything', …(7) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "content": "{\"note\":\"PMDA review reports are available as PDFs from the PMDA website. Full automated extraction requires Japanese language processing.\"}",
++   "id": "anything",
++   "metadata": {
++     "agency": "PMDA",
++     "market": "Japan",
++   },
++   "retrievedAt": 2026-10-01T00:21:36.122Z,
++   "sourceConnector": "pmda_reviews",
++   "title": "PMDA Document anything",
++   "type": "pmda_review",
++   "url": "https://www.pmda.go.jp/english/review-services/reviews/approved-information/drugs/0002.html",
+  }
+
+ ❯ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts:30:42
+     28|
+     29|   it('refuses a fetch instead of returning a placeholder document', as…
+     30|     await expect(make().fetch('anything')).rejects.toThrow(/no .* sear…
+       |                                          ^
+     31|   });
+     32|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > reports itself unavailable, without reaching out to test a web page
+ FAIL  server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > reports itself unavailable, without reaching out to test a web page
+AssertionError: expected 'degraded' to be 'unavailable' // Object.is equality
+
+Expected: "unavailable"
+Received: "degraded"
+
+ ❯ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts:36:27
+     34|     const fetchSpy = vi.spyOn(globalThis, 'fetch');
+     35|     const health = await make().status();
+     36|     expect(health.status).toBe('unavailable');
+       |                           ^
+     37|     expect(fetchSpy).not.toHaveBeenCalled();
+     38|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > does not promise search, scraping or translation in the catalog
+AssertionError: expected '{"id":"pmda_reviews","name":"PMDA Rev…' not to match /machine translation|machine-translat…/i
+
+- Expected:
+/machine translation|machine-translated|is scraped|Search by (INN|product)/i
+
++ Received:
+"{\"id\":\"pmda_reviews\",\"name\":\"PMDA Review Reports\",\"type\":\"scraper\",\"category\":\"regulatory\",\"description\":\"Japanese Pharmaceuticals and Medical Devices Agency review reports and approval information.\",\"requiredTier\":\"professional\",\"requiresCredentials\":false,\"icon\":\"scroll\",\"setupGuide\":{\"overview\":\"PMDA review reports are publicly accessible. English translations are available for most recently approved products.\",\"prerequisites\":[\"Professional tier subscription\"],\"credentialFields\":[],\"steps\":[{\"step\":1,\"title\":\"Enable the connector\",\"instructions\":\"Toggle the connector on to access PMDA review reports.\"},{\"step\":2,\"title\":\"Search by product\",\"instructions\":\"Search by INN, product name, or therapeutic area. English translations are available for recent approvals.\"}],\"troubleshooting\":[\"Some review reports are only available in Japanese. Machine translation is applied where English versions are unavailable.\",\"PMDA website may have intermittent availability during maintenance windows.\"]}}"
+
+ ❯ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts:43:22
+     41|     const entry = CONNECTOR_CATALOG.find((c) => c.id === id)!;
+     42|     const text = JSON.stringify(entry);
+     43|     expect(text).not.toMatch(/machine translation|machine-translated|i…
+       |                      ^
+     44|     expect(entry.description).toMatch(/not connected/i);
+     45|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > PMDA connector > is reported as skipped by the repository search, never as a document
+AssertionError: expected [ { connector: 'pmda_reviews', …(4) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "connector": "pmda_reviews",
++     "relevanceScore": 0.8,
++     "summary": "Search PMDA for approved drugs related to \"pembrolizumab\". Review reports available in Japanese with English summaries for select products.",
++     "title": "PMDA Approved Drugs: pembrolizumab",
++     "url": "https://www.pmda.go.jp/english/review-services/reviews/approved-information/drugs/0002.html",
++   },
++ ]
+
+ ❯ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts:63:27
+     61|       },
+     62|     );
+     63|     expect(out.documents).toEqual([]);
+       |                           ^
+     64|     expect(out.skipped).toEqual([{ connector: id, reason: expect.strin…
+     65|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > refuses a search instead of returning the query as a scored result
+AssertionError: promise resolved "[ { id: 'nmpa:search:NSCLC', …(6) } ]" instead of rejecting
+
+- Expected:
+Error {
+  "message": "rejected promise",
+}
+
++ Received:
+[
+  {
+    "id": "nmpa:search:NSCLC",
+    "metadata": {
+      "agency": "NMPA/CDE",
+      "market": "China",
+      "searchTerm": "NSCLC",
+    },
+    "relevanceScore": 0.7,
+    "sourceConnector": "nmpa_cde",
+    "summary": "Search NMPA Center for Drug Evaluation for approved drugs related to \"NSCLC\". Data available in Chinese with limited English translations.",
+    "title": "NMPA/CDE Approved Drugs: NSCLC",
+    "url": "https://www.cde.org.cn/",
+  },
+]
+
+ ❯ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts:25:85
+     23| ])('%s connector', (_name, make, id, url) => {
+     24|   it('refuses a search instead of returning the query as a scored resu…
+     25|     await expect(make().search({ keywords: ['pembrolizumab'], indicati…
+       |                                                                                     ^
+     26|     await expect(make().search({ keywords: ['pembrolizumab'] })).rejec…
+     27|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > refuses a fetch instead of returning a placeholder document
+AssertionError: promise resolved "{ id: 'anything', …(7) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "content": "{\"note\":\"NMPA/CDE documents are primarily in Chinese. Full extraction requires Chinese language processing and may require VPN access.\"}",
++   "id": "anything",
++   "metadata": {
++     "agency": "NMPA/CDE",
++     "market": "China",
++   },
++   "retrievedAt": 2026-10-01T00:21:36.251Z,
++   "sourceConnector": "nmpa_cde",
++   "title": "NMPA/CDE Document anything",
++   "type": "nmpa_approval",
++   "url": "https://www.cde.org.cn/",
+  }
+
+ ❯ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts:30:42
+     28|
+     29|   it('refuses a fetch instead of returning a placeholder document', as…
+     30|     await expect(make().fetch('anything')).rejects.toThrow(/no .* sear…
+       |                                          ^
+     31|   });
+     32|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > does not promise search, scraping or translation in the catalog
+AssertionError: expected '{"id":"nmpa_cde","name":"NMPA / CDE A…' not to match /machine translation|machine-translat…/i
+
+- Expected:
+/machine translation|machine-translated|is scraped|Search by (INN|product)/i
+
++ Received:
+"{\"id\":\"nmpa_cde\",\"name\":\"NMPA / CDE Approvals\",\"type\":\"scraper\",\"category\":\"regulatory\",\"description\":\"China National Medical Products Administration and Center for Drug Evaluation approval data.\",\"requiredTier\":\"professional\",\"requiresCredentials\":false,\"icon\":\"scroll\",\"setupGuide\":{\"overview\":\"NMPA/CDE approval data is scraped from public Chinese regulatory databases.\",\"prerequisites\":[\"Professional tier subscription\"],\"credentialFields\":[],\"steps\":[{\"step\":1,\"title\":\"Enable the connector\",\"instructions\":\"Toggle the connector on to access NMPA/CDE approval data.\"},{\"step\":2,\"title\":\"Search by drug name\",\"instructions\":\"Search by INN, Chinese drug name, or registration number.\"}],\"troubleshooting\":[\"Data is primarily in Chinese with machine-translated summaries. Use INN for best cross-language matching.\",\"CDE website access may be intermittent from non-China regions.\"]}}"
+
+ ❯ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts:43:22
+     41|     const entry = CONNECTOR_CATALOG.find((c) => c.id === id)!;
+     42|     const text = JSON.stringify(entry);
+     43|     expect(text).not.toMatch(/machine translation|machine-translated|i…
+       |                      ^
+     44|     expect(entry.description).toMatch(/not connected/i);
+     45|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  server/services/connectors/__tests__/pmda-nmpa-honest.test.ts > NMPA connector > is reported as skipped by the repository search, never as a document
+AssertionError: expected [ { connector: 'nmpa_cde', …(4) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "connector": "nmpa_cde",
++     "relevanceScore": 0.7,
++     "summary": "Search NMPA Center for Drug Evaluation for approved drugs related to \"pembrolizumab\". Data available in Chinese with limited English translations.",
++     "title": "NMPA/CDE Approved Drugs: pembrolizumab",
++     "url": "https://www.cde.org.cn/",
++   },
++ ]
+
+ ❯ server/services/connectors/__tests__/pmda-nmpa-honest.test.ts:63:27
+     61|       },
+     62|     );
+     63|     expect(out.documents).toEqual([]);
+       |                           ^
+     64|     expect(out.skipped).toEqual([{ connector: id, reason: expect.strin…
+     65|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed (10)
+   Start at  00:21:33
+   Duration  2.71s (transform 1.10s, setup 98ms, import 1.94s, tests 249ms, environment 0ms)
+

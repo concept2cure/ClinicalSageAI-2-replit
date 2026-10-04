@@ -1,0 +1,15 @@
+# 2026-10-01T14:52:01Z, tree at HEAD 0812a990 plus this item. terraform/modules/compliance-evidence.
+$ terraform init -backend=false && terraform validate && terraform test
+Success! The configuration is valid.
+
+tests/evidence.tftest.hcl... in progress
+  run "the_key_admits_cloudtrail_and_logs_for_this_trail_and_log_group_only"... pass
+  run "the_bucket_admits_cloudtrail_and_refuses_plaintext"... pass
+  run "the_trail_does_not_log_its_own_deliveries"... pass
+  run "names_come_from_the_prefix_not_ros_staging"... pass
+  run "a_put_under_anchors_without_if_none_match_is_refused_for_everyone"... pass
+tests/evidence.tftest.hcl... tearing down
+tests/evidence.tftest.hcl... pass
+
+Success! 5 passed, 0 failed.
+exit=0

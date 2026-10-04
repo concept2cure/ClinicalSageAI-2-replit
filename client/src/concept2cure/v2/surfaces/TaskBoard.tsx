@@ -4,12 +4,14 @@ import { useDialog } from '../useDialog';
 import { useLiveRows, useLiveData, hasKeys, EmptyState } from '../dataConnect';
 import { apiRequest, ApiRequestError, serverMessage } from '@/lib/queryClient';
 import { useAuth } from '@/services/portal/authService';
+import { canGovernedWrite } from '@shared/constants/permissions';
 import { EsignModal, esignSignerOf, type EsigSignedManifest, type EsignSigner } from '../../_shared/components/EsignModal';
 import type { EsigMeaning } from '../../hooks/useEsignature';
 import { describeSignatureMethod } from '@shared/part11/signature-method';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { publishShellProject } from '../shellProject';
 import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import {
   // TB_PROJECTS (three invented programmes) is gone — the board, the project
@@ -75,7 +77,8 @@ interface TaskItem {
   /** Real assignee user-id FK as a string; '' when unassigned. */
   assignee: string;
   /** Real assigned-by user-id FK as a string; '' when unknown. */
-  assignedBy: string;
+  /** Null on another store's card: that store records no assigner. */
+  assignedBy: string | null;
   progress: number;
   /** 0-10 submission impact; null when never scored (real nullable column). */
   impactScore: number | null;
@@ -109,7 +112,27 @@ interface TaskItem {
   blockedReason?: string;
   estimatedHours?: number | null;
   assignmentType?: string;
+  /** Work that lives in another store (schedule, correspondence, filing). The
+   *  board shows it and does not write it; `home` is where it is changed. */
+  readOnly?: boolean;
+  home?: { surface: 'project-home' | 'submission-center'; projectId: number | null } | null;
+  /** The owning store's own note (a blocker, a module, a catalogue key). */
+  detail?: string | null;
 }
+
+/** The screen that owns another store's work, as a person reads it. */
+const HOME_LABEL: Record<string, string> = {
+  'project-home': 'Project home',
+  'submission-center': 'Submission Center',
+};
+
+/** A store the board could not read (meta.unreadSources), as a person reads it. */
+const STORE_LABEL: Record<string, string> = {
+  unified_tasks: "the board's own tasks",
+  project_tasks: 'the schedule and Communication Center',
+  c2c_project_work_items: 'agency correspondence',
+  estar_submissions: 'tracked filings',
+};
 
 /** Initials for an already-resolved display name. '?' when there is no name. */
 function tbAvatar(name: string): string {
@@ -260,7 +283,7 @@ function AutomationCard() {
 
 /* ── Main surface ── */
 
-export function TaskBoard({ onAsk }: SurfaceViewProps) {
+export function TaskBoard({ onAsk, onNav }: SurfaceViewProps) {
   /* Org-wide unifiedTasks board — REAL, org-scoped read model
      (GET /api/task-management/board -> server/routes/taskBoard.routes.ts: a real
      drizzle query over unified_tasks + task_dependencies). Real rows, an honest
@@ -279,6 +302,16 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
     reloadKey,
   ]);
   const tasks: TaskItem[] = liveTasks.rows;
+  /* Which stores the board could not read. The board reads every task store
+     (its own, the schedule's, correspondence's, filings'); one it could not
+     read is named, so a short board is never taken for a complete one. */
+  const unreadStores: string[] = useMemo(
+    () =>
+      liveTasks.meta?.partial === true && Array.isArray(liveTasks.meta.unreadSources)
+        ? (liveTasks.meta.unreadSources as unknown[]).map(String)
+        : [],
+    [liveTasks.meta],
+  );
 
   /* The org's REAL programmes, for the project filter below. This filter used to
      be driven by TB_PROJECTS — three invented programmes ("BX-204 -- NDA 212345",
@@ -299,6 +332,11 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
      returned an empty board for every user of the product. */
   const { user } = useAuth();
   const myId = user?.id != null ? String(user.id) : '';
+  /* Every task write is refused to a viewer by requireEditorAccess. The board
+     offered a viewer New task, Start workflow, move, archive and sign anyway,
+     and refused only after the click (T2's UI half). The session now carries
+     the permission the server derives from the same role set. */
+  const canWrite = canGovernedWrite(user);
 
   const [view, setView] = useState('board');
   const [proj, setProj] = useState<string>(() => {
@@ -651,9 +689,13 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
       summary:
         `Task board for the organisation: ${stats.total} tasks, ${stats.open} open, ` +
         `${stats.blocked} blocked, ${overdue.length} overdue, ${stats.appr} awaiting approval.` +
+        (unreadStores.length
+          ? ` These counts are incomplete: ${unreadStores.map((u) => STORE_LABEL[u] ?? u).join(', ')} could not be read.`
+          : '') +
         (sel0 ? ` The task "${sel0.title}" (${sel0.taskId}) is open in the detail panel.` : ''),
       facts: {
         view,
+        unreadStores,
         totals: {
           all: stats.total, open: stats.open, blocked: stats.blocked,
           overdue: overdue.length, criticalPath: stats.crit,
@@ -682,7 +724,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
         'Filter the board by module, priority, assignee or search text',
       ],
     };
-  }, [list, stats, sel, view, liveTasks.loading, liveTasks.error]);
+  }, [list, stats, sel, view, liveTasks.loading, liveTasks.error, unreadStores]);
   usePublishSurfaceContext('tasks', anaContext);
 
   /* The tasks a person marked critical-path (unified_tasks.critical_path), in
@@ -739,12 +781,18 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
         <div>
           <div className="ph-eyebrow">Project — collaboration</div>
           <h1 className="ph-title">Task board</h1>
-          <div className="ph-sub">The org-wide unified task board. Org-scoped by design — filter to a project below. Tasks from sections, the pyramid engine, the legacy WBS and modules are surfaced here with their origin store labelled.</div>
+          <div className="ph-sub">The organisation's tasks from every store: the board's own, and the schedule's, agency correspondence's and tracked filings' work, each labelled with where it lives. Filter to a project below. Work from another store opens where it lives to be changed.</div>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn ghost" onClick={() => setWf(true)}>{I.workflow} Start workflow</button>
-          <button className="btn primary" onClick={() => setCreating(true)}>{I.plus} New task</button>
-        </div>
+        {canWrite ? (
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn ghost" onClick={() => setWf(true)}>{I.workflow} Start workflow</button>
+            <button className="btn primary" onClick={() => setCreating(true)}>{I.plus} New task</button>
+          </div>
+        ) : (
+          <div className="ph-sub" role="note" data-testid="tb-view-only">
+            {I.lock} View only. Creating and changing tasks needs an editor role in this organization.
+          </div>
+        )}
       </div>
 
       {actionErr && (
@@ -797,13 +845,19 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
                  to watch a path that does not exist. */
               : undefined
         }
-        action={{
+        action={canWrite ? {
           label: critBlocked ? 'Unblock the critical path' : overdue.length ? 'Triage the overdue work' : critDesignated ? 'Start a workflow from a template' : 'Mark the tasks that gate the milestone',
           onClick: () => { if (critBlocked || overdue.length) { setView('path'); } else { setWf(true); } },
           alt: { label: 'Auto-balance assignments', onClick: () => onAsk && onAsk('Rebalance open task assignments by workload using getOptimalAssignee') },
-        }}
+        } : { label: 'See the critical path', onClick: () => setView('path') }}
         secondary="Or work the board, critical path, and analytics below."
       />
+
+      {unreadStores.length > 0 && (
+        <div className="ph-sub" role="status" data-testid="tb-partial">
+          {I.alertTriangle} Not every task store could be read: {unreadStores.map((u) => STORE_LABEL[u] ?? u).join(', ')}. The columns and counts show only what was read.
+        </div>
+      )}
 
       {/* Provenance strip -- the 7-table fragmentation made visible (Gap 1) */}
       <div className="tb-src">
@@ -816,7 +870,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
             </span>
           );
         })}
-        <span className="tb-src-note">unified via <code>crossModuleTaskLinks</code> — no single reconciliation store</span>
+        <span className="tb-src-note">other stores read through the cross-store work view; their cards open where they live</span>
       </div>
 
       {/* Filters + views */}
@@ -872,7 +926,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
                       }}
                     >
                       <div className="tb-card-top">
-                        <span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || MODULE_COLOR_UNKNOWN } as React.CSSProperties}>{t.moduleType}</span>
+                        {t.moduleType && <span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || MODULE_COLOR_UNKNOWN } as React.CSSProperties}>{t.moduleType}</span>}
                         {t.criticalPath && <span className="tb-flag crit" title="On critical path">{I.zap}</span>}
                         {t.regulatoryImpact && <span className="tb-flag reg" title="Regulatory impact">{I.shieldCheck}</span>}
                       </div>
@@ -880,7 +934,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
                       {t.blocked && <div className="tb-blocked">{I.alertTriangle} {t.blockedReason || 'Blocked'}</div>}
                       <div className="tb-card-meta">
                         <span className="tb-type" data-t={t.taskType}>{TB_TYPE[t.taskType]}</span>
-                        <span className={`tb-pri pri-${t.priority}`}>{t.priority}</span>
+                        {t.priority && <span className={`tb-pri pri-${t.priority}`}>{t.priority}</span>}
                         {t.approvalRequired && <span className="tb-appr" data-s={t.approvalStatus}>{t.approvalStatus === 'approved' ? 'approved' : t.approvalStatus === 'pending' ? 'approval — pending' : 'needs approval'}</span>}
                       </div>
                       {t.progress > 0 && t.progress < 100 && <div className="tb-prog"><span style={{ width: t.progress + '%' }} /></div>}
@@ -889,12 +943,14 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
                         {(t.dependsOn.length > 0 || t.blocks.length > 0) && <span className="tb-deps" title={t.dependsOn.length + ' upstream — ' + t.blocks.length + ' downstream'}>{I.gitCompare}{t.dependsOn.length + t.blocks.length}</span>}
                         {t.comments > 0 && <span className="tb-cmt">{t.comments}</span>}
                         <span className="tb-due" data-over={isOverdue(t) || undefined}>{t.due}</span>
-                        <span className="tb-av" title={nameOf(t.assignee)}>{tbAvatar(nameOf(t.assignee))}</span>
+                        {!t.readOnly && <span className="tb-av" title={nameOf(t.assignee)}>{tbAvatar(nameOf(t.assignee))}</span>}
                       </div>
-                      <div className="tb-move" onClick={e => e.stopPropagation()}>
-                        <button disabled={t.status === 'pending'} onClick={() => move(t, -1)} title="Move back" aria-label="Move back">{I.left}</button>
-                        <button disabled={t.status === 'completed'} onClick={() => move(t, 1)} title="Advance" aria-label="Advance">{I.chevRight}</button>
-                      </div>
+                      {canWrite && !t.readOnly && (
+                        <div className="tb-move" onClick={e => e.stopPropagation()}>
+                          <button disabled={t.status === 'pending'} onClick={() => move(t, -1)} title="Move back" aria-label="Move back">{I.left}</button>
+                          <button disabled={t.status === 'completed'} onClick={() => move(t, 1)} title="Advance" aria-label="Advance">{I.chevRight}</button>
+                        </div>
+                      )}
                     </div>
                   ))}
                   {!items.length && <div className="tb-empty">No tasks</div>}
@@ -1043,7 +1099,22 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
           }}
         />
       )}
-      {sel && (
+      {sel && sel.readOnly && (
+        <OtherStoreTaskDetail
+          t={sel}
+          projLabel={projLabel}
+          onClose={() => setSel(null)}
+          onOpenHome={(t) => {
+            if (!t.home) return;
+            if (t.home.projectId != null) {
+              publishShellProject({ id: t.home.projectId, title: projLabel(String(t.home.projectId)) });
+            }
+            setSel(null);
+            onNav(t.home.surface);
+          }}
+        />
+      )}
+      {sel && !sel.readOnly && (
         <TaskDetail
           t={sel}
           byId={byId}
@@ -1052,6 +1123,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
           onAsk={onAsk}
           onMove={move}
           nameOf={nameOf}
+          canWrite={canWrite}
           onArchived={() => { setSel(null); setReloadKey((k) => k + 1); }}
         />
       )}
@@ -1081,12 +1153,64 @@ interface TaskDetailProps {
   nameOf: (id: string | null | undefined) => string;
   /** Called after a successful soft-delete so the board closes + refetches. */
   onArchived: () => void;
+  /** False for a role the server refuses every task write (see canGovernedWrite). */
+  canWrite: boolean;
 }
 
 /** archiveTaskSchema's ceiling on the archive reason (server/routes/taskManagement.routes.ts). */
 const ARCHIVE_REASON_MAX = 1000;
 
-function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onArchived }: TaskDetailProps) {
+/**
+ * Another store's work, opened from the board. The board does not write that
+ * store, so this panel offers none of the board's controls (move, archive,
+ * sign): it says what the store records and opens the screen that owns it.
+ */
+/** Where another store's work lives, in one sentence. */
+function whereItLives(home: string | null, project: string | null): React.ReactNode {
+  if (!home) return 'This work lives in another store. The board shows it and does not edit it.';
+  const forProject = project ? ` for ${project}` : '';
+  return `This work lives in ${home}${forProject}. It is changed there; the board shows it and does not edit it.`;
+}
+
+function OtherStoreTaskDetail({ t, projLabel, onClose, onOpenHome }: {
+  t: TaskItem;
+  projLabel: (id: string) => string;
+  onClose: () => void;
+  onOpenHome: (t: TaskItem) => void;
+}) {
+  const src = TB_SRC[t.source] || TB_SRC.unified;
+  const status = (TB_COLS.find(c => c.id === t.status) || { label: t.status }).label;
+  const home = t.home ? HOME_LABEL[t.home.surface] ?? t.home.surface : null;
+  const project = t.project ? projLabel(t.project) : null;
+  const dialogRef = useDialog(onClose);
+  return (
+    <div className="tb-detail-bd" onClick={onClose}>
+      <div className="tb-detail" role="dialog" aria-modal="true" aria-label="Task detail" tabIndex={-1} ref={dialogRef} onClick={e => e.stopPropagation()}>
+        <div className="tb-detail-h">
+          <div><span className="mono" style={{ fontSize: 10.5, color: 'var(--text-400)' }}>{t.taskId}</span><h3>{t.title}</h3></div>
+          <button className="tb-detail-x" onClick={onClose} aria-label="Close">{I.close}</button>
+        </div>
+        {t.blocked && <div className="tb-blocked lg">{I.alertTriangle} {t.detail || 'Blocked'}</div>}
+        <div className="tb-detail-grid">
+          <div><label>Project</label><span>{project ?? '—'}</span></div>
+          <div><label>Status</label><span>{status}</span></div>
+          <div><label>Due</label><span style={{ color: isOverdue(t) ? 'var(--error)' : 'inherit' }}>{t.due || '—'}</span></div>
+          <div><label>Store</label><span>{src.l} — <em style={{ color: 'var(--text-400)' }}>{src.t}</em></span></div>
+          {t.priority && <div><label>Priority</label><span>{t.priority}</span></div>}
+          {t.detail && !t.blocked && <div><label>Note</label><span>{t.detail}</span></div>}
+        </div>
+        <div className="tb-detail-sec">
+          <div className="tb-detail-note">{whereItLives(home, project)}</div>
+          {home && (
+            <button className="btn primary" onClick={() => onOpenHome(t)}>Open in {home}</button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onArchived, canWrite }: TaskDetailProps) {
   const src = TB_SRC[t.source] || TB_SRC.unified;
   const owner = nameOf(t.assignee) || 'Unassigned';
   const dep = (id: string) => { const d = byId(id); return d ? d.title : id; };
@@ -1266,20 +1390,26 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onArch
         )}
         <div className="tb-detail-f">
           <button className="btn ghost" onClick={() => { onAsk && onAsk('Draft a status update for ' + t.taskId + ': ' + t.title); onClose(); }}>{I.sparkles} Ask AnA</button>
-          {confirmArchive && (
+          {canWrite && confirmArchive && (
             <button className="btn ghost" onClick={() => { setConfirmArchive(false); setArchiveReason(''); setArchiveErr(''); }}>Cancel</button>
           )}
-          <button
-            className="btn ghost"
-            style={confirmArchive ? { color: 'var(--error)', borderColor: 'var(--error)' } : undefined}
-            disabled={archiving || (confirmArchive && !archiveReasonOk)}
-            onClick={archive}
-            title={confirmArchive && !archiveReasonOk ? (archiveReasonTooLong ? archiveReasonTooLongText : 'Give a reason to archive') : undefined}
-            aria-label={confirmArchive ? `Confirm archiving "${t.title}"` : `Archive "${t.title}"`}
-          >{archiving ? 'Archiving…' : confirmArchive ? 'Confirm archive' : 'Archive'}</button>
+          {canWrite && (
+            <button
+              className="btn ghost"
+              style={confirmArchive ? { color: 'var(--error)', borderColor: 'var(--error)' } : undefined}
+              disabled={archiving || (confirmArchive && !archiveReasonOk)}
+              onClick={archive}
+              title={confirmArchive && !archiveReasonOk ? (archiveReasonTooLong ? archiveReasonTooLongText : 'Give a reason to archive') : undefined}
+              aria-label={confirmArchive ? `Confirm archiving "${t.title}"` : `Archive "${t.title}"`}
+            >{archiving ? 'Archiving…' : confirmArchive ? 'Confirm archive' : 'Archive'}</button>
+          )}
           <span className="sp" />
-          <button className="btn ghost" disabled={t.status === 'pending'} onClick={() => { onMove(t, -1); onClose(); }}>Move back</button>
-          <button className="btn primary" disabled={t.status === 'completed'} onClick={() => { onMove(t, 1); onClose(); }}>{I.chevRight} Advance</button>
+          {canWrite && (
+            <>
+              <button className="btn ghost" disabled={t.status === 'pending'} onClick={() => { onMove(t, -1); onClose(); }}>Move back</button>
+              <button className="btn primary" disabled={t.status === 'completed'} onClick={() => { onMove(t, 1); onClose(); }}>{I.chevRight} Advance</button>
+            </>
+          )}
         </div>
       </div>
     </div>

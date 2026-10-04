@@ -5,6 +5,7 @@
  * deterministic validator lives in pccp-validator.service.ts.
  */
 
+import auditService from '../auditService';
 import { and, asc, desc, eq } from 'drizzle-orm';
 
 import { db } from '../../db';
@@ -186,15 +187,17 @@ export async function updateModification(
 export interface ApprovePlanArgs {
   organizationId: number;
   planId: string;
+  /** The re-authenticated signer's user id (the route verified it). */
   approvedBy: string;
-  signatureId?: string;
+  /** Reason for approval, recorded on the audit trail. */
+  reason: string;
 }
 
 export async function approvePlan(args: ApprovePlanArgs): Promise<{
   plan: AiMlPccpPlan;
   validation: PccpValidationResult;
   publish: PublishOutcome;
-} | { error: 'NOT_FOUND' } | { error: 'GATE_BLOCKED'; validation: PccpValidationResult } | { error: 'ALREADY_LOCKED' }> {
+} | { error: 'NOT_FOUND' } | { error: 'GATE_BLOCKED'; validation: PccpValidationResult } | { error: 'ALREADY_LOCKED' } | { error: 'AUDIT_WRITE_FAILED' }> {
   const plan = await getPlan(args.organizationId, args.planId);
   if (!plan) return { error: 'NOT_FOUND' };
   if (plan.locked) return { error: 'ALREADY_LOCKED' };
@@ -213,11 +216,33 @@ export async function approvePlan(args: ApprovePlanArgs): Promise<{
       locked: true,
       approvedBy: args.approvedBy,
       approvedAt: new Date(),
-      signatureId: args.signatureId ?? null,
+      /* Was `args.signatureId ?? null` — a client string, never checked,
+         stored on the locked plan as its signature reference. */
+      signatureId: null,
       updatedAt: new Date(),
     })
     .where(eq(aiMlPccpPlans.id, plan.id))
     .returning();
+
+  /* The approval's reason and verified approver go on the chained audit trail.
+     logAction does not throw on a failed write — it reports it — and a locked
+     PCCP with no record of who approved it or why is the one outcome this
+     cannot leave behind, so a failed write reverses the approval. */
+  const audit = await auditService.logAction({
+    tenantId: args.organizationId,
+    userId: args.approvedBy,
+    action: 'pccp_plan_approved',
+    resourceType: 'ai_ml_pccp_plan',
+    resourceId: plan.id,
+    details: { reason: args.reason, code: updated.code, version: updated.version },
+  });
+  if (!audit.persisted) {
+    await db
+      .update(aiMlPccpPlans)
+      .set({ status: plan.status, locked: false, approvedBy: null, approvedAt: null, updatedAt: new Date() })
+      .where(eq(aiMlPccpPlans.id, plan.id));
+    return { error: 'AUDIT_WRITE_FAILED' };
+  }
 
   // Living-file: PCCP approval changes the AI/ML governance posture, which
   // downstream registrants (defense packets, sufficiency assessments,

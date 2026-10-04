@@ -57,10 +57,36 @@
 -- reference, not a foreign key.
 --
 -- Append-only, enforced by the engine for every role: UPDATE, DELETE and
--- TRUNCATE are refused. A correction is a new record, never an edit. The
--- tenant purge (server/services/tenant/tenant-offboarding.ts) does not list
--- this table; a governed purge or erasure path, when one exists (VR-07,
--- security plan P2-9), amends THIS file in place to admit it (RULE 1).
+-- TRUNCATE are refused. A correction is a new record, never an edit.
+--
+-- AMENDED 2026-10-01 (rows D5/D6,
+-- docs/evidence/D5-ANA-RECORD/2026-10-01-erasure-and-grants/), in place per
+-- CLAUDE.md Rule 1: the tenant purge erases a tenant's turn records, and
+-- nothing else can.
+--   - Why. A turn record's body (record_text and the blobs it names) is
+--     Customer Data: the customer's prompts, documents and AnA's answers.
+--     MSA §10.2 and DPA §3.5 delete Customer Data after the export window and
+--     retain only audit-trail records. Each turn's audit-trail record is its
+--     chained audit_logs row (record_sha256, actor, time), which the purge
+--     keeps. The body goes back to the customer in the tenant export first
+--     (tenant-full-export.service.ts discovers both tables by their tenant
+--     column), so the exported copy stays verifiable against the retained
+--     chain. Before this, a purge left every turn record behind, which
+--     ci:purge-coverage reported as new residue.
+--   - How. A row DELETE passes the append-only trigger only when current_user
+--     is ana_record_purger: a NOLOGIN, NOINHERIT, NOBYPASSRLS role created here
+--     (the audit_archiver pattern of 20260617_audit_logs_immutability.sql). The
+--     only thing that runs as it is public.purge_tenant_turn_records(integer),
+--     SECURITY DEFINER, search_path pinned, EXECUTE revoked from PUBLIC. It
+--     restates at the database the purge's own preconditions, as VR-07's
+--     purge_tenant_vault_records does: the platform scope, the organization
+--     pending_deletion, no active legal hold. A table owner or superuser
+--     DELETE is still refused, and TRUNCATE is refused for everyone.
+--   - Called by purgeTurnRecords in server/services/tenant/tenant-offboarding.ts,
+--     inside the purge's transaction. Pinned by
+--     tests/db/turn-record-purge-door.dbtest.ts.
+--   - Nothing is dropped. Replays: CREATE OR REPLACE, the role and triggers
+--     only when absent.
 --
 -- A superuser or the table owner can still DISABLE TRIGGER. The two triggers
 -- are on EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS
@@ -137,10 +163,16 @@ RETURNS trigger
 LANGUAGE plpgsql
 AS $$
 BEGIN
+  -- 2026-10-01: the tenant purge's door, and only it. current_user is
+  -- ana_record_purger inside public.purge_tenant_turn_records alone.
+  IF TG_LEVEL = 'ROW' AND TG_OP = 'DELETE' AND current_user = 'ana_record_purger' THEN
+    RETURN OLD;
+  END IF;
   IF TG_LEVEL = 'ROW' THEN
     RAISE EXCEPTION
       'IMMUTABILITY_VIOLATION: % row cannot be % — it is part of a retained AnA turn record (21 CFR Part 11 §11.10(e)).',
-      TG_TABLE_NAME, lower(TG_OP)
+      -- 2026-09-29: "changed"/"deleted", not lower(TG_OP) ("cannot be update").
+      TG_TABLE_NAME, CASE TG_OP WHEN 'DELETE' THEN 'deleted' ELSE 'changed' END
       USING ERRCODE = 'raise_exception',
             HINT = 'A turn record is corrected by appending a new record, never by editing or removing one.';
   END IF;
@@ -196,3 +228,126 @@ BEGIN
   END IF;
 END
 $$;
+
+-- =============================================================================
+-- The tenant purge's door (2026-10-01; see the AMENDED note in the header).
+-- =============================================================================
+DO $purge$
+DECLARE
+  v_applier_is_super boolean;
+  v_applier_can_set  boolean;
+BEGIN
+  -- NOLOGIN, no attributes, no inheritance: it exists only to own the door, so
+  -- the trigger can recognise the door by current_user. Roles are cluster-wide
+  -- and this file re-runs on every deploy, so never a plain CREATE ROLE.
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ana_record_purger') THEN
+    CREATE ROLE ana_record_purger
+      NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS NOREPLICATION;
+  END IF;
+
+  -- A non-superuser applier (the RDS master) must be able to SET ROLE to the
+  -- owner it hands the function to. As in 20260617_audit_logs_immutability.sql:
+  -- ask first, grant itself membership if it created the role, and otherwise
+  -- fail closed with the remedy rather than install a door it cannot hand over.
+  SELECT rolsuper INTO v_applier_is_super FROM pg_roles WHERE rolname = current_user;
+  IF NOT COALESCE(v_applier_is_super, false) THEN
+    IF current_setting('server_version_num')::int >= 160000 THEN
+      v_applier_can_set := pg_has_role(current_user, 'ana_record_purger', 'SET');
+    ELSE
+      v_applier_can_set := pg_has_role(current_user, 'ana_record_purger', 'MEMBER');
+    END IF;
+    IF NOT v_applier_can_set THEN
+      BEGIN
+        EXECUTE format('GRANT ana_record_purger TO %I', current_user);
+      EXCEPTION WHEN insufficient_privilege THEN
+        RAISE EXCEPTION '[ana_turn_records] % cannot become a member of ana_record_purger and so cannot install the purge door', current_user
+          USING HINT = format('Have a superuser run: GRANT ana_record_purger TO %I; then re-run the migration set.', current_user);
+      END;
+    END IF;
+  END IF;
+
+  -- What the door reads and deletes, and nothing more. CREATE on public is the
+  -- ALTER … OWNER TO rule for a non-superuser applier; nothing runs as this
+  -- role except the fixed body below.
+  GRANT USAGE, CREATE ON SCHEMA public TO ana_record_purger;
+  GRANT SELECT, DELETE ON public.ana_turn_records, public.ana_record_blobs TO ana_record_purger;
+  -- Both are read by the door's preconditions; a harness without them gets a
+  -- door that refuses (no organization is pending deletion where none exist).
+  IF to_regclass('public.organizations') IS NOT NULL THEN
+    GRANT SELECT ON public.organizations TO ana_record_purger;
+  END IF;
+  IF to_regclass('vault.legal_holds') IS NOT NULL THEN
+    GRANT USAGE ON SCHEMA vault TO ana_record_purger;
+    GRANT SELECT ON vault.legal_holds TO ana_record_purger;
+  END IF;
+END
+$purge$;
+
+-- The preconditions are purge_tenant_vault_records' (VR-07), restated here so
+-- a caller holding only the runtime role's credentials cannot erase a tenant
+-- that is not being offboarded. The role is subject to RLS. Both tables'
+-- tenant policies, organizations' and vault.legal_holds' admit the platform
+-- scope this function requires, so the hold count it reads is the whole count.
+CREATE OR REPLACE FUNCTION public.purge_tenant_turn_records(p_org integer)
+RETURNS TABLE (records integer, blobs integer)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, public
+AS $fn$
+DECLARE
+  v_status  text;
+  v_holds   integer := 0;
+  v_records integer;
+  v_blobs   integer;
+BEGIN
+  IF NULLIF(current_setting('app.rls_enforce', true), '') = 'on'
+     AND current_setting('app.current_user_role', true) IS DISTINCT FROM 'app_super_admin' THEN
+    RAISE EXCEPTION 'TURN_RECORD_PURGE_REFUSED: the tenant purge runs in the platform scope, not a tenant scope (organization %).', p_org
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+  SELECT o.status INTO v_status FROM public.organizations o WHERE o.id = p_org;
+  IF v_status IS DISTINCT FROM 'pending_deletion' THEN
+    RAISE EXCEPTION 'TURN_RECORD_PURGE_REFUSED: organization % is not pending deletion (status %).', p_org, COALESCE(v_status, 'not found')
+      USING ERRCODE = 'raise_exception';
+  END IF;
+  IF to_regclass('vault.legal_holds') IS NOT NULL THEN
+    EXECUTE 'SELECT count(*)::int FROM vault.legal_holds WHERE organization_id = $1 AND lifted_at IS NULL'
+      INTO v_holds USING p_org;
+  END IF;
+  IF v_holds > 0 THEN
+    RAISE EXCEPTION 'TURN_RECORD_PURGE_REFUSED: organization % has % active legal hold(s); records under hold cannot be destroyed.', p_org, v_holds
+      USING ERRCODE = 'raise_exception';
+  END IF;
+  DELETE FROM public.ana_turn_records t WHERE t.organization_id = p_org;
+  GET DIAGNOSTICS v_records = ROW_COUNT;
+  DELETE FROM public.ana_record_blobs b WHERE b.organization_id = p_org;
+  GET DIAGNOSTICS v_blobs = ROW_COUNT;
+  RETURN QUERY SELECT v_records, v_blobs;
+END;
+$fn$;
+
+DO $door$
+BEGIN
+  IF (SELECT pg_get_userbyid(proowner) FROM pg_proc
+       WHERE oid = 'public.purge_tenant_turn_records(integer)'::regprocedure) <> 'ana_record_purger' THEN
+    ALTER FUNCTION public.purge_tenant_turn_records(integer) OWNER TO ana_record_purger;
+  END IF;
+  REVOKE ALL ON FUNCTION public.purge_tenant_turn_records(integer) FROM PUBLIC;
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app_service') THEN
+    GRANT EXECUTE ON FUNCTION public.purge_tenant_turn_records(integer) TO app_service;
+  END IF;
+
+  -- Verify what was installed; a door in any other shape is no door.
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_proc
+     WHERE oid = 'public.purge_tenant_turn_records(integer)'::regprocedure
+       AND prosecdef
+       AND pg_get_userbyid(proowner) = 'ana_record_purger'
+  ) THEN
+    RAISE EXCEPTION '[ana_turn_records] the purge door is not SECURITY DEFINER owned by ana_record_purger';
+  END IF;
+  IF has_function_privilege('public', 'public.purge_tenant_turn_records(integer)', 'EXECUTE') THEN
+    RAISE EXCEPTION '[ana_turn_records] the purge door is executable by PUBLIC';
+  END IF;
+END
+$door$;

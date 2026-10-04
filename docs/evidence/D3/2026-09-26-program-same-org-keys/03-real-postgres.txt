@@ -1,0 +1,59 @@
+# PF-04 on a real PostgreSQL 16.13 (with pgvector), deploy-shaped as CI builds it: install-fresh, then deploy-migrate TWICE (the second is the replay every deploy performs).
+# The same sequence from clean trunk (00870fe4) on a second database is the baseline.
+
+trunk install=0
+trunk deploy=0
+mine install=0
+mine deploy1=0
+mine deploy2=0
+
+## Keys on the deployed databases (conrelid, conname, convalidated, confdeltype, confdelsetcols)
+-- c2c_dbtest
+cdisc_prm_studies|cdisc_prm_studies_program_same_org_fk|f|n|{4}
+projects|projects_regulatory_program_same_org_fk|f|n|{34}
+submissions|submissions_program_same_org_fk|f|n|{14}
+c2c_documents|c2c_documents_project_same_org_fk|f|a|
+authoring_documents|authoring_documents_program_same_org_fk|f|n|{19}
+cre_evidence_sources|cre_evidence_sources_program_needs_org|f| |
+cre_evidence_sources|cre_evidence_sources_program_same_org_fk|f|n|{31}
+-- c2c_trunk
+submissions|submissions_program_same_org_fk|f|n|{14}
+
+## The second deploy (replay) applied 20260926b with no error:
+  ✓ applied: migrations/20260926b_program_same_org_keys.sql
+
+## The pre-flight CLI against the deployed database
+  ✓ public.projects: 0 record(s) name a foreign or missing project
+  ✓ public.authoring_documents: 0 record(s) name a foreign or missing project
+  ✓ public.cre_evidence_sources: 0 record(s) name a foreign or missing project
+  ✓ public.c2c_documents: 0 record(s) name a foreign or missing project
+  ✓ public.cdisc_prm_studies: 0 record(s) name a foreign or missing project
+  ✓ vault.documents: 0 record(s) name a foreign or missing project
+  ✓ public.submission_transmittals: 0 record(s) name a foreign or missing project
+
+✓ every project key names a project of its own organization.
+exit=0
+
+## npm run test:db (tests/db, unmocked pg, RLS_ENFORCE=on) on the deployed database
+ Test Files  70 passed (70)
+      Tests  755 passed (755)
+exit=0
+
+## Legacy data on real PostgreSQL: the trunk database (no keys) gets a cross-organization row, then 20260926b is applied to it
+-- pre-flight BEFORE the keys:
+  ✓ public.projects: 0 record(s) name a foreign or missing project
+  ✗ public.authoring_documents: 1 record(s) name a foreign or missing project
+  ✓ public.cre_evidence_sources: 0 record(s) name a foreign or missing project
+  ✓ public.c2c_documents: 0 record(s) name a foreign or missing project
+  ✓ public.cdisc_prm_studies: 0 record(s) name a foreign or missing project
+  ✓ vault.documents: 0 record(s) name a foreign or missing project
+  ✓ public.submission_transmittals: 0 record(s) name a foreign or missing project
+✗ 1 record(s) to clear before any tenant purge or VALIDATE CONSTRAINT (set the key to NULL).
+exit=1
+-- apply 20260926b (NOT VALID: the legacy row must not fail it):
+psql exit=0
+-- pre-flight AFTER the keys (the legacy row is still listed):
+  ✗ public.authoring_documents: 1 record(s) name a foreign or missing project
+-- a NEW cross-organization row is refused:
+ERROR:  insert or update on table "authoring_documents" violates foreign key constraint "authoring_documents_program_same_org_fk"
+DETAIL:  Key (client_program_id, tenant_id)=(cf31ce5f-138b-43d9-b035-83faf00a8246, 2) is not present in table "regulatory_programs".

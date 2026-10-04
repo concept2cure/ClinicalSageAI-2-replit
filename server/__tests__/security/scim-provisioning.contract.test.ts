@@ -19,9 +19,12 @@ import request from 'supertest';
 import { createHash } from 'crypto';
 import { __resetScimDbTenantCache } from '../../routes/scim';
 
-const { queryMock, clientQueryMock, tenantEntitledMock } = vi.hoisted(() => ({
+const { queryMock, clientQueryMock, tenantEntitledMock, auditRowMock } = vi.hoisted(() => ({
   queryMock: vi.fn(),
   clientQueryMock: vi.fn(),
+  // The chained audit row a SCIM group role change writes on its transaction's
+  // client (services/tenant/membership-change.ts; P1-49).
+  auditRowMock: vi.fn(async () => undefined),
   // SCIM sits outside /api, so the lifecycle guard never runs for it and the
   // router consults the posture itself. Driven explicitly here — an entitled
   // tenant is the baseline, and the suspended case is exercised below.
@@ -36,6 +39,10 @@ vi.mock('../../db', () => ({
   query: queryMock,
   transaction: async (cb: (client: unknown) => Promise<unknown>) =>
     cb({ query: clientQueryMock }),
+}));
+
+vi.mock('../../services/auditService', () => ({
+  writeChainedAuditRow: auditRowMock,
 }));
 
 let app: express.Express;
@@ -126,13 +133,14 @@ describe('SCIM provisioning — lifecycle', () => {
     expect(res.status).toBe(404);
   });
 
-  it('DELETE deactivates a member and writes a deprovision audit event (204)', async () => {
-    queryMock.mockResolvedValue({ rows: [{ id: 100 }] }); // member found; UPDATE/audit ok
+  it('DELETE deactivates a member and writes a deprovision audit event in the same transaction (204)', async () => {
+    queryMock.mockResolvedValue({ rows: [{ id: 100 }] }); // member found
+    clientQueryMock.mockResolvedValue({ rows: [] }); // the write and its audit event, on the transaction's client
     const res = await request(app)
       .delete('/scim/v2/Users/100')
       .set('Authorization', `Bearer ${TOKEN}`);
     expect(res.status).toBe(204);
-    const audit = queryMock.mock.calls.find(
+    const audit = clientQueryMock.mock.calls.find(
       c =>
         /INSERT INTO audit_events/i.test(String(c[0])) &&
         Array.isArray(c[1]) &&
@@ -171,8 +179,11 @@ describe('SCIM provisioning — Groups (RBAC roles)', () => {
     expect(res.status).toBe(404);
   });
 
-  it('PATCH add assigns the group role to a member (org-scoped UPDATE)', async () => {
+  it('PATCH add assigns the group role to a member (org-scoped UPDATE, recorded in its transaction)', async () => {
     queryMock.mockResolvedValue({ rows: [{ id: 100, email: 'jane@acme.test', name: 'Jane' }] });
+    clientQueryMock.mockImplementation(async (sql: string) =>
+      /SELECT role FROM organization_users/i.test(sql) ? { rows: [{ role: 'member' }] } : { rows: [] }
+    );
     const res = await request(app)
       .patch('/scim/v2/Groups/admin')
       .set('Authorization', `Bearer ${TOKEN}`)
@@ -182,9 +193,13 @@ describe('SCIM provisioning — Groups (RBAC roles)', () => {
       });
     expect(res.status).toBe(200);
     expect(res.body.id).toBe('admin');
-    const update = queryMock.mock.calls.find(c => /UPDATE organization_users SET role = \$1/.test(c[0]));
+    const update = clientQueryMock.mock.calls.find(c => /UPDATE organization_users SET role = \$1/.test(c[0]));
     expect(update).toBeTruthy();
     expect(update?.[1]).toEqual(['admin', 7, 100]); // role, orgId, userId
+    expect(auditRowMock).toHaveBeenCalledWith(
+      expect.objectContaining({ query: clientQueryMock }),
+      expect.objectContaining({ tenantId: 7, action: 'member_role_changed', resourceId: '100' })
+    );
   });
 });
 

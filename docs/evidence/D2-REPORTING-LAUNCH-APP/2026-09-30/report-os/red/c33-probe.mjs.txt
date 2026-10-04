@@ -1,0 +1,49 @@
+// Scratch replica of tests/schema-contract/tenant-isolation-sweep.contract.test.ts
+// C-33 (baseSchemaFixture + batch applied twice + unpoliced check), with the
+// one proposed fixture line toggled by WITH_FIX=1.
+const R = '/home/user/ClinicalSageAI-2-replit';
+const { PGlite } = await import(`${R}/node_modules/@electric-sql/pglite/dist/index.js`);
+const { pgcrypto } = await import(`${R}/node_modules/@electric-sql/pglite/dist/contrib/pgcrypto.js`);
+const { pg_trgm } = await import(`${R}/node_modules/@electric-sql/pglite/dist/contrib/pg_trgm.js`);
+const { uuid_ossp } = await import(`${R}/node_modules/@electric-sql/pglite/dist/contrib/uuid_ossp.js`);
+const { citext } = await import(`${R}/node_modules/@electric-sql/pglite/dist/contrib/citext.js`);
+const { C2C_MIGRATION_FILES } = await import(`${R}/scripts/db/migration-set.mjs`);
+const fs = await import('node:fs');
+const readMig = (rel) => fs.readFileSync(`${R}/${rel}`, 'utf8');
+const pg = new PGlite({ extensions: { pgcrypto, pg_trgm, uuid_ossp, citext } });
+const safe = async (sql, label) => { try { await pg.exec(sql); return true; } catch (e) { await pg.exec('ROLLBACK').catch(() => {}); if (label) console.log(`fixture step failed: ${label}: ${e.message}`); return false; } };
+for (const ext of ['pgcrypto', 'pg_trgm', '"uuid-ossp"', 'citext']) await safe(`CREATE EXTENSION IF NOT EXISTS ${ext};`);
+for (const s of ['predicate', 'precedent', 'core', 'intelligence', 'regulatory']) await safe(`CREATE SCHEMA IF NOT EXISTS ${s};`);
+const journal = readMig('migrations/0000_sweet_joseph.sql');
+for (const m of journal.matchAll(/CREATE TABLE "([a-z0-9_]+)" \([\s\S]*?\n\);/g)) await safe(m[0].replace('CREATE TABLE ', 'CREATE TABLE IF NOT EXISTS '));
+await safe(readMig('migrations/20260524_program_workbench_schema.sql'));
+await safe(readMig('db/migrations/20260730_ectd_compilations_sequence_columns.sql'));
+await safe(readMig('db/migrations/20260730_manufacturing_processes_reconstruction.sql'));
+await safe(readMig('migrations/20260730_estar_submission.sql'));
+await safe(readMig('migrations/20260604_submission_core_canonical.sql'));
+if (process.env.WITH_FIX === '1') {
+  const reportOs = readMig('migrations/0014_report_os_foundation.sql');
+  const ok = await safe(reportOs.match(/CREATE TABLE IF NOT EXISTS report_type_registry \([\s\S]*?\n\);/)[0], 'report_type_registry block');
+  console.log('fixture: report_type_registry block applied =', ok);
+}
+console.log('report_type_registry present before batch =', (await pg.query(`SELECT to_regclass('public.report_type_registry') AS t`)).rows[0].t);
+const PGVECTOR_DEPENDENT = new Set([
+  'db/migrations/20260207_phase6_6a_fda_clearance_universe.sql',
+  'db/migrations/20260306_precedent_engine.sql',
+  'db/migrations/20260208_phase6_6a_risk_rollups.sql',
+  'migrations/20260602_working_memory_embeddings.sql',
+]);
+const batch = C2C_MIGRATION_FILES.slice(C2C_MIGRATION_FILES.indexOf('db/migrations/022_stability_v2.sql')).filter((r) => !PGVECTOR_DEPENDENT.has(r));
+let failed = null;
+outer: for (const pass of [1, 2]) {
+  for (const rel of batch) {
+    try { await pg.exec(readMig(rel)); } catch (e) { await pg.exec('ROLLBACK').catch(() => {}); failed = `pass ${pass}: ${rel} failed — ${e.message}`; break outer; }
+  }
+}
+console.log(failed ?? `batch of ${batch.length} applied twice`);
+if (!failed) {
+  const { rows } = await pg.query(`SELECT DISTINCT c.table_name FROM information_schema.columns c JOIN information_schema.tables t ON t.table_schema = c.table_schema AND t.table_name = c.table_name AND t.table_type = 'BASE TABLE' WHERE c.table_schema = 'public' AND c.column_name IN ('organization_id','org_id','tenant_id') AND c.data_type IN ('integer','bigint','smallint') AND c.table_name <> ALL (ARRAY['organizations','organization_users','stripe_events','ectd_agency_configs']) AND NOT EXISTS (SELECT 1 FROM pg_policies p WHERE p.tablename = c.table_name AND p.policyname = 'tenant_isolation_policy')`);
+  console.log('unpoliced tenant tables =', JSON.stringify(rows.map((r) => r.table_name)));
+  console.log('seeded registry rows =', (await pg.query(`SELECT count(*)::int AS n FROM report_type_registry`)).rows[0].n);
+}
+await pg.close();

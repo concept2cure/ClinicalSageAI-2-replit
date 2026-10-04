@@ -39,6 +39,14 @@ const {
 vi.mock('../../server/services/concept2cure/governedDocumentContractService.js', () => ({
   resolveGovernedContext: mockResolveGovernedContext,
 }));
+/* The numeric project's ownership (PF-03). Its SQL is proven in
+   server/services/cmc/__tests__/project-membership.pglite.test.ts; here project
+   12 is organization 5's, and any other numeric project is not. */
+const mockProjectBelongs = vi.hoisted(() =>
+  vi.fn(async (p: { organizationId: number; projectId: string }) => p.organizationId === 5 && p.projectId === '12'),
+);
+vi.mock('../../server/services/cmc/project-membership.js', () => ({ projectBelongsToTenant: mockProjectBelongs }));
+vi.mock('../../server/services/cmc/project-membership.ts', () => ({ projectBelongsToTenant: mockProjectBelongs }));
 vi.mock('../../server/db.js', () => {
   const poolStub = { query: mockPoolQuery };
   return { pool: poolStub, getPool: () => poolStub };
@@ -272,6 +280,19 @@ describe('chat upload → a Data Room source belongs to a project (PF-02, PF-07)
     // project, or to none that exists.
     programsOfOrg5('11111111-1111-4111-8111-111111111111');
     const res = await runUpload({ projectId: '22222222-2222-4222-8222-222222222222' });
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(payload(res)).toMatchObject({ code: 'PROJECT_NOT_FOUND' });
+    expect(mockCreateSource).not.toHaveBeenCalled();
+    const writes = mockPoolQuery.mock.calls.filter(([sql]) => /^\s*(INSERT|UPDATE|DELETE)\b/i.test(String(sql)));
+    expect(writes).toEqual([]);
+  });
+
+  it('refuses a numeric project of another organization the same way — 404, nothing written (PF-03)', async () => {
+    // The legacy numeric id-space was taken as given: it keyed the governed
+    // artifact row and the source identity, so a file could be filed under
+    // another organization's project.
+    const res = await runUpload({ projectId: 'proj_99' });
+    expect(mockProjectBelongs).toHaveBeenCalledWith({ organizationId: 5, projectId: '99' }, expect.anything());
     expect(res.status).toHaveBeenCalledWith(404);
     expect(payload(res)).toMatchObject({ code: 'PROJECT_NOT_FOUND' });
     expect(mockCreateSource).not.toHaveBeenCalled();

@@ -1,0 +1,86 @@
+# red at 0f029d44: the engine module added, truth-engine still asks the model
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/truth-engine/__tests__/consistency-deterministic.test.ts > runConsistencyCheck > records a conflict and a match from the figures each text states, with no model call 12ms
+   → The AI request could not be completed.
+ × server/services/truth-engine/__tests__/consistency-deterministic.test.ts > runConsistencyCheck > records nothing for a source that shares no labelled figure, and names it as not compared 1ms
+   → The AI request could not be completed.
+ × server/services/truth-engine/__tests__/consistency-deterministic.test.ts > runConsistencyCheck > audits the check as the engine that ran it, not as AI generation 1ms
+   → The AI request could not be completed.
+ × server/services/truth-engine/__tests__/consistency-deterministic.test.ts > AnA's check_consistency > tells AnA which sources were not compared, and that this is not a finding of consistency 4050ms
+   → expected undefined to be true // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/truth-engine/__tests__/consistency-deterministic.test.ts > runConsistencyCheck > records a conflict and a match from the figures each text states, with no model call
+TruthEngineError: The AI request could not be completed.
+ ❯ Module.runConsistencyCheck server/services/truth-engine/truth-engine-service.ts:166:11
+    164|       });
+    165|     }
+    166|     throw new TruthEngineError(code, message);
+       |           ^
+    167|   }
+    168|
+ ❯ server/services/truth-engine/__tests__/consistency-deterministic.test.ts:55:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'PROVIDER_UNAVAILABLE' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/truth-engine/__tests__/consistency-deterministic.test.ts > runConsistencyCheck > records nothing for a source that shares no labelled figure, and names it as not compared
+TruthEngineError: The AI request could not be completed.
+ ❯ Module.runConsistencyCheck server/services/truth-engine/truth-engine-service.ts:166:11
+    164|       });
+    165|     }
+    166|     throw new TruthEngineError(code, message);
+       |           ^
+    167|   }
+    168|
+ ❯ server/services/truth-engine/__tests__/consistency-deterministic.test.ts:78:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'PROVIDER_UNAVAILABLE' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/truth-engine/__tests__/consistency-deterministic.test.ts > runConsistencyCheck > audits the check as the engine that ran it, not as AI generation
+TruthEngineError: The AI request could not be completed.
+ ❯ Module.runConsistencyCheck server/services/truth-engine/truth-engine-service.ts:166:11
+    164|       });
+    165|     }
+    166|     throw new TruthEngineError(code, message);
+       |           ^
+    167|   }
+    168|
+ ❯ server/services/truth-engine/__tests__/consistency-deterministic.test.ts:88:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'PROVIDER_UNAVAILABLE' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/truth-engine/__tests__/consistency-deterministic.test.ts > AnA's check_consistency > tells AnA which sources were not compared, and that this is not a finding of consistency
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/services/truth-engine/__tests__/consistency-deterministic.test.ts:108:20
+    106|       ),
+    107|     );
+    108|     expect(res.ok).toBe(true);
+       |                    ^
+    109|     expect(res.notCompared).toEqual(['Label']);
+    110|     expect(res.message).toMatch(/not compared/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  00:54:31
+   Duration  6.33s (transform 4.40s, setup 82ms, import 1.84s, tests 4.07s, environment 0ms)
+

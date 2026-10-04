@@ -78,3 +78,26 @@ describe('getWorkflowStatus is tenant-scoped', () => {
     expect(await getWorkflowStatus(42, 'not-a-real-type', 7)).toBeNull();
   });
 });
+
+describe('getWorkflowStatus marks a step complete only on evidence', () => {
+  /* A step requiring no artifact, or naming no CTD section, was complete for
+     every project — hasArtifacts was `requiredArtifacts.length === 0 || …` and
+     hasSection `!step.ctdSection || …`. "Submit IND package to FDA" was done
+     for a project with nothing in it, and AnA was told so. */
+  it('with no project records, marks no step complete and no step it cannot track as done', async () => {
+    const status = (await getWorkflowStatus(42, 'ind', 7))!;
+    const steps = status.phases.flatMap((p) => p.steps);
+    expect(steps.filter((s) => s.complete === true)).toEqual([]);
+    expect(status.completedSteps).toBe(0);
+    expect(status.untrackedSteps).toBeGreaterThan(0);
+    for (const s of steps.filter((x) => /submit .*to fda/i.test(x.title))) {
+      expect(s.complete, `"${s.title}" asserted without evidence`).not.toBe(true);
+    }
+  });
+
+  it('computes progress over tracked steps only', async () => {
+    const status = (await getWorkflowStatus(42, 'ind', 7))!;
+    expect(status.trackedSteps + status.untrackedSteps).toBe(status.totalSteps);
+    expect(status.progressPercent === null || status.progressPercent === 0).toBe(true);
+  });
+});

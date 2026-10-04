@@ -18,7 +18,7 @@ const NDA_MILESTONES: MilestoneDefinition[] = [
   {
     id: 'ms_pre_nda', title: 'Pre-NDA Preparation', description: 'Pre-NDA meeting and submission planning', phase: 'pre_submission', order: 0,
     tasks: [
-      { id: 't_pre_nda_meeting', title: 'Pre-NDA Meeting (Type A)', description: 'FDA Type A meeting for submission planning', assigneeRole: 'regulatory_lead', estimatedDays: 14 },
+      { id: 't_pre_nda_meeting', title: 'Pre-NDA Meeting (Type B)', description: 'FDA Type B meeting for submission planning (pre-NDA meetings are Type B; Type A is for a stalled program or an important safety issue)', assigneeRole: 'regulatory_lead', estimatedDays: 14 },
       { id: 't_submission_plan', title: 'Submission Plan', description: 'Define rolling/complete submission strategy', assigneeRole: 'regulatory_lead', estimatedDays: 10 },
     ],
   },

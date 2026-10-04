@@ -61,11 +61,13 @@ const DESIGN = {
 const BOIN = { method: 'boin', targetToxicity: 0.3, doseLevels: [{ label: 'DL1' }, { label: 'DL2' }], cohortSize: 3, maxSampleSize: 30 };
 const REASON = 'Record the escalation rules';
 
-function app(role: string) {
+function app(role: string, withRequestClient = true) {
   const a = express();
   a.use(express.json());
   a.use((req, _res, next) => {
     Object.assign(req, { user: { id: 7, organizationId: 1 }, organizationId: 1, userRole: role });
+    // The request's own connection, as authenticateToken attaches it (requestDb.ts).
+    if (withRequestClient) Object.assign(req, { dbClient: { query: h.query } });
     next();
   });
   a.use('/api/study-design', router);
@@ -96,7 +98,7 @@ describe('POST /api/study-design/:studyId/planning — refusals before anything 
   it('refuses a viewer', async () => {
     const res = await post({ block: 'doseEscalation', value: BOIN, expected: null, reason: REASON }, 'viewer');
     expect(res.status).toBe(403);
-    expect(h.connect).not.toHaveBeenCalled();
+    expect(h.query).not.toHaveBeenCalled();
   });
 
   it('refuses a short reason, an invalid block and a missing precondition, with the path, before a connection is taken', async () => {
@@ -110,7 +112,23 @@ describe('POST /api/study-design/:studyId/planning — refusals before anything 
     const blind = await post({ block: 'doseEscalation', value: BOIN, reason: REASON });
     expect(blind.status).toBe(400);
     expect(blind.body.error).toBe('PRECONDITION_REQUIRED');
+    expect(h.query).not.toHaveBeenCalled();
+  });
+});
+
+describe('POST /api/study-design/:studyId/planning — the request connection', () => {
+  it('writes on the request\'s own connection, and refuses without one rather than use the shared pool', async () => {
+    const ok = await post({ block: 'doseEscalation', value: BOIN, expected: null, reason: REASON });
+    expect(ok.status).toBe(200);
     expect(h.connect).not.toHaveBeenCalled();
+    vi.clearAllMocks();
+    const res = await request(app('member', false))
+      .post('/api/study-design/sd_1/planning')
+      .send({ block: 'doseEscalation', value: BOIN, expected: null, reason: REASON });
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('PLANNING_WRITE_FAILED');
+    expect(h.connect).not.toHaveBeenCalled();
+    expect(h.persist).not.toHaveBeenCalled();
   });
 });
 

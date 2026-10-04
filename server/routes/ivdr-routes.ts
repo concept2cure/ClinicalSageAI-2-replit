@@ -22,6 +22,7 @@ import { createScopedLogger } from '../utils/logger.js';
 import { classifyIvdrAnnexVIII } from '../services/regulatory/ivdr-classification';
 import { getEntry as getKnowledgeEntry } from '../services/ivd-knowledge/knowledge.service';
 import { calculateClinical2x2 } from '../../shared/ivdr/manifest';
+import { programInOrganization } from '../services/c2c/program-access';
 
 const log = createScopedLogger('ivdr-routes');
 
@@ -1370,13 +1371,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
          organisation before anything is gathered (same convention as
          ownsProgram in mdx-ivdr.ts). A cross-tenant probe gets 404 —
          never data, and never a 403 that confirms the project exists. */
-      const ownership = await pool.query(
-        `SELECT 1 FROM regulatory_programs
-          WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
-          LIMIT 1`,
-        [projectId, orgId]
-      );
-      if (ownership.rows.length === 0) {
+      if (!(await programInOrganization(pool, projectId, orgId))) {
         return res.status(404).json({
           error: 'Project not found in this organization',
           code: 'IVDR_SUBMISSION_PROJECT_NOT_FOUND',
@@ -1613,13 +1608,7 @@ export default function createIVDRRoutes(pool: Pool): Router {
           code: 'IVDR_EUDAMED_BAD_PROJECT',
         });
       }
-      const ownership = await pool.query(
-        `SELECT 1 FROM regulatory_programs
-          WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
-          LIMIT 1`,
-        [projectId, orgId]
-      );
-      if (ownership.rows.length === 0) {
+      if (!(await programInOrganization(pool, projectId, orgId))) {
         return res.status(404).json({
           error: 'Project not found in this organization',
           code: 'IVDR_EUDAMED_PROJECT_NOT_FOUND',

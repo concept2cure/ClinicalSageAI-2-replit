@@ -41,6 +41,7 @@ import express from 'express';
 import request from 'supertest';
 import { SignJWT } from 'jose';
 import { Pool } from 'pg';
+import bcrypt from 'bcryptjs';
 import { databaseUrl } from '../setup.db';
 
 /**
@@ -61,6 +62,8 @@ import { databaseUrl } from '../setup.db';
  * cleanup still matches on the prefix, so it only ever sees its own rows.
  */
 const PROBE_TITLE = `dbtest-w11 Module 3 stability ${process.pid}-${Date.now().toString(36)}`;
+/** The actor's password: a freeze is signed and re-verified (DP-35). */
+const SIGNER_PASSWORD = 'dbtest-w11-signer-password';
 
 const CONDITIONS = ['25°C / 60% RH', '30°C / 65% RH', '40°C / 75% RH'];
 const TIMEPOINTS = ['0 M', '3 M', '6 M', '9 M', '12 M'];
@@ -91,6 +94,8 @@ let userId: number;
 let app: express.Express;
 let docId: string;
 let auth: string;
+/** The project the document is created in: a document belongs to a project (PF-07). */
+let programId: string;
 
 /**
  * A REAL signed token, not a stubbed req.user.
@@ -193,11 +198,14 @@ beforeAll(async () => {
 
   // Columns match the provisioned schema, not the Drizzle barrel: `users` here
   // is (email, name, password_hash), which is what the sibling W0-1 suite uses.
+  /* DP-35 (2026-10-01): a freeze is signed, and the platform ceremony
+     re-verifies the signer's password against this row, so the actor carries a
+     real hash of SIGNER_PASSWORD (refreshed on a re-run). */
   const usr = await owner.query(
     `INSERT INTO users (email, name, password_hash) VALUES ($1, $2, $3)
-       ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name
+       ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name, password_hash = EXCLUDED.password_hash
      RETURNING id`,
-    ['dbtest-w11@c2c.test', 'dbtest-w11 actor', 'not-a-real-hash'],
+    ['dbtest-w11@c2c.test', 'dbtest-w11 actor', bcrypt.hashSync(SIGNER_PASSWORD, 4)],
   );
   userId = Number(usr.rows[0].id);
 
@@ -213,6 +221,18 @@ beforeAll(async () => {
     [orgId, userId],
   );
 
+  /* A document is created in a project of its organization (PF-07): POST
+     /api/authoring/docs refuses one that names none, 400 PROJECT_REQUIRED.
+     Upserted on (organization_id, code), so a re-run reuses it. */
+  const program = await owner.query(
+    `INSERT INTO regulatory_programs (organization_id, name, code, program_type, product_type, primary_agency, product_name)
+       VALUES ($1, $2, $3, 'IND', 'drug', 'FDA', $4)
+     ON CONFLICT (organization_id, code) DO UPDATE SET name = EXCLUDED.name, deleted_at = NULL
+     RETURNING id`,
+    [orgId, 'dbtest-w11 program', 'DBTEST-W11-STABILITY', 'C2C-101'],
+  );
+  programId = String(program.rows[0].id);
+
   await cleanupProbeRows();
   app = await buildApp();
   auth = await bearer();
@@ -220,6 +240,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await cleanupProbeRows().catch(() => undefined);
+  await owner?.query('DELETE FROM regulatory_programs WHERE organization_id = $1 AND code = $2', [orgId, 'DBTEST-W11-STABILITY']).catch(() => undefined);
   await owner?.end().catch(() => undefined);
 });
 
@@ -228,7 +249,7 @@ describe('BP-W1-1 wave gate — a stability table reaches Word as a table', () =
     const doc = await request(app)
       .post('/api/authoring/docs')
       .set('Authorization', auth)
-      .send({ title: PROBE_TITLE, module: 'M3', product_code: 'C2C-101' });
+      .send({ title: PROBE_TITLE, module: 'M3', product_code: 'C2C-101', client_program_id: programId });
     expect(doc.status).toBe(201);
     docId = doc.body?.document?.id ?? doc.body?.id;
     expect(docId, 'document id').toBeTruthy();
@@ -268,7 +289,7 @@ describe('BP-W1-1 wave gate — a stability table reaches Word as a table', () =
     const frozen = await request(app)
       .post(`/api/authoring/docs/${docId}/freeze`)
       .set('Authorization', auth)
-      .send({ reason: 'dbtest: sealing the record so it can be exported' });
+      .send({ reason: 'dbtest: sealing the record so it can be exported', meaning: 'AUTHOR', password: SIGNER_PASSWORD });
     expect(frozen.status, `freeze: ${JSON.stringify(frozen.body)}`).toBe(200);
 
     const res = await request(app)

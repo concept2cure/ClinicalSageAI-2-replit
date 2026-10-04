@@ -22,10 +22,28 @@ const logger = createScopedLogger('launch-scope');
 
 export type LaunchScopeMode = 'on' | 'off';
 
+let loggedProductionOff = false;
+
+/**
+ * An explicit `off` in production is honoured, and said once, as an error: it
+ * serves every router outside the launch catalog to any authenticated member.
+ * Once, because this is read per request as well as at boot. The AWS deploy
+ * refuses the value before a task rolls (deploy-aws.yml preflight; reporting
+ * review 2026-10-01, SECURITY-6 / INF-17).
+ */
+function logProductionOff() {
+  if (loggedProductionOff) return;
+  loggedProductionOff = true;
+  logger.error(
+    '[launch-scope] LAUNCH_SCOPE_ENFORCE=off in production: the launch boundary is off and every surface outside the launch catalog is served',
+  );
+}
+
 export function readLaunchScopeMode(env: NodeJS.ProcessEnv = process.env): LaunchScopeMode {
   const raw = (env.LAUNCH_SCOPE_ENFORCE ?? '').trim().toLowerCase();
   const production = env.NODE_ENV === 'production';
   if (raw === '') return production ? 'on' : 'off';
+  if (raw === 'off' && production) logProductionOff();
   if (raw === 'on' || raw === 'off') return raw;
   if (production) {
     throw new Error(

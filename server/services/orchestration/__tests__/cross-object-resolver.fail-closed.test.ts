@@ -89,7 +89,11 @@ describe('a read that fails', () => {
   it('never lets a project nothing could be read from be assessed', async () => {
     // What a program's uuid did to every read: the review then reported an
     // empty project with no critical issues.
-    h.failing = new Set(['projects', 'concept2cure_artifacts', 'regulatory_audit_logs']);
+    // The task stores are the work view's four (unified-work-view.ts).
+    h.failing = new Set([
+      'projects', 'concept2cure_artifacts', 'regulatory_audit_logs',
+      'project_tasks', 'c2c_project_work_items', 'estar_submissions', 'unified_tasks',
+    ]);
     h.executeFails = true;
 
     await expect(assembleCrossObjectPayload(SCOPE)).rejects.toMatchObject({

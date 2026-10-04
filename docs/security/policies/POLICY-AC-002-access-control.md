@@ -34,16 +34,43 @@
 ## 4. Access reviews and offboarding
 | Control | Status | Evidence |
 |---|---|---|
-| Quarterly access review of tenant admins and platform operators | **Partial** — the procedure is written (§4a); no review has been performed | §4a; records under `docs/evidence/D6/access-reviews/` |
+| Quarterly access review of tenant admins and platform operators | **Partial**. For each organisation, the review is a signed record in the product, and an overdue review is flagged in the user access review report (P1-43, 2026-10-01). No review has been recorded yet. The platform-operator review has a written procedure (§4a) but has not been performed | §4a; `public.compliance_review_records`, `server/services/audit/compliance-reviews.ts`; `docs/evidence/D6/2026-10-01-tranche-4/P1-25-P1-43-review-records/`; operator records under `docs/evidence/D6/access-reviews/` |
 | Offboarding within one business day | **Planned** | — |
 | Privileged access to production (AWS console, database) limited to the founder, MFA-protected | **Planned** — no production account exists yet (row D1) | — |
 
 ## 4a. Access-review procedure
 
 Run quarterly (first week of January, April, July, October) and after any change of platform operator. The reviewer
-is the founder until a second operator exists; then the two review each other's access. The record is one Markdown
-file per review at `docs/evidence/D6/access-reviews/<yyyy-mm-dd>.md`, with the lists as reviewed (copied in, not
-linked), the reviewer, the date, each decision and the change that carried it out.
+is the founder until a second operator exists; then the two review each other's access.
+
+**The record.** There are two kinds of record, depending on what is being reviewed:
+
+- **An organisation's access.** This is the *access-review record* in the product (P1-43; ADR-0014 §8). The
+  organisation's reviewer runs the user access review (Reporting & analytics → Audit & compliance reports). They then
+  record the review in **Periodic reviews → Record review → User access review** on the same screen.
+  - The record holds the period, what was covered (the user access review run it names by export id and data hash),
+    the outcome, and one decision line per privileged account: user, role, keep / reduce (to what) / remove, and the
+    change that carried a reduce or remove out.
+  - The product checks the record when it is recorded, and again when it is signed:
+    - The period ended no more than three months ago, and starts no later than the day after the last signed access
+      review ended, so no days go unreviewed.
+    - The run it names is a user access review this organisation ran, with that export id and data hash.
+    - Each line matches the organisation's current roles and memberships. A keep names a member with the role the
+      member holds now. A reduce names the role now in effect. A remove names an account whose removal from the
+      organisation was recorded (by an administrator in the product, or by SCIM provisioning) or a member whose
+      account is deactivated. A reduce or remove is therefore recorded once it has been carried out.
+    - Every account that holds an owner, admin, manager or platform role now, by current roles and memberships, has
+      a line. A role on a past date is not reconstructed, so a past role is not checked.
+  - The reviewer signs it through the platform's signing ceremony: meaning *review*, a reason, the password, and the
+    second factor where one is enrolled. Once signed, no role can change or delete it, and a correction is a new review.
+  - The user access review report names the latest signed record, the one covering the most recent period. The next
+    review is due three months after the end of that period. The report shows **Overdue** once the report date is past
+    that due date, and says "No access review recorded" when there is none.
+  - When an organisation is offboarded, its review records are returned in the tenant export and are kept with the
+    audit trail (DPA §3.5): the tenant purge does not erase them.
+- **Platform operators.** These are identities outside any organisation: AWS, GitHub, and the platform's secrets. The
+  record is one Markdown file per review at `docs/evidence/D6/access-reviews/<yyyy-mm-dd>.md`. It holds the lists as
+  reviewed (copied in, not linked), the reviewer, the date, each decision and the change that carried it out.
 
 **Platform operators** — every identity that can reach production or the repository as an operator:
 
@@ -63,13 +90,18 @@ linked), the reviewer, the date, each decision and the change that carried it ou
 Administration. The tenant's own owner confirms each; a membership nobody confirms is set to member, and an account
 whose person has left is suspended (POLICY-AC-002 §4 offboarding; `PATCH /api/admin/master/users/:id/status`).
 
-**Decisions and evidence.** Each line of the lists gets one of: keep, reduce (to what), remove (how, and the ledger
-entry that shows it). The review is complete when every line has a decision, every remove or reduce has landed, and
-the file names the audit-ledger entries of the changes (`GET /api/audit-trail/ledger`). A review that finds nothing
-to change still produces the file: the record is the control.
+**Decisions and evidence.** Each line of the lists gets one of: keep, reduce (to what), or remove (how, and the ledger
+entry that shows it). A review is complete when:
+
+- every line has a decision;
+- every remove or reduce has landed; and
+- the record names the audit-ledger entries of those changes (`GET /api/audit-trail/ledger`).
+
+A review that finds nothing to change is still recorded and signed, because the record is the control.
 
 ## Revision history
 | Version | Date | Author | Change |
 |---|---|---|---|
 | 0.1 DRAFT | 2026-09-20 | W3b session | First draft |
 | 0.2 DRAFT | 2026-09-26 | D6 session | §4a access-review procedure (operators: AWS, GitHub, platform roles, secrets; tenant administrators through the tenant's owner), quarterly, with the record format; the first review is the founder's (security audit 2026-09-24, INF-07 / plan P1-13). |
+| 0.3 DRAFT | 2026-10-01 | D6 session | §4 and §4a: an organisation's access review is now a signed access-review record in the product, refused while a privileged account has no decision, fixed once signed. The user access review report names the latest one and flags it overdue after three months (P1-43; ADR-0014 §8). Platform operators stay on the Markdown record. Fix round (DP-69, DP-70): the record is checked against current roles and memberships, the run it names and the period; the due date runs from the end of the period reviewed; the records are kept at offboarding. |

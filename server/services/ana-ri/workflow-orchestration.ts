@@ -43,6 +43,16 @@ export interface SubmissionWorkflow {
   }>;
 }
 
+// ─── Ordering ────────────────────────────────────────────────────────────────
+// getWorkflowStatus names the first unfinished step in phase order as AnA's
+// next step, so phase order is the order AnA tells a writer to work in. Each
+// document comes after what it is written from: Module 3 before the Quality
+// Overall Summary (2.3) that summarises it; the Module 5 reports and the
+// ISS/ISE before the clinical summary (2.7); a written summary (2.6, 2.7)
+// before the overview (2.4, 2.5) that interprets it (ICH M4). Until 2026-10-04
+// the NDA and BLA put Module 2 first and every workflow made 2.7 depend on
+// 2.5 and 2.6 on 2.4 (tests/regulatory/ana-submission-sequence-truth.test.ts).
+
 // ─── IND Workflow ────────────────────────────────────────────────────────────
 
 const IND_WORKFLOW: SubmissionWorkflow = {
@@ -55,28 +65,18 @@ const IND_WORKFLOW: SubmissionWorkflow = {
       description: 'Gather data, define strategy, prepare for pre-IND meeting',
       steps: [
         { id: 'ind-1', phase: 'pre-ind', title: 'Define regulatory strategy', description: 'Determine IND type, clinical phase, indication, and target population', ctdSection: undefined, requiredArtifacts: ['strategy_note'], commands: ['/strategy'], roles: ['ra_lead', 'ceo'], depends: [], criticalPath: true },
-        { id: 'ind-2', phase: 'pre-ind', title: 'Pre-IND meeting request', description: 'Draft Type B meeting request with questions for FDA', ctdSection: '1.1', requiredArtifacts: ['meeting_request'], commands: ['/draft 1.1'], roles: ['ra_lead'], depends: ['ind-1'], criticalPath: true },
-        { id: 'ind-3', phase: 'pre-ind', title: 'Nonclinical data package', description: 'Compile pharmacology, toxicology, ADME summaries', ctdSection: '2.4', requiredArtifacts: ['nonclinical_overview'], commands: ['/draft 2.4'], roles: ['clinical_lead'], depends: ['ind-1'], criticalPath: true },
+        { id: 'ind-2', phase: 'pre-ind', title: 'Pre-IND meeting request', description: 'Draft Type B meeting request with questions for FDA', ctdSection: '1.6.1', requiredArtifacts: ['meeting_request'], commands: ['/draft 1.6.1'], roles: ['ra_lead'], depends: ['ind-1'], criticalPath: true },
+        { id: 'ind-3', phase: 'pre-ind', title: 'Nonclinical data package', description: 'Assemble the pharmacology, PK/ADME and toxicology study reports (Module 4) that the nonclinical summaries, the overview and the IB are written from', ctdSection: '4.2', requiredArtifacts: [], commands: ['/draft 4.2'], roles: ['clinical_lead'], depends: ['ind-1'], criticalPath: true },
       ],
     },
     {
       name: 'Module 1 — Administrative',
       description: 'Cover letter, forms, and administrative documents',
       steps: [
-        { id: 'ind-4', phase: 'module-1', title: 'Cover letter & Form 1571', description: 'IND cover letter with sponsor info, drug name, phase, protocol list', ctdSection: '1.1', requiredArtifacts: ['cover_letter', 'form_1571'], commands: ['/draft 1.1'], roles: ['ra_lead'], depends: ['ind-1'], criticalPath: true },
-        { id: 'ind-5', phase: 'module-1', title: 'Form 1572 (Investigators)', description: 'Statement of Investigator for each site PI', ctdSection: '1.3.1', requiredArtifacts: ['form_1572'], commands: ['/draft 1.3.1'], roles: ['ra_lead', 'clinical_lead'], depends: [], criticalPath: false },
-        { id: 'ind-6', phase: 'module-1', title: 'Investigator brochure', description: 'Compile IB with all available nonclinical and clinical data', ctdSection: '1.14', requiredArtifacts: ['investigator_brochure'], commands: ['/draft 1.14', '/safety'], roles: ['medical_writer', 'clinical_lead'], depends: ['ind-3'], criticalPath: true },
-      ],
-    },
-    {
-      name: 'Module 2 — CTD Summaries',
-      description: 'The critical overview documents FDA reviewers read first',
-      steps: [
-        { id: 'ind-7', phase: 'module-2', title: 'Quality Overall Summary (2.3)', description: 'CMC summary — drug substance, drug product, controls', ctdSection: '2.3', requiredArtifacts: ['quality_overall_summary'], commands: ['/draft 2.3', '/cmc'], roles: ['cmc_lead'], depends: [], criticalPath: true },
-        { id: 'ind-8', phase: 'module-2', title: 'Nonclinical Overview (2.4)', description: 'Integrated nonclinical evaluation', ctdSection: '2.4', requiredArtifacts: ['nonclinical_overview'], commands: ['/draft 2.4'], roles: ['clinical_lead'], depends: ['ind-3'], criticalPath: true },
-        { id: 'ind-9', phase: 'module-2', title: 'Clinical Overview (2.5)', description: 'Integrated analysis of clinical data', ctdSection: '2.5', requiredArtifacts: ['clinical_overview'], commands: ['/draft 2.5'], roles: ['medical_writer'], depends: [], criticalPath: true },
-        { id: 'ind-10', phase: 'module-2', title: 'Nonclinical Written Summaries (2.6)', description: 'Pharmacology, PK, toxicology summaries', ctdSection: '2.6', requiredArtifacts: ['nonclinical_summaries'], commands: ['/draft 2.6'], roles: ['clinical_lead'], depends: ['ind-8'], criticalPath: false },
-        { id: 'ind-11', phase: 'module-2', title: 'Clinical Summary (2.7)', description: 'Efficacy + safety summary with biopharm evaluation', ctdSection: '2.7', requiredArtifacts: ['clinical_summary'], commands: ['/draft 2.7', '/safety'], roles: ['medical_writer'], depends: ['ind-9'], criticalPath: true },
+        { id: 'ind-4', phase: 'module-1', title: 'Form FDA 1571', description: 'IND application form: sponsor, drug, phase(s), contents and commitments (21 CFR 312.23(a)(1))', ctdSection: '1.1.1', requiredArtifacts: ['form_1571'], commands: ['/draft 1.1.1'], roles: ['ra_lead'], depends: ['ind-1'], criticalPath: true },
+        { id: 'ind-21', phase: 'module-1', title: 'Cover letter', description: 'IND cover letter with sponsor info, drug name, phase, protocol list', ctdSection: '1.2', requiredArtifacts: ['cover_letter'], commands: ['/draft 1.2'], roles: ['ra_lead'], depends: ['ind-1'], criticalPath: true },
+        { id: 'ind-5', phase: 'module-1', title: 'Form 1572 (Investigators)', description: 'Statement of Investigator for each site PI', ctdSection: '1.1.2', requiredArtifacts: ['form_1572'], commands: ['/draft 1.1.2'], roles: ['ra_lead', 'clinical_lead'], depends: [], criticalPath: false },
+        { id: 'ind-6', phase: 'module-1', title: 'Investigator brochure', description: 'Compile IB with all available nonclinical and clinical data', ctdSection: '1.14.4.1', requiredArtifacts: ['investigator_brochure'], commands: ['/draft 1.14.4.1', '/safety'], roles: ['medical_writer', 'clinical_lead'], depends: ['ind-3'], criticalPath: true },
       ],
     },
     {
@@ -92,14 +92,25 @@ const IND_WORKFLOW: SubmissionWorkflow = {
       description: 'Clinical study reports and statistical analyses',
       steps: [
         { id: 'ind-14', phase: 'module-5', title: 'Clinical protocol', description: 'Phase-appropriate protocol with endpoints, design, SAP', ctdSection: '5.3.5', requiredArtifacts: ['protocol', 'sap'], commands: ['/design', '/sap', '/power'], roles: ['clinical_lead', 'medical_writer'], depends: ['ind-1'], criticalPath: true },
-        { id: 'ind-15', phase: 'module-5', title: 'Statistical Analysis Plan', description: 'Standalone SAP with all planned analyses', ctdSection: '5.3.5.3', requiredArtifacts: ['sap'], commands: ['/sap'], roles: ['clinical_lead'], depends: ['ind-14'], criticalPath: true },
+        { id: 'ind-15', phase: 'module-5', title: 'Statistical Analysis Plan', description: 'Standalone SAP with all planned analyses, filed with its protocol in the study\'s own 5.3.5 folder (5.3.5.3 holds analyses of more than one study)', ctdSection: undefined, requiredArtifacts: ['sap'], commands: ['/sap'], roles: ['clinical_lead'], depends: ['ind-14'], criticalPath: true },
+      ],
+    },
+    {
+      name: 'Module 2 — CTD Summaries',
+      description: 'The critical overview documents FDA reviewers read first',
+      steps: [
+        { id: 'ind-7', phase: 'module-2', title: 'Quality Overall Summary (2.3)', description: 'CMC summary — drug substance, drug product, controls', ctdSection: '2.3', requiredArtifacts: ['quality_overall_summary'], commands: ['/draft 2.3', '/cmc'], roles: ['cmc_lead'], depends: ['ind-12', 'ind-13'], criticalPath: true },
+        { id: 'ind-10', phase: 'module-2', title: 'Nonclinical Written Summaries (2.6)', description: 'Pharmacology, PK, toxicology summaries', ctdSection: '2.6', requiredArtifacts: ['nonclinical_summaries'], commands: ['/draft 2.6'], roles: ['clinical_lead'], depends: ['ind-3'], criticalPath: false },
+        { id: 'ind-8', phase: 'module-2', title: 'Nonclinical Overview (2.4)', description: 'Integrated nonclinical evaluation', ctdSection: '2.4', requiredArtifacts: ['nonclinical_overview'], commands: ['/draft 2.4'], roles: ['clinical_lead'], depends: ['ind-3', 'ind-10'], criticalPath: true },
+        { id: 'ind-11', phase: 'module-2', title: 'Clinical Summary (2.7)', description: 'Efficacy + safety summary with biopharm evaluation', ctdSection: '2.7', requiredArtifacts: ['clinical_summary'], commands: ['/draft 2.7', '/safety'], roles: ['medical_writer'], depends: [], criticalPath: true },
+        { id: 'ind-9', phase: 'module-2', title: 'Clinical Overview (2.5)', description: 'Integrated analysis of clinical data', ctdSection: '2.5', requiredArtifacts: ['clinical_overview'], commands: ['/draft 2.5'], roles: ['medical_writer'], depends: ['ind-11'], criticalPath: true },
       ],
     },
     {
       name: 'Pre-Submission Review',
       description: 'Final quality checks before submitting to FDA',
       steps: [
-        { id: 'ind-16', phase: 'review', title: 'Full dossier preflight', description: 'Check all modules for completeness, consistency, and compliance', ctdSection: undefined, requiredArtifacts: ['preflight_report'], commands: ['/preflight', '/assess'], roles: ['ra_lead'], depends: ['ind-4', 'ind-7', 'ind-9', 'ind-12', 'ind-14'], criticalPath: true },
+        { id: 'ind-16', phase: 'review', title: 'Full dossier preflight', description: 'Check all modules for completeness, consistency, and compliance', ctdSection: undefined, requiredArtifacts: ['preflight_report'], commands: ['/preflight', '/assess'], roles: ['ra_lead'], depends: ['ind-4', 'ind-21', 'ind-7', 'ind-9', 'ind-12', 'ind-14'], criticalPath: true },
         { id: 'ind-17', phase: 'review', title: 'Risk assessment', description: 'Generate risk memo with go/no-go recommendation', ctdSection: undefined, requiredArtifacts: ['risk_memo'], commands: ['/risk', '/memo'], roles: ['ra_lead', 'ceo'], depends: ['ind-16'], criticalPath: true },
         { id: 'ind-18', phase: 'review', title: 'Reviewer question prep', description: 'Anticipate reviewer questions and prepare responses', ctdSection: undefined, requiredArtifacts: ['reviewer_brief'], commands: ['/brief', '/simulate'], roles: ['ra_lead', 'medical_writer'], depends: ['ind-16'], criticalPath: false },
         { id: 'ind-19', phase: 'review', title: 'Freeze and sign', description: 'Freeze all documents, collect electronic signatures', ctdSection: undefined, requiredArtifacts: [], commands: ['/freeze', '/sign'], roles: ['ra_lead', 'ceo'], depends: ['ind-16', 'ind-17'], criticalPath: true },
@@ -166,17 +177,6 @@ const NDA_WORKFLOW: SubmissionWorkflow = {
       ],
     },
     {
-      name: 'Module 2 — CTD Summaries',
-      description: 'All CTD overview and summary documents',
-      steps: [
-        { id: 'nda-3', phase: 'module-2', title: 'Quality Overall Summary (2.3)', description: 'Complete CMC summary for commercial product', ctdSection: '2.3', requiredArtifacts: ['quality_overall_summary'], commands: ['/draft 2.3', '/cmc'], roles: ['cmc_lead'], depends: [], criticalPath: true },
-        { id: 'nda-4', phase: 'module-2', title: 'Nonclinical Overview (2.4)', description: 'Integrated nonclinical evaluation with full tox package', ctdSection: '2.4', requiredArtifacts: ['nonclinical_overview'], commands: ['/draft 2.4'], roles: ['clinical_lead'], depends: [], criticalPath: true },
-        { id: 'nda-5', phase: 'module-2', title: 'Clinical Overview (2.5)', description: 'Integrated benefit-risk assessment across all clinical studies', ctdSection: '2.5', requiredArtifacts: ['clinical_overview'], commands: ['/draft 2.5'], roles: ['medical_writer'], depends: [], criticalPath: true },
-        { id: 'nda-6', phase: 'module-2', title: 'Nonclinical Summaries (2.6)', description: 'Detailed pharmacology, PK, toxicology summaries', ctdSection: '2.6', requiredArtifacts: ['nonclinical_summaries'], commands: ['/draft 2.6'], roles: ['clinical_lead'], depends: ['nda-4'], criticalPath: true },
-        { id: 'nda-7', phase: 'module-2', title: 'Clinical Summary (2.7)', description: 'Biopharm, clinical efficacy, clinical safety, synopses', ctdSection: '2.7', requiredArtifacts: ['clinical_summary'], commands: ['/draft 2.7', '/safety'], roles: ['medical_writer'], depends: ['nda-5'], criticalPath: true },
-      ],
-    },
-    {
       name: 'Module 3 — Quality',
       description: 'Full commercial CMC package',
       steps: [
@@ -194,10 +194,21 @@ const NDA_WORKFLOW: SubmissionWorkflow = {
       ],
     },
     {
+      name: 'Module 2 — CTD Summaries',
+      description: 'All CTD overview and summary documents',
+      steps: [
+        { id: 'nda-3', phase: 'module-2', title: 'Quality Overall Summary (2.3)', description: 'Complete CMC summary for commercial product', ctdSection: '2.3', requiredArtifacts: ['quality_overall_summary'], commands: ['/draft 2.3', '/cmc'], roles: ['cmc_lead'], depends: ['nda-8', 'nda-9'], criticalPath: true },
+        { id: 'nda-6', phase: 'module-2', title: 'Nonclinical Summaries (2.6)', description: 'Detailed pharmacology, PK, toxicology summaries', ctdSection: '2.6', requiredArtifacts: ['nonclinical_summaries'], commands: ['/draft 2.6'], roles: ['clinical_lead'], depends: [], criticalPath: true },
+        { id: 'nda-4', phase: 'module-2', title: 'Nonclinical Overview (2.4)', description: 'Integrated nonclinical evaluation with full tox package', ctdSection: '2.4', requiredArtifacts: ['nonclinical_overview'], commands: ['/draft 2.4'], roles: ['clinical_lead'], depends: ['nda-6'], criticalPath: true },
+        { id: 'nda-7', phase: 'module-2', title: 'Clinical Summary (2.7)', description: 'Biopharm, clinical efficacy, clinical safety, synopses — summarises the CSRs and the ISS/ISE', ctdSection: '2.7', requiredArtifacts: ['clinical_summary'], commands: ['/draft 2.7', '/safety'], roles: ['medical_writer'], depends: ['nda-10', 'nda-11', 'nda-12'], criticalPath: true },
+        { id: 'nda-5', phase: 'module-2', title: 'Clinical Overview (2.5)', description: 'Integrated benefit-risk assessment across all clinical studies', ctdSection: '2.5', requiredArtifacts: ['clinical_overview'], commands: ['/draft 2.5'], roles: ['medical_writer'], depends: ['nda-7'], criticalPath: true },
+      ],
+    },
+    {
       name: 'Labeling & Advisory Committee',
       description: 'USPI, Medication Guide, AdCom preparation',
       steps: [
-        { id: 'nda-13', phase: 'labeling', title: 'USPI draft', description: 'Prescribing information per FDA Physician Labeling Rule', ctdSection: '1.14', requiredArtifacts: ['uspi'], commands: ['/draft'], roles: ['medical_writer', 'ra_lead'], depends: ['nda-7'], criticalPath: true },
+        { id: 'nda-13', phase: 'labeling', title: 'USPI draft', description: 'Prescribing information per FDA Physician Labeling Rule', ctdSection: '1.14', requiredArtifacts: ['uspi'], commands: ['/draft'], roles: ['medical_writer', 'ra_lead'], depends: ['nda-5', 'nda-7'], criticalPath: true },
         { id: 'nda-14', phase: 'labeling', title: 'AdCom preparation', description: 'Advisory committee briefing document and presentation', ctdSection: undefined, requiredArtifacts: ['adcom_briefing'], commands: ['/brief', '/simulate'], roles: ['ra_lead', 'medical_writer', 'clinical_lead'], depends: ['nda-7'], criticalPath: false },
       ],
     },
@@ -228,15 +239,6 @@ const BLA_WORKFLOW: SubmissionWorkflow = {
       ],
     },
     {
-      name: 'Module 2 — CTD Summaries',
-      description: 'CTD overview documents with biologics-specific content',
-      steps: [
-        { id: 'bla-2', phase: 'module-2', title: 'Quality Overall Summary (2.3)', description: 'Biologics CMC — cell line, fermentation, purification, characterization', ctdSection: '2.3', requiredArtifacts: ['quality_overall_summary'], commands: ['/draft 2.3', '/cmc'], roles: ['cmc_lead'], depends: [], criticalPath: true },
-        { id: 'bla-3', phase: 'module-2', title: 'Clinical Overview (2.5)', description: 'Integrated clinical benefit-risk with immunogenicity assessment', ctdSection: '2.5', requiredArtifacts: ['clinical_overview'], commands: ['/draft 2.5'], roles: ['medical_writer'], depends: [], criticalPath: true },
-        { id: 'bla-4', phase: 'module-2', title: 'Clinical Summary (2.7)', description: 'Efficacy, safety, immunogenicity summaries', ctdSection: '2.7', requiredArtifacts: ['clinical_summary'], commands: ['/draft 2.7', '/safety'], roles: ['medical_writer'], depends: ['bla-3'], criticalPath: true },
-      ],
-    },
-    {
       name: 'Module 3 — Quality (Biologics)',
       description: 'Biologics-specific CMC including cell line, manufacturing, comparability',
       steps: [
@@ -244,14 +246,21 @@ const BLA_WORKFLOW: SubmissionWorkflow = {
         { id: 'bla-6', phase: 'module-3', title: 'Drug Product (3.2.P)', description: 'Formulation, fill-finish, container closure, stability', ctdSection: '3.2.P', requiredArtifacts: ['drug_product'], commands: ['/draft 3.2.P', '/cmc'], roles: ['cmc_lead'], depends: ['bla-5'], criticalPath: true },
       ],
     },
-    {
-      name: 'Module 5 & Filing',
-      description: 'Clinical studies and submission',
-      steps: [
+    { name: 'Module 5 — Clinical Studies', description: 'The clinical study reports the summaries are written from', steps: [
         { id: 'bla-7', phase: 'module-5', title: 'Pivotal CSRs', description: 'ICH E3 reports including immunogenicity data', ctdSection: '5.3.5', requiredArtifacts: ['pivotal_csr'], commands: ['/csr', '/draft'], roles: ['medical_writer'], depends: [], criticalPath: true },
-        { id: 'bla-8', phase: 'filing', title: 'Full preflight + submit', description: 'BLA readiness check, risk assessment, submission', ctdSection: undefined, requiredArtifacts: ['preflight_report', 'risk_memo', 'submission_package'], commands: ['/assess', '/risk', '/freeze', '/sign', '/submit'], roles: ['ra_lead'], depends: ['bla-2', 'bla-3', 'bla-5', 'bla-7'], criticalPath: true },
+    ] },
+    {
+      name: 'Module 2 — CTD Summaries',
+      description: 'CTD overview documents with biologics-specific content',
+      steps: [
+        { id: 'bla-2', phase: 'module-2', title: 'Quality Overall Summary (2.3)', description: 'Biologics CMC — cell line, fermentation, purification, characterization', ctdSection: '2.3', requiredArtifacts: ['quality_overall_summary'], commands: ['/draft 2.3', '/cmc'], roles: ['cmc_lead'], depends: ['bla-5', 'bla-6'], criticalPath: true },
+        { id: 'bla-4', phase: 'module-2', title: 'Clinical Summary (2.7)', description: 'Efficacy, safety, immunogenicity summaries — summarises the CSRs', ctdSection: '2.7', requiredArtifacts: ['clinical_summary'], commands: ['/draft 2.7', '/safety'], roles: ['medical_writer'], depends: ['bla-7'], criticalPath: true },
+        { id: 'bla-3', phase: 'module-2', title: 'Clinical Overview (2.5)', description: 'Integrated clinical benefit-risk with immunogenicity assessment', ctdSection: '2.5', requiredArtifacts: ['clinical_overview'], commands: ['/draft 2.5'], roles: ['medical_writer'], depends: ['bla-4'], criticalPath: true },
       ],
     },
+    { name: 'Filing', description: 'Readiness, risk assessment and submission', steps: [
+        { id: 'bla-8', phase: 'filing', title: 'Full preflight + submit', description: 'BLA readiness check, risk assessment, submission', ctdSection: undefined, requiredArtifacts: ['preflight_report', 'risk_memo', 'submission_package'], commands: ['/assess', '/risk', '/freeze', '/sign', '/submit'], roles: ['ra_lead'], depends: ['bla-2', 'bla-3', 'bla-4', 'bla-6', 'bla-7'], criticalPath: true },
+    ] },
   ],
 };
 
@@ -420,14 +429,21 @@ export interface WorkflowStatus {
   type: string;
   name: string;
   totalSteps: number;
+  /** Steps something in the system can evidence (an artifact type or a CTD
+   *  section). The rest are `untrackedSteps`: no record here can say whether
+   *  they happened. */
+  trackedSteps: number;
+  untrackedSteps: number;
   completedSteps: number;
   currentPhase: string;
   nextStep: WorkflowStep | null;
   criticalBlockers: string[];
-  progressPercent: number;
+  /** Of TRACKED steps; null when none is tracked. */
+  progressPercent: number | null;
   phases: Array<{
     name: string;
-    steps: Array<{ id: string; title: string; complete: boolean; critical: boolean }>;
+    /** complete is null for an untracked step — unknown, never assumed done. */
+    steps: Array<{ id: string; title: string; complete: boolean | null; critical: boolean }>;
   }>;
 }
 
@@ -481,6 +497,7 @@ export async function getWorkflowStatus(
 
   const allSteps = workflow.phases.flatMap(p => p.steps);
   let completedCount = 0;
+  let trackedCount = 0;
   let currentPhase = workflow.phases[0].name;
   let nextStep: WorkflowStep | null = null;
   const criticalBlockers: string[] = [];
@@ -488,13 +505,23 @@ export async function getWorkflowStatus(
   const phases = workflow.phases.map(phase => ({
     name: phase.name,
     steps: phase.steps.map(step => {
-      const hasArtifacts = step.requiredArtifacts.length === 0 ||
-        step.requiredArtifacts.some(a => existingArtifacts.includes(a));
-      const hasSection = !step.ctdSection || populatedSections.includes(step.ctdSection);
-      const complete = hasArtifacts || hasSection;
+      /* A step is complete only on evidence. These read
+           hasArtifacts = requiredArtifacts.length === 0 || …
+           hasSection   = !step.ctdSection || …
+         so a step requiring no artifact, or naming no CTD section, was
+         complete for EVERY project — 50 of 87 steps, among them "Submit IND
+         package to FDA", "Submit 510(k) to FDA", "Submit MAA" and the pre-
+         submission meeting requests. That went into AnA's prompt as the
+         project's progress, with the instruction "Be directive". A step with
+         nothing that could evidence it is untracked, not done. */
+      const tracked = step.requiredArtifacts.length > 0 || Boolean(step.ctdSection);
+      const hasArtifacts = step.requiredArtifacts.some(a => existingArtifacts.includes(a));
+      const hasSection = Boolean(step.ctdSection) && populatedSections.includes(step.ctdSection as string);
+      const complete: boolean | null = tracked ? hasArtifacts || hasSection : null;
+      if (tracked) trackedCount++;
 
       if (complete) completedCount++;
-      if (!complete && step.criticalPath) {
+      if (complete === false && step.criticalPath) {
         criticalBlockers.push(step.title);
       }
       if (!complete && !nextStep) {
@@ -510,11 +537,13 @@ export async function getWorkflowStatus(
     type: workflow.type,
     name: workflow.name,
     totalSteps: allSteps.length,
+    trackedSteps: trackedCount,
+    untrackedSteps: allSteps.length - trackedCount,
     completedSteps: completedCount,
     currentPhase,
     nextStep,
     criticalBlockers: criticalBlockers.slice(0, 5),
-    progressPercent: Math.round((completedCount / allSteps.length) * 100),
+    progressPercent: trackedCount > 0 ? Math.round((completedCount / trackedCount) * 100) : null,
     phases,
   };
 }
@@ -532,7 +561,9 @@ export async function buildWorkflowContext(
 
   const parts: string[] = [
     `## Submission Workflow: ${status.name}`,
-    `**Progress:** ${status.completedSteps}/${status.totalSteps} steps (${status.progressPercent}%)`,
+    status.progressPercent === null
+      ? `**Progress:** not tracked — none of the ${status.totalSteps} steps can be evidenced from project records`
+      : `**Progress:** ${status.completedSteps}/${status.trackedSteps} tracked steps (${status.progressPercent}%); ${status.untrackedSteps} step(s) are not tracked and may or may not have happened — ask, do not assume`,
     `**Current Phase:** ${status.currentPhase}`,
   ];
 
@@ -557,9 +588,13 @@ export async function buildWorkflowContext(
   // Phase summary
   parts.push('\n**Phases:**');
   for (const phase of status.phases) {
-    const done = phase.steps.filter(s => s.complete).length;
-    const total = phase.steps.length;
-    const icon = done === total ? 'DONE' : `${done}/${total}`;
+    const done = phase.steps.filter(s => s.complete === true).length;
+    const trackedInPhase = phase.steps.filter(s => s.complete !== null).length;
+    const untrackedInPhase = phase.steps.length - trackedInPhase;
+    const icon =
+      trackedInPhase === 0
+        ? 'not tracked'
+        : `${done}/${trackedInPhase} tracked${untrackedInPhase ? ` · ${untrackedInPhase} not tracked` : ''}`;
     parts.push(`- ${phase.name}: ${icon}`);
   }
 

@@ -55,7 +55,7 @@
  * section's stored content changing. See @shared/authoring/cross-references.
  */
 
-import { parse, HTMLElement, TextNode, Node } from 'node-html-parser';
+import { HTMLElement, TextNode, Node } from 'node-html-parser';
 import {
   CROSS_REF_TARGET_ATTR,
   CROSS_REF_DISPLAY_ATTR,
@@ -76,6 +76,8 @@ import {
   type NumberedCaption,
 } from '@shared/authoring/captions';
 import type { CrossReferenceTarget } from '@shared/authoring/cross-references';
+import { looksLikeHtml } from '@shared/authoring/plain-text-html';
+import { parseSectionHtml } from './section-html-parse';
 
 export interface InlineRun {
   text: string;
@@ -250,25 +252,14 @@ export function blockRuns(b: ContentBlock): InlineRun[] {
   return out;
 }
 
-/** Same detection the client's round-trip gate uses (roundTrip.ts — keep the
- * two in agreement). Known tags only: prose can legitimately contain
- * tag-shaped tokens (`temperature <critical> threshold`), and any-tag
- * detection routed such text through an HTML parse that swallowed the token.
- *
- * "Keep the two in agreement" was a comment and nothing else, and they drifted:
- * `dl`/`dt`/`dd`/`caption` were in neither, so a glossary section was ESCAPED
- * into the record by the editor (see roundTrip.ts for that failure in full) and
- * would have been read as plain text here too — one paragraph per line, tags
- * and all, in the exported DOCX and PDF. A section whose own tags are prose on
- * screen and prose in the filing is the same document being wrong twice.
- *
- * The agreement is now asserted: `roundTripFidelity.test.ts` compares the two
- * lists and fails if either gains a tag the other lacks. */
-const KNOWN_HTML_TAG =
-  /<\/?(p|div|br|h[1-6]|ul|ol|li|dl|dt|dd|b|strong|i|em|u|s|strike|ins|del|span|table|caption|thead|tbody|tfoot|tr|td|th|blockquote|pre|a|img|hr|sub|sup|mark|code|font|section|article|figure|figcaption)\b[^>]*>/i;
-export function contentLooksLikeHtml(stored: string): boolean {
-  return KNOWN_HTML_TAG.test(stored);
-}
+/** Whether stored section content is HTML: the one rule every reader of
+ * section content shares (looksLikeHtml, shared/authoring/plain-text-html.ts).
+ * The editor and this export each kept a copy, held equal only by a test that
+ * compared their source; they had drifted before (`dl`/`dt`/`dd`/`caption`
+ * were in neither, so a glossary section was escaped into the record by the
+ * editor and read as plain text here, tags and all, in the exported DOCX and
+ * PDF), and the lineage became a third reader. */
+export const contentLooksLikeHtml = looksLikeHtml;
 
 interface InlineState {
   bold?: boolean;
@@ -548,7 +539,7 @@ function parseTable(node: HTMLElement, st: InlineState): ContentBlock | null {
 }
 
 function parseHtmlToBlocks(html: string): ContentBlock[] {
-  const root = parse(html);
+  const root = parseSectionHtml(html);
   const blocks: ContentBlock[] = [];
   let current: ContentBlock | null = null;
 

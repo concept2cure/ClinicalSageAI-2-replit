@@ -1,0 +1,12 @@
+client/src/concept2cure/v2/__tests__/batchDraftAcceptance.test.tsx now=0/0 head=0/0
+client/src/concept2cure/v2/surfaces/BatchDraft.tsx now=7/0 head=7/0
+server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts now=0/0 head=0/0
+server/routes/ana-intelligence.ts now=2/0 head=2/0
+server/routes/batch-draft-routes.ts now=3/0 head=3/0
+server/services/clinical-regulatory-evidence/__tests__/lineage-gate.pglite.integration.test.ts now=0/0 head=0/0
+server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts now=0/0 head=0/0
+server/services/clinical-regulatory-evidence/__tests__/machine-draft-lineage.pglite.integration.test.ts now=0/0 head=0/0
+server/services/clinical-regulatory-evidence/lineage-gate.ts now=3/0 head=3/0
+server/services/clinical-regulatory-evidence/machine-attribution.ts now=1/0 head=0/0
+server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts now=0/0 head=new
+server/services/authoring/machine-claim-verify.ts now=0/0 head=new

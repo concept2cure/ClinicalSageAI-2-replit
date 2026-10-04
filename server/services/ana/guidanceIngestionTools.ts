@@ -1,10 +1,10 @@
 /**
- * Guidance Ingestion tool definitions — exposes the live guidance ingestion
+ * Guidance Ingestion tool definitions — exposes the guidance ingestion
  * service (server/services/regulatory-currency/guidance-ingestion-service.ts)
  * to AnA as first-class tools.
  *
  * Tools:
- *   fetch_fda_guidance_list      — search FDA guidance documents by topic/year/status
+ *   fetch_fda_guidance_list      — says no FDA guidance index is connected
  *   fetch_ich_guideline_updates  — check ICH guideline updates by category
  *   check_guidance_freshness     — verify cited guidances are current
  *
@@ -16,7 +16,7 @@ import type { AnaTool } from '../ai-gateway/types';
 export const FETCH_FDA_GUIDANCE_LIST: AnaTool = {
   name: 'fetch_fda_guidance_list',
   description:
-    'Search FDA guidance documents from the live FDA guidance API. Returns matching guidance documents with their title, issue date, topic, URL, and status. Use to check current FDA guidance on a topic before advising. Network-dependent — returns {status: "unavailable"} if the API is unreachable rather than guessing.',
+    'List FDA guidance documents. No FDA guidance index is connected yet, so this returns {status: "unavailable"} with the reason; it never lists a guidance. Say an FDA guidance needs confirming unless the user supplied it.',
   input_schema: {
     type: 'object',
     properties: {
@@ -45,7 +45,7 @@ export const FETCH_FDA_GUIDANCE_LIST: AnaTool = {
 export const FETCH_ICH_GUIDELINE_UPDATES: AnaTool = {
   name: 'fetch_ich_guideline_updates',
   description:
-    'Check for ICH guideline updates from a curated registry of known ICH guidelines with their step dates. Covers E6(R3), M11, Q12, Q14, E8(R1), M4(R4). Filter by category (Q/S/E/M) and/or a since-date to find guidelines that reached a milestone after a given point. Deterministic — no network call; returns from a curated, freshness-stamped registry.',
+    'Check for ICH guideline updates in a curated list of ICH guidelines with their step dates. Covers E6(R3), M11, Q12, Q14, E8(R1) only. Filter by category (Q/S/E/M) and/or a since-date to find guidelines that reached a milestone after a given point. Deterministic — no network call; a guideline not in the list is not covered, not absent.',
   input_schema: {
     type: 'object',
     properties: {
@@ -66,7 +66,7 @@ export const FETCH_ICH_GUIDELINE_UPDATES: AnaTool = {
 export const CHECK_GUIDANCE_FRESHNESS: AnaTool = {
   name: 'check_guidance_freshness',
   description:
-    "Verify that cited guidances in a document are still current by cross-referencing against the curated regulatory currency registry and ICH guideline step-date registry. DETERMINISTIC — pure cross-reference, no LLM, no network. For each cited guidance, reports whether it is current, its latest known date, and any staleness warnings. Use when reviewing a document's regulatory citations for currency.",
+    "Check whether cited guidances are still current against the verified regulatory currency registry and the ICH step-date list. DETERMINISTIC — no LLM, no network. A citation is identified only by its ICH code, by a revision the registry records as superseded, or by an exact registry name; for those it reports current or not, the latest known date, and the registry entry and source it rests on. A citation it cannot identify is reported unverified (current: null) — never current. Use when reviewing a document's regulatory citations for currency.",
   input_schema: {
     type: 'object',
     properties: {
@@ -77,7 +77,7 @@ export const CHECK_GUIDANCE_FRESHNESS: AnaTool = {
           properties: {
             title: {
               type: 'string',
-              description: 'Title or identifier of the cited guidance (e.g. "ICH E6(R2)", "FDA eSTAR", "EU AI Act").',
+              description: 'Title or identifier of the cited guidance (e.g. "ICH E6(R2)", "EU AI Act", "LDT final rule").',
             },
             citedDate: {
               type: 'string',

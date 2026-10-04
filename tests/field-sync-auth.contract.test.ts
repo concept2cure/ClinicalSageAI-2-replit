@@ -100,16 +100,19 @@ const PREREQ = `
   -- Without these rows every request 503'd before reaching the tenant-scoping
   -- this file exists to test. Only ORG_A is seeded: the caller belongs to A, and
   -- the cross-tenant cases below assert that A's token cannot reach B's project.
+  -- created_at as migrations/0000_sweet_joseph.sql defines it: the gates read
+  -- when the membership began with the account's standing (P0-4b R1).
   CREATE TABLE organization_users (
     organization_id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
-    role TEXT NOT NULL DEFAULT 'member'
+    role TEXT NOT NULL DEFAULT 'member',
+    created_at TIMESTAMP NOT NULL DEFAULT now()
   );
   INSERT INTO organization_users (organization_id, user_id, role) VALUES (1, 7, 'member');
   -- The account's standing (services/account-standing.ts, VSR-001 F-29) is read
   -- on every authenticated request as well, and one that cannot be read is
   -- refused with 503, for the same reason. The caller's account is in use.
-  CREATE TABLE users (id INTEGER PRIMARY KEY, status TEXT NOT NULL DEFAULT 'active', password_changed_at TIMESTAMP);
+  CREATE TABLE users (id INTEGER PRIMARY KEY, status TEXT NOT NULL DEFAULT 'active', password_changed_at TIMESTAMP, sessions_ended_at TIMESTAMPTZ);
   INSERT INTO users (id) VALUES (7);
   CREATE TABLE fda_510k_projects (
     id SERIAL PRIMARY KEY,

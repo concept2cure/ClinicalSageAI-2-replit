@@ -1,0 +1,147 @@
+FIXUP MUTANT 3 diff:
+671c671
+<   return history.redo ? redoDepth(state) > floor.redo : undoDepth(state) > floor.undo;
+---
+>   return undoDepth(state) > floor.undo; // MUTANT 3: redo judged by the undo floor
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 ./
+
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > Accept, then Undo: the suggestion stays accepted 94ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > Reject, then Undo: the rejected text does not come back 19ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > Accept all, then Undo: nothing returns to pending 20ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > an AnA draft inserted and accepted in this session is not removed by Undo 30ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo cannot take back a recorded decision > CONTROL: ordinary typing is still undoable 14ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops at a recorded decision on the reviewer’s own tracked edit > own 'insertion': Accept, then Undo: the accepted change stands 14ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops at a recorded decision on the reviewer’s own tracked edit > own 'deletion': Accept, then Undo: the accepted change stands 11ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops at a recorded decision on the reviewer’s own tracked edit > own 'insertion': Accept all, then Undo: the accepted change stands 16ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops at a recorded decision on the reviewer’s own tracked edit > own 'deletion': Accept all, then Undo: the accepted change stands 14ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops at a recorded decision on the reviewer’s own tracked edit > own 'insertion': typing after the decision is still undoable, Undo stops at the decision, Redo re-applies it 21ms
+   → expected 'Base text. Typed clause.' to be 'Base text. Typed clause. After.' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops at a recorded decision on the reviewer’s own tracked edit > own 'deletion': typing after the decision is still undoable, Undo stops at the decision, Redo re-applies it 11ms
+   → expected 'Keep this.' to be 'Keep this. After.' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops at a recorded decision on the reviewer’s own tracked edit > CONTROL: own 'insertion' with no decision: Undo and Redo behave as before 14ms
+   → expected [] to deeply equal [ [ 'insertion', ' Typed clause.' ] ]
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops at a recorded decision on the reviewer’s own tracked edit > CONTROL: own 'deletion' with no decision: Undo and Redo behave as before 9ms
+   → expected [] to deeply equal [ [ 'deletion', ' Remove this.' ] ]
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops at a recorded decision on the reviewer’s own tracked edit > CONTROL: an AnA insert is not a decision; the typing before it stays undoable 15ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Redo cannot bring back a step undone before a recorded decision > own insertion: deleted, the delete undone, accepted, then Redo: the accepted text stays 17ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Redo cannot bring back a step undone before a recorded decision > AnA draft: deleted, the delete undone, accepted, then Redo: the accepted draft stays 10ms
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Redo cannot bring back a step undone before a recorded decision > typing after that decision is redoable once undone 14ms
+   → expected 'Base text. Typed clause.' to be 'Base text. Typed clause. After.' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > keeps an accepted text present, unmarked, in the document — across a formatting split 6ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > drops a text that is back under a pending insertion mark, and its author with it 11ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > drops a text that is struck by a pending deletion 6ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > drops a text the document no longer holds 7ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > keeps an author while any one of their accepted texts survives 6ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > settleAcceptedContributions > does not match a text across a paragraph boundary 9ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > the accepted-author read at save time > the ribbon Undo after Accept leaves the decision, the canvas and the save in agreement 295ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > the accepted-author read at save time > attributes nothing to AnA once the accepted text is gone from the section 58ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > the accepted-author read at save time > the ribbon Undo after accepting one’s own tracked insertion leaves the accepted text (gap (e)) 102ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > the accepted-author read at save time > answers the same whichever list the host reads first 53ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops at a recorded decision on the reviewer’s own tracked edit > own 'insertion': typing after the decision is still undoable, Undo stops at the decision, Redo re-applies it
+AssertionError: expected 'Base text. Typed clause.' to be 'Base text. Typed clause. After.' // Object.is equality
+
+Expected: "Base text. Typed clause. After."
+Received: "Base text. Typed clause."
+
+ ❯ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx:264:44
+    262|
+    263|       editor.commands.redo();
+    264|       expect(editor.state.doc.textContent).toBe(`${own.accepted} After…
+       |                                            ^
+    265|       expect(pendingOf(editor)).toEqual([['insertion', ' After.']]);
+    266|       editor.destroy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops at a recorded decision on the reviewer’s own tracked edit > own 'deletion': typing after the decision is still undoable, Undo stops at the decision, Redo re-applies it
+AssertionError: expected 'Keep this.' to be 'Keep this. After.' // Object.is equality
+
+Expected: "Keep this. After."
+Received: "Keep this."
+
+ ❯ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx:264:44
+    262|
+    263|       editor.commands.redo();
+    264|       expect(editor.state.doc.textContent).toBe(`${own.accepted} After…
+       |                                            ^
+    265|       expect(pendingOf(editor)).toEqual([['insertion', ' After.']]);
+    266|       editor.destroy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops at a recorded decision on the reviewer’s own tracked edit > CONTROL: own 'insertion' with no decision: Undo and Redo behave as before
+AssertionError: expected [] to deeply equal [ [ 'insertion', ' Typed clause.' ] ]
+
+- Expected
++ Received
+
+- [
+-   [
+-     "insertion",
+-     " Typed clause.",
+-   ],
+- ]
++ []
+
+ ❯ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx:279:31
+    277|
+    278|     editor.commands.redo();
+    279|     expect(pendingOf(editor)).toEqual([[own.kind, own.pending]]);
+       |                               ^
+    280|     expect(decisions).toEqual([]);
+    281|     editor.destroy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Undo stops at a recorded decision on the reviewer’s own tracked edit > CONTROL: own 'deletion' with no decision: Undo and Redo behave as before
+AssertionError: expected [] to deeply equal [ [ 'deletion', ' Remove this.' ] ]
+
+- Expected
++ Received
+
+- [
+-   [
+-     "deletion",
+-     " Remove this.",
+-   ],
+- ]
++ []
+
+ ❯ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx:279:31
+    277|
+    278|     editor.commands.redo();
+    279|     expect(pendingOf(editor)).toEqual([[own.kind, own.pending]]);
+       |                               ^
+    280|     expect(decisions).toEqual([]);
+    281|     editor.destroy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx > Redo cannot bring back a step undone before a recorded decision > typing after that decision is redoable once undone
+AssertionError: expected 'Base text. Typed clause.' to be 'Base text. Typed clause. After.' // Object.is equality
+
+Expected: "Base text. Typed clause. After."
+Received: "Base text. Typed clause."
+
+ ❯ client/src/concept2cure/v2/__tests__/trackedChangeUndo.test.tsx:368:42
+    366|     // decision and Redo re-applies it.
+    367|     editor.commands.redo();
+    368|     expect(editor.state.doc.textContent).toBe(`${own.accepted} After.`…
+       |                                          ^
+    369|     expect(pendingOf(editor)).toEqual([['insertion', ' After.']]);
+    370|     editor.destroy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 22 passed (27)
+   Start at  19:21:24
+   Duration  2.69s (transform 576ms, setup 195ms, import 852ms, tests 899ms, environment 583ms)
+

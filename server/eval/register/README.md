@@ -16,9 +16,23 @@ opener, restated question, labelled "next step", capability menu, empty
 closer, filler transitions. Every violation carries a weight; `score` is 1.0
 minus the deductions (floor 0) and `pass` means no violations.
 
+Exclamation marks and emoji are measured against the personality, not banned
+(2026-10-01; `ANA_PERSONALITY_CORE`, "Warm, and allowed to show it" and
+"Serious where it counts"). In chat, one earned exclamation in an open room
+passes; it fails when there is more than one, when it is stacked, when it sits
+on a greeting, praise or closer, when its sentence carries a figure or
+citation, and always in a serious room. An emoji passes only as a mirror
+(`userUsedEmoji`), one, in an open room, off the substance. The room is derived
+fail-closed from the reply and `userText` (`SERIOUS_TERMS`: adverse events,
+safety, holds, deficiency letters, e-signatures, audit trail, CAPA …) unless the
+turn labels it — label it when the stress is not in the words. The summary
+reports `exclamationTurnRate` and `emojiTurnRate`, and `findCatchphrases`
+reports a playful line that repeats within a conversation; a `--transcript`
+run fails on either (`--max-exclamation-rate`, default 0.2).
+
 For an artifact turn (`classifyRegister` → two or more headers or numbered
-section labels) it checks for chat-voice interjections, an empty closer and
-first-person voice.
+section labels) it checks for chat-voice interjections, an empty closer,
+first-person voice, and any exclamation mark or emoji at all.
 
 Platform blocks (` ```ana-grounding `, ` ```ana-action `) are stripped before
 measuring; they are machine-read, not chat structure.
@@ -33,7 +47,7 @@ tsx server/eval/register/run-eval.ts --samples
 tsx server/eval/register/run-eval.ts --transcript turns.json --min-pass-rate 0.8
 ```
 
-Transcript format: `{ "turns": [ { "id", "text", "firstTurn"?, "userAskedForList"?, "register"? } ] }`.
+Transcript format: `{ "turns": [ { "id", "text", "firstTurn"?, "userAskedForList"?, "register"?, "room"?, "userText"?, "userUsedEmoji"?, "conversationId"? } ] }`.
 
 ## Status
 

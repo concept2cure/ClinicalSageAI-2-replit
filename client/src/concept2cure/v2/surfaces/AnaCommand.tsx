@@ -32,7 +32,33 @@ const TRAJ_MAP: Record<string, { ic: string; t: string; c: string }> = {
   improving: { ic: 'trendUp', t: 'improving', c: 'ok' },
   declining: { ic: 'trendDown', t: 'declining', c: 'err' },
   stable:    { ic: 'minus', t: 'stable', c: 'idle' },
+  /* U14: the trend is measured against a shared baseline (the latest snapshot
+     at least 24 h old). Until one exists the server says so, and so does this
+     surface — it used to fall back to 'stable', a verdict nothing measured. */
+  no_baseline: { ic: 'history', t: 'no baseline yet', c: 'idle' },
 };
+
+/* Answer-first lead for one program, from its continuity briefing. An unknown
+   or missing trajectory is not 'stable': nothing measured it (U14). */
+function continuityLead(cont: Continuity | null | undefined, progLabel: string) {
+  if (!cont) {
+    return { traj: TRAJ_MAP.no_baseline, urgent: false, noBaseline: false, leadHead: progLabel, changesHeading: '' };
+  }
+  const traj = TRAJ_MAP[cont.trajectory] ?? TRAJ_MAP.no_baseline;
+  const urgent = cont.trajectory === 'declining';
+  const noBaseline = traj === TRAJ_MAP.no_baseline;
+  const needs = cont.needsAttention || [];
+  let leadHead = `${progLabel} is ${traj.t}: ${(cont.newlyReady || []).length} newly ready · ${needs.length} need attention`;
+  if (urgent) leadHead = `${progLabel} is trending ${traj.t} — ${needs[0] ? needs[0].title : 'act now'}`;
+  else if (noBaseline) leadHead = `${progLabel}: no baseline yet · ${needs.length} need attention`;
+  return { traj, urgent, noBaseline, leadHead, changesHeading: changesHeadingFor(cont.changesSince, noBaseline) };
+}
+
+/* The "what changed" window, named by where it starts. */
+function changesHeadingFor(since: string | undefined, noBaseline: boolean): string {
+  if (!since) return 'Since you were last here';
+  return noBaseline ? 'Last 7 days' : 'Since ' + since.slice(0, 10);
+}
 
 const VERDICT_MAP: Record<string, { t: string; c: string }> = {
   ready:       { t: 'READY', c: 'ok' },
@@ -98,8 +124,12 @@ interface ContinuityAttention { type: string; id: number; title: string; reason:
 interface Continuity {
   projectId: number;
   summary: string;
-  trajectory: string;            // 'improving' | 'declining' | 'stable'
-  metrics: { readinessScore: number; documentCount: number; validatedCount: number; blockerCount: number; taskCompletionPercent: number };
+  trajectory: string;            // 'improving' | 'declining' | 'stable' | 'no_baseline'
+  /* What the trend was measured against; null until a baseline exists. */
+  baseline?: { snapshotAt: string; readinessScore: number } | null;
+  /* Start of the "what changed" window (the baseline's time, else 7 days ago). */
+  changesSince?: string;
+  metrics: { readinessScore: number; documentCount: number; validatedCount: number; blockerCount: number; taskCompletionPercent: number | null };
   changes: ContinuityChange[];
   newlyReady: ContinuityReady[];
   needsAttention: ContinuityAttention[];
@@ -496,14 +526,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
   );
 
   /* Answer-first lead — AnA's proactive read of THIS program right now. */
-  const traj = TRAJ_MAP[cont?.trajectory || 'stable'] || TRAJ_MAP.stable;
-  const urgent = cont?.trajectory === 'declining';
-  const topNeed = cont?.needsAttention?.[0];
-  const leadHead = cont
-    ? (urgent
-        ? `${progLabel} is trending ${traj.t} — ${topNeed ? topNeed.title : 'act now'}`
-        : `${progLabel} is ${traj.t}: ${(cont.newlyReady || []).length} newly ready · ${(cont.needsAttention || []).length} need attention`)
-    : progLabel;
+  const { traj, urgent, noBaseline, leadHead, changesHeading } = continuityLead(cont, progLabel);
 
   return (
     <div className="ac">
@@ -625,7 +648,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                 />
               ) : (
                 <>
-                  <div className="ac-sec">{Ico.history || I.clock} Since you were last here</div>
+                  <div className="ac-sec">{Ico.history || I.clock} {changesHeading}</div>
                   <div className="ac-changes">
                     {(cont.changes || []).map((c, i) => (
                       <div key={i} className="ac-change">
@@ -640,7 +663,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                     <div>
                       <div className="ac-sec ok">{Ico.checkCircle || I.check} Newly ready</div>
                       {(cont.newlyReady || []).map((r, i) => (<div key={i} className="ac-ready-row">{r.title}</div>))}
-                      {(cont.newlyReady || []).length === 0 && <div className="ac-empty">Nothing newly ready.</div>}
+                      {(cont.newlyReady || []).length === 0 && <div className="ac-empty">{noBaseline ? 'No baseline yet to compare against.' : 'Nothing newly ready.'}</div>}
                     </div>
                     <div>
                       <div className="ac-sec warn">{I.alertTriangle} Needs attention</div>
@@ -656,7 +679,8 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                       ['Documents', cont.metrics && cont.metrics.documentCount],
                       ['Validated', cont.metrics && cont.metrics.validatedCount],
                       ['Blockers', cont.metrics && cont.metrics.blockerCount],
-                      ['Tasks done', cont.metrics && cont.metrics.taskCompletionPercent + '%'],
+                      // No figure when there are no tasks or a task store went unread (the server sends null).
+                      ['Tasks done', cont.metrics && (cont.metrics.taskCompletionPercent == null ? '—' : cont.metrics.taskCompletionPercent + '%')],
                     ] as [string, string | number | undefined][]).map(([k, v], i) => (
                       <div key={i} className="ac-metric"><span className="ac-metric-v">{v}</span><span className="ac-metric-k">{k}</span></div>
                     ))}

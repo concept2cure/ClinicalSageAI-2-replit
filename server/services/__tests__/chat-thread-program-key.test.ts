@@ -1,14 +1,14 @@
 /**
- * A conversation started with a project open must be minted CARRYING that
- * project, or the project's own list can never find it again.
+ * A conversation started with a project open is minted CARRYING that project,
+ * and only a project of the caller's own organization (PF-10 S2).
  *
- * `chat_threads.project_id` is an INTEGER and the shell's project key is a
- * regulatory_programs UUID, so the program key rides in `metadata.programId` —
- * written here, at mint time, and read back by
- * GET /api/chat/threads?program_id=. This is the write half of that pair; it
- * had no test, and the browser can only prove the client sends the id (the
- * stream route mints well after the AI-provider check, which fails closed in
- * an environment with no provider).
+ * The shell's project key is a regulatory_programs UUID. It is written to
+ * chat_threads.program_id (20261001c: a same-organization key, ON DELETE SET
+ * NULL (program_id)) at mint time, after programInOrganization says the
+ * program is the thread organization's, and read back by
+ * GET /api/chat/threads?program_id=. Until S2 it rode in metadata.programId,
+ * written with no organization check, so a thread could name another
+ * organization's program and be listed under it.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import fs from 'node:fs';
@@ -24,6 +24,19 @@ const PROGRAM = '0F3C1A2B-1111-4222-8333-444455556666';
 /** The INSERT the mint issues, if it issued one. */
 const insert = () =>
   query.mock.calls.find(([sql]) => /INSERT INTO chat_threads/.test(String(sql)));
+/** The INSERT's parameters by column name. */
+const inserted = () => {
+  const [sql, params] = insert()!;
+  const cols = /INSERT INTO chat_threads\s*\(([^)]*)\)/.exec(String(sql))![1].split(',').map((c) => c.trim());
+  return Object.fromEntries(cols.map((c, i) => [c, (params as unknown[])[i]]));
+};
+/** The organization check the mint asks before binding, if it asked. */
+const programLookup = () =>
+  query.mock.calls.find(([sql]) => /FROM regulatory_programs/.test(String(sql)));
+/** regulatory_programs answers: the program is (or is not) this organization's. */
+const programIs = (ours: boolean) =>
+  query.mockImplementation(async (sql: string) =>
+    /FROM regulatory_programs/.test(sql) ? { rows: ours ? [{ id: PROGRAM.toLowerCase() }] : [] } : { rows: [] });
 
 beforeEach(() => {
   query.mockReset();
@@ -32,20 +45,45 @@ beforeEach(() => {
 });
 
 describe('getOrCreateThread — the program key', () => {
-  it('writes the program into metadata, lower-cased, when one is open', async () => {
+  it("binds the program, lower-cased, to program_id once it is the organization's", async () => {
+    programIs(true);
     const id = await getOrCreateThread(null, 1, 'ana-ri', 7, PROGRAM);
     expect(id.startsWith('ana-ri_')).toBe(true);
-    const [, params] = insert()!;
-    expect(params[2]).toBe(7); // organization
-    expect(JSON.parse(String(params[3]))).toEqual({ programId: PROGRAM.toLowerCase() });
+    expect(programLookup()![1]).toEqual([PROGRAM.toLowerCase(), 7]);
+    expect(inserted()).toMatchObject({ organization_id: 7, program_id: PROGRAM.toLowerCase() });
+    // One store for a thread's program: the metadata copy is not written.
+    expect(inserted().metadata ?? null).toBeNull();
   });
 
-  it('writes no metadata when no project is open, or when the id is not a program key', async () => {
+  it('a program of another organization, or a deleted one, is never bound: the thread is minted unbound', async () => {
+    programIs(false);
+    await getOrCreateThread(null, 1, 'ana-ri', 7, PROGRAM);
+    expect(programLookup()).toBeDefined();
+    expect(inserted()).toMatchObject({ organization_id: 7, program_id: null });
+    expect(JSON.stringify(insert()![1])).not.toContain(PROGRAM.toLowerCase());
+  });
+
+  it('without an organization nothing is bound, and nothing is asked', async () => {
+    await getOrCreateThread(null, 1, 'ana-ri', null, PROGRAM);
+    expect(programLookup()).toBeUndefined();
+    expect(inserted()).toMatchObject({ organization_id: null, program_id: null });
+  });
+
+  it('a check that could not complete mints nothing: it is not read as "not ours"', async () => {
+    query.mockImplementation(async (sql: string) => {
+      if (/FROM regulatory_programs/.test(sql)) throw Object.assign(new Error('connection reset'), { code: '08006' });
+      return { rows: [] };
+    });
+    await expect(getOrCreateThread(null, 1, 'ana-ri', 7, PROGRAM)).rejects.toThrow('connection reset');
+    expect(insert()).toBeUndefined();
+  });
+
+  it('binds nothing, and asks nothing, when no project is open or the id is not a program key', async () => {
     for (const value of [undefined, null, '', '42', 42]) {
       query.mockClear();
       await getOrCreateThread(null, 1, 'ana-ri', 7, value as never);
-      const [, params] = insert()!;
-      expect(params[3], String(value)).toBeNull();
+      expect(programLookup(), String(value)).toBeUndefined();
+      expect(inserted().program_id, String(value)).toBeNull();
     }
   });
 

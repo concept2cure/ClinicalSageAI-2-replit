@@ -51,7 +51,9 @@ export const TASKS_COLUMNS: TaskColumn[] = [
 // ── Validation Center ────────────────────────────────────────────────────
 
 export interface ValidationSummary { label: string; metric: string; unit?: string; meta: string; tone?: Tone }
-export interface ValidationProgram { id: string; code: string; title: string; pathway: string; errs: number; warns: number; ok: number; status: 'blocked' | 'active' | 'complete'; readiness: number }
+/** errs / warns / ok are null when no blocker can be attributed to the program
+ *  — see useWorkbenchValidation. Never 0 by default: 0 is a finding. */
+export interface ValidationProgram { id: string; code: string; title: string; pathway: string; errs: number | null; warns: number | null; ok: number | null; status: 'blocked' | 'active' | 'complete'; readiness: number }
 export interface ValidationRule { id: string; prog: string; sect: string; severity: 'err' | 'warn' | 'ok'; category: string; msg: string; since: string }
 
 

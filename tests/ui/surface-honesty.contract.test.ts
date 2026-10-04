@@ -128,10 +128,17 @@ describe('no surface mints its own audit identifier', () => {
 });
 
 describe('AnaDrafter does not claim a regulatory transmission', () => {
-  it('has no network call — the premise of every assertion below', () => {
-    // If this becomes false the file gained a backend, and these assertions
-    // must be revisited rather than deleted.
-    expect(code(A_DRAFTER)).not.toMatch(/fetch\s*\(|['"`]\/api\//);
+  /* Revisited, as this premise asked, when the drafter gained a backend
+     (2026-10-01). It used to render four invented letters from a fixture and
+     had no network call at all. It now READS the tenant's letter, through the
+     correspondence hook and nothing else — so the premise becomes: it reads,
+     and it can write or transmit nothing. The three assertions below stand
+     unchanged on that premise. */
+  it('reads the letter through the correspondence hook, and has no network call of its own', () => {
+    const src = code(A_DRAFTER);
+    expect(src).toMatch(/useCorrespondenceDetail\(/);
+    expect(src).not.toMatch(/(?<![A-Za-z])fetch\s*\(|['"`]\/api\//);
+    expect(src).not.toMatch(/apiRequest\s*\(|['"](POST|PUT|PATCH|DELETE)['"]/);
   });
 
   it('no control reports the response was sent to an agency', () => {

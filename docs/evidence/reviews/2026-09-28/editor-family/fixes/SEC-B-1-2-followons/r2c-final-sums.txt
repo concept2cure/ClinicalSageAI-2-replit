@@ -1,0 +1,7 @@
+a57271b19b4f2a74dcf1936aab9d49eb9cc1d170d7cea5f879b00461d3e8d221  shared/authoring/plain-text-html.ts
+fb1357c5513a3fd13289e62aa51af810d450d089c8c561cfae994a9d821d6600  client/src/concept2cure/v2/editor/roundTrip.ts
+750c5456d787fbd75d6815a979097227fc64f29c1355adb396f07ab6d6c068c1  server/services/authoring/section-generation-service.ts
+346c1e9c94c6dc660bfae99dd1bb556bbba54a1ba08376fd9f5de223a7b973aa  server/services/authoring/__tests__/section-generation-figures.test.ts
+7577a3c2e518dd0d018c0eb5240669083e097a7adad752248d0c4d1929d9b482  server/services/ectd/leaf-pdf-renderer.ts
+51062d63f166a9fc094b50c7f7ad24e311cf9fbb7b5d68cb14285d0c8a7eb741  server/services/ectd/__tests__/leaf-pdf-renderer.test.ts
+cf7106439ae42ffedbf91649cee7762c7dcbe0145adc6ea70c19d5448062be03  server/export/authoring-images.ts

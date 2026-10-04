@@ -778,12 +778,12 @@ export const LIST_PLATFORM_COMMANDS: AnaTool = {
 export const EXECUTE_PLATFORM_COMMAND: AnaTool = {
   name: 'execute_platform_command',
   description:
-    "Execute any governed platform command — ANA's full operational control beyond the typed tools (see list_platform_commands for the catalog). Pass `command` (a command name) and `params`. Runs through the platform's governed command executor: reads are open; governed mutations require params.confirm = true and a params.reason string, and are written to the audit trail. The organization, user, and active project are taken from the session context, never from params, and per-tenant tool policy is enforced. If a result asks for confirmation, re-issue with params.confirm = true and params.reason set. Report the result message verbatim.",
+    "Run a platform command beyond the typed tools (see list_platform_commands for the catalog). Pass `command` (a command name) and `params`. Runs through the platform's governed command executor: reads run; a write never runs on your call. It comes back as a proposal (HUMAN_CONFIRMATION_REQUIRED or PART11_SIGNATURE_REQUIRED) that only the person's confirmation in the platform runs, and that confirmation is what the audit trail records. Tell the person what you proposed and that it has not been done; do not re-issue it, because calling again with any params only proposes it again. The organization, user, and active project are taken from the session context, never from params, and per-tenant tool policy is enforced. Report the result message verbatim.",
   input_schema: {
     type: 'object',
     properties: {
       command: { type: 'string', description: 'Command name from list_platform_commands (e.g. create_artifact, module3_build_all, sign_document).' },
-      params: { type: 'object', description: 'Command parameters. For governed mutations include confirm: true and reason: "…".' },
+      params: { type: 'object', description: 'Command parameters, as list_platform_commands lists them. A confirm flag here does nothing: only the person confirms a write.' },
     },
     required: ['command'],
   },

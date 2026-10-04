@@ -29,16 +29,19 @@ vi.mock('../../db', () => ({ get db() { return holder.db; } }));
 // Faked JWT verifier — `verifyJwtWithRotation` is the only auth dependency of
 // the router. A mutable identity lets each test set/clear the "current user".
 const auth = vi.hoisted(() => ({
-  current: null as null | { userId: string; organizationId?: string },
+  current: null as null | { userId: string; organizationId?: string; type?: string },
 }));
+// An access token unless a case says otherwise: since IAM-23 (bf83e12b) the
+// router refuses any other token class (requireAccessTokenReason).
 vi.mock('../../utils/jwtVerify.js', () => ({
   verifyJwtWithRotation: vi.fn(() => {
     if (!auth.current) throw new Error('invalid token');
-    return auth.current;
+    return { type: 'access', ...auth.current };
   }),
 }));
 
 import approvalWorkflowRouter from '../approval-workflow';
+import { AUDIT_LOGS_PGLITE_DDL } from '../../db/pglite-harness';
 
 // ── In-process PGlite schema (mirrors shared/schema/unified_workflow.ts) ──────
 const WORKFLOW_DDL = `
@@ -213,8 +216,10 @@ beforeAll(async () => {
   await pglite.query(`INSERT INTO users (id, email, name) VALUES ($1,'u1@example.com','User One')`, [Number(USER)]);
   // Initiator names resolve through public.actor_name (D3 2026-09-29), created
   // from the real migration; minimal stand-ins for the two tables it reads.
-  await pglite.exec(`CREATE TABLE IF NOT EXISTS organization_users (user_id integer, organization_id integer);
-                     CREATE TABLE IF NOT EXISTS audit_logs (id serial, tenant_id integer, actor_id integer);`);
+  // audit_logs is the shared fixture (every column the audit writer writes), so
+  // a governed write reached from this suite can land (ci:audit-logs-fixture).
+  await pglite.exec(`CREATE TABLE IF NOT EXISTS organization_users (user_id integer, organization_id integer);`);
+  await pglite.exec(AUDIT_LOGS_PGLITE_DDL);
   await pglite.exec(fs.readFileSync(path.join(process.cwd(), 'migrations/20260929_actor_names.sql'), 'utf8'));
   holder.db = drizzle(pglite);
   app = makeApp();
@@ -239,6 +244,12 @@ describe('auth gating', () => {
 
   it('401 when the token fails verification', async () => {
     auth.current = null; // verifier throws
+    const res = await authed().get('/api/approval-workflows/pending');
+    expect(res.status).toBe(401);
+  });
+
+  it('401 for a token that is not an access token (an MFA challenge), IAM-23', async () => {
+    auth.current = { userId: USER, organizationId: String(ORG), type: 'mfa_challenge' };
     const res = await authed().get('/api/approval-workflows/pending');
     expect(res.status).toBe(401);
   });

@@ -123,7 +123,7 @@ export function buildDocumentGenerationContext(doc: DetectedDocument): string {
   if (doc.module) parts.push(`**Module:** ${doc.module}`);
   parts.push(`**Description:** ${doc.description}`);
 
-  parts.push(`\nGenerate this document NOW. Write complete, submission-ready content — not an outline, not a summary, not placeholders. Use proper regulatory prose with ICH/FDA/EMA compliance. When done, include an \`\`\`ana-action block to auto-save as a governed artifact.`);
+  parts.push(`\nGenerate this document NOW. Write complete, submission-ready content — not an outline, not a summary, not placeholders. Use proper regulatory prose with ICH/FDA/EMA compliance. When done, include an \`\`\`ana-action block so the platform can propose saving it as a governed artifact; the person confirms before it is saved.`);
 
   return '\n\n' + parts.join('\n');
 }

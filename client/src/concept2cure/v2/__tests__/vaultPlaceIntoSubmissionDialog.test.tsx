@@ -64,25 +64,55 @@ function definedClasses(): Set<string> {
   return names;
 }
 
+/** The classes in use that no v2 stylesheet defines. */
+function inventedClasses(): string[] {
+  const defined = definedClasses();
+  const used = new Set<string>();
+  for (const el of Array.from(document.querySelectorAll('[class]'))) {
+    // getAttribute, not .className: on an SVG element className is an
+    // SVGAnimatedString, and stringifying it yields "[object ...]".
+    for (const c of (el.getAttribute('class') ?? '').split(/\s+/).filter(Boolean)) used.add(c);
+  }
+
+  /* lucide-* comes from the icon library's own SVGs and is styled by the
+     library, not by this app's stylesheets. Excluded by NAMESPACE rather than
+     by listing the three that happen to appear today, so adding an icon does
+     not fail this test for the wrong reason. */
+  const libraryOwned = (c: string) => c === 'lucide' || c.startsWith('lucide-');
+  return [...used].filter((c) => !defined.has(c) && !libraryOwned(c)).sort();
+}
+
 describe('the dialog is styled by the design system, not by invented names', () => {
   it('uses no class that no stylesheet defines', async () => {
     render(<VaultPlaceIntoSubmission {...(props() as any)} />);
     await screen.findByRole('dialog');
 
-    const defined = definedClasses();
-    const used = new Set<string>();
-    for (const el of Array.from(document.querySelectorAll('[class]'))) {
-      // getAttribute, not .className: on an SVG element className is an
-      // SVGAnimatedString, and stringifying it yields "[object ...]".
-      for (const c of (el.getAttribute('class') ?? '').split(/\s+/).filter(Boolean)) used.add(c);
-    }
+    const invented = inventedClasses();
+    expect(
+      invented,
+      `these class names are not defined in any v2 stylesheet, so they style nothing: ${invented.join(', ')}`,
+    ).toEqual([]);
+  });
 
-    /* lucide-* comes from the icon library's own SVGs and is styled by the
-       library, not by this app's stylesheets. Excluded by NAMESPACE rather than
-       by listing the three that happen to appear today, so adding an icon does
-       not fail this test for the wrong reason. */
-    const libraryOwned = (c: string) => c === 'lucide' || c.startsWith('lucide-');
-    const invented = [...used].filter((c) => !defined.has(c) && !libraryOwned(c)).sort();
+  it('uses no invented class when it shows a pre-filled section, a version\'s stage and the server\'s transmit verdict', async () => {
+    const PID = '11111111-1111-4111-8111-111111111111';
+    apiRequest.mockImplementation(async (_m: string, url: string) => {
+      if (url === '/api/submissions') return ok([]);
+      if (url === `/api/c2c/project-vault/${PID}/documents/${DOC_UUID}/versions`) {
+        return ok({ success: true, data: { versions: [{
+          id: DOC_UUID, version: '1.0', current: true, link: 'none', createdAt: '2026-09-30T10:00:00.000Z',
+          lifecycle: { canonicalId: 'c-1', stage: 'in_review', review: null, approval: null },
+          transmitRefusal: 'in_review, not approved', placements: [],
+        }] } });
+      }
+      return ok({});
+    });
+    const filing = { ctdSection: '3.2.P.8.3', placementStatus: 'confirmed' };
+    render(<VaultPlaceIntoSubmission {...(props({ projectId: PID, mimeType: 'application/pdf', filing }) as any)} />);
+    await screen.findByText(/This version would not be transmitted: in_review, not approved\./);
+    expect(screen.getByText(/Pre-filled from this document's confirmed filing/)).toBeTruthy();
+
+    const invented = inventedClasses();
     expect(
       invented,
       `these class names are not defined in any v2 stylesheet, so they style nothing: ${invented.join(', ')}`,

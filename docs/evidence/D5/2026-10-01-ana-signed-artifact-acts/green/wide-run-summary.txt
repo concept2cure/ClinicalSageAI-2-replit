@@ -1,0 +1,8 @@
+⎯⎯⎯⎯⎯⎯ Failed Tests 28 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  5 failed | 461 passed | 1 skipped (467)
+      Tests  28 failed | 4729 passed | 7 skipped (4764)
+     14  FAIL  server/routes/__tests__/approval-workflow.contract.test.ts
+      3  FAIL  server/routes/__tests__/evidence-sufficiency-5xx-containment.test.ts
+      2  FAIL  server/routes/__tests__/predicate-intelligence-error-containment.test.ts
+      3  FAIL  server/routes/__tests__/rim-date-validation.test.ts
+      6  FAIL  server/routes/__tests__/se-matrix-5xx-containment.test.ts

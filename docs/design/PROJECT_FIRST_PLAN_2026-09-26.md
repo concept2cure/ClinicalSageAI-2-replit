@@ -812,4 +812,52 @@ The founder chose the plan's recommended option in each case:
 
 - **LX-22 part 1** landed as `041976f2`: `submissions.program_id`, the same-organization key (`ON DELETE SET NULL (program_id)`, so a tenant purge is not blocked) and the one-to-one backfill.
 - **The LX-20 red test (§5 item 5)** is fixed in `c0a95ede`, with a second suite the same sweep found.
-- **PF-05 and PF-06 (LX-22 part 2)** are next, in this session.
+- **PF-05 and PF-06 (LX-22 part 2)** landed as `1706c05b` and `99862840`: every writer anchors a submission to its project, and readers take the anchored one; a name match is only for unanchored legacy rows.
+- **PF-11**, placement half, and LX-11: `39dfd9b7`. A cross-project placement is refused 409 `CROSS_PROJECT`, and the ledger names the document, its pin and both projects.
+  - Comments: fixed in `63b43274` (SEC-A-2): a comment's `doc_id` must be its section's document.
+  - Citations, the source-change scope, Module 3 placement and the re-point ledger: done (`docs/evidence/D2-PLACEMENT-STAYS-IN-PROJECT/2026-10-01-citation-module3-repoint/`).
+  - Pins (`stream.ts`, handed to `…01KZK3jg`) and the protocol→design binding (needs a project column on `protocol_documents`) are still open.
+- **PF-02**: the upload route landed as `25ee228e`, and `/docs/from-draft` in `824f699c`. The AnA tool's legacy branch (precondition P2 of PF-04) goes with PF-04.
+- **PF-14**: `2564895a`. A study design is anchored to a live project of its organization, and never moved or overwritten across organizations.
+- **PF-17**: done.
+  - The server half landed as `65412ea5` (`GET /:id/records`, and the activity feed shows the project's governed actions).
+  - The ProjectHome panel and the artifact status route: `fe7db61a`, with `be236610` (a failed project lookup is a 500).
+  - Every artifact route acts only on its own project's artifact, and a v2 project reaches them all: `a1d99e1b` (`server/routes/c2c/artifact-project-scope.ts`).
+- **PF-13**: `6f752472`. A project holding sealed, filed or transmitted records is archived, never deleted.
+  - Follow-up, `0ecc058c` (D5): a delete the database refuses is an honest 409. About 45 stores name a project under a NO ACTION key, and all three hard-delete routes answered their 23503 as a bare 500. Now `project-retention.ts` `projectDeleteBlockedRefusal` answers 409 `PROJECT_HOLDS_RECORDS`, "archive instead". AnA's working memory no longer blocks a draft-only project's delete: both its keys are `ON DELETE SET NULL (project_id)`, amended in place in `20260820` and `20261001` (`docs/evidence/D5-PROJECT-RETENTION/2026-10-01-delete-held-by-store/`). Whether any of the other 44 stores should cascade is left open, per store.
+- **PF-07** (founder decision: project required): done.
+  - The Data Room half landed as `824f699c`: no source without a project, one audited adopt, identity per project.
+  - The Authoring half: `86ab0d2e`. No document without a project, on the server and both client create paths.
+  - The user's half: `27d87155`. The Data Room offers the caller's conversation files, and "Add to this project" is the audited adopt.
+  - Handed to W1 (`…01T2wooC`): the chat message shown for an upload made with no project open.
+- **PF-04**: done, `f8c32f28` (precondition P2: `b4b218bd`). The same-organization keys cover five stores, with a pre-flight for legacy rows, proven on real PostgreSQL 16 (`docs/evidence/D3/2026-09-26-program-same-org-keys/`). `vault.documents` and `submission_transmittals` are deliberately left out (see the migration header), and handed to D6 and PF-12.
+- **PF-08**: the anchor-delete half is done (`docs/evidence/D5-PROJECT-RETENTION/2026-09-30-legacy-hard-delete/`). `DELETE /api/projects/:id` and `DELETE /api/clients/:id` refuse to hard-delete a program's anchor row, or a project holding documents past draft. The anchor reader and the unique anchor index are done (`docs/evidence/D2-PROGRAM-ONE-ANCHOR/2026-10-01/`, `fa00d639`, `382e25c6`).
+  - One reader, `readProgramAnchorRow`, reads the lowest-id row, the one intake links, and names a duplicate.
+  - The six copies are folded onto it, and a contract test refuses a new one.
+  - `20261001b` adds the one-anchor-per-program partial unique index when no program has two anchor rows. Otherwise it names them as `project@organization` and the deploy proceeds.
+  - Still open: the founder decision on auto-linking same-named legacy projects, which bounds the 20260814 backfill and gives it an audit row.
+- **PF-10** (founder decision: switching project forks the conversation): in progress, planned as eleven slices by the scout of 2026-10-01 (`wf_92bf7e8a-b5e`).
+  - S1, `541a8d2e`: `chat_threads.program_id`, with a same-organization key, `ON DELETE SET NULL (program_id)`, a needs-organization CHECK, and a same-organization-only backfill from the old metadata (`docs/evidence/D2-CONVERSATION-ONE-PROJECT/2026-10-01-program-key/`).
+  - S2, `301ab17d`: the thread mint binds `program_id` only after `programInOrganization`; both thread lists read the column (`.../2026-10-01-bound-at-mint/`).
+  - S8, `6e5cf462`: no route re-homes a conversation; `PATCH /api/chat/thread/:id` refuses a project change with 409 (`.../2026-10-01-project-fixed/`).
+  - S5, `72096543` + `cac00a27` (LX-06's stream half): every way a tool runs (dispatched, held, confirmed) names its conversation, turn and model through one builder (`services/ana/turn-tool-context.ts`); a draft's provenance records them; the walk's `model-recorded` and `turn-recorded` are green and the baseline ceiling is 15 (`docs/evidence/D5-ANA-RECORD/2026-10-01-draft-names-conversation/`).
+  - S6a, `54aba6ce` + `583f8146`: one resolution of a turn's project ref (`services/c2c/project-ref.ts`); the intelligence prefix and post-processing no longer turn `7abb…` into project 7 (the guidance and command executors acted on it) (`.../2026-10-01-prefix-open-project/`, `.../2026-10-01-post-processing-project/`).
+  - S10b, `975290b6`: `POST /api/chat/send-message` resolves its project once; a contract test refuses project-id coercion on the AnA turn paths (`.../2026-10-01-send-message-project/`).
+  - S7, `453593ba` + `0a2f2290` (vault MISSED-2): AnA's document catalog tools stay in the open project. Listing, filing, the three by-id tools (read, catalog, place) and both searches refuse another project's documents with `CROSS_PROJECT` (`services/ana/catalog-scope.ts`). An open project with no program is refused `NO_PROJECT`, not read organization-wide. The passage search's scope is pushed into the vault SQL (`rag-filters.ts` `programId`, fail-closed on a corpus without the column). The non-stream chat path now passes the project's ref (`.../2026-10-01-catalog-open-project/`).
+  - S11, `98df97e2` (D3): AnA's working memory names a project of its own organization, at the database: a fourth same-organization key in `20261001_integer_project_same_org_keys.sql` (amended in place), with a preflight entry (`docs/evidence/D3/2026-10-01-working-memory-project-key/`).
+  - Next: S3, the fork on the server, after a deploy boundary so threads minted during the S2 roll are backfilled first; then S4 (the client marker), the stream's own readers (S6a rest, with S3), S6b, S9 and S10a.
+  - Decisions for the founder before S3, each with the scout's recommended default:
+    - F1, no project then a project opened: fork.
+    - F2, a project then closed: fork into no project.
+    - F3, resuming a thread of A while B is open: fork on the next send.
+    - F4, a held governed action confirmed after a fork: run it under its recorded project, named in the dialog.
+    - F5, `list_project_documents` with no project open: organization-wide, as today.
+    - F6, turning on the integer-keyed AnA tools for v2 projects: first move them onto `projectRef`.
+    - F7, a turn naming a foreign or deleted project: refuse.
+    - F8, when the marker appears: on the first turn in the new project.
+- **PF-03**: done. The writers check the `projects` row is the caller's (`docs/evidence/D3/2026-10-01-integer-space-writers/`). The database holds the integer project id to the row's organization on `concept2cure_artifacts`, `c2c_submission_packages` (`docs/evidence/D3/2026-10-01-integer-project-same-org-keys/`) and `concept2cure_conversations` (`docs/evidence/D3/2026-10-01-conversation-project-key/`). Handed on: `approve_import` and `save_document_to_vault` to the D6 lane.
+- **PF-15**: the CMC and eSTAR halves are done. LX-26 (the device filing path) waits on its founder decision.
+  - `652e0947`: the Module 3 routes and `POST /api/cmc-changes` write only under a project of the caller's organization.
+  - `369cc698`: one membership check for CMC, `project-membership.ts` `projectBelongsToTenant`, which no longer admits a deleted program.
+  - `0f69a1d3` (MISSED-2): an interview session is bound only to a project of its organization, checked at start and on every commit.
+  - `c432e27a`: a tracked eSTAR filing names a project of its organization.

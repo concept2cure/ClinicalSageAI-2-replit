@@ -1,0 +1,24 @@
+=== server/export/authoring-blocks-to-html.ts with handon.patch applied (scratch copy, linted as the tree path)
+./server/export/authoring-blocks-to-html.ts
+  103:14  warning  Arrow function has a complexity of 17. Maximum allowed is 15            complexity
+  231:1   warning  Function 'tableHtml' has too many parameters (6). Maximum allowed is 5  max-params
+  308:8   warning  Function 'blocksToHtml' has a complexity of 22. Maximum allowed is 15   complexity
+✖ 3 problems (0 errors, 3 warnings)
+=== server/export/authoring-blocks-to-html.ts (HEAD)
+./server/export/authoring-blocks-to-html.ts
+  103:14  warning  Arrow function has a complexity of 17. Maximum allowed is 15            complexity
+  233:1   warning  Function 'tableHtml' has too many parameters (6). Maximum allowed is 5  max-params
+  310:8   warning  Function 'blocksToHtml' has a complexity of 22. Maximum allowed is 15   complexity
+✖ 3 problems (0 errors, 3 warnings)
+=== server/export/authoring-blocks-to-docx.ts with handon.patch applied (scratch copy, linted as the tree path)
+./server/export/authoring-blocks-to-docx.ts
+  273:1   warning  Function 'runsOf' has too many parameters (8). Maximum allowed is 5   max-params
+  286:27  warning  Arrow function has a complexity of 18. Maximum allowed is 15          complexity
+  405:1   warning  Function 'tableOf' has too many parameters (8). Maximum allowed is 5  max-params
+✖ 3 problems (0 errors, 3 warnings)
+=== server/export/authoring-blocks-to-docx.ts (HEAD)
+./server/export/authoring-blocks-to-docx.ts
+  273:1   warning  Function 'runsOf' has too many parameters (8). Maximum allowed is 5   max-params
+  286:27  warning  Arrow function has a complexity of 18. Maximum allowed is 15          complexity
+  405:1   warning  Function 'tableOf' has too many parameters (8). Maximum allowed is 5  max-params
+✖ 3 problems (0 errors, 3 warnings)

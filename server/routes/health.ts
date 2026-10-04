@@ -6,6 +6,7 @@
  */
 import express, { Request, Response } from 'express';
 import { createContextLogger } from '../utils/logger';
+import { serverError } from '../lib/api-response';
 import { healthCheck as dbHealthCheck, pool } from '../db';
 import { CircuitState, getCircuitBreaker } from '../middleware/circuitBreaker';
 import { healthCheck as sagePlusHealthCheck } from '../sage-plus-service';
@@ -67,17 +68,24 @@ router.get('/health/ready', async (req: Request, res: Response) => {
     // Return appropriate status code
     res.status(isHealthy ? 200 : 503).json(status);
   } catch (error) {
-    logger.error('Health check failed', {
-      error: error instanceof Error ? error.message : String(error),
-    });
-
-    res.status(500).json({
-      status: 'error',
-      timestamp: new Date().toISOString(),
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    /* A probe router is reached without a session wherever it is mounted, so
+       the thrower's text (a connection target, a driver message) goes to the
+       log against the request id, never into the body (IAM-18 (1), P1-17). */
+    return serverError(res, logger, 'running the readiness check', error);
   }
 });
+
+/**
+ * The fixed sentence a degraded deep-check report carries in place of a
+ * failed probe's own text. The detail is logged; the body states only which
+ * probe failed, which is what a load balancer or an operator dashboard needs.
+ */
+function probeFailed(probe: string, error: unknown): string {
+  logger.warn(`${probe} probe failed`, {
+    err: error instanceof Error ? error.message : String(error),
+  });
+  return `${probe} probe failed; the detail is in the server log`;
+}
 
 /**
  * Deep health check
@@ -112,7 +120,7 @@ router.get('/health/deep', async (req: Request, res: Response) => {
       } catch (error) {
         databaseResult = {
           status: 'error',
-          error: error instanceof Error ? error.message : String(error),
+          error: probeFailed('database', error),
           latency: 0,
         };
       }
@@ -138,7 +146,7 @@ router.get('/health/deep', async (req: Request, res: Response) => {
     } catch (error) {
       sagePlusResult = {
         status: 'error',
-        error: error instanceof Error ? error.message : String(error),
+        error: probeFailed('SagePlus', error),
         latency: 0,
       };
     }
@@ -151,7 +159,7 @@ router.get('/health/deep', async (req: Request, res: Response) => {
         databaseResult.latency = Date.now() - startDb;
       } catch (error) {
         // Keep existing status but note latency error
-        (databaseResult as any).latencyError = error instanceof Error ? error.message : String(error);
+        databaseResult.latencyError = probeFailed('database latency', error);
       }
     }
 
@@ -204,15 +212,8 @@ router.get('/health/deep', async (req: Request, res: Response) => {
 
     res.status(isHealthy ? 200 : 503).json(healthReport);
   } catch (error) {
-    logger.error('Deep health check failed', {
-      error: error instanceof Error ? error.message : String(error),
+    return serverError(res, logger, 'running the deep health check', error, {
       stack: error instanceof Error ? error.stack : undefined,
-    });
-
-    res.status(500).json({
-      status: 'error',
-      timestamp: new Date().toISOString(),
-      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });

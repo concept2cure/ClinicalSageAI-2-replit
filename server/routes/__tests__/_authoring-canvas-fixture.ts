@@ -95,8 +95,8 @@ export const VAULT_DDL = `
     content_hash TEXT NOT NULL,
     classification TEXT DEFAULT 'INTERNAL',
     retention_policy TEXT, parent_document_id UUID, supersedes_id UUID,
-    -- The retention clock the ingest now starts at admission (9f43e7e9, P1-22):
-    -- today plus the named, active policy's days (migrations/20260608_vault_retention.sql).
+    -- The retention clock the ingest starts at admission (P1-22; ADR-0014 §6):
+    -- the organisation's period, else 25 years, never earlier than a named policy.
     retention_until DATE,
     extracted_text TEXT, page_count INTEGER, word_count INTEGER,
     folder_id TEXT, evidence_kind TEXT, ctd_section TEXT,
@@ -113,12 +113,19 @@ export const VAULT_DDL = `
   CREATE UNIQUE INDEX idx_vault_documents_program_hash_unique ON vault.documents (program_id, content_hash);
   -- The policies the ingest reads the retention days from (the columns it
   -- reads, from migrations/20260608_vault_retention.sql). Empty here: a document
-  -- that names no policy, or an unknown one, gets no date.
+  -- that names no policy, or an unknown one, is dated by the organisation period.
   CREATE TABLE vault.retention_policies (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     policy_name TEXT NOT NULL UNIQUE,
     retention_days INTEGER NOT NULL,
     active BOOLEAN NOT NULL DEFAULT TRUE
+  );
+  -- The organisation's own retention period the ingest reads (ADR-0014 §6; the
+  -- columns it reads, from migrations/20261001_organization_retention_settings.sql).
+  -- Empty here: every document is dated by the 25-year default.
+  CREATE TABLE organization_retention_settings (
+    organization_id INTEGER NOT NULL UNIQUE,
+    retention_years INTEGER NOT NULL
   );
 `;
 

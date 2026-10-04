@@ -33,7 +33,10 @@ vi.mock('../server/db', () => {
     delete: () => chain,
     execute: () => Promise.resolve({ rows: [] }),
   };
-  const query = () => Promise.resolve({ rows: [], rowCount: 0 });
+  // The program check (programInOrganization) reads regulatory_programs on the
+  // pool; it answers from the same pass/deny holder as the chain.
+  const query = (sql: string) =>
+    Promise.resolve(/FROM regulatory_programs/.test(sql) ? { rows: h.rows, rowCount: h.rows.length } : { rows: [], rowCount: 0 });
   return { db: chain, pool: { query }, getPool: () => ({ query }) };
 });
 
@@ -67,8 +70,8 @@ beforeEach(() => {
 
 describe('post-market authoring — auth gate', () => {
   it.each([
-    '/api/post-market/programs/p1/documents/pmcf-plan/generate',
-    '/api/post-market/programs/p1/documents/pms_plan/generate',
+    '/api/post-market/programs/aaaaaaaa-0000-4000-8000-000000000001/documents/pmcf-plan/generate',
+    '/api/post-market/programs/aaaaaaaa-0000-4000-8000-000000000001/documents/pms_plan/generate',
   ])('POST %s returns 403 without org context', async url => {
     const res = await request(makeApp(false)).post(url).send({ deviceName: 'X' });
     expect(res.status).toBe(403);
@@ -87,12 +90,12 @@ describe('post-market authoring — program access scoping', () => {
 
 describe('post-market authoring — input validation (program access granted)', () => {
   beforeEach(() => {
-    h.rows = [{ id: 'p1' }]; // requireProgramAccess passes
+    h.rows = [{ id: 'aaaaaaaa-0000-4000-8000-000000000001' }]; // requireProgramAccess passes
   });
 
   it('rejects an unknown documentType with 422', async () => {
     const res = await request(makeApp())
-      .post('/api/post-market/programs/p1/documents/not_a_type/generate')
+      .post('/api/post-market/programs/aaaaaaaa-0000-4000-8000-000000000001/documents/not_a_type/generate')
       .send({ deviceName: 'Acme Pump' });
     expect(res.status).toBe(422);
     expect(res.body.error).toMatch(/documentType must be one of/i);
@@ -100,7 +103,7 @@ describe('post-market authoring — input validation (program access granted)', 
 
   it('rejects when neither deviceName nor relatedCerReportId is provided', async () => {
     const res = await request(makeApp())
-      .post('/api/post-market/programs/p1/documents/pms_plan/generate')
+      .post('/api/post-market/programs/aaaaaaaa-0000-4000-8000-000000000001/documents/pms_plan/generate')
       .send({});
     expect(res.status).toBe(422);
     expect(res.body.error).toMatch(/deviceName or relatedCerReportId/i);
@@ -108,14 +111,14 @@ describe('post-market authoring — input validation (program access granted)', 
 
   it('rejects an invalid regulation with 422', async () => {
     const res = await request(makeApp())
-      .post('/api/post-market/programs/p1/documents/sscp/generate')
+      .post('/api/post-market/programs/aaaaaaaa-0000-4000-8000-000000000001/documents/sscp/generate')
       .send({ deviceName: 'Acme Pump', regulation: 'FDA' });
     expect(res.status).toBe(422);
   });
 
   it('rejects a non-integer relatedCerReportId with 422', async () => {
     const res = await request(makeApp())
-      .post('/api/post-market/programs/p1/documents/psur/generate')
+      .post('/api/post-market/programs/aaaaaaaa-0000-4000-8000-000000000001/documents/psur/generate')
       .send({ relatedCerReportId: 'abc' });
     expect(res.status).toBe(422);
   });
@@ -124,7 +127,7 @@ describe('post-market authoring — input validation (program access granted)', 
     // Reaches the generator (program access ok, valid input); with the mocked
     // DB this resolves without throwing a validation 422.
     const res = await request(makeApp())
-      .post('/api/post-market/programs/p1/documents/pmcf-evaluation/generate')
+      .post('/api/post-market/programs/aaaaaaaa-0000-4000-8000-000000000001/documents/pmcf-evaluation/generate')
       .send({ deviceName: 'Acme Pump' });
     expect(res.status).not.toBe(422);
   });

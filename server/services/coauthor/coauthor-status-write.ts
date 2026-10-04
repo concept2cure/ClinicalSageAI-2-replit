@@ -64,6 +64,21 @@
  *      isCoauthorVerdictStatus and coauthorReadOnlyRefusal and refuses a
  *      verdict row the same way, on the row it holds FOR UPDATE.
  *
+ *   4. (2026-10-01, D5; editor-family review P11-B-1.) A PUT that writes
+ *      the row states its reason for change (`changeReason`, held to the one
+ *      server rule, routes/governed-reason.ts requireGovernedReason), as the other two hosts of the same
+ *      editor already require (PATCH /api/authoring/sections/:id,
+ *      PATCH /api/protocol-development/sections/:id); else 400
+ *      REASON_REQUIRED and nothing is written. Decided after rules 2 and 3, so
+ *      their refusals are unchanged, and only when there is something to
+ *      write: a restate or an empty PUT stays a no-op that needs no reason.
+ *      In the same transaction as the write, the text it replaces is kept as
+ *      the document's next version, and a `coauthor_document.updated` event
+ *      records the actor, the reason, what changed, and the status, title,
+ *      module and content digest before and after. Until this, both PUTs
+ *      overwrote a filing copy's text and status with none of those, while
+ *      the editor saved it as an ordinary edit.
+ *
  * The row is read FOR UPDATE inside one transaction and rules 2 and 3 are
  * decided on that locked row, so a concurrent status change cannot turn a
  * restate into a promotion or let an edit land on a row that became approved
@@ -74,8 +89,16 @@
  */
 import { and, eq } from 'drizzle-orm';
 import { db } from '../../db';
+import { queryableFromDrizzle } from '../../db/drizzle-queryable.js';
 import { coauthorDocuments } from '../../../shared/schema';
+import { requireGovernedReason } from '../../routes/governed-reason.js';
 import { isFinalizedStatus } from '../ectd/leaf-source-resolver.js';
+import {
+  coauthorContentSha256,
+  recordCoauthorDocumentEvent,
+  versionReplacedCoauthorContent,
+  type CoauthorAuditActor,
+} from './coauthor-audit.js';
 
 type CoauthorRow = typeof coauthorDocuments.$inferSelect;
 
@@ -92,7 +115,11 @@ export const COAUTHOR_WORKING_STATUSES: readonly string[] = Object.freeze([
  * the leaf resolver does not count filable. The resolver's own finalized set
  * is not copied here — it is asked, through isFinalizedStatus.
  */
-const SIGN_OFF_STATUSES: ReadonlySet<string> = new Set(['signed', 'locked']);
+/* Statuses only a governed act may set, beyond those the resolver files.
+   'finalized' is the sealed snapshot of a frozen authoring document: since
+   DP-35 (2026-10-01) the resolver no longer files it, since a freeze is not an
+   approval, but a PUT must still never award it. */
+const SIGN_OFF_STATUSES: ReadonlySet<string> = new Set(['signed', 'locked', 'finalized']);
 
 /** Every value the codebase documents or reads for coauthor_documents.status. */
 const DOCUMENTED_VOCABULARY: readonly string[] = [
@@ -112,6 +139,16 @@ export function normalizeCoauthorStatus(status: string | null | undefined): stri
 export function isCoauthorVerdictStatus(status: string | null | undefined): boolean {
   const n = normalizeCoauthorStatus(status);
   return isFinalizedStatus(n, 'coauthor_documents') || SIGN_OFF_STATUSES.has(n);
+}
+
+/**
+ * A row as the co-author client reads it: with `readOnly`, so the editor is
+ * opened read-only over a verdict row instead of offering a Save rule 3 can
+ * only refuse (2026-10-01, D5; editor-family review P11-B-3). Decided here, so
+ * the client keeps no copy of the vocabulary or its normaliser.
+ */
+export function withCoauthorReadOnly<T extends { status: string | null }>(row: T): T & { readOnly: boolean } {
+  return { ...row, readOnly: isCoauthorVerdictStatus(row.status) };
 }
 
 /** The verdict spellings, enumerated. (2026-09-23, repair 2: this said "for
@@ -241,6 +278,10 @@ export function coauthorReadOnlyRefusal(current: string): CoauthorPutRefusal {
 export async function applyCoauthorDocumentPut(args: {
   documentId: number;
   organizationId: number;
+  /** Who is writing, from the verified session (coauthorAuditActor(req)). */
+  actor: CoauthorAuditActor;
+  /** The request's `changeReason`, as sent (rule 4). */
+  changeReason: unknown;
   status: unknown;
   governed: Partial<Pick<CoauthorRow, 'title' | 'content' | 'moduleNumber'>>;
   ungoverned?:
@@ -297,8 +338,70 @@ export async function applyCoauthorDocumentPut(args: {
     // A pure restate (or an empty PUT): nothing to write.
     if (Object.keys(set).length === 0) return { ok: true, document: current };
 
+    // Rule 4: a write states its reason, keeps the text it replaces, and is recorded.
+    const stated = requireGovernedReason(args.changeReason);
+    if (!stated.ok) return { ok: false, refusal: reasonRequired(stated.error) };
+    const reason = stated.reason;
+    const q = queryableFromDrizzle(tx);
+    const replacesContent = set.content !== undefined && set.content !== current.content;
+    const supersededVersion = replacesContent
+      ? await versionReplacedCoauthorContent(q, {
+          documentId: current.id,
+          previousContent: current.content,
+          createdBy: args.actor.name,
+          changeSummary: reason,
+        })
+      : null;
+
     set.updatedAt = new Date();
     const [document] = await tx.update(coauthorDocuments).set(set).where(scope).returning();
+    await recordCoauthorDocumentEvent(q, {
+      organizationId,
+      documentId: document.id,
+      eventType: 'coauthor_document.updated',
+      actor: args.actor,
+      reason,
+      metadata: {
+        changed: changedFields(current, document),
+        before: recordedState(current),
+        after: recordedState(document),
+        supersededVersion,
+      },
+    });
     return { ok: true, document };
   });
+}
+
+function reasonRequired(rule: string): CoauthorPutRefusal {
+  return {
+    httpStatus: 400,
+    body: {
+      error: 'REASON_REQUIRED',
+      message: `${rule} It is recorded on the document’s audit trail with the change. Nothing was saved.`,
+    },
+  };
+}
+
+/** What a coauthor event records of a row: its state, its eCTD placement
+ *  metadata (section, region — the eCTD PUT writes them), and its text as a
+ *  digest (the text itself is kept as a version). */
+function recordedState(row: CoauthorRow) {
+  const meta = (row.metadata ?? {}) as { section?: unknown; region?: unknown };
+  return {
+    status: row.status,
+    title: row.title,
+    moduleNumber: row.moduleNumber ?? null,
+    section: meta.section ?? null,
+    region: meta.region ?? null,
+    contentSha256: coauthorContentSha256(row.content),
+  };
+}
+
+/** The recorded fields whose value the write changed. Empty for a save that changed nothing. */
+function changedFields(before: CoauthorRow, after: CoauthorRow): string[] {
+  const a = recordedState(before);
+  const b = recordedState(after);
+  return (Object.keys(a) as Array<keyof typeof a>)
+    .filter((k) => a[k] !== b[k])
+    .map((k) => (k === 'contentSha256' ? 'content' : k));
 }

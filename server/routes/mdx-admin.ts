@@ -37,6 +37,10 @@ import { isDevAuthAllowed } from '../auth/dev-auth-policy';
 import { mfaEnrolmentOf } from '../services/mfa-enrolment';
 import { humanizeEventType, linkedSignatures, type LinkedSignature } from './audit-trail-ledger.routes';
 
+// People are named through public.actor_name, not a join on users: since users
+// took row-level security (D3, 2026-09-28) a tenant scope reads only current
+// members, so the join dropped the name of anyone who had left
+// (docs/evidence/D3/2026-09-29-actor-names/).
 const router = Router();
 const log = createScopedLogger('mdx-admin');
 
@@ -183,7 +187,7 @@ router.get('/admin', async (req: Request, res: Response) => {
       `SELECT k.id, k.name, k.key_prefix, k.scopes, k.created_at, k.last_used_at, k.created_by, k.status,
               u.name AS owner_name, u.email AS owner_email
          FROM api_keys k
-         LEFT JOIN users u ON u.id = k.created_by
+         LEFT JOIN LATERAL public.actor_name(k.created_by) u ON TRUE
         WHERE k.organization_id = $1 ORDER BY k.created_at DESC LIMIT 50`,
       [orgId],
       unavailable,
@@ -229,8 +233,10 @@ router.get('/admin', async (req: Request, res: Response) => {
               ua.name AS actor_name, ua.email AS actor_email,
               ut.name AS target_name, ut.email AS target_email
          FROM audit_logs a
-         LEFT JOIN users ua ON ua.id = a.user_id
-         LEFT JOIN users ut ON a.table_name IN ('user', 'users') AND ut.id::text = a.record_id
+         LEFT JOIN LATERAL public.actor_name(a.user_id) ua ON TRUE
+         LEFT JOIN LATERAL public.actor_name(
+           CASE WHEN a.table_name IN ('user', 'users') AND a.record_id ~ '^[0-9]{1,9}$' THEN a.record_id::int END
+         ) ut ON TRUE
         WHERE a.tenant_id = $1 ORDER BY a.created_at DESC LIMIT 20`,
       [orgId],
       unavailable,
@@ -278,7 +284,7 @@ router.get('/admin', async (req: Request, res: Response) => {
       return {
         id: String(a.id),
         when: new Date(a.created_at).toISOString(),
-        actor: a.user_id ? accountName(a.actor_name, a.actor_email) ?? 'Unknown account' : 'system',
+        actor: a.user_id ? accountName(a.actor_name, a.actor_email) ?? `user ${a.user_id}` : 'system',
         action: signed?.event ?? ((a.description && a.description.trim()) || humanizeEventType(a.action)),
         target: signed?.subject ?? target,
         sha: a.sha256_chain ? `${a.sha256_chain.slice(0, 4)}…${a.sha256_chain.slice(-4)}` : '',

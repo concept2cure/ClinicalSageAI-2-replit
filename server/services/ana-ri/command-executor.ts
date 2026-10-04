@@ -15,6 +15,7 @@
  */
 
 import { getPool } from '../../db';
+import { projectBelongsToTenant } from '../cmc/project-membership';
 import type { StatisticalInput } from '../ana-biostats/types';
 import type { PoolClient } from 'pg';
 import type { AuditTaskActionParams } from '../tasking/task-audit.js';
@@ -29,12 +30,7 @@ import {
   sha256OfContent,
   signGovernedCommand,
 } from './governed-command-signature.js';
-import { artifactApproval } from '../ectd/package-content-fingerprint';
-import {
-  approvalRecordedOnlyByGovernedAct,
-  GOVERNED_LOCK_ACTION,
-  lockRecordedOnlyByGovernedAct,
-} from '../artifact-approval-act';
+import { signArtifactStatusByAna } from './ana-signed-artifact-act';
 
 // Lazy pool access. Acquiring the pool at module load (`getPool()` at
 // top level) throws "Database connection not available" when this module
@@ -89,12 +85,16 @@ import {
   requiresPart11Signoff,
   requiresEsignature,
   validateSignoff,
+  normalizedArtifactStatus,
   buildSignatureRequiredResult,
   buildHumanConfirmationRequiredResult,
   loadPart11EnforceStrict,
   type Part11Signoff,
 } from './part11-governance';
 import { authorizeCommand, isPrivacyAdmin, isProposeOnlyCommand } from './command-rbac';
+import { statedReasonOrNull } from '../../routes/governed-reason.js';
+import { recordCommentPosted } from '../../routes/c2c/review-comment-record.js';
+import { ANA_REVIEW_COMMENT_ROLE } from '../../../shared/constants/review-comment.js';
 import {
   explainAuditRow,
   EXPLAIN_AUDIT_ROW_METADATA,
@@ -561,8 +561,8 @@ export async function createArtifact(
       return {
         success: false,
         action: 'create_artifact',
-        message: `Governed persistence failed for "${params.title}"`,
-        error: execution.persistenceStatus,
+        message: execution.persistenceRefusal?.message ?? `Governed persistence failed for "${params.title}"`,
+        error: execution.persistenceRefusal?.code ?? execution.persistenceStatus,
       };
     }
 
@@ -706,6 +706,27 @@ export async function updateArtifactStatus(
   }
 ): Promise<CommandResult> {
   try {
+    // Approving and locking are electronic signatures (2026-10-01, D5): the
+    // status route's act, with its rules, through the governed-action sign-off
+    // (ana-signed-artifact-act.ts). They were the reason tier here, and wrote
+    // the status with no signature, no version and no snapshot.
+    const target = normalizedArtifactStatus(params.status);
+    if (target === 'approved' || target === 'locked') {
+      return await signArtifactStatusByAna(ctx, { ...params, status: target });
+    }
+    // Anything else unsigned is draft or review, by name. 'Approved' or 'LOCKED'
+    // used to be the reason tier and was written raw, where some readers took
+    // it as finalized (review of dacc2ff84).
+    if (target !== 'draft' && target !== 'review') {
+      return {
+        success: false,
+        action: 'update_artifact_status',
+        message:
+          `"${String(params.status)}" is not a status this command moves an artifact to: draft or review, ` +
+          'or approved and locked as an electronic signature. Nothing was changed.',
+      };
+    }
+
     // Load current artifact to validate transition
     const existing = await pool.query(
       `SELECT artifact_id, title, status, ctd_section,
@@ -725,7 +746,7 @@ export async function updateArtifactStatus(
 
     const current = existing.rows[0];
     const fromStatus = current.status;
-    const toStatus = params.status;
+    const toStatus = target;
 
     // Guard: locked documents cannot be status-changed without explicit unlock
     if (fromStatus === 'locked' && toStatus !== 'draft') {
@@ -737,88 +758,18 @@ export async function updateArtifactStatus(
       };
     }
 
-    // Guard: a controlled document cannot skip its review/approval gates. Locking
-    // (the freeze that precedes an e-signature) requires a prior APPROVED state,
-    // and approval requires a prior REVIEW — 21 CFR Part 11 §11.10. Blocking only
-    // the unambiguous early-state skips (draft/review → locked, draft → approved)
-    // keeps documents already past these gates (approved/effective/signed/final)
-    // unaffected. The lawful path is draft → review → approved → locked.
-    if (toStatus === 'locked' && (fromStatus === 'draft' || fromStatus === 'review')) {
-      return {
-        success: false,
-        action: 'update_artifact_status',
-        message: `"${current.title}" cannot be locked from "${fromStatus}". A document must be approved before it can be locked. Move it through review and approval first.`,
-        data: { artifactId: params.artifactId, currentStatus: fromStatus, requestedStatus: toStatus },
-      };
-    }
-    if (toStatus === 'approved' && fromStatus === 'draft') {
-      return {
-        success: false,
-        action: 'update_artifact_status',
-        message: `"${current.title}" cannot be approved directly from draft. It must be submitted for review first (draft → review → approved).`,
-        data: { artifactId: params.artifactId, currentStatus: fromStatus, requestedStatus: toStatus },
-      };
-    }
-
-    // Guard: a lock must cover the approval.
-    // 2026-09-23 (W5/D7, residual repair): an approved v1 edited to v2 (status
-    // stays 'approved') could be locked here over content no one reviewed. The
-    // verdict is the filing rule's own (artifactApproval, imported — not a
-    // second rule), as the status route (server/routes/c2c/artifacts.ts PUT
-    // …/status) and authoring-actions lock-artifact apply it: lockable only
-    // when filable as approved (version = approved_version_id); an approval
-    // that recorded no version fails closed.
-    if (toStatus === 'locked') {
-      const approval = artifactApproval({
-        status: fromStatus,
-        version: current.version,
-        approvedVersionId: current.approved_version_id,
-        publishedVersionId: current.published_version_id,
-      });
-      // 2026-09-23 (W5/D7, final pass, repair): the refusal gave the filing
-      // rule's status-route remedy ("approved → review, then review →
-      // approved, which records the version approved"); done through this
-      // command, which records no version, the next lock was refused with the
-      // same words. It names the governed act and says this command records
-      // none.
-      if (!approval.filable) {
-        return {
-          success: false,
-          action: 'update_artifact_status',
-          message:
-            `"${current.title}" cannot be locked: ${approval.problem}. ` +
-            `${approvalRecordedOnlyByGovernedAct('command')} Lock it after that through ${GOVERNED_LOCK_ACTION}, ` +
-            'which records the version locked; this command records none.',
-          data: {
-            artifactId: params.artifactId,
-            currentStatus: fromStatus,
-            requestedStatus: toStatus,
-            reason: approval.reason,
-          },
-        };
-      }
-    }
-
     // Guard: warn about approved → draft regression (but allow it)
     const isRegression =
       fromStatus === 'approved' && (toStatus === 'draft' || toStatus === 'review');
 
-    // 2026-09-23 (W5/D7, final pass): this command is not the approval act. It
-    // writes the status and records no approved or locked version (HEAD
-    // behaviour; the residual-repair rounds' recording here was reverted — it
-    // recorded approvals for roles the status route refuses and locks without
-    // the route's role check or attestation). Only the governed act (the
-    // status route's review → approved, authoring-actions approve-artifact)
-    // records one. Leaving approved/locked clears any recorded version in this
-    // same write (the trigger in
-    // migrations/20260923b_artifact_approval_follows_status.sql), so an
-    // approval revoked earlier is not resurrected here. RETURNING reads what
-    // was written, so the message below is judged on it.
-    const written = await pool.query(
+    // Draft and review only, here (approve and lock returned above). Leaving
+    // approved/locked clears any recorded version in this same write (the
+    // trigger in migrations/20260923b_artifact_approval_follows_status.sql), so
+    // an approval revoked earlier is not resurrected.
+    await pool.query(
       `UPDATE concept2cure_artifacts
        SET status = $4, updated_at = NOW()
-       WHERE artifact_id = $1 AND project_id = $2 AND organization_id = $3
-       RETURNING status, version, approved_version_id, published_version_id`,
+       WHERE artifact_id = $1 AND project_id = $2 AND organization_id = $3`,
       [params.artifactId, params.projectId, ctx.organizationId, toStatus]
     );
 
@@ -827,7 +778,6 @@ export async function updateArtifactStatus(
     const regressionWarning = isRegression
       ? ' ⚠ This reverses approval and will require re-review before the document can be approved again.'
       : '';
-    const filingNote = notFilableNote(toStatus, written.rows[0]);
 
     return {
       success: true,
@@ -839,7 +789,7 @@ export async function updateArtifactStatus(
         title: current.title,
         isRegression,
       },
-      message: `"${current.title}"${sectionLabel} status changed: ${transitionLabel}.${regressionWarning}${filingNote}`,
+      message: `"${current.title}"${sectionLabel} status changed: ${transitionLabel}.${regressionWarning}`,
     };
   } catch (err: unknown) {
     return {
@@ -851,35 +801,6 @@ export async function updateArtifactStatus(
       error: err instanceof Error ? err.message : String(err),
     };
   }
-}
-
-/**
- * The truthful filing note for a status this command wrote: empty unless the
- * row it wrote is approved/locked and the filing rule (artifactApproval) still
- * refuses it — in which case it says why and which governed act files it. 2026-09-23 (W5/D7,
- * final pass). A row that could not be read back is reported as not filable
- * (fail closed), never as filable.
- */
-function notFilableNote(
-  toStatus: string,
-  row: { status?: string; version?: number; approved_version_id?: number | null; published_version_id?: number | null } | undefined
-): string {
-  if (toStatus !== 'approved' && toStatus !== 'locked') return '';
-  if (!row) return ' It cannot be shown to be filable: the written row could not be read back.';
-  const approval = artifactApproval({
-    status: row.status ?? null,
-    version: row.version ?? null,
-    approvedVersionId: row.approved_version_id ?? null,
-    publishedVersionId: row.published_version_id ?? null,
-  });
-  if (approval.filable) return '';
-  // 2026-09-23 (W5/D7, final pass, repair): the remedy names the governed act
-  // and says this command records none (it said "approval through review" and,
-  // for a lock, the status route's transitions — neither records anything
-  // when done here).
-  return toStatus === 'approved'
-    ? ` It cannot be filed yet: ${approval.problem}. ${approvalRecordedOnlyByGovernedAct('command')}`
-    : ` It cannot be filed yet: ${approval.problem}. ${lockRecordedOnlyByGovernedAct('command')}`;
 }
 
 /**
@@ -1083,6 +1004,21 @@ async function boardWriteWithLineage(
   return true;
 }
 
+/**
+ * The lineage row for a task write AnA carried out. Its reason is the one the
+ * person stated through a verified sign-off (`ctx.signoff`, stamped only by
+ * POST /api/ana-ri/governed-action), or none — task-audit records null. Both
+ * task commands are the confirm tier (part11-governance.ts governedTierOf): the
+ * person says yes and is asked for no reason, and a `reason` the model wrote
+ * into params is not theirs. What AnA did is the row's `summary`. Until
+ * 2026-10-01 these rows recorded "Task created by AnA and mirrored to the
+ * canonical task board" / "Task status changed by AnA" as the reason (D5).
+ */
+function anaTaskLineage(ctx: CommandContext, event: AnaTaskEvent): AuditTaskActionParams {
+  return { orgId: ctx.organizationId, userId: ctx.userId, reason: ctx.signoff?.reasonForChange, ...event };
+}
+type AnaTaskEvent = Pick<AuditTaskActionParams, 'command' | 'taskId' | 'payload' | 'summary'>;
+
 /** What a board write records when it caused more than its own change: its own
  *  row first, then one per record it moved (a completion's unblocked
  *  dependents), and the notices to send once all of it has committed. */
@@ -1146,9 +1082,7 @@ async function mirrorProjectTaskToUnified(
     // tasking routes record. Nothing on a conflict (an idempotent re-run wrote
     // nothing).
     if (!inserted) return null;
-    return {
-      orgId: ctx.organizationId,
-      userId: ctx.userId,
+    return anaTaskLineage(ctx, {
       command: 'task.create',
       taskId: mirroredTaskId,
       payload: {
@@ -1159,8 +1093,8 @@ async function mirrorProjectTaskToUnified(
         sourceEntityType: 'project_task',
         sourceEntityId: String(projectTaskId),
       },
-      reason: 'Task created by AnA and mirrored to the canonical task board',
-    };
+      summary: 'Task created by AnA and mirrored to the canonical task board',
+    });
   });
   // Tell the assignee only about a board row that committed.
   if (onBoard && inserted && params.assigneeId && params.assigneeId !== ctx.userId) {
@@ -1432,14 +1366,12 @@ export async function updateTask(
           // Governed lineage only for a status change that actually landed.
           transitioned = Boolean(mirrored.rowCount) && Boolean(newStatus) && newStatus !== mirrorFrom;
           if (!transitioned) return null;
-          const own: AuditTaskActionParams = {
-            orgId: ctx.organizationId,
-            userId: ctx.userId,
+          const own = anaTaskLineage(ctx, {
             command: 'task.transition',
             taskId: mirroredTaskId,
             payload: { from: mirrorFrom, to: newStatus },
-            reason: 'Task status changed by AnA',
-          };
+            summary: 'Task status changed by AnA',
+          });
           if (newStatus !== 'completed') return own;
           // Completing a task wakes its dependents on every write path — here
           // on this transaction, locking them after the completed row and
@@ -1789,14 +1721,19 @@ export async function exportPersonalData(
  */
 const GDPR_RETENTION_LEGAL_BASIS =
   'GDPR Art. 17(3)(b): erasure does not apply where processing is necessary to comply with a legal obligation. ' +
-  'concept2cure_artifacts are regulated records under GxP record retention and 21 CFR 11.10(c); ' +
+  'concept2cure_artifacts are regulated records under GxP record retention and 21 CFR 11.10(c), ' +
+  'and the review comments on them (concept2cure_thread_comments) are part of their review record; ' +
   "the subject's identity on them is pseudonymised by the redaction of their user record.";
 
-/** The tables the AnA erasure writes. concept2cure_artifacts is read (retained), never written. */
+/**
+ * The tables the AnA erasure writes. concept2cure_artifacts and, since
+ * 2026-10-01, concept2cure_thread_comments are read (retained), never written:
+ * a review comment's words are fixed once posted
+ * (migrations/20261001_review_comments_record.sql).
+ */
 const ERASURE_SCOPE = [
   'users',
   'concept2cure_conversations',
-  'concept2cure_thread_comments',
   'gdpr_data_subject_requests',
 ] as const;
 
@@ -1833,7 +1770,7 @@ interface ErasureOutcome {
   redactedUser: boolean;
   /** null ⇒ the table is not present here (listed in notApplicable), not zero. */
   redactedConversations: number | null;
-  redactedComments: number | null;
+  retainedReviewComments: number | null;
   retainedRegulatedArtifacts: number | null;
   notApplicable: string[];
 }
@@ -1875,20 +1812,18 @@ async function redactDataSubject(client: PoolClient, orgId: number, dataSubjectI
     `SELECT count(*)::int AS n FROM concept2cure_artifacts WHERE organization_id = $1 AND created_by_id = $2`,
     scope
   );
+  // The review record: counted, NOT overwritten (GDPR_RETENTION_LEGAL_BASIS).
+  // Until 2026-10-01 this overwrote every comment the subject had written.
   const comments = await runIfTablePresent(
     client,
-    `UPDATE concept2cure_thread_comments
-     SET body = '[REDACTED PER GDPR ART.17]',
-         updated_at = NOW()
-     WHERE org_id = $1 AND author_id = $2
-     RETURNING id`,
+    `SELECT count(*)::int AS n FROM concept2cure_thread_comments WHERE org_id = $1 AND author_id = $2`,
     scope
   );
   const count = (r: { applicable: boolean; rows: any[] }) => (r.applicable ? r.rows.length : null);
   return {
     redactedUser: userResult.rows.length > 0,
     redactedConversations: count(conversations),
-    redactedComments: count(comments),
+    retainedReviewComments: comments.applicable ? Number(comments.rows[0]?.n ?? 0) : null,
     retainedRegulatedArtifacts: artifacts.applicable ? Number(artifacts.rows[0]?.n ?? 0) : null,
     notApplicable: [
       ...(conversations.applicable ? [] : ['concept2cure_conversations']),
@@ -1902,8 +1837,9 @@ function erasureMessage(dataSubjectId: number, o: ErasureOutcome): string {
   const n = (v: number | null, what: string) => (v === null ? `${what}: not applicable` : `${v} ${what}`);
   return (
     `Erasure completed for subject ${dataSubjectId}: user record ${o.redactedUser ? 'redacted' : 'not found in this organization'}, ` +
-    `${n(o.redactedConversations, 'conversation(s) redacted')}, ${n(o.redactedComments, 'comment(s) redacted')}. ` +
-    `${n(o.retainedRegulatedArtifacts, 'regulated artifact(s) retained')} under GDPR Art. 17(3)(b) (GxP record retention).`
+    `${n(o.redactedConversations, 'conversation(s) redacted')}. ` +
+    `${n(o.retainedRegulatedArtifacts, 'regulated artifact(s)')} and ${n(o.retainedReviewComments, 'review comment(s)')} ` +
+    'retained under GDPR Art. 17(3)(b) (GxP record retention).'
   );
 }
 
@@ -1930,7 +1866,10 @@ export async function erasePersonalData(
 
   const client = await pool.connect();
   try {
-    const reason = params?.reason || 'GDPR Art. 17 erasure request';
+    // The reason the person stated in the e-signature ceremony
+    // (POST /api/ana-ri/governed-action stamps ctx.signoff), or none. Until
+    // 2026-10-01 this was the model's params.reason, or a stock sentence (D5).
+    const reason = statedReasonOrNull(ctx.signoff?.reasonForChange);
     await client.query('BEGIN');
 
     // The signature FIRST, before any redaction. persistGovernedActionSignature
@@ -1945,7 +1884,7 @@ export async function erasePersonalData(
       target: `data-subject:${dataSubjectId}`,
       payload: { dataSubjectId, scope: [...ERASURE_SCOPE] },
       binding: ledgerBinding('An erasure destroys the content it acts on, so there is no content to bind: the signer attests to the decision to erase.'),
-      extraManifest: { retainedTables: ['concept2cure_artifacts'], retentionLegalBasis: GDPR_RETENTION_LEGAL_BASIS },
+      extraManifest: { retainedTables: ['concept2cure_artifacts', 'concept2cure_thread_comments'], retentionLegalBasis: GDPR_RETENTION_LEGAL_BASIS },
     });
 
     const outcome = await redactDataSubject(client, ctx.organizationId, dataSubjectId);
@@ -1959,7 +1898,7 @@ export async function erasePersonalData(
       [
         ctx.organizationId,
         String(dataSubjectId),
-        `AnA erasure workflow completed. Reason: ${reason}. ${erasureMessage(dataSubjectId, outcome)} ` +
+        `AnA erasure workflow completed. ${reason ? `Reason: ${reason}. ` : ''}${erasureMessage(dataSubjectId, outcome)} ` +
           `Electronic signature ${signatureId}.`,
       ]
     );
@@ -2012,6 +1951,18 @@ export async function createSubmissionPackage(
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    /* The package's project is a projects row of this organization (PF-03),
+       the same rule as POST /api/submission-ops/packages. The id comes from the
+       command's params, which the model fills; it was inserted as given. */
+    if (!(await projectBelongsToTenant({ organizationId: ctx.organizationId, projectId: String(params.projectId) }, client))) {
+      await client.query('ROLLBACK');
+      return {
+        success: false,
+        action: 'create_submission_package',
+        error: 'PROJECT_NOT_FOUND',
+        message: `Project ${params.projectId} is not a project of this organization. No package was created.`,
+      };
+    }
     const result = await client.query(
       `INSERT INTO c2c_submission_packages
          (package_id, org_id, project_id, package_family, title, description,
@@ -2121,6 +2072,22 @@ export async function createReviewThread(
   }
 }
 
+/** BEGIN … COMMIT on one pooled client; ROLLBACK and rethrow on any failure. */
+async function onOneClient<T>(work: (client: PoolClient) => Promise<T>): Promise<T> {
+  const client = (await pool.connect()) as PoolClient;
+  try {
+    await client.query('BEGIN');
+    const out = await work(client);
+    await client.query('COMMIT');
+    return out;
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 /** Add a comment to a review thread (matches concept2cure_thread_comments schema) */
 export async function addReviewComment(
   ctx: CommandContext,
@@ -2132,22 +2099,42 @@ export async function addReviewComment(
 ): Promise<CommandResult> {
   try {
     const commentId = `comment_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-    const result = await pool.query(
-      `INSERT INTO concept2cure_thread_comments
-         (comment_id, org_id, thread_id, artifact_id, author_id, author_name,
-          body, kind, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, 'comment', NOW(), NOW())
-       RETURNING id, comment_id`,
-      [
-        commentId,
-        ctx.organizationId,
-        params.threadId,
-        params.artifactId,
-        ctx.userId,
-        ctx.userName || 'AnA RI',
-        params.body,
-      ]
-    );
+    // The comment and its chained record commit together. AnA wrote the
+    // words, and the record says so (origin 'ana', D5 2026-10-01).
+    const result = await onOneClient(async (client) => {
+      const inserted = await client.query(
+        `INSERT INTO concept2cure_thread_comments
+           (comment_id, org_id, thread_id, artifact_id, author_id, author_name,
+            body, kind, author_role, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 'comment', $8, NOW(), NOW())
+         RETURNING id, comment_id, version_id, parent_comment_id, author_role`,
+        [
+          commentId,
+          ctx.organizationId,
+          params.threadId,
+          params.artifactId,
+          ctx.userId,
+          ctx.userName || 'AnA RI',
+          params.body,
+          ANA_REVIEW_COMMENT_ROLE,
+        ]
+      );
+      const row = inserted.rows[0];
+      await recordCommentPosted(client, {
+        orgId: ctx.organizationId,
+        authorId: ctx.userId,
+        commentId: row.comment_id,
+        threadId: params.threadId,
+        artifactId: params.artifactId,
+        versionId: row.version_id ?? null,
+        parentCommentId: row.parent_comment_id ?? null,
+        kind: 'comment',
+        authorName: ctx.userName || 'AnA RI',
+        authorRole: row.author_role ?? null,
+        body: params.body,
+      }, 'ana');
+      return inserted;
+    });
     return {
       success: true,
       action: 'add_review_comment',
@@ -2285,7 +2272,7 @@ export async function listArtifactVersions(
               u.name as created_by_name
        FROM concept2cure_artifact_versions v
        JOIN concept2cure_artifacts a ON a.id = v.artifact_id AND a.organization_id = $2
-       LEFT JOIN users u ON u.id = v.created_by_id
+       LEFT JOIN LATERAL public.actor_name(v.created_by_id) u ON TRUE
        WHERE v.artifact_id = $1
        ORDER BY v.version DESC`,
       [params.artifactId, ctx.organizationId]
@@ -2557,10 +2544,10 @@ export async function compareVersions(
   try {
     const versions = await pool.query(
       `SELECT v.version, v.content, v.change_description, v.created_at,
-              u.name as author
+              COALESCE(u.name, 'user ' || v.created_by_id) as author
        FROM concept2cure_artifact_versions v
        JOIN concept2cure_artifacts a ON a.id = v.artifact_id AND a.organization_id = $4
-       LEFT JOIN users u ON u.id = v.created_by_id
+       LEFT JOIN LATERAL public.actor_name(v.created_by_id) u ON TRUE
        WHERE v.artifact_id = $1 AND v.version IN ($2, $3)
        ORDER BY v.version`,
       [params.artifactId, params.versionA, params.versionB, ctx.organizationId]
@@ -2664,10 +2651,10 @@ export async function reviewVersionImpact(
     // 1. Load both versions
     const versions = await pool.query(
       `SELECT v.version, v.content, v.change_description, v.created_at,
-              u.name as author
+              COALESCE(u.name, 'user ' || v.created_by_id) as author
        FROM concept2cure_artifact_versions v
        JOIN concept2cure_artifacts a ON a.id = v.artifact_id AND a.organization_id = $4
-       LEFT JOIN users u ON u.id = v.created_by_id
+       LEFT JOIN LATERAL public.actor_name(v.created_by_id) u ON TRUE
        WHERE v.artifact_id = $1 AND v.version IN ($2, $3)
        ORDER BY v.version`,
       [params.artifactId, params.versionA, params.versionB, ctx.organizationId]
@@ -4739,7 +4726,9 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
   },
   {
     name: 'update_artifact_status',
-    description: 'Change artifact lifecycle status',
+    description:
+      'Change artifact lifecycle status. Approving (review → approved) and locking (approved → locked) are the ' +
+      "person's electronic signature, with the meaning 'approval' or 'release': propose them, and the person signs",
     parameters: 'projectId, artifactId, status (draft/review/approved/locked)',
     example: '"Move artifact 12 to review status"',
   },
@@ -5506,7 +5495,9 @@ export async function executeCommands(
       // this dispatch carries a valid sign-off. Tiered — reason-for-change
       // always; high-impact actions additionally require an e-signature. ──
       if (ctx.part11Enforce && requiresPart11Signoff(cmd.command)) {
-        const v = validateSignoff(ctx.signoff, { requireSignature: requiresEsignature(cmd.command) });
+        const v = validateSignoff(ctx.signoff, {
+          requireSignature: requiresEsignature(cmd.command, cmd.params as Record<string, unknown>),
+        });
         if (!v.ok) {
           const blocked = buildSignatureRequiredResult(cmd.command, v, cmd.params as Record<string, unknown>);
           results.push(blocked);

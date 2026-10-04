@@ -1,0 +1,44 @@
+# PF-17 remainder, red: tests/artifact-routes-project-scope.test.ts against trunk 57dad115's server/routes/c2c/artifacts.ts (the scope module not yet used).
+# 39 of 42 fail: 19 of the 21 cross-project cases (another project's artifact was read or changed through this project's URL) and 20 of the 21 program-UUID cases ("Project not found").
+# The 3 that pass: the status route (both cases; fixed in fe7db61a) and one cross-project case that already 404'd for another reason.
+
+ × put …: another project's artifact through this project's URL is not found, and nothing is written
+ × put …/placement: another project's artifact through this project's URL is not found, and nothing is written
+ × get …/signatures: another project's artifact through this project's URL is not found, and nothing is written
+ × get …/snapshots: another project's artifact through this project's URL is not found, and nothing is written
+ × get …/provenance: another project's artifact through this project's URL is not found, and nothing is written
+ × get …/versions: another project's artifact through this project's URL is not found, and nothing is written
+ × get …/audit-report: another project's artifact through this project's URL is not found, and nothing is written
+ × post …/audit-report/export: another project's artifact through this project's URL is not found, and nothing is written
+ × put …/ctd-section: another project's artifact through this project's URL is not found, and nothing is written
+ × get …/verify-integrity: another project's artifact through this project's URL is not found, and nothing is written
+ × post …/rollback: another project's artifact through this project's URL is not found, and nothing is written
+ × post …/comments: another project's artifact through this project's URL is not found, and nothing is written
+ × get …/comments: another project's artifact through this project's URL is not found, and nothing is written
+ × put …/comments/c1/resolve: another project's artifact through this project's URL is not found, and nothing is written
+ × post …/reviewers: another project's artifact through this project's URL is not found, and nothing is written
+ × get …/reviewers: another project's artifact through this project's URL is not found, and nothing is written
+ × post …/reviewers/as1/remind: another project's artifact through this project's URL is not found, and nothing is written
+ × post …/reviews/submit: another project's artifact through this project's URL is not found, and nothing is written
+ × get …/reviews/status: another project's artifact through this project's URL is not found, and nothing is written
+ × put …: a v2 project (program UUID) reaches the route
+ × put …/placement: a v2 project (program UUID) reaches the route
+ × get …/signatures: a v2 project (program UUID) reaches the route
+ × get …/snapshots: a v2 project (program UUID) reaches the route
+ × get …/provenance: a v2 project (program UUID) reaches the route
+ × get …/versions: a v2 project (program UUID) reaches the route
+ × get …/audit-report: a v2 project (program UUID) reaches the route
+ × post …/audit-report/export: a v2 project (program UUID) reaches the route
+ × put …/ctd-section: a v2 project (program UUID) reaches the route
+ × get …/verify-integrity: a v2 project (program UUID) reaches the route
+ × post …/rollback: a v2 project (program UUID) reaches the route
+ × post …/comments: a v2 project (program UUID) reaches the route
+ × get …/comments: a v2 project (program UUID) reaches the route
+ × put …/comments/c1/resolve: a v2 project (program UUID) reaches the route
+ × post …/reviewers: a v2 project (program UUID) reaches the route
+ × get …/reviewers: a v2 project (program UUID) reaches the route
+ × delete …/reviewers/as1: a v2 project (program UUID) reaches the route
+ × post …/reviewers/as1/remind: a v2 project (program UUID) reaches the route
+ × post …/reviews/submit: a v2 project (program UUID) reaches the route
+ × get …/reviews/status: a v2 project (program UUID) reaches the route
+      Tests  39 failed | 3 passed (42)

@@ -18,7 +18,29 @@
  *
  * @compliance ICH E6(R2) data integrity — the same query against the same
  *             corpus yields a reproducible result set.
+ *
+ * ── THE MODEL ACTUALLY WRITTEN, PER LANE (P1-54 round 2, 2026-10-01) ─────────
+ * ADR-0014 §1.5, amended 2026-10-01: every organisation embeds through the
+ * self-hosted lane, BAAI/bge-m3, whatever it elected for generation. bge-m3
+ * emits 1024 values; the corpora below are 1536 and 3072 wide. The seam
+ * (ai-gateway/embeddings/embedding-provider.ts) asks the model for its own
+ * width and zero-pads to the corpus width, which leaves cosine and L2 between
+ * padded vectors unchanged. That holds only while every vector in a column
+ * comes from one model, so:
+ *   - `model` below stays the name the runtime's callers ask for (and the one
+ *     the OpenAI lane writes); `writtenEmbedding(corpus, lane)` says what a lane
+ *     actually stores, so a reader can tell;
+ *   - a corpus holding vectors from another model is re-embedded before it is
+ *     served. The rows cannot say which model wrote them: the writers record the
+ *     name their caller asked for (vault/document-chunking.service.ts
+ *     CHUNK_EMBEDDING_MODEL, enhancedEmbeddingService.embedAtom), whichever lane
+ *     served it, so a filter on `embedding_model` would separate nothing.
+ *     `findVectorsFromAnotherModel` reads the vectors instead, and the readiness
+ *     probe (server/startup/ana-readiness-state.ts) refuses to report search
+ *     ready while it finds any.
  */
+
+import { runWithSystemTenantScope, runWithTenantScope } from '../db/tenantStore';
 
 export type EmbeddingModel =
   | 'text-embedding-3-small'
@@ -30,6 +52,8 @@ export interface CorpusPolicy {
   corpus: string;
   /** Backing table in shared/schema.ts. */
   table: string;
+  /** The pgvector column the corpus's embeddings are written to. */
+  column: string;
   /** Vector dimension declared on the column. */
   dimensions: 1536 | 3072;
   /** Model that MUST be used to embed both writes and queries. */
@@ -77,6 +101,7 @@ export const CORPUS_POLICY: readonly CorpusPolicy[] = [
   {
     corpus: 'documentVectors',
     table: 'document_vectors',
+    column: 'embedding',
     dimensions: 3072,
     model: 'text-embedding-3-large',
     purpose: 'Primary document corpus — high-precision retrieval over full eCTD/CER/510(k) bodies',
@@ -84,6 +109,7 @@ export const CORPUS_POLICY: readonly CorpusPolicy[] = [
   {
     corpus: 'ragChunks',
     table: 'rag_chunks',
+    column: 'embedding',
     dimensions: 1536,
     model: 'text-embedding-3-small',
     purpose: 'Hot-path chunked retrieval for AnA chat and AnA-RI orchestrator',
@@ -91,6 +117,7 @@ export const CORPUS_POLICY: readonly CorpusPolicy[] = [
   {
     corpus: 'knowledgeEntries',
     table: 'knowledge_entries',
+    column: 'embedding',
     dimensions: 1536,
     model: 'text-embedding-3-small',
     purpose: 'Knowledge atoms (rejection patterns, guidance excerpts, regulatory decisions)',
@@ -98,6 +125,7 @@ export const CORPUS_POLICY: readonly CorpusPolicy[] = [
   {
     corpus: 'clientMemoryEntries',
     table: 'client_memory_entries',
+    column: 'embedding',
     dimensions: 1536,
     model: 'text-embedding-3-small',
     purpose: 'Per-tenant persistent memory atoms with importance + verification flags',
@@ -105,6 +133,7 @@ export const CORPUS_POLICY: readonly CorpusPolicy[] = [
   {
     corpus: 'projectMemoryEntries',
     table: 'project_memory_entries',
+    column: 'embedding',
     dimensions: 1536,
     model: 'text-embedding-3-small',
     purpose: 'Per-project memory entries scoped to a single submission/program',
@@ -112,6 +141,7 @@ export const CORPUS_POLICY: readonly CorpusPolicy[] = [
   {
     corpus: 'accountCanonItems',
     table: 'account_canon_items',
+    column: 'embedding',
     dimensions: 1536,
     model: 'text-embedding-3-small',
     purpose: 'Canonicalized account-level items (products, indications, regulatory bodies)',
@@ -119,6 +149,7 @@ export const CORPUS_POLICY: readonly CorpusPolicy[] = [
   {
     corpus: 'biostatKnowledgeNodes',
     table: 'biostat_knowledge_nodes',
+    column: 'embedding',
     dimensions: 1536,
     model: 'text-embedding-3-small',
     purpose: 'Biostatistics knowledge graph — endpoints, study designs, statistical methods',
@@ -126,6 +157,7 @@ export const CORPUS_POLICY: readonly CorpusPolicy[] = [
   {
     corpus: 'vaultDocumentChunks',
     table: 'vault.document_chunks',
+    column: 'embedding',
     dimensions: 1536,
     // The active writer (vault/document-chunking.service.ts:110,
     // CHUNK_EMBEDDING_MODEL) and the reader
@@ -142,6 +174,18 @@ export const CORPUS_POLICY: readonly CorpusPolicy[] = [
     // attribution is the evidence this entry rests on.
     model: 'text-embedding-3-small',
     purpose: 'Vault document chunks — semantic similarity search over indexed vault PDFs/DOCX',
+  },
+  {
+    corpus: 'lumenDataAtoms',
+    table: 'lumen_data_atoms',
+    column: 'embedding',
+    dimensions: 1536,
+    // Added 2026-10-01 (P1-54 round 2): the corpus the embedding runtime itself
+    // writes (enhancedEmbeddingService.embedAtom / embedAllPendingAtoms, its
+    // default model) and searches (searchSemantic / searchHybrid). It was not
+    // registered, so nothing that reads this table could check it.
+    model: 'text-embedding-3-small',
+    purpose: 'Retrieval atoms — the knowledge base the embedding runtime embeds and searches',
   },
 ] as const;
 
@@ -197,4 +241,181 @@ export function assertModelMatchesCorpus(
 /** All registered corpora. Useful for inventory / CI inspection. */
 export function listCorpora(): readonly CorpusPolicy[] {
   return CORPUS_POLICY;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// What each lane writes (ADR-0014 §1.5, amended 2026-10-01).
+
+/**
+ * The model the self-hosted lane serves and writes into every corpus, and its
+ * own width. The seam defaults EMBEDDING_LOCAL_MODEL and
+ * EMBEDDING_LOCAL_NATIVE_DIMENSIONS to these; terraform/stack serves the same
+ * model (tests/boot_contract.tftest.hcl reads this line), and the readiness
+ * probe refuses a lane that answers as anything else.
+ */
+export const SELF_HOSTED_EMBEDDING_MODEL = { model: 'BAAI/bge-m3', nativeDimensions: 1024 } as const;
+
+/** The embedding lanes (EMBEDDING_PROVIDER): OpenAI, or the self-hosted server. */
+export type EmbeddingLane = 'openai' | 'local';
+
+export interface WrittenEmbedding {
+  corpus: string;
+  lane: EmbeddingLane;
+  /** The model whose vectors the corpus holds when this lane writes it. */
+  model: string;
+  /** How many values that model emits. */
+  nativeDimensions: number;
+  /** The column's width. */
+  storedDimensions: number;
+  /** Stored wider than emitted: the values past `nativeDimensions` are zero. */
+  zeroPadded: boolean;
+}
+
+/** What a corpus holds when `lane` writes it. Throws for an unregistered corpus. */
+export function writtenEmbedding(corpus: string, lane: EmbeddingLane): WrittenEmbedding {
+  const policy = getPolicyForCorpus(corpus);
+  if (lane === 'local') {
+    return {
+      corpus,
+      lane,
+      model: SELF_HOSTED_EMBEDDING_MODEL.model,
+      nativeDimensions: SELF_HOSTED_EMBEDDING_MODEL.nativeDimensions,
+      storedDimensions: policy.dimensions,
+      zeroPadded: SELF_HOSTED_EMBEDDING_MODEL.nativeDimensions < policy.dimensions,
+    };
+  }
+  return {
+    corpus,
+    lane,
+    model: policy.model,
+    nativeDimensions: policy.dimensions,
+    storedDimensions: policy.dimensions,
+    zeroPadded: false,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// A corpus written by another model (the check the readiness probe uses).
+
+/** What the check needs of a database handle: `pg.Pool` satisfies it. */
+export interface CorpusQueryable {
+  query(text: string, params?: unknown[]): Promise<{ rows: Array<Record<string, unknown>> }>;
+}
+
+export interface ForeignVectorFinding {
+  corpus: string;
+  table: string;
+  /** The most rows any one scope saw. */
+  rows: number;
+  /** Who saw them: 'platform', or 'organization <id>'. */
+  scopes: string[];
+}
+
+export interface ForeignVectorReport {
+  model: string;
+  nativeDimensions: number;
+  /** Corpus tables this database has, which were read. */
+  examined: string[];
+  /** Corpus tables this database does not have (they hold nothing). */
+  absent: string[];
+  findings: ForeignVectorFinding[];
+}
+
+const CHECK_CALLER = 'embedding-corpus-policy:vectors-from-another-model';
+
+const PLAIN_IDENTIFIER = /^[a-z_][a-z0-9_]*$/;
+
+/** `schema.table` → `"schema"."table"`; a bare name is in `public`. Policy constants only. */
+function qualifiedIdentifier(name: string): string {
+  const parts = name.includes('.') ? name.split('.') : ['public', name];
+  if (parts.length !== 2 || !parts.every(p => PLAIN_IDENTIFIER.test(p))) {
+    throw new Error(`embedding-corpus-policy: "${name}" is not a plain identifier`);
+  }
+  return parts.map(p => `"${p}"`).join('.');
+}
+
+/**
+ * Rows of a corpus whose vector carries a value past the self-hosted model's
+ * width: a padded bge-m3 vector is zero there, one any wider model wrote is not.
+ * Built from the policy's constants (validated identifiers), never from input.
+ */
+function foreignVectorCountSql(policy: CorpusPolicy, nativeDimensions: number): string {
+  if (!PLAIN_IDENTIFIER.test(policy.column) || !Number.isInteger(nativeDimensions)) {
+    throw new Error(`embedding-corpus-policy: "${policy.column}" is not a plain identifier`);
+  }
+  const table = qualifiedIdentifier(policy.table);
+  const column = `"${policy.column}"`;
+  return (
+    `SELECT count(*)::int AS rows FROM ${table} AS t ` +
+    `WHERE t.${column} IS NOT NULL ` +
+    `AND EXISTS (SELECT 1 FROM unnest((t.${column}::real[])[${nativeDimensions + 1}:]) AS v(x) WHERE v.x <> 0)`
+  );
+}
+
+/**
+ * Which corpora hold vectors the self-hosted model did not write.
+ *
+ * Reads every registered corpus table in the platform scope and then in each
+ * organization's own scope, because neither sees everything under RLS: the
+ * platform scope sees a public corpus whole but no Vault chunk at all
+ * (vault.document_chunks resolves the tenant from the organization's UUID), and
+ * an organization sees only its own rows, not the platform's. Proof against
+ * PostgreSQL as the runtime role: __tests__/embedding-corpus-policy.dbtest.ts.
+ *
+ * Decides by content, for the reason in this file's header: the rows' own
+ * `embedding_model` names what was asked for, not what served it. A vector
+ * whose values past position 1024 are all zero is indistinguishable from a
+ * padded bge-m3 one; another 1024-wide model behind the address is the seam's
+ * and the probe's to refuse (embedding-provider.ts).
+ *
+ * Every scan is a full read of the table's vector column, per scope. With no
+ * tenant data yet (ADR-0014 §1.5) that is nothing; it grows with the corpora
+ * (P1-54 round 2 evidence, residuals).
+ *
+ * Throws when a query fails: a corpus that could not be read is not clean.
+ */
+export async function findVectorsFromAnotherModel(db: CorpusQueryable): Promise<ForeignVectorReport> {
+  const { model, nativeDimensions } = SELF_HOSTED_EMBEDDING_MODEL;
+
+  const { examined, absent, organizations } = await runWithSystemTenantScope(CHECK_CALLER, async () => {
+    const present: string[] = [];
+    const missing: string[] = [];
+    for (const policy of CORPUS_POLICY) {
+      const found = await db.query('SELECT to_regclass($1) IS NOT NULL AS present', [
+        qualifiedIdentifier(policy.table).replace(/"/g, ''),
+      ]);
+      (found.rows[0]?.present === true ? present : missing).push(policy.table);
+    }
+    const orgs = await db.query('SELECT id, uuid::text AS uuid FROM public.organizations ORDER BY id');
+    return {
+      examined: present,
+      absent: missing,
+      organizations: orgs.rows.map(r => ({ id: Number(r.id), uuid: r.uuid == null ? null : String(r.uuid) })),
+    };
+  });
+
+  const corpora = CORPUS_POLICY.filter(policy => examined.includes(policy.table));
+  const scopes: Array<{ label: string; run: <T>(fn: () => Promise<T>) => Promise<T> }> = [
+    { label: 'platform', run: fn => runWithSystemTenantScope(CHECK_CALLER, fn) },
+    ...organizations.map(o => ({
+      label: `organization ${o.id}`,
+      run: <T>(fn: () => Promise<T>) =>
+        runWithTenantScope({ tenantId: String(o.id), orgUuid: o.uuid, role: null, source: 'job', caller: CHECK_CALLER }, fn),
+    })),
+  ];
+
+  const byTable = new Map<string, ForeignVectorFinding>();
+  for (const scope of scopes) {
+    for (const policy of corpora) {
+      const result = await scope.run(() => db.query(foreignVectorCountSql(policy, nativeDimensions)));
+      const rows = Number(result.rows[0]?.rows ?? 0);
+      if (rows <= 0) continue;
+      const finding = byTable.get(policy.table) ?? { corpus: policy.corpus, table: policy.table, rows: 0, scopes: [] };
+      finding.rows = Math.max(finding.rows, rows);
+      finding.scopes.push(scope.label);
+      byTable.set(policy.table, finding);
+    }
+  }
+
+  return { model, nativeDimensions, examined, absent, findings: [...byTable.values()] };
 }

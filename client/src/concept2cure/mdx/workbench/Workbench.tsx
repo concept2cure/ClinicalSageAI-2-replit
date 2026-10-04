@@ -442,9 +442,17 @@ export function ValidationSurface({ onAskAna }: WorkbenchProps) {
                 <span className="val-bar-pct mono">{p.readiness}%</span>
               </div>
               <div className="val-prog-counts">
-                <span className="val-count err">{p.errs} err</span>
-                <span className="val-count warn">{p.warns} warn</span>
-                <span className="val-count ok">{p.ok} ok</span>
+                {p.errs === null ? (
+                  <span className="val-count" title="Blockers are recorded per project and cannot be attributed to this program">
+                    Blockers not linked to this program
+                  </span>
+                ) : (
+                  <>
+                    <span className="val-count err">{p.errs} err</span>
+                    <span className="val-count warn">{p.warns} warn</span>
+                    <span className="val-count ok">{p.ok} ok</span>
+                  </>
+                )}
               </div>
             </button>
           ))}

@@ -1,0 +1,66 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T14:07:08.159Z","pid":20206,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T14:07:08.162Z","pid":20206,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T14:07:08.162Z","pid":20206,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/report-os-delivery-recording.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T14:07:08.439Z', poolSize: 1 }
+
+stdout | tests/db/report-os-delivery-recording.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/report-os-delivery-recording.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/report-os-delivery-recording.dbtest.ts > POST /api/report-os/deliveries on the record (P1-44) > a plain member cannot deliver: 403, no letter and no chain row (DP-61) 163ms
+ ✓ tests/db/report-os-delivery-recording.dbtest.ts > POST /api/report-os/deliveries on the record (P1-44) > platform_send as app_service under RLS: 'sent', with the letter, the record and one chained row 77ms
+{"level":50,"time":"2026-10-01T14:07:10.251Z","pid":20206,"hostname":"vm","context":{"deliveryId":"c5676370-0ad0-4da7-8cfb-4587a3c5c6ba","channel":"platform_send","error":"refused by the P1-44 dbtest"},"msg":"[report-os] report delivery not recorded; rolled back"}
+{"level":50,"time":"2026-10-01T14:07:10.304Z","pid":20206,"hostname":"vm","context":{"deliveryId":"eec15dd4-2d61-4404-b6d0-189e696b6ccc","channel":"platform_send","error":"refused by the P1-44 dbtest"},"msg":"[report-os] report delivery not recorded; rolled back"}
+ ✓ tests/db/report-os-delivery-recording.dbtest.ts > POST /api/report-os/deliveries on the record (P1-44) > a refused correspondence write is not sent: 503, and no record or chain row claims it 44ms
+ ✓ tests/db/report-os-delivery-recording.dbtest.ts > POST /api/report-os/deliveries on the record (P1-44) > a refused chain row is not sent: the letter and the record roll back with it 55ms
+ × tests/db/report-os-delivery-recording.dbtest.ts > POST /api/report-os/deliveries on the record (P1-44) > external_pdf_export of a final report with no signature is refused: 409, nothing recorded 23ms
+   → expected 'A final report delivered outside the …' to contain 'run 110'
+ × tests/db/report-os-delivery-recording.dbtest.ts > a failed delivery logs ids and codes, never the letter (DP-67 (b)) > a delivery record refused by the database: 503, and no log line carries the subject, the letter or a recipient 54ms
+   → the log must not carry "wo03_20206_muplysjn record refused": expected '[{"message":"[report-os] report deliv…' not to contain 'wo03_20206_muplysjn record refused'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/report-os-delivery-recording.dbtest.ts > POST /api/report-os/deliveries on the record (P1-44) > external_pdf_export of a final report with no signature is refused: 409, nothing recorded
+AssertionError: expected 'A final report delivered outside the …' to contain 'run 110'
+
+Expected: "run 110"
+Received: "A final report delivered outside the platform requires an e-signature, and report runs cannot be e-signed yet. The delivery was refused. Nothing was recorded."
+
+ ❯ tests/db/report-os-delivery-recording.dbtest.ts:205:36
+    203|     expect(res.status, JSON.stringify(res.body)).toBe(409);
+    204|     expect(res.body.error.code).toBe('E_SIGNATURE_REQUIRED');
+    205|     expect(res.body.error.message).toContain(`run ${finalRun}`);
+       |                                    ^
+    206|     expect(await traces(subject)).toEqual({ letters: [], records: [], …
+    207|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/db/report-os-delivery-recording.dbtest.ts > a failed delivery logs ids and codes, never the letter (DP-67 (b)) > a delivery record refused by the database: 503, and no log line carries the subject, the letter or a recipient
+AssertionError: the log must not carry "wo03_20206_muplysjn record refused": expected '[{"message":"[report-os] report deliv…' not to contain 'wo03_20206_muplysjn record refused'
+
+Expected: "wo03_20206_muplysjn record refused"
+Received: "[{"message":"[report-os] report delivery not recorded; rolled back","context":{"deliveryId":"657ae54a-0148-44a6-818b-7fedd1887193","channel":"platform_send","error":"Failed query: insert into \"project_memory_entries\" (\"id\", \"project_profile_id\", \"project_id\", \"organization_id\", \"category\", \"subcategory\", \"title\", \"content\", \"source_document_name\", \"source_document_type\", \"confidence_score\", \"importance_level\", \"is_verified_by_user\", \"embedding\", \"status\", \"extracted_by\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, $5, $6, $7, default, $8, $9, $10, default, default, default, $11, default, default)\nparams: 54,408,90302,regulatory,report_delivery_record,delivery:657ae54a-0148-44a6-818b-7fedd1887193,{\"deliveryRecord\":{\"deliveryId\":\"657ae54a-0148-44a6-818b-7fedd1887193\",\"organizationId\":90302,\"projectId\":408,\"runId\":109,\"submissionId\":\"e7cd7874-80bb-4df1-ace3-321575356ef3\",\"channel\":\"platform_send\",\"recipients\":[\"wo03_20206_muplysjn-reviewer@agency.example\"],\"subject\":\"wo03_20206_muplysjn record refused\",\"message\":\"wo03_20206_muplysjn the clarification letter body, which is not for a log\",\"status\":\"sent\",\"requestedBy\":1868,\"createdAt\":\"2026-10-01T14:07:10.359Z\",\"correspondenceId\":\"fca34a99-e1c2-472b-ae12-e6e3e23a5fef\"}},report_os_state,0.92,high,report_os_delivery"}}]"
+
+ ❯ tests/db/report-os-delivery-recording.dbtest.ts:244:62
+    242|     const logged = JSON.stringify(lines);
+    243|     for (const text of [subject, message, recipient, 'refused by the P…
+    244|       expect(logged, `the log must not carry "${text}"`).not.toContain…
+       |                                                              ^
+    245|     }
+    246|     const failure = lines.find((l) => /report delivery not recorded/.t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 4 passed (6)
+   Start at  14:07:05
+   Duration  4.84s (transform 2.22s, setup 84ms, import 3.61s, tests 838ms, environment 0ms)
+

@@ -1,0 +1,51 @@
+# Mutant V-caveat-always-shown: client/src/concept2cure/v2/surfaces/licensing/LicensingHistoryPanel.tsx
+# replaced: "  if (status !== 'verified' || head !== 'not-verified') return null;"
+# with:     "  if (status !== 'verified') return null;"
+# restored byte for byte: True
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > the decisions themselves > shows what changed, on which workspace and module, by whom, when, and why 110ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > the decisions themselves > names an action it has never heard of, instead of dropping or dumping it 27ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > the decisions themselves > filters to one workspace and one module 69ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about completeness > says how much of the record this page is NOT showing 206ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about completeness > says a complete page is complete 56ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about completeness > flags entries it could not fully read, and still lists them 23ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about completeness > a failed read renders an error, never an empty history 27ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about completeness > shows the honest empty state only when the service reports nothing 19ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about integrity > shows a verified row as verified when the chain AND the seal were checked 19ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about integrity > does not imply a seal check that could not happen 20ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about integrity > claims no verification at all when none was performed 21ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about integrity > reports a broken chain, and does not vouch for what follows the break 24ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about integrity > says plainly that the end of the chain does not match its anchor, not that the check failed 15ms
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about integrity > says when the newest entries were not checked against the anchor 16ms
+ × client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about integrity > adds no such caveat when the newest entries were checked 23ms
+   → expected 'Record chain and seals verifiedEvery …' not to contain 'were not checked against'
+ ✓ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about integrity > says when an entry was never committed to the chain 13ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 passed (16)
+   Start at  15:51:53
+   Duration  2.13s (transform 347ms, setup 184ms, import 431ms, tests 692ms, environment 614ms)
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx > honest about integrity > adds no such caveat when the newest entries were checked
+AssertionError: expected 'Record chain and seals verifiedEvery …' not to contain 'were not checked against'
+
+Expected: "were not checked against"
+Received: "Record chain and seals verifiedEvery entry was re-derived from the one before it and its seal was checked.The newest entries were not checked against the copy kept outside the database, so entries removed from the end of the record would not show here.12 entries checked at Aug 24, 2026, 9:00 AM."
+
+ ❯ client/src/concept2cure/v2/__tests__/licensingHistory.test.tsx:387:64
+    385|
+    386|     await screen.findByText('Module tier changed');
+    387|     expect(screen.getByTestId('lh-integrity').textContent).not.toConta…
+       |                                                                ^
+    388|   });
+    389|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

@@ -1,0 +1,31 @@
+== HEAD server/services/authoring/section-generation-service.ts
+exit=0
+== HEAD client/src/concept2cure/v2/editor/roundTrip.ts
+
+./client/src/concept2cure/v2/editor/roundTrip.ts
+   85:38  warning  'Document' is not defined                                               no-undef
+  174:49  warning  'Document' is not defined                                               no-undef
+  251:8   warning  Function 'parsedDocText' has a complexity of 16. Maximum allowed is 15  complexity
+
+✖ 3 problems (0 errors, 3 warnings)
+
+exit=0
+== HEAD server/services/ectd/leaf-pdf-renderer.ts
+
+./server/services/ectd/leaf-pdf-renderer.ts
+  335:1  warning  Function 'walkNode' has a complexity of 32. Maximum allowed is 15             complexity
+  515:8  warning  Async function 'renderLeafPdf' has a complexity of 16. Maximum allowed is 15  complexity
+
+✖ 2 problems (0 errors, 2 warnings)
+
+exit=0
+== HEAD server/services/ectd/__tests__/leaf-pdf-renderer.test.ts
+exit=0
+== HEAD server/export/authoring-images.ts
+
+./server/export/authoring-images.ts
+  64:1  warning  Function 'jpegSize' has a complexity of 16. Maximum allowed is 15  complexity
+
+✖ 1 problem (0 errors, 1 warning)
+
+exit=0

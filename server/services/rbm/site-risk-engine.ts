@@ -10,13 +10,73 @@
  * Defensive by design: two divergent site_intel.sites shapes exist in the
  * codebase (composite_score/operational_score vs overall_score/compliance_score),
  * and the schema may be absent in some tenants. We SELECT * and read whichever
- * score columns are present, and treat a missing table as "no sites".
+ * score columns are present.
+ *
+ * Two properties this module has to hold (#1128), both of which it previously
+ * did not:
+ *
+ *   1. A read is scoped to the caller's tenant. The recompute is reached from a
+ *      route that takes programId from the request body, and readProgramSites
+ *      filtered site_intel.sites on program_id ALONE — so one organization
+ *      could recompute against another's sites by passing their program UUID,
+ *      and the result was then persisted under the caller's organization_id.
+ *      Ownership is now proved FIRST, by `programInOrganization` — the one
+ *      program check — and Site Intelligence is not queried at all when it
+ *      fails. site_intel.sites carries no integer organization_id of its own to
+ *      filter on. (Until 2026-10-01 the proof was "this organization holds RBM
+ *      records naming the program". rbm_*.program_id has no foreign key, so a
+ *      KRI naming another tenant's program passed it, and an owner whose study
+ *      had no RBM records yet was refused its own. D3.)
+ *
+ *   2. A failed read never looks like a healthy empty study, and never destroys
+ *      the last good snapshot. `catch { return [] }` collapsed "no sites",
+ *      "Site Intelligence not installed", "database down" and "not your study"
+ *      into one empty array, which the board drew as clean site risk. Every
+ *      outcome is now typed; the write happens only after a successful read,
+ *      inside one transaction.
  *
  * @module server/services/rbm/site-risk-engine
  */
 
 import { pool } from '../../db';
+import { programInOrganization } from '../c2c/program-access';
 import { monitoringTierFromRisk, type MonitoringTier } from './rbm-engine';
+
+/** Minimal pg-compatible executor — matches rbm-actuator's `Exec`. */
+export interface Exec {
+  query(sql: string, args?: unknown[]): Promise<{ rows: any[] }>;
+}
+
+// ── Postgres error codes we can distinguish and report on ─────────────────────
+const UNDEFINED_TABLE = '42P01';
+const INVALID_SCHEMA = '3F000';
+const UNDEFINED_COLUMN = '42703';
+const INSUFFICIENT_PRIVILEGE = '42501';
+
+/**
+ * Why a read or recompute produced nothing. These used to be one value — an
+ * empty array — so an infrastructure failure rendered as a study with clean
+ * site risk. Naming each case is the whole point.
+ */
+export type SiteReadFailure =
+  /** The program is not a live project of the caller's organization. */
+  | 'not_in_tenant'
+  /** site_intel.sites / the site_intel schema is not provisioned or readable here. */
+  | 'source_unavailable'
+  /** The table exists but not in a shape this engine can read. */
+  | 'schema_mismatch'
+  /** Whether the program is the caller's could not be checked, so nothing was read. */
+  | 'ownership_unverifiable'
+  /** Anything else the read or the snapshot write raised. */
+  | 'source_error';
+
+export type SiteReadOutcome =
+  | { ok: true; rows: Record<string, unknown>[] }
+  | { ok: false; reason: SiteReadFailure; detail?: string };
+
+export type RecomputeOutcome =
+  | { ok: true; snapshots: SiteRiskSnapshot[] }
+  | { ok: false; reason: SiteReadFailure; detail?: string };
 
 export interface SiteRiskSnapshot {
   siteId: string | null;
@@ -76,50 +136,127 @@ export function snapshotFromSiteRow(row: Record<string, unknown>): SiteRiskSnaps
   };
 }
 
-/** Read site_intel.sites for a program; returns [] if the schema is absent. */
-export async function readProgramSites(programId: string): Promise<Record<string, unknown>[]> {
+/** Map a pg error to the narrowest failure we can name. */
+function classify(err: unknown): { reason: SiteReadFailure; detail: string } {
+  const code = (err as { code?: string })?.code;
+  const detail = err instanceof Error ? err.message : String(err);
+  if (code === UNDEFINED_TABLE || code === INVALID_SCHEMA || code === INSUFFICIENT_PRIVILEGE) {
+    return { reason: 'source_unavailable', detail };
+  }
+  if (code === UNDEFINED_COLUMN) return { reason: 'schema_mismatch', detail };
+  return { reason: 'source_error', detail };
+}
+
+/**
+ * Read site_intel.sites for a program the caller's organization owns.
+ *
+ * Ownership is checked FIRST and the source read does not happen at all if it
+ * fails, so a cross-tenant program UUID never reaches Site Intelligence. A
+ * genuine empty result is `{ ok: true, rows: [] }`; every failure is typed.
+ */
+export async function readProgramSites(
+  exec: Exec,
+  organizationId: number,
+  programId: string,
+): Promise<SiteReadOutcome> {
+  let owns: boolean;
   try {
-    const { rows } = await pool.query(
+    owns = await programInOrganization(exec, programId, organizationId);
+  } catch (err) {
+    return { ok: false, reason: 'ownership_unverifiable', detail: err instanceof Error ? err.message : String(err) };
+  }
+  if (!owns) return { ok: false, reason: 'not_in_tenant' };
+
+  try {
+    const { rows } = await exec.query(
       `SELECT * FROM site_intel.sites WHERE program_id = $1`,
       [programId],
     );
-    return rows;
-  } catch {
-    return [];
+    return { ok: true, rows };
+  } catch (err) {
+    const { reason, detail } = classify(err);
+    return { ok: false, reason, detail };
+  }
+}
+
+async function recomputeOn(
+  exec: Exec,
+  organizationId: number,
+  programId: string,
+): Promise<RecomputeOutcome> {
+  // Read BEFORE the transaction: a failed source read must not touch the
+  // stored snapshot, and a statement error inside BEGIN would poison it.
+  const read = await readProgramSites(exec, organizationId, programId);
+  if (!read.ok) return read;
+  const snapshots = read.rows.map(snapshotFromSiteRow);
+
+  try {
+    await exec.query('BEGIN');
+    await exec.query(
+      `DELETE FROM rbm_site_risk_scores WHERE organization_id = $1 AND program_id = $2`,
+      [organizationId, programId],
+    );
+    for (const s of snapshots) {
+      await exec.query(
+        `INSERT INTO rbm_site_risk_scores (
+           organization_id, program_id, site_id, site_number, site_name,
+           composite_risk, enrollment_risk, quality_risk, operational_risk,
+           monitoring_tier, drivers
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+        [
+          organizationId, programId, s.siteId, s.siteNumber, s.siteName,
+          s.compositeRisk, s.enrollmentRisk, s.qualityRisk, s.operationalRisk,
+          s.monitoringTier, JSON.stringify(s.drivers),
+        ],
+      );
+    }
+    await exec.query('COMMIT');
+    return { ok: true, snapshots };
+  } catch (err) {
+    await exec.query('ROLLBACK').catch(() => {});
+    const { reason, detail } = classify(err);
+    return { ok: false, reason, detail };
   }
 }
 
 /**
- * Recompute and persist the site-risk snapshot for a program. Replaces the
- * prior snapshot (delete-then-insert) so the table holds the current view.
- * Tenant-scoped on write via organizationId. Returns the computed snapshots.
+ * Recompute and persist the site-risk snapshot for a program.
+ *
+ * Replaces the prior snapshot so the table holds the current view — but only
+ * after the tenant-checked source read has succeeded, and inside ONE
+ * transaction on ONE connection, so a failure anywhere leaves the last good
+ * snapshot exactly as it was. (It used to DELETE and then INSERT in a loop over
+ * separate pool connections, so a mid-loop failure left a partial snapshot or
+ * none, and a source outage wiped the snapshot while reporting success.)
+ *
+ * `exec` is the caller's request-scoped client — a single pinned connection
+ * carrying the tenant's RLS session, on which BEGIN/COMMIT are meaningful. With
+ * none (jobs, tools outside a request) a dedicated pool client is used.
  */
 export async function recomputeSiteRisk(
   organizationId: number,
   programId: string,
-): Promise<SiteRiskSnapshot[]> {
-  const sites = await readProgramSites(programId);
-  const snapshots = sites.map(snapshotFromSiteRow);
-
-  await pool.query(
-    `DELETE FROM rbm_site_risk_scores WHERE organization_id = $1 AND program_id = $2`,
-    [organizationId, programId],
-  );
-
-  for (const s of snapshots) {
-    await pool.query(
-      `INSERT INTO rbm_site_risk_scores (
-         organization_id, program_id, site_id, site_number, site_name,
-         composite_risk, enrollment_risk, quality_risk, operational_risk,
-         monitoring_tier, drivers
-       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
-      [
-        organizationId, programId, s.siteId, s.siteNumber, s.siteName,
-        s.compositeRisk, s.enrollmentRisk, s.qualityRisk, s.operationalRisk,
-        s.monitoringTier, JSON.stringify(s.drivers),
-      ],
-    );
+  exec?: Exec,
+): Promise<RecomputeOutcome> {
+  if (exec) return recomputeOn(exec, organizationId, programId);
+  const client = await pool.connect();
+  try {
+    return await recomputeOn(client, organizationId, programId);
+  } finally {
+    client.release();
   }
-
-  return snapshots;
 }
+
+/** Operator-facing explanation for each failure. Never "no sites". */
+export const SITE_READ_MESSAGE: Record<SiteReadFailure, string> = {
+  not_in_tenant:
+    'This study is not a project of your organization, so its site risk cannot be recomputed.',
+  source_unavailable:
+    'Site Intelligence is not available in this environment, so site risk cannot be derived. The previous snapshot is unchanged.',
+  schema_mismatch:
+    'Site Intelligence returned a shape this engine does not recognise, so no site risk was derived. The previous snapshot is unchanged.',
+  ownership_unverifiable:
+    'Whether this study is your organization\'s could not be checked just now, so its site risk was not recomputed. This is not a permission decision. The previous snapshot is unchanged.',
+  source_error:
+    'Reading Site Intelligence or writing the snapshot failed, so no site risk was derived. The previous snapshot is unchanged.',
+};

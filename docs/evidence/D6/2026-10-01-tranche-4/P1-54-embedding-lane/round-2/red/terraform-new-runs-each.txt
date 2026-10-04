@@ -1,0 +1,76 @@
+# RED, each round-2 run alone (one file per run: the suite's mock provider and variables + the run), against a scratch copy of the working tree with the round-2 tests and NO round-2 change to terraform/ or the corpus policy. terraform 1.9.8, aws 5.70.0 (production's lock), 2026-10-01T16:00:51Z
+tests/p154r2_the_api_and_worker_embed_through_the_self_hosted_lane.tftest.hcl... in progress
+  run "the_api_and_worker_embed_through_the_self_hosted_lane"... fail
+
+Error: Error in function call
+
+  on tests/p154r2_the_api_and_worker_embed_through_the_self_hosted_lane.tftest.hcl line 164, in run "the_api_and_worker_embed_through_the_self_hosted_lane":
+ 164:     ]) && module.embeddings.model_id == one(regex("SELF_HOSTED_EMBEDDING_MODEL[^=]*= \\{ model: '([^']+)'", file("../../server/services/embedding-corpus-policy.ts")))
+    ├────────────────
+    │ while calling regex(pattern, string)
+
+Call to function "regex" failed: pattern did not match any part of the given
+string.
+tests/p154r2_the_api_and_worker_embed_through_the_self_hosted_lane.tftest.hcl... tearing down
+tests/p154r2_the_api_and_worker_embed_through_the_self_hosted_lane.tftest.hcl... fail
+
+Failure! 0 passed, 1 failed.
+tests/p154r2_an_openai_election_does_not_move_the_embedding_lane.tftest.hcl... in progress
+  run "an_openai_election_does_not_move_the_embedding_lane"... pass
+tests/p154r2_an_openai_election_does_not_move_the_embedding_lane.tftest.hcl... tearing down
+tests/p154r2_an_openai_election_does_not_move_the_embedding_lane.tftest.hcl... pass
+
+Success! 1 passed, 0 failed.
+tests/p154r2_refuses_placement_approvals_without_the_embedding_lane.tftest.hcl... in progress
+  run "refuses_placement_approvals_without_the_embedding_lane"... fail
+
+Error: Missing expected failure
+
+  on tests/p154r2_refuses_placement_approvals_without_the_embedding_lane.tftest.hcl line 142, in run "refuses_placement_approvals_without_the_embedding_lane":
+ 142:   expect_failures = [terraform_data.boot_contract]
+
+The checkable object, terraform_data.boot_contract, was expected to report an
+error but did not.
+tests/p154r2_refuses_placement_approvals_without_the_embedding_lane.tftest.hcl... tearing down
+tests/p154r2_refuses_placement_approvals_without_the_embedding_lane.tftest.hcl... fail
+
+Failure! 0 passed, 1 failed.
+tests/p154r2_refuses_a_local_approval_that_does_not_name_embedding.tftest.hcl... in progress
+  run "refuses_a_local_approval_that_does_not_name_embedding"... fail
+
+Error: Missing expected failure
+
+  on tests/p154r2_refuses_a_local_approval_that_does_not_name_embedding.tftest.hcl line 142, in run "refuses_a_local_approval_that_does_not_name_embedding":
+ 142:   expect_failures = [terraform_data.boot_contract]
+
+The checkable object, terraform_data.boot_contract, was expected to report an
+error but did not.
+tests/p154r2_refuses_a_local_approval_that_does_not_name_embedding.tftest.hcl... tearing down
+tests/p154r2_refuses_a_local_approval_that_does_not_name_embedding.tftest.hcl... fail
+
+Failure! 0 passed, 1 failed.
+tests/p154r2_the_environment_examples_show_the_decided_embedding_approval.tftest.hcl... in progress
+  run "the_environment_examples_show_the_decided_embedding_approval"... fail
+
+Error: Test assertion failed
+
+  on tests/p154r2_the_environment_examples_show_the_decided_embedding_approval.tftest.hcl line 139, in run "the_environment_examples_show_the_decided_embedding_approval":
+ 139:     condition = alltrue([
+ 140:       for env in ["production", "staging"] :
+ 141:       strcontains(file("../environments/${env}/terraform.tfvars.example"), "\"local\":{\"region\":\"on_prem\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\",\"phi\"],\"approvedIntendedUses\":[\"embedding\"]}")
+ 142:     ]) && jsondecode(var.ai_provider_placement_approvals)["local"] == jsondecode("{\"region\":\"on_prem\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\",\"phi\"],\"approvedIntendedUses\":[\"embedding\"]}")
+    ├────────────────
+    │ var.ai_provider_placement_approvals is "{\"anthropic\":{\"region\":\"global\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\"],\"approvedIntendedUses\":[\"drafting\"]},\"local\":{\"region\":\"on_prem\",\"zeroRetentionApproved\":true,\"approvedDataClasses\":[\"pii\",\"phi\"],\"approvedIntendedUses\":[\"embedding\"]}}"
+
+Both terraform.tfvars.example files, and this suite's approvals, must carry
+the local embedding approval exactly as ADR-0014 §1.5 records it.
+tests/p154r2_the_environment_examples_show_the_decided_embedding_approval.tftest.hcl... tearing down
+tests/p154r2_the_environment_examples_show_the_decided_embedding_approval.tftest.hcl... fail
+
+Failure! 0 passed, 1 failed.
+tests/p154r2_accepts_the_fail_closed_interim_approvals.tftest.hcl... in progress
+  run "accepts_the_fail_closed_interim_approvals"... pass
+tests/p154r2_accepts_the_fail_closed_interim_approvals.tftest.hcl... tearing down
+tests/p154r2_accepts_the_fail_closed_interim_approvals.tftest.hcl... pass
+
+Success! 1 passed, 0 failed.

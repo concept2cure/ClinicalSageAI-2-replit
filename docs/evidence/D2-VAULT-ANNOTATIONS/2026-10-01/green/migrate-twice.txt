@@ -1,0 +1,18 @@
+== deploy-migrate run 1
+  ✓ applied: migrations/20261001_vault_document_relationships.sql
+  ✓ applied: migrations/20261001_vault_version_annotations.sql
+      [NOTICE] [rls-sweep] tenant_isolation_policy applied to 1 newly-provisioned table(s); 0 rebuilt to the canonical shape; 0 forced retroactively; 0 healed off allowlisted tables; 0 skipped for non-integer tenant key
+✅ Schema migration complete — safe to roll services.
+== deploy-migrate run 2
+  ✓ applied: migrations/20261001_vault_document_relationships.sql
+  ✓ applied: migrations/20261001_vault_version_annotations.sql
+      [NOTICE] [rls-sweep] tenant_isolation_policy applied to 0 newly-provisioned table(s); 0 rebuilt to the canonical shape; 0 forced retroactively; 0 healed off allowlisted tables; 0 skipped for non-integer tenant key
+✅ Schema migration complete — safe to roll services.
+
+== the table after both runs
+rls=true force=true
+policy tenant_isolation_policy
+trigger vault_version_annotations_delete_guard
+trigger vault_version_annotations_guard
+trigger vault_version_annotations_insert_guard
+trigger vault_version_annotations_truncate_guard

@@ -1,0 +1,15 @@
+# scripts/db/provision.mjs on an empty local PostgreSQL 16 (c2c_imgboot), owner postgres, runtime app_service — the command the provision image runs. Tail:
+  security-critical tables: 5/5 present
+  Part 11 audit store: 1/1 present
+  authoring subsystem: 19/19 present
+  SELECT reach: 27/27 contract tables readable by app_service
+  grant audit: 1294/1294 application relations hold the recipe privileges for app_service; beyond the audit ceiling: 0
+
+✅ Database provisioned and the /readyz schema contract holds.
+   Next:
+   • boot the server with DATABASE_URL / APP_DATABASE_URL pointed at this database;
+     GET /readyz must report schema: ok (ana is down until an AI provider key is set).
+   • production: RLS_ENFORCE=on, AUDIT_TRAIL_ENABLED=true, and APP_DATABASE_URL on the
+     app_service role — the boot refuses a superuser under RLS_ENFORCE=on.
+   • at any time: node scripts/db/audit-runtime-grants.mjs re-checks app_service's reach.
+   • every later deploy re-runs deploy-migrate only (the AWS pipeline does this).

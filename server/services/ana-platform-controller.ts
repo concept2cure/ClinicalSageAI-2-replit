@@ -14,11 +14,16 @@
  *
  * Security model:
  *   - All actions require an active paid subscription (paymentStatus === 'active')
- *   - All mutations are audit-logged with actor = 'ana:platform-controller'
+ *   - Settings writes go through the one settings writer
+ *     (tenant/tenant-settings-writer.ts): the change and its chained
+ *     tenant_settings_changed row, with the requesting user as actor, commit
+ *     together or not at all (P1-49). Other mutations are audit-logged as
+ *     ana:<action>
  *   - HITL breakpoints for destructive actions (delete, downgrade, billing)
  *   - Organization-scoped — Ana cannot cross tenant boundaries
  */
 
+import type { Request } from 'express';
 import { db } from '../db';
 import { eq, and, sql } from 'drizzle-orm';
 import {
@@ -27,6 +32,13 @@ import {
 } from '../../shared/schema';
 import auditService from './auditService.js';
 import { pickWritable } from '../utils/authedOrgId';
+import {
+  asSettings,
+  overlaySettings,
+  writeTenantSettings,
+  type Settings,
+} from './tenant/tenant-settings-writer';
+import { CONNECTOR_NOT_A_GENERAL_SETTING, namesClaudeConnector } from '../mcp/auth/connector-enablement';
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -207,34 +219,68 @@ class AnaPlatformController {
   }
 
   /**
-   * Update organization settings. Ana can modify any setting for paid clients.
+   * Update organization settings. Ana can modify any setting for paid clients,
+   * except the connector for Claude.
+   *
+   * `via` is the request the change was made through: the write runs on its
+   * connection, in its tenant scope, and records its actor.
+   *
+   * The connector for Claude is the owner's setting, with one door of its own
+   * (PUT /api/tenant-config/:id/claude-connector; P1-47, ADR-0014 §10), and the
+   * connector reads it live. Every arbitrary-key write here comes through this
+   * method (PATCH /settings, /ai-config through configureAI, and /execute for
+   * settings and ai_config), and an administrator reaches all of them, so a
+   * patch that names the key is refused whole: nothing is written and nothing
+   * is recorded. Until 2026-10-01 (P1-49 fix round) it was written and recorded
+   * as an ordinary tenant_settings_changed.
    */
-  async updateSettings(orgId: number, updates: Partial<OrgSettings>, userId?: string): Promise<AnaActionResult> {
+  async updateSettings(orgId: number, updates: Partial<OrgSettings>, via: Request): Promise<AnaActionResult> {
+    if (namesClaudeConnector(updates)) {
+      return { success: false, action: 'update_settings', error: CONNECTOR_NOT_A_GENERAL_SETTING };
+    }
     const access = await this.verifyPaidAccess(orgId);
     if (!access.authorized) {
       return { success: false, action: 'update_settings', error: access.reason };
     }
+    // A key given no value is not named, so it is kept (DP-62), not erased.
+    const named = Object.fromEntries(Object.entries(asSettings(updates)).filter(([, value]) => value !== undefined));
+    return this.writeSettings(orgId, via, () => named);
+  }
 
-    const currentSettings = (access.org!.settings || {}) as OrgSettings;
-    const mergedSettings = { ...currentSettings, ...updates };
-
-    await db
-      .update(organizations)
-      .set({
-        settings: mergedSettings,
-        updatedAt: new Date(),
-      })
-      .where(eq(organizations.id, orgId));
-
-    await this.auditLog(orgId, 'update_settings', {
-      changed: Object.keys(updates),
-      actor: userId || 'ana:platform-controller',
+  /**
+   * Every settings write here goes through the one settings writer
+   * (services/tenant/tenant-settings-writer.ts), as tenant-config's do (P1-49,
+   * DP-58): the stored settings read under a row lock, `patchOf` of them laid
+   * over them (overlaySettings: a key the patch does not name is kept, DP-62),
+   * and the write's chained `tenant_settings_changed` audit row, in one
+   * transaction. A refused record throws and the write is rolled back; the
+   * route answers that as a failure.
+   *
+   * Until 2026-10-01 this merged on the shared pool and, after the write, logged
+   * a best-effort `ana:update_settings` row whose failure was ignored, so a
+   * configuration change could be made with no record of it.
+   */
+  private async writeSettings(
+    orgId: number,
+    via: Request,
+    patchOf: (current: Settings) => Settings
+  ): Promise<AnaActionResult> {
+    let named: Settings = {};
+    const stored = await writeTenantSettings(via, orgId, {
+      action: 'tenant_settings_changed',
+      next: current => {
+        named = patchOf(current);
+        return overlaySettings(current, named);
+      },
+      sections: () => Object.keys(named).sort(),
     });
-
+    if (!stored) {
+      return { success: false, action: 'update_settings', error: 'Organization not found' };
+    }
     return {
       success: true,
       action: 'update_settings',
-      result: { applied: Object.keys(updates), settings: mergedSettings },
+      result: { applied: Object.keys(named), settings: stored },
     };
   }
 
@@ -285,27 +331,31 @@ class AnaPlatformController {
   /**
    * Enable or disable a specific module for the organization.
    */
-  async toggleModule(orgId: number, moduleId: string, enabled: boolean): Promise<AnaActionResult> {
+  async toggleModule(orgId: number, moduleId: string, enabled: boolean, via: Request): Promise<AnaActionResult> {
     const access = await this.verifyPaidAccess(orgId);
     if (!access.authorized) {
       return { success: false, action: 'toggle_module', error: access.reason };
     }
 
-    const settings = (access.org!.settings || {}) as OrgSettings;
-    const enabledModules = new Set(settings.enabledModules || []);
-    const disabledModules = new Set(settings.disabledModules || []);
+    // From the settings as stored under the writer's lock, so a concurrent
+    // toggle is not overwritten.
+    return this.writeSettings(orgId, via, current => {
+      const settings = current as OrgSettings;
+      const enabledModules = new Set(settings.enabledModules || []);
+      const disabledModules = new Set(settings.disabledModules || []);
 
-    if (enabled) {
-      enabledModules.add(moduleId);
-      disabledModules.delete(moduleId);
-    } else {
-      disabledModules.add(moduleId);
-      enabledModules.delete(moduleId);
-    }
+      if (enabled) {
+        enabledModules.add(moduleId);
+        disabledModules.delete(moduleId);
+      } else {
+        disabledModules.add(moduleId);
+        enabledModules.delete(moduleId);
+      }
 
-    return this.updateSettings(orgId, {
-      enabledModules: Array.from(enabledModules),
-      disabledModules: Array.from(disabledModules),
+      return {
+        enabledModules: Array.from(enabledModules),
+        disabledModules: Array.from(disabledModules),
+      };
     });
   }
 
@@ -423,8 +473,8 @@ class AnaPlatformController {
     enableAutoExtraction?: boolean;
     anaProactiveMode?: boolean;
     anaAutoRemediate?: boolean;
-  }): Promise<AnaActionResult> {
-    return this.updateSettings(orgId, config);
+  }, via: Request): Promise<AnaActionResult> {
+    return this.updateSettings(orgId, config, via);
   }
 
   // ── Compliance Framework Management ─────────────────────
@@ -437,13 +487,13 @@ class AnaPlatformController {
     submissionType?: string;
     requireSignatures?: boolean;
     enforce21CFR?: boolean;
-  }): Promise<AnaActionResult> {
+  }, via: Request): Promise<AnaActionResult> {
     return this.updateSettings(orgId, {
       defaultComplianceFrameworks: config.frameworks,
       defaultSubmissionType: config.submissionType,
       requireElectronicSignatures: config.requireSignatures,
       enforce21CFRPart11: config.enforce21CFR,
-    });
+    }, via);
   }
 
   // ── Onboarding & Provisioning ───────────────────────────
@@ -457,7 +507,7 @@ class AnaPlatformController {
     primaryAgency: string;
     submissionType: string;
     companySize?: 'startup' | 'mid' | 'large' | 'pharma';
-  }): Promise<AnaActionResult> {
+  }, via: Request): Promise<AnaActionResult> {
     const access = await this.verifyPaidAccess(orgId);
     if (!access.authorized) {
       return { success: false, action: 'onboard', error: access.reason };
@@ -477,7 +527,7 @@ class AnaPlatformController {
       enableDeepResearch: true,
       enableAutoExtraction: true,
       enableSafetyNarrative: true,
-    });
+    }, via);
     results.push(settingsResult);
 
     // 2. Create starter project
@@ -504,7 +554,7 @@ class AnaPlatformController {
     const modulesResult = await this.updateSettings(orgId, {
       enabledModules: modulesToEnable,
       disabledModules: [],
-    });
+    }, via);
     results.push(modulesResult);
 
     await this.auditLog(orgId, 'onboard_organization', {
@@ -586,7 +636,7 @@ class AnaPlatformController {
    * Main entry point for Ana's agentic actions. Routes to the appropriate
    * handler based on the action category and name.
    */
-  async executeAction(orgId: number, action: AnaAction): Promise<AnaActionResult> {
+  async executeAction(orgId: number, action: AnaAction, via: Request): Promise<AnaActionResult> {
     const access = await this.verifyPaidAccess(orgId);
     if (!access.authorized) {
       return { success: false, action: action.action, error: access.reason };
@@ -594,7 +644,7 @@ class AnaPlatformController {
 
     switch (action.category) {
       case 'settings':
-        return this.updateSettings(orgId, action.parameters as Partial<OrgSettings>);
+        return this.updateSettings(orgId, action.parameters as Partial<OrgSettings>, via);
       case 'project':
         if (action.action === 'create') {
           return this.createProject(orgId, action.parameters as any);
@@ -606,15 +656,15 @@ class AnaPlatformController {
         return { success: false, action: action.action, error: 'Unknown project action' };
       case 'feature':
         if (action.parameters.moduleId && typeof action.parameters.enabled === 'boolean') {
-          return this.toggleModule(orgId, action.parameters.moduleId as string, action.parameters.enabled);
+          return this.toggleModule(orgId, action.parameters.moduleId as string, action.parameters.enabled, via);
         }
         return { success: false, action: action.action, error: 'Missing moduleId or enabled flag' };
       case 'ai_config':
-        return this.configureAI(orgId, action.parameters as any);
+        return this.configureAI(orgId, action.parameters as any, via);
       case 'compliance':
-        return this.setComplianceDefaults(orgId, action.parameters as any);
+        return this.setComplianceDefaults(orgId, action.parameters as any, via);
       case 'onboarding':
-        return this.onboardOrganization(orgId, action.parameters as any);
+        return this.onboardOrganization(orgId, action.parameters as any, via);
       case 'usage':
         return this.analyzeUsage(orgId);
       default:

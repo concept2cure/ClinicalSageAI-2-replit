@@ -1,0 +1,259 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > the list (1) > lists what the server returns, open by default, with the summary, the three anchors and stale notes 321ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > the list (1) > says when nothing is open on any version 8ms
+ × client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > a list that could not be read (2) > a 500 says so and never reads as no open annotations 5010ms
+   → Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      data-testid="vault-annotations"
+    >
+      <div
+        class="vd-d-seclbl"
+      >
+        Review annotations
+      </div>
+      <div
+        class="vd-d-filing-acts"
+      >
+        <button
+          class="sp-ask"
+          data-testid="vault-annotations-open"
+        >
+          Add annotation
+        </button>
+      </div>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      data-testid="vault-annotations"
+    >
+      <div
+        class="vd-d-seclbl"
+      >
+        Review annotations
+      </div>
+      <div
+        class="vd-d-filing-acts"
+      >
+        <button
+          class="sp-ask"
+          data-testid="vault-annotations-open"
+        >
+          Add annotation
+        </button>
+      </div>
+    </div>
+  </div>
+</body>
+ × client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > a list that could not be read (2) > a 200 that is not the expected shape says so too 5005ms
+   → Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      data-testid="vault-annotations"
+    >
+      <div
+        class="vd-d-seclbl"
+      >
+        Review annotations
+      </div>
+      <div
+        class="vd-d-filing-acts"
+      >
+        <button
+          class="sp-ask"
+          data-testid="vault-annotations-open"
+        >
+          Add annotation
+        </button>
+      </div>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      data-testid="vault-annotations"
+    >
+      <div
+        class="vd-d-seclbl"
+      >
+        Review annotations
+      </div>
+      <div
+        class="vd-d-filing-acts"
+      >
+        <button
+          class="sp-ask"
+          data-testid="vault-annotations-open"
+        >
+          Add annotation
+        </button>
+      </div>
+    </div>
+  </div>
+</body>
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > posting (3) > claims a whole-document comment only once the server answered 201 80ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > posting (3) > a 409 shows the server message, keeps the form and claims nothing 39ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > posting (3) > a returned 401 is not a success either 33ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > passages in code points (4) > codePointRange converts UTF-16 offsets and refuses a split character or an empty range 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > passages in code points (4) > posts the selected passage at its absolute code-point offset with the hash as read 68ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > acting on an annotation (5) > offers Retract only on the actor’s own annotations and replies 67ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > acting on an annotation (5) > a 422 on resolve shows the server message and keeps the form 91ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > acting on an annotation (5) > a retraction is claimed after the 200, with its reason sent 89ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > acting on an annotation (5) > a reply is claimed after the 201, and its form closes 79ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > page anchors (6) > offers the page input when the text read gives a page count 46ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > page anchors (6) > does not offer it when the version has no recorded page count 27ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > openAnnotationsSentence (7) > says what was open, or that it could not be read 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > a list that could not be read (2) > a 500 says so and never reads as no open annotations
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      data-testid="vault-annotations"
+    >
+      <div
+        class="vd-d-seclbl"
+      >
+        Review annotations
+      </div>
+      <div
+        class="vd-d-filing-acts"
+      >
+        <button
+          class="sp-ask"
+          data-testid="vault-annotations-open"
+        >
+          Add annotation
+        </button>
+      </div>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      data-testid="vault-annotations"
+    >
+      <div
+        class="vd-d-seclbl"
+      >
+        Review annotations
+      </div>
+      <div
+        class="vd-d-filing-acts"
+      >
+        <button
+          class="sp-ask"
+          data-testid="vault-annotations-open"
+        >
+          Add annotation
+        </button>
+      </div>
+    </div>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx:132:26
+    130|     onList = () => { throw refusal(500, 'ANNOTATIONS_UNAVAILABLE', "Th…
+    131|     mount();
+    132|     expect((await screen.findByRole('alert')).textContent).toMatch(/^T…
+       |                          ^
+    133|     expect(screen.getByTestId('vault-annotations').textContent).not.to…
+    134|     expect(screen.queryByTestId('vault-annotation')).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > a list that could not be read (2) > a 200 that is not the expected shape says so too
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      data-testid="vault-annotations"
+    >
+      <div
+        class="vd-d-seclbl"
+      >
+        Review annotations
+      </div>
+      <div
+        class="vd-d-filing-acts"
+      >
+        <button
+          class="sp-ask"
+          data-testid="vault-annotations-open"
+        >
+          Add annotation
+        </button>
+      </div>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      data-testid="vault-annotations"
+    >
+      <div
+        class="vd-d-seclbl"
+      >
+        Review annotations
+      </div>
+      <div
+        class="vd-d-filing-acts"
+      >
+        <button
+          class="sp-ask"
+          data-testid="vault-annotations-open"
+        >
+          Add annotation
+        </button>
+      </div>
+    </div>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx:140:26
+    138|     onList = () => res(200, {});
+    139|     mount();
+    140|     expect((await screen.findByRole('alert')).textContent).toMatch(/co…
+       |                          ^
+    141|     expect(screen.getByTestId('vault-annotations').textContent).not.to…
+    142|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 14 passed (16)
+   Start at  21:41:09
+   Duration  12.20s (transform 299ms, setup 179ms, import 311ms, tests 10.97s, environment 544ms)
+

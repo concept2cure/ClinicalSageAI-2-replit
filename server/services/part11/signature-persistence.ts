@@ -60,7 +60,8 @@ import { createHash } from 'crypto';
 import type { SQL } from 'drizzle-orm';
 import { queryableFromDrizzle } from '../../db/drizzle-queryable.js';
 import { resolveSignerIdentity } from './resolve-signer-identity.js';
-import { GOVERNED_SIGN_MEANINGS, isGovernedSignMeaning, type GovernedSignMeaning } from './signature-meanings.js';
+import { GOVERNED_SIGN_MEANINGS, signMeaningRefusal, type GovernedSignMeaning } from './signature-meanings.js';
+import { CONTENT_BINDERS } from './governed-target-binders.js';
 
 /** Minimal pg-compatible client: node-pg Pool, PoolClient, or a test shim. */
 export interface SignatureDbClient {
@@ -147,6 +148,34 @@ export const BINDING_BASIS = {
    * free TEXT (migrations/20260813d, no CHECK), so no migration is needed.
    */
   C2C_ARTIFACT_VERSION_CONTENT: 'c2c-artifact-version-content-sha256',
+  /**
+   * sha256 of one Vault version's bytes: the `vault.documents.content_hash` of
+   * the version a lifecycle document is sourced from, read in the signing
+   * transaction (FOR SHARE), never from the client. The row's hash is frozen
+   * (migrations/20260926_vault_documents_record_immutability.sql), so the
+   * digest re-derives from the stored row. Added 2026-09-29 with
+   * server/services/regulatory/lifecycle-signature.ts (VR-12).
+   */
+  VAULT_DOCUMENT_VERSION: 'vault-document-version-sha256',
+  /**
+   * sha256 content hash of a Report OS run's seal (buildSealedRecord,
+   * services/report-os/sealing/seal.ts: the rendered report's canonical blocks
+   * and provenance atoms), read from the run's latest snapshot in the signing
+   * transaction, where the finalize has just written it. Added 2026-10-01 with
+   * P1-44b: a final report's signature binds what it sealed. binding_basis is
+   * free TEXT (migrations/20260813d, no CHECK), so no migration is needed.
+   */
+  REPORT_RUN_SEAL: 'report-run-seal-sha256',
+  /**
+   * sha256 of a Vault version's bytes that are a RENDERING of Authoring content
+   * a signature covers (FD5 (c), 2026-10-01). The Authoring signature covers the
+   * sections digest; the filing rendered exactly those sections (digest
+   * recomputed over the rows rendered) into these bytes. Recorded on a Vault
+   * lifecycle sign-off that names the Authoring signature
+   * (server/services/regulatory/authoring-approval-carryover.ts); no
+   * electronic_signatures row carries it, because nothing is signed again.
+   */
+  AUTHORING_RENDITION: 'authoring-rendition-sha256',
   /**
    * No content digest is derivable for this target type. The digest column
    * carries the governed action's audit sha256 chain hash instead — a
@@ -287,9 +316,10 @@ export interface ElectronicSignatureRecord {
  * Insert ONE electronic_signatures row on the supplied client. When the client
  * is a transaction client, the row commits/rolls back with the transaction.
  *
- * Fail-closed: throws on a missing anchor, missing signer identity, or a
- * missing attribution hash. Database errors propagate untouched (callers
- * decide how to map 42P01 etc. — this function never swallows them).
+ * Fail-closed: throws on a missing anchor, missing signer identity, a missing
+ * attribution hash, or a meaning outside the closed vocabulary
+ * (assertRecordedMeaning). Database errors propagate untouched (callers decide
+ * how to map 42P01 etc. — this function never swallows them).
  */
 export async function persistElectronicSignature(
   client: SignatureDbClient,
@@ -303,6 +333,7 @@ export async function persistElectronicSignature(
       'electronic_signatures: refusing anchorless signature — need (documentId AND versionId) or a signedTarget (§11.70).',
     );
   }
+  assertRecordedMeaning(record);
   if (!Number.isFinite(record.signerId)) {
     throw new Error('electronic_signatures: signerId is required (§11.100).');
   }
@@ -357,7 +388,7 @@ export async function persistElectronicSignature(
       record.authenticationTimestamp,
       record.secondFactorVerified,
       record.signatureHash,
-      record.signatureMeaning ?? null,
+      record.signatureMeaning ?? null, // null only on a governed revocation (assertRecordedMeaning)
       JSON.stringify(record.signatureManifest),
       record.isValid,
       record.verificationStatus ?? null,
@@ -371,6 +402,27 @@ export async function persistElectronicSignature(
     ],
   );
   return { id: result.rows[0].id as number, signedAt: result.rows[0].signed_at as Date };
+}
+
+/**
+ * §11.50(a)(3) at the one writer (security audit 2026-09-24 DP-55, plan P1-42):
+ * every row states a meaning from the closed vocabulary (GOVERNED_SIGN_MEANINGS),
+ * or nothing is inserted. The column is nullable and this writer used to store
+ * `signatureMeaning ?? null`, so POST /api/esignature/sign — which took the
+ * meaning as optional free text — recorded signatures that said nothing about
+ * what they meant. Routes refuse first (signMeaningRefusal, before
+ * re-authentication); this is the floor for every current and future caller.
+ *
+ * The one row that may carry none is a governed revocation: it withdraws a
+ * signature rather than asserting a meaning, and its manifest
+ * (kind 'governed-revoke-signature') records the act. Every caller was checked
+ * on 2026-10-01: the document path, the release path ('approval', OQ-8), the
+ * governed sign (asserted in persistGovernedActionSignature) and the QMS
+ * approve/retire writers ('APPROVED') all pass a vocabulary meaning.
+ */
+function assertRecordedMeaning(record: ElectronicSignatureRecord): void {
+  if (record.signatureType === GOVERNED_REVOCATION_SIGNATURE_TYPE && record.signatureMeaning == null) return;
+  assertGovernedSignMeaning(record.signatureMeaning);
 }
 
 // ── Governed-target content-binding derivation ───────────────────────────────
@@ -537,13 +589,15 @@ export async function deriveGovernedTargetBinding(
           note: 'sha256 over the section content + version at signing time.',
         };
       }
-      case 'protocol-document':
-      case 'protocol-review-assignment':
-        // `return await`, not `return`: the helper's queries must reject INSIDE
-        // this try so a 42P01 still falls back to the ledger basis below.
-        return await protocolContentBinding(client, prefix, rest, orgId, ledgerFallback);
-      default:
-        return ledgerFallback(`no content-digest derivation implemented for target type '${prefix}'`);
+      default: {
+        // A type whose binder lives in governed-target-binders.ts. `return
+        // await`, not `return`: its queries must reject INSIDE this try so a
+        // 42P01 still falls back to the ledger basis below.
+        const binder = CONTENT_BINDERS[prefix];
+        return binder
+          ? await binder(client, rest, orgId, ledgerFallback)
+          : ledgerFallback(`no content-digest derivation implemented for target type '${prefix}'`);
+      }
     }
   } catch (err: any) {
     // Table absent in this environment (pre-migration) — the target's content is
@@ -554,68 +608,6 @@ export async function deriveGovernedTargetBinding(
     // Any other DB error is real — fail closed (roll back the whole sign).
     throw err;
   }
-}
-
-/**
- * The protocol-document / protocol-review-assignment case of
- * deriveGovernedTargetBinding. Errors propagate to that function's catch,
- * which owns the 42P01 ledger fallback and the fail-closed rethrow.
- */
-async function protocolContentBinding(
-  client: SignatureDbClient,
-  prefix: 'protocol-document' | 'protocol-review-assignment',
-  rest: string,
-  orgId: number,
-  ledgerFallback: (why: string) => GovernedBinding,
-): Promise<GovernedBinding> {
-  // A disposition is a signature over the protocol the reviewer read, so
-  // it binds that protocol's content, not the assignment row.
-  //
-  // CONTENT ONLY. No version, no workflow status, no timestamps: finalize
-  // bumps the version and moves section status, and a reviewer's
-  // signature taken before that must still re-derive afterwards when no
-  // content changed (the ectd-sequence lesson in deriveGovernedTargetBinding).
-  // And ALL of the content, not just the prose: the cover page, synopsis,
-  // objectives, eligibility, schedule of visits, schedule of assessments
-  // and study team are what a reviewer approves too.
-  if (!/^\d+$/.test(rest)) return ledgerFallback('malformed protocol pointer');
-  let docId = rest;
-  if (prefix === 'protocol-review-assignment') {
-    const a = await client.query(
-      `SELECT protocol_document_id FROM protocol_review_assignments
-        WHERE id = $1::int AND organization_id = $2 AND deleted_at IS NULL
-        LIMIT 1`,
-      [rest, orgId],
-    );
-    if (a.rows.length === 0) return ledgerFallback('review assignment not readable at signing time');
-    docId = String(a.rows[0].protocol_document_id);
-  }
-  const doc = await client.query(
-    `SELECT id, protocol_kind, protocol_number, title, design_type, phase, therapeutic_area,
-            synopsis, sponsor, principal_investigator
-       FROM protocol_documents
-      WHERE id = $1::int AND organization_id = $2 AND deleted_at IS NULL
-      LIMIT 1`,
-    [docId, orgId],
-  );
-  if (doc.rows.length === 0) return ledgerFallback('protocol document not readable at signing time');
-  const rows = async (sql: string) => (await client.query(sql, [docId, orgId])).rows;
-  const live = 'protocol_document_id = $1::int AND organization_id = $2';
-  const content = {
-    protocol: doc.rows[0],
-    sections: await rows(`SELECT section_key, title, content, required, order_index FROM protocol_sections WHERE ${live} AND deleted_at IS NULL ORDER BY order_index, section_key`),
-    objectives: await rows(`SELECT objective_type, objective, endpoint, timepoint, order_index FROM protocol_objectives WHERE ${live} AND deleted_at IS NULL ORDER BY order_index, id`),
-    eligibility: await rows(`SELECT kind, criterion, order_index FROM protocol_eligibility_criteria WHERE ${live} AND deleted_at IS NULL ORDER BY kind, order_index, id`),
-    visits: await rows(`SELECT id, visit_name, timepoint, procedures, order_index FROM protocol_schedule_visits WHERE ${live} AND deleted_at IS NULL ORDER BY order_index, id`),
-    assessments: await rows(`SELECT id, name, category, order_index FROM protocol_soa_assessments WHERE ${live} AND deleted_at IS NULL ORDER BY order_index, id`),
-    cells: await rows(`SELECT assessment_id, visit_id, required, notes FROM protocol_soa_cells WHERE ${live} ORDER BY assessment_id, visit_id`),
-    team: await rows(`SELECT member_name, role, responsibilities, personnel_id, user_id FROM protocol_team_members WHERE ${live} AND deleted_at IS NULL ORDER BY id`),
-  };
-  return {
-    digest: sha256Hex(canonicalJson(content)),
-    basis: BINDING_BASIS.PROTOCOL_DOCUMENT_CONTENT,
-    note: `sha256 over the protocol's content at signing time: cover page and synopsis (protocol_documents), ${content.sections.length} section(s), ${content.objectives.length} objective(s), ${content.eligibility.length} eligibility criteria, ${content.visits.length} visit(s), ${content.assessments.length} SoA assessment(s) and ${content.cells.length} cell(s), ${content.team.length} team member(s). No version, workflow status or timestamp is bound.`,
-  };
 }
 
 // ── Governed sign composition ────────────────────────────────────────────────
@@ -686,20 +678,20 @@ export class SignatureMeaningError extends Error {
 /**
  * The §11.50(a)(3) rule for a governed sign: the declared meaning is a string
  * from the closed vocabulary. The value is not echoed back (it is caller
- * text); the message names what is accepted instead.
+ * text); the message names what is accepted instead. Which refusal applies is
+ * decided once, by signMeaningRefusal — the same function the routes call
+ * before re-authentication — so the routes and this writer cannot disagree
+ * about what is "missing" and what is "unknown" (P1-42).
  */
 export function assertGovernedSignMeaning(meaning: unknown): asserts meaning is GovernedSignMeaning {
-  if (isGovernedSignMeaning(meaning)) return;
+  const refused = signMeaningRefusal(meaning);
+  if (!refused) return;
   const accepted = GOVERNED_SIGN_MEANINGS.join(', ');
-  if (typeof meaning !== 'string' || meaning.length === 0) {
-    throw new SignatureMeaningError(
-      'SIGNATURE_MEANING_REQUIRED',
-      `A signature meaning is required, one of: ${accepted}. Nothing was signed.`,
-    );
-  }
   throw new SignatureMeaningError(
-    'SIGNATURE_MEANING_UNKNOWN',
-    `The declared meaning is not a signature meaning; use one of: ${accepted}. Nothing was signed.`,
+    refused.error,
+    refused.error === 'SIGNATURE_MEANING_REQUIRED'
+      ? `A signature meaning is required, one of: ${accepted}. Nothing was signed.`
+      : `The declared meaning is not a signature meaning; use one of: ${accepted}. Nothing was signed.`,
   );
 }
 
@@ -735,10 +727,8 @@ export async function persistGovernedActionSignature(
 
   // §11.50 meaning: only what the signer actually declared (the sign modal sends
   // payload.meaning). Never fabricate a meaning that was not declared.
-  const declaredMeaning =
-    typeof params.payload?.meaning === 'string' && params.payload.meaning.length > 0
-      ? (params.payload.meaning as string)
-      : null;
+  const declared = params.payload?.meaning;
+  const declaredMeaning = typeof declared === 'string' && declared.length > 0 ? declared : null;
 
   const signedAtIso = params.occurredAt.toISOString();
 

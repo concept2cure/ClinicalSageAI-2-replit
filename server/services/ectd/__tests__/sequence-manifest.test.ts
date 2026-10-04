@@ -76,6 +76,40 @@ describe('manifestToPriorLeaves', () => {
   });
 });
 
+describe('the pre-normalization digest (sourceMd5) — the core spine\'s half of comparing like with like', () => {
+  // With Ghostscript in the production image the packager converts every leaf,
+  // so the published md5 is of the converted bytes, while the next compile's
+  // desired md5 is computed over the staged bytes, before conversion. Unless the
+  // pre-conversion digest survives the manifest round trip, the two never
+  // compare equal and every follow-up re-files every unchanged document.
+  it('survives buildLeafManifest -> stored JSON -> manifestToPriorLeaves', () => {
+    const stored = JSON.parse(JSON.stringify(buildLeafManifest([
+      { ctdSection: '2.5', href: 'm2/2-5/overview.pdf', md5: 'shipped', sourceMd5: 'staged' },
+    ])));
+    const [p] = manifestToPriorLeaves(stored);
+    expect(p).toMatchObject({ md5: 'shipped', sourceMd5: 'staged' });
+  });
+
+  it('drives the diff: an unchanged staged document is unchanged, however the shipped bytes differ', () => {
+    const prior = manifestToPriorLeaves(buildLeafManifest([
+      { ctdSection: '2.5', href: 'm2/2-5/overview.pdf', md5: 'shipped-by-gs-run-1', sourceMd5: 'staged' },
+    ]));
+    const same = computeLifecycleOperations(prior, [
+      { ctdSection: '2.5', fileName: 'overview.pdf', title: 'Overview', sourcePath: '/x', md5: 'staged' },
+    ]);
+    expect(same.summary).toMatchObject({ unchanged: 1, replace: 0 });
+  });
+
+  it('a manifest filed before the digest was recorded still compares on md5', () => {
+    const prior = manifestToPriorLeaves([{ ctdSection: '2.5', fileName: 'overview.pdf', href: 'm2/2-5/overview.pdf', md5: 'm1' }]);
+    expect(prior[0].sourceMd5).toBeUndefined();
+    const res = computeLifecycleOperations(prior, [
+      { ctdSection: '2.5', fileName: 'overview.pdf', title: 'Overview', sourcePath: '/x', md5: 'm1' },
+    ]);
+    expect(res.summary).toMatchObject({ unchanged: 1 });
+  });
+});
+
 describe('computeSequencePrefix', () => {
   it('builds the grouped sibling traversal from the new backbone to the prior sequence', () => {
     expect(computeSequencePrefix('0000')).toBe('../0000/');

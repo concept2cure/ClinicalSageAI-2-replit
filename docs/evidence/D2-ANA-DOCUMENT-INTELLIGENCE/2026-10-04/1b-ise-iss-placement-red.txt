@@ -1,0 +1,148 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | tests/regulatory/ana-ctd-section-truth.test.ts
+{
+  "timestamp": "2026-10-04T18:31:00.363Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-04T18:31:00.365Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | tests/regulatory/ana-ctd-section-truth.test.ts
+{
+  "timestamp": "2026-10-04T18:31:00.366Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | tests/regulatory/ana-ctd-section-truth.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | tests/regulatory/ana-ctd-section-truth.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | tests/regulatory/ana-ctd-section-truth.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stderr | tests/regulatory/ana-ctd-section-truth.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/regulatory/ana-ctd-section-truth.test.ts
+{
+  "timestamp": "2026-10-04T18:31:01.101Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/regulatory/ana-ctd-section-truth.test.ts
+Loaded 0 academic documents
+
+ ↓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 2.7.3 is Summary of Clinical Efficacy
+ ↓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 2.7.4 is Summary of Clinical Safety
+ ↓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 2.7.5 is Literature References
+ ↓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 1.2 is Cover Letter
+ ↓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 1.12.14 is Environmental Assessment
+ ↓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > 1.14 is labeling, not the environmental assessment
+ ↓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > a sub-section is briefed as its nearest registered section, and says so
+ ↓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > a parent is briefed by the sections it contains, not as its first child
+ ↓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > a code nothing registers gets no line rather than a guessed one
+ ↓ tests/regulatory/ana-ctd-section-truth.test.ts > the orchestrator's section line names the section ICH M4 / FDA Module 1 names > agrees with the canonical overlay on every registered code
+ ↓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.1 carries Form FDA 1571
+ ↓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.2 carries Cover Letter
+ ↓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.3.3 carries Debarment Certification
+ ↓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 1.14.4.1 carries Investigator's Brochure
+ ↓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 5.2 carries Tabular Listing
+ ↓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > 5.3.5.1 holds the reports of controlled clinical studies, not a protocol playbook
+ ↓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > opens with the canonical code and title for every registered code
+ ↓ tests/regulatory/ana-ctd-section-truth.test.ts > the stream's section playbook names the section ICH M4 / FDA Module 1 names > keeps the module playbooks the overlay does not model
+ ↓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "summary of clinical efficacy" → 2.7.3
+ ↓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "draft section 2.7.3" → 2.7.3
+ ↓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "summary of clinical safety" → 2.7.4
+ ↓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "section 2.7.4" → 2.7.4
+ ↓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > "section 2.7.4 summary of clinical safety" → 2.7.4
+ ↓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > every template with a CTD primary code is named for that code
+ ↓ tests/regulatory/ana-ctd-section-truth.test.ts > the template injected for a named document is the document the overlay files at its code > every coded 2.5.x / 2.7.x sub-heading carries its ICH M4E title
+ × tests/regulatory/ana-ctd-section-truth.test.ts > 2.7.3 and 2.7.4 summarise; the ISE and ISS are the analyses filed in 5.3.5.3 > 2.7.3 does not claim to be the ISE 6ms
+   → expected 'Section 2.7.3 is where the Integrated…' not to match /is where the .*\(ISE\) narrative lives/
+ × tests/regulatory/ana-ctd-section-truth.test.ts > 2.7.3 and 2.7.4 summarise; the ISE and ISS are the analyses filed in 5.3.5.3 > 2.7.4 does not claim to be the ISS 1ms
+   → expected 'Section 2.7.4 is where the Integrated…' not to match /is where the .*\(ISS\) narrative lives/
+ × tests/regulatory/ana-ctd-section-truth.test.ts > 2.7.3 and 2.7.4 summarise; the ISE and ISS are the analyses filed in 5.3.5.3 > 2.7.3 states FDA’s own description of the summary 6ms
+   → expected 'Section 2.7.3 is where the Integrated…' to contain 'data summaries, not a complete exposi…'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/regulatory/ana-ctd-section-truth.test.ts > 2.7.3 and 2.7.4 summarise; the ISE and ISS are the analyses filed in 5.3.5.3 > 2.7.3 does not claim to be the ISE
+AssertionError: expected 'Section 2.7.3 is where the Integrated…' not to match /is where the .*\(ISE\) narrative lives/
+
+- Expected:
+/is where the .*\(ISE\) narrative lives/
+
++ Received:
+"Section 2.7.3 is where the Integrated Summary of Efficacy (ISE) narrative lives — the detailed, cross-study analysis of efficacy for each proposed indication, pooling data where appropriate to support the effectiveness claim. Per ICH M4E it is the comprehensive factual efficacy summary feeding the 2.5.4 Overview, and for a US NDA/BLA it houses the integrated efficacy analyses FDA expects under 21 CFR 314.50(d)(5)(v). FDA statistical and clinical reviewers scrutinize it for the pooled evidence, subgroup consistency, and persistence of effect; acceptability depends on rigorous integrated analyses, pre-specified vs. post hoc clarity, and full consistency with Module 5 study reports. This is abbreviated for an IND."
+
+ ❯ tests/regulatory/ana-ctd-section-truth.test.ts:164:19
+    162|   ])('%s does not claim to be the %s', (code, summary, cfr) => {
+    163|     const g = CTD_AUTHORING_GUIDANCE[code].guidance;
+    164|     expect(g).not.toMatch(new RegExp(`is where the .*\\(${summary}\\) …
+       |                   ^
+    165|     expect(g).not.toMatch(/houses the integrated/);
+    166|     expect(g).toContain('5.3.5.3');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/regulatory/ana-ctd-section-truth.test.ts > 2.7.3 and 2.7.4 summarise; the ISE and ISS are the analyses filed in 5.3.5.3 > 2.7.4 does not claim to be the ISS
+AssertionError: expected 'Section 2.7.4 is where the Integrated…' not to match /is where the .*\(ISS\) narrative lives/
+
+- Expected:
+/is where the .*\(ISS\) narrative lives/
+
++ Received:
+"Section 2.7.4 is where the Integrated Summary of Safety (ISS) narrative lives — the comprehensive, pooled analysis of safety across the entire clinical program, the single most scrutinized safety document in the application. Per ICH M4E it is the detailed factual safety summary feeding the 2.5.5 Overview, and for a US NDA/BLA it houses the integrated safety analyses FDA expects under 21 CFR 314.50(d)(5)(vi). FDA reviewers mine it for exposure, adverse-event patterns, deaths, serious events, laboratory signals, and adverse events of special interest; acceptability depends on a rigorous pooling strategy, complete adverse-event accounting, and full consistency with Module 5. This is abbreviated for an IND."
+
+ ❯ tests/regulatory/ana-ctd-section-truth.test.ts:164:19
+    162|   ])('%s does not claim to be the %s', (code, summary, cfr) => {
+    163|     const g = CTD_AUTHORING_GUIDANCE[code].guidance;
+    164|     expect(g).not.toMatch(new RegExp(`is where the .*\\(${summary}\\) …
+       |                   ^
+    165|     expect(g).not.toMatch(/houses the integrated/);
+    166|     expect(g).toContain('5.3.5.3');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/regulatory/ana-ctd-section-truth.test.ts > 2.7.3 and 2.7.4 summarise; the ISE and ISS are the analyses filed in 5.3.5.3 > 2.7.3 states FDA’s own description of the summary
+AssertionError: expected 'Section 2.7.3 is where the Integrated…' to contain 'data summaries, not a complete exposi…'
+
+Expected: "data summaries, not a complete exposition"
+Received: "Section 2.7.3 is where the Integrated Summary of Efficacy (ISE) narrative lives — the detailed, cross-study analysis of efficacy for each proposed indication, pooling data where appropriate to support the effectiveness claim. Per ICH M4E it is the comprehensive factual efficacy summary feeding the 2.5.4 Overview, and for a US NDA/BLA it houses the integrated efficacy analyses FDA expects under 21 CFR 314.50(d)(5)(v). FDA statistical and clinical reviewers scrutinize it for the pooled evidence, subgroup consistency, and persistence of effect; acceptability depends on rigorous integrated analyses, pre-specified vs. post hoc clarity, and full consistency with Module 5 study reports. This is abbreviated for an IND."
+
+ ❯ tests/regulatory/ana-ctd-section-truth.test.ts:171:54
+    169|
+    170|   it('2.7.3 states FDA’s own description of the summary', () => {
+    171|     expect(CTD_AUTHORING_GUIDANCE['2.7.3'].guidance).toContain('data s…
+       |                                                      ^
+    172|   });
+    173| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 25 skipped (28)
+   Start at  18:30:57
+   Duration  9.05s (transform 5.58s, setup 101ms, import 8.62s, tests 18ms, environment 0ms)
+

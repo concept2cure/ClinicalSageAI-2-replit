@@ -1,0 +1,4 @@
+  run "each_key_is_used_where_it_belongs_and_the_passwords_rotate_on_the_marker"... fail
+  on tests/boot_contract.tftest.hcl line 1137, in run "each_key_is_used_where_it_belongs_and_the_passwords_rotate_on_the_marker":
+Every secret must be on the secrets key.
+Failure! 45 passed, 2 failed.

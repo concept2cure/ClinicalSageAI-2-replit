@@ -28,6 +28,7 @@ import {
 } from '../c2c/document-alias-map.js';
 import { enforceAuthorLineage } from '../clinical-regulatory-evidence/lineage-gate';
 import { grantAuthoringPermission } from './authoring-permissions';
+import { describeRefusedFigures, refusedFigures, refusedKind } from './authoring-html-sanitizer';
 import { sectionInsertIndex } from '../../../shared/regulatory/section-code';
 import { LOCKED_DOCUMENT_STATUSES } from './document-lock';
 import {
@@ -62,7 +63,7 @@ export interface CreateContext {
   audit: AuthoringAuditContext;
 }
 
-export type Refusal = { kind: 'refused'; status: 400 | 403 | 404 | 503; error: string };
+export type Refusal = { kind: 'refused'; status: 400 | 403 | 404 | 503; error: string; code?: string };
 
 export interface Binding {
   documentId: string | null;
@@ -447,21 +448,60 @@ export type CreateDocumentOutcome =
     };
 
 /**
- * Why a document cannot be anchored to `clientProgramId`, or null when it can
- * (including when no project is named). A malformed id is a clean 400 rather
- * than a UUID-cast 500. Otherwise the project must be a live one this
+ * Why a document cannot be anchored to `clientProgramId`, or null when it can.
+ * A document belongs to a project (PF-07; founder decision 2026-09-26): one
+ * that names none is refused 400 PROJECT_REQUIRED — it used to be created
+ * org-wide, where no project ever listed it. A malformed id is a clean 400
+ * rather than a UUID-cast 500. Otherwise the project must be a live one this
  * organization owns (LX-20): reads are gated on tenant_id, but the ANCHOR was
  * not, so a document could name another organization's project, a missing one,
  * or a deleted one. 404, not 403: the caller learns nothing about another
  * tenant's project ids.
  */
 async function refuseProgramAnchor(ctx: CreateContext, clientProgramId: unknown): Promise<Refusal | null> {
-  if (clientProgramId === undefined || clientProgramId === null || clientProgramId === '') return null;
+  if (clientProgramId === undefined || clientProgramId === null || clientProgramId === '') {
+    return { kind: 'refused', status: 400, code: 'PROJECT_REQUIRED', error: 'Open a project first: a document belongs to a project.' };
+  }
   if (!UUID_RE.test(String(clientProgramId))) {
     return { kind: 'refused', status: 400, error: 'client_program_id must be a valid UUID' };
   }
   if (!(await programInOrganization(ctx.pool, String(clientProgramId), ctx.tenantId))) {
     return { kind: 'refused', status: 404, error: 'Project not found' };
+  }
+  return null;
+}
+
+/**
+ * AN IMAGE IN A SECTION IS AN UPLOADED FIGURE OR NOTHING, on create as on save
+ * (periodic review 2026-09-28, editor family, SEC-B-1/2 follow-on b1). An
+ * organization template's sections are copied into the new document as they
+ * are stored, and the template store never checked them, so a template
+ * seeded exactly what the section save refuses. The first section holding
+ * such an image refuses the create before anything is written; nothing is
+ * rewritten, because the template's words are its author's.
+ *
+ * The images are named in the section save's words (refusedKind), but the
+ * advice is not the save's "upload the image or remove it, then save again":
+ * a template has no edit route, so the person creating the document can act
+ * only on the choice of template (fix-up).
+ */
+async function refuseTemplateFigures(seeds: TemplateSectionSeed[]): Promise<Refusal | null> {
+  for (const [i, seed] of seeds.entries()) {
+    const refused = await refusedFigures(seed.content);
+    if (refused.length > 0) {
+      const section = seed.code || seed.title || String(i + 1);
+      const notFigures = refused.filter((r) => r.reason !== 'read-differently');
+      // refusedFigures reports a misread image only when nothing else is refused.
+      const what =
+        notFigures.length === 0
+          ? 'an image written in a way the editor and the filed document would read differently ' +
+            '(a repeated attribute, or an image inside a comment, a text box or a template). '
+          : `${notFigures.length === 1 ? 'an image that is not an uploaded figure' : `${notFigures.length} images that are not uploaded figures`} ` +
+            `(${[...new Set(notFigures.map((r) => refusedKind(r.src)))].join(', ')}). ` +
+            'A section can only hold images uploaded to the document (PNG, JPEG or GIF). ';
+      const error = `Template section ${section} holds ${what}Choose another template, or create the document without one.`;
+      return { kind: 'refused', status: 400, error };
+    }
   }
   return null;
 }
@@ -480,6 +520,8 @@ export async function createDocument(ctx: CreateContext, input: CreateDocumentIn
   if (template_id) {
     const resolved = await resolveTemplateSections(ctx.pool, ctx.tenantId, String(template_id));
     if (!Array.isArray(resolved)) return resolved;
+    const seedRefusal = await refuseTemplateFigures(resolved);
+    if (seedRefusal) return seedRefusal;
     templateSections = resolved;
   }
 
@@ -538,6 +580,29 @@ export type CreateSectionOutcome =
   | { kind: 'lineage_failed' }
   | { kind: 'created'; section: Record<string, unknown> };
 
+/**
+ * What POST /sections refuses before the parent document is read: a missing
+ * field, and content the section save would refuse.
+ *
+ * The section save refuses content holding an image that is not an uploaded
+ * figure; this create stored the same content as sent, so it was the way round
+ * that refusal (periodic review 2026-09-28, editor family, SEC-B-1/2 follow-on
+ * b1). Refused the same way, with the images named, and never rewritten.
+ * Content that is not text is refused as well: the driver stores an object as
+ * its JSON, which no figure check would have read.
+ */
+async function refuseSectionInput(input: CreateSectionInput): Promise<Refusal | null> {
+  const { doc_id, code, title, content } = input;
+  if (!doc_id || !code || !title) {
+    return { kind: 'refused', status: 400, error: 'doc_id, code, and title are required' };
+  }
+  if (content != null && typeof content !== 'string') {
+    return { kind: 'refused', status: 400, error: 'content must be text' };
+  }
+  const refused = await refusedFigures(content ?? '');
+  return refused.length > 0 ? { kind: 'refused', status: 400, error: describeRefusedFigures(refused) } : null;
+}
+
 /** POST /sections. The caller has already resolved the actor (401 without one). */
 export async function createSection(ctx: CreateContext, input: CreateSectionInput): Promise<CreateSectionOutcome> {
   const { pool, tenantId, actor } = ctx;
@@ -551,9 +616,8 @@ export async function createSection(ctx: CreateContext, input: CreateSectionInpu
     : undefined;
   const sectionId = crypto.randomUUID();
 
-  if (!doc_id || !code || !title) {
-    return { kind: 'refused', status: 400, error: 'doc_id, code, and title are required' };
-  }
+  const inputRefusal = await refuseSectionInput({ doc_id, code, title, content });
+  if (inputRefusal) return inputRefusal;
 
   // The same Part 11 immutability lock the /sections/:sectionId guard applies
   // (C2C-AUTHOR-001): adding a section to a FROZEN or APPROVED document alters

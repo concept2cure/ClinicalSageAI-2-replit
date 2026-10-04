@@ -30,6 +30,7 @@ import {
 } from '../../services/part11/signature-persistence';
 import { SIGNATURE_MEANINGS, signatureMeaningSchema, resolveActorUserId } from './governance';
 import { serverError } from '../../lib/api-response';
+import { guardModule3Project, module3OrgId } from './module3-project-guard';
 import { createScopedLogger } from '../../utils/logger';
 import { clientIpOf } from '../../utils/client-ip';
 
@@ -39,6 +40,10 @@ type SignatureMeaning = (typeof SIGNATURE_MEANINGS)[number];
 const router = express.Router();
 
 const logger = createScopedLogger('cmc-module3-os');
+
+/* Every route here that names a project acts only in a project of the
+   caller's organization (PF-15): the shared guard, module3-project-guard.ts. */
+guardModule3Project(router, logger);
 
 const upsertSourceObjectSchema = z.object({
   /* Derived from the composer's own list — the enum here used to be a
@@ -70,19 +75,9 @@ function incompleteSectionRefusal(sectionKey: string, record: CompiledRecordStat
   return verdict + remedy;
 }
 
-function getOrgId(req: express.Request): number {
-  const orgId = parseInt(
-    String((req as any).tenantId || (req as any).tenantContext?.organizationId || 0),
-    10
-  );
-  if (!orgId || Number.isNaN(orgId)) throw new Error('Organization context required');
-  return orgId;
-}
-
-
 router.post('/source-objects/:projectId', async (req, res) => {
   try {
-    const orgId = getOrgId(req);
+    const orgId = module3OrgId(req);
     const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     const data = upsertSourceObjectSchema.parse(req.body);
     const pool = getPool();
@@ -124,7 +119,7 @@ router.post('/source-objects/:projectId', async (req, res) => {
 
 router.get('/sections/:projectId', async (req, res) => {
   try {
-    const orgId = getOrgId(req);
+    const orgId = module3OrgId(req);
     const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     const pool = getPool();
     const { rows } = await pool.query(
@@ -156,7 +151,7 @@ router.post('/compile/:projectId', async (req, res) => {
   const pool = getPool();
   const client = await pool.connect();
   try {
-    const orgId = getOrgId(req);
+    const orgId = module3OrgId(req);
     const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     await client.query('BEGIN');
 
@@ -235,7 +230,7 @@ router.post('/compile/:projectId', async (req, res) => {
 
 router.post('/source-changed/:projectId', async (req, res) => {
   try {
-    const orgId = getOrgId(req);
+    const orgId = module3OrgId(req);
     const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     const { changedSourceType, reason } = req.body;
     const pool = getPool();
@@ -267,7 +262,7 @@ router.post('/source-changed/:projectId', async (req, res) => {
 
 router.post('/contradictions/:projectId', async (req, res) => {
   try {
-    const orgId = getOrgId(req);
+    const orgId = module3OrgId(req);
     const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     const pool = getPool();
     /* The ONE tenant-scoped register sweep
@@ -346,7 +341,7 @@ router.post('/contradictions/:projectId', async (req, res) => {
 
 router.get('/contradictions/:projectId', async (req, res) => {
   try {
-    const orgId = getOrgId(req);
+    const orgId = module3OrgId(req);
     const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     const pool = getPool();
     const { rows } = await pool.query(
@@ -369,7 +364,7 @@ router.get('/contradictions/:projectId', async (req, res) => {
 
 router.patch('/contradictions/:id/resolve', async (req, res) => {
   try {
-    const orgId = getOrgId(req);
+    const orgId = module3OrgId(req);
     const idRaw = req.params.id; const id = Array.isArray(idRaw) ? idRaw[0] : (idRaw ?? "");
     const parsed = resolveContradictionSchema.parse(req.body || {});
     const pool = getPool();
@@ -409,7 +404,7 @@ router.patch('/contradictions/:id/resolve', async (req, res) => {
 
 router.get('/readiness/:projectId', async (req, res) => {
   try {
-    const orgId = getOrgId(req);
+    const orgId = module3OrgId(req);
     const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
 
     // The same evaluation the final-export gate runs, so this read cannot be
@@ -486,7 +481,7 @@ router.get('/readiness/:projectId', async (req, res) => {
  */
 router.get('/sections/:projectId/:sectionKey', async (req, res) => {
   try {
-    const orgId = getOrgId(req);
+    const orgId = module3OrgId(req);
     const projectIdRaw = req.params.projectId;
     const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? '');
     const sectionKey = String(req.params.sectionKey ?? '');
@@ -562,7 +557,7 @@ router.get('/sections/:projectId/:sectionKey', async (req, res) => {
 
 router.get('/provenance/:projectId/:sectionKey', async (req, res) => {
   try {
-    const orgId = getOrgId(req);
+    const orgId = module3OrgId(req);
     const { projectId, sectionKey } = req.params;
     const pool = getPool();
     const sectionRes = await pool.query(
@@ -592,7 +587,7 @@ router.get('/provenance/:projectId/:sectionKey', async (req, res) => {
 
 router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
   try {
-    const orgId = getOrgId(req);
+    const orgId = module3OrgId(req);
     const { projectId, sectionKey } = req.params;
 
     // §11.10(g) / §11.200 re-authentication. Approving a Module 3 section is a
@@ -849,7 +844,7 @@ router.post('/sections/:projectId/:sectionKey/refresh', async (req, res) => {
   const pool = getPool();
   const client = await pool.connect();
   try {
-    const orgId = getOrgId(req);
+    const orgId = module3OrgId(req);
     const { projectId, sectionKey } = req.params;
     await client.query('BEGIN');
     const sectionRes = await client.query(
@@ -926,7 +921,7 @@ router.post('/sections/:projectId/:sectionKey/refresh', async (req, res) => {
 
 router.post('/guard/final-export/:projectId', async (req, res) => {
   try {
-    const orgId = getOrgId(req);
+    const orgId = module3OrgId(req);
     const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     // The verdict lives in evaluateFinalExportGate so the placement path
     // (place-into-submission below) refuses on exactly the same answer.
@@ -962,7 +957,7 @@ router.post('/guard/final-export/:projectId', async (req, res) => {
  */
 router.post('/place-into-submission/:projectId', async (req, res) => {
   try {
-    const orgId = getOrgId(req);
+    const orgId = module3OrgId(req);
     const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
 
     const actorId = resolveActorUserId(req);
@@ -1004,6 +999,9 @@ router.post('/place-into-submission/:projectId', async (req, res) => {
           .status(409)
           .json({ success: false, error: result.error, vocabulary: result.vocabulary });
       }
+      if (result.refusedBy === 'cross-project') {
+        return res.status(409).json({ success: false, code: 'CROSS_PROJECT', error: result.error });
+      }
       return res.status(409).json({ success: false, error: result.error, skipped: result.skipped });
     }
     return res.json({ success: true, data: result });
@@ -1018,7 +1016,7 @@ router.post('/place-into-submission/:projectId', async (req, res) => {
     if (msg.includes('NOT_FOUND') || msg.includes('FORBIDDEN')) {
       return res.status(404).json({ success: false, error: msg });
     }
-    return res.status(500).json({ success: false, error: msg || 'Placement failed' });
+    return serverError(res, logger, 'placing the document', error);
   }
 });
 

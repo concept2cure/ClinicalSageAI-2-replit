@@ -1,0 +1,14 @@
+$ docker build --network host -f Dockerfile.optimized --target production .   # base re-tagged with the session proxy CA; apt on https mirrors
+ > [production  3/22] RUN apt-get update &&     apt-get install -y --no-install-recommends       libreoffice-common       libreoffice-writer       fonts-liberation       ghostscript       ocrmypdf       tesseract-ocr       curl       ca-certificates       default-jre-headless       libxml2-utils       python3-venv     && apt-get clean && rm -rf /var/lib/apt/lists/*:
+#6 [production  3/22] RUN apt-get update &&     apt-get install -y --no-install-recommends       libreoffice-common       libreoffice-writer       fonts-liberation       ghostscript       ocrmypdf       tesseract-ocr       curl       ca-certificates       default-jre-headless       libxml2-utils       python3-venv     && apt-get clean && rm -rf /var/lib/apt/lists/*
+11.11 E: Package 'ca-certificates' has no installation candidate
+11.11 E: Unable to locate package curl
+11.11 E: Unable to locate package default-jre-headless
+11.11 E: Unable to locate package fonts-liberation
+11.11 E: Unable to locate package ghostscript
+11.11 E: Unable to locate package libreoffice-writer
+11.11 E: Unable to locate package libxml2-utils
+11.11 E: Unable to locate package ocrmypdf
+11.11 E: Unable to locate package python3-venv
+11.11 E: Unable to locate package tesseract-ocr
+exit=1

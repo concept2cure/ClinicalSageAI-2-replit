@@ -1,0 +1,327 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <scratch>/review-figure
+
+stdout | create-door.probe.test.ts
+✅ Template tables initialized
+
+stdout | create-door.probe.test.ts > POST /sections: an image from another site the check does not see > template element
+{
+  "timestamp": "2026-10-04T17:55:47.921Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stderr | create-door.probe.test.ts > POST /sections: an image from another site the check does not see > template element
+{
+  "timestamp": "2026-10-04T17:55:47.922Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.CREATE",
+    "resourceType": "authoring_section",
+    "resourceId": "2fb24fa0-f11d-4003-a246-6b1242d64811",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | create-door.probe.test.ts > POST /sections: an image from another site the check does not see > template element
+[authoring] audit_logs index entry NOT written for authoring.section.CREATE on authoring_section 2fb24fa0-f11d-4003-a246-6b1242d64811; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+stdout | create-door.probe.test.ts > POST /sections: an image from another site the check does not see > template element
+CREATE [template element] status=201 storedHasExternal=true leaf="Drug substance."
+
+stdout | create-door.probe.test.ts > POST /sections: an image from another site the check does not see > bogus comment <!x
+{
+  "timestamp": "2026-10-04T17:55:47.950Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stderr | create-door.probe.test.ts > POST /sections: an image from another site the check does not see > bogus comment <!x
+{
+  "timestamp": "2026-10-04T17:55:47.951Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.CREATE",
+    "resourceType": "authoring_section",
+    "resourceId": "af39c77a-1034-4221-a7a1-5f3c4f2b6345",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | create-door.probe.test.ts > POST /sections: an image from another site the check does not see > bogus comment <!x
+[authoring] audit_logs index entry NOT written for authoring.section.CREATE on authoring_section af39c77a-1034-4221-a7a1-5f3c4f2b6345; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+stdout | create-door.probe.test.ts > POST /sections: an image from another site the check does not see > bogus comment <!x
+CREATE [bogus comment <!x] status=201 storedHasExternal=true leaf="Drug substance.\n<!x\n[Figure: from another site]"
+
+stdout | create-door.probe.test.ts > POST /sections: an image from another site the check does not see > textarea
+{
+  "timestamp": "2026-10-04T17:55:47.962Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stderr | create-door.probe.test.ts > POST /sections: an image from another site the check does not see > textarea
+{
+  "timestamp": "2026-10-04T17:55:47.962Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.CREATE",
+    "resourceType": "authoring_section",
+    "resourceId": "e5705955-3dab-4b70-9be8-ce2e1a619a41",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | create-door.probe.test.ts > POST /sections: an image from another site the check does not see > textarea
+[authoring] audit_logs index entry NOT written for authoring.section.CREATE on authoring_section e5705955-3dab-4b70-9be8-ce2e1a619a41; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+stdout | create-door.probe.test.ts > POST /sections: an image from another site the check does not see > textarea
+CREATE [textarea] status=201 storedHasExternal=true leaf="Drug substance.\n\n[Figure: from another site]"
+
+stdout | create-door.probe.test.ts > POST /sections: an image from another site the check does not see > img srcset, no src
+{
+  "timestamp": "2026-10-04T17:55:47.972Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stderr | create-door.probe.test.ts > POST /sections: an image from another site the check does not see > img srcset, no src
+{
+  "timestamp": "2026-10-04T17:55:47.972Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.CREATE",
+    "resourceType": "authoring_section",
+    "resourceId": "fd06c3fc-ae61-4ae2-a1fb-f4c7383a0a81",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | create-door.probe.test.ts > POST /sections: an image from another site the check does not see > img srcset, no src
+[authoring] audit_logs index entry NOT written for authoring.section.CREATE on authoring_section fd06c3fc-ae61-4ae2-a1fb-f4c7383a0a81; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+stdout | create-door.probe.test.ts > POST /sections: an image from another site the check does not see > img srcset, no src
+CREATE [img srcset, no src] status=201 storedHasExternal=true leaf="Drug substance.\n\n[Figure: unresolved image reference]"
+
+stdout | create-door.probe.test.ts > POST /sections: an image from another site the check does not see > svg image href
+{
+  "timestamp": "2026-10-04T17:55:47.987Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc D1 by a***@test.co",
+  "context": {}
+}
+
+stderr | create-door.probe.test.ts > POST /sections: an image from another site the check does not see > svg image href
+{
+  "timestamp": "2026-10-04T17:55:47.987Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "authoring.section.CREATE",
+    "resourceType": "authoring_section",
+    "resourceId": "35dae2d3-0d59-4814-95d5-3ba542e3c5a0",
+    "reason": "auditService.logAction reported no durable store; the audit row cannot be shown to exist"
+  }
+}
+
+stderr | create-door.probe.test.ts > POST /sections: an image from another site the check does not see > svg image href
+[authoring] audit_logs index entry NOT written for authoring.section.CREATE on authoring_section 35dae2d3-0d59-4814-95d5-3ba542e3c5a0; the authoritative authoring_audit_trail row exists, but this event is missing from the unified audit query
+
+stdout | create-door.probe.test.ts > POST /sections: an image from another site the check does not see > svg image href
+CREATE [svg image href] status=201 storedHasExternal=true leaf="Drug substance."
+
+stderr | create-door.probe.test.ts > POST /docs from an org template: the same forms > template element
+{
+  "timestamp": "2026-10-04T17:55:47.999Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "502bd855-947f-4cec-a7db-7b83ebb83cc1",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | create-door.probe.test.ts > POST /docs from an org template: the same forms > template element
+{
+  "timestamp": "2026-10-04T17:55:48.000Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 502bd855-947f-4cec-a7db-7b83ebb83cc1 by a***@test.co",
+  "context": {}
+}
+
+stdout | create-door.probe.test.ts > POST /docs from an org template: the same forms > template element
+TEMPLATE [template element] status=201 seededHasExternal=true
+
+stderr | create-door.probe.test.ts > POST /docs from an org template: the same forms > bogus comment <!x
+{
+  "timestamp": "2026-10-04T17:55:48.008Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "1791b5b9-73c0-4624-af1c-f3efa9b8b053",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | create-door.probe.test.ts > POST /docs from an org template: the same forms > bogus comment <!x
+{
+  "timestamp": "2026-10-04T17:55:48.009Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 1791b5b9-73c0-4624-af1c-f3efa9b8b053 by a***@test.co",
+  "context": {}
+}
+
+stdout | create-door.probe.test.ts > POST /docs from an org template: the same forms > bogus comment <!x
+TEMPLATE [bogus comment <!x] status=201 seededHasExternal=true
+
+stderr | create-door.probe.test.ts > POST /docs from an org template: the same forms > textarea
+{
+  "timestamp": "2026-10-04T17:55:48.016Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "04af8ad9-41e0-4877-a26b-1cb5f68e92f1",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | create-door.probe.test.ts > POST /docs from an org template: the same forms > textarea
+{
+  "timestamp": "2026-10-04T17:55:48.017Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 04af8ad9-41e0-4877-a26b-1cb5f68e92f1 by a***@test.co",
+  "context": {}
+}
+
+stdout | create-door.probe.test.ts > POST /docs from an org template: the same forms > textarea
+TEMPLATE [textarea] status=201 seededHasExternal=true
+
+stderr | create-door.probe.test.ts > POST /docs from an org template: the same forms > img srcset, no src
+{
+  "timestamp": "2026-10-04T17:55:48.027Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "6b3316c9-7a07-4e83-8fe3-1d0a98444f76",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | create-door.probe.test.ts > POST /docs from an org template: the same forms > img srcset, no src
+{
+  "timestamp": "2026-10-04T17:55:48.027Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 6b3316c9-7a07-4e83-8fe3-1d0a98444f76 by a***@test.co",
+  "context": {}
+}
+
+stdout | create-door.probe.test.ts > POST /docs from an org template: the same forms > img srcset, no src
+TEMPLATE [img srcset, no src] status=201 seededHasExternal=true
+
+ × create-door.probe.test.ts > POST /sections: an image from another site the check does not see > template element 451ms
+   → {"success":true,"section":{"id":"S9","code":"2.3.S","content":"x"},"message":"Section created successfully"}: expected 201 to be 400 // Object.is equality
+ × create-door.probe.test.ts > POST /sections: an image from another site the check does not see > bogus comment <!x 14ms
+   → {"success":true,"section":{"id":"S9","code":"2.3.S","content":"x"},"message":"Section created successfully"}: expected 201 to be 400 // Object.is equality
+ × create-door.probe.test.ts > POST /sections: an image from another site the check does not see > textarea 10ms
+   → {"success":true,"section":{"id":"S9","code":"2.3.S","content":"x"},"message":"Section created successfully"}: expected 201 to be 400 // Object.is equality
+ × create-door.probe.test.ts > POST /sections: an image from another site the check does not see > img srcset, no src 13ms
+   → {"success":true,"section":{"id":"S9","code":"2.3.S","content":"x"},"message":"Section created successfully"}: expected 201 to be 400 // Object.is equality
+ × create-door.probe.test.ts > POST /sections: an image from another site the check does not see > svg image href 11ms
+   → {"success":true,"section":{"id":"S9","code":"2.3.S","content":"x"},"message":"Section created successfully"}: expected 201 to be 400 // Object.is equality
+ × create-door.probe.test.ts > POST /docs from an org template: the same forms > template element 12ms
+   → {"success":true,"document":{},"sections_seeded":1,"message":"Document created successfully","governance":{"bound":false,"reason":"The project has no program type, so no document class can be derived. The document was created and can be authored, but it is not bound to a filing."}}: expected 201 to be 400 // Object.is equality
+ × create-door.probe.test.ts > POST /docs from an org template: the same forms > bogus comment <!x 8ms
+   → {"success":true,"document":{},"sections_seeded":1,"message":"Document created successfully","governance":{"bound":false,"reason":"The project has no program type, so no document class can be derived. The document was created and can be authored, but it is not bound to a filing."}}: expected 201 to be 400 // Object.is equality
+ × create-door.probe.test.ts > POST /docs from an org template: the same forms > textarea 8ms
+   → {"success":true,"document":{},"sections_seeded":1,"message":"Document created successfully","governance":{"bound":false,"reason":"The project has no program type, so no document class can be derived. The document was created and can be authored, but it is not bound to a filing."}}: expected 201 to be 400 // Object.is equality
+stderr | create-door.probe.test.ts > POST /docs from an org template: the same forms > svg image href
+{
+  "timestamp": "2026-10-04T17:55:48.036Z",
+  "level": "warn",
+  "message": "[authoring-documents] Document alias map absent; document created without cross-store identity",
+  "context": {
+    "docId": "ad860e19-8cb5-404f-b924-7e08f7549743",
+    "migration": "migrations/20260814d_document_alias_map.sql"
+  }
+}
+
+stdout | create-door.probe.test.ts > POST /docs from an org template: the same forms > svg image href
+{
+  "timestamp": "2026-10-04T17:55:48.036Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc ad860e19-8cb5-404f-b924-7e08f7549743 by a***@test.co",
+  "context": {}
+}
+
+stdout | create-door.probe.test.ts > POST /docs from an org template: the same forms > svg image href
+TEMPLATE [svg image href] status=201 seededHasExternal=true
+
+ × create-door.probe.test.ts > POST /docs from an org template: the same forms > img srcset, no src 12ms
+   → {"success":true,"document":{},"sections_seeded":1,"message":"Document created successfully","governance":{"bound":false,"reason":"The project has no program type, so no document class can be derived. The document was created and can be authored, but it is not bound to a filing."}}: expected 201 to be 400 // Object.is equality
+ × create-door.probe.test.ts > POST /docs from an org template: the same forms > svg image href 8ms
+   → {"success":true,"document":{},"sections_seeded":1,"message":"Document created successfully","governance":{"bound":false,"reason":"The project has no program type, so no document class can be derived. The document was created and can be authored, but it is not bound to a filing."}}: expected 201 to be 400 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  create-door.probe.test.ts > POST /sections: an image from another site the check does not see > template element
+ FAIL  create-door.probe.test.ts > POST /sections: an image from another site the check does not see > bogus comment <!x
+ FAIL  create-door.probe.test.ts > POST /sections: an image from another site the check does not see > textarea
+ FAIL  create-door.probe.test.ts > POST /sections: an image from another site the check does not see > img srcset, no src
+ FAIL  create-door.probe.test.ts > POST /sections: an image from another site the check does not see > svg image href
+AssertionError: {"success":true,"section":{"id":"S9","code":"2.3.S","content":"x"},"message":"Section created successfully"}: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ create-door.probe.test.ts:108:50
+    106|     const stored = sectionInserts()[0]?.[1]?.[4];
+    107|     console.log(`CREATE [${label}] status=${res.status} storedHasExter…
+    108|     expect(res.status, JSON.stringify(res.body)).toBe(400);
+       |                                                  ^
+    109|   });
+    110| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  create-door.probe.test.ts > POST /docs from an org template: the same forms > template element
+ FAIL  create-door.probe.test.ts > POST /docs from an org template: the same forms > bogus comment <!x
+ FAIL  create-door.probe.test.ts > POST /docs from an org template: the same forms > textarea
+ FAIL  create-door.probe.test.ts > POST /docs from an org template: the same forms > img srcset, no src
+ FAIL  create-door.probe.test.ts > POST /docs from an org template: the same forms > svg image href
+AssertionError: {"success":true,"document":{},"sections_seeded":1,"message":"Document created successfully","governance":{"bound":false,"reason":"The project has no program type, so no document class can be derived. The document was created and can be authored, but it is not bound to a filing."}}: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ create-door.probe.test.ts:121:50
+    119|     const stored = sectionInserts().map((c) => (c[1] as unknown[])[3]);
+    120|     console.log(`TEMPLATE [${label}] status=${res.status} seededHasExt…
+    121|     expect(res.status, JSON.stringify(res.body)).toBe(400);
+       |                                                  ^
+    122|   });
+    123| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed (10)
+   Start at  17:55:43
+   Duration  4.85s (transform 2.03s, setup 104ms, import 3.99s, tests 553ms, environment 0ms)
+

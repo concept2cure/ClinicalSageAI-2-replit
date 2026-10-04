@@ -389,20 +389,104 @@ describe('EctdCoauthor — the Co-Author can AUTHOR', () => {
     expect(el.editor).toBeTruthy();
     el.editor!.chain().focus().insertContent(' Amended for cycle 2.').run();
 
-    const save = await waitFor(() => {
-      const b = Array.from(document.querySelectorAll('button')).find((x) =>
+    /* 2026-10-01 (D5, P11-B-1): a save states its reason. Save stays
+       disabled until one meets the floor, and the field says so first. */
+    const saveButton = () =>
+      Array.from(document.querySelectorAll('button')).find((x) =>
         (x.textContent || '').includes('Save ('),
-      ) as HTMLButtonElement | undefined;
-      if (!b || b.disabled) throw new Error('save control not enabled yet');
-      return b;
-    });
-    fireEvent.click(save);
+      ) as HTMLButtonElement;
+    const reason = screen.getByLabelText(/^Reason for change/) as HTMLInputElement;
+    expect(reason.getAttribute('aria-required')).toBe('true');
+    expect(document.getElementById(reason.getAttribute('aria-describedby')!)!.textContent).toMatch(
+      /Required to save, at least 8 characters\. Recorded on this document’s audit trail/,
+    );
+    await waitFor(() => expect(document.body.textContent).toContain('unsaved edits'));
+    expect(saveButton().disabled, 'Save is offered before a reason is stated').toBe(true);
+
+    fireEvent.change(reason, { target: { value: 'Amended the rationale for cycle 2' } });
+    expect(saveButton().disabled).toBe(false);
+    fireEvent.click(saveButton());
 
     await waitFor(() => expect(put).toHaveBeenCalled());
-    expect(String((put.mock.calls[0][0] as { content: string }).content)).toContain(
-      'Amended for cycle 2.',
-    );
+    const body = put.mock.calls[0][0] as { content: string; changeReason: string };
+    expect(String(body.content)).toContain('Amended for cycle 2.');
+    expect(body.changeReason).toBe('Amended the rationale for cycle 2');
     // The footer reports the CONFIRMED save — not an optimistic echo.
     await waitFor(() => expect(document.body.textContent).toContain('All changes saved'));
+    // The reason described that save; the next one states its own.
+    expect(reason.value).toBe('');
+    expect(saveButton().disabled).toBe(true);
+  });
+
+});
+
+describe('EctdCoauthor — a save states its reason (2026-10-01, D5, P11-B-1)', () => {
+  it('⌘S in the canvas without a reason is refused at the field, which takes focus; nothing is sent', async () => {
+    try { localStorage.clear(); } catch { /* ignore */ }
+    const put = vi.fn();
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method === 'GET' && String(url).split('?')[0] === '/api/coauthor/documents') return ok(REAL_DOCS);
+      if (method === 'PUT') put(body);
+      return fail(404);
+    });
+    render(<EctdCoauthor {...props()} />);
+    await waitFor(() => expect(document.querySelector('.rse-root .tiptap')).toBeTruthy());
+    const el = document.querySelector('.rse-body .tiptap') as HTMLElement & { editor?: { chain: () => any } };
+    el.editor!.chain().focus().insertContent(' Amended.').run();
+
+    fireEvent.keyDown(document.querySelector('.rse-root')!, { key: 's', metaKey: true });
+
+    const reason = screen.getByLabelText(/^Reason for change/) as HTMLInputElement;
+    await waitFor(() => expect(reason.getAttribute('aria-invalid')).toBe('true'));
+    expect(document.activeElement).toBe(reason);
+    expect(document.getElementById('ec-change-reason-note')!.textContent).toMatch(
+      /Not saved — say why this document is changing, in at least 8 characters/,
+    );
+    expect(put).not.toHaveBeenCalled();
+    expect(document.body.textContent).not.toContain('All changes saved');
+
+    // Stating one clears the refusal.
+    fireEvent.change(reason, { target: { value: 'Amended the rationale' } });
+    expect(reason.getAttribute('aria-invalid')).toBeNull();
+  });
+
+  it('a reason belongs to its document: opening another clears it', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && String(url).split('?')[0] === '/api/coauthor/documents') return ok(REAL_DOCS);
+      return fail(404);
+    });
+    render(<EctdCoauthor {...props()} />);
+    await waitFor(() => expect(document.querySelector('.rse-root .tiptap')).toBeTruthy());
+    fireEvent.change(screen.getByLabelText(/^Reason for change/), { target: { value: 'Reason for the first document' } });
+
+    fireEvent.click(screen.getAllByText('Drug Product — ZX-9')[0]);
+
+    await waitFor(() => expect((screen.getByLabelText(/^Reason for change/) as HTMLInputElement).value).toBe(''));
+  });
+
+  it('⌘S in the reason field saves the document, not the web page', async () => {
+    try { localStorage.clear(); } catch { /* ignore */ }
+    const put = vi.fn();
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method === 'GET' && String(url).split('?')[0] === '/api/coauthor/documents') return ok(REAL_DOCS);
+      if (method === 'PUT' && url === '/api/coauthor/documents/7001') {
+        put(body);
+        return ok({ success: true, document: { ...REAL_DOCS.documents[0], content: (body as { content: string }).content } });
+      }
+      return fail(404);
+    });
+    render(<EctdCoauthor {...props()} />);
+    await waitFor(() => expect(document.querySelector('.rse-root .tiptap')).toBeTruthy());
+    const el = document.querySelector('.rse-body .tiptap') as HTMLElement & { editor?: { chain: () => any } };
+    el.editor!.chain().focus().insertContent(' Amended.').run();
+
+    const reason = screen.getByLabelText(/^Reason for change/);
+    fireEvent.change(reason, { target: { value: 'Amended the rationale' } });
+    const keyDown = new KeyboardEvent('keydown', { key: 's', metaKey: true, bubbles: true, cancelable: true });
+    reason.dispatchEvent(keyDown);
+
+    expect(keyDown.defaultPrevented, "the browser's Save dialog would open").toBe(true);
+    await waitFor(() => expect(put).toHaveBeenCalled());
+    expect((put.mock.calls[0][0] as { changeReason: string }).changeReason).toBe('Amended the rationale');
   });
 });

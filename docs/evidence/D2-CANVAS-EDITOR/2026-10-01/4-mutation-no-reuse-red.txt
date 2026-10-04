@@ -1,0 +1,7 @@
+# 4. Mutation B — the matching provenance is never reused: every open creates another document
+ × client/src/concept2cure/v2/editor/__tests__/draftToDocument.test.ts > openDraftAsDocument — once per turn > opens the document made from the same conversation and turn, and creates nothing 10ms
+   → expected { ok: false, …(1) } to deeply equal { ok: true, docId: 'same', …(2) }
+ × client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx > ConversationThread — every AnA draft opens as a document (2026-10-01) > opens the document already made from that turn instead of creating a second copy 232ms
+   → expected [ { …(5) } ] to have a length of +0 but got 1
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 24 passed (26)

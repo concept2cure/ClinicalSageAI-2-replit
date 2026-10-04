@@ -1,0 +1,20 @@
+ × shared/authoring/__tests__/looks-like-html.test.ts > looksLikeHtml in linear time > 400,000 characters of `<a` with no `>` 72633ms
+   → quadratic: every opener re-scanned the rest: expected 72627.66644100001 to be less than 1000
+ × shared/authoring/__tests__/looks-like-html.test.ts > looksLikeHtml in linear time > the same after a `>` 72542ms
+   → quadratic: every opener re-scanned the rest: expected 72540.42763099998 to be less than 1000
+ ✓ shared/authoring/__tests__/looks-like-html.test.ts > looksLikeHtml in linear time > the same before a `>` at the very end 1ms
+ ✓ shared/authoring/__tests__/looks-like-html.test.ts > looksLikeHtml answers as the frozen rule does > on 200,000 generated strings built from the characters the rule reads 107ms
+ ✓ shared/authoring/__tests__/looks-like-html.test.ts > looksLikeHtml answers as the frozen rule does > "<p>Text.</p>" → true 1ms
+ ✓ shared/authoring/__tests__/looks-like-html.test.ts > looksLikeHtml answers as the frozen rule does > "<dl><dt>AE</dt><dd>Adverse Event</dd></dl>" → true 0ms
+ ✓ shared/authoring/__tests__/looks-like-html.test.ts > looksLikeHtml answers as the frozen rule does > "temperature <critical> threshold exceeded" → false 0ms
+ ✓ shared/authoring/__tests__/looks-like-html.test.ts > looksLikeHtml answers as the frozen rule does > "the value is <= 10 and >= 2" → false 0ms
+ ✓ shared/authoring/__tests__/looks-like-html.test.ts > looksLikeHtml answers as the frozen rule does > "a <p" → false 1ms
+ ✓ shared/authoring/__tests__/looks-like-html.test.ts > looksLikeHtml answers as the frozen rule does > "a <p >" → true 0ms
+ ✓ shared/authoring/__tests__/looks-like-html.test.ts > looksLikeHtml answers as the frozen rule does > "<P CLASS=\"x\">" → true 0ms
+ ✓ shared/authoring/__tests__/looks-like-html.test.ts > looksLikeHtml answers as the frozen rule does > "" → false 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: quadratic: every opener re-scanned the rest: expected 72627.66644100001 to be less than 1000
+     33|     expect(performance.now() - started, 'quadratic: every opener re-sc…
+AssertionError: quadratic: every opener re-scanned the rest: expected 72540.42763099998 to be less than 1000
+     33|     expect(performance.now() - started, 'quadratic: every opener re-sc…
+ Test Files  1 failed (1)

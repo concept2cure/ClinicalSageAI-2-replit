@@ -1,0 +1,21 @@
+mutant N1-opener-lookahead: server/services/clinical-regulatory-evidence/machine-attribution.ts
+- const RAW_TEXT_OPENER = new RegExp(`<(?:${RAW_TEXT_ELEMENTS})(?=[\\s/>])|<!\\[CDATA\\[`, 'i');
++ const RAW_TEXT_OPENER = new RegExp(`<(?:${RAW_TEXT_ELEMENTS})(?=>)|<!\\[CDATA\\[`, 'i');
+
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > rawTextFrom: where a browser may first read `<…>` as text > finds an attribute 11ms
+   → expected -1 to be 2 // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > rawTextFrom: where a browser may first read `<…>` as text > finds an attribute after a space 2ms
+   → expected -1 to be 2 // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > rawTextFrom: where a browser may first read `<…>` as text > finds a self-closing slash 2ms
+   → expected -1 to be 2 // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > rawTextFrom: where a browser may first read `<…>` as text > finds a line break after the name 1ms
+   → expected -1 to be 2 // Object.is equality
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > plaintext with an attribute (N1): the clause holding the shown words is not the machine's 2ms
+   → words a reader is shown were credited to the machine: expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > xmp with a class, and a space in its end tag (N1): the clause holding the shown words is not the machine's 1ms
+   → words a reader is shown were credited to the machine: expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > a raw-text element whose opening tag the clause splitter puts in another clause (PROBE-C) > textarea with rows, and a space in its end tag (N1): the clause holding the shown words is not the machine's 1ms
+   → words a reader is shown were credited to the machine: expected [ Array(1) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 1 passed (2)
+      Tests  7 failed | 52 passed (59)

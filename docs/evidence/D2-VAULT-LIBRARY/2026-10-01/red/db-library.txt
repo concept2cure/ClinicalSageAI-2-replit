@@ -1,0 +1,12 @@
+# trunk server code (no library search route) with tests/db/vault-library-search.dbtest.ts
+ × tests/db/vault-library-search.dbtest.ts > library search across every project (critique 15) > finds matches in every project the organisation holds, each named with its project, and never another organisation's 18ms
+   → {"success":false,"error":"NOT_FOUND"}: expected 404 to be 200 // Object.is equality
+ × tests/db/vault-library-search.dbtest.ts > library search across every project (critique 15) > lists an earlier version only when asked 11ms
+   → Cannot read properties of undefined (reading 'total')
+ × tests/db/vault-library-search.dbtest.ts > library search across every project (critique 15) > an empty query answers no results and says why 6ms
+   → expected 404 to be 200 // Object.is equality
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across every project (critique 15) > the project search still searches its project only 16ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: {"success":false,"error":"NOT_FOUND"}: expected 404 to be 200 // Object.is equality
+AssertionError: expected 404 to be 200 // Object.is equality
+      Tests  3 failed | 1 passed (4)

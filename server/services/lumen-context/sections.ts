@@ -1,11 +1,22 @@
 /**
  * CTD section-specific prompt supplements.
  *
- * Encodes ICH M4 and region-specific drafting guidance per CTD section
- * (Module 1–5). Consumed by both /chat and /stream when an authoring
- * context carries a sectionCode, so AnA gives section-appropriate
- * drafting scaffolding (body expectations, common review concerns,
- * formatting requirements).
+ * Consumed by both /chat and /stream when an authoring context carries a
+ * sectionCode, so AnA gives section-appropriate drafting scaffolding.
+ *
+ * A section the canonical CTD overlay registers (CTD_AUTHORING_GUIDANCE), or
+ * one beneath it, is briefed from that overlay through ind/ctd/section-brief.ts
+ * — the same entries the orchestrator names the open section from. The
+ * playbooks kept in this file cover what the overlay does not model: a whole
+ * module ('2.7', '3.2.S', '5.3.5') and deliverables outside the CTD tree
+ * ('SAP', 'CER-BODY', 'TYPE-B-MEETING'). This file used to brief registered
+ * codes itself, and twelve of those entries were removed on 2026-10-04 (D2,
+ * docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-04/): five named the wrong
+ * section — 1.1 "Cover Letter / FDA Form 1571", 1.2 "Table of Contents", 1.3.1
+ * "FDA Form 1572", 1.3.3 "Investigator's Brochure" (FDA Module 1: 1.1 forms,
+ * 1.2 cover letter, 1.3.3 debarment certification, 1.14.4.1 IB) and 5.3.5.1
+ * "Clinical Protocol" (5.3.5.1 holds the reports of controlled studies) — and
+ * seven (2.2–2.5, 5.2, 5.3.1, 5.3.3) were shadowed copies of overlay entries.
  *
  * Extracted from server/services/lumen-context-builder.ts. The original
  * import site re-exports buildSectionSpecificPrompt to preserve backward
@@ -14,221 +25,14 @@
  * @module server/services/lumen-context/sections
  */
 
+import { normalizeCtdCode } from '../../../shared/regulatory/section-code';
+import { renderSectionBrief, resolveSectionBriefSource, e3TopLevel } from '../ind/ctd/index.js';
+
+/** ICH E3's sixteen headings, from the overlay (ind/ctd/csr-e3-guidance.ts). */
+const E3_OUTLINE = e3TopLevel().map((s) => `${s.number}. ${s.title}`).join('\n');
+
 const SECTION_PROMPTS: Record<string, string> = {
-  // ── MODULE 1: Administrative ──────────────────────────────────────────────
-
-  '1.1': `## Drafting: Module 1.1 — Cover Letter / FDA Form 1571
-You are drafting the IND Cover Letter and FDA Form 1571.
-
-### Required Content:
-- Sponsor name, address, and contact information
-- Drug name (proposed proprietary name, chemical name, code designation)
-- IND number (if amendment or annual report; "NEW" for initial)
-- Cross-reference to any related INDs, NDAs, or DMFs
-- Phase of clinical investigation proposed
-- Description of protocol(s) included
-- Identification of the serial number
-- Signature of sponsor or authorized representative
-
-### FDA Expectations:
-- Must list ALL components being submitted in this package
-- Cross-reference table to prior submissions if amending
-- eSignature must comply with 21 CFR Part 11
-- Include statement of commitment per 21 CFR 312.23(a)(1)
-
-### Common Deficiencies:
-- Missing serial numbers on amendments
-- Incomplete cross-reference to master files
-- Ambiguous identification of clinical phases`,
-
-  '1.2': `## Drafting: Module 1.2 — Table of Contents
-You are generating the Table of Contents for the CTD.
-
-### Requirements:
-- Must reflect the actual eCTD structure per ICH M4
-- Hyperlink every entry to the corresponding document/section
-- Include volume/page references for paper submissions
-- Use eCTD 4.0 lifecycle operations for amendments
-- Automatically generated from the eCTD backbone.xml in electronic submissions
-
-### Best Practice:
-- Use the eCTD Module structure as the organizational backbone
-- Cross-reference CTD triangle diagram for completeness check`,
-
-  '1.3.1': `## Drafting: Module 1.3.1 — FDA Form 1572
-You are assisting with FDA Form 1572 (Statement of Investigator).
-
-### Required Fields:
-- Name and address of investigator
-- Name and address of research facility
-- Name and code of protocol(s)
-- Drug name and IND reference
-- Clinical laboratory information
-- List of sub-investigators and research team
-- IRB name and address
-- Investigator commitments (8 required statements)
-
-### Critical Compliance Points:
-- Must be signed BEFORE drug is shipped to the site
-- One 1572 per investigator per protocol
-- All sub-investigators listed must have adequate training
-- Lab certifications (CLIA, CAP) must be current
-- Must be updated when investigator information changes`,
-
-  '1.3.3': `## Drafting: Module 1.3.3 — Investigator's Brochure (IB)
-You are drafting the Investigator's Brochure per ICH E6(R2) Section 7.
-
-### Required Sections (per ICH E6):
-1. Title page (drug name, IND number, edition date)
-2. Confidentiality statement
-3. Table of Contents
-4. Summary (1-2 pages; nonclinical + clinical overview)
-5. Introduction (rationale, target population)
-6. Physical, Chemical, and Pharmaceutical Properties
-7. Nonclinical Studies: pharmacology, pharmacokinetics, toxicology
-8. Effects in Humans: PK, safety, efficacy, post-marketing
-9. Summary of Data and Guidance for the Investigator
-10. References
-
-### FDA Review Focus:
-- Summary section must allow rapid risk-benefit assessment
-- Nonclinical safety data presentation should match ICH M4 organization
-- Known/expected adverse reactions must be clearly presented
-- Dosing rationale derived from nonclinical/PK data
-- Must be updated at least annually per 21 CFR 312.55
-
-### Common Deficiencies:
-- Missing sections (especially effects in humans for FIH)
-- Inadequate dose-response characterization
-- Safety margin calculations absent or poorly presented
-- No clear guidance section for investigators`,
-
   // ── MODULE 2: Summaries ───────────────────────────────────────────────────
-
-  '2.2': `## Drafting: Module 2.2 — Introduction to the CTD
-You are drafting the CTD Introduction (typically 1-2 pages).
-
-### Required Content:
-- Drug name (all names: proprietary, non-proprietary, chemical, company code)
-- Pharmacological class
-- Proposed indication(s) and route of administration
-- Dosage form and strength(s)
-- Brief pharmacological rationale
-- Reference to any orphan drug or fast-track designations
-
-### Format:
-- Maximum 2 pages
-- Factual, concise overview
-- Do NOT include efficacy claims or promotional language`,
-
-  '2.3': `## Drafting: Module 2.3 — Quality Overall Summary (QOS)
-You are drafting the Quality Overall Summary per ICH M4Q(R1).
-
-### Required Structure:
-1. Introduction
-2. Drug Substance (2.3.S) — summary of each active ingredient
-   - General Information (nomenclature, structure, properties)
-   - Manufacture (synthetic route, process controls, critical steps)
-   - Characterization (elucidation of structure, impurities)
-   - Control (specifications, analytical procedures, validation)
-   - Reference Standards
-   - Container Closure System
-   - Stability (summary of stability studies, proposed shelf-life)
-3. Drug Product (2.3.P) — summary of each dosage form
-   - Description and Composition
-   - Pharmaceutical Development (formulation rationale, excipient selection)
-   - Manufacture (process description, process controls, validation)
-   - Control (specifications, analytical procedures, batch analysis)
-   - Reference Standards
-   - Container Closure System
-   - Stability (summary studies, proposed shelf-life)
-4. Appendices (facilities, adventitious agents assessment)
-5. Regional Information
-
-### ICH Guidelines to Reference:
-- **ICH Q1A-Q1F**: Stability testing
-- **ICH Q2(R1)**: Analytical validation
-- **ICH Q3A/Q3B**: Impurities
-- **ICH Q6A/Q6B**: Specifications
-- **ICH Q7**: GMP for APIs
-- **ICH Q8-Q12**: Pharmaceutical development, QRM, PQS
-
-### FDA Review Focus for Initial IND:
-- For Phase 1: Abbreviated CMC is acceptable per 21 CFR 312.23(a)(7)
-- Focus on identity, strength, purity, potency sufficient for initial clinical safety
-- GMP compliance for clinical supplies
-- Detailed stability data may be limited; provide available data with commitment to generate
-
-### Common Deficiencies:
-- Insufficient characterization of impurity profiles
-- Missing identity/purity specifications for drug substance
-- Inadequate description of manufacturing process controls
-- No discussion of container closure system suitability`,
-
-  '2.4': `## Drafting: Module 2.4 — Nonclinical Overview
-You are drafting the Nonclinical Overview per ICH M4S.
-
-### Required Content:
-- Integrated assessment of ALL nonclinical pharmacology, PK, and toxicology
-- Safety pharmacology assessment (cardiovascular, CNS, respiratory)
-- PK/ADME profile summary
-- Toxicology findings across all completed studies
-- Evaluation of impurities' qualification status per ICH Q3A/Q3B
-- Integrated risk assessment with safety margins for proposed clinical dose
-- Carcinogenicity assessment strategy (if applicable)
-- Reproductive toxicology strategy and available data
-
-### ICH Guidelines:
-- **ICH M3(R2)**: Nonclinical safety studies timing
-- **ICH S1-S11**: Various nonclinical study guidelines
-- **ICH S6(R1)**: Biotechnology-derived biologicals
-- **ICH S7A/S7B**: Safety pharmacology, QT prolongation
-- **ICH S9**: Oncology products
-
-### Structure:
-This is a NARRATIVE overview, not a study-by-study listing. It should:
-1. Synthesize findings across studies
-2. Discuss relevance to human risk
-3. Identify gaps and mitigation strategies
-4. Support the proposed clinical program
-
-### Common Deficiencies:
-- Tabular listings without integration/interpretation
-- Missing safety margin calculations
-- Inadequate PK/tox correlation
-- No discussion of species relevance`,
-
-  '2.5': `## Drafting: Module 2.5 — Clinical Overview
-You are drafting the Clinical Overview per ICH M4E.
-
-### Required Structure:
-1. Product Development Rationale
-2. Overview of Biopharmaceutics
-3. Overview of Clinical Pharmacology
-4. Overview of Efficacy
-5. Overview of Safety
-6. Benefits and Risks Conclusions
-
-### For Initial IND (Phase 1):
-- Focus on Sections 1-3 (rationale and pharmacology)
-- Efficacy section may reference disease background and unmet need
-- Safety section should discuss nonclinical-to-clinical safety extrapolation
-- Include MRTD (maximum recommended therapeutic dose) rationale from nonclinical data
-- Starting dose justification (MRSD calculation per FDA Guidance)
-
-### ICH Guidelines:
-- **ICH E1**: Population exposure sizing
-- **ICH E2-E4**: Clinical safety/periodic reporting
-- **ICH E3**: Clinical study report structure
-- **ICH E6(R2)**: GCP compliance
-- **ICH E8(R3)**: General considerations for clinical studies
-- **ICH E9(R1)**: Estimands framework
-
-### Critical for FDA:
-- Must be a critical assessment, NOT just a summary
-- Discuss published literature on the drug class
-- Address known class effects and monitoring strategy
-- Provide benefit-risk analysis that supports the clinical plan`,
 
   '2.6': `## Drafting: Module 2.6 — Nonclinical Written and Tabulated Summaries
 You are assisting with the Nonclinical Summaries per ICH M4S.
@@ -419,105 +223,18 @@ You are organizing the Toxicology study reports.
 
   // ── MODULE 5: Clinical Study Reports ───────────────────────────────────────
 
-  '5.2': `## Drafting: Module 5.2 — Tabular Listing of All Clinical Studies
-You are generating the Tabular Listing per ICH E3.
-
-### Required Columns:
-- Study Number
-- Study Title
-- Study Design (randomized, blinded, etc.)
-- Study Population
-- Treatment Groups and Dosing
-- Number of Subjects
-- Study Duration
-- Study Status
-- CSR Section Reference
-
-### For Initial IND:
-- Include the PROPOSED clinical study protocol
-- Reference any published or foreign clinical data
-- Include any PK bridging studies if applicable`,
-
-  '5.3.1': `## Drafting: Module 5.3.1 — Reports of Biopharmaceutic Studies
-BA/BE studies, dissolution, food effect, etc.
-
-### For Phase 1 IND:
-- May not have human biopharmaceutic data yet
-- Include any in vitro dissolution data from Module 3
-- Reference any published class PK data`,
-
-  '5.3.3': `## Drafting: Module 5.3.3 — Reports of Human PK Studies
-You are organizing PK study reports.
-
-### For Phase 1:
-- This section may contain the proposed Phase 1 PK study protocol
-- Include any FIH exposure predictions (allometric scaling, PBPK modeling)
-- Reference nonclinical PK data bridging from Module 4`,
-
   '5.3.5': `## Drafting: Module 5.3.5 — Clinical Study Reports
 You are assisting with CSR formatting per ICH E3.
 
 ### ICH E3 CSR Structure:
-1. Title Page
-2. Synopsis
-3. Table of Contents
-4. List of Abbreviations
-5. Ethics (IRB/IEC, consent, regulatory compliance)
-6. Investigators and Study Administrative Structure
-7. Introduction
-8. Study Objectives
-9. Investigational Plan (study design, endpoints, statistics)
-10. Study Patients (disposition, demographics, protocol deviations)
-11. Efficacy Evaluation
-12. Safety Evaluation
-13. Discussion and Overall Conclusions
-14. Tables, Figures, Graphs (referenced by section)
-15. Reference List
-16. Appendices (protocol, amendments, sample CRF, listing of patients, etc.)
+${E3_OUTLINE}
 
 ### FDA Expectations:
 - Synopsis must be stand-alone
 - Individual patient data listings in appendices
-- Statistical analysis plan (SAP) as an appendix
+- Statistical analysis plan (SAP) as appendix 16.1.9
+- Case report forms for every patient who died or left the study because of an adverse event (21 CFR 314.50(f)(2)), in 16.3.1
 - Follow ICH E9(R1) estimands framework for efficacy endpoints`,
-
-  // ── Protocol-specific ─────────────────────────────────────────────────────
-
-  '5.3.5.1': `## Drafting: Module 5.3.5.1 — Clinical Protocol
-You are drafting a Clinical Study Protocol per ICH E6(R2).
-
-### Standard Protocol Sections:
-1. Protocol Summary/Synopsis
-2. Introduction and Background/Rationale
-3. Study Objectives and Endpoints
-4. Study Design (including schema figure)
-5. Study Population (inclusion/exclusion criteria)
-6. Study Treatments (drug, dose, route, schedule, duration)
-7. Study Assessments and Procedures
-8. Statistical Considerations (sample size, analysis populations, methods)
-9. Adverse Event Reporting
-10. Data Management and Quality Assurance
-11. Ethics and Regulatory Considerations
-12. References
-13. Appendices (schedule of assessments table, lab normals, etc.)
-
-### ICH E6(R2) Requirements:
-- Risk-Based Monitoring plan
-- Protocol amendments process
-- IMP accountability procedures
-- Investigator responsibilities
-
-### ICH E8(R3) Considerations:
-- Quality by Design approach to clinical studies
-- Critical to Quality factors identification
-- Stakeholder engagement framework
-
-### FDA Phase 1 Specifics:
-- Starting dose justification (MRSD per FDA Guidance)
-- Dose escalation scheme with stopping rules
-- Safety monitoring (DSMB/SMC charter reference)
-- Sentinel dosing requirements
-- Biomarker or PD endpoint rationale`,
 
   // ── DEVICE: 510(k) Substantial Equivalence ────────────────────────────────
 
@@ -705,19 +422,31 @@ The briefing is a regulatory argument, not a marketing pitch. State your positio
  * for sections like "3.2.S.1" → "3.2.S".
  */
 export function buildSectionSpecificPrompt(sectionCode: string): string | null {
-  // Exact match first
-  if (SECTION_PROMPTS[sectionCode]) {
-    return SECTION_PROMPTS[sectionCode];
+  // A section the canonical overlay registers, or one beneath it, is briefed
+  // from the overlay, so this playbook and the orchestrator's section line
+  // can never name the open section differently.
+  const source = resolveSectionBriefSource(sectionCode);
+  if (source && source.kind !== 'parent') return renderSectionBrief(sectionCode);
+
+  // A module playbook ('2.7', '3.2.S') or a deliverable outside the CTD tree
+  // ('SAP'). CTD-shaped input is normalised first ('m2.7' → '2.7').
+  const key = normalizeCtdCode(sectionCode) ?? sectionCode.trim();
+  if (SECTION_PROMPTS[key]) {
+    return SECTION_PROMPTS[key];
   }
 
-  // Try prefix match (e.g., "3.2.S.2.1" → "3.2.S")
-  const parts = sectionCode.split('.');
+  // A parent of registered sections with no playbook here ('1.1', '1.14'):
+  // the sections it contains, from the overlay.
+  if (source) return renderSectionBrief(sectionCode);
+
+  // Try prefix match (e.g., "4.2.1.5" → "4.2.1")
+  const parts = key.split('.');
   for (let len = parts.length - 1; len >= 1; len--) {
     const prefix = parts.slice(0, len).join('.');
     if (SECTION_PROMPTS[prefix]) {
       return (
         SECTION_PROMPTS[prefix] +
-        `\n\n> **Note**: You are specifically working on sub-section ${sectionCode}. Provide guidance focused on this particular sub-section within the broader ${prefix} context described above.`
+        `\n\n> **Note**: You are specifically working on sub-section ${key}. Provide guidance focused on this particular sub-section within the broader ${prefix} context described above.`
       );
     }
   }

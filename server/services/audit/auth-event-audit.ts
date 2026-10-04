@@ -62,6 +62,10 @@ const EVENT_DESCRIPTIONS: Readonly<Record<string, string>> = {
   'user_login|failure|account_locked': 'Sign-in refused: account locked',
   'user_login|failure|account_inactive': 'Sign-in refused: the account is not active (suspended or deprovisioned)',
   'user_login|failure|email_unverified': 'Sign-in refused: the e-mail address has not been confirmed',
+  // A second factor for a challenge issued before the account's sessions were
+  // ended (a password change, a sign-out everywhere, a removal), at either door
+  // (routes/auth.ts, routes/authEnterprise.ts; plan P0-4b R3).
+  'user_login|failure|sign_in_begun_before_sessions_ended': "Sign-in refused: begun before the account's sessions were ended",
   'user_signup|success|verification_sent': 'Signed up: the account waits on its e-mail confirmation link',
   'user_signup|success|dev_no_verification': 'Signed up on a development server: e-mail confirmation skipped',
   'email_verified|success|link': 'E-mail address confirmed from the sign-up link: the account is active',
@@ -83,6 +87,8 @@ const EVENT_DESCRIPTIONS: Readonly<Record<string, string>> = {
   'user_login_mfa_failed|failure|invalid_code': 'Second factor refused: wrong code',
   'user_login_mfa_failed|failure|invalid_or_expired_challenge': 'Second factor refused: invalid or expired challenge',
   'user_logout|success|': 'Signed out',
+  // POST /api/auth/logout with terminateAllSessions (plan P0-4b, signOutEverywhere).
+  'user_logout|success|signed out of every session': 'Signed out of every session of the account',
   'user_password_reset_requested|success|': 'Password reset requested',
   'user_password_reset_requested|failure|no account for this address': 'Password reset requested for an address with no account',
   'user_password_reset_failed|failure|reset token matched no account': 'Password reset refused: the reset link matched no account',

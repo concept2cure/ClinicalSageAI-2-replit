@@ -983,7 +983,20 @@ export interface PendingToolApproval {
   /** The reason AnA gave for proposing it, if she gave one. */
   rationale?: string;
   /** A tool (not a platform command) only: the context the loop would have run it with. The route runs it from this, never the body. */
-  toolContext?: { projectId: number | null; projectRef: string | null; servingModel: { provider?: string | null; model?: string | null } | null };
+  toolContext?: {
+    projectId: number | null;
+    projectRef: string | null;
+    servingModel: { provider?: string | null; model?: string | null; requestId?: string | null } | null;
+    /** The conversation and turn that proposed it (PF-10 S5); absent on a run held before. */
+    threadId?: string | null;
+    turnId?: string | null;
+  };
+  /**
+   * The model call whose tool_use proposed this action (servedModelOf), for a
+   * platform command and a tool alike. The governed-action route runs the action
+   * with it, so the Part 11 row names the gateway request (agentAuditDetails).
+   */
+  proposedBy?: { provider: string | null; model: string | null; requestId: string | null } | null;
 }
 
 /** What the person decided, and what came of it. */

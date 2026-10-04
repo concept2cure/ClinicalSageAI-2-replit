@@ -13,6 +13,7 @@ function makeState(overrides: Partial<RunTruthfulnessState> = {}): RunTruthfulne
     blockers: [],
     criticalBlockers: [],
     gapsSection: true,
+    disclosure: false,
     ...overrides,
   };
 }
@@ -245,3 +246,35 @@ describe('evaluateTruthfulness', () => {
     });
   });
 });
+
+/* Reporting review 2026-10-01: the two prediction types declare forbidFinal and
+   requireDisclosure, in taxonomy.ts and in the deployed registry seed, and
+   nothing enforced either. Both sealed as final with no disclosure. */
+describe('advisory report types', () => {
+  const PREDICTION: TruthfulnessRules = { allowPartial: true, forbidFinal: true, requireDisclosure: true };
+
+  it('holds a prediction with no disclosure at draft, whatever was requested', () => {
+    for (const requestedStatus of ['final', 'partial'] as const) {
+      const r = evaluateTruthfulness(makeState({ requestedStatus }), PREDICTION);
+      expect(r.allowedStatus).toBe('draft');
+      expect(r.reasons.join(' ')).toMatch(/disclos/);
+    }
+  });
+
+  it('never lets a prediction be final, even with a disclosure', () => {
+    const r = evaluateTruthfulness(makeState({ disclosure: true }), PREDICTION);
+    expect(r.allowedStatus).toBe('partial');
+    expect(r.downgradedFrom).toBe('final');
+    expect(r.reasons.join(' ')).toMatch(/advisory and is never final/);
+  });
+
+  it('a forbidFinal type that does not allow partial falls to draft', () => {
+    const r = evaluateTruthfulness(makeState({ disclosure: true }), { forbidFinal: true });
+    expect(r.allowedStatus).toBe('draft');
+  });
+
+  it('leaves types without these rules unchanged', () => {
+    expect(evaluateTruthfulness(makeState(), { allowPartial: true }).allowedStatus).toBe('final');
+  });
+});
+

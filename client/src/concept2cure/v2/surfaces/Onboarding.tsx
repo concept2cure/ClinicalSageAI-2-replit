@@ -13,6 +13,7 @@ import {
 import { getAuthHeaders, getOrgId } from '@/utils/authToken';
 import { probeAuditRowOutcome, serverMessage } from '@/lib/queryClient';
 import { useLiveData } from '../dataConnect';
+import { GatewayAccountsSetting } from './GatewayAccountsSetting';
 import '../styles/project-home-v2.css';
 
 /* ── Helpers ── */
@@ -341,6 +342,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
     'Choose plan',
     'Invite personnel',
     'Modules',
+    'Agency accounts',
     'Review & activate',
   ];
 
@@ -677,7 +679,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
         'Workspace setup — activation is running; profile, invitations and checkout have not all reported.';
     } else {
       summary =
-        `Workspace setup wizard, step ${step + 1} of 6 (${STEPS[step]}). ` +
+        `Workspace setup wizard, step ${step + 1} of ${STEPS.length} (${STEPS[step]}). ` +
         'Nothing has been created yet — this screen collects configuration and creates nothing until Activate.';
     }
     return {
@@ -699,8 +701,9 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
           <div className="sp-eyebrow">Onboarding {I.dot} {currentOrgName ?? 'your organization'}</div>
           <h1 className="sp-title">Set up your workspace</h1>
           <p className="sp-state">
-            Six steps for the organization you are signed into: its profile,
-            pricing model, plan, personnel, module provisioning, then activate.
+            Seven steps for the organization you are signed into: its profile,
+            pricing model, plan, personnel, module provisioning, agency gateway
+            accounts, then activate.
             Changes here are saved to this organization's own record.
           </p>
         </div>
@@ -1111,6 +1114,18 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
               )}
 
               {step === 5 && (
+                <GatewayAccountsSetting
+                  note={
+                    <div className="scaf-note">
+                      Nothing is needed here to activate: the platform account is used
+                      until you choose your own. You can change this at any time in
+                      Admin, Setup.
+                    </div>
+                  }
+                />
+              )}
+
+              {step === 6 && (
                 <div className="ob-review">
                   {(
                     [

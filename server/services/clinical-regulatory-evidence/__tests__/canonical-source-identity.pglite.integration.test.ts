@@ -31,7 +31,23 @@ const pool = {
     };
   },
 };
-vi.mock('../../../db', () => ({ pool: { query: (s: string, p?: unknown[]) => pool.query(s, p) } }));
+// `connect` too: a data-room capture's INSERT and its chained row run in one transaction (VR-16b).
+vi.mock('../../../db', () => ({
+  pool: {
+    query: (s: string, p?: unknown[]) => pool.query(s, p),
+    connect: async () => ({ query: (s: string, p?: unknown[]) => pool.query(s, p), release: () => {} }),
+  },
+}));
+
+// A data-room capture writes its chained audit row in the same transaction
+// (VR-16b). The chain itself is exercised on PostgreSQL
+// (tests/db/data-room-capture-provenance.dbtest.ts); here the writer is
+// captured, so the spine-only schema needs no audit_logs table.
+const chained = vi.hoisted(() => [] as Array<{ action: string; resourceId?: string }>);
+vi.mock('../../auditService', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../auditService')>()),
+  writeChainedAuditRow: async (_q: unknown, e: { action: string; resourceId?: string }) => { chained.push(e); },
+}));
 
 import * as svc from '../evidence-spine.service';
 
@@ -76,6 +92,10 @@ beforeAll(async () => {
     '../../../../migrations/20260726_cre_source_program_scope.sql',
   );
   await pglite.exec(fs.readFileSync(programScope, 'utf8'));
+  // Revision columns (is_current, previous_version_id): resolveSourceUploadIds
+  // reads them through readSourceUploads, as every deployed database has them.
+  const versioning = path.resolve(here, '../../../../migrations/20260829_cre_source_versioning.sql');
+  await pglite.exec(fs.readFileSync(versioning, 'utf8'));
 }, 90_000);
 afterAll(async () => {
   await pglite.close();
@@ -83,7 +103,10 @@ afterAll(async () => {
 
 describe('canonical source identity (real Postgres)', () => {
   it('creates a client_document source carrying its upload provenance', async () => {
+    chained.length = 0;
     const src = await svc.createSource(ORG_A, upload('sha-aaa'));
+    // A data-room capture writes one chained capture row (VR-16b).
+    expect(chained.map((e) => [e.action, e.resourceId])).toEqual([['data_room.capture', String(src.id)]]);
 
     expect(src.id).toBeGreaterThan(0);
     expect(src.sourceType).toBe('client_document');

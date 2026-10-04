@@ -542,7 +542,10 @@ const ENFORCEMENT_FLAGS = [
   {
     id: 'flag-pdfa', label: 'PDF/A submission-grade enforcement', varName: 'ECTD_REQUIRE_PDFA', wanted: 'true', severity: 'blocker',
     gate: 'server/services/ectd/pdfa-readiness.ts pdfaRequiredFromEnv → pre-transmit-check.ts',
-    unblock: 'Set ECTD_REQUIRE_PDFA=true after Ghostscript + veraPDF are present in the deployment image (see the pdfa-pipeline deployment TODO).',
+    owner: 'Product (decide the rule), then Ops (deploy env)',
+    unblock: 'Do NOT set ECTD_REQUIRE_PDFA=true yet. Ghostscript + veraPDF are already in the image (cd02466a4), but the gate refuses any unconverted PDF leaf, '
+      + 'and FDA and EMA accept plain PDF 1.4-1.7, so it would refuse packages the agency accepts. The rule needs deciding first: '
+      + 'see the 2026-10-01 note in docs/reports/ectd-gate-posture-2026-09-08.md.',
   },
   {
     id: 'flag-rps-schema', label: 'eCTD v4.0 RPS schema enforcement', varName: 'ECTD_REQUIRE_RPS_SCHEMA', wanted: 'true', severity: 'advisory',
@@ -561,7 +564,7 @@ for (const f of ENFORCEMENT_FLAGS) {
     severity: f.severity,
     observed: actual === '' ? `${f.varName} not set` : `${f.varName}="${env[f.varName]}"`,
     gate: f.gate,
-    owner: 'Ops (deploy env)',
+    owner: f.owner ?? 'Ops (deploy env)',
     unblock: f.unblock,
   });
 }

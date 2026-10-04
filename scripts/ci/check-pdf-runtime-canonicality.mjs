@@ -13,8 +13,15 @@
  * (ind-pdf, /artifacts/export-pdf, documentExportService, etc.) that
  * predate the canonical converter; they're documented and not new.
  *
+ * An approval is for a file that generates PDF. One whose file no longer
+ * imports a PDF library is a standing pre-approval for whatever is added there
+ * next, so it fails until deleted (2026-10-01: five had gone unused, among them
+ * routes/report-os.ts once its rendering moved into services/report-os/pdf/).
+ * Before scanning, the gate shows both rules firing on a constructed case, so
+ * a pattern that stopped matching cannot pass silently.
+ *
  * Exit 0 — all PDF generation is in approved files OR within tests.
- * Exit 1 — unapproved new PDF entry point detected.
+ * Exit 1 — unapproved new PDF entry point, or an approval that is unused.
  *
  * Usage:
  *   node scripts/ci/check-pdf-runtime-canonicality.mjs
@@ -31,27 +38,43 @@ const repoRoot = path.resolve(path.dirname(__filename), '..', '..');
 
 // ─── Approved entry points ──────────────────────────────────────────────────
 
+/** The canonical service. It renders through LibreOffice or a browser, not a PDF library, so the unused-approval rule does not apply to it. */
+const CANONICAL = 'server/services/pdf-converter.ts';
+
 const APPROVED = new Set([
-  // Canonical service.
-  'server/services/pdf-converter.ts',
+  CANONICAL,
   // Existing platform consumers (documented, not new).
+  // (2026-10-01: documentQuality/pdfValidationAttachment.ts and tools/index.ts
+  //  removed — neither imports a PDF library.)
   'server/export/renderers.ts',
   'server/services/documentExportService.ts',
-  'server/services/documentQuality/pdfValidationAttachment.ts',
   'server/services/biotech-artifact-generator.ts',
   'server/services/universal-packager.ts',
-  'server/services/tools/index.ts',
   // The Concept2Cure export family (L53 slice 7 moved it out of routes/concept2cure.ts).
   'server/routes/c2c/exports.ts',
   'server/src/routes/stability.router.ts',
   // Additional pre-existing consumers (documented at gate-introduction time,
   // 2026-05-07). New PDF surfaces must use pdf-converter.ts instead of
   // adding entries here.
-  'server/routes/authoring.router.ts',
+  // (2026-10-01: authoring.router.ts and report-os.ts removed — neither imports
+  //  a PDF library any more; report-os.ts renders through services/report-os/pdf/.)
   'server/routes/documentOrchestrationRoutes.ts',
   'server/routes/integration-test.ts',
   'server/routes/planner-routes.ts',
-  'server/routes/report-os.ts',
+  // Reporting's governed exports (reporting review 2026-10-01, Part 11 §11.10(b):
+  // accurate and complete copies). A report run is structured data, not a DOCX,
+  // so there is nothing for pdf-converter.ts to convert; the run PDF prints the
+  // report body (the sealed document for a final run), the §11.50 signature
+  // manifestation, and the export id and time on every page, and the route
+  // records the sha256 of the bytes it sends on the audit chain before sending
+  // them (routes/report-os.ts sendRecordedPdf), refusing the export otherwise.
+  // Reproducible as the Data Origins report below is: the metadata dates are
+  // the recorded export time, fixed at construction (writer.ts
+  // stampExportIdentity), so a recorded hash can be re-verified by rendering
+  // again. Held by report-os/pdf/__tests__/export-identity.test.ts.
+  'server/services/report-os/pdf/writer.ts',
+  'server/services/report-os/pdf/run-pdf.ts',
+  'server/services/report-os/pdf/bundle-pdf.ts',
   // eCTD leaf rendering — pdfkit directly, and deliberately. The canonical
   // converter cannot pin what this file must pin: PDFKit stamps /CreationDate
   // and /ModDate from the wall clock and writes its own version into /Producer
@@ -70,7 +93,8 @@ const APPROVED = new Set([
   // merge while this gate was advisory-only; documented at CI-wiring time,
   // 2026-07-06). Each is a legitimate exception — none is a DOCX→PDF
   // conversion that pdf-converter.ts could perform:
-  //   submission-ops.ts        — binder export renders section markdown via pdfkit.
+  //   (submission-ops.ts — binder export via pdfkit — removed 2026-10-01: it no
+  //    longer imports a PDF library.)
   //   leaf-pdf-renderer.ts     — deterministic eCTD leaf PDFs (byte-identical output
   //                              is the index.xml md5 checksum contract).
   //   pdf-bookmark-generator.ts — builds /Outlines dicts on EXISTING PDFs (eCTD spec).
@@ -80,7 +104,6 @@ const APPROVED = new Set([
   //                              NO fillable AcroForm layer; pdf-converter.ts (a
   //                              DOCX/HTML→PDF converter) cannot reconstruct XFA.
   //   templateExtractor.ts     — READS PDFs (PDFDocument.load) to extract formatting.
-  'server/routes/submission-ops.ts',
   'server/services/ectd/leaf-pdf-renderer.ts',
   'server/services/ectd/pdf-bookmark-generator.ts',
   'server/services/forms/fill-official-pdf.ts',
@@ -122,6 +145,42 @@ if (assertAllowlistPathsExist({ tag: '[ci:pdf-runtime]', repoRoot, name: 'APPROV
 const PDF_LIB_IMPORT = /from\s+['"](pdfkit|pdf-lib)['"]/;
 const PDF_LIB_DYNAMIC = /import\(\s*['"](pdfkit|pdf-lib)['"]\s*\)/;
 const PUPPETEER_PDF = /\bpage\.pdf\s*\(/;
+// require() too. Until 2026-10-01 the gate read only `import`, and the one file
+// that reached pdfkit through require() was an unrecorded export serving
+// hard-coded figures (routes/analytics-routes.ts GET /export, retired that day).
+const PDF_LIB_REQUIRE = /\brequire\(\s*['"](pdfkit|pdf-lib)['"]\s*\)/;
+
+/** How a file generates PDF, as the findings name it; empty when it does not. */
+function pdfUses(text) {
+  const matches = [];
+  if (PDF_LIB_IMPORT.test(text)) matches.push("imports 'pdfkit' or 'pdf-lib'");
+  if (PDF_LIB_DYNAMIC.test(text)) matches.push("dynamic import of 'pdfkit'/'pdf-lib'");
+  if (PDF_LIB_REQUIRE.test(text)) matches.push("require() of 'pdfkit'/'pdf-lib'");
+  if (PUPPETEER_PDF.test(text)) matches.push('calls page.pdf() (puppeteer)');
+  return matches;
+}
+
+/** Approved files (the canonical service aside) whose text no longer generates PDF. */
+function unusedApprovals(approved, read) {
+  return [...approved].filter(rel => rel !== CANONICAL && pdfUses(read(rel)).length === 0).sort();
+}
+
+// The gate fails on the cases it exists for before it is allowed to pass.
+{
+  const probe = new Set([CANONICAL, 'probe/uses.ts', 'probe/unused.ts']);
+  const text = { 'probe/uses.ts': "import PDFDocument from 'pdfkit';", 'probe/unused.ts': 'export const x = 1;' };
+  const caught =
+    pdfUses("import { PDFDocument } from 'pdf-lib';").length === 1 &&
+    pdfUses("const { PDFDocument } = await import('pdf-lib');").length === 1 &&
+    pdfUses("const PDFDocument = require('pdfkit');").length === 1 &&
+    pdfUses('await page.pdf({ format: "A4" });').length === 1 &&
+    pdfUses('export const report = "pdf";').length === 0 &&
+    JSON.stringify(unusedApprovals(probe, rel => text[rel] ?? '')) === '["probe/unused.ts"]';
+  if (!caught) {
+    console.error('[ci:pdf-runtime-canonicality] FAIL — the gate no longer detects its own probe cases; it would pass anything.');
+    process.exit(1);
+  }
+}
 
 const SCAN_ROOTS = [path.join(repoRoot, 'server')];
 
@@ -156,14 +215,22 @@ for (const root of SCAN_ROOTS) {
     if (APPROVED.has(rel)) continue;
 
     const text = fs.readFileSync(file, 'utf8');
-    const matches = [];
-    if (PDF_LIB_IMPORT.test(text)) matches.push("imports 'pdfkit' or 'pdf-lib'");
-    if (PDF_LIB_DYNAMIC.test(text)) matches.push("dynamic import of 'pdfkit'/'pdf-lib'");
-    if (PUPPETEER_PDF.test(text)) matches.push('calls page.pdf() (puppeteer)');
+    const matches = pdfUses(text);
     if (matches.length > 0) {
       findings.push({ file: rel, matches });
     }
   }
+}
+
+const unused = unusedApprovals(APPROVED, rel => fs.readFileSync(path.join(repoRoot, rel), 'utf8'));
+if (unused.length > 0) {
+  console.error('[ci:pdf-runtime-canonicality] FAIL — approved files that no longer generate PDF:\n');
+  for (const rel of unused) console.error(`  ${rel}`);
+  console.error(
+    '\nAn unused approval admits whatever PDF generation is added to that file next, unreviewed. ' +
+      'Delete each entry from APPROVED.'
+  );
+  process.exit(1);
 }
 
 if (findings.length === 0) {

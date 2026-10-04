@@ -1,0 +1,6 @@
+
+[tenant-trust-header] 1 violation(s)
+  Do not read org / tenant identity from request headers — validateTenantContext sources it from the JWT and emits a tenant_impersonation_attempt audit event when a header tries to override it. For the organization UUID use currentTenantOrgUuid(db) from server/db/currentTenant.
+    server/middleware/tenantAuth.ts:28:25  const headerTenant = (req.header('x-tenant-id') || req.header('x-tenant') || '').toString();
+
+check-security-patterns: 1 violation(s) across 3000 file(s).

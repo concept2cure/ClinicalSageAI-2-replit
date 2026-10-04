@@ -1,6 +1,7 @@
 import { getSchema, type JSONContent, type Extensions } from '@tiptap/core';
 import { EditorState } from '@tiptap/pm/state';
 import { fixTables, tableEditing } from '@tiptap/pm/tables';
+import { looksLikeHtml } from '@shared/authoring/plain-text-html';
 
 /**
  * Round-trip fidelity gate for the canonical section editor.
@@ -24,41 +25,11 @@ import { fixTables, tableEditing } from '@tiptap/pm/tables';
  * regulated document may not change by a single character.
  */
 
-/** True when the stored string is HTML rather than textarea-era plain text.
- *
- * Matches KNOWN html tags only, deliberately: prose can legitimately contain
- * tag-shaped tokens (`temperature <critical> threshold`), and any-tag
- * detection routed such text through an HTML parse that swallowed the token —
- * the exact silent-loss class this module exists to stop. Mirrored by
- * `contentLooksLikeHtml` in server/export/authoring-section-content.ts; keep
- * the two in agreement.
- *
- * AN ALLOWLIST THAT IS TOO NARROW CORRUPTS THE RECORD, and did. `dl`, `dt`,
- * `dd` and `caption` were missing. A definition list is how an abbreviations
- * or glossary section is written — "AE / Adverse Event", "MTD / Maximum
- * Tolerated Dose" — and is exactly the shape an AI draft emits for one. With
- * the tag unrecognised the boot path took the PLAIN-TEXT branch, where
- * `plainTextToHtml` escapes everything because plain text has no markup by
- * definition. So the record's markup became visible body text: a filed
- * document reading `<dl><dt>AE</dt><dd>Adverse Event</dd></dl>` as a literal
- * line of prose, angle brackets and all.
- *
- * The gate then AFFIRMED it. `assessFidelity` asks this same question, so it
- * compared the raw string-with-tags against the parsed literal
- * string-with-tags, they matched, and it returned `lossy: false` — reporting
- * the corruption as faithful because both halves agreed on the same mistake.
- *
- * Adding a tag here is therefore not cosmetic. Anything the stored record can
- * legitimately hold must be recognised, or it is escaped into the filed
- * document; anything ambiguous with prose must not be. `figure`/`figcaption`
- * are listed for the same reason even though the boot path also routes
- * `figure` to source mode explicitly — the two guards are independent, and
- * this one governs whether `assessFidelity` reads the content as markup. */
-const KNOWN_HTML_TAG =
-  /<\/?(p|div|br|h[1-6]|ul|ol|li|dl|dt|dd|b|strong|i|em|u|s|strike|ins|del|span|table|caption|thead|tbody|tfoot|tr|td|th|blockquote|pre|a|img|hr|sub|sup|mark|code|font|section|article|figure|figcaption)\b[^>]*>/i;
-export function looksLikeHtml(stored: string): boolean {
-  return KNOWN_HTML_TAG.test(stored);
-}
+/* Whether the stored string is HTML or textarea-era plain text: the one rule
+   every reader of section content shares, in @shared/authoring/plain-text-html
+   (its comment says why the allowlist is what it is, and what a narrow one
+   did to the record). Re-exported for this module's importers. */
+export { looksLikeHtml };
 
 /** Block-level tags whose boundaries read as line breaks in extracted text. */
 const BLOCK_TAGS = new Set([
@@ -369,15 +340,12 @@ export function assessFidelity(stored: string, parsedDoc: JSONContent): Fidelity
  * Convert textarea-era plain text to the editor's HTML: blank-line-separated
  * runs become paragraphs, single newlines become hard breaks. Escapes
  * everything — plain text has no markup by definition.
+ *
+ * Implemented in @shared/authoring/plain-text-html, because section generation
+ * on the server stores a model's text with the same function, and re-exported
+ * here for the editor and its tests.
  */
-export function plainTextToHtml(text: string): string {
-  const esc = (s: string) =>
-    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const paras = text.replace(/\r\n/g, '\n').split(/\n{2,}/);
-  return paras
-    .map((p) => `<p>${esc(p).replace(/\n/g, '<br>')}</p>`)
-    .join('');
-}
+export { plainTextToHtml } from '@shared/authoring/plain-text-html';
 
 /**
  * How many of the clipboard's words the parse kept.

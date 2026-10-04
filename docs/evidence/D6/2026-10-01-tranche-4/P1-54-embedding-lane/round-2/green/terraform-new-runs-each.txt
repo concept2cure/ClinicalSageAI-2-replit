@@ -1,0 +1,37 @@
+# GREEN, each round-2 run alone (same split as red/terraform-new-runs-each.txt), 2026-10-01T16:11:06Z
+tests/p154r2_the_api_and_worker_embed_through_the_self_hosted_lane.tftest.hcl... in progress
+  run "the_api_and_worker_embed_through_the_self_hosted_lane"... pass
+tests/p154r2_the_api_and_worker_embed_through_the_self_hosted_lane.tftest.hcl... tearing down
+tests/p154r2_the_api_and_worker_embed_through_the_self_hosted_lane.tftest.hcl... pass
+
+Success! 1 passed, 0 failed.
+tests/p154r2_an_openai_election_does_not_move_the_embedding_lane.tftest.hcl... in progress
+  run "an_openai_election_does_not_move_the_embedding_lane"... pass
+tests/p154r2_an_openai_election_does_not_move_the_embedding_lane.tftest.hcl... tearing down
+tests/p154r2_an_openai_election_does_not_move_the_embedding_lane.tftest.hcl... pass
+
+Success! 1 passed, 0 failed.
+tests/p154r2_refuses_placement_approvals_without_the_embedding_lane.tftest.hcl... in progress
+  run "refuses_placement_approvals_without_the_embedding_lane"... pass
+tests/p154r2_refuses_placement_approvals_without_the_embedding_lane.tftest.hcl... tearing down
+tests/p154r2_refuses_placement_approvals_without_the_embedding_lane.tftest.hcl... pass
+
+Success! 1 passed, 0 failed.
+tests/p154r2_refuses_a_local_approval_that_does_not_name_embedding.tftest.hcl... in progress
+  run "refuses_a_local_approval_that_does_not_name_embedding"... pass
+tests/p154r2_refuses_a_local_approval_that_does_not_name_embedding.tftest.hcl... tearing down
+tests/p154r2_refuses_a_local_approval_that_does_not_name_embedding.tftest.hcl... pass
+
+Success! 1 passed, 0 failed.
+tests/p154r2_the_environment_examples_show_the_decided_embedding_approval.tftest.hcl... in progress
+  run "the_environment_examples_show_the_decided_embedding_approval"... pass
+tests/p154r2_the_environment_examples_show_the_decided_embedding_approval.tftest.hcl... tearing down
+tests/p154r2_the_environment_examples_show_the_decided_embedding_approval.tftest.hcl... pass
+
+Success! 1 passed, 0 failed.
+tests/p154r2_accepts_the_fail_closed_interim_approvals.tftest.hcl... in progress
+  run "accepts_the_fail_closed_interim_approvals"... pass
+tests/p154r2_accepts_the_fail_closed_interim_approvals.tftest.hcl... tearing down
+tests/p154r2_accepts_the_fail_closed_interim_approvals.tftest.hcl... pass
+
+Success! 1 passed, 0 failed.

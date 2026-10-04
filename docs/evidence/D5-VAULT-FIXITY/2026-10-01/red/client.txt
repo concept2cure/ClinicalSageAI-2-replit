@@ -1,0 +1,6 @@
+# trunk Vault.tsx with client/src/concept2cure/v2/__tests__/vaultFixityCheck.test.tsx
+ × client/src/concept2cure/v2/__tests__/vaultFixityCheck.test.tsx > check stored files (critique 15) > runs the check and names every version that could not be proven 5095ms
+ × client/src/concept2cure/v2/__tests__/vaultFixityCheck.test.tsx > check stored files (critique 15) > a check that did not run says so, with the reason, and shows no result 5019ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultFixityCheck.test.tsx > check stored files (critique 15) > all intact, and a capped run, read as such 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 1 passed (3)

@@ -1,0 +1,6 @@
+Unreferenced modules: 83 (baseline 82)
+
+1 NEW unreferenced module(s):
+  + client/src/concept2cure/v2/surfaces/complianceReviewModel.ts
+
+FAIL: new unreachable source file(s). Nothing imports these, so nothing they contain can run — their routes are unmounted and their code paths are dead. Either wire the module up, or delete it. If it is genuinely reached in a way this scanner cannot see, add the reaching path to ENTRY_POINTS with a comment explaining how it is reached.

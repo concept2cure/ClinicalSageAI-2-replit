@@ -77,6 +77,17 @@ const OUTSIDER = {
   name: 'Iris Intruder',
 };
 
+// The project the reviewed document is authored IN. PF-07 (founder decision
+// 2026-09-26): a document belongs to a project, so POST /docs refuses a create
+// that names none (400 PROJECT_REQUIRED), and LX-20 refuses one that names a
+// project its organization does not own as a live regulatory_programs row
+// (404). The fixture document is therefore created in a real IND project of
+// the AUTHOR's organization (org 1), seeded into the real table
+// (migrations/20260524_program_workbench_schema.sql) in beforeAll. The OUTSIDER
+// (org 2) owns no project and never sees this one — the cross-tenant
+// assertions below are unchanged by the anchor.
+const PROJECT_ID = '5a1c2a10-7e0f-4c1a-9b2d-3e4f5a6b7c8d';
+
 const PREREQ = `
   /* Governed authoring writes land a hash-chained, HMAC-sealed §11.10(e) row,
      and that write is fail-closed — the audit row and the mutation it records
@@ -127,7 +138,28 @@ beforeAll(async () => {
   jdb = await createJourneyDb({
     prereqSql: PREREQ,
     migrations: [
+      // The project the document belongs to (PF-07). createDocument checks the
+      // anchor against the real regulatory_programs table (LX-20:
+      // programInOrganization — this org, not soft-deleted), so the table is
+      // built from its own migration rather than hand-mirrored.
+      'migrations/20260524_program_workbench_schema.sql',
+      // A create inside a project asks which governed filing it contributes to
+      // (resolveGovernedDocument reads c2c_documents for an IND × FDA project).
+      // The system-of-record table, with the c2c_ana_actions table its
+      // section-version FK names, from the files that create them — so the
+      // binding read answers "this project has no governed document yet"
+      // against a real table instead of a caught 42P01. The document stays
+      // unbound to a filing, as it was before PF-07.
+      'migrations/20260527_mutation_primitives.sql',
+      'migrations/20260528_phase9_document_schema.sql',
       'db/migrations/20260725_authoring_document_loop_tables.sql',
+      // authoring_documents.client_program_id — the column the project anchor
+      // is written to. Guarded on the loop tables above, so it follows them.
+      'migrations/20260727_authoring_document_program_scope.sql',
+      // Object permissions: the doc_permissions shape and the seed trigger that
+      // grants a document's creator OWNER. The audit read decides access
+      // through it (DP-42), as every write already did in production.
+      'db/migrations/20260727_authoring_object_permissions.sql',
       'db/migrations/20260730_authoring_comments_router_columns.sql',
       // ALTERs doc_revisions above with the ledger columns the router now writes
       // (content/chain hashes, origin, input manifest) and installs the
@@ -155,6 +187,15 @@ beforeAll(async () => {
   h.db = jdb.db;
   h.pool = jdb.pool;
 
+  // The live IND project of org 1 that the document is created in (PF-07).
+  // Only the NOT NULL columns; the rest take the migration's defaults.
+  await jdb.pool.query(
+    `INSERT INTO regulatory_programs
+       (id, organization_id, name, code, program_type, product_type, primary_agency, product_name)
+     VALUES ($1, $2, 'IND 12345', 'IND-12345', 'ind', 'drug', 'FDA', 'C2C-001')`,
+    [PROJECT_ID, AUTHOR.organizationId],
+  );
+
   for (const u of [AUTHOR, REVIEWER, OUTSIDER]) tokens.set(u.id, await mint(u));
 
   const { default: authoringRouter } = await import('../../server/routes/authoring.router');
@@ -162,8 +203,11 @@ beforeAll(async () => {
   app.use(express.json({ limit: '5mb' }));
   app.use('/api/authoring', authoringRouter);
 
+  // Created in its project (PF-07): a create with no client_program_id is now
+  // refused 400 PROJECT_REQUIRED before anything is written.
   const doc = await as(AUTHOR)(request(app).post('/api/authoring/docs')).send({
     title: 'IND 12345 — Module 2.5 Clinical Overview', module: 'M2',
+    client_program_id: PROJECT_ID,
   });
   expect(doc.status).toBe(201);
   docId = doc.body.document.id;

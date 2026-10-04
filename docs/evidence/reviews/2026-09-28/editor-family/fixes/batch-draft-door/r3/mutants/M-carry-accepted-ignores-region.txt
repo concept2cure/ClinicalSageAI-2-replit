@@ -1,0 +1,9 @@
+mutant M-carry-accepted-ignores-region: server/services/clinical-regulatory-evidence/machine-attribution.ts
+- (!accepted || comparable[i])
++ true
+
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > carry-forward meets a raw-text region > an accepted clause a later save put inside one is not carried: its words were matched with tags removed 11ms
+   → expected [ Array(1) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 58 passed (59)

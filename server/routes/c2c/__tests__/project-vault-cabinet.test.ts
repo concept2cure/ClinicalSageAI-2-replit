@@ -91,7 +91,10 @@ describe('filingCabinet — uploads appear in the tree they were uploaded into',
     const eng = cab.children.find(c => 'children' in c && c.id === 'cab-eng');
     const doc = (eng as { children: unknown[] }).children[0] as ReturnType<typeof uploadLeaf>;
     expect(doc.status).toBe('confirmed');
-    expect(doc.num).toBe('—');                      // no CTD section → em dash, not invented
+    // A device vault is not CTD-numbered: the index is the folder's ordinal and
+    // the leaf's position (VR-15), and no CTD section is invented for it.
+    expect(doc.num).toBe('4.1');
+    expect(doc.filing?.ctdSection).toBeNull();
     expect(doc.preview).toContain('SHA-256');
     // Uploads carry no authoring completion, so no figure: 0 read to AnA as
     // "0% complete" for every file in the cabinet.

@@ -1,0 +1,12 @@
+# P1-19b boot wiring, green (2026-09-30): 14 suites that boot production, sign or verify exports, or serve the export routes
+ Test Files  14 passed (14)
+      Tests  212 passed (212)
+
+# after the export-key block moved to its own file (max-lines):
+ ✓ server/config/__tests__/environment-audit-export-key.test.ts > production audit export key posture (fires on config import) > refuses to load in production without a dedicated export key 201ms
+ ✓ server/config/__tests__/environment-audit-export-key.test.ts > production audit export key posture (fires on config import) > refuses to load in production when the export key is the JWT secret 3ms
+ ✓ server/config/__tests__/environment-audit-export-key.test.ts > production audit export key posture (fires on config import) > refuses to load in production on a short export key, without echoing it 8ms
+ ✓ server/config/__tests__/environment-audit-export-key.test.ts > production audit export key posture (fires on config import) > loads in production with a dedicated export key 6ms
+ ✓ server/config/__tests__/environment-audit-export-key.test.ts > production audit export key posture (fires on config import) > does not require an export key in development 2ms
+ Test Files  2 passed (2)
+      Tests  48 passed (48)

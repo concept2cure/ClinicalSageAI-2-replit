@@ -162,6 +162,37 @@ describe('the real registry, launch scope on', () => {
     }
   });
 
+  /* 2026-09-29: three more broad claims, each pre-dating launch scope, that let
+     a hidden app's routes answer as launch. dossier-map claimed all of
+     /api/global-ri and /api/rim; project-home and program-journey claimed
+     /api/rim; submission-center claimed all of /api/510k/estar. No launch
+     screen calls any of them except the two eSTAR sub-paths Submission Center
+     uses. */
+  it('refuses Global RI, RIM and the device eSTAR kit, and passes what launch screens call', async () => {
+    for (const p of ['/api/global-ri/catalog', '/api/global-ri/impurities/x', '/api/rim/products', '/api/510k/estar/official', '/api/510k/estar/build']) {
+      expect(await refused(p), p).toBe(true);
+    }
+    for (const p of ['/api/dossier-map', '/api/510k/estar/submissions', '/api/510k/estar/assemble']) {
+      expect(await refused(p), p).toBe(false);
+    }
+  });
+
+  /* Found 2026-09-29: Projects and Project home each claimed all of /api/programs.
+     Every route under it is device 510(k) predicate intelligence (21, 12 of them
+     writes), the substantial-equivalence render, or an RTM over tables nothing
+     writes to. No launch screen calls any of them. */
+  it('refuses the device predicate-intelligence and RTM routes under /api/programs, and passes Projects', async () => {
+    for (const p of [
+      '/api/programs/7/predicate-intel/defense-packet/build',
+      '/api/programs/7/predicate-intel/render/job-1/download',
+      '/api/programs/7/se-matrix/render',
+      '/api/programs/7/rtm/csv',
+    ]) {
+      expect(await refused(p), p).toBe(true);
+    }
+    expect(await refused('/api/projects')).toBe(false);
+  });
+
   it('refuses a surface outside the catalog, and leaves the public API and webhooks alone', async () => {
     expect(await refused('/api/pharmacovigilance/cases')).toBe(true);
     expect(await refused('/api/v1/documents')).toBe(false);
@@ -275,6 +306,19 @@ describe('the real registry, unattributed paths enforced', () => {
       const { res, passed } = await run(gate(), p);
       expect(passed, p).toBe(false);
       expect(res.statusCode, p).toBe(403);
+    }
+  });
+
+  /* 2026-09-29: /api/biotech-artifacts generates ICSRs, PSURs, CIOMS forms,
+     expedited safety reports, monitoring/deviation/enrollment reports and eCTD
+     cover letters from the request body and records none of them: no vault
+     document, no version, no audit row. Its only caller is its own route, no
+     screen calls it, and pharmacovigilance and clinical operations are outside
+     the release. artifacts-center no longer claims it, so production refuses
+     it; a regulated document is produced only through a path that records it. */
+  it('refuses the unrecorded regulatory-document generators', async () => {
+    for (const p of ['/api/biotech-artifacts/pv/icsr', '/api/biotech-artifacts/pv/psur', '/api/biotech-artifacts/clinical/monitoring-report', '/api/biotech-artifacts/ectd/cover-letter', '/api/biotech-artifacts/catalog']) {
+      expect(await passes(p), p).toBe(false);
     }
   });
 

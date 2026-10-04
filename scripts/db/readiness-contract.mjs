@@ -41,6 +41,9 @@
  * append-only ceiling on the audit store. Until this the contract checked only
  * the 27 contract tables, so a deploy could verify green while the runtime
  * role could not read 183 of the owner's public tables (measured 2026-09-20).
+ * Since 2026-10-01 (P0-8, DP-04) the append-only ceiling covers every
+ * APPEND_ONLY_TABLES store, not only the `audit` schema: a runtime role that
+ * holds UPDATE, DELETE or TRUNCATE on audit_logs fails this contract by name.
  */
 
 import { auditRuntimeRoleGrants } from './provision-app-role.mjs';
@@ -225,7 +228,9 @@ export async function verifyReadinessContract(
       }
 
       // The whole estate: every application relation, with the recipe's
-      // privileges, and no more than the ceiling on the audit store.
+      // privileges, and no more than the ceiling on the audit schema and on
+      // every append-only store wherever it lives (2026-10-01, P0-8, DP-04:
+      // audit_logs and audit_events are in public, where the role held DELETE).
       const reachable = grantAudit.relations - grantAudit.denied.length;
       log(
         `  grant audit: ${reachable}/${grantAudit.relations} application relations hold the recipe privileges for ` +
@@ -245,8 +250,9 @@ export async function verifyReadinessContract(
       if (grantAudit.excess.length) {
         failures.push(
           `runtime role ${roleUnderTest} holds privileges beyond the append-only ceiling on: ` +
-            `${preview(grantAudit.excess, (e) => `${e.relation} (${e.held.join('/')})`)} — REVOKE them; the recipe ` +
-            'never grants UPDATE/DELETE on audit and a widened audit store is not a deployable state',
+            `${preview(grantAudit.excess, (e) => `${e.relation} (${e.held.join('/')})`)} — REVOKE them (re-running ` +
+            'deploy-migrate step 4 does); the recipe withholds UPDATE/DELETE/TRUNCATE on the audit schema and on every ' +
+            'append-only store (provision-app-role.mjs APPEND_ONLY_TABLES), and a widened audit store is not a deployable state',
         );
       }
       if (grantAudit.ownedAppendOnly.length) {

@@ -34,7 +34,8 @@
  * Org id is bound from the verified JWT (authedOrgId); the mount adds
  * authenticateToken. Every handler is try/caught and never throws out of the
  * router; DB-touching services fail closed (empty list / null), never a fake
- * zero.
+ * zero. A failed portfolio read is a 503 PORTFOLIO_UNAVAILABLE, not an empty
+ * organisation (review round 1).
  *
  * Mounted at `/api/insights-canvas` (see server/bootstrap/register-*-routes.ts).
  *
@@ -92,7 +93,8 @@ interface CanvasReportType {
 }
 
 interface CanvasLeadProgram {
-  scope: 'program';
+  /** The canvas's "program" is a project: its readiness is computed at project scope. */
+  scope: 'project';
   scopeId: string;
   projectId: number;
   code: string | null;
@@ -120,7 +122,7 @@ interface CanvasPortfolioProgram {
   code: string | null;
   label: string;
   indication: string | null;
-  readiness: number;
+  readiness: number | null;
   confidence: number;
   status: ProgramMemberInsight['status'];
   riskLevel: RiskLevel;
@@ -129,7 +131,7 @@ interface CanvasPortfolioProgram {
 
 interface CanvasPortfolioSummary {
   programCount: number;
-  avgReadiness: number;
+  avgReadiness: number | null;
   avgConfidence: number;
   worstRisk: RiskLevel;
   readyCount: number;
@@ -174,7 +176,9 @@ const LOCKED_PORTFOLIO_DECISION: ReportEntitlementDecision = {
 function pickFlagship(members: ProgramMemberInsight[]): ProgramMemberInsight | null {
   if (members.length === 0) return null;
   const sorted = [...members].sort((a, b) => {
-    if (b.readinessScore !== a.readinessScore) return b.readinessScore - a.readinessScore;
+    const ar = a.readinessScore ?? -1;
+    const br = b.readinessScore ?? -1;
+    if (br !== ar) return br - ar;
     if (a.criticalBlockerCount !== b.criticalBlockerCount) {
       return a.criticalBlockerCount - b.criticalBlockerCount;
     }
@@ -185,8 +189,16 @@ function pickFlagship(members: ProgramMemberInsight[]): ProgramMemberInsight | n
 
 /** PURE: single-program lead context. filing/agency/pdufa are unsourced → null. */
 function toLeadProgram(insight: ProgramMemberInsight): CanvasLeadProgram {
+  /* L189 (reporting review 2026-10-01). This said 'program' with a PROJECT id,
+     and the canvas runs every report over the scope it is given: POST /runs
+     read 'program' as a report program group and looked up the group whose
+     serial id equalled the project id. So a report titled for the project
+     the opener named was computed over an unrelated group, or over nothing
+     ("No governed artifacts discovered"), and half the standard-pack tiles
+     were refused because their types do not run at program scope. The lead
+     is a project, and its readiness above is computed at project scope. */
   return {
-    scope: 'program',
+    scope: 'project',
     scopeId: String(insight.projectId),
     projectId: insight.projectId,
     code: insight.code ?? null,
@@ -238,9 +250,9 @@ export default function createInsightsCanvasRoutes(): Router {
 
       const persona = typeof req.query.persona === 'string' ? req.query.persona : null;
 
-      // Independent, resilient reads. The entitlement gate and segment
-      // derivation fail closed internally (never throw); the portfolio compute
-      // can throw, so any rejection degrades to an honest empty, not a 500.
+      // Independent reads. The entitlement gate and segment derivation fail
+      // closed internally (never throw). The portfolio compute can throw, and
+      // a failed read is answered as one (below), never as an empty org.
       const [gateResult, segmentsResult, portfolioResult] = await Promise.allSettled([
         requireReportEntitlement(organizationId, 'portfolio.board_pack', 'portfolio'),
         deriveOrgSegments(organizationId),
@@ -254,16 +266,28 @@ export default function createInsightsCanvasRoutes(): Router {
       const segments: ReportSegment[] =
         segmentsResult.status === 'fulfilled' ? segmentsResult.value : [];
 
+      // Review round 1 (honest-state M5): a failed portfolio read was answered
+      // 200 with leadProgram null, so the canvas said "No program readiness
+      // yet" for a read that failed. It is a 503 now, the detail logged only;
+      // an organisation with no program (a fulfilled null) is still the 200
+      // empty.
       if (portfolioResult.status === 'rejected') {
-        logger.warn('org portfolio compute failed; degrading to empty', {
+        logger.error('org portfolio read failed', {
           organizationId,
           err:
             portfolioResult.reason instanceof Error
               ? portfolioResult.reason.message
               : String(portfolioResult.reason),
         });
+        return res.status(503).json({
+          success: false,
+          error: {
+            code: 'PORTFOLIO_UNAVAILABLE',
+            message: 'Program readiness could not be read just now. Try again in a moment.',
+          },
+        });
       }
-      const summary = portfolioResult.status === 'fulfilled' ? portfolioResult.value : null;
+      const summary = portfolioResult.value;
 
       // Report catalog: filter the seed to the org's segment(s), annotate each
       // with the org's entitlement verdict (pure). Identical to /taxonomy.

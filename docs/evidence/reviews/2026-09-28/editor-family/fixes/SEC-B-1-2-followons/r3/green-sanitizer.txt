@@ -1,0 +1,37 @@
+ ✓ sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: /api/authoring/images/../../tenant-export/full 17ms
+ ✓ sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: /api/authoring/images/%2e%2e/%2e%2e/users/me 4ms
+ ✓ sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: /api/authoring/images/..\..\tenant-export\full 3ms
+ ✓ sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: /api/authoring/images/file_1_a?download=1 2ms
+ ✓ sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: https://collector.example/p.png?d=secret 3ms
+ ✓ sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: //collector.example/p.png 2ms
+ ✓ sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: data:image/svg+xml;base64,PHN2Zz4= 2ms
+ ✓ sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: data:text/html;base64,PHNjcmlwdD4= 2ms
+ ✓ sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: data:image/webp;base64,UklGRg== 3ms
+ ✓ sanitizeAuthoringSectionHtml > removes an image that is not a figure, whole: javascript:alert(1) 2ms
+ ✓ sanitizeAuthoringSectionHtml > keeps a governed reference and an inline PNG exactly as written 2ms
+ ✓ sanitizeAuthoringSectionHtml > finds the image wherever the parse puts it: inside a table cell, and in upper case 4ms
+ ✓ sanitizeAuthoringSectionHtml > still strips scripts and handlers, and leaves the chat-safe rest alone 3ms
+ ✓ sanitizeAuthoringSectionHtml > does not leave its image rule on the shared DOMPurify instance 6ms
+ ✓ refusedFigures — what the section save refuses > names nothing in prose, a governed reference, an inline PNG, or an image with no src 380ms
+ ✓ refusedFigures — what the section save refuses > names an image that is not a figure: /api/authoring/images/../../tenant-export/full 4ms
+ ✓ refusedFigures — what the section save refuses > names an image that is not a figure: /api/authoring/images/%2e%2e/%2e%2e/users/me 2ms
+ ✓ refusedFigures — what the section save refuses > names an image that is not a figure: /api/authoring/images/..\..\tenant-export\full 2ms
+ ✓ refusedFigures — what the section save refuses > names an image that is not a figure: /api/authoring/images/file_1_a?download=1 2ms
+ ✓ refusedFigures — what the section save refuses > names an image that is not a figure: https://collector.example/p.png?d=secret 2ms
+ ✓ refusedFigures — what the section save refuses > names an image that is not a figure: //collector.example/p.png 2ms
+ ✓ refusedFigures — what the section save refuses > names an image that is not a figure: data:image/svg+xml;base64,PHN2Zz4= 2ms
+ ✓ refusedFigures — what the section save refuses > names an image that is not a figure: data:text/html;base64,PHNjcmlwdD4= 1ms
+ ✓ refusedFigures — what the section save refuses > names an image that is not a figure: data:image/webp;base64,UklGRg== 1ms
+ ✓ refusedFigures — what the section save refuses > names an image that is not a figure: javascript:alert(1) 1ms
+ ✓ refusedFigures — what the section save refuses > reads the markup the way a browser does 7ms
+ ✓ refusedFigures — what the section save refuses > says which images, by position and kind, without echoing an application path 1ms
+ ✓ refusedFigures — markup the editor and the filed document would read differently > a duplicated src: shown as the first, filed as the second 2ms
+ ✓ refusedFigures — markup the editor and the filed document would read differently > an image inside a template 4ms
+ ✓ refusedFigures — markup the editor and the filed document would read differently > an image inside a bogus comment 3ms
+ ✓ refusedFigures — markup the editor and the filed document would read differently > an image inside a text box 3ms
+ ✓ refusedFigures — markup the editor and the filed document would read differently > a source a reader loads that is not a figure: a srcset on an image with no src 1ms
+ ✓ refusedFigures — markup the editor and the filed document would read differently > a source a reader loads that is not a figure: a picture source 2ms
+ ✓ refusedFigures — markup the editor and the filed document would read differently > a source a reader loads that is not a figure: an SVG image 2ms
+ ✓ refusedFigures — markup the editor and the filed document would read differently > two figures written plainly are refused for nothing (guard) 4ms
+ ✓ refusedFigures — markup the editor and the filed document would read differently > says what to do about a misread image, without the not-a-figure advice 0ms
+      Tests  36 passed (36)

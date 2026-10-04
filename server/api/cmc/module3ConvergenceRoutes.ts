@@ -31,18 +31,15 @@ import { createSourceHash } from '../../services/cmc-module3-compiler';
 import { resolveCmcArtifactProject } from '../../services/cmc/resolve-cmc-artifact-project';
 import { serverError } from '../../lib/api-response';
 import { createScopedLogger } from '../../utils/logger';
+import { guardModule3Project, module3OrgId } from './module3-project-guard';
 
 const router = express.Router();
 const log = createScopedLogger('module3-convergence');
+/* Every route here that names a project reads or builds only in a project of
+   the caller's organization (PF-15); another organization's project is 404,
+   not an empty build state. */
+guardModule3Project(router, log);
 
-function getOrgId(req: express.Request): number {
-  const orgId = parseInt(
-    String((req as any).tenantId || (req as any).tenantContext?.organizationId || 0),
-    10
-  );
-  if (!orgId || Number.isNaN(orgId)) throw new Error('Organization context required');
-  return orgId;
-}
 
 // ── POST /classify-artifact/:projectId ────────────────────────────────────────
 // Takes an existing uploaded artifact and maps it into a CMC source object.
@@ -63,7 +60,7 @@ const classifySchema = z.object({
 
 router.post('/classify-artifact/:projectId', async (req, res) => {
   try {
-    const orgId = getOrgId(req);
+    const orgId = module3OrgId(req);
     const { projectId } = req.params;
     const data = classifySchema.parse(req.body);
 
@@ -104,7 +101,7 @@ router.post('/build-section/:projectId/:sectionKey', async (req, res) => {
   const pool = getPool();
   const client = await pool.connect();
   try {
-    const orgId = getOrgId(req);
+    const orgId = module3OrgId(req);
     const { projectId, sectionKey } = req.params;
 
     await client.query('BEGIN');
@@ -203,7 +200,7 @@ router.post('/build-section/:projectId/:sectionKey', async (req, res) => {
 
 router.get('/source-lineage/:projectId/:sectionKey', async (req, res) => {
   try {
-    const orgId = getOrgId(req);
+    const orgId = module3OrgId(req);
     const { projectId, sectionKey } = req.params;
     const pool = getPool();
 

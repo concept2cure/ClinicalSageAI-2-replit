@@ -50,13 +50,17 @@ jobs:
         id: install
         # Retry to absorb transient registry/network failures (e.g. ECONNRESET)
         # that otherwise fail the whole pipeline (every other job needs: lint).
+        # `npm ci`, not `npm install` (security audit 2026-09-24 INF-24): it
+        # installs exactly what package-lock.json pins, and fails when the lock
+        # and package.json disagree instead of resolving and rewriting the lock.
+        # .npmrc supplies legacy-peer-deps, which npm ci reads too.
         run: |
           for attempt in 1 2 3; do
-            npm install && exit 0
-            echo "::warning::npm install failed (attempt $attempt/3); retrying after backoff…"
+            npm ci && exit 0
+            echo "::warning::npm ci failed (attempt $attempt/3); retrying after backoff…"
             sleep $((attempt * 15))
           done
-          echo "::error::npm install failed after 3 attempts"; exit 1
+          echo "::error::npm ci failed after 3 attempts"; exit 1
 
       # The manifest gate's fail-closed logic must be exercised on every push,
       # not only when a release workflow eventually calls it. AFTER install:
@@ -78,6 +82,15 @@ jobs:
       - name: Guardrails — migration prefix collisions (no regressions)
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:migration-prefix-collisions
+
+      - name: Guardrails — a new migration is on a DEPLOY path (with selftest)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # install-fresh applies every top-level migrations/*.sql to a NEW
+        # database; deploy-migrate applies only C2C_MIGRATION_FILES. A file on
+        # neither the set nor the journal reaches no database already deployed:
+        # the IND amendment/annual-report tables were missing that way until
+        # 9d6e3375b. Baselined at 113 pre-existing files; must only shrink.
+        run: npm run ci:migration-deploy-path:selftest && npm run ci:migration-deploy-path
 
       - name: Guardrails — RLS allowlist TS↔SQL parity
         if: "!cancelled() && steps.install.conclusion == 'success'"
@@ -133,6 +146,16 @@ jobs:
         # a written reason; the selftest shows each failure branch firing.
         run: npm run ci:runtime-ddl && npm run ci:runtime-ddl:selftest
 
+      - name: Guardrails — the security and tenant gates fail on what they exist to catch (selftests)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # A gate that has only ever been seen to pass has not been tested
+        # (CLAUDE.md working agreement). Each selftest builds a throwaway tree
+        # with the defect its gate exists to catch, runs the real gate on it and
+        # expects the failure, then the safe forms and the baseline semantics.
+        # Each was mutation-checked against copies of its gate (2026-10-01,
+        # docs/evidence/D6/2026-10-01-gate-selftests/).
+        run: npm run ci:audit-route-mounts:selftest && npm run ci:audit-logs-fixture:selftest && npm run ci:tenant-isolation-justifications:selftest && npm run ci:committed-secrets:selftest && npm run ci:gateway-bypass:selftest && npm run ci:no-dev-auth-in-prod:selftest && npm run ci:org-path-param-guards:selftest && npm run ci:password-hygiene:selftest && npm run ci:purge-coverage:selftest && npm run ci:regulated-delete-audit:selftest && npm run ci:rls-allowlist-sync:selftest && npm run ci:route-ownership-matrix:selftest && npm run ci:server-error-leaks:selftest && npm run ci:session-scoped-rls-bypass:selftest && npm run ci:tenant-blind-models:selftest && npm run ci:tenant-column-types:selftest && npm run ci:tenant-entry-points:selftest && npm run ci:tenant-isolation:selftest && npm run ci:tenant-resolvers:selftest
+
       - name: Guardrails — no jsonb operator on a json column
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # Most JSON columns in this schema are `json`, not `jsonb`. json has no
@@ -171,10 +194,21 @@ jobs:
         # seed script, as the fallback used whenever DATABASE_URL was unset).
         # Two different passwords, same endpoint, both the OWNER role — above
         # the non-superuser app_service role the whole tenant-RLS program relies
-        # on. Nothing in CI could block it: semgrep.yml is deliberately
-        # continue-on-error so a broad ruleset with a triage backlog does not
-        # gate every PR. This guard is narrow enough to be blocking on day one.
+        # on. Nothing in CI could block it: semgrep.yml was then deliberately
+        # continue-on-error so a broad ruleset with a triage backlog did not
+        # gate every PR (it now blocks what a commit adds — INF-10, P1-12). This
+        # guard is narrow enough to be blocking over the whole tree.
         run: npm run ci:committed-secrets
+
+      - name: Guardrails — the Compose stacks carry the production boot contract
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # docker-compose.yml (self-host) and docker-compose.beta.yml run the app
+        # with NODE_ENV=production. Until 2026-10-01 neither passed the signer
+        # mode, the AI placement settings or SMTP, so neither could boot or sign
+        # anyone in, and nothing compared them with the contract. The required
+        # names come from deploy-aws.yml's preflight, so a variable added there
+        # is required here too (docs/evidence/W2/2026-10-01-compose-boot-contract/).
+        run: npm run ci:compose-boot-contract:selftest && npm run ci:compose-boot-contract
 
       - name: Guardrails — requirements.txt pins must install on the declared Python
         if: "!cancelled() && steps.install.conclusion == 'success'"
@@ -537,6 +571,31 @@ jobs:
           npm run ci:session-scoped-rls-bypass
           npm run ci:tenant-resolvers
 
+      - name: Security gates that ran only in the pre-push hook
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # Security audit 2026-09-24 INF-02 (plan P1-12). .husky/pre-push blocked
+        # on these and nothing else ran them: a hook runs only where someone
+        # installed it (core.hooksPath was unset in the audited checkout), and a
+        # push made without it reached the trunk unchecked. All pass at
+        # 2026-10-01; each self-test runs first, so a gate that can no longer
+        # fail is caught before its clean result is believed.
+        #   unauthenticated-fetch — a raw client fetch() without the bearer token
+        #   drizzle-tenant-scope  — an ORM query on tenant data with no org bound
+        #   migration-drop-safety — CLAUDE.md Rule 1: a DROP the set re-creates
+        #   upload-guards         — a multer upload with no type or size guard
+        # check:catalog-copy ran only in pr-checks.yml and pre-push; it is here
+        # so no npm gate there is pull-request-only.
+        run: |
+          npm run ci:unauthenticated-fetch:selftest
+          npm run ci:unauthenticated-fetch
+          npm run ci:drizzle-tenant-scope:selftest
+          npm run ci:drizzle-tenant-scope
+          npm run ci:migration-drop-safety:selftest
+          npm run ci:migration-drop-safety
+          npm run ci:upload-guards:selftest
+          npm run ci:upload-guards
+          npm run check:catalog-copy
+
       - name: Guardrails — no API route or table name in user-visible copy
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:internals-in-copy
@@ -556,6 +615,10 @@ jobs:
       - name: Guardrails — no invented signer or applicant identity
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:fabricated-identity
+
+      - name: Guardrails — one program-ownership check (with selftest)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run ci:program-ownership-single-source:selftest && npm run ci:program-ownership-single-source
 
       - name: Guardrails — audit_logs fixtures accept the audit writer's columns
         if: "!cancelled() && steps.install.conclusion == 'success'"
@@ -683,6 +746,12 @@ jobs:
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:frontend-sync-coverage:selftest && npm run ci:frontend-sync-coverage
 
+      # Three builds of @napi-rs/canvas, each with its own Skia, were mixed in
+      # one render: a scanned PDF crashed the API task with SIGSEGV. One copy.
+      - name: Guardrails — one native canvas library in the lockfile (with selftest)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run ci:single-native-canvas:selftest && npm run ci:single-native-canvas
+
       # A required security scan that gets cancelled by the next push produces
       # no release evidence for the commit it was meant to certify — 74 of the
       # last 100 canonical-branch CodeQL runs, before codeql.yml and
@@ -750,6 +819,18 @@ jobs:
         run: |
           npm run ci:sign-ceremony:selftest
           npm run ci:sign-ceremony
+
+      - name: Guardrails — only named writers change a recorded Vault version (Part 11)
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # The record guard (migrations/20260926_vault_documents_record_immutability.sql)
+        # refuses identity, hash and lineage changes; title, type, classification
+        # and filing are left to named writers that each write a chained audit
+        # row. A new file issuing UPDATE vault.documents fails here until it is
+        # named. The selftest runs first and fails on an unnamed writer and on a
+        # stale entry.
+        run: |
+          npm run ci:vault-document-writers:selftest
+          npm run ci:vault-document-writers
 
       - name: Guardrails — route mount authority audit (no regressions)
         if: "!cancelled() && steps.install.conclusion == 'success'"
@@ -1138,6 +1219,9 @@ jobs:
     name: Coverage (ratchet)
     runs-on: ubuntu-latest
     needs: lint
+    # As `test`: a red guardrail in lint must not skip this job (a skipped job
+    # reports neither pass nor fail). tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts
+    if: ${{ !cancelled() }}
     # Runs the vitest suite with the v8 coverage provider against a real
     # Postgres so the DB-backed paths are counted, then ENFORCES that coverage
     # has not gone down.
@@ -1263,6 +1347,9 @@ jobs:
     name: AnA Readiness Tests
     runs-on: ubuntu-latest
     needs: lint
+    # As `test`: a red guardrail in lint must not skip this job (a skipped job
+    # reports neither pass nor fail). tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts
+    if: ${{ !cancelled() }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
@@ -1292,6 +1379,9 @@ jobs:
     name: Integration Tests
     runs-on: ubuntu-latest
     needs: lint
+    # As `test`: a red guardrail in lint must not skip this job (a skipped job
+    # reports neither pass nor fail). tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts
+    if: ${{ !cancelled() }}
     services:
       postgres:
         image: pgvector/pgvector:pg15
@@ -1456,6 +1546,9 @@ jobs:
     name: Blank DB Provisioning + Deploy Migration
     runs-on: ubuntu-latest
     needs: lint
+    # As `test`: a red guardrail in lint must not skip this job (a skipped job
+    # reports neither pass nor fail). tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts
+    if: ${{ !cancelled() }}
     services:
       postgres:
         # pgvector, not stock postgres: the installer creates the `vector`
@@ -1716,6 +1809,9 @@ jobs:
     name: Production Boot Smoke (RLS on, non-superuser role)
     runs-on: ubuntu-latest
     needs: lint
+    # As `test`: a red guardrail in lint must not skip this job (a skipped job
+    # reports neither pass nor fail). tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts
+    if: ${{ !cancelled() }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
@@ -1864,6 +1960,7 @@ jobs:
           REFRESH_TOKEN_SECRET: ci-boot-smoke-refresh-secret-min-32-chars-ccc
           AUDIT_HMAC_SECRET: ci-boot-smoke-audit-hmac-secret-min-32-chars-ddd
           AUDIT_HMAC_KEY: ci-boot-smoke-audit-hmac-key-min-32-chars-eee
+          AUDIT_EXPORT_SIGNING_KEY: ci-boot-smoke-audit-export-key-min-32-chars-hhh
           MFA_ENCRYPTION_KEY: ci-boot-smoke-mfa-encryption-key-min-32-chars-fff
           CONNECTOR_ENCRYPTION_KEY: ci-boot-smoke-connector-encryption-key-32-ggg
           # server/services/signature/signer-mode.ts refuses to boot production
@@ -1928,10 +2025,160 @@ jobs:
         if: always()
         run: docker rm -f pgboot || true
 
+  # The image itself, not the source (launch row D1; evidence
+  # docs/evidence/W2/2026-10-01-image-boot/). production-boot-smoke above runs
+  # dist/index.js on the runner; nothing started the image Dockerfile.optimized
+  # produces until this job. It builds both targets the deploy builds, provisions
+  # an EMPTY database with the provision image's own `npm run db:provision`,
+  # starts the production image as `appuser` under RLS_ENFORCE=on as app_service,
+  # requires /healthz and /readyz to answer 200, and signs a person in, second
+  # factor included, from inside the image (scripts/ci/image-boot-signin.mjs).
+  # The session that wrote it could not build the image (its network refuses
+  # Debian's mirrors); GitHub's runners reach them, as deploy-aws.yml's build does.
+  production-image-boot:
+    name: Production Image Boot (built image, empty database, sign-in)
+    runs-on: ubuntu-latest
+    needs: lint
+    # As `test`: a red guardrail in lint must not skip this job (a skipped job
+    # reports neither pass nor fail). tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts
+    if: ${{ !cancelled() }}
+    timeout-minutes: 60
+    env:
+      APP_SERVICE_PASSWORD: ci-image-boot-app-service-password
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Build the provision and production images (as deploy-aws.yml does)
+        run: |
+          docker build -f Dockerfile.optimized --target provision -t c2c-provision:ci .
+          docker build -f Dockerfile.optimized --target production -t c2c-app:ci .
+          echo "production image runs as: $(docker inspect --format '{{.Config.User}}' c2c-app:ci)"
+          if [ "$(docker inspect --format '{{.Config.User}}' c2c-app:ci)" != "appuser" ]; then
+            echo "::error::the production image must run as appuser"; exit 1
+          fi
+
+      - name: Start an empty PostgreSQL with TLS
+        run: |
+          mkdir -p "$RUNNER_TEMP/pgcerts" "$RUNNER_TEMP/ca"
+          openssl req -new -x509 -days 2 -nodes -text \
+            -out "$RUNNER_TEMP/pgcerts/server.crt" \
+            -keyout "$RUNNER_TEMP/pgcerts/server.key" \
+            -subj "/CN=localhost" \
+            -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
+          # The containers verify the server against this certificate.
+          cp "$RUNNER_TEMP/pgcerts/server.crt" "$RUNNER_TEMP/ca/server.crt"
+          chmod 644 "$RUNNER_TEMP/ca/server.crt"
+          sudo chown 999:999 "$RUNNER_TEMP/pgcerts/server.key" "$RUNNER_TEMP/pgcerts/server.crt"
+          sudo chmod 600 "$RUNNER_TEMP/pgcerts/server.key"
+          docker run -d --name pgimage \
+            -e POSTGRES_HOST_AUTH_METHOD=trust \
+            -e POSTGRES_USER=postgres \
+            -e POSTGRES_DB=c2c_image \
+            -p 5432:5432 \
+            -v "$RUNNER_TEMP/pgcerts:/certs:ro" \
+            pgvector/pgvector:pg15 \
+            -c ssl=on -c ssl_cert_file=/certs/server.crt -c ssl_key_file=/certs/server.key
+          for i in $(seq 1 45); do
+            docker exec pgimage pg_isready -U postgres && break
+            sleep 2
+          done
+
+      - name: Provision the empty database with the provision image
+        run: |
+          docker run --rm --network host \
+            -v "$RUNNER_TEMP/ca:/ca:ro" \
+            -e DATABASE_OWNER_URL=postgresql://postgres@localhost:5432/c2c_image \
+            -e APP_DATABASE_URL="postgresql://app_service:${APP_SERVICE_PASSWORD}@localhost:5432/c2c_image" \
+            -e APP_SERVICE_DB_PASSWORD="${APP_SERVICE_PASSWORD}" \
+            -e NODE_EXTRA_CA_CERTS=/ca/server.crt \
+            -e PGSSLROOTCERT=/ca/server.crt \
+            c2c-provision:ci
+
+      - name: Start the production image and require /healthz and /readyz = 200
+        run: |
+          # The production posture production-boot-smoke runs, as an env file.
+          # Throwaway values for a container destroyed with the job; each
+          # acceptance below is explained in production-boot-smoke's env.
+          cat > "$RUNNER_TEMP/app.env" <<ENV
+          NODE_ENV=production
+          RLS_ENFORCE=on
+          PORT=5199
+          DATABASE_URL=postgresql://postgres@localhost:5432/c2c_image
+          APP_DATABASE_URL=postgresql://app_service:${APP_SERVICE_PASSWORD}@localhost:5432/c2c_image
+          NODE_EXTRA_CA_CERTS=/ca/server.crt
+          PGSSLROOTCERT=/ca/server.crt
+          JWT_SECRET=ci-image-boot-jwt-secret-min-32-chars-long-aaa
+          SESSION_SECRET=ci-image-boot-session-secret-min-32-chars-bbb
+          REFRESH_TOKEN_SECRET=ci-image-boot-refresh-secret-min-32-chars-ccc
+          AUDIT_HMAC_SECRET=ci-image-boot-audit-hmac-secret-min-32-chars-ddd
+          AUDIT_HMAC_KEY=ci-image-boot-audit-hmac-key-min-32-chars-eee
+          AUDIT_EXPORT_SIGNING_KEY=ci-image-boot-audit-export-key-min-32-chars-hhh
+          MFA_ENCRYPTION_KEY=ci-image-boot-mfa-encryption-key-min-32-chars-fff
+          CONNECTOR_ENCRYPTION_KEY=ci-image-boot-connector-encryption-key-32-ggg
+          CONCEPT2CURE_SIGNER_MODE=hmac
+          CONCEPT2CURE_SIGNER_ACCEPT_HMAC=true
+          STORAGE_PROVIDER=local
+          STORAGE_ACCEPT_LOCAL_DISK=true
+          AUDIT_TRAIL_ENABLED=true
+          AUDIT_REQUIRE_ENFORCE=true
+          AI_GATEWAY_DETERMINISTIC=true
+          AI_GATEWAY_ACCEPT_DETERMINISTIC=true
+          AI_SENSITIVE_DATA_POLICY_MODE=enforce
+          AI_PROVIDER_PLACEMENT_APPROVALS={"private-deployment":{"region":"us","zeroRetentionApproved":true,"approvedDataClasses":[],"approvedIntendedUses":[]}}
+          ALLOWED_ORIGINS=https://image-boot.invalid
+          ENV
+          docker run -d --name c2c-app --network host \
+            -v "$RUNNER_TEMP/ca:/ca:ro" --env-file "$RUNNER_TEMP/app.env" c2c-app:ci
+          READY=""
+          for i in $(seq 1 300); do
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:5199/readyz || true)
+            if [ "$CODE" = "200" ]; then READY="yes"; echo "/readyz=200 after ${i}s"; break; fi
+            if [ "$(docker inspect --format '{{.State.Running}}' c2c-app)" != "true" ]; then
+              echo "::error::the production container exited during boot (last /readyz: ${CODE:-none})."
+              break
+            fi
+            if [ $((i % 30)) -eq 0 ]; then echo "…still booting at ${i}s (last /readyz: ${CODE:-none})"; fi
+            sleep 1
+          done
+          if [ -z "$READY" ]; then
+            echo "──────── /readyz body ────────"
+            curl -s http://127.0.0.1:5199/readyz || echo "(no HTTP response — the port was never bound)"
+            echo ""
+            echo "──────── container log ────────"
+            docker logs --tail 150 c2c-app
+            echo "::error::the production image did not reach /readyz=200 on a freshly provisioned database."
+            exit 1
+          fi
+          curl -s http://127.0.0.1:5199/readyz; echo
+          HEALTH=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:5199/healthz)
+          echo "/healthz=$HEALTH"
+          if [ "$HEALTH" != "200" ]; then echo "::error::/healthz answered $HEALTH"; exit 1; fi
+
+      - name: Sign a person in to the running image, second factor included
+        run: |
+          docker run --rm --network host -w /app \
+            -v "$PWD/scripts/ci/image-boot-signin.mjs:/app/image-boot-signin.mjs:ro" \
+            -e DATABASE_URL=postgresql://postgres@localhost:5432/c2c_image \
+            -e BASE_URL=http://127.0.0.1:5199 \
+            -e SIGNIN_ORIGIN=https://image-boot.invalid \
+            -e MFA_ENCRYPTION_KEY=ci-image-boot-mfa-encryption-key-min-32-chars-fff \
+            c2c-app:ci node image-boot-signin.mjs
+
+      - name: Container log on failure
+        if: failure()
+        run: docker logs --tail 200 c2c-app || true
+
+      - name: Tear down
+        if: always()
+        run: docker rm -f c2c-app pgimage || true
+
   aios-audit-assets:
     name: AIOS Audit Assets
     runs-on: ubuntu-latest
     needs: lint
+    # As `test`: a red guardrail in lint must not skip this job (a skipped job
+    # reports neither pass nor fail). tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts
+    if: ${{ !cancelled() }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
@@ -1965,11 +2212,11 @@ jobs:
         # Retry to absorb transient registry/network failures (e.g. ECONNRESET).
         run: |
           for attempt in 1 2 3; do
-            npm install && exit 0
-            echo "::warning::npm install failed (attempt $attempt/3); retrying after backoff…"
+            npm ci && exit 0
+            echo "::warning::npm ci failed (attempt $attempt/3); retrying after backoff…"
             sleep $((attempt * 15))
           done
-          echo "::error::npm install failed after 3 attempts"; exit 1
+          echo "::error::npm ci failed after 3 attempts"; exit 1
 
       - name: Build
         run: npm run build
@@ -2003,11 +2250,11 @@ jobs:
         # Retry to absorb transient registry/network failures (e.g. ECONNRESET).
         run: |
           for attempt in 1 2 3; do
-            npm install && exit 0
-            echo "::warning::npm install failed (attempt $attempt/3); retrying after backoff…"
+            npm ci && exit 0
+            echo "::warning::npm ci failed (attempt $attempt/3); retrying after backoff…"
             sleep $((attempt * 15))
           done
-          echo "::error::npm install failed after 3 attempts"; exit 1
+          echo "::error::npm ci failed after 3 attempts"; exit 1
 
       - name: Generate SBOM (CycloneDX)
         # Software Bill of Materials (production tree) for vendor security
@@ -2101,7 +2348,10 @@ jobs:
           # vendored skill's own CI image, never built, published or deployed
           # here (Dockerfile.optimized runs as appuser). Every other Dockerfile
           # is checked. .trivyignore could only drop DS002 for the whole tree.
-          skip-files: .claude/skills/gstack/.github/docker/Dockerfile.ci
+          # Also the D1 document-runtime evidence record (2eda0ed0f): a verbatim
+          # copy of a build that ran, never built, published or deployed, and not
+          # to be edited (it is evidence). CI run 12734: DS-0002 on it.
+          skip-files: .claude/skills/gstack/.github/docker/Dockerfile.ci,docs/evidence/D1/2026-10-01-image-document-runtime/green/Dockerfile.green
 
   secret-history-scan:
     # Security plan P0-17 / audit INF-22. check-committed-secrets.mjs (Lint)
@@ -2157,11 +2407,11 @@ jobs:
         # Retry to absorb transient registry/network failures (e.g. ECONNRESET).
         run: |
           for attempt in 1 2 3; do
-            npm install && exit 0
-            echo "::warning::npm install failed (attempt $attempt/3); retrying after backoff…"
+            npm ci && exit 0
+            echo "::warning::npm ci failed (attempt $attempt/3); retrying after backoff…"
             sleep $((attempt * 15))
           done
-          echo "::error::npm install failed after 3 attempts"; exit 1
+          echo "::error::npm ci failed after 3 attempts"; exit 1
       - name: Route mount audit (strict debt gate)
         run: npm run ci:audit-route-mounts:full-strict
       - name: Repo health audit (strict debt gate)

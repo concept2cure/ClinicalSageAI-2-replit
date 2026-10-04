@@ -1,0 +1,37 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 ./
+
+ × client/src/concept2cure/v2/__tests__/trackedChangeUndoFloorEdges.test.tsx > the decision floor at its edges (P11-B-4, remaining gap e) > P1: an Undo after the decision does not turn the cut off: Undo later reverses exactly what came after it 281ms
+   → Undo stopped short of the decision, or went past it: expected 49 to be 70 // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndoFloorEdges.test.tsx > the decision floor at its edges (P11-B-4, remaining gap e) > P2: a decision taken with nothing to undo still lets Redo re-apply the reviewer's later typing 23ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndoFloorEdges.test.tsx > the decision floor at its edges (P11-B-4, remaining gap e) > P3 (guard): with a cut between two decisions, Undo stops at the second 198ms
+ ✓ client/src/concept2cure/v2/__tests__/trackedChangeUndoFloorEdges.test.tsx > the decision floor at its edges (P11-B-4, remaining gap e) > P4 (guard): with tracking off through three cuts, Undo reverses exactly the typing after the decision 266ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/trackedChangeUndoFloorEdges.test.tsx > the decision floor at its edges (P11-B-4, remaining gap e) > P1: an Undo after the decision does not turn the cut off: Undo later reverses exactly what came after it
+AssertionError: Undo stopped short of the decision, or went past it: expected 49 to be 70 // Object.is equality
+
+- Expected
++ Received
+
+- 70
++ 49
+
+ ❯ client/src/concept2cure/v2/__tests__/trackedChangeUndoFloorEdges.test.tsx:104:93
+    102|     expect(undoDepth(editor.state)).toBe(100);
+    103|
+    104|     expect(undoUntilRefused(editor), 'Undo stopped short of the decisi…
+       |                                                                                             ^
+    105|     expect(editor.state.doc.textContent).toBe(`Base text.${CLAUSE}Othe…
+    106|     expect(editor.getHTML().startsWith(`<p>Base text.${CLAUSE}</p>`), …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  17:48:38
+   Duration  1.72s (transform 131ms, setup 152ms, import 120ms, tests 772ms, environment 507ms)
+

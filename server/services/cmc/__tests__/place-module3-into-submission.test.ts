@@ -27,6 +27,12 @@ const getSubmission = vi.fn<(...args: any[]) => Promise<any>>(async () => ({
 const upsertLeaf = vi.fn();
 const listSequences = vi.fn<(...args: any[]) => Promise<any[]>>(async () => []);
 const listLeaves = vi.fn<(...args: any[]) => Promise<any[]>>(async () => []);
+/* The submission program's anchored projects row, for a legacy numeric CMC
+   project (PF-11). The translation rule is tested in its own suite. */
+const resolveAnchor = vi.fn<(...args: any[]) => Promise<any>>(async () => ({ state: 'unanchored', detail: 'no anchor' }));
+vi.mock('../resolve-cmc-artifact-project', () => ({
+  resolveCmcArtifactProject: (...args: unknown[]) => resolveAnchor(...args),
+}));
 vi.mock('../../submission-service/submission-service', () => ({
   getSequence: (...args: unknown[]) => getSequence(...args),
   getSubmission: (...args: unknown[]) => getSubmission(...args),
@@ -160,6 +166,55 @@ describe('placeModule3IntoSubmission', () => {
     // The orphan snapshot is the point: nothing may be written before this.
     expect(inserted).toHaveLength(0);
     expect(upsertLeaf).not.toHaveBeenCalled();
+  });
+
+  describe('the submission is the CMC project’s own (PF-11)', () => {
+    const P1 = '11111111-1111-4111-8111-111111111111';
+    const P2 = '22222222-2222-4222-8222-222222222222';
+    const place = (cmcProjectId: string) =>
+      placeModule3IntoSubmission({ orgId: 7, userId: 42, cmcProjectId, submissionId: 10, sequenceId: 20 });
+    beforeEach(() => {
+      evaluateFinalExportGate.mockResolvedValue(GATE_PASS);
+      getSequence.mockResolvedValue({ id: 20, submissionId: 10, sequenceNumber: '0001', status: 'draft' });
+      sectionRows = [{ sectionKey: '3.2.S.1', narrativeText: 'General information.', deterministicJson: { tables: [] } }];
+      resolveAnchor.mockReset();
+      resolveAnchor.mockResolvedValue({ state: 'unanchored', detail: 'no anchor' });
+      upsertLeaf.mockImplementation(async (input: { sectionCode: string }) => ({ id: 900, sectionCode: input.sectionCode }));
+    });
+
+    it("another program's submission is refused before anything is read or written", async () => {
+      getSubmission.mockResolvedValue({ id: 10, applicationType: 'ind', programId: P2 });
+      const result = await place(P1);
+      expect(result).toMatchObject({ placed: false, refusedBy: 'cross-project', cmcProjectId: P1, submissionProgramId: P2 });
+      expect(inserted).toHaveLength(0);
+      expect(upsertLeaf).not.toHaveBeenCalled();
+    });
+
+    it('the same program, in any case, is placed', async () => {
+      getSubmission.mockResolvedValue({ id: 10, applicationType: 'ind', programId: P1.toUpperCase() });
+      const result = await place(P1);
+      expect(result.placed).toBe(true);
+    });
+
+    it("a legacy numeric project is compared with the program's anchored row: another one is refused", async () => {
+      getSubmission.mockResolvedValue({ id: 10, applicationType: 'ind', programId: P2 });
+      resolveAnchor.mockResolvedValue({ state: 'linked', artifactProjectId: 42 });
+      const result = await place('41');
+      expect(result).toMatchObject({ placed: false, refusedBy: 'cross-project' });
+      expect(resolveAnchor).toHaveBeenCalledWith(7, P2, { strict: true });
+      expect(inserted).toHaveLength(0);
+    });
+
+    it('a legacy numeric project of the anchored row is placed', async () => {
+      getSubmission.mockResolvedValue({ id: 10, applicationType: 'ind', programId: P2 });
+      resolveAnchor.mockResolvedValue({ state: 'linked', artifactProjectId: 41 });
+      expect((await place('41')).placed).toBe(true);
+    });
+
+    it('a program with no anchor cannot be judged, and is not refused (as upsertLeaf)', async () => {
+      getSubmission.mockResolvedValue({ id: 10, applicationType: 'ind', programId: P2 });
+      expect((await place('41')).placed).toBe(true);
+    });
   });
 
   it('refuses an eSTAR device submission for the same reason', async () => {

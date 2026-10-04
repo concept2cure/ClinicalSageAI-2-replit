@@ -31,6 +31,11 @@ import { ipInAnyCidr } from '../utils/cidr';
 import { shouldProcessTenantInBackground } from '../services/tenant/tenant-lifecycle.js';
 import { clientIpOf } from '../utils/client-ip';
 import { invalidateOrgMembershipCache } from '../middleware/orgMembership';
+import {
+  changeMemberRole,
+  type MembershipActor,
+  type MembershipTxClient,
+} from '../services/tenant/membership-change';
 
 const logger = createScopedLogger('scim');
 const router = Router();
@@ -281,13 +286,20 @@ function orgOf(req: Request): number {
 }
 
 /**
- * Best-effort audit of a SCIM account-lifecycle event to the append-only
- * audit_events table. Account provisioning/deprovisioning is GxP-relevant
- * (21 CFR Part 11 §11.10(d) — limiting system access to authorized individuals)
- * and is the evidence a CSO/auditor expects for offboarding. Non-blocking: a
- * provisioning sync is not failed on an audit hiccup, but the failure is logged.
+ * Record a SCIM account-lifecycle event in the append-only audit_events table,
+ * on the CLIENT of the write it records, inside that write's transaction
+ * (server/db/runtime.ts `transaction`). Account provisioning/deprovisioning is
+ * GxP-relevant (21 CFR Part 11 §11.10(d) — limiting system access to authorized
+ * individuals) and is the evidence a CSO/auditor expects for offboarding.
+ *
+ * Until 2026-10-01 (P1-49, DP-58) this ran after the write had committed, on
+ * its own connection, and logged and swallowed a failure: an account could be
+ * provisioned or deprovisioned with no record of it. A failure now propagates
+ * and the caller's transaction rolls the write back: a change with no record
+ * of it does not happen (21 CFR 11.10(e); Annex 11 §12.4).
  */
 async function auditScim(
+  client: MembershipTxClient,
   req: Request,
   orgId: number,
   eventType: string,
@@ -295,17 +307,13 @@ async function auditScim(
   reason: string,
   metadata?: Record<string, unknown>
 ): Promise<void> {
-  try {
-    await query(
-      `INSERT INTO audit_events
-         (organization_id, event_type, entity_type, entity_id, user_id, user_name,
-          user_role, ip_address, reason, metadata, regulatory_significant, gxp_relevant)
-       VALUES ($1, $2, 'scim_user', $3, NULL, 'SCIM Provisioning', 'system', $4, $5, $6, false, true)`,
-      [orgId, eventType, userId, req.ip ?? null, reason, metadata ? JSON.stringify(metadata) : null]
-    );
-  } catch (err) {
-    logger.error('SCIM audit write failed', err as Record<string, unknown>);
-  }
+  await client.query(
+    `INSERT INTO audit_events
+       (organization_id, event_type, entity_type, entity_id, user_id, user_name,
+        user_role, ip_address, reason, metadata, regulatory_significant, gxp_relevant)
+     VALUES ($1, $2, 'scim_user', $3, NULL, 'SCIM Provisioning', 'system', $4, $5, $6, false, true)`,
+    [orgId, eventType, userId, req.ip ?? null, reason, metadata ? JSON.stringify(metadata) : null]
+  );
 }
 
 // ─── Resource mapping ────────────────────────────────────────────────────────
@@ -400,31 +408,212 @@ const SHARED_NAME_DETAIL =
 
 /**
  * Deprovision a user who belongs to other organisations: remove THIS tenant's
- * membership row, leave `users.status` untouched, drop the membership cache so
- * revocation is immediate, and audit it as a deactivation with the scope
- * spelled out. Removal precedent: server/routes/tenant-users.ts
- * (DELETE /:organizationId/:userId).
+ * membership row, leave `users.status` untouched, and audit it as a
+ * deactivation with the scope spelled out — both on the caller's transaction
+ * client. The caller drops the membership cache once the transaction has
+ * committed, so revocation is immediate. Removal precedent:
+ * server/routes/tenant-users.ts (DELETE /:organizationId/:userId).
  */
 async function removeMembership(
+  client: MembershipTxClient,
   req: Request,
-  orgId: number,
-  userId: number,
-  via: string,
-  organizationCount: number
+  removal: { orgId: number; userId: number; via: string; organizationCount: number; platformHold?: string }
 ): Promise<void> {
-  await query('DELETE FROM organization_users WHERE user_id = $1 AND organization_id = $2', [
+  const { orgId, userId, via, organizationCount, platformHold } = removal;
+  await client.query('DELETE FROM organization_users WHERE user_id = $1 AND organization_id = $2', [
     userId,
     orgId,
   ]);
-  invalidateOrgMembershipCache(userId, orgId);
+  const account = platformHold
+    ? `the account stays ${platformHold} by the platform`
+    : 'the account remains active for its other organisations';
   await auditScim(
+    client,
     req,
     orgId,
     'scim.user.deactivated',
     userId,
-    `${via}: membership removed from this organization; the account remains active for its other organisations`,
-    { membershipRemoved: true, accountStatusUnchanged: true, organizationCount }
+    `${via}: membership removed from this organization; ${account}`,
+    { membershipRemoved: true, accountStatusUnchanged: true, organizationCount, ...(platformHold ? { platformHold } : {}) }
   );
+}
+
+// ─── A platform hold on a sole-organisation account (IAM-27) ─────────────────
+//
+// SCIM moves an account between `active` and `inactive`, and nothing else.
+// `suspended` is a platform administrator's hold (routes/admin/master-admin.ts
+// PATCH /users/:id/status). On a sole-organisation account SCIM used to write
+// over it: an IdP that sent active=true, or a replace that left `active` out,
+// lifted the suspension. A held account is now treated as a shared one is for
+// its status (activation is a no-op; deactivation removes this organisation's
+// membership and leaves the hold), and its name stays the sole organisation's.
+const SCIM_OWNED_STATUSES: ReadonlySet<string> = new Set(['active', 'inactive']);
+
+/** Whether this tenant writes `users.status` for the account: its sole organisation, and a status SCIM owns. */
+function ownsAccountStatus(scope: MembershipScope, storedStatus: string): boolean {
+  return scope.soleOrg && SCIM_OWNED_STATUSES.has(storedStatus);
+}
+
+/**
+ * Apply a SCIM write to a held sole-organisation account: the name if it
+ * changed; on deactivation, this organisation's membership removed (with its
+ * record) and the hold left in place; on activation, nothing. True when the
+ * membership was removed.
+ */
+async function writeHeldAccount(
+  req: Request,
+  held: { orgId: number; userId: number; storedStatus: string; storedName: string | null; name: string | null; nextStatus: string | null; via: string }
+): Promise<boolean> {
+  const rename = held.name !== null && held.name !== (held.storedName ?? '');
+  const deactivate = held.nextStatus === 'inactive';
+  if (rename || deactivate) {
+    await transaction(async (client: MembershipTxClient) => {
+      if (rename) await client.query('UPDATE users SET name = $1, updated_at = now() WHERE id = $2', [held.name, held.userId]);
+      if (deactivate) {
+        await removeMembership(client, req, {
+          orgId: held.orgId,
+          userId: held.userId,
+          via: held.via,
+          organizationCount: 1,
+          platformHold: held.storedStatus,
+        });
+      }
+    });
+  }
+  if (deactivate) invalidateOrgMembershipCache(held.userId, held.orgId);
+  else if (held.nextStatus === 'active') {
+    // Nothing is written, so nothing claims to have been: no audit row.
+    logger.info('SCIM activate ignored — the account is held by the platform', {
+      orgId: held.orgId,
+      userId: held.userId,
+      storedStatus: held.storedStatus,
+    });
+  }
+  return deactivate;
+}
+
+/** What a body's `active` asks of the status: nothing when it is left out (IAM-27). */
+function statusAsked(active: unknown): 'active' | 'inactive' | null {
+  if (active === undefined) return null;
+  return active === false ? 'inactive' : 'active';
+}
+
+/**
+ * A replace (PUT) of an account SCIM owns the status of: the name and the
+ * status written, and a changed status recorded, in one transaction (P1-49).
+ */
+async function replaceOwnedAccount(
+  req: Request,
+  r: { orgId: number; userId: number; name: string; status: string; storedStatus: string }
+): Promise<void> {
+  await transaction(async (client: MembershipTxClient) => {
+    await client.query('UPDATE users SET name = $1, status = $2, updated_at = now() WHERE id = $3', [
+      r.name,
+      r.status,
+      r.userId,
+    ]);
+    if (r.status !== r.storedStatus) {
+      await auditScim(
+        client,
+        req,
+        r.orgId,
+        r.status === 'inactive' ? 'scim.user.deactivated' : 'scim.user.activated',
+        r.userId,
+        `SCIM replace set active=${r.status === 'active'}`
+      );
+    }
+  });
+  if (r.status === 'inactive') invalidateOrgMembershipCache(r.userId, r.orgId);
+}
+
+/**
+ * A replace (PUT) of a sole-organisation account: the held path when the
+ * platform holds it (IAM-27), else the name and status written. True when this
+ * organisation's membership was removed.
+ */
+async function replaceSoleOrgAccount(
+  req: Request,
+  r: { orgId: number; userId: number; body: ScimUserBody; stored: { email: string; name: string | null; status: string } }
+): Promise<boolean> {
+  const askedStatus = statusAsked(r.body.active);
+  if (!SCIM_OWNED_STATUSES.has(r.stored.status)) {
+    return writeHeldAccount(req, {
+      orgId: r.orgId,
+      userId: r.userId,
+      storedStatus: r.stored.status,
+      storedName: r.stored.name,
+      name: requestedName(r.body),
+      nextStatus: askedStatus,
+      via: 'SCIM replace set active=false',
+    });
+  }
+  await replaceOwnedAccount(req, {
+    orgId: r.orgId,
+    userId: r.userId,
+    name: resolveName(r.body, r.stored.email),
+    status: askedStatus ?? r.stored.status,
+    storedStatus: r.stored.status,
+  });
+  return false;
+}
+
+/**
+ * A patch of a sole-organisation account: the held path when the platform
+ * holds it (IAM-27), else patchOwnedAccount. True when this organisation's
+ * membership was removed.
+ */
+async function patchSoleOrgAccount(
+  req: Request,
+  p: { orgId: number; userId: number; stored: { name: string | null; status: string }; nextName: string | null; nextStatus: string | null }
+): Promise<boolean> {
+  if (!SCIM_OWNED_STATUSES.has(p.stored.status)) {
+    return writeHeldAccount(req, {
+      orgId: p.orgId,
+      userId: p.userId,
+      storedStatus: p.stored.status,
+      storedName: p.stored.name,
+      name: p.nextName,
+      nextStatus: p.nextStatus,
+      via: 'SCIM patch set active=false',
+    });
+  }
+  await patchOwnedAccount(req, { orgId: p.orgId, userId: p.userId, nextName: p.nextName, nextStatus: p.nextStatus });
+  return false;
+}
+
+/**
+ * A patch of an account SCIM owns the status of: the name and status ops
+ * written, and a status op recorded, in one transaction (P1-49).
+ */
+async function patchOwnedAccount(
+  req: Request,
+  p: { orgId: number; userId: number; nextName: string | null; nextStatus: string | null }
+): Promise<void> {
+  const sets: string[] = [];
+  const params: unknown[] = [];
+  if (p.nextName !== null) {
+    params.push(p.nextName);
+    sets.push(`name = $${params.length}`);
+  }
+  if (p.nextStatus !== null) {
+    params.push(p.nextStatus);
+    sets.push(`status = $${params.length}`);
+  }
+  params.push(p.userId);
+  await transaction(async (client: MembershipTxClient) => {
+    await client.query(`UPDATE users SET ${sets.join(', ')}, updated_at = now() WHERE id = $${params.length}`, params);
+    if (p.nextStatus !== null) {
+      await auditScim(
+        client,
+        req,
+        p.orgId,
+        p.nextStatus === 'inactive' ? 'scim.user.deactivated' : 'scim.user.activated',
+        p.userId,
+        `SCIM patch set active=${p.nextStatus === 'active'}`
+      );
+    }
+  });
+  if (p.nextStatus === 'inactive') invalidateOrgMembershipCache(p.userId, p.orgId);
 }
 
 // ─── ServiceProviderConfig ───────────────────────────────────────────────────
@@ -658,6 +847,11 @@ router.post('/Users', scimAuth, async (req: Request, res: Response) => {
          ON CONFLICT (user_id, organization_id) DO NOTHING`,
         [orgId, userId]
       );
+      // The record of the provisioning, in its transaction (P1-49).
+      await auditScim(client, req, orgId, 'scim.user.provisioned', userId, 'Provisioned via SCIM', {
+        email,
+        existingAccount,
+      });
       return { conflict: false as const, userId, existingAccount };
     });
 
@@ -677,10 +871,6 @@ router.post('/Users', scimAuth, async (req: Request, res: Response) => {
         storedStatus,
       });
     }
-    await auditScim(req, orgId, 'scim.user.provisioned', created.userId, 'Provisioned via SCIM', {
-      email,
-      existingAccount: created.existingAccount,
-    });
     res
       .status(201)
       .location(`${baseUrl(req)}/scim/v2/Users/${created.userId}`)
@@ -708,27 +898,14 @@ router.put('/Users/:id', scimAuth, async (req: Request, res: Response) => {
     if (!member.rows.length) return scimError(res, 404, 'User not found.');
     const stored = member.rows[0] as { email: string; name: string | null; status: string };
 
-    const status = body.active === false ? 'inactive' : 'active';
+    // What the replace asks of the status: nothing when it leaves `active`
+    // out (IAM-27). It used to read an omitted `active` as true.
+    const askedStatus = statusAsked(body.active);
     const scope = await membershipScope(id);
     let deprovisionedHere = false;
 
     if (scope.soleOrg) {
-      const name = resolveName(body, stored.email);
-      await query('UPDATE users SET name = $1, status = $2, updated_at = now() WHERE id = $3', [
-        name,
-        status,
-        id,
-      ]);
-      if (status === 'inactive') invalidateOrgMembershipCache(id, orgId);
-      if (status !== stored.status) {
-        await auditScim(
-          req,
-          orgId,
-          status === 'inactive' ? 'scim.user.deactivated' : 'scim.user.activated',
-          id,
-          `SCIM replace set active=${status === 'active'}`
-        );
-      }
+      deprovisionedHere = await replaceSoleOrgAccount(req, { orgId, userId: id, body, stored });
     } else {
       // Shared account: this tenant's effects stop at its own membership.
       // Compared against the STORED name so a full-profile replace that carries
@@ -738,10 +915,18 @@ router.put('/Users/:id', scimAuth, async (req: Request, res: Response) => {
       if (requested !== null && requested !== (stored.name ?? '')) {
         return scimError(res, 403, SHARED_NAME_DETAIL, 'mutability');
       }
-      if (status === 'inactive') {
-        await removeMembership(req, orgId, id, 'SCIM replace set active=false', scope.orgCount);
+      if (askedStatus === 'inactive') {
+        await transaction((client: MembershipTxClient) =>
+          removeMembership(client, req, {
+            orgId,
+            userId: id,
+            via: 'SCIM replace set active=false',
+            organizationCount: scope.orgCount,
+          })
+        );
+        invalidateOrgMembershipCache(id, orgId);
         deprovisionedHere = true;
-      } else if (stored.status !== 'active') {
+      } else if (askedStatus === 'active' && stored.status !== 'active') {
         logger.info(
           'SCIM activate ignored — account status is platform-wide and the user belongs to other organisations',
           { orgId, userId: id, storedStatus: stored.status, organizationCount: scope.orgCount }
@@ -815,31 +1000,7 @@ router.patch('/Users/:id', scimAuth, async (req: Request, res: Response) => {
       const scope = await membershipScope(id);
 
       if (scope.soleOrg) {
-        const sets: string[] = [];
-        const params: unknown[] = [];
-        if (nextName !== null) {
-          params.push(nextName);
-          sets.push(`name = $${params.length}`);
-        }
-        if (nextStatus !== null) {
-          params.push(nextStatus);
-          sets.push(`status = $${params.length}`);
-        }
-        params.push(id);
-        await query(
-          `UPDATE users SET ${sets.join(', ')}, updated_at = now() WHERE id = $${params.length}`,
-          params
-        );
-        if (nextStatus === 'inactive') invalidateOrgMembershipCache(id, orgId);
-        if (nextStatus !== null) {
-          await auditScim(
-            req,
-            orgId,
-            nextStatus === 'inactive' ? 'scim.user.deactivated' : 'scim.user.activated',
-            id,
-            `SCIM patch set active=${nextStatus === 'active'}`
-          );
-        }
+        deprovisionedHere = await patchSoleOrgAccount(req, { orgId, userId: id, stored, nextName, nextStatus });
       } else {
         // Shared account: this tenant's effects stop at its own membership.
         // An op that restates the stored name is not a rename.
@@ -847,7 +1008,15 @@ router.patch('/Users/:id', scimAuth, async (req: Request, res: Response) => {
           return scimError(res, 403, SHARED_NAME_DETAIL, 'mutability');
         }
         if (nextStatus === 'inactive') {
-          await removeMembership(req, orgId, id, 'SCIM patch set active=false', scope.orgCount);
+          await transaction((client: MembershipTxClient) =>
+            removeMembership(client, req, {
+              orgId,
+              userId: id,
+              via: 'SCIM patch set active=false',
+              organizationCount: scope.orgCount,
+            })
+          );
+          invalidateOrgMembershipCache(id, orgId);
           deprovisionedHere = true;
         } else if (nextStatus === 'active') {
           // Nothing is written, so nothing claims to have been: no audit row.
@@ -883,22 +1052,33 @@ router.delete('/Users/:id', scimAuth, async (req: Request, res: Response) => {
     if (!Number.isFinite(id)) return scimError(res, 404, 'User not found.');
 
     const member = await query(
-      'SELECT 1 FROM users u JOIN organization_users ou ON ou.user_id = u.id AND ou.organization_id = $1 WHERE u.id = $2',
+      'SELECT u.status FROM users u JOIN organization_users ou ON ou.user_id = u.id AND ou.organization_id = $1 WHERE u.id = $2',
       [orgId, id]
     );
     if (!member.rows.length) return scimError(res, 404, 'User not found.');
+    const storedStatus = String((member.rows[0] as { status?: unknown }).status ?? '');
 
     const scope = await membershipScope(id);
-    if (scope.soleOrg) {
-      // SCIM delete = deactivate (the user record is retained; access is revoked).
-      await query("UPDATE users SET status = 'inactive', updated_at = now() WHERE id = $1", [id]);
-      invalidateOrgMembershipCache(id, orgId);
-      await auditScim(req, orgId, 'scim.user.deactivated', id, 'Deactivated via SCIM DELETE (offboarding)');
-    } else {
-      // The user belongs to other organisations: revoke THIS tenant's access
-      // only. `users.status` is not this tenant's to write.
-      await removeMembership(req, orgId, id, 'SCIM DELETE (offboarding)', scope.orgCount);
-    }
+    // The write and its record: one transaction (P1-49).
+    await transaction(async (client: MembershipTxClient) => {
+      if (ownsAccountStatus(scope, storedStatus)) {
+        // SCIM delete = deactivate (the user record is retained; access is revoked).
+        await client.query("UPDATE users SET status = 'inactive', updated_at = now() WHERE id = $1", [id]);
+        await auditScim(client, req, orgId, 'scim.user.deactivated', id, 'Deactivated via SCIM DELETE (offboarding)');
+      } else {
+        // The user belongs to other organisations, or the platform holds the
+        // account (IAM-27): revoke THIS tenant's access only. `users.status`
+        // is not this tenant's to write.
+        await removeMembership(client, req, {
+          orgId,
+          userId: id,
+          via: 'SCIM DELETE (offboarding)',
+          organizationCount: scope.orgCount,
+          ...(scope.soleOrg ? { platformHold: storedStatus } : {}),
+        });
+      }
+    });
+    invalidateOrgMembershipCache(id, orgId);
     res.status(204).send();
   } catch (err) {
     logger.error('SCIM delete user failed', err as Record<string, unknown>);
@@ -1013,30 +1193,42 @@ router.patch('/Groups/:id', scimAuth, async (req: Request, res: Response) => {
     if (!isValidRole(role)) return scimError(res, 404, 'Group not found.');
 
     const ops = ((req.body?.Operations ?? []) as PatchOp[]) || [];
-    for (const op of ops) {
-      const action = (op.op ?? '').toLowerCase();
-      const memberIds = extractMemberIds(op);
-      if (memberIds.length === 0) continue;
-
-      if (action === 'add' || action === 'replace') {
-        // Assign the group's role to existing org members (never cross-tenant).
-        for (const uid of memberIds) {
-          await query(
-            'UPDATE organization_users SET role = $1, updated_at = now() WHERE organization_id = $2 AND user_id = $3',
-            [role, orgId, uid]
-          );
-        }
-      } else if (action === 'remove') {
-        // Removing from a role-group demotes the user to the baseline 'member'
-        // role (only if they currently hold this group's role).
-        for (const uid of memberIds) {
-          await query(
-            "UPDATE organization_users SET role = 'member', updated_at = now() WHERE organization_id = $1 AND user_id = $2 AND role = $3",
-            [orgId, uid, role]
-          );
+    // The identity provider made this change: no person, the address it called from.
+    const actor: MembershipActor = {
+      userId: null,
+      ipAddress: clientIpOf(req) ?? null,
+      userAgent: req.get('user-agent') ?? undefined,
+    };
+    // Each role change with its chained audit row on the same client
+    // (membership-change.ts), and the request's changes in one transaction: a
+    // SCIM PATCH is atomic (RFC 7644 §3.5.2), and a change whose record is
+    // refused is rolled back with the rest (P1-49, DP-58; 21 CFR 11.10(e),
+    // Annex 11 §12.4). Until 2026-10-01 each role was written with a bare
+    // UPDATE and nothing recorded it.
+    const changed = await transaction(async (client: MembershipTxClient) => {
+      const changedIds = new Set<number>();
+      for (const op of ops) {
+        const action = (op.op ?? '').toLowerCase();
+        if (action !== 'add' && action !== 'replace' && action !== 'remove') continue;
+        for (const uid of extractMemberIds(op)) {
+          // add/replace assign the group's role to an existing member of this
+          // organisation (never cross-tenant); remove demotes to the baseline
+          // 'member' role, and only a member who holds this group's role.
+          const outcome = await changeMemberRole(client, actor, {
+            organizationId: orgId,
+            userId: uid,
+            reason: `SCIM group '${role}' ${action} by the identity provider`,
+            ...(action === 'remove' ? { role: 'member', onlyFrom: role } : { role }),
+          });
+          if (outcome === 'changed') changedIds.add(uid);
         }
       }
-    }
+      return changedIds;
+    });
+    // The role is cached per server task for up to a minute (orgMembership.ts).
+    // Dropped once the change has committed, as the tenant-users PATCH does
+    // (c1f2cb9c); not when nothing changed or the record was refused.
+    for (const uid of changed) invalidateOrgMembershipCache(uid, orgId);
 
     res.json(toScimGroup(req, role, await membersOfRole(orgId, role)));
   } catch (err) {

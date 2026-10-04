@@ -1,0 +1,12 @@
+
+/home/user/ClinicalSageAI-2-replit/server/routes/report-os.ts
+   287:23  warning  Unexpected control character(s) in regular expression: \x09, \x0a, \x0d        no-control-regex
+   621:1   warning  File has too many lines (2198). Maximum allowed is 500                         max-lines
+  1457:58  warning  Async arrow function has too many lines (173). Maximum allowed is 100          max-lines-per-function
+  1457:58  warning  Async arrow function has a complexity of 25. Maximum allowed is 15             complexity
+  1777:1   warning  Function 'buildRenderedFromRun' has a complexity of 16. Maximum allowed is 15  complexity
+  2115:11  warning  The value assigned to 'compare' is not used in subsequent statements           no-useless-assignment
+  2643:60  warning  Async arrow function has a complexity of 16. Maximum allowed is 15             complexity
+
+✖ 7 problems (0 errors, 7 warnings)
+

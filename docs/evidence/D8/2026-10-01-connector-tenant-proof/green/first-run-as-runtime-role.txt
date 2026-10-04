@@ -1,0 +1,47 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T03:06:15.616Z","pid":3243,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T03:06:15.618Z","pid":3243,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T03:06:15.618Z","pid":3243,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+{"level":30,"time":"2026-10-01T03:06:15.898Z","pid":3243,"hostname":"vm","context":{"resource":"http://localhost:46769/mcp","issuer":"http://localhost:46769/","resourceMetadataUrl":"http://localhost:46769/.well-known/oauth-protected-resource/mcp"},"msg":"[mcp] Concept2Cure MCP connector mounted"}
+stdout | server/mcp/__tests__/mcp-connector.dbtest.ts > tools/list > lists the 19 curated tools with annotations through the SDK client
+[database] Database connection successful
+
+stdout | server/mcp/__tests__/mcp-connector.dbtest.ts > tools/list > lists the 19 curated tools with annotations through the SDK client
+[database] Database connection successful { timestamp: '2026-10-01T03:06:16.280Z', poolSize: 1 }
+
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 27ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > discovery and authentication over HTTP > 401 + resource_metadata without a bearer; metadata documents resolve 58ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > tools/list > lists the 19 curated tools with annotations through the SDK client 152ms
+{"level":30,"time":"2026-10-01T03:06:16.672Z","pid":3243,"hostname":"vm","context":{"userId":78,"tenantId":18,"resourceId":"c2c_list_projects"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+stderr | server/mcp/__tests__/mcp-connector.dbtest.ts > tool calls are scoped to the token’s organisation > c2c_list_projects: A sees A’s program; B sees B’s and never A’s
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":30,"time":"2026-10-01T03:06:16.710Z","pid":3243,"hostname":"vm","context":{"userId":79,"tenantId":19,"resourceId":"c2c_list_projects"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > tool calls are scoped to the token’s organisation > c2c_list_projects: A sees A’s program; B sees B’s and never A’s 321ms
+{"level":30,"time":"2026-10-01T03:06:16.855Z","pid":3243,"hostname":"vm","context":{"userId":78,"tenantId":18,"resourceId":"c2c_list_vault_documents"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+{"level":30,"time":"2026-10-01T03:06:16.882Z","pid":3243,"hostname":"vm","context":{"userId":79,"tenantId":19,"resourceId":"c2c_list_vault_documents"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > tool calls are scoped to the token’s organisation > c2c_list_vault_documents: each organisation sees only its own document 171ms
+{"level":30,"time":"2026-10-01T03:06:21.310Z","pid":3243,"hostname":"vm","context":{"userId":78,"tenantId":18,"resourceId":"c2c_assess_sequence_readiness"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+{"level":30,"time":"2026-10-01T03:06:21.336Z","pid":3243,"hostname":"vm","context":{"userId":79,"tenantId":19,"resourceId":"c2c_assess_sequence_readiness"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+{"level":30,"time":"2026-10-01T03:06:21.433Z","pid":3243,"hostname":"vm","context":{"userId":79,"tenantId":19,"resourceId":"c2c_list_sequences"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > tool calls are scoped to the token’s organisation > c2c_assess_sequence_readiness: A gets the engine verdict; B is refused for A’s sequence 4549ms
+{"level":30,"time":"2026-10-01T03:06:21.481Z","pid":3243,"hostname":"vm","context":{"userId":78,"tenantId":18,"resourceId":"c2c_list_projects"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+{"level":30,"time":"2026-10-01T03:06:21.501Z","pid":3243,"hostname":"vm","context":{"userId":78,"tenantId":18,"resourceId":"c2c_file_draft_for_review"},"msg":"[audit-service] [AUDIT] mcp_governed_tool_call mcp_tool"}
+{"level":30,"time":"2026-10-01T03:06:21.599Z","pid":3243,"hostname":"vm","context":{"userId":78,"tenantId":18,"resourceId":"3"},"msg":"[audit-service] [AUDIT] LEAF_CREATED submission_leaf"}
+{"level":30,"time":"2026-10-01T03:06:21.610Z","pid":3243,"hostname":"vm","context":{"userId":78,"tenantId":18,"resourceId":"c2c_file_draft_for_review"},"msg":"[audit-service] [AUDIT] mcp_governed_tool_call mcp_tool"}
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > the governed write > is denied to a connector token without c2c:file 69ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > the governed write > files a DRAFT leaf pointing at a vault document, returns the sign-off link, and is audited with tool + org 120ms
+{"level":30,"time":"2026-10-01T03:06:21.678Z","pid":3243,"hostname":"vm","context":{"userId":78,"tenantId":18,"resourceId":"c2c_file_draft_for_review"},"msg":"[audit-service] [AUDIT] mcp_governed_tool_call mcp_tool"}
+{"level":30,"time":"2026-10-01T03:06:21.729Z","pid":3243,"hostname":"vm","context":{"userId":78,"tenantId":18,"resourceId":"c2c_draft_agency_response"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > the governed write > refuses a vault document from another organisation verbatim (no cross-tenant pointer) 57ms
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > model-backed tool without a provider key > returns the gateway refusal verbatim, never demo-mode text 53ms
+{"level":30,"time":"2026-10-01T03:06:26.075Z","pid":3243,"hostname":"vm","context":{"userId":78,"tenantId":18,"resourceId":"c2c_lookup_ich_guideline"},"msg":"[audit-service] [AUDIT] mcp_tool_call mcp_tool"}
+ ✓ server/mcp/__tests__/mcp-connector.dbtest.ts > model-backed tool without a provider key > a deterministic reference tool (ICH corpus) answers through the AnA handler 4346ms
+
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+   Start at  03:06:07
+   Duration  20.68s (transform 7.25s, setup 116ms, import 1.54s, tests 16.11s, environment 0ms)
+

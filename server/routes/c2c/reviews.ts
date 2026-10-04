@@ -49,6 +49,9 @@ import {
 import { verifyProjectAccess } from './project-access';
 import { createNotification, upsertProjectWorkItem } from './notifications';
 import { clientIpKey } from '../../utils/client-ip';
+import { postRecordedComment, retractRecordedComment } from './review-comment-record';
+import { exportReviewRecord } from './review-record-export';
+import { canReadAuditTrail, requireAuditReader } from '../../services/audit/audit-api-authority';
 
 const logger = createScopedLogger('concept2cure-reviews');
 const router = Router();
@@ -67,19 +70,55 @@ router.use(requireOrganizationContext);
 
 type ThreadPermission = 'read' | 'comment' | 'request_changes' | 'resolve' | 'assign';
 
+const LEAD: readonly ThreadPermission[] = ['read', 'comment', 'request_changes', 'resolve', 'assign'];
+const REVIEW: readonly ThreadPermission[] = ['read', 'comment', 'request_changes', 'resolve'];
+
+/**
+ * What a role may do on a review thread. The roles are the organisation's own
+ * (organization_users.role, resolved live per request: owner, admin, manager,
+ * member, the legacy editor, viewer), the vocabulary ORG_ROLE_FUNCTIONAL_GRANTS
+ * in middleware/auth.ts maps. Whoever does the regulatory work there takes part
+ * in its review; assigning review work stays with those who lead it.
+ *
+ * Until 2026-10-01 this named document roles no membership carries (approver,
+ * reviewer, author, user), so every organisation role but admin was read-only:
+ * a manager could not comment on a review, and neither could a member doing
+ * the work. Those names are kept for tokens that still carry them.
+ */
+const THREAD_PERMISSIONS_BY_ROLE: ReadonlyMap<string, readonly ThreadPermission[]> = new Map([
+  ['owner', LEAD],
+  ['admin', LEAD],
+  ['manager', LEAD],
+  ['member', REVIEW],
+  ['editor', REVIEW],
+  ['approver', LEAD],
+  ['reviewer', REVIEW],
+  ['author', ['read', 'comment']],
+  ['user', ['read', 'comment']],
+]);
+
 function getThreadPermissions(role: string): Set<ThreadPermission> {
-  const r = role.toLowerCase();
-  if (['admin', 'approver'].includes(r)) {
-    return new Set(['read', 'comment', 'request_changes', 'resolve', 'assign']);
-  }
-  if (r === 'reviewer') {
-    return new Set(['read', 'comment', 'request_changes', 'resolve']);
-  }
-  if (r === 'author' || r === 'user') {
-    return new Set(['read', 'comment']);
-  }
-  // viewer
-  return new Set(['read']);
+  // viewer, and any role this map does not name: read only.
+  return new Set(THREAD_PERMISSIONS_BY_ROLE.get(role.toLowerCase()) ?? ['read']);
+}
+
+/**
+ * What the caller may actually do, for the client, so it stops rendering
+ * governed actions the server will refuse. Resolve and request-changes are
+ * role-gated (getThreadPermissions), and my-queue deliberately contains threads
+ * ASSIGNED to the caller: an admin can assign a thread to an author, who would
+ * then see a Resolve button that 403s every time. Each flag comes from the same
+ * check its route enforces, so the button and the guard cannot drift apart;
+ * canExportRecord is the review record export's gate (DP-18 audit readers).
+ */
+function queuePermissions(req: Request) {
+  const perms = getThreadPermissions(String((req as any).userRole || ''));
+  return {
+    canComment: perms.has('comment'),
+    canRequestChanges: perms.has('request_changes'),
+    canResolve: perms.has('resolve'),
+    canExportRecord: canReadAuditTrail(req),
+  };
 }
 
 // ── Auto-propagation: Document events → Project Management signals ───────────
@@ -330,21 +369,18 @@ router.post(
           return sendError(res, 400, 'initialComment must not exceed 10000 characters');
         }
         const commentIdStr = `cmt_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
-        const [inserted] = await db
-          .insert(concept2cureThreadComments)
-          .values({
-            commentId: commentIdStr,
-            orgId: organizationId,
-            threadId: thread.id,
-            artifactId: artifact.id,
-            versionId: versionId ? Number(versionId) : null,
-            authorId: userId,
-            authorName: actorName,
-            authorRole: userRole,
-            body: sanitizeContent(initialComment.trim()),
-            kind: 'comment',
-          })
-          .returning();
+        const inserted = await postRecordedComment(req, {
+          commentId: commentIdStr,
+          orgId: organizationId,
+          threadId: thread.id,
+          artifactId: artifact.id,
+          versionId: versionId ? Number(versionId) : null,
+          authorId: userId,
+          authorName: actorName,
+          authorRole: userRole,
+          body: sanitizeContent(initialComment.trim()),
+          kind: 'comment',
+        });
         comment = {
           commentId: inserted.commentId,
           authorId: inserted.authorId,
@@ -573,7 +609,7 @@ router.post('/review-threads/:threadId/resolve', async (req: Request, res: Respo
 
     // System comment
     const commentIdStr = `cmt_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
-    await db.insert(concept2cureThreadComments).values({
+    await postRecordedComment(req, {
       commentId: commentIdStr,
       orgId: organizationId,
       threadId: thread.id,
@@ -701,7 +737,7 @@ router.post('/review-threads/:threadId/reopen', async (req: Request, res: Respon
 
     // System comment
     const commentIdStr = `cmt_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
-    await db.insert(concept2cureThreadComments).values({
+    await postRecordedComment(req, {
       commentId: commentIdStr,
       orgId: organizationId,
       threadId: thread.id,
@@ -892,22 +928,20 @@ router.post('/review-threads/:threadId/comments', async (req: Request, res: Resp
     const actorName = (req as any).userName || req.userEmail || 'unknown';
     const commentIdStr = `cmt_${Date.now()}_${crypto.randomBytes(6).toString('hex')}`;
 
-    const [inserted] = await db
-      .insert(concept2cureThreadComments)
-      .values({
-        commentId: commentIdStr,
-        orgId: organizationId,
-        threadId: thread.id,
-        artifactId: thread.artifactId,
-        versionId: versionId ? Number(versionId) : null,
-        parentCommentId: parentCommentId ? Number(parentCommentId) : null,
-        authorId: userId,
-        authorName: actorName,
-        authorRole: userRole,
-        body: sanitizeContent(body.trim()),
-        kind: commentKind,
-      })
-      .returning();
+    // The comment and its chained record commit together (review-comment-record.ts).
+    const inserted = await postRecordedComment(req, {
+      commentId: commentIdStr,
+      orgId: organizationId,
+      threadId: thread.id,
+      artifactId: thread.artifactId,
+      versionId: versionId ? Number(versionId) : null,
+      parentCommentId: parentCommentId ? Number(parentCommentId) : null,
+      authorId: userId,
+      authorName: actorName,
+      authorRole: userRole,
+      body: sanitizeContent(body.trim()),
+      kind: commentKind,
+    });
 
     // Update thread's updatedAt
     await db
@@ -1005,58 +1039,19 @@ router.post('/review-threads/:threadId/comments', async (req: Request, res: Resp
 
 /**
  * PATCH /api/concept2cure/review-comments/:commentId
- * Edit a comment's body. Only the author can edit, and only non-system comments.
+ * Refused: a posted comment's words are part of the review record
+ * (migrations/20261001_review_comments_record.sql refuses the UPDATE too). A
+ * correction is a reply. Until 2026-10-01 this overwrote the words in place and
+ * kept no copy of what they had said. No launch screen calls it.
  */
-router.patch('/review-comments/:commentId', async (req: Request, res: Response) => {
-  try {
-    const organizationId = getOrganizationId(req);
-    const userId = getUserId(req);
-
-    const [comment] = await db
-      .select()
-      .from(concept2cureThreadComments)
-      .where(
-        and(
-          eq(concept2cureThreadComments.commentId, paramStr(req.params.commentId)),
-          eq(concept2cureThreadComments.orgId, organizationId),
-          isNull(concept2cureThreadComments.deletedAt)
-        )
-      )
-      .limit(1);
-
-    if (!comment) return sendError(res, 404, 'Comment not found');
-    if (comment.authorId !== userId) {
-      return sendError(res, 403, 'Only the comment author can edit');
-    }
-    if (comment.kind === 'system') {
-      return sendError(res, 400, 'System comments cannot be edited');
-    }
-
-    const { body } = req.body;
-    if (!body || typeof body !== 'string' || body.trim().length === 0) {
-      return sendError(res, 400, 'body is required');
-    }
-    if (body.length > 10000) return sendError(res, 400, 'body must not exceed 10000 characters');
-
-    const now = new Date();
-    await db
-      .update(concept2cureThreadComments)
-      .set({
-        body: sanitizeContent(body.trim()),
-        editedAt: now,
-        updatedAt: now,
-      })
-      .where(eq(concept2cureThreadComments.id, comment.id));
-
-    return sendSuccess(res, {
-      commentId: comment.commentId,
-      body: sanitizeContent(body.trim()),
-      editedAt: now,
-    });
-  } catch (error: any) {
-    logConcept2cureError('edit comment', error, { commentId: req.params.commentId });
-    return sendError(res, 500, 'Failed to edit comment');
-  }
+router.patch('/review-comments/:commentId', (_req: Request, res: Response) => {
+  return res.status(409).json({
+    success: false,
+    error: {
+      code: 'COMMENT_TEXT_FIXED',
+      message: 'A posted comment is part of the review record and cannot be changed. Post a reply with the correction.',
+    },
+  });
 });
 
 /**
@@ -1089,15 +1084,48 @@ router.delete('/review-comments/:commentId', async (req: Request, res: Response)
       return sendError(res, 403, 'Only the comment author or admin can delete');
     }
 
-    await db
-      .update(concept2cureThreadComments)
-      .set({ deletedAt: new Date() })
-      .where(eq(concept2cureThreadComments.id, comment.id));
+    // A retraction: hidden from the thread, its words kept, the act chained
+    // with the reason the person gave, or none (review-comment-record.ts).
+    const retractedAt = await retractRecordedComment(req, comment, userId, req.body?.reason);
 
-    return sendSuccess(res, { commentId: comment.commentId, deleted: true });
+    return sendSuccess(res, { commentId: comment.commentId, deleted: true, retracted: true, retractedAt });
   } catch (error: any) {
     logConcept2cureError('delete comment', error, { commentId: req.params.commentId });
     return sendError(res, 500, 'Failed to delete comment');
+  }
+});
+
+/**
+ * GET /api/concept2cure/projects/:projectId/artifacts/:artifactId/review-record/export
+ * The artifact's whole review record for an inspector (§11.10(b)): every thread
+ * and comment, retractions with who and why, each comment checked against its
+ * chained rows, the tenant chain walked. Read by the audit readers (DP-18),
+ * recorded on the chain before it leaves (review-record-export.ts).
+ */
+router.get('/projects/:projectId/artifacts/:artifactId/review-record/export', async (req: Request, res: Response) => {
+  if (!requireAuditReader(req, res)) return;
+  try {
+    const organizationId = getOrganizationId(req);
+    if (!(await verifyProjectAccess(req, req.params.projectId))) return sendError(res, 404, 'Project not found');
+    const [artifact] = await db
+      .select()
+      .from(concept2cureArtifacts)
+      .where(
+        and(
+          eq(concept2cureArtifacts.artifactId, paramStr(req.params.artifactId)),
+          eq(concept2cureArtifacts.organizationId, organizationId)
+        )
+      )
+      .limit(1);
+    if (!artifact) return sendError(res, 404, 'Artifact not found');
+    return await exportReviewRecord(req, res, {
+      orgId: organizationId,
+      userId: getUserId(req),
+      artifact: { id: artifact.id, artifactId: artifact.artifactId, title: artifact.title, type: artifact.type, projectId: artifact.projectId },
+    });
+  } catch (error: any) {
+    logConcept2cureError('export review record', error, { artifactId: req.params.artifactId });
+    return sendError(res, 500, 'The review record could not be exported');
   }
 });
 
@@ -1781,15 +1809,6 @@ router.get('/reviews/my-queue', async (req: Request, res: Response) => {
     const changeRequestTasks = myTasks.filter(t => t.taskType === 'change_request');
     const approvalTasks = myTasks.filter(t => t.taskType === 'approval_task');
 
-    // Tell the client what this caller may actually do, so it can stop
-    // rendering governed actions that the server will refuse. Resolve and
-    // request-changes are role-gated (getThreadPermissions), and my-queue
-    // deliberately contains threads ASSIGNED to the caller — an admin can
-    // assign a thread to an author, who would then see a Resolve button that
-    // 403s every time. Deriving this from the same function the enforcement
-    // uses means the button and the guard cannot drift apart.
-    const perms = getThreadPermissions(String((req as any).userRole || ''));
-
     return sendSuccess(res, {
       threads: myThreads,
       tasks: myTasks,
@@ -1800,11 +1819,7 @@ router.get('/reviews/my-queue', async (req: Request, res: Response) => {
       dueSoonTasks: dueSoonTasks.length,
       changeRequests: changeRequestTasks.length,
       approvalsNeeded: approvalTasks.length,
-      permissions: {
-        canComment: perms.has('comment'),
-        canRequestChanges: perms.has('request_changes'),
-        canResolve: perms.has('resolve'),
-      },
+      permissions: queuePermissions(req),
     });
   } catch (error: any) {
     logConcept2cureError('my review queue', error);

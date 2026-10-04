@@ -16,6 +16,19 @@
  * classify audit record as `leafPlacement: { placed, refusal }`; any other
  * error propagates. Runs over PGlite with the REAL upsertLeaf; only the model
  * gateway and the audit writer are stubbed.
+ *
+ * 2026-10-01 (D5, NEW-P11-B-1a): classify PROPOSES. It wrote the model's
+ * section code into module_number at confidence 0.5 or more on any row, an
+ * approved filing copy included, with no lock, no reason and no audit event,
+ * and placed a leaf under that code with no reason; the placement route
+ * requires one (PX-1), and the person confirming AnA's call never saw the
+ * section it would use. It now writes nothing to the document and places
+ * nothing: when a sequence is named it returns the leaf a person would place,
+ * and placing it is its own step with the section in view (AnA
+ * place_into_sequence, or the Submission Center's PUT …/leaves with a reason).
+ * extractStructure no longer writes its result into the document's metadata.
+ * The cases below are restated from "places through upsertLeaf" to "places
+ * nothing"; a frozen or dispatched sequence is therefore untouched too.
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 
@@ -62,10 +75,16 @@ vi.mock('../../submission-service/submission-service', async (orig) => {
 });
 
 import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
-import { classifyDocument } from '../ingestion-service';
+import { classifyDocument, extractStructure, CLASSIFY_PLACES_NOTHING } from '../ingestion-service';
 
 let h: IndPgliteDb;
 const ORG = 7, USER = 3, OTHER_ORG = 8;
+const STAMP = '2026-09-01T00:00:00.000Z';
+const docRow = async (id: number) =>
+  (await h.pglite.query<{ module_number: string | null; metadata: unknown; updated_at: Date }>(
+    'SELECT module_number, metadata, updated_at FROM coauthor_documents WHERE id = $1',
+    [id],
+  )).rows[0];
 
 const leavesIn = async (seqId: number) =>
   (await h.pglite.query(
@@ -99,8 +118,14 @@ beforeAll(async () => {
     INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by) VALUES
       (1, 'classify', 'ind', 'biotech', 'fda', ${ORG}, ${USER}),
       (2, 'other tenant', 'ind', 'biotech', 'fda', ${OTHER_ORG}, ${USER});
-    INSERT INTO coauthor_documents (id, organization_id, title, content, module_number, status) VALUES
-      (201, ${ORG}, 'Nonclinical Overview', '<p>nonclinical overview body</p>', NULL, 'draft');
+    INSERT INTO coauthor_documents (id, organization_id, title, content, module_number, status, metadata, updated_at) VALUES
+      (201, ${ORG}, 'Nonclinical Overview', '<p>nonclinical overview body</p>', NULL, 'draft', '{"version":"0001"}', '${STAMP}'),
+      (202, ${ORG}, 'Clinical Overview', '<p>clinical overview body</p>', 'm2.5', 'approved', '{"version":"0001"}', '${STAMP}');
+    CREATE TABLE IF NOT EXISTS submission_evidence_links (
+      id SERIAL PRIMARY KEY, submission_id INTEGER NOT NULL, target_section_code TEXT NOT NULL,
+      source_document_table TEXT NOT NULL, source_document_id INTEGER NOT NULL, source_locator TEXT,
+      direction TEXT NOT NULL DEFAULT 'derives_from', confidence REAL, organization_id INTEGER NOT NULL,
+      created_by INTEGER, created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now(), deleted_at TIMESTAMPTZ);
     INSERT INTO ectd_sequences (id, submission_id, region, sequence_number, organization_id, created_by, status, dispatch_status) VALUES
       (1, 1, 'fda', '0000', ${ORG}, ${USER}, 'frozen', NULL),
       (2, 1, 'fda', '0001', ${ORG}, ${USER}, 'dispatched', 'pending'),
@@ -114,59 +139,70 @@ beforeEach(() => {
   holder.upsertOverride = null;
 });
 
-describe('classifyDocument places its leaf through upsertLeaf', () => {
+describe('classifyDocument proposes; it places nothing and changes no document', () => {
   it.each([
     [1, 'frozen'],
     [2, 'dispatched'],
-  ])('into a %s sequence (%s) places nothing and reports the refusal', async (seqId, status) => {
+    [3, 'draft'],
+    [4, 'another organisation\'s'],
+  ])('sequence %s (%s): no leaf, and the placement is reported as not made', async (seqId) => {
+    const upsert = vi.fn();
+    holder.upsertOverride = upsert;
     const result = await classifyDocument({ documentId: 201, userId: USER, organizationId: ORG, sequenceId: seqId });
-    expect(await leavesIn(seqId), `classify wrote a leaf into a ${status} sequence`).toEqual([]);
+
+    expect(await leavesIn(seqId), 'classify placed a leaf').toEqual([]);
+    expect(upsert).not.toHaveBeenCalled();
     expect(result.sectionCode).toBe('m2.4');
-    expect(result.leafPlacement, 'a refused placement was reported as nothing at all').toEqual({
-      placed: false,
-      refusal: `INVALID_STATE: Sequence is ${status}; its leaves are immutable.`,
-    });
+    expect(result.leafPlacement).toEqual({ placed: false, refusal: CLASSIFY_PLACES_NOTHING });
     expect(classifyAuditDetails()).toMatchObject({ sequenceId: seqId, leafPlacement: result.leafPlacement });
   }, 60_000);
 
-  it('into an open sequence places the leaf as before, and says so', async () => {
+  it('returns the leaf a person would place, for them to place as its own step', async () => {
     const result = await classifyDocument({ documentId: 201, userId: USER, organizationId: ORG, sequenceId: 3 });
-    expect(result.leafPlacement).toEqual({ placed: true, refusal: null });
-    expect(await leavesIn(3)).toEqual([
-      {
-        section_code: 'm2.4', title: 'Nonclinical Overview', granularity: 'document', lifecycle_op: 'new',
-        document_table: 'coauthor_documents', document_id: 201, document_type: 'overview',
-        organization_id: ORG, created_by: USER,
-      },
-    ]);
-    expect(classifyAuditDetails()).toMatchObject({ sequenceId: 3, leafPlacement: { placed: true, refusal: null } });
+    expect(result.proposedLeaf).toEqual({
+      sequenceId: 3, sectionCode: 'm2.4', title: 'Nonclinical Overview', granularity: 'document',
+      documentTable: 'coauthor_documents', documentId: 201, documentType: 'overview',
+    });
+    expect(classifyAuditDetails()).toMatchObject({ proposedLeaf: result.proposedLeaf });
   }, 60_000);
 
-  it("reports another organization's sequence as a refusal, not as a silent skip", async () => {
-    const result = await classifyDocument({ documentId: 201, userId: USER, organizationId: ORG, sequenceId: 4 });
-    expect(result.leafPlacement).toMatchObject({ placed: false, refusal: expect.stringMatching(/^NOT_FOUND: /) });
-    expect(await leavesIn(4)).toEqual([]);
-  }, 60_000);
-
-  it('reports a section code the submission vocabulary refuses', async () => {
-    holder.modelAnswer = { ...holder.modelAnswer, sectionCode: 'm1/us/1.2' };
-    const before = (await leavesIn(3)).length;
-    const result = await classifyDocument({ documentId: 201, userId: USER, organizationId: ORG, sequenceId: 3 });
-    expect(result.leafPlacement).toMatchObject({ placed: false, refusal: expect.stringMatching(/^VALIDATION: /) });
-    expect((await leavesIn(3)).length).toBe(before);
+  it.each([
+    [201, 'a draft', null],
+    [202, 'an approved filing copy', 'm2.5'],
+  ])('document %s (%s): its section, metadata and stamp are unchanged', async (docId, _label, module) => {
+    await classifyDocument({ documentId: docId, userId: USER, organizationId: ORG });
+    const after = await docRow(docId);
+    expect(after.module_number, "the model's section code was written into the document").toBe(module);
+    expect(after.metadata).toEqual({ version: '0001' });
+    expect(new Date(after.updated_at).toISOString()).toBe(STAMP);
   }, 60_000);
 
   it('never takes the placement outcome from the model', async () => {
     holder.modelAnswer = { ...holder.modelAnswer, leafPlacement: { placed: true, refusal: null } };
-    const refused = await classifyDocument({ documentId: 201, userId: USER, organizationId: ORG, sequenceId: 1 });
-    expect(refused.leafPlacement).toMatchObject({ placed: false });
+    const asked = await classifyDocument({ documentId: 201, userId: USER, organizationId: ORG, sequenceId: 3 });
+    expect(asked.leafPlacement).toMatchObject({ placed: false });
     const unasked = await classifyDocument({ documentId: 201, userId: USER, organizationId: ORG });
     expect(unasked.leafPlacement, 'a placement nobody asked for was reported from the model answer').toBeUndefined();
+    expect(unasked.proposedLeaf).toBeUndefined();
   }, 60_000);
 
-  it('does not swallow an error that is not a placement refusal', async () => {
-    holder.upsertOverride = async () => { throw new Error('connection terminated unexpectedly'); };
-    await expect(classifyDocument({ documentId: 201, userId: USER, organizationId: ORG, sequenceId: 3 }))
-      .rejects.toThrow('connection terminated unexpectedly');
+  it('proposes no leaf when the model proposed no section', async () => {
+    holder.modelAnswer = { ...holder.modelAnswer, sectionCode: null };
+    const result = await classifyDocument({ documentId: 201, userId: USER, organizationId: ORG, sequenceId: 3 });
+    expect(result.proposedLeaf).toBeUndefined();
+    expect(result.leafPlacement).toMatchObject({ placed: false });
+  }, 60_000);
+});
+
+describe('extractStructure records its link, and changes no document', () => {
+  it("leaves the document's metadata and stamp as they were", async () => {
+    holder.modelAnswer = { extractedClaims: [{ text: 'c', locator: 'p1' }], referencedSources: [] };
+    await extractStructure({ documentId: 202, sectionCode: '2.5', submissionId: 1, userId: USER, organizationId: ORG });
+
+    const after = await docRow(202);
+    expect(after.metadata, 'the extraction was written into an approved filing copy').toEqual({ version: '0001' });
+    expect(new Date(after.updated_at).toISOString()).toBe(STAMP);
+    const links = await h.pglite.query('SELECT target_section_code, source_document_id FROM submission_evidence_links');
+    expect(links.rows).toEqual([{ target_section_code: '2.5', source_document_id: 202 }]);
   }, 60_000);
 });

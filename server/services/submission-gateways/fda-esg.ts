@@ -55,7 +55,11 @@
  *   AS2 / SFTP path:
  *   FDA_ESG_URL              FDA AS2 endpoint (https://…)
  *   FDA_ESG_AS2_FROM         Sponsor AS2 id assigned by FDA
- *   FDA_ESG_AS2_TO           FDA AS2 id (default 'FDA-CESUB')
+ *   FDA_ESG_AS2_TO           FDA's AS2 identifier for this environment, as
+ *                            issued at ESG registration. Never defaulted: it
+ *                            used to fall back to 'FDA-CESUB', a value with no
+ *                            FDA source, the same for both environments
+ *                            (2026-10-01, W5/D7, sweep F16).
  *   FDA_ESG_CERT_PATH        mTLS client certificate (PEM path)
  *   FDA_ESG_KEY_PATH         mTLS private key (PEM path)
  *   FDA_ESG_FDA_CERT_PATH    FDA's certificate (PEM path) — TLS trust anchor
@@ -80,8 +84,10 @@
 import { promises as fs } from 'fs';
 import { randomUUID } from 'crypto';
 import { pool } from '../../db';
+import { resolveGatewayAccount, type ResolvedGatewayAccount } from './gateway-accounts';
 import { readVerifiedBundle } from './bundle-integrity';
 import { platformTransmittalRecord } from './acknowledgement';
+import { usableIdentifier } from '../ectd/regulatory-identifiers';
 import {
   attemptDelivery, buildAs2Headers, classifyAs2Delivery, postAs2, signAs2Body, type DeliveryOutcome,
 } from './as2-transport';
@@ -99,7 +105,7 @@ import {
 interface FdaEsgCredentials {
   endpointUrl:   string;       // 'https://esg.fda.gov' or staging variant
   as2From:       string;       // Sponsor's AS2 identifier (assigned by FDA)
-  as2To:         string;       // FDA AS2 identifier (e.g. 'FDA-CESUB')
+  as2To:         string;       // FDA's AS2 identifier for this environment (issued at ESG registration)
   clientCertPem: string;       // mTLS client cert (also signs AS2)
   clientKeyPem:  string;       // mTLS private key
   fdaCertPem:    string;       // FDA's AS2 public cert (encrypts AS2 to FDA)
@@ -116,6 +122,56 @@ function envFor(env: 'staging' | 'production', key: string): string | undefined 
   return process.env[prefix + key];
 }
 
+/**
+ * The credentials a transmit goes out under. `account` is the organisation's
+ * choice (gateway-accounts.ts, founder decision 2026-10-01): in client mode the
+ * sponsor side — the AS2 identifier FDA assigned the client, and the client's
+ * own certificate and key — is the client's; FDA's side (endpoint, FDA's AS2
+ * identifier, FDA's public certificate) is the same for every sponsor and stays
+ * the platform's configuration. Platform mode is the server's env, as before.
+ */
+async function credentialsFor(
+  organizationId: number,
+  environment: 'staging' | 'production',
+  account: ResolvedGatewayAccount | null,
+): Promise<FdaEsgCredentials> {
+  return account?.mode === 'client'
+    ? loadFdaClientCredentials(environment, account)
+    : loadFdaCredentials(organizationId, environment);
+}
+
+/** The organisation's own FDA account: its AS2 identity, certificate and key, with FDA's side from the platform. */
+async function loadFdaClientCredentials(
+  environment: 'staging' | 'production',
+  account: ResolvedGatewayAccount,
+): Promise<FdaEsgCredentials> {
+  const own = "(your organisation's own account)";
+  const endpointUrl = envFor(environment, 'URL');
+  const as2To = envFor(environment, 'AS2_TO');
+  const fdaCertPath = envFor(environment, 'FDA_CERT_PATH');
+  const cert = account.credentials?.clientCertPem;
+  const key = account.credentials?.clientKeyPem;
+  const missing = [
+    !endpointUrl && envVarName(environment, 'URL'),
+    !account.senderIdentifier && `AS2 identifier assigned by FDA ${own}`,
+    !as2To && envVarName(environment, 'AS2_TO'),
+    !cert && `Your ESG certificate (PEM) ${own}`,
+    !key && `Its private key (PEM) ${own}`,
+    !fdaCertPath && envVarName(environment, 'FDA_CERT_PATH'),
+  ].filter((m): m is string => Boolean(m));
+  if (missing.length > 0) throw new CredentialError('fda', 'esg', environment, missing);
+  // The organisation's own account is recorded in organization_gateway_accounts;
+  // the platform's identity is not written against it.
+  return {
+    endpointUrl: endpointUrl!,
+    as2From: account.senderIdentifier!,
+    as2To: as2To!,
+    clientCertPem: cert!,
+    clientKeyPem: key!,
+    fdaCertPem: await fs.readFile(fdaCertPath!, 'utf8'),
+  };
+}
+
 async function loadFdaCredentials(
   organizationId: number,
   environment: 'staging' | 'production',
@@ -123,12 +179,15 @@ async function loadFdaCredentials(
   const missing: string[] = [];
   const endpointUrl = envFor(environment, 'URL');
   const as2From     = envFor(environment, 'AS2_FROM');
-  const as2To       = envFor(environment, 'AS2_TO') ?? 'FDA-CESUB';
+  const as2To       = envFor(environment, 'AS2_TO');
   const certPath    = envFor(environment, 'CERT_PATH');
   const keyPath     = envFor(environment, 'KEY_PATH');
   const fdaCertPath = envFor(environment, 'FDA_CERT_PATH');
   if (!endpointUrl)    missing.push(`FDA_ESG${environment === 'staging' ? '_STAGING' : ''}_URL`);
   if (!as2From)        missing.push(`FDA_ESG${environment === 'staging' ? '_STAGING' : ''}_AS2_FROM`);
+  // FDA's AS2 identifier is a credential like the others, never defaulted —
+  // as the ICSR transport's agency id is not (icsr-gateway-transport.ts).
+  if (!as2To)          missing.push(`FDA_ESG${environment === 'staging' ? '_STAGING' : ''}_AS2_TO`);
   if (!certPath)       missing.push(`FDA_ESG${environment === 'staging' ? '_STAGING' : ''}_CERT_PATH`);
   if (!keyPath)        missing.push(`FDA_ESG${environment === 'staging' ? '_STAGING' : ''}_KEY_PATH`);
   if (!fdaCertPath)    missing.push(`FDA_ESG${environment === 'staging' ? '_STAGING' : ''}_FDA_CERT_PATH`);
@@ -159,7 +218,7 @@ async function loadFdaCredentials(
   return {
     endpointUrl: endpointUrl!,
     as2From: as2From!,
-    as2To,
+    as2To: as2To!,
     clientCertPem, clientKeyPem, fdaCertPem,
     sftpHost: envFor(environment, 'SFTP_HOST'),
     sftpUser: envFor(environment, 'SFTP_USER'),
@@ -249,12 +308,24 @@ function transmitViaNextGenRest(
    exactly one AS2 implementation. The PKCS#7 conformance gap is documented
    there and at the top of this file. */
 
-/** The agency application number the SFTP path is filed under; refused when absent. */
+/**
+ * The agency application number the SFTP path is filed under: it names the
+ * /incoming/<application>/<sequence>/ directory the PUT writes to and is part
+ * of the stored transmission id. Held to the repo's one identifier rule
+ * (ectd/regulatory-identifiers) — it was only trimmed, so '../', '/' or a
+ * space reached the destination path (2026-10-01, W5/D7, sweep F18). Refused
+ * when absent, unusable or a placeholder. A pure check of the request, made
+ * before the transmittal row and any connection, so it carries the proof that
+ * nothing was sent.
+ */
 function sftpApplicationId(req: GatewayTransmitRequest): string {
-  const raw = req.metadata?.applicationId;
-  const applicationId = typeof raw === 'string' ? raw.trim() : '';
+  const applicationId = usableIdentifier('applicationNumber', req.metadata?.applicationId);
   if (!applicationId || /^UNASSIGNED/i.test(applicationId)) {
-    throw new ValidationError('FDA ESG SFTP transmit requires the agency application number; nothing is sent without it.', []);
+    throw new ValidationError(
+      'FDA ESG SFTP transmit requires the agency application number (a letter or digit, then letters, digits, ".", "_" or "-"); nothing is sent without it.',
+      [],
+      NOTHING_TRANSMITTED,
+    );
   }
   return applicationId;
 }
@@ -567,7 +638,11 @@ export class FdaEsgGateway implements SubmissionGateway {
         loadFdaRestCredentials(environment);
         return true;
       }
-      await loadFdaCredentials(organizationId, environment);
+      await credentialsFor(
+        organizationId,
+        environment,
+        await resolveGatewayAccount(pool, organizationId, 'fda', 'esg', environment),
+      );
       return true;
     } catch {
       // Any failure to load the credentials — a missing variable, or a cert
@@ -599,11 +674,11 @@ export class FdaEsgGateway implements SubmissionGateway {
     // The SFTP path is filed under /incoming/<application>/<sequence>/, so both
     // are required there; the AS2 envelope carries neither (an eSTAR has no
     // eCTD sequence). Refuse before a transmittal row exists: a refused
-    // request is not a transmittal.
-    if (transport === 'sftp') {
-      sftpApplicationId(normalizedReq);
-      requiredAgencyMetadata(normalizedReq);
-    }
+    // request is not a transmittal. Checked once, here, so no throw site
+    // after the row carries the proof that nothing was sent.
+    const sftpTarget = transport === 'sftp'
+      ? { applicationId: sftpApplicationId(normalizedReq), sequence: requiredAgencyMetadata(normalizedReq).sequenceNumber }
+      : null;
     const transmittalId = await createTransmittalRow(normalizedReq, transport);
     /* 2026-09-23 (W5/D7, round-3 review, third pass): what has left for FDA,
        once FDA may hold it. The catch below records any failure after that
@@ -613,20 +688,22 @@ export class FdaEsgGateway implements SubmissionGateway {
     let sent: SentBundle | null = null;
 
     try {
-      const creds = await loadFdaCredentials(req.organizationId, req.environment);
+      // The guard resolved the organisation's account; resolved here again only
+      // when a caller reached this implementation without it (tests drive it
+      // unguarded), so no path sends under an account nobody chose.
+      const account = req.account ?? await resolveGatewayAccount(pool, req.organizationId, 'fda', 'esg', req.environment);
+      const creds = await credentialsFor(req.organizationId, req.environment, account);
       await updateTransmittal(transmittalId, { status: 'in_transit' });
 
-      if (transport === 'sftp') {
+      if (sftpTarget) {
         // The application number and sequence name the /incoming/ path FDA
         // files the bundle under. These defaulted to `APP-<packageId>` and
         // '0001', so a bundle with no application number was deposited under
         // a name FDA could not route.
-        const applicationId = sftpApplicationId(normalizedReq);
-        const sequence = requiredAgencyMetadata(normalizedReq).sequenceNumber;
         // Verify the on-disk bytes match the signed descriptor before SFTP
         // streams the file by path.
         await readVerifiedBundle(req.bundle);
-        const result = await transmitViaSftp(creds, req.environment, req.bundle.path, applicationId, sequence);
+        const result = await transmitViaSftp(creds, req.environment, req.bundle.path, sftpTarget.applicationId, sftpTarget.sequence);
         sent = {
           delivery: `The bundle was deposited over SFTP (${result.transmissionId})`,
           transmissionId: result.transmissionId, errorClass: 'transport',
@@ -985,6 +1062,9 @@ export async function rollbackTransmittal(params: {
 
 /* ─── Active-transmittal lookup (FIX 7) ──────────────────────────── */
 
+/** The statuses the duplicate-send lock holds — sub_trans_active_lock_idx's WHERE. */
+const ACTIVE_TRANSMITTAL_STATUSES = "('pending', 'in_transit', 'received')";
+
 /**
  * Returns the active (pending|in_transit|received) transmittal row for an
  * (organizationId, packageId, bundleSha256) tuple, or null if none exists.
@@ -995,13 +1075,27 @@ export async function rollbackTransmittal(params: {
  *
  * Tenant-scoped: a different org can transmit the same package_id /
  * bundle_sha256 (realistic for a CMO running multiple sponsors).
+ *
+ * With a `filing`, an active row of the same package sent under that eCTD
+ * sequence in that environment (metadata.sequence / metadata.environment,
+ * which governed-transmit writes from the stored descriptor) holds it too,
+ * whatever its bytes. 2026-10-01 (W5/D7, sweep F15): the bytes alone were the
+ * key, and re-assembling a sequence produces a new zip sha256 for the SAME
+ * sequence, so while the first send was in flight, or delivered but
+ * unconfirmed, a re-assembled bundle passed this lookup and the unique index
+ * and the sequence went to the agency twice. The environment is part of the
+ * key: a send to the agency's test environment never holds production, nor
+ * the reverse. Such a row is returned with the `sequence` it holds; a row
+ * found by its bytes is returned without one. No index backs the sequence
+ * match — it is this check only.
  */
 export async function findActiveTransmittal(params: {
   organizationId: number;
   packageId: number | null;
   bundleSha256: string;
-}): Promise<{ id: number; status: string } | null> {
-  const { organizationId, packageId, bundleSha256 } = params;
+  filing?: { sequence: string; environment: string } | null;
+}): Promise<{ id: number; status: string; sequence?: string } | null> {
+  const { organizationId, packageId, bundleSha256, filing } = params;
   // If packageId is null we cannot enforce a meaningful lock (the partial
   // index is keyed on package_id). Return null and let the gateway proceed —
   // ad-hoc transmits without a package row are not the surface area the lock
@@ -1013,10 +1107,23 @@ export async function findActiveTransmittal(params: {
       WHERE organization_id = $1
         AND package_id      = $2
         AND bundle_sha256   = $3
-        AND status IN ('pending', 'in_transit', 'received')
+        AND status IN ${ACTIVE_TRANSMITTAL_STATUSES}
       ORDER BY submitted_at DESC
       LIMIT 1`,
     [organizationId, packageId, bundleSha256],
   );
-  return rows[0] ?? null;
+  if (rows[0] || !filing) return rows[0] ?? null;
+
+  const bySequence = await pool.query<{ id: number; status: string }>(
+    `SELECT id, status FROM submission_transmittals
+      WHERE organization_id = $1
+        AND package_id      = $2
+        AND metadata->>'sequence'    = $3
+        AND metadata->>'environment' = $4
+        AND status IN ${ACTIVE_TRANSMITTAL_STATUSES}
+      ORDER BY submitted_at DESC
+      LIMIT 1`,
+    [organizationId, packageId, filing.sequence, filing.environment],
+  );
+  return bySequence.rows[0] ? { ...bySequence.rows[0], sequence: filing.sequence } : null;
 }

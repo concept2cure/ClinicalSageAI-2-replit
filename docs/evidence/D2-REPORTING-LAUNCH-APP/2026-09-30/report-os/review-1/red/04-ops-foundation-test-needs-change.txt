@@ -1,0 +1,50 @@
+# tests/ops/report-os-foundation.test.mjs (not this helper's file; run by npm run test:ops-audits, CI job 'Ops Audit Plan' on PRs touching tests/ops/**) asserts the deleted seed route exists.
+$ node --test tests/ops/report-os-foundation.test.mjs   # as committed, against the route without POST /taxonomy/seed
+not ok 1 - report-os route guards taxonomy seed and supports dependency endpoint
+ok 2 - report-os route includes reporting bundle and delivery endpoints
+not ok 3 - report-os taxonomy seed includes regional agency report packs
+ok 4 - report-os persists bundle and delivery state records
+ok 5 - report-os schema includes normalized dependency table
+ok 6 - report-os migration includes dependency table and indexes
+ok 7 - session progress doc tracks goal status and remaining P0 items
+ok 8 - orchestrator includes lifecycle-aware readiness computation
+ok 9 - report-os orchestrator includes regional obligation provider
+ok 10 - report-os route captures regional context in run metadata
+ok 11 - server index imports route registrars used at startup callsites
+ok 12 - startup script derives DB target from DATABASE_URL before connection checks
+ok 13 - startup script defines shared SQL executor and schema readiness guardrails
+# pass 11
+# fail 2
+
+# the proposed change (diff below), run from a scratch copy: node --test <scratch>/report-os-foundation.proposed.test.mjs
+10a11
+> const seedMigrationSource = readFileSync('migrations/20260930_report_type_registry_seed.sql', 'utf8');
+12,14c13,17
+< test('report-os route guards taxonomy seed and supports dependency endpoint', () => {
+<   assert.ok(routeSource.includes('canSeedTaxonomy'));
+<   assert.ok(routeSource.includes("router.post('/taxonomy/seed'"));
+---
+> test('report-os registry is seeded by its migration, and the route supports dependency endpoint', () => {
+>   // POST /taxonomy/seed was deleted on 2026-09-30 (review round 1): the generated
+>   // migration is the registry's one writer.
+>   assert.ok(!routeSource.includes("router.post('/taxonomy/seed'"));
+>   assert.ok(seedMigrationSource.includes('ON CONFLICT (type_id) DO UPDATE SET'));
+35c38
+<     assert.ok(routeSource.includes("router.post('/taxonomy/seed'"));
+---
+>     assert.ok(seedMigrationSource.includes(`'${typeId}'`), `expected the registry seed to include ${typeId}`);
+ok 1 - report-os registry is seeded by its migration, and the route supports dependency endpoint
+ok 2 - report-os route includes reporting bundle and delivery endpoints
+ok 3 - report-os taxonomy seed includes regional agency report packs
+ok 4 - report-os persists bundle and delivery state records
+ok 5 - report-os schema includes normalized dependency table
+ok 6 - report-os migration includes dependency table and indexes
+ok 7 - session progress doc tracks goal status and remaining P0 items
+ok 8 - orchestrator includes lifecycle-aware readiness computation
+ok 9 - report-os orchestrator includes regional obligation provider
+ok 10 - report-os route captures regional context in run metadata
+ok 11 - server index imports route registrars used at startup callsites
+ok 12 - startup script derives DB target from DATABASE_URL before connection checks
+ok 13 - startup script defines shared SQL executor and schema readiness guardrails
+# pass 13
+# fail 0

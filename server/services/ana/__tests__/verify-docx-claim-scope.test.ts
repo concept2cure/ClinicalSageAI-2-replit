@@ -42,7 +42,7 @@ describe('verify_docx_against_source — claim scope', () => {
 
   it('does NOT claim the document reproduces a source when none was supplied', async () => {
     const r = await run({
-      input_docx_path: '/tmp/uspi.docx',
+      input_docx_path: 'tmp/docbuilder/org-7/claims/uspi.docx',
       required_strings: ['1 INDICATIONS AND USAGE', '2 DOSAGE'],
     });
     expect(r.ok).toBe(true);
@@ -59,7 +59,7 @@ describe('verify_docx_against_source — claim scope', () => {
 
   it('still reports the required-string result honestly when one is missing', async () => {
     const r = await run({
-      input_docx_path: '/tmp/uspi.docx',
+      input_docx_path: 'tmp/docbuilder/org-7/claims/uspi.docx',
       required_strings: ['1 INDICATIONS AND USAGE', '17 PATIENT COUNSELING'],
     });
     expect(r.ok).toBe(false);
@@ -69,7 +69,7 @@ describe('verify_docx_against_source — claim scope', () => {
   });
 
   it('DOES claim source fidelity when a source was actually diffed and matches', async () => {
-    const r = await run({ input_docx_path: '/tmp/uspi.docx', expected_text: DOC_TEXT });
+    const r = await run({ input_docx_path: 'tmp/docbuilder/org-7/claims/uspi.docx', expected_text: DOC_TEXT });
     expect(r.sourceDiffPerformed).toBe(true);
     expect(r.ok).toBe(true);
     expect(r.message).toMatch(/reproduces the source/i);
@@ -80,7 +80,7 @@ describe('verify_docx_against_source — claim scope', () => {
 
   it('reports real divergence when the document departs from the source', async () => {
     const r = await run({
-      input_docx_path: '/tmp/uspi.docx',
+      input_docx_path: 'tmp/docbuilder/org-7/claims/uspi.docx',
       expected_text: 'A COMPLETELY DIFFERENT SOURCE\nWith other lines entirely.',
     });
     expect(r.sourceDiffPerformed).toBe(true);

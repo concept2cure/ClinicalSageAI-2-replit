@@ -41,6 +41,7 @@
  */
 
 import { createHash } from 'node:crypto';
+import { DEFAULT_RETENTION_YEARS } from '../../../shared/schema/vault';
 import { pool } from '../../db.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { assertUploadSafe, UploadSafetyError, type UploadOrigin } from '../../middleware/uploadSafety.js';
@@ -54,12 +55,15 @@ import {
 } from './vault-ingest-discard.js';
 import { vaultWriteRefusal } from './vault-write-authority.js';
 import { readRecordedVersion, reuploadChanges, reuploadDiffers, type ReuploadChange, type ReuploadDiffer } from './vault-reupload.js';
+import { checkInArgumentRefusal, inheritedPlacement, planCheckIn, recheckUnderLock } from './vault-version-checkin.js';
 import {
   classifyForFiling,
+  filingVocabularyRefusal,
   resolveVaultView,
   isFolderInView,
   folderLabel,
 } from './vault-filing.service.js';
+import { programInOrganization } from '../c2c/program-access';
 
 const logger = createScopedLogger('vault-ingest');
 
@@ -78,8 +82,14 @@ export interface VaultIngestArgs {
   version?: string;
   classification?: string;
   retentionPolicy?: string;
-  parentDocumentId?: string;
-  supersedesId?: string;
+  /**
+   * Check in the next version of an existing document (VR-08): the id of one of
+   * its versions. The server finds the current head, keeps its document code
+   * and filing, assigns the next version and links the predecessor
+   * (vault-version-checkin.ts). `version` and a filing are not accepted with it.
+   * Lineage is never taken from a caller any other way.
+   */
+  supersedesDocumentId?: string;
   folderId?: string;
   evidenceKind?: string;
   ctdSection?: string;
@@ -97,6 +107,12 @@ export interface VaultIngestArgs {
    * note in middleware/uploadSafety.
    */
   origin?: UploadOrigin;
+  /**
+   * The data-room capture these bytes were filed from (VR-11a, VR-16b). Named
+   * in the ingest's audit row, so the chain links the capture to the Vault
+   * document it became. Set only by vault-data-room-filing.ts.
+   */
+  dataRoomSourceId?: number;
 }
 
 export interface VaultIngestFiling {
@@ -179,6 +195,13 @@ async function admitVaultDocument(
   // is told so before anything is stored, checked or disclosed.
   const roleRefusal = vaultWriteRefusal();
   if (roleRefusal) return roleRefusal;
+  // A filing the uploader names is held to the vocabulary before any byte is
+  // stored (VR-04). Only a named folder's kind and section are written; without
+  // one the classifier's proposal is, so those are not the caller's to break.
+  const vocabulary = args.folderId ? filingVocabularyRefusal(args) : null;
+  if (vocabulary) return { ok: false, status: 400, ...vocabulary };
+  const checkInArgs = checkInArgumentRefusal(args);
+  if (checkInArgs) return checkInArgs;
 
   // Tenant ownership guard. `vault.documents` now carries organization_id
   // (migrations/20260905_vault_documents_organization_id.sql), and the INSERT
@@ -194,11 +217,7 @@ async function admitVaultDocument(
       message: 'An authenticated organization context is required to ingest documents.' };
   }
   try {
-    const owns = await pool.query(
-        `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,
-      [args.programId, orgId],
-    );
-    if (owns.rowCount === 0) {
+    if (!(await programInOrganization(pool, args.programId, orgId))) {
       logger.warn('Vault ingest denied: program not owned by caller organization', {
         programId: args.programId,
         orgId,
@@ -239,6 +258,16 @@ async function admitVaultDocument(
   }
 
   const contentHash = sha256Bytes(args.fileBuffer);
+
+  // A check-in is planned before any byte is stored, so a refusal stores
+  // nothing, and again under the head's row lock in the transaction below.
+  const checkIn = args.supersedesDocumentId
+    ? await planCheckIn(pool, { organizationId: orgId, programId: args.programId, headId: args.supersedesDocumentId, contentHash })
+    : null;
+  if (checkIn && !checkIn.ok) return checkIn;
+  // What this version is recorded as: a check-in's are the server's.
+  const documentCode = checkIn ? checkIn.head.document_code : args.documentCode;
+  const version = checkIn ? checkIn.version : (args.version ?? '1.0');
 
   /* Bytes go through the canonical storage seam — `server/services/storage/`.
      They used to be written straight to `uploads/vault/{programId}/{hash}` with
@@ -283,7 +312,7 @@ async function admitVaultDocument(
       filename: fileName,
       bytes: args.fileBuffer,
       mime: mimeType,
-      metadata: { contentHash, documentCode: args.documentCode },
+      metadata: { contentHash, documentCode },
     });
     storageVersionId = written.vaultVersionId;
     storageProvider = written.provider;
@@ -404,7 +433,9 @@ async function admitVaultDocument(
     placedBy: number | null;
     needsReview: boolean;
   };
-  if (args.folderId) {
+  if (checkIn) {
+    placement = inheritedPlacement(checkIn.head);
+  } else if (args.folderId) {
     if (!isFolderInView(vaultView, args.folderId)) {
       return { ok: false, status: 400, code: 'INVALID_FOLDER',
         message: `Folder '${args.folderId}' does not exist in this program's ${vaultView} vault taxonomy.` };
@@ -426,6 +457,7 @@ async function admitVaultDocument(
       mimeType,
       extractedText,
       view: vaultView,
+      documentType: args.documentType,
     });
     placement = {
       folderId: classified.folderId,
@@ -451,9 +483,19 @@ async function admitVaultDocument(
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    // A check-in holds its head's row lock from here to COMMIT: a concurrent
+    // check-in waits, then finds this version and is refused, naming it.
+    const stale = checkIn && (await recheckUnderLock(client, { organizationId: orgId, programId: args.programId, contentHash }, checkIn));
+    if (stale) return (await client.query('ROLLBACK'), stale);
     // What is already recorded at this (program, code, version), locked: a
     // same-bytes retry is judged against it (vault-reupload.ts).
-    const recorded = await readRecordedVersion(client, args.programId, args.documentCode, args.version ?? '1.0');
+    const recorded = await readRecordedVersion(client, args.programId, documentCode, version);
+    // retention_until — the clock starts at admission (P1-22; ADR-0014 §6): the
+    // organisation's own period, or DEFAULT_RETENTION_YEARS ($30) when it has
+    // set none, and the LATER of that and the named, active policy's date, so a
+    // named policy is never shortened silently (GREATEST skips the NULL of an
+    // absent or unknown policy). Read under the caller's RLS scope and keyed by
+    // $27, the organisation the ownership guard proved.
     // tenant-isolation-safe: vault.documents is program-scoped (program_id, no
     // org_id column); the caller's ownership of args.programId was already
     // enforced above against regulatory_programs.organization_id (403 on
@@ -474,12 +516,10 @@ async function admitVaultDocument(
         $1, $2, $3, $4,
         $5, $6, $7, $8, $9, $10,
         $11, $12, $13,
-        -- The retention clock starts at admission (P1-22): the named, active
-        -- policy's days from today; NULL (kept indefinitely) when the document
-        -- names no policy or an unknown one. The sweep never destroys a
-        -- document with no date.
-        (SELECT CURRENT_DATE + rp.retention_days FROM vault.retention_policies rp
-          WHERE rp.policy_name = $13 AND rp.active LIMIT 1),
+        GREATEST(
+          (CURRENT_DATE + make_interval(years => COALESCE(
+            (SELECT s.retention_years FROM organization_retention_settings s WHERE s.organization_id = $27), $30::integer)))::date,
+          (SELECT CURRENT_DATE + rp.retention_days FROM vault.retention_policies rp WHERE rp.policy_name = $13 AND rp.active LIMIT 1)),
         $14, $15,
         $16, $17, $18,
         $19, $20, $21,
@@ -537,20 +577,21 @@ async function admitVaultDocument(
                 retention_policy, parent_document_id, supersedes_id, storage_version_id, file_name, s3_key`,
       [
         args.programId,
-        args.documentCode,
+        documentCode,
         args.documentTitle,
-        args.documentType,
-        args.version ?? '1.0',
+        // A new version is the same kind of document as its head.
+        checkIn?.head.document_type ?? args.documentType,
+        version,
         s3Bucket,
         s3Key,
         fileName,
         fileSize,
         mimeType,
         contentHash,
-        args.classification ?? 'INTERNAL',
-        args.retentionPolicy ?? null,
-        args.parentDocumentId ?? null,
-        args.supersedesId ?? null,
+        args.classification ?? checkIn?.head.classification ?? 'INTERNAL',
+        args.retentionPolicy ?? checkIn?.head.retention_policy ?? null,
+        null,
+        checkIn?.head.id ?? null,
         extractedText,
         pageCount,
         wordCount,
@@ -565,6 +606,7 @@ async function admitVaultDocument(
         orgId,
         storageVersionId,
         storageProvider,
+        DEFAULT_RETENTION_YEARS,
       ],
     );
 
@@ -580,9 +622,9 @@ async function admitVaultDocument(
       return {
         ok: false, status: 409, code: 'VERSION_CONTENT_CONFLICT',
         message:
-          `A different document is already recorded at code "${args.documentCode}" ` +
-          `version "${args.version ?? '1.0'}" for this program. Nothing was changed. ` +
-          'Upload it under a new version rather than replacing the existing record.',
+          `A different document is already recorded at code "${documentCode}" ` +
+          `version "${version}" for this program. Nothing was changed. ` +
+          'Add it as a new version of that document instead of replacing the recorded one.',
       };
     }
 
@@ -633,10 +675,10 @@ async function admitVaultDocument(
       userAgent: args.userAgent,
       details: {
         programId: args.programId,
-        documentCode: args.documentCode,
+        documentCode,
         documentTitle: args.documentTitle,
-        documentType: args.documentType,
-        version: args.version ?? '1.0',
+        documentType: doc.document_type,
+        version,
         fileName: doc.file_name ?? fileName,
         fileSize,
         mimeType,
@@ -644,6 +686,9 @@ async function admitVaultDocument(
         classification: doc.classification,
         storageKey: doc.s3_key,
         ...(recorded ? { changes } : {}),
+        ...(args.dataRoomSourceId != null ? { dataRoomSource: { sourceId: args.dataRoomSourceId } } : {}),
+        // A check-in names what it succeeds; its filing is the head's (above).
+        ...(checkIn ? { lineage: { supersedes: checkIn.head.id, predecessorVersion: checkIn.head.version, filingKept: true } } : {}),
         /* WHERE the document was filed and WHO/WHAT decided — the audit
            trail records the placement decision, not merely that an upload
            happened. A 'suggested' placement is attributed to the classifier
@@ -671,8 +716,8 @@ async function admitVaultDocument(
 
     logger.info('Vault document ingested', {
       id: doc.id,
-      code: args.documentCode,
-      type: args.documentType,
+      code: documentCode,
+      type: doc.document_type,
       size: fileSize,
       hasText: !!extractedText,
     });
@@ -682,10 +727,10 @@ async function admitVaultDocument(
       document: {
         id: doc.id,
         programId: args.programId,
-        documentCode: args.documentCode,
+        documentCode,
         documentTitle: doc.document_title,
         documentType: doc.document_type,
-        version: args.version ?? '1.0',
+        version,
         fileName: doc.file_name ?? fileName,
         fileSize,
         mimeType,

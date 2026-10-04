@@ -1,0 +1,493 @@
+# GREEN, the same two suites with their stub servers answering in the width asked for (as TEI does), 2026-10-01T16:28:04Z: TEST_DATABASE_URL=... APP_DATABASE_URL=app_service RLS_ENFORCE=on npx vitest run --config vitest.db.config.ts tests/db/vault-passage-search.dbtest.ts tests/db/document-catalog-recall.dbtest.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T16:28:07.313Z","pid":14233,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T16:28:07.315Z","pid":14233,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T16:28:07.315Z","pid":14233,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/document-catalog-recall.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T16:28:07.406Z', poolSize: 1 }
+
+stdout | tests/db/document-catalog-recall.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/document-catalog-recall.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/document-catalog-recall.dbtest.ts > memory ingestion writes embedded entries > ingestProjectDocument leaves NO entry invisible to semantic recall
+{
+  "timestamp": "2026-10-01T16:28:08.560Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] No providers available — falling back to demo mode. Set ANTHROPIC_API_KEY in .env to enable live AI.",
+  "context": {}
+}
+
+stdout | tests/db/document-catalog-recall.dbtest.ts > memory ingestion writes embedded entries > ingestProjectDocument leaves NO entry invisible to semantic recall
+✅ Enhanced Embedding Service initialized
+
+stdout | tests/db/document-catalog-recall.dbtest.ts > memory ingestion writes embedded entries > ingestProjectDocument leaves NO entry invisible to semantic recall
+[AI Gateway Audit] ✓ local/BAAI/bge-m3 task=embedding tokens=1 39ms org=11 user=- caller=embedding-provider req=19fa320a-a18e-423b-9a27-161b7147f385
+
+ ✓ tests/db/document-catalog-recall.dbtest.ts > memory ingestion writes embedded entries > ingestProjectDocument leaves NO entry invisible to semantic recall 803ms
+{"level":40,"time":"2026-10-01T16:28:08.670Z","pid":14233,"hostname":"vm","context":{"filename":"tox-77a.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+(node:14233) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/db/document-catalog-recall.dbtest.ts > semantic search over the catalog > a cataloged document is embedded and findable; uncataloged ones are counted, not hidden
+{
+  "timestamp": "2026-10-01T16:28:08.779Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 183,
+    "wordCount": 21,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/document-catalog-recall.dbtest.ts > semantic search over the catalog > a cataloged document is embedded and findable; uncataloged ones are counted, not hidden
+[database] Database connection successful { timestamp: '2026-10-01T16:28:08.875Z', poolSize: 2 }
+
+stdout | tests/db/document-catalog-recall.dbtest.ts > semantic search over the catalog > a cataloged document is embedded and findable; uncataloged ones are counted, not hidden
+[AI Gateway Audit] ✓ local/BAAI/bge-m3 task=embedding tokens=1 5ms org=11 user=- caller=embedding-provider req=803261c6-82bb-44c9-a9e4-0627b978f500
+
+stdout | tests/db/document-catalog-recall.dbtest.ts > semantic search over the catalog > a cataloged document is embedded and findable; uncataloged ones are counted, not hidden
+{
+  "timestamp": "2026-10-01T16:28:08.916Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "4848a69c-812f-4cd7-8d3b-d388261b5f9e",
+    "code": "DBTEST-RECALL-DOC-TOX",
+    "type": "OTHER",
+    "size": 183,
+    "hasText": true
+  }
+}
+
+stdout | tests/db/document-catalog-recall.dbtest.ts > semantic search over the catalog > a cataloged document is embedded and findable; uncataloged ones are counted, not hidden
+[AI Gateway Audit] ✓ local/BAAI/bge-m3 task=embedding tokens=1 6ms org=11 user=- caller=embedding-provider req=1b02eab7-25b1-4bbb-9021-7e492d016cea
+
+{"level":40,"time":"2026-10-01T16:28:13.272Z","pid":14233,"hostname":"vm","context":{"filename":"coa-12.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/document-catalog-recall.dbtest.ts > semantic search over the catalog > a cataloged document is embedded and findable; uncataloged ones are counted, not hidden
+{
+  "timestamp": "2026-10-01T16:28:13.273Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 47,
+    "wordCount": 7,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/document-catalog-recall.dbtest.ts > semantic search over the catalog > a cataloged document is embedded and findable; uncataloged ones are counted, not hidden
+[AI Gateway Audit] ✓ local/BAAI/bge-m3 task=embedding tokens=1 4ms org=11 user=- caller=embedding-provider req=a646e2a9-9e69-4c31-9126-7b09b8bf01c1
+
+stdout | tests/db/document-catalog-recall.dbtest.ts > semantic search over the catalog > a cataloged document is embedded and findable; uncataloged ones are counted, not hidden
+{
+  "timestamp": "2026-10-01T16:28:13.311Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "130fb5fc-acc1-4ac4-9af7-a140a36e6350",
+    "code": "DBTEST-RECALL-DOC-COA",
+    "type": "OTHER",
+    "size": 47,
+    "hasText": true
+  }
+}
+
+stdout | tests/db/document-catalog-recall.dbtest.ts > semantic search over the catalog > a cataloged document is embedded and findable; uncataloged ones are counted, not hidden
+[AI Gateway Audit] ✓ local/BAAI/bge-m3 task=embedding tokens=1 6ms org=11 user=- caller=embedding-provider req=371aef80-ae8b-4a16-8e4f-24ebfc48f48e
+
+ ✓ tests/db/document-catalog-recall.dbtest.ts > semantic search over the catalog > a cataloged document is embedded and findable; uncataloged ones are counted, not hidden 4706ms
+stdout | tests/db/document-catalog-recall.dbtest.ts > semantic search over the catalog > an embedding-provider failure is said as unavailability — never an empty result
+[AI Gateway Audit] ✗ local/BAAI/bge-m3 task=embedding tokens=0 1354ms org=11 user=- caller=embedding-provider req=2f8d3cf2-6600-4c9a-a46e-5932f6e3f66b
+
+ ✓ tests/db/document-catalog-recall.dbtest.ts > semantic search over the catalog > an embedding-provider failure is said as unavailability — never an empty result 1361ms
+{"level":40,"time":"2026-10-01T16:28:14.781Z","pid":14233,"hostname":"vm","context":{"filename":"dissolution-44b.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/document-catalog-recall.dbtest.ts > vault passage retrieval — the reader finally has a writer > an ingested document is chunked, embedded, ledgered, and retrievable through ragRouter
+{
+  "timestamp": "2026-10-01T16:28:14.783Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 15419,
+    "wordCount": 2592,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/document-catalog-recall.dbtest.ts > vault passage retrieval — the reader finally has a writer > an ingested document is chunked, embedded, ledgered, and retrievable through ragRouter
+[AI Gateway Audit] ✓ local/BAAI/bge-m3 task=embedding tokens=6 6ms org=11 user=- caller=embedding-provider req=d83278fb-a513-4be1-bfc4-5f5989b3564c
+
+stdout | tests/db/document-catalog-recall.dbtest.ts > vault passage retrieval — the reader finally has a writer > an ingested document is chunked, embedded, ledgered, and retrievable through ragRouter
+{
+  "timestamp": "2026-10-01T16:28:14.836Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "94f58d85-0c4f-4b21-bc63-7c7c6fbd76f3",
+    "code": "DBTEST-RECALL-DOC-DISSO",
+    "type": "OTHER",
+    "size": 15420,
+    "hasText": true
+  }
+}
+
+stdout | tests/db/document-catalog-recall.dbtest.ts > vault passage retrieval — the reader finally has a writer > an ingested document is chunked, embedded, ledgered, and retrievable through ragRouter
+⚠️ OpenAI API key not configured
+⚠️ Anthropic API key not configured
+✅ Advanced RAG Pipeline initialized
+
+stdout | tests/db/document-catalog-recall.dbtest.ts > vault passage retrieval — the reader finally has a writer > an ingested document is chunked, embedded, ledgered, and retrievable through ragRouter
+[AI Gateway Audit] ✓ local/BAAI/bge-m3 task=embedding tokens=1 5ms org=11 user=- caller=embedding-provider req=edf16b6c-53dd-4b58-949e-fe04324bfb9c
+
+ ✓ tests/db/document-catalog-recall.dbtest.ts > chat-upload discovery > lists the current upload with its reopenable file_id and excludes the superseded one 64ms
+ ✓ tests/db/document-catalog-recall.dbtest.ts > vault passage retrieval — the reader finally has a writer > an ingested document is chunked, embedded, ledgered, and retrievable through ragRouter 99ms
+{"level":40,"time":"2026-10-01T16:28:14.884Z","pid":14233,"hostname":"vm","context":{"filename":"poison.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/document-catalog-recall.dbtest.ts > vault passage retrieval — the reader finally has a writer > an embedding failure leaves ZERO chunks and a chunk_failed ledger row — never a partial index
+{
+  "timestamp": "2026-10-01T16:28:14.885Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 5256,
+    "wordCount": 857,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/document-catalog-recall.dbtest.ts > vault passage retrieval — the reader finally has a writer > an embedding failure leaves ZERO chunks and a chunk_failed ledger row — never a partial index
+[AI Gateway Audit] ✗ local/BAAI/bge-m3 task=embedding tokens=0 1347ms org=11 user=- caller=embedding-provider req=bd7ab781-edb0-41cf-88ba-3400a7d02234
+
+stdout | tests/db/document-catalog-recall.dbtest.ts > vault passage retrieval — the reader finally has a writer > an embedding failure leaves ZERO chunks and a chunk_failed ledger row — never a partial index
+[AI Gateway Audit] ✗ local/BAAI/bge-m3 task=embedding tokens=0 1388ms org=11 user=- caller=embedding-provider req=2a473a96-c182-4f17-9cf9-e2c6e0348de1
+
+stdout | tests/db/document-catalog-recall.dbtest.ts > vault passage retrieval — the reader finally has a writer > an embedding failure leaves ZERO chunks and a chunk_failed ledger row — never a partial index
+[AI Gateway Audit] ✗ local/BAAI/bge-m3 task=embedding tokens=0 1416ms org=11 user=- caller=embedding-provider req=441987dc-2cc8-4052-a179-60c063a786b0
+
+stderr | tests/db/document-catalog-recall.dbtest.ts > vault passage retrieval — the reader finally has a writer > an embedding failure leaves ZERO chunks and a chunk_failed ledger row — never a partial index
+{
+  "timestamp": "2026-10-01T16:28:22.077Z",
+  "level": "warn",
+  "message": "[document-chunking] Vault chunking failed — recorded on the catalog ledger",
+  "context": {
+    "documentId": "2a630855-98e6-422d-8091-7837c910e99b",
+    "error": "Embedding failed: 500 stub: embedding refused"
+  }
+}
+
+stdout | tests/db/document-catalog-recall.dbtest.ts > vault passage retrieval — the reader finally has a writer > an embedding failure leaves ZERO chunks and a chunk_failed ledger row — never a partial index
+{
+  "timestamp": "2026-10-01T16:28:22.078Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "2a630855-98e6-422d-8091-7837c910e99b",
+    "code": "DBTEST-RECALL-DOC-POISON",
+    "type": "OTHER",
+    "size": 5257,
+    "hasText": true
+  }
+}
+
+ ✓ tests/db/document-catalog-recall.dbtest.ts > vault passage retrieval — the reader finally has a writer > an embedding failure leaves ZERO chunks and a chunk_failed ledger row — never a partial index 7210ms
+{"level":40,"time":"2026-10-01T16:28:22.091Z","pid":14233,"hostname":"vm","context":{"filename":"legacy-lr9.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/document-catalog-recall.dbtest.ts > backfilling documents ingested before chunking existed > indexes the legacy document the sweep finds, and says what it could not index
+{
+  "timestamp": "2026-10-01T16:28:22.092Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 2399,
+    "wordCount": 320,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/document-catalog-recall.dbtest.ts > backfilling documents ingested before chunking existed > indexes the legacy document the sweep finds, and says what it could not index
+{
+  "timestamp": "2026-10-01T16:28:22.107Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "c9159a0f-52a9-49ac-8d73-e1bf5058b6cf",
+    "code": "DBTEST-RECALL-DOC-LEGACY",
+    "type": "OTHER",
+    "size": 2400,
+    "hasText": true
+  }
+}
+
+stdout | tests/db/document-catalog-recall.dbtest.ts > backfilling documents ingested before chunking existed > indexes the legacy document the sweep finds, and says what it could not index
+{
+  "timestamp": "2026-10-01T16:28:22.125Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 11,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": true
+  }
+}
+
+stdout | tests/db/document-catalog-recall.dbtest.ts > backfilling documents ingested before chunking existed > indexes the legacy document the sweep finds, and says what it could not index
+[AI Gateway Audit] ✓ local/BAAI/bge-m3 task=embedding tokens=1 3ms org=11 user=- caller=embedding-provider req=d9809481-db6c-4f24-9c7f-486c72ba16a0
+
+stdout | tests/db/document-catalog-recall.dbtest.ts > backfilling documents ingested before chunking existed > indexes the legacy document the sweep finds, and says what it could not index
+{
+  "timestamp": "2026-10-01T16:28:22.149Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 11,
+    "examined": 1,
+    "indexed": 1,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | tests/db/document-catalog-recall.dbtest.ts > backfilling documents ingested before chunking existed > indexes the legacy document the sweep finds, and says what it could not index
+{
+  "timestamp": "2026-10-01T16:28:22.154Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 11,
+    "examined": 0,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 0,
+    "dryRun": false
+  }
+}
+
+stdout | tests/db/document-catalog-recall.dbtest.ts > backfilling documents ingested before chunking existed > indexes the legacy document the sweep finds, and says what it could not index
+[AI Gateway Audit] ✗ local/BAAI/bge-m3 task=embedding tokens=0 1284ms org=11 user=- caller=embedding-provider req=dd3ce2a2-638a-4205-b12a-29db40b70e7b
+
+stdout | tests/db/document-catalog-recall.dbtest.ts > backfilling documents ingested before chunking existed > indexes the legacy document the sweep finds, and says what it could not index
+[AI Gateway Audit] ✗ local/BAAI/bge-m3 task=embedding tokens=0 1255ms org=11 user=- caller=embedding-provider req=bb6f3b75-673c-4201-abe1-85fe03a1b9c4
+
+stdout | tests/db/document-catalog-recall.dbtest.ts > backfilling documents ingested before chunking existed > indexes the legacy document the sweep finds, and says what it could not index
+[AI Gateway Audit] ✗ local/BAAI/bge-m3 task=embedding tokens=0 1480ms org=11 user=- caller=embedding-provider req=13adbdc5-2c46-488b-91e3-e48f6ef5fcaa
+
+stdout | tests/db/document-catalog-recall.dbtest.ts > backfilling documents ingested before chunking existed > indexes the legacy document the sweep finds, and says what it could not index
+{
+  "timestamp": "2026-10-01T16:28:29.208Z",
+  "level": "info",
+  "message": "[document-chunking-backfill] Vault chunk backfill run complete",
+  "context": {
+    "organizationId": 11,
+    "examined": 1,
+    "indexed": 0,
+    "skipped": 0,
+    "failed": 1,
+    "dryRun": false
+  }
+}
+
+ ✓ tests/db/document-catalog-recall.dbtest.ts > backfilling documents ingested before chunking existed > indexes the legacy document the sweep finds, and says what it could not index 7125ms
+{"level":40,"time":"2026-10-01T16:28:29.282Z","pid":14233,"hostname":"vm","context":{"filename":"coa-batch-23-104.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/document-catalog-recall.dbtest.ts > filing a chat upload into the vault > performs the same governed admission the Vault surface does, and the file becomes catalogable
+{
+  "timestamp": "2026-10-01T16:28:29.284Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 87,
+    "wordCount": 12,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/document-catalog-recall.dbtest.ts > filing a chat upload into the vault > performs the same governed admission the Vault surface does, and the file becomes catalogable
+[AI Gateway Audit] ✓ local/BAAI/bge-m3 task=embedding tokens=1 3ms org=11 user=- caller=embedding-provider req=5490c9ef-33b7-4c43-b9ee-3384dd2469b8
+
+stdout | tests/db/document-catalog-recall.dbtest.ts > filing a chat upload into the vault > performs the same governed admission the Vault surface does, and the file becomes catalogable
+{
+  "timestamp": "2026-10-01T16:28:29.328Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "deef0fc7-1e8b-466c-8317-c7052f9159e2",
+    "code": "coa-batch-23-104",
+    "type": "REPORT",
+    "size": 87,
+    "hasText": true
+  }
+}
+
+ ✓ tests/db/document-catalog-recall.dbtest.ts > filing a chat upload into the vault > performs the same governed admission the Vault surface does, and the file becomes catalogable 180ms
+{"level":30,"time":"2026-10-01T16:28:31.149Z","pid":14518,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T16:28:31.158Z","pid":14518,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T16:28:31.158Z","pid":14518,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/vault-passage-search.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T16:28:31.215Z', poolSize: 1 }
+
+stderr | tests/db/vault-passage-search.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/vault-passage-search.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/vault-passage-search.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T16:28:31.328Z', poolSize: 2 }
+
+{"level":40,"time":"2026-10-01T16:28:31.394Z","pid":14518,"hostname":"vm","context":{"filename":"DBTEST-PASSAGE-DOC-TOX.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+(node:14518) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+stdout | tests/db/vault-passage-search.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:28:31.422Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 342,
+    "wordCount": 49,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-passage-search.dbtest.ts
+✅ Enhanced Embedding Service initialized
+
+stdout | tests/db/vault-passage-search.dbtest.ts
+[AI Gateway Audit] ✓ local/BAAI/bge-m3 task=embedding tokens=0 28ms org=16 user=- caller=embedding-provider req=fa0fa64b-17e5-4a26-bd41-9d9dcd4d280f
+
+stdout | tests/db/vault-passage-search.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:28:31.624Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "ab22ffc6-72e0-4bef-8a66-4660e1c66fab",
+    "code": "DBTEST-PASSAGE-DOC-TOX",
+    "type": "REPORT",
+    "size": 342,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T16:28:31.638Z","pid":14518,"hostname":"vm","context":{"filename":"DBTEST-PASSAGE-DOC-STAB.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-passage-search.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:28:31.638Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 326,
+    "wordCount": 47,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-passage-search.dbtest.ts
+[AI Gateway Audit] ✓ local/BAAI/bge-m3 task=embedding tokens=0 5ms org=16 user=- caller=embedding-provider req=6070d093-b5c7-4f6b-8bd1-dbf40f81f23a
+
+stdout | tests/db/vault-passage-search.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:28:31.680Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "c6460faf-3346-47fa-baea-622596d22191",
+    "code": "DBTEST-PASSAGE-DOC-STAB",
+    "type": "REPORT",
+    "size": 326,
+    "hasText": true
+  }
+}
+
+{"level":40,"time":"2026-10-01T16:28:31.688Z","pid":14518,"hostname":"vm","context":{"filename":"DBTEST-PASSAGE-DOC-OTHER.txt","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-passage-search.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:28:31.690Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 342,
+    "wordCount": 49,
+    "pagesMapped": 0
+  }
+}
+
+stdout | tests/db/vault-passage-search.dbtest.ts
+[AI Gateway Audit] ✓ local/BAAI/bge-m3 task=embedding tokens=0 5ms org=17 user=- caller=embedding-provider req=9ce8b51a-aae0-4393-91fb-84d0cfc7d28b
+
+stdout | tests/db/vault-passage-search.dbtest.ts
+{
+  "timestamp": "2026-10-01T16:28:31.729Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "9d30276a-59ce-4460-ad7b-a1e4c387f8fd",
+    "code": "DBTEST-PASSAGE-DOC-OTHER",
+    "type": "REPORT",
+    "size": 342,
+    "hasText": true
+  }
+}
+
+ ✓ tests/db/vault-passage-search.dbtest.ts > the chunk corpus is written by ingest > chunked and embedded both uploads, and the catalog ledger says so 16ms
+stdout | tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > returns the passage that answers the question, from the right document
+⚠️ OpenAI API key not configured
+⚠️ Anthropic API key not configured
+✅ Advanced RAG Pipeline initialized
+
+stdout | tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > returns the passage that answers the question, from the right document
+[AI Gateway Audit] ✓ local/BAAI/bge-m3 task=embedding tokens=0 7ms org=16 user=- caller=embedding-provider req=883dde1e-3fb8-4b78-b30d-aacbc73979ab
+
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > returns the passage that answers the question, from the right document 859ms
+stdout | tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > answers a tox question from the tox document
+[AI Gateway Audit] ✓ local/BAAI/bge-m3 task=embedding tokens=0 4ms org=16 user=- caller=embedding-provider req=e2d06376-cc5b-4a58-84d9-1221c42cb48e
+
+stdout | tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > states the coverage it searched, read from the chunking ledger
+[AI Gateway Audit] ✓ local/BAAI/bge-m3 task=embedding tokens=0 3ms org=16 user=- caller=embedding-provider req=2111bab8-88f9-4356-a428-a3c304b4cd3a
+
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > answers a tox question from the tox document 25ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > never returns another organization's document, even for identical text 16ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > states the coverage it searched, read from the chunking ledger 21ms
+ ✓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > REFUSES without an organization identity rather than reporting no matches 1ms
+{"level":40,"time":"2026-10-01T16:28:32.902Z","pid":14518,"hostname":"vm","context":{"filename":"three-sections.pdf","reason":"clamav_not_configured"},"msg":"[upload-safety] Virus scan bypassed (non-production)"}
+stdout | tests/db/vault-passage-search.dbtest.ts > a retrieved passage can be cited > carries a real page number, derived from the PDF and not from arithmetic
+{
+  "timestamp": "2026-10-01T16:28:33.175Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault ingest text extracted",
+  "context": {
+    "chars": 10813,
+    "wordCount": 1851,
+    "pagesMapped": 3
+  }
+}
+
+stdout | tests/db/vault-passage-search.dbtest.ts > a retrieved passage can be cited > carries a real page number, derived from the PDF and not from arithmetic
+[AI Gateway Audit] ✓ local/BAAI/bge-m3 task=embedding tokens=0 6ms org=16 user=- caller=embedding-provider req=a840ab75-4928-42d4-bd65-92f197704003
+
+stdout | tests/db/vault-passage-search.dbtest.ts > a retrieved passage can be cited > carries a real page number, derived from the PDF and not from arithmetic
+{
+  "timestamp": "2026-10-01T16:28:33.232Z",
+  "level": "info",
+  "message": "[vault-ingest] Vault document ingested",
+  "context": {
+    "id": "77657385-d05b-4ccb-93e7-8e53590a36a0",
+    "code": "DBTEST-PASSAGE-DOC-PAGED",
+    "type": "REPORT",
+    "size": 4751,
+    "hasText": true
+  }
+}
+
+ ✓ tests/db/vault-passage-search.dbtest.ts > a retrieved passage can be cited > carries a real page number, derived from the PDF and not from arithmetic 566ms
+
+ Test Files  2 passed (2)
+      Tests  15 passed (15)
+   Start at  16:28:04
+   Duration  28.69s (transform 5.73s, setup 128ms, import 429ms, tests 27.62s, environment 0ms)
+

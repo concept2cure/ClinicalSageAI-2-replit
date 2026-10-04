@@ -95,7 +95,14 @@ vi.mock('../../db', () => ({
     }),
   },
   getPool: () => null,
-  pool: null,
+  // The program check (programInOrganization) reads on the pool: the caller
+  // owns every program in this suite. Anything else on the pool is unexpected.
+  pool: {
+    query: async (sql: string, params: unknown[]) => {
+      if (!/FROM regulatory_programs/.test(sql)) throw new Error(`unexpected pool query: ${sql}`);
+      return { rows: [{ id: params[0] }] };
+    },
+  },
 }));
 
 // Service mocks — only enough surface to keep handlers reaching audit calls.
@@ -256,7 +263,7 @@ describe('Audit-trail contract — every governed mutation logs one row', () => 
       '/api/evidence-sufficiency',
     );
     await request(app)
-      .post('/api/evidence-sufficiency/programs/p-1/assess')
+      .post('/api/evidence-sufficiency/programs/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1/assess')
       .send({ pathway: '510K', profile: { isSoftware: true } });
     expect(actionsFromAudit()).toContain('evidence_sufficiency.assess');
   });
@@ -264,7 +271,7 @@ describe('Audit-trail contract — every governed mutation logs one row', () => 
   it('gspr.mapping.upsert on POST /programs/:p/mappings', async () => {
     const app = await bootRouter('../../routes/gspr-postmarket', '/api/gspr');
     await request(app)
-      .post('/api/gspr/programs/p-1/mappings')
+      .post('/api/gspr/programs/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1/mappings')
       .send({ requirementId: 'r-1', applicability: 'applicable' });
     expect(actionsFromAudit()).toContain('gspr.mapping.upsert');
   });

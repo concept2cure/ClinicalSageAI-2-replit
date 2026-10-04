@@ -1,0 +1,154 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | tests/routes/concept2cure.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.10(e) audit-trail invariant > CRITICAL: rolls the signature back and 500s when the audit write throws
+[esignature] sign transaction failed: audit sink down
+
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.10(e) audit-trail invariant > CRITICAL: rolls the signature back and 500s when the audit write throws 104ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.10(e) audit-trail invariant > signs successfully (201) when password verifies and the audit write succeeds 15ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.10(e) audit-trail invariant > writes the audit row on the SAME client as the signature (atomicity) 6ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.10(e) audit-trail invariant > §11.50: ignores a client-supplied signerTitle and persists the server-resolved one 5ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — input + authority guards > rejects a reserved/unknown signatureType (allowlist) 6ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — input + authority guards > accepts an allowed signatureType (witness) 4ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — input + authority guards > 403s when the signer role lacks signing authority (§11.10(g)) 2ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — input + authority guards > 401s when the password fails re-verification (§11.200) 7ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — input + authority guards > fails closed (400) requiring mfaToken when MFA is enabled but none supplied 5ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > refuses a signature that declares no meaning (400 SIGNATURE_MEANING_REQUIRED) before re-verifying the signer 2ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > refuses an empty string as a meaning with the same code 4ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > refuses null as a meaning with the same code 2ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > refuses a number as a meaning with the same code 2ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > refuses an object as a meaning with the same code 5ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > refuses free text outside the vocabulary (400 SIGNATURE_MEANING_UNKNOWN), names what is accepted, and checks no password 2ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > refuses a near-miss spelling rather than normalising it (Approval is not approval) 9ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > signs with the vocabulary meaning approval and persists exactly that meaning 4ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > signs with the vocabulary meaning review and persists exactly that meaning 11ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > signs with the vocabulary meaning APPROVED and persists exactly that meaning 8ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50(a)(3) signature meaning > signs with the vocabulary meaning AUTHORSHIP and persists exactly that meaning 8ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/sign — §11.50 signer attribution > REGRESSION: refuses to sign when the signer is not attributable in the org 15ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/verify-password — whether a second factor is enrolled > reports an enrolled second factor once the password verified 9ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/verify-password — whether a second factor is enrolled > reports none when none is enrolled 8ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/verify-password — whether a second factor is enrolled > says nothing about enrolment for a wrong password 11ms
+ ✓ server/routes/__tests__/esignature-sign.test.ts > POST /api/esignature/verify-password — whether a second factor is enrolled > leaves the answer out, not false, when enrolment cannot be read 12ms
+stdout | server/services/ana-ri/__tests__/command-rbac.test.ts
+{
+  "timestamp": "2026-10-01T03:16:04.041Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T03:16:04.043Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/command-rbac.test.ts
+{
+  "timestamp": "2026-10-01T03:16:04.043Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a signature states its meaning > refuses a row whose meaning is absent, before any query (SIGNATURE_MEANING_REQUIRED) 10ms
+ ✓ server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a signature states its meaning > refuses a row whose meaning is null, before any query (SIGNATURE_MEANING_REQUIRED) 1ms
+ ✓ server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a signature states its meaning > refuses a row whose meaning is empty, before any query (SIGNATURE_MEANING_REQUIRED) 1ms
+ ✓ server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a signature states its meaning > refuses a meaning outside the closed vocabulary, before any query (SIGNATURE_MEANING_UNKNOWN) 1ms
+ ✓ server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a signature states its meaning > writes a vocabulary meaning (approval) verbatim into signature_meaning 26ms
+ ✓ server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a signature states its meaning > writes a vocabulary meaning (review) verbatim into signature_meaning 1ms
+ ✓ server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a signature states its meaning > writes a vocabulary meaning (release) verbatim into signature_meaning 0ms
+ ✓ server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a signature states its meaning > writes a vocabulary meaning (APPROVED) verbatim into signature_meaning 0ms
+ ✓ server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a signature states its meaning > writes a vocabulary meaning (RESPONSIBILITY) verbatim into signature_meaning 1ms
+ ✓ server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a governed revocation > may carry no meaning: it withdraws a signature, it does not assert one 1ms
+ ✓ server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a governed revocation > is held to the vocabulary when it does carry a meaning 1ms
+ ✓ server/services/part11/__tests__/electronic-signature-meaning-required.test.ts > persistElectronicSignature: a governed revocation > the exemption is the revocation type only: another type with no meaning is refused 0ms
+stdout | server/services/ana-ri/__tests__/command-rbac.test.ts
+Loaded 0 academic documents
+
+stdout | tests/routes/concept2cure.test.ts > Concept2Cure API > should create an artifact for a project
+[GenerationGuard] artifact_created | source=document_builder project=1 artifact=artifact_1790824567726_f424aa68fd68 trace=gen_1790824567731_5gluxp
+
+stdout | tests/routes/concept2cure.test.ts > Concept2Cure API > should persist template lineage when creating artifact from template
+[GenerationGuard] artifact_created | source=document_builder project=1 artifact=artifact_1790824567737_e2bec48dc61b trace=gen_1790824567738_997gd5
+
+stderr | tests/routes/concept2cure.test.ts > Concept2Cure API > should create a signature for an artifact version — through the one signing substrate
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ tests/routes/concept2cure.test.ts > Concept2Cure API > should create a project with valid payload 504ms
+ ✓ tests/routes/concept2cure.test.ts > Concept2Cure API > seeds the blueprint’s milestones through the ledgered seeder, as the project’s creator 8ms
+ ✓ tests/routes/concept2cure.test.ts > Concept2Cure API > should create a conversation for a project 3ms
+ ✓ tests/routes/concept2cure.test.ts > Concept2Cure API > should create an artifact for a project 17ms
+ ✓ tests/routes/concept2cure.test.ts > Concept2Cure API > should persist template lineage when creating artifact from template 4ms
+ ✓ tests/routes/concept2cure.test.ts > Concept2Cure API > should reject AI template generation without projectId unless adhoc context is explicit 2ms
+ ✓ tests/routes/concept2cure.test.ts > Concept2Cure API > should return IND package templates when filtered by package 2ms
+ ✓ tests/routes/concept2cure.test.ts > Concept2Cure API > should allow AI template generation when adhoc context is explicit 4ms
+ ✓ tests/routes/concept2cure.test.ts > Concept2Cure API > should create a signature for an artifact version — through the one signing substrate 9ms
+ ✓ tests/routes/concept2cure.test.ts > Concept2Cure API > refuses a signature whose password does not verify — identity is checked at the moment of signing 1ms
+stderr | server/services/ana-ri/__tests__/command-rbac.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/command-rbac.test.ts
+{
+  "timestamp": "2026-10-01T03:16:08.466Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — fail-closed by construction > DENIES a dispatchable-looking command that carries no authorization metadata 2ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — fail-closed by construction > allows a read-only command without consulting RBAC 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — tenant tool policy applies to ALL commands > DENIES a non-MDX write that the tenant deny-list names 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — tenant tool policy applies to ALL commands > DENIES a READ the tenant deny-list names (deny outranks the degraded-read path) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — tenant tool policy applies to ALL commands > DENIES a command absent from a non-empty allow-list (whitelist actually constrains) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — tenant tool policy applies to ALL commands > ALLOWS a command that is on the allow-list, and when no policy is set 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES a mutation when the caller lacks the required role (viewer) 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > ALLOWS a mutation when the caller holds the required role 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > demands the manager tier for Part 11 record-altering commands 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES when the RBAC lookup throws (fail closed, never fail open) 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES a mutation with missing userId (identity must come from the verified principal) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES a mutation with missing organizationId (identity must come from the verified principal) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES a mutation with non-numeric userId (identity must come from the verified principal) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — role enforcement on mutations > DENIES a mutation with zero organizationId (identity must come from the verified principal) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > REFUSES a viewer (RBAC_DENIED), naming the manager tier 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > REFUSES a member (RBAC_DENIED), naming the manager tier 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > ADMITS a manager 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > ADMITS a admin 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > REFUSES when the role lookup throws (fail closed) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > REFUSES without a provable identity, before any role lookup 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > a self-asserted ctx.userRole does not stand in for the RBAC lookup 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > stays a read: the tier is checked while governance is unresolved, and a manager is still admitted 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — audit.explain is limited to the audit-reader tier > leaves untiered reads open to every member without a role lookup 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — fail-closed governance > BLOCKS every mutation when tenant governance config could not be resolved 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — fail-closed governance > BLOCKS a Part 11 governed mutation when governance config is unresolved 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — fail-closed governance > keeps READ-ONLY commands available while governance is unresolved (documented degraded mode) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — GDPR data-subject carve-out > lets the central gate through so the handler can apply the self-service rule 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — GDPR data-subject carve-out > still demands provable identity for the GDPR commands 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorizeCommand — GDPR data-subject carve-out > blocks the erase mutation when governance is unresolved 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > isPrivacyAdmin — DB-sourced, fail closed > is true for manager+ in the organization 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > isPrivacyAdmin — DB-sourced, fail closed > is true for a dedicated privacy role that has no hierarchy level 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > isPrivacyAdmin — DB-sourced, fail closed > is false for an ordinary member and never trusts ctx.userRole 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > isPrivacyAdmin — DB-sourced, fail closed > is false when the role lookup throws 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > isPrivacyAdmin — DB-sourced, fail closed > is false without a provable identity 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > classifies EVERY dispatchable command 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > has no authorization entry for a command that is not dispatchable 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > gives every mutation-capable command a role tier or an explicit handler carve-out 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > puts a role tier on a read only where the read returns the audit trail (audit.explain, manager) 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > marks every dispatchable Part 11 governed command as a manager-tier write 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > mirrors the Part 11 e-signature subset exactly 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > authorization registry — total coverage (anti-drift CI guard) > never marks a Part 11 governed command as read-only 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > launch scope > refuses a hidden-app command in production, read or write, whatever the role 1ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > launch scope > leaves in-scope commands to the normal checks 0ms
+ ✓ server/services/ana-ri/__tests__/command-rbac.test.ts > launch scope > with launch scope off (a development server), a hidden-app command reaches the normal checks 0ms
+
+ Test Files  4 passed (4)
+      Tests  91 passed (91)
+   Start at  03:15:58
+   Duration  11.30s (transform 12.29s, setup 1.01s, import 21.65s, tests 904ms, environment 0ms)
+

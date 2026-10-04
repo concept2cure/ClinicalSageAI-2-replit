@@ -929,37 +929,62 @@ router.get('/programs/:programId/scores', async (req: Request, res: Response) =>
   }
 });
 
+const SEVERITY_WEIGHTS: Record<string, number> = { critical: 25, high: 15, medium: 8, low: 3 };
+
+/**
+ * The findings that name a section, and the section's title. A finding's blast
+ * radius records the section TITLES it impacts (`artifactsImpacted` is their
+ * count), so a section is the unit a finding can be attributed to. Null title
+ * when the id is not a section the caller can read.
+ */
+async function findingsForSection(req: Request, orgId: number, sectionId: number) {
+  const [section] = await requestDb(req)
+    .select({ title: sections.title })
+    .from(sections)
+    .where(eq(sections.id, sectionId))
+    .limit(1);
+  const title = section?.title ?? null;
+  if (!title) return { title: null, impacting: [] as any[] };
+  const impacting = await store.query(orgId, 'finding', (f: any) =>
+    f.blastRadius?.sectionsImpacted?.includes(title)
+  );
+  return { title, impacting };
+}
+
+const severityWeight = (findings: any[]) =>
+  findings.reduce((sum: number, f: any) => sum + (SEVERITY_WEIGHTS[f.severity] || 5), 0);
+
+/* ── 2026-10-01: the artifact score was scored from the artifact's ID ─────────
+   It took every finding that impacted ANY artifact, kept the first
+   `3 + (artifactId % 4)` of them, and scored the artifact from those. So the
+   score of artifact 5 was the severity of whichever four findings happened to
+   be stored first, artifact 6 got five, and none of them had to touch it.
+   Now the artifact is resolved to the section it is (the unit findings record)
+   and scored from the findings that name it; an unresolvable id returns null
+   scores and says so. */
 router.get('/artifacts/:artifactId/scores', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const artifactId = parseInt(String(req.params.artifactId));
+    const { title, impacting } = await findingsForSection(req, orgId, artifactId);
 
-    const relevantFindings = await store.query(
-      orgId,
-      'finding',
-      (f: any) => f.blastRadius && f.blastRadius.artifactsImpacted > 0
-    );
-
-    let riskScore = 0;
-    let findingCount = 0;
-    const severityWeights: Record<string, number> = { critical: 25, high: 15, medium: 8, low: 3 };
-    const impactingFindings = relevantFindings.slice(
-      0,
-      Math.min(relevantFindings.length, 3 + (artifactId % 4))
-    );
-    for (const f of impactingFindings) {
-      riskScore += severityWeights[f.severity] || 5;
-      findingCount++;
+    if (!title) {
+      return res.json({
+        data: {
+          artifactId,
+          overallScore: null,
+          findingsImpacting: 0,
+          riskLevel: null,
+          engineBreakdown: null,
+          assessmentSource: 'no-data',
+        },
+      });
     }
-    const normalizedScore = Math.min(100, Math.max(0, 100 - riskScore));
 
-    // Derive the per-engine breakdown from the real impacting findings rather
-    // than fabricating it: higher score = lower aggregated severity.
+    const normalizedScore = Math.min(100, Math.max(0, 100 - severityWeight(impacting)));
     const engineBreakdown: Record<string, number> = {};
     for (const eng of ['agency_screen', 'reviewer_attack', 'audit_inspection'] as const) {
-      const weight = impactingFindings
-        .filter((f: any) => f.engine === eng)
-        .reduce((sum: number, f: any) => sum + (severityWeights[f.severity] || 5), 0);
+      const weight = severityWeight(impacting.filter((f: any) => f.engine === eng));
       engineBreakdown[eng] = Math.min(100, Math.max(0, 100 - weight));
     }
 
@@ -967,9 +992,10 @@ router.get('/artifacts/:artifactId/scores', async (req: Request, res: Response) 
       data: {
         artifactId,
         overallScore: normalizedScore,
-        findingsImpacting: findingCount,
+        findingsImpacting: impacting.length,
         riskLevel: normalizedScore > 70 ? 'low' : normalizedScore > 40 ? 'medium' : 'high',
         engineBreakdown,
+        assessmentSource: 'snowglobe-findings',
       },
     });
   } catch (err: any) {
@@ -985,32 +1011,12 @@ router.get('/dossier-nodes/:nodeId/scores', async (req: Request, res: Response) 
     // Resolve the node to a real section, then score it from the real findings
     // that impact it. Metrics that have no real basis are returned as null
     // rather than fabricated from the node id.
-    const [section] = await requestDb(req)
-      .select({ title: sections.title })
-      .from(sections)
-      .where(eq(sections.id, nodeId))
-      .limit(1);
-
-    const sectionTitle = section?.title ?? null;
+    const { title: sectionTitle, impacting } = await findingsForSection(req, orgId, nodeId);
     let overall: number | null = null;
     let reviewerRisk: number | null = null;
 
     if (sectionTitle) {
-      const severityWeights: Record<string, number> = {
-        critical: 25,
-        high: 15,
-        medium: 8,
-        low: 3,
-      };
-      const impacting = await store.query(
-        orgId,
-        'finding',
-        (f: any) => f.blastRadius?.sectionsImpacted?.includes(sectionTitle)
-      );
-      const weight = impacting.reduce(
-        (sum: number, f: any) => sum + (severityWeights[f.severity] || 5),
-        0
-      );
+      const weight = severityWeight(impacting);
       overall = Math.min(100, Math.max(0, 100 - weight));
       reviewerRisk = Math.max(0, Math.min(100, weight));
     }

@@ -172,3 +172,62 @@ export const CTD_SECTION_KEYS: (keyof CtdSection)[] = [
   'dependencies',
   'generationPrompt',
 ];
+
+// ── ICH E3 clinical study report ─────────────────────────────────────────────
+
+/**
+ * How strongly a statement in the E3 overlay is evidenced. Kept per statement
+ * so a reader — and AnA — can tell the guideline's text from the platform's
+ * practice.
+ *
+ * - `regulator-text`: wording confirmed on a regulator-hosted copy (FDA, EMA,
+ *   TGA, HHS) on the date in `checked`, with its URL;
+ * - `recall`: ICH E3 (Step 4, 1995) as known to the author. Its numbering and
+ *   headings have not changed since 1995, but the primary text could not be
+ *   fetched when this was written (fda.gov / ich.org refused by the
+ *   environment's egress policy on 2026-10-04), so a verbatim check is owed;
+ * - `platform-convention`: how this platform recommends doing it (for example
+ *   which CDISC dataset usually feeds a table). Not a regulatory requirement:
+ *   the SAP, define.xml and the sponsor's standards decide.
+ */
+export type E3Confidence = 'regulator-text' | 'recall' | 'platform-convention';
+
+export interface E3Basis {
+  /** Short citation ("ICH E3 §12.2.4", "21 CFR 314.50(f)(2)"). */
+  ref: string;
+  confidence: E3Confidence;
+  /** The regulator-hosted copy the wording was checked against. */
+  url?: string;
+  /** ISO date the wording was checked (regulator-text only). */
+  checked?: string;
+}
+
+/**
+ * Whether a section is expected in every CSR, only when the study produced
+ * its subject (a second batch, interim analyses, drug concentrations), or as
+ * the reviewing authority requires.
+ */
+export type E3Applicability = 'always' | 'when-applicable' | 'authority-dependent';
+
+/** One heading of an ICH E3 clinical study report, with what belongs under it. */
+export interface E3Section {
+  /** E3 number ("12.2.4", "16.1.9"). */
+  number: string;
+  /** E3 heading. */
+  title: string;
+  applies: E3Applicability;
+  /** What the section establishes and how a reviewer reads it. */
+  purpose?: string;
+  /** The content a complete section carries. */
+  contains?: string[];
+  /** Where that content usually comes from (platform convention unless a basis says otherwise). */
+  sources?: string[];
+  /** Display conventions: tables, listings, figures, placement. */
+  presentation?: string[];
+  /** Deficiencies a reviewer finds here. */
+  pitfalls?: string[];
+  /** Other E3 sections, or CTD codes, this section is read with. */
+  see?: string[];
+  /** Bases beyond the section's own E3 citation, which every section carries. */
+  basis?: E3Basis[];
+}

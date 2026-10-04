@@ -1,0 +1,132 @@
+# HEAD c6f2028b; server/routes/cortex-unified.ts unchanged
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/cortex-unified-tenant-context.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/cortex-unified-tenant-context.test.ts
+{
+  "timestamp": "2026-10-01T06:10:32.496Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/cortex-unified-tenant-context.test.ts
+{
+  "timestamp": "2026-10-01T06:10:35.623Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T06:10:35.632Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/cortex-unified-tenant-context.test.ts
+{
+  "timestamp": "2026-10-01T06:10:35.632Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/cortex-unified-tenant-context.test.ts
+Loaded 0 academic documents
+
+stdout | server/routes/__tests__/cortex-unified-tenant-context.test.ts
+✅ Unified Cortex Query API initialized
+
+stdout | server/routes/__tests__/cortex-unified-tenant-context.test.ts
+{
+  "timestamp": "2026-10-01T06:10:43.452Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /advisory (AI advisory)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/cortex-unified-tenant-context.test.ts
+{
+  "timestamp": "2026-10-01T06:10:43.452Z",
+  "level": "warn",
+  "message": "[cortex-unified] Cortex management routes require explicit initialization with database pool",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/cortex-unified-tenant-context.test.ts
+{
+  "timestamp": "2026-10-01T06:10:43.452Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /query (AI queries)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/cortex-unified-tenant-context.test.ts > /api/cortex tenant context is the session’s, never a header > never publishes a workspace taken from the x-client-workspace-id header
+{
+  "timestamp": "2026-10-01T06:10:43.668Z",
+  "level": "info",
+  "message": "[cortex-unified] Mounted: /ana (AnA 1.0 RI integration)",
+  "context": {}
+}
+
+ × server/routes/__tests__/cortex-unified-tenant-context.test.ts > /api/cortex tenant context is the session’s, never a header > keeps the session’s organisation uuid when the request names another tenant 56ms
+   → expected undefined to be '11111111-1111-4111-8111-111111111111' // Object.is equality
+ × server/routes/__tests__/cortex-unified-tenant-context.test.ts > /api/cortex tenant context is the session’s, never a header > never publishes a workspace taken from the x-client-workspace-id header 154ms
+   → expected '999' to be null
+ ✓ server/routes/__tests__/cortex-unified-tenant-context.test.ts > /api/cortex tenant context is the session’s, never a header > a session with no organisation uuid does not get one from the x-org-uuid header 7ms
+ ✓ server/routes/__tests__/cortex-unified-tenant-context.test.ts > /api/cortex tenant context is the session’s, never a header > the tenant-keyed query route refuses (403) a session with no tenant scope, header or not 13ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/cortex-unified-tenant-context.test.ts > /api/cortex tenant context is the session’s, never a header > keeps the session’s organisation uuid when the request names another tenant
+AssertionError: expected undefined to be '11111111-1111-4111-8111-111111111111' // Object.is equality
+
+- Expected:
+"11111111-1111-4111-8111-111111111111"
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/cortex-unified-tenant-context.test.ts:101:53
+     99|       .set('x-client-workspace-id', '999');
+    100|     expect(res.status).toBe(200);
+    101|     expect(res.body.tenantContext.organizationUuid).toBe(UUID_A);
+       |                                                     ^
+    102|     expect(res.body.tenantContext.organizationId).toBe(String(ORG_A));
+    103|     expect(res.body.tenantContext.userId).toBe(7);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/routes/__tests__/cortex-unified-tenant-context.test.ts > /api/cortex tenant context is the session’s, never a header > never publishes a workspace taken from the x-client-workspace-id header
+AssertionError: expected '999' to be null
+
+- Expected:
+null
+
++ Received:
+"999"
+
+ ❯ server/routes/__tests__/cortex-unified-tenant-context.test.ts:111:62
+    109|       .set('x-client-workspace-id', '999');
+    110|     expect(res.status).toBe(200);
+    111|     expect(res.body.tenantContext.clientWorkspaceId ?? null).toBeNull(…
+       |                                                              ^
+    112|     expect(JSON.stringify(res.body)).not.toContain('999');
+    113|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  06:10:26
+   Duration  17.49s (transform 11.49s, setup 228ms, import 530ms, tests 15.98s, environment 0ms)
+
+exit=1

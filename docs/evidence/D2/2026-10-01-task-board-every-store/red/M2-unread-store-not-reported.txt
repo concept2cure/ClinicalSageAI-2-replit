@@ -1,0 +1,4 @@
+ × tests/db/task-board-every-store.dbtest.ts > the task board, as the runtime role with RLS on > names a store it could not read and says it is partial, instead of showing less without a word 70ms
+   → expected { partial: false, unreadSources: [] } to match object { partial: true, …(1) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 5 passed (6)

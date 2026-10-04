@@ -69,9 +69,9 @@ afterAll(async () => {
 
 describe('enforceAuthorLineage', () => {
   it('is a no-op for empty content — records nothing, does not throw', async () => {
-    await expect(enforceAuthorLineage(exec, ORG, REF, '', ACTOR)).resolves.toBeUndefined();
-    await expect(enforceAuthorLineage(exec, ORG, REF, null, ACTOR)).resolves.toBeUndefined();
-    await expect(enforceAuthorLineage(exec, ORG, REF, undefined, ACTOR)).resolves.toBeUndefined();
+    await expect(enforceAuthorLineage(exec, ORG, REF, '', ACTOR)).resolves.toEqual({ clausesInAcceptedText: 0 });
+    await expect(enforceAuthorLineage(exec, ORG, REF, null, ACTOR)).resolves.toEqual({ clausesInAcceptedText: 0 });
+    await expect(enforceAuthorLineage(exec, ORG, REF, undefined, ACTOR)).resolves.toEqual({ clausesInAcceptedText: 0 });
     expect(await spanCount(REF.documentId)).toBe(0);
   });
 
@@ -79,7 +79,8 @@ describe('enforceAuthorLineage', () => {
     const ref = { documentTable: 'authoring_sections', documentId: 'sec-gate-2' };
     const content =
       'The primary endpoint was confirmed ORR. Secondary endpoints included PFS and OS.';
-    await expect(enforceAuthorLineage(exec, ORG, ref, content, ACTOR)).resolves.toBeUndefined();
+    // Nothing was accepted from a machine author, so no clause is in accepted text.
+    await expect(enforceAuthorLineage(exec, ORG, ref, content, ACTOR)).resolves.toEqual({ clausesInAcceptedText: 0 });
     const { rows } = await exec.query<{ n: string }>(
       `SELECT COUNT(*)::int AS n FROM document_span_lineage
         WHERE organization_id = $1 AND document_table = $2 AND document_id = $3

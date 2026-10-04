@@ -1,0 +1,436 @@
+# Red: fix round, server readers (IAM-26, DP-71 b, DP-72). Unfixed code at the working tree before the fix round, 2026-10-01T15:46:39Z
+# npx vitest run server/services/audit/__tests__/chain-head-on-demand.test.ts
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/audit/__tests__/chain-head-on-demand.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/audit/__tests__/chain-head-on-demand.test.ts
+{
+  "timestamp": "2026-10-01T15:46:43.339Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > GET /api/c2c/actions/verify-chain answers 409 and names the missing head (a member of organisation 7) 22ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > GET /audit-trail/seal-integrity reports the integrity not ok, with the anchor break 6ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > the licensing history reports the record store broken, not verified 5ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > the tenant verdict (ledger, export, compliance reports) is broken for the truncated organisation only 2ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > with an anchor bucket configured, a chain whose anchored head is gone is not reported ok > npm run ops:verify-audit-chain reports public.audit_logs broken and exits 1 2ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > GET /api/c2c/actions/verify-chain 4ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > GET /audit-trail/seal-integrity 4ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > the licensing history keeps the walk verdict and marks the head not verified 3ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > the tenant verdict 1ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > without an anchor bucket, every verdict says it is a walk only > npm run ops:verify-audit-chain 2ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > an anchor bucket that cannot be read is an error to an operator verifier, never a verdict > GET /api/c2c/actions/verify-chain does not answer ok (a member of organisation 7) 4ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > an anchor bucket that cannot be read is an error to an operator verifier, never a verdict > GET /api/c2c/actions/verify-chain does not answer ok (a platform administrator, estate-wide) 3ms
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > an anchor bucket that cannot be read is an error to an operator verifier, never a verdict > npm run ops:verify-audit-chain reports public.audit_logs unverifiable (exit 2), not ok 1ms
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > IAM-26: verify-chain gives a caller who is not a platform administrator their own organisation only > an administrator of organisation 8 gets organisation 8's verdict, and nothing of organisation 7 12ms
+   → expected 409 to be 200 // Object.is equality
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > IAM-26: verify-chain gives a caller who is not a platform administrator their own organisation only > a break the walk finds in another organisation's row is said to be there, not named 7ms
+   → expected { id: 'their-row', …(5) } to deeply equal { segment: 'legacy', …(2) }
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > IAM-26: verify-chain gives a caller who is not a platform administrator their own organisation only > a platform administrator still gets the estate-wide verdict, every organisation's break included 4ms
+   → expected undefined to be 'estate' // Object.is equality
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > no anchor bucket: the verdict is the walk only, and each reader says so > the ledger (meta.chain) 3ms
+   → expected undefined to match object { verified: false, …(1) }
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > no anchor bucket: the verdict is the walk only, and each reader says so > a document's history (meta.chain) 2ms
+   → expected undefined to match object { status: 'not_configured' }
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > no anchor bucket: the verdict is the walk only, and each reader says so > the export walk (turn-record and authoring exports) 1ms
+   → expected undefined to match object { status: 'not_configured' }
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > no anchor bucket: the verdict is the walk only, and each reader says so > the signed audit export's manifest 4ms
+   → expected { status: 'intact', …(4) } to match object { status: 'intact', …(1) }
+(4 matching properties omitted from actual)
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > no anchor bucket: the verdict is the walk only, and each reader says so > the integrity attestation's chain row 2ms
+   → expected 'Every chained row re-derives from its…' to match /head not verified against the anchor/
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > organisation 7's anchored head is gone: each reader says broken and where, never 'null' > the ledger (meta.chain) 2ms
+   → expected undefined to match object { status: 'broken' }
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > organisation 7's anchored head is gone: each reader says broken and where, never 'null' > the export walk 2ms
+   → expected undefined to deeply equal [ Array(1) ]
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > organisation 7's anchored head is gone: each reader says broken and where, never 'null' > the signed audit export's manifest 2ms
+   → expected { status: 'broken', …(4) } to match object { status: 'broken', …(1) }
+(4 matching properties omitted from actual)
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > organisation 7's anchored head is gone: each reader says broken and where, never 'null' > the integrity attestation's chain row 1ms
+   → expected 'null' not to be 'null' // Object.is equality
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > organisation 7's anchored head is gone: each reader says broken and where, never 'null' > organisation 8's readers name nothing of organisation 7 2ms
+   → expected { store: 'audit_logs', ok: true, …(3) } to match object { ok: true, head: { …(2) } }
+(4 matching properties omitted from actual)
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-72: an anchor that cannot be read leaves a tenant's own audit trail readable, and unverified > the tenant verdict is the walk, with the head unavailable and ok null (not ok, not broken) 2ms
+   → audit chain anchor anchors/audit-chain/2026/10/02/x.json is malformed: not JSON
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-72: an anchor that cannot be read leaves a tenant's own audit trail readable, and unverified > the ledger still returns its entries, and its verdict is unverified 2ms
+   → audit chain anchor anchors/audit-chain/2026/10/02/x.json is malformed: not JSON
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-72: an anchor that cannot be read leaves a tenant's own audit trail readable, and unverified > a document's history still returns its entries, unverified 1ms
+   → audit chain anchor anchors/audit-chain/2026/10/02/x.json is malformed: not JSON
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-72: an anchor that cannot be read leaves a tenant's own audit trail readable, and unverified > the export walk, the signed manifest and the attestation say not verified, with the reason 1ms
+   → expected { ok: null, …(1) } to match object { ok: null, …(1) }
+(1 matching property omitted from actual)
+ ✓ server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-72: an anchor that cannot be read leaves a tenant's own audit trail readable, and unverified > a walk that fails still fails: only the head step is caught 2ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 17 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/audit/__tests__/chain-head-on-demand.test.ts > IAM-26: verify-chain gives a caller who is not a platform administrator their own organisation only > an administrator of organisation 8 gets organisation 8's verdict, and nothing of organisation 7
+AssertionError: expected 409 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 409
+
+ ❯ server/services/audit/__tests__/chain-head-on-demand.test.ts:307:24
+    305|   it("an administrator of organisation 8 gets organisation 8's verdict…
+    306|     const res = await request(actionsApp(ORG_8_ADMIN)).get('/api/c2c/a…
+    307|     expect(res.status).toBe(200);
+       |                        ^
+    308|     expect(res.body).toMatchObject({ ok: true, scope: 'organization' }…
+    309|     expect(h.verifyAuditChain).toHaveBeenCalledTimes(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/17]⎯
+
+ FAIL  server/services/audit/__tests__/chain-head-on-demand.test.ts > IAM-26: verify-chain gives a caller who is not a platform administrator their own organisation only > a break the walk finds in another organisation's row is said to be there, not named
+AssertionError: expected { id: 'their-row', …(5) } to deeply equal { segment: 'legacy', …(2) }
+
+- Expected
++ Received
+
+  {
+-   "commitsTo": "another organization",
+-   "row": "another organization",
++   "commitsTo": {
++     "id": "their-prev",
++     "tenantId": 9,
++   },
++   "expected": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
++   "id": "their-row",
+    "segment": "legacy",
++   "stored": "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy",
++   "tenantId": 9,
+  }
+
+ ❯ server/services/audit/__tests__/chain-head-on-demand.test.ts:328:31
+    326|     const res = await request(actionsApp(ORG_8_ADMIN)).get('/api/c2c/a…
+    327|     expect(res.status).toBe(409);
+    328|     expect(res.body.brokenAt).toEqual({ segment: 'legacy', row: 'anoth…
+       |                               ^
+    329|     for (const secret of ['their-row', 'their-prev', 'x'.repeat(64), '…
+    330|       expect(JSON.stringify(res.body)).not.toContain(secret);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/17]⎯
+
+ FAIL  server/services/audit/__tests__/chain-head-on-demand.test.ts > IAM-26: verify-chain gives a caller who is not a platform administrator their own organisation only > a platform administrator still gets the estate-wide verdict, every organisation's break included
+AssertionError: expected undefined to be 'estate' // Object.is equality
+
+- Expected:
+"estate"
+
++ Received:
+undefined
+
+ ❯ server/services/audit/__tests__/chain-head-on-demand.test.ts:337:28
+    335|     const res = await request(actionsApp(PLATFORM_ADMIN)).get('/api/c2…
+    336|     expect(res.status).toBe(409);
+    337|     expect(res.body.scope).toBe('estate');
+       |                            ^
+    338|     expect(h.verifyAuditChain.mock.calls[0]).toHaveLength(1);
+    339|     expect(res.body.head.breaks.map((b: { organizationId: number }) =>…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/17]⎯
+
+ FAIL  server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > no anchor bucket: the verdict is the walk only, and each reader says so > the ledger (meta.chain)
+AssertionError: expected undefined to match object { verified: false, …(1) }
+
+- Expected:
+{
+  "status": "not_configured",
+  "verified": false,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/audit/__tests__/chain-head-on-demand.test.ts:400:35
+    398|       const out = await readAuditLedger(ledgerClient(), 7, 10);
+    399|       expect(out.meta.chain.ok).toBe(true);
+    400|       expect(out.meta.chain.head).toMatchObject({ verified: false, sta…
+       |                                   ^
+    401|       expect(out.meta.chain.head?.reason).toMatch(LABEL);
+    402|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/17]⎯
+
+ FAIL  server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > no anchor bucket: the verdict is the walk only, and each reader says so > a document's history (meta.chain)
+AssertionError: expected undefined to match object { status: 'not_configured' }
+
+- Expected:
+{
+  "status": "not_configured",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/audit/__tests__/chain-head-on-demand.test.ts:406:35
+    404|     it("a document's history (meta.chain)", async () => {
+    405|       const out = await readRecordAuditHistory(ledgerClient(), 7, { ta…
+    406|       expect(out.meta.chain.head).toMatchObject({ status: 'not_configu…
+       |                                   ^
+    407|       expect(out.meta.chain.head?.reason).toMatch(LABEL);
+    408|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/17]⎯
+
+ FAIL  server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > no anchor bucket: the verdict is the walk only, and each reader says so > the export walk (turn-record and authoring exports)
+AssertionError: expected undefined to match object { status: 'not_configured' }
+
+- Expected:
+{
+  "status": "not_configured",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/audit/__tests__/chain-head-on-demand.test.ts:413:22
+    411|       const v = await walkTenantChain(7);
+    412|       expect(v.ok).toBe(true);
+    413|       expect(v.head).toMatchObject({ status: 'not_configured' });
+       |                      ^
+    414|       expect(v.head?.reason).toMatch(LABEL);
+    415|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/17]⎯
+
+ FAIL  server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > no anchor bucket: the verdict is the walk only, and each reader says so > the signed audit export's manifest
+AssertionError: expected { status: 'intact', …(4) } to match object { status: 'intact', …(1) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "head": {
+-     "status": "not_configured",
+-   },
+    "status": "intact",
+  }
+
+ ❯ server/services/audit/__tests__/chain-head-on-demand.test.ts:419:43
+    417|     it("the signed audit export's manifest", async () => {
+    418|       const out = await generateSignedAuditExport(exportPool as never,…
+    419|       expect(out.manifest.auditLogsChain).toMatchObject({ status: 'int…
+       |                                           ^
+    420|       expect(out.manifest.auditLogsChain?.head?.reason).toMatch(LABEL);
+    421|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/17]⎯
+
+ FAIL  server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > no anchor bucket: the verdict is the walk only, and each reader says so > the integrity attestation's chain row
+AssertionError: expected 'Every chained row re-derives from its…' to match /head not verified against the anchor/
+
+- Expected:
+/head not verified against the anchor/
+
++ Received:
+"Every chained row re-derives from its predecessor."
+
+ ❯ server/services/audit/__tests__/chain-head-on-demand.test.ts:426:26
+    424|       const row = await reportChainRow();
+    425|       expect(row.verdict).toBe('intact');
+    426|       expect(row.detail).toMatch(LABEL);
+       |                          ^
+    427|     });
+    428|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/17]⎯
+
+ FAIL  server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > organisation 7's anchored head is gone: each reader says broken and where, never 'null' > the ledger (meta.chain)
+AssertionError: expected undefined to match object { status: 'broken' }
+
+- Expected:
+{
+  "status": "broken",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/audit/__tests__/chain-head-on-demand.test.ts:434:35
+    432|       const out = await readAuditLedger(ledgerClient(), 7, 10);
+    433|       expect(out.meta.chain.ok).toBe(false);
+    434|       expect(out.meta.chain.head).toMatchObject({ status: 'broken' });
+       |                                   ^
+    435|       expect(out.meta.chain.head?.breaks).toEqual([
+    436|         { organizationId: 7, rowId: HEAD_7.rowId, kind: 'head_missing'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/17]⎯
+
+ FAIL  server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > organisation 7's anchored head is gone: each reader says broken and where, never 'null' > the export walk
+AssertionError: expected undefined to deeply equal [ Array(1) ]
+
+- Expected:
+[
+  "6f1c0d2e-0000-4000-8000-000000000007",
+]
+
++ Received:
+undefined
+
+ ❯ server/services/audit/__tests__/chain-head-on-demand.test.ts:443:51
+    441|       const v = await walkTenantChain(7);
+    442|       expect(v.ok).toBe(false);
+    443|       expect(v.head?.breaks?.map((b) => b.rowId)).toEqual([HEAD_7.rowI…
+       |                                                   ^
+    444|     });
+    445|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/17]⎯
+
+ FAIL  server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > organisation 7's anchored head is gone: each reader says broken and where, never 'null' > the signed audit export's manifest
+AssertionError: expected { status: 'broken', …(4) } to match object { status: 'broken', …(1) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "head": {
+-     "status": "broken",
+-   },
+    "status": "broken",
+  }
+
+ ❯ server/services/audit/__tests__/chain-head-on-demand.test.ts:448:43
+    446|     it("the signed audit export's manifest", async () => {
+    447|       const out = await generateSignedAuditExport(exportPool as never,…
+    448|       expect(out.manifest.auditLogsChain).toMatchObject({ status: 'bro…
+       |                                           ^
+    449|       expect(out.manifest.auditLogsChain?.head?.breaks?.map((b) => b.r…
+    450|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/17]⎯
+
+ FAIL  server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > organisation 7's anchored head is gone: each reader says broken and where, never 'null' > the integrity attestation's chain row
+AssertionError: expected 'null' not to be 'null' // Object.is equality
+ ❯ server/services/audit/__tests__/chain-head-on-demand.test.ts:455:30
+    453|       const row = await reportChainRow();
+    454|       expect(row.verdict).toBe('broken');
+    455|       expect(row.detail).not.toBe('null');
+       |                              ^
+    456|       expect(row.detail).toContain(HEAD_7.rowId);
+    457|       expect(row.detail).toMatch(/missing or different/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/17]⎯
+
+ FAIL  server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-71: every reader of the tenant verdict states what it did about the head > organisation 7's anchored head is gone: each reader says broken and where, never 'null' > organisation 8's readers name nothing of organisation 7
+AssertionError: expected { store: 'audit_logs', ok: true, …(3) } to match object { ok: true, head: { …(2) } }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "head": {
+-     "breaks": [],
+-     "status": "verified",
+-   },
+    "ok": true,
+  }
+
+ ❯ server/services/audit/__tests__/chain-head-on-demand.test.ts:462:30
+    460|     it("organisation 8's readers name nothing of organisation 7", asyn…
+    461|       const out = await readAuditLedger(ledgerClient(), 8, 10);
+    462|       expect(out.meta.chain).toMatchObject({ ok: true, head: { status:…
+       |                              ^
+    463|       expect(JSON.stringify(out.meta.chain)).not.toContain(HEAD_7.rowI…
+    464|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/17]⎯
+
+ FAIL  server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-72: an anchor that cannot be read leaves a tenant's own audit trail readable, and unverified > the tenant verdict is the walk, with the head unavailable and ok null (not ok, not broken)
+Error: audit chain anchor anchors/audit-chain/2026/10/02/x.json is malformed: not JSON
+ ❯ parseAuditChainAnchor server/services/audit/chain-anchor.ts:195:11
+    193|     doc = JSON.parse(body);
+    194|   } catch {
+    195|     throw new AuditAnchorMalformedError(key, 'not JSON');
+       |           ^
+    196|   }
+    197|   if (doc?.format !== AUDIT_ANCHOR_FORMAT) throw new AuditAnchorMalfor…
+ ❯ verifyAuditChainAnchor server/services/audit/chain-anchor.ts:410:18
+ ❯ verifyChainHead server/services/audit/chain-anchor.ts:473:13
+ ❯ server/services/audit/tenant-chain-verdict.ts:36:20
+ ❯ server/services/audit/__tests__/chain-head-on-demand.test.ts:477:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'AUDIT_ANCHOR_MALFORMED' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/17]⎯
+
+ FAIL  server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-72: an anchor that cannot be read leaves a tenant's own audit trail readable, and unverified > the ledger still returns its entries, and its verdict is unverified
+Error: audit chain anchor anchors/audit-chain/2026/10/02/x.json is malformed: not JSON
+ ❯ parseAuditChainAnchor server/services/audit/chain-anchor.ts:195:11
+    193|     doc = JSON.parse(body);
+    194|   } catch {
+    195|     throw new AuditAnchorMalformedError(key, 'not JSON');
+       |           ^
+    196|   }
+    197|   if (doc?.format !== AUDIT_ANCHOR_FORMAT) throw new AuditAnchorMalfor…
+ ❯ verifyAuditChainAnchor server/services/audit/chain-anchor.ts:410:18
+ ❯ verifyChainHead server/services/audit/chain-anchor.ts:473:13
+ ❯ server/services/audit/tenant-chain-verdict.ts:36:20
+ ❯ Module.readAuditLedger server/routes/audit-trail-ledger.routes.ts:562:13
+ ❯ server/services/audit/__tests__/chain-head-on-demand.test.ts:485:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'AUDIT_ANCHOR_MALFORMED' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/17]⎯
+
+ FAIL  server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-72: an anchor that cannot be read leaves a tenant's own audit trail readable, and unverified > a document's history still returns its entries, unverified
+Error: audit chain anchor anchors/audit-chain/2026/10/02/x.json is malformed: not JSON
+ ❯ parseAuditChainAnchor server/services/audit/chain-anchor.ts:195:11
+    193|     doc = JSON.parse(body);
+    194|   } catch {
+    195|     throw new AuditAnchorMalformedError(key, 'not JSON');
+       |           ^
+    196|   }
+    197|   if (doc?.format !== AUDIT_ANCHOR_FORMAT) throw new AuditAnchorMalfor…
+ ❯ verifyAuditChainAnchor server/services/audit/chain-anchor.ts:410:18
+ ❯ verifyChainHead server/services/audit/chain-anchor.ts:473:13
+ ❯ server/services/audit/tenant-chain-verdict.ts:36:20
+ ❯ Module.readRecordAuditHistory server/routes/audit-trail-ledger.routes.ts:631:13
+ ❯ server/services/audit/__tests__/chain-head-on-demand.test.ts:493:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'AUDIT_ANCHOR_MALFORMED' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/17]⎯
+
+ FAIL  server/services/audit/__tests__/chain-head-on-demand.test.ts > DP-72: an anchor that cannot be read leaves a tenant's own audit trail readable, and unverified > the export walk, the signed manifest and the attestation say not verified, with the reason
+AssertionError: expected { ok: null, …(1) } to match object { ok: null, …(1) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "head": {
+-     "status": "unavailable",
+-   },
+    "ok": null,
+  }
+
+ ❯ server/services/audit/__tests__/chain-head-on-demand.test.ts:500:15
+    498|   it('the export walk, the signed manifest and the attestation say not…
+    499|     const v = await walkTenantChain(7);
+    500|     expect(v).toMatchObject({ ok: null, head: { status: 'unavailable' …
+       |               ^
+    501|     expect(v.reason).toMatch(UNREADABLE);
+    502|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/17]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  17 failed | 14 passed (31)
+   Start at  15:46:40
+   Duration  3.44s (transform 1.70s, setup 110ms, import 2.75s, tests 116ms, environment 0ms)
+

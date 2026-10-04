@@ -1,0 +1,152 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana/__tests__/regulatory-knowledge-registration.test.ts
+{
+  "timestamp": "2026-10-04T19:28:02.868Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-04T19:28:02.870Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/regulatory-knowledge-registration.test.ts
+{
+  "timestamp": "2026-10-04T19:28:02.870Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/regulatory-knowledge-registration.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana/__tests__/regulatory-knowledge-registration.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/regulatory-knowledge-registration.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ × server/services/ana/__tests__/regulatory-knowledge-registration.test.ts > the regulatory knowledge tools are wired > are offered to the model 9ms
+   → get_document_section_requirements: expected false to be true // Object.is equality
+ × server/services/ana/__tests__/regulatory-knowledge-registration.test.ts > the regulatory knowledge tools are wired > have a handler 2ms
+   → get_document_section_requirements: expected 'undefined' to be 'function' // Object.is equality
+ × server/services/ana/__tests__/regulatory-knowledge-registration.test.ts > the regulatory knowledge tools are wired > are classed read, so a read never asks the person to confirm 1ms
+   → get_document_section_requirements: expected 'confirm' to be 'read' // Object.is equality
+ × server/services/ana/__tests__/regulatory-knowledge-registration.test.ts > the regulatory knowledge tools are wired > are in launch scope 2ms
+   → get_document_section_requirements: expected [ 'ack_training', …(602) ] to include 'get_document_section_requirements'
+ × server/services/ana/__tests__/regulatory-knowledge-registration.test.ts > the regulatory knowledge tools are wired > have a plan label of their own, not a humanised tool name 1ms
+   → get_document_section_requirements: expected 'get document section requirements' not to contain 'get document section requirements'
+ × server/services/ana/__tests__/regulatory-knowledge-registration.test.ts > the regulatory knowledge tools are wired > report deterministic pedigree: the registry lookups as registry, the Vault read as a query 1ms
+   → expected 'model_assisted' to be 'deterministic_registry' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/regulatory-knowledge-registration.test.ts > the regulatory knowledge tools are wired > are offered to the model
+AssertionError: get_document_section_requirements: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana/__tests__/regulatory-knowledge-registration.test.ts:28:54
+     26|   it('are offered to the model', () => {
+     27|     const offered = new Set(ALL_ANA_TOOLS.map((t) => t.name));
+     28|     for (const n of NAMES) expect(offered.has(n), n).toBe(true);
+       |                                                      ^
+     29|   });
+     30|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/services/ana/__tests__/regulatory-knowledge-registration.test.ts > the regulatory knowledge tools are wired > have a handler
+AssertionError: get_document_section_requirements: expected 'undefined' to be 'function' // Object.is equality
+
+Expected: "function"
+Received: "undefined"
+
+ ❯ server/services/ana/__tests__/regulatory-knowledge-registration.test.ts:32:64
+     30|
+     31|   it('have a handler', () => {
+     32|     for (const n of NAMES) expect(typeof getToolHandler(n), n).toBe('f…
+       |                                                                ^
+     33|   });
+     34|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/services/ana/__tests__/regulatory-knowledge-registration.test.ts > the regulatory knowledge tools are wired > are classed read, so a read never asks the person to confirm
+AssertionError: get_document_section_requirements: expected 'confirm' to be 'read' // Object.is equality
+
+Expected: "read"
+Received: "confirm"
+
+ ❯ server/services/ana/__tests__/regulatory-knowledge-registration.test.ts:36:72
+     34|
+     35|   it('are classed read, so a read never asks the person to confirm', (…
+     36|     for (const n of NAMES) expect(toolAuthorizationOf(n, {}).class, n)…
+       |                                                                        ^
+     37|   });
+     38|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/services/ana/__tests__/regulatory-knowledge-registration.test.ts > the regulatory knowledge tools are wired > are in launch scope
+AssertionError: get_document_section_requirements: expected [ 'ack_training', …(602) ] to include 'get_document_section_requirements'
+ ❯ server/services/ana/__tests__/regulatory-knowledge-registration.test.ts:43:57
+     41|       fs.readFileSync(path.resolve(__dirname, '..', 'ana-launch-scope.…
+     42|     ) as { tools: { inScope: string[] } };
+     43|     for (const n of NAMES) expect(inv.tools.inScope, n).toContain(n);
+       |                                                         ^
+     44|   });
+     45|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/services/ana/__tests__/regulatory-knowledge-registration.test.ts > the regulatory knowledge tools are wired > have a plan label of their own, not a humanised tool name
+AssertionError: get_document_section_requirements: expected 'get document section requirements' not to contain 'get document section requirements'
+ ❯ server/services/ana/__tests__/regulatory-knowledge-registration.test.ts:51:42
+     49|       const label = step.label;
+     50|       expect(label, n).toBeTruthy();
+     51|       expect(label.toLowerCase(), n).not.toContain(n.replace(/_/g, ' '…
+       |                                          ^
+     52|     }
+     53|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/services/ana/__tests__/regulatory-knowledge-registration.test.ts > the regulatory knowledge tools are wired > report deterministic pedigree: the registry lookups as registry, the Vault read as a query
+AssertionError: expected 'model_assisted' to be 'deterministic_registry' // Object.is equality
+
+Expected: "deterministic_registry"
+Received: "model_assisted"
+
+ ❯ server/services/ana/__tests__/regulatory-knowledge-registration.test.ts:56:75
+     54|
+     55|   it('report deterministic pedigree: the registry lookups as registry,…
+     56|     expect(getToolPedigree('get_document_section_requirements').pedigr…
+       |                                                                           ^
+     57|     expect(getToolPedigree('list_fda_technical_rules').pedigree).toBe(…
+     58|     expect(getToolPedigree('plan_submission_from_database_lock').pedig…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  19:27:58
+   Duration  8.11s (transform 5.10s, setup 94ms, import 7.63s, tests 23ms, environment 0ms)
+

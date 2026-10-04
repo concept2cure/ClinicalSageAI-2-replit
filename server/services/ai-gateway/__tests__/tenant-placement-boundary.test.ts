@@ -409,11 +409,19 @@ describe('tenant placement boundary (D6) — what the ledger records', () => {
       success: false,
       organizationId: ORG,
       callerModule: 'test:refusal',
+      // Typed columns since 2026-09-26; metadata keeps only what has none.
+      placementReasonCode: 'DENY_TENANT_POLICY',
+      tenantPolicyResolution: 'resolved',
+      tenantBoundFrom: 'explicit',
       metadata: {
-        tenantPlacement: { reasonCode: 'DENY_TENANT_POLICY', stage: 'selection', resolution: 'resolved', boundFrom: 'explicit' },
+        tenantPlacement: { stage: 'selection' },
         contentPolicy: { findings: [expect.objectContaining({ detector: 'tenant_placement_policy', action: 'block' })] },
       },
     });
+    // One place per fact: the columns hold these, so metadata does not repeat them.
+    expect(Object.keys(rows[0].metadata.tenantPlacement).sort()).toEqual(
+      expect.not.arrayContaining(['reasonCode', 'resolution', 'boundFrom', 'payloadProvenance']),
+    );
     expect(JSON.stringify(rows[0])).not.toContain('unpublished 12-month stability');
   });
 

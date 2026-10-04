@@ -1,0 +1,11 @@
+# 1w. The authoring read tools are wired — RED before the four registration edits
+ × server/services/ana/__tests__/authoring-read-registration.test.ts > the authoring read tools are wired > are offered to the model 11ms
+   → list_authoring_outline: expected false to be true // Object.is equality
+ × server/services/ana/__tests__/authoring-read-registration.test.ts > the authoring read tools are wired > have a handler 4ms
+   → list_authoring_outline: expected 'undefined' to be 'function' // Object.is equality
+ × server/services/ana/__tests__/authoring-read-registration.test.ts > the authoring read tools are wired > are classed read, so a read never asks the person to confirm 2ms
+   → list_authoring_outline: expected 'confirm' to be 'read' // Object.is equality
+ × server/services/ana/__tests__/authoring-read-registration.test.ts > the authoring read tools are wired > are in launch scope 3ms
+   → list_authoring_outline: expected [ 'ack_training', …(599) ] to include 'list_authoring_outline'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed (4)

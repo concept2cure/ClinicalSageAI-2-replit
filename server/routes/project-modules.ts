@@ -17,8 +17,11 @@ import {
   SUPPORTED_PROJECT_MODULE_TYPES,
 } from '../services/project-module-bridge';
 import { getTenantContext } from '../utils/tenantContext';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('project-modules');
 
 const MODULE_TYPES = [...SUPPORTED_PROJECT_MODULE_TYPES] as [ModuleType, ...ModuleType[]];
 const MODULE_LINK_STATUSES = ['active', 'inactive', 'completed'] as const satisfies readonly [
@@ -147,12 +150,11 @@ router.post('/:projectId/modules', async (req: Request, res: Response) => {
     });
 
     res.status(201).json(link);
-  } catch (err: any) {
+  } catch (err) {
     if (err instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid request', details: err.errors });
     }
-    console.error('Error linking module:', err);
-    res.status(500).json({ error: err.message || 'Failed to link module' });
+    return serverError(res, log, 'linking the module', err, { projectId: req.params.projectId });
   }
 });
 
@@ -187,12 +189,11 @@ router.post('/:projectId/modules/bulk', async (req: Request, res: Response) => {
     );
 
     res.status(201).json({ projectId, linked: links.length, modules: links });
-  } catch (err: any) {
+  } catch (err) {
     if (err instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid request', details: err.errors });
     }
-    console.error('Error bulk-linking modules:', err);
-    res.status(500).json({ error: err.message || 'Failed to bulk-link modules' });
+    return serverError(res, log, 'bulk-linking the modules', err, { projectId: req.params.projectId });
   }
 });
 

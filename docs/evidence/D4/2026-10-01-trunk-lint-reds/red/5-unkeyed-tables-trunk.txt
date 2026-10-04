@@ -1,0 +1,39 @@
+===== Guardrails — no per-request table without a tenant key
+$ npm run ci:unkeyed-request-tables
+
+> concept2cure-riai@1.0.0 ci:unkeyed-request-tables
+> node scripts/ci/check-unkeyed-request-tables.mjs
+
+[ci:unkeyed-request-tables] 1074 tables created; 603 read by a per-request path; 108 of those carry NO tenant column; 109 baselined, 100 still unreviewed
+
+
+🚫 Stale baseline entries — these tables are no longer unkeyed-and-read:
+      audit.tamper_proof_log
+      vault.document_archives
+
+  A baseline that overstates the debt hides the next real entry.
+  Fix: npm run ci:unkeyed-request-tables:write-baseline
+
+
+
+===== Guardrails — the unkeyed-table gate can still fail
+$ npm run ci:unkeyed-request-tables:selftest
+
+> concept2cure-riai@1.0.0 ci:unkeyed-request-tables:selftest
+> node scripts/ci/check-unkeyed-request-tables.selftest.mjs
+
+
+[selftest] the gate is ALREADY failing before any fixture was written.
+           Fix that first — these cases cannot be interpreted otherwise.
+[ci:unkeyed-request-tables] 1074 tables created; 603 read by a per-request path; 108 of those carry NO tenant column; 109 baselined, 100 still unreviewed
+
+🚫 Stale baseline entries — these tables are no longer unkeyed-and-read:
+      audit.tamper_proof_log
+      vault.document_archives
+
+  A baseline that overstates the debt hides the next real entry.
+  Fix: npm run ci:unkeyed-request-tables:write-baseline
+
+
+
+

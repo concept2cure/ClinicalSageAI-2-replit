@@ -112,4 +112,48 @@ describe('runDocxPdfPipeline', () => {
     expect(args).toContain('prepress');
     expect(args).toContain('--input-docx');
   });
+
+});
+
+describe('runDocxPdfPipeline — limits', () => {
+  beforeEach(() => {
+    vi.mocked(spawn).mockReset();
+  });
+
+  // A LibreOffice that hangs held the tool call for ever: nothing timed the
+  // conversion, and a spawn that failed (no python3) emitted 'error', which
+  // nothing listened for, so the promise never settled either.
+  it('stops a conversion that runs past its time limit, the whole process group, and says so', async () => {
+    vi.useFakeTimers();
+    try {
+      const proc = new EventEmitter() as any;
+      proc.stdout = new EventEmitter();
+      proc.stderr = new EventEmitter();
+      proc.pid = 4242;
+      proc.kill = vi.fn();
+      vi.mocked(spawn).mockReturnValue(proc);
+      const killSpy = vi.spyOn(process, 'kill').mockImplementation(() => true);
+
+      const pending = runDocxPdfPipeline({ inputDocxPath: 'in.docx', timeoutMs: 1_000 });
+      const settled = pending.then(() => 'resolved', (e: Error) => e.message);
+      await vi.advanceTimersByTimeAsync(1_000);
+      proc.emit('close', null);
+
+      expect(await settled).toMatch(/stopped after 1s/);
+      expect(killSpy).toHaveBeenCalledWith(-4242, 'SIGKILL');
+      expect(vi.mocked(spawn).mock.calls[0][2]).toMatchObject({ detached: true });
+      killSpy.mockRestore();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('rejects when the converter cannot be started at all', async () => {
+    const proc = new EventEmitter() as any;
+    proc.stdout = new EventEmitter();
+    proc.stderr = new EventEmitter();
+    vi.mocked(spawn).mockReturnValue(proc);
+    setTimeout(() => proc.emit('error', Object.assign(new Error('spawn python3 ENOENT'), { code: 'ENOENT' })), 0);
+    await expect(runDocxPdfPipeline({ inputDocxPath: 'in.docx' })).rejects.toThrow(/could not be started: spawn python3 ENOENT/);
+  });
 });

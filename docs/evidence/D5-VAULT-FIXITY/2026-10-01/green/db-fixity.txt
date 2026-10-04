@@ -1,0 +1,6 @@
+# this change: tests/db/vault-fixity.dbtest.ts
+ ✓ tests/db/vault-fixity.dbtest.ts > fixity: every stored version re-proven (critique 15) > reports each version verified, altered or missing, and lists the failures 56ms
+ ✓ tests/db/vault-fixity.dbtest.ts > fixity: every stored version re-proven (critique 15) > writes one chained verdict per version, naming the person 2ms
+ ✓ tests/db/vault-fixity.dbtest.ts > fixity: every stored version re-proven (critique 15) > the document's history shows the check 44ms
+ ✓ tests/db/vault-fixity.dbtest.ts > fixity: every stored version re-proven (critique 15) > a viewer is refused, and another organisation's program is not found 9ms
+      Tests  4 passed (4)

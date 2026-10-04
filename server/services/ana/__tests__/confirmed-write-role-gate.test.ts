@@ -33,7 +33,8 @@ import { getToolHandler } from '../AnaToolExecutor';
 import { toolAuthorizationOf } from '../tool-authorization';
 
 const CONFIRMED = { organizationId: 7, userId: 42, humanConfirmed: true } as never;
-const CREATE_SOP = { doc_number: 'SOP-901', title: 'Supplier qualification', doc_type: 'sop' };
+// With the person's reason: a governed write without one is refused before any gate below (governed-reason-not-invented.test.ts).
+const CREATE_SOP = { doc_number: 'SOP-901', title: 'Supplier qualification', doc_type: 'sop', reason: 'New SOP for supplier qualification.' };
 
 async function run(tool: string, input: Record<string, unknown>, ctx: unknown = CONFIRMED) {
   return JSON.parse(await getToolHandler(tool)!(input, ctx as never));

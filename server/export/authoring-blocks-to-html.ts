@@ -21,7 +21,7 @@ import {
   type ContentBlock,
   type InlineRun,
 } from './authoring-section-content.js';
-import type { ResolvedImage } from './authoring-images.js';
+import { unfiledFigureLabel, type ResolvedImage } from './authoring-images.js';
 import {
   crossReferenceAnchorId,
   normalizeCrossReferenceDisplay,
@@ -215,9 +215,7 @@ function figureHtml(
 ): string {
   const resolved = fig.src ? images?.get(fig.src) : undefined;
   if (!resolved) {
-    return `<p class="img-missing">[Figure not exported: ${escapeHtml(
-      fig.alt || fig.src || 'unresolved image reference',
-    )}]</p>`;
+    return `<p class="img-missing">[Figure not exported: ${escapeHtml(unfiledFigureLabel(fig))}]</p>`;
   }
   /* `alt` stays the author's words. It is what a screen reader announces and
      what a text extraction reads; prefixing it with "Figure 3" would put a

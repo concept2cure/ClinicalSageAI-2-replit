@@ -21,6 +21,7 @@ import { getGateway } from '../ai-gateway';
 import auditService from '../auditService';
 import { createScopedLogger } from '../../utils/logger';
 import { PROMPTS_DIR } from '../ai-gateway/prompts-dir';
+import { plainTextToHtml } from '@shared/authoring/plain-text-html';
 
 const logger = createScopedLogger('section-generation-service');
 
@@ -111,7 +112,27 @@ export async function generateSection(
     throw new AuthoringError('PROVIDER_UNAVAILABLE', `The AI request could not be completed: ${err instanceof Error ? err.message : String(err)}`);
   }
 
-  const { body, citations, ungrounded } = splitBodyAndTrailer(content);
+  const { body: modelBody, citations, ungrounded } = splitBodyAndTrailer(content);
+  /* The model's body is stored as text (periodic review 2026-09-28, editor
+     family, SEC-B-1/2 follow-on b6). coauthor_documents.content is parsed as
+     HTML by the eCTD leaf renderer, and by the co-author editor whenever it
+     holds a known tag, so a body stored as it came back could carry an <img>,
+     which from a model is never an uploaded figure, to every later reader.
+     The prompt asks for markdown, which is text, so the body is stored as
+     plainTextToHtml writes it: escaped paragraphs. No model output becomes
+     markup, and <p> is a known tag, so the co-author editor reads the stored
+     value as HTML and shows the words as written. Escaped text with no tag
+     would be escaped a second time there ("R&amp;D" for "R&D"). Sanitizing
+     the body as HTML would delete the words after a `<` that starts a word:
+     "Impurity B was <LOQ in all 3 batches" would be stored as "Impurity B
+     was ". The result carries what was stored.
+     A body with no words stays "": an empty draft, which the eCTD leaf
+     resolver reports as a gap. "<p></p>" would pass its emptiness check and
+     be filed as a blank leaf. No words means no letter and no digit: trim()
+     keeps a zero-width space, a soft hyphen or a word joiner, which no reader
+     shows, and "<p>\u200b</p>" was filed as a blank leaf the same way
+     (refute-review of the figure rule, round 3: D4). */
+  const body = /[\p{L}\p{N}]/u.test(modelBody) ? plainTextToHtml(modelBody) : '';
 
   // Persist as a governed draft artifact (never loose chat text).
   const [doc] = await db

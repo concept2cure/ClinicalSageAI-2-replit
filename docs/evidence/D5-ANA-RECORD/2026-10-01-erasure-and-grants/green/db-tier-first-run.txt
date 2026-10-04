@@ -1,0 +1,5 @@
+ × tests/db/scheduler-jobs-under-rls.dbtest.ts > AnA memory consolidation > the nightly cron fired on two processes at once runs ONE cycle (lease) 29ms
+ × tests/db/two-tenant-application-rls.dbtest.ts > WO-03 two-tenant application isolation > audit_logs: update and delete of tenant B are indistinguishable not-found 10ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed | 93 passed (95)
+      Tests  2 failed | 941 passed (943)

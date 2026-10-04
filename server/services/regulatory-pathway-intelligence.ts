@@ -17,10 +17,6 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { fileURLToPath } from 'node:url';
-
-// ESM has no module-scope __dirname; recreate it from import.meta.url.
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 
@@ -107,7 +103,10 @@ export class RegulatoryPathwayIntelligenceEngine {
 
   private loadKnowledgeBases(): void {
     try {
-      const dataDir = path.join(__dirname, '..', 'data');
+      // The working directory, not the module: bundled at /app/dist/index.js,
+      // a module-relative path named /app/data, where nothing is, and the
+      // engine loaded an empty knowledge base without error.
+      const dataDir = path.join(process.cwd(), 'server', 'data');
 
       // Load global regulatory authorities
       const authPath = path.join(dataDir, 'global-regulatory-authorities.json');

@@ -44,6 +44,13 @@ const CASES: { prompt: string; expect: string }[] = [
   { prompt: 'can we close out this grant award yet, what closeout items and final reports are still outstanding', expect: 'prepare_award_closeout' },
   { prompt: 'are we ready for the FDA meeting, do we have the briefing book and open questions for this interaction', expect: 'prepare_meeting_package' },
   { prompt: 'triage the critical compliance attention items into tasks for the team to action', expect: 'triage_compliance_attention' },
+  // Regulatory knowledge (regulatory-knowledge-tools.ts, D2 2026-10-04).
+  { prompt: 'what has to go in section 12.2 adverse events of the clinical study report', expect: 'get_document_section_requirements' },
+  { prompt: 'what should the summary of clinical efficacy 2.7.3 contain for our NDA', expect: 'get_document_section_requirements' },
+  { prompt: 'we just locked the database, what happens next to get the NDA filed', expect: 'plan_submission_from_database_lock' },
+  { prompt: 'what is blocking the clinical overview and what is the next step for the submission', expect: 'plan_submission_from_database_lock' },
+  { prompt: 'will our dossier pass FDA technical validation and Elsa, what are the PDF requirements', expect: 'list_fda_technical_rules' },
+  { prompt: 'why would the FDA gateway reject our study data, is the TS dataset and define.xml required', expect: 'list_fda_technical_rules' },
 ];
 
 describe('AnA tool-selection routing eval', () => {

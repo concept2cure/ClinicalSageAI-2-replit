@@ -56,7 +56,8 @@ The canonical file's spec list grows, amended in place with a dated note
 WITH CHECK is part of the policy, so each of the four paths above is now
 refused when it reaches for another tenant's parent.
 
-Nothing else can break, by construction:
+Nothing in the running application can break, by construction (the installer
+did; see *Corrections*):
 
 - Inside the server process, every query already needs a tenant scope.
 - Out-of-process scripts (the migration runner, laptop seeds, audit scripts)
@@ -163,9 +164,38 @@ tables. The non-public children: red, `audit.purge_requests` unpolicied
 tests (`green/all-db-suites-53-of-54.txt`), and after the grandchildren
 656 of 661 (`green/all-db-suites-after-grandchildren.txt`), and after the
 non-public children 657 of 662 (`green/all-db-suites-after-nonpublic.txt`).
-That includes all seven D3 fixture suites. The one failing file, `atom-search`, fails on `search_atoms_hybrid`'s
-signature on a from-blank install. That predates this change and is recorded in
-the D3 launch note.
+That includes all seven D3 fixture suites. The one failing file, `atom-search`,
+failed because of this lane's database, not a defect (see *Corrections*).
+
+## Corrections
+
+Three things this README said were wrong. They are corrected here rather than
+rewritten above, so the record shows what was claimed.
+
+1. **`atom-search` failed on a stale database, not a defect.** The database
+   behind the suite counts was built from blank at `e0e42ec4`. `881680d73` then
+   amended `search_atoms_hybrid`'s creating migration in place (Rule 1), and
+   nothing re-applied it here. The logs show the old signature: *"function
+   search_atoms_hybrid(unknown, vector, unknown, unknown, unknown, unknown,
+   integer[]) does not exist"*. On a database built at trunk it passes 5/5: the
+   W2 lane's rebuild (`ed87e3aa`) and
+   `../2026-09-29-child-scope-first-deploy/`. Ledger L201–L203 carry the same
+   correction.
+2. **"Nothing else can break" was wrong: every install from blank exited 1.**
+   `install-fresh.mjs` ends with the same coverage gate, and only
+   `deploy-migrate` applied the child scope. So from `2ddbfb6a` the installer
+   named 80 tables and withheld "install complete", and from `d46d5251` it
+   named 83. This lane checked against a database it had already provisioned,
+   and did not rebuild one from blank after the change. The W2 lane found it
+   and fixed it in `ed87e3aa` (ledger L205): the installer applies the uuid
+   half of the final sweep pair, then the child scope.
+3. **The gate was green only after a second deploy.** On a blank database's
+   first deploy, `regulatory_harmonization.export_job_audit_log` stayed
+   unscoped until the next deploy. The child scope ran mid-set, before the uuid
+   step that policies its parent. The W2 lane handed this on. `…01YZFCXR` fixed
+   it in `98ec62749`, taking over this lane's stale claim: the child scope runs
+   in the isolation tail, and CI checks coverage after the first deploy
+   (`../2026-09-29-child-scope-first-deploy/`).
 
 ## Recorded, not fixed here
 

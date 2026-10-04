@@ -1,0 +1,23 @@
+# The PDF/A rule tests against trunk's transmit guard (index.ts) and pre-transmit check, at 37fc20746. pdfa-requirement.ts is present so the file imports.
+ ✓ server/services/submission-gateways/__tests__/pdfa-requirement.test.ts > the PDF/A rule at the transmit guard > nobody chose PDF/A: a production transmit with a plain-PDF leaf goes out 10ms
+ × server/services/submission-gateways/__tests__/pdfa-requirement.test.ts > the PDF/A rule at the transmit guard > the organisation chose it: refused before the wire, naming the organisation's own setting 8ms
+   → expected the transmit to reject
+ × server/services/submission-gateways/__tests__/pdfa-requirement.test.ts > the PDF/A rule at the transmit guard > the deployment chose it: refused, naming the deployment, whatever the organisation set 4ms
+   → expected 'Refusing to transmit to FDA esg: pack…' to match /…/A for every submission \(ECTD_REQUIRE_PDFA\)
+ × server/services/submission-gateways/__tests__/pdfa-requirement.test.ts > the PDF/A rule at the transmit guard > the organisation row cannot be seen: refused before the wire, never taken as not required 3ms
+   → expected the transmit to reject
+ × server/services/submission-gateways/__tests__/pdfa-requirement.test.ts > the PDF/A rule at the transmit guard > the setting cannot be read: refused before the wire, never sent as plain PDF 3ms
+   → expected the transmit to reject
+ ✓ server/services/submission-gateways/__tests__/pdfa-requirement.test.ts > the PDF/A rule at the transmit guard > a test (staging) transmit is never refused for PDF/A 3ms
+ ✓ server/services/submission-gateways/__tests__/pdfa-requirement.test.ts > who requires PDF/A > only the literal boolean true turns the organisation setting on 2ms
+ ✓ server/services/submission-gateways/__tests__/pdfa-requirement.test.ts > who requires PDF/A > the deployment wins when both chose it, without reading the organisation 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ ❯ server/services/submission-gateways/__tests__/pdfa-requirement.test.ts:95:65
+ ❯ server/services/submission-gateways/__tests__/pdfa-requirement.test.ts:107:17
+ ❯ server/services/submission-gateways/__tests__/pdfa-requirement.test.ts:121:33
+ ❯ server/services/submission-gateways/__tests__/pdfa-requirement.test.ts:95:65
+ ❯ server/services/submission-gateways/__tests__/pdfa-requirement.test.ts:127:17
+ ❯ server/services/submission-gateways/__tests__/pdfa-requirement.test.ts:95:65
+ ❯ server/services/submission-gateways/__tests__/pdfa-requirement.test.ts:135:17
+ Test Files  1 failed (1)
+      Tests  4 failed | 4 passed (8)

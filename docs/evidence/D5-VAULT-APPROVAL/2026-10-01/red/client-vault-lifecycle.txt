@@ -1,0 +1,18 @@
+## RED: vaultLifecycle.test.tsx with trunk's Vault.tsx and VaultVersions.tsx (HEAD 9370314d9)
+ × client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > shows each version's stage and sign-offs, apart from its filing 5183ms
+   → expected 'Versionsv2.0 · current2026-09-30 10:0…' to contain 'Approved by Abe Approver · APPROVED ·…'
+ × client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > sends a version nobody started for review: starts its record, then moves it to In review 5105ms
+   → expected 'Versionsv2.0 · current2026-09-30 10:0…' to contain 'Not reviewed'
+ × client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > signs the review through the e-signature dialog: meaning, reason and password go to the lifecycle route 5035ms
+   → Unable to find role="button" and name `/^Sign as reviewed:/`
+ × client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > a refused approval shows the server's reason, in the dialog 5025ms
+   → Unable to find role="button" and name `/^Approve:/`
+ × client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > says before signing that the reviewer, and the uploader, do not approve 5026ms
+   → Unable to find role="button" and name `/^Approve:/`
+ × client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault version's review and approval (VR-13) > the list row says the stage beside the filing 5025ms
+   → Unable to find an element with the text: /v2\.0, 2 versions · Not reviewed/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more 
+ × client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > what counts as settled in a folder (VR-13, FD4) > an upload counts only once approved; a confirmed filing is not an approval 1ms
+   → isSettled is not a function
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  7 failed (7)

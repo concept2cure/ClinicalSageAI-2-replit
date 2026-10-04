@@ -41,6 +41,8 @@ const P_A = '0a000000-0000-4000-8000-00000000000a';
 const P_B = '0b000000-0000-4000-8000-00000000000b';
 const V_A = 'a1000000-0000-4000-8000-0000000000a1';
 const V_B = 'b1000000-0000-4000-8000-0000000000b1';
+/** A second document of project A, so a leaf can be re-pointed inside its project. */
+const V_A2 = 'a2000000-0000-4000-8000-0000000000a2';
 // P_B's, with no organization attribution: vault.documents.organization_id is
 // nullable (20260905 leaves rows it cannot attribute NULL).
 const V_N = 'b2000000-0000-4000-8000-0000000000b2';
@@ -83,7 +85,7 @@ beforeAll(async () => {
       [id, CTX.organizationId, `Program ${code}`, code],
     );
   }
-  for (const [id, programId, hash] of [[V_A, P_A, 'a'.repeat(64)], [V_B, P_B, 'b'.repeat(64)]]) {
+  for (const [id, programId, hash] of [[V_A, P_A, 'a'.repeat(64)], [V_B, P_B, 'b'.repeat(64)], [V_A2, P_A, 'd'.repeat(64)]]) {
     await q(
       `INSERT INTO vault.documents (id, program_id, organization_id, document_code, document_title, document_type, content_hash)
        VALUES ($1, $2, $3, $4, $4, 'PROTOCOL', $5)`,
@@ -214,6 +216,29 @@ describe('upsertLeaf keeps a filing inside its project', () => {
     expect(err.code).toBe('CROSS_PROJECT');
     const [row] = await q<{ document_uuid: string }>(`SELECT document_uuid FROM submission_leaves WHERE id = $1`, [leaf.id]);
     expect(row.document_uuid).toBe(V_A);
+  });
+
+  it('re-pointing a leaf to another document of the project names both, old and new, in its ledger row (PF-11)', async () => {
+    const leaf = await vaultLeaf(SEQ_A, V_A, 'm5.3.7');
+    await upsertLeaf(
+      { leafId: leaf.id, sequenceId: SEQ_A, sectionCode: 'm5.3.7', title: 'Protocol v2', documentTable: 'vault_documents', documentUuid: V_A2, reason: 'Amended protocol' },
+      CTX,
+    );
+    expect(lastLedgerDetails()).toMatchObject({
+      documentUuid: V_A2,
+      documentContentSha256: 'd'.repeat(64),
+      previousDocument: { documentTable: 'vault_documents', documentUuid: V_A, documentContentSha256: 'a'.repeat(64) },
+      documentChanged: true,
+    });
+  });
+
+  it('an update that keeps the same document says so', async () => {
+    const leaf = await vaultLeaf(SEQ_A, V_A, 'm5.3.8');
+    await upsertLeaf({ leafId: leaf.id, sequenceId: SEQ_A, sectionCode: 'm5.3.8', title: 'Protocol (retitled)', documentTable: 'vault_documents', documentUuid: V_A }, CTX);
+    expect(lastLedgerDetails()).toMatchObject({
+      previousDocument: { documentUuid: V_A, documentContentSha256: 'a'.repeat(64) },
+      documentChanged: false,
+    });
   });
 
   it('allows a placement it cannot judge (the submission records no project), and records both sides', async () => {

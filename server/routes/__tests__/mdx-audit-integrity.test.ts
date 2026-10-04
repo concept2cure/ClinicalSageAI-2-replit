@@ -34,7 +34,9 @@ import mdxAuditRouter from '../mdx-audit';
 function appWith(org: number | null) {
   const app = express();
   app.use((req: Request, _res: Response, next: NextFunction) => {
-    if (org !== null) (req as unknown as { user: unknown }).user = { organizationId: org };
+    // An audit reader: GET /api/mdx/audit answers owners, admins and managers
+    // (DP-18, second door, 2026-10-01; audit-second-doors.test.ts).
+    if (org !== null) (req as unknown as { user: unknown }).user = { organizationId: org, role: 'admin' };
     next();
   });
   app.use('/api/mdx', mdxAuditRouter);
@@ -154,5 +156,32 @@ describe('GET /api/mdx/audit — per-row integrity', () => {
     query.mockRejectedValueOnce(Object.assign(new Error('missing'), { code: '42P01' }));
     const res = await request(appWith(7)).get('/api/mdx/audit');
     expect(res.status).toBe(503);
+  });
+});
+
+describe('GET /api/mdx/audit — one record’s own trail', () => {
+  /* The vault drawer used to render three hardcoded audit rows on every live
+     artifact — a signature, a SHA-256 verification and an upload, carrying the
+     real artifact's author. It now reads this route with `record=<id>`, which
+     must mean exactly that record: an exact match on audit_logs.record_id,
+     never the table-level `resource` filter and never a substring match that
+     would pull another artifact's events into this one's trail. */
+  beforeEach(() => query.mockReset());
+
+  it('filters by exact record_id, bound as a parameter', async () => {
+    query.mockResolvedValueOnce({ rows: [] });
+    const res = await request(appWith(7)).get('/api/mdx/audit?record=art-1');
+    expect(res.status).toBe(200);
+    const [sql, args] = query.mock.calls[0] as [string, unknown[]];
+    expect(sql).toMatch(/al\.record_id = \$\d+/);
+    expect(sql).not.toMatch(/record_id ILIKE/);
+    expect(args).toContain('art-1');
+  });
+
+  it('adds no record predicate when none is asked for', async () => {
+    query.mockResolvedValueOnce({ rows: [] });
+    await request(appWith(7)).get('/api/mdx/audit');
+    const [sql] = query.mock.calls[0] as [string];
+    expect(sql).not.toMatch(/al\.record_id = \$/);
   });
 });
