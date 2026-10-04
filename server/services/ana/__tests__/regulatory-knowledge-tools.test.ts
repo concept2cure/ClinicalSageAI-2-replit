@@ -10,6 +10,7 @@ import {
   fdaTechnicalRules,
   registerRegulatoryKnowledgeHandlers,
   type KnowledgeQueryable,
+  REGULATORY_KNOWLEDGE_TOOLS,
 } from '../regulatory-knowledge-tools';
 import { CTD_AUTHORING_GUIDANCE, ICH_E3_GUIDANCE, listLifecycleIds, SUBMISSION_CHAIN } from '../../ind/ctd/index';
 
@@ -176,6 +177,18 @@ describe('list_fda_technical_rules', () => {
       expect(r.url, r.id).toMatch(/^https:\/\/www\.(fda|ecfr)\.gov\//);
       expect(r.if_missed, r.id).toBeTruthy();
     }
+  });
+
+  // The PLR format rules are their own area. A schema enum without it means
+  // the model can never ask for them, however the description reads.
+  it('offers the labeling area and answers it with the PLR format rules', () => {
+    const tool = REGULATORY_KNOWLEDGE_TOOLS.find((t) => t.name === 'list_fda_technical_rules')!;
+    const schema = tool.input_schema as unknown as { properties: { area: { enum: string[] } } };
+    expect(schema.properties.area.enum).toContain('labeling');
+    const out = JSON.parse(fdaTechnicalRules({ area: 'labeling' }));
+    expect(out.rules.length).toBeGreaterThan(0);
+    for (const r of out.rules) expect(r.url, r.id).toMatch(/^https:\/\/www\.(fda|ecfr)\.gov\//);
+    expect(JSON.parse(fdaTechnicalRules({ area: 'nope' })).error).toContain('labeling');
   });
 
   it('refuses an area it does not have', () => {
