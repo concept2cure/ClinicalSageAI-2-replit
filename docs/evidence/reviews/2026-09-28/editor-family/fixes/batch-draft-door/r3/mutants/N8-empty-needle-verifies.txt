@@ -1,0 +1,9 @@
+mutant N8-empty-needle-verifies: server/services/authoring/machine-claim-verify.ts
+- if (!needle || !rec.outputs.some((o) => o.includes(needle))) {
++ if (!rec.outputs.some((o) => o.includes(needle))) {
+
+ × server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts > the accept names AnA only when the lineage credited AnA's words > N8: a claim with no comparable text (`<p></p>`) verifies nothing 53ms
+   → expected [ { chars: 7, authorId: 'ana', …(2) } ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 15 passed (16)

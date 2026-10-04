@@ -73,6 +73,20 @@ export interface AuthorLineageOptions {
   machineDraft?: { authorId: string } | null;
 }
 
+export interface AuthorLineageResult {
+  /**
+   * Clauses of the saved content inside text this save accepted from a
+   * machine author: credited by it now, or credited by an earlier save and
+   * accepted again. Zero when the save accepted nothing, when no accepted text
+   * holds a whole clause of the content (a claim of one word), or when every
+   * such clause is one the lineage does not compare (machine-attribution.ts,
+   * "What is compared"). A caller that says a save accepted a machine's text
+   * says it only when this is above zero; clauses carried forward from an
+   * earlier acceptance and not accepted again do not count.
+   */
+  clausesInAcceptedText: number;
+}
+
 /**
  * The clause split every gate shares, with the machine's clauses taken out
  * and written first. Returns the clauses that remain the actor's to assert.
@@ -90,13 +104,15 @@ async function attributeMachineThenAuthor(
   actor: string,
   accepted: AcceptedMachineText[],
   machineDraft: { authorId: string } | null,
-): Promise<{ machineSpans: number; machineDraftSpans: number; authorSpans: number }> {
+  content: string,
+): Promise<{ machineSpans: number; machineDraftSpans: number; authorSpans: number; clausesInAcceptedText: number }> {
   const live = await listLiveMachineSpans(orgId, ref, exec);
   const machine = attributeMachineSpans(candidates as Parameters<typeof attributeMachineSpans>[0], {
     accepted,
     live,
     actor,
     machineDraft,
+    content,
   });
   await replaceMachineSpans(orgId, ref, machine, { createdBy: actor }, exec);
 
@@ -110,6 +126,7 @@ async function attributeMachineThenAuthor(
     machineSpans: machine.filter((m) => m.assertedBy).length,
     machineDraftSpans: machine.filter((m) => !m.assertedBy).length,
     authorSpans: authorSpans.length,
+    clausesInAcceptedText: machine.filter((m) => m.inAcceptedText).length,
   };
 }
 
@@ -123,6 +140,8 @@ async function attributeMachineThenAuthor(
  * @param content the content being written (empty/null ⇒ no-op)
  * @param actor   the author id recorded as `assertedBy`/`createdBy`
  * @param opts    what this save accepted from a machine author, if anything
+ * @returns how many clauses of the content are inside text this save
+ *          accepted from a machine author (see AuthorLineageResult)
  * @throws when the recorded spans do not cover the content (SpanLineageError)
  */
 export async function enforceAuthorLineage(
@@ -132,11 +151,11 @@ export async function enforceAuthorLineage(
   content: string | null | undefined,
   actor: string,
   opts: AuthorLineageOptions = {},
-): Promise<void> {
+): Promise<AuthorLineageResult> {
   if (content == null || typeof content !== 'string' || content.length === 0) {
     // Nothing authored → nothing to attribute. Matches the empty-scaffold seed
     // path and assertLineageCoversContent's own length<=0 early return.
-    return;
+    return { clausesInAcceptedText: 0 };
   }
 
   // Source spans recorded by an earlier accept are claims about characters at
@@ -152,15 +171,17 @@ export async function enforceAuthorLineage(
 
   // The machine's clauses first — accepted in this save, or carried forward
   // from an earlier one by their text — then everything else as the actor's.
-  await attributeMachineThenAuthor(
+  const { clausesInAcceptedText } = await attributeMachineThenAuthor(
     exec, orgId, ref, candidates, actor,
     opts.acceptedMachineText ?? [],
     opts.machineDraft ?? null,
+    content,
   );
 
   // Ask the database what it is about to commit, rather than trusting that the
   // writer not throwing means the rows say what they should.
   await assertLineageCoversContent(orgId, ref, content, exec);
+  return { clausesInAcceptedText };
 }
 
 export interface SourceAndAuthorLineageResult {
@@ -313,6 +334,7 @@ export async function enforceSourceAndAuthorLineage(
     exec, orgId, ref, remainder, actor,
     opts.acceptedMachineText ?? [],
     opts.machineDraft ?? null,
+    content,
   );
 
   // 5. Ask the database what it is about to commit. A gap throws and rolls the

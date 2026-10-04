@@ -1,0 +1,445 @@
+# r2c red: new tests against the pre-fix lane files (round-1 machine-claim-verify.ts and batch-draft-routes.ts; machine-attribution.ts at HEAD)
+# sha256 of the source files under test:
+656d6bcb11685bd70aec83b98281f3bc38cba3cd7bd18682b9a5f769d80e4dcf  server/services/authoring/machine-claim-verify.ts
+2e93ced68ad5bfaa57a513a8555f00708ebcd8e75d327e9adb4605319403a60f  server/services/clinical-regulatory-evidence/machine-attribution.ts
+d00e9dedf9797a1750653f44b81fdf8a7e48933c8a943bfcdfe0309a57f720bb  server/routes/batch-draft-routes.ts
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 ./
+
+stdout | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-29T00:33:40.630Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-29T00:33:40.631Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-29T00:33:40.631Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts
+{
+  "timestamp": "2026-09-29T00:33:40.634Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-29T00:33:40.635Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts
+{
+  "timestamp": "2026-09-29T00:33:40.635Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts
+[database] Database connection successful
+
+stdout | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+[database] Database connection successful
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts
+{
+  "timestamp": "2026-09-29T00:33:40.798Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts
+{
+  "timestamp": "2026-09-29T00:33:40.798Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept (ledger L160) > records every clause of the accepted text as the acceptor's assertion, in the same transaction as the content and its audit row 72ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept (ledger L160) > refuses an accept with no identified user, and writes nothing 10ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "approved": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 15ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "finalized": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 13ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "signed": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 13ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status "locked": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 9ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > status " Approved ": 409 FINALIZED_DOCUMENT_READ_ONLY, and the row, its versions, spans and audit are untouched 9ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept refuses a verdict row > a working row is still accepted (the refusal is the verdict, not the route) 17ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a truncated draft is not a finished one > refuses a draft the model cut off at its output limit, and writes nothing 9ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a truncated draft is not a finished one > refuses on the explicit truncated flag as well as the raw reason 4ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a truncated draft is not a finished one > accepts a completed draft that reports its finish reason 19ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — AI authorship is checked against the turn record > the batch records what it produced: one turn record holding the draft, its id and hash on the result 20ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — AI authorship is checked against the turn record > a forged claim with no record behind it yields no accepted_machine_draft span, and the claim is disclosed 19ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — AI authorship is checked against the turn record > a real record id does not launder the accepter's own text as AnA's 36ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — AI authorship is checked against the turn record > a draft accepted with its record id is AnA's, accepted by this person, under the record's model 42ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — AI authorship is checked against the turn record > a model named in the body is ignored; the model comes from the record 29ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim the record cannot vouch for > a record from another tenant does not verify 29ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim the record cannot vouch for > a record that no longer verifies whole does not verify a claim 31ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim the record cannot vouch for > a record id of "not-a-uuid" is disclosed as malformed_turn_record_id, not answered with a 500 15ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim the record cannot vouch for > a record id of 12345 is disclosed as no_turn_record_id, not answered with a 500 16ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — a claim the record cannot vouch for > a record id of {"id":"3f2b8c1e-5d4a-4e6f-9a7b-1c2d3e4f5a6b"} is disclosed as no_turn_record_id, not answered with a 500 20ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > the accepter's own words, stored in the record as their request, do not verify as AnA's 29ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > one verified claim does not carry a forged one: only the recorded draft is AnA's 29ms
+stdout | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept
+{
+  "timestamp": "2026-09-29T00:33:45.869Z",
+  "level": "info",
+  "message": "[audit-service] [AUDIT] ai_generation ai_drafting_surface",
+  "context": {
+    "userId": 501,
+    "tenantId": 77,
+    "resourceId": "batch"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept
+{
+  "timestamp": "2026-09-29T00:33:45.876Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.connect",
+    "caller": "server/services/auditService.ts:417:35",
+    "enforcement": "off"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept
+{
+  "timestamp": "2026-09-29T00:33:45.877Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write chained audit_logs row",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept
+{
+  "timestamp": "2026-09-29T00:33:45.879Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.connect",
+    "caller": "server/lib/tamper-proof-audit.ts:397:36",
+    "enforcement": "off"
+  }
+}
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept
+[AuditLog] Failed to write audit entry: TypeError: Cannot read properties of undefined (reading 'rows')
+    at TamperProofAuditLog.log (./server/lib/tamper-proof-audit.ts:430:39)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at AuditService.logAction (./server/services/auditService.ts:455:9)
+    at ./server/routes/ana-intelligence.ts:105:7
+
+stderr | server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept
+{
+  "timestamp": "2026-09-29T00:33:45.881Z",
+  "level": "error",
+  "message": "[audit-service] Failed to write tamper-proof audit entry",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > one claim holding the recorded draft and more does not verify: the claim must be inside the record, not around it 34ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record vouches only for what AnA wrote in it > a batch whose drafts came from two models names neither, and neither does the accept 42ms
+ × server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the words a browser shows are the words checked > PROBE-A: a claim holding words typed inside < … > does not verify, and the clause holding them is the accepter's 35ms
+   → text AnA never wrote was credited to AnA: expected [ 'accepted_machine_draft:ana' ] to deeply equal [ 'author_assertion' ]
+ × server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the words a browser shows are the words checked > PROBE-B: words typed inside < … > into a verified draft are the accepter's, not AnA's 31ms
+   → text AnA never wrote was credited to AnA: expected [ 'accepted_machine_draft:ana' ] to deeply equal [ 'author_assertion' ]
+ × server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record is read as markdown, the claim never is > a claim with an asterisk AnA never wrote does not verify, and the clause is the accepter's 30ms
+   → a character AnA never wrote was credited to AnA: expected [ { machine_author_id: 'ana', …(1) } ] to deeply equal []
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record is read as markdown, the claim never is > a draft recorded as markdown verifies as the text it shows 25ms
+ × server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — it names AnA as the writer only when the record does > nothing verified: the audit reason, the version summary and lastDraftSource do not say AnA wrote it 15ms
+   → expected { …(3) } to deeply equal { …(3) }
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > two accepted insertions from the same machine author, in one save > attributes BOTH to the machine, not just the one in the first accepted text 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > two accepted insertions from the same machine author, in one save > still leaves a genuinely human clause alone 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > two accepted insertions from the same machine author, in one save > bounds by occurrence WITHIN each accepted text, so one repeated clause is not over-claimed 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > two accepted insertions from the same machine author, in one save > claims two when the author genuinely accepted it twice 1ms
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > a clause with words inside < … > added is not the machine's 8ms
+   → words the machine never wrote were recorded as its: expected [ { charStart: +0, …(4) } ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > a clause with words inside an <xmp>, which shows its inside as text added is not the machine's 2ms
+   → words the machine never wrote were recorded as its: expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > a clause with words inside a <textarea>, which shows its inside as text added is not the machine's 1ms
+   → words the machine never wrote were recorded as its: expected [ Array(1) ] to deeply equal []
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > a clause with words after a <plaintext>, which shows the rest as text added is not the machine's 1ms
+   → words the machine never wrote were recorded as its: expected [ Array(1) ] to deeply equal []
+ ✓ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > the machine's words inside ordinary markup are still the machine's 1ms
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > removes an ordinary tag, and keeps every `<` a browser does not read as a tag 1ms
+   → comparableText is not a function
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > reads markdown only when asked, as the turn record's side is: `\|` is `|` and `*` is dropped 1ms
+   → comparableText is not a function
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > scans a run of `<a` with no `>` once, not once for every `<` 4980ms
+   → expected 4978.179251 to be less than 1000
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — it names AnA as the writer only when the record does > a verified draft: all three name AnA 38ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the figure rule > refuses an image that is not an uploaded figure, and writes nothing 401ms
+ ✓ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the figure rule > accepts an uploaded figure reference 26ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the words a browser shows are the words checked > PROBE-A: a claim holding words typed inside < … > does not verify, and the clause holding them is the accepter's
+AssertionError: text AnA never wrote was credited to AnA: expected [ 'accepted_machine_draft:ana' ] to deeply equal [ 'author_assertion' ]
+
+- Expected
++ Received
+
+  [
+-   "author_assertion",
++   "accepted_machine_draft:ana",
+  ]
+
+ ❯ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts:546:66
+    544|
+    545|     const covering = (await whoseSpans(id, TAMPERED.indexOf('3 patient…
+    546|     expect(covering, 'text AnA never wrote was credited to AnA').toEqu…
+       |                                                                  ^
+    547|     const audit = await acceptAudit(id);
+    548|     expect(audit.machineText.verified).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the words a browser shows are the words checked > PROBE-B: words typed inside < … > into a verified draft are the accepter's, not AnA's
+AssertionError: text AnA never wrote was credited to AnA: expected [ 'accepted_machine_draft:ana' ] to deeply equal [ 'author_assertion' ]
+
+- Expected
++ Received
+
+  [
+-   "author_assertion",
++   "accepted_machine_draft:ana",
+  ]
+
+ ❯ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts:565:66
+    563|     expect((await acceptAudit(id)).machineText.verified).toEqual([expe…
+    564|     const covering = (await whoseSpans(id, TAMPERED.indexOf('3 patient…
+    565|     expect(covering, 'text AnA never wrote was credited to AnA').toEqu…
+       |                                                                  ^
+    566|   });
+    567| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — the record is read as markdown, the claim never is > a claim with an asterisk AnA never wrote does not verify, and the clause is the accepter's
+AssertionError: a character AnA never wrote was credited to AnA: expected [ { machine_author_id: 'ana', …(1) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "asserted_by": "501",
++     "machine_author_id": "ana",
++   },
++ ]
+
+ ❯ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts:585:87
+    583|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    584|
+    585|     expect(await machineSpans(id), 'a character AnA never wrote was cr…
+       |                                                                                       ^
+    586|     expect((await acceptAudit(id)).machineText.unverified).toEqual([
+    587|       expect.objectContaining({ turnRecordId, reason: 'text_not_in_rec…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts > POST /api/batch-draft/documents/:id/accept — it names AnA as the writer only when the record does > nothing verified: the audit reason, the version summary and lastDraftSource do not say AnA wrote it
+AssertionError: expected { …(3) } to deeply equal { …(3) }
+
+- Expected
++ Received
+
+  {
+-   "changeSummary": "Superseded by batch-draft text not verified as AnA's",
+-   "lastDraftSource": "batch-unverified",
+-   "reason": "Batch-draft text accepted into document; none of it verified as AnA's",
++   "changeSummary": "Superseded by an accepted AnA batch draft",
++   "lastDraftSource": "ana-batch",
++   "reason": "AnA batch draft accepted into document",
+  }
+
+ ❯ server/routes/__tests__/batch-draft-accept-lineage.pglite.integration.test.ts:623:28
+    621|     const res = await acceptClaimingAnA(id); // no turn record id: the…
+    622|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    623|     expect(await said(id)).toEqual({
+       |                            ^
+    624|       reason: "Batch-draft text accepted into document; none of it ver…
+    625|       changeSummary: "Superseded by batch-draft text not verified as A…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > a clause with words inside < … > added is not the machine's
+AssertionError: words the machine never wrote were recorded as its: expected [ { charStart: +0, …(4) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "assertedBy": "user-7",
++     "charEnd": 107,
++     "charStart": 0,
++     "machineAuthorId": "ana",
++     "spanText": "The primary endpoint was met < 3 patients died of hepatic failure > at week twelve in the trial population.",
++   },
++ ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts:170:90
+    168|     ['words after a <plaintext>, which shows the rest as text', 'The p…
+    169|   ])('a clause with %s added is not the machine\'s', (_, clause) => {
+    170|     expect(machineSpansOf(clause), 'words the machine never wrote were…
+       |                                                                                          ^
+    171|   });
+    172|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > a clause with words inside an <xmp>, which shows its inside as text added is not the machine's
+AssertionError: words the machine never wrote were recorded as its: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "assertedBy": "user-7",
++     "charEnd": 87,
++     "charStart": 0,
++     "machineAuthorId": "ana",
++     "spanText": "The primary endpoint was <xmp><b NOT></xmp> met at week twelve in the trial population.",
++   },
++ ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts:170:90
+    168|     ['words after a <plaintext>, which shows the rest as text', 'The p…
+    169|   ])('a clause with %s added is not the machine\'s', (_, clause) => {
+    170|     expect(machineSpansOf(clause), 'words the machine never wrote were…
+       |                                                                                          ^
+    171|   });
+    172|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > a clause with words inside a <textarea>, which shows its inside as text added is not the machine's
+AssertionError: words the machine never wrote were recorded as its: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "assertedBy": "user-7",
++     "charEnd": 97,
++     "charStart": 0,
++     "machineAuthorId": "ana",
++     "spanText": "The primary endpoint was <textarea><b NOT></textarea> met at week twelve in the trial population.",
++   },
++ ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts:170:90
+    168|     ['words after a <plaintext>, which shows the rest as text', 'The p…
+    169|   ])('a clause with %s added is not the machine\'s', (_, clause) => {
+    170|     expect(machineSpansOf(clause), 'words the machine never wrote were…
+       |                                                                                          ^
+    171|   });
+    172|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > a clause with words after a <plaintext>, which shows the rest as text added is not the machine's
+AssertionError: words the machine never wrote were recorded as its: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "assertedBy": "user-7",
++     "charEnd": 87,
++     "charStart": 0,
++     "machineAuthorId": "ana",
++     "spanText": "The primary endpoint was <plaintext><b NOT> met at week twelve in the trial population.",
++   },
++ ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts:170:90
+    168|     ['words after a <plaintext>, which shows the rest as text', 'The p…
+    169|   ])('a clause with %s added is not the machine\'s', (_, clause) => {
+    170|     expect(machineSpansOf(clause), 'words the machine never wrote were…
+       |                                                                                          ^
+    171|   });
+    172|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > removes an ordinary tag, and keeps every `<` a browser does not read as a tag
+TypeError: comparableText is not a function
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts:180:12
+    178|
+    179|   it('removes an ordinary tag, and keeps every `<` a browser does not …
+    180|     expect(comparableText('<p>The <strong class="x">endpoint</strong> …
+       |            ^
+    181|     // Each of these is text to a browser (or a comment it hides). Kep…
+    182|     // only make a match fail.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > reads markdown only when asked, as the turn record's side is: `\|` is `|` and `*` is dropped
+TypeError: comparableText is not a function
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts:192:12
+    190|
+    191|   it('reads markdown only when asked, as the turn record\'s side is: `…
+    192|     expect(comparableText('The **primary** endpoint \\| per protocol',…
+       |            ^
+    193|     expect(comparableText('The **primary** endpoint \\| per protocol')…
+    194|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts > comparableText: the words a browser shows are the words compared > scans a run of `<a` with no `>` once, not once for every `<`
+AssertionError: expected 4978.179251 to be less than 1000
+ ❯ server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts:201:41
+    199|     const started = performance.now();
+    200|     machineSpansOf('<a'.repeat(50_000));
+    201|     expect(performance.now() - started).toBeLessThan(1000);
+       |                                         ^
+    202|   });
+    203| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/11]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  11 failed | 34 passed (45)
+   Start at  00:33:38
+   Duration  7.73s (transform 2.85s, setup 174ms, import 5.88s, tests 8.89s, environment 0ms)
+
