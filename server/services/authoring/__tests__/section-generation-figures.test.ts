@@ -267,6 +267,13 @@ describe('generateSection stores an empty body as an empty draft', () => {
     },
     { label: 'an empty completion', completion: '', citations: [], ungrounded: [] },
     { label: 'a completion of whitespace', completion: ' \n\n\t \r\n', citations: [], ungrounded: [] },
+    /* Round 3 (refute-review of the figure rule, D4): characters that trim()
+       keeps and no reader shows. Stored as "<p>\u200b</p>", each was content
+       to the resolver's trim() check and a blank leaf in the filing. */
+    { label: 'a zero-width space before the trailer', completion: `\u200b\n\n${TRAILER}`, citations: [{ claim: 'Stable', evidenceId: 'E1' }], ungrounded: [] },
+    { label: 'a zero-width joiner', completion: '\u200d', citations: [], ungrounded: [] },
+    { label: 'a soft hyphen', completion: '\u00ad', citations: [], ungrounded: [] },
+    { label: 'a word joiner and a byte-order mark', completion: '\u2060\ufeff', citations: [], ungrounded: [] },
   ])('$label: the draft and the result body are "", and the trailer is still read', async ({ completion, citations, ungrounded }) => {
     const result = await complete(completion);
     const stored = storedContent();

@@ -55,7 +55,7 @@
  * section's stored content changing. See @shared/authoring/cross-references.
  */
 
-import { parse, HTMLElement, TextNode, Node } from 'node-html-parser';
+import { HTMLElement, TextNode, Node } from 'node-html-parser';
 import {
   CROSS_REF_TARGET_ATTR,
   CROSS_REF_DISPLAY_ATTR,
@@ -77,6 +77,7 @@ import {
 } from '@shared/authoring/captions';
 import type { CrossReferenceTarget } from '@shared/authoring/cross-references';
 import { looksLikeHtml } from '@shared/authoring/plain-text-html';
+import { parseSectionHtml } from './section-html-parse';
 
 export interface InlineRun {
   text: string;
@@ -538,7 +539,7 @@ function parseTable(node: HTMLElement, st: InlineState): ContentBlock | null {
 }
 
 function parseHtmlToBlocks(html: string): ContentBlock[] {
-  const root = parse(html);
+  const root = parseSectionHtml(html);
   const blocks: ContentBlock[] = [];
   let current: ContentBlock | null = null;
 

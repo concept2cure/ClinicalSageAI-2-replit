@@ -490,15 +490,16 @@ async function refuseTemplateFigures(seeds: TemplateSectionSeed[]): Promise<Refu
     const refused = await refusedFigures(seed.content);
     if (refused.length > 0) {
       const section = seed.code || seed.title || String(i + 1);
-      const kinds = [...new Set(refused.map((r) => refusedKind(r.src)))].join(', ');
-      const images =
-        refused.length === 1
-          ? 'an image that is not an uploaded figure'
-          : `${refused.length} images that are not uploaded figures`;
-      const error =
-        `Template section ${section} holds ${images} (${kinds}). ` +
-        'A section can only hold images uploaded to the document (PNG, JPEG or GIF). ' +
-        'Choose another template, or create the document without one.';
+      const notFigures = refused.filter((r) => r.reason !== 'read-differently');
+      // refusedFigures reports a misread image only when nothing else is refused.
+      const what =
+        notFigures.length === 0
+          ? 'an image written in a way the editor and the filed document would read differently ' +
+            '(a repeated attribute, or an image inside a comment, a text box or a template). '
+          : `${notFigures.length === 1 ? 'an image that is not an uploaded figure' : `${notFigures.length} images that are not uploaded figures`} ` +
+            `(${[...new Set(notFigures.map((r) => refusedKind(r.src)))].join(', ')}). ` +
+            'A section can only hold images uploaded to the document (PNG, JPEG or GIF). ';
+      const error = `Template section ${section} holds ${what}Choose another template, or create the document without one.`;
       return { kind: 'refused', status: 400, error };
     }
   }

@@ -128,8 +128,11 @@ export async function generateSection(
      was ". The result carries what was stored.
      A body with no words stays "": an empty draft, which the eCTD leaf
      resolver reports as a gap. "<p></p>" would pass its emptiness check and
-     be filed as a blank leaf. */
-  const body = modelBody.trim() ? plainTextToHtml(modelBody) : '';
+     be filed as a blank leaf. No words means no letter and no digit: trim()
+     keeps a zero-width space, a soft hyphen or a word joiner, which no reader
+     shows, and "<p>\u200b</p>" was filed as a blank leaf the same way
+     (refute-review of the figure rule, round 3: D4). */
+  const body = /[\p{L}\p{N}]/u.test(modelBody) ? plainTextToHtml(modelBody) : '';
 
   // Persist as a governed draft artifact (never loose chat text).
   const [doc] = await db

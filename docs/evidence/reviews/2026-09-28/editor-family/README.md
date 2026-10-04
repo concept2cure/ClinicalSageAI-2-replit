@@ -221,7 +221,18 @@ two lanes onto trunk (above) and withdrew one.
       eCTD leaf renderer reads as HTML, so "Impurity B was <LOQ in all 3
       batches" is filed as "Impurity B was 98.0%)".
 
-  Both reviews are being taken up in this round.
+  The figure review is answered in `fixes/SEC-B-1-2-followons/r3/`:
+  - D1 to D6 are fixed, each red first. The two readers of a section's images,
+    a browser and the export's parser, must agree, or no image of the section
+    is filed and the save is refused. One parse reads `<pre>` as markup.
+  - O1 is fixed at its class: the eCTD leaf opens stored content as the
+    editor does.
+  - 11 of 11 mutants are killed.
+  - The rest is handed on (board items 17 and 18).
+
+  The undo review's ribbon item stays on this lane's list. Its co-editing
+  floor is a blocker before `ENABLE_LIVE_COEDITING` is turned on (board
+  item 19).
 
 ## Files
 

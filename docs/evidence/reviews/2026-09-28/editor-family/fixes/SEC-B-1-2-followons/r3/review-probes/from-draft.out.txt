@@ -1,0 +1,89 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <scratch>/review-figure
+
+stdout | from-draft.probe.test.ts > F1 model HTML through the from-draft sanitizer > model inline PNG
+F1 [model inline PNG] stored="<p>Results.</p><img src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==\" alt=\"Figure 1\">" leafPrintsPayload=false
+
+stdout | from-draft.probe.test.ts > F1 model HTML through the from-draft sanitizer > model governed reference to an existing upload
+F1 [model governed reference to an existing upload] stored="<p>Results.</p><img src=\"/api/authoring/images/file_1727500000000_k3v9qa\">" leafPrintsPayload=false
+
+stdout | from-draft.probe.test.ts > F1 model HTML through the from-draft sanitizer > model inline PNG inside <pre>
+F1 [model inline PNG inside <pre>] stored="<p>Results.</p><pre><img src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==\"></pre>" leafPrintsPayload=true
+
+stdout | from-draft.probe.test.ts > F1 model HTML through the from-draft sanitizer > model figure removed, leaving an empty paragraph
+F1 [model figure removed, leaving an empty paragraph] stored="<p></p>" leafPrintsPayload=false
+
+ × from-draft.probe.test.ts > F1 model HTML through the from-draft sanitizer > model inline PNG 25ms
+   → expected '<p>Results.</p><img src="data:image/p…' not to match /<img/i
+ × from-draft.probe.test.ts > F1 model HTML through the from-draft sanitizer > model governed reference to an existing upload 5ms
+   → expected '<p>Results.</p><img src="/api/authori…' not to match /<img/i
+ × from-draft.probe.test.ts > F1 model HTML through the from-draft sanitizer > model inline PNG inside <pre> 4ms
+   → expected '<p>Results.</p><pre><img src="data:im…' not to match /<img/i
+ ✓ from-draft.probe.test.ts > F1 model HTML through the from-draft sanitizer > model figure removed, leaving an empty paragraph 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  from-draft.probe.test.ts > F1 model HTML through the from-draft sanitizer > model inline PNG
+AssertionError: expected '<p>Results.</p><img src="data:image/p…' not to match /<img/i
+
+- Expected:
+/<img/i
+
++ Received:
+"<p>Results.</p><img src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==\" alt=\"Figure 1\">"
+
+ ❯ from-draft.probe.test.ts:21:24
+     19|     const stored = sanitizeAuthoringSectionHtml(html);
+     20|     console.log(`F1 [${label}] stored=${JSON.stringify(stored.length >…
+     21|     expect(stored).not.toMatch(/<img/i);
+       |                        ^
+     22|   });
+     23| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  from-draft.probe.test.ts > F1 model HTML through the from-draft sanitizer > model governed reference to an existing upload
+AssertionError: expected '<p>Results.</p><img src="/api/authori…' not to match /<img/i
+
+- Expected:
+/<img/i
+
++ Received:
+"<p>Results.</p><img src=\"/api/authoring/images/file_1727500000000_k3v9qa\">"
+
+ ❯ from-draft.probe.test.ts:21:24
+     19|     const stored = sanitizeAuthoringSectionHtml(html);
+     20|     console.log(`F1 [${label}] stored=${JSON.stringify(stored.length >…
+     21|     expect(stored).not.toMatch(/<img/i);
+       |                        ^
+     22|   });
+     23| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  from-draft.probe.test.ts > F1 model HTML through the from-draft sanitizer > model inline PNG inside <pre>
+AssertionError: expected '<p>Results.</p><pre><img src="data:im…' not to match /<img/i
+
+- Expected:
+/<img/i
+
++ Received:
+"<p>Results.</p><pre><img src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==\"></pre>"
+
+ ❯ from-draft.probe.test.ts:21:24
+     19|     const stored = sanitizeAuthoringSectionHtml(html);
+     20|     console.log(`F1 [${label}] stored=${JSON.stringify(stored.length >…
+     21|     expect(stored).not.toMatch(/<img/i);
+       |                        ^
+     22|   });
+     23| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+   Start at  17:58:49
+   Duration  1.40s (transform 227ms, setup 106ms, import 1.08s, tests 41ms, environment 0ms)
+

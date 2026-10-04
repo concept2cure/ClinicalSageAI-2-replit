@@ -1,0 +1,24 @@
+ ✓ generateSection stores the model body as text > an external address: the stored draft holds no image, and the result is what was stored 119ms
+ ✓ generateSection stores the model body as text > dot segments out of the image route: the stored draft holds no image, and the result is what was stored 33ms
+ ✓ generateSection stores the model body as text > an inline SVG: the stored draft holds no image, and the result is what was stored 36ms
+ ✓ generateSection stores the model body as text > script the model emits is stored as text, never as an element 22ms
+ ✓ generateSection stores the model body as text > a limit of quantitation: every reader reads back every word the model wrote 18ms
+ ✓ generateSection stores the model body as text > an upper limit of normal: every reader reads back every word the model wrote 25ms
+ ✓ generateSection stores the model body as text > a markdown autolink: every reader reads back every word the model wrote 15ms
+ ✓ generateSection stores the model body as text > a plain comparison: every reader reads back every word the model wrote 16ms
+ ✓ generateSection stores the model body as text > an ampersand: every reader reads back every word the model wrote 19ms
+ ✓ generateSection stores the model body as text > character references written as text: every reader reads back every word the model wrote 26ms
+ ✓ generateSection stores the model body as text > paragraphs and line breaks: every reader reads back every word the model wrote 31ms
+ ✓ generateSection stores the model body as text > escapes exactly <, > and &, inside one paragraph (guard) 1ms
+ ✓ generateSection stores the model body as text > stores a markdown body as its paragraphs and line breaks, words unchanged (guard) 12ms
+ ✓ generateSection stores the model body as text > stores a body written with CRLF line endings as the same paragraphs and line breaks (guard) 1ms
+ ✓ generateSection stores the model body as text > the editor converts plain text with the function that stores it (one implementation) 0ms
+ ✓ generateSection stores an empty body as an empty draft > 'only the JSON trailer': the draft and the result body are "", and the trailer is still read 10ms
+ ✓ generateSection stores an empty body as an empty draft > 'only a trailer listing what the evide…': the draft and the result body are "", and the trailer is still read 9ms
+ ✓ generateSection stores an empty body as an empty draft > 'an empty completion': the draft and the result body are "", and the trailer is still read 15ms
+ ✓ generateSection stores an empty body as an empty draft > 'a completion of whitespace': the draft and the result body are "", and the trailer is still read 9ms
+ ✓ generateSection stores an empty body as an empty draft > 'a zero-width space before the trailer': the draft and the result body are "", and the trailer is still read 8ms
+ ✓ generateSection stores an empty body as an empty draft > 'a zero-width joiner': the draft and the result body are "", and the trailer is still read 8ms
+ ✓ generateSection stores an empty body as an empty draft > 'a soft hyphen': the draft and the result body are "", and the trailer is still read 8ms
+ ✓ generateSection stores an empty body as an empty draft > 'a word joiner and a byte-order mark': the draft and the result body are "", and the trailer is still read 9ms
+      Tests  23 passed (23)
