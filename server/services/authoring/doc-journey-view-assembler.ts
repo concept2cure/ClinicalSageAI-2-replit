@@ -108,7 +108,12 @@ export async function assembleOrgDocJourney(orgId: number): Promise<Record<strin
             d.created_by, d.created_at, d.updated_at, d.submitted_at, d.approved_at, d.frozen_at,
             u.name AS creator_name, u.email AS creator_email
        FROM authoring_documents d
-       LEFT JOIN users u ON u.id::text = d.created_by
+       -- Names through public.actor_name (D3): a join on users found no one who
+       -- had left the organization. created_by is text; the guarded cast names
+       -- nobody for a non-numeric value instead of failing.
+       LEFT JOIN LATERAL public.actor_name(
+         CASE WHEN d.created_by ~ '^[0-9]{1,9}$' THEN d.created_by::int END
+       ) u ON TRUE
       WHERE d.tenant_id = $1
       ORDER BY d.updated_at DESC NULLS LAST, d.created_at DESC NULLS LAST, d.id DESC
       LIMIT 1`,
@@ -138,7 +143,9 @@ export async function assembleOrgDocJourney(orgId: number): Promise<Record<strin
           `SELECT r.id, r.section_id, r.content, r.created_by, r.created_at,
                   u.name AS author_name, u.email AS author_email
              FROM doc_revisions r
-             LEFT JOIN users u ON u.id::text = r.created_by
+             LEFT JOIN LATERAL public.actor_name(
+               CASE WHEN r.created_by ~ '^[0-9]{1,9}$' THEN r.created_by::int END
+             ) u ON TRUE
             WHERE r.section_id = ANY($1) AND r.tenant_id = $2
             ORDER BY r.created_at DESC NULLS LAST, r.id DESC`,
           [sectionIds, orgId],

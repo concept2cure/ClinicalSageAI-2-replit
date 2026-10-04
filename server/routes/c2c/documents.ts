@@ -429,7 +429,10 @@ router.get('/:id/sections/:key/versions', async (req: Request, res: Response) =>
          FROM c2c_document_section_versions v
          JOIN c2c_document_sections s ON s.id = v.section_id
          JOIN c2c_documents d ON d.id = s.document_id AND d.org_id = $3
-         LEFT JOIN users u ON u.id = v.author_id
+         -- Named through public.actor_name, not users: since users took row-level
+         -- security (D3, 2026-09-28) a join on users found no one who had left
+         -- the organization (docs/evidence/D3/2026-09-29-actor-names/).
+         LEFT JOIN LATERAL public.actor_name(v.author_id) u ON TRUE
         WHERE s.document_id = $1 AND s.section_key = $2
         ORDER BY v.version DESC
         LIMIT 200`,
