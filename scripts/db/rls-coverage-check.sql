@@ -154,9 +154,11 @@ WHERE c.table_schema NOT IN ('pg_catalog', 'information_schema')
 -- same shape, and that migration's chained list takes schema-qualified names.
 -- An edge into identity.users or public.users does not count. A row that names
 -- a user is that user's, not a tenant's, and those children (cognitive_audit.*,
--- federated_ml.*; public.drafting_tasks, notification_preferences,
--- user_presence) are recorded, not policied. (public.platform_role_grants is
--- policied — platform-scope writes only, 20260928_platform_role_grants_platform_writes.sql.) public.users
+-- federated_ml.*; public.drafting_tasks, notification_preferences) are
+-- recorded, not policied. (public.platform_role_grants is policied —
+-- platform-scope writes only, 20260928_platform_role_grants_platform_writes.sql;
+-- public.user_presence is policied — members read, the person writes,
+-- 20261004_user_presence_rls.sql.) public.users
 -- joined this clause on 2026-09-28, when it gained row security of its own
 -- (below); before that its children were never flagged, so nothing is newly
 -- exempted.

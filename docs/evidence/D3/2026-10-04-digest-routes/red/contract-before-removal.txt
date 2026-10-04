@@ -1,0 +1,62 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × tests/routes/legacy-digest-routes-removed.contract.test.ts > the legacy digest routes stay removed (D3) > the module and its file-backed logger are gone 6ms
+   → expected true to be false // Object.is equality
+ × tests/routes/legacy-digest-routes-removed.contract.test.ts > the legacy digest routes stay removed (D3) > no server source registers a route that takes the target user from the request on these paths 277ms
+   → expected [ …(6) ] to deeply equal []
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/routes/legacy-digest-routes-removed.contract.test.ts > the legacy digest routes stay removed (D3) > the module and its file-backed logger are gone
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/routes/legacy-digest-routes-removed.contract.test.ts:38:64
+     36| describe('the legacy digest routes stay removed (D3)', () => {
+     37|   it('the module and its file-backed logger are gone', () => {
+     38|     expect(existsSync('server/routes/notification_routes.ts')).toBe(fa…
+       |                                                                ^
+     39|     expect(existsSync('server/export_logger.ts')).toBe(false);
+     40|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/routes/legacy-digest-routes-removed.contract.test.ts > the legacy digest routes stay removed (D3) > no server source registers a route that takes the target user from the request on these paths
+AssertionError: expected [ …(6) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "server/bootstrap/register-advanced-platform-routes.ts: imports notification_routes",
++   "server/routes/notification_routes.ts: /api/notify/send-weekly-digest",
++   "server/routes/notification_routes.ts: /api/digest/get-data",
++   "server/routes/notification_routes.ts: /api/user/save-digest-prefs",
++   "server/routes/notification_routes.ts: /api/notify/send-comparison-notification",
++   "server/routes/notification_routes.ts: imports notification_routes",
++ ]
+
+ ❯ tests/routes/legacy-digest-routes-removed.contract.test.ts:49:18
+     47|       if (/notification_routes/.test(text)) hits.push(`${file}: import…
+     48|     }
+     49|     expect(hits).toEqual([]);
+       |                  ^
+     50|   });
+     51| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  23:38:44
+   Duration  704ms (transform 73ms, setup 85ms, import 10ms, tests 287ms, environment 0ms)
+

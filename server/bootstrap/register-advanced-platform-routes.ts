@@ -42,8 +42,8 @@ const log = createScopedLogger('workspace-projects');
 
 // SECURITY: nearly every router mounted here is tenant-scoped — task
 // management, approvals, branding, lineage, workspace projects. The
-// few exceptions (integration-test, notifications-as-function-app) are
-// either dev-only or perform their own auth via app.METHOD handlers,
+// one exception (integration-test) is
+// dev-only and performs its own auth via app.METHOD handlers,
 // where authenticateToken would not be the right gate. Bulk-apply
 // authenticateToken to every config-driven mount below.
 
@@ -109,21 +109,6 @@ export async function registerAdvancedPlatformRoutes({
     console.error('Failed to mount External Intelligence routes:', error);
   }
 
-  try {
-    const notificationRoutes = await import('../routes/notification_routes');
-    // notification_routes exports a function(app) that registers routes directly
-    if (
-      typeof notificationRoutes.default === 'function' &&
-      notificationRoutes.default.length >= 1
-    ) {
-      notificationRoutes.default(app);
-    } else {
-      app.use('/api/notifications', authenticateToken, notificationRoutes.default);
-    }
-    console.log('✅ Notification routes mounted at /api/notifications');
-  } catch (error) {
-    console.error('Failed to mount notification routes:', error);
-  }
 
   // ── Audit, Testing, Device/IVD lifecycle ──
   //

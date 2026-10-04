@@ -233,12 +233,6 @@ export const RUNTIME_PATHS = {
     kind: 'not-shipped',
     reason: 'csr-search-service corpus; not in the repository, so not an image gap. CSR search is outside the launch catalog.',
   },
-  '../data/user_preferences': {
-    kind: 'not-shipped',
-    reason:
-      'notification_routes.ts per-user preference files, resolved from __dirname: /data/user_preferences in ' +
-      'the image, outside /app. Runtime state, not a vendored asset; a missing file returns defaults.',
-  },
   csrs: {
     kind: 'not-shipped',
     reason:

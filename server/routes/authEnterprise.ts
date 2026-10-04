@@ -29,6 +29,7 @@ import {
 import { config } from '../config/environment';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 import { revokeToken, verifyLiveToken } from '../services/token-revocation';
+import { bindAccountByEmail, bindPreAuthAccount } from '../services/auth/pre-auth-account';
 import { continuedSessionClaims, idleWindowSecondsOf, openSession } from '../services/session-inactivity';
 import { recordAuthEvent } from '../services/audit/auth-event-audit';
 import {
@@ -272,12 +273,11 @@ router.post('/verify-password', enterpriseAuthLimiter, async (req: Request, res:
 
     // SECURITY FIX: Dev-mode any-password bypass removed. Always validate against database.
 
-    // Look up user in database
-    const userResult = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, normalizedEmail))
-      .limit(1);
+    // The account this address names, bound to the request: from here the
+    // sign-in reads and writes that row and no other (D3, 2026-10-04).
+    const accountId = await bindAccountByEmail(normalizedEmail);
+    const userResult =
+      accountId === null ? [] : await db.select().from(users).where(eq(users.id, accountId)).limit(1);
 
     if (!userResult.length) {
       // The same bcrypt cost a wrong password pays, so the response time does
@@ -552,6 +552,8 @@ router.post('/verify-mfa', enterpriseAuthLimiter, signInLimits.secondFactor, asy
 
     // Verify the MFA code using the same canonical MFA service as /api/auth/*
     const userId = parseInt(decoded.userId);
+    // The partial token is server-signed: its subject is the account (D3, 2026-10-04).
+    if (Number.isInteger(userId) && userId > 0) bindPreAuthAccount(userId);
 
     // A challenge issued before the account was suspended or deprovisioned does
     // not become a session after it (the rule routes/auth.ts's /mfa/verify

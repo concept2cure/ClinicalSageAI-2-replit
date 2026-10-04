@@ -152,14 +152,18 @@ function inferCaller(): string {
 // Postgres guarantee, not application discipline: cross-tenant reuse is
 // structurally impossible, even if a query throws.
 
-// One round-trip that sets all three vars LOCAL to the current transaction.
+// One round-trip that sets all four vars LOCAL to the current transaction.
+// app.current_account_id is the account a pre-auth scope is bound to
+// (tenantStore.bindPreAuthAccount); empty otherwise. Written on every scoped
+// statement, so a connection never carries one request's account into another.
 const TENANT_SET_CONFIG_SQL =
   "SELECT set_config('app.current_tenant_id', $1, true), " +
   "set_config('app.current_org_id', $2, true), " +
-  "set_config('app.current_user_role', $3, true)";
+  "set_config('app.current_user_role', $3, true), " +
+  "set_config('app.current_account_id', $4, true)";
 
-function scopeParams(scope: TenantScope): [string, string, string] {
-  return [scope.tenantId, scope.orgUuid ?? '', scope.role ?? ''];
+function scopeParams(scope: TenantScope): [string, string, string, string] {
+  return [scope.tenantId, scope.orgUuid ?? '', scope.role ?? '', scope.accountId != null ? String(scope.accountId) : ''];
 }
 
 /**
