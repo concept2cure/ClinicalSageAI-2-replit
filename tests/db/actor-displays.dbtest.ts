@@ -26,13 +26,19 @@ import projectKnowledgeRoutes from '../../server/routes/c2c/project-knowledge';
 import mdxAuditRoutes from '../../server/routes/mdx-audit';
 import mdxAdminRoutes from '../../server/routes/mdx-admin';
 import c2cProjectsRoutes from '../../server/routes/c2c/projects';
+import concept2cureRoutes from '../../server/routes/concept2cure';
+import authoringRouter from '../../server/routes/authoring.router';
+import c2cDocumentsRoutes from '../../server/routes/c2c/documents';
+import { assembleOrgDocJourney } from '../../server/services/authoring/doc-journey-view-assembler';
 import { authenticateToken } from '../../server/middleware/auth';
 import { getActivity, getProgramById } from '../../server/services/regulatory-programs.service';
 import {
+  TAG,
   ORG_A,
   owner,
   userA,
   ids,
+  workspaceA,
   accessToken,
   auth,
   provisionMember,
@@ -48,12 +54,65 @@ let silentLeaver = 0; // never in A's audit trail, then left
 let leaverName = '';
 let program = ''; // led by the leaver
 let adminA = 0;
+let sharedProject = 0; // the leaver is still on its ownership team
+let revisedSection = ''; // revised by the leaver, and by a non-numeric author
+const dossierDoc = `${CODE}-dossier`; // a dossier section the leaver revised
 
 async function leave(user: number) {
   await owner.query('DELETE FROM organization_users WHERE organization_id = $1 AND user_id = $2', [
     ORG_A,
     user,
   ]);
+}
+
+/** The leaver on a project ownership team, in a section's revision history,
+ *  and as a dossier section's author — seeded while they are still a member. */
+async function seedRecordsAcrossSurfaces() {
+  const sp = await owner.query(
+    `INSERT INTO projects (organization_id, client_workspace_id, name, type, status, owner_id, settings)
+     VALUES ($1, $2, $3, 'regulatory', 'active', $4, $5::jsonb) RETURNING id`,
+    [
+      ORG_A,
+      workspaceA,
+      `${TAG}-displays-shared`,
+      userA,
+      JSON.stringify({ ownership: { ownershipTeam: [{ userId: leaver, permission: 'can_edit' }] } }),
+    ]
+  );
+  sharedProject = Number(sp.rows[0].id);
+  // doc_revisions is an append-only ledger with no foreign key to the
+  // organization, so these rows stay behind in the disposable database.
+  const doc = await owner.query(
+    `INSERT INTO authoring_documents (id, title, created_by, tenant_id, updated_at)
+     VALUES (gen_random_uuid(), $1, $2, $3, now() + interval '1 day') RETURNING id`,
+    [`${TAG}-displays-doc`, String(leaver), ORG_A]
+  );
+  const sec = await owner.query(
+    `INSERT INTO authoring_sections (id, doc_id, tenant_id) VALUES (gen_random_uuid(), $1, $2) RETURNING id`,
+    [doc.rows[0].id, ORG_A]
+  );
+  revisedSection = sec.rows[0].id;
+  await owner.query(
+    `INSERT INTO doc_revisions (id, section_id, tenant_id, created_by, content, created_at)
+     VALUES (gen_random_uuid(), $1, $2, $3, 'by the leaver', now() - interval '1 minute'),
+            (gen_random_uuid(), $1, $2, 'system', 'by a non-numeric author', now())`,
+    [revisedSection, ORG_A, String(leaver)]
+  );
+  await owner.query(
+    `INSERT INTO c2c_documents (id, org_id, doc_type, agency, rule_pack_version, title)
+     VALUES ($1, $2, 'ind', 'fda', 'ich-m4-v2.0', 'Dossier')`,
+    [dossierDoc, ORG_A]
+  );
+  const ds = await owner.query(
+    `INSERT INTO c2c_document_sections (document_id, section_key, label, path_order)
+     VALUES ($1, 'm2.5', 'Clinical overview', 1) RETURNING id`,
+    [dossierDoc]
+  );
+  await owner.query(
+    `INSERT INTO c2c_document_section_versions (section_id, version, content, author_id, reason)
+     VALUES ($1, 1, '{}'::jsonb, $2, 'first draft by the leaver')`,
+    [ds.rows[0].id, leaver]
+  );
 }
 
 beforeAll(async () => {
@@ -120,6 +179,7 @@ beforeAll(async () => {
      VALUES ($1, $2, 'data_modify', 'regulatory_programs', $3, now() - interval '1 minute')`,
     [ORG_A, silentLeaver, program]
   );
+  await seedRecordsAcrossSurfaces();
   await leave(leaver);
   await leave(silentLeaver);
 
@@ -131,6 +191,9 @@ beforeAll(async () => {
   app.use('/api/mdx', mdxAuditRoutes);
   app.use('/api/mdx', mdxAdminRoutes);
   app.use('/api/c2c/projects', c2cProjectsRoutes);
+  app.use('/api/concept2cure', concept2cureRoutes);
+  app.use('/api/authoring', authoringRouter);
+  app.use('/api/c2c/documents', authenticateToken, c2cDocumentsRoutes);
 }, 60_000);
 
 afterAll(async () => {
@@ -142,6 +205,8 @@ afterAll(async () => {
       ]);
     }
   }
+  if (owner && sharedProject) await owner.query('DELETE FROM projects WHERE id = $1', [sharedProject]);
+  if (owner) await owner.query('DELETE FROM c2c_documents WHERE id = $1', [dossierDoc]);
   await teardownTwoTenantFixture();
 });
 
@@ -258,5 +323,45 @@ describe('activity feeds and the MDx audit list name people who left (D3)', () =
     expect(res.status, JSON.stringify(res.body).slice(0, 200)).toBe(200);
     const rows = (res.body.data ?? res.body.programs ?? res.body) as Array<{ id: string; lead: string }>;
     expect(rows.find(r => String(r.id) === program)?.lead).toBe(leaverName);
+  });
+
+  it('the collaborator list names a collaborator who left, so they can be removed', async () => {
+    const res = await request(app)
+      .get(`/api/concept2cure/projects/proj_${sharedProject}/collaborators`)
+      .set(asA());
+    expect(res.status, JSON.stringify(res.body).slice(0, 200)).toBe(200);
+    expect(res.body.data.collaborators).toEqual([
+      expect.objectContaining({ userId: leaver, permission: 'can_edit', name: leaverName }),
+    ]);
+  });
+
+  it("a section's revision history names a reviser who left, and a non-numeric author is no error", async () => {
+    const res = await request(app).get(`/api/authoring/sections/${revisedSection}/history`).set(asA());
+    expect(res.status, JSON.stringify(res.body).slice(0, 200)).toBe(200);
+    expect(
+      (res.body.revisions as Array<{ created_by: string; created_by_name: string | null }>).map(r => [
+        r.created_by,
+        r.created_by_name,
+      ])
+    ).toEqual([
+      ['system', null],
+      [String(leaver), leaverName],
+    ]);
+  });
+
+  it("a dossier section's version history names the author who left", async () => {
+    const res = await request(app).get(`/api/c2c/documents/${dossierDoc}/sections/m2.5/versions`).set(asA());
+    expect(res.status, JSON.stringify(res.body).slice(0, 200)).toBe(200);
+    expect((res.body.data as Array<{ authorId: number; authorName: string | null }>).map(v => [v.authorId, v.authorName])).toEqual([
+      [leaver, leaverName],
+    ]);
+  });
+
+  it("the document journey names the creator and reviser who left", async () => {
+    const stages = await runWithTenantScope(
+      { tenantId: String(ORG_A), role: 'member', source: 'request', caller: 'actor-displays.dbtest' },
+      () => assembleOrgDocJourney(ORG_A)
+    );
+    expect(JSON.stringify(stages)).toContain(leaverName);
   });
 });

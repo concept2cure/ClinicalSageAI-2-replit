@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createHash } from 'crypto';
-import { assembleRealPackage, serializeTable, sectionToContent } from '../orchestrator-real-package';
+import { assembleRealPackage, composedSectionBlocks } from '../orchestrator-real-package';
 import { validateEctdPackageHardened } from '../ectd-validator-hardening';
 import type { ComposedSection } from '../../module3Composer';
 
@@ -19,15 +19,16 @@ function section(sectionKey: string, narrative: string, tables: ComposedSection[
 
 const CTX = { region: 'US' as const, applicationNumber: 'IND-123', sequenceNumber: '0000', submissionType: 'IND' };  // an APPLICATION type, which is what this ctx field holds
 
-describe('serializeTable / sectionToContent', () => {
-  it('serializes a table to delimited plain text (not HTML)', () => {
-    const s = serializeTable({ title: 'Batch Formula', headers: ['Component', 'mg'], rows: [['API', '50'], ['Excipient', '100']] });
-    expect(s).toBe('Batch Formula\nComponent  |  mg\nAPI  |  50\nExcipient  |  100');
-  });
-  it('flattens narrative + tables into one content string', () => {
-    const c = sectionToContent(section('3.2.P.1', 'The drug product is...', [{ title: 'T', headers: ['a'], rows: [['1']] }]));
-    expect(c).toContain('The drug product is...');
-    expect(c).toContain('T\na\n1');
+describe('composedSectionBlocks', () => {
+  it('lays a section out as its narrative, then each table under its title', () => {
+    const blocks = composedSectionBlocks(
+      section('3.2.P.1', 'The drug product is...', [{ title: 'Batch Formula', headers: ['Component', 'mg'], rows: [['API', '50']] }]),
+    );
+    expect(blocks).toEqual([
+      { kind: 'paragraph', text: 'The drug product is...' },
+      { kind: 'heading', level: 3, text: 'Batch Formula' },
+      { kind: 'table', headers: ['Component', 'mg'], rows: [['API', '50']] },
+    ]);
   });
 });
 

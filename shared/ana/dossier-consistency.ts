@@ -48,6 +48,11 @@
  * that had none.
  *
  * @module shared/ana/dossier-consistency
+ *
+ * 2026-10-04: the dossier check's and the numerical integrity check's own
+ * reasons, verdicts and length constants were removed at the merge with trunk's
+ * e7021b7bb, which is now the canonical implementation of both checks
+ * (cross-artifact-consistency.ts). What remains serves the figure reconciler.
  */
 
 /** Severity of one divergence the check found. */
@@ -67,42 +72,6 @@ export const DOSSIER_CONSISTENCY_VERDICTS = [
 ] as const;
 
 export type DossierConsistencyVerdict = (typeof DOSSIER_CONSISTENCY_VERDICTS)[number];
-
-/** Why a report compared nothing (its `notAssessedReason`). */
-export const DOSSIER_NOT_ASSESSED_REASONS = [
-  /** The project id is not a positive integer, so no project documents were read. */
-  'no_project',
-  /** The draft is shorter than DOSSIER_CHECK_MIN_DRAFT_LENGTH. */
-  'draft_too_short',
-  /** The draft states no labelled figure (N =, a dose, a NOAEL, a p-value …). */
-  'no_figures_in_draft',
-  /** The project holds no documents other than the draft. */
-  'no_related_artifacts',
-  /** The only project documents found hold the draft's own text: the draft saved. */
-  'only_draft_copies',
-  /** No other document states any of the draft's figures under the same label. */
-  'no_shared_figures',
-] as const;
-
-export type DossierNotAssessedReason = (typeof DOSSIER_NOT_ASSESSED_REASONS)[number];
-
-/** The shortest draft the check compares; shorter is 'draft_too_short'. */
-export const DOSSIER_CHECK_MIN_DRAFT_LENGTH = 100;
-
-/**
- * The shortest text the labelled-figure extractor reads. Shorter text yields no
- * figure whatever it states, so a check over it reports that it was too short,
- * never that it states no figure.
- */
-export const FIGURE_EXTRACTION_MIN_LENGTH = 20;
-
-/**
- * The relative spread within which two statements of one measured figure agree:
- * a rounding artefact ("12.00" against "12.04"), not a difference. Counts and
- * other whole-number figures (N, batches, months, weeks, years, RPN) agree only
- * when equal, and a range agrees only when both bounds do.
- */
-export const FIGURE_AGREEMENT_SPREAD = 0.005;
 
 /**
  * Why a cross-document figure reconciliation compared nothing (its
@@ -124,31 +93,3 @@ export const RECONCILIATION_NOT_ASSESSED_REASONS = [
 ] as const;
 
 export type ReconciliationNotAssessedReason = (typeof RECONCILIATION_NOT_ASSESSED_REASONS)[number];
-
-/**
- * Every verdict of the within-document numerical integrity check. A candidate
- * is one labelled quantity stated with two values in the same document; the
- * check does not decide whether that is an error (a multi-arm study states a
- * different N per arm). 'not_assessed' means no figure was compared with
- * another: it is not a clean result.
- */
-export const NUMERICAL_INTEGRITY_VERDICTS = [
-  'clean',
-  'review_candidates',
-  'likely_inconsistency',
-  'not_assessed',
-] as const;
-
-export type NumericalIntegrityVerdict = (typeof NUMERICAL_INTEGRITY_VERDICTS)[number];
-
-/** Why a numerical integrity report compared nothing (its `notAssessedReason`). */
-export const NUMERICAL_INTEGRITY_NOT_ASSESSED_REASONS = [
-  /** The content is shorter than FIGURE_EXTRACTION_MIN_LENGTH, so it was not read for figures. */
-  'content_too_short',
-  /** No labelled figure (N =, a dose, a NOAEL, a p-value …) was found in the content. */
-  'no_figures',
-  /** Each labelled quantity is stated once, so no figure was compared with another. */
-  'no_repeated_figures',
-] as const;
-
-export type NumericalIntegrityNotAssessedReason = (typeof NUMERICAL_INTEGRITY_NOT_ASSESSED_REASONS)[number];

@@ -12,6 +12,9 @@
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
+import fs from 'node:fs';
+import path from 'node:path';
+import { AUDIT_LOGS_PGLITE_DDL } from '../../../db/pglite-harness';
 
 let pglite: PGlite;
 const pool = {
@@ -41,7 +44,15 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 const fmt = (iso: string) => { const d = new Date(iso); return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}`; };
 const daysAgo = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString();
 
-beforeAll(async () => { pglite = new PGlite(); await pglite.exec(DDL); }, 60_000);
+beforeAll(async () => {
+  pglite = new PGlite();
+  await pglite.exec(DDL);
+  // Names resolve through public.actor_name (D3, 2026-09-29), created from the
+  // real migration; minimal stand-ins for the two tables it reads.
+  await pglite.exec(`CREATE TABLE IF NOT EXISTS organization_users (user_id integer, organization_id integer);`);
+  await pglite.exec(AUDIT_LOGS_PGLITE_DDL);
+  await pglite.exec(fs.readFileSync(path.join(process.cwd(), 'migrations/20260929_actor_names.sql'), 'utf8'));
+}, 60_000);
 afterAll(async () => { await pglite.close(); });
 beforeEach(async () => {
   await pglite.exec(

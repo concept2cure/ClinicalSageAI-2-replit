@@ -206,13 +206,12 @@ export function toWinAnsiSafe(input: string): string {
  *
  * Only the boundary BETWEEN adjacent cells becomes a delimiter; the row's final
  * `</td>` is still stripped by the generic rule, so a row does not end in a
- * dangling separator. ` | ` matches the convention serializeTable() already
- * uses in orchestrator-real-package.ts, and single spaces survive the
- * whitespace-collapsing rules below (a two-space separator would not).
+ * dangling separator. Single spaces survive the whitespace-collapsing rules
+ * below (a two-space separator would not).
  *
- * The orchestrator path was never affected: it serializes structured tables via
- * serializeTable() before rendering. This is the leaf-source-resolver path,
- * which renders stored document HTML directly.
+ * This is the leaf-source-resolver path, which renders stored document HTML
+ * directly. Composed Module 3 sections (orchestrator-real-package) and placed
+ * Module 3 snapshots are drawn with real ruled tables by typeset-leaf-pdf.ts.
  */
 /**
  * Reduce stored document HTML to the plain text a leaf renders.

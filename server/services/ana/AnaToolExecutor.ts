@@ -39,6 +39,7 @@ import { ANA_MACHINE_AUTHOR_ID } from '../authoring/revision-ledger.js';
 // annotation the local is inferred from `p: any`, which makes every field
 // REQUIRED and so rejects PriorLeaf's optional ones.
 import type { PriorLeaf } from '../ectd/lifecycle-operator.js';
+import type { ConsistencyReport } from '../intelligence/cross-artifact-consistency.js';
 import type { ProgramRef, ProgramResolution } from '../ana-ri/drive-context.js';
 import fdaMaudeClient from '../../fda_maude_client.js';
 import { searchTrials } from '../integrations/clinicaltrials-client.js';
@@ -5177,20 +5178,26 @@ registerToolHandler('check_numerical_integrity', async (input: Record<string, un
   }
 
   try {
-    // Row 74, track NC: 'not_assessed' (nothing compared) has its own copy; the
-    // inline ternary this replaces sent it to "No numerical inconsistencies
-    // detected." or to the LIKELY INCONSISTENCY copy.
-    const [{ checkInternalNumericalIntegrity }, { integrityRecommendationFor }] = await Promise.all([
-      import('../intelligence/cross-artifact-consistency.js'),
-      import('../intelligence/consistency-verdict.js'),
-    ]);
+    const { checkInternalNumericalIntegrity } = await import(
+      '../intelligence/cross-artifact-consistency.js'
+    );
+    const { checkValueConsistency } = await import('./terminology-consistency.js');
     const report = checkInternalNumericalIntegrity(content);
+    // 'likely_inconsistency' only from the canonical in-document rule: the
+    // same document-level quantity (keyword sample size, MRSD, shelf life)
+    // stated with two values. Two arms or two dose cohorts are candidates,
+    // not a likely defect (b1-consistency-defects).
+    const valueInconsistencies = checkValueConsistency(content).filter(f => f.kind === 'value_inconsistency');
+    const verdict = valueInconsistencies.length > 0 ? 'likely_inconsistency' : report.verdict;
 
     return JSON.stringify({
-      verdict: report.verdict,
-      notAssessedReason: report.notAssessedReason,
+      verdict,
+      valueInconsistencies: valueInconsistencies.map(f => ({
+        quantity: f.label,
+        variants: f.variants,
+        evidence: f.evidence,
+      })),
       factsExtracted: report.factsExtracted,
-      quantitiesCompared: report.quantitiesCompared,
       candidateCount: report.candidateCount,
       candidates: report.candidates.slice(0, 15).map(c => ({
         label: c.humanLabel,
@@ -5198,7 +5205,12 @@ registerToolHandler('check_numerical_integrity', async (input: Record<string, un
         distinctValues: c.distinctValues,
         occurrences: c.occurrences.slice(0, 6),
       })),
-      recommendation: integrityRecommendationFor(report),
+      recommendation:
+        verdict === 'likely_inconsistency'
+          ? 'LIKELY INCONSISTENCY — the same document-level quantity is stated with two values. Fix it before finalizing.'
+          : verdict === 'review_candidates'
+            ? 'Candidate inconsistencies detected — verify whether each is a real mismatch or documented multi-arm / multi-timepoint variance. Fix genuine mismatches; add disambiguating text for legitimate cases (e.g. "N=648 at Week 26; N=612 at Week 52").'
+            : 'No numerical inconsistencies detected.',
     });
   } catch (err: any) {
     return JSON.stringify({
@@ -6068,6 +6080,48 @@ registerToolHandler('get_ctd_module_home', async (input: Record<string, unknown>
 });
 
 // Check Dossier Consistency — cross-artifact divergence detection
+/** Why check_dossier_consistency compared nothing, in words AnA can relay. */
+const NOT_COMPARED_MESSAGE: Record<NonNullable<ConsistencyReport['notCompared']>, string> = {
+  invalid_project: 'No valid project was given, so nothing was compared.',
+  draft_too_short: 'The draft is under 100 characters, so nothing was compared.',
+  no_draft_facts: 'The draft states no labelled figures and no CTD section was given, so nothing was compared.',
+};
+
+const DOSSIER_VERDICT_LINE: Record<ConsistencyReport['verdict'], string> = {
+  clean: 'No consistency issues detected against the documents compared.',
+  minor_issues: 'Minor consistency issues detected — review before finalizing.',
+  needs_review: 'Material consistency issues detected — resolve or justify before recommending for dossier.',
+  blocker: 'BLOCKER — critical consistency divergences detected. Revise before proceeding.',
+};
+
+/**
+ * The answer when nothing was compared, or null when a verdict may be given.
+ * A failed read (row 74, S3) and a not-compared report both carry the empty
+ * report's 'clean' verdict, which must not reach the model as a pass.
+ */
+function dossierNotComparedEnvelope(report: ConsistencyReport): string | null {
+  if (report.unavailable) {
+    return JSON.stringify({
+      error: 'The project documents could not be read, so nothing was compared.',
+      unavailable: true,
+    });
+  }
+  if (report.notCompared) {
+    return JSON.stringify({ error: NOT_COMPARED_MESSAGE[report.notCompared], notCompared: report.notCompared });
+  }
+  return null;
+}
+
+function dossierRecommendation(report: ConsistencyReport): string {
+  // Zero rows still carries verdict 'clean' until the off-lane unreadable
+  // test and the client learn a not-compared tier; the words do not claim a pass.
+  if (report.artifactsCompared === 0) return 'No other documents in this project were found, so nothing was compared.';
+  const line = DOSSIER_VERDICT_LINE[report.verdict];
+  return report.truncated
+    ? `Only ${report.artifactsCompared} of this project's documents were compared; the project holds more. ${line}`
+    : line;
+}
+
 registerToolHandler('check_dossier_consistency', async (input: Record<string, unknown>, ctx?: ToolContext) => {
   const draftContent = input.draft_content as string;
   const projectId = Number(input.project_id);
@@ -6085,21 +6139,11 @@ registerToolHandler('check_dossier_consistency', async (input: Record<string, un
       error: 'check_dossier_consistency requires draft_content and project_id',
     });
   }
-  // A project id that names no project is an input to correct, not a result:
-  // answering it with a 'not_assessed' verdict would read as an assessment of
-  // the draft (row 74, track H review). The engine keeps 'no_project' for
-  // direct callers.
-  if (!Number.isInteger(projectId) || projectId <= 0) {
-    return JSON.stringify({
-      error: 'check_dossier_consistency requires a positive integer project_id.',
-    });
-  }
 
   try {
-    const [{ checkDossierConsistency }, { recommendationFor }] = await Promise.all([
-      import('../intelligence/cross-artifact-consistency.js'),
-      import('../intelligence/consistency-verdict.js'),
-    ]);
+    const { checkDossierConsistency } = await import(
+      '../intelligence/cross-artifact-consistency.js'
+    );
     const report = await checkDossierConsistency({
       projectId,
       organizationId,
@@ -6107,28 +6151,18 @@ registerToolHandler('check_dossier_consistency', async (input: Record<string, un
       draftCtdSection: ctdSection,
       excludeArtifactId,
     });
-    // The documents could not be read: nothing was compared. Its report is
-    // verdict 'not_assessed' with `unavailable` set; answer with an error, not
-    // a verdict (row 74, S3; track H).
-    if (report.unavailable) {
-      return JSON.stringify({
-        error: 'The project documents could not be read, so nothing was compared.',
-        unavailable: true,
-      });
-    }
+    // Nothing was compared: there is no verdict to give.
+    const notCompared = dossierNotComparedEnvelope(report);
+    if (notCompared) return notCompared;
 
     // Summarize for AnA — keep the response compact. Full divergences
     // stay in the structured report; the summary gives AnA enough to
-    // decide whether to recommend revisions. Nothing compared is verdict
-    // 'not_assessed' with its reason, never 'clean' (row 74, track H).
+    // decide whether to recommend revisions.
     return JSON.stringify({
       verdict: report.verdict,
-      notAssessedReason: report.notAssessedReason,
       artifactsCompared: report.artifactsCompared,
-      draftCopiesSetAside: report.draftCopiesSetAside,
+      ...(report.truncated ? { truncated: true } : {}),
       draftFactsExtracted: report.draftFactsExtracted,
-      figuresCompared: report.figuresCompared,
-      crossReferencesChecked: report.crossReferencesChecked,
       divergenceCount: report.divergences.length,
       bySeverity: {
         critical: report.divergences.filter(d => d.severity === 'critical').length,
@@ -6145,7 +6179,7 @@ registerToolHandler('check_dossier_consistency', async (input: Record<string, un
         existingArtifact: d.existingArtifactTitle,
         existingCtdSection: d.existingCtdSection,
       })),
-      recommendation: recommendationFor(report),
+      recommendation: dossierRecommendation(report),
     });
   } catch (err: any) {
     return JSON.stringify({

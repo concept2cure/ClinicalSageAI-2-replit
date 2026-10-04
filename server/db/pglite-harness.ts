@@ -398,6 +398,7 @@ CREATE TABLE IF NOT EXISTS coauthor_documents (
   content         TEXT,
   status          TEXT NOT NULL DEFAULT 'draft',
   module_number   TEXT,
+  metadata        JSON DEFAULT '{}'::json,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
