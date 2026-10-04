@@ -1,0 +1,21 @@
+Mutant D2-loose-tag: A tag is whatever a browser opens: any `<name` up to `>`, as the old strip read it.
+Result: KILLED (vitest exit 1, 2 failing tests)
+Tests run: server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts, server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts, server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts, server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts
+The file was restored after the run (sha256 checked).
+
+--- diff ---
+--- a/server/services/clinical-regulatory-evidence/machine-attribution.ts
++++ b/server/services/clinical-regulatory-evidence/machine-attribution.ts
+@@ -164,3 +164,3 @@
+  */
+-const START_TAG = new RegExp(`<([A-Za-z][A-Za-z0-9]*)((?:${WS}+${ATTRIBUTE})*)${WS}*/?>`, 'y');
++const START_TAG = new RegExp('<([A-Za-z][A-Za-z0-9]*)([^<>]*)>', 'y');
+ const END_TAG = new RegExp(`</([A-Za-z][A-Za-z0-9]*)${WS}*>`, 'y');
+
+--- failing tests ---
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D2: a token a browser hides as a tag and node-html-parser prints as text > outside the region it does not compare, node-html-parser and a browser show the same text, and the comparison drops only what neither shows 83ms
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D3: what the leaf or the export drops opens the not-compared region > notComparedFrom finds a `<` a browser may read as markup and node-html-parser as text in HTML content 2ms
+
+--- summary ---
+ Test Files  1 failed | 3 passed (4)
+      Tests  2 failed | 145 passed (147)

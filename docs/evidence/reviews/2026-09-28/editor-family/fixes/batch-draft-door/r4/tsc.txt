@@ -1,0 +1,35 @@
+Narrow typecheck (TypeScript 5.6.3, the repository's tsconfig.json): a config that extends it
+and lists the files this round touched or added. tsc checks them and everything they import.
+  npx tsc -p <config>   files:
+    server/services/clinical-regulatory-evidence/machine-attribution.ts
+    server/services/clinical-regulatory-evidence/lineage-gate.ts
+    server/services/authoring/machine-claim-verify.ts
+    server/services/authoring/revision-ledger.ts
+    server/routes/batch-draft-routes.ts
+    shared/authoring/source-mode.ts
+    shared/authoring/__tests__/source-mode.test.ts
+    server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts
+    server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts
+    server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts
+    server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts
+    server/services/authoring/__tests__/accepted-machine-text.test.ts
+    client/src/concept2cure/v2/editor/RichSectionEditor.tsx
+
+Errors in the files listed: 0
+
+Errors elsewhere (60 in 12 files), none in a file this round touches. They come from the narrow
+program itself: it leaves out the global declarations the whole-tree include brings in (the
+Express Request augmentation: `req.user`, `req.userRole`), and some imported .js modules and
+packages have no declaration files (TS7016). None names a symbol this round changed:
+   15  server/middleware/requirePlatformAdmin.ts
+   12  server/routes/c2c/shared.ts
+    6  server/middleware/orgMembership.ts
+    6  server/middleware/redisRateLimiter.ts
+    6  server/services/authoring/authoring-permissions.ts
+    5  server/services/concept2cure/governedDocumentContractService.ts
+    3  server/routes/c2c/project-access.ts
+    2  server/services/ana/AnaToolExecutor.ts
+    2  server/services/mfaService.ts
+    1  server/services/cmc/link-to-module3.ts
+    1  server/services/memory/document-text-extraction.ts
+    1  server/utils/jwtVerify.ts

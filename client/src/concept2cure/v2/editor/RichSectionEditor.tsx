@@ -100,6 +100,7 @@ import {
   editorHeldDoc,
   type StructuralSignature,
 } from './roundTrip';
+import { opensInSourceMode } from '@shared/authoring/source-mode';
 import { FindReplace, getFindState } from './findReplace';
 import { AuthoringImage } from './imageNode';
 import { CrossReference } from './crossReferenceNode';
@@ -866,8 +867,9 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       // schema holds an image node backed by the governed image store — but
       // figure/svg/video/embed/object still are not, so content holding one
       // of those is edited in source mode, where the raw string round-trips
-      // byte-for-byte.
-      if (/<(figure|svg|video|embed|object)[\s/>]/i.test(stored)) {
+      // byte-for-byte. The test is shared with the lineage, which reads such
+      // content as this reader shows it (shared/authoring/source-mode.ts).
+      if (opensInSourceMode(stored)) {
         return { mode: 'source' as const, html: null, verdict: null };
       }
       try {

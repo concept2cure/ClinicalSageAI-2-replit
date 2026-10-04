@@ -1,0 +1,20 @@
+Mutant D5-image: An image is not a printing element.
+Result: KILLED (vitest exit 1, 1 failing tests)
+Tests run: server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts, server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts, server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts, server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts
+The file was restored after the run (sha256 checked).
+
+--- diff ---
+--- a/server/services/clinical-regulatory-evidence/machine-attribution.ts
++++ b/server/services/clinical-regulatory-evidence/machine-attribution.ts
+@@ -266,3 +266,3 @@
+  */
+-const PRINTING_ELEMENTS = new Set(['img', 'image']);
++const PRINTING_ELEMENTS = new Set<string>([]);
+ const PRINTED_ATTRIBUTES = new Set([
+
+--- failing tests ---
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > D5: an image prints its alt, or a label, in the leaf > not even when AnA's record holds the same image, with no alt: the leaf prints a label for its kind 9ms
+
+--- summary ---
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 146 passed (147)

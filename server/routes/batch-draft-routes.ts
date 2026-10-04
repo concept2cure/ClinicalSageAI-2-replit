@@ -591,7 +591,11 @@ export default function createBatchDraftRoutes(): Router {
         { documentTable: 'coauthor_documents', documentId: String(documentId) },
         content,
         String(actor.userId),
-        { acceptedMachineText: machineText.verified.map(({ authorId, text }) => ({ authorId, text })) },
+        {
+          acceptedMachineText: machineText.verified.map(({ authorId, text }) => ({ authorId, text })),
+          // No clause is credited more times than the record holds it (round 4, DUP).
+          recordOccurrences: machineText.occurrencesInRecords,
+        },
       );
       const credited = lineage.clausesInAcceptedText > 0;
       const wording = acceptWording(credited);

@@ -1,0 +1,23 @@
+Mutant DUP-no-cap: The records' count bounds nothing.
+Result: KILLED (vitest exit 1, 4 failing tests)
+Tests run: server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts, server/services/clinical-regulatory-evidence/__tests__/machine-attribution.test.ts, server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts, server/routes/__tests__/batch-draft-accept-shown-words.pglite.integration.test.ts
+The file was restored after the run (sha256 checked).
+
+--- diff ---
+--- a/server/services/clinical-regulatory-evidence/machine-attribution.ts
++++ b/server/services/clinical-regulatory-evidence/machine-attribution.ts
+@@ -578,3 +578,3 @@
+   const recordHoldsMore = (needle: string): boolean => {
+-    if (!opts.recordOccurrences) return true;
++    return true;
+     if (!held.has(needle)) held.set(needle, opts.recordOccurrences(needle));
+
+--- failing tests ---
+ × server/services/clinical-regulatory-evidence/__tests__/machine-attribution-readers.test.ts > DUP: a clause is credited no more times than the record holds it > the same claim three times credits one of three repeated clauses 10ms
+ × server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > a clause is credited no more times than the record holds it (DUP) > the record holds the sentence once; the same claim sent three times credits one of three 40ms
+ × server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > a clause is credited no more times than the record holds it (DUP) > nor does accepting the same draft again: the clause carried forward counts against the record 56ms
+ × server/routes/__tests__/batch-draft-accept-readers.pglite.integration.test.ts > a clause is credited no more times than the record holds it (DUP) > nor do overlapping claims: three claims each holding the sentence credit one of three 34ms
+
+--- summary ---
+ Test Files  2 failed | 2 passed (4)
+      Tests  4 failed | 143 passed (147)
