@@ -118,6 +118,7 @@ to one line; edit only your own row to limit merge conflicts.
 - SEC-A-1, P11-A-1/SEC-A-8, SEC-A-2 (`63b43274`); A-B-2/3 (`26e0b3a8`);
 - SEC-C-4 (`e8f448d1`); HS-C-3 (`146a6382`); A-C-2 (`88ef5f87`); A-C-5 (`8691cfe8`); A-C-8 (`a0bdfbf0`);
 - P11-C-4 (`8e72b9bf`, `d848acf3`); SEC-C-7 (`6b442012`); P11-C-2 (`fb69b716`).
+- **2026-10-04, round 3:** the P11-B-4 undo and redo floor (`f2ab9b3cd`) and the SEC-B-1/2 figure rule on create, AI drafting and export (`e93ee0387`), merged onto trunk at `25740b97c`. NEW-P11-B-1a was withdrawn unpushed: `c3f2b287a` (`…01SuVLo2`) closed it more strictly. The batch-draft door is still this lane's. Record: the editor-family README, rounds 2 and 3.
 
 `…01KiDof7`'s same-day coverage-gap sweep fixed SEC-A-9 (`59b0d8f9`), part of HS-B-1 (`59b0d8f9`), and the protocol tab strip half of A-C-2 (`780a0639`). Its lane has no row here, and it works in this lane's files, so any further work in the editor family should be claimed first. Handed on: items 5–7 of this lane's list below. **Second round, claimed 2026-09-28 18:00 (cold files only, none changed by another lane in 24 h):**
   - SEC-C-4 (a) server half: `server/services/ana-ri/surface-context-block.ts`; the SEC-C-4 class in `client/src/concept2cure/v2/editor/askAnaToDraft.ts`;

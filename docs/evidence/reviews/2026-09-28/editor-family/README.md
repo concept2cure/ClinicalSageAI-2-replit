@@ -158,20 +158,37 @@ refute them.
 - `f569d49d`: the SEC-C-4 class, draft prompt.
 - `e6822dac`: the SEC-C-7 follow-on.
 - `dfe08dea`: SEC-C-4 (a), server half, inert.
+- `f2ab9b3cd` (2026-10-04, on trunk at the merge `25740b97c`): P11-B-4,
+  remaining gap. A recorded accept or reject is an undo and redo floor in a
+  session of any length (`fixes/P11-B-4-remaining-gap/`). The first
+  attempt's reviewers found that redo reversed a decision too, and that a
+  long session disabled undo; both are fixed and pinned.
+- `e93ee0387` (2026-10-04, same merge): SEC-B-1/2 follow-ons a, b1, b6.
+  Create from an organization template, AI section drafting and export apply
+  the section figure rule (`fixes/SEC-B-1-2-followons/`). The first attempt's
+  reviewers found that the export placeholder printed a whole base64 payload,
+  and that generated drafts were double-escaped; both are fixed and pinned.
 
-**Still in progress**, each after its reviewers found a blocking defect in
-the first attempt:
-- **P11-B-4, remaining gap.** Undo past a recorded decision. The reviewers
-  found that redo reversed a decision too, and that a long session disabled
-  undo.
-- **SEC-B-1/2 follow-ons a, b1, b6.** The reviewers found:
-  - the export placeholder printed a whole base64 payload;
-  - generated drafts were double-escaped.
-- **The batch-draft door.** The reviewers found that a `< … >` span in the
-  text passed both the verifier and the lineage.
-- **NEW-P11-B-1a.** The reviewers found:
-  - the leaf path still re-filed an approved row;
-  - the actor was named "System".
+These two were reviewed by agents told to refute them in their first
+attempts. The final fix-up cycle was checked by this lane alone (each fix
+failing first, mutants), because review agents were unavailable that week.
+Independent refute-reviews at the merge are recorded in round 3 below.
+
+**Withdrawn unpushed:** NEW-P11-B-1a. This lane's attempt (classify refused
+to re-file a verdict row) was superseded by `c3f2b287a` (`…01SuVLo2`,
+2026-10-01), which closes the same finding more strictly: classify and
+extract propose and write nothing. Its evidence folder is not filed.
+
+**Still in progress:** the batch-draft door. The reviewers found that a
+`< … >` span in the text passed both the verifier and the lineage. Round 3
+below takes it up.
+
+## Round 3 (2026-10-04)
+
+The lane resumed after five days, with 1,170 commits on trunk. It carried
+two lanes onto trunk (above) and withdrew one. Still open in this lane: the
+batch-draft door, and the round-3 list of held-file findings whose holds have
+now lapsed.
 
 ## Files
 
