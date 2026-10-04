@@ -1,0 +1,16 @@
+# The one-reader scan (tests/schema-contract/one-program-anchor-reader.contract.test.ts patterns) over three trees
+fa00d6392^1 [
+ "server/routes/ana-biostats-governed-documents.ts",
+ "server/routes/ana-ri/post-processing.ts",
+ "server/services/biostatistics-bridge/bridge-service.ts",
+ "server/services/c2c/program-project-anchor.ts",
+ "server/services/cmc/contradiction-tasks.ts",
+ "server/services/pathway-engines/estar/estar-administrative-data.ts"
+]
+fa00d6392 [
+ "server/routes/ana-ri/post-processing.ts",
+ "server/services/c2c/program-project-anchor.ts"
+]
+382e25c6b [
+ "server/services/c2c/program-project-anchor.ts"
+]

@@ -1,6 +1,6 @@
 {
   "description": "Accepted set of env vars read by server/ + shared/ but not yet documented in .env.example. New undocumented vars fail CI; document them in .env.example (preferred) or, if intentional, re-run npm run ci:env-var-docs:write-baseline. Ratchet this list down over time.",
-  "count": 241,
+  "count": 240,
   "vars": [
     "AI_GATEWAY_MAX_CONCURRENCY",
     "AI_GATEWAY_SCAN_ALL_ROLES",
@@ -115,7 +115,6 @@
     "FDA_ESG_PASSWORD",
     "FDA_ESG_URL",
     "FDA_ESG_USERNAME",
-    "FDA_GUIDANCE_API_URL",
     "FDA_PRIVATE_KEY",
     "FEATURE_FIRECRAWL_ENABLED",
     "FHIR_ACCESS_TOKEN",

@@ -1,0 +1,25 @@
+ FAIL  server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the device predicate-intelligence and RTM routes under /api/programs, and passes Projects
+AssertionError: /api/programs/7/predicate-intel/defense-packet/build: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/middleware/__tests__/launch-scope-api-gate.test.ts:191:35
+    189|       '/api/programs/7/rtm/csv',
+    190|     ]) {
+    191|       expect(await refused(p), p).toBe(true);
+       |                                   ^
+    192|     }
+    193|     expect(await refused('/api/projects')).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 26 passed (27)
+   Start at  21:32:50
+   Duration  1.06s (transform 333ms, setup 115ms, import 299ms, tests 137ms, environment 0ms)
+

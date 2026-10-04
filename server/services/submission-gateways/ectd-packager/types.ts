@@ -33,11 +33,18 @@ export interface EctdLeaf {
    */
   leafKey?: string;
   /**
-   * For a lifecycle operation (replace/delete/append), the package-relative
-   * path (+ optional `#leafId` fragment) of the prior leaf this one modifies.
+   * For a lifecycle operation (replace/delete/append), the prior leaf this one
+   * modifies, named as ICH eCTD v3.2.2 requires: the backbone of the sequence
+   * that filed it, '#', and that leaf's ID — from the sequence root, e.g.
+   * `../0000/index.xml#leaf-3-2-S-1-general` or
+   * `../0000/m1/us/us-regional.xml#leaf-1-2-cover` (the packager rebases a
+   * pointer carried by the regional backbone onto that backbone's folder).
    * Emitted as the `modified-file` attribute. For grouped submissions the path
    * must carry the application prefix + number (Module 1 Backbone Spec
    * Addendum 1), e.g. `../../../../nda456789/0001/m1/us/us-regional.xml#id2`.
+   *
+   * 2026-09-29 (W5/D7): this carried the superseded FILE's path
+   * (`../0000/m3/…/x.pdf`), which names no leaf.
    */
   modifiedFile?: string;
   /**
@@ -54,12 +61,19 @@ export interface EctdLeaf {
   stfFileTag?: string;
 }
 
-/** One applicant contact rendered into the FDA us-regional admin block. */
+/**
+ * One applicant contact rendered into the FDA us-regional admin block as
+ * `<applicant-contact>`: `<applicant-contact-name>`, then `<telephones>`, then
+ * `<emails>`, each wrapper only when the value is present.
+ */
 export interface FdaApplicantContact {
   /** Contact role — resolved to `fdaactN` (regulatory/technical/us-agent). */
   type: string;
   name: string;
+  /** Written as `<emails><email>`. */
   email?: string;
+  /** Written as `<telephones><telephone>`, with no telephone-number-type: FDA's
+   *  code list for it is not vendored (2026-10-01), so the bundle reports the gap. */
   phone?: string;
 }
 
@@ -71,11 +85,18 @@ export interface FdaFormLeaf {
 }
 
 /**
- * FDA us-regional admin metadata. When present, the FDA backbone emits the
- * spec-conformant `<admin>` block (applicant-contacts + application-set with
- * application-type / submission-type / submission-sub-type coded attributes +
- * transmittal form). When absent, sensible values are derived from the
- * top-level PackagerInput so existing callers keep working.
+ * FDA us-regional admin metadata for the `<admin>` block: `<applicant-info>`
+ * (`<id>` and `<company-name>` from PackagerInput.sponsorId / sponsorName, then
+ * `<applicant-contacts>` when `contacts` is non-empty) and the application-set
+ * (application-type / submission-type / submission-sub-type coded attributes +
+ * transmittal forms). Values that can be derived from the top-level
+ * PackagerInput are; a filing identity that cannot be is refused, never guessed.
+ *
+ * Nothing here is invented when absent: with no `contacts` no
+ * `<applicant-contacts>` is written. What the backbone therefore cannot stand
+ * behind (no contacts, an undeclared 1.1 form, a heading whose parent element
+ * name is not recorded) is stated on the bundle's `regionalBackbone`, which is
+ * not region-conformant while any of it remains (2026-10-01, sweep F06/F07).
  */
 export interface FdaRegionalAdmin {
   /** Application-type: `fdaatN` code or canonical string ('nda','ind',…). */
@@ -86,9 +107,12 @@ export interface FdaRegionalAdmin {
   submissionSubType?: string;
   /** submission-id value (defaults to the sequence number). */
   submissionId?: string;
-  /** Applicant contacts (regulatory/technical/US agent). */
+  /** Applicant contacts (regulatory/technical/US agent), written inside
+   *  `<applicant-info>` after `<id>` and `<company-name>`. Absent or empty: no
+   *  `<applicant-contacts>` element and no placeholder contact. */
   contacts?: FdaApplicantContact[];
-  /** Transmittal forms (356h/1571/…) nested under `<form>`. */
+  /** Transmittal forms (356h/1571/…) nested under `<form>`. A 1.1 leaf counts as
+   *  declared only when its form's `leaf` is the SAME object as the package leaf. */
   forms?: FdaFormLeaf[];
 }
 
@@ -110,6 +134,15 @@ export interface LeafRef {
    * a follow-up sequence supersedes.
    */
   backboneDir: string;
+  /**
+   * The leaf's XML ID in the backbone that carries it, and that backbone's path
+   * from the sequence root (`index.xml`, `m1/us/us-regional.xml`). Assigned once
+   * per backbone, after every leaf is known, so the ID a backbone carries and
+   * the ID the leaf manifest records are the same value; a later sequence's
+   * `modified-file` names the leaf by exactly these two. 2026-09-29 (W5/D7).
+   */
+  id?: string;
+  backbone?: string;
 }
 
 /** One entry in the index-md5.txt manifest: a package-relative path + its MD5. */

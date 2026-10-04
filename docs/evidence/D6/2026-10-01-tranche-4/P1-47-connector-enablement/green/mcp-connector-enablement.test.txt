@@ -1,0 +1,49 @@
+# git HEAD: 0812a990 + the P1-47 working-tree change
+# command: npx vitest run server/mcp/__tests__/mcp-connector-enablement.test.ts
+# (structured JSON log lines filtered out)
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/mcp/__tests__/mcp-connector-enablement.test.ts
+
+stderr | server/mcp/__tests__/mcp-connector-enablement.test.ts
+
+stderr | server/mcp/__tests__/mcp-connector-enablement.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+
+stderr | server/mcp/__tests__/mcp-connector-enablement.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/mcp/__tests__/mcp-connector-enablement.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stdout | server/mcp/__tests__/mcp-connector-enablement.test.ts
+
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > control: enabled, both a connector token and the session open the connector 97ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > no settings at all: a connector token is refused with invalid_token and the reason 11ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > settings without the connector: a connector token is refused with invalid_token and the reason 8ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > enabled: false: a connector token is refused with invalid_token and the reason 8ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > enabled: "true" (a string, not true): a connector token is refused with invalid_token and the reason 7ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > the connector stored as a bare true: a connector token is refused with invalid_token and the reason 6ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > the session token is refused the same way 7ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > refuses as an outage when the organization cannot be read: never admits, never "bad token" 9ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > control: enabled, consent issues a code 12ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > no settings at all: 403 access_denied with the reason, and no code 7ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > settings without the connector: 403 access_denied with the reason, and no code 6ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > enabled: false: 403 access_denied with the reason, and no code 5ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > enabled: "true" (a string, not true): 403 access_denied with the reason, and no code 5ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > the connector stored as a bare true: 403 access_denied with the reason, and no code 6ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > answers 503 and issues no code when the organization cannot be read 5ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the /token exchanges > control: enabled, a refresh rotates and issues, and a code exchange issues 3ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the /token exchanges > not enabled: a refresh is refused (invalid_grant) and the grant is left as it was 3ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the /token exchanges > not enabled: a code exchange is refused and issues nothing 1ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the /token exchanges > a refresh refuses as an outage when the organization cannot be read, and neither rotates nor issues 1ms
+
+ Test Files  1 passed (1)
+      Tests  19 passed (19)
+   Start at  14:18:38
+   Duration  3.93s (transform 1.66s, setup 117ms, import 238ms, tests 3.17s, environment 0ms)
+

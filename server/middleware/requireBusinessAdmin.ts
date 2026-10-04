@@ -22,6 +22,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { createScopedLogger } from '../utils/logger';
 import { query } from '../db';
+import { tokenProvider } from './requirePlatformAdmin';
 
 const logger = createScopedLogger('business-center-guard');
 
@@ -50,8 +51,13 @@ export function isBusinessAdmin(req: Request): boolean {
   if (BUSINESS_ROLES.has(primaryRole)) return true;
   if (roles.some(r => BUSINESS_ROLES.has(r))) return true;
 
+  // The allowlist names the owner's OWN (password) sign-in. A federated
+  // session's e-mail is whatever its identity provider asserted, so it gets
+  // nothing from the list: the rule requirePlatformAdmin applies to
+  // PLATFORM_ADMIN_EMAILS (audit IAM-03), by the same reading of the provider.
+  // Such an identity is decided by a platform_role_grants row alone.
   const email = (req.userEmail || req.user?.email || '').toString().toLowerCase();
-  if (email && allowlistedEmails().has(email)) return true;
+  if (email && tokenProvider(req) !== 'saml' && allowlistedEmails().has(email)) return true;
 
   return false;
 }

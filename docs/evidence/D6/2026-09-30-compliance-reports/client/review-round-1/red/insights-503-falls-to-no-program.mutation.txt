@@ -1,0 +1,328 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ↓ client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 1. the chain statement says what was checked > a report that does not check the chain says so, and offers the integrity attestation
+ ↓ client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 1. the chain statement says what was checked > every check intact: "All 3 integrity checks passed at generation"
+ ↓ client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 1. the chain statement says what was checked > a break is an error, not a warning, and carries its reason
+ ↓ client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 1. the chain statement says what was checked > checks that could not verify are counted, with the reason
+ ↓ client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 1. the chain statement says what was checked > ok:true over zero rows is never shown as verified
+ ↓ client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 1. the chain statement says what was checked > styles each verdict cell by its verdict, with the word always present
+ ↓ client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 1. the chain statement says what was checked > the full audit trail states each store on its own line, never one merged verdict
+ ↓ client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 2. the seal is explained and can be checked > says what the seal is, who ran the report, and that it is not an electronic signature
+ ↓ client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 2. the seal is explained and can be checked > copies the full SHA-256, and shows it when the browser refuses
+ ↓ client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 2. the seal is explained and can be checked > verifies a saved JSON bundle with exactly its data, manifest and signature
+ ↓ client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 2. the seal is explained and can be checked > verifies a CSV with its manifest file, sending the CSV text exactly as read
+ ↓ client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 2. the seal is explained and can be checked > refuses files that are not a saved report without calling the server
+ ↓ client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 3. an as-of report says which fields are as of the date > describes the as-of rule, and notes current status for a past date only
+ ↓ client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 4. what does not parse is unreadable, never empty > a section without a rows array could not be read
+ ↓ client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 4. what does not parse is unreadable, never empty > a section whose row count disagrees with its rows could not be read
+ ↓ client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 4. what does not parse is unreadable, never empty > one malformed catalog entry fails the whole read
+ ↓ client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 5. Download CSV says it ran the report again > names the new export and its time, and warns when its row counts differ
+ ↓ client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 6. timestamps read as UTC > formats ISO instants as YYYY-MM-DD HH:MM:SS UTC and marks their column
+ ↓ client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 7. no audit-trail row has a blank actor > adds a User id column when a row has no user name
+ ↓ client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 7. no audit-trail row has a blank actor > leaves the column out when every row names its user
+ ↓ client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 8. who may run reports is the server’s statement > takes the readers notice from the catalog
+ ↓ client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 8. who may run reports is the server’s statement > a restricted-read 403 shows the readers notice; any other 403 shows its own message
+ ↓ client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 8. who may run reports is the server’s statement > a 429 for a run in progress says a report is already running
+ × client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 9. Insights renders a 503 overview as an error > shows the error state, not "No program readiness yet", and keeps the reports reachable 5055ms
+   → Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"rc"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rc-canvas"[39m
+        [33mstyle[39m=[32m"grid-column: 1 / -1;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"c2c-empty-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-chart-column"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 3v16a2 2 0 0 0 2 2h16"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M18 17V9"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M13 17V5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 17v-3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-t"[39m
+          [36m>[39m
+            [0mNo program readiness yet[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-h"[39m
+          [36m>[39m
+            [0mOnce a program with a governed readiness run exists in your organization, the reporting canvas opens here — flagship readiness, the portfolio rollup, and every governed report, all provenance-linked. Nothing is estimated.[0m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"c2c-empty-action"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mAudit & compliance reports[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"rc"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rc-canvas"[39m
+        [33mstyle[39m=[32m"grid-column: 1 / -1;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"c2c-empty-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-chart-column"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 3v16a2 2 0 0 0 2 2h16"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M18 17V9"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M13 17V5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 17v-3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-t"[39m
+          [36m>[39m
+            [0mNo program readiness yet[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-h"[39m
+          [36m>[39m
+            [0mOnce a program with a governed readiness run exists in your organization, the reporting canvas opens here — flagship readiness, the portfolio rollup, and every governed report, all provenance-linked. Nothing is estimated.[0m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"c2c-empty-action"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mAudit & compliance reports[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx > 9. Insights renders a 503 overview as an error > shows the error state, not "No program readiness yet", and keeps the reports reachable
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"rc"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rc-canvas"[39m
+        [33mstyle[39m=[32m"grid-column: 1 / -1;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"c2c-empty-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-chart-column"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 3v16a2 2 0 0 0 2 2h16"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M18 17V9"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M13 17V5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 17v-3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-t"[39m
+          [36m>[39m
+            [0mNo program readiness yet[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-h"[39m
+          [36m>[39m
+            [0mOnce a program with a governed readiness run exists in your organization, the reporting canvas opens here — flagship readiness, the portfolio rollup, and every governed report, all provenance-linked. Nothing is estimated.[0m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"c2c-empty-action"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mAudit & compliance reports[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"rc"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"rc-canvas"[39m
+        [33mstyle[39m=[32m"grid-column: 1 / -1;"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"c2c-empty-state tone-idle"[39m
+          [33mrole[39m=[32m"status"[39m
+        [36m>[39m
+          [36m<span[39m
+            [33maria-hidden[39m=[32m"true"[39m
+            [33mclass[39m=[32m"c2c-empty-ic"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"lucide lucide-chart-column"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"1em"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.75"[39m
+              [33mviewBox[39m=[32m"0 0 24 24"[39m
+              [33mwidth[39m=[32m"1em"[39m
+              [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 3v16a2 2 0 0 0 2 2h16"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M18 17V9"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M13 17V5"[39m
+              [36m/>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 17v-3"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-t"[39m
+          [36m>[39m
+            [0mNo program readiness yet[0m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"c2c-empty-h"[39m
+          [36m>[39m
+            [0mOnce a program with a governed readiness run exists in your organization, the reporting canvas opens here — flagship readiness, the portfolio rollup, and every governed report, all provenance-linked. Nothing is estimated.[0m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"c2c-empty-action"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mAudit & compliance reports[0m
+          [36m</button>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx:414:26
+    412|     const onNav = vi.fn();
+    413|     render(<InsightsCanvas onNav={onNav} segment="pharma" {...({ surfa…
+    414|     expect((await screen.findByRole('alert')).textContent).toMatch(/Co…
+       |                          ^
+    415|     expect(screen.queryByText('No program readiness yet')).toBeNull();
+    416|     await act(async () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 23 skipped (24)
+   Start at  01:27:22
+   Duration  6.60s (transform 525ms, setup 189ms, import 670ms, tests 5.06s, environment 518ms)
+

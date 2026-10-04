@@ -1,0 +1,17 @@
+$ npx eslint server/services/audit/signedAuditExport.ts server/services/audit/auditExportKeyPosture.ts server/services/audit/__tests__/signed-audit-export-key-id.test.ts server/services/audit/__tests__/auditExportKeyPosture.test.ts
+
+/home/user/ClinicalSageAI-2-replit/server/services/audit/signedAuditExport.ts
+  406:47  warning  The value assigned to 'idx' is not used in subsequent statements  no-useless-assignment
+
+✖ 1 problem (0 errors, 1 warning)
+
+exit=0
+
+$ git show HEAD:server/services/audit/signedAuditExport.ts | npx eslint --stdin --stdin-filename server/services/audit/signedAuditExport.ts   # HEAD 6eeee017 baseline: the one pre-existing warning
+
+/home/user/ClinicalSageAI-2-replit/server/services/audit/signedAuditExport.ts
+  391:47  warning  The value assigned to 'idx' is not used in subsequent statements  no-useless-assignment
+
+✖ 1 problem (0 errors, 1 warning)
+
+exit=0

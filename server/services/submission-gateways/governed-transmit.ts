@@ -49,10 +49,17 @@ import { pool } from '../../db';
 import { getGateway } from './index';
 import { preTransmitFindings } from './pre-transmit-findings';
 import type { GatewayName, GatewayTransmitResult, Region, SubmissionBundle } from './types';
-import { findActiveTransmittal } from './fda-esg';
+import {
+  GovernedTransmitInternalError,
+  GovernedTransmitRefusal,
+  agencyMetadata,
+  assertNoActiveTransmittal,
+  assertSequenceNotFiledAsAnotherBundle,
+} from './governed-transmit-checks';
 import { getBundle } from '../submission-bundle-storage';
 import { recordFiledSequence } from '../ectd/package-content-change';
 import { isFiledLeaf } from '../ectd/package-sequence-lifecycle';
+import { usableIdentifier } from '../ectd/regulatory-identifiers';
 import {
   assessPackageContent,
   isContentFingerprintOfAnyScheme,
@@ -69,49 +76,10 @@ import {
 
 /* ─── Refusal vocabulary ─────────────────────────────────────────── */
 
-/**
- * Why a governed transmit was refused BEFORE any bytes left the platform.
- *
- * Every one of these is an honest "no", not a failure: the caller asked for a
- * transmission the platform is not willing to make, and no transmittal row,
- * acknowledgement or agency identifier is produced.
- */
-export type GovernedTransmitRefusalCode =
-  | 'CLIENT_DESCRIPTOR_REFUSED'
-  | 'BUNDLE_NOT_ASSEMBLED'
-  | 'BUNDLE_PATH_UNSAFE'
-  | 'BUNDLE_VALIDATION_UNKNOWN'
-  | 'BUNDLE_OUTSIDE_NAMESPACE'
-  | 'BUNDLE_STORAGE_KEY_OUTSIDE_NAMESPACE'
-  | 'BUNDLE_VALIDATION_ERRORS'
-  | 'BUNDLE_CONTENT_DRIFT'
-  | 'BUNDLE_CONTENT_UNPROVEN'
-  | 'ACTIVE_TRANSMITTAL';
-
-/** A refusal the caller should surface verbatim to the operator. */
-export class GovernedTransmitRefusal extends Error {
-  readonly name = 'GovernedTransmitRefusal';
-  constructor(
-    readonly code: GovernedTransmitRefusalCode,
-    message: string,
-    /** HTTP status the pre-existing route used for this refusal. */
-    readonly httpStatus: 409 | 422,
-    readonly details?: Record<string, unknown>,
-  ) {
-    super(message);
-  }
-}
-
-/**
- * An internal failure (DB read, durable-storage fetch) rather than a refusal.
- * Carries the log label the HTTP route used so its 500 telemetry is unchanged.
- */
-export class GovernedTransmitInternalError extends Error {
-  readonly name = 'GovernedTransmitInternalError';
-  constructor(readonly stage: string, readonly cause: unknown) {
-    super(`governed transmit failed at stage '${stage}'`);
-  }
-}
+// Defined beside the pre-transmit checks that raise them (./governed-transmit-checks);
+// re-exported so every caller keeps importing them from here.
+export { GovernedTransmitInternalError, GovernedTransmitRefusal } from './governed-transmit-checks';
+export type { GovernedTransmitRefusalCode } from './governed-transmit-checks';
 
 /* ─── Bundle descriptors ─────────────────────────────────────────── */
 
@@ -154,7 +122,19 @@ export interface ResolvedBundle {
    *  diffs against, once an agency has accepted these bytes. */
   sequence?: string;
   submissionType?: string;
+  /** The us-regional identity the assembled backbone declared (FDA; sweep F04). */
+  submissionTypeCode?: string;
+  submissionSubTypeCode?: string;
+  submissionId?: string;
   leafManifest?: Array<{ ctdSection: string; fileName: string; href: string; md5: string; operation?: string; title?: string }>;
+  /** The agency application number the package records
+   *  (metadata.regulatory.applicationNumber) under the one identifier rule;
+   *  null when it records none usable. Stored descriptors only. */
+  applicationNumber?: string | null;
+  /** The package's filed history as the same row stores it, unparsed: the
+   *  transmit check asks of it what the writer asks (filedEntryHolding).
+   *  Stored descriptors only. */
+  filedSequences?: unknown[];
 }
 
 /* Shape guards for the stored evidence blocks (see ResolvedBundle). Each
@@ -224,6 +204,18 @@ async function ensureBundleLocal(bundle: {
  * format one of the known transmit formats. A malformed descriptor is treated
  * as "no bundle", never coerced.
  */
+
+/** The us-regional identity the stored descriptor records, shape-checked: a
+ *  field that is not a code (or a four-digit sequence) is left out. */
+function storedIdentityOf(stored: Record<string, unknown>): Pick<ResolvedBundle, 'submissionTypeCode' | 'submissionSubTypeCode' | 'submissionId'> {
+  const fits = (v: unknown, re: RegExp): v is string => typeof v === 'string' && re.test(v);
+  return {
+    ...(fits(stored.submissionTypeCode, /^fdast\d{1,2}$/) ? { submissionTypeCode: stored.submissionTypeCode } : {}),
+    ...(fits(stored.submissionSubTypeCode, /^fdasst\d{1,2}$/) ? { submissionSubTypeCode: stored.submissionSubTypeCode } : {}),
+    ...(fits(stored.submissionId, /^\d{4}$/) ? { submissionId: stored.submissionId } : {}),
+  };
+}
+
 async function loadStoredBundle(
   packageId: number,
   organizationId: number,
@@ -269,6 +261,7 @@ async function loadStoredBundle(
     contentFingerprint: isContentFingerprintOfAnyScheme(stored.contentFingerprint) ? stored.contentFingerprint : undefined,
     sequence: typeof stored.sequence === 'string' && /^\d{4}$/.test(stored.sequence) ? stored.sequence : undefined,
     submissionType: typeof stored.submissionType === 'string' ? stored.submissionType : undefined,
+    ...storedIdentityOf(stored),
     // Shape-checked with the SAME guard the reader applies, and dropped whole
     // when any entry fails it. readFiledSequences drops a partial inventory
     // because a prior state missing a leaf computes `new` for a document that
@@ -281,6 +274,11 @@ async function loadStoredBundle(
       Array.isArray(stored.leafManifest) && stored.leafManifest.every(isFiledLeaf)
         ? (stored.leafManifest as ResolvedBundle['leafManifest'])
         : undefined,
+    // From the same row: the number the agency metadata is sent under
+    // (see agencyMetadata), so the deposit and the filed history agree.
+    applicationNumber: usableIdentifier('applicationNumber', rows[0]?.metadata?.regulatory?.applicationNumber),
+    // And what is already on file (assertSequenceNotFiledAsAnotherBundle).
+    filedSequences: Array.isArray(rows[0]?.metadata?.filedSequences) ? rows[0].metadata.filedSequences : undefined,
   };
 }
 
@@ -361,7 +359,15 @@ export interface GovernedTransmitOutcome {
    * filed history. The bytes are with the agency either way; what is lost is
    * the baseline the NEXT sequence diffs against, so the caller must say so
    * rather than let a follow-up be planned against a stale history.
-   * 'not-applicable' ONLY for a bundle that files no eCTD sequence.
+   * 'not-applicable' ONLY for a bundle that files no eCTD sequence, or for a
+   * send to an environment other than 'production', which files nothing
+   * (filedSequenceReason says which).
+   * 2026-10-01 (W5/D7, sweep F14): a send to the agency's TEST environment
+   * ('staging', FDA ESG's pre-production endpoint) was appended to the filed
+   * history as if it were on file. The production 0000 could then never be
+   * assembled (SEQUENCE_ALREADY_FILED), 0001 was planned as a replace against
+   * a 0000 the agency's production record does not have, and the sign record
+   * said the test send had filed it.
    */
   filedSequenceRecorded: boolean | 'not-applicable';
   /**
@@ -374,9 +380,19 @@ export interface GovernedTransmitOutcome {
    */
   filedSequenceReason:
     | 'recorded'
+    | 'already-recorded'     // this very bundle was already on file under the sequence (a re-send)
     | 'no-sequence'          // not an eCTD sequence filing (or a dev/test client bundle)
+    | 'test-environment'     // an eCTD sequence sent to a non-production (agency test) environment
     | 'no-usable-manifest'   // an eCTD sequence whose leaf inventory is absent or unreadable
+    | 'sequence-conflict'    // the history holds the sequence on file as ANOTHER bundle (filedSequenceConflict)
     | 'write-failed';        // the append itself did not land
+  /**
+   * For 'sequence-conflict': the bundle the history holds under this sequence.
+   * The send passed the pre-transmit check (assertSequenceNotFiledAsAnotherBundle)
+   * and the other bundle was recorded while it was in flight, so two filings
+   * now carry one number and the history was not changed. null otherwise.
+   */
+  filedSequenceConflict: { sequence: string; filedSha256: string; filedTransmittalId: number | null } | null;
   /**
    * Package checks the transmit guard ran that FAILED without blocking (a
    * flag-gated check not enforced here), as "name: detail", and the guard's
@@ -389,6 +405,59 @@ export interface GovernedTransmitOutcome {
   preTransmitWarnings: string[] | null;
 }
 
+/**
+ * The agency has the bytes: append the sequence they file to the package's
+ * filed history, which the next sequence diffs against. Recorded before the
+ * ledger write and independently of it — an audit outage must not also cost
+ * the lifecycle baseline. Never throws: the transmit is irreversible and is
+ * not undone by a failure here.
+ */
+async function recordTransmittedSequence(
+  input: GovernedTransmitInput,
+  bundle: ResolvedBundle,
+  transmittalId: number | null,
+): Promise<Pick<GovernedTransmitOutcome, 'filedSequenceRecorded' | 'filedSequenceReason' | 'filedSequenceConflict'>> {
+  const notRecorded = (reason: GovernedTransmitOutcome['filedSequenceReason'], recorded: false | 'not-applicable') =>
+    ({ filedSequenceRecorded: recorded, filedSequenceReason: reason, filedSequenceConflict: null });
+  if (input.packageId == null || input.clientBundle || !bundle.sequence) return notRecorded('no-sequence', 'not-applicable');
+  // Only a production send puts a sequence on file. The agency's test
+  // environment is not a regulatory submission (2026-10-01, W5/D7, sweep F14;
+  // see GovernedTransmitOutcome.filedSequenceRecorded). `!==`, so a value that
+  // is neither environment files nothing rather than something untrue.
+  if (input.environment !== 'production') return notRecorded('test-environment', 'not-applicable');
+  const logged = { packageId: String(input.packageId), sequence: bundle.sequence, region: input.region, gateway: input.gateway };
+  if (!bundle.leafManifest?.length) {
+    // An eCTD sequence WITH no readable inventory is not a non-event: the
+    // filing is at the agency and the history will not know it happened.
+    // Reported as a failure so the caller can say so, where it used to stay
+    // 'not-applicable' and say nothing at all.
+    input.log?.error('transmit-filed-sequence-no-manifest', logged);
+    return notRecorded('no-usable-manifest', false);
+  }
+  const recorded = await recordFiledSequence(input.packageId, {
+    sequence: bundle.sequence,
+    submissionType: bundle.submissionType ?? '',
+    ...storedIdentityOf(bundle as unknown as Record<string, unknown>),
+    sha256: bundle.sha256,
+    transmittalId,
+    leaves: bundle.leafManifest,
+  });
+  if (recorded.outcome === 'recorded' || recorded.outcome === 'already-recorded') {
+    return { filedSequenceRecorded: true, filedSequenceReason: recorded.outcome, filedSequenceConflict: null };
+  }
+  if (recorded.outcome === 'write-failed') {
+    input.log?.error('transmit-filed-sequence-record-failed', logged);
+    return notRecorded('write-failed', false);
+  }
+  // Another bundle of this sequence was recorded while this one was in flight
+  // (sweep F19): the history is left as it is, and the conflict is reported.
+  input.log?.error('transmit-filed-sequence-conflict', { ...logged, filedTransmittalId: recorded.filed.transmittalId });
+  return {
+    filedSequenceRecorded: false,
+    filedSequenceReason: 'sequence-conflict',
+    filedSequenceConflict: { sequence: bundle.sequence, filedSha256: recorded.filed.sha256, filedTransmittalId: recorded.filed.transmittalId },
+  };
+}
 
 /**
  * Run the full governed transmit ceremony and hand the bytes to the regional
@@ -562,33 +631,12 @@ export async function executeGovernedTransmit(
     throw new GovernedTransmitInternalError('transmit-rematerialize-bundle', err);
   }
 
-  // Per-package transmit lock. Refuse a second transmit against the same
-  // (org, package_id, bundle_sha256) while a prior attempt is still active
-  // (pending|in_transit|received). Terminal states (rejected, rolled_back,
-  // completed) are excluded by findActiveTransmittal so a rolled-back package
-  // CAN be intentionally re-transmitted. The DB-level partial unique index
-  // (sub_trans_active_lock_idx) is the backstop for races between this check
-  // and the gateway's INSERT. Cross-tenant double-transmit is allowed by design
-  // (CMO scenario).
-  let active: { id: number; status: string } | null;
-  try {
-    active = await findActiveTransmittal({
-      organizationId,
-      packageId: input.packageId ?? null,
-      bundleSha256: bundle.sha256,
-    });
-  } catch (err) {
-    throw new GovernedTransmitInternalError('transmit-active-lock-check', err);
-  }
-  if (active) {
-    throw new GovernedTransmitRefusal(
-      'ACTIVE_TRANSMITTAL',
-      `An active transmittal already exists for this package (id=${active.id}, status=${active.status}). ` +
-        `Roll it back via POST /api/mdx/gateways/transmittals/${active.id}/rollback before re-transmitting.`,
-      409,
-      { transmittalId: active.id, status: active.status },
-    );
-  }
+  // What the agency is told this bundle files (refused when the caller's
+  // metadata disagrees with the descriptor), then the per-package lock on its
+  // bytes and on that sequence — see agencyMetadata / assertNoActiveTransmittal.
+  const metadata = agencyMetadata(input, bundle);
+  assertSequenceNotFiledAsAnotherBundle(input, bundle);
+  await assertNoActiveTransmittal(input, bundle);
 
   const gw = getGateway(region, gateway);
   const result = await gw.transmit({
@@ -620,7 +668,7 @@ export async function executeGovernedTransmit(
     },
     environment,
     submissionType: input.submissionType,
-    metadata: { ...(input.metadata ?? {}), environment },
+    metadata,
     // The caller verified a human for THIS transmit and hands the proof in; the
     // gateway layer refuses any transmit that cannot name a human gate — see
     // TransmitAuthorization in ./types.ts.
@@ -660,39 +708,10 @@ export async function executeGovernedTransmit(
     }
   }
 
-  // The agency has the bytes: this sequence is now ON FILE, and the next one
-  // must diff against it. Recorded before the ledger write and independently
-  // of it — an audit outage must not also cost the lifecycle baseline. Never
-  // throws: the transmit is irreversible and is not undone by a failure here.
-  let filedSequenceRecorded: GovernedTransmitOutcome['filedSequenceRecorded'] = 'not-applicable';
-  let filedSequenceReason: GovernedTransmitOutcome['filedSequenceReason'] = 'no-sequence';
-  if (input.packageId != null && !input.clientBundle && bundle.sequence) {
-    if (!bundle.leafManifest?.length) {
-      // An eCTD sequence WITH no readable inventory is not a non-event: the
-      // filing is at the agency and the history will not know it happened.
-      // Reported as a failure so the caller can say so, where it used to stay
-      // 'not-applicable' and say nothing at all.
-      filedSequenceRecorded = false;
-      filedSequenceReason = 'no-usable-manifest';
-      input.log?.error('transmit-filed-sequence-no-manifest', {
-        packageId: String(input.packageId), sequence: bundle.sequence, region, gateway,
-      });
-    } else {
-      filedSequenceRecorded = await recordFiledSequence(input.packageId, {
-        sequence: bundle.sequence,
-        submissionType: bundle.submissionType ?? '',
-        sha256: bundle.sha256,
-        transmittalId: result.transmittalId ?? null,
-        leaves: bundle.leafManifest,
-      });
-      filedSequenceReason = filedSequenceRecorded ? 'recorded' : 'write-failed';
-      if (!filedSequenceRecorded) {
-        input.log?.error('transmit-filed-sequence-record-failed', {
-          packageId: String(input.packageId), sequence: bundle.sequence, region, gateway,
-        });
-      }
-    }
-  }
+  // The agency has the bytes: a production send of an eCTD sequence puts it
+  // ON FILE, and the next one must diff against it (recordTransmittedSequence).
+  const { filedSequenceRecorded, filedSequenceReason, filedSequenceConflict } =
+    await recordTransmittedSequence(input, bundle, result.transmittalId ?? null);
 
   // Record the governed sign AFTER the external transmit succeeds. The external
   // transmit is irreversible, so if the ledger write fails we report it and
@@ -716,6 +735,7 @@ export async function executeGovernedTransmit(
         submissionType: bundle.submissionType ?? null,
         filedSequenceRecorded,
         filedSequenceReason,
+        filedSequenceConflict,
       };
       const signPayload = {
           meaning: input.meaning,
@@ -824,6 +844,7 @@ export async function executeGovernedTransmit(
     contentAfterTransmit,
     filedSequenceRecorded,
     filedSequenceReason,
+    filedSequenceConflict,
     ...preTransmitFacts,
   };
 }

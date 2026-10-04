@@ -58,7 +58,12 @@ variable "rds_deletion_protection" {
 }
 
 variable "rds_engine_version" {
-  type = string
+  type        = string
+  description = "PostgreSQL major version for RDS. Major only: see the validation."
+  validation {
+    condition     = can(regex("^[0-9]+$", var.rds_engine_version))
+    error_message = "RDS PostgreSQL MAJOR version only, e.g. \"15\". RDS creates the instance on its current minor and applies minor patches in the maintenance window. A pinned minor is retired by AWS on a schedule (15.4 was) and a retired minor cannot be created, so the first apply and every rebuild of the database would fail."
+  }
 }
 
 variable "api_cpu" {
@@ -67,6 +72,23 @@ variable "api_cpu" {
 
 variable "api_memory" {
   type = number
+}
+
+variable "scanner_image" {
+  description = <<-EOT
+    The virus scanner beside the API (modules/ecs-fargate, the clamav container):
+    ClamAV's own image, on its long-term-support line, pinned by digest. The image
+    carries a signature database from its build and freshclam keeps it current,
+    so moving the digest is for clamd itself, not for signatures. To move it:
+    resolve the tag's index digest (Docker Hub, clamav/clamav) and replace both
+    parts here. To pull from a registry of your own instead of Docker Hub (its
+    anonymous pull limit is per NAT address), mirror the same digest and name the
+    mirror here.
+  EOT
+  type        = string
+  # clamav/clamav:1.4.6, the index digest resolved 2026-10-01 (amd64; Fargate's
+  # default platform).
+  default = "clamav/clamav:1.4.6@sha256:57deb108fc4c72778aa83eafbca7bb7153e28c3f57c005afd38d31f16da86f23"
 }
 
 variable "api_desired_count" {
@@ -194,6 +216,28 @@ variable "audit_hmac_secret" {
   }
 }
 
+variable "audit_export_signing_key" {
+  type      = string
+  sensitive = true
+  validation {
+    condition     = length(var.audit_export_signing_key) >= 32
+    error_message = "audit_export_signing_key must be at least 32 characters (server/services/audit/auditExportKeyPosture.ts)."
+  }
+}
+
+# Signs the attestation a departing tenant's export carries
+# (server/services/tenant-export/attestation-report.service.ts refuses under 32
+# characters). The server boots without it, and every attestation then fails to
+# sign; until 2026-10-01 no deploy path provided it.
+variable "audit_attestation_key" {
+  type      = string
+  sensitive = true
+  validation {
+    condition     = length(var.audit_attestation_key) >= 32
+    error_message = "audit_attestation_key must be at least 32 characters (server/services/tenant-export/attestation-report.service.ts)."
+  }
+}
+
 variable "connector_encryption_key" {
   type      = string
   sensitive = true
@@ -254,9 +298,63 @@ variable "smtp_from" {
   }
 }
 
+# Vault search embeds with OpenAI by default. An empty key used to deploy, and
+# the Vault then searched nothing (D1, docs/evidence/W2/2026-10-01-inventory-gaps/).
+variable "platform_owner_emails" {
+  description = <<-EOT
+    The platform owner(s), by the address each signs in with by password: named
+    in PLATFORM_ADMIN_EMAILS and BUSINESS_CENTER_EMAILS on the API (main.tf,
+    owner_environment). At least one, or nobody can reach Master Administration
+    or designate anyone. The first account itself is created through first-run
+    setup with the deployment's setup token (outputs.tf, first_run_setup).
+  EOT
+  type        = list(string)
+  validation {
+    condition     = length(var.platform_owner_emails) > 0
+    error_message = "platform_owner_emails must name at least one owner."
+  }
+  validation {
+    condition = alltrue([
+      for e in var.platform_owner_emails : can(regex("^[a-z0-9._%+-]+@[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$", e))
+    ])
+    error_message = "Each platform_owner_emails entry must be a lower-case e-mail address: the allowlists compare lower-cased addresses, so any other entry could never match."
+  }
+}
+
+# OpenAI is a lane a tenant elects in writing (ADR-0014 §1; DPA Annex III;
+# security plan P0-11, DP-07). The gateway refuses it, before dispatch, for
+# every organisation that has not elected it (P1-45), so a key held for no
+# elected tenant serves nobody; it is provisioned exactly when one has.
+variable "openai_enabled" {
+  type        = bool
+  default     = false
+  description = "True when a tenant's Order Form elects OpenAI; then openai_api_key is required and provisioned."
+}
+
 variable "openai_api_key" {
   type      = string
   sensitive = true
+  default   = ""
+  validation {
+    condition     = var.openai_api_key == "" || (startswith(var.openai_api_key, "sk-") && !startswith(var.openai_api_key, "sk-ant-"))
+    error_message = "openai_api_key must be empty or an OpenAI API key (sk-…, not an Anthropic sk-ant- key)."
+  }
+}
+
+# The drafting provider (D1 brief B4, decided 2026-10-01 under the CPO mandate):
+# Anthropic first party. Every model approved for high-risk regulatory drafting
+# is Anthropic (server/services/ai-governance/approved-models.ts); without one
+# enabled, every Authoring draft is refused and /readyz reports AnA down.
+# First party, not Bedrock: the Bedrock SDK is not a dependency of this
+# repository, and the first-party entry is the one pinned to the PQ target.
+# Covered by the Anthropic BAA that D6 lists as owed.
+variable "anthropic_api_key" {
+  type      = string
+  sensitive = true
+  validation {
+    condition     = startswith(var.anthropic_api_key, "sk-ant-")
+    error_message = "anthropic_api_key must be an Anthropic API key (sk-ant-…): regulatory drafting runs only on an approved Anthropic model."
+  }
 }
 
 # D1 brief B4. Which AI provider may see which data classes is a compliance
@@ -319,4 +417,87 @@ variable "github_build_subjects" {
 variable "create_github_oidc_provider" {
   type        = bool
   description = "Create the account's GitHub OIDC provider. One per account: set false for an environment that shares an account with one that already created it (the account-topology decision in docs/evidence/W2/2026-09-23b/README.md)."
+}
+
+# Error reports (server/utils/sentry.ts). Optional: the server boots without it
+# and warns. Not a secret: a DSN only lets a client send events.
+variable "sentry_dsn" {
+  type    = string
+  default = ""
+  validation {
+    condition     = var.sentry_dsn == "" || startswith(var.sentry_dsn, "https://")
+    error_message = "sentry_dsn must be empty or an https:// DSN."
+  }
+}
+
+variable "db_credentials_rotation" {
+  type        = string
+  description = <<-EOT
+    Rotation marker for the two database passwords (the RDS master and app_service).
+    Changing it — to the date of the change, say "2027-01" — generates both passwords
+    anew on the next apply: RDS takes the new master password, the secrets take both,
+    and the deploy that must follow re-aligns app_service and rolls every task onto the
+    new secrets. A deliberate, recorded change rather than a timer: running tasks hold
+    the old values until that deploy, so the apply and the deploy go together, in a
+    maintenance window. The runbook is docs/evidence/W2/2026-10-01-p1-11-db-audit-keys/.
+  EOT
+  validation {
+    condition     = length(trimspace(var.db_credentials_rotation)) > 0
+    error_message = "db_credentials_rotation must name the current rotation, e.g. \"initial\" or the date of the last one."
+  }
+}
+
+# ── The self-hosted embedding lane (P1-54, ADR-0014 §1.5; main.tf, module "embeddings") ──
+
+variable "embedding_image" {
+  description = <<-EOT
+    The embedding server (modules/embedding-service): Hugging Face Text
+    Embeddings Inference, CPU build, pinned by digest, pulled from ghcr.io
+    through the NAT. To move it: resolve a cpu-<version> tag's index digest
+    (ghcr.io/huggingface/text-embeddings-inference) and replace both parts. To
+    pull from a registry of your own, mirror the same digest and name the
+    mirror here.
+  EOT
+  type        = string
+  # cpu-1.9.4, the index digest resolved 2026-10-01 (linux/amd64, Fargate's
+  # default platform): docs/evidence/D6/2026-10-01-tranche-4/P1-54-embedding-lane/image/.
+  default = "ghcr.io/huggingface/text-embeddings-inference:cpu-1.9.4@sha256:2538ea1c9640d3763b15af668039d24172d063b42337b0c27796fc2be180c78d"
+  validation {
+    condition     = can(regex("@sha256:[0-9a-f]{64}$", var.embedding_image))
+    error_message = "embedding_image must be pinned by digest (…@sha256:<64 hex>): a tag can be moved under a running deployment."
+  }
+}
+
+variable "embedding_model_revision" {
+  description = <<-EOT
+    The Hugging Face commit of BAAI/bge-m3 the embedding server loads. Unset, it
+    loads the hub's current main and every plan warns (main.tf, check
+    "embedding_model_is_pinned"). Resolve it with
+    curl -s https://huggingface.co/api/models/BAAI/bge-m3 | jq -r .sha
+  EOT
+  type        = string
+  default     = null
+  validation {
+    # try(), not ||: Terraform evaluates both sides, and regex() of null errors.
+    condition     = try(var.embedding_model_revision == null || can(regex("^[0-9a-f]{40}$", var.embedding_model_revision)), false)
+    error_message = "embedding_model_revision must be a 40-character commit id: a branch moves, and the stored vectors would then mix two models."
+  }
+}
+
+variable "embedding_cpu" {
+  description = "Fargate CPU units for each embedding task (4096 = 4 vCPU; bge-m3 runs on CPU)."
+  type        = number
+  default     = 4096
+}
+
+variable "embedding_memory" {
+  description = "Fargate memory (MiB) for each embedding task: the model's weights (~2.3 GB) and its working set."
+  type        = number
+  default     = 16384
+}
+
+variable "embedding_desired_count" {
+  description = "Embedding tasks; two spread the lane across the private subnets' zones."
+  type        = number
+  default     = 2
 }

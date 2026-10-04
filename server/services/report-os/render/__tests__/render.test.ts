@@ -75,20 +75,27 @@ describe('renderReport', () => {
     }
   });
 
-  it('always includes a gaps section with an empty-state path', () => {
+  /* Reporting review 2026-10-01: this case pinned the defect. A summary with no
+     gap evaluation printed "No gaps detected", and sealed it in final records,
+     for every scope no evaluation covers. "Not evaluated" and "no gaps" now
+     never print the same sentence. */
+  it('says gaps were not evaluated when no gap evaluation ran, and claims no empty list', () => {
     const report = renderReport(baseInput({ summary: {} }));
     const gaps = sectionById(report.sections, 'gaps');
     expect(gaps).toBeDefined();
-    const gapList = gaps?.blocks.find(b => b.kind === 'gap-list');
-    expect(gapList?.kind).toBe('gap-list');
-    if (gapList?.kind === 'gap-list') {
-      expect(gapList.items).toEqual([]);
-    }
+    expect(gaps?.blocks.find(b => b.kind === 'gap-list')).toBeUndefined();
     const note = gaps?.blocks.find(b => b.kind === 'summary');
-    expect(note?.kind).toBe('summary');
-    if (note?.kind === 'summary') {
-      expect(note.text).toBe(`No gaps detected as of ${FIXED_AT}.`);
-    }
+    expect(note?.kind === 'summary' && note.text).toBe('Gaps were not evaluated for this scope.');
+    expect(JSON.stringify(report)).not.toContain('No gaps detected');
+  });
+
+  it('says no gaps were detected only when an evaluation ran and found none', () => {
+    const report = renderReport(baseInput({ summary: { regulatory: { missingArtifacts: [] } } }));
+    const gaps = sectionById(report.sections, 'gaps');
+    const gapList = gaps?.blocks.find(b => b.kind === 'gap-list');
+    expect(gapList?.kind === 'gap-list' && gapList.items).toEqual([]);
+    const note = gaps?.blocks.find(b => b.kind === 'summary');
+    expect(note?.kind === 'summary' && note.text).toBe(`No gaps detected as of ${FIXED_AT}.`);
   });
 
   it('renders gaps from regulatory.missingArtifacts', () => {

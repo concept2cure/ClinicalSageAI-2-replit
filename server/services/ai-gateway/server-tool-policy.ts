@@ -135,3 +135,31 @@ export function governServerTools(
     withheld,
   };
 }
+
+/** The basic version of each dynamic-filtering web tool. */
+const BASIC_WEB_TOOL_TYPE: Readonly<Record<string, string>> = {
+  web_search_20260209: 'web_search_20250305',
+  web_fetch_20260209: 'web_fetch_20250910',
+};
+
+/**
+ * The request with its web tools in the version this model accepts (2026-09-29).
+ * A model that is not declared `dynamic_filtering` is sent the basic variant of
+ * each, with the same name, domains and cap, rather than a tool it rejects:
+ * every Fast turn routes to Haiku 4.5, which takes only the basic ones.
+ */
+export function webToolsForModel(
+  request: GatewayRequest,
+  variant: 'dynamic_filtering' | 'basic' | undefined,
+): GatewayRequest {
+  const tools = request.tools as unknown[] | undefined;
+  if (variant === 'dynamic_filtering' || !tools?.some(t => isServerTool(t) && t.type in BASIC_WEB_TOOL_TYPE)) {
+    return request;
+  }
+  return {
+    ...request,
+    tools: tools.map(t =>
+      isServerTool(t) && t.type in BASIC_WEB_TOOL_TYPE ? { ...t, type: BASIC_WEB_TOOL_TYPE[t.type] } : t,
+    ) as GatewayRequest['tools'],
+  };
+}

@@ -1,0 +1,1272 @@
+# RED — the new/updated task-reason tests against the code BEFORE the fix
+# 2026-10-01T03:21:04Z  HEAD 363a41b54  (fix not applied; only test files changed)
+# npx vitest run server/services/tasking/__tests__/task-audit.test.ts server/services/tasking/__tests__/task-event-reason-not-invented.test.ts server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts server/routes/__tests__/task-management-reasons.test.ts server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts server/routes/__tests__/unifiedTasks.routes.test.ts server/routes/__tests__/task-management-governed-writes-review.test.ts server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts 
+#
+# Failing tests (24):
+#   FAIL  server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > completing a task unblocks its dependents in the SAME transaction, with their ledger rows > moves B and C, leaves D blocked, and records every dependent whose record changed
+#   FAIL  server/routes/__tests__/task-management-governed-writes-review.test.ts > C2 — lock order: every task-row UPDATE precedes the first ledger write > PATCH → completed runs the cascade on its own transaction, before any ledger row, and notifies after COMMIT
+#   FAIL  server/routes/__tests__/task-management-reasons.test.ts > a stated reason is recorded verbatim (trimmed); none is recorded as null > POST /tasks with no reason records null
+#   FAIL  server/routes/__tests__/task-management-reasons.test.ts > a stated reason is recorded verbatim (trimmed); none is recorded as null > POST /tasks with a blank reason records null
+#   FAIL  server/routes/__tests__/task-management-reasons.test.ts > a stated reason is recorded verbatim (trimmed); none is recorded as null > POST /tasks/bulk-create records null for each task
+#   FAIL  server/routes/__tests__/task-management-reasons.test.ts > a stated reason is recorded verbatim (trimmed); none is recorded as null > POST /tasks/:id/notify records null
+#   FAIL  server/routes/__tests__/task-management-reasons.test.ts > what the system did is the payload summary, never the reason > a blocking dependency: the successor’s transition records null and says why in its summary
+#   FAIL  server/routes/__tests__/task-management-reasons.test.ts > what the system did is the payload summary, never the reason > auto-assign records null and names its method in the summary
+#   FAIL  server/routes/__tests__/task-management-reasons.test.ts > what the system did is the payload summary, never the reason > a workflow template records null on every row; each summary names the template
+#   FAIL  server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — a completion, the dependents it unblocks and all their ledger rows are one transaction > runs the cascade on the completion’s transaction and records A, then B, before COMMIT; notifies after
+#   FAIL  server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA task events record the person’s reason, or none > create_task with no stated reason records null — not a sentence, not the model’s params.reason
+#   FAIL  server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA task events record the person’s reason, or none > update_task with no stated reason records null; what happened is the payload summary
+#   FAIL  server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA task events record the person’s reason, or none > a reason the person stated through a verified sign-off is recorded verbatim, trimmed
+#   FAIL  server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > the reason a raised task records > is null when the request states none; what happened is the summary
+#   FAIL  server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > the reason a seeded milestone records > is null — what happened is the summary
+#   FAIL  server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > records a governed lineage entry for a task mutation
+#   FAIL  server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.create with no stated reason records a null reason, never one the code wrote
+#   FAIL  server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.transition with no stated reason records a null reason, never one the code wrote
+#   FAIL  server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.link with no stated reason records a null reason, never one the code wrote
+#   FAIL  server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.assign with no stated reason records a null reason, never one the code wrote
+#   FAIL  server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.notify with no stated reason records a null reason, never one the code wrote
+#   FAIL  server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.delete with no stated reason records a null reason, never one the code wrote
+#   FAIL  server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > records what happened as the payload summary, not as the reason
+#   FAIL  server/services/tasking/__tests__/task-event-reason-not-invented.test.ts > task events never record a reason nobody gave > every task-event reason is a value handed in — never a sentence the code wrote
+
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T03:20:32.150Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T03:20:32.152Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T03:20:32.152Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T03:20:32.837Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > a new project’s blueprint milestones > each reach the board with a task.create row naming its creator, in the order they were seeded
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ × server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > completing a task unblocks its dependents in the SAME transaction, with their ledger rows > moves B and C, leaves D blocked, and records every dependent whose record changed 106ms
+   → expected { target: 'task:TASK-B', …(3) } to match object { command: 'task.transition', …(2) }
+(1 matching property omitted from actual)
+ ✓ server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > completing a task unblocks its dependents in the SAME transaction, with their ledger rows > writes every ledger row inside the completion’s transaction, after every task-row UPDATE (lock order) 52ms
+ ✓ server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > completing a task unblocks its dependents in the SAME transaction, with their ledger rows > lists the completion before the unblocking it caused: A, then B, C, D 45ms
+stderr | server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > a new project’s blueprint milestones > with no creator to name, nothing is seeded — no board task without its record
+{
+  "timestamp": "2026-10-01T03:20:40.184Z",
+  "level": "warn",
+  "message": "[task-audit] Task lineage SKIPPED — no attributable tenant, actor or target",
+  "context": {
+    "orgId": 7,
+    "hasUserId": false,
+    "taskId": "TASK-BP-41-pre-ind",
+    "command": "task.create"
+  }
+}
+
+ ✓ server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > a new project’s blueprint milestones > each reach the board with a task.create row naming its creator, in the order they were seeded 70ms
+ ✓ server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > a new project’s blueprint milestones > seeded twice, the second run adds no task and no row 27ms
+ ✓ server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > a new project’s blueprint milestones > with no creator to name, nothing is seeded — no board task without its record 8ms
+ ✓ server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > a new project’s blueprint milestones > when the ledger cannot be written, no milestone stays on the board 23ms
+ ✓ server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > a new project’s blueprint milestones > a milestone that cannot be written takes the ones before it back: all or none 11ms
+ × server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > the reason a seeded milestone records > is null — what happened is the summary 19ms
+   → expected 'Milestone seeded from the US_IND blue…' to be null
+stderr | server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > a cascade that cannot be recorded or completed rolls the completion back > a failed ledger row for B rolls back A’s completion and B’s unblocking: 500, nothing changed, nobody notified
+{
+  "timestamp": "2026-10-01T03:20:40.257Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.transition",
+    "taskId": "TASK-B",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+ ✓ server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > completing a task unblocks its dependents in the SAME transaction, with their ledger rows > locks every dependent in ONE statement, in task-id order, whichever linkage system names it 49ms
+ ✓ server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > completing a task unblocks its dependents in the SAME transaction, with their ledger rows > sends the unblock and completion notifications only after COMMIT 36ms
+stderr | server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > a cascade that cannot be recorded or completed rolls the completion back > a database failure inside the cascade is a rolled-back completion and an honest 500, not a 400 over a committed one
+Error updating task: DrizzleQueryError: Failed query: select "successor_task_id" from "task_dependencies" where ("task_dependencies"."predecessor_task_id" = $1 and ("task_dependencies"."is_blocking" is null or "task_dependencies"."is_blocking" = $2))
+params: TASK-A,true
+    at PglitePreparedQuery.queryWithCache (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pg-core/session.js:41:15)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at PglitePreparedQuery.execute (file:///home/user/ClinicalSageAI-2-replit/node_modules/drizzle-orm/pglite/session.js:70:20)
+    at unblockDependents (/home/user/ClinicalSageAI-2-replit/server/services/tasking/task-side-effects.ts:194:26)
+    at cascadeUnblockOnCompletionInTx (/home/user/ClinicalSageAI-2-replit/server/services/tasking/task-side-effects.ts:116:3)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:461:13
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-NODLP6BS.js:8:1740 {
+  query: 'select "successor_task_id" from "task_dependencies" where ("task_dependencies"."predecessor_task_id" = $1 and ("task_dependencies"."is_blocking" is null or "task_dependencies"."is_blocking" = $2))',
+  params: [ 'TASK-A', true ],
+  cause: error: relation "task_dependencies" does not exist
+      at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+      at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+      at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+      at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+      at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+      at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+    length: 116,
+    severity: 'ERROR',
+    code: '42P01',
+    detail: undefined,
+    hint: undefined,
+    position: '33',
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'parse_relation.c',
+    line: '1469',
+    routine: 'parserOpenTable',
+    query: 'select "successor_task_id" from "task_dependencies" where ("task_dependencies"."predecessor_task_id" = $1 and ("task_dependencies"."is_blocking" is null or "task_dependencies"."is_blocking" = $2))',
+    params: [ 'TASK-A', true ],
+    queryOptions: { rowMode: 'array', parsers: [Object] }
+  }
+}
+
+stdout | server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T03:20:40.259Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T03:20:40.261Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T03:20:40.261Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > a cascade that cannot be recorded or completed rolls the completion back > a failed ledger row for B rolls back A’s completion and B’s unblocking: 500, nothing changed, nobody notified 48ms
+ ✓ server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > a cascade that cannot be recorded or completed rolls the completion back > a database failure inside the cascade is a rolled-back completion and an honest 500, not a 400 over a committed one 30ms
+ ✓ server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > an archived task is out of the cascade’s reach, and out of PATCH’s > leaves an archived blocked dependent as it was: no move, no ledger row, no notification 27ms
+ ✓ server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > an archived task is out of the cascade’s reach, and out of PATCH’s > a task archived after PATCH read it is not completed: 409 CONFLICT_STALE, nothing written 35ms
+ ✓ server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > the callers with no transaction of their own keep the old behaviour > runs on db, notifies inline, and writes no ledger row 26ms
+ ✓ server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > the callers with no transaction of their own keep the old behaviour > never re-writes an archived dependent there either 20ms
+stdout | server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T03:20:41.584Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T03:20:41.586Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T03:20:41.586Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T03:20:41.674Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/unifiedTasks.routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/unifiedTasks.routes.test.ts
+{
+  "timestamp": "2026-10-01T03:20:41.678Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > POST /unified is 403 for an org viewer and writes nothing 31ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > POST /:id/link is 403 for an org viewer and writes nothing 6ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > POST /sync/:module is 403 for an org viewer and writes nothing 5ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > PATCH /:id/status is 403 for an org viewer and writes nothing 4ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > POST /unified is 403 with no org role at all 6ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > POST /:id/link is 403 with no org role at all 4ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > POST /sync/:module is 403 with no org role at all 4ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > PATCH /:id/status is 403 with no org role at all 4ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > POST /unified is 401 and writes nothing when the session names no actor 6ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > POST /:id/link is 401 and writes nothing when the session names no actor 9ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > POST /sync/:module is 401 and writes nothing when the session names no actor 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > PATCH /:id/status is 401 and writes nothing when the session names no actor 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/regulatory/tasks: a viewer reads, but does not write > reads stay open to a viewer 6ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > POST /unified is 403 for an org viewer and writes nothing 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > POST /:id/link is 403 for an org viewer and writes nothing 3ms
+stderr | server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /unified rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails
+{
+  "timestamp": "2026-10-01T03:20:41.877Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.create",
+    "taskId": "TASK-N",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+stderr | server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /:id/link rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails
+{
+  "timestamp": "2026-10-01T03:20:41.881Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.link",
+    "taskId": "TASK-A",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+stderr | server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /sync/:module rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails
+{
+  "timestamp": "2026-10-01T03:20:41.883Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.create",
+    "taskId": "TASK-S1",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+stderr | server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > PATCH /:id/status rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails
+{
+  "timestamp": "2026-10-01T03:20:41.887Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.transition",
+    "taskId": "TASK-A",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+stderr | server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > a store failure is an honest 500 that does not carry the store text, with the write rolled back
+{
+  "timestamp": "2026-10-01T03:20:41.890Z",
+  "level": "error",
+  "message": "[unified-tasks] creating the task failed",
+  "context": {
+    "err": "relation \"unified_tasks\" does not exist",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /unified whose COMMIT was lost answers OUTCOME_UNKNOWN — never a failure, never a success
+{
+  "timestamp": "2026-10-01T03:20:41.897Z",
+  "level": "error",
+  "message": "[unified-tasks] creating the task: COMMIT lost, outcome unknown",
+  "context": {
+    "err": "Connection terminated unexpectedly"
+  }
+}
+
+stderr | server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /:id/link whose COMMIT was lost answers OUTCOME_UNKNOWN — never a failure, never a success
+{
+  "timestamp": "2026-10-01T03:20:41.900Z",
+  "level": "error",
+  "message": "[unified-tasks] linking tasks: COMMIT lost, outcome unknown",
+  "context": {
+    "err": "Connection terminated unexpectedly"
+  }
+}
+
+stderr | server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /sync/:module whose COMMIT was lost answers OUTCOME_UNKNOWN — never a failure, never a success
+{
+  "timestamp": "2026-10-01T03:20:41.903Z",
+  "level": "error",
+  "message": "[unified-tasks] syncing: COMMIT lost, outcome unknown",
+  "context": {
+    "err": "Connection terminated unexpectedly"
+  }
+}
+
+stderr | server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > PATCH /:id/status whose COMMIT was lost answers OUTCOME_UNKNOWN — never a failure, never a success
+{
+  "timestamp": "2026-10-01T03:20:41.905Z",
+  "level": "error",
+  "message": "[unified-tasks] updating status: COMMIT lost, outcome unknown",
+  "context": {
+    "err": "Connection terminated unexpectedly"
+  }
+}
+
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > POST /sync/:module is 403 for an org viewer and writes nothing 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > PATCH /:id/status is 403 for an org viewer and writes nothing 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > POST /unified is 403 with no org role at all 2ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > POST /:id/link is 403 with no org role at all 2ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > POST /sync/:module is 403 with no org role at all 2ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > PATCH /:id/status is 403 with no org role at all 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > POST /unified is 401 and writes nothing when the session names no actor 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > POST /:id/link is 401 and writes nothing when the session names no actor 2ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > POST /sync/:module is 401 and writes nothing when the session names no actor 2ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > PATCH /:id/status is 401 and writes nothing when the session names no actor 2ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T2 — /api/unified-tasks: a viewer reads, but does not write > reads stay open to a viewer 4ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /unified creates on ONE transaction with its task.create row, as the session actor 5ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /:id/link links the resolved business keys on ONE transaction with its task.link row 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /:id/link is 404 and records nothing when an endpoint is gone by the time it writes 7ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /sync/:module creates every synced task, then writes one task.create row each, on ONE transaction 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /sync/Vault is refused as unavailable (501) — not a failure, not an empty sync — and records nothing 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > PATCH /:id/status transitions on ONE transaction with its row, attributed to the session — never the body 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /unified rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails 4ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /:id/link rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /sync/:module rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > PATCH /:id/status rolls back and answers 500 AUDIT_WRITE_FAILED when its ledger row fails 4ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > a store failure is an honest 500 that does not carry the store text, with the write rolled back 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > a malformed body is a 400 that writes nothing 4ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /unified whose COMMIT was lost answers OUTCOME_UNKNOWN — never a failure, never a success 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /:id/link whose COMMIT was lost answers OUTCOME_UNKNOWN — never a failure, never a success 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > POST /sync/:module whose COMMIT was lost answers OUTCOME_UNKNOWN — never a failure, never a success 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — each write and its ledger row commit or roll back together > PATCH /:id/status whose COMMIT was lost answers OUTCOME_UNKNOWN — never a failure, never a success 3ms
+ × server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — a completion, the dependents it unblocks and all their ledger rows are one transaction > runs the cascade on the completion’s transaction and records A, then B, before COMMIT; notifies after 14ms
+   → expected { orgId: 2, userId: 7, …(6) } to match object { command: 'task.transition', …(2) }
+(9 matching properties omitted from actual)
+stderr | server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — a completion, the dependents it unblocks and all their ledger rows are one transaction > a dependent’s ledger row that fails rolls back the completion and the unblocking; nobody is notified
+{
+  "timestamp": "2026-10-01T03:20:41.934Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.transition",
+    "taskId": "TASK-B",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+stderr | server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — a completion, the dependents it unblocks and all their ledger rows are one transaction > a cascade failure rolls the completion back and is an honest 500
+{
+  "timestamp": "2026-10-01T03:20:41.937Z",
+  "level": "error",
+  "message": "[unified-tasks] updating status failed",
+  "context": {
+    "err": "relation \"task_dependencies\" does not exist",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — a completion, the dependents it unblocks and all their ledger rows are one transaction > never commits a signed completion whose ledger row did not land
+{
+  "timestamp": "2026-10-01T03:20:41.942Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.transition",
+    "taskId": "TASK-A",
+    "err": "audit_logs: connection reset"
+  }
+}
+
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — a completion, the dependents it unblocks and all their ledger rows are one transaction > a dependent’s ledger row that fails rolls back the completion and the unblocking; nobody is notified 14ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — a completion, the dependents it unblocks and all their ledger rows are one transaction > a cascade failure rolls the completion back and is an honest 500 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — a completion, the dependents it unblocks and all their ledger rows are one transaction > commits a signed completion with its manifestation in the ledger payload 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — a completion, the dependents it unblocks and all their ledger rows are one transaction > never commits a signed completion whose ledger row did not land 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > tenant isolation and the state machine (unchanged, now behind the gate) > GET /all returns 401 when there is no org context 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > tenant isolation and the state machine (unchanged, now behind the gate) > GET /all scopes to the JWT org and ignores a client organizationId param 2ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > tenant isolation and the state machine (unchanged, now behind the gate) > PATCH /:id/status 404s on another org's task and writes nothing 2ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > tenant isolation and the state machine (unchanged, now behind the gate) > POST /:id/link 404s when either endpoint is outside the caller org, and writes nothing 2ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > tenant isolation and the state machine (unchanged, now behind the gate) > PATCH /:id/status addressed by numeric id writes with the resolved business key 6ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > tenant isolation and the state machine (unchanged, now behind the gate) > PATCH /:id/status 409s CONFLICT_STALE without a ledger row when the compare-and-set loses 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > tenant isolation and the state machine (unchanged, now behind the gate) > PATCH /:id/status to the status the task already has is refused as stale, not re-written 2ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > tenant isolation and the state machine (unchanged, now behind the gate) > PATCH /:id/status runs the state machine — an illegal move 409s without writing 3ms
+ ✓ server/routes/__tests__/unifiedTasks.routes.test.ts > tenant isolation and the state machine (unchanged, now behind the gate) > PATCH /:id/status demands the e-sign ceremony on approval-gated completion (428) 2ms
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > C9 — a PATCH whose COMMIT was lost is reported as unknown, never as a failure > answers 500 OUTCOME_UNKNOWN with a sentence that says so, and tells nobody it happened
+Error updating task: Error: Connection terminated unexpectedly
+    at Object.transaction (/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/_task-management-governed-harness.ts:103:15)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:422:21
+
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C2 — lock order: every task-row UPDATE precedes the first ledger write > POST /tasks/dependencies blocks the successor before writing either ledger row 48ms
+ × server/routes/__tests__/task-management-governed-writes-review.test.ts > C2 — lock order: every task-row UPDATE precedes the first ledger write > PATCH → completed runs the cascade on its own transaction, before any ledger row, and notifies after COMMIT 29ms
+   → expected { orgId: 2, userId: 7, …(6) } to match object { command: 'task.transition', …(1) }
+(10 matching properties omitted from actual)
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > C9 — a PATCH whose COMMIT was lost is reported as unknown, never as a failure > a failure inside the transaction is still the rolled-back 500, not unknown
+Error updating task: Error: deadlock detected
+    at Object.__vi_import_4__.h.fail (/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/task-management-governed-writes-review.test.ts:124:66)
+    at Object.c.then (/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/_task-management-governed-harness.ts:74:21)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > bulk-create: an insert failure after the first task committed reports that task
+Error bulk creating tasks: Error: deadlock detected
+    at Object.__vi_import_4__.h.fail (/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/task-management-governed-writes-review.test.ts:152:70)
+    at Object.c.then (/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/_task-management-governed-harness.ts:74:21)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > bulk-create: an assignee lookup that throws after the first commit reports that task
+Error bulk creating tasks: Error: roster read failed
+    at /home/user/ClinicalSageAI-2-replit/server/routes/__tests__/task-management-governed-writes-review.test.ts:165:80
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > bulk-create: a dependency link that fails after every task committed says the tasks exist and the links do not
+Error bulk creating tasks: Error: fk violation
+    at Object.__vi_import_4__.h.fail (/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/task-management-governed-writes-review.test.ts:176:70)
+    at Object.c.then (/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/_task-management-governed-harness.ts:74:21)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > bulk-create: a COMMIT whose outcome is unknown is reported as unknown, never as not created
+Error bulk creating tasks: Error: Connection terminated unexpectedly
+    at Object.transaction (/home/user/ClinicalSageAI-2-replit/server/routes/__tests__/_task-management-governed-harness.ts:103:15)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at bulkCreateOne (/home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:573:19)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/taskManagement.routes.ts:633:7
+
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > auto-assign: a failure after the first assignment committed reports that assignment
+Error auto-assigning tasks: Error: roster read failed
+    at /home/user/ClinicalSageAI-2-replit/server/routes/__tests__/task-management-governed-writes-review.test.ts:203:30
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+stderr | server/routes/__tests__/task-management-governed-writes-review.test.ts > C4 — a delivered notification whose ledger connection failed is reported as delivered and unrecorded > answers AUDIT_WRITE_FAILED with the delivered sentence, not a generic send failure
+[tasking] audit lineage write failed (non-fatal): connect ETIMEDOUT 10.0.0.5:5432
+
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C9 — a PATCH whose COMMIT was lost is reported as unknown, never as a failure > answers 500 OUTCOME_UNKNOWN with a sentence that says so, and tells nobody it happened 31ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C9 — a PATCH whose COMMIT was lost is reported as unknown, never as a failure > a failure inside the transaction is still the rolled-back 500, not unknown 6ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C10 — PATCH never completes a task archived after it was read > its compare-and-set UPDATE matches only a row that is not archived 7ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > bulk-create: an insert failure after the first task committed reports that task 7ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > bulk-create: an assignee lookup that throws after the first commit reports that task 6ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > bulk-create: a dependency link that fails after every task committed says the tasks exist and the links do not 6ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > bulk-create: a COMMIT whose outcome is unknown is reported as unknown, never as not created 8ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C3 — a batch that fails part-way names what it committed, whatever the failure > auto-assign: a failure after the first assignment committed reports that assignment 6ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C4 — a delivered notification whose ledger connection failed is reported as delivered and unrecorded > answers AUDIT_WRITE_FAILED with the delivered sentence, not a generic send failure 7ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C5 — auto-assign never reassigns an archived task, and never ledgers an assignment that did not happen > reads and updates only rows that are not archived 4ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C5 — auto-assign never reassigns an archived task, and never ledgers an assignment that did not happen > an UPDATE that matched no row writes no ledger row and is not reported as assigned 4ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C6 — the actor and organization are the ones requireEditorAccess resolved > refuses a non-integer actor id with 401 before anything is written 3ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C6 — the actor and organization are the ones requireEditorAccess resolved > writes the task and its ledger row under the organization the gate checked 3ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C7 — every dependency edge a batch creates is ledgered with task.link on its own transaction > bulk-create records each edge with the transaction that inserts it 4ms
+ ✓ server/routes/__tests__/task-management-governed-writes-review.test.ts > C7 — every dependency edge a batch creates is ledgered with task.link on its own transaction > from-template records every template edge on the workflow’s transaction 4ms
+ ✓ server/services/tasking/__tests__/task-event-reason-not-invented.test.ts > task events never record a reason nobody gave > the scan sees the task-event literals it guards (an empty population proves nothing) 279ms
+ × server/services/tasking/__tests__/task-event-reason-not-invented.test.ts > task events never record a reason nobody gave > every task-event reason is a value handed in — never a sentence the code wrote 132ms
+   → task events that record a composed reason:
+server/services/tasking/task-side-effects.ts:130  reason: next.unblocked ? `Unblocked: predecessor ${completedTaskId} completed` : `Blocker ${completedTaskId} completed; removed from this task's blockers`
+server/services/tasking/blueprint-milestones.ts:92  reason: `Milestone seeded from the ${registryId} blueprint when the project was created`
+server/services/biostatistics-bridge/bridge-service.ts:440  reason: args.reason ?? `Raised from the biostatistics assessment of "${assessment.title}" (${b.trigger})`
+server/services/ana-ri/command-executor.ts:1163  reason: 'Task created by AnA and mirrored to the canonical task board'
+server/services/ana-ri/command-executor.ts:1442  reason: 'Task status changed by AnA'
+server/routes/taskManagement.routes.ts:827  reason: `Created from workflow template "${template.name}"`
+server/routes/taskManagement.routes.ts:858  reason: `Linked by workflow template "${template.name}"`
+server/routes/taskManagement.routes.ts:1035  reason: `Blocked by new dependency on ${validatedData.predecessorTaskId}`
+server/routes/taskManagement.routes.ts:1160  reason: 'Workload-balanced auto-assign'
+server/routes/unifiedTasks.routes.ts:430  reason: `Synced from the ${module} module`: expected [ …(10) ] to deeply equal []
+ ✓ server/services/tasking/__tests__/task-event-reason-not-invented.test.ts > task events never record a reason nobody gave > the guard recognises a composed reason when it sees one 2ms
+stderr | server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > each reach the board naming its creator, with a task.create row, in the order raised
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stdout | server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts
+Loaded 0 academic documents
+
+stderr | server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > when the ledger cannot be written, nothing is raised and nothing is answered "created"
+{
+  "timestamp": "2026-10-01T03:20:45.295Z",
+  "level": "error",
+  "message": "[task-audit] Task lineage write failed; rolling back the task write",
+  "context": {
+    "command": "task.create",
+    "taskId": "34951f47-3f65-467e-b94b-74026268ef78",
+    "err": "Failed query: INSERT INTO c2c_ana_actions\n       (id, org_id, domain, surface, command, target, risk, payload,\n        agentic_mode, state, proposed_at, proposed_by,\n        decided_at, decided_by, decision_reason,\n        executed_at, audit_row_id, idempotency_key)\n     VALUES ($1, $2, $3, $4, $5, $6, $7, $8,\n             $9, $10, $11, $12,\n             $13, $14, $15,\n             $16, $17, $18)\nparams: act_9e4d42f34c644a8fbe14844f3bf4e690,7,tasking,tasking-api,task.create,task:34951f47-3f65-467e-b94b-74026268ef78,low,{\"moduleType\":\"Biostatistics\",\"title\":\"Complete the design: effect size\",\"priority\":\"high\",\"status\":\"pending\",\"sourceEntityType\":\"study_design\",\"sourceEntityId\":\"study-bx-204\",\"blueprintKey\":\"design-gap:effectSize\"},suggest,executed,2026-10-01T03:20:45.290Z,5,2026-10-01T03:20:45.290Z,5,Raised at the design review.,2026-10-01T03:20:45.290Z,6ef7ef47-87d1-4263-8527-8f0fe3cb415d,"
+  }
+}
+
+ ✓ server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > the design proposes at least two tasks (the cases below need a selection of more than one) 4ms
+ ✓ server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > each reach the board naming its creator, with a task.create row, in the order raised 83ms
+stderr | server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > with no creator to name, nothing is raised
+{
+  "timestamp": "2026-10-01T03:20:45.309Z",
+  "level": "warn",
+  "message": "[task-audit] Task lineage SKIPPED — no attributable tenant, actor or target",
+  "context": {
+    "orgId": 7,
+    "hasUserId": false,
+    "taskId": "7b0b926f-3c7f-472d-9b96-81d5d495be26",
+    "command": "task.create"
+  }
+}
+
+ ✓ server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > when the ledger cannot be written, nothing is raised and nothing is answered "created" 20ms
+ ✓ server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > with no creator to name, nothing is raised 11ms
+ ✓ server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > tasks raised from a statistical assessment > a task that cannot be written takes the ones before it back: all or none 43ms
+ × server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > the reason a raised task records > is null when the request states none; what happened is the summary 84ms
+   → expected 'Raised from the biostatistics assessm…' to be null
+ ✓ server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > the reason a raised task records > is the stated reason, verbatim and trimmed 63ms
+stderr | server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > skips silently without a tenant, actor, or target (no attributionless row)
+{
+  "timestamp": "2026-10-01T03:20:46.147Z",
+  "level": "warn",
+  "message": "[task-audit] Task lineage SKIPPED — no attributable tenant, actor or target",
+  "context": {
+    "orgId": 2,
+    "hasUserId": false,
+    "taskId": "T",
+    "command": "task.create"
+  }
+}
+
+stderr | server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > skips silently without a tenant, actor, or target (no attributionless row)
+{
+  "timestamp": "2026-10-01T03:20:46.149Z",
+  "level": "warn",
+  "message": "[task-audit] Task lineage SKIPPED — no attributable tenant, actor or target",
+  "context": {
+    "orgId": 0,
+    "hasUserId": true,
+    "taskId": "T",
+    "command": "task.create"
+  }
+}
+
+stderr | server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > skips silently without a tenant, actor, or target (no attributionless row)
+{
+  "timestamp": "2026-10-01T03:20:46.149Z",
+  "level": "warn",
+  "message": "[task-audit] Task lineage SKIPPED — no attributable tenant, actor or target",
+  "context": {
+    "orgId": 2,
+    "hasUserId": true,
+    "taskId": null,
+    "command": "task.create"
+  }
+}
+
+stderr | server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > never throws when the ledger write fails, and reports that it failed
+[tasking] audit lineage write failed (non-fatal): db down
+
+ × server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > records a governed lineage entry for a task mutation 13ms
+   → expected 'Task status changed via tasking API' to be null
+ × server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.create with no stated reason records a null reason, never one the code wrote 6ms
+   → expected [ Array(3) ] to deeply equal [ null, null, null ]
+ × server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.transition with no stated reason records a null reason, never one the code wrote 2ms
+   → expected [ …(3) ] to deeply equal [ null, null, null ]
+ × server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.link with no stated reason records a null reason, never one the code wrote 2ms
+   → expected [ 'Task linked via tasking API', …(2) ] to deeply equal [ null, null, null ]
+ × server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.assign with no stated reason records a null reason, never one the code wrote 2ms
+   → expected [ …(3) ] to deeply equal [ null, null, null ]
+ × server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.notify with no stated reason records a null reason, never one the code wrote 1ms
+   → expected [ …(3) ] to deeply equal [ null, null, null ]
+ × server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.delete with no stated reason records a null reason, never one the code wrote 1ms
+   → expected [ …(3) ] to deeply equal [ null, null, null ]
+ × server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > records what happened as the payload summary, not as the reason 1ms
+   → expected 'Task status changed via tasking API' to be null
+ ✓ server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > uses a provided reason (trimmed) when present 1ms
+ ✓ server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > skips silently without a tenant, actor, or target (no attributionless row) 3ms
+ ✓ server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > never throws when the ledger write fails, and reports that it failed 2ms
+stderr | server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T03:20:46.261Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/routes/__tests__/task-management-reasons.test.ts > a stated reason is recorded verbatim (trimmed); none is recorded as null > POST /tasks with no reason records null 41ms
+   → expected { orgId: 2, userId: 7, …(6) } to match object { Object (command, reason) }
+(13 matching properties omitted from actual)
+ × server/routes/__tests__/task-management-reasons.test.ts > a stated reason is recorded verbatim (trimmed); none is recorded as null > POST /tasks with a blank reason records null 6ms
+   → expected 'Task created via tasking API' to be null
+ ✓ server/routes/__tests__/task-management-reasons.test.ts > a stated reason is recorded verbatim (trimmed); none is recorded as null > POST /tasks with a stated reason records it, trimmed 5ms
+ × server/routes/__tests__/task-management-reasons.test.ts > a stated reason is recorded verbatim (trimmed); none is recorded as null > POST /tasks/bulk-create records null for each task 6ms
+   → expected [ 'Task created via tasking API' ] to deeply equal [ null ]
+ × server/routes/__tests__/task-management-reasons.test.ts > a stated reason is recorded verbatim (trimmed); none is recorded as null > POST /tasks/:id/notify records null 9ms
+   → expected [ { orgId: 2, userId: 7, …(6) } ] to deeply equal [ ObjectContaining{…} ]
+ × server/routes/__tests__/task-management-reasons.test.ts > what the system did is the payload summary, never the reason > a blocking dependency: the successor’s transition records null and says why in its summary 7ms
+   → expected [ [ 'task.link', …(1) ], …(1) ] to deeply equal [ [ 'task.link', null ], …(1) ]
+ × server/routes/__tests__/task-management-reasons.test.ts > what the system did is the payload summary, never the reason > auto-assign records null and names its method in the summary 6ms
+   → expected [ { orgId: 2, userId: 7, …(6) } ] to deeply equal [ ObjectContaining{…} ]
+ × server/routes/__tests__/task-management-reasons.test.ts > what the system did is the payload summary, never the reason > a workflow template records null on every row; each summary names the template 5ms
+   → task.create recorded a reason nobody gave: expected 'Created from workflow template "NDA /…' to be null
+stderr | server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA create_task > puts the task on the board with its task.create ledger row
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+stdout | server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA create_task > puts the task on the board with its task.create ledger row
+[AnA Command] Executed create_task: OK — Created task "Draft Module 2.7.4" — ID: 1.
+
+stderr | server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA create_task > puts nothing on the board when its ledger row cannot be written, and says so
+[ana-ri] unified_tasks mirror failed (non-fatal): relation "c2c_ana_actions" does not exist
+
+stdout | server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA create_task > puts nothing on the board when its ledger row cannot be written, and says so
+[AnA Command] Executed create_task: OK — Created task "Draft Module 2.7.3" — ID: 2. It is not on the task board: the board entry and its audit record could not be written.
+
+stdout | server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA update_task > moves the board row with its task.transition ledger row
+[AnA Command] Executed update_task: OK — Task 201 updated.
+
+stderr | server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA update_task > leaves the board row where it was when its ledger row cannot be written, and says so
+[ana-ri] unified_tasks mirror update failed (non-fatal): relation "c2c_ana_actions" does not exist
+
+stdout | server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA update_task > leaves the board row where it was when its ledger row cannot be written, and says so
+[AnA Command] Executed update_task: OK — Task 202 updated. The task board still shows the previous state: the board change and its audit record could not be written.
+
+stdout | server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA task events record the person’s reason, or none > create_task with no stated reason records null — not a sentence, not the model’s params.reason
+[AnA Command] Executed create_task: OK — Created task "Draft Module 2.5" — ID: 3.
+
+stdout | server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA task events record the person’s reason, or none > update_task with no stated reason records null; what happened is the payload summary
+[AnA Command] Executed update_task: OK — Task 203 updated.
+
+ ✓ server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA create_task > puts the task on the board with its task.create ledger row 137ms
+ ✓ server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA create_task > puts nothing on the board when its ledger row cannot be written, and says so 14ms
+ ✓ server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA update_task > moves the board row with its task.transition ledger row 14ms
+ ✓ server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA update_task > leaves the board row where it was when its ledger row cannot be written, and says so 13ms
+ × server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA task events record the person’s reason, or none > create_task with no stated reason records null — not a sentence, not the model’s params.reason 17ms
+   → expected 'Task created by AnA and mirrored to t…' to be null
+stdout | server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA task events record the person’s reason, or none > a reason the person stated through a verified sign-off is recorded verbatim, trimmed
+[AnA Command] Executed create_task: OK — Created task "Close the 2.7.4 gap" — ID: 4.
+
+stdout | server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA task events record the person’s reason, or none > a reason the person stated through a verified sign-off is recorded verbatim, trimmed
+[AnA Command] Executed update_task: OK — Task 204 updated.
+
+ × server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA task events record the person’s reason, or none > update_task with no stated reason records null; what happened is the payload summary 11ms
+   → expected 'Task status changed by AnA' to be null
+ × server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA task events record the person’s reason, or none > a reason the person stated through a verified sign-off is recorded verbatim, trimmed 24ms
+   → expected 'Task created by AnA and mirrored to t…' to be 'Sponsor asked for the 2.7.4 gap to be…' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 24 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts > completing a task unblocks its dependents in the SAME transaction, with their ledger rows > moves B and C, leaves D blocked, and records every dependent whose record changed
+AssertionError: expected { target: 'task:TASK-B', …(3) } to match object { command: 'task.transition', …(2) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+@@ -8,10 +8,9 @@
+        "to": [],
+      },
+      "cause": "predecessor-completed",
+      "from": "blocked",
+      "predecessor": "TASK-A",
+-     "summary": "Unblocked: predecessor TASK-A completed",
+      "to": "in-progress",
+    },
+-   "reason": null,
++   "reason": "Unblocked: predecessor TASK-A completed",
+  }
+
+ ❯ server/routes/__tests__/task-completion-cascade.pglite.integration.test.ts:218:37
+    216|     // D5: nobody stated a reason for a dependent's move, so none is r…
+    217|     // what happened is the row's summary.
+    218|     expect(byTarget['task:TASK-B']).toMatchObject({
+       |                                     ^
+    219|       command: 'task.transition',
+    220|       payload: {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/24]⎯
+
+ FAIL  server/routes/__tests__/task-management-governed-writes-review.test.ts > C2 — lock order: every task-row UPDATE precedes the first ledger write > PATCH → completed runs the cascade on its own transaction, before any ledger row, and notifies after COMMIT
+AssertionError: expected { orgId: 2, userId: 7, …(6) } to match object { command: 'task.transition', …(1) }
+(10 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "command": "task.transition",
+-   "reason": null,
++   "reason": "Task status changed via tasking API",
+  }
+
+ ❯ server/routes/__tests__/task-management-governed-writes-review.test.ts:96:25
+     94|     expect(h.audits.map((a) => a.target)).toEqual(['task:TASK-1', 'tas…
+     95|     // D5: the dependent's move records no reason (nobody gave one); i…
+     96|     expect(h.audits[1]).toMatchObject({ command: 'task.transition', re…
+       |                         ^
+     97|     expect(h.audits[1].payload.summary).toBe('Unblocked: predecessor T…
+     98|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/24]⎯
+
+ FAIL  server/routes/__tests__/task-management-reasons.test.ts > a stated reason is recorded verbatim (trimmed); none is recorded as null > POST /tasks with no reason records null
+AssertionError: expected { orgId: 2, userId: 7, …(6) } to match object { Object (command, reason) }
+(13 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "command": "task.create",
+-   "reason": null,
++   "reason": "Task created via tasking API",
+  }
+
+ ❯ server/routes/__tests__/task-management-reasons.test.ts:49:25
+     47|     expect(res.status).toBe(200);
+     48|     expect(h.audits).toHaveLength(1);
+     49|     expect(h.audits[0]).toMatchObject({ command: 'task.create', reason…
+       |                         ^
+     50|   });
+     51|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/24]⎯
+
+ FAIL  server/routes/__tests__/task-management-reasons.test.ts > a stated reason is recorded verbatim (trimmed); none is recorded as null > POST /tasks with a blank reason records null
+AssertionError: expected 'Task created via tasking API' to be null
+
+- Expected:
+null
+
++ Received:
+"Task created via tasking API"
+
+ ❯ server/routes/__tests__/task-management-reasons.test.ts:55:32
+     53|     await request(makeApp()).post(`${BASE}/tasks`).send({ title: 'T', …
+     54|
+     55|     expect(h.audits[0].reason).toBeNull();
+       |                                ^
+     56|   });
+     57|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/24]⎯
+
+ FAIL  server/routes/__tests__/task-management-reasons.test.ts > a stated reason is recorded verbatim (trimmed); none is recorded as null > POST /tasks/bulk-create records null for each task
+AssertionError: expected [ 'Task created via tasking API' ] to deeply equal [ null ]
+
+- Expected
++ Received
+
+  [
+-   null,
++   "Task created via tasking API",
+  ]
+
+ ❯ server/routes/__tests__/task-management-reasons.test.ts:70:43
+     68|
+     69|     expect(h.audits.length).toBeGreaterThan(0);
+     70|     expect(h.audits.map((a) => a.reason)).toEqual(h.audits.map(() => n…
+       |                                           ^
+     71|   });
+     72|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/24]⎯
+
+ FAIL  server/routes/__tests__/task-management-reasons.test.ts > a stated reason is recorded verbatim (trimmed); none is recorded as null > POST /tasks/:id/notify records null
+AssertionError: expected [ { orgId: 2, userId: 7, …(6) } ] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+  [
+    {
+      "command": "task.notify",
+-     "reason": null,
++     "domain": "tasking",
++     "orgId": 2,
++     "payload": {
++       "recipientUserId": 42,
++     },
++     "reason": "Task notification sent via tasking API",
++     "surface": "tasking-api",
++     "target": "task:TASK-1",
++     "userId": 7,
+    },
+  ]
+
+ ❯ server/routes/__tests__/task-management-reasons.test.ts:78:22
+     76|     await request(makeApp()).post(`${BASE}/tasks/TASK-1/notify`).send(…
+     77|
+     78|     expect(h.audits).toEqual([expect.objectContaining({ command: 'task…
+       |                      ^
+     79|   });
+     80| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/24]⎯
+
+ FAIL  server/routes/__tests__/task-management-reasons.test.ts > what the system did is the payload summary, never the reason > a blocking dependency: the successor’s transition records null and says why in its summary
+AssertionError: expected [ [ 'task.link', …(1) ], …(1) ] to deeply equal [ [ 'task.link', null ], …(1) ]
+
+- Expected
++ Received
+
+  [
+    [
+      "task.link",
+-     null,
++     "Task linked via tasking API",
+    ],
+    [
+      "task.transition",
+-     null,
++     "Blocked by new dependency on TASK-A",
+    ],
+  ]
+
+ ❯ server/routes/__tests__/task-management-reasons.test.ts:91:56
+     89|
+     90|     expect(res.status).toBe(200);
+     91|     expect(h.audits.map((a) => [a.command, a.reason])).toEqual([['task…
+       |                                                        ^
+     92|     expect(h.audits[1].payload).toMatchObject({ from: 'pending', to: '…
+     93|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/24]⎯
+
+ FAIL  server/routes/__tests__/task-management-reasons.test.ts > what the system did is the payload summary, never the reason > auto-assign records null and names its method in the summary
+AssertionError: expected [ { orgId: 2, userId: 7, …(6) } ] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+  [
+    {
+      "command": "task.assign",
+-     "reason": null,
++     "domain": "tasking",
++     "orgId": 2,
++     "payload": {
++       "assigneeId": 9,
++       "method": "workload-balanced",
++     },
++     "reason": "Workload-balanced auto-assign",
++     "surface": "tasking-api",
++     "target": "task:TASK-1",
++     "userId": 7,
+    },
+  ]
+
+ ❯ server/routes/__tests__/task-management-reasons.test.ts:101:22
+     99|     await request(makeApp()).post(`${BASE}/tasks/auto-assign`).send({ …
+    100|
+    101|     expect(h.audits).toEqual([expect.objectContaining({ command: 'task…
+       |                      ^
+    102|     expect(h.audits[0].payload).toMatchObject({ assigneeId: 9, summary…
+    103|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/24]⎯
+
+ FAIL  server/routes/__tests__/task-management-reasons.test.ts > what the system did is the payload summary, never the reason > a workflow template records null on every row; each summary names the template
+AssertionError: task.create recorded a reason nobody gave: expected 'Created from workflow template "NDA /…' to be null
+
+- Expected:
+null
+
++ Received:
+"Created from workflow template \"NDA / BLA filing workflow\""
+
+ ❯ server/routes/__tests__/task-management-reasons.test.ts:112:74
+    110|     expect(h.audits.length).toBeGreaterThan(0);
+    111|     for (const row of h.audits) {
+    112|       expect(row.reason, `${row.command} recorded a reason nobody gave…
+       |                                                                          ^
+    113|       expect(row.payload.summary).toContain(`workflow template "${temp…
+    114|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/24]⎯
+
+ FAIL  server/routes/__tests__/unifiedTasks.routes.test.ts > T1 — a completion, the dependents it unblocks and all their ledger rows are one transaction > runs the cascade on the completion’s transaction and records A, then B, before COMMIT; notifies after
+AssertionError: expected { orgId: 2, userId: 7, …(6) } to match object { command: 'task.transition', …(2) }
+(9 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "command": "task.transition",
+-   "reason": null,
++   "reason": "Task status changed via tasking API",
+    "userId": 7,
+  }
+
+ ❯ server/routes/__tests__/unifiedTasks.routes.test.ts:453:25
+    451|     expect(h.audits.map((a) => a.target)).toEqual(['task:TASK-A', 'tas…
+    452|     // D5: the dependent's move records no reason (nobody gave one); i…
+    453|     expect(h.audits[1]).toMatchObject({ command: 'task.transition', us…
+       |                         ^
+    454|     expect(h.audits[1].payload.summary).toBe('Unblocked: predecessor T…
+    455|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/24]⎯
+
+ FAIL  server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA task events record the person’s reason, or none > create_task with no stated reason records null — not a sentence, not the model’s params.reason
+AssertionError: expected 'Task created by AnA and mirrored to t…' to be null
+
+- Expected:
+null
+
++ Received:
+"Task created by AnA and mirrored to the canonical task board"
+
+ ❯ server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts:204:23
+    202|     const out = await command('create_task', { projectId: PROJECT, tit…
+    203|     const got = await reasons('task.create', `TASK-PT-${ORG}-${out.dat…
+    204|     expect(got.audit).toBeNull();
+       |                       ^
+    205|     expect(got.decision).toBeNull();
+    206|     expect(got.payload.summary).toBe('Task created by AnA and mirrored…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/24]⎯
+
+ FAIL  server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA task events record the person’s reason, or none > update_task with no stated reason records null; what happened is the payload summary
+AssertionError: expected 'Task status changed by AnA' to be null
+
+- Expected:
+null
+
++ Received:
+"Task status changed by AnA"
+
+ ❯ server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts:213:23
+    211|     await command('update_task', { projectId: PROJECT, taskId: 203, up…
+    212|     const got = await reasons('task.transition', `TASK-PT-${ORG}-203`);
+    213|     expect(got.audit).toBeNull();
+       |                       ^
+    214|     expect(got.decision).toBeNull();
+    215|     expect(got.payload).toMatchObject({ from: 'in-progress', to: 'revi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/24]⎯
+
+ FAIL  server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts > AnA task events record the person’s reason, or none > a reason the person stated through a verified sign-off is recorded verbatim, trimmed
+AssertionError: expected 'Task created by AnA and mirrored to t…' to be 'Sponsor asked for the 2.7.4 gap to be…' // Object.is equality
+
+Expected: "Sponsor asked for the 2.7.4 gap to be tracked"
+Received: "Task created by AnA and mirrored to the canonical task board"
+
+ ❯ server/services/ana-ri/__tests__/ana-task-ledger-atomic.pglite.integration.test.ts:226:25
+    224|     const moved = await reasons('task.transition', `TASK-PT-${ORG}-204…
+    225|     for (const got of [created, moved]) {
+    226|       expect(got.audit).toBe('Sponsor asked for the 2.7.4 gap to be tr…
+       |                         ^
+    227|       expect(got.decision).toBe('Sponsor asked for the 2.7.4 gap to be…
+    228|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/24]⎯
+
+ FAIL  server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts > the reason a raised task records > is null when the request states none; what happened is the summary
+AssertionError: expected 'Raised from the biostatistics assessm…' to be null
+
+- Expected:
+null
+
++ Received:
+"Raised from the biostatistics assessment of \"A phase 3 study of Drug X in type 2 diabetes\" (Blocking design gap)"
+
+ ❯ server/services/biostatistics-bridge/__tests__/bridge-tasks-ledger.pglite.integration.test.ts:171:33
+    169|     expect(rows).toHaveLength(proposedKeys.length);
+    170|     for (const r of rows) {
+    171|       expect(r.decision_reason).toBeNull();
+       |                                 ^
+    172|       expect(r.audit_reason).toBeNull();
+    173|       expect(r.payload.summary).toMatch(/^Raised from the biostatistic…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/24]⎯
+
+ FAIL  server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts > the reason a seeded milestone records > is null — what happened is the summary
+AssertionError: expected 'Milestone seeded from the US_IND blue…' to be null
+
+- Expected:
+null
+
++ Received:
+"Milestone seeded from the US_IND blueprint when the project was created"
+
+ ❯ server/services/tasking/__tests__/blueprint-milestones.pglite.integration.test.ts:145:33
+    143|     expect(rows).toHaveLength(MILESTONES.length);
+    144|     for (const r of rows) {
+    145|       expect(r.decision_reason).toBeNull();
+       |                                 ^
+    146|       expect(r.audit_reason).toBeNull();
+    147|       expect(r.payload.summary).toBe(`Milestone seeded from the ${REGI…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/24]⎯
+
+ FAIL  server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > records a governed lineage entry for a task mutation
+AssertionError: expected 'Task status changed via tasking API' to be null
+
+- Expected:
+null
+
++ Received:
+"Task status changed via tasking API"
+
+ ❯ server/services/tasking/__tests__/task-audit.test.ts:40:27
+     38|     });
+     39|     // D5: nobody stated a reason, so none is recorded — not a stock s…
+     40|     expect(params.reason).toBeNull();
+       |                           ^
+     41|     expect(params.payload).toEqual({ from: 'pending', to: 'completed' …
+     42|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/24]⎯
+
+ FAIL  server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.create with no stated reason records a null reason, never one the code wrote
+AssertionError: expected [ Array(3) ] to deeply equal [ null, null, null ]
+
+- Expected
++ Received
+
+  [
+-   null,
+-   null,
+-   null,
++   "Task created via tasking API",
++   "Task created via tasking API",
++   "Task created via tasking API",
+  ]
+
+ ❯ server/services/tasking/__tests__/task-audit.test.ts:51:76
+     49|       await auditTaskAction({ orgId: 2, userId: 7, command, taskId: 'T…
+     50|       await auditTaskAction({ orgId: 2, userId: 7, command, taskId: 'T…
+     51|       expect(recordGovernedAction.mock.calls.map(([, row]) => row.reas…
+       |                                                                            ^
+     52|     },
+     53|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/24]⎯
+
+ FAIL  server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.transition with no stated reason records a null reason, never one the code wrote
+AssertionError: expected [ …(3) ] to deeply equal [ null, null, null ]
+
+- Expected
++ Received
+
+  [
+-   null,
+-   null,
+-   null,
++   "Task status changed via tasking API",
++   "Task status changed via tasking API",
++   "Task status changed via tasking API",
+  ]
+
+ ❯ server/services/tasking/__tests__/task-audit.test.ts:51:76
+     49|       await auditTaskAction({ orgId: 2, userId: 7, command, taskId: 'T…
+     50|       await auditTaskAction({ orgId: 2, userId: 7, command, taskId: 'T…
+     51|       expect(recordGovernedAction.mock.calls.map(([, row]) => row.reas…
+       |                                                                            ^
+     52|     },
+     53|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/24]⎯
+
+ FAIL  server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.link with no stated reason records a null reason, never one the code wrote
+AssertionError: expected [ 'Task linked via tasking API', …(2) ] to deeply equal [ null, null, null ]
+
+- Expected
++ Received
+
+  [
+-   null,
+-   null,
+-   null,
++   "Task linked via tasking API",
++   "Task linked via tasking API",
++   "Task linked via tasking API",
+  ]
+
+ ❯ server/services/tasking/__tests__/task-audit.test.ts:51:76
+     49|       await auditTaskAction({ orgId: 2, userId: 7, command, taskId: 'T…
+     50|       await auditTaskAction({ orgId: 2, userId: 7, command, taskId: 'T…
+     51|       expect(recordGovernedAction.mock.calls.map(([, row]) => row.reas…
+       |                                                                            ^
+     52|     },
+     53|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/24]⎯
+
+ FAIL  server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.assign with no stated reason records a null reason, never one the code wrote
+AssertionError: expected [ …(3) ] to deeply equal [ null, null, null ]
+
+- Expected
++ Received
+
+  [
+-   null,
+-   null,
+-   null,
++   "Task assigned via tasking API",
++   "Task assigned via tasking API",
++   "Task assigned via tasking API",
+  ]
+
+ ❯ server/services/tasking/__tests__/task-audit.test.ts:51:76
+     49|       await auditTaskAction({ orgId: 2, userId: 7, command, taskId: 'T…
+     50|       await auditTaskAction({ orgId: 2, userId: 7, command, taskId: 'T…
+     51|       expect(recordGovernedAction.mock.calls.map(([, row]) => row.reas…
+       |                                                                            ^
+     52|     },
+     53|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/24]⎯
+
+ FAIL  server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.notify with no stated reason records a null reason, never one the code wrote
+AssertionError: expected [ …(3) ] to deeply equal [ null, null, null ]
+
+- Expected
++ Received
+
+  [
+-   null,
+-   null,
+-   null,
++   "Task notification sent via tasking API",
++   "Task notification sent via tasking API",
++   "Task notification sent via tasking API",
+  ]
+
+ ❯ server/services/tasking/__tests__/task-audit.test.ts:51:76
+     49|       await auditTaskAction({ orgId: 2, userId: 7, command, taskId: 'T…
+     50|       await auditTaskAction({ orgId: 2, userId: 7, command, taskId: 'T…
+     51|       expect(recordGovernedAction.mock.calls.map(([, row]) => row.reas…
+       |                                                                            ^
+     52|     },
+     53|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/24]⎯
+
+ FAIL  server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > task.delete with no stated reason records a null reason, never one the code wrote
+AssertionError: expected [ …(3) ] to deeply equal [ null, null, null ]
+
+- Expected
++ Received
+
+  [
+-   null,
+-   null,
+-   null,
++   "Task archived (soft delete) via tasking API",
++   "Task archived (soft delete) via tasking API",
++   "Task archived (soft delete) via tasking API",
+  ]
+
+ ❯ server/services/tasking/__tests__/task-audit.test.ts:51:76
+     49|       await auditTaskAction({ orgId: 2, userId: 7, command, taskId: 'T…
+     50|       await auditTaskAction({ orgId: 2, userId: 7, command, taskId: 'T…
+     51|       expect(recordGovernedAction.mock.calls.map(([, row]) => row.reas…
+       |                                                                            ^
+     52|     },
+     53|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/24]⎯
+
+ FAIL  server/services/tasking/__tests__/task-audit.test.ts > auditTaskAction > records what happened as the payload summary, not as the reason
+AssertionError: expected 'Task status changed via tasking API' to be null
+
+- Expected:
+null
+
++ Received:
+"Task status changed via tasking API"
+
+ ❯ server/services/tasking/__tests__/task-audit.test.ts:66:24
+     64|     });
+     65|     const [, row] = recordGovernedAction.mock.calls[0];
+     66|     expect(row.reason).toBeNull();
+       |                        ^
+     67|     expect(row.payload).toEqual({ from: 'blocked', to: 'pending', summ…
+     68|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/24]⎯
+
+ FAIL  server/services/tasking/__tests__/task-event-reason-not-invented.test.ts > task events never record a reason nobody gave > every task-event reason is a value handed in — never a sentence the code wrote
+AssertionError: task events that record a composed reason:
+server/services/tasking/task-side-effects.ts:130  reason: next.unblocked ? `Unblocked: predecessor ${completedTaskId} completed` : `Blocker ${completedTaskId} completed; removed from this task's blockers`
+server/services/tasking/blueprint-milestones.ts:92  reason: `Milestone seeded from the ${registryId} blueprint when the project was created`
+server/services/biostatistics-bridge/bridge-service.ts:440  reason: args.reason ?? `Raised from the biostatistics assessment of "${assessment.title}" (${b.trigger})`
+server/services/ana-ri/command-executor.ts:1163  reason: 'Task created by AnA and mirrored to the canonical task board'
+server/services/ana-ri/command-executor.ts:1442  reason: 'Task status changed by AnA'
+server/routes/taskManagement.routes.ts:827  reason: `Created from workflow template "${template.name}"`
+server/routes/taskManagement.routes.ts:858  reason: `Linked by workflow template "${template.name}"`
+server/routes/taskManagement.routes.ts:1035  reason: `Blocked by new dependency on ${validatedData.predecessorTaskId}`
+server/routes/taskManagement.routes.ts:1160  reason: 'Workload-balanced auto-assign'
+server/routes/unifiedTasks.routes.ts:430  reason: `Synced from the ${module} module`: expected [ …(10) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "server/services/tasking/task-side-effects.ts:130  reason: next.unblocked ? `Unblocked: predecessor ${completedTaskId} completed` : `Blocker ${completedTaskId} completed; removed from this task's blockers`",
++   "server/services/tasking/blueprint-milestones.ts:92  reason: `Milestone seeded from the ${registryId} blueprint when the project was created`",
++   "server/services/biostatistics-bridge/bridge-service.ts:440  reason: args.reason ?? `Raised from the biostatistics assessment of \"${assessment.title}\" (${b.trigger})`",
++   "server/services/ana-ri/command-executor.ts:1163  reason: 'Task created by AnA and mirrored to the canonical task board'",
++   "server/services/ana-ri/command-executor.ts:1442  reason: 'Task status changed by AnA'",
++   "server/routes/taskManagement.routes.ts:827  reason: `Created from workflow template \"${template.name}\"`",
++   "server/routes/taskManagement.routes.ts:858  reason: `Linked by workflow template \"${template.name}\"`",
++   "server/routes/taskManagement.routes.ts:1035  reason: `Blocked by new dependency on ${validatedData.predecessorTaskId}`",
++   "server/routes/taskManagement.routes.ts:1160  reason: 'Workload-balanced auto-assign'",
++   "server/routes/unifiedTasks.routes.ts:430  reason: `Synced from the ${module} module`",
++ ]
+
+ ❯ server/services/tasking/__tests__/task-event-reason-not-invented.test.ts:121:92
+    119|   it('every task-event reason is a value handed in — never a sentence …
+    120|     const invented = TASK_EVENT_SOURCES.flatMap(inventedReasons);
+    121|     expect(invented, `task events that record a composed reason:\n${in…
+       |                                                                                            ^
+    122|   });
+    123|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/24]⎯
+
+
+ Test Files  9 failed (9)
+      Tests  24 failed | 102 passed (126)
+   Start at  03:20:28
+   Duration  19.69s (transform 7.64s, setup 472ms, import 14.32s, tests 38.28s, environment 1ms)
+

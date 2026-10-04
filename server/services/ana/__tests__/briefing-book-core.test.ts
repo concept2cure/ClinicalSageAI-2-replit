@@ -21,8 +21,6 @@ import {
   normalizeReviewerChallenges,
   normalizePremortemFindings,
   sponsorQuestionLabel,
-  FIXTURE_EOP2_MEETING,
-  FIXTURE_EOP2_CONTEXT,
   type AnticipatedChallenge,
 } from '../briefing-book-core.js';
 import { getToolHandler } from '../AnaToolExecutor.js';
@@ -182,11 +180,23 @@ describe('normalizers', () => {
   });
 });
 
-describe('fixtures', () => {
-  it('the EOP2 fixture assembles a complete, fixture-sourced book', () => {
-    const book = assembleBriefingBook(FIXTURE_EOP2_MEETING, FIXTURE_EOP2_CONTEXT);
-    expect(book.questionCount).toBe(FIXTURE_EOP2_MEETING.keyQuestions!.length);
+/* Test data. This used to be imported from the product module, where the
+   assemble_briefing_book tool also used it on every call — see the tool tests
+   below for why it no longer lives there. */
+const TEST_MEETING = { id: 'test-eop2', type: 'eop2' as const, keyQuestions: QS };
+const TEST_CONTEXT = { productName: 'Test Product', indication: 'Test indication', sponsor: 'Test Sponsor' };
+
+describe('assembleBriefingBook', () => {
+  it('assembles a complete book from supplied inputs', () => {
+    const book = assembleBriefingBook(TEST_MEETING, TEST_CONTEXT);
+    expect(book.questionCount).toBe(QS.length);
     for (const required of book.requiredStrings) expect(book.content).toContain(required);
+  });
+
+  it('with no supporting data supplied, says so — it does not claim appendices exist', () => {
+    const book = assembleBriefingBook(TEST_MEETING, TEST_CONTEXT);
+    expect(book.content).not.toMatch(/compiled in the appendices/);
+    expect(book.content).toMatch(/not yet supplied by the sponsor/);
   });
 });
 
@@ -201,17 +211,35 @@ describe('assemble_briefing_book tool', () => {
     expect(def!.description.length).toBeGreaterThan(50);
   });
 
-  it('builds a fixture book that is not_assessed and not sealable (honest default)', async () => {
+  /* This case was 'builds a fixture book that is not_assessed and not sealable
+     (honest default)'. The default was a fixture EOP2 meeting and its invented
+     clinical history, into which a caller's real product name was substituted;
+     marking the book not_assessed did not stop the invented Background and
+     Supporting-Data text reading as the product's own. The honest default is
+     to build nothing without the sponsor's own meeting type and questions. */
+  it('refuses to build a book without the meeting type and the sponsor\'s questions', async () => {
     const handler = getToolHandler('assemble_briefing_book')!;
     const out = JSON.parse(await handler({ run_premortem: false }, { organizationId: 'org_1' } as any));
+    expect(out.error).toMatch(/meeting type and the sponsor's own questions/);
+    expect(out.missing).toEqual(['meeting_type', 'key_questions']);
+    expect(out.content).toBeUndefined();
+  });
+
+  it('builds only from what is supplied — no sample sponsor, product or clinical history', async () => {
+    const handler = getToolHandler('assemble_briefing_book')!;
+    const out = JSON.parse(
+      await handler(
+        { run_premortem: false, meeting_type: 'eop2', key_questions: QS, product_name: 'Real Product' },
+        { organizationId: 'org_1' } as any,
+      ),
+    );
     expect(out.error).toBeUndefined();
     expect(out.status).toBe('generated');
     expect(out.documentType).toBe('briefing-book');
-    expect(Array.isArray(out.requiredStrings)).toBe(true);
-    expect(out.premortem.assessment).toBe('not_assessed');
-    expect(out.premortem.sealable).toBe(false);
-    expect(out.premortem.anticipated).toBe(true);
-    // Every required string is present verbatim in the assembled content.
     for (const required of out.requiredStrings) expect(out.content).toContain(required);
+    for (const invented of ['C2C-117', 'Concept2Cure Therapeutics', 'N=36', 'complete-remission', 'DHRR', 'SAMPLE DATA']) {
+      expect(out.content).not.toContain(invented);
+    }
+    expect(out.content).toContain('Real Product');
   });
 });

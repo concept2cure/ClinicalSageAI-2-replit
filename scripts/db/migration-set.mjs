@@ -74,6 +74,15 @@ export const UUID_TENANT_ISOLATION_NONPUBLIC =
 export const C48_STAGE1_IDENTITY_ORG_BRIDGE =
   'db/migrations/20260919_c48_stage1_identity_org_bridge.sql';
 
+/**
+ * Parent-scoped RLS for child tables. Runs in the isolation tail, after the uuid
+ * step and before the integer sweep (2026-09-29, D3): its chained list
+ * delegates to parent policies the uuid step creates, and every table the set
+ * creates must exist before it runs. It creates no table, so the sweep stays
+ * last. Evidence docs/evidence/D3/2026-09-29-child-scope-first-deploy/.
+ */
+export const CHILD_TABLE_PARENT_SCOPE = 'db/migrations/20260813_child_table_parent_scoped_rls.sql';
+
 export const C2C_MIGRATION_FILES = [
   // ── Golden-journey prerequisites ────────────────────────────────────────────
   // Seven migrations that tests/golden-journeys provision and depend on, and
@@ -1164,23 +1173,11 @@ export const C2C_MIGRATION_FILES = [
   // tenant-facing data.
   'db/migrations/20260813_ai_gateway_audit_log.sql',
 
-  // ── Parent-scoped RLS for child tables (added 2026-08-13) ────────────────
-  // 21 tables held tenant data with NO tenant column, NO RLS and NO policy —
-  // readable by every tenant. Found mechanically against a provisioned
-  // database: of 937 public base tables, 195 have no tenant column, 170 of
-  // those have no RLS at all, 78 of those are referenced by server SQL, and 21
-  // of those carry an FK to a table that IS tenant-keyed. chat_messages is the
-  // sharpest: every tenant's conversation bodies.
-  //
-  // The FK is the evidence of ownership, so these get a PARENT-scoped policy
-  // rather than an organization_id column of their own — a copied tenant key is
-  // a second source of truth that can drift from the parent.
-  //
-  // Placed with the other pre-sweep entries: it only ALTERs, but "the isolation
-  // steps are the tail of the set" is an invariant (C-33), not a case-by-case
-  // judgement. The sweep will not touch these tables anyway — it keys on an
-  // org column they do not have, and it never replaces an existing policy.
-  'db/migrations/20260813_child_table_parent_scoped_rls.sql',
+  // (The parent-scoped child RLS, 20260813_child_table_parent_scoped_rls.sql,
+  // stood here until 2026-09-29. It now runs in the isolation tail — see
+  // CHILD_TABLE_PARENT_SCOPE — because here it ran before the uuid step and
+  // before every table added below it, so a blank database's first deploy left
+  // regulatory_harmonization.export_job_audit_log unscoped.)
   // Export receipts — what turns the purge's `finalExportDigest` precondition
   // from "a non-empty string was supplied" into "an export of THIS tenant was
   // actually produced". Creates one table, so it must precede the isolation
@@ -1291,8 +1288,9 @@ export const C2C_MIGRATION_FILES = [
   // new to policy — `projects` is a base table policied long ago — and the
   // ordering costs it nothing. No dependency on any entry above: it ALTERs
   // `projects` (a drizzle-push base table deploy-migrate asserts as a sentinel)
-  // and its backfill self-guards on regulatory_programs, whose creator
-  // (20260524_program_workbench_schema.sql) is deliberately not on this path.
+  // and its backfill self-guards on regulatory_programs. (Corrected 2026-09-26:
+  // this said that table's creator, 20260524_program_workbench_schema.sql, is
+  // not on this path. It is entry 1 of this set.)
   'migrations/20260814_projects_regulatory_program_anchor.sql',
 
   // ── Literature screening trail, GA ledger L4 (added 2026-08-14) ──────────
@@ -1447,6 +1445,11 @@ export const C2C_MIGRATION_FILES = [
   // superseded which, and inferring it would manufacture a lineage the system
   // never observed.
   'migrations/20260829_cre_source_versioning.sql',
+  // VR-16 (D2/D5): the data room's capture record is append-only. Triggers on
+  // cre_evidence_sources (checksum and lineage write-once, retirement one-way,
+  // no TRUNCATE, DELETE only by the owner). After the file that adds its
+  // versioning columns; no table, no column, no DROP.
+  'migrations/20261001_cre_evidence_sources_capture_immutability.sql',
 
   // Constraint repair only: no table, no column, no data. 0001_phase13_full
   // meant to widen concept2cure_review_tasks.task_type to include
@@ -2200,6 +2203,36 @@ export const C2C_MIGRATION_FILES = [
      20260905b pattern, idempotent. */
   'migrations/20260911_vault_evidence_citations.sql',
 
+  /* vault.documents record guard, added 2026-09-26 (VR-06, row D5). A row
+     trigger refuses any change to a recorded version's identity, hash, uploader
+     or lineage, and to a write-once field once it holds a value; a statement
+     trigger refuses TRUNCATE. Nothing below the application stopped the
+     runtime role rewriting a recorded version's content_hash.
+
+     Placed after every file in this set that writes vault.documents
+     (20260821_vault_documents_canonical_shape, 20260905_vault_documents_
+     organization_id), and those write only `WHERE x IS NULL`, which the
+     write-once rule admits; so a replay passes the guard. CREATE OR REPLACE for
+     the functions, each trigger created only when absent: replayable, no DROP.
+     Proven by tests/db/vault-record-immutability.dbtest.ts (red before this
+     file, green after). The code that may still UPDATE the table is named in
+     scripts/ci/check-vault-document-writers.mjs. */
+  /* The deletion archive and retention policies (plan critique 13,
+     2026-10-01). vault.document_archives is the snapshot the retention job
+     writes before it disposes of a document; it was on no applier, so a
+     database built by deploy-migrate had no archive to write to. CREATE ...
+     IF NOT EXISTS only: replayable, no DROP. Just before the next file, which
+     guards it (append-only, owner-only delete, row security) and has the
+     tenant purge erase it. */
+  'migrations/20260608_vault_retention.sql',
+  'migrations/20260926_vault_documents_record_immutability.sql',
+  // VR-08 (D2): a version names its predecessor only inside its own family,
+  // and has at most one live successor. A trigger, plus a partial unique index
+  // created only when no version is already forked (NOTICE otherwise). After
+  // VR-06's file: it guards the same table's lineage column. No table, no
+  // column, no FK, no DROP.
+  'migrations/20260930_vault_documents_version_lineage.sql',
+
   /* c2c_template_specs + its doc_types column, added 2026-09-17 (WO-15
      finding 5). Self-contained: this file creates the base table IF NOT EXISTS
      (byte-identical to 20260531_template_specs.sql modulo comments — verified)
@@ -2300,6 +2333,10 @@ export const C2C_MIGRATION_FILES = [
   // VR-03 (D5): the lifecycle trail only grows, signatures are written once,
   // nothing is deleted. Triggers only, created when absent; no table, no DROP.
   'migrations/20260925_canonical_documents_append_only.sql',
+  // VR-13 (D5): one lifecycle record per Vault version. A unique index on the
+  // version a record names, created only when no version already has two
+  // (NOTICE otherwise). After the table's own file; no table, no column, no DROP.
+  'migrations/20261001_canonical_documents_vault_version.sql',
 
   // The three IVDR append-only history tables carry no tenant column of their
   // own — their tenant is their parent's, reached by foreign key — so BOTH
@@ -2667,6 +2704,15 @@ export const C2C_MIGRATION_FILES = [
   // policy is unchanged. Evidence docs/evidence/D3/2026-09-28-invitation-acceptance/.
   'migrations/20260928_invitations_for_member.sql',
 
+  // ── actor_name(): the audit trail names people who acted and left (D3) ───
+  // audit_logs keeps an actor id and no name; after the users policy a tenant
+  // scope resolves only current members, so the audit-trail ledger read
+  // `user <id>` for anyone who had left. actor_name returns name and email only,
+  // for members of the calling organization and actors in its own audit trail,
+  // nobody else. Plus audit_logs_tenant_actor_idx, created only when absent.
+  // Evidence docs/evidence/D3/2026-09-29-actor-names/.
+  'migrations/20260929_actor_names.sql',
+
   // ── submissions.program_id: a submission carries its project (LX-22) ─────
   // The project → submission link was guessed from product names; two projects
   // for one product shared a filing spine. Additive column, a composite
@@ -2731,7 +2777,217 @@ export const C2C_MIGRATION_FILES = [
   // polices them — which it could not while they were invisible to it.
   'migrations/20260327_data_lineage_tracking.sql',
 
+  // ── An artifact's signatures and lock snapshots are append-only (2026-09-29)
+  // concept2cure_signatures (the approval and release signatures the
+  // readiness engine, the Artifacts Center and the DOCX signature block read)
+  // and concept2cure_submission_snapshots (each lock's record) were protected
+  // only by triggers in db/migrations/_legacy/ and by a migration on no
+  // applier, so an UPDATE could rewrite a signer's name and a DELETE, or the
+  // ON DELETE CASCADE from the artifact, could remove a signature. UPDATE,
+  // DELETE and TRUNCATE are now refused for every role; no server code does
+  // either (census in the file). Creates no table. Idempotent (CREATE OR
+  // REPLACE FUNCTION, CREATE TRIGGER only when absent, to_regclass guarded);
+  // required at boot by server/services/audit/audit-immutability-triggers.ts.
+  // Evidence docs/evidence/D5/2026-09-29-artifact-signatures-append-only/.
+  'migrations/20260929_concept2cure_signatures_append_only.sql',
+
+  // ── A record names a project of its own organization only (PF-04, D3) ────
+  // One composite key per store, (project key, org) → regulatory_programs (id,
+  // organization_id): projects, authoring_documents, cre_evidence_sources,
+  // c2c_documents, cdisc_prm_studies. NOT VALID (legacy rows are listed by
+  // scripts/db/program-same-org-preflight.mjs, not scanned by the deploy), ON
+  // DELETE SET NULL (key) so a tenant purge un-anchors instead of failing —
+  // except c2c_documents, NO ACTION like the key it already has.
+  // After every creator it keys: 20260524, 20260528/29, the cre spine and its
+  // scope, the authoring scope, 20260814, and 20260925b's unique index (which it
+  // also creates when that file skipped). authoring_documents comes from the
+  // authoring subsystem deploy-migrate applies before this set. Creates no
+  // table, so the sweep has nothing new to policy; it adds one column
+  // (cdisc_prm_studies.program_id) to an existing table. No DROP.
+  'migrations/20260926b_program_same_org_keys.sql',
+
+  // ── The same rule for the integer project key (PF-03, D3, 2026-10-01) ─────
+  // (project_id, org) → projects (id, organization_id) on concept2cure_artifacts
+  // and c2c_submission_packages, on a unique index it creates when absent.
+  // NOT VALID (legacy rows listed by program-same-org-preflight.mjs), ON DELETE
+  // CASCADE like each table's existing project_id key, so a project delete is
+  // unchanged. After every creator: 0000 (artifacts), 0002 (packages). Creates
+  // no table; adds one index and two keys. No DROP.
+  'migrations/20261001_integer_project_same_org_keys.sql',
+
+  // ── A program has at most one anchor row (PF-08, 2026-10-01) ──────────────
+  // Partial unique index on projects (regulatory_program_id), created only when
+  // no program has two anchors; otherwise a NOTICE names them and the deploy
+  // proceeds. After 20260814, which creates the column. Creates no table. No
+  // DROP.
+  'migrations/20261001b_projects_one_anchor_per_program.sql',
+
+  // ── An AnA conversation names its project, by key (PF-10 S1, 2026-10-01) ──
+  // chat_threads.program_id, held to the thread's organization by a NOT VALID
+  // composite key (ON DELETE SET NULL (program_id)), with a CHECK, an index,
+  // and a same-organization-only backfill from metadata->>'programId'. After
+  // 20260728 (chat_threads) and 20260926b (regulatory_programs_id_org_uq,
+  // created here too when absent). Creates no table. No DROP.
+  'migrations/20261001c_chat_threads_program_key.sql',
+
+  // ── RBQM: signed records stay signed; QTLs bite in their direction; a
+  //    duplicate metric load is refused (2026-09-30) ─────────────────────────
+  // Ported from the abandoned #1120 / #1123 / #1130 (+ #1166's UNIQUE replay
+  // index). Each ALTERs a table 20260629 / 20260630 / 20260726 above create
+  // with CREATE TABLE IF NOT EXISTS, so each ships as its own additive file
+  // (the 20260918 note explains why an in-place amendment would reach no
+  // deployed tenant). All ADD COLUMN / CREATE INDEX IF NOT EXISTS, constraints
+  // added only when absent, to_regclass-guarded, no DROP; the plan-version
+  // backfill runs only on the apply that adds the column, so a replay never
+  // renumbers. Create no table, so the sweep has nothing new to policy. Above
+  // the final pair because ci:migration-set-order pins those two last.
+  'migrations/20260930_rbm_qtl_direction.sql',
+  'migrations/20260930_rbm_plan_versioning.sql',
+  'migrations/20260930_rbm_ingest_idempotency.sql',
+
+  // ── The report type registry reaches a deployed database (2026-09-30, D2) ─
+  // report_runs.report_type_id references report_type_registry(type_id), and
+  // nothing on any applier inserted into it — its only writer,
+  // POST /api/report-os/taxonomy/seed, was refused in production, and was
+  // deleted in review round 1, leaving this file the one writer — so the
+  // registry was empty on every provisioned database and every report run
+  // answered 404. Generated from the in-code report types by
+  // scripts/db/generate-report-type-registry-seed.ts (drift test beside the
+  // taxonomy). INSERT … ON CONFLICT (type_id) DO UPDATE of every descriptive
+  // column except `enabled`, so each deploy mirrors the code and an operator's
+  // disable survives; ends with a row-count assertion. Raises when the table is
+  // missing (drizzle-kit push creates it). Data only: no DDL, no DROP, creates
+  // no table, so the sweep has nothing new to policy — the registry is global
+  // by design (install-fresh's surface list, tenantColumn: null). Above the
+  // final pair because ci:migration-set-order pins those last.
+  // Evidence docs/evidence/D2-REPORTING-LAUNCH-APP/2026-09-30/report-os/.
+  'migrations/20260930_report_type_registry_seed.sql',
+  'migrations/20261001_organization_retention_settings.sql', // P1-22-org (ADR-0014 §6): one public org-keyed table, no DROP; above the pair so the sweep gives it RLS
+  'migrations/20261001_domain_history_append_only.sql', // P1-24 (DP-15/16): append-only triggers on workflow_history, document_audit_logs, regulatory_audit_logs, c2c_ana_actions, authoring_signatures; after every creator; no table, no DROP
+  'migrations/20261001_users_sessions_ended_at.sql', // P0-4b (IAM-04 b): users.sessions_ended_at + a trigger stamping it when status leaves 'active'; additive, no table, no DROP of anything the set creates
+  'migrations/20261001_qms_document_signature_required.sql', // P0-18 (DP-01 residual): deferred constraint triggers refusing qms_documents → effective/retired without a same-transaction signature; after 20260813d (signed_target); no table, no DROP
+
+  // ── IND lifecycle and assessment tables reach every deployed database (2026-10-01, D1) ─
+  // Five tables existed only on databases installed after their 20260615
+  // files. install-fresh overlays every top-level migrations/*.sql, so a new
+  // install creates them. deploy-migrate applies only this array, and they
+  // were not in it. drizzle-kit push does not create them either: their models
+  // live in shared/schema/*.ts modules that drizzle.config.ts does not push. A
+  // database provisioned before 2026-06-15 therefore never got them, and on
+  // that database the IND amendment and annual-report registers
+  // (server/routes/ind-lifecycle/registers.routes.ts) answer "relation does not
+  // exist". Each file is CREATE TABLE/INDEX IF NOT EXISTS only, with no DROP, in
+  // public and keyed by organization_id INTEGER NOT NULL. So it is a no-op where
+  // the table exists, and the sweep below gives it its tenant policy where it
+  // was missing. Replayed twice on PGlite: 0 of 5 tables before, 5 of 5 after.
+  // (report_subscriptions, the sixth 20260615 file, is created by the report-os
+  // push.)
+  'migrations/20260615_ind_amendments.sql',
+  'migrations/20260615_ind_annual_reports.sql',
+  'migrations/20260615_ind_icsr_transmissions.sql',
+  'migrations/20260615_regulatory_assessments.sql',
+  'migrations/20260615_tmf_artifact_filings.sql',
+
+  // ── Shared state across API tasks: continuity baseline and presence roster
+  //    (2026-10-01, D1, audit W2 fix units U14 + U16) ───────────────────────
+  // Production runs two API tasks behind an ALB with no stickiness. AnA
+  // Command's continuity baseline and the Authoring presence roster each lived
+  // in one task's memory, so the trend verdict and the roster depended on
+  // which task answered and reset on every deploy. Each file creates one table
+  // in public keyed by organization_id INTEGER NOT NULL (CREATE TABLE/INDEX IF
+  // NOT EXISTS only, no DROP), so the sweep below gives it its tenant policy.
+  // collab_presence sits in db/migrations beside its precedent,
+  // 20260807_collab_section_locks.sql. Above the final pair because
+  // ci:migration-set-order pins the tail. Evidence
+  // docs/evidence/W2/2026-09-24-multi-task/u14-u16-shared-state.md.
+  'migrations/20261001_project_continuity_snapshots.sql',
+  'db/migrations/20261001_collab_presence.sql',
+
+  // ── Scheduled jobs run once per window, not once per process (2026-10-01,
+  //    D1, audit W2 fix unit U19) ────────────────────────────────────────────
+  // The advisory lease stopped overlapping runs only; a tick on another task
+  // that did not overlap ran the same window again (retention archived and
+  // audited each disposition up to three times; the sentinel notified three
+  // times an hour). One claim row per (organization, job, window), in public
+  // with organization_id INTEGER NOT NULL so the sweep below gives it its
+  // tenant policy. IF NOT EXISTS only, no DROP. Evidence
+  // docs/evidence/W2/2026-09-24-multi-task/u19-scheduler-windows.md.
+  'migrations/20261001d_scheduled_job_claims.sql',
+
+  // ── Sign-in sessions shared by every server process (2026-10-01, D1, audit
+  //    W2 fix unit U20) ─────────────────────────────────────────────────────
+  // Production runs no Redis (decision B6); session activity, the session
+  // registry and superseded markers lived in each process's memory, so every
+  // deploy signed out everyone signed in longer than the idle window. One row
+  // per session, in public with organization_id INTEGER NOT NULL (always 0,
+  // system scope only) so the sweep below gives it its tenant policy. IF NOT
+  // EXISTS only, no DROP. Evidence
+  // docs/evidence/W2/2026-09-24-multi-task/u20-sessions-across-tasks.md.
+  'migrations/20261001e_session_activity.sql',
+
+  // ── AnA action locks and per-organisation slots shared by every process
+  //    (2026-10-01, D1, audit W2 fix unit U21) ─────────────────────────────
+  // Decision B6 (no Redis): the write-action target lock and the per-org cap
+  // held per process, so two writes on one document ran on two tasks. Leases
+  // carry the acting organisation (organization_id INTEGER NOT NULL, public)
+  // so the sweep below gives the table its tenant policy. IF NOT EXISTS only.
+  // Evidence docs/evidence/W2/2026-09-24-multi-task/u21-action-leases.md.
+  'migrations/20261001f_coordination_leases.sql',
+
+  // ── A review comment is fixed once posted (2026-10-01, D5) ────────────────
+  // concept2cure_thread_comments (the Review surface's threads) could be
+  // rewritten in place, soft-deleted and overwritten by the GDPR erasure, with
+  // no record of what a comment said. Triggers only: the words, author and
+  // place fixed, deleted_at set once (a retraction), DELETE and TRUNCATE
+  // refused. Creates no table, so the sweep has nothing new to policy. Above
+  // the final pair because ci:migration-set-order pins the tail. Evidence
+  // docs/evidence/D5-ANA-RECORD/2026-10-01-review-comments/.
+  'migrations/20261001_review_comments_record.sql',
+  'migrations/20261001_compliance_review_records.sql', // P1-25 + P1-43 (ADR-0014 §8): one public org-keyed table (audit-trail and access reviews), signed through the ceremony, fixed once signed; after electronic_signatures' creators; no DROP of anything another file creates; above the pair so the sweep gives it RLS
+  /* Vault document relationships (plan critique 15, D2, 2026-10-01): the
+     replacement for parentDocumentId. One public, org-keyed table (Rule 1),
+     frozen identity, one-way removal with a reason, no TRUNCATE, DELETE only
+     by cascade or the owner. Reached by the tenant purge through ON DELETE
+     CASCADE from regulatory_programs and vault.documents. Above the pair so
+     the sweep gives it row security. No DROP. */
+  'migrations/20261001_vault_document_relationships.sql',
+  /* Review annotations on a Vault version (plan critique 15, D2/D5,
+     2026-10-01): public, org-keyed (Rule 1), posted-open and checked in SQL
+     (version, organisation, content hash, body and passage SHA-256 in code
+     points, page against page count), frozen words and anchor, write-once
+     outcome, author-only retraction, DELETE only by the owner once the version
+     is gone, no TRUNCATE. Above the pair so the sweep gives it row security.
+     No DROP. */
+  'migrations/20261001_vault_version_annotations.sql',
+
+  // ── Which account an organisation's submissions go out under (2026-10-01,
+  //    D7, founder decision) ───────────────────────────────────────────────
+  // Per organisation, agency gateway and environment: the platform's gateway
+  // account or the client's own (credentials encrypted, never returned). Read
+  // by the guarded transmit, which records the mode and sender on every
+  // transmittal. One public table, organization_id INTEGER NOT NULL, so the
+  // sweep below gives it its tenant policy. IF NOT EXISTS only, no DROP.
+  // Evidence docs/evidence/D7/2026-10-01-gateway-account-choice/.
+  'migrations/20261001g_organization_gateway_accounts.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
+
+  // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)
+  // 21 tables held tenant data with NO tenant column, NO RLS and NO policy —
+  // readable by every tenant (chat_messages the sharpest: every tenant's
+  // conversation bodies). The FK is the evidence of ownership, so these get a
+  // PARENT-scoped policy rather than a tenant column of their own; the list has
+  // grown since (see the file's dated notes).
+  //
+  // Here, not mid-set (D3, 2026-09-29): its chained list delegates to parents'
+  // own policies, and some of those come from the uuid step just above, so run
+  // earlier it logged "the parent is not scoped … skipping" and a blank
+  // database's first deploy left regulatory_harmonization.export_job_audit_log
+  // unscoped until the second. And a child or parent created by any entry
+  // above is now present when it runs. It creates no table, so the sweep below
+  // still sees everything the set creates. ci:migration-set-order pins the
+  // tail. Evidence docs/evidence/D3/2026-09-29-child-scope-first-deploy/.
+  CHILD_TABLE_PARENT_SCOPE,
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───
   // MUST BE LAST. 0021_enable_rls_everywhere runs once, on install-fresh, and

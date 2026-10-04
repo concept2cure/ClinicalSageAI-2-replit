@@ -1,0 +1,7 @@
+ × server/routes/__tests__/clients-delete-retention.test.ts > DELETE /api/clients/:id — the workspace’s projects > a workspace holding a program’s anchor row is refused 409, naming the program, and nothing is deleted 42ms
+ × server/routes/__tests__/clients-delete-retention.test.ts > DELETE /api/clients/:id — the workspace’s projects > a workspace whose projects hold documents past draft is refused 409 with the count, and nothing is deleted 7ms
+ ✓ server/routes/__tests__/clients-delete-retention.test.ts > DELETE /api/clients/:id — the workspace’s projects > a workspace holding only drafts is deleted, as before 6ms
+ × server/routes/__tests__/clients-delete-retention.test.ts > DELETE /api/clients/:id — the workspace’s projects > a holds read that cannot complete deletes nothing and is a 500 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)

@@ -1,0 +1,201 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+stderr | server/__tests__/routes/ana-mdx-context.test.ts > GET /api/ana/mdx-context-snapshot > a resolver failure answers 500 with the envelope, never the thrower's text
+{
+  "timestamp": "2026-09-26T19:11:39.230Z",
+  "level": "error",
+  "message": "[ana-mdx-context] building the MDX context snapshot failed",
+  "context": {
+    "err": "relation \"mdx_context_snapshots\" does not exist",
+    "correlationId": "req-p1-17-2",
+    "code": "42P01"
+  }
+}
+ ✓ server/__tests__/routes/ana-mdx-context.test.ts > GET /api/ana/mdx-context-snapshot > returns 403 when no organization context 54ms
+ ✓ server/__tests__/routes/ana-mdx-context.test.ts > GET /api/ana/mdx-context-snapshot > returns the resolver payload (without the systemPromptBlock) 7ms
+ ✓ server/__tests__/routes/ana-mdx-context.test.ts > GET /api/ana/mdx-context-snapshot > emits an audit row for the snapshot read 7ms
+ ✓ server/__tests__/routes/ana-mdx-context.test.ts > GET /api/ana/mdx-context-snapshot > honors includeProactive=false to skip the snapshot 4ms
+ ✓ server/__tests__/routes/ana-mdx-context.test.ts > GET /api/ana/mdx-context-snapshot > a resolver failure answers 500 with the envelope, never the thrower's text 6ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > GET /api/ana-tool-policy > returns 403 when no organization context 158ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > GET /api/ana-tool-policy > returns 403 for non-admin 6ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > GET /api/ana-tool-policy > returns empty policy when none configured 5ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > GET /api/ana-tool-policy > returns existing policy when configured 5ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > PUT /api/ana-tool-policy > rejects allow as non-array 14ms
+stderr | server/__tests__/routes/ana-tool-policy.test.ts > a failed read or write answers 500 without naming what broke > GET: when the loader itself throws, the text stays in the log and the client gets the envelope
+{
+  "timestamp": "2026-09-26T19:11:39.394Z",
+  "level": "error",
+  "message": "[ana-tool-policy] loading the tool policy failed",
+  "context": {
+    "err": "relation \"organizations\" does not exist",
+    "correlationId": "req-p1-17-2",
+    "code": "42P01"
+  }
+}
+stderr | server/__tests__/routes/ana-tool-policy.test.ts > a failed read or write answers 500 without naming what broke > PUT: the relation name stays in the log, the client gets the envelope
+{
+  "timestamp": "2026-09-26T19:11:39.405Z",
+  "level": "error",
+  "message": "[ana-tool-policy] updating the tool policy failed",
+  "context": {
+    "err": "relation \"organizations\" does not exist",
+    "correlationId": "req-p1-17-2",
+    "code": "42P01"
+  }
+}
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > PUT /api/ana-tool-policy > rejects deny with non-string entries 29ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > PUT /api/ana-tool-policy > rejects unknown keys (typo defense) 11ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > PUT /api/ana-tool-policy > persists and emits audit on success 9ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > PUT /api/ana-tool-policy > round-trips: PUT then GET returns the same shape 12ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > a failed read or write answers 500 without naming what broke > GET: a failed settings read is fail-soft — 200 and an empty policy, no error text 5ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > a failed read or write answers 500 without naming what broke > GET: when the loader itself throws, the text stays in the log and the client gets the envelope 9ms
+ ✓ server/__tests__/routes/ana-tool-policy.test.ts > a failed read or write answers 500 without naming what broke > PUT: the relation name stays in the log, the client gets the envelope 10ms
+stderr | tests/routes/cerv2-literature-record.test.ts > POST /api/cerv2/literature/record > answers 500 with the envelope, never the relation name, when the write fails
+{
+  "timestamp": "2026-09-26T19:11:41.238Z",
+  "level": "error",
+  "message": "[cerv2-documents] recording literature entries failed",
+  "context": {
+    "err": "relation \"literature_entries\" does not exist",
+    "correlationId": "req-p1-17-2",
+    "code": null
+  }
+}
+stderr | tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > 422s a service refusal with its real reason, and does not audit a non-event
+{
+  "timestamp": "2026-09-26T19:11:41.242Z",
+  "level": "warn",
+  "message": "[cerv2-documents] Refused a literature screening decision",
+  "context": {
+    "code": "ENTRY_NOT_IN_CORPUS",
+    "reason": "PMID 38012345 — that article is not in this organization's literature corpus"
+  }
+}
+ ✓ tests/routes/cerv2-literature-record.test.ts > POST /api/cerv2/literature/record > records entries org-scoped from the request, on the request-scoped client 6ms
+ ✓ tests/routes/cerv2-literature-record.test.ts > POST /api/cerv2/literature/record > ignores any org id smuggled in the body — org is request-derived only 1ms
+ ✓ tests/routes/cerv2-literature-record.test.ts > POST /api/cerv2/literature/record > 400s without an organization context 2ms
+ ✓ tests/routes/cerv2-literature-record.test.ts > POST /api/cerv2/literature/record > 400s an invalid payload (no entries / malformed pmid) 2ms
+ ✓ tests/routes/cerv2-literature-record.test.ts > POST /api/cerv2/literature/record > 404s a programId outside the caller org without recording anything 26ms
+ ✓ tests/routes/cerv2-literature-record.test.ts > POST /api/cerv2/literature/record > accepts an org-visible programId 1ms
+ ✓ tests/routes/cerv2-literature-record.test.ts > POST /api/cerv2/literature/record > answers 500 with the envelope, never the relation name, when the write fails 3ms
+stderr | tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > 500s with the envelope, never the driver text, when the write genuinely fails
+{
+  "timestamp": "2026-09-26T19:11:41.246Z",
+  "level": "error",
+  "message": "[cerv2-documents] recording the screening decision failed",
+  "context": {
+    "err": "deadlock detected",
+    "correlationId": "req-p1-17-2",
+    "code": null
+  }
+}
+stderr | tests/routes/cerv2-literature-screening.test.ts > GET /api/cerv2/literature/screening > 500s with the envelope, never the driver text, rather than an empty trail on a genuine failure
+{
+  "timestamp": "2026-09-26T19:11:41.252Z",
+  "level": "error",
+  "message": "[cerv2-documents] reading the screening decisions failed",
+  "context": {
+    "err": "connection terminated",
+    "correlationId": "req-p1-17-2",
+    "code": null
+  }
+}
+ ✓ tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > records the decision org-scoped from the request, on the request-scoped client 6ms
+ ✓ tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > ignores an org id smuggled in the body — org is request-derived only 1ms
+ ✓ tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > 400s without an organization context 1ms
+ ✓ tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > 400s without a named reviewer — an unattributed decision is not Part 11 evidence 1ms
+ ✓ tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > 400s an exclusion with no reason (MEDDEV 2.7/1 Rev 4 §8) 1ms
+ ✓ tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > 400s a reason attached to a non-exclusion — no stale rationale is stored 1ms
+ ✓ tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > 400s an unknown stage or decision 3ms
+ ✓ tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > 404s a programId outside the caller org without screening anything 38ms
+ ✓ tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > accepts an org-visible programId and passes it through as the scope key 2ms
+ ✓ tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > audits through the canonical auditService path, carrying old→new 1ms
+ ✓ tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > audits a first decision as a create with a null superseded value 1ms
+ ✓ tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > 422s a service refusal with its real reason, and does not audit a non-event 3ms
+ ✓ tests/routes/cerv2-literature-screening.test.ts > POST /api/cerv2/literature/screen > 500s with the envelope, never the driver text, when the write genuinely fails 2ms
+ ✓ tests/routes/cerv2-literature-screening.test.ts > GET /api/cerv2/literature/screening > reads the trail org-scoped from the request, on the request-scoped client 1ms
+ ✓ tests/routes/cerv2-literature-screening.test.ts > GET /api/cerv2/literature/screening > splits the pmids query into a list the service can filter on 1ms
+ ✓ tests/routes/cerv2-literature-screening.test.ts > GET /api/cerv2/literature/screening > 400s without an organization context 1ms
+ ✓ tests/routes/cerv2-literature-screening.test.ts > GET /api/cerv2/literature/screening > 404s a programId outside the caller org without reading anything 1ms
+ ✓ tests/routes/cerv2-literature-screening.test.ts > GET /api/cerv2/literature/screening > passes the honest unavailable payload through untouched 1ms
+ ✓ tests/routes/cerv2-literature-screening.test.ts > GET /api/cerv2/literature/screening > 500s with the envelope, never the driver text, rather than an empty trail on a genuine failure 1ms
+stdout | tests/routes/cerv2-export-governance.test.ts
+{
+  "timestamp": "2026-09-26T19:11:41.371Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-26T19:11:41.373Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+stderr | tests/routes/cerv2-export-governance.test.ts
+{
+  "timestamp": "2026-09-26T19:11:41.373Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+stderr | tests/routes/cerv2-export-governance.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+stdout | tests/routes/cerv2-export-governance.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+stderr | tests/routes/cerv2-export-governance.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+stderr | tests/routes/cerv2-export-governance.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+stderr | tests/routes/cerv2-export-governance.test.ts
+{
+  "timestamp": "2026-09-26T19:11:41.649Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+stderr | tests/routes/cerv2-export-governance.test.ts > CERV2 export governance gate > fails closed when governed persistence fails and does not stream a download
+{
+  "timestamp": "2026-09-26T19:11:42.338Z",
+  "level": "error",
+  "message": "[cerv2-export-routes] PDF error",
+  "context": {
+    "err": "db writeback failed"
+  }
+}
+stderr | tests/routes/authoring-actions-compare-versions-tenant.test.ts
+{
+  "timestamp": "2026-09-26T19:11:42.356Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../server/db.js\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+ ✓ tests/routes/cerv2-export-governance.test.ts > CERV2 export governance gate > refuses a projectId that is not in the caller org, and registers nothing 6ms
+ ✓ tests/routes/cerv2-export-governance.test.ts > CERV2 export governance gate > returns 403 when strict mode is enabled and governance approval is missing 3ms
+ ✓ tests/routes/cerv2-export-governance.test.ts > CERV2 export governance gate > adds governance headers and exports in non-strict mode 2ms
+ ✓ tests/routes/cerv2-export-governance.test.ts > CERV2 export governance gate > allows strict mode export when governance approval exists and includes reviewer headers 2ms
+ ✓ tests/routes/cerv2-export-governance.test.ts > CERV2 export governance gate > fails closed when governed persistence fails and does not stream a download 2ms
+ ✓ tests/routes/cerv2-export-governance.test.ts > CERV2 export governance gate > returns governed consequence for ZIP export (no direct attachment streaming) 26ms
+ ✓ tests/routes/authoring-actions-compare-versions-tenant.test.ts > authoring-actions compare-versions tenant isolation > never returns another tenant's artifact version content 3ms
+ ✓ tests/routes/authoring-actions-compare-versions-tenant.test.ts > authoring-actions compare-versions tenant isolation > returns 401 when no tenant context is present 2ms
+stderr | tests/routes/authoring-actions-governance.test.ts
+{
+  "timestamp": "2026-09-26T19:11:42.427Z",
+  "level": "warn",
+  "message": "[audit-service] Tamper-proof audit unavailable — fallback to console",
+  "context": {
+    "codeFrame": "vi.mock(import(\"../../server/db.js\"), async (importOriginal) => {\n  const actual = await importOriginal()\n  return {\n    ...actual,\n    // your mocked methods\n  }\n})"
+  }
+}
+ ✓ tests/routes/authoring-actions-governance.test.ts > authoring-actions governed validation envelopes > returns 400 GOVERNED_CONTRACT_INVALID on promote-to-review when governed validation fails 5ms
+ Test Files  7 passed (7)
+      Tests  52 passed (52)
+   Start at  19:11:38
+   Duration  3.91s (transform 2.92s, setup 318ms, import 9.14s, tests 533ms, environment 1ms)

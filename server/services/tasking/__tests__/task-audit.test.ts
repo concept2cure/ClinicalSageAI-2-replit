@@ -36,8 +36,35 @@ describe('auditTaskAction', () => {
       domain: 'tasking',
       surface: 'tasking-api',
     });
-    expect(params.reason).toBeTruthy();
+    // D5: nobody stated a reason, so none is recorded — not a stock sentence.
+    expect(params.reason).toBeNull();
     expect(params.payload).toEqual({ from: 'pending', to: 'completed' });
+  });
+
+  it.each(['task.create', 'task.transition', 'task.link', 'task.assign', 'task.notify', 'task.delete'] as const)(
+    '%s with no stated reason records a null reason, never one the code wrote',
+    async (command) => {
+      recordGovernedAction.mockResolvedValue({});
+      await auditTaskAction({ orgId: 2, userId: 7, command, taskId: 'T' });
+      await auditTaskAction({ orgId: 2, userId: 7, command, taskId: 'T', reason: '   ' });
+      await auditTaskAction({ orgId: 2, userId: 7, command, taskId: 'T', reason: null });
+      expect(recordGovernedAction.mock.calls.map(([, row]) => row.reason)).toEqual([null, null, null]);
+    },
+  );
+
+  it('records what happened as the payload summary, not as the reason', async () => {
+    recordGovernedAction.mockResolvedValue({});
+    await auditTaskAction({
+      orgId: 2,
+      userId: 7,
+      command: 'task.transition',
+      taskId: 'TASK-B',
+      payload: { from: 'blocked', to: 'pending' },
+      summary: 'Unblocked: predecessor TASK-A completed',
+    });
+    const [, row] = recordGovernedAction.mock.calls[0];
+    expect(row.reason).toBeNull();
+    expect(row.payload).toEqual({ from: 'blocked', to: 'pending', summary: 'Unblocked: predecessor TASK-A completed' });
   });
 
   it('uses a provided reason (trimmed) when present', async () => {

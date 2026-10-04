@@ -1,0 +1,292 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ana-ri/__tests__/part11-governance.test.ts
+{
+  "timestamp": "2026-10-01T14:29:50.388Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T14:29:50.390Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/part11-governance.test.ts
+{
+  "timestamp": "2026-10-01T14:29:50.390Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana-ri/__tests__/part11-governance.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/ana-ri/__tests__/part11-governance.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana-ri/__tests__/part11-governance.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T14:29:50.829Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T14:29:50.835Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T14:29:50.835Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts
+{
+  "timestamp": "2026-10-01T14:29:51.468Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > requiresPart11Signoff > gates record-altering mutations 5ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > requiresPart11Signoff > does NOT gate reads / drafting / listing 1ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > requiresEsignature (high-impact tier) > requires an e-signature for record-altering / submission-state actions 1ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > requiresEsignature (high-impact tier) > does NOT require an e-signature for milestone / status transitions (reason-only) 1ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > requiresEsignature (high-impact tier) > requires an e-signature for the GDPR erasure (audit 2026-09-24 DP-08/DP-09, P0-12) 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > requiresEsignature (high-impact tier) > the e-sign set is a subset of the governed set 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > validateSignoff (fail-closed) > accepts a verified sign-off with a sufficient reason 1ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > validateSignoff (fail-closed) > rejects a missing sign-off 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > validateSignoff (fail-closed) > rejects an empty reason 1ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > validateSignoff (fail-closed) > rejects a too-short reason 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > validateSignoff (fail-closed) > rejects when the signature was not server-verified (default = strict) 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > validateSignoff (fail-closed) > reason-only tier: accepts a valid reason WITHOUT a verified signature 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > validateSignoff (fail-closed) > reason-only tier still requires a sufficient reason 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > buildSignatureRequiredResult > is a fail-closed result that cues the e-sign modal 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > buildSignatureRequiredResult > echoes the command + params so the client can re-submit with a sign-off 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > buildSignatureRequiredResult > flags signatureRequired per tier (high-impact vs reason-only) 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > governed set hygiene > contains no read-shaped verbs 1ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > a command whose tier follows the call: update_artifact_status > to draft: the reason tier, no signature, no fixed meaning 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > a command whose tier follows the call: update_artifact_status > to review: the reason tier, no signature, no fixed meaning 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > a command whose tier follows the call: update_artifact_status > to approved: the e-signature tier, signed with the meaning approval 1ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > a command whose tier follows the call: update_artifact_status > to locked: the e-signature tier, signed with the meaning release 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > a command whose tier follows the call: update_artifact_status > to "Approved": the same act, read the way the handler reads it — the e-signature tier 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > a command whose tier follows the call: update_artifact_status > to " approved ": the same act, read the way the handler reads it — the e-signature tier 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > a command whose tier follows the call: update_artifact_status > to "APPROVED": the same act, read the way the handler reads it — the e-signature tier 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > a command whose tier follows the call: update_artifact_status > to "Locked": the same act, read the way the handler reads it — the e-signature tier 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > a command whose tier follows the call: update_artifact_status > to "LOCKED ": the same act, read the way the handler reads it — the e-signature tier 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > a command whose tier follows the call: update_artifact_status > read without its params, it is the reason tier — the params decide, and every caller passes them 0ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > a command whose tier follows the call: update_artifact_status > a command in the e-signature set fixes no meaning: the signer declares one 1ms
+ ✓ server/services/ana-ri/__tests__/part11-governance.test.ts > a command whose tier follows the call: update_artifact_status > the dialog's RELEASE is the canonical 'release' 0ms
+stderr | server/services/__tests__/artifact-tagger-finalized.pglite.test.ts > an artifact is written as a draft or in review > status "draft": written
+[ArtifactTagger] Section sync skipped: error: relation "project_sections" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 115,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '20',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1469',
+  routine: 'parserOpenTable',
+  query: 'SELECT status FROM project_sections\n' +
+    '         WHERE project_id = $1 AND organization_id = $2 AND section_code = $3',
+  params: [ 3, 99, '2.5' ],
+  queryOptions: {}
+}
+
+stderr | server/services/__tests__/artifact-tagger-finalized.pglite.test.ts > an artifact is written as a draft or in review > status "review": written
+[ArtifactTagger] Section sync skipped: error: relation "project_sections" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 115,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '20',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1469',
+  routine: 'parserOpenTable',
+  query: 'SELECT status FROM project_sections\n' +
+    '         WHERE project_id = $1 AND organization_id = $2 AND section_code = $3',
+  params: [ 3, 99, '2.5' ],
+  queryOptions: {}
+}
+
+stderr | server/services/__tests__/artifact-tagger-finalized.pglite.test.ts > an artifact is written as a draft or in review > status undefined: written
+[ArtifactTagger] Section sync skipped: error: relation "project_sections" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 115,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '20',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1469',
+  routine: 'parserOpenTable',
+  query: 'SELECT status FROM project_sections\n' +
+    '         WHERE project_id = $1 AND organization_id = $2 AND section_code = $3',
+  params: [ 3, 99, '2.5' ],
+  queryOptions: {}
+}
+
+stderr | server/services/__tests__/artifact-tagger-finalized.pglite.test.ts > an approved or locked artifact is not overwritten > the section holds a draft: it is updated, as before
+[ArtifactTagger] Section sync skipped: error: relation "project_sections" does not exist
+    at pe.Le (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572)
+    at pe.Xe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961)
+    at pe.parse (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713)
+    at O.qe (file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at file:///home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5922082)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2616592)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649078)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:2649682)
+    at null.<anonymous> (wasm://wasm/0267bdc2:1:5570415) {
+  length: 115,
+  severity: 'ERROR',
+  code: '42P01',
+  detail: undefined,
+  hint: undefined,
+  position: '20',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '1469',
+  routine: 'parserOpenTable',
+  query: 'SELECT status FROM project_sections\n' +
+    '         WHERE project_id = $1 AND organization_id = $2 AND section_code = $3',
+  params: [ 3, 99, '2.5' ],
+  queryOptions: {}
+}
+
+ ✓ server/services/__tests__/artifact-tagger-finalized.pglite.test.ts > an artifact is written as a draft or in review > status "locked": refused before anything is written 10ms
+ ✓ server/services/__tests__/artifact-tagger-finalized.pglite.test.ts > an artifact is written as a draft or in review > status "approved": refused before anything is written 3ms
+ ✓ server/services/__tests__/artifact-tagger-finalized.pglite.test.ts > an artifact is written as a draft or in review > status "Approved": refused before anything is written 3ms
+ ✓ server/services/__tests__/artifact-tagger-finalized.pglite.test.ts > an artifact is written as a draft or in review > status " LOCKED ": refused before anything is written 2ms
+ ✓ server/services/__tests__/artifact-tagger-finalized.pglite.test.ts > an artifact is written as a draft or in review > status "published": refused before anything is written 2ms
+ ✓ server/services/__tests__/artifact-tagger-finalized.pglite.test.ts > an artifact is written as a draft or in review > status "effective": refused before anything is written 2ms
+ ✓ server/services/__tests__/artifact-tagger-finalized.pglite.test.ts > an artifact is written as a draft or in review > status "draft": written 25ms
+ ✓ server/services/__tests__/artifact-tagger-finalized.pglite.test.ts > an artifact is written as a draft or in review > status "review": written 9ms
+ ✓ server/services/__tests__/artifact-tagger-finalized.pglite.test.ts > an artifact is written as a draft or in review > status undefined: written 12ms
+ ✓ server/services/__tests__/artifact-tagger-finalized.pglite.test.ts > an approved or locked artifact is not overwritten > the section holds a locked artifact: refused, its text and status as signed 6ms
+ ✓ server/services/__tests__/artifact-tagger-finalized.pglite.test.ts > an approved or locked artifact is not overwritten > the section holds a approved artifact: refused, its text and status as signed 5ms
+ ✓ server/services/__tests__/artifact-tagger-finalized.pglite.test.ts > an approved or locked artifact is not overwritten > the section holds a Locked artifact: refused, its text and status as signed 5ms
+ ✓ server/services/__tests__/artifact-tagger-finalized.pglite.test.ts > an approved or locked artifact is not overwritten > the section holds a draft: it is updated, as before 10ms
+stdout | server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts
+Loaded 0 academic documents
+
+stderr | server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > signed with the meaning approval: approved at the version, one signature, its ledger row
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > with a reason only (no verified signature): refused, and nothing is written 16ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > signed with the meaning approval: approved at the version, one signature, its ledger row 46ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > signed with the meaning release: refused, nothing written — the act fixes its meaning 6ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > signed with the meaning authorship: refused, nothing written — the act fixes its meaning 5ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > signed with the meaning review: refused, nothing written — the act fixes its meaning 4ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > a member, whom the status route does not let approve: refused, nothing written 12ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > a manager, whom the status route does not let approve: refused, nothing written 12ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > a author, whom the status route does not let approve: refused, nothing written 10ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > the status is read the one way, by the tier and by the handler > unsigned "Approved": refused as needing a signature, nothing written 6ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > the status is read the one way, by the tier and by the handler > unsigned " approved ": refused as needing a signature, nothing written 5ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > the status is read the one way, by the tier and by the handler > unsigned "APPROVED": refused as needing a signature, nothing written 5ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > the status is read the one way, by the tier and by the handler > signed "Approved": approved at the version, recorded as approved 21ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > the status is read the one way, by the tier and by the handler > unsigned "archived": not a status this command writes; nothing changed 9ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > the status is read the one way, by the tier and by the handler > unsigned "effective": not a status this command writes; nothing changed 6ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > the status is read the one way, by the tier and by the handler > unsigned "published": not a status this command writes; nothing changed 5ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > the status is read the one way, by the tier and by the handler > the ledger row names the door the act was taken through, and the signature the moment the signer was verified 30ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > a signature does not make an unlawful step lawful > signed draft → approved: refused by the status route's transitions, nothing written 7ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > a signature does not make an unlawful step lawful > signed draft → locked: refused by the status route's transitions, nothing written 6ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > a signature does not make an unlawful step lawful > signed review → locked: refused by the status route's transitions, nothing written 7ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA locking an approved artifact is an electronic signature > with a reason only: refused, not locked, no snapshot 5ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA locking an approved artifact is an electronic signature > signed with the meaning release: locked at the version, with its snapshot, signature and ledger row 25ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA locking an approved artifact is an electronic signature > signed with the meaning approval: refused, not locked 4ms
+ ✓ server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA locking an approved artifact is an electronic signature > a reviewer, whom the status route lets approve but not lock: refused 8ms
+
+ Test Files  3 passed (3)
+      Tests  65 passed (65)
+   Start at  14:29:47
+   Duration  11.81s (transform 6.95s, setup 342ms, import 12.86s, tests 6.69s, environment 0ms)
+

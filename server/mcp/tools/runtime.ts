@@ -84,13 +84,29 @@ export function parseAnaResult(raw: string): ToolOutcome {
   return ok('', { value: parsed });
 }
 
-/** Call one of AnA's registered deterministic handlers with the caller's tenant. */
+/**
+ * Call one of AnA's registered deterministic handlers with the caller's tenant.
+ *
+ * The tenant's AnA tool policy applies here as on every chat door: a tool in
+ * `anaToolPolicy.deny` is withheld there by governedToolsetFor, and this ran
+ * the handler directly, so the same tool still ran for the same organization
+ * over the connector. Same loader, same filter (deny-list only; `allow` is
+ * scoped to governed mutations), so the two doors cannot disagree.
+ */
 export async function callAnaHandler(
   name: string,
   input: Record<string, unknown>,
   ctx: ToolRunContext,
 ): Promise<ToolOutcome> {
-  const { getToolHandler } = await import('../../services/ana/AnaToolExecutor');
+  const [{ getToolHandler }, { loadAnaToolPolicy, filterToolsByPolicy }, { getPool }] = await Promise.all([
+    import('../../services/ana/AnaToolExecutor'),
+    import('../../services/ana-ri/mdx-tool-policy'),
+    import('../../db'),
+  ]);
+  const policy = await loadAnaToolPolicy(getPool(), ctx.ana.organizationId);
+  if (filterToolsByPolicy([{ name }], policy).length === 0) {
+    return refused(`Platform tool "${name}" is disabled by your organization's AnA tool policy.`);
+  }
   const handler = getToolHandler(name);
   if (!handler) return refused(`Platform tool "${name}" is not registered on this deployment.`);
   const raw = await handler(input, ctx.ana);

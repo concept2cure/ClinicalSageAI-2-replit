@@ -1,0 +1,3 @@
+# insightsExportProducesFile after the wording change
+ Test Files  2 passed (2)
+      Tests  10 passed (10)

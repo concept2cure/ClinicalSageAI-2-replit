@@ -9,11 +9,14 @@
  * @module server/routes/ibc
  */
 
-import { Router, type Request, type Response } from 'express';
+import { Router, type Request, type RequestHandler, type Response } from 'express';
 import { z } from 'zod';
 import { pool } from '../db';
 import { recordGovernedAction } from './c2c/actions';
+import { signGovernedAct, signedActAttempts } from './governed-signed-act';
+import { DECISION_ACT_MEANINGS } from '../services/part11/signature-meanings';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
+import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 import {
   createRegistrationTx,
   setRegistrationStatusTx,
@@ -26,6 +29,10 @@ import { evaluateContainment, registrationExpiration, requiresConvenedReview } f
 import { recordIbcRegistrationCreated, recordIbcApproval, recordIbcAgentRegistered } from '../services/ibc-metrics';
 
 const router = Router();
+// A viewer reads these records and writes none of them: one gate for every
+// write, as the ProtocolDev routers (P11-C-1). The signed review routes also
+// check signing authority (P0-10b).
+router.use(requireEditorAccessForWrites);
 
 function resolveUserId(req: Request): number | null {
   const r = req as any;
@@ -119,11 +126,25 @@ const statusSchema = z.object({
   reason,
 });
 
+/*
+ * A status a committee determination sets is set only by the determination,
+ * POST /api/ibc/registrations/:id/reviews, where an approval is an electronic signature
+ * (signGovernedAct) and every outcome leaves a review record. This route used
+ * to accept 'approved' too and wrote it under a 'transition' ledger row and
+ * nothing else: an approval with no signature, no review and no reviewer, from
+ * a session alone (P0-10b fix round, DP-02). The statuses no determination
+ * sets still move here.
+ */
+const SET_BY_DETERMINATION: ReadonlySet<string> = new Set(['approved', 'conditional']);
+
 router.patch('/registrations/:id/status', async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   const parsed = statusSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  if (SET_BY_DETERMINATION.has(parsed.data.status)) {
+    return res.status(409).json({ error: { code: 'STATUS_SET_BY_DETERMINATION', message: `'${parsed.data.status}' is a committee determination. Record it at POST /api/ibc/registrations/:id/reviews; an approval there is an electronic signature. Nothing was changed.` } });
+  }
   await governed(req, res, 'transition', parsed.data.reason, async (client, orgId) => {
     await setRegistrationStatusTx(client, orgId, id, parsed.data.status);
     return { target: `ibc-registration:${id}`, payload: { status: parsed.data.status }, body: { id, status: parsed.data.status } };
@@ -157,16 +178,31 @@ const reviewSchema = z.object({
   reason,
 });
 
-router.post('/registrations/:id/reviews', async (req, res) => {
+/*
+ * An approval is an electronic signature (21 CFR 11.50, 11.200): it runs the
+ * platform's one signing ceremony (governed-signed-act.ts): password, enrolled
+ * second factor, declared meaning and reason, then the act, the ledger `sign`
+ * and the electronic_signatures row on one transaction. A request without them
+ * writes nothing. Any other outcome is a determination recorded under
+ * 'resolve' and asks for no password. It used to write a 'sign' ledger row
+ * with neither (P0-10b, DP-02).
+ */
+/** The signing-attempt limit, for the requests that sign. */
+const whenApproving: RequestHandler = (req, res, next) =>
+  req.body?.outcome === 'approved' ? signedActAttempts(req, res, next) : next();
+
+router.post('/registrations/:id/reviews', whenApproving, async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   const parsed = reviewSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
-  await governed(req, res, parsed.data.outcome === 'approved' ? 'sign' : 'resolve', parsed.data.reason, async (client, orgId, userId) => {
+  const record = async (client: any, orgId: number, userId: number) => {
     const result = await recordReviewTx(client, orgId, userId, id, parsed.data);
     if (parsed.data.outcome === 'approved') recordIbcApproval();
     return { target: `ibc-registration:${id}`, payload: { outcome: parsed.data.outcome, expirationDate: result.expirationDate, provenanceLinkId: result.provenanceLinkId }, body: { id, ...result } };
-  });
+  };
+  if (parsed.data.outcome !== 'approved') return governed(req, res, 'resolve', parsed.data.reason, record);
+  await signGovernedAct(req, res, { domain: 'ibc', target: `ibc-registration:${id}`, meanings: DECISION_ACT_MEANINGS, codeStatus: CODE_STATUS, run: record });
 });
 
 router.get('/registrations/:id/containment', async (req, res) => {

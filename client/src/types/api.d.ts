@@ -1,20 +1,24 @@
 // API Response types for Concept2Cure application
 
-// Protocol Optimizer API responses
+// Protocol Optimizer API responses (POST /api/protocol/optimize). Every list is
+// computed from the protocol's stated values and the trial corpus; the
+// recommendation is null, with the reason in recommendationUnavailable, when no
+// model wrote one.
 interface ProtocolOptimizationResponse {
   success: boolean;
-  recommendation: string;
+  recommendation: string | null;
+  recommendationUnavailable?: string;
   keySuggestions: string[];
   riskFactors: string[];
   matchedCsrInsights: {
-    id: string;
+    id: number;
     title: string;
-    phase: string;
-    indication: string;
-    insight?: string;
+    phase: string | null;
+    indication: string | null;
+    suggestions: string[];
   }[];
   suggestedEndpoints: string[];
-  suggestedArms: string[];
+  commonDesigns: string[];
   error?: string;
 }
 

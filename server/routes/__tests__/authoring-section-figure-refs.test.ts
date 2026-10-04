@@ -230,9 +230,21 @@ async function createSection(content: unknown) {
     .send({ doc_id: 'D1', code: '2.3.S', title: 'Drug substance', content });
 }
 
+/* A document belongs to a project (PF-07, founder decision 2026-09-26), so
+   POST /docs refuses a create that names none (400 PROJECT_REQUIRED) and 404s
+   one that is not a live project of the caller's organization (LX-20). Every
+   create below is made in this project, owned by the token's organization (7).
+   The figure rule under test is unchanged by the project; the create only has
+   to get past the anchor check. */
+const PROJECT_ID = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
+
 /** The organization's template holds these section contents; the global store has none. */
 function orgTemplate(contents: string[]) {
-  h.poolQuery.mockImplementation(async (sql: string) => {
+  h.poolQuery.mockImplementation(async (sql: string, params?: unknown[]) => {
+    if (/SELECT id FROM regulatory_programs/i.test(sql)) {
+      const owned = params?.[0] === PROJECT_ID && params?.[1] === 7;
+      return owned ? { rowCount: 1, rows: [{ id: PROJECT_ID }] } : { rowCount: 0, rows: [] };
+    }
     if (/FROM intelligence\.template_sections/i.test(sql)) return { rowCount: 0, rows: [] };
     if (/FROM authoring_templates/i.test(sql)) {
       return {
@@ -259,7 +271,7 @@ async function createFromTemplate() {
   return request(makeApp())
     .post('/api/authoring/docs')
     .set('Authorization', await bearer())
-    .send({ title: 'Quality overall summary', module: 'M2', template_id: TEMPLATE_ID });
+    .send({ title: 'Quality overall summary', module: 'M2', template_id: TEMPLATE_ID, client_program_id: PROJECT_ID });
 }
 
 const sectionInserts = () =>

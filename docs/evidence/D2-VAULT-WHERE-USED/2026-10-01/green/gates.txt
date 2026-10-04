@@ -1,0 +1,77 @@
+== ci:action-overclaim
+check-action-overclaim: no new occurrences. 0 baselined.
+ci:action-overclaim EXIT 0
+
+== ci:check-client-api-calls
+check-client-api-calls-resolve: 138 client /api prefixes, 315 server /api prefixes.
+✅ every client /api call has a server route behind it.
+ci:check-client-api-calls EXIT 0
+
+== ci:column-reachability
+[ci:column-reachability] OK — 3194 column add(s) on no applier, 0 queried by the server.
+ci:column-reachability EXIT 0
+
+== ci:design-system
+[design-system] OK — no icon-library, spring/bounce or inline <style> violations on live concept2cure surfaces.
+ci:design-system EXIT 0
+
+== ci:fixture-fallback
+
+✅ no new ungated fixture fallback. 0 baselined.
+ci:fixture-fallback EXIT 0
+
+== ci:internals-in-copy
+check-internals-in-copy: no new occurrences. 0 baselined across 0 file(s).
+ci:internals-in-copy EXIT 0
+
+== ci:launch-scope-api
+ci:launch-scope-api: 286 API paths named by launch and shell screens; none refused. {"launch":240,"never-gated":44,"infrastructure":2}
+ci:launch-scope-api EXIT 0
+
+== ci:runtime-ddl
+[ci:runtime-ddl] 84 DDL statement(s) in 14 runtime server file(s); 14 baselined
+[ci:runtime-ddl] ✅ no new runtime DDL.
+ci:runtime-ddl EXIT 0
+
+== ci:server-error-leaks
+[ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+ci:server-error-leaks EXIT 0
+
+== ci:sign-ceremony
+[ci:sign-ceremony] OK — no new sign write without the ceremony. 19 baselined site(s) remain, exactly as baselined.
+ci:sign-ceremony EXIT 0
+
+== ci:success-before-ok
+check-success-before-ok: no occurrences across 198 file(s).
+ci:success-before-ok EXIT 0
+
+== ci:tenant-entry-points
+[ci:tenant-entry-points] 14 entry point(s); 5 consider tenant entitlement, 9 do not (baseline 9)
+[ci:tenant-entry-points] OK — no unclassified tenant entry points.
+ci:tenant-entry-points EXIT 0
+
+== ci:tenant-isolation:no-regression
+Total: 8 candidate(s). These are RAW SQL queries against known tenant-scoped tables that don't reference an org_id / tenant_id / workspace_id in the same statement. Each one is either a real tenant-isolation bug, needs a `// tenant-isolation-safe: <reason>` marker at the call site, or belongs in the file allowlist with a one-line justification (admin tool / schema migration / pre-tenant-resolution auth).
+[ci:tenant-isolation] OK — no new findings above baseline (8 current, 8 baseline)
+ci:tenant-isolation:no-regression EXIT 0
+
+== ci:unauthenticated-fetch
+✅ ci:unauthenticated-fetch — 70 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined).
+ci:unauthenticated-fetch EXIT 0
+
+== ci:undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+ci:undefined-css-classes EXIT 0
+
+== ci:vault-document-writers
+[ci:vault-document-writers] 6 file(s) write vault.documents; 6 named.
+[ci:vault-document-writers] OK: every writer is a named one.
+ci:vault-document-writers EXIT 0
+
+== audit-requestdb-coverage
+[ci:requestdb-coverage] FAIL — 1 NEW route(s) on the shared pool above baseline of 228. New tenant-facing routes must use requestDb(req):
+  server/routes/governed-signed-act.ts
+requestdb EXIT 1
+
+== tsc
+EXIT 0

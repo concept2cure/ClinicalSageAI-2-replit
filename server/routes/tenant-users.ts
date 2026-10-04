@@ -1,7 +1,14 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { pool } from '../db';
+import { pool, transaction } from '../db';
 import { inVerifiedOrgScope } from '../services/tenant/verified-org-scope';
+import {
+  changeMemberRole,
+  memberChangeReason,
+  removeMember,
+  type MembershipActor,
+} from '../services/tenant/membership-change';
+import { clientIpOf } from '../utils/client-ip';
 import { createScopedLogger } from '../utils/logger.js';
 import { invalidateOrgMembershipCache } from '../middleware/auth';
 import {
@@ -36,7 +43,27 @@ const createUserSchema = z.object({
 // Schema for user role update
 const updateUserRoleSchema = z.object({
   role: z.enum(['admin', 'manager', 'member', 'viewer']),
+  reason: memberChangeReason,
 });
+
+const removeMemberSchema = z.object({ reason: memberChangeReason });
+
+/** 400 before anything is written: a membership change states its reason (21 CFR 11.10(e)). */
+function reasonRequired(res: any, change: string) {
+  return res.status(400).json({
+    error: 'REASON_REQUIRED',
+    message: `A reason is required to ${change}. Nothing was changed.`,
+  });
+}
+
+/** Who is making a membership change, from where — for its audit row. */
+function membershipActor(req: any): MembershipActor {
+  return {
+    userId: getCallerId(req),
+    ipAddress: clientIpOf(req),
+    userAgent: typeof req.get === 'function' ? req.get('user-agent') : undefined,
+  };
+}
 
 /**
  * Authorize the caller against the *target* organization (the org named in the
@@ -518,7 +545,9 @@ router.post('/', async (req, res) => {
 
 /**
  * PATCH /api/tenant-users/:organizationId/:userId
- * Update user role in organization
+ * Update user role in organization. Body: { role, reason } — the reason is
+ * required (400 REASON_REQUIRED otherwise) and recorded with the role before
+ * and after in a chained audit row written in the change's transaction.
  */
 router.patch('/:organizationId/:userId', async (req, res) => {
   try {
@@ -536,35 +565,53 @@ router.patch('/:organizationId/:userId', async (req, res) => {
 
     const verifiedRole = await authorizeOrgAccess(req, res, organizationId, { requireAdmin: true }); if (!verifiedRole) return;
 
-    const validatedData = updateUserRoleSchema.parse(req.body);
+    // PR #973 port: an admin re-roling THEMSELVES can leave an organization
+    // with no administrator and no one able to undo it. Checked after authZ so
+    // a non-member still gets 403, not a disclosure.
+    if (getCallerId(req) === userId) {
+      return res.status(400).json({ error: 'You cannot change your own role', code: 'SELF_ROLE_CHANGE' });
+    }
 
-    const updateQuery = `
-      UPDATE organization_users
-      SET role = $1, updated_at = NOW()
-      WHERE organization_id = $2 AND user_id = $3
-      RETURNING *
-    `;
+    const parsed = updateUserRoleSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      if (parsed.error.issues.every(i => i.path[0] === 'reason')) {
+        return reasonRequired(res, "change a member's role");
+      }
+      return res.status(400).json({ error: 'Invalid role data', details: parsed.error.errors });
+    }
+    const { role, reason } = parsed.data;
 
-    const result = await inVerifiedOrgScope(req, organizationId, verifiedRole, () => pool.query(updateQuery, [validatedData.role, organizationId, userId]));
+    // The role before (locked), the change and its audit row: one transaction.
+    const outcome = await inVerifiedOrgScope(req, organizationId, verifiedRole, () =>
+      transaction(client =>
+        changeMemberRole(client, membershipActor(req), { organizationId, userId, role, reason })
+      )
+    );
 
-    if (result.rows.length === 0) {
+    if (outcome === 'not_found') {
       return res.status(404).json({ error: 'User not found in organization' });
     }
+    if (outcome === 'unchanged') {
+      return res.json({ message: 'User role unchanged', unchanged: true });
+    }
 
-    log.debug('Updated user role:', result.rows[0]);
+    // The role is cached for up to a minute per instance (orgMembership.ts);
+    // a demotion must not outlive its audited change time by that minute.
+    invalidateOrgMembershipCache(userId, organizationId);
+    log.debug(`Updated role of user ${userId} in organization ${organizationId}`);
     res.json({ message: 'User role updated successfully' });
   } catch (error) {
+    // Includes a refused audit row: the transaction rolled the change back.
     log.error('Error updating user role:', error);
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid role data', details: error.errors });
-    }
     res.status(500).json({ error: 'Failed to update user role' });
   }
 });
 
 /**
  * DELETE /api/tenant-users/:organizationId/:userId
- * Remove user from organization
+ * Remove user from organization. Body: { reason } — required (400
+ * REASON_REQUIRED otherwise) and recorded with the role the member held in a
+ * chained audit row written in the removal's transaction.
  */
 router.delete('/:organizationId/:userId', async (req, res) => {
   try {
@@ -582,15 +629,21 @@ router.delete('/:organizationId/:userId', async (req, res) => {
 
     const verifiedRole = await authorizeOrgAccess(req, res, organizationId, { requireAdmin: true }); if (!verifiedRole) return;
 
-    const deleteQuery = `
-      DELETE FROM organization_users
-      WHERE organization_id = $1 AND user_id = $2
-      RETURNING *
-    `;
+    // PR #973 port: self-removal — same lockout as a self re-role above.
+    if (getCallerId(req) === userId) {
+      return res.status(400).json({ error: 'You cannot remove yourself from an organization', code: 'SELF_REMOVAL' });
+    }
 
-    const result = await inVerifiedOrgScope(req, organizationId, verifiedRole, () => pool.query(deleteQuery, [organizationId, userId]));
+    const parsed = removeMemberSchema.safeParse(req.body ?? {});
+    if (!parsed.success) return reasonRequired(res, 'remove a member');
+    const { reason } = parsed.data;
 
-    if (result.rows.length === 0) {
+    // The removal and its audit row: one transaction.
+    const removed = await inVerifiedOrgScope(req, organizationId, verifiedRole, () =>
+      transaction(client => removeMember(client, membershipActor(req), { organizationId, userId, reason }))
+    );
+
+    if (!removed) {
       return res.status(404).json({ error: 'User not found in organization' });
     }
 
@@ -598,9 +651,10 @@ router.delete('/:organizationId/:userId', async (req, res) => {
     // middleware's membership-cache TTL.
     invalidateOrgMembershipCache(userId, organizationId);
 
-    log.debug('Removed user from organization:', result.rows[0]);
+    log.debug(`Removed user ${userId} from organization ${organizationId}`);
     res.json({ message: 'User removed from organization successfully' });
   } catch (error) {
+    // Includes a refused audit row: the transaction rolled the removal back.
     log.error('Error removing user from organization:', error);
     res.status(500).json({ error: 'Failed to remove user from organization' });
   }

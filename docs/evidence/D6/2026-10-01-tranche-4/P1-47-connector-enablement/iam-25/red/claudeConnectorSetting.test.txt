@@ -1,0 +1,55 @@
+# IAM-25 RED, 2026-10-01T16:17:00Z: the client test's copy updated to the decision ("owner or administrator"), run on the unchanged ClaudeConnectorSetting.tsx.
+# command: npx vitest run client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx > Connector for Claude on Admin → Settings > the owner or administrator turns it on after confirming, and the stored value is read back 343ms
+ ✓ client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx > Connector for Claude on Admin → Settings > cancel sends nothing 99ms
+ × client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx > Connector for Claude on Admin → Settings > anyone but the owner or administrator sees the state, no switch, and who can change it 40ms
+   → expected 'Connector for ClaudeLets members of t…' to contain 'Only the organisation\'s owner or adm…'
+ ✓ client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx > Connector for Claude on Admin → Settings > a read that fails is "Could not be read", never "Off" 30ms
+ ✓ client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx > Connector for Claude on Admin → Settings > a read that answers in a shape the page does not know is "Could not be read", never "Off" 29ms
+ × client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx > Connector for Claude on Admin → Settings > a refused change says it was not changed, and the state stays as stored 99ms
+   → expected 'The setting was not changed. Only the…' to be 'The setting was not changed. Only the…' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx > Connector for Claude on Admin → Settings > anyone but the owner or administrator sees the state, no switch, and who can change it
+AssertionError: expected 'Connector for ClaudeLets members of t…' to contain 'Only the organisation\'s owner or adm…'
+
+Expected: "Only the organisation's owner or administrator can change this."
+Received: "Connector for ClaudeLets members of this organisation connect Claude to Concept2Cure. While it is off, no one can connect, and connections already made stop working. Each change is recorded in the audit trail.Only the organisation's owner can change this.On"
+
+ ❯ client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx:126:29
+    124|     const row = await openSettings();
+    125|     await waitFor(() => expect(row.textContent).toContain('On'));
+    126|     expect(row.textContent).toContain("Only the organisation's owner o…
+       |                             ^
+    127|     expect(screen.queryByRole('switch')).toBeNull();
+    128|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx > Connector for Claude on Admin → Settings > a refused change says it was not changed, and the state stays as stored
+AssertionError: expected 'The setting was not changed. Only the…' to be 'The setting was not changed. Only the…' // Object.is equality
+
+Expected: "The setting was not changed. Only the organisation's owner or administrator can change it."
+Received: "The setting was not changed. Only the organisation's owner can change it."
+
+ ❯ client/src/concept2cure/v2/__tests__/claudeConnectorSetting.test.tsx:146:60
+    144|     fireEvent.click(await screen.findByRole('switch', { name: 'Connect…
+    145|     fireEvent.click(screen.getByRole('button', { name: 'Turn on' }));
+    146|     expect((await screen.findByRole('alert')).textContent).toBe(
+       |                                                            ^
+    147|       "The setting was not changed. Only the organisation's owner or a…
+    148|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 4 passed (6)
+   Start at  16:17:01
+   Duration  2.35s (transform 642ms, setup 186ms, import 768ms, tests 645ms, environment 566ms)
+

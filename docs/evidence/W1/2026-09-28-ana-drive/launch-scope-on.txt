@@ -1,0 +1,68 @@
+D2 — AnA with launch scope enforced, as production runs
+2026-09-29, concept2cure-v2, local stand-in model (harness/), headless Chromium
+
+── Why ──────────────────────────────────────────────────────────────────────
+LAUNCH_SCOPE_ENFORCE unset means on in production and off everywhere else
+(server/services/entitlements/launch-scope.ts). Every battery run before this
+one had it off, so every screen was open. With it on, screens outside the
+launch catalog are locked. A deployment the founder tests on runs with it on.
+
+── Where AnA's navigation targets land ──────────────────────────────────────
+Each of the 97 navigation targets (shared/navigation) was resolved through
+the client's own resolver to the screen the shell mounts:
+  34 land on a launch-catalog screen;
+  63 land on a screen outside the release (Biostatistics, Inconsistency,
+     the device and product-development workstreams, …);
+   0 land on no screen.
+With launch scope on, the shell sends AnA the locked set with every turn
+(locked_screens). list_app_screens withholds those screens, and navigate_to
+and act_on_screen refuse them as not_available.
+
+── The whole battery, launch scope on ───────────────────────────────────────
+LAUNCH_SCOPE_ENFORCE=on on the app, LAUNCH_SCOPE=on on the battery. The
+battery then asserts the refusal on the checks that name a screen outside
+the release.
+PASS  take me to biostatistics → refused, not in this release; the screen stays  — /concept2cure/conversation-thread
+PASS  biostat: no tool-missing / error text
+PASS  take me to the vault → a program's Vault opens  — /concept2cure/conversation-thread → /concept2cure/vault
+PASS  vault: a real program is open (no "open a program" state)
+PASS  open program BX-301 → its project home  — /concept2cure/conversation-thread → /concept2cure/projects → /concept2cure/project-home
+PASS  open program: BX-301 is the program shown
+PASS  held action: an overlay switch sent from another screen gets the screen's own answer  — Act result: not_available — "Switch the regulator overlay" works on the "inconsistency" screen, which is not available in this workspace (not in this release).
+PASS  held action: a design on a screen outside the release is refused, not in this release  — Act result: not_available — "Load a persisted study design" works on the "biostatistics" screen, which is not available in this workspace (not in this release).
+PASS  search the vault for stability → Vault opens  — /concept2cure/conversation-thread → /concept2cure/vault
+PASS  vault search: the query is in the search box, or an empty vault is refused out loud  — ["stability"]
+PASS  rail: take me to biostatistics → refused, not in this release; the screen stays  — /concept2cure/projects
+PASS  rail: the conversation is still there after the move
+PASS  training demo visits every stop in order
+PASS  training demo shows "AnA is demonstrating"
+PASS  training demo reaches its end
+PASS  training demo: every stop is narrated in AnA's words  — 12 stops; not narrated: none
+PASS  training demo: each round's words start their own paragraph
+PASS  sales demo visits its stops
+PASS  sales demo: a guessed document name is refused with the real titles, and AnA retries with one
+PASS  sales demo reaches its end
+PASS  drive off: the ask does not move the screen  — /concept2cure/conversation-thread
+PASS  drive off: no chip is offered for a screen outside the release  — chip=false after=/concept2cure/conversation-thread
+PASS  no uncaught page errors
+23/23 passed; the stand-in refused no request.
+
+What AnA was told, from the stand-in's side:
+  navigate_to {"target":"biostatistics"} -> "Navigation result: not_available — The "biostatistics" screen is not available in this workspace (not in this release)."
+The screen did not move, and no button was offered for it.
+
+── The refusal checks, made to fail ─────────────────────────────────────────
+The same four checks, in "on" mode, run against the app with enforcement
+off. There they must fail, because the screens are open:
+FAIL  take me to biostatistics → refused, not in this release; the screen stays  — /concept2cure/conversation-thread → /concept2cure/biostatistics
+FAIL  rail: take me to biostatistics → refused, not in this release; the screen stays  — /concept2cure/projects → /concept2cure/biostatistics
+FAIL  drive off: no chip is offered for a screen outside the release  — chip=true after=/concept2cure/biostatistics
+FAIL  held action: a design on a screen outside the release is refused, not in this release  — Act result: action_ready. Screen: no report (selected: Phase 2 dose finding; answered in 6688 ms)
+5/9 passed
+
+── Outcome ──────────────────────────────────────────────────────────────────
+No defect. With launch scope enforced, every launch-catalog path the battery
+covers works: navigation, opening a program, the Vault and its search, both
+demonstrations with every stop narrated, and the sales demonstration's
+recovery. Every screen outside the release is refused out loud, never moved
+to. No code changed; the battery gained the mode (LAUNCH_SCOPE).

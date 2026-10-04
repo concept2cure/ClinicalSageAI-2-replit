@@ -55,11 +55,20 @@ beforeAll(async () => {
       content_hash TEXT, file_name TEXT, deleted_at TIMESTAMPTZ,
       -- Last, so the positional INSERT below is unchanged. NULL: the reader
       -- (7fd5d6af) then asks getStorageProviderFor for the default store.
-      storage_provider TEXT
+      storage_provider TEXT,
+      -- VR-14: the version family the transmit rule reads (is this version
+      -- current?). Appended, so the positional INSERT below is unchanged.
+      organization_id INTEGER, supersedes_id UUID, document_code TEXT
     );
     INSERT INTO regulatory_programs VALUES ('${PROGRAM}', ${ORG}, NULL);
     INSERT INTO vault.documents VALUES
       ('${VAULT_DOC}', '${PROGRAM}', 'ver-1', '${createHash('sha256').update(PDF).digest('hex')}', 'csr.pdf', NULL);
+    -- VR-14: a vault leaf is transmitted only when its version is approved on
+    -- its VR-13 lifecycle record, for these bytes.
+    INSERT INTO canonical_documents (canonical_id, organization_id, project_id, title, document_type, stage, has_content, content_hash, source_refs)
+    VALUES ('cd-vault', ${ORG}, '${PROGRAM}', 'csr.pdf', 'CSR', 'approved', true,
+            '${createHash('sha256').update(PDF).digest('hex')}',
+            '{"vault_documents":{"nativeId":"${VAULT_DOC}","role":"artifact"}}'::jsonb);
 
     INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by)
     VALUES (1, 'IND', 'ind', 'biotech', 'fda', ${ORG}, ${USER});

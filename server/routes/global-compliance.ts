@@ -555,7 +555,10 @@ router.get('/gdpr/:orgId/data-subject/:dataSubjectId/export', async (req: Reques
  * records the request; ana-governed-command-signature.pglite.integration.test.ts
  * and governedActionConfirmTier.test.ts pin it.
  */
-router.delete('/gdpr/:orgId/data-subject/:dataSubjectId', (_req: Request, res: Response) => {
+router.delete('/gdpr/:orgId/data-subject/:dataSubjectId', (req: Request, res: Response) => {
+  // Answer only for the caller's own organization, as every sibling route does,
+  // so the path cannot be used to probe another organization's id.
+  if (!enforceOrgScope(req, res, parseInt(String(req.params.orgId), 10))) return;
   return res.status(410).json({
     error: 'ERASURE_IS_A_GOVERNED_ACTION',
     message:

@@ -2,7 +2,8 @@
 
 The browser battery and the stand-in model that produced `../browser-battery.txt`,
 `../contract-audit.txt`, `../silent-thinking.txt`, `../answer-cut-off.txt`,
-`../batched-moves.txt` and `../narration.txt`. Kept beside the evidence
+`../batched-moves.txt`, `../narration.txt`, `../held-actions.txt` and
+`../launch-scope-on.txt`. Kept beside the evidence
 so the runs can be repeated, the way `../../2026-09-24-ana-progress/live/harness/`
 keeps its own. It is evidence tooling, not product: nothing in the app imports
 it.
@@ -11,7 +12,8 @@ it.
   `127.0.0.1:8787`.
   - It plays a model that uses AnA's self-drive tools the way her instructions
     ask: navigation, operations, both demonstrations, and a retry with a name
-    the screen listed.
+    the screen listed. "act <action> [param=value]" makes one act_on_screen
+    call and answers with what came back ("Act result: … Screen: …").
   - It refuses every request the real API documents that it refuses, with the
     API's own status and wording. Each rule and its source are in
     `../contract-audit.txt`.
@@ -28,9 +30,12 @@ it.
   block first.
 - `selftest.mjs` makes each of the stand-in's rules fail on a request built to
   break it (27 cases). Run it after any change to the stand-in.
-- `battery.mjs` drives the real app in headless Chromium through 21 checks:
+- `battery.mjs` drives the real app in headless Chromium through 23 checks:
   - navigation from Home and from the rail;
   - a program's Vault, opening a program, a Vault search;
+  - actions sent to a screen the person is not on, held while that screen
+    loads and answered once it has (the Inconsistency overlay, a
+    Biostatistics design);
   - both demonstrations, including the sales demonstration's recovery from a
     guessed title;
   - every stop of the training demonstration narrated in AnA's words, each
@@ -49,6 +54,18 @@ it.
    UPDATE authoring_documents
       SET client_program_id = (SELECT id FROM regulatory_programs WHERE code = 'BX-512')
     WHERE title = 'Clinical Overview (CTD Module 2.5)';
+   ```
+
+   The held-action scenario loads a study design, and the seed has none, so
+   add one for BX-301:
+
+   ```sql
+   INSERT INTO cdisc_prm_studies (tenant_id, study_id, program_id, protocol_id, protocol_title,
+                                  protocol_version, study_phase, indication, protocol_status,
+                                  planned_subjects, created_at, updated_at)
+   SELECT organization_id, 'BX301-P2-DF', id, 'BX301-P2', 'Phase 2 dose finding', '1.0',
+          'Phase 2', 'NSCLC', 'draft', 120, now(), now()
+     FROM regulatory_programs WHERE code = 'BX-301';
    ```
 
 2. **The stand-in**, with its log in a file the battery reads:
@@ -96,6 +113,7 @@ it.
 | `HARNESS_OUT` | battery | where screenshots go |
 | `DATABASE_URL` | battery | only for the two scenarios run by name, `takeoverBeforePromotion` and `screenReportChannel` |
 | `BATTERY_EMAIL`, `BATTERY_PASSWORD` | battery | the account; default the GA demo seed's |
+| `LAUNCH_SCOPE` | battery | `on` when the app runs with `LAUNCH_SCOPE_ENFORCE=on` (production's default): the checks that name a screen outside the release (Biostatistics, Inconsistency) assert the honest refusal instead — `../launch-scope-on.txt` |
 
 With `ANA_MODEL_TIERING=off` on the app, every round goes to Opus 5.5, which
 takes AnA's operator turns as mid-conversation system messages. With tiering on

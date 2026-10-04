@@ -1,0 +1,12 @@
+# trunk migration set and code with tests/db/vault-document-archives.dbtest.ts
+ × tests/db/vault-document-archives.dbtest.ts > the deletion archive (critique 13) > its creating migration is in the deploy set 85ms
+   → expected [ …(349) ] to include 'migrations/20260608_vault_retention.s…'
+ ✓ tests/db/vault-document-archives.dbtest.ts > the deletion archive (critique 13) > the retention job's write still works (control) 1422ms
+ × tests/db/vault-document-archives.dbtest.ts > the deletion archive (critique 13) > an archive cannot be changed, deleted or truncated 8ms
+   → the change was applied: expected true to be false // Object.is equality
+ × tests/db/vault-document-archives.dbtest.ts > the deletion archive (critique 13) > another organisation cannot read it 6ms
+   → expected { ok: true, …(1) } to deeply equal { ok: true, rows: [] }
+ × tests/db/vault-document-archives.dbtest.ts > the deletion archive (critique 13) > the tenant purge erases the organisation's archives, and no one else's 32ms
+   → expected true to be false // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 1 passed (5)

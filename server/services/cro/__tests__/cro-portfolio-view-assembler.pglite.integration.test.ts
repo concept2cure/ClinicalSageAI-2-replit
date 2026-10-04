@@ -13,6 +13,8 @@
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
+import fs from 'node:fs';
+import path from 'node:path';
 
 let pglite: PGlite;
 const pool = {
@@ -24,6 +26,7 @@ const pool = {
 vi.mock('../../../db', () => ({ pool: { query: (s: string, p?: unknown[]) => pool.query(s, p) }, db: {} }));
 
 import { assembleOrgCroPortfolio } from '../cro-portfolio-view-assembler';
+import { AUDIT_LOGS_PGLITE_DDL } from '../../../db/pglite-harness';
 
 const ORG = 7;
 const OTHER = 9;
@@ -66,7 +69,17 @@ CREATE TABLE cro_team_assignments (
 );
 `;
 
-beforeAll(async () => { pglite = new PGlite(); await pglite.exec(DDL); }, 60_000);
+beforeAll(async () => {
+  pglite = new PGlite();
+  await pglite.exec(DDL);
+  // The lead's name resolves through public.actor_name (D3 2026-09-29), created
+  // from the real migration; minimal stand-ins for the two tables it reads.
+  // audit_logs is the shared fixture (every column the audit writer writes), so
+  // a governed write reached from this suite can land (ci:audit-logs-fixture).
+  await pglite.exec(`CREATE TABLE IF NOT EXISTS organization_users (user_id integer, organization_id integer);`);
+  await pglite.exec(AUDIT_LOGS_PGLITE_DDL);
+  await pglite.exec(fs.readFileSync(path.join(process.cwd(), 'migrations/20260929_actor_names.sql'), 'utf8'));
+}, 60_000);
 afterAll(async () => { await pglite.close(); });
 beforeEach(async () => {
   await pglite.exec(

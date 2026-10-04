@@ -76,14 +76,18 @@ describe('EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS', () => {
     expect(new Set(names).size).toBe(names.length);
   });
 
-  it('is created by a migration on the deploy applier, under exactly that name (drift guard)', () => {
+  it('is created by a migration on a deploy applier, under exactly that name (drift guard)', () => {
+    // Two appliers replay their files on every deploy: C2C_MIGRATION_FILES, and
+    // the authoring subsystem unit (deploy-migrate runs both).
     const migrationSet = fs.readFileSync(path.join(repoRoot, 'scripts/db/migration-set.mjs'), 'utf8');
+    const authoringSet = fs.readFileSync(path.join(repoRoot, 'scripts/db/authoring-subsystem.mjs'), 'utf8');
     for (const t of EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS) {
       const sql = fs.readFileSync(path.join(repoRoot, t.source), 'utf8');
       expect(sql, `${t.source} must CREATE TRIGGER ${t.trigger}`).toMatch(
         new RegExp(`CREATE TRIGGER\\s+${t.trigger}\\b`),
       );
-      expect(migrationSet, `${t.source} must be in C2C_MIGRATION_FILES`).toContain(`'${t.source}'`);
+      const onApplier = migrationSet.includes(`'${t.source}'`) || authoringSet.includes(`'${t.source}'`);
+      expect(onApplier, `${t.source} must be in C2C_MIGRATION_FILES or AUTHORING_SUBSYSTEM_FILES`).toBe(true);
     }
   });
 });

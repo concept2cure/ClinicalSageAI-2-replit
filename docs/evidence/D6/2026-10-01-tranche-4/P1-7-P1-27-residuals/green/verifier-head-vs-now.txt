@@ -1,0 +1,44 @@
+# Every row of audit.tamper_proof_log on the local PostgreSQL 16 test database, each verified on its own
+# (content_hash, chain_hash, HMAC signature against its own previous_hash) by verifyTamperProofLogRows at HEAD 0e58e794 and in the working tree.
+# Rows with a tenant were appended after the column was added, by suites other implementers ran on the shared database with this working tree's writer (this item's own dbtest commits nothing).
+# Script (scratch, not committed):
+#   // Same rows, HEAD verifier vs working-tree verifier: the amendment must not
+#   // change the verdict on any row written before the column existed.
+#   import pg from 'pg';
+#   import { verifyTamperProofLogRows as now } from '/home/user/ClinicalSageAI-2-replit/server/lib/tamper-proof-audit.ts';
+#   import { verifyTamperProofLogRows as head } from './headlib/tamper-proof-audit.ts';
+#   const c = new pg.Client({ connectionString: 'postgresql://postgres@127.0.0.1:5432/c2c_testdb?sslmode=disable' });
+#   await c.connect();
+#   const { rows } = await c.query('SELECT * FROM audit.tamper_proof_log ORDER BY sequence_number ASC');
+#   await c.end();
+#   const secret = process.env.AUDIT_HMAC_SECRET || 'INSECURE_DEV_SECRET_CHANGE_IN_PRODUCTION';
+#   // Walk each maximal run from its own predecessor so one break elsewhere does not hide the rest.
+#   const out = { rows: rows.length, nullTenant: { rows: 0, verdictsAgree: 0, validUnderBoth: 0 }, withTenant: { rows: 0, validNow: 0, validUnderHeadVerifier: 0 } };
+#   for (const r of rows) {
+#     const opts = { hmacSecret: secret, expectedPreviousHash: r.previous_hash };
+#     const a = head([r], opts), b = now([r], opts);
+#     if (r.organization_id == null) {
+#       out.nullTenant.rows++;
+#       if (a.valid === b.valid && a.invalidReason === b.invalidReason) out.nullTenant.verdictsAgree++;
+#       if (a.valid && b.valid) out.nullTenant.validUnderBoth++;
+#     } else {
+#       out.withTenant.rows++;
+#       if (b.valid) out.withTenant.validNow++;
+#       if (a.valid) out.withTenant.validUnderHeadVerifier++;
+#     }
+#   }
+#   console.log(JSON.stringify(out, null, 1));
+{
+ "rows": 635,
+ "nullTenant": {
+  "rows": 506,
+  "verdictsAgree": 506,
+  "validUnderBoth": 506
+ },
+ "withTenant": {
+  "rows": 129,
+  "validNow": 129,
+  "validUnderHeadVerifier": 0
+ }
+}
+exit=0

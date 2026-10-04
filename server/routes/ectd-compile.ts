@@ -49,13 +49,17 @@ import { sectionMatches } from '../services/ectd/section-code-match';
 import { formRequirementForDocumentType } from '../services/ectd/section-to-ctd';
 import { toPackagerRegion } from '../services/ectd/core-to-packager';
 import { buildLeafManifest } from '../services/ectd/sequence-manifest';
+import { recordedApplicationId } from '../services/ectd/regulatory-identifiers';
 import {
   resolveRequiredSections,
   type RequiredSectionSet,
   type RequiredSectionProvenance,
 } from '../services/ectd/required-sections';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('ectd-compile');
 
 /** SHA-256 of a UTF-8 string, hex. Used for real content hashes in the backbone. */
 function sha256(input: string): string {
@@ -244,29 +248,10 @@ async function resolveCompileAnchor(ident: string, orgId: number): Promise<Compi
   return null;
 }
 
-/**
- * The identifier that goes in the agency's application-number field.
- *
- * `applicationId` becomes `<application-number>` in the FDA us-regional
- * backbone (and the equivalent field in the EU/JP backbones), so it must be the
- * number the AGENCY assigned whenever the program records one. It used to be
- * `anchor.programCode` unconditionally — the sponsor's internal code, e.g.
- * `BX-204` — because at the time nothing in the data model held an agency
- * number. `regulatory_programs.application_number` does now.
- *
- * The chain below keeps the rule the previous comment stated, and only improves
- * what "recorded identity" can mean: the recorded agency number, else the
- * program's own code, else a handle that says plainly it is unassigned. A blank
- * or whitespace column is NOT a recorded number. Nothing is ever invented — an
- * invented agency number is a filing that references another sponsor's
- * application.
- */
+/** The agency application-number field from the program record — the one rule
+ *  (services/ectd/regulatory-identifiers.ts), shared with the export. */
 function applicationIdFor(anchor: CompileAnchor, fallbackKey: string): string {
-  const recorded = (anchor.applicationNumber ?? '').trim();
-  if (recorded !== '') return recorded;
-  const code = (anchor.programCode ?? '').trim();
-  if (code !== '') return code;
-  return fallbackKey;
+  return recordedApplicationId({ applicationNumber: anchor.applicationNumber, programCode: anchor.programCode }, fallbackKey);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -729,12 +714,8 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
     );
 
     res.json(result);
-  } catch (error: any) {
-    console.error('[eCTD Compile] Compilation failed:', error);
-    res.status(500).json({
-      error: 'Compilation failed',
-      message: error.message,
-    });
+  } catch (error) {
+    return serverError(res, log, 'compiling the eCTD submission', error, { projectIdent: ident });
   }
 });
 
@@ -1353,9 +1334,8 @@ router.get('/:projectIdent/status', async (req: Request, res: Response) => {
               .toISOString()
           : null,
     });
-  } catch (error: any) {
-    console.error('[eCTD Status] Error:', error);
-    res.status(500).json({ error: 'Failed to get compilation status', message: error.message });
+  } catch (error) {
+    return serverError(res, log, 'reading the compilation status', error, { projectIdent: ident });
   }
 });
 
@@ -1406,9 +1386,8 @@ router.get('/:projectIdent/history', async (req: Request, res: Response) => {
     }
 
     res.json({ projectId: anchor.numericProjectId, projectIdent: ident, programId: anchor.programId, compilations });
-  } catch (error: any) {
-    console.error('[eCTD History] Error:', error);
-    res.status(500).json({ error: 'Failed to get compilation history', message: error.message });
+  } catch (error) {
+    return serverError(res, log, 'reading the compilation history', error, { projectIdent: ident });
   }
 });
 
@@ -1479,9 +1458,8 @@ router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
       results,
       summary: { pass: passCount, warnings: warnCount, errors: errorCount },
     });
-  } catch (error: any) {
-    console.error('[eCTD Validate] Error:', error);
-    res.status(500).json({ error: 'Validation failed', message: error.message });
+  } catch (error) {
+    return serverError(res, log, 'validating the submission', error, { projectIdent: ident });
   }
 });
 

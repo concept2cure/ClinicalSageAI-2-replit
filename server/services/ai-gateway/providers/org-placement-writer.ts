@@ -24,6 +24,13 @@
  *
  * `preferred_ai_provider` (a separate, unapplied column) is not touched.
  *
+ * The provider election (ADR-0014 §1, P1-45): in production a NULL
+ * `allowedProviders` is the default set (anthropic, bedrock, local), and
+ * OpenAI, Azure or Vertex is used only when the list names it — so this is
+ * where an administrator elects OpenAI, and the satisfiability check reads the
+ * list the same way the gateway does. A list naming Moonshot is refused in
+ * production: the gateway would never honour it.
+ *
  * @module server/services/ai-gateway/providers/org-placement-writer
  */
 
@@ -32,7 +39,9 @@ import type { DataResidency, ProviderName, SubstrateClass } from '../types';
 import {
   PLACEMENT_PROVIDERS,
   PLACEMENT_SUBSTRATES,
+  effectiveAllowedProviders,
   getOrgPlacementResolver,
+  isProviderExcludedInEnvironment,
 } from './org-placement';
 import { isPlacementCompliant, resolvePlacement } from './placement';
 
@@ -96,6 +105,15 @@ export function parsePlacementPolicyInput(body: unknown): PlacementPolicyInput {
   if (!substrates.ok) return substrates;
   const providers = allowListInput('allowedProviders', b.allowedProviders, PLACEMENT_PROVIDERS);
   if (!providers.ok) return providers;
+  const excluded = providers.list?.filter(p => isProviderExcludedInEnvironment(p)) ?? [];
+  if (excluded.length > 0) {
+    return {
+      ok: false,
+      message:
+        `allowedProviders names ${excluded.join(', ')}, which is not a production AI service for any ` +
+        'organization (ADR-0014 §1).',
+    };
+  }
 
   const policy: StoredPlacementPolicy = {
     residency: b.residency as StoredPlacementPolicy['residency'],
@@ -145,9 +163,12 @@ function scalarsProblem(b: Record<string, unknown>): string | null {
  * residency with no self-hosted service allowed. Returns why, or null.
  */
 export function placementPolicyContradiction(policy: StoredPlacementPolicy): string | null {
+  // The vendors the gateway would admit for this list here: in production a
+  // NULL list is the default set, and Moonshot is never one (ADR-0014 §1).
+  const vendors = effectiveAllowedProviders(policy.allowedProviders);
   const candidates = [...PLACEMENT_PROVIDERS].filter(
     p =>
-      (!policy.allowedProviders || policy.allowedProviders.includes(p)) &&
+      (!vendors || vendors.includes(p)) &&
       (!policy.allowedSubstrates || policy.allowedSubstrates.includes(resolvePlacement(p).substrate)),
   );
   if (candidates.length === 0) {

@@ -99,11 +99,11 @@ const WIRED_FILES = [
  * they are listed rather than swept. The list may shrink, never grow silently.
  */
 const BACKSTOP_ONLY = [
-  // GDPR Art.17 erasure, org-wide by author. It must complete as a legal
-  // obligation whatever else is stored, and the fingerprint gate then refuses
-  // every bundle built from an erased artifact — which is the required
-  // outcome, not a degraded one.
-  'server/routes/global-compliance.ts',
+  // GDPR Art.17 erasure (erasePersonalData, the one erasure path since the
+  // HTTP duplicate in global-compliance.ts was retired to a 410 on 2026-09-28).
+  // It must complete as a legal obligation whatever else is stored, and the
+  // fingerprint gate then refuses every bundle built from an erased artifact —
+  // which is the required outcome, not a degraded one.
   'server/services/ana-ri/command-executor.ts',
   'server/services/ana/AnaToolExecutor.ts',
   'server/services/ana/artifactVersionStore.ts',

@@ -19,6 +19,15 @@
  * Superseded: the round-2/3 cases that pinned the recording.
  * Proven against real Postgres (PGlite) through the real handler, judged by
  * the real filing rule.
+ *
+ * 2026-10-01 (D5) — supersedes the cases above that pinned "succeeds and records
+ * nothing": approving and locking through this command are now the status
+ * route's electronic signature, committed through the same act
+ * (server/services/ana-ri/ana-signed-artifact-act.ts; the signed cases are in
+ * ana-signed-artifact-act.pglite.integration.test.ts). What these cases pin
+ * now is the other half: without a verified signature the command approves
+ * and locks nothing, from every state the earlier cases started from, and
+ * leaves the row as it found it. Moving to review or draft is unchanged.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
@@ -95,122 +104,75 @@ const editToNextVersion = () =>
 const change = (to: 'draft' | 'review' | 'approved' | 'locked') =>
   updateArtifactStatus(ctx, { projectId: 1, artifactId: 1, status: to });
 
-// 2026-09-23 (W5/D7, final pass, repair): the message named the status
-// route's remedy ("approved → review, then review → approved, which records
-// the version approved") — false for this command, which records no version:
-// a user who followed it here went round in a circle (lock refused, same
-// remedy, forever). The message must name the governed act that records the
-// version and say this command records none.
-const NAMES_GOVERNED_APPROVE = /An approved version is recorded only by the review workflow's Approve action \(the status route's review → approved, .*authoring-actions approve-artifact\); this command records none/;
-const NAMES_GOVERNED_LOCK = /A locked version is recorded only by the review workflow's Lock action \(the status route's approved → locked, or authoring-actions lock-artifact\); this command records none/;
-const FALSE_REMEDIES = [
-  '(approved → review, then review → approved), which records',
-  'then lock it (approved → locked), which records',
-  'Filing requires approval through review, which records the approved version.',
-];
-const expectTruthfulRemedy = (message: string, names: RegExp) => {
-  expect(message).toMatch(names);
-  for (const f of FALSE_REMEDIES) expect(message).not.toContain(f);
-};
 /** The governed approval act's write (status route review → approved). */
 const governedApprove = () =>
   pglite.query("UPDATE concept2cure_artifacts SET status = 'approved', approved_version_id = version WHERE artifact_id = 1");
+/** Refused as needing a signature, and the row is as it was. */
+async function expectUnsignedRefusal(to: 'approved' | 'locked'): Promise<void> {
+  const before = await row();
+  const res = await change(to);
+  expect(res.success).toBe(false);
+  expect((res as { error?: string }).error).toBe('PART11_SIGNATURE_REQUIRED');
+  expect(await row()).toEqual(before);
+}
 
-describe('update_artifact_status sets the status and records no approval', () => {
-  it('review → approved succeeds but records no approved version, is not filable, and the message says so', async () => {
-    const res = await change('approved');
-    expect(res.success).toBe(true);
-    const r = await row();
-    expect(r.status).toBe('approved');
-    expect(r.approved_version_id).toBeNull();
-    expect(filable(r)).toMatchObject({ filable: false, reason: 'no-approved-version' });
-    expectTruthfulRemedy(res.message, NAMES_GOVERNED_APPROVE);
+describe('update_artifact_status approves only as an electronic signature', () => {
+  it('review → approved without a signature: refused, nothing recorded', async () => {
+    await expectUnsignedRefusal('approved');
+    expect((await row()).status).toBe('review');
   });
 
-  it.each(['archived', 'superseded', 'rejected'])(
-    '%s → approved records no approved version, is not filable, and the message says so',
-    async from => {
-      await pglite.query('UPDATE concept2cure_artifacts SET status = $1, version = 3 WHERE artifact_id = 1', [from]);
-      const res = await change('approved');
-      expect(res.success).toBe(true);
-      const r = await row();
-      expect(r.approved_version_id).toBeNull();
-      expect(filable(r)).toMatchObject({ filable: false, reason: 'no-approved-version' });
-      expectTruthfulRemedy(res.message, NAMES_GOVERNED_APPROVE);
-    }
-  );
+  it.each(['archived', 'superseded', 'rejected'])('%s → approved without a signature: refused, nothing recorded', async from => {
+    await pglite.query('UPDATE concept2cure_artifacts SET status = $1, version = 3 WHERE artifact_id = 1', [from]);
+    await expectUnsignedRefusal('approved');
+  });
 
-  it('an artifact the governed act approved stays filable through approved → approved, and the message claims nothing', async () => {
+  it('an artifact the governed act approved stays filable, and an unsigned approved → approved changes nothing', async () => {
     await governedApprove();
-    const res = await change('approved');
-    expect(res.success).toBe(true);
+    await expectUnsignedRefusal('approved');
     expect(filable(await row())).toEqual({ filable: true });
-    expect(res.message).not.toMatch(/cannot be filed|not filable|Filing requires|recorded only by/i);
   });
 
-  it('approved → approved does not re-stamp the approval over an unreviewed edit', async () => {
+  it('approved → approved after an unreviewed edit does not re-stamp the approval', async () => {
     await governedApprove();
     await editToNextVersion();
-    const res = await change('approved');
+    await expectUnsignedRefusal('approved');
     const r = await row();
     expect(r.approved_version_id).toBe(1);
     expect(filable(r)).toMatchObject({ filable: false, reason: 'edited-after-approval' });
-    expectTruthfulRemedy(res.message, NAMES_GOVERNED_APPROVE);
   });
 });
 
-describe('update_artifact_status: a lock must cover the approval, and records no lock version', () => {
-  it('approved (governed, at v1) → locked succeeds, records no locked version, and says it cannot be filed yet', async () => {
+describe('update_artifact_status locks only as an electronic signature', () => {
+  it('approved (governed, at v1) → locked without a signature: refused, not locked, no locked version', async () => {
     await governedApprove();
-    const res = await change('locked');
-    expect(res.success).toBe(true);
+    await expectUnsignedRefusal('locked');
     const r = await row();
-    expect(r.status).toBe('locked');
-    expect(r.approved_version_id).toBe(1);
+    expect(r.status).toBe('approved');
     expect(r.published_version_id).toBeNull();
-    expect(filable(r)).toMatchObject({ filable: false, reason: 'no-approved-version' });
-    expect(res.message).toMatch(/cannot be filed yet/);
-    expectTruthfulRemedy(res.message, NAMES_GOVERNED_LOCK);
   });
 
-  it('approved → locked after an unreviewed edit is REFUSED, writes nothing, and asks for re-approval', async () => {
+  it('approved → locked after an unreviewed edit: refused, nothing written', async () => {
     await governedApprove();
     await editToNextVersion();
-    const before = await row();
-    const res = await change('locked');
-    expect(res.success).toBe(false);
-    expect(res.message).toMatch(/edited after approval/i);
-    expectTruthfulRemedy(res.message, NAMES_GOVERNED_APPROVE);
-    expect(res.message).toMatch(
-      /Lock it after that through the review workflow's Lock action \(the status route's approved → locked, or authoring-actions lock-artifact\), which records the version locked; this command records none\./
-    );
-    const after = await row();
-    expect(after).toEqual(before);
-    expect(after.status).toBe('approved');
+    await expectUnsignedRefusal('locked');
   });
 
-  it('approved → locked when no approved version was ever recorded is refused (fail closed)', async () => {
+  it('approved with no approved version recorded → locked: refused (fail closed)', async () => {
     await pglite.query("UPDATE concept2cure_artifacts SET status = 'approved', approved_version_id = NULL WHERE artifact_id = 1");
-    const res = await change('locked');
-    expect(res.success).toBe(false);
-    expect((await row()).status).toBe('approved');
-    expectTruthfulRemedy(res.message, NAMES_GOVERNED_APPROVE);
+    await expectUnsignedRefusal('locked');
   });
 
-  it('following the message through this command does not go round in a circle: every step names the governed act', async () => {
-    // The skeptic's P1: approve here, lock refused, do what the refusal says
-    // (approved → review, review → approved) here, lock refused again.
-    const a1 = await change('approved');
-    const l1 = await change('locked');
-    const r2 = await change('review');
-    const a2 = await change('approved');
-    const l2 = await change('locked');
-    expect([a1.success, l1.success, r2.success, a2.success, l2.success]).toEqual([true, false, true, true, false]);
-    expect((await row()).approved_version_id).toBeNull();
-    for (const m of [a1.message, l1.message, a2.message, l2.message]) expectTruthfulRemedy(m, NAMES_GOVERNED_APPROVE);
-    // The governed act then records the version, and a governed lock follows.
-    await change('review');
+  it('review and back are unchanged: the moves that are not signatures still run', async () => {
     await governedApprove();
-    expect(filable(await row())).toEqual({ filable: true });
+    const r1 = await change('review');
+    expect(r1.success).toBe(true);
+    const back = await row();
+    expect(back.status).toBe('review');
+    // Leaving approved clears the recorded version (the trigger in production;
+    // this table has none, so the column is as the earlier write left it).
+    const d1 = await change('draft');
+    expect(d1.success).toBe(true);
+    expect((await row()).status).toBe('draft');
   });
 });

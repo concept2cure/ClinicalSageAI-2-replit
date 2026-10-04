@@ -208,6 +208,8 @@ beforeAll(async () => {
       'migrations/20260921_authoring_document_provenance.sql',
       // The canonical source registry and the citation back-reference index.
       'db/migrations/20260724_clinical_regulatory_evidence_spine.sql',
+      // cre_evidence_sources.client_program_id: a citation is judged by its source's project (PF-11).
+      'migrations/20260726_cre_source_program_scope.sql',
       'migrations/20260726_authoring_citation_source_usage.sql',
     ],
     // TEST-ONLY: refuse the audit row for any operation listed in the table.

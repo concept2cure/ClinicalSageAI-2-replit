@@ -1,0 +1,176 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/insights-canvas-portfolio-unavailable.test.ts > GET /overview and the portfolio read > answers 503 PORTFOLIO_UNAVAILABLE when the portfolio read fails, never the empty answer
+{
+  "timestamp": "2026-10-01T03:28:44.038Z",
+  "level": "error",
+  "message": "[insights-canvas-routes] org portfolio read failed",
+  "context": {
+    "organizationId": 7,
+    "err": "connection reset by peer at 10.0.3.xxx:5432"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts
+{
+  "timestamp": "2026-10-01T03:28:44.122Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/insights-canvas-portfolio-unavailable.test.ts > GET /overview and the portfolio read > answers 503 PORTFOLIO_UNAVAILABLE when the portfolio read fails, never the empty answer 135ms
+ ✓ server/routes/__tests__/insights-canvas-portfolio-unavailable.test.ts > GET /overview and the portfolio read > still answers 200 with leadProgram null for an organisation that has no program 7ms
+ ✓ server/routes/__tests__/insights-canvas-portfolio-unavailable.test.ts > GET /overview and the portfolio read > answers 200 with the flagship program when there are programs 23ms
+stderr | server/routes/__tests__/report-os-portfolio-empty.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-portfolio-empty.test.ts
+{
+  "timestamp": "2026-10-01T03:28:44.341Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > daily > returns today at the scheduled time when still ahead 2ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > daily > rolls to tomorrow when the time has already passed 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > daily > rolls forward when exactly at the scheduled time (strictly after) 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > weekly > lands on the correct dayOfWeek at the correct hour 1ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > weekly > can land today when the scheduled time is still ahead 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > weekly > rolls a full week when same weekday but time has passed 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > monthly > uses this month when the day is still ahead 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > monthly > rolls to next month when the day has passed 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > monthly > clamps dayOfMonth 31 to 28 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > computeNextRun > DEFAULT_WEEKLY_SCHEDULE yields a Monday 07:00 UTC 18ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > isDue > is true when now is at or past the next run after lastRunAt 1ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > isDue > is false just before the next run 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > isDue > is due when there has been no prior run 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > decideDelivery > external + final requires e-signature and is not watermarked 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > decideDelivery > external + partial is watermarked and does not require e-signature 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > decideDelivery > external + draft is watermarked and does not require e-signature 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > decideDelivery > sealed flag forces e-signature on external even when not final 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > decideDelivery > platform + final has no watermark and no e-signature 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > decideDelivery > platform + non-final is watermarked but needs no e-signature 0ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > describeDeliveryAudit > returns the expected normalized keys 6ms
+ ✓ server/services/report-os/scheduling/__tests__/scheduling.test.ts > describeDeliveryAudit > defaults subscriptionId and reason to null when absent 0ms
+stderr | server/routes/__tests__/report-os-portfolio-empty.test.ts > GET /portfolio/org > answers a failed read with 500, never with the empty answer
+{
+  "timestamp": "2026-10-01T03:28:45.285Z",
+  "level": "error",
+  "message": "[report-os] loading org failed",
+  "context": {
+    "err": "connection reset",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain > answers 503 saying the run exists but was not recorded when the row cannot be written
+{
+  "timestamp": "2026-10-01T03:28:45.293Z",
+  "level": "error",
+  "message": "[report-os] report event not recorded on the audit chain",
+  "context": {
+    "action": "report_os.run_created",
+    "resourceId": "41",
+    "error": "audit_logs refused the row"
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-portfolio-empty.test.ts > GET /portfolio/org > answers 200 with data: null when the organisation has no programs 103ms
+ ✓ server/routes/__tests__/report-os-portfolio-empty.test.ts > GET /portfolio/org > still answers the summary when there are programs 70ms
+ ✓ server/routes/__tests__/report-os-portfolio-empty.test.ts > GET /portfolio/org > still refuses an organisation the plan gate refuses 12ms
+ ✓ server/routes/__tests__/report-os-portfolio-empty.test.ts > GET /portfolio/org > answers a failed read with 500, never with the empty answer 8ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain > writes report_os.run_created for the run, on a tenant-stamped transaction, and answers 201 142ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs records the run on the audit chain > answers 503 saying the run exists but was not recorded when the row cannot be written 43ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > refuses a member with 403 before reading anything 6ms
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > answers 503 with nothing changed when the chain row cannot be written: the writes roll back with it
+{
+  "timestamp": "2026-10-01T03:28:45.393Z",
+  "level": "error",
+  "message": "[report-os] report finalize not recorded on the audit chain; rolled back",
+  "context": {
+    "runId": 41,
+    "error": "audit_logs refused the row"
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > refuses a viewer with 403 before reading anything 35ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > lets the owner finalize: status, seal and chain row commit together 21ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > lets the admin finalize: status, seal and chain row commit together 6ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > lets the manager finalize: status, seal and chain row commit together 4ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > refuses a run that is already final with 409 RUN_ALREADY_FINAL and writes nothing 15ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > refuses when a concurrent finalize won the lock, and rolls back 6ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > answers 503 with nothing changed when the chain row cannot be written: the writes roll back with it 4ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > POST /runs/:id/finalize (DP-47) > records nothing when the truthfulness gate refuses the finalize 21ms
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > answers 503 and sends no PDF when the export cannot be recorded
+{
+  "timestamp": "2026-10-01T03:28:45.526Z",
+  "level": "error",
+  "message": "[report-os] report event not recorded on the audit chain",
+  "context": {
+    "action": "report_os.run_exported",
+    "resourceId": "41",
+    "error": "audit_logs refused the row"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > answers 503 and sends no PDF when the bundle export cannot be recorded
+{
+  "timestamp": "2026-10-01T03:28:45.600Z",
+  "level": "error",
+  "message": "[report-os] report event not recorded on the audit chain",
+  "context": {
+    "action": "report_os.bundle_exported",
+    "resourceId": "11111111-1111-4111-8111-111111111111",
+    "error": "audit_logs refused the row"
+  }
+}
+
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > writes report_os.run_exported carrying the hash of the bytes sent, then sends the PDF 88ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /runs/:id/export.pdf records the export before anything is sent > answers 503 and sends no PDF when the export cannot be recorded 29ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > refuses with the run export gate when a report in the bundle is above the plan, and sends nothing 26ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > writes report_os.bundle_exported carrying the hash of the bytes sent, then sends the PDF 22ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > GET /bundles/:bundleId/export.pdf (DP-50) > answers 503 and sends no PDF when the bundle export cannot be recorded 20ms
+ ✓ server/routes/__tests__/report-os-audit-recording.test.ts > the registry has one writer > POST /taxonomy/seed no longer exists: the generated migration seeds the registry 9ms
+stdout | server/routes/__tests__/report-os-insights.contract.test.ts
+{
+  "timestamp": "2026-10-01T03:28:47.390Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-01T03:28:47.391Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-insights.contract.test.ts
+{
+  "timestamp": "2026-10-01T03:28:47.392Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/report-os-insights.contract.test.ts > report-os-insights router contract > exports an Express router (a function) 2ms
+ ✓ server/routes/__tests__/report-os-insights.contract.test.ts > PREDICTION_REPORT_TYPES contract > defines exactly three prediction report types 1ms
+ ✓ server/routes/__tests__/report-os-insights.contract.test.ts > PREDICTION_REPORT_TYPES contract > has unique typeIds in the prediction family 1ms
+ ✓ server/routes/__tests__/report-os-insights.contract.test.ts > PREDICTION_REPORT_TYPES contract > uses only valid allowedScopes 1ms
+ ✓ server/routes/__tests__/report-os-insights.contract.test.ts > PREDICTION_REPORT_TYPES contract > requires Part 11 governance on every prediction type 0ms
+
+ Test Files  5 passed (5)
+      Tests  50 passed (50)
+   Start at  03:28:37
+   Duration  9.73s (transform 8.03s, setup 471ms, import 20.28s, tests 968ms, environment 1ms)
+

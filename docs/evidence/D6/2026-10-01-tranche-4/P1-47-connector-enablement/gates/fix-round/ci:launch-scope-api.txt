@@ -1,0 +1,14 @@
+# Fix round, 2026-10-01T15:29:47Z: npm run ci:launch-scope-api
+
+> concept2cure-riai@1.0.0 ci:launch-scope-api
+> npx tsx scripts/ci/check-launch-scope-api.ts
+
+ci:launch-scope-api: 1 API path(s) that launch or shell screens call are not attributed to the launch scope:
+"out-of-scope" is refused in production today; "unmapped" is claimed by no surface. Declare each prefix on the
+launch surface that calls it (shared/constants/ui-surface-registry*.ts apiPrefixes), or, if the shell uses it
+whatever app is open, on LAUNCH_PLATFORM_API with its reason — or stop calling it.
+
+  [unmapped] /api/tenant-config/:p/claude-connector
+    called by admin-console
+    in client/src/concept2cure/v2/surfaces/ClaudeConnectorSetting.tsx
+exit=1

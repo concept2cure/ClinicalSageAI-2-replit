@@ -24,7 +24,7 @@ vi.mock('../../../utils/logger', () => ({
   default: logSpies,
 }));
 
-import { AIGateway } from '../gateway';
+import { AIGateway, GatewayModelDeclinedError } from '../gateway';
 import { resetOrgPlacementResolver, setOrgPlacementResolver, type OrgPlacementPolicy } from '../providers/org-placement';
 import { resetPlacementRegistry } from '../providers/placement';
 import { APPROVED_MODELS } from '../../ai-governance/approved-models';
@@ -207,6 +207,19 @@ describe('the prompt hash and the serving region', () => {
     expect(a.promptHash).not.toBe(b.promptHash);
   });
 
+  it('two requests that differ only in their request-level imageContent hash differently', async () => {
+    useTenantPolicy(null);
+    const gateway = buildGateway(['anthropic']);
+    stubDispatch(gateway);
+    const image = (data: string) => [{ type: 'image' as const, source: { type: 'base64' as const, media_type: 'image/png' as const, data } }];
+
+    await gateway.route(chat({ imageContent: image('aGVsbG8=') }));
+    await gateway.route(chat({ imageContent: image('d29ybGQ=') }));
+
+    const [a, b] = rows(gateway).filter(r => r.success);
+    expect(a.promptHash).not.toBe(b.promptHash);
+  });
+
   it('a text-only prompt hashes exactly as before, so existing rows stay comparable', async () => {
     useTenantPolicy(null);
     const gateway = buildGateway(['anthropic']);
@@ -226,5 +239,70 @@ describe('the prompt hash and the serving region', () => {
     await gateway.route(chat());
 
     expect(rows(gateway).find(r => r.success)?.region).toBe('on_prem');
+  });
+});
+
+describe('a row claims only what happened (2026-09-26 review)', () => {
+  it('a call nothing served records no served-model governance and no region', async () => {
+    useTenantPolicy(null);
+    const gateway = buildGateway(['anthropic']);
+    vi.spyOn(gateway as any, 'dispatchProvider').mockImplementation(async () => {
+      throw Object.assign(new Error('upstream 400'), { status: 400 });
+    });
+
+    await expect(gateway.route(chat())).rejects.toThrow();
+
+    const row = rows(gateway).find(r => !r.success);
+    expect(row).toBeDefined();
+    for (const field of ['approvedModelId', 'pinnedVersion', 'pqStatus', 'region']) {
+      expect(row[field], field).toBeUndefined();
+    }
+  });
+
+  it('a payload whose document or image no screen read is recorded unscreened_media, not none', async () => {
+    useTenantPolicy(null);
+    const gateway = buildGateway(['anthropic']);
+    stubDispatch(gateway);
+
+    await gateway.route(chat({
+      messages: [{
+        role: 'user',
+        content: 'Read the attached document.',
+        contentBlocks: [
+          { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: 'JVBERi0x' } },
+          { type: 'text', text: 'Read the attached document.' },
+        ],
+      } as GatewayRequest['messages'][number]],
+    }));
+
+    expect(rows(gateway).find(r => r.success)?.dataClass).toBe('unscreened_media');
+  });
+
+  it('a malformed content block still leaves a row, hashed', async () => {
+    useTenantPolicy(null);
+    const gateway = buildGateway(['anthropic']);
+    stubDispatch(gateway);
+
+    await gateway.route(chat({
+      messages: [{
+        role: 'user',
+        content: 'x',
+        contentBlocks: [{ type: 'text', text: 123 }, { type: 'image' }],
+      } as unknown as GatewayRequest['messages'][number]],
+    }));
+
+    expect(rows(gateway).find(r => r.success)?.promptHash).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it('a decline no other model may run leaves a failure row', async () => {
+    useTenantPolicy(null);
+    const gateway = buildGateway(['anthropic']);
+    vi.spyOn(gateway as any, 'dispatchProvider').mockImplementation(async (model: any) => {
+      throw new GatewayModelDeclinedError(model.model, 'reasoning_extraction', false);
+    });
+
+    await expect(gateway.route(chat())).rejects.toBeInstanceOf(GatewayModelDeclinedError);
+
+    expect(rows(gateway)).toEqual([expect.objectContaining({ success: false, error: expect.stringMatching(/declined/) })]);
   });
 });

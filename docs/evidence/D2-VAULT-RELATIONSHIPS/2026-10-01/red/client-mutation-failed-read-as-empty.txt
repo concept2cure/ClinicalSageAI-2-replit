@@ -1,0 +1,137 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > lists both directions in their own words, with the project and a later version named 127ms
+ × client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > a list that could not be read says so, and never reads as no related documents 5054ms
+   → Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+<div
+  data-testid="vault-relationships"
+>
+  <div
+    class="vd-d-seclbl"
+  >
+    Related documents
+  </div>
+  <div
+    class="vd-d-idx"
+  >
+    No related documents are recorded for this version.
+  </div>
+  <div
+    class="vd-d-filing-acts"
+  >
+    <button
+      class="sp-ask"
+      data-testid="vault-relationships-open"
+    >
+      Relate a document
+    </button>
+  </div>
+</div>
+
+Ignored nodes: comments, script, style
+<div
+  data-testid="vault-relationships"
+>
+  <div
+    class="vd-d-seclbl"
+  >
+    Related documents
+  </div>
+  <div
+    class="vd-d-idx"
+  >
+    No related documents are recorded for this version.
+  </div>
+  <div
+    class="vd-d-filing-acts"
+  >
+    <button
+      class="sp-ask"
+      data-testid="vault-relationships-open"
+    >
+      Relate a document
+    </button>
+  </div>
+</div>
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > finds a document in the library, relates it, and claims it only once the server recorded it 224ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > a refused relate says so and claims nothing 126ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > removing one needs a reason of the required length, sends it, and then re-reads the list 100ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx > related documents (critique 15) > a list that could not be read says so, and never reads as no related documents
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+<div
+  data-testid="vault-relationships"
+>
+  <div
+    class="vd-d-seclbl"
+  >
+    Related documents
+  </div>
+  <div
+    class="vd-d-idx"
+  >
+    No related documents are recorded for this version.
+  </div>
+  <div
+    class="vd-d-filing-acts"
+  >
+    <button
+      class="sp-ask"
+      data-testid="vault-relationships-open"
+    >
+      Relate a document
+    </button>
+  </div>
+</div>
+
+Ignored nodes: comments, script, style
+<div
+  data-testid="vault-relationships"
+>
+  <div
+    class="vd-d-seclbl"
+  >
+    Related documents
+  </div>
+  <div
+    class="vd-d-idx"
+  >
+    No related documents are recorded for this version.
+  </div>
+  <div
+    class="vd-d-filing-acts"
+  >
+    <button
+      class="sp-ask"
+      data-testid="vault-relationships-open"
+    >
+      Relate a document
+    </button>
+  </div>
+</div>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/vaultRelationships.test.tsx:78:29
+     76|     render(<Vault {...props()} />);
+     77|     const p = await pane();
+     78|     expect((await within(p).findByRole('alert')).textContent).toMatch(…
+       |                             ^
+     79|     expect(p.textContent).not.toMatch(/No related documents are record…
+     80|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  16:26:22
+   Duration  7.64s (transform 963ms, setup 139ms, import 1.16s, tests 5.64s, environment 509ms)
+

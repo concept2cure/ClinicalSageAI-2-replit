@@ -48,6 +48,7 @@ import os from 'node:os';
 import path from 'node:path';
 import http from 'node:http';
 import { spawn, spawnSync } from 'node:child_process';
+import readline from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import { load as loadYaml } from 'js-yaml';
 
@@ -270,8 +271,37 @@ function stringEnv(env) {
   return Object.fromEntries(Object.entries(env).filter(([, v]) => typeof v !== 'object').map(([k, v]) => [k, String(v)]));
 }
 
+/**
+ * `terraform test -json -verbose`, read line by line, keeping only the summary,
+ * the error lines and the one state this proof reads. Streamed, not buffered:
+ * -verbose prints every run's full state, and at 41 runs (2026-10-01) the whole
+ * output passed the longest string Node can hold (ERR_STRING_TOO_LONG), which
+ * crashed this proof, and with it the CI job that runs it.
+ */
+function terraformTestLines(wantState) {
+  return new Promise((resolve, reject) => {
+    const child = spawn('terraform', ['test', '-json', '-verbose', `-filter=${TEST_FILE}`], { cwd: TF_DIR });
+    const kept = { summary: null, state: null, errors: [] };
+    const rl = readline.createInterface({ input: child.stdout, crlfDelay: Infinity });
+    rl.on('line', (line) => {
+      if (!line.trim()) return;
+      const l = JSON.parse(line);
+      if (l.type === 'test_summary') kept.summary = l;
+      else if (l.type === 'test_state' && l['@testrun'] === wantState) kept.state = l;
+      if (l['@level'] === 'error') kept.errors.push(l['@message']);
+    });
+    child.stderr.on('data', () => {});
+    child.on('error', reject);
+    // Both, in either order: the exit status, and readline having emitted the
+    // last line (it can still be draining when the process closes).
+    const exited = new Promise((r) => child.on('close', r));
+    const drained = new Promise((r) => rl.on('close', r));
+    Promise.all([exited, drained]).then(([status]) => resolve({ status, ...kept }));
+  });
+}
+
 /** `terraform test`, then the rendered task definitions from its final state. */
-function renderTaskDefinitions() {
+async function renderTaskDefinitions() {
   if (!noInit) {
     const init = spawnSync('terraform', ['init', '-backend=false', '-input=false', '-no-color'], { cwd: TF_DIR, encoding: 'utf8' });
     if (init.status !== 0) {
@@ -280,20 +310,17 @@ function renderTaskDefinitions() {
       process.exit(1);
     }
   }
-  const t = spawnSync('terraform', ['test', '-json', '-verbose', `-filter=${TEST_FILE}`], {
-    cwd: TF_DIR, encoding: 'utf8', maxBuffer: 512 * 1024 * 1024,
-  });
-  const lines = t.stdout.trim().split('\n').filter(Boolean).map((l) => JSON.parse(l));
-  const summary = lines.find((l) => l.type === 'test_summary');
+  const t = await terraformTestLines('renders_the_boot_contract');
+  const summary = t.summary;
   if (t.status !== 0 || !summary || summary.test_summary.status !== 'pass') {
-    for (const l of lines) if (l['@level'] === 'error') console.error(`  ${l['@message']}`);
+    for (const m of t.errors) console.error(`  ${m}`);
     console.error(`${TAG} FAIL — terraform test did not pass (${summary ? summary.test_summary.status : 'no summary'}).`);
     process.exit(1);
   }
   const s = summary.test_summary;
   ok(`terraform test: ${s.passed} passed, ${s.failed} failed, ${s.errored} errored`);
 
-  const state = lines.find((l) => l.type === 'test_state' && l['@testrun'] === 'renders_the_boot_contract');
+  const state = t.state;
   if (!state) {
     console.error(`${TAG} FAIL — no state for run "renders_the_boot_contract"; cannot read the rendered task definition.`);
     process.exit(1);
@@ -356,7 +383,7 @@ async function main() {
   if (tdJsonArg) {
     tdFile = path.resolve(tdJsonArg);
   } else {
-    rendered = renderTaskDefinitions();
+    rendered = await renderTaskDefinitions();
     tdFile = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'tf-td-')), 'api-td.json');
     fs.writeFileSync(tdFile, JSON.stringify(rendered.api, null, 2));
     ok(`rendered API task definition written to ${tdFile}`);

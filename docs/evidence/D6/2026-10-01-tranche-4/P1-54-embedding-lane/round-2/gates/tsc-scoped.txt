@@ -1,0 +1,34 @@
+# 2026-10-01T16:30:22Z: scoped tsc (not the full project): npx tsc -p <a temporary tsconfig extending ./tsconfig.json, files = the 13 changed TypeScript files, include = []>, noEmit. Every error printed is in a file this item did not change: declaration files a scoped run does not pick up (jsonwebtoken, qrcode, server/*.js) and the Express Request augmentation (dbClient, identity) that lives outside the scoped graph. None is in a changed file.
+## files
+server/services/ai-gateway/embeddings/embedding-provider.ts
+server/services/ai-gateway/embeddings/__tests__/embedding-provider.test.ts
+server/services/embedding-corpus-policy.ts
+server/services/__tests__/embedding-corpus-policy.test.ts
+server/services/__tests__/embedding-corpus-policy.dbtest.ts
+server/services/ai-gateway/gateway.ts
+server/services/ai-gateway/__tests__/self-hosted-residency.test.ts
+server/startup/ana-readiness-state.ts
+server/startup/__tests__/ana-readiness.test.ts
+server/startup/__tests__/ana-readiness-embedding-probe.test.ts
+server/startup/__tests__/support/embedding-lane.ts
+tests/db/vault-passage-search.dbtest.ts
+tests/db/document-catalog-recall.dbtest.ts
+## output
+server/middleware/establishRequestTenantScope.ts(163,7): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/establishRequestTenantScope.ts(165,9): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/establishRequestTenantScope.ts(228,11): error TS2339: Property 'dbClient' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/middleware/requirePlatformAdmin.ts(58,21): error TS2339: Property 'identity' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+server/services/ana/AnaToolExecutor.ts(43,28): error TS7016: Could not find a declaration file for module '../../fda_maude_client.js'. '/home/user/ClinicalSageAI-2-replit/server/fda_maude_client.js' implicitly has an 'any' type.
+server/services/ana/AnaToolExecutor.ts(164,28): error TS7016: Could not find a declaration file for module '../../fda_faers_client.js'. '/home/user/ClinicalSageAI-2-replit/server/fda_faers_client.js' implicitly has an 'any' type.
+server/services/cmc/link-to-module3.ts(34,32): error TS7016: Could not find a declaration file for module '../../metrics.js'. '/home/user/ClinicalSageAI-2-replit/server/metrics.js' implicitly has an 'any' type.
+server/services/memory/document-text-extraction.ts(41,54): error TS2339: Property 'default' does not exist on type 'typeof import("/home/user/ClinicalSageAI-2-replit/node_modules/pdf-parse/dist/pdf-parse/esm/index")'.
+server/services/mfaService.ts(15,17): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/home/user/ClinicalSageAI-2-replit/node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`
+server/services/mfaService.ts(16,25): error TS7016: Could not find a declaration file for module 'qrcode'. '/home/user/ClinicalSageAI-2-replit/node_modules/qrcode/lib/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/qrcode` if it exists or add a new declaration (.d.ts) file containing `declare module 'qrcode';`
+server/services/token-revocation.ts(20,17): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/home/user/ClinicalSageAI-2-replit/node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`
+server/startup/inline-endpoints.ts(650,57): error TS7016: Could not find a declaration file for module '../metrics.js'. '/home/user/ClinicalSageAI-2-replit/server/metrics.js' implicitly has an 'any' type.
+server/utils/jwtVerify.ts(24,41): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/home/user/ClinicalSageAI-2-replit/node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`
+exit 2

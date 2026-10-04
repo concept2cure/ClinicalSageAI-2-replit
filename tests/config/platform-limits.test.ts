@@ -27,7 +27,8 @@ describe('platform-limits config values', () => {
   describe('RATE_LIMITS (Redis limiter)', () => {
     it('auth is env-dependent (prod strict, dev relaxed)', () => {
       expect(RATE_LIMITS.auth.windowMs).toBe(IS_PRODUCTION ? FIFTEEN_MINUTES_MS : ONE_MINUTE_MS);
-      expect(RATE_LIMITS.auth.maxRequests).toBe(IS_PRODUCTION ? 20 : 300);
+      // 20 in production until D6 (2026-09-29): about ten sign-ins per office address.
+      expect(RATE_LIMITS.auth.maxRequests).toBe(IS_PRODUCTION ? 600 : 300);
     });
 
     it('api is 100 requests / minute', () => {

@@ -427,7 +427,7 @@ router.post('/sync/:module', requireEditorAccess, async (req: Request, res: Resp
             sourceEntityId: task.sourceEntityId ?? null,
             sync: true,
           },
-          reason: `Synced from the ${module} module`,
+          summary: `Synced from the ${module} module`,
         });
       }
       commitInFlight = true;

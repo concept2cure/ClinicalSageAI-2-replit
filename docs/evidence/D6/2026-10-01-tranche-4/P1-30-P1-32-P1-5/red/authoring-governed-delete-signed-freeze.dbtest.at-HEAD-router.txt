@@ -1,0 +1,200 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T06:02:23.505Z","pid":21083,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T06:02:23.508Z","pid":21083,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T06:02:23.508Z","pid":21083,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/zz-red-head-authoring.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/zz-red-head-authoring.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/zz-red-head-authoring.dbtest.ts
+✅ Template tables initialized
+
+ × tests/db/zz-red-head-authoring.dbtest.ts > DP-33 — the governed delete, on the real database > an organisation member (not owner/admin/manager) is refused and the document stays 165ms
+   → expected 401 to be 403 // Object.is equality
+{"level":30,"time":"2026-10-01T06:02:27.351Z","pid":21083,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 49cfaeb2-46d1-4c59-b163-e29b907e8335 by d***@c2c.test"}
+{"level":30,"time":"2026-10-01T06:02:27.352Z","pid":21083,"hostname":"vm","context":{"userId":"441","tenantId":97,"resourceId":"6c99110b-e844-4f00-9307-03f8d691251e"},"msg":"[audit-service] [AUDIT] authoring.section.CREATE authoring_section"}
+stderr | tests/db/zz-red-head-authoring.dbtest.ts > DP-33 — the governed delete, on the real database > a draft that carries a signature answers 409 and stays — the signature keeps its record
+[part11] account status check failed during sign: column "sessions_ended_at" does not exist
+
+ × tests/db/zz-red-head-authoring.dbtest.ts > DP-33 — the governed delete, on the real database > an admin deletes an empty document of their organisation; the chained row names the actor and the reason 38ms
+   → {"error":"admin token required"}: expected 401 to be 200 // Object.is equality
+ × tests/db/zz-red-head-authoring.dbtest.ts > DP-33 — the governed delete, on the real database > a document with a section (so a revision) answers 409 and stays — the ledger is append-only 59ms
+   → {"error":"admin token required"}: expected 401 to be 409 // Object.is equality
+ × tests/db/zz-red-head-authoring.dbtest.ts > DP-33 — the governed delete, on the real database > a draft that carries a signature answers 409 and stays — the signature keeps its record 30ms
+   → {"error":"Signature rejected: unable to verify the account (§11.200).","code":"ACCOUNT_STATE_UNKNOWN"}: expected 401 to be 200 // Object.is equality
+ × tests/db/zz-red-head-authoring.dbtest.ts > DP-33 — the governed delete, on the real database > another organisation's admin gets 404 for this organisation's document, and it stays 19ms
+   → expected 401 to be 404 // Object.is equality
+{"level":30,"time":"2026-10-01T06:02:27.589Z","pid":21083,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: FREEZE on doc 3450ae5c-de61-4940-9ce9-fff7e375b80f by d***@c2c.test"}
+{"level":30,"time":"2026-10-01T06:02:27.659Z","pid":21083,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: FREEZE on doc 196d0142-8481-4c97-a39b-36c5740177f7 by d***@c2c.test"}
+ × tests/db/zz-red-head-authoring.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > an admin freezing without the password is refused by the ceremony; the document stays a draft 191ms
+   → expected 200 to be 400 // Object.is equality
+{"level":30,"time":"2026-10-01T06:02:27.710Z","pid":21083,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: FREEZE on doc d2b98a3c-1ff6-433f-bef4-5ed785a2acd7 by d***@c2c.test"}
+ × tests/db/zz-red-head-authoring.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > a member without a signing role is refused before any credential is read 58ms
+   → expected 200 to be 403 // Object.is equality
+ × tests/db/zz-red-head-authoring.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > an admin with the ceremony seals it, and the signature row names the snapshot it sealed 61ms
+   → expected [] to have a length of 1 but got +0
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/zz-red-head-authoring.dbtest.ts > DP-33 — the governed delete, on the real database > an organisation member (not owner/admin/manager) is refused and the document stays
+AssertionError: expected 401 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 401
+
+ ❯ tests/db/zz-red-head-authoring.dbtest.ts:168:24
+    166|       .set('Authorization', actors.member.auth)
+    167|       .send({ reason: REASON });
+    168|     expect(res.status).toBe(403);
+       |                        ^
+    169|     expect(await docRow(id)).toBeTruthy();
+    170|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  tests/db/zz-red-head-authoring.dbtest.ts > DP-33 — the governed delete, on the real database > an admin deletes an empty document of their organisation; the chained row names the actor and the reason
+AssertionError: {"error":"admin token required"}: expected 401 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 401
+
+ ❯ tests/db/zz-red-head-authoring.dbtest.ts:178:50
+    176|       .set('Authorization', actors.admin.auth)
+    177|       .send({ reason: REASON });
+    178|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+       |                                                  ^
+    179|     expect(await docRow(id)).toBeUndefined();
+    180|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  tests/db/zz-red-head-authoring.dbtest.ts > DP-33 — the governed delete, on the real database > a document with a section (so a revision) answers 409 and stays — the ledger is append-only
+AssertionError: {"error":"admin token required"}: expected 401 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 401
+
+ ❯ tests/db/zz-red-head-authoring.dbtest.ts:205:50
+    203|       .set('Authorization', actors.admin.auth)
+    204|       .send({ reason: REASON });
+    205|     expect(res.status, JSON.stringify(res.body)).toBe(409);
+       |                                                  ^
+    206|     expect(res.body.code).toBe('AUTHORING_DOCUMENT_HAS_HISTORY');
+    207|     expect(await docRow(id)).toBeTruthy();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  tests/db/zz-red-head-authoring.dbtest.ts > DP-33 — the governed delete, on the real database > a draft that carries a signature answers 409 and stays — the signature keeps its record
+AssertionError: {"error":"Signature rejected: unable to verify the account (§11.200).","code":"ACCOUNT_STATE_UNKNOWN"}: expected 401 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 401
+
+ ❯ tests/db/zz-red-head-authoring.dbtest.ts:216:50
+    214|       .set('Authorization', actors.admin.auth)
+    215|       .send({ meaning: 'AUTHOR', intent: 'dbtest-p130: authorship atte…
+    216|     expect(sig.status, JSON.stringify(sig.body)).toBe(200);
+       |                                                  ^
+    217|     const res = await request(actors.admin.app)
+    218|       .delete(`/api/authoring/docs/${id}`)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  tests/db/zz-red-head-authoring.dbtest.ts > DP-33 — the governed delete, on the real database > another organisation's admin gets 404 for this organisation's document, and it stays
+AssertionError: expected 401 to be 404 // Object.is equality
+
+- Expected
++ Received
+
+- 404
++ 401
+
+ ❯ tests/db/zz-red-head-authoring.dbtest.ts:232:24
+    230|       .set('Authorization', actors.outsider.auth)
+    231|       .send({ reason: REASON });
+    232|     expect(res.status).toBe(404);
+       |                        ^
+    233|     expect(await docRow(id)).toBeTruthy();
+    234|     // And the outsider's own organisation is untouched by the attempt.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  tests/db/zz-red-head-authoring.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > an admin freezing without the password is refused by the ceremony; the document stays a draft
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ tests/db/zz-red-head-authoring.dbtest.ts:246:24
+    244|       .set('Authorization', actors.admin.auth)
+    245|       .send({ reason: 'dbtest-p130: seal attempted without credentials…
+    246|     expect(res.status).toBe(400);
+       |                        ^
+    247|     expect(res.body.code).toBe('PASSWORD_REQUIRED');
+    248|     expect(String((await docRow(id))?.status).toUpperCase()).not.toBe(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  tests/db/zz-red-head-authoring.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > a member without a signing role is refused before any credential is read
+AssertionError: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ tests/db/zz-red-head-authoring.dbtest.ts:257:24
+    255|       .set('Authorization', actors.member.auth)
+    256|       .send({ reason: 'dbtest-p130: member seal attempt', meaning: 'AU…
+    257|     expect(res.status).toBe(403);
+       |                        ^
+    258|     expect(res.body.code).toBe('ESIGNATURE_NO_AUTHORITY');
+    259|     expect(String((await docRow(id))?.status).toUpperCase()).not.toBe(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  tests/db/zz-red-head-authoring.dbtest.ts > DP-35 — a freeze without the ceremony seals nothing, on the real database > an admin with the ceremony seals it, and the signature row names the snapshot it sealed
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/db/zz-red-head-authoring.dbtest.ts:275:22
+    273|       [res.body.signatureId, orgA],
+    274|     );
+    275|     expect(sig.rows).toHaveLength(1);
+       |                      ^
+    276|     expect(sig.rows[0]).toMatchObject({
+    277|       signer_email: 'dbtest-p130-admin@c2c.test',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed (8)
+   Start at  06:02:20
+   Duration  7.67s (transform 3.73s, setup 93ms, import 316ms, tests 6.76s, environment 0ms)
+

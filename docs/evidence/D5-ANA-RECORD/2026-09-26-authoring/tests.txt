@@ -1,0 +1,333 @@
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > Download the record > GETs the export with the bearer token and saves the package as a file
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > Download the record > says so when the session is not authenticated (401), rather than nothing
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > Download the record > shows the server’s refusal on the rail when the export cannot be recorded (503), and saves nothing
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > auditIntegrityNote > speaks only for intact: false on a chained row
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > describeAuditMetadata — comments and bulk decisions recorded whole > describes a comment or reply by its quoted passage, capped at 80 characters
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > describeAuditMetadata — comments and bulk decisions recorded whole > samples the first three texts of a bulk act and claims no omission when none was recorded
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > the audit rail reports each row’s chain verdict > describes a comment row by the passage it quoted
+ ✓ client/src/concept2cure/v2/__tests__/auditRailIntegrity.test.tsx > the audit rail reports each row’s chain verdict > shows the note only on the row whose verdict is intact: false, naming the fields
+ ✓ client/src/concept2cure/v2/__tests__/documentWorkbenchDecisionPayload.test.tsx > the tracked-change decision POST carries the AnA turn record > "Accept all" sends one bulk act whose every change names its own turn
+ ✓ client/src/concept2cure/v2/__tests__/documentWorkbenchDecisionPayload.test.tsx > the tracked-change decision POST carries the AnA turn record > a human's change is sent with no turn record at all — never a guessed one
+ ✓ client/src/concept2cure/v2/__tests__/documentWorkbenchDecisionPayload.test.tsx > the tracked-change decision POST carries the AnA turn record > a single accept sends the turn record of the suggestion that was accepted
+ ✓ client/src/concept2cure/v2/__tests__/documentWorkbenchDecisionPayload.test.tsx > the tracked-change decision POST carries the AnA turn record > two adjacent drafts from two turns are two rows, and each decision names its own turn
+ ✓ client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts > a human insertion names no turn record > a human typing after an AnA draft that is resolved keeps no turn record
+ ✓ client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts > a human insertion names no turn record > a human typing at the end of a pending AnA draft is their own change, naming no turn
+ ✓ client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts > a human insertion names no turn record > typed text is tracked as the human author with sourceRecord null
+ ✓ client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts > an AnA draft carries its turn record into the saved HTML > a stored AnA insertion from before the attribute existed parses as sourceRecord null, never a guess
+ ✓ client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts > an AnA draft carries its turn record into the saved HTML > getHTML → setContent restores the attribute on the mark
+ ✓ client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts > an AnA draft carries its turn record into the saved HTML > insertSuggestedContent renders data-source-record on every insertion it creates
+ ✓ client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts > an AnA draft carries its turn record into the saved HTML > parses stored section HTML written by an earlier session
+ ✓ client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts > an AnA draft carries its turn record into the saved HTML > survives a save and reload: the HTML parses back to the same turn record
+ ✓ client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts > collectSuggestions keeps drafts from different turns apart > does NOT merge an AnA insertion that names a turn with one that names none
+ ✓ client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts > collectSuggestions keeps drafts from different turns apart > does NOT merge two adjacent AnA insertions from different turn records
+ ✓ client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts > collectSuggestions keeps drafts from different turns apart > does merge adjacent spans of the same turn into one suggestion
+ ✓ client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts > collectSuggestions keeps drafts from different turns apart > does merge same-turn spans parsed from stored HTML
+ ✓ client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts > the decision carries the turn record > "Reject all" hands the host one decision per turn, each naming its own
+ ✓ client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts > the decision carries the turn record > decisionOf copies sourceRecord from the range
+ ✓ client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts > the decision carries the turn record > decisionOf keeps null as null — an unknown turn is not invented
+ ✓ client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts > the decision carries the turn record > identical drafts from two turns in one minute are two changes
+ ✓ client/src/concept2cure/v2/__tests__/suggestionSourceRecord.test.ts > the decision carries the turn record > resolving one suggestion in the editor hands the host its turn record
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > the content, its revision, its trail row and the chained row are written on the transaction’s client, between BEGIN and COMMIT
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the authoring_audit_trail INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the doc_revisions INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the database this ran on > had every table and column the routes under test asked for
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > what the record says about the draft > an edited draft: generated_draft is the candidate text and generated_draft_sha256 its hash; the row verifies against its chain
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > what the record says about the draft > an unedited draft (content omitted): generated_draft is absent, its hash is recorded
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > what the record says about the draft > an unedited draft (content sent equal to the candidate): generated_draft is absent, its hash is recorded
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 1 — a decision on a document this tenant does not have > an id that names no document: 404 for single and bulk, and nothing is written
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 1 — a decision on a document this tenant does not have > another tenant’s document: 404 for single and bulk, and nothing is written
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 1 — a decision on a document this tenant does not have > the same decision on this tenant’s own document is recorded (the control)
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 2 — the acts the legacy wrapper wrote carry the real actor, and no invented reason > a review stating why (standalone): the actor on both rows, and the reviewer’s words as the reason
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 2 — the acts the legacy wrapper wrote carry the real actor, and no invented reason > a section reorder (on the transaction): actor on the trail row and the chained row; no reason
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 2 — the acts the legacy wrapper wrote carry the real actor, and no invented reason > an approval with no comment: the actor, and no reason at all
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 2 — the acts the legacy wrapper wrote carry the real actor, and no invented reason > no row anywhere carries the reason "Legacy audit event"
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > the database this ran on > had every table and column the routes under test asked for
+ ✓ server/routes/__tests__/authoring-record-comments.pglite.test.ts > (1) a comment and its record, written through POST /sections/:id/comment > writes the comment, a trail row with the words and the quoted passage, and a chained row naming it
+ ✓ server/routes/__tests__/authoring-record-comments.pglite.test.ts > (2) the comment and its record commit together or not at all > when the chained audit write fails: 5xx, and no comment row and no trail row remain
+ ✓ server/routes/__tests__/authoring-record-comments.pglite.test.ts > (3) the document is the section’s > a body naming another document is refused: 400, and nothing is filed under either document
+ ✓ server/routes/__tests__/authoring-record-comments.pglite.test.ts > (3) the document is the section’s > a body naming the section’s own document, in any case, is accepted and filed there
+ ✓ server/routes/__tests__/authoring-record-comments.pglite.test.ts > (4) a reply belongs to a thread on the same section > a reply whose parent is on another section → 400, and nothing is written
+ ✓ server/routes/__tests__/authoring-record-comments.pglite.test.ts > (4) a reply belongs to a thread on the same section > the same reply on the parent’s own section is accepted and recorded as reply_added
+ ✓ server/routes/__tests__/authoring-record-comments.pglite.test.ts > (5) PATCH /comments/:id — resolving and reopening are recorded, with who and why > reopen: transition reopened, from resolved to open, the earlier note kept as before_content
+ ✓ server/routes/__tests__/authoring-record-comments.pglite.test.ts > (5) PATCH /comments/:id — resolving and reopening are recorded, with who and why > resolve with a note: transition resolved, the note as the reason, both statuses, the real actor
+ ✓ server/routes/__tests__/authoring-record-comments.pglite.test.ts > (6) the engine holds the record, whoever asks > refuses UPDATE, DELETE and TRUNCATE on authoring_audit_trail
+ ✓ server/routes/__tests__/authoring-record-comments.pglite.test.ts > (6) the engine holds the record, whoever asks > refuses to rewrite a comment’s words or quoted passage, and lets its status move
+ ✓ server/routes/__tests__/authoring-record-comments.pglite.test.ts > (7) GET /docs/:docId/audit verifies every row against its chain entry > a comment’s words rewritten past the guard — hash column rewritten to match — read intact:false, naming after_content
+ ✓ server/routes/__tests__/authoring-record-comments.pglite.test.ts > (7) GET /docs/:docId/audit verifies every row against its chain entry > a quote rewritten past the guard reads intact:false, naming metadata; the other rows stay intact
+ ✓ server/routes/__tests__/authoring-record-comments.pglite.test.ts > (7) GET /docs/:docId/audit verifies every row against its chain entry > every row written through the routes above reads intact
+ ✓ server/routes/__tests__/authoring-record-comments.pglite.test.ts > the database this ran on > had every table and column the routes under test asked for
+ ✓ server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 1 — a long proposed text is recorded whole > a 1,200-character insertion lands in the trail metadata in full, with its SHA-256, and verifies against the chain
+ ✓ server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 2 — "Accept all" records every change > 25 changes → 25 upserts, ONE trail row carrying all 25 texts whole with their hashes, one chain entry
+ ✓ server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 3 — the AnA turn a suggestion came from is verified in the tenant > bulk: each change is resolved on its own — own, foreign, non-id and none
+ ✓ server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 3 — the AnA turn a suggestion came from is verified in the tenant > single: a claim that is not a record id → unverified, "not a record id"
+ ✓ server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 3 — the AnA turn a suggestion came from is verified in the tenant > single: a turn record of this organization → verified, with that record’s SHA-256
+ ✓ server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 3 — the AnA turn a suggestion came from is verified in the tenant > single: another organization’s turn record → unverified, "no such turn record in this organization"
+ ✓ server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 4 — a decision is filed only against a section of its own document > single and bulk: a section of ANOTHER document → 400, and nothing is written
+ ✓ server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 5 — the decision and its record commit together, or neither does > audit_logs refusing the chained row → 500, and no decision upsert and no trail row survive
+ ✓ server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 6 — the reason is the person’s, or none > bulk: a stated reason is recorded the same way
+ ✓ server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 6 — the reason is the person’s, or none > no reason, or only whitespace → null in the trail and in audit_logs, never a made-up one
+ ✓ server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 6 — the reason is the person’s, or none > single: a stated reason is the trail’s change_reason and the chain row’s audit_logs.reason
+ ✓ server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 7 — a sealed document takes no decision (existing behaviour) > FROZEN → 403 DOCUMENT_FROZEN on single and bulk, and nothing is written
+ ✓ server/routes/__tests__/authoring-record-decisions.pglite.test.ts > the harness builds the schema a deploy builds > lists the authoring subsystem unit exactly as the durable applier declares it
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (i) the export is recorded before it leaves > (i) writes exactly one chained "authoring.record.exported" row, committed before the response is sent
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (ii) the package verifies offline > (ii) every chained event in the package verifies offline by the package’s own steps
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (ii) the same steps catch a rewrite > (ii) the same offline steps catch a quoted passage rewritten past the table’s guard
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (iii) no record, no export > (iii) when the export row cannot be written: 503 AUTHORING_RECORD_EXPORT_NOT_RECORDED, and no package leaves
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (iv) an id that is not a document id > is 404 on the read and the export — not the uuid cast's 500 — and nothing is written
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (iv) tenancy > (iv) another tenant’s document is 404 in both directions — nothing written, nothing sent
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (v) a chain walk that could not run > (v) when the tenant chain walk throws, tenantChain.ok is null in the package and in the recorded row — never true
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > the database this ran on > had every table and column the routes under test asked for
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > 400 when draftId is missing
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > 404 when the section is not found for this tenant (past the edit guard)
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > 410 when the draft candidate is missing/expired/already accepted
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > 500 (fails closed) when lineage cannot be recorded — rolls content back
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > accepts a draft: consumes it, records lineage, returns the attribution summary
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > attributes the EDITED text when the client sends its own content
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > commits the accepted draft to the filing, and reports whether it landed
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > never records "Accepted AI draft" as the reason for change
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > records the author's stated reason when they give one
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > POST /documents/:id/tracked-change-decisions > keeps the whole proposed text, with its hash — accepting strips the mark, so this is the only copy
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > POST /documents/:id/tracked-change-decisions > records the refused TEXT, not just an id the document no longer holds
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > POST /documents/:id/tracked-change-decisions > refuses a verdict that is neither accept nor reject
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > POST /documents/:id/tracked-change-decisions > still records the decision when no context is supplied
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > POST /documents/:id/tracked-change-decisions/bulk > records every change of an "Accept all", whole — no cap, nothing left out
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > POST /documents/:id/tracked-change-decisions/bulk > records one act, with the changes it covered
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > POST /documents/:id/tracked-change-decisions/bulk > records the bulk act even when no per-change context is sent
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > SEC-A-7: a decision names a section of its own document, and a change type the editor has > a changeType the editor does not have is not recorded (null, single and bulk)
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > SEC-A-7: a decision names a section of its own document, and a change type the editor has > a decision that names no section is recorded, as before
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > SEC-A-7: a decision names a section of its own document, and a change type the editor has > a sectionId that is not a uuid is refused without a query — Postgres would answer 22P02, a 500
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > SEC-A-7: a decision names a section of its own document, and a change type the editor has > bulk: another document's section is refused — no rows, no audit event
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > SEC-A-7: a decision names a section of its own document, and a change type the editor has > single: a section of this document is recorded, as before
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > SEC-A-7: a decision names a section of its own document, and a change type the editor has > single: another document's section is refused 400 SECTION_NOT_IN_DOCUMENT — no row, no audit event
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > SEC-A-7: a decision names a section of its own document, and a change type the editor has > the lookup is scoped to this document AND this tenant
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > bulk audit metadata carries what the single route already carries > omits sectionId when the caller sends none, same as the single route
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > bulk audit metadata carries what the single route already carries > records sectionId and each change's proposedAt, mirroring the single route
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > proposedBy — a machine author is canonicalised, everything else is caller-asserted text > an authorId of "ana" is canonicalised — the caller-supplied authorName is IGNORED
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > proposedBy — a machine author is canonicalised, everything else is caller-asserted text > an ordinary human proposer is recorded as unverified, caller-asserted text
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > proposedBy — a machine author is canonicalised, everything else is caller-asserted text > an unrecognised authorId (not "ana") is NOT treated as a machine — recorded as its own text
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > proposedBy — a machine author is canonicalised, everything else is caller-asserted text > bounds an unverified proposer name — an audit row is not a place for arbitrary text
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > proposedBy — a machine author is canonicalised, everything else is caller-asserted text > bulk: a machine author is canonicalised per change, mirroring the single route
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > the FROZEN/APPROVED document lock — accept/reject must not write past it > refuses a bulk accept against a FROZEN document — no rows written
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > the FROZEN/APPROVED document lock — accept/reject must not write past it > refuses a single accept/reject against a FROZEN document — no row written
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > the FROZEN/APPROVED document lock — accept/reject must not write past it > refuses a single accept/reject against an APPROVED document
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > the FROZEN/APPROVED document lock — accept/reject must not write past it > still accepts a bulk decision against an ordinary DRAFT document
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > the FROZEN/APPROVED document lock — accept/reject must not write past it > still accepts against an ordinary DRAFT document — the fix is not a blanket deny
+ ✓ server/services/ana/__tests__/governed-reason-not-invented.test.ts > AnaToolExecutor.ts — no governed ledger write can carry an invented reason > every reason is a variable — no literal, template, fallback helper, or ?? / || default
+ ✓ server/services/ana/__tests__/governed-reason-not-invented.test.ts > AnaToolExecutor.ts — no governed ledger write can carry an invented reason > every reason variable is resolved before the handler opens a connection
+ ✓ server/services/ana/__tests__/governed-reason-not-invented.test.ts > AnaToolExecutor.ts — no governed ledger write can carry an invented reason > every tool that records a governed action is asked for its reason before confirmation
+ ✓ server/services/ana/__tests__/governed-reason-not-invented.test.ts > AnaToolExecutor.ts — no governed ledger write can carry an invented reason > finds the population it guards (a scan that matches nothing proves nothing)
+ ✓ server/services/ana/__tests__/governed-reason-not-invented.test.ts > AnaToolExecutor.ts — no governed ledger write can carry an invented reason > no helper in the file takes a fallback reason
+ ✓ server/services/ana/__tests__/governed-reason-not-invented.test.ts > a governed AnA write without the person's reason is refused before anything is written > add_protocol_review_comment — governedPdev helper > records exactly the reason the person gave, trimmed
+ ✓ server/services/ana/__tests__/governed-reason-not-invented.test.ts > a governed AnA write without the person's reason is refused before anything is written > add_protocol_review_comment — governedPdev helper > refuses on a reason that is not text, and the invented sentence never reaches the ledger
+ ✓ server/services/ana/__tests__/governed-reason-not-invented.test.ts > a governed AnA write without the person's reason is refused before anything is written > add_protocol_review_comment — governedPdev helper > refuses on a reason under 8 characters once trimmed, and the invented sentence never reaches the ledger
+ ✓ server/services/ana/__tests__/governed-reason-not-invented.test.ts > a governed AnA write without the person's reason is refused before anything is written > add_protocol_review_comment — governedPdev helper > refuses on an empty reason, and the invented sentence never reaches the ledger
+ ✓ server/services/ana/__tests__/governed-reason-not-invented.test.ts > a governed AnA write without the person's reason is refused before anything is written > add_protocol_review_comment — governedPdev helper > refuses on no reason at all, and the invented sentence never reaches the ledger
+ ✓ server/services/ana/__tests__/governed-reason-not-invented.test.ts > a governed AnA write without the person's reason is refused before anything is written > add_protocol_review_comment — governedPdev helper > tells the model to ask the person, and not to supply a reason they did not give
+ ✓ server/services/ana/__tests__/governed-reason-not-invented.test.ts > a governed AnA write without the person's reason is refused before anything is written > create_clinical_investigator — handler-owned transaction (fcoiReason) > records exactly the reason the person gave, trimmed
+ ✓ server/services/ana/__tests__/governed-reason-not-invented.test.ts > a governed AnA write without the person's reason is refused before anything is written > create_clinical_investigator — handler-owned transaction (fcoiReason) > refuses on a reason that is not text, and the invented sentence never reaches the ledger
+ ✓ server/services/ana/__tests__/governed-reason-not-invented.test.ts > a governed AnA write without the person's reason is refused before anything is written > create_clinical_investigator — handler-owned transaction (fcoiReason) > refuses on a reason under 8 characters once trimmed, and the invented sentence never reaches the ledger
+ ✓ server/services/ana/__tests__/governed-reason-not-invented.test.ts > a governed AnA write without the person's reason is refused before anything is written > create_clinical_investigator — handler-owned transaction (fcoiReason) > refuses on an empty reason, and the invented sentence never reaches the ledger
+ ✓ server/services/ana/__tests__/governed-reason-not-invented.test.ts > a governed AnA write without the person's reason is refused before anything is written > create_clinical_investigator — handler-owned transaction (fcoiReason) > refuses on no reason at all, and the invented sentence never reaches the ledger
+ ✓ server/services/ana/__tests__/governed-reason-not-invented.test.ts > a governed AnA write without the person's reason is refused before anything is written > create_clinical_investigator — handler-owned transaction (fcoiReason) > tells the model to ask the person, and not to supply a reason they did not give
+ ✓ server/services/ana/__tests__/governed-reason-not-invented.test.ts > a governed AnA write without the person's reason is refused before anything is written > create_qms_document — QMS controlled document (qmsReason) > records exactly the reason the person gave, trimmed
+ ✓ server/services/ana/__tests__/governed-reason-not-invented.test.ts > a governed AnA write without the person's reason is refused before anything is written > create_qms_document — QMS controlled document (qmsReason) > refuses on a reason that is not text, and the invented sentence never reaches the ledger
+ ✓ server/services/ana/__tests__/governed-reason-not-invented.test.ts > a governed AnA write without the person's reason is refused before anything is written > create_qms_document — QMS controlled document (qmsReason) > refuses on a reason under 8 characters once trimmed, and the invented sentence never reaches the ledger
+ ✓ server/services/ana/__tests__/governed-reason-not-invented.test.ts > a governed AnA write without the person's reason is refused before anything is written > create_qms_document — QMS controlled document (qmsReason) > refuses on an empty reason, and the invented sentence never reaches the ledger
+ ✓ server/services/ana/__tests__/governed-reason-not-invented.test.ts > a governed AnA write without the person's reason is refused before anything is written > create_qms_document — QMS controlled document (qmsReason) > refuses on no reason at all, and the invented sentence never reaches the ledger
+ ✓ server/services/ana/__tests__/governed-reason-not-invented.test.ts > a governed AnA write without the person's reason is refused before anything is written > create_qms_document — QMS controlled document (qmsReason) > tells the model to ask the person, and not to supply a reason they did not give
+ ✓ server/services/ana/__tests__/governed-reason-not-invented.test.ts > a governed AnA write without the person's reason is refused before anything is written > triage_compliance_attention — writes before its ledger row > records exactly the reason the person gave, trimmed
+ ✓ server/services/ana/__tests__/governed-reason-not-invented.test.ts > a governed AnA write without the person's reason is refused before anything is written > triage_compliance_attention — writes before its ledger row > refuses on a reason that is not text, and the invented sentence never reaches the ledger
+ ✓ server/services/ana/__tests__/governed-reason-not-invented.test.ts > a governed AnA write without the person's reason is refused before anything is written > triage_compliance_attention — writes before its ledger row > refuses on a reason under 8 characters once trimmed, and the invented sentence never reaches the ledger
+ ✓ server/services/ana/__tests__/governed-reason-not-invented.test.ts > a governed AnA write without the person's reason is refused before anything is written > triage_compliance_attention — writes before its ledger row > refuses on an empty reason, and the invented sentence never reaches the ledger
+ ✓ server/services/ana/__tests__/governed-reason-not-invented.test.ts > a governed AnA write without the person's reason is refused before anything is written > triage_compliance_attention — writes before its ledger row > refuses on no reason at all, and the invented sentence never reaches the ledger
+ ✓ server/services/ana/__tests__/governed-reason-not-invented.test.ts > a governed AnA write without the person's reason is refused before anything is written > triage_compliance_attention — writes before its ledger row > tells the model to ask the person, and not to supply a reason they did not give
+ ✓ server/services/ana/__tests__/governed-reason-not-invented.test.ts > the person is asked why before they are asked to confirm > an unconfirmed governed write without a reason asks for the reason, not for confirmation
+ ✓ server/services/ana/__tests__/governed-reason-not-invented.test.ts > the person is asked why before they are asked to confirm > with the reason stated, it is proposed for confirmation
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > files the turn on the request’s own connection, never the shared pool
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > files the turn under the tenant the auth middleware attaches, not only req.organizationId
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > records a failed turn
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > POST /api/claude/agent > records the turn and returns its status
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > recordLoopTurn > a turn with no organization is not recorded, and says why
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > recordLoopTurn > files the tool calls, an error result as a failed step, the answer, and what the door cannot report
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records a failed turn and emits its status with ana:error
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records a stopped turn when the signal was aborted
+ ✓ server/services/ana/__tests__/turn-record-loop.test.ts > the /ana socket turn > records an answered turn and emits its status with ana:done
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > a turn record is written whole, or not at all > commits the record, every text it references and a chain row carrying its hash
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > a turn record is written whole, or not at all > leaves nothing behind when the chain write fails
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > a turn record is written whole, or not at all > stores a repeated text once — turn 40 references the history, it does not copy it
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > tampering is caught even past the triggers > a record rewritten with a consistent hash no longer matches the chain
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > tampering is caught even past the triggers > a text that is missing is named
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > DELETE FROM ana_record_blobs
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > DELETE FROM ana_turn_records
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > TRUNCATE ana_record_blobs
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > TRUNCATE ana_turn_records
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > UPDATE ana_record_blobs SET chars = 0
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > UPDATE ana_turn_records SET outcome = 'failed'
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > the engine refuses to change a record > refuses a record or a text stored under a hash that is not its own
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > what the record will not claim > controls that could not be read are recorded as unknown, not as none
+ ✓ server/services/ana/__tests__/turn-record.pglite.test.ts > what the record will not claim > numbers model calls in order, and gives each later call the input staged for it
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > EXECUTE is not public: a role without the grant cannot open the door
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > SET LOCAL app.audit_archive_bypass = 'on' no longer opens the door for the runtime role (Phase A §9)
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > UPDATE and TRUNCATE on audit_logs stay refused
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > a plain DELETE as the runtime role is refused with the IMMUTABILITY_VIOLATION shape
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > refuses a batch containing a row newer than the cutoff, and writes no record
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > refuses a batch naming a row that is not in audit_logs, and an empty batch
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > refuses a cutoff inside the 24-month hot window even for old rows
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > refuses an empty locator, an empty checksum and a checksum that is not a sha256
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the GUC does not open the door for the superuser session either
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the archive record is itself append-only
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the door is owned by audit_archiver, is SECURITY DEFINER, and audit_archiver cannot log in
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the migration replays cleanly (Rule 1): a second apply changes nothing and the door still works
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the service issues only the door call: no bypass GUC, no raw DELETE, in its code
+ ✓ server/services/audit/__tests__/audit-archive-delete-door.pglite.integration.test.ts > audit_logs DELETE door (DP-04 / P0-8a) > the service statement deletes an old, archived batch and writes the archive record
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > computeBatchHash > produces different hashes for different content
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > computeBatchHash > produces the same hash for the same rows regardless of key order
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > a door that reports a count other than the batch size is treated as a refusal
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > a refusal by the door aborts the batch, is counted and reported, and leaves the rows in hot
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > aborts on sink throw and leaves rows in hot
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > archives rows past cutoff and removes them from hot through the door
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > calls the door once per batch with the ids, the sink locator, the stored checksum and the cutoff, after the sink confirmed
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > chunks large datasets into multiple batches, one door call each
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > does NOT call the door when the sink reports a checksum mismatch
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > never opens the trigger with a session setting and never issues a raw DELETE
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > respects maxBatches as a time-box
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > returns zero work when nothing past cutoff
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > the default cutoff is never inside the 24-month floor the door enforces
+ ✓ server/services/audit/__tests__/audit-archive.test.ts > runAuditArchive > works on a Pool-shaped client without checking out a dedicated connection
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > does not count a same-named trigger on another table
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names a disabled Vault record guard (VR-06): a recorded version is rewritable again
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names a disabled trigger — the catalog row exists, the protection does not
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names a dropped trigger
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > names every authoring trigger file the registry names, literally
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > reports an absent store (fresh install before deploy-migrate) as missing its triggers
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > reports ok after the real trigger migrations have been applied
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.pglite.test.ts > assertAuditImmutabilityTriggers against PGlite > stays ok when the migrations replay (they re-run on every deploy, CLAUDE.md Rule 1)
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS > is created by a migration on a deploy applier, under exactly that name (drift guard)
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > EXPECTED_AUDIT_IMMUTABILITY_TRIGGERS > names the immutability triggers of every audit store the sweep verifies
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > fails closed when the probe returns no row for an expected trigger
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > issues one read-only catalog probe over pg_trigger, pg_class and pg_namespace, parameterised
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > names a trigger the catalog does not have (trg_audit_logs_no_delete dropped)
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > propagates a probe failure rather than reporting ok (caller decides the posture)
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > reports a table that does not exist yet as missing every trigger on it
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > reports ok when every expected trigger is present and enabled
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > assertAuditImmutabilityTriggers > treats a disabled trigger (ALTER TABLE … DISABLE TRIGGER) as not protecting the table
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > describeAuditImmutabilityGap > names every missing and disabled trigger, the absent tables and the migration to run
+ ✓ server/services/audit/__tests__/audit-immutability-triggers.test.ts > security-health panel exposure > runs as a critical check that fails when a trigger is missing
+ ✓ server/services/audit/__tests__/audit-integrity-pglite.integration.test.ts > verifyAuditIntegrity against PGlite > detects a tampered row (broken sha256 chain)
+ ✓ server/services/audit/__tests__/audit-integrity-pglite.integration.test.ts > verifyAuditIntegrity against PGlite > fails closed (unverifiable, ok=false) when AUDIT_HMAC_KEY is absent
+ ✓ server/services/audit/__tests__/audit-integrity-pglite.integration.test.ts > verifyAuditIntegrity against PGlite > is ok for an empty log
+ ✓ server/services/audit/__tests__/audit-integrity-pglite.integration.test.ts > verifyAuditIntegrity against PGlite > reports ok for an intact, sealed chain
+ ✓ server/services/audit/__tests__/audit-row-headers.test.ts > setAuditRowHeaders > a lost row: persisted false and the stable code, never the store text
+ ✓ server/services/audit/__tests__/audit-row-headers.test.ts > setAuditRowHeaders > a written row: persisted true and no code
+ ✓ server/services/audit/__tests__/audit-row-headers.test.ts > setAuditRowHeaders > no outcome (no audited write happened): no headers
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > non-production (no-op) > returns 'active' and never throws when NODE_ENV=development
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > non-production (no-op) > returns 'active' and never throws when NODE_ENV=staging
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > non-production (no-op) > returns 'active' and never throws when NODE_ENV=test
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > non-production (no-op) > returns 'active' and never throws when NODE_ENV=unset
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > production > does not echo the key value in the too-short error
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > production > is case-insensitive on NODE_ENV and the accept flag
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > production > refuses to boot when the key is empty or whitespace-only
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > production > refuses to boot when the key is too short
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > production > refuses to boot when the key is unset
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > production > rejects a too-short key even when unsealed is accepted (weak key is a misconfig)
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > production > returns 'active' with a sufficiently long key
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > production > returns 'unsealed-accepted' when the operator explicitly accepts an unsealed ledger
+ ✓ server/services/audit/__tests__/auditSealPosture.test.ts > assertAuditSealPostureForProduction > production > treats a non-"true" accept value as no decision and refuses to boot
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > a write that is not persisted > does not fail the request that caused it
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (absent)
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (empty)
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (negative)
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (not an id)
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (null)
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names no organisation > is written from the scope it arrives in (zero)
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names the user organisation > is written in a scope for exactly that organisation, with no role (a number, from the user record)
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names the user organisation > is written in a scope for exactly that organisation, with no role (a string, from the signed MFA challenge)
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > an event that names the user organisation > leaves the request in the pre-auth scope it arrived in
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > has its own sentence for user_login | saml_no_email
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > has its own sentence for user_login | saml_org_not_resolved
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > has its own sentence for user_login | saml_sso
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > has its own sentence for user_login | saml_user_not_in_organisation
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > has its own sentence for user_login | saml_validation_failed
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > is written into the row the ledger reads
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > names a resend refused at the per-challenge limit
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > never shows a refused sign-in the way it shows a successful one
+ ✓ server/services/audit/__tests__/auth-event-audit.test.ts > what the audit ledger shows for an event > states the outcome even for an event it has no sentence for
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > migrations/20260921_audit_logs_chain_seq.sql on the shared fixture > adds chain_seq, the position trigger and the sequence, and replays without error
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > migrations/20260921_audit_logs_chain_seq.sql on the shared fixture > names the same announcement GUC the writer uses (one recipe)
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > anchors a tenant's first sequenced row to its legacy head
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > assigns increasing chain_seq per tenant and the verifier walks it
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > detects a tampered sequenced row and names the segment
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > diagnoses the pre-fix fork: a legacy row committing to genesis instead of its predecessor
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > records a chained row written without a position as legacy and still verifies it
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > records a row written outside a transaction as legacy (the lock and announcement end with their statement)
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > refuses a row whose tenant_id differs from the position the writer took (fail closed)
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > seals through the same walk: valid when intact, failing closed after a break
+ ✓ server/services/audit/__tests__/chain-order.pglite.test.ts > writer + trigger + verifier > verifies by commit order even when occurred_at runs backwards
+ ✓ server/services/audit/__tests__/chain.test.ts > computeAuditChain (writer) > chains onto the tenant head (order-sensitive)
+ ✓ server/services/audit/__tests__/chain.test.ts > computeAuditChain (writer) > falls back to the pre-fix order, once warned, only for a test fixture without chain_seq
+ ✓ server/services/audit/__tests__/chain.test.ts > computeAuditChain (writer) > locks the tenant chain, reads the tenant head by chain_seq, and announces the position
+ ✓ server/services/audit/__tests__/chain.test.ts > computeAuditChain (writer) > refuses a row whose tenant cannot be resolved outside a test runtime (fail closed)
+ ✓ server/services/audit/__tests__/chain.test.ts > computeAuditChain (writer) > refuses to write against a database without chain_seq outside a test runtime
+ ✓ server/services/audit/__tests__/chain.test.ts > computeAuditChain (writer) > resolves the tenant from the connection when the row carries none
+ ✓ server/services/audit/__tests__/chain.test.ts > computeAuditChain (writer) > resolves the tenant from the request scope when neither row nor connection carries one
+ ✓ server/services/audit/__tests__/chain.test.ts > computeAuditChain (writer) > under vitest, a harness without tenant context gets the legacy recipe: no tenant filter, no announcement
+ ✓ server/services/audit/__tests__/chain.test.ts > computeAuditChain (writer) > uses the genesis hash when the tenant has no prior row
+ ✓ server/services/audit/__tests__/chain.test.ts > computeAuditChainSealed + verifyAuditChainSeals (21 CFR Part 11 §11.70) > detects a tampered seal
+ ✓ server/services/audit/__tests__/chain.test.ts > computeAuditChainSealed + verifyAuditChainSeals (21 CFR Part 11 §11.70) > fails closed on a sealed row the chain walk cannot link
+ ✓ server/services/audit/__tests__/chain.test.ts > computeAuditChainSealed + verifyAuditChainSeals (21 CFR Part 11 §11.70) > produces a verifiable seal when AUDIT_HMAC_KEY is set
+ ✓ server/services/audit/__tests__/chain.test.ts > computeAuditChainSealed + verifyAuditChainSeals (21 CFR Part 11 §11.70) > produces an UNSEALED row (hmacSeal null) when AUDIT_HMAC_KEY is absent
+ ✓ server/services/audit/__tests__/chain.test.ts > computeAuditChainSealed + verifyAuditChainSeals (21 CFR Part 11 §11.70) > verifies a correctly-sealed chain and tolerates interleaved unsealed rows
+ ✓ server/services/audit/__tests__/chain.test.ts > hashPayload > differs for different payloads
+ ✓ server/services/audit/__tests__/chain.test.ts > hashPayload > is deterministic for equal payloads
+ ✓ server/services/audit/__tests__/chain.test.ts > hashPayload > returns a 64-char hex digest
+ ✓ server/services/audit/__tests__/chain.test.ts > verifyAuditChain (reader) > reads every tenant with no tenant predicate, and one tenant with it
+ ✓ server/services/audit/__tests__/chain.test.ts > verifyAuditChain (reader) > refuses a cross-tenant verification on a tenant-scoped connection (fail closed)
+ ✓ server/services/audit/__tests__/chain.test.ts > verifyAuditChain (reader) > reports ok for an intact chain read from the database
+ ✓ server/services/audit/__tests__/chain.test.ts > walkAuditChain (pure) > accepts legacy rows written under the tenant view AND under the global view
+ ✓ server/services/audit/__tests__/chain.test.ts > walkAuditChain (pure) > anchors a tenant's first sequenced row to its legacy head
+ ✓ server/services/audit/__tests__/chain.test.ts > walkAuditChain (pure) > detects a tampered middle row and stops at the first break
+ ✓ server/services/audit/__tests__/chain.test.ts > walkAuditChain (pure) > detects a tampered stored hash on the first row
+ ✓ server/services/audit/__tests__/chain.test.ts > walkAuditChain (pure) > keeps chains of different tenants independent
+ ✓ server/services/audit/__tests__/chain.test.ts > walkAuditChain (pure) > names what a broken legacy row actually commits to (fork diagnosis)
+ ✓ server/services/audit/__tests__/chain.test.ts > walkAuditChain (pure) > orders sequenced rows by chain_seq, not occurred_at (the F-1 ordering half)
+ ✓ server/services/audit/__tests__/chain.test.ts > walkAuditChain (pure) > treats an empty log as ok
+ ✓ server/services/audit/__tests__/chain.test.ts > walkAuditChain (pure) > verifies an intact per-tenant sequenced chain
+ ✓ server/services/audit/__tests__/chainIntegrityMonitor.test.ts > findBrokenChainLinks > does not let one org's hash satisfy another org's link
+ ✓ server/services/audit/__tests__/chainIntegrityMonitor.test.ts > findBrokenChainLinks > flags a row whose previous_hash does not match the prior record_hash
+ ✓ server/services/audit/__tests__/chainIntegrityMonitor.test.ts > findBrokenChainLinks > reports every break, not just the first
+ ✓ server/services/audit/__tests__/chainIntegrityMonitor.test.ts > findBrokenChainLinks > returns [] for an empty chain
+ ✓ server/services/audit/__tests__/chainIntegrityMonitor.test.ts > findBrokenChainLinks > returns nothing for an intact single-org chain
+ ✓ server/services/audit/__tests__/chainIntegrityMonitor.test.ts > findBrokenChainLinks > treats a null previous_hash as "no claim" (genesis or unset writer)
+ ✓ server/services/audit/__tests__/chainIntegrityMonitor.test.ts > findBrokenChainLinks > validates each org chain independently (no cross-tenant break)
+ ✓ server/services/audit/__tests__/concept2cure-signatures-append-only.pglite.test.ts > concept2cure_signatures is append-only > a new signature can be recorded
+ ✓ server/services/audit/__tests__/concept2cure-signatures-append-only.pglite.test.ts > concept2cure_signatures is append-only > deleting the signature is refused, and the signature stands as signed
+ ✓ server/services/audit/__tests__/concept2cure-signatures-append-only.pglite.test.ts > concept2cure_signatures is append-only > deleting the signed artifact (the cascade) is refused, and the signature stands as signed
+ ✓ server/services/audit/__tests__/concept2cure-signatures-append-only.pglite.test.ts > concept2cure_signatures is append-only > deleting the signed version (the cascade) is refused, and the signature stands as signed
+ ✓ server/services/audit/__tests__/concept2cure-signatures-append-only.pglite.test.ts > concept2cure_signatures is append-only > rewriting the meaning is refused, and the signature stands as signed
+ ✓ server/services/audit/__tests__/concept2cure-signatures-append-only.pglite.test.ts > concept2cure_signatures is append-only > rewriting the printed name is refused, and the signature stands as signed
+ ✓ server/services/audit/__tests__/concept2cure-signatures-append-only.pglite.test.ts > concept2cure_signatures is append-only > truncating the table is refused, and the signature stands as signed
+ ✓ server/services/audit/__tests__/concept2cure-signatures-append-only.pglite.test.ts > concept2cure_submission_snapshots is append-only > deleting the snapshot is refused
+ ✓ server/services/audit/__tests__/concept2cure-signatures-append-only.pglite.test.ts > concept2cure_submission_snapshots is append-only > rewriting the hash is refused
+ ✓ server/services/audit/__tests__/concept2cure-signatures-append-only.pglite.test.ts > concept2cure_submission_snapshots is append-only > truncating the table is refused
+ ✓ server/services/audit/__tests__/concept2cure-signatures-append-only.pglite.test.ts > the migration replays > a second run (every deploy runs it again) succeeds and adds no second trigger
+ ✓ server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts > version 1 — exports already issued still verify > reproduces the original expression byte for byte
+ ✓ server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts > version 1 — exports already issued still verify > routes by the manifest's own declaration, not by a global switch
+ ✓ server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts > version 1 — exports already issued still verify > still carries the defect, deliberately, because the signature did
+ ✓ server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts > version 2 — the signature covers the manifest > distinguishes a broken chain from an intact one
+ ✓ server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts > version 2 — the signature covers the manifest > distinguishes exports covering different date ranges
+ ✓ server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts > version 2 — the signature covers the manifest > emits valid JSON
+ ✓ server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts > version 2 — the signature covers the manifest > includes the nested fields that version 1 signed as {}
+ ✓ server/services/audit/__tests__/signed-audit-export-canonicalization.test.ts > version 2 — the signature covers the manifest > is insensitive to key order, which is the point of canonicalizing
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > contains the Vault events, each with its chain hash, sequence and source
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > narrows to one document when asked, and the manifest says so
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > never carries another tenant's rows
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > states the audit_logs chain verdict it was given — and never "intact" without one
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > still carries the audit_events rows it always did
+ ✓ server/services/audit/__tests__/signed-export-audit-logs.pglite.test.ts > the signed export carries audit_logs > verifies, and refuses after a one-byte change to a row
+ ✓ tests/golden-journeys/ind-authoring.journey.test.ts > Journey A phase 1 — authoring loop over HTTP (canonical DDL) > runs the authoring spine
+ ✓ tests/schema-contract/authoring-migration-list-closure.contract.test.ts > authoring migration lists in test harnesses are ALTER-closed > and the applier itself still declares files that ALTER what it creates
+ ✓ tests/schema-contract/authoring-migration-list-closure.contract.test.ts > authoring migration lists in test harnesses are ALTER-closed > finds the harnesses at all — the gate is not vacuous
+ ✓ tests/schema-contract/authoring-migration-list-closure.contract.test.ts > authoring migration lists in test harnesses are ALTER-closed > lists its migrations as calls or array elements, never as bare strings
+ ✓ tests/schema-contract/authoring-migration-list-closure.contract.test.ts > authoring migration lists in test harnesses are ALTER-closed > no harness builds a table and then skips an applier file that alters it
+ Test Files  29 passed (29)
+      Tests  331 passed (331)

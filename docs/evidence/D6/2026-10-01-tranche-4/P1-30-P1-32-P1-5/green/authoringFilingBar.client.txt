@@ -1,0 +1,25 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > freezes through the shared signing dialog: meaning, reason and password go to the real endpoint 373ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > offers only the meanings a freeze carries — approval is E-sign 109ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > sends the authenticator code with the freeze when one is enrolled, and a review meaning as REVIEWER 137ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > a 401 on freeze is shown in the dialog as not sealed — never as "frozen and sealed" 75ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > when the server refuses because the document is not settled > re-asks, naming what is outstanding, instead of reporting a failure 72ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > when the server refuses because the document is not settled > sends the acknowledgement only when the user deliberately chooses to seal, under a fresh signature 141ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > when the server refuses because the document is not settled > sends nothing at all when the user chooses to go back and resolve 84ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > when the server refuses because the document is not settled > a settled document goes straight to the signature, with nothing to acknowledge 46ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > signs through the shared dialog: the password and meaning go to the real endpoint (approves + freezes) 103ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > asks for the authenticator code when one is enrolled, and sends it with the signature 96ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > offers only the meanings the authoring store takes 52ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > a refused credential is shown in the dialog, and nothing is signed or claimed 87ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > disables Freeze once the document is already frozen 15ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — the server’s refusal, before the dialog > disables Freeze and E-sign with the reason as visible, described text 16ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — the server’s refusal, before the dialog > leaves both enabled when the permission is unknown 14ms
+
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+   Start at  06:01:48
+   Duration  3.39s (transform 535ms, setup 353ms, import 563ms, tests 1.42s, environment 605ms)
+

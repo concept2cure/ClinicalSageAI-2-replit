@@ -44,7 +44,8 @@ import { getToolHandler } from '../AnaToolExecutor.js';
 
 describe('convene_drafting_council — claim counts', () => {
   it('reports claims found, checked against data, and unverifiable', async () => {
-    const out = JSON.parse(await getToolHandler('convene_drafting_council')!({ section_path: '2.7.3' }, {}));
+    // A call carries its tenant; the council refuses one that does not (council-tool.test.ts).
+    const out = JSON.parse(await getToolHandler('convene_drafting_council')!({ section_path: '2.7.3' }, { organizationId: 42 }));
 
     expect(out.status).toBe('completed');
     expect(out).toMatchObject({

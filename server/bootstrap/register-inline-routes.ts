@@ -32,6 +32,7 @@ import predictiveSectionsRoutes from '../routes/predictive-sections';
 import { createCsrIntelligenceRoutes } from '../routes/csr-intelligence-routes';
 import csrAnalyticsRouter from '../routes/csr-analytics';
 import { createAuditTrailRoutes } from '../routes/audit-trail-routes';
+import { createComplianceReportRoutes } from '../routes/audit-compliance-reports';
 import { createAnaRiInlineRoutes } from '../routes/ana-ri-inline-routes';
 import evidenceAskRouter from '../routes/evidence-ask';
 import esignatureRouter from '../routes/esignature';
@@ -261,6 +262,7 @@ export function registerInlinePlatformFacadesRoutes({
 
   // Audit trail — append-only, signed exports, chain integrity (21 CFR Part 11).
   app.use('/api', createAuditTrailRoutes(pool));
+  app.use('/api', createComplianceReportRoutes(pool));
 
   // Evidence Ask — single-shot grounded Q&A over the Data Room
   // (Doc System Convergence Phase 4 — Ask-Data-Room flow).

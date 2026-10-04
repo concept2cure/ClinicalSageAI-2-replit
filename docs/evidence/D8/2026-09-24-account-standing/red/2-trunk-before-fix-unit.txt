@@ -1,0 +1,236 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > accepts a normal access token (returns null) 2ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > rejects an MFA-partial token (mfaPending claim) 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > rejects an MFA-partial token (pending_mfa role) 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > rejects a refresh token 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > rejects an MFA challenge token 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > is case-insensitive on the type claim 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > MFA-bypass guard: nonAccessTokenReason > rejects UNKNOWN explicit token classes (allow-list, not deny-list) 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > strict access-token requirement: requireAccessTokenReason > accepts only an explicit access token 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > strict access-token requirement: requireAccessTokenReason > rejects a token with NO type claim (missing_token_type) 1ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > strict access-token requirement: requireAccessTokenReason > rejects every non-access class, known or unknown 0ms
+ × server/__tests__/security/security-swarm-hardening.test.ts > delegated-token rule: a connector-issued token is not a first-party session > every first-party authenticator refuses it, on either entry point 8ms
+   → expected null to be 'delegated_token' // Object.is equality
+ × server/__tests__/security/security-swarm-hardening.test.ts > delegated-token rule: a connector-issued token is not a first-party session > refuses any delegated use, known or unknown, and whatever the type claim says 2ms
+   → expected null to be 'delegated_token' // Object.is equality
+ × server/__tests__/security/security-swarm-hardening.test.ts > delegated-token rule: a connector-issued token is not a first-party session > the connector, and only a caller naming that use, accepts its own tokens 1ms
+   → expected null to be 'delegated_token' // Object.is equality
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > delegated-token rule: a connector-issued token is not a first-party session > an absent or null claim is not a delegated token 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildRegionArray > accepts valid regions without throwing 1ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildRegionArray > defaults to US_EAST when empty/undefined 1ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildRegionArray > rejects an unknown region 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildRegionArray > rejects a SQL-injection payload that breaks out of the array literal 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildEncryptionFieldArray > accepts valid snake_case field names 1ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildEncryptionFieldArray > defaults to the standard PHI fields when empty/undefined 1ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildEncryptionFieldArray > rejects a field name containing a quote / injection characters 0ms
+ ✓ server/__tests__/security/security-swarm-hardening.test.ts > SQLi guard: buildEncryptionFieldArray > rejects an uppercase / non-identifier field name 0ms
+stdout | server/mcp/__tests__/mcp-standing-unreadable.test.ts
+{
+  "timestamp": "2026-09-30T23:18:27.058Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-30T23:18:27.060Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/mcp/__tests__/mcp-standing-unreadable.test.ts
+{
+  "timestamp": "2026-09-30T23:18:27.061Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/mcp/__tests__/mcp-standing-unreadable.test.ts
+[database] Database connection successful
+
+stdout | server/mcp/__tests__/mcp-standing-unreadable.test.ts
+{
+  "timestamp": "2026-09-30T23:18:27.442Z",
+  "level": "info",
+  "message": "[mcp] Concept2Cure MCP connector mounted",
+  "context": {
+    "resource": "http://localhost:5300/mcp",
+    "issuer": "http://localhost:5300/",
+    "resourceMetadataUrl": "http://localhost:5300/.well-known/oauth-protected-resource/mcp"
+  }
+}
+
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > /mcp > control: with the standing readable, the session opens the connector 59ms
+ × server/mcp/__tests__/mcp-standing-unreadable.test.ts > /mcp > refuses as an outage when the standing cannot be read — never admits, never "bad token" 14ms
+   → an unreadable standing admitted the session: expected 200 to be 500 // Object.is equality
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the consent POST > control: with the standing readable, consent issues a code 9ms
+ × server/mcp/__tests__/mcp-standing-unreadable.test.ts > the consent POST > answers 503 and issues no code when the standing cannot be read 6ms
+   → an unreadable standing authorised a client: expected 302 to be 503 // Object.is equality
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the /token exchanges > control: with the standing readable, a refresh rotates and issues 43ms
+ × server/mcp/__tests__/mcp-standing-unreadable.test.ts > the /token exchanges > a refresh refuses as an outage, and neither rotates nor issues 6ms
+   → promise resolved "{ …(5) }" instead of rejecting
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the /token exchanges > control: with the standing readable, a code exchange issues 1ms
+ × server/mcp/__tests__/mcp-standing-unreadable.test.ts > the /token exchanges > a code exchange refuses as an outage and issues nothing 2ms
+   → promise resolved "{ …(5) }" instead of rejecting
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/__tests__/security/security-swarm-hardening.test.ts > delegated-token rule: a connector-issued token is not a first-party session > every first-party authenticator refuses it, on either entry point
+AssertionError: expected null to be 'delegated_token' // Object.is equality
+
+- Expected:
+"delegated_token"
+
++ Received:
+null
+
+ ❯ server/__tests__/security/security-swarm-hardening.test.ts:99:54
+     97|
+     98|   it('every first-party authenticator refuses it, on either entry poin…
+     99|     expect(requireAccessTokenReason(connectorToken)).toBe('delegated_t…
+       |                                                      ^
+    100|     expect(nonAccessTokenReason(connectorToken)).toBe('delegated_token…
+    101|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  server/__tests__/security/security-swarm-hardening.test.ts > delegated-token rule: a connector-issued token is not a first-party session > refuses any delegated use, known or unknown, and whatever the type claim says
+AssertionError: expected null to be 'delegated_token' // Object.is equality
+
+- Expected:
+"delegated_token"
+
++ Received:
+null
+
+ ❯ server/__tests__/security/security-swarm-hardening.test.ts:104:87
+    102|
+    103|   it('refuses any delegated use, known or unknown, and whatever the ty…
+    104|     expect(requireAccessTokenReason({ type: 'access', token_use: 'some…
+       |                                                                                       ^
+    105|     expect(nonAccessTokenReason({ token_use: 'mcp' })).toBe('delegated…
+    106|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  server/__tests__/security/security-swarm-hardening.test.ts > delegated-token rule: a connector-issued token is not a first-party session > the connector, and only a caller naming that use, accepts its own tokens
+AssertionError: expected null to be 'delegated_token' // Object.is equality
+
+- Expected:
+"delegated_token"
+
++ Received:
+null
+
+ ❯ server/__tests__/security/security-swarm-hardening.test.ts:111:103
+    109|     expect(requireAccessTokenReason(connectorToken, { delegatedUse: 'm…
+    110|     // Naming a use admits that use and no other.
+    111|     expect(requireAccessTokenReason({ type: 'access', token_use: 'othe…
+       |                                                                                                       ^
+    112|     // It admits nothing the rule otherwise refuses.
+    113|     expect(requireAccessTokenReason({ type: 'refresh', token_use: 'mcp…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  server/mcp/__tests__/mcp-standing-unreadable.test.ts > /mcp > refuses as an outage when the standing cannot be read — never admits, never "bad token"
+AssertionError: an unreadable standing admitted the session: expected 200 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 200
+
+ ❯ server/mcp/__tests__/mcp-standing-unreadable.test.ts:123:71
+    121|     standing.readable = false;
+    122|     const res = await initialize();
+    123|     expect(res.status, 'an unreadable standing admitted the session').…
+       |                                                                       ^
+    124|     expect(res.headers['www-authenticate'] ?? '').not.toContain('inval…
+    125|     expect(JSON.stringify(res.body)).toContain('could not be checked');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  server/mcp/__tests__/mcp-standing-unreadable.test.ts > the consent POST > answers 503 and issues no code when the standing cannot be read
+AssertionError: an unreadable standing authorised a client: expected 302 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 302
+
+ ❯ server/mcp/__tests__/mcp-standing-unreadable.test.ts:139:70
+    137|     standing.readable = false;
+    138|     const res = await consent();
+    139|     expect(res.status, 'an unreadable standing authorised a client').t…
+       |                                                                      ^
+    140|     expect(res.body.error).toBe('temporarily_unavailable');
+    141|     expect(res.headers.location).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  server/mcp/__tests__/mcp-standing-unreadable.test.ts > the /token exchanges > a refresh refuses as an outage, and neither rotates nor issues
+AssertionError: promise resolved "{ …(5) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "access_token": "<token redacted>",
++   "expires_in": 3600,
++   "refresh_token": "7.issued-refresh-token-issued-refresh-token-issued-refresh",
++   "scope": "c2c:read",
++   "token_type": "bearer",
+  }
+
+ ❯ server/mcp/__tests__/mcp-standing-unreadable.test.ts:155:70
+    153|   it('a refresh refuses as an outage, and neither rotates nor issues',…
+    154|     standing.readable = false;
+    155|     await expect(provider.exchangeRefreshToken(client, '7.presented'))…
+       |                                                                      ^
+    156|       name: 'ServerError',
+    157|       errorCode: 'server_error',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  server/mcp/__tests__/mcp-standing-unreadable.test.ts > the /token exchanges > a code exchange refuses as an outage and issues nothing
+AssertionError: promise resolved "{ …(5) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "access_token": "<token redacted>",
++   "expires_in": 3600,
++   "refresh_token": "7.issued-refresh-token-issued-refresh-token-issued-refresh",
++   "scope": "c2c:read",
++   "token_type": "bearer",
+  }
+
+ ❯ server/mcp/__tests__/mcp-standing-unreadable.test.ts:171:70
+    169|   it('a code exchange refuses as an outage and issues nothing', async …
+    170|     standing.readable = false;
+    171|     await expect(provider.exchangeAuthorizationCode(client, '7.code'))…
+       |                                                                      ^
+    172|       name: 'ServerError',
+    173|       errorCode: 'server_error',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  7 failed | 23 passed (30)
+   Start at  23:18:23
+   Duration  3.66s (transform 1.88s, setup 238ms, import 965ms, tests 2.77s, environment 0ms)
+

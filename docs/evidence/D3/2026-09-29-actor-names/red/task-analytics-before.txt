@@ -1,0 +1,40 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-29T17:39:55.299Z","pid":2750,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-29T17:39:55.301Z","pid":2750,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-29T17:39:55.301Z","pid":2750,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/actor-vanishing.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/actor-vanishing.dbtest.ts
+[database] Database connection successful
+
+{"level":30,"time":"2026-09-29T17:39:56.188Z","pid":2750,"hostname":"vm","context":{"userId":1170,"tenantId":90301,"resourceId":"wo03_2750_mumyopqq"},"msg":"[audit-service] [AUDIT] data_modify actor_vanishing_contract"}
+ ↓ tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the sentinel still reports the leaver's over-allocation, by name
+ ↓ tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the CRO portfolio keeps the leaver as lead of record, not the next assignee
+ ↓ tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the project home keeps the leaver on the team and as the project's lead
+ ↓ tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > the RBM board names the approver and owners who left, and never calls an owned action "Unassigned"
+ × tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > task analytics keeps the leaver's work in team productivity 23ms
+   → expected [] to include 'WO03 vanishing-leaver'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/actor-vanishing.dbtest.ts > work held by someone who left stays visible, and theirs (D3) > task analytics keeps the leaver's work in team productivity
+AssertionError: expected [] to include 'WO03 vanishing-leaver'
+ ❯ tests/db/actor-vanishing.dbtest.ts:205:49
+    203|   it("task analytics keeps the leaver's work in team productivity", as…
+    204|     const a = await inA(() => loadTaskAnalytics(ORG_A, projects[0]));
+    205|     expect(a.teamProductivity.map(t => t.name)).toContain(leaverName);
+       |                                                 ^
+    206|   });
+    207| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+   Start at  17:39:53
+   Duration  3.01s (transform 1.49s, setup 73ms, import 2.27s, tests 378ms, environment 0ms)
+

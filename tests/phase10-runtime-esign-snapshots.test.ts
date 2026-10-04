@@ -27,6 +27,9 @@ const BACKEND = path.join(ROOT, 'server/routes/concept2cure.ts');
 const EXPORTS = path.join(ROOT, 'server/routes/c2c/exports.ts');
 // The artifact domain (status, signatures, snapshots) moved to its own router (L53, slice 8).
 const ARTIFACTS = path.join(ROOT, 'server/routes/c2c/artifacts.ts');
+/* 2026-09-28 (D5): the approve/lock signature and the lock snapshot are written by
+   the signed act the status route commits (server/services/artifact-signed-act.ts). */
+const SIGNED_ACT = path.join(ROOT, 'server/services/artifact-signed-act.ts');
 // GovernedDocumentPanel.tsx was removed with the disconnected legacy island in
 // the design-system port (CLAUDE.md), taking 10H–10K with it. The backend
 // governance wiring (10A–10G) stays fully covered.
@@ -126,10 +129,10 @@ describe('10B — Backend: attestation validation', () => {
 // ── 10C: Backend — signature creation on approve/lock ────────────────────────
 
 describe('10C — Backend: signature creation on approve/lock', () => {
-  const src = readSrc(ARTIFACTS);
+  const src = readSrc(SIGNED_ACT);
 
   it('creates signature record on approve/lock transitions', () => {
-    // The status PUT handler should insert into concept2cureSignatures
+    // The signed act the status PUT handler commits inserts into concept2cureSignatures
     expect(src).toMatch(/concept2cureSignatures.*insert|insert.*concept2cureSignatures/s);
   });
 
@@ -152,7 +155,7 @@ describe('10C — Backend: signature creation on approve/lock', () => {
 // ── 10D: Backend — snapshot creation on lock ─────────────────────────────────
 
 describe('10D — Backend: snapshot creation on lock/publish', () => {
-  const src = readSrc(ARTIFACTS);
+  const src = readSrc(SIGNED_ACT);
 
   it('inserts into concept2cureSubmissionSnapshots on lock', () => {
     expect(src).toMatch(

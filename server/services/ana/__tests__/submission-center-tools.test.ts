@@ -102,20 +102,34 @@ describe('compute_lifecycle_operations (pure)', () => {
     expect(out.summary).toMatchObject({ new: 1, replace: 1 });
   });
 
-  it('forwards prior href + prior_sequence_prefix so a replace emits modified-file', async () => {
+  it('forwards the prior leaf ID + backbone and prior_sequence_prefix so a replace names the leaf it supersedes', async () => {
     const handler = getToolHandler('compute_lifecycle_operations')!;
     const out = JSON.parse(
       await handler({
         prior_sequence_prefix: '../0000/',
-        prior_leaves: [
-          { ctd_section: '3.2.S.1', file_name: 'general.pdf', md5: 'a', href: 'm3/32-body-data/32s-drug-sub/general.pdf' },
-        ],
+        prior_leaves: [{
+          ctd_section: '3.2.S.1', file_name: 'general.pdf', md5: 'a', href: 'm3/32-body-data/32s-drug-sub/general.pdf',
+          leaf_id: 'leaf-3-2-S-1-general', backbone: 'index.xml',
+        }],
         desired_leaves: [{ ctd_section: '3.2.S.1', file_name: 'general.pdf', md5: 'b' }],
       })
     );
     expect(out.ok).toBe(true);
     const replaced = out.leaves.find((l: any) => l.operation === 'replace');
-    expect(replaced.modifiedFile).toBe('../0000/m3/32-body-data/32s-drug-sub/general.pdf');
+    expect(replaced.modifiedFile).toBe('../0000/index.xml#leaf-3-2-S-1-general');
+  });
+
+  it('never names a prior leaf by its file path: listed with only an href, a replace carries no pointer', async () => {
+    const handler = getToolHandler('compute_lifecycle_operations')!;
+    const out = JSON.parse(
+      await handler({
+        prior_sequence_prefix: '../0000/',
+        prior_leaves: [{ ctd_section: '3.2.S.1', file_name: 'general.pdf', md5: 'a', href: 'm3/32-body-data/32s-drug-sub/general.pdf' }],
+        desired_leaves: [{ ctd_section: '3.2.S.1', file_name: 'general.pdf', md5: 'b' }],
+      })
+    );
+    const replaced = out.leaves.find((l: any) => l.operation === 'replace');
+    expect(replaced.modifiedFile).toBeUndefined();
   });
 
   it('refuses to auto-load a prior sequence without tenant context (org from ToolContext only)', async () => {
@@ -586,8 +600,11 @@ describe('ingestion tools — tenant + input guards', () => {
     // 2026-09-28: a confirm-class call with no identified member is refused by the
     // registry wrapper (writeRoleRefusal) before the handler's tenant guard, and
     // before any role lookup.
-    expect(out.error).toMatch(/needs an identified member of the organization/);
-    expect(out.error).toMatch(/Nothing was changed/);
+    // 2026-10-01 (D5, NEW-P11-B-1a): classify proposes and changes nothing, so
+    // it is a read in the register and the wrapper's write-role refusal no
+    // longer applies; the handler's own tenant guard refuses, still before any
+    // role lookup and any model call.
+    expect(out.error).toMatch(/requires tenant context \(organizationId and userId\)/);
     expect(resolveSignerOrgRole).not.toHaveBeenCalled();
   });
 

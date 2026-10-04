@@ -290,12 +290,31 @@ because those engines have other consumers.
 | Biospecimens + master protocol | 13 (2 blocking) | **a blood volume recorded as a string was summed by concatenation** — "10" gave a total of `0010010` mL and both reference points "exceeded"; **draws at unscheduled and early-termination visits were summed into the scheduled total**, and one undated unscheduled column nulled every window; the 8-week windows treated a day 0 that the design model does not have, one day short across screening→treatment; the 50 mL / 3 mL/kg reference read "not exceeded" with no weight; duplicated cells doubled volumes; the one-collection-per-cell rule is now stated. Master protocol: a shared control was judged by counting sub-studies, not arms; a biomarker was demanded of every basket sub-study (FDA 2022 also allows histology, stage, prior therapies); adjusted non-concurrent controls were rendered clean (FDA's 2023 draft expects concurrent controls for primary comparisons) | 41 | 36 |
 | Planning-inputs write path | 12 (1 blocking) | **free text containing `\|` was silently cut, and the form's prefill turned every recorded `\|` into `/`** — recorded governed text was not what the sponsor entered; `\|`, `;` and line breaks are now reserved and refused; a server refusal's field-level details were swallowed by the client; φ1/φ2 could not be recorded and were deleted on the next edit; the activity drawer carried one activity's values onto another; duplicate dose labels re-parsed a start dose as another level; MMRM visits unbounded (800 visits: 5.5 s per viewer GET, now capped); **a write now carries the block as it was read (`expected`) and a block changed since is refused 409 STALE_BLOCK**; numbers like `0x9` or `Infinity` refused; required choices are not pre-selected; every Edit button names its target | 68 | 37 |
 
+## Fix-and-verify of the canonical statistics engines
+
+The Tier 2/3 reviewers found defects inside `server/services/stats/` itself.
+Those engines have other consumers (the `/api/biostat` routes, AnA's
+statistical tools), so a consumer-side guard was not enough: each engine got
+one owner, who reproduced every defect, fixed it in the engine, pinned it with a
+test seen failing, and ran every importer's suite; then an independent skeptic,
+who re-derived the maths, diffed old against new over large random input sets,
+ran its own mutants, and returned `sound` or `needs_work`. Every `needs_work`
+finding was closed before the engine was committed — a surviving mutant by a
+test that kills it.
+
+| Engine | Defects | Fix | Verifier's findings, and how each was closed | Tests after | Mutants caught |
+|---|---|---|---|---|---|
+| BOIN dose finding (`37dd3d9e8`) | 2 | **`selectMtd` could pick a dose above an eliminated one** (probe: doses 3/0, 9/6 eliminated, 3/0 at target 0.3 gave dose 3). BOIN elimination removes the dose and every higher one (Liu & Yuan 2015), so the ceiling is now the lowest eliminated dose, reported as `lowestEliminatedIndex`; with the lowest dose eliminated no MTD is selected. The defaults (φ1 = 0.6φ, φ2 = 1.4φ, threshold 0.95, minimum n 3, Beta(1,1)) are one exported `BOIN_DEFAULTS`; `dose-escalation.ts` re-exports it instead of keeping a copy labelled "engine default" | Two survivors: `findLastIndex` in place of `findIndex` (every test flagged exactly one dose) and an untried-dose flag; both killed by multi-flag tests. Differential over 300,000 seeded cases: isotonic rates bit-identical, every changed `mtdIndex` had the old pick at or above the lowest eliminated dose; agreement with the BOIN R package's `select.mtd` rose from 57.3% to 92.9% (the rest is the pre-existing isotonic fit) | 23 engine + 32 consumer | 12 |
+| Multiplicity FWER (`e378dfb00`) | 1 | **Rates for different rejection rules shared one `inputsSha256`** — Holm, unadjusted and partial Holm all hashed to `1d8a2f2f…`. `estimateFWER` takes an optional rule identifier and hashes it; a five-argument call hashes byte-identically to before. No rate changed (1,152 combinations, old against new) | Two survivors: the consumer's Hochberg identifier and its textbook-split identifier could be made constant with every test green; both now pinned by provenance-distinctness tests | 25 engine + 28 consumer | 8 |
+| Estimand multiplicity designer (`edea462aa`) | 3 | **"Hochberg step-up" thresholds were Simes / Benjamini–Hochberg** (m = 3, α = 0.05: 0.0167, 0.0333, 0.05 where Hochberg's are 0.0167, 0.025, 0.05), and Holm's and Hochberg's thresholds were assigned to hypotheses in listed order although they belong to p-value ranks. They are now `rankThresholds`, derived at run time from the canonical `holmReject` / `hochbergReject` and refused if the two disagree; the per-hypothesis `alphaAllocation` is each hypothesis's initial level α/m (Bretz et al. 2009), and the description says the thresholds belong to ranks and are not initial levels. Missing or malformed inputs are a 400 naming the input, not a 500 or a silent `[]` | Three survivors: the lenient direction of the canonical-rule guard (a Simes-lenient mock), α = 1, and a missing `hypotheses`; each killed by a test | 33 service + 9 route | 12 |
+
 ## What is not done, and why
 
 - **Adversarial review is complete** for all eight Tier 1 engines (workflow
-  `protocol-industry-engines-v2`: 29 agents, two lenses per engine, every
-  blocking and major finding reproduced, fixed and pinned). The Tier 2 and
-  Tier 3 wirings have not yet had the same two-lens review.
+  `protocol-industry-engines-v2`: 29 agents, two lenses per engine), the Tier 2
+  and Tier 3 wirings and the planning-inputs write path (workflow
+  `protocol-tier23-review`), and the canonical statistics engines those wirings
+  read (above).
 - **A second line-diff engine exists**: `versionDiffService.ts` `diffText` uses
   the same line rule with an N×M LCS. Moving `splitContentLines` and the run
   counting into one pure line-diff module and making `diffText` delegate is its

@@ -101,3 +101,27 @@ describe('data room — what "classified" means', () => {
     expect(room.captured).toBe(3);
   });
 });
+
+describe('data room — "filed" names the Vault version (VR-16)', () => {
+  it('a filed source says which version its bytes are, and which version replaced it', async () => {
+    listClientDocuments.mockResolvedValue([source(1), source(2), source(3)]);
+    const base = query.getMockImplementation()!;
+    query.mockImplementation(async (sql: string, params?: unknown[]) => {
+      if (/content_hash = ANY\(\$3::text\[\]\)/.test(String(sql))) {
+        return {
+          rows: [
+            { content_hash: 'sha256-1', version: '1.0', superseded: true, current_version: '2.0' },
+            { content_hash: 'sha256-2', version: '3.0', superseded: false, current_version: '3.0' },
+          ],
+        };
+      }
+      return base(sql, params);
+    });
+    const room = await dataRoom();
+    const by = (id: number) => room.sources.find((s: { id: number }) => s.id === id);
+    expect(by(1)).toMatchObject({ stage: 'filed', filedAs: { version: '1.0', supersededBy: '2.0' } });
+    expect(by(2)).toMatchObject({ stage: 'filed', filedAs: { version: '3.0', supersededBy: null } });
+    expect(by(3)).toMatchObject({ stage: 'captured', filedAs: null });
+    expect(room.filed).toBe(2);
+  });
+});

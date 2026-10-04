@@ -1,0 +1,13 @@
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > 20261001 on the applier > runs after the program keys and before the tenant sweep 3ms
+ × tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > 20261001 on the applier > a replay adds nothing: one NOT VALID key per table, ON DELETE CASCADE, ON UPDATE NO ACTION 10ms
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > concept2cure_artifacts: (project_id, org) → projects (id, organization_id) > a row under a project of its own organization is written 2ms
+ × tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > concept2cure_artifacts: (project_id, org) → projects (id, organization_id) > a row under another organization's project is refused by the database 2ms
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > c2c_submission_packages: (project_id, org) → projects (id, organization_id) > a row under a project of its own organization is written 1ms
+ × tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > c2c_submission_packages: (project_id, org) → projects (id, organization_id) > a row under another organization's project is refused by the database 1ms
+ × tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > legacy rows and the existing behaviour > the legacy cross-organization rows did not fail the deploy, and are listed by the preflight 48ms
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > legacy rows and the existing behaviour > a legacy row still takes a change that is neither its project nor its organization 2ms
+ × tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > legacy rows and the existing behaviour > a project with records of its organization under it cannot be moved to another organization 3ms
+ ✓ tests/schema-contract/integer-project-same-org-keys.pglite.test.ts > legacy rows and the existing behaviour > a project delete still cascades its own artifacts and packages, as before 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  5 failed | 5 passed (10)

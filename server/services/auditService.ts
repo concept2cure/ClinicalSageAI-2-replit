@@ -46,6 +46,13 @@ interface AuditLogEntry {
   details?: Record<string, any>;
   ipAddress?: string;
   userAgent?: string;
+  /**
+   * The person's stated reason for the act (§11.10(e) "reason for change").
+   * writeChainedAuditRow writes it to audit_logs.reason — the column the
+   * inspector's ledger shows — when one was given. It is hash-protected only
+   * through `details`, so a caller that wants it chained carries it there too.
+   */
+  reason?: string | null;
   /** Alias accepted by callers that use "organizationId" instead of tenantId */
   organizationId?: string | number;
   /**
@@ -95,6 +102,12 @@ const RESOURCE_TYPES = {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+/** A positive integer organisation id, or undefined. */
+function organizationIdOf(value: unknown): number | undefined {
+  const n = typeof value === 'number' ? value : typeof value === 'string' && value.trim() ? Number(value) : NaN;
+  return Number.isSafeInteger(n) && n > 0 ? n : undefined;
+}
 
 /** Map action strings to TamperProofAuditLog event types */
 function mapEventType(action: string): AuditEventType {
@@ -284,12 +297,16 @@ export async function writeChainedAuditRow(
     occurred_at: occurredAt,
     tenant_id: tenantId,
   });
+  // The reason column only when a reason was given: the column is added by
+  // migrations/20260527_mutation_primitives.sql, and a caller with nothing to
+  // say writes exactly the row it always wrote.
+  const reason = typeof entry.reason === 'string' && entry.reason.trim() ? entry.reason : null;
   await client.query(
     `INSERT INTO audit_logs
        (id, tenant_id, user_id, action, table_name, record_id,
         actor_id, target, payload_hash, sha256_chain, occurred_at, hmac_seal,
-        old_values, new_values, ip_address, user_agent)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::json,$15,$16)`,
+        old_values, new_values, ip_address, user_agent${reason ? ', reason' : ''})
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::json,$15,$16${reason ? ',$17' : ''})`,
     [
       randomUUID(),
       tenantId,
@@ -307,6 +324,7 @@ export async function writeChainedAuditRow(
       newValues == null ? null : JSON.stringify(newValues),
       entry.ipAddress ?? null,
       entry.userAgent ?? null,
+      ...(reason ? [reason] : []),
     ],
   );
 }
@@ -466,6 +484,11 @@ class AuditService {
             resourceId: resolvedResourceId,
             ipAddress: entry.ipAddress,
             userAgent: entry.userAgent,
+            // The row's tenant — the same one audit_logs.tenant_id gets above.
+            // Not an organisation id (absent, 0, a non-numeric legacy value):
+            // left to the store, which takes the session's tenant or writes a
+            // platform row, and refuses a tenant other than the session's.
+            organizationId: organizationIdOf(resolvedTenantId),
           }
         );
         tamperProof = true;
@@ -493,35 +516,24 @@ class AuditService {
    * Reads from the Drizzle `audit_logs` table first (fast, indexed).
    * Falls back to TamperProofAuditLog search if Drizzle is unavailable.
    *
-   * ── THE FALLBACK CANNOT BE TENANT-SCOPED, SO IT REFUSES ─────────────────────
-   * `audit.tamper_proof_log` has no tenant or organization column
-   * (db/migrations/20260813_audit_tamper_proof_log.sql:64 — id, sequence_number,
-   * event_type, actor, resource, action, details, the hash chain, client
-   * context, and nothing else). `TamperProofAuditLog.search` therefore has no
-   * tenant parameter to accept, and its query is
-   * `SELECT * FROM audit.tamper_proof_log WHERE 1=1` plus whatever optional
-   * filters it was given. The table is in schema `audit`, and both tenant
-   * sweeps filter `WHERE c.table_schema = 'public'`, so no RLS policy covers it
-   * either.
-   *
+   * ── THE FALLBACK IS TENANT-SCOPED ON THE STORE'S OWN COLUMN ────────────────
    * Before 2026-09-10 this method passed userId/resourceType/fromDate/toDate to
-   * that fallback and dropped `tenantId` on the floor. The shape of the bug
-   * matters more than its reachability: a caller asked for one tenant's Part 11
-   * audit trail, the primary path threw, and the `catch` below fell through to a
-   * path that answered the question for EVERY tenant — and returned an array, so
-   * the caller could not tell. An error widening a result set is worse than an
-   * error surfacing, and it is the exact inverse of this repo's "an error is
-   * never rendered as an empty result" rule.
+   * the tamper-proof fallback and dropped `tenantId` on the floor, because
+   * `audit.tamper_proof_log` had no tenant column: a caller asked for one
+   * tenant's Part 11 audit trail, the primary path threw, and the fallback
+   * answered for EVERY tenant. With no column there was no correct answer, so
+   * this refused (AUDIT_LOG_TENANT_SCOPE_UNAVAILABLE).
    *
-   * Nothing reaches this today: `queryAuditEvents` in
-   * server/services/audit/auditLogger.ts is this method's only caller, and
-   * nothing imports `queryAuditEvents`. That is why this is a refusal and not an
-   * incident. The first route that wires it up inherits the behaviour, so the
-   * refusal is here rather than in a comment.
+   * Since 2026-10-01 (DP-28, plan P1-27) the store carries `organization_id`,
+   * every writer names its tenant, and `TamperProofAuditLog.search` filters on
+   * it — and, inside a per-user request scope, refuses any tenant but the
+   * session's. So the fallback is asked for this tenant's rows. Rows written
+   * before the column existed carry no tenant and are not returned to a
+   * tenant-scoped read; the cut-over is recorded in the header of
+   * db/migrations/20260813_audit_tamper_proof_log.sql.
    *
-   * Giving `audit.tamper_proof_log` a tenant column and a policy is WO-13.
-   * Until then a tenant-scoped read has no correct answer from the fallback,
-   * and the honest response to "no correct answer" is to say so.
+   * A store that cannot be read is an error, never `[]`: an empty array reads
+   * as "nothing was audited". queryAuditEvents, the one caller, catches it.
    */
   async getAuditLog(filters?: {
     userId?: string | number;
@@ -580,36 +592,26 @@ class AuditService {
       logger.error('Failed to query audit_logs table', error);
     }
 
-    // --- Fallback: TamperProofAuditLog ---
-    // Refuse rather than answer a tenant-scoped question with every tenant's
-    // rows. See the header: this store has no tenant column to filter on.
-    const scopeRequested = filters?.tenantId ?? filters?.organizationId;
-    if (scopeRequested != null) {
-      logger.error(
-        'getAuditLog: durable audit_logs query unavailable and the tamper-proof ' +
-          'fallback cannot be tenant-scoped; refusing rather than returning ' +
-          'cross-tenant audit rows',
-        { tenantId: scopeRequested },
-      );
-      throw new Error('AUDIT_LOG_TENANT_SCOPE_UNAVAILABLE');
+    // --- Fallback: TamperProofAuditLog, scoped to the tenant asked for ---
+    const tpLog = await ensureInitialized();
+    if (!tpLog) {
+      throw new Error('AUDIT_LOG_UNAVAILABLE: neither audit_logs nor the tamper-proof store can be read');
     }
-
+    const scopeRequested = filters?.tenantId ?? filters?.organizationId;
     try {
-      const tpLog = await ensureInitialized();
-      if (tpLog) {
-        return await tpLog.search({
-          userId: filters?.userId?.toString(),
-          resourceType: filters?.resourceType,
-          fromDate: filters?.fromDate,
-          toDate: filters?.toDate,
-          limit: maxRows,
-        });
-      }
+      return await tpLog.search({
+        organizationId: scopeRequested ?? undefined,
+        userId: filters?.userId?.toString(),
+        resourceType: filters?.resourceType,
+        resourceId: filters?.resourceId,
+        fromDate: filters?.fromDate,
+        toDate: filters?.toDate,
+        limit: maxRows,
+      });
     } catch (error) {
       logger.error('Failed to fetch tamper-proof audit log', error);
+      throw error;
     }
-
-    return [];
   }
 
   /**

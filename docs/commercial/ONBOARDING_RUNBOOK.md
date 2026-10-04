@@ -89,8 +89,14 @@ them, but the founder needs the number at the start of every pilot.
 
 - First organisation on a fresh install: `POST /api/setup/initialize`
   (first-run setup, `server/routes/setup.ts`) creates the organisation and
-  admin user. Additional organisations: the signup flow
-  (`POST /api/auth/signup`).
+  admin user. In production it needs the deployment's setup token in the
+  `X-Setup-Token` header; on the AWS stack Terraform generates it, and the
+  `first_run_setup` output names the secret and the call. Use one of the
+  addresses in `platform_owner_emails`, which the stack names as the platform
+  owners (`terraform/environments/<env>/platform-owners.auto.tfvars`). Another
+  owner signs up through `POST /api/auth/signup`; in production that account is
+  pending until its address is verified from the e-mailed link. Additional
+  organisations: the same signup flow.
 - Organisation creation provisions the Launch Catalog automatically. For an
   organisation created before that change:
   `npm run ops:provision-launch-modules -- --org <id>` (expect 21/21 modules

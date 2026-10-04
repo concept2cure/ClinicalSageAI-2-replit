@@ -1,0 +1,11 @@
+# tests/db/ana-vault-search-no-key.dbtest.ts against the server code as on trunk (the five changed server files stashed), PostgreSQL 16, runtime role app_service, RLS enforcing, no AI key, catalog off
+ ✓ tests/db/ana-vault-search-no-key.dbtest.ts > AnA reaches the Vault with no key and the catalog off (D2) > the catalog really is off for these organisations 3ms
+ × tests/db/ana-vault-search-no-key.dbtest.ts > AnA reaches the Vault with no key and the catalog off (D2) > a question in plain English finds the current version by its text 4194ms
+ × tests/db/ana-vault-search-no-key.dbtest.ts > AnA reaches the Vault with no key and the catalog off (D2) > another organisation's document is never a hit, from either side 4ms
+ × tests/db/ana-vault-search-no-key.dbtest.ts > AnA reaches the Vault with no key and the catalog off (D2) > lists and reads the document, with no refusal naming a setting 4ms
+ × tests/db/ana-vault-search-no-key.dbtest.ts > AnA reaches the Vault with no key and the catalog off (D2) > a question no document answers is nothing found, not unavailable 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: {"error":"AnA cannot open this organization's Vault documents from the conversation — that access is not enabled for the organization (operator note: feature ana.document_catalog). Tell the user plainly that you cannot read their Vault files here, that the files are safe in the Vault, and that a file attached to this conversation can be read. Do not name internal settings, do not say a document does not exist, and do not simulate a listing."}: expected undefined to be true // Object.is equality
+AssertionError: expected '{"error":"AnA cannot open this organi…' not to match /not enabled|ana\.document_catalog/
+AssertionError: expected undefined to be true // Object.is equality
+      Tests  4 failed | 1 passed (5)

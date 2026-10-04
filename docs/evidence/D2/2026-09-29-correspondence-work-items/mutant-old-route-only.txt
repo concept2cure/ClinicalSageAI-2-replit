@@ -1,0 +1,54 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-29T19:29:21.721Z","pid":7909,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-29T19:29:21.722Z","pid":7909,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-29T19:29:21.722Z","pid":7909,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/correspondence-work-items.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-29T19:29:22.111Z', poolSize: 1 }
+
+stdout | tests/db/correspondence-work-items.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/correspondence-work-items.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":30,"time":"2026-09-29T19:29:22.754Z","pid":7909,"hostname":"vm","context":{"userId":17,"tenantId":91860,"resourceId":"a4ef463a-8c39-48c2-8487-418fad6c11df"},"msg":"[audit-service] [AUDIT] correspondence.ingest regulatory_correspondence"}
+{"level":30,"time":"2026-09-29T19:29:22.834Z","pid":7909,"hostname":"vm","context":{"userId":17,"tenantId":91860,"resourceId":"6b76eb86-8b99-453f-b27e-df9bed9e4933"},"msg":"[audit-service] [AUDIT] correspondence.ingest regulatory_correspondence"}
+ ✓ tests/db/correspondence-work-items.dbtest.ts > an agency letter becomes one work item per issue > a letter raising several issues is recorded whole: 201, one work item for each 187ms
+ ✓ tests/db/correspondence-work-items.dbtest.ts > an agency letter becomes one work item per issue > the organisation's next letter is recorded too 63ms
+stderr | tests/db/correspondence-work-items.dbtest.ts > a failed intake says so without shipping the database error > answers 500 with no PostgreSQL text in the body
+[Correspondence Intake] DB operation failed: permission denied for table c2c_correspondence_issues
+
+ ✓ tests/db/correspondence-work-items.dbtest.ts > the key still deduplicates what it was added to deduplicate > two work items for the same integer-keyed source in one organisation are refused 6ms
+ ✓ tests/db/correspondence-work-items.dbtest.ts > the key still deduplicates what it was added to deduplicate > the same correspondence issue cannot be written twice 10ms
+ × tests/db/correspondence-work-items.dbtest.ts > a failed intake says so without shipping the database error > answers 500 with no PostgreSQL text in the body 35ms
+   → expected '{"error":"Failed to ingest correspond…' not to match /permission denied|c2c_correspondence…/i
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/correspondence-work-items.dbtest.ts > a failed intake says so without shipping the database error > answers 500 with no PostgreSQL text in the body
+AssertionError: expected '{"error":"Failed to ingest correspond…' not to match /permission denied|c2c_correspondence…/i
+
+- Expected:
+/permission denied|c2c_correspondence_issues|duplicate key|constraint/i
+
++ Received:
+"{\"error\":\"Failed to ingest correspondence\",\"detail\":\"permission denied for table c2c_correspondence_issues\"}"
+
+ ❯ tests/db/correspondence-work-items.dbtest.ts:259:44
+    257|       const res = await intake('Letter that cannot be stored', SECOND_…
+    258|       expect(res.status).toBe(500);
+    259|       expect(JSON.stringify(res.body)).not.toMatch(/permission denied|…
+       |                                            ^
+    260|     } finally {
+    261|       await owner.query(`GRANT INSERT ON c2c_correspondence_issues TO …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  19:29:18
+   Duration  5.35s (transform 1.81s, setup 88ms, import 244ms, tests 4.61s, environment 0ms)
+

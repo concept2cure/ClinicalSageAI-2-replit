@@ -139,6 +139,17 @@ export function registerAgenticWorkflowHandlers(register: RegisterFn): void {
     ...(context ? { source_context: context } : {}),
   };
 
+  // The council runs for one tenant: its sessions are tenant content, and its
+  // model calls are placed under that tenant's policy (D6). No organization,
+  // no council — refused before anything is read or written.
+  const organizationId = Number(ctx?.organizationId);
+  if (!Number.isInteger(organizationId) || organizationId <= 0) {
+    return JSON.stringify({
+      error: 'The drafting council runs for an organization, and this call carries none. It was not convened.',
+      tool: 'convene_drafting_council',
+    });
+  }
+
   const { getPool } = await import('../../db.js');
   const pool = getPool();
 
@@ -160,7 +171,7 @@ export function registerAgenticWorkflowHandlers(register: RegisterFn): void {
   try {
     const { MultiAgentCouncilService } = await import('../multi-agent-council.js');
     const council = new MultiAgentCouncilService(pool);
-    const sessionId = await council.initializeSession(sectionPath, councilRequirements, []);
+    const sessionId = await council.initializeSession(sectionPath, councilRequirements, [], { organizationId });
     const session = await council.executeCouncil(
       sessionId,
       ctx?.userId != null ? String(ctx.userId) : undefined,

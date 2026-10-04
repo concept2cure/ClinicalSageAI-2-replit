@@ -221,8 +221,11 @@ describe('the synthesized Part 11 record is gone, and cannot be reintroduced', (
     expect(src).not.toMatch(/^function chain\(/m);
     expect(src).not.toMatch(/_AUDIT(_BASE|_HASHES)?\s*[:=]/);
     expect(src).not.toMatch(/_APPROVALS\s*[:=]/);
-    /* Correspondence is ordinary example content and stays. */
-    expect(src).toMatch(/_CORRESP\s*:/);
+    /* This asserted "Correspondence is ordinary example content and stays."
+       It was not ordinary: the letters were agency and notified-body
+       correspondence that was never sent — an AI-Hold, an RTA, a Day-100
+       letter — the same class of record as an audit event. They are gone too. */
+    expect(src).not.toMatch(/_CORRESP\s*[:=]/);
   });
 
   it('the bundle TYPE no longer has the fields, so a revert does not compile', () => {
@@ -234,20 +237,20 @@ describe('the synthesized Part 11 record is gone, and cannot be reintroduced', (
       types.indexOf('export interface PathwayTabsBundle'),
       types.indexOf('export type PathwayTabsData'),
     );
-    expect(bundle).toContain('correspondence');
+    expect(bundle).not.toMatch(/\bcorrespondence\b\s*:/);
     expect(bundle).not.toMatch(/\baudit\b\s*:/);
     expect(bundle).not.toMatch(/\bapprovals\b\s*:/);
   });
 
-  it('neither governed pane is handed sample content any more', () => {
+  it('no pathway pane is handed sample content any more', () => {
     /* Code lines only. The file explains the removal by quoting the prop it
        removed, and a naive substring search matches that explanation — which is
        how this assertion first failed on its own documentation. */
     const panes = code(read('surfaces/pathway/PathwayPanes.tsx'));
     expect(panes).not.toContain('sample={fixtures.audit}');
     expect(panes).not.toContain('sample={fixtures.approvals}');
-    /* Correspondence keeps its fixture — and its banner. */
-    expect(panes).toContain('sample={fixtures.correspondence}');
+    /* Nor is correspondence — see the bundle type above. */
+    expect(panes).not.toContain('sample={fixtures.correspondence}');
   });
 
   it('the dossier Activity tab merges no seed chain', () => {

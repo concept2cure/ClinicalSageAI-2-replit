@@ -1,0 +1,788 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > a ci-verdict job, pinned github-script, with read access to Actions only 7ms
+   → deploy-aws.yml has no ci-verdict job: expected undefined to be defined
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > every job that builds, migrates, deploys or smoke-tests waits for it 4ms
+   → build-push does not need ci-verdict: expected false to be true // Object.is equality
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > passes when CI, Semgrep and CodeQL all passed on the trunk for this SHA 1ms
+   → deploy-aws.yml has no ci-verdict github-script step
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > asks for each required workflow at this SHA, on the trunk, from push events 1ms
+   → deploy-aws.yml has no ci-verdict github-script step
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > refuses a SHA whose CI run ended failure 1ms
+   → deploy-aws.yml has no ci-verdict github-script step
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > refuses a SHA whose CI run ended cancelled 1ms
+   → deploy-aws.yml has no ci-verdict github-script step
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > refuses a SHA whose CI run ended timed_out 0ms
+   → deploy-aws.yml has no ci-verdict github-script step
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > refuses a SHA whose CI run ended skipped 0ms
+   → deploy-aws.yml has no ci-verdict github-script step
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > refuses a SHA whose CI run ended action_required 1ms
+   → deploy-aws.yml has no ci-verdict github-script step
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > refuses a red Semgrep at the SHA even when CI is green 1ms
+   → deploy-aws.yml has no ci-verdict github-script step
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > reads the newest run: a red re-run after a green one is red 0ms
+   → deploy-aws.yml has no ci-verdict github-script step
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > does not count a green run of another SHA, branch, event or repository 1ms
+   → deploy-aws.yml has no ci-verdict github-script step
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > fails closed when the verdict cannot be read 0ms
+   → deploy-aws.yml has no ci-verdict github-script step
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > refuses when CI has not finished by the deadline 0ms
+   → deploy-aws.yml has no ci-verdict github-script step
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > refuses a SHA CI never ran on 0ms
+   → deploy-aws.yml has no ci-verdict github-script step
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > waits for a run in progress and passes once it is green 0ms
+   → deploy-aws.yml has no ci-verdict github-script step
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the built image is scanned before it is pushed > build, then trivy image, then push, as three steps 1ms
+   → no trivy image step: expected -1 to be greater than 4
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the built image is scanned before it is pushed > the scan blocks on HIGH and CRITICAL, with the repository .trivyignore and no blanket exception 10ms
+   → expected [ 'undefined' ] to deeply equal [ 'CRITICAL', 'HIGH' ]
+ × tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the built image is scanned before it is pushed > scans the exact tag the build produced and the push sends 1ms
+   → expected '' to be '${{ steps.login-ecr.outputs.registry …' // Object.is equality
+ ✓ tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:server-error-leaks runs on a trunk push, in a step that can fail the run 3ms
+ ✓ tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > check:compliance-claims runs on a trunk push, in a step that can fail the run 1ms
+ ✓ tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:discarded-audit-write:self-test runs on a trunk push, in a step that can fail the run 1ms
+ ✓ tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:discarded-audit-write runs on a trunk push, in a step that can fail the run 1ms
+ ✓ tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:session-scoped-rls-bypass runs on a trunk push, in a step that can fail the run 0ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:unauthenticated-fetch:selftest runs on a trunk push, in a step that can fail the run 6ms
+   → ci:unauthenticated-fetch:selftest runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:unauthenticated-fetch runs on a trunk push, in a step that can fail the run 1ms
+   → ci:unauthenticated-fetch runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:drizzle-tenant-scope:selftest runs on a trunk push, in a step that can fail the run 1ms
+   → ci:drizzle-tenant-scope:selftest runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:drizzle-tenant-scope runs on a trunk push, in a step that can fail the run 1ms
+   → ci:drizzle-tenant-scope runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:migration-drop-safety:selftest runs on a trunk push, in a step that can fail the run 1ms
+   → ci:migration-drop-safety:selftest runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:migration-drop-safety runs on a trunk push, in a step that can fail the run 1ms
+   → ci:migration-drop-safety runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:upload-guards:selftest runs on a trunk push, in a step that can fail the run 2ms
+   → ci:upload-guards:selftest runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:upload-guards runs on a trunk push, in a step that can fail the run 1ms
+   → ci:upload-guards runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > no npm gate in pr-checks.yml is pull-request-only 8ms
+   → these run on pull requests only: expected [ 'check:catalog-copy' ] to deeply equal []
+ × tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > Semgrep p/ci runs on a trunk push, with --error 2ms
+   → expected '' to match /--config=p\/ci\b/ci\b
+ ✓ tests/ci/ci-honesty.contract.test.ts > INF-10: Semgrep blocks > keeps the job name the release-evidence policy requires 1ms
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: Semgrep blocks > has no job-level continue-on-error, and its scan steps none either 1ms
+   → expected true to be falsy
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: Semgrep blocks > runs a pinned image: a version and a sha256 digest, never :latest 1ms
+   → expected 'semgrep/semgrep:latest' to match /…/semgrep:\d+\.\d+\.\d+@sha256:[0-9a-f]{64}$
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: Semgrep blocks > scans p/default and p/ci in both scans, and the shell is sh -e 1ms
+   → .toMatch() expects to receive a string, but got undefined
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: Semgrep blocks > checks out full history, so the baseline commit exists locally 1ms
+   → expected undefined to be +0 // Object.is equality
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: Semgrep blocks > is the only Semgrep: no other workflow runs one 26ms
+   → expected [ 'pr-checks.yml › semgrep' ] to deeply equal []
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: the blocking scan, run as written > passes when Semgrep reports nothing new over the baseline 4ms
+   → job semgrep has no step named "Blocking scan…"
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: the blocking scan, run as written > fails when Semgrep finds something the baseline did not have (exit 1) 1ms
+   → job semgrep has no step named "Blocking scan…"
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: the blocking scan, run as written > fails when Semgrep does not finish (exit 2, 7): an unfinished scan is not a pass 1ms
+   → job semgrep has no step named "Blocking scan…"
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: the blocking scan, run as written > fails without scanning when no baseline was resolved 1ms
+   → job semgrep has no step named "Blocking scan…"
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: the full scan for the Security tab fails when it does not finish > exit 0 passes; exit 2 fails 1ms
+   → job semgrep has no step named "Full scan…"
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: the full scan for the Security tab fails when it does not finish > runs after a red blocking scan, so the Security tab is still fed 1ms
+   → job semgrep has no step named "Full scan…"
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: the baseline is the newest commit whose Semgrep run passed > is a github-script step whose sha output the blocking scan reads 1ms
+   → job semgrep has no step named "Resolve the baseline…"
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: the baseline is the newest commit whose Semgrep run passed > skips a failed run, a pull-request run and a fork run to reach the last green trunk commit 1ms
+   → job semgrep has no step named "Resolve the baseline…"
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: the baseline is the newest commit whose Semgrep run passed > a pull request compares against its base 1ms
+   → job semgrep has no step named "Resolve the baseline…"
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: the baseline is the newest commit whose Semgrep run passed > fails closed when the run history cannot be read 1ms
+   → job semgrep has no step named "Resolve the baseline…"
+ × tests/ci/ci-honesty.contract.test.ts > INF-10: the baseline is the newest commit whose Semgrep run passed > fails closed when no run ever passed 1ms
+   → job semgrep has no step named "Resolve the baseline…"
+ × tests/ci/ci-honesty.contract.test.ts > INF-24: dependencies install from the lockfile (npm ci) > no workflow step installs the dependency tree with npm install 15ms
+   → expected [ …(6) ] to deeply equal []
+ × tests/ci/ci-honesty.contract.test.ts > INF-24: dependencies install from the lockfile (npm ci) > ci.yml › lint installs with npm ci 6ms
+   → expected false to be true // Object.is equality
+ × tests/ci/ci-honesty.contract.test.ts > INF-24: dependencies install from the lockfile (npm ci) > ci.yml › build installs with npm ci 5ms
+   → expected false to be true // Object.is equality
+ × tests/ci/ci-honesty.contract.test.ts > INF-24: dependencies install from the lockfile (npm ci) > ci.yml › security installs with npm ci 5ms
+   → expected false to be true // Object.is equality
+ × tests/ci/ci-honesty.contract.test.ts > INF-24: dependencies install from the lockfile (npm ci) > ci.yml › nightly-governance installs with npm ci 5ms
+   → expected false to be true // Object.is equality
+ × tests/ci/ci-honesty.contract.test.ts > INF-24: dependencies install from the lockfile (npm ci) > db-schema-validation.yml › schema-push installs with npm ci 1ms
+   → expected false to be true // Object.is equality
+ × tests/ci/ci-honesty.contract.test.ts > INF-24: dependencies install from the lockfile (npm ci) > neon-preview-db.yml › preview_db_test installs with npm ci 1ms
+   → expected false to be true // Object.is equality
+ ✓ tests/ci/ci-honesty.contract.test.ts > INF-24: dependencies install from the lockfile (npm ci) > .npmrc carries legacy-peer-deps, which npm ci reads in place of the flag 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 52 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:unauthenticated-fetch:selftest runs on a trunk push, in a step that can fail the run
+AssertionError: ci:unauthenticated-fetch:selftest runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ ❯ tests/ci/ci-honesty.contract.test.ts:79:109
+     77|     it(`${gate} runs on a trunk push, in a step that can fail the run`…
+     78|       const hit = steps.find(({ step }) => runsNpmScript(step.run, gat…
+     79|       expect(hit, `${gate} runs on no trunk push (pull-request-only, p…
+       |                                                                                                             ^
+     80|     });
+     81|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/52]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:unauthenticated-fetch runs on a trunk push, in a step that can fail the run
+AssertionError: ci:unauthenticated-fetch runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ ❯ tests/ci/ci-honesty.contract.test.ts:79:109
+     77|     it(`${gate} runs on a trunk push, in a step that can fail the run`…
+     78|       const hit = steps.find(({ step }) => runsNpmScript(step.run, gat…
+     79|       expect(hit, `${gate} runs on no trunk push (pull-request-only, p…
+       |                                                                                                             ^
+     80|     });
+     81|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/52]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:drizzle-tenant-scope:selftest runs on a trunk push, in a step that can fail the run
+AssertionError: ci:drizzle-tenant-scope:selftest runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ ❯ tests/ci/ci-honesty.contract.test.ts:79:109
+     77|     it(`${gate} runs on a trunk push, in a step that can fail the run`…
+     78|       const hit = steps.find(({ step }) => runsNpmScript(step.run, gat…
+     79|       expect(hit, `${gate} runs on no trunk push (pull-request-only, p…
+       |                                                                                                             ^
+     80|     });
+     81|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/52]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:drizzle-tenant-scope runs on a trunk push, in a step that can fail the run
+AssertionError: ci:drizzle-tenant-scope runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ ❯ tests/ci/ci-honesty.contract.test.ts:79:109
+     77|     it(`${gate} runs on a trunk push, in a step that can fail the run`…
+     78|       const hit = steps.find(({ step }) => runsNpmScript(step.run, gat…
+     79|       expect(hit, `${gate} runs on no trunk push (pull-request-only, p…
+       |                                                                                                             ^
+     80|     });
+     81|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/52]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:migration-drop-safety:selftest runs on a trunk push, in a step that can fail the run
+AssertionError: ci:migration-drop-safety:selftest runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ ❯ tests/ci/ci-honesty.contract.test.ts:79:109
+     77|     it(`${gate} runs on a trunk push, in a step that can fail the run`…
+     78|       const hit = steps.find(({ step }) => runsNpmScript(step.run, gat…
+     79|       expect(hit, `${gate} runs on no trunk push (pull-request-only, p…
+       |                                                                                                             ^
+     80|     });
+     81|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/52]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:migration-drop-safety runs on a trunk push, in a step that can fail the run
+AssertionError: ci:migration-drop-safety runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ ❯ tests/ci/ci-honesty.contract.test.ts:79:109
+     77|     it(`${gate} runs on a trunk push, in a step that can fail the run`…
+     78|       const hit = steps.find(({ step }) => runsNpmScript(step.run, gat…
+     79|       expect(hit, `${gate} runs on no trunk push (pull-request-only, p…
+       |                                                                                                             ^
+     80|     });
+     81|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/52]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:upload-guards:selftest runs on a trunk push, in a step that can fail the run
+AssertionError: ci:upload-guards:selftest runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ ❯ tests/ci/ci-honesty.contract.test.ts:79:109
+     77|     it(`${gate} runs on a trunk push, in a step that can fail the run`…
+     78|       const hit = steps.find(({ step }) => runsNpmScript(step.run, gat…
+     79|       expect(hit, `${gate} runs on no trunk push (pull-request-only, p…
+       |                                                                                                             ^
+     80|     });
+     81|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/52]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > ci:upload-guards runs on a trunk push, in a step that can fail the run
+AssertionError: ci:upload-guards runs on no trunk push (pull-request-only, pre-push-only, or continue-on-error): expected undefined to be defined
+ ❯ tests/ci/ci-honesty.contract.test.ts:79:109
+     77|     it(`${gate} runs on a trunk push, in a step that can fail the run`…
+     78|       const hit = steps.find(({ step }) => runsNpmScript(step.run, gat…
+     79|       expect(hit, `${gate} runs on no trunk push (pull-request-only, p…
+       |                                                                                                             ^
+     80|     });
+     81|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/52]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > no npm gate in pr-checks.yml is pull-request-only
+AssertionError: these run on pull requests only: expected [ 'check:catalog-copy' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "check:catalog-copy",
++ ]
+
+ ❯ tests/ci/ci-honesty.contract.test.ts:90:56
+     88|     expect(gates.length).toBeGreaterThan(0);
+     89|     const missing = gates.filter((g) => !steps.some(({ step }) => runs…
+     90|     expect(missing, 'these run on pull requests only').toEqual([]);
+       |                                                        ^
+     91|   });
+     92|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/52]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-02: the security gates run, blocking, on every push to the trunk > Semgrep p/ci runs on a trunk push, with --error
+AssertionError: expected '' to match /--config=p\/ci\b/ci\b
+
+- Expected:
+/--config=p\/ci\b/
+
++ Received:
+""
+
+ ❯ tests/ci/ci-honesty.contract.test.ts:96:65
+     94|     const wf = readWorkflow('semgrep.yml');
+     95|     expect(triggersOnTrunkPush(wf)).toBe(true);
+     96|     expect(String(wf.jobs.semgrep?.env?.SEMGREP_CONFIGS ?? '')).toMatc…
+       |                                                                 ^
+     97|     expect(stepNamed(wf, 'semgrep', 'Blocking scan').run).toMatch(/--e…
+     98|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/52]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-10: Semgrep blocks > has no job-level continue-on-error, and its scan steps none either
+AssertionError: expected true to be falsy
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/ci/ci-honesty.contract.test.ts:111:40
+    109|
+    110|   it('has no job-level continue-on-error, and its scan steps none eith…
+    111|     expect(job?.['continue-on-error']).toBeFalsy();
+       |                                        ^
+    112|     for (const s of job?.steps ?? []) {
+    113|       if (/semgrep scan/.test(s.run ?? '')) expect(s['continue-on-erro…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/52]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-10: Semgrep blocks > runs a pinned image: a version and a sha256 digest, never :latest
+AssertionError: expected 'semgrep/semgrep:latest' to match /…/semgrep:\d+\.\d+\.\d+@sha256:[0-9a-f]{64}$
+
+- Expected:
+/^semgrep\/semgrep:\d+\.\d+\.\d+@sha256:[0-9a-f]{64}$/
+
++ Received:
+"semgrep/semgrep:latest"
+
+ ❯ tests/ci/ci-honesty.contract.test.ts:119:19
+    117|   it('runs a pinned image: a version and a sha256 digest, never :lates…
+    118|     const image = typeof job?.container === 'string' ? job.container :…
+    119|     expect(image).toMatch(/^semgrep\/semgrep:\d+\.\d+\.\d+@sha256:[0-9…
+       |                   ^
+    120|   });
+    121|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/52]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-10: Semgrep blocks > scans p/default and p/ci in both scans, and the shell is sh -e
+TypeError: .toMatch() expects to receive a string, but got undefined
+ ❯ tests/ci/ci-honesty.contract.test.ts:123:39
+    121|
+    122|   it('scans p/default and p/ci in both scans, and the shell is sh -e',…
+    123|     expect(job?.env?.SEMGREP_CONFIGS).toMatch(/--config=p\/default\b/);
+       |                                       ^
+    124|     expect(job?.defaults?.run?.shell).toBe('sh');
+    125|     expect(stepNamed(wf, 'semgrep', 'Blocking scan').run).toMatch(/\$S…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/52]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-10: Semgrep blocks > checks out full history, so the baseline commit exists locally
+AssertionError: expected undefined to be +0 // Object.is equality
+
+- Expected:
+0
+
++ Received:
+undefined
+
+ ❯ tests/ci/ci-honesty.contract.test.ts:131:45
+    129|   it('checks out full history, so the baseline commit exists locally',…
+    130|     const checkout = (job?.steps ?? []).find((s) => (s.uses ?? '').sta…
+    131|     expect(checkout?.with?.['fetch-depth']).toBe(0);
+       |                                             ^
+    132|   });
+    133|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/52]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-10: Semgrep blocks > is the only Semgrep: no other workflow runs one
+AssertionError: expected [ 'pr-checks.yml › semgrep' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "pr-checks.yml › semgrep",
++ ]
+
+ ❯ tests/ci/ci-honesty.contract.test.ts:146:20
+    144|           .map(([job]) => `${f} › ${job}`),
+    145|       );
+    146|     expect(others).toEqual([]);
+       |                    ^
+    147|   });
+    148| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/52]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-10: the blocking scan, run as written > passes when Semgrep reports nothing new over the baseline
+Error: job semgrep has no step named "Blocking scan…"
+ ❯ stepNamed tests/ci/workflow-harness.ts:59:20
+     57| export function stepNamed(wf: Workflow, job: string, prefix: string): …
+     58|   const step = (wf.jobs[job]?.steps ?? []).find((s) => (s.name ?? '').…
+     59|   if (!step) throw new Error(`job ${job} has no step named "${prefix}……
+       |                    ^
+     60|   return step;
+     61| }
+ ❯ step tests/ci/ci-honesty.contract.test.ts:151:22
+ ❯ run tests/ci/ci-honesty.contract.test.ts:154:18
+ ❯ tests/ci/ci-honesty.contract.test.ts:157:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/52]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-10: the blocking scan, run as written > fails when Semgrep finds something the baseline did not have (exit 1)
+Error: job semgrep has no step named "Blocking scan…"
+ ❯ stepNamed tests/ci/workflow-harness.ts:59:20
+     57| export function stepNamed(wf: Workflow, job: string, prefix: string): …
+     58|   const step = (wf.jobs[job]?.steps ?? []).find((s) => (s.name ?? '').…
+     59|   if (!step) throw new Error(`job ${job} has no step named "${prefix}……
+       |                    ^
+     60|   return step;
+     61| }
+ ❯ step tests/ci/ci-honesty.contract.test.ts:151:22
+ ❯ run tests/ci/ci-honesty.contract.test.ts:154:18
+ ❯ tests/ci/ci-honesty.contract.test.ts:166:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/52]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-10: the blocking scan, run as written > fails when Semgrep does not finish (exit 2, 7): an unfinished scan is not a pass
+Error: job semgrep has no step named "Blocking scan…"
+ ❯ stepNamed tests/ci/workflow-harness.ts:59:20
+     57| export function stepNamed(wf: Workflow, job: string, prefix: string): …
+     58|   const step = (wf.jobs[job]?.steps ?? []).find((s) => (s.name ?? '').…
+     59|   if (!step) throw new Error(`job ${job} has no step named "${prefix}……
+       |                    ^
+     60|   return step;
+     61| }
+ ❯ step tests/ci/ci-honesty.contract.test.ts:151:22
+ ❯ run tests/ci/ci-honesty.contract.test.ts:154:18
+ ❯ tests/ci/ci-honesty.contract.test.ts:172:39
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/52]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-10: the blocking scan, run as written > fails without scanning when no baseline was resolved
+Error: job semgrep has no step named "Blocking scan…"
+ ❯ stepNamed tests/ci/workflow-harness.ts:59:20
+     57| export function stepNamed(wf: Workflow, job: string, prefix: string): …
+     58|   const step = (wf.jobs[job]?.steps ?? []).find((s) => (s.name ?? '').…
+     59|   if (!step) throw new Error(`job ${job} has no step named "${prefix}……
+       |                    ^
+     60|   return step;
+     61| }
+ ❯ step tests/ci/ci-honesty.contract.test.ts:151:22
+ ❯ run tests/ci/ci-honesty.contract.test.ts:154:18
+ ❯ tests/ci/ci-honesty.contract.test.ts:176:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/52]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-10: the full scan for the Security tab fails when it does not finish > exit 0 passes; exit 2 fails
+Error: job semgrep has no step named "Full scan…"
+ ❯ stepNamed tests/ci/workflow-harness.ts:59:20
+     57| export function stepNamed(wf: Workflow, job: string, prefix: string): …
+     58|   const step = (wf.jobs[job]?.steps ?? []).find((s) => (s.name ?? '').…
+     59|   if (!step) throw new Error(`job ${job} has no step named "${prefix}……
+       |                    ^
+     60|   return step;
+     61| }
+ ❯ step tests/ci/ci-honesty.contract.test.ts:183:22
+ ❯ run tests/ci/ci-honesty.contract.test.ts:185:18
+ ❯ tests/ci/ci-honesty.contract.test.ts:188:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/52]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-10: the full scan for the Security tab fails when it does not finish > runs after a red blocking scan, so the Security tab is still fed
+Error: job semgrep has no step named "Full scan…"
+ ❯ stepNamed tests/ci/workflow-harness.ts:59:20
+     57| export function stepNamed(wf: Workflow, job: string, prefix: string): …
+     58|   const step = (wf.jobs[job]?.steps ?? []).find((s) => (s.name ?? '').…
+     59|   if (!step) throw new Error(`job ${job} has no step named "${prefix}……
+       |                    ^
+     60|   return step;
+     61| }
+ ❯ step tests/ci/ci-honesty.contract.test.ts:183:22
+ ❯ tests/ci/ci-honesty.contract.test.ts:193:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/52]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-10: the baseline is the newest commit whose Semgrep run passed > is a github-script step whose sha output the blocking scan reads
+Error: job semgrep has no step named "Resolve the baseline…"
+ ❯ stepNamed tests/ci/workflow-harness.ts:59:20
+     57| export function stepNamed(wf: Workflow, job: string, prefix: string): …
+     58|   const step = (wf.jobs[job]?.steps ?? []).find((s) => (s.name ?? '').…
+     59|   if (!step) throw new Error(`job ${job} has no step named "${prefix}……
+       |                    ^
+     60|   return step;
+     61| }
+ ❯ step tests/ci/ci-honesty.contract.test.ts:198:22
+ ❯ tests/ci/ci-honesty.contract.test.ts:208:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/52]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-10: the baseline is the newest commit whose Semgrep run passed > skips a failed run, a pull-request run and a fork run to reach the last green trunk commit
+Error: job semgrep has no step named "Resolve the baseline…"
+ ❯ stepNamed tests/ci/workflow-harness.ts:59:20
+     57| export function stepNamed(wf: Workflow, job: string, prefix: string): …
+     58|   const step = (wf.jobs[job]?.steps ?? []).find((s) => (s.name ?? '').…
+     59|   if (!step) throw new Error(`job ${job} has no step named "${prefix}……
+       |                    ^
+     60|   return step;
+     61| }
+ ❯ step tests/ci/ci-honesty.contract.test.ts:198:22
+ ❯ script tests/ci/ci-honesty.contract.test.ts:199:31
+ ❯ tests/ci/ci-honesty.contract.test.ts:221:37
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/52]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-10: the baseline is the newest commit whose Semgrep run passed > a pull request compares against its base
+Error: job semgrep has no step named "Resolve the baseline…"
+ ❯ stepNamed tests/ci/workflow-harness.ts:59:20
+     57| export function stepNamed(wf: Workflow, job: string, prefix: string): …
+     58|   const step = (wf.jobs[job]?.steps ?? []).find((s) => (s.name ?? '').…
+     59|   if (!step) throw new Error(`job ${job} has no step named "${prefix}……
+       |                    ^
+     60|   return step;
+     61| }
+ ❯ step tests/ci/ci-honesty.contract.test.ts:198:22
+ ❯ script tests/ci/ci-honesty.contract.test.ts:199:31
+ ❯ tests/ci/ci-honesty.contract.test.ts:229:37
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/52]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-10: the baseline is the newest commit whose Semgrep run passed > fails closed when the run history cannot be read
+Error: job semgrep has no step named "Resolve the baseline…"
+ ❯ stepNamed tests/ci/workflow-harness.ts:59:20
+     57| export function stepNamed(wf: Workflow, job: string, prefix: string): …
+     58|   const step = (wf.jobs[job]?.steps ?? []).find((s) => (s.name ?? '').…
+     59|   if (!step) throw new Error(`job ${job} has no step named "${prefix}……
+       |                    ^
+     60|   return step;
+     61| }
+ ❯ step tests/ci/ci-honesty.contract.test.ts:198:22
+ ❯ script tests/ci/ci-honesty.contract.test.ts:199:31
+ ❯ tests/ci/ci-honesty.contract.test.ts:234:37
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/52]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-10: the baseline is the newest commit whose Semgrep run passed > fails closed when no run ever passed
+Error: job semgrep has no step named "Resolve the baseline…"
+ ❯ stepNamed tests/ci/workflow-harness.ts:59:20
+     57| export function stepNamed(wf: Workflow, job: string, prefix: string): …
+     58|   const step = (wf.jobs[job]?.steps ?? []).find((s) => (s.name ?? '').…
+     59|   if (!step) throw new Error(`job ${job} has no step named "${prefix}……
+       |                    ^
+     60|   return step;
+     61| }
+ ❯ step tests/ci/ci-honesty.contract.test.ts:198:22
+ ❯ script tests/ci/ci-honesty.contract.test.ts:199:31
+ ❯ tests/ci/ci-honesty.contract.test.ts:240:37
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/52]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-24: dependencies install from the lockfile (npm ci) > no workflow step installs the dependency tree with npm install
+AssertionError: expected [ …(6) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "ci.yml › lint › Install dependencies",
++   "ci.yml › build › Install dependencies",
++   "ci.yml › security › Install dependencies",
++   "ci.yml › nightly-governance › Install dependencies",
++   "db-schema-validation.yml › schema-push › Install dependencies",
++   "neon-preview-db.yml › preview_db_test › Install Node deps + run server tests",
++ ]
+
+ ❯ tests/ci/ci-honesty.contract.test.ts:258:23
+    256|       ),
+    257|     );
+    258|     expect(offenders).toEqual([]);
+       |                       ^
+    259|   });
+    260|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/52]⎯
+
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-24: dependencies install from the lockfile (npm ci) > ci.yml › lint installs with npm ci
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-24: dependencies install from the lockfile (npm ci) > ci.yml › build installs with npm ci
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-24: dependencies install from the lockfile (npm ci) > ci.yml › security installs with npm ci
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-24: dependencies install from the lockfile (npm ci) > ci.yml › nightly-governance installs with npm ci
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-24: dependencies install from the lockfile (npm ci) > db-schema-validation.yml › schema-push installs with npm ci
+ FAIL  tests/ci/ci-honesty.contract.test.ts > INF-24: dependencies install from the lockfile (npm ci) > neon-preview-db.yml › preview_db_test installs with npm ci
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/ci/ci-honesty.contract.test.ts:273:91
+    271|       const def = readWorkflow(file).jobs[job];
+    272|       expect(def, `${file} has no job ${job}`).toBeDefined();
+    273|       expect((def.steps ?? []).some((s) => /(^|[\s;&|])npm ci(\s|$)/m.…
+       |                                                                                           ^
+    274|     });
+    275|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/52]⎯
+
+ FAIL  tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > a ci-verdict job, pinned github-script, with read access to Actions only
+AssertionError: deploy-aws.yml has no ci-verdict job: expected undefined to be defined
+ ❯ tests/ci/deploy-refuses-unproven-sha.contract.test.ts:45:57
+     43|   it('a ci-verdict job, pinned github-script, with read access to Acti…
+     44|     const job = wf.jobs['ci-verdict'];
+     45|     expect(job, 'deploy-aws.yml has no ci-verdict job').toBeDefined();
+       |                                                         ^
+     46|     expect(verdictStep().uses).toMatch(/^actions\/github-script@[0-9a-…
+     47|     expect(job?.permissions).toEqual({ actions: 'read', contents: 'rea…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/52]⎯
+
+ FAIL  tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > every job that builds, migrates, deploys or smoke-tests waits for it
+AssertionError: build-push does not need ci-verdict: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/ci/deploy-refuses-unproven-sha.contract.test.ts:53:93
+     51|     const exempt = new Set(['ci-verdict', 'test', 'security-gate']);
+     52|     for (const job of Object.keys(wf.jobs).filter((j) => !exempt.has(j…
+     53|       expect(transitiveNeeds(wf, job).has('ci-verdict'), `${job} does …
+       |                                                                                             ^
+     54|     }
+     55|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/52]⎯
+
+ FAIL  tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > passes when CI, Semgrep and CodeQL all passed on the trunk for this SHA
+Error: deploy-aws.yml has no ci-verdict github-script step
+ ❯ verdictStep tests/ci/deploy-refuses-unproven-sha.contract.test.ts:36:20
+     34| const verdictStep = (): Step => {
+     35|   const step = (wf.jobs['ci-verdict']?.steps ?? []).find((s) => (s.use…
+     36|   if (!step) throw new Error('deploy-aws.yml has no ci-verdict github-…
+       |                    ^
+     37|   return step;
+     38| };
+ ❯ verdict tests/ci/deploy-refuses-unproven-sha.contract.test.ts:40:26
+ ❯ tests/ci/deploy-refuses-unproven-sha.contract.test.ts:58:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/52]⎯
+
+ FAIL  tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > asks for each required workflow at this SHA, on the trunk, from push events
+Error: deploy-aws.yml has no ci-verdict github-script step
+ ❯ verdictStep tests/ci/deploy-refuses-unproven-sha.contract.test.ts:36:20
+     34| const verdictStep = (): Step => {
+     35|   const step = (wf.jobs['ci-verdict']?.steps ?? []).find((s) => (s.use…
+     36|   if (!step) throw new Error('deploy-aws.yml has no ci-verdict github-…
+       |                    ^
+     37|   return step;
+     38| };
+ ❯ tests/ci/deploy-refuses-unproven-sha.contract.test.ts:64:34
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/52]⎯
+
+ FAIL  tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > refuses a SHA whose CI run ended failure
+ FAIL  tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > refuses a SHA whose CI run ended cancelled
+ FAIL  tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > refuses a SHA whose CI run ended timed_out
+ FAIL  tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > refuses a SHA whose CI run ended skipped
+ FAIL  tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > refuses a SHA whose CI run ended action_required
+Error: deploy-aws.yml has no ci-verdict github-script step
+ ❯ verdictStep tests/ci/deploy-refuses-unproven-sha.contract.test.ts:36:20
+     34| const verdictStep = (): Step => {
+     35|   const step = (wf.jobs['ci-verdict']?.steps ?? []).find((s) => (s.use…
+     36|   if (!step) throw new Error('deploy-aws.yml has no ci-verdict github-…
+       |                    ^
+     37|   return step;
+     38| };
+ ❯ verdict tests/ci/deploy-refuses-unproven-sha.contract.test.ts:40:26
+ ❯ tests/ci/deploy-refuses-unproven-sha.contract.test.ts:71:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/52]⎯
+
+ FAIL  tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > refuses a red Semgrep at the SHA even when CI is green
+Error: deploy-aws.yml has no ci-verdict github-script step
+ ❯ verdictStep tests/ci/deploy-refuses-unproven-sha.contract.test.ts:36:20
+     34| const verdictStep = (): Step => {
+     35|   const step = (wf.jobs['ci-verdict']?.steps ?? []).find((s) => (s.use…
+     36|   if (!step) throw new Error('deploy-aws.yml has no ci-verdict github-…
+       |                    ^
+     37|   return step;
+     38| };
+ ❯ verdict tests/ci/deploy-refuses-unproven-sha.contract.test.ts:40:26
+ ❯ tests/ci/deploy-refuses-unproven-sha.contract.test.ts:77:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/52]⎯
+
+ FAIL  tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > reads the newest run: a red re-run after a green one is red
+Error: deploy-aws.yml has no ci-verdict github-script step
+ ❯ verdictStep tests/ci/deploy-refuses-unproven-sha.contract.test.ts:36:20
+     34| const verdictStep = (): Step => {
+     35|   const step = (wf.jobs['ci-verdict']?.steps ?? []).find((s) => (s.use…
+     36|   if (!step) throw new Error('deploy-aws.yml has no ci-verdict github-…
+       |                    ^
+     37|   return step;
+     38| };
+ ❯ verdict tests/ci/deploy-refuses-unproven-sha.contract.test.ts:40:26
+ ❯ tests/ci/deploy-refuses-unproven-sha.contract.test.ts:82:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/52]⎯
+
+ FAIL  tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > does not count a green run of another SHA, branch, event or repository
+Error: deploy-aws.yml has no ci-verdict github-script step
+ ❯ verdictStep tests/ci/deploy-refuses-unproven-sha.contract.test.ts:36:20
+     34| const verdictStep = (): Step => {
+     35|   const step = (wf.jobs['ci-verdict']?.steps ?? []).find((s) => (s.use…
+     36|   if (!step) throw new Error('deploy-aws.yml has no ci-verdict github-…
+       |                    ^
+     37|   return step;
+     38| };
+ ❯ verdict tests/ci/deploy-refuses-unproven-sha.contract.test.ts:40:26
+ ❯ tests/ci/deploy-refuses-unproven-sha.contract.test.ts:88:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/52]⎯
+
+ FAIL  tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > fails closed when the verdict cannot be read
+Error: deploy-aws.yml has no ci-verdict github-script step
+ ❯ verdictStep tests/ci/deploy-refuses-unproven-sha.contract.test.ts:36:20
+     34| const verdictStep = (): Step => {
+     35|   const step = (wf.jobs['ci-verdict']?.steps ?? []).find((s) => (s.use…
+     36|   if (!step) throw new Error('deploy-aws.yml has no ci-verdict github-…
+       |                    ^
+     37|   return step;
+     38| };
+ ❯ verdict tests/ci/deploy-refuses-unproven-sha.contract.test.ts:40:26
+ ❯ tests/ci/deploy-refuses-unproven-sha.contract.test.ts:94:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/52]⎯
+
+ FAIL  tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > refuses when CI has not finished by the deadline
+Error: deploy-aws.yml has no ci-verdict github-script step
+ ❯ verdictStep tests/ci/deploy-refuses-unproven-sha.contract.test.ts:36:20
+     34| const verdictStep = (): Step => {
+     35|   const step = (wf.jobs['ci-verdict']?.steps ?? []).find((s) => (s.use…
+     36|   if (!step) throw new Error('deploy-aws.yml has no ci-verdict github-…
+       |                    ^
+     37|   return step;
+     38| };
+ ❯ verdict tests/ci/deploy-refuses-unproven-sha.contract.test.ts:40:26
+ ❯ tests/ci/deploy-refuses-unproven-sha.contract.test.ts:99:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/52]⎯
+
+ FAIL  tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > refuses a SHA CI never ran on
+Error: deploy-aws.yml has no ci-verdict github-script step
+ ❯ verdictStep tests/ci/deploy-refuses-unproven-sha.contract.test.ts:36:20
+     34| const verdictStep = (): Step => {
+     35|   const step = (wf.jobs['ci-verdict']?.steps ?? []).find((s) => (s.use…
+     36|   if (!step) throw new Error('deploy-aws.yml has no ci-verdict github-…
+       |                    ^
+     37|   return step;
+     38| };
+ ❯ verdict tests/ci/deploy-refuses-unproven-sha.contract.test.ts:40:26
+ ❯ tests/ci/deploy-refuses-unproven-sha.contract.test.ts:104:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/52]⎯
+
+ FAIL  tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the deploy reads the CI verdict for the SHA it deploys > waits for a run in progress and passes once it is green
+Error: deploy-aws.yml has no ci-verdict github-script step
+ ❯ verdictStep tests/ci/deploy-refuses-unproven-sha.contract.test.ts:36:20
+     34| const verdictStep = (): Step => {
+     35|   const step = (wf.jobs['ci-verdict']?.steps ?? []).find((s) => (s.use…
+     36|   if (!step) throw new Error('deploy-aws.yml has no ci-verdict github-…
+       |                    ^
+     37|   return step;
+     38| };
+ ❯ tests/ci/deploy-refuses-unproven-sha.contract.test.ts:122:44
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/52]⎯
+
+ FAIL  tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the built image is scanned before it is pushed > build, then trivy image, then push, as three steps
+AssertionError: no trivy image step: expected -1 to be greater than 4
+ ❯ tests/ci/deploy-refuses-unproven-sha.contract.test.ts:139:41
+    137|   it('build, then trivy image, then push, as three steps', () => {
+    138|     expect(build, 'no docker build step').toBeGreaterThanOrEqual(0);
+    139|     expect(scan, 'no trivy image step').toBeGreaterThan(build);
+       |                                         ^
+    140|     expect(push, 'no docker push step after the scan').toBeGreaterThan…
+    141|     expect(steps[build].run).not.toMatch(/docker push/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/52]⎯
+
+ FAIL  tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the built image is scanned before it is pushed > the scan blocks on HIGH and CRITICAL, with the repository .trivyignore and no blanket exception
+AssertionError: expected [ 'undefined' ] to deeply equal [ 'CRITICAL', 'HIGH' ]
+
+- Expected
++ Received
+
+  [
+-   "CRITICAL",
+-   "HIGH",
++   "undefined",
+  ]
+
+ ❯ tests/ci/deploy-refuses-unproven-sha.contract.test.ts:146:71
+    144|   it('the scan blocks on HIGH and CRITICAL, with the repository .trivy…
+    145|     const w = steps[scan]?.with ?? {};
+    146|     expect(String(w.severity).split(',').map((s) => s.trim()).sort()).…
+       |                                                                       ^
+    147|     expect(String(w['exit-code'])).toBe('1');
+    148|     expect(w.trivyignores).toBe('.trivyignore');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/52]⎯
+
+ FAIL  tests/ci/deploy-refuses-unproven-sha.contract.test.ts > INF-09: the built image is scanned before it is pushed > scans the exact tag the build produced and the push sends
+AssertionError: expected '' to be '${{ steps.login-ecr.outputs.registry …' // Object.is equality
+
+- Expected
++ Received
+
+- ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_API_REPO }}:${{ steps.meta.outputs.tag }}
+
+ ❯ tests/ci/deploy-refuses-unproven-sha.contract.test.ts:155:17
+    153|   it('scans the exact tag the build produced and the push sends', () =…
+    154|     const ref = String(steps[scan]?.with?.['image-ref'] ?? '');
+    155|     expect(ref).toBe('${{ steps.login-ecr.outputs.registry }}/${{ env.…
+       |                 ^
+    156|     expect(steps[build].run).toContain('"$ECR_REGISTRY/$ECR_API_REPO:$…
+    157|     expect(steps[push].run).toContain('docker push "$ECR_REGISTRY/$ECR…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/52]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  52 failed | 7 passed (59)
+   Start at  06:33:16
+   Duration  808ms (transform 304ms, setup 221ms, import 209ms, tests 157ms, environment 0ms)
+

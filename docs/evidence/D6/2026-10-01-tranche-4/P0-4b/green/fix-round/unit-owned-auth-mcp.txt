@@ -1,0 +1,716 @@
+# Fix round 2: owned unit/contract/harness suites + server/routes/__tests__/auth* + server/middleware/__tests__/auth* + server/mcp/__tests__ (unit config). 2026-10-01T15:42:54Z, HEAD 01b1020c + working tree
+ ✓ tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-003: task/notification/compliance/timer events never cross tenants > two organizations connected => ZERO cross-tenant receipt across all 11 events, intra-tenant delivery preserved 800ms
+ ✓ tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > rejects actor spoofing: the collaborator and the edit are attributed to the authenticated user 113ms
+ ✓ tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > rejects lock theft: a non-holder cannot release another user's section lock 355ms
+ ✓ tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > rejects events aimed at a document the socket did not join 391ms
+ × server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > 5 wrong codes lock the account in its users row; the right code is then refused 423 AUTH_002 without being spent 5674ms
+ × server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > the count is one per account across tasks: wrong codes on two tasks lock it, and a third task refuses the right code 169ms
+ ✓ tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > rejects joining a document owned by another organization, and an id that does not exist 484ms
+ × server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > the last wrong code is audited as the one that locked the account 282ms
+ × server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > a right password does not clear what the second factor counted, so signing in again buys no fresh guesses 167ms
+ × server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > a completed sign-in (right code) clears the count the wrong codes built 188ms
+ ✓ tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > rejects join-room smuggling into a document room the caller was never authorized for 588ms
+ × server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > wrong passwords and wrong codes are one count, one threshold: the password step refuses an account the codes locked 187ms
+ × server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an account whose second factor is an emailed code > a locked account completes no sign-in with a challenge issued before the lock, even with a code that would verify 158ms
+ × server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an account whose second factor is an emailed code > control: wrong emailed codes keep their own cap (emailOtpService) and are not added to the account lockout 161ms
+ ✓ tests/socket-tenant-isolation.contract.test.ts > C2C-COLLAB-002: collaboration identity and object binding > refuses collaboration events from a socket that never joined a document 398ms
+ ✓ tests/socket-tenant-isolation.contract.test.ts > handshake fails closed > rejects a connection with no token 69ms
+ ✓ tests/socket-tenant-isolation.contract.test.ts > handshake fails closed > rejects a token with no organization claim 71ms
+ ✓ tests/socket-tenant-isolation.contract.test.ts > handshake fails closed > rejects a refresh token (non-access token class) 69ms
+ ✓ tests/socket-tenant-isolation.contract.test.ts > handshake fails closed > rejects an MFA-partial token 72ms
+ ✓ server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > renders, ingests, files and records ONE governed action — the vault row carries the export bytes’ SHA-256 514ms
+ ✓ server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 409 DOCUMENT_HAS_NO_PROGRAM for an org-wide document — nothing filed 80ms
+ ✓ server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 409 DOCUMENT_MID_FREEZE when the document carries a lock but no sealed status 104ms
+ ✓ server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 403 to a viewer, and files nothing — the Vault service checks the role this route does not 99ms
+ ✓ server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > refuses 400 on a format it does not file 93ms
+ ✓ server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > files a DOCX too — real docx bytes, the same folder 328ms
+File-to-vault error: Error: placement exploded
+ ✓ server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > never leaves a partial write: a failure after ingest reverts the vault row and answers 500 254ms
+ ✓ server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault — handed-off items #9 and #13 > a placement that throws reverts the vault row it admitted — nothing is left behind (#9) 139ms
+ ✓ server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault — handed-off items #9 and #13 > an AnA draft with no module is not filed by the assumed M2 — it waits for a filing decision (#13) 134ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > documentName parsing > accepts a whole-document name and a section name 9ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > documentName parsing > refuses an unknown resource kind rather than defaulting to permitted 7ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > documentName parsing > refuses a malformed id before it can reach Postgres 1ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > documentName parsing > does not treat a SQL-injection attempt as a document id 19ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > admits a member of the document owning tenant 47ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > admits a member for a section of their own document 6ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a missing token 2ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a token signed with the wrong secret — no fallback identity 2ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses an expired token 4ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a session that was signed out (AUTH-03) 6ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses an account taken out of use since its token was issued (F-29) 14ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (refresh) 5ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (mfa_challenge) 9ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (mfa_partial) 5ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (mfaPending flag) 5ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a non-access token (pending_mfa role) 4ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a valid token whose organization membership has been revoked 9ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a token with no tenant claim 5ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a token with no usable subject claim 2ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses to open another tenant's document 5ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses to open a section of another tenant's document 10ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses another tenant's section even when paired with an owned document id 5ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > refuses a document that does not exist at all 5ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > authenticating a collaboration connection > is symmetric — the other tenant is refused in the other direction 11ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > durable CRDT state > reports an unwritten document as absent, not as an error 3ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > durable CRDT state > survives a restart: a fresh Y.Doc reloads what the first one wrote 10ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > durable CRDT state > preserves concurrent edits rather than last-write-wins 7ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > durable CRDT state > replaces rather than appends on a second store 18ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > durable CRDT state > does not serve one tenant the bytes another tenant stored under the same name 7ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > durable CRDT state > cascades the CRDT state away with the document it belongs to 9ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > an unprovisioned store > reports missing rather than looking like an empty document 3122ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > admits a member of an ACTIVE tenant (the baseline) 6ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > REFUSES a member of a suspended tenant 4ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > DOWNGRADES a read-only tenant to a view-only socket rather than refusing 6ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > refuses a read-only tenant when the socket cannot be downgraded 4ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > refuses fail-closed when the posture cannot be read 4ms
+ ✓ server/services/collab/__tests__/collab-governance.pglite.integration.test.ts > tenant lifecycle on the collaboration socket > checks the posture AFTER membership — a revoked user never reveals tenant state 4ms
+ ✓ tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > POST /update-field with NO credential is rejected (401), not executed 41ms
+ ✓ tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > GET /completeness with NO credential is rejected (401) 13ms
+ ✓ tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > GET /subscribe with NO credential is rejected (401) 26ms
+ ✓ tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > POST /update-field against ANOTHER org's project returns 404, not a write 95ms
+ ✓ tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > GET /completeness for ANOTHER org's project returns 404 20ms
+ ✓ tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > GET /subscribe for ANOTHER org's project returns 403 before any stream opens 13ms
+ ✓ tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > a refresh token cannot open the SSE stream (non-access token rejected) 4ms
+ ✓ tests/field-sync-auth.contract.test.ts > C2C-DEVICE-002: /api/field-sync authenticates and tenant-scopes every handler > the caller's OWN project is still permitted (the fix is not a blanket deny) 16ms
+ ✓ tests/golden-journeys/drug-nda-ectd.journey.test.ts > golden journey — drug NDA / eCTD > runs the drug NDA journey 4315ms
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 1 — a decision on a document this tenant does not have > an id that names no document: 404 for single and bulk, and nothing is written 65ms
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 1 — a decision on a document this tenant does not have > another tenant’s document: 404 for single and bulk, and nothing is written 22ms
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 1 — a decision on a document this tenant does not have > the same decision on this tenant’s own document is recorded (the control) 36ms
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 2 — the acts the legacy wrapper wrote carry the real actor, and no invented reason > a section reorder (on the transaction): actor on the trail row and the chained row; no reason 55ms
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 2 — the acts the legacy wrapper wrote carry the real actor, and no invented reason > a review stating why (standalone): the actor on both rows, and the reviewer’s words as the reason 38ms
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 2 — the acts the legacy wrapper wrote carry the real actor, and no invented reason > an approval with no comment: the actor, and no reason at all 46ms
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 2 — the acts the legacy wrapper wrote carry the real actor, and no invented reason > no row anywhere carries the reason "Legacy audit event" 2ms
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 3 — who may read and export a document's record > a member with no grant on the document: 403 on the read and the export, and nothing is exported 40ms
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 3 — who may read and export a document's record > a VIEWER grant reads the trail but may not export it; a revoked grant reads nothing 24ms
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 3 — who may read and export a document's record > the document's owner, and the organization's audit reader, read and export it 240ms
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 3 — who may read and export a document's record > another organization's document, or an id that is not one: 404 either way 19ms
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > 4 — the session a trail row names is the token's, not a header > records the verified token's sid, and ignores a caller-sent x-session-id 34ms
+ ✓ server/routes/__tests__/authoring-record-attribution.pglite.test.ts > the database this ran on > had every table and column the routes under test asked for 0ms
+CRITICAL: Failed to create audit trail: Error: injected: the chained audit_logs write failed
+Error adding comment: Error: injected: the chained audit_logs write failed
+ ✓ server/routes/__tests__/authoring-record-comments.pglite.test.ts > (1) a comment and its record, written through POST /sections/:id/comment > writes the comment, a trail row with the words and the quoted passage, and a chained row naming it 156ms
+ ✓ server/routes/__tests__/authoring-record-comments.pglite.test.ts > (2) the comment and its record commit together or not at all > when the chained audit write fails: 5xx, and no comment row and no trail row remain 105ms
+ ✓ server/routes/__tests__/authoring-record-comments.pglite.test.ts > (3) the document is the section’s > a body naming another document is refused: 400, and nothing is filed under either document 25ms
+ ✓ server/routes/__tests__/authoring-record-comments.pglite.test.ts > (3) the document is the section’s > a body naming the section’s own document, in any case, is accepted and filed there 41ms
+ ✓ server/routes/__tests__/authoring-record-comments.pglite.test.ts > (4) a reply belongs to a thread on the same section > a reply whose parent is on another section → 400, and nothing is written 69ms
+ ✓ server/routes/__tests__/authoring-record-comments.pglite.test.ts > (4) a reply belongs to a thread on the same section > the same reply on the parent’s own section is accepted and recorded as reply_added 39ms
+ ✓ server/routes/__tests__/authoring-record-comments.pglite.test.ts > (5) PATCH /comments/:id — resolving and reopening are recorded, with who and why > resolve with a note: transition resolved, the note as the reason, both statuses, the real actor 47ms
+ ✓ server/routes/__tests__/authoring-record-comments.pglite.test.ts > (5) PATCH /comments/:id — resolving and reopening are recorded, with who and why > reopen: transition reopened, from resolved to open, the earlier note kept as before_content 25ms
+ ✓ server/routes/__tests__/authoring-record-comments.pglite.test.ts > (6) the engine holds the record, whoever asks > refuses to rewrite a comment’s words or quoted passage, and lets its status move 14ms
+ ✓ server/routes/__tests__/authoring-record-comments.pglite.test.ts > (6) the engine holds the record, whoever asks > refuses UPDATE, DELETE and TRUNCATE on authoring_audit_trail 10ms
+ ✓ server/routes/__tests__/authoring-record-comments.pglite.test.ts > (7) GET /docs/:docId/audit verifies every row against its chain entry > every row written through the routes above reads intact 11ms
+ ✓ server/routes/__tests__/authoring-record-comments.pglite.test.ts > (7) GET /docs/:docId/audit verifies every row against its chain entry > a quote rewritten past the guard reads intact:false, naming metadata; the other rows stay intact 18ms
+ ✓ server/routes/__tests__/authoring-record-comments.pglite.test.ts > (7) GET /docs/:docId/audit verifies every row against its chain entry > a comment’s words rewritten past the guard — hash column rewritten to match — read intact:false, naming after_content 17ms
+ ✓ server/routes/__tests__/authoring-record-comments.pglite.test.ts > the database this ran on > had every table and column the routes under test asked for 1ms
+CRITICAL: Failed to create audit trail: Error: injected: INSERT INTO authoring_audit_trail failed
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > the content, its revision, its trail row and the chained row are written on the transaction’s client, between BEGIN and COMMIT 196ms
+Error creating revision: Error: injected: INSERT INTO doc_revisions failed
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the authoring_audit_trail INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable 129ms
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the accept is one transaction > with the doc_revisions INSERT failing: 500, the section content unchanged, nothing recorded — and the draft still claimable 118ms
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > what the record says about the draft > an edited draft: generated_draft is the candidate text and generated_draft_sha256 its hash; the row verifies against its chain 116ms
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > what the record says about the draft > an unedited draft (content sent equal to the candidate): generated_draft is absent, its hash is recorded 116ms
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > what the record says about the draft > an unedited draft (content omitted): generated_draft is absent, its hash is recorded 53ms
+ ✓ server/routes/__tests__/authoring-draft-accept-record.pglite.test.ts > the database this ran on > had every table and column the routes under test asked for 1ms
+ ✓ server/mcp/__tests__/mcp-tenant-tool-policy.test.ts > callAnaHandler and the tenant tool policy > refuses a tool the organization denied 2ms
+ ✓ server/mcp/__tests__/mcp-tenant-tool-policy.test.ts > callAnaHandler and the tenant tool policy > runs it for an organization that did not deny it 34ms
+ ✓ server/mcp/__tests__/mcp-tenant-tool-policy.test.ts > callAnaHandler and the tenant tool policy > does not let an allowlist for governed mutations strip a read tool, as on the chat doors 1ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > refuses, as not found, a citation on another document that is FROZEN and not granted to the caller; nothing is written 88ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > refuses a citation on another section of the same document 33ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > re-reads the section's own citation and records the prior checksum in the same transaction 44ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-1 — "Re-read source" re-reads only a citation the path section owns > a re-read that finds the content unchanged writes nothing 21ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > cite-source: CITATION_ADDED under the document the section belongs to, in the same transaction 40ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > re-citing an already-cited source keeps the checksum recorded at cite time and writes nothing 87ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > re-citing with new citation text records the prior text, and leaves the checksum alone 55ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > uncite: CITATION_REMOVED keeps the deleted row, cite-time checksum included, as its before-image 57ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 / SEC-A-8 — every citation write is on the document trail, with its before-image > the free-text cite: CITATION_ADDED in the same transaction 29ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 — "Re-read all" records each checksum it moves, and refuses a sealed document > refresh-all: one CITATION_REFRESHED per citation whose checksum moved, under its own section 33ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > P11-A-1 — "Re-read all" records each checksum it moves, and refuses a sealed document > refresh-all refuses a FROZEN document and re-reads nothing 12ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > cite-source 29ms
+Error refreshing token: error: test: audit row refused for CITATION_REFRESHED
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > uncite 29ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > refresh-token 37ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > fail closed — an audit row that cannot be written takes the change with it > refresh-all — the whole batch, not the citations before the failure 39ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > refuses (400) a body doc_id naming another document, and writes nothing 17ms
+Error adding comment: error: test: audit row refused for comment_added
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > files the comment, and its audit row, under the section's document in one transaction 25ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > refuses (400) a parent comment on another section, and writes nothing 30ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > threads a reply to a parent on the same section 47ms
+ ✓ server/routes/__tests__/authoringWritesBoundAndAudited.pglite.integration.test.ts > SEC-A-2 — a comment belongs to the document its section belongs to > fail closed: a comment whose audit row cannot be written is not saved 31ms
+ ✓ tests/golden-journeys/submission-release-signature.journey.test.ts > Journey B phase 2 — the Part 11 release-signature gate > runs the release gate 298ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 1 · project — a project of org A, created the way the Projects surface creates it 125ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 2 · capture — bytes X into the project’s Data Room through the upload route 182ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 3 · ana-draft — AnA drafts the canvas document, grounded on the source, under the stream’s own tool ctx 277ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 4 · edit-save — a person edits the quoted section and saves it through the section save path 79ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 5 · seal — the document is frozen and approved under a Part 11 signature 115ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 6 · file-to-vault — the sealed document is filed to the project’s Vault 107ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 7 · place — the filing copy and the Vault copy are placed as submission leaves 257ms
+ ✓ tests/golden-journeys/ind-authoring.journey.test.ts > Journey A phase 1 — authoring loop over HTTP (canonical DDL) > runs the authoring spine 761ms
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (i) the export is recorded before it leaves > (i) writes exactly one chained "authoring.record.exported" row, committed before the response is sent 55ms
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (ii) the package verifies offline > (ii) every chained event in the package verifies offline by the package’s own steps 36ms
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (ii) the same steps catch a rewrite > (ii) the same offline steps catch a quoted passage rewritten past the table’s guard 63ms
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (iii) no record, no export > (iii) when the export row cannot be written: 503 AUTHORING_RECORD_EXPORT_NOT_RECORDED, and no package leaves 54ms
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (iv) tenancy > (iv) another tenant’s document is 404 in both directions — nothing written, nothing sent 17ms
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (iv) an id that is not a document id > is 404 on the read and the export — not the uuid cast's 500 — and nothing is written 6ms
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > (v) a chain walk that could not run > (v) when the tenant chain walk throws, tenantChain.ok is null in the package and in the recorded row — never true 28ms
+ ✓ server/routes/__tests__/authoring-record-export.pglite.test.ts > the database this ran on > had every table and column the routes under test asked for 0ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed) 2184ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project 29ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal 56ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > adopt · a conversation file becomes a project’s source only through one audited adopt 69ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted 185ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the database the walk ran on held every table and column the code asked for 1ms
+ ✓ tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, each with its verified finding and LX fix, and never grows 1ms
+ ✓ server/routes/__tests__/authoring-section-order.pglite.integration.test.ts > this file exercises the router’s own statements > still contains the order read this file mirrors 7ms
+ ✓ server/routes/__tests__/authoring-section-order.pglite.integration.test.ts > this file exercises the router’s own statements > still contains the shift this file mirrors 2ms
+ ✓ server/routes/__tests__/authoring-section-order.pglite.integration.test.ts > this file exercises the router’s own statements > still resolves the position with the shared comparator 2ms
+ ✓ server/routes/__tests__/authoring-section-order.pglite.integration.test.ts > the defect, demonstrated against a real database > leaves every section at index 0 the old way, so the order is not determined by anything 9ms
+ ✓ server/routes/__tests__/authoring-section-order.pglite.integration.test.ts > sections assemble in code order regardless of creation order > creating 5.6 then 5.1 assembles 5.1 first — the W1-2 acceptance criterion 9ms
+ ✓ server/routes/__tests__/authoring-section-order.pglite.integration.test.ts > sections assemble in code order regardless of creation order > converges on full order however scrambled the creation sequence 10ms
+ ✓ server/routes/__tests__/authoring-section-order.pglite.integration.test.ts > sections assemble in code order regardless of creation order > nests sub-sections under their parent 10ms
+ ✓ server/routes/__tests__/authoring-section-order.pglite.integration.test.ts > sections assemble in code order regardless of creation order > puts drug substance before drug product, whichever was created first 6ms
+ ✓ server/routes/__tests__/authoring-section-order.pglite.integration.test.ts > sections assemble in code order regardless of creation order > assigns contiguous indices, so no two sections tie 6ms
+ ✓ server/routes/__tests__/authoring-section-order.pglite.integration.test.ts > sections assemble in code order regardless of creation order > actually moves the rows below an insertion point 6ms
+ ✓ server/routes/__tests__/authoring-section-order.pglite.integration.test.ts > an explicit position still wins > honours a caller-supplied order_index instead of deriving one 19ms
+ ✓ server/routes/__tests__/authoring-section-order.pglite.integration.test.ts > an explicit position still wins > does not re-sort a document someone deliberately reordered 5ms
+ ✓ server/routes/__tests__/authoring-section-order.pglite.integration.test.ts > tenant isolation > reads only this tenant’s sections when resolving a position 4ms
+ ✓ server/routes/__tests__/authoring-record-decisions.pglite.test.ts > the harness builds the schema a deploy builds > lists the authoring subsystem unit exactly as the durable applier declares it 3ms
+ ✓ server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 1 — a long proposed text is recorded whole > a 1,200-character insertion lands in the trail metadata in full, with its SHA-256, and verifies against the chain 102ms
+ ✓ server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 2 — "Accept all" records every change > 25 changes → 25 upserts, ONE trail row carrying all 25 texts whole with their hashes, one chain entry 78ms
+ ✓ server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 3 — the AnA turn a suggestion came from is verified in the tenant > single: a turn record of this organization → verified, with that record’s SHA-256 25ms
+ ✓ server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 3 — the AnA turn a suggestion came from is verified in the tenant > single: another organization’s turn record → unverified, "no such turn record in this organization" 26ms
+ ✓ server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 3 — the AnA turn a suggestion came from is verified in the tenant > single: a claim that is not a record id → unverified, "not a record id" 32ms
+ ✓ server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 3 — the AnA turn a suggestion came from is verified in the tenant > bulk: each change is resolved on its own — own, foreign, non-id and none 24ms
+Error persisting tracked change decision: error: simulated audit_logs outage
+Error persisting bulk tracked change decisions: error: simulated audit_logs outage
+ ✓ server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 4 — a decision is filed only against a section of its own document > single and bulk: a section of ANOTHER document → 400, and nothing is written 27ms
+ ✓ server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 5 — the decision and its record commit together, or neither does > audit_logs refusing the chained row → 500, and no decision upsert and no trail row survive 66ms
+ ✓ server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 6 — the reason is the person’s, or none > single: a stated reason is the trail’s change_reason and the chain row’s audit_logs.reason 16ms
+ ✓ server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 6 — the reason is the person’s, or none > bulk: a stated reason is recorded the same way 17ms
+ ✓ server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 6 — the reason is the person’s, or none > no reason, or only whitespace → null in the trail and in audit_logs, never a made-up one 45ms
+ ✓ server/routes/__tests__/authoring-record-decisions.pglite.test.ts > 7 — a sealed document takes no decision (existing behaviour) > FROZEN → 403 DOCUMENT_FROZEN on single and bulk, and nothing is written 14ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } } 498ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > sanitizes the content: a <script> tag and an onerror handler never reach the store 140ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 on an empty section list — nothing written 16ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 without a programId 16ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 404 a project of another organization — nothing written (PF-02: the draft route checked the id's shape only) 16ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 on a provenance source it does not know 14ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 403 without a tenant 9ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > the root cause, demonstrated: the alias map admits ONE canonical document per filing 12ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId= 145ms
+ ✓ server/routes/__tests__/authoring-ledger.pglite.integration.test.ts > doc_revisions immutable ledger — real engine > applies, and chained revisions land with their input manifests 11ms
+ ✓ server/routes/__tests__/authoring-ledger.pglite.integration.test.ts > doc_revisions immutable ledger — real engine > REFUSES the tamper: UPDATE on a revision is rejected by the engine 7ms
+ ✓ server/routes/__tests__/authoring-ledger.pglite.integration.test.ts > doc_revisions immutable ledger — real engine > REFUSES the erasure: DELETE on a revision is rejected by the engine 4ms
+ ✓ server/routes/__tests__/authoring-ledger.pglite.integration.test.ts > doc_revisions immutable ledger — real engine > REFUSES the whole-table erasure: TRUNCATE is rejected by the engine 5ms
+ ✓ server/routes/__tests__/authoring-ledger.pglite.integration.test.ts > doc_revisions immutable ledger — real engine > stays honest about pre-ledger rows: NULL chain columns are accepted history 3ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > the creator (OWNER + AUTHOR grants, org role member) may file and assign, and may neither freeze nor sign 31ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a member with only a Reviewer grant and a viewer org role is told, per act, why not 18ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a FROZEN document can still be filed to the vault — the sealed record is what filing is for 32ms
+ ✓ server/routes/__tests__/authoringDocAccess.pglite.integration.test.ts > GET /docs/:docId — the caller’s access > a failed permission lookup is reported as unknown, not as a denial 25ms
+ ✓ server/routes/__tests__/authoring-attribution.pglite.integration.test.ts > the revision history read > the previous join was rejected by Postgres at parse time, on every call 8ms
+ ✓ server/routes/__tests__/authoring-attribution.pglite.integration.test.ts > the revision history read > runs against the real users DDL and resolves author names 7ms
+ ✓ server/routes/__tests__/authoring-attribution.pglite.integration.test.ts > the revision history read > survives a created_by that is not a number instead of raising 22P02 4ms
+ ✓ server/routes/__tests__/authoring-attribution.pglite.integration.test.ts > the revision history read > does not serve another tenant its revisions 3ms
+ ✓ server/routes/__tests__/authoring-attribution.pglite.integration.test.ts > what a revision row means > attributes each text to the author who wrote it, across a change of hands 4ms
+ ✓ server/routes/__tests__/authoring-attribution.pglite.integration.test.ts > what a revision row means > records the author of the text that is currently live 5ms
+ ✓ server/routes/__tests__/authoring-attribution.pglite.integration.test.ts > the Part 11 audit row for a content change > stores both sides and a verifiable hash of each 5ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > serves RFC 9728 protected-resource metadata for /mcp 40ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > serves RFC 8414 authorization-server metadata with PKCE S256 and dynamic registration 9ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > answers /mcp without a token with 401 and a resource_metadata challenge 42ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > answers /mcp with a forged token with 401 (same verifier as the API: HS256 + rotation) 38ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > OAuth 2.1 resource-server contract > rejects a refresh-class token on the MCP path (token-class allow-list) 8ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > curated tool catalog > has 19 uniquely named tools, each with all four annotation hints, a scope and exactly one governed write 5ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > fail-closed model-backed tool > returns the gateway’s own refusal verbatim when no provider key is configured 99ms
+ ✓ server/mcp/__tests__/mcp-auth-contract.test.ts > fail-closed model-backed tool > maps an AnA handler error to a verbatim refusal, never an empty success 3ms
+ ✓ tests/schema-contract/esignature-verify-roundtrip.contract.test.ts > e-signature verify round-trip (§11.70 integrity) > a freshly created signature validates as valid — hash covers the stored manifest 73ms
+ ✓ tests/schema-contract/esignature-verify-roundtrip.contract.test.ts > e-signature verify round-trip (§11.70 integrity) > detects a manifest that does not match its hash — integrity is not vacuous 8ms
+ ✓ tests/schema-contract/esignature-verify-roundtrip.contract.test.ts > release-gate OQ-3 uniqueness backstop > refuses a second ACTIVE release signature for the same (org, digest) 5ms
+ ✓ tests/schema-contract/esignature-verify-roundtrip.contract.test.ts > release-gate OQ-3 uniqueness backstop > allows the SAME digest once the first is superseded (append-only re-sign) 8ms
+ ✓ tests/schema-contract/esignature-verify-roundtrip.contract.test.ts > release-gate OQ-3 uniqueness backstop > does NOT block document multi-signature (different signature_type, same digest) 3ms
+ ✓ server/routes/__tests__/authoring-migration.pglite.integration.test.ts > authoring migrations apply to a real Postgres engine > creates all 22 subsystem tables + 7 runtime-DDL tables 8ms
+ ✓ server/routes/__tests__/authoring-migration.pglite.integration.test.ts > the router's real SQL executes against the migrated schema > create-document + create-section flow (the exact router INSERTs) succeeds 6ms
+ ✓ server/routes/__tests__/authoring-migration.pglite.integration.test.ts > the router's real SQL executes against the migrated schema > section upsert honors ON CONFLICT (doc_id, code, tenant_id) 4ms
+ ✓ server/routes/__tests__/authoring-migration.pglite.integration.test.ts > the router's real SQL executes against the migrated schema > comment INSERT accepts jsonb anchor + position_data (the type question, verified) 4ms
+ ✓ server/routes/__tests__/authoring-migration.pglite.integration.test.ts > the router's real SQL executes against the migrated schema > review request upsert honors ON CONFLICT (doc_id, reviewer_id, tenant_id) 4ms
+ ✓ server/routes/__tests__/authoring-migration.pglite.integration.test.ts > the router's real SQL executes against the migrated schema > compliance-scores upsert honors ON CONFLICT (document_id, tenant_id) with numeric scores + jsonb blobs 3ms
+ ✓ server/routes/__tests__/authoring-migration.pglite.integration.test.ts > the router's real SQL executes against the migrated schema > checklist + items with FK cascade on delete 4ms
+ ✓ server/routes/__tests__/authoring-migration.pglite.integration.test.ts > the router's real SQL executes against the migrated schema > user_pins composite PK (email, tenant_id) + lockout columns 3ms
+ ✓ server/routes/__tests__/authoring-migration.pglite.integration.test.ts > the router's real SQL executes against the migrated schema > runtime-DDL tables work: token UNIQUE(section_id, cite_id) + tracked-change CHECK(decision) 7ms
+ ✓ server/routes/__tests__/authoring-migration.pglite.integration.test.ts > the canonical spine's status + placement SQL executes > setReviewStatusTx flips draft → review but never a locked artifact; setPlacementTx sets ctd_section 5ms
+ ✓ server/middleware/__tests__/auth-role-from-database.test.ts > the role a guard reads is the membership row, not the token > a token still claiming admin for a user the row now says is member: requireRole(admin) refuses 891ms
+ ✓ server/middleware/__tests__/auth-role-from-database.test.ts > the role a guard reads is the membership row, not the token > a token minted as member for a user the row now says is admin: requireRole(admin) admits without a new sign-in 5ms
+ ✓ server/middleware/__tests__/auth-role-from-database.test.ts > the role a guard reads is the membership row, not the token > req.user.roles is expanded from the database role, so a functional grant of that role is honoured 3ms
+ ✓ server/middleware/__tests__/auth-role-from-database.test.ts > the role a guard reads is the membership row, not the token > a revoked membership is still refused before any role is read 4ms
+ ✓ server/middleware/__tests__/auth-role-from-database.test.ts > the role a guard reads is the membership row, not the token > a platform administrator granted through platform_role_grants still passes requirePlatformAdmin with an org role of member 3ms
+ ✓ server/middleware/__tests__/auth-role-from-database.test.ts > behind the global gate, the role is that gate's uncached reading on this request > a demotion the global gate read is the role requireRole sees, though the cached row still says admin 2ms
+ ✓ server/middleware/__tests__/auth-role-from-database.test.ts > behind the global gate, the role is that gate's uncached reading on this request > another organisation's reading is not taken: the membership row's role is 2ms
+ ✓ server/middleware/__tests__/auth-role-from-database.test.ts > behind the global gate, the role is that gate's uncached reading on this request > another account's reading is not taken: the membership row's role is 1ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > control: enabled, both a connector token and the session open the connector 78ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > no settings at all: a connector token is refused with invalid_token and the reason 8ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > settings without the connector: a connector token is refused with invalid_token and the reason 8ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > enabled: false: a connector token is refused with invalid_token and the reason 8ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > enabled: "true" (a string, not true): a connector token is refused with invalid_token and the reason 17ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > the connector stored as a bare true: a connector token is refused with invalid_token and the reason 8ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > the session token is refused the same way 4ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > /mcp > refuses as an outage when the organization cannot be read: never admits, never "bad token" 12ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > control: enabled, consent issues a code 11ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > no settings at all: 403 access_denied with the reason, and no code 5ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > settings without the connector: 403 access_denied with the reason, and no code 6ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > enabled: false: 403 access_denied with the reason, and no code 5ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > enabled: "true" (a string, not true): 403 access_denied with the reason, and no code 9ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > the connector stored as a bare true: 403 access_denied with the reason, and no code 4ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the consent POST > answers 503 and issues no code when the organization cannot be read 4ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the /token exchanges > control: enabled, a refresh rotates and issues, and a code exchange issues 2ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the /token exchanges > not enabled: a refresh is refused (invalid_grant) and the grant is left as it was 2ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the /token exchanges > not enabled: a code exchange is refused and issues nothing 1ms
+ ✓ server/mcp/__tests__/mcp-connector-enablement.test.ts > the /token exchanges > a refresh refuses as an outage when the organization cannot be read, and neither rotates nor issues 1ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > /mcp > control: with the standing readable, the session opens the connector 96ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > /mcp > refuses as an outage when the standing cannot be read — never admits, never "bad token" 9ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the consent POST > control: with the standing readable, consent issues a code 12ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the consent POST > answers 503 and issues no code when the standing cannot be read 7ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the /token exchanges > control: with the standing readable, a refresh rotates and issues 2ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the /token exchanges > a refresh refuses as an outage, and neither rotates nor issues 2ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the /token exchanges > control: with the standing readable, a code exchange issues 1ms
+ ✓ server/mcp/__tests__/mcp-standing-unreadable.test.ts > the /token exchanges > a code exchange refuses as an outage and issues nothing 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authenticateToken opens a tenant scope on the member path > a valid token yields an active scope for the downstream handler 876ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authenticateToken opens a tenant scope on the member path > no token → 401 and the handler never runs (no scope) 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authenticateToken opens a tenant scope on the member path > a revoked member → 403 and the handler never runs (no scope) 3ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > an account taken out of use opens nothing on either gate > authenticateToken refuses a suspended account, before a scope opens 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > an account taken out of use opens nothing on either gate > authMiddleware (global /api gate) refuses a suspended account, before a scope opens 20ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > an account taken out of use opens nothing on either gate > authenticateToken refuses a inactive account, before a scope opens 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > an account taken out of use opens nothing on either gate > authMiddleware (global /api gate) refuses a inactive account, before a scope opens 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > an account taken out of use opens nothing on either gate > both answer 503, never a pass, when the standing cannot be read 2ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > both gates carry the organization uuid into the scope > authenticateToken 2ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > both gates carry the organization uuid into the scope > authMiddleware (global /api gate) 2ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > both gates carry the organization uuid into the scope > authMiddleware behind authenticateToken leaves the published context carrying it 2ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authMiddleware (global /api gate) opens a tenant scope > a valid token yields an active scope for the downstream handler 2ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > authMiddleware (global /api gate) opens a tenant scope > no token → 401 and the handler never runs (no scope) 0ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > authenticateToken refuses a live member of a suspended organization 2ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > authMiddleware refuses a live member of a suspended organization 2ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > a past-due organization still reaches the handler on a safe verb 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the tenant lifecycle guard runs on both auth chains > refuses fail-closed when the organization row cannot be read 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > refuses an over-quota upload on authenticateToken 2ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > refuses an over-quota upload on authMiddleware (the global /api gate) 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > admits an upload that fits, with the scope still open for the handler 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > does not evaluate storage on a small JSON write 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > tells a SUSPENDED tenant it is suspended, not that it is out of disk 1ms
+ ✓ server/middleware/__tests__/auth-establishes-scope.integration.test.ts > the storage quota guard composes with the rest of the chain > refuses a past-due tenant on an upload, having allowed it a safe verb 3ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > prints the printed name, the meaning and the executed time 213ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > says so plainly when a document carries no signatures 31ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — DOCX carries the manifestation > does not print an email where the printed name goes 24ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > includes a signature element with the required lines 8ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > escapes the document title, which it never did 7ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — XML carries the manifestation, and is well-formed > is parseable by a real XML parser 43ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.50(b) — PDF carries the manifestation > renders the signature block into the PDF html 414ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > the dead renderer is gone > buildDocx no longer exists to be mistaken for the live path 3ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > states, per signature, that it covers the exported content 29ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > refuses the export when NO signature covers the content being filed 8ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > still exports, and marks the stale one, when a LATER signature covers it 29ms
+ ✓ server/routes/__tests__/authoringExportSignatureManifest.test.ts > §11.70 — a printed hash is now a verified one > an unsigned document is unaffected — nothing to verify, nothing to refuse 27ms
+ ✓ server/middleware/__tests__/auth.test.ts > authenticateToken — subject claim enforcement > rejects a token with no subject claim (no fallback to id=0) 6ms
+ ✓ server/middleware/__tests__/auth.test.ts > authenticateToken — subject claim enforcement > rejects a token with sub=0 2ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > creates the account pending verification, mails the link, and answers without a token 431ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > refuses sign-up when the deployment cannot send mail, and creates nothing 10ms
+ ✓ server/middleware/__tests__/auth.test.ts > authenticateToken — subject claim enforcement > accepts a token with a valid userId claim 759ms
+ ✓ server/middleware/__tests__/auth.test.ts > authenticateToken — subject claim enforcement > returns 401 AUTH_001 when token is missing 1ms
+ ✓ server/middleware/__tests__/auth.test.ts > authenticateToken — subject claim enforcement > rejects a subject-bearing token that is not an access token 2ms
+ ✓ server/middleware/__tests__/auth.test.ts > optionalAuth — subject claim handling > continues unauthenticated when token has no subject claim 2ms
+ ✓ server/middleware/__tests__/auth.test.ts > optionalAuth — subject claim handling > attaches user when token has a valid subject 2ms
+ ✓ server/routes/__tests__/authEnterprise-unknown-email-timing.test.ts > POST /api/auth/enterprise/verify-password > an unknown e-mail pays exactly one bcrypt comparison, at the stored hashes' cost, and is still 401 INVALID_CREDENTIALS 718ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup — no session until the address is confirmed > on a development server with dev auth allowed, the account is active and the token is returned (as before) 352ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/verify-email > moves the account from pending to active, once, and never from any other status 18ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/verify-email > refuses a token of another class, a forged one, and a missing one alike 19ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/resend-verification > answers 202 for every address; mails only an account that is pending 9ms
+ ✓ server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/login for an unconfirmed account > refuses with AUTH_EMAIL_UNVERIFIED after the password is checked, and records the refusal 12ms
+ ✓ server/routes/__tests__/authEnterprise-unknown-email-timing.test.ts > POST /api/auth/enterprise/verify-password > a known account with no stored password pays the same one comparison, and is 401 331ms
+ ✓ server/routes/__tests__/authEnterprise-unknown-email-timing.test.ts > POST /api/auth/enterprise/verify-password > control: a known account with the wrong password is compared against its own hash only, never the pad 8ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/verify > redeems a recovery code through the login verifier (the login screen's "Use a recovery code") 88ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/verify > never completes an authenticator account's sign-in with an emailed code 7ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/verify > still verifies an emailed code for an account without an authenticator 7ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/resend > mints no emailed code for an authenticator account (409, names the authenticator and the recovery codes) 4ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/resend > re-issues a code for an account without an authenticator through the capped re-issue, never a fresh challenge 8ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/mfa/resend > refuses a challenge that has had its limit of codes: 429 MFA_RESEND_LIMIT, no mail, one audit row 6ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/login for a known account > control: issues a fresh challenge through createEmailOtp, never the capped re-issue, so the count of codes starts again with the password 32ms
+ ✓ server/routes/__tests__/auth-sign-in-limits.test.ts > an office behind one address > eleven colleagues — and forty — sign in, password and second factor, and none is refused 402ms
+ ✓ server/routes/__tests__/auth-sign-in-limits.test.ts > one account is still protected > failed passwords for one address signed in with are refused past the per-account limit — and nobody else is 45ms
+ ✓ server/routes/__tests__/auth-sign-in-limits.test.ts > one account is still protected > wrong second-factor codes for one account are refused past the per-account limit — the next account is not 28ms
+ ✓ server/routes/__tests__/auth-mfa-challenge-factors.test.ts > POST /api/auth/login with an unknown e-mail > pays the bcrypt comparison a wrong password pays, so the answer time does not say the e-mail is unknown 652ms
+ ✓ server/routes/__tests__/auth-sign-in-limits.test.ts > one account is still protected > a successful sign-in spends none of the account’s allowance 67ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > dot segments: 400, names the image, writes nothing 420ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > percent-encoded dot segments: 400, names the image, writes nothing 10ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > backslash segments: 400, names the image, writes nothing 7ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > a query: 400, names the image, writes nothing 6ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > another API route: 400, names the image, writes nothing 7ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > an external address: 400, names the image, writes nothing 6ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > a protocol-relative address: 400, names the image, writes nothing 5ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > an inline SVG: 400, names the image, writes nothing 6ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > an inline WebP: 400, names the image, writes nothing 9ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > names only the images that are not figures, by their position in the section 8ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > returns a long refused src shortened, so a megabyte data: URI is not echoed back 9ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > saves a governed reference and an inline PNG, exactly as sent 10ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > leaves a metadata-only save alone 5ms
+ ✓ server/routes/__tests__/authoring-section-figure-refs.test.ts > PATCH /sections/:id refuses an image that is not an uploaded figure > accepts every reference the image store mints (bound to saveDerivedUpload) 27ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-33 — DELETE /docs/:docId is the governed delete, not an admin-token door > the static x-admin-token authorises nothing: a member holding it is refused and nothing is deleted 101ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-33 — DELETE /docs/:docId is the governed delete, not an admin-token door > an organisation manager deletes its own document: tenant-scoped, one transaction, chained row naming the actor 18ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-33 — DELETE /docs/:docId is the governed delete, not an admin-token door > a document outside the caller's organisation answers 404 and deletes nothing 5ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-33 — DELETE /docs/:docId is the governed delete, not an admin-token door > a delete with no stated reason is refused before anything is read 6ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-33 — DELETE /docs/:docId is the governed delete, not an admin-token door > a sealed (FROZEN) document is not deleted 5ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-33 — DELETE /docs/:docId is the governed delete, not an admin-token door > a document with revision history answers 409 before any DELETE — the ledger is append-only 6ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-33 — DELETE /docs/:docId is the governed delete, not an admin-token door > a draft that carries a signature answers 409 — the signature is never left naming a record that is gone 4ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-33 — DELETE /docs/:docId is the governed delete, not an admin-token door > the router no longer reads x-admin-token or ADMIN_TOKEN 2ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-35 — freeze is the signing ceremony > a member without signing authority cannot freeze (403) and nothing is sealed 5ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-35 — freeze is the signing ceremony > a freeze without the password is refused by the ceremony and nothing is sealed 46ms
+ ✓ server/routes/__tests__/authoringApprovalNoWorkflow.test.ts > POST /docs/:docId/sign on a document with NO approval workflow > does not flip the document to APPROVED 49ms
+ ✓ server/routes/__tests__/authoringApprovalNoWorkflow.test.ts > POST /docs/:docId/sign on a document with NO approval workflow > still records the signature — only the APPROVAL is withheld 9ms
+ ✓ server/routes/__tests__/authoringApprovalNoWorkflow.test.ts > POST /docs/:docId/sign on a document with NO approval workflow > does not seal the document into frozen_documents either 7ms
+ ✓ server/routes/__tests__/authoringApprovalNoWorkflow.test.ts > POST /docs/:docId/sign where an approval workflow DID exist > still flips to APPROVED once every step is approved 7ms
+ ✓ server/routes/__tests__/authoringApprovalNoWorkflow.test.ts > POST /docs/:docId/sign where an approval workflow DID exist > does NOT approve while a step is still pending 9ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-35 — freeze is the signing ceremony > a wrong password is refused (401) and nothing is sealed 10ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-35 — freeze is the signing ceremony > a freeze without a §11.50 meaning is refused 5ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-35 — freeze is the signing ceremony > an approval is not a freeze meaning — approval is E-sign, which approves and freezes in one act 5ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > DP-35 — freeze is the signing ceremony > the signed freeze writes the signature bound to the snapshot it seals, in the freeze transaction 11ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > IAM-14 — POST /images and POST /import/docx run assertUploadSafe > a PNG named and declared as a PNG is stored 17ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > IAM-14 — POST /images and POST /import/docx run assertUploadSafe > a file whose name says GIF but whose bytes and declared type are PNG is refused (the name binds the type) 8ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > IAM-14 — POST /images and POST /import/docx run assertUploadSafe > in production a figure the scanner could not scan is refused (503), not admitted 9ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > IAM-14 — POST /images and POST /import/docx run assertUploadSafe > a .docx whose bytes are not a Word container is refused before it is parsed 13ms
+ ✓ server/routes/__tests__/authoring-governed-delete-signed-freeze.test.ts > IAM-14 — POST /images and POST /import/docx run assertUploadSafe > a Word container that the scanner flags is refused before it is parsed 5ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-password > a suspended account is refused (403 AUTH_ACCOUNT_INACTIVE) before its password is compared, and the refusal is audited 46ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-password > control: an active account with the wrong password is 401 10ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa > a challenge for an account suspended since it was issued does not become a session; no code is spent 14ms
+ ✓ server/routes/__tests__/authEnterprise-inactive-account.test.ts > POST /verify-mfa > control: an active account with a verified code proceeds past the standing check 64ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > brackets the revision, section update and audit in one BEGIN…COMMIT 87ms
+Error freezing document: Error: injected mid-transaction failure
+Sign error: Error: injected mid-transaction failure
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > PATCH /sections/:id — revision + update + audit are atomic > ROLLBACK + 500 when the section update fails mid-transaction 10ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/freeze — snapshot + status flip + audit are atomic > brackets the snapshot, status update and audit in one BEGIN…COMMIT 60ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/freeze — snapshot + status flip + audit are atomic > ROLLBACK + 500 when the status update fails mid-transaction 20ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/sign — signature + workflow approval + audit are atomic > brackets the signature, workflow step, document approval and audit in one BEGIN…COMMIT 14ms
+CRITICAL: Failed to create audit trail: Error: injected mid-transaction failure
+Error reverting section: Error: injected mid-transaction failure
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /docs/:id/sign — signature + workflow approval + audit are atomic > ROLLBACK + 500 when the signature insert fails mid-transaction 8ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /sections/:id/revert — update + revision + filing + audit are atomic > writes its audit record inside the same BEGIN…COMMIT, not on the pool after it 5ms
+ ✓ server/routes/__tests__/authoring-atomic-mutations.test.ts > POST /sections/:id/revert — update + revision + filing + audit are atomic > a failed audit write rolls the revert back and reports 500 6ms
+ ✓ server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F2 — POST /docs/:id/sign auto-freezes when the final step approves the document > writes a frozen_documents row on the transaction client, between BEGIN and COMMIT 49ms
+ ✓ server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F3 — POST /docs/:id/export gates on the record being sealed > REFUSES with 409 when the document is a DRAFT — no unapproved artifact, no manifest 9ms
+ ✓ server/routes/__tests__/authoringSignFreezeAndExportGate.test.ts > F3 — POST /docs/:id/export gates on the record being sealed > ALLOWS an APPROVED document and records the DELIVERED artifact-bytes hash 55ms
+ ✓ server/routes/__tests__/authoringExportDocx.test.ts > BP-W0-6 — authoring export, Word branch > returns 200 and a real .docx whose XML carries the section content 250ms
+ ✓ server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > no enabled provider → 503 GATEWAY_UNAVAILABLE and no draft body at all 63ms
+ ✓ server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > a provider failure refuses with its classified code — never a template 13ms
+ ✓ server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > a provider that answers with no content is INVALID_AI_RESPONSE, not a template 11ms
+ ✓ server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > a fault of ours (not the gateway) is a 500, still with no draft body 11ms
+ ✓ server/routes/__tests__/authoringAiDraftNoProvider.test.ts > authoring AI-draft — no provider / failing provider is a refusal > a provider that drafts → 200 with the model draft, source "model" 16ms
+ ✓ server/routes/__tests__/authoring-signing-authority.test.ts > §11.10(g) — authoring e-signature requires signing authority > /e-sign: a role outside the allowlist is refused 35ms
+ ✓ server/routes/__tests__/authoring-signing-authority.test.ts > §11.10(g) — authoring e-signature requires signing authority > /e-sign: no membership row at all is refused (fails closed) 7ms
+ ✓ server/routes/__tests__/authoring-signing-authority.test.ts > §11.10(g) — authoring e-signature requires signing authority > /e-sign: rejects an unauthorized role BEFORE verifying the password 6ms
+ ✓ server/routes/__tests__/authoring-signing-authority.test.ts > §11.10(g) — authoring e-signature requires signing authority > /e-sign: an authorized role passes the gate and proceeds 10ms
+ ✓ server/routes/__tests__/authoring-signing-authority.test.ts > §11.10(g) — authoring e-signature requires signing authority > /sign: a role outside the allowlist is refused 6ms
+ ✓ server/routes/__tests__/authoring-signing-authority.test.ts > §11.10(g) — authoring e-signature requires signing authority > /sign: no membership row at all is refused (fails closed) 15ms
+ ✓ server/routes/__tests__/authoring-signing-authority.test.ts > §11.10(g) — authoring e-signature requires signing authority > /sign: rejects an unauthorized role BEFORE verifying the password 9ms
+ ✓ server/routes/__tests__/authoring-signing-authority.test.ts > §11.10(g) — authoring e-signature requires signing authority > /sign: an authorized role passes the gate and proceeds 4ms
+ ✓ server/routes/__tests__/authoring-signing-authority.test.ts > §11.70 — a signature must be linked to a real record > e-sign refuses an unknown document rather than binding to sha256("") 8ms
+ ✓ server/routes/__tests__/authoringExportPdf.test.ts > authoring export — real PDF branch > renders application/pdf through the HTML→PDF engine (not mislabeled DOCX) 119ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > rejects the backslash open-redirect payloads 2ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > rejects protocol-relative and absolute URLs 1ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > rejects non-strings / empty 0ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 1: sanitizeReturnTo hardening (SSO open-redirect / token exfil) > accepts a legitimate same-origin path (incl. query) 1ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token rejects a pre-MFA partial token (no 24h access minted) 87ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token rejects an mfa_challenge token 10ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /refresh-token still refreshes a VALID access token 12ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /select-organization rejects a partial token 22ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > GET /session reports unauthenticated for a partial token 6ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > GET /session reports authenticated for a VALID access token 7ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /mfa/setup rejects a partial token 5ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /mfa/enable rejects a partial token 11ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/enterprise/* > POST /mfa/disable rejects a partial token 11ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /session rejects a partial token (401) 6ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /session rejects an mfa_challenge token (401) 5ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > GET /me rejects a partial token (401) 5ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/setup rejects a partial token (401) 7ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/enable rejects a partial token (401) 15ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /mfa/disable rejects a partial token (401) 4ms
+ ✓ server/routes/__tests__/authSurfaceSecurity.test.ts > Defect 2: token-class guard on /api/auth/* (plain variants) > POST /password/change rejects a partial token (401) 7ms
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > 400 when draftId is missing 53ms
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > 404 when the section is not found for this tenant (past the edit guard) 9ms
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > 410 when the draft candidate is missing/expired/already accepted 14ms
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > accepts a draft: consumes it, records lineage, returns the attribution summary 12ms
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > attributes the EDITED text when the client sends its own content 7ms
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > commits the accepted draft to the filing, and reports whether it landed 7ms
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > never records "Accepted AI draft" as the reason for change 7ms
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > records the author's stated reason when they give one 7ms
+ ✓ server/routes/__tests__/authoringAiDraftAccept.test.ts > POST /sections/:id/ai/draft/accept > 500 (fails closed) when lineage cannot be recorded — rolls content back 13ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > a signing PIN alone signs nothing 56ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > signs with the account password and the enrolled code, and records that 16ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > refuses the password alone when an authenticator is enrolled 6ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > refuses a wrong code, counts it against the account, and writes nothing 7ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > signs with the password when no authenticator is enrolled, and records that 6ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/e-sign > refuses a wrong password and writes nothing 5ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > a signing PIN alone signs nothing 9ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > signs with the account password and the enrolled code, and records that 10ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > refuses the password alone when an authenticator is enrolled 16ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > refuses a wrong code, counts it against the account, and writes nothing 7ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > signs with the password when no authenticator is enrolled, and records that 6ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > Authoring signs with the platform ceremony > POST /docs/:docId/sign > refuses a wrong password and writes nothing 6ms
+ ✓ server/routes/__tests__/authoring-sign-ceremony.test.ts > the PIN store > has no route that sets a PIN: POST /users/pin is gone 7ms
+ ✓ server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa asks the account its own factor > an authenticator account is never verified by an emailed code: the emailed-code verifier is not called, and a wrong authenticator code is 401 72ms
+ ✓ server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa asks the account its own factor > an authenticator account signs in with its authenticator code, recorded as totp 11ms
+ ✓ server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa asks the account its own factor > an authenticator account signs in with a recovery code, recorded as backup_code 7ms
+ ✓ server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa asks the account its own factor > control: an account without an authenticator is verified by its emailed code, recorded as email 7ms
+ ✓ server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa asks the account its own factor > control: an account without an authenticator whose emailed code is wrong is 401, after the authenticator verifier had its turn 7ms
+ ✓ server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa issues a session only where the account is a member > carries the membership role into the session 7ms
+ ✓ server/routes/__tests__/authEnterprise-verify-mfa-factor-order.test.ts > POST /verify-mfa issues a session only where the account is a member > refuses, and records it, when the account no longer belongs to the organisation — no invented role 5ms
+ ✓ server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/refresh after a password change > refuses a refresh token issued before password_changed_at: no new session, nothing rotated 83ms
+ ✓ server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/refresh after a password change > mints from a refresh token issued after the change, and rotates it (existing behaviour) 17ms
+ ✓ server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/refresh after a password change > mints for an account that never changed its password 7ms
+ ✓ server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/refresh after a sign-out everywhere (P0-4b) > refuses a refresh token whose session began before it, even one rotated after it 6ms
+ ✓ server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/refresh after a sign-out everywhere (P0-4b) > mints for a session that began after it 19ms
+ ✓ server/routes/__tests__/auth-refresh-session-currency.test.ts > POST /api/auth/logout > revokes the refresh token the client sends in the body, as well as the bearer 6ms
+ ✓ server/middleware/__tests__/auth-carries-provider.test.ts > authenticateToken carries the token provider onto req.user > a token with provider 'saml' yields req.user.provider === 'saml' 160ms
+ ✓ server/middleware/__tests__/auth-carries-provider.test.ts > authenticateToken carries the token provider onto req.user > a token with no provider claim yields req.user.provider === 'local-jwt' (a password session) 3ms
+ ✓ server/middleware/__tests__/auth-carries-provider.test.ts > authenticateToken carries the token provider onto req.user > a provider claim that is not a string is read as 'local-jwt', never as a value the guard could mistake 3ms
+ ✓ server/middleware/__tests__/auth-carries-provider.test.ts > PLATFORM_ADMIN_EMAILS behind authenticateToken > does not admit an allow-listed e-mail asserted by an IdP (provider saml): isPlatformAdmin false, requirePlatformAdmin 403 6ms
+ ✓ server/middleware/__tests__/auth-carries-provider.test.ts > PLATFORM_ADMIN_EMAILS behind authenticateToken > still admits the same e-mail on a password session (no provider claim) 9ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > POST /documents/:id/tracked-change-decisions > records the refused TEXT, not just an id the document no longer holds 43ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > POST /documents/:id/tracked-change-decisions > keeps the whole proposed text, with its hash — accepting strips the mark, so this is the only copy 11ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > POST /documents/:id/tracked-change-decisions > still records the decision when no context is supplied 6ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > POST /documents/:id/tracked-change-decisions > refuses a verdict that is neither accept nor reject 6ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > POST /documents/:id/tracked-change-decisions/bulk > records one act, with the changes it covered 9ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > POST /documents/:id/tracked-change-decisions/bulk > records every change of an "Accept all", whole — no cap, nothing left out 8ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > POST /documents/:id/tracked-change-decisions/bulk > records the bulk act even when no per-change context is sent 7ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > the FROZEN/APPROVED document lock — accept/reject must not write past it > refuses a single accept/reject against a FROZEN document — no row written 10ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > the FROZEN/APPROVED document lock — accept/reject must not write past it > refuses a single accept/reject against an APPROVED document 9ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > the FROZEN/APPROVED document lock — accept/reject must not write past it > still accepts against an ordinary DRAFT document — the fix is not a blanket deny 7ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > the FROZEN/APPROVED document lock — accept/reject must not write past it > refuses a bulk accept against a FROZEN document — no rows written 5ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > the FROZEN/APPROVED document lock — accept/reject must not write past it > still accepts a bulk decision against an ordinary DRAFT document 5ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > bulk audit metadata carries what the single route already carries > records sectionId and each change's proposedAt, mirroring the single route 5ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > bulk audit metadata carries what the single route already carries > omits sectionId when the caller sends none, same as the single route 4ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > proposedBy — a machine author is canonicalised, everything else is caller-asserted text > an authorId of "ana" is canonicalised — the caller-supplied authorName is IGNORED 14ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > proposedBy — a machine author is canonicalised, everything else is caller-asserted text > an authorId that is a prototype key ("constructor") is not a machine author 8ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > proposedBy — a machine author is canonicalised, everything else is caller-asserted text > an ordinary human proposer is recorded as unverified, caller-asserted text 5ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > proposedBy — a machine author is canonicalised, everything else is caller-asserted text > an unrecognised authorId (not "ana") is NOT treated as a machine — recorded as its own text 5ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > proposedBy — a machine author is canonicalised, everything else is caller-asserted text > bounds an unverified proposer name — an audit row is not a place for arbitrary text 5ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > proposedBy — a machine author is canonicalised, everything else is caller-asserted text > bulk: a machine author is canonicalised per change, mirroring the single route 6ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > SEC-A-7: a decision names a section of its own document, and a change type the editor has > single: another document's section is refused 400 SECTION_NOT_IN_DOCUMENT — no row, no audit event 5ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > SEC-A-7: a decision names a section of its own document, and a change type the editor has > the lookup is scoped to this document AND this tenant 6ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > SEC-A-7: a decision names a section of its own document, and a change type the editor has > single: a section of this document is recorded, as before 7ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > SEC-A-7: a decision names a section of its own document, and a change type the editor has > a sectionId that is not a uuid is refused without a query — Postgres would answer 22P02, a 500 7ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > SEC-A-7: a decision names a section of its own document, and a change type the editor has > bulk: another document's section is refused — no rows, no audit event 8ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > SEC-A-7: a decision names a section of its own document, and a change type the editor has > a decision that names no section is recorded, as before 6ms
+ ✓ server/routes/__tests__/authoringTrackedChangeDecisions.test.ts > SEC-A-7: a decision names a section of its own document, and a change type the editor has > a changeType the editor does not have is not recorded (null, single and bulk) 11ms
+ ✓ server/middleware/__tests__/auth-session-currency.test.ts > authenticateToken — a session the password change ended > answers 401 SESSION_ENDED for a bearer issued before password_changed_at, and the handler never runs 203ms
+ ✓ server/middleware/__tests__/auth-session-currency.test.ts > authenticateToken — a session the password change ended > admits a bearer issued after the change 5ms
+ ✓ server/middleware/__tests__/auth-session-currency.test.ts > authenticateToken — a session the password change ended > admits a bearer for an account that never changed its password 3ms
+ ✓ server/middleware/__tests__/auth-session-currency.test.ts > authenticateToken — a session the password change ended > outside production, admits a bearer that carries no iat (fixtures build claims by hand); production refuses it — pinned on the rule in account-standing 7ms
+ ✓ server/middleware/__tests__/auth-session-currency.test.ts > authenticateToken — a session the password change ended > still answers 401 ACCOUNT_INACTIVE for an account out of use (F-29 unchanged) 2ms
+ ✓ server/routes/__tests__/authoringBindingColumnStates.test.ts > renaming a section code where the binding column is ABSENT > does not 500 — nothing can be bound, so nothing can break 68ms
+ ✓ server/routes/__tests__/authoringBindingColumnStates.test.ts > renaming a section code where the binding column is ABSENT > does not consult the bound-document predicate at all 12ms
+ ✓ server/routes/__tests__/authoringBindingColumnStates.test.ts > renaming a section code where the check could NOT RUN > refuses rather than guessing, and says nothing was changed 9ms
+ ✓ server/routes/__tests__/authoringBindingColumnStates.test.ts > renaming a section code where the column IS present > still locks the code on a bound document 7ms
+ ✓ server/routes/__tests__/authoringBindingColumnStates.test.ts > creating a document when the check could NOT RUN > does not claim the deployment lacks the column 15ms
+ ✓ server/routes/__tests__/authoringBindingColumnStates.test.ts > creating a document when the check could NOT RUN > still creates the document, unbound 10ms
+ ✓ server/routes/__tests__/authoringBindingColumnStates.test.ts > creating a document when the check could NOT RUN > DOES name the column when it is genuinely absent 23ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > sessionPredatesPasswordChange — the rule > a session issued before the change predates it; at or after does not 3ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > sessionPredatesPasswordChange — the rule > an account that never changed its password ends no session 1ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > sessionPredatesPasswordChange — the rule > a token with no iat is refused in production only (no first-party issuer omits it; test fixtures do) 1ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > sessionEndedByStanding — both stamps, measured from the session start (P0-4b) > the later of the password change and the end of every session is the one that counts 1ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > sessionEndedByStanding — both stamps, measured from the session start (P0-4b) > a session that began before a sign-out everywhere is over, whenever its token was minted 1ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > sessionEndedByStanding — both stamps, measured from the session start (P0-4b) > a token without a session start is measured from its iat, as before 1ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > a membership begun after the session ended it in that organisation (P0-4b R1) > the start of the membership counts with the other stamps 0ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > a membership begun after the session ended it in that organisation (P0-4b R1) > a session older than the membership (removed and re-added) is over; the one the membership began with is current 0ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > a membership begun after the session ended it in that organisation (P0-4b R1) > readAccountStanding reads the membership in the same statement when an organisation is named, and only then 5ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > a membership begun after the session ended it in that organisation (P0-4b R1) > verifyLiveToken refuses an access token of a session older than its organisation membership 73ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > endingStampOf: the first whole second after an ending event (R3) > rounds every instant up to the next whole second, even one exactly on a second 1ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > endingStampOf: the first whole second after an ending event (R3) > ends a session begun in the event's own second and admits one begun in the stamp's 0ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > issuedAtOfClaims > reads a numeric iat as whole seconds and nothing else 0ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > readAccountStanding — one statement, both answers > returns the status and the password-change second, parsing the bigint pg hands back as text 1ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > readAccountStanding — one statement, both answers > keeps the statement the request-path doubles recognise, and isAccountActive stays a boolean 1ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > isSessionCurrent > is false for a session issued before the password change and true after 22ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > verifyLiveToken refuses a session the password change ended > throws SessionEndedError for an access token whose iat precedes password_changed_at 5ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > verifyLiveToken refuses a session the password change ended > admits an access token issued after the change, and one for an account that never changed its password 6ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > verifyLiveToken refuses a session the password change ended > refuses a session begun before a sign-out everywhere, even through a token rotated after it 5ms
+ ✓ server/services/__tests__/account-standing-session-currency.test.ts > verifyLiveToken refuses a session the password change ended > still refuses an account out of use, whichever way its session was issued (F-29 unchanged) 5ms
+ ✓ server/middleware/__tests__/auth-inactivity-logoff.test.ts > authenticateToken — inactivity logoff > answers 401 SESSION_IDLE for a session with no activity for longer than its idle window, and the handler never runs 101ms
+ ✓ server/middleware/__tests__/auth-inactivity-logoff.test.ts > authenticateToken — inactivity logoff > a request is activity: a session used every 14 minutes stays open, and one left alone for 16 is over 5ms
+ ✓ server/middleware/__tests__/auth-inactivity-logoff.test.ts > authenticateToken — inactivity logoff > honours the window the tenant set at sign-in (idl), not the default 2ms
+ ✓ server/middleware/__tests__/auth-inactivity-logoff.test.ts > authenticateToken — inactivity logoff > answers 401 SESSION_LIFETIME for a session that began more than 12 hours ago, however active 3ms
+ ✓ server/middleware/__tests__/auth-inactivity-logoff.test.ts > authenticateToken — inactivity logoff > a token minted before sessions had ids is measured from its own issue 3ms
+ ✓ server/middleware/__tests__/auth-inactivity-logoff.test.ts > authenticateToken — inactivity logoff > answers 401 SESSION_SUPERSEDED for a session ended by a later sign-in beyond the account's limit 7ms
+ ✓ server/middleware/__tests__/auth-inactivity-logoff.test.ts > authenticateToken — inactivity logoff > optionalAuth attaches no user from a session that is over, and the request continues anonymous 9ms
+ ✓ server/routes/__tests__/authoringTemplateStartFrom.test.ts > POST /docs — create from a template > seeds the skeleton from the global reference store, resolved BEFORE the document is written 67ms
+ ✓ server/routes/__tests__/authoringTemplateStartFrom.test.ts > POST /docs — create from a template > falls back to the org template store and seeds ITS content 17ms
+ ✓ server/routes/__tests__/authoringTemplateStartFrom.test.ts > POST /docs — create from a template > refuses an id that resolves nothing in either store — and writes NO document 9ms
+Error creating document: Error: audit store unavailable
+ ✓ server/routes/__tests__/authoringTemplateStartFrom.test.ts > POST /docs — create from a template > refuses a malformed template_id with a clean 400 before any query can throw 8ms
+ ✓ server/routes/__tests__/authoringTemplateStartFrom.test.ts > GET /templates — the picker lists what create consumes > merges global reference templates after the org rows, dropping sectionless globals 10ms
+ ✓ server/routes/__tests__/authoringTemplateStartFrom.test.ts > GET /templates — the picker lists what create consumes > drops sectionless ORG rows too — the picker must not offer what POST /docs refuses 6ms
+ ✓ server/routes/__tests__/authoringTemplateStartFrom.test.ts > GET /templates — the picker lists what create consumes > fail-soft: an unreachable global store still lists the org templates 7ms
+ ✓ server/routes/__tests__/authoringTemplateStartFrom.test.ts > POST /docs — create-with-seed is one transaction > a mid-seed failure rolls the whole create back, so "nothing was persisted" is true 19ms
+ ✓ server/routes/__tests__/authoringBindingColumnGuard.test.ts > POST /docs — governed binding column > creates the document when the binding column is ABSENT, rather than failing 36ms
+ ✓ server/routes/__tests__/authoringBindingColumnGuard.test.ts > POST /docs — governed binding column > says the document is NOT bound, rather than claiming a binding it dropped 7ms
+ ✓ server/routes/__tests__/authoringBindingColumnGuard.test.ts > POST /docs — governed binding column > still binds when the column IS present 6ms
+ ✓ server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > never reports a negative percentage, however bad the section 47ms
+ ✓ server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > publishes the denominator, so the percentage is not taken on trust 9ms
+ ✓ server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > applies the CTD element check migrated off the deleted endpoint 5ms
+ ✓ server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > does not count a CTD check it has no expectations for 11ms
+ ✓ server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /sections/:id/ai/deficiency-scan > frames its output as a signal, never as a compliance determination 6ms
+ ✓ server/routes/__tests__/authoringDeficiencyScan.test.ts > POST /ai/validate-compliance > is gone — it answered PASS for every section it never examined 6ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: an account added through user administration (SEC-0928-2) > address unconfirmed: the refusal names the organisation it belongs to 61ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: an account added through user administration (SEC-0928-2) > account out of use: the refusal names the organisation it belongs to 10ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: an account added through user administration (SEC-0928-2) > locked: the refusal names the organisation it belongs to 6ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: an account added through user administration (SEC-0928-2) > wrong password: the refusal names the organisation it belongs to 8ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: an account with a default organisation > control: its default organisation, where it holds a membership, is named 6ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: an account with a default organisation > the second-factor challenge names the organisation its sign-in lands in 11ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: an account with a default organisation > the partial token and the challenge name a MEMBERSHIP, never a default the account does not belong to 9ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: an account with a default organisation > with no membership at all, the default organisation is named 4ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: which organisation the sign-in lands in > an account with a membership and no default signs in, into its membership 10ms
+ ✓ server/routes/__tests__/authEnterprise-audit-organisation.test.ts > POST /verify-password: which organisation the sign-in lands in > an account with no membership at all is refused, and the refusal is recorded 7ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token and the organisation the token names > carries the membership role into the successor 54ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token and the organisation the token names > mints nothing and revokes nothing once the account no longer belongs to it 7ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > mints a successor and revokes the presented access token 19ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > refuses a refresh token: nothing minted, nothing revoked 5ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > refuses a mfa_challenge token: nothing minted, nothing revoked 5ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > refuses a mfa-partial token: nothing minted, nothing revoked 5ms
+ ✓ server/routes/__tests__/authEnterprise-refresh-token-rotation.test.ts > POST /refresh-token rotates > cannot renew a session the password change ended (iat before password_changed_at) 6ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session idle past its window (401 SESSION_IDLE) 54ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session that began more than 12 hours ago (401 SESSION_LIFETIME) 10ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > refreshes an active session and carries its id, start and window into both new tokens 11ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > a refresh token minted before sessions had ids is checked for its lifetime only 11ms
+ ✓ server/routes/__tests__/auth-refresh-inactivity.test.ts > POST /api/auth/refresh — a refresh is not activity > mints nothing for a session ended by a later sign-in beyond the account's limit (401 SESSION_SUPERSEDED) 8ms
+ ✓ server/routes/__tests__/authoringDocsStatusFilter.test.ts > BP-W0-7 — GET /docs status filter > compares status case-insensitively, so lower-case filters reach upper-case rows 39ms
+ ✓ server/routes/__tests__/authoringDocsStatusFilter.test.ts > BP-W0-7 — GET /docs status filter > the same holds for in_review and approved, which also matched nothing 12ms
+ ✓ server/routes/__tests__/authoringDocsStatusFilter.test.ts > BP-W0-7 — GET /docs status filter > status=all applies NO status predicate, so no state can orphan a document 5ms
+ ✓ server/routes/__tests__/authoringDocsStatusFilter.test.ts > BP-W0-7 — GET /docs status filter > an absent status also lists everything rather than silently defaulting to draft 5ms
+ ✓ server/routes/__tests__/authoringDocsStatusFilter.test.ts > BP-W0-7 — GET /docs status filter > other filters are unaffected 4ms
+ ✓ server/routes/__tests__/authEnterprise-signature-verify-tenant.test.ts > electronic-signature verify — tenant boundary > passes the organization from the verified request, not the signature id alone 21ms
+ ✓ server/routes/__tests__/authEnterprise-signature-verify-tenant.test.ts > electronic-signature verify — tenant boundary > refuses when the request carries no organization 5ms
+ ✓ server/routes/__tests__/authEnterprise-signature-verify-tenant.test.ts > electronic-signature verify — tenant boundary > cannot be told which organization to read — the caller does not get a vote 4ms
+ ✓ server/routes/__tests__/authEnterprise-signature-verify-tenant.test.ts > electronic-signature verify — tenant boundary > rejects a non-numeric id instead of querying on NaN 3ms
+ ✓ server/routes/__tests__/authoringExportHistory.test.ts > GET /docs/:docId/diff-since-export > 404s an unknown document rather than answering "no baseline" 28ms
+ ✓ server/routes/__tests__/authoringExportHistory.test.ts > GET /docs/:docId/diff-since-export > answers with a null baseline for a real document never exported 9ms
+ ✓ server/routes/__tests__/authoringExportHistory.test.ts > GET /docs/:docId/exports > 404s an unknown or cross-tenant document instead of hashing the empty string 9ms
+ ✓ server/routes/__tests__/authoringExportHistory.test.ts > GET /docs/:docId/exports > reports null — not false — when there is no export to compare against 9ms
+ ✓ server/routes/__tests__/authoringExportHistory.test.ts > GET /docs/:docId/exports > reports null when the stored export carried no content hash 9ms
+ ✓ server/routes/__tests__/authoringExportHistory.test.ts > GET /docs/:docId/exports > reports drift when the last export hash differs from the document now 4ms
+ ✓ server/routes/__tests__/authoringExportHistory.test.ts > GET /docs/:docId/exports > reports no drift when the last export hash IS the document now 8ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > ignores non-authoring API mutations at the shared /api mount 3ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > allows document creation so the database trigger can seed OWNER and AUTHOR 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > allows a document author to edit the section 3ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > denies a same-tenant authenticated user with no object permission 3ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets a REVIEWER comment but does not let the reviewer edit content 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets a section-scoped APPROVER reach an approval action but not an ordinary edit 2ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > classes /docs/:id/e-sign as an approval action, so a FROZEN document can be signed (VSR-001 F-12) 2ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets the record be produced from a FROZEN document: POST /docs/:id/export 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets the record be produced from a FROZEN document: POST /docs/:id/file-to-vault 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > lets the record be produced from a FROZEN document: POST /docs/:id/send-to-packager 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/export 2ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/file-to-vault 2ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > still needs a producing grant: a REVIEWER or VIEWER is refused POST /docs/:id/send-to-packager 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > blocks content mutation after the document becomes immutable 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > fails closed with 503 when the permission store cannot be queried 2ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > rejects a mutation when verified principal or tenant context is missing 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > mandatory authoring object authorization middleware > does not impose mutation permission checks on safe reads 0ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > denies a same-tenant member with no doc_permissions grant — this is the case the fix exists for 5ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > denies the same caller on the bulk route identically 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > still allows the document author — an AUTHOR grant is enough to record a decision 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > a REVIEWER who can review but not edit is still refused here — the same person can accept via /sections/:id, so this is not a workflow lockout 1ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > refuses a FROZEN document with 409, not a silent pass-through 0ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization.test.ts > the tracked-change-decision routes — the regex miss that let them run unchecked > does not match a document id that merely starts with "docs" or an unrelated /documents/ route 0ms
+ ✓ server/routes/__tests__/authEnterprise-select-organization-rotation.test.ts > POST /select-organization rotates > mints a token for the selected organisation, keeps the session, and revokes the presented token 43ms
+ ✓ server/middleware/__tests__/authoringObjectAuthorization-from-draft.test.ts > POST /api/authoring/docs/from-draft passes the object-authorization gate > reaches the router (the gate treats it like POST /docs — no object exists yet) 24ms
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > refuses a viewer before the tool runs, and records the denial 10ms
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > refuses someone who is no longer a member before the tool runs, and records the denial 1ms
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > fails closed when the role cannot be read 1ms
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > lets an editor run the governed tool 1ms
+ ✓ server/mcp/__tests__/mcp-governed-role-gate.test.ts > MCP governed tools need an editor role > does not ask for a role on a tool that is not governed 1ms
+ ✓ server/routes/__tests__/authoring-schema-contract.test.ts > authoring schema contract — migration matches the router SQL > parses the migration into tables 3ms
+ ✓ server/routes/__tests__/authoring-schema-contract.test.ts > authoring schema contract — migration matches the router SQL > creates every contracted table 1ms
+ ✓ server/routes/__tests__/authoring-schema-contract.test.ts > authoring schema contract — migration matches the router SQL > authoring_documents has every column the router queries 1ms
+ ✓ server/routes/__tests__/authoring-schema-contract.test.ts > authoring schema contract — migration matches the router SQL > authoring_sections has every column the router queries 1ms
+ ✓ server/routes/__tests__/authoring-schema-contract.test.ts > authoring schema contract — migration matches the router SQL > authoring_comments has every column the router queries 0ms
+ ✓ server/routes/__tests__/authoring-schema-contract.test.ts > authoring schema contract — migration matches the router SQL > authoring_comment_activity has every column the router queries 0ms
+ ✓ server/routes/__tests__/authoring-schema-contract.test.ts > authoring schema contract — migration matches the router SQL > authoring_citations has every column the router queries 0ms
+ ✓ server/routes/__tests__/authoring-schema-contract.test.ts > authoring schema contract — migration matches the router SQL > authoring_reviews has every column the router queries 0ms
+ ✓ server/routes/__tests__/authoring-schema-contract.test.ts > authoring schema contract — migration matches the router SQL > authoring_audit_events has every column the router queries 1ms
+ ✓ server/routes/__tests__/authoring-schema-contract.test.ts > authoring schema contract — migration matches the router SQL > authoring_audit_trail has every column the router queries 0ms
+ ✓ server/routes/__tests__/authoring-schema-contract.test.ts > authoring schema contract — migration matches the router SQL > authoring_ai_suggestions has every column the router queries 0ms
+ ✓ server/routes/__tests__/authoring-schema-contract.test.ts > authoring schema contract — migration matches the router SQL > authoring_compliance_scores has every column the router queries 0ms
+ ✓ server/routes/__tests__/authoring-schema-contract.test.ts > authoring schema contract — migration matches the router SQL > authoring_suggestion_feedback has every column the router queries 0ms
+ ✓ server/routes/__tests__/authoring-schema-contract.test.ts > authoring schema contract — migration matches the router SQL > authoring_workflow_steps has every column the router queries 0ms
+ ✓ server/routes/__tests__/authoring-schema-contract.test.ts > authoring schema contract — migration matches the router SQL > authoring_signatures has every column the router queries 0ms
+ ✓ server/routes/__tests__/authoring-schema-contract.test.ts > authoring schema contract — migration matches the router SQL > authoring_exports has every column the router queries 0ms
+ ✓ server/routes/__tests__/authoring-schema-contract.test.ts > authoring schema contract — migration matches the router SQL > frozen_documents has every column the router queries 0ms
+ ✓ server/routes/__tests__/authoring-schema-contract.test.ts > authoring schema contract — migration matches the router SQL > doc_change_requests has every column the router queries 0ms
+ ✓ server/routes/__tests__/authoring-schema-contract.test.ts > authoring schema contract — migration matches the router SQL > doc_checklist has every column the router queries 0ms
+ ✓ server/routes/__tests__/authoring-schema-contract.test.ts > authoring schema contract — migration matches the router SQL > doc_checklist_items has every column the router queries 0ms
+ ✓ server/routes/__tests__/authoring-schema-contract.test.ts > authoring schema contract — migration matches the router SQL > doc_permissions has every column the router queries 0ms
+ ✓ server/routes/__tests__/authoring-schema-contract.test.ts > authoring schema contract — migration matches the router SQL > doc_exports has every column the router queries 0ms
+ ✓ server/routes/__tests__/authoring-schema-contract.test.ts > authoring schema contract — migration matches the router SQL > template_sections has every column the router queries 0ms
+ ✓ server/routes/__tests__/authoring-schema-contract.test.ts > authoring schema contract — migration matches the router SQL > user_pins has every column the router queries 0ms
+ ✓ server/routes/__tests__/authoring-schema-contract.test.ts > authoring schema contract — no table is referenced-but-uncreated > every authoring table the router queries is provisioned somewhere 10ms
+ ✓ server/routes/__tests__/authoring-schema-contract.test.ts > authoring schema contract — the router issues no runtime DDL > authoring.router.ts contains no CREATE TABLE — schema lives in migrations 2ms
+ ✓ server/routes/__tests__/authoring-schema-contract.test.ts > authoring schema contract — the router issues no runtime DDL > the previously runtime-only tables are now declared in a migration 1ms
+ ✓ server/routes/__tests__/authoringAiDraftStructured.test.ts > authoring AI-draft — structured generation (Phase 4b) > parks the model’s SRC-mapped paraphrase assertions from a JSON envelope 45ms
+ ✓ server/routes/__tests__/authoringAiDraftStructured.test.ts > authoring AI-draft — structured generation (Phase 4b) > degrades to plain prose with no assertions when the model does not return JSON 9ms
+ ✓ server/routes/__tests__/authoringSignerPrintedName.test.ts > §11.50(a)(1) — the signer name is a printed name, not an address > neither signing path reads a name off req.user 3ms
+ ✓ server/routes/__tests__/authoringSignerPrintedName.test.ts > §11.50(a)(1) — the signer name is a printed name, not an address > req.user genuinely carries no name, so the old fallback could never lose 1ms
+ ✓ server/routes/__tests__/authoringSignerPrintedName.test.ts > §11.50(a)(1) — the signer name is a printed name, not an address > every signing path resolves the name from the user record 1ms
+ ✓ server/routes/__tests__/authoringSignerPrintedName.test.ts > §11.50(a)(1) — the signer name is a printed name, not an address > the resolver reads users.name and returns NULL rather than the email 1ms
+ ✓ server/routes/__tests__/authoringSignerPrintedName.test.ts > §11.50(a)(3) — the meaning is a closed set on BOTH paths > declares the meanings once 1ms
+ ✓ server/routes/__tests__/authoringSignerPrintedName.test.ts > §11.50(a)(3) — the meaning is a closed set on BOTH paths > validates the meaning on both paths, not just /e-sign 0ms
+ ✓ server/routes/__tests__/authoringSignerPrintedName.test.ts > §11.70 — the signature-to-record link is readable > the signatures read returns which frozen snapshot the signature covers 1ms
+ ✓ server/routes/__tests__/authoring-draft-envelope.test.ts > parseDraftEnvelope > reads content and attributions out of a well-formed envelope 5ms
+ ✓ server/routes/__tests__/authoring-draft-envelope.test.ts > parseDraftEnvelope > reads through a ```json fence and surrounding prose 1ms
+ ✓ server/routes/__tests__/authoring-draft-envelope.test.ts > parseDraftEnvelope > treats a non-JSON response as the draft itself, with no attributions 0ms
+ ✓ server/routes/__tests__/authoring-draft-envelope.test.ts > parseDraftEnvelope > treats malformed JSON as prose rather than throwing 0ms
+ ✓ server/routes/__tests__/authoring-draft-envelope.test.ts > parseDraftEnvelope > treats an envelope with an empty or non-string content as prose 0ms
+ ✓ server/routes/__tests__/authoring-draft-envelope.test.ts > parseDraftEnvelope > drops a malformed claim instead of repairing it 0ms
+ ✓ server/routes/__tests__/authoring-draft-envelope.test.ts > parseDraftEnvelope > returns no attributions when the envelope carries a non-array 0ms
+ ✓ server/routes/__tests__/authoring-draft-envelope.test.ts > parseDraftEnvelope > handles an absent response without throwing 0ms
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the token carries the session claims: a fresh id, its start, and the token TTL as its idle window 7ms
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the idle window is the TTL held inside the platform window [1 min, 24 h] 1ms
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the lifetime rule is the platform rule: the session is over ABSOLUTE_SESSION_HOURS after its start, whatever the TTL 1ms
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > connector sessions hold slots in their own pool: beyond the limit the oldest connector token is superseded, the browser session is not 4ms
+ ✓ server/mcp/__tests__/platform-token-session.test.ts > mintAccessToken opens a connector session > the limit is the membership organisation's maxConcurrentSessions, as at sign-in 2ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > isPublicApiPath > matches an exact entry only for itself, not sub-paths 1ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > isPublicApiPath > matches a prefix entry for the path and its sub-paths 0ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > isPublicApiPath > does not let a lookalike ride on a prefix entry 0ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > isPublicApiPath > defaults to deny for protected surfaces 0ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > resolveAuthBoundaryMode > resolves an explicit warn to enforce in production (a single variable cannot turn default-deny off) 1ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > resolveAuthBoundaryMode > enforces in production by default 0ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > resolveAuthBoundaryMode > warns in staging and dev/test by default (soak, never silent-open in prod) 0ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > resolveAuthBoundaryMode > honours an explicit AUTH_BOUNDARY_MODE override outside production, and enforce anywhere 0ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > createAuthBoundary > passes CORS preflight without authenticating 1ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > createAuthBoundary > passes an allowlisted public path without authenticating 1ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > createAuthBoundary > passes a request already authenticated upstream (idempotent) 1ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > createAuthBoundary > rejects an authenticated request that carries no resolvable tenant (AUTH_011) 2ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > createAuthBoundary > and lets the same request through when RLS is not enforcing 1ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > createAuthBoundary > enforce mode delegates a protected unauthenticated request to the canonical 401 1ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > createAuthBoundary > installs tenant execution context only after authentication succeeds 1ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > createAuthBoundary > warn mode lets an unauthenticated protected request through and logs once per route 0ms
+ ✓ server/middleware/__tests__/authBoundary.test.ts > createAuthBoundary > warn mode ALSO installs tenant execution context after a successful auth 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > 5 wrong codes lock the account in its users row; the right code is then refused 423 AUTH_002 without being spent
+AssertionError: wrong code 1 was not refused: expected 500 to be 401 // Object.is equality
+ ❯ server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts:177:59
+ FAIL  server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > the count is one per account across tasks: wrong codes on two tasks lock it, and a third task refuses the right code
+AssertionError: expected 500 to be 401 // Object.is equality
+ ❯ server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts:201:80
+ FAIL  server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > the last wrong code is audited as the one that locked the account
+AssertionError: expected undefined to be 'invalid_code_threshold_exceeded' // Object.is equality
+ ❯ server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts:217:36
+ FAIL  server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > a right password does not clear what the second factor counted, so signing in again buys no fresh guesses
+AssertionError: expected 500 to be 401 // Object.is equality
+ ❯ server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts:222:90
+ FAIL  server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > a completed sign-in (right code) clears the count the wrong codes built
+AssertionError: expected 500 to be 401 // Object.is equality
+ ❯ server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts:237:78
+ FAIL  server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > wrong passwords and wrong codes are one count, one threshold: the password step refuses an account the codes locked
+AssertionError: expected 500 to be 401 // Object.is equality
+ ❯ server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts:249:78
+ FAIL  server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an account whose second factor is an emailed code > a locked account completes no sign-in with a challenge issued before the lock, even with a code that would verify
+AssertionError: a locked account was signed in with an emailed code: expected 500 to be 423 // Object.is equality
+ ❯ server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts:267:77
+ FAIL  server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an account whose second factor is an emailed code > control: wrong emailed codes keep their own cap (emailOtpService) and are not added to the account lockout
+AssertionError: expected 500 to be 401 // Object.is equality
+ ❯ server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts:274:95
+ Test Files  1 failed | 73 passed (74)
+      Tests  8 failed | 666 passed (674)

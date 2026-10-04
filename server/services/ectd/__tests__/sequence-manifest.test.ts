@@ -26,6 +26,16 @@ describe('buildLeafManifest', () => {
     expect(m[0].fileName).toBe('general-information.pdf');
   });
 
+  it('keeps the backbone ID and the backbone that carries it — what a later modified-file names', () => {
+    const m = buildLeafManifest([
+      { ctdSection: '3.2.S.1', href: 'm3/x/gen.pdf', md5: 'a', leafId: 'leaf-3-2-S-1-gen', backbone: 'index.xml' },
+      { ctdSection: '3.2.S.2', href: 'm3/x/man.pdf', md5: 'b', leafId: 'leaf-3-2-S-2-man' }, // no backbone: not recorded
+    ]);
+    expect(m[0]).toMatchObject({ leafId: 'leaf-3-2-S-1-gen', backbone: 'index.xml' });
+    expect(m[1]).not.toHaveProperty('leafId');
+    expect(m[1]).not.toHaveProperty('backbone');
+  });
+
   it('skips leaves with no href or no checksum (nothing to diff against)', () => {
     const m = buildLeafManifest([
       { ctdSection: '2.5', href: '', md5: 'a' },
@@ -53,9 +63,50 @@ describe('manifestToPriorLeaves', () => {
     expect(manifestToPriorLeaves([{ ctdSection: '2.5' }, { md5: 'x' }, 42, null])).toEqual([]);
   });
 
+  it('carries the recorded backbone ID into the prior leaf', () => {
+    const [leaf] = manifestToPriorLeaves([
+      { ctdSection: '2.5', fileName: 'o.pdf', href: 'm2/25/o.pdf', md5: 'a', leafId: 'leaf-2-5-o', backbone: 'index.xml' },
+    ]);
+    expect(leaf).toMatchObject({ leafId: 'leaf-2-5-o', backbone: 'index.xml' });
+  });
+
   it('derives fileName from href when the stored entry omits it', () => {
     const leaves = manifestToPriorLeaves([{ ctdSection: '2.5', href: 'm2/25/overview.pdf', md5: 'a' }]);
     expect(leaves[0].fileName).toBe('overview.pdf');
+  });
+});
+
+describe('the pre-normalization digest (sourceMd5) — the core spine\'s half of comparing like with like', () => {
+  // With Ghostscript in the production image the packager converts every leaf,
+  // so the published md5 is of the converted bytes, while the next compile's
+  // desired md5 is computed over the staged bytes, before conversion. Unless the
+  // pre-conversion digest survives the manifest round trip, the two never
+  // compare equal and every follow-up re-files every unchanged document.
+  it('survives buildLeafManifest -> stored JSON -> manifestToPriorLeaves', () => {
+    const stored = JSON.parse(JSON.stringify(buildLeafManifest([
+      { ctdSection: '2.5', href: 'm2/2-5/overview.pdf', md5: 'shipped', sourceMd5: 'staged' },
+    ])));
+    const [p] = manifestToPriorLeaves(stored);
+    expect(p).toMatchObject({ md5: 'shipped', sourceMd5: 'staged' });
+  });
+
+  it('drives the diff: an unchanged staged document is unchanged, however the shipped bytes differ', () => {
+    const prior = manifestToPriorLeaves(buildLeafManifest([
+      { ctdSection: '2.5', href: 'm2/2-5/overview.pdf', md5: 'shipped-by-gs-run-1', sourceMd5: 'staged' },
+    ]));
+    const same = computeLifecycleOperations(prior, [
+      { ctdSection: '2.5', fileName: 'overview.pdf', title: 'Overview', sourcePath: '/x', md5: 'staged' },
+    ]);
+    expect(same.summary).toMatchObject({ unchanged: 1, replace: 0 });
+  });
+
+  it('a manifest filed before the digest was recorded still compares on md5', () => {
+    const prior = manifestToPriorLeaves([{ ctdSection: '2.5', fileName: 'overview.pdf', href: 'm2/2-5/overview.pdf', md5: 'm1' }]);
+    expect(prior[0].sourceMd5).toBeUndefined();
+    const res = computeLifecycleOperations(prior, [
+      { ctdSection: '2.5', fileName: 'overview.pdf', title: 'Overview', sourcePath: '/x', md5: 'm1' },
+    ]);
+    expect(res.summary).toMatchObject({ unchanged: 1 });
   });
 });
 
@@ -74,7 +125,10 @@ describe('manifest → lifecycle → modified-file (the full purpose)', () => {
   it('a prior manifest drives a correct replace pointer on the next sequence', () => {
     // Sequence 0000 published a drug-substance leaf; 0001 replaces it.
     const priorManifest = buildLeafManifest([
-      { ctdSection: '3.2.S.1', href: 'm3/32-body-data/32s/general.pdf', md5: 'v1', operation: 'new' },
+      {
+        ctdSection: '3.2.S.1', href: 'm3/32-body-data/32s/general.pdf', md5: 'v1', operation: 'new',
+        leafId: 'leaf-3-2-S-1-general', backbone: 'index.xml',
+      },
     ]);
     const prior = manifestToPriorLeaves(priorManifest);
     const res = computeLifecycleOperations(
@@ -85,14 +139,14 @@ describe('manifest → lifecycle → modified-file (the full purpose)', () => {
     expect(res.summary).toMatchObject({ replace: 1, new: 0, delete: 0 });
     expect(res.leaves[0]).toMatchObject({
       operation: 'replace',
-      modifiedFile: '../0000/m3/32-body-data/32s/general.pdf',
+      modifiedFile: '../0000/index.xml#leaf-3-2-S-1-general',
     });
   });
 
   it('precise sub-sections keep distinct identity (no false replace across 3.2.S.1 vs 3.2.S.4.2)', () => {
     const prior = manifestToPriorLeaves(buildLeafManifest([
-      { ctdSection: '3.2.S.1', href: 'm3/a/general.pdf', md5: 'g1' },
-      { ctdSection: '3.2.S.4.2', href: 'm3/b/impurities.pdf', md5: 'i1' },
+      { ctdSection: '3.2.S.1', href: 'm3/a/general.pdf', md5: 'g1', leafId: 'leaf-3-2-S-1-general', backbone: 'index.xml' },
+      { ctdSection: '3.2.S.4.2', href: 'm3/b/impurities.pdf', md5: 'i1', leafId: 'leaf-3-2-S-4-2-impurities', backbone: 'index.xml' },
     ]));
     // New sequence changes only impurities.
     const res = computeLifecycleOperations(
@@ -106,6 +160,6 @@ describe('manifest → lifecycle → modified-file (the full purpose)', () => {
     // general unchanged (omitted), impurities replaced with the RIGHT pointer.
     expect(res.summary).toMatchObject({ unchanged: 1, replace: 1, delete: 0, new: 0 });
     const replaced = res.leaves.find((l) => l.operation === 'replace')!;
-    expect(replaced.modifiedFile).toBe('../0000/m3/b/impurities.pdf');
+    expect(replaced.modifiedFile).toBe('../0000/index.xml#leaf-3-2-S-4-2-impurities');
   });
 });

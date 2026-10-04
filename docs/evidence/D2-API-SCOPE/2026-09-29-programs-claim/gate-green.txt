@@ -1,0 +1,8 @@
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > refuses the unrecorded regulatory-document generators 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > a public prefix does not widen: an exact public path is not its parent namespace 1ms
+
+ Test Files  1 passed (1)
+      Tests  27 passed (27)
+   Start at  21:33:01
+   Duration  894ms (transform 337ms, setup 108ms, import 303ms, tests 105ms, environment 0ms)
+

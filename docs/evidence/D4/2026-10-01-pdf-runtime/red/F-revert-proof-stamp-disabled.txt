@@ -1,0 +1,12 @@
+ × server/services/report-os/pdf/__tests__/export-identity.test.ts > the run PDF > renders the same bytes from the same recorded export, whenever it is rendered 86ms
+   → two renders of one export differ, so its recorded sha256 cannot be re-verified: expected false to be true // Object.is equality
+ × server/services/report-os/pdf/__tests__/export-identity.test.ts > the run PDF > states the export in its metadata: the printed export time, the export id, the platform as producer 27ms
+   → expected '2026-10-01T20:10:21.000Z' to be '2026-10-01T10:00:00.000Z' // Object.is equality
+ × server/services/report-os/pdf/__tests__/export-identity.test.ts > the bundle PDF > renders the same bytes from the same recorded export, whenever it is rendered 19ms
+   → two renders of one export differ, so its recorded sha256 cannot be re-verified: expected false to be true // Object.is equality
+ × server/services/report-os/pdf/__tests__/export-identity.test.ts > the bundle PDF > states the export in its metadata: the printed export time, the export id, the platform as producer 14ms
+   → expected '2026-10-01T20:10:22.000Z' to be '2026-10-01T10:00:00.000Z' // Object.is equality
+ × server/services/report-os/pdf/__tests__/export-identity.test.ts > renders nothing under an export time that is not a time 20ms
+   → promise resolved "{ …(3) }" instead of rejecting
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  5 failed | 12 passed (17)

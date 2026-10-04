@@ -208,19 +208,6 @@
    },
    {
     "surfaces": [
-     "insights"
-    ],
-    "names": [
-     "explain_report_blockers",
-     "generate_report",
-     "list_report_definitions",
-     "list_report_types",
-     "save_report_definition",
-     "suggest_reports"
-    ]
-   },
-   {
-    "surfaces": [
      "labeling"
     ],
     "names": [
@@ -647,6 +634,8 @@
    "create_protocol_document",
    "create_protocol_template",
    "create_qms_document",
+   "critique_document",
+   "critique_draft",
    "cross_region_gap_analysis",
    "define_estimand",
    "derive_ctq_factors",
@@ -719,6 +708,7 @@
    "evaluate_pbpk_model",
    "execute_platform_command",
    "explain_design_risk",
+   "explain_report_blockers",
    "explain_resolution_plan",
    "explain_validation_findings",
    "export_protocol_document",
@@ -741,6 +731,7 @@
    "generate_document",
    "generate_dsur_structure",
    "generate_psur_structure",
+   "generate_report",
    "generate_schedule_of_events",
    "generate_sop",
    "generate_spl",
@@ -808,6 +799,7 @@
    "link_program_clinical_study",
    "lint_references",
    "list_app_screens",
+   "list_authoring_outline",
    "list_demo_scripts",
    "list_fda_forms",
    "list_governed_documents",
@@ -816,6 +808,8 @@
    "list_project_documents",
    "list_protocol_templates",
    "list_regulatory_capabilities",
+   "list_report_definitions",
+   "list_report_types",
    "list_screen_actions",
    "list_validation_rules",
    "list_vault_documents",
@@ -875,6 +869,7 @@
    "qms_change_transition",
    "query_rim_patterns_by_domain",
    "rasterize_page",
+   "read_authoring_section",
    "read_governed_document",
    "read_project_document",
    "read_spreadsheet",
@@ -934,6 +929,7 @@
    "run_submission_premortem",
    "save_document_as_template",
    "save_document_to_vault",
+   "save_report_definition",
    "scan_document_citations",
    "scan_project_risks",
    "scan_regulatory_deficiencies",
@@ -944,6 +940,7 @@
    "screen_restricted_party",
    "screen_signal_panel",
    "search_all_documents",
+   "search_authoring_sections",
    "search_chembl_compound",
    "search_clinical_evidence",
    "search_clinical_regulatory_evidence",
@@ -993,6 +990,7 @@
    "stress_test_protocol",
    "structure_benefit_risk_framework",
    "structure_smpc",
+   "suggest_reports",
    "summarize_onboarding_readiness",
    "summarize_rim_intelligence",
    "surgical_docx_xml_edit",
@@ -1016,8 +1014,10 @@
    "validate_spl_structure",
    "validate_udi",
    "value_dossier_guidance",
+   "verify_citations",
    "verify_docx_against_source",
-   "verify_memory_atom"
+   "verify_memory_atom",
+   "verify_revision"
   ]
  },
  "commands": {

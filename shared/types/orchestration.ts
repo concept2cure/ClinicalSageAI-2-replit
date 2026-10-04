@@ -250,9 +250,17 @@ export interface ProjectSnapshot {
   therapeuticArea?: string;
   targetDate?: string;
   totalDocuments: number;
+  /** Every task on the project, from every store the platform keeps (loadUnifiedWork). */
   totalTasks: number;
+  /** Of those, done (closed, in the store's own vocabulary). */
+  doneTasks: number;
   blockedTasks: number;
   overdueTasks: number;
+  /**
+   * True when a task store could not be read: every count above is then a floor,
+   * not a total, and nothing may present it as complete.
+   */
+  taskCountsPartial: boolean;
 }
 
 export interface DocumentSnapshot {
@@ -294,7 +302,8 @@ export interface ValidationSnapshot {
 }
 
 export interface TaskSnapshot {
-  id: number;
+  /** The work view's composite id, `${source}:${nativeId}` (unified-work-view.ts). */
+  id: string;
   title: string;
   status: string;
   priority: string;
@@ -607,7 +616,12 @@ export interface ProjectContinuitySnapshot {
     documentCount: number;
     validatedCount: number;
     blockerCount: number;
-    taskCompletionPercent: number;
+    /**
+     * Done over total, from every task store. null when there are no tasks, or a
+     * store could not be read — never a figure for either (until 2026-10-01 a
+     * project with no counted tasks read 100%).
+     */
+    taskCompletionPercent: number | null;
   };
 }
 

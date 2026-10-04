@@ -1,0 +1,292 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > no reason: 400 REASON_REQUIRED and nothing written 1206ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > an empty reason: 400 REASON_REQUIRED and nothing written 7ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > a blank reason: 400 REASON_REQUIRED and nothing written 5ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > writes one chained row on the change transaction, before COMMIT, with roles, member and reason 5ms
+   → expected [] to have a length of 1 but got +0
+ × server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > the action it writes is one the administrative changes report reads 7ms
+   → expected [ 'api_key_created', …(7) ] to include undefined
+ × server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > a failed audit write rolls the change back and the 500 carries no error text 4ms
+   → expected 200 to be 500 // Object.is equality
+ ✓ server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > a member not in the organisation is 404 and nothing is recorded 3ms
+ × server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > no body: 400 REASON_REQUIRED and nothing removed 4ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > no reason: 400 REASON_REQUIRED and nothing removed 10ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > a blank reason: 400 REASON_REQUIRED and nothing removed 11ms
+   → expected 200 to be 400 // Object.is equality
+ × server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > writes one chained row on the removal transaction, before COMMIT, then revokes the cached membership 11ms
+   → expected [] to have a length of 1 but got +0
+ × server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > a failed audit write rolls the removal back: 500, no error text, the membership cache untouched 3ms
+   → expected 200 to be 500 // Object.is equality
+ × server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > PATCH /settings/security: one chained row inside the write transaction, before COMMIT 1963ms
+   → expected [ 'UPDATE' ] to deeply equal [ 'BEGIN', 'SELECT FOR UPDATE', …(3) ]
+ × server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > PATCH /settings: names every section written; values only for security and audit retention 7ms
+   → expected [] to have a length of 1 but got +0
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > a stored secret in a section that is value-audited is still not carried 4ms
+ × server/routes/__tests__/tenant-config-audit.test.ts > a reset to defaults is recorded > POST /settings/reset: one tenant_settings_reset row naming every section, with the security and retention values 5ms
+   → expected [ 'UPDATE' ] to deeply equal [ 'BEGIN', 'SELECT FOR UPDATE', …(3) ]
+ × server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > PATCH /settings/security: ROLLBACK, no COMMIT, 500 without the error text 4ms
+   → expected 200 to be 500 // Object.is equality
+ × server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > PATCH /settings: ROLLBACK, no COMMIT, 500 without the error text 3ms
+   → expected 200 to be 500 // Object.is equality
+ × server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > POST /settings/reset: ROLLBACK, no COMMIT, 500 without the error text 3ms
+   → expected 200 to be 500 // Object.is equality
+ × server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > an unknown tenant is 404, rolled back, and nothing is recorded 5ms
+   → expected [] to deeply equal [ 'BEGIN', 'SELECT FOR UPDATE', …(1) ]
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 18 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > PATCH /settings/security: one chained row inside the write transaction, before COMMIT
+AssertionError: expected [ 'UPDATE' ] to deeply equal [ 'BEGIN', 'SELECT FOR UPDATE', …(3) ]
+
+- Expected
++ Received
+
+  [
+-   "BEGIN",
+-   "SELECT FOR UPDATE",
+    "UPDATE",
+-   "AUDIT",
+-   "COMMIT",
+  ]
+
+ ❯ server/routes/__tests__/tenant-config-audit.test.ts:123:20
+    121|       .send({ mfaRequired: true, sessionTimeoutMinutes: 15, ipRestrict…
+    122|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    123|     expect(flow()).toEqual(['BEGIN', 'SELECT FOR UPDATE', 'UPDATE', 'A…
+       |                    ^
+    124|     expect(h.auditCalls).toHaveLength(1);
+    125|     expect(h.auditCalls[0].client).toBe(client);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/18]⎯
+
+ FAIL  server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > PATCH /settings: names every section written; values only for security and audit retention
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/routes/__tests__/tenant-config-audit.test.ts:154:26
+    152|       });
+    153|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    154|     expect(h.auditCalls).toHaveLength(1);
+       |                          ^
+    155|     const details = h.auditCalls[0].entry.details as Record<string, an…
+    156|     expect(details.sections).toEqual(['notifications', 'qmp']);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/18]⎯
+
+ FAIL  server/routes/__tests__/tenant-config-audit.test.ts > a reset to defaults is recorded > POST /settings/reset: one tenant_settings_reset row naming every section, with the security and retention values
+AssertionError: expected [ 'UPDATE' ] to deeply equal [ 'BEGIN', 'SELECT FOR UPDATE', …(3) ]
+
+- Expected
++ Received
+
+  [
+-   "BEGIN",
+-   "SELECT FOR UPDATE",
+    "UPDATE",
+-   "AUDIT",
+-   "COMMIT",
+  ]
+
+ ❯ server/routes/__tests__/tenant-config-audit.test.ts:180:20
+    178|     const res = await request(app).post(`/api/tenant-config/${ORG}/set…
+    179|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    180|     expect(flow()).toEqual(['BEGIN', 'SELECT FOR UPDATE', 'UPDATE', 'A…
+       |                    ^
+    181|     const { entry } = h.auditCalls[0];
+    182|     expect(entry.action).toBe('tenant_settings_reset');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/18]⎯
+
+ FAIL  server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > PATCH /settings/security: ROLLBACK, no COMMIT, 500 without the error text
+ FAIL  server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > PATCH /settings: ROLLBACK, no COMMIT, 500 without the error text
+ FAIL  server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > POST /settings/reset: ROLLBACK, no COMMIT, 500 without the error text
+AssertionError: expected 200 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 200
+
+ ❯ server/routes/__tests__/tenant-config-audit.test.ts:200:24
+    198|     h.auditFails = true;
+    199|     const res = await send();
+    200|     expect(res.status).toBe(500);
+       |                        ^
+    201|     expect(JSON.stringify(res.body)).not.toMatch(/serialize|audit_logs…
+    202|     expect(flow()).toEqual(['BEGIN', 'SELECT FOR UPDATE', 'UPDATE', 'A…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/18]⎯
+
+ FAIL  server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > an unknown tenant is 404, rolled back, and nothing is recorded
+AssertionError: expected [] to deeply equal [ 'BEGIN', 'SELECT FOR UPDATE', …(1) ]
+
+- Expected
++ Received
+
+- [
+-   "BEGIN",
+-   "SELECT FOR UPDATE",
+-   "ROLLBACK",
+- ]
++ []
+
+ ❯ server/routes/__tests__/tenant-config-audit.test.ts:210:20
+    208|     expect(res.status).toBe(404);
+    209|     expect(h.auditCalls).toHaveLength(0);
+    210|     expect(flow()).toEqual(['BEGIN', 'SELECT FOR UPDATE', 'ROLLBACK']);
+       |                    ^
+    211|   });
+    212| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/18]⎯
+
+ FAIL  server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > no reason: 400 REASON_REQUIRED and nothing written
+ FAIL  server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > an empty reason: 400 REASON_REQUIRED and nothing written
+ FAIL  server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > a blank reason: 400 REASON_REQUIRED and nothing written
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/tenant-users-audit.test.ts:124:24
+    122|   ])('%s: 400 REASON_REQUIRED and nothing written', async (_label, bod…
+    123|     const res = await patch(body);
+    124|     expect(res.status).toBe(400);
+       |                        ^
+    125|     expect(res.body.error).toBe('REASON_REQUIRED');
+    126|     expect(written(/^UPDATE organization_users/i)).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/18]⎯
+
+ FAIL  server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > writes one chained row on the change transaction, before COMMIT, with roles, member and reason
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/routes/__tests__/tenant-users-audit.test.ts:133:26
+    131|     const res = await patch({ role: 'viewer', reason: 'Quarterly acces…
+    132|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    133|     expect(h.auditCalls).toHaveLength(1);
+       |                          ^
+    134|     const [{ client, entry }] = h.auditCalls;
+    135|     // The audit row is written on the client that made the change, be…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/18]⎯
+
+ FAIL  server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > the action it writes is one the administrative changes report reads
+AssertionError: expected [ 'api_key_created', …(7) ] to include undefined
+ ❯ server/routes/__tests__/tenant-users-audit.test.ts:158:36
+    156|   it('the action it writes is one the administrative changes report re…
+    157|     await patch({ role: 'viewer', reason: 'r' });
+    158|     expect(ADMINISTRATIVE_ACTIONS).toContain(h.auditCalls[0]?.entry.ac…
+       |                                    ^
+    159|   });
+    160|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/18]⎯
+
+ FAIL  server/routes/__tests__/tenant-users-audit.test.ts > PATCH /:organizationId/:userId — a role change is recorded with its reason > a failed audit write rolls the change back and the 500 carries no error text
+AssertionError: expected 200 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 200
+
+ ❯ server/routes/__tests__/tenant-users-audit.test.ts:164:24
+    162|     h.auditFails = true;
+    163|     const res = await patch({ role: 'viewer', reason: 'Quarterly acces…
+    164|     expect(res.status).toBe(500);
+       |                        ^
+    165|     expect(JSON.stringify(res.body)).not.toMatch(/audit_logs|locked|pr…
+    166|     expect(written(/^ROLLBACK/)).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/18]⎯
+
+ FAIL  server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > no body: 400 REASON_REQUIRED and nothing removed
+ FAIL  server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > no reason: 400 REASON_REQUIRED and nothing removed
+ FAIL  server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > a blank reason: 400 REASON_REQUIRED and nothing removed
+AssertionError: expected 200 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 200
+
+ ❯ server/routes/__tests__/tenant-users-audit.test.ts:185:24
+    183|   ])('%s: 400 REASON_REQUIRED and nothing removed', async (_label, bod…
+    184|     const res = await remove(body);
+    185|     expect(res.status).toBe(400);
+       |                        ^
+    186|     expect(res.body.error).toBe('REASON_REQUIRED');
+    187|     expect(written(/^DELETE FROM organization_users/i)).toHaveLength(0…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/18]⎯
+
+ FAIL  server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > writes one chained row on the removal transaction, before COMMIT, then revokes the cached membership
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/routes/__tests__/tenant-users-audit.test.ts:194:26
+    192|     const res = await remove({ reason: 'Left the company' });
+    193|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    194|     expect(h.auditCalls).toHaveLength(1);
+       |                          ^
+    195|     const order = h.log.filter(s => /^(BEGIN|COMMIT|ROLLBACK|DELETE FR…
+    196|     expect(order).toEqual(['BEGIN', 'DELETE', 'AUDIT', 'COMMIT']);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/18]⎯
+
+ FAIL  server/routes/__tests__/tenant-users-audit.test.ts > DELETE /:organizationId/:userId — a removal is recorded with its reason > a failed audit write rolls the removal back: 500, no error text, the membership cache untouched
+AssertionError: expected 200 to be 500 // Object.is equality
+
+- Expected
++ Received
+
+- 500
++ 200
+
+ ❯ server/routes/__tests__/tenant-users-audit.test.ts:213:24
+    211|     h.auditFails = true;
+    212|     const res = await remove({ reason: 'Left the company' });
+    213|     expect(res.status).toBe(500);
+       |                        ^
+    214|     expect(JSON.stringify(res.body)).not.toMatch(/audit_logs|locked|pr…
+    215|     expect(written(/^ROLLBACK/)).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/18]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  18 failed | 2 passed (20)
+   Start at  03:07:16
+   Duration  3.31s (transform 2.35s, setup 391ms, import 889ms, tests 3.28s, environment 0ms)
+

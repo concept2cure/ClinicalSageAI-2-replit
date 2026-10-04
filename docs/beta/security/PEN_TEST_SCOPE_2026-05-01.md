@@ -1,3 +1,5 @@
+> **Superseded 2026-09-26** for the launch catalog by `docs/security/PEN_TEST_SCOPE_2026-09-26.md` (GA scope, plan item P1-15); this BETA scope is kept for history.
+
 # Limited penetration test — BETA scope of work
 
 **Status:** Draft for vendor RFP. **Owner:** Backend stream + RA.

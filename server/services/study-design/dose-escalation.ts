@@ -32,7 +32,8 @@
  *  - A default is labelled a default: when φ1/φ2 or the elimination threshold
  *    are not in the design, the engine's own defaults are what compute, and the
  *    parameter's `source` says `engine default`; the elimination rule's fixed
- *    minimum n and prior are shown the same way. A value that could not be
+ *    minimum n and prior are shown the same way, read from the engine's
+ *    exported `BOIN_DEFAULTS` (never restated here). A value that could not be
  *    computed is null with the reason as its source — never a number derived
  *    from an invalid input.
  *  - Escalation rules that count DLTs are flagged when the design does not
@@ -41,7 +42,7 @@
  * @module server/services/study-design/dose-escalation
  */
 
-import { boinBoundaries, boinDecision, boinDecisionTable } from '../stats/dose-finding-boin';
+import { BOIN_DEFAULTS, boinBoundaries, boinDecision, boinDecisionTable } from '../stats/dose-finding-boin';
 import type { DoseEscalationDesign, StudyDesign } from './study-design-types';
 
 export const DOSE_ESCALATION_BASIS =
@@ -50,11 +51,12 @@ export const DOSE_ESCALATION_BASIS =
   'FDA guidance: Optimizing the Dosage of Human Prescription Drugs and Biological Products for the Treatment of Oncologic Diseases (2024)';
 
 /**
- * The elimination rule's engine defaults, restated only so the projection can
- * print them: `boinDecision` applies them inline and does not export them. The
- * suite pins each one to the engine's behaviour, so a change there fails here.
+ * The engine's defaults, re-exported under the name this module has always
+ * exported: the projection prints `eliminationThreshold`, `minEliminationN` and
+ * `prior` from the engine's own constant, the one `boinDecision` applies — not a
+ * copy. The suite pins it to the engine's object and behaviour.
  */
-export const BOIN_DEFAULTS = { eliminationThreshold: 0.95, minEliminationN: 3, prior: 'Beta(1,1)' } as const;
+export { BOIN_DEFAULTS };
 
 /** The largest per-dose n the decision table is computed to. */
 export const MAX_TABLE_N = 200;
@@ -119,8 +121,9 @@ export interface DoseEscalationProjection {
 
 /** What `selectMtd` in stats/dose-finding-boin.ts does, in words — each tie clause is pinned to it by the suite. */
 const MTD_RULE =
-  'At the end of the trial, DLT rates are smoothed by isotonic (pool-adjacent-violators) regression, and the MTD is the tried, ' +
-  'non-eliminated dose whose smoothed rate is closest to the target; on a tie a dose below the target is preferred over one above it, ' +
+  'At the end of the trial, DLT rates are smoothed by isotonic (pool-adjacent-violators) regression, and the MTD is the tried dose ' +
+  'whose smoothed rate is closest to the target, among the doses below the lowest eliminated one (eliminating a dose eliminates ' +
+  'every higher dose); on a tie a dose below the target is preferred over one above it, ' +
   'between two below the target the higher dose is chosen, and between two above it the lower.';
 
 /** The BOIN method's safety stop (Liu & Yuan 2015; Yuan et al. 2016). The engine computes decisions, not this rule; it is stated. */

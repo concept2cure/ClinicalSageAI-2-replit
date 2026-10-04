@@ -1,0 +1,124 @@
+# green, review round 1
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > returns all known ICH guidelines when no filters are provided 3ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > filters by category Q 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > filters by category E 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > filters by category M 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > filters by since date 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > dates M11 as the verified currency registry does 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > dates Q12 and Q14 at their Step 4, and carries no undated M4 revision 2ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > combines category and since filters 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchIchGuidelineUpdates > returns empty when category has no results 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness > flags stale guidance when citedDate predates effectiveDate 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness > marks current guidance as current 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness > flags void guidance from the currency registry 2ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness > reports a guidance it cannot identify as unverified, never as current 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > reports a superseded ICH revision as not current, naming its successor 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not read another ICH guideline as E6(R3) because both titles say "ICH" 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not match a registry keyword found inside another word 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not date a 510(k) guidance by the eSTAR mandate because both mention 510(k) 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > refuses to identify a fact from another jurisdiction than the one cited 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not identify "IVD" — a retrieval keyword, not the name of a dated fact 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not identify "MDR" — a retrieval keyword, not the name of a dated fact 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not identify "IVDR" — a retrieval keyword, not the name of a dated fact 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not identify "CTR" — a retrieval keyword, not the name of a dated fact 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not identify "SaMD" — a retrieval keyword, not the name of a dated fact 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not identify "510(k)" — a retrieval keyword, not the name of a dated fact 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not identify "De Novo" — a retrieval keyword, not the name of a dated fact 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not identify "Real-world data" — a retrieval keyword, not the name of a dated fact 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not identify "clinical trials" — a retrieval keyword, not the name of a dated fact 0ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > identifies a fact by a name it is cited by 2ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > dates "ICH E6(R3) Annex 2" by Annex 2, not by the base guideline 2ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > does not call a title superseded when it also names what superseded it 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > names the registry entry and source every identified verdict rests on 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > throws when citedGuidances is missing 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > checkGuidanceFreshness — identification > checks multiple guidances at once 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchFdaGuidanceList > says no FDA guidance index is connected, and makes no request 1ms
+ ✓ server/services/regulatory-currency/__tests__/guidance-ingestion-service.test.ts > fetchFdaGuidanceList > never throws 1ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > statusAsOf > keeps a future obligation upcoming before its date 2ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > statusAsOf > promotes to in_force on the effective date itself 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > statusAsOf > promotes to in_force after the effective date 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > statusAsOf > never expires a vacated or rescinded rule 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > statusAsOf > leaves in_force untouched 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > statusAsOf > falls back to the stored status when asOf is unusable 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > statusAsOf > falls back when the fact itself has no usable effective date 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > statusAsOf > compares dates lexicographically, immune to timezone drift 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > factAsOf > returns the same object when nothing changed 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > factAsOf > returns a copy with the resolved status, leaving the original intact 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > findFacts with asOf > reports EUDAMED as in force today, not upcoming 4ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > findFacts with asOf > reports PMDA eCTD v4.0 as in force today 2ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > findFacts with asOf > still reports genuinely future obligations as upcoming 1ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > findFacts with asOf > leaves the vacated LDT rule void regardless of date 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > findFacts with asOf > returns stored statuses unchanged when asOf is omitted 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > findFacts with asOf > does not mutate the shared registry across calls 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > verificationAgeDays > counts whole days since the fact was last verified 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > verificationAgeDays > is zero on the verification date itself 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > verificationAgeDays > returns null rather than a guess when a date is unusable 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > verificationAgeDays > surfaces a future lastVerified as negative rather than clamping 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > verificationAgeDays > is timezone-independent across a month boundary 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > isVerificationStale > is fresh inside the re-verification window 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > isVerificationStale > is stale past the window 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > isVerificationStale > is not stale exactly on the boundary 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > isVerificationStale > treats an unreadable verification date as stale, not fresh 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > isVerificationStale > honours a caller-supplied window 0ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > isVerificationStale > reports every shipped fact as currently verified 1ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > topic search matches whole words, plurals included > finds the void LDT rule for the plural spellings people write 2ms
+ ✓ server/services/regulatory-currency/__tests__/currency-registry-asof.test.ts > topic search matches whole words, plurals included > does not match a keyword inside another word 0ms
+ ✓ server/services/ana/__tests__/lookup-fda-guidance-honest.test.ts > lookup_fda_guidance > answers "510(k)" with no invented docket number, title or requirement 7ms
+ ✓ server/services/ana/__tests__/lookup-fda-guidance-honest.test.ts > lookup_fda_guidance > answers "biocompatibility" with no invented docket number, title or requirement 2ms
+ ✓ server/services/ana/__tests__/lookup-fda-guidance-honest.test.ts > lookup_fda_guidance > answers "software" with no invented docket number, title or requirement 1ms
+ ✓ server/services/ana/__tests__/lookup-fda-guidance-honest.test.ts > lookup_fda_guidance > returns the dated registry fact for a topic the registry holds, with its source 2ms
+ ✓ server/services/ana/__tests__/lookup-fda-guidance-honest.test.ts > lookup_fda_guidance > says nothing is indexed for a topic the registry does not hold 1ms
+ ✓ server/services/ana/__tests__/lookup-fda-guidance-honest.test.ts > lookup_fda_guidance > asks for a topic instead of throwing 0ms
+ ✓ server/services/ana/__tests__/lookup-fda-guidance-honest.test.ts > lookup_fda_guidance > does not promise document numbers or requirements in its definition 0ms
+ ✓ server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > resolves each reference against the outlines of the tenant's own documents 52ms
+ ✓ server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > does not assess table and figure numbers, and does not pass them 2ms
+ ✓ server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > refuses a document outside the organization, and says the same as for one that does not exist 1ms
+ ✓ server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > refuses without a tenant, and asks for the references it is to check 1ms
+ ✓ server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > matches a section by its code, not by a longer code that starts the same 1ms
+ ✓ server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > reads its own outline when the document belongs to no project 1ms
+ ✓ server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > does not count an archived document of the project 1ms
+ ✓ server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > reads the most specific section a reference names 1ms
+ ✓ server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > reports a section that is only a template heading as outline_only, not found 1ms
+ ✓ server/services/ana/__tests__/validate-cross-references-honest.test.ts > validate_cross_references > describes what it checks, not a table or figure check it does not do 2ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > formats a journal article from the record PubMed returned for its PMID 87ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > looks a DOI up as a DOI 1ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > returns no citation when the article is not_found — never a placeholder 1ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > returns no citation when the article is unverifiable — never a placeholder 0ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > returns no citation when the article is error — never a placeholder 0ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > carries a retraction with the citation 0ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > keeps PubMed author names as PubMed gives them, a collective author included 0ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > formats Crossref authors from their family and given names, particles and organisations included 1ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > looks a reference up by its PMID when it carries both, so a retraction is seen 1ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > says retraction status was not checked when only Crossref verified it 5ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > takes an ICH guideline's title from the ICH corpus 1ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > formats an ICH code the corpus does not hold, and says it is not in the corpus 1ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > formats a 21cfr citation from the identifier given and labels it not verified 0ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > formats a fda_guidance citation from the identifier given and labels it not verified 0ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > formats a eu_mdr citation from the identifier given and labels it not verified 0ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > formats a iso_standard citation from the identifier given and labels it not verified 0ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > applies the style it names, and says when it cannot apply the one asked for 1ms
+ ✓ server/services/ana/__tests__/generate-citation-honest.test.ts > generate_citation > asks for what is missing instead of formatting nothing 5ms
+ ✓ server/services/__tests__/citation-verification-service.test.ts > citation-verification-service > verifies a citation by PMID (exact identifier) 3ms
+ ✓ server/services/__tests__/citation-verification-service.test.ts > citation-verification-service > verifies a citation by DOI (exact identifier) 1ms
+ ✓ server/services/__tests__/citation-verification-service.test.ts > citation-verification-service > extracts a PMID from a raw reference string 1ms
+ ✓ server/services/__tests__/citation-verification-service.test.ts > citation-verification-service > verifies by title when no identifier is present 1ms
+ ✓ server/services/__tests__/citation-verification-service.test.ts > citation-verification-service > reports not_found when a supplied identifier does not resolve 0ms
+ ✓ server/services/__tests__/citation-verification-service.test.ts > citation-verification-service > reports not_found when a title has no confident match 1ms
+ ✓ server/services/__tests__/citation-verification-service.test.ts > citation-verification-service > reports unverifiable when there is nothing resolvable to check 0ms
+ ✓ server/services/__tests__/citation-verification-service.test.ts > citation-verification-service > fails loud (error, exists=null) when the upstream API throws — never fabricates 2ms
+ ✓ server/services/__tests__/citation-verification-service.test.ts > citation-verification-service > verifies a batch and preserves input order 2ms
+ ✓ server/services/__tests__/citation-verification-service.test.ts > citation-verification-service > flags a retracted publication while still confirming it exists 1ms
+ ✓ server/services/__tests__/citation-verification-service.test.ts > citation-verification-service > flags a year discrepancy on an otherwise-verified citation 0ms
+ ✓ server/services/__tests__/citation-verification-service.test.ts > citation-verification-service > flags when an identifier resolves to a different article than the cited title 1ms
+ ✓ server/services/__tests__/citation-verification-service.test.ts > a tenant that turned public-source egress off (D6 review) > checks nothing outbound and reports unverifiable, never verified 1ms
+ ✓ server/services/__tests__/citation-verification-service.test.ts > a tenant that turned public-source egress off (D6 review) > a policy that cannot be read makes no outbound check and says so 1ms
+ ✓ server/services/__tests__/citation-verification-service.test.ts > a tenant that turned public-source egress off (D6 review) > egress on (or no policy row) checks as before 1ms
+ ✓ server/services/ana/__tests__/regulatory-currency-tools.test.ts > regulatory-currency tools — registration > every defined tool has a registered handler 3ms
+ ✓ server/services/ana/__tests__/regulatory-currency-tools.test.ts > check_regulatory_currency > returns the LDT fact flagged as void/superseded 8ms
+ ✓ server/services/ana/__tests__/regulatory-currency-tools.test.ts > check_regulatory_currency > retrieves the PMDA eCTD v4.0 mandate for jurisdiction=JP 1ms
+ ✓ server/services/ana/__tests__/regulatory-currency-tools.test.ts > check_regulatory_currency > returns a clean empty result for an unknown topic (does not throw) 3ms
+ ✓ server/services/ana/__tests__/regulatory-currency-tools.test.ts > guidance_change_radar > surfaces drift after an early draftedOn with void_rule ranked highest 1ms
+ ✓ server/services/ana/__tests__/regulatory-currency-tools.test.ts > guidance_change_radar > only flags facts effective AFTER draftedOn 1ms
+ ✓ server/services/ana/__tests__/regulatory-currency-tools.test.ts > guidance_change_radar > returns a clean empty result for an unmatched topic (does not throw) 1ms
+ Test Files  7 passed (7)
+      Tests  121 passed (121)

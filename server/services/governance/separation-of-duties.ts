@@ -182,6 +182,30 @@ async function documentAuthors(db: AuthorshipReader, documentId: string, orgId: 
 }
 
 /**
+ * A lifecycle document's authors (VR-12): whoever created the canonical record
+ * and, for a document made from a Vault version, whoever uploaded that version.
+ * Both are write-once (the canonical append-only guard; the Vault record guard).
+ */
+async function canonicalDocumentAuthors(db: AuthorshipReader, canonicalId: string, orgId: number): Promise<TargetAuthorship> {
+  const set = new AuthorSet();
+  const doc = await db.query(
+    `SELECT created_by, source_refs->'vault_documents'->>'nativeId' AS vault_id
+       FROM canonical_documents WHERE canonical_id = $1 AND organization_id = $2 LIMIT 1`,
+    [canonicalId, orgId],
+  );
+  set.add(doc.rows, 'created_by', 'lifecycle record creator');
+  const vaultId = doc.rows[0]?.vault_id;
+  if (typeof vaultId === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(vaultId)) {
+    const version = await db.query(
+      `SELECT created_by FROM vault.documents WHERE id = $1::uuid AND organization_id = $2 LIMIT 1`,
+      [vaultId, orgId],
+    );
+    set.add(version.rows, 'created_by', 'Vault uploader');
+  }
+  return set.result();
+}
+
+/**
  * A protocol's authors: everyone who wrote its content. That is its creator, the
  * creator of every live content row (sections, objectives, eligibility, visits,
  * schedule-of-assessments rows and cells, team, version snapshots), and everyone
@@ -246,6 +270,29 @@ async function single(db: AuthorshipReader, sql: string, params: unknown[], colu
 }
 
 /**
+ * Target types whose author is one recorded column on one row, keyed by the
+ * target prefix. The id is passed as text; `$1::int` columns are guarded by
+ * `numericId`, so a malformed id reads as "no such record" (no authors, refused
+ * 409) rather than a failed lookup (503).
+ */
+const SINGLE_AUTHOR: Record<string, { sql: string; column: string; source: string; numericId?: boolean }> = {
+  task: { sql: `SELECT owner_id FROM c2c_project_work_items WHERE id = $1 AND org_id = $2 LIMIT 1`, column: 'owner_id', source: 'recorded owner' },
+  blocker: { sql: `SELECT owner_user_id FROM c2c_blockers WHERE blocker_id = $1 AND org_id = $2 LIMIT 1`, column: 'owner_user_id', source: 'recorded owner' },
+  // The one target the Part 11 freeze/dispatch/transmit chain signs.
+  'ectd-sequence': { sql: `SELECT created_by FROM ectd_sequences WHERE id = $1 AND organization_id = $2 LIMIT 1`, column: 'created_by', source: 'sequence creator' },
+  program: { sql: `SELECT created_by FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`, column: 'created_by', source: 'program creator' },
+  // Report finalize is signed (reporting review 2026-10-01). The run's content
+  // is computed by the engines; the person who requested it is its author. A
+  // run whose requester was removed has none, and is refused.
+  'report-run': {
+    sql: `SELECT requested_by FROM report_runs WHERE id = $1::int AND organization_id = $2 LIMIT 1`,
+    column: 'requested_by',
+    source: 'run requester',
+    numericId: true,
+  },
+};
+
+/**
  * Resolve the authors of a governed target, org-scoped. THROWS when a lookup
  * fails — that is not an answer about authorship and must not be read as one.
  */
@@ -254,6 +301,12 @@ export async function resolveTargetAuthors(target: string, orgId: number, db: Au
   if (colonIdx === -1) return NOT_MODELLED;
   const prefix = target.slice(0, colonIdx);
   const rest = target.slice(colonIdx + 1);
+
+  const one = SINGLE_AUTHOR[prefix];
+  if (one) {
+    if (one.numericId && !/^\d+$/.test(rest)) return new AuthorSet().result();
+    return single(db, one.sql, [rest, orgId], one.column, one.source);
+  }
 
   switch (prefix) {
     case 'document':
@@ -264,17 +317,10 @@ export async function resolveTargetAuthors(target: string, orgId: number, db: Au
       const [docId, ...keyParts] = parts;
       return documentAuthors(db, docId, orgId, keyParts.join(':'));
     }
-    case 'task':
-      return single(db, `SELECT owner_id FROM c2c_project_work_items WHERE id = $1 AND org_id = $2 LIMIT 1`, [rest, orgId], 'owner_id', 'recorded owner');
-    case 'blocker':
-      return single(db, `SELECT owner_user_id FROM c2c_blockers WHERE blocker_id = $1 AND org_id = $2 LIMIT 1`, [rest, orgId], 'owner_user_id', 'recorded owner');
-    case 'ectd-sequence':
-      // The one target the Part 11 freeze/dispatch/transmit chain signs.
-      return single(db, `SELECT created_by FROM ectd_sequences WHERE id = $1 AND organization_id = $2 LIMIT 1`, [rest, orgId], 'created_by', 'sequence creator');
-    case 'program':
-      return single(db, `SELECT created_by FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`, [rest, orgId], 'created_by', 'program creator');
     case 'protocol-document':
       return protocolDocumentAuthors(db, rest, orgId);
+    case 'canonical_document':
+      return canonicalDocumentAuthors(db, rest, orgId);
     case 'protocol-review-assignment': {
       // A reviewer signs over the protocol, so independence is from its authors.
       if (!/^\d+$/.test(rest)) return new AuthorSet().result();

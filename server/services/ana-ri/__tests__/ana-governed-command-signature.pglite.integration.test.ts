@@ -110,6 +110,9 @@ CREATE TABLE concept2cure_thread_comments (
 const BASE_DDL = `
 CREATE TABLE organizations (id serial PRIMARY KEY, name text, settings jsonb DEFAULT '{}'::jsonb);
 CREATE TABLE projects (id serial PRIMARY KEY, organization_id integer NOT NULL, name text);
+-- The project-membership check (PF-03) reads programs and projects as one; a
+-- package's integer project matches only the projects arm.
+CREATE TABLE regulatory_programs (id uuid PRIMARY KEY, organization_id integer NOT NULL, deleted_at timestamp);
 `;
 
 const signoff = (over: Partial<Part11Signoff> = {}): Part11Signoff => ({
@@ -303,6 +306,15 @@ describe('create_submission_package signs the creation decision', () => {
     });
   });
 
+  it("another organization's project is refused before anything is written, signature included (PF-03)", async () => {
+    await pg.exec(`INSERT INTO projects (id, organization_id, name) VALUES (${PROJECT + 1}, ${OTHER_ORG}, 'Their IND') ON CONFLICT DO NOTHING`);
+    const { createSubmissionPackage } = await import('../command-executor');
+    const r = await createSubmissionPackage(ctxWith(signoff()) as never, { ...params, projectId: PROJECT + 1 });
+    expect(r).toMatchObject({ success: false, error: 'PROJECT_NOT_FOUND' });
+    expect(await q(`SELECT 1 FROM c2c_submission_packages`)).toHaveLength(0);
+    expect(await signatures()).toHaveLength(0);
+  });
+
   it('without a verified sign-off creates no package', async () => {
     const { createSubmissionPackage } = await import('../command-executor');
     const r = await createSubmissionPackage(ctxWith(signoff({ signaturePurpose: undefined })) as never, params);
@@ -369,6 +381,20 @@ describe('revert_to_version signs the new version in the transaction that writes
   });
 });
 
+/**
+ * 42703 on the conversations UPDATE for the duration of `fn`: a real failure,
+ * not an absent table. (It was the comments UPDATE until 2026-10-01; review
+ * comments are retained now.)
+ */
+async function withSummaryColumnMoved(fn: () => Promise<void>): Promise<void> {
+  await pg.exec(`ALTER TABLE concept2cure_conversations RENAME COLUMN summary TO summary_moved`);
+  try {
+    await fn();
+  } finally {
+    await pg.exec(`ALTER TABLE concept2cure_conversations RENAME COLUMN summary_moved TO summary`);
+  }
+}
+
 describe('erase_personal_data', () => {
   async function seedSubjectData() {
     const artifactPk = await seedArtifact();
@@ -404,12 +430,11 @@ describe('erase_personal_data', () => {
     const [ledger] = await signLedger();
     expect(sig.bound_payload_digest).toBe(ledger.sha256_chain);
     expect(asJson(ledger.payload)).toMatchObject({ dataSubjectId: SIGNER, command: 'erase_personal_data' });
-    expect(asJson(ledger.payload).scope).toEqual(expect.arrayContaining(['users', 'concept2cure_conversations', 'concept2cure_thread_comments']));
+    expect(asJson(ledger.payload).scope).toEqual(expect.arrayContaining(['users', 'concept2cure_conversations']));
 
     // The erasure itself happened.
     expect((await userRow()).name).toBe(`[ERASED USER ${SIGNER}]`);
     expect((await q(`SELECT summary FROM concept2cure_conversations`))[0].summary).toBe('[REDACTED PER GDPR ART.17]');
-    expect((await q(`SELECT body FROM concept2cure_thread_comments`))[0].body).toBe('[REDACTED PER GDPR ART.17]');
     expect(await q(`SELECT 1 FROM gdpr_data_subject_requests WHERE data_subject_id = $1 AND status = 'completed'`, [String(SIGNER)])).toHaveLength(1);
   });
 
@@ -450,14 +475,14 @@ describe('erase_personal_data', () => {
 
   it('a failing redaction statement returns failure with nothing committed', async () => {
     await seedSubjectData();
-    // 42703 on the comments UPDATE: a real failure, not an absent table.
-    await pg.exec(`ALTER TABLE concept2cure_thread_comments RENAME COLUMN body TO body_moved`);
-    const r = await erase(signoff());
-    expect(r.success).toBe(false);
-    expect((await userRow()).name).toBe(SIGNER_NAME);
-    expect((await q(`SELECT summary FROM concept2cure_conversations`))[0].summary).toBe('Discussed my availability');
-    expect(await signatures()).toHaveLength(0);
-    expect(await q(`SELECT 1 FROM gdpr_data_subject_requests`)).toHaveLength(0);
+    await withSummaryColumnMoved(async () => {
+      const r = await erase(signoff());
+      expect(r.success).toBe(false);
+      expect((await userRow()).name).toBe(SIGNER_NAME);
+      expect((await q(`SELECT summary_moved FROM concept2cure_conversations`))[0].summary_moved).toBe('Discussed my availability');
+      expect(await signatures()).toHaveLength(0);
+      expect(await q(`SELECT 1 FROM gdpr_data_subject_requests`)).toHaveLength(0);
+    });
   });
 
   it('an absent table is reported as not applicable, not as zero, and the erasure completes', async () => {
@@ -465,7 +490,7 @@ describe('erase_personal_data', () => {
     await pg.exec(`DROP TABLE concept2cure_thread_comments`);
     const r = await erase(signoff());
     expect(r.success).toBe(true);
-    expect(r.data?.redactedComments).toBeNull();
+    expect(r.data?.retainedReviewComments).toBeNull();
     expect(r.data?.notApplicable).toEqual(['concept2cure_thread_comments']);
     expect((await userRow()).name).toBe(`[ERASED USER ${SIGNER}]`);
     expect(await signatures()).toHaveLength(1);
@@ -482,6 +507,38 @@ describe('erase_personal_data', () => {
     } finally {
       await pg.exec(`ALTER TABLE gdpr_data_subject_requests_down RENAME TO gdpr_data_subject_requests`);
     }
+  });
+});
+
+// 2026-10-01 (D5): the reason on the erasure record is the one the person
+// stated in the ceremony, never the model's params.reason or a stock line.
+describe('erase_personal_data records the reason the person stated, and keeps the review record', () => {
+  it('retains the subject’s review comments, word for word, outside its scope (D5, 2026-10-01)', async () => {
+    const artifactPk = await seedArtifact();
+    await q(
+      `INSERT INTO concept2cure_thread_comments (comment_id, org_id, thread_id, artifact_id, author_id, author_name, body)
+       VALUES ('cmt_keep', $1, 1, $2, $3, $4, 'Table 14.2.1 uses the wrong population')`,
+      [ORG, artifactPk, SIGNER, SIGNER_NAME],
+    );
+    const { erasePersonalData } = await import('../command-executor');
+    const r = await erasePersonalData(ctxWith(signoff()) as never, { dataSubjectId: SIGNER });
+    expect(r.success).toBe(true);
+    expect(r.data?.retainedReviewComments).toBe(1);
+    expect((await q(`SELECT body FROM concept2cure_thread_comments WHERE comment_id = 'cmt_keep'`))[0].body).toBe('Table 14.2.1 uses the wrong population');
+    const [ledger] = await signLedger();
+    expect(asJson(ledger.payload).scope).not.toContain('concept2cure_thread_comments');
+  });
+
+  it('takes it from the sign-off, not from what AnA wrote', async () => {
+    const { erasePersonalData } = await import('../command-executor');
+    const r = await erasePersonalData(ctxWith(signoff()) as never, {
+      dataSubjectId: SIGNER,
+      reason: 'AnA decided this subject should be erased',
+    });
+    expect(r.success).toBe(true);
+    const [row] = await q(`SELECT response_details FROM gdpr_data_subject_requests WHERE data_subject_id = $1`, [String(SIGNER)]);
+    expect(row.response_details).toContain(`Reason: ${REASON}.`);
+    expect(row.response_details).not.toMatch(/AnA decided|GDPR Art\. 17 erasure request/);
   });
 });
 
@@ -506,5 +563,21 @@ describe('tagArtifact into a section that already has an artifact', () => {
     expect(row.content).toBe('Section 2.7.3, revised by the section write.');
     expect(Number(row.version)).toBe(4);
     expect(asJson(row.metadata)).toMatchObject({ origin: 'seed', revisedBy: 'section-write' });
+  });
+});
+
+// 2026-10-01 (D5): a review comment AnA wrote for the person is filed as AnA's
+// (author_role 'ana', fixed once posted), and commits with its chained row.
+describe('add_review_comment files AnA’s words as AnA’s', () => {
+  it('stamps author_role ana and chains the comment with origin ana', async () => {
+    const artifactPk = await seedArtifact();
+    const { addReviewComment } = await import('../command-executor');
+    const words = 'Section 4 needs the starting-dose rationale.';
+    const r = await addReviewComment(ctxWith(signoff()) as never, { threadId: 1, artifactId: artifactPk, body: words });
+    expect(r.success).toBe(true);
+    const id = r.data?.externalId as string;
+    expect((await q(`SELECT author_role FROM concept2cure_thread_comments WHERE comment_id = $1`, [id]))[0].author_role).toBe('ana');
+    const [chained] = await q(`SELECT new_values FROM audit_logs WHERE action = 'review.comment.posted' AND record_id = $1`, [id]);
+    expect(asJson(chained.new_values)).toMatchObject({ origin: 'ana', authorRole: 'ana', body: words });
   });
 });

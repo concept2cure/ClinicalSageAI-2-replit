@@ -1,0 +1,9 @@
+semgrep 1.177.0; B=89169bcf H=558f6030
+job continue-on-error: true; image: semgrep/semgrep:latest
+
+## old step at H (a finding the rule matches is present)
+  exit 0
+     • Parsed lines: ~100.0%
+     • Scan was limited to files tracked by git
+     • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+    Ran 1 rule on 1 file: 1 finding.

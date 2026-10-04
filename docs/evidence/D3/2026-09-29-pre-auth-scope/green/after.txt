@@ -1,0 +1,443 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-29T01:30:18.420Z","pid":15932,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-29T01:30:18.421Z","pid":15932,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-29T01:30:18.422Z","pid":15932,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/pre-auth-user-lookup.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/pre-auth-user-lookup.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/pre-auth-user-lookup.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/pre-auth-user-lookup.dbtest.ts
+✅ Platform health/auth routes mounted
+
+ ✓ tests/db/pre-auth-user-lookup.dbtest.ts > GET /api/users/:id answers by membership in the caller organization (D3) > positive control: a member of A finds another member of A 74ms
+ ✓ tests/db/pre-auth-user-lookup.dbtest.ts > GET /api/users/:id answers by membership in the caller organization (D3) > a person removed from A is not found, whatever their default organization says 9ms
+ ✓ tests/db/pre-auth-user-lookup.dbtest.ts > GET /api/users/:id answers by membership in the caller organization (D3) > a current member of A is found, even with another default organization 8ms
+ ✓ tests/db/pre-auth-user-lookup.dbtest.ts > GET /api/users/:id answers by membership in the caller organization (D3) > B's member is not found from A 8ms
+ ✓ tests/db/pre-auth-user-lookup.dbtest.ts > GET /api/users/:id answers by membership in the caller organization (D3) > the response carries no credential field 9ms
+{"level":30,"time":"2026-09-29T01:30:21.212Z","pid":15952,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-29T01:30:21.214Z","pid":15952,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-29T01:30:21.214Z","pid":15952,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/one-time-credentials.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-29T01:30:21.306Z', poolSize: 1 }
+
+stdout | tests/db/one-time-credentials.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/one-time-credentials.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/one-time-credentials.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/one-time-credentials.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/one-time-credentials.dbtest.ts
+[mfa] MFA enabled for user 1010
+
+stdout | tests/db/one-time-credentials.dbtest.ts
+[mfa] MFA enabled for user 1011
+
+stdout | tests/db/one-time-credentials.dbtest.ts
+[mfa] MFA enabled for user 1012
+
+stdout | tests/db/one-time-credentials.dbtest.ts
+[mfa] MFA enabled for user 1013
+
+stdout | tests/db/one-time-credentials.dbtest.ts
+[mfa] MFA enabled for user 1016
+
+{"level":30,"time":"2026-09-29T01:30:05.000Z","pid":15952,"hostname":"vm","context":{"userId":1010,"tenantId":91850,"resourceId":"1010"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+ ✓ tests/db/one-time-credentials.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 5ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > the posture is the one production runs in > enrolment used the step it presented 3ms
+{"level":30,"time":"2026-09-29T01:30:05.000Z","pid":15952,"hostname":"vm","context":{"userId":1010,"tenantId":"91850","resourceId":"1010"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-29T01:30:05.000Z","pid":15952,"hostname":"vm","context":{"userId":1010,"tenantId":91850,"resourceId":"1010"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-29T01:30:05.000Z","pid":15952,"hostname":"vm","context":{"userId":1010,"tenantId":"91850","resourceId":"1010"},"msg":"[audit-service] [AUDIT] user_login_mfa_failed user"}
+{"level":30,"time":"2026-09-29T01:30:05.000Z","pid":15952,"hostname":"vm","context":{"userId":1010,"tenantId":91850,"resourceId":"1010"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-29T01:30:05.000Z","pid":15952,"hostname":"vm","context":{"userId":1010,"tenantId":"91850","resourceId":"1010"},"msg":"[audit-service] [AUDIT] user_login_mfa_failed user"}
+{"level":30,"time":"2026-09-29T01:30:35.000Z","pid":15952,"hostname":"vm","context":{"userId":1010,"tenantId":91850,"resourceId":"1010"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-29T01:30:35.000Z","pid":15952,"hostname":"vm","context":{"userId":1010,"tenantId":"91850","resourceId":"1010"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/one-time-credentials.dbtest.ts > a code opens one session (POST /api/auth/mfa/verify) > refuses the same code the second time 137ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > a code opens one session (POST /api/auth/mfa/verify) > refuses a code from a step earlier than the last accepted, though that code was never used 38ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > a code opens one session (POST /api/auth/mfa/verify) > accepts the next code: a refusal is per step, not a lockout 44ms
+{"level":30,"time":"2026-09-29T01:30:05.000Z","pid":15952,"hostname":"vm","context":{"userId":1011,"tenantId":91850,"resourceId":"1011"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-29T01:30:05.000Z","pid":15952,"hostname":"vm","context":{"userId":1011,"tenantId":91850,"resourceId":"1011"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+stdout | tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > two sign-ins racing one code: exactly one session
+[database] Database connection successful { timestamp: '2026-09-29T01:30:05.000Z', poolSize: 2 }
+
+{"level":30,"time":"2026-09-29T01:30:05.000Z","pid":15952,"hostname":"vm","context":{"userId":1011,"tenantId":"91850","resourceId":"1011"},"msg":"[audit-service] [AUDIT] user_login_mfa_failed user"}
+{"level":30,"time":"2026-09-29T01:30:05.000Z","pid":15952,"hostname":"vm","context":{"userId":1011,"tenantId":"91850","resourceId":"1011"},"msg":"[audit-service] [AUDIT] user_login user"}
+stdout | tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > eight verifiers racing one code: exactly one accepts it
+[database] Database connection successful { timestamp: '2026-09-29T01:30:35.000Z', poolSize: 3 }
+
+stdout | tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > eight verifiers racing one code: exactly one accepts it
+[database] Database connection successful { timestamp: '2026-09-29T01:30:35.000Z', poolSize: 4 }
+
+stdout | tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > eight verifiers racing one code: exactly one accepts it
+[database] Database connection successful { timestamp: '2026-09-29T01:30:35.000Z', poolSize: 5 }
+
+stdout | tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > eight verifiers racing one code: exactly one accepts it
+[database] Database connection successful { timestamp: '2026-09-29T01:30:35.000Z', poolSize: 6 }
+
+stdout | tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > eight verifiers racing one code: exactly one accepts it
+[database] Database connection successful { timestamp: '2026-09-29T01:30:35.000Z', poolSize: 7 }
+
+stdout | tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > eight verifiers racing one code: exactly one accepts it
+[database] Database connection successful { timestamp: '2026-09-29T01:30:35.000Z', poolSize: 8 }
+
+{"level":30,"time":"2026-09-29T01:30:05.000Z","pid":15952,"hostname":"vm","context":{"userId":1012,"tenantId":91850,"resourceId":"1012"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-29T01:30:05.000Z","pid":15952,"hostname":"vm","context":{"userId":1012,"tenantId":"91850","resourceId":"1012"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-29T01:30:05.000Z","pid":15952,"hostname":"vm","context":{"userId":1012,"tenantId":91850,"resourceId":"1012"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-29T01:30:05.000Z","pid":15952,"hostname":"vm","context":{"userId":1012,"tenantId":"91850","resourceId":"1012"},"msg":"[audit-service] [AUDIT] user_login_mfa_failed user"}
+ ✓ tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > two sign-ins racing one code: exactly one session 68ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > concurrent verifications of one code > eight verifiers racing one code: exactly one accepts it 30ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > one record of used codes, whichever path verifies > the enterprise sign-in refuses a code it already accepted 100ms
+{"level":30,"time":"2026-09-29T01:30:05.000Z","pid":15952,"hostname":"vm","context":{"userId":1012,"tenantId":91850,"resourceId":"1012"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-29T01:30:05.000Z","pid":15952,"hostname":"vm","context":{"userId":1012,"tenantId":"91850","resourceId":"1012"},"msg":"[audit-service] [AUDIT] user_login_mfa_failed user"}
+ ✓ tests/db/one-time-credentials.dbtest.ts > one record of used codes, whichever path verifies > the password sign-in refuses a code the enterprise sign-in used 35ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > the modal can check a code, even twice, and it is still unused 30ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > the signature then accepts that same code, and uses it 12ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > a used code neither checks nor signs again 25ms
+{"level":40,"time":"2026-09-29T01:30:05.000Z","pid":15952,"hostname":"vm","context":{},"msg":"[auth-security] Account locked for user 1013 after 5 failed attempts"}
+{"level":40,"time":"2026-09-29T01:30:05.000Z","pid":15952,"hostname":"vm","context":{},"msg":"[auth-security] Account locked for user 1013 after 5 failed attempts"}
+ ✓ tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > the code pre-check is metered per signer, and a wrong code counts against the account 92ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > signing: the pre-check does not use the code, the signature does > the password pre-check is metered per signer too, on its own budget, and a wrong password counts 114ms
+stdout | tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > twelve concurrent wrong guesses exhaust the five attempts, and the right code is then refused
+[database] Database connection successful { timestamp: '2026-09-29T01:30:05.000Z', poolSize: 9 }
+
+stdout | tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > twelve concurrent wrong guesses exhaust the five attempts, and the right code is then refused
+[database] Database connection successful { timestamp: '2026-09-29T01:30:05.000Z', poolSize: 10 }
+
+stdout | tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > twelve concurrent wrong guesses exhaust the five attempts, and the right code is then refused
+[database] Database connection successful { timestamp: '2026-09-29T01:30:05.000Z', poolSize: 11 }
+
+stdout | tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > twelve concurrent wrong guesses exhaust the five attempts, and the right code is then refused
+[database] Database connection successful { timestamp: '2026-09-29T01:30:05.000Z', poolSize: 12 }
+
+ ✓ tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > five verifiers racing one emailed code: exactly one accepts it 19ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > after 4 wrong guesses the right code is accepted: true (the limit is exactly five) 14ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > after 5 wrong guesses the right code is accepted: false (the limit is exactly five) 18ms
+ ✓ tests/db/one-time-credentials.dbtest.ts > the email one-time code is used once, and its attempts are counted once each > twelve concurrent wrong guesses exhaust the five attempts, and the right code is then refused 45ms
+{"level":30,"time":"2026-09-29T01:30:05.000Z","pid":15952,"hostname":"vm","context":{"userId":1015,"tenantId":91850,"resourceId":"1015"},"msg":"[audit-service] [AUDIT] user_password_changed user"}
+{"level":30,"time":"2026-09-29T01:30:05.000Z","pid":15952,"hostname":"vm","context":{"userId":1015,"tenantId":91850,"resourceId":"1015"},"msg":"[audit-service] [AUDIT] user_password_reset_failed user"}
+stdout | tests/db/one-time-credentials.dbtest.ts > a password-reset token is used once > two resets racing one token: exactly one succeeds, and its password is the one set
+{
+  "timestamp": "2026-09-29T01:30:05.000Z",
+  "level": "info",
+  "message": "[auth] Password reset completed",
+  "context": {
+    "userId": 1015
+  }
+}
+
+ ✓ tests/db/one-time-credentials.dbtest.ts > a password-reset token is used once > two resets racing one token: exactly one succeeds, and its password is the one set 1090ms
+stdout | tests/db/one-time-credentials.dbtest.ts > replay state belongs to one secret > a new authenticator's first code is not refused for the old one's last step
+[mfa] MFA disabled for user 1016
+
+stdout | tests/db/one-time-credentials.dbtest.ts > replay state belongs to one secret > a new authenticator's first code is not refused for the old one's last step
+[mfa] MFA enabled for user 1016
+
+ ✓ tests/db/one-time-credentials.dbtest.ts > replay state belongs to one secret > a new authenticator's first code is not refused for the old one's last step 28ms
+{"level":30,"time":"2026-09-29T01:30:25.861Z","pid":15978,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-29T01:30:25.862Z","pid":15978,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-29T01:30:25.862Z","pid":15978,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/sign-in-audit-trail.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-29T01:30:25.937Z', poolSize: 1 }
+
+stdout | tests/db/sign-in-audit-trail.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/sign-in-audit-trail.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/sign-in-audit-trail.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/sign-in-audit-trail.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/sign-in-audit-trail.dbtest.ts
+[mfa] MFA enabled for user 1017
+
+stdout | tests/db/sign-in-audit-trail.dbtest.ts
+[mfa] MFA enabled for user 1018
+
+{"level":30,"time":"2026-09-29T01:30:26.309Z","pid":15978,"hostname":"vm","context":{"userId":1017,"tenantId":91800,"resourceId":"1017"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-29T01:30:26.339Z","pid":15978,"hostname":"vm","context":{"userId":1017,"tenantId":"91800","resourceId":"1017"},"msg":"[audit-service] [AUDIT] user_login_mfa_failed user"}
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 4ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records the MFA challenge a password sign-in issues, against the organisation 51ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records a wrong authenticator code 18ms
+{"level":30,"time":"2026-09-29T01:30:26.390Z","pid":15978,"hostname":"vm","context":{"userId":1017,"tenantId":"91800","resourceId":"1017"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-29T01:30:26.410Z","pid":15978,"hostname":"vm","context":{"userId":1017,"tenantId":91800,"resourceId":"1017"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-29T01:30:26.422Z","pid":15978,"hostname":"vm","context":{"resourceId":"unknown"},"msg":"[audit-service] [AUDIT] user_logout user"}
+stdout | tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > opens the API with the session /mfa/verify issued
+[database] Database connection successful { timestamp: '2026-09-29T01:30:26.435Z', poolSize: 2 }
+
+{"level":30,"time":"2026-09-29T01:30:26.452Z","pid":15978,"hostname":"vm","context":{"userId":"1017","tenantId":"91800","resourceId":"1017"},"msg":"[audit-service] [AUDIT] user_logout user"}
+stderr | tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > opens nothing once it is signed out (AUTH-03)
+[Enterprise Auth] select-organization error: SessionEndedError: This session has ended. Sign in again.
+    at verifyLiveToken (/home/user/ClinicalSageAI-2-replit/server/services/token-revocation.ts:288:42)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/authEnterprise.ts:916:22 {
+  reason: 'signed-out'
+}
+
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records the session /mfa/verify issues 53ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records a wrong password on a real account, against its organisation 17ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > does not let a token the server never signed write into the organisation chain 12ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > opens the API with the session /mfa/verify issued 19ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > records the end of a session the server issued, against its organisation 16ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > opens nothing once it is signed out (AUTH-03) 23ms
+{"level":30,"time":"2026-09-29T01:30:26.518Z","pid":15978,"hostname":"vm","context":{"userId":1018,"tenantId":91800,"resourceId":"1018"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-29T01:30:26.537Z","pid":15978,"hostname":"vm","context":{"userId":1018,"tenantId":91800,"resourceId":"1018"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-29T01:30:26.554Z","pid":15978,"hostname":"vm","context":{"userId":1018,"tenantId":"91800","resourceId":"1018"},"msg":"[audit-service] [AUDIT] user_login_mfa_failed user"}
+{"level":30,"time":"2026-09-29T01:30:26.576Z","pid":15978,"hostname":"vm","context":{"userId":1018,"tenantId":"91800","resourceId":"1018"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-29T01:30:26.604Z","pid":15978,"hostname":"vm","context":{"userId":"1018","resourceType":"organization","resourceId":"91800","success":true},"msg":"[audit] [AUDIT] authorization:organization_switch"}
+{"level":30,"time":"2026-09-29T01:30:26.605Z","pid":15978,"hostname":"vm","context":{"userId":"1018","tenantId":"91800","resourceId":"91800"},"msg":"[audit-service] [AUDIT] authorization.organization_switch organization"}
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > a sign-in reaches the audit trail under RLS > refuses a session another server signed out, which only the database can know 11ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records a wrong password 26ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records the challenge a correct password receives 21ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records a wrong code 17ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records the session it issues 21ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > records entering an organisation, against that organisation 113ms
+{"level":30,"time":"2026-09-29T01:30:26.703Z","pid":15978,"hostname":"vm","context":{"userId":"1018","tenantId":"91800","resourceId":"1018"},"msg":"[audit-service] [AUDIT] user_logout user"}
+{"level":30,"time":"2026-09-29T01:30:26.732Z","pid":15978,"hostname":"vm","context":{"userId":1017,"tenantId":91800,"resourceId":"1017"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-29T01:30:26.754Z","pid":15978,"hostname":"vm","context":{"userId":1017,"tenantId":91800,"resourceId":"1017"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the enterprise sign-in reaches the same audit trail > ends the session it reports ending, and records it 24ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > no sign-in path skips the second factor > /api/users/login asks for the code instead of issuing a session 19ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > no sign-in path skips the second factor > /api/user/login asks for the code instead of issuing a session 20ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > no sign-in path skips the second factor > creates no account outside signup 6ms
+ ✓ tests/db/sign-in-audit-trail.dbtest.ts > the organisation audit chain > verifies end to end over every row the organisation holds 5ms
+{"level":30,"time":"2026-09-29T01:30:28.470Z","pid":15994,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-29T01:30:28.472Z","pid":15994,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-29T01:30:28.472Z","pid":15994,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/account-standing.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-29T01:30:28.591Z', poolSize: 1 }
+
+stdout | tests/db/account-standing.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/account-standing.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/account-standing.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/account-standing.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 1019
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 1020
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 1021
+
+stdout | tests/db/account-standing.dbtest.ts
+[mfa] MFA enabled for user 1022
+
+{"level":30,"time":"2026-09-29T01:31:35.000Z","pid":15994,"hostname":"vm","context":{"userId":1019,"tenantId":92100,"resourceId":"1019"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+ ✓ tests/db/account-standing.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 4ms
+ ✓ tests/db/account-standing.dbtest.ts > the posture is the one production runs in > the accounts are in the states the admin route and SCIM leave them in 2ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > an active account signs 20ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a suspended account cannot sign, with the right password and code 2ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a guess against a suspended account is neither compared nor counted 3ms
+ ✓ tests/db/account-standing.dbtest.ts > signing (F-28) > a deprovisioned account cannot sign 2ms
+{"level":30,"time":"2026-09-29T01:31:35.000Z","pid":15994,"hostname":"vm","context":{"userId":1019,"tenantId":"92100","resourceId":"1019"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-29T01:31:35.000Z","pid":15994,"hostname":"vm","context":{"userId":1020,"tenantId":92100,"resourceId":"1020"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-29T01:31:35.000Z","pid":15994,"hostname":"vm","context":{"userId":1021,"tenantId":92100,"resourceId":"1021"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-29T01:32:05.000Z","pid":15994,"hostname":"vm","context":{"userId":1022,"tenantId":92100,"resourceId":"1022"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-29T01:32:05.000Z","pid":15994,"hostname":"vm","context":{"userId":1022,"tenantId":"92100","resourceId":"1022"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > an active account signs in 111ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > a suspended account is refused at the password, and no challenge is issued 17ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > a deprovisioned account is refused at the password, and no challenge is issued 16ms
+ ✓ tests/db/account-standing.dbtest.ts > sign-in (F-29) > a challenge issued before the suspension does not become a session after it 31ms
+{"level":30,"time":"2026-09-29T01:32:35.000Z","pid":15994,"hostname":"vm","context":{"userId":1022,"tenantId":92100,"resourceId":"1022"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-29T01:32:35.000Z","pid":15994,"hostname":"vm","context":{"userId":1022,"tenantId":"92100","resourceId":"1022"},"msg":"[audit-service] [AUDIT] user_login user"}
+stdout | tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > ends at the gate once the account is suspended, and says why
+[database] Database connection successful { timestamp: '2026-09-29T01:32:35.000Z', poolSize: 2 }
+
+{"level":30,"time":"2026-09-29T01:33:05.000Z","pid":15994,"hostname":"vm","context":{"userId":1022,"tenantId":92100,"resourceId":"1022"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-29T01:33:05.000Z","pid":15994,"hostname":"vm","context":{"userId":1022,"tenantId":"92100","resourceId":"1022"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > ends at the gate once the account is suspended, and says why 90ms
+ ✓ tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > ends once the identity provider deprovisions the account 53ms
+{"level":30,"time":"2026-09-29T01:33:35.000Z","pid":15994,"hostname":"vm","context":{"userId":1022,"tenantId":92100,"resourceId":"1022"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+{"level":30,"time":"2026-09-29T01:33:35.000Z","pid":15994,"hostname":"vm","context":{"userId":1022,"tenantId":"92100","resourceId":"1022"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/account-standing.dbtest.ts > a session the account already holds (F-29) > works again when the account is reactivated 47ms
+{"level":30,"time":"2026-09-29T01:30:31.101Z","pid":16011,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-29T01:30:31.102Z","pid":16011,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-29T01:30:31.102Z","pid":16011,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/sign-in-posture.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-29T01:30:31.225Z', poolSize: 1 }
+
+stdout | tests/db/sign-in-posture.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/sign-in-posture.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/db/sign-in-posture.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/sign-in-posture.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/sign-in-posture.dbtest.ts
+[mfa] MFA enabled for user 1023
+
+stdout | tests/db/sign-in-posture.dbtest.ts
+[mfa] MFA enabled for user 1025
+
+stdout | tests/db/sign-in-posture.dbtest.ts
+[mfa] MFA disabled for user 1025
+
+stdout | tests/db/sign-in-posture.dbtest.ts
+[mfa] MFA enabled for user 1026
+
+{"level":30,"time":"2026-09-29T01:30:35.000Z","pid":16011,"hostname":"vm","context":{"userId":1023,"tenantId":92100,"resourceId":"1023"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+ ✓ tests/db/sign-in-posture.dbtest.ts > the posture is the one production runs in > connects as a non-superuser runtime role with RLS enforcing 4ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > the posture is the one production runs in > the three accounts are what their names say 2ms
+{"level":30,"time":"2026-09-29T01:30:35.000Z","pid":16011,"hostname":"vm","context":{"userId":1023,"tenantId":"92100","resourceId":"1023"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-29T01:31:05.000Z","pid":16011,"hostname":"vm","context":{"userId":1024,"tenantId":92100,"resourceId":"1024"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+stderr | tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > email: the verified sign-in, the session and /api/users/me agree
+{
+  "timestamp": "2026-09-29T01:31:05.000Z",
+  "level": "warn",
+  "message": "[email-service] SMTP not configured — login OTP email not sent (dev)",
+  "context": {
+    "to": "d***@example.invalid"
+  }
+}
+
+{"level":30,"time":"2026-09-29T01:31:05.000Z","pid":16011,"hostname":"vm","context":{"userId":1024,"tenantId":"92100","resourceId":"1024"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/sign-in-posture.dbtest.ts > an account with an authenticator is told it has one (VSR-001 §13.3 item 4) > the challenge, the verified sign-in, the session and /api/users/me all say so 137ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > email: the verified sign-in, the session and /api/users/me agree 74ms
+{"level":30,"time":"2026-09-29T01:31:05.000Z","pid":16011,"hostname":"vm","context":{"userId":1025,"tenantId":92100,"resourceId":"1025"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+stderr | tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > disabled: the verified sign-in, the session and /api/users/me agree
+{
+  "timestamp": "2026-09-29T01:31:05.000Z",
+  "level": "warn",
+  "message": "[email-service] SMTP not configured — login OTP email not sent (dev)",
+  "context": {
+    "to": "d***@example.invalid"
+  }
+}
+
+{"level":30,"time":"2026-09-29T01:31:05.000Z","pid":16011,"hostname":"vm","context":{"userId":1025,"tenantId":"92100","resourceId":"1025"},"msg":"[audit-service] [AUDIT] user_login user"}
+{"level":30,"time":"2026-09-29T01:31:05.000Z","pid":16011,"hostname":"vm","context":{"userId":1024,"tenantId":92100,"resourceId":"1024"},"msg":"[audit-service] [AUDIT] user_login_mfa_challenge user"}
+stderr | tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > a password change the account owes is reported, not overwritten with false
+{
+  "timestamp": "2026-09-29T01:31:05.000Z",
+  "level": "warn",
+  "message": "[email-service] SMTP not configured — login OTP email not sent (dev)",
+  "context": {
+    "to": "d***@example.invalid"
+  }
+}
+
+{"level":30,"time":"2026-09-29T01:31:05.000Z","pid":16011,"hostname":"vm","context":{"userId":1024,"tenantId":"92100","resourceId":"1024"},"msg":"[audit-service] [AUDIT] user_login user"}
+ ✓ tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > disabled: the verified sign-in, the session and /api/users/me agree 59ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > an account without one is told it signs in with an emailed code > a password change the account owes is reported, not overwritten with false 55ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > before any credential, every address gets the same answer > enterprise check-email does not tell an enrolled account from an unknown address 14ms
+ ✓ tests/db/sign-in-posture.dbtest.ts > the enterprise router refuses setup over an enrolled authenticator, and says so (F-26) > 409 MFA_ALREADY_ENABLED, no secret handed out, the enrolled secret untouched 10ms
+{"level":30,"time":"2026-09-29T01:30:33.443Z","pid":16026,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-29T01:30:33.445Z","pid":16026,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-29T01:30:33.445Z","pid":16026,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/memberships.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/memberships.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/memberships.dbtest.ts
+DATABASE_URL_DEV not found, using DATABASE_URL as fallback
+
+stdout | tests/db/memberships.dbtest.ts
+✅ Platform health/auth routes mounted
+
+stdout | tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > positive control: the route admits A into its own organization
+[database] Database connection successful { timestamp: '2026-09-29T01:30:33.967Z', poolSize: 1 }
+
+{"level":40,"time":"2026-09-29T01:30:34.012Z","pid":16026,"hostname":"vm","context":{"userId":1027,"organizationId":90302},"msg":"[auth-middleware] Org membership revoked — rejecting authenticated request (fail-closed)"}
+{"level":40,"time":"2026-09-29T01:30:34.013Z","pid":16026,"hostname":"vm","context":{"method":"GET","path":"/api/organizations/90302","statusCode":403},"msg":"[auth-boundary] Unauthenticated request passed through auth boundary (mode=warn). This route would be rejected in enforce mode."}
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > positive control: the route admits A into its own organization 77ms
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > cannot place its user in B, so the gate never admits a token for B 20ms
+ ✓ tests/db/memberships.dbtest.ts > tenant A's scope cannot write tenant B's memberships (D3) > cannot change or remove B's members 6ms
+ ✓ tests/db/memberships.dbtest.ts > no tenant can mint a platform-staff role, not even in its own organization (D3) > its own member cannot be made super_admin, platform_admin or app_super_admin 9ms
+ ✓ tests/db/memberships.dbtest.ts > the legitimate writers still write (D3) > an organization manages its own members' ordinary roles 8ms
+ ✓ tests/db/memberships.dbtest.ts > the legitimate writers still write (D3) > the platform scope writes any organization, staff roles included 5ms
+stdout | tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > self-serve signup gives the new organization its first admin
+{
+  "timestamp": "2026-09-29T01:30:34.495Z",
+  "level": "info",
+  "message": "[launch-scope] launch catalog provisioned",
+  "context": {
+    "organizationId": 141,
+    "granted": 19
+  }
+}
+
+{"level":30,"time":"2026-09-29T01:30:34.500Z","pid":16026,"hostname":"vm","context":{"userId":1033,"tenantId":141,"resourceId":"1033"},"msg":"[audit-service] [AUDIT] user_signup user"}
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > self-serve signup gives the new organization its first admin 698ms
+stdout | tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into
+[database] Database connection successful { timestamp: '2026-09-29T01:30:34.793Z', poolSize: 2 }
+
+stderr | tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into
+{
+  "timestamp": "2026-09-29T01:30:34.818Z",
+  "level": "warn",
+  "message": "[email-service] SMTP not configured — invitation email not sent",
+  "context": {
+    "to": "w***@example.invalid"
+  }
+}
+
+{"level":30,"time":"2026-09-29T01:30:34.819Z","pid":16026,"hostname":"vm","context":{"userId":1032,"tenantId":90302,"resourceId":"1034"},"msg":"[audit-service] [AUDIT] user_invited user"}
+{"level":50,"time":"2026-09-29T01:30:34.825Z","pid":16026,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:287:3)\n    at AuditService.logAction (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:420:11)\n    at issueInvitation (/home/user/ClinicalSageAI-2-replit/server/services/tenant/invitation-delivery.ts:114:17)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/tenant-users.ts:485:22"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > a member sets their own persona (a write to their own membership row) 18ms
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations adds a member to the one they are not signed into 178ms
+ ✓ tests/db/memberships.dbtest.ts > the writers that ran outside their membership's organization now run inside it (D3) > an admin of both organizations changes a member's role in the one they are not signed into 15ms
+{"level":30,"time":"2026-09-29T01:30:36.060Z","pid":16045,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-29T01:30:36.061Z","pid":16045,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-29T01:30:36.061Z","pid":16045,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/users-rls.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/users-rls.dbtest.ts > tenant A's scope cannot reach tenant B's users (D3) > reads none of B's user rows, by id, by email, or by scanning 8ms
+ ✓ tests/db/users-rls.dbtest.ts > tenant A's scope cannot reach tenant B's users (D3) > cannot rewrite B's password hash, MFA secret or reset token, nor delete B's user 4ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > reads its own organization's members, the caller included 2ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > updates its own member's profile 4ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > INSERT … RETURNING of a non-member is refused, so tenant-users takes the id first 5ms
+ ✓ tests/db/users-rls.dbtest.ts > what a tenant scope still reaches (D3) > user_id_for_email answers an existing account’s id, and nothing else 3ms
+ ✓ tests/db/users-rls.dbtest.ts > the tenant-less scopes keep the whole table (D3) > pre-auth: the sign-in lookup by email finds any tenant’s user, and writes it 5ms
+ ✓ tests/db/users-rls.dbtest.ts > the tenant-less scopes keep the whole table (D3) > system: SCIM and platform administration read and write every tenant’s users 4ms
+stdout | tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account
+[database] Database connection successful
+
+stdout | tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account
+[database] Database connection successful { timestamp: '2026-09-29T01:30:36.354Z', poolSize: 1 }
+
+stdout | tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account
+[database] Database connection successful { timestamp: '2026-09-29T01:30:36.355Z', poolSize: 2 }
+
+{"level":30,"time":"2026-09-29T01:30:36.399Z","pid":16045,"hostname":"vm","context":{"userId":1040,"tenantId":90301,"resourceId":"1042"},"msg":"[audit-service] [AUDIT] user_invited user"}
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator creates a new member, and the setup token is stored on the account 215ms
+{"level":30,"time":"2026-09-29T01:30:36.571Z","pid":16045,"hostname":"vm","context":{"userId":1040,"tenantId":90302,"resourceId":"1043"},"msg":"[audit-service] [AUDIT] user_invited user"}
+{"level":50,"time":"2026-09-29T01:30:36.578Z","pid":16045,"hostname":"vm","context":{"error":"new row violates row-level security policy for table \"audit_logs\"","stack":"error: new row violates row-level security policy for table \"audit_logs\"\n    at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at writeChainedAuditRow (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:287:3)\n    at AuditService.logAction (/home/user/ClinicalSageAI-2-replit/server/services/auditService.ts:420:11)\n    at issueInvitation (/home/user/ClinicalSageAI-2-replit/server/services/tenant/invitation-delivery.ts:114:17)\n    at /home/user/ClinicalSageAI-2-replit/server/routes/tenant-users.ts:485:22"},"msg":"[audit-service] Failed to write chained audit_logs row"}
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > adding another tenant's account asks for its consent instead of failing or duplicating it 18ms
+ ✓ tests/db/users-rls.dbtest.ts > user administration through tenant-users, in the tenant scope (D3) > an administrator of both organizations lists and invites into the one they are not signed into 165ms
+
+ Test Files  7 passed (7)
+      Tests  87 passed (87)
+   Start at  01:30:16
+   Duration  20.20s (transform 1.79s, setup 262ms, import 4.06s, tests 14.62s, environment 1ms)
+

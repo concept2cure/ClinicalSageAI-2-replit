@@ -40,9 +40,12 @@ const store = vi.hoisted(() => ({ upsertDocumentArtifactVersion: vi.fn() }));
 vi.mock('../../../services/ana/artifactVersionStore.js', () => store);
 
 // The program→project anchor lookup (`projects.regulatory_program_id`) runs
-// only when the stream carries a program UUID.
-const db = vi.hoisted(() => ({ pool: { query: vi.fn() } }));
+// only when the stream carries a program UUID, through the one anchor reader
+// (PF-08), which reads the lowest-id row (program-anchor-reader.pglite.test.ts).
+const db = vi.hoisted(() => ({ db: { tag: 'shared-db' } }));
 vi.mock('../../../db.js', () => db);
+const anchor = vi.hoisted(() => ({ resolveProgramProjectAnchor: vi.fn() }));
+vi.mock('../../../services/c2c/program-project-anchor.js', () => anchor);
 
 import { persistCollectedDrafts } from '../post-processing';
 
@@ -184,7 +187,7 @@ describe('persistCollectedDrafts — it never overstates what was recorded', () 
   });
 
   it('a program UUID resolves through the projects anchor and the draft IS saved', async () => {
-    db.pool.query.mockResolvedValueOnce({ rows: [{ id: 88 }] });
+    anchor.resolveProgramProjectAnchor.mockResolvedValueOnce(88);
     store.upsertDocumentArtifactVersion.mockResolvedValue({
       created: true, artifactId: 'art_9', version: 1, contentHash: 'h',
     });
@@ -198,17 +201,16 @@ describe('persistCollectedDrafts — it never overstates what was recorded', () 
     expect(store.upsertDocumentArtifactVersion).toHaveBeenCalledWith(
       expect.objectContaining({ projectId: 88 }),
     );
-    expect(db.pool.query).toHaveBeenCalledWith(
-      expect.stringMatching(/regulatory_program_id\s*=\s*\$1\s+AND\s+organization_id\s*=\s*\$2/),
-      ['aabb1c22-1234-4abc-8def-0123456789ab', 7],
-    );
+    expect(anchor.resolveProgramProjectAnchor).toHaveBeenCalledWith(db.db, {
+      programId: 'aabb1c22-1234-4abc-8def-0123456789ab', orgId: 7, context: 'ana-ri.persistCollectedDrafts',
+    });
     expect(res.events().find(e => e.type === 'artifact_version_saved')).toBeTruthy();
   });
 
   it('a UUID with leading digits NEVER files to the integer project those digits spell', async () => {
     // parseInt('7abb1c22-…') === 7 — the ADR-0011 Class-A coercion. With no
     // anchor row, the only honest outcomes are: no save, and a warning.
-    db.pool.query.mockResolvedValueOnce({ rows: [] });
+    anchor.resolveProgramProjectAnchor.mockResolvedValueOnce(null);
     const res = fakeRes();
 
     await persistCollectedDrafts({

@@ -119,6 +119,22 @@ describe('Vault — document types are named in words', () => {
   });
 });
 
+describe('Vault — an evidence kind is named in words (VR-04)', () => {
+  it("the detail pane's 'Looks like' says 'Clinical study report', not 'csr'", async () => {
+    const stored = UPLOAD.filing.evidenceKind;
+    UPLOAD.filing.evidenceKind = 'csr';
+    try {
+      mockSearch(() => ok({}));
+      render(<Vault {...props()} />);
+      fireEvent.click((await screen.findAllByText('stability-summary-24m'))[0]);
+      const key = await screen.findByText('Looks like');
+      expect(key.nextElementSibling?.textContent).toBe('Clinical study report');
+    } finally {
+      UPLOAD.filing.evidenceKind = stored;
+    }
+  });
+});
+
 describe('Vault — what AnA is told about a selected file', () => {
   function Probe({ onCtx }: { onCtx: (c: SurfaceContext | null) => void }) {
     onCtx(useActiveSurfaceContext('vault'));

@@ -232,10 +232,16 @@ describe('POST /sections/:id/ai/draft/accept', () => {
       .set('Authorization', await bearer())
       .send({ draftId: 'd1' });
 
-    // The audit INSERT carries change_reason at value index 9.
-    const insert = mockQuery.mock.calls.find((c) =>
+    // The audit INSERT carries change_reason at value index 9. It is written
+    // on the accept's own transaction client (D5, 2026-09-26) — never on the
+    // pool after COMMIT, where a failure left an accepted draft unrecorded.
+    const insert = mockClientQuery.mock.calls.find((c) =>
       String(c[0]).includes('INSERT INTO') && String(c[0]).includes('authoring_audit_trail'));
-    expect(insert, 'no authoring_audit_trail row was written').toBeTruthy();
+    expect(insert, 'no authoring_audit_trail row was written in the transaction').toBeTruthy();
+    expect(
+      mockQuery.mock.calls.some((c) => String(c[0]).includes('authoring_audit_trail')),
+      'the audit row must not be written on the pool, outside the transaction',
+    ).toBe(false);
     const reason = (insert![1] as unknown[])[9];
     expect(reason, 'a mechanism string was recorded as the reason').not.toBe('Accepted AI draft');
     expect(reason).toBeNull();
@@ -252,7 +258,7 @@ describe('POST /sections/:id/ai/draft/accept', () => {
       .set('Authorization', await bearer())
       .send({ draftId: 'd1', changeReason: 'Incorporated the reviewer’s requested safety language.' });
 
-    const insert = mockQuery.mock.calls.find((c) =>
+    const insert = mockClientQuery.mock.calls.find((c) =>
       String(c[0]).includes('INSERT INTO') && String(c[0]).includes('authoring_audit_trail'));
     expect((insert![1] as unknown[])[9]).toBe('Incorporated the reviewer’s requested safety language.');
   });

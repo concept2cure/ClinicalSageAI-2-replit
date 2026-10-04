@@ -29,6 +29,7 @@ import {
   unregisterSession,
 } from '../services/session-inactivity';
 import { requireAccessTokenReason } from '../middleware/tokenType';
+import { sessionPermissions } from '../middleware/orgMembership';
 import { recordAuthEvent } from '../services/audit/auth-event-audit';
 import { auditOrganizationOf, membershipsOf, signInMembership } from '../services/sign-in-organisation';
 import { PASSWORD_HASH_COST, padUnknownEmailTiming } from '../services/login-timing-pad';
@@ -36,12 +37,15 @@ import {
   ACCOUNT_INACTIVE_MESSAGE,
   ACCOUNT_STATUS_ACTIVE,
   ACCOUNT_STATUS_PENDING_VERIFICATION,
-  isAccountActive,
   isActiveAccountStatus,
   isPendingVerificationStatus,
-  issuedAtOfClaims,
-  passwordChangedAtSecondsOf,
-  sessionPredatesPasswordChange,
+  accountIdOfClaims,
+  endEverySessionOf,
+  endingStampOf,
+  organizationIdOfClaims,
+  readAccountStanding,
+  sessionEndedByStanding,
+  untilStampHasBegun,
 } from '../services/account-standing';
 import {
   EMAIL_UNVERIFIED_MESSAGE,
@@ -98,6 +102,7 @@ import {
   ensureOrganizationDefaultWorkspace,
 } from '../services/c2c/organization-default-workspace';
 import { runWithTenantScope } from '../db/tenantStore';
+import { signInLimits } from '../middleware/sign-in-limits';
 
 const router = Router();
 
@@ -116,17 +121,10 @@ function getRefreshTokenSecret(): string {
 // ─── Rate Limiters ──────────────────────────────────────────────────────────
 // Separate limiters for different risk levels.
 
-/** Login: 10 attempts per 15 minutes per IP */
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: {
-    success: false,
-    error: { code: 'RATE_LIMIT', message: 'Too many login attempts. Please try again later.' },
-  },
-});
+// Password and second-factor steps: per ACCOUNT, failures only
+// (middleware/sign-in-limits.ts). They were 10 requests per client address,
+// successes included, so the eleventh colleague behind one office address was
+// refused (D6, 2026-09-29).
 
 /** Signup: 5 per hour per IP */
 const signupLimiter = rateLimit({
@@ -164,18 +162,6 @@ const passwordResetLimiter = rateLimit({
       code: 'RATE_LIMIT',
       message: 'Too many password reset requests. Please try again later.',
     },
-  },
-});
-
-/** MFA verify: 10 per 15 minutes per IP */
-const mfaLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: {
-    success: false,
-    error: { code: 'RATE_LIMIT', message: 'Too many MFA attempts. Please try again later.' },
   },
 });
 
@@ -224,6 +210,12 @@ function maskEmail(email: string): string {
   const visible = local.slice(0, Math.min(2, local.length));
   return `${visible}${'*'.repeat(Math.max(0, local.length - 2))}@${domain}`;
 }
+
+/** A locked account's answer at either sign-in step. No lockout timestamp. */
+const ACCOUNT_LOCKED_BODY = {
+  success: false,
+  error: { code: 'AUTH_002', message: 'Account temporarily locked due to too many failed attempts. Try again later.' },
+};
 
 function requireDb(res: Response): boolean {
   if (!db) {
@@ -349,7 +341,7 @@ router.get('/session', async (req: Request, res: Response) => {
         lastName: sessionLastName,
         displayName: sessionDisplayName,
         roles: sessionRoles,
-        permissions: [],
+        permissions: sessionPermissions(sessionRole),
         organizationId: decoded.organizationId,
         organizationName: orgName,
         // The account as it is. These were the literals false / [] / false for
@@ -406,7 +398,7 @@ router.get('/session', async (req: Request, res: Response) => {
  * POST /api/auth/login
  * Login with email and password
  */
-router.post('/login', loginLimiter, async (req: Request, res: Response) => {
+router.post('/login', signInLimits.login, async (req: Request, res: Response) => {
   try {
     const { email, password, deviceInfo, rememberDevice } = req.body;
 
@@ -461,14 +453,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
         ipAddress: req.ip,
         userAgent: req.headers['user-agent'],
       });
-      return res.status(423).json({
-        success: false,
-        error: {
-          code: 'AUTH_002',
-          message: 'Account temporarily locked due to too many failed attempts. Try again later.',
-        },
-        // SECURITY: Don't leak exact lockout timestamp
-      });
+      return res.status(423).json(ACCOUNT_LOCKED_BODY);
     }
 
     if (!userData.passwordHash) {
@@ -545,8 +530,9 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
       });
     }
 
-    // Successful password check — reset lockout counter
-    await resetFailedLogins(userData.id);
+    // An authenticator code still to come counts too, so /mfa/verify clears the
+    // count then: a fresh password buys no fresh guesses (U17).
+    if (mfaEnrolmentOf(userData).signInFactor !== 'totp' || isDevAuthAllowed()) await resetFailedLogins(userData.id);
     // NOTE: the "success" audit fires where the session is created: on the
     // development path below, or on /mfa/verify for every other sign-in. This
     // route records the MFA challenge it issues, so a sign-in is recorded as
@@ -652,7 +638,7 @@ router.post('/login', loginLimiter, async (req: Request, res: Response) => {
           lastName,
           displayName,
           roles,
-          permissions: [],
+          permissions: sessionPermissions(jwtRole),
           organizationId: organizationId.toString(),
           organizationName: organization?.name || 'Organization',
           organizationUuid: organization?.uuid || null,
@@ -843,7 +829,7 @@ router.post('/dev-login', async (req: Request, res: Response) => {
         lastName,
         displayName,
         roles,
-        permissions: [],
+        permissions: sessionPermissions(jwtRole),
         organizationId: organizationId.toString(),
         organizationName: organization?.name || 'Organization',
         organizationUuid: organization?.uuid || null,
@@ -1272,12 +1258,77 @@ router.post('/resend-verification', verificationLimiter, async (req: Request, re
   return res.status(202).json({ success: true });
 });
 
+/** What verifyLiveToken throws for a token that opens nothing: a 401, never a 5xx. */
+const TOKEN_REFUSAL_NAMES = new Set(['JsonWebTokenError', 'TokenExpiredError', 'NotBeforeError', 'SessionEndedError']);
+const isTokenRefusal = (error: unknown): boolean =>
+  error instanceof Error && TOKEN_REFUSAL_NAMES.has(error.name);
+
+/**
+ * POST /api/auth/logout with `terminateAllSessions: true` — sign out of every
+ * session the account holds (security audit 2026-09-24, IAM-04 (b); plan
+ * P0-4b; 21 CFR 11.300(c)). The client sends the flag
+ * (client/src/services/portal/authService.tsx logout(true)); until 2026-10-01
+ * nothing read it, the route revoked the pair it was handed, answered "Tokens
+ * invalidated.", and every other session of the account carried on.
+ *
+ * Only a live access token may end the account's sessions: verified as every
+ * authenticator verifies (verifyLiveToken), so a token already signed out,
+ * idle, superseded or ended answers 401 and ends nothing, rather than a
+ * success it did not earn. The account's users.sessions_ended_at is stamped
+ * (endEverySessionOf), and every session that began before it is refused at
+ * its next request by the gates, verifyLiveToken and the refresh
+ * (sessionEndedByStanding). The presented pair is also revoked and its slot
+ * freed, as a plain logout does. The stamp is the first whole second after the
+ * request (endingStampOf), and the answer waits for that second (at most one),
+ * so every session begun before the sign-out is ended and the sign-in that
+ * follows it is not (plan P0-4b R3).
+ */
+async function signOutEverywhere(req: Request, res: Response): Promise<void> {
+  const { revokeToken } = await import('../services/token-revocation.js');
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  const refuse = (): void => {
+    res.status(401).json({ success: false, error: { code: 'AUTH_006', message: 'This session has ended. Sign in again.' } });
+  };
+  if (!token) return refuse();
+  let claims: Record<string, unknown>;
+  try {
+    claims = await verifyLiveToken<Record<string, unknown>>(token, undefined, { activity: false });
+  } catch (error) {
+    if (isTokenRefusal(error)) return refuse();
+    throw error;
+  }
+  const accountId = accountIdOfClaims(claims);
+  if (requireAccessTokenReason(claims) || accountId === null) return refuse();
+  const endedAt = new Date();
+  if (!(await endEverySessionOf(accountId, endedAt))) return refuse();
+  await unregisterSession(accountId, claims.sid);
+  await revokeToken(token);
+  if (req.body?.refreshToken) await revokeToken(req.body.refreshToken);
+  await recordAuthEvent({
+    action: 'user_logout',
+    userId: accountId,
+    tenantId: claims.organizationId as string | undefined,
+    email: claims.email as string | undefined,
+    outcome: 'success',
+    reason: 'signed out of every session',
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent'],
+  });
+  // The stamp is the first whole second after now (R3); answered once it has
+  // begun, so a sign-in that follows this answer is not one it ended.
+  await untilStampHasBegun(endingStampOf(endedAt.getTime()));
+  res.json({ success: true, message: 'Signed out of every session.' });
+}
+
 /**
  * POST /api/auth/logout
- * Logout and invalidate tokens
+ * Logout and invalidate tokens. With `terminateAllSessions: true`, every
+ * session of the account (signOutEverywhere).
  */
 router.post('/logout', async (req: Request, res: Response) => {
   try {
+    if (req.body?.terminateAllSessions === true) return await signOutEverywhere(req, res);
     const { revokeToken } = await import('../services/token-revocation.js');
 
     // Extract token from Authorization header and revoke it. The logout audit
@@ -1399,25 +1450,42 @@ router.post('/refresh', async (req: Request, res: Response) => {
     }
 
     const refreshUserData = refreshUser[0];
+    // The organisation the new pair is for: the account's default, else its
+    // first membership. Chosen before the standing is read, so the standing
+    // carries when that membership began (plan P0-4b R1).
+    const refreshMemberships = await db
+      .select({ organizationId: organizationUsers.organizationId, role: organizationUsers.role })
+      .from(organizationUsers)
+      .where(eq(organizationUsers.userId, refreshUserData.id))
+      .limit(25);
+
+    let refreshOrgId = refreshUserData.defaultOrganizationId;
+    if (!refreshOrgId || !refreshMemberships.some(m => m.organizationId === refreshOrgId)) {
+      refreshOrgId = refreshMemberships[0]?.organizationId || null;
+    }
+    // The account's standing, read as every authenticator reads it
+    // (account-standing.ts): one statement, so the refresh and the gate cannot
+    // disagree about whether this session is over. Until 2026-10-01 the refresh
+    // compared this row's own status and password_changed_at, a second reading
+    // that knew nothing of a sign-out everywhere (plan P0-4b), and nothing here
+    // knew a membership removed and added back since the session began (R1).
+    const refreshStanding = await readAccountStanding(refreshUserData.id, refreshOrgId ?? null);
     // A refresh token outlives the access token it came with; an account taken
     // out of use gets no new session from it (VSR-001 F-29).
-    if (!isActiveAccountStatus(refreshUserData.status)) {
+    if (!refreshStanding.active) {
       return res.status(403).json({
         success: false,
         error: { code: 'AUTH_ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE },
       });
     }
-    // Security audit 2026-09-24, IAM-04: a refresh token issued before the
-    // account's last password change mints nothing. The gate refuses the access
+    // Security audit 2026-09-24, IAM-04: a refresh token whose session began
+    // before the account's last password change, sign-out everywhere,
+    // suspension or deprovisioning, or before its membership in the organisation
+    // it would mint for (R1), mints nothing. The gate refuses the access
     // tokens it minted for the same reason (middleware/auth.ts, verifyLiveToken);
     // without this the client's next 401 would refresh and carry on, and the
     // change would have ended no session at all.
-    if (
-      sessionPredatesPasswordChange(
-        issuedAtOfClaims(decoded),
-        passwordChangedAtSecondsOf(refreshUserData.passwordChangedAt),
-      )
-    ) {
+    if (sessionEndedByStanding(decoded, refreshStanding)) {
       return res.status(401).json({
         success: false,
         error: { code: 'AUTH_006', message: 'This session has ended. Sign in again.' },
@@ -1438,16 +1506,6 @@ router.post('/refresh', async (req: Request, res: Response) => {
     }
     // The session continues: its id, start and window travel into the new pair.
     const session = continuedSessionClaims(decoded);
-    const refreshMemberships = await db
-      .select({ organizationId: organizationUsers.organizationId, role: organizationUsers.role })
-      .from(organizationUsers)
-      .where(eq(organizationUsers.userId, refreshUserData.id))
-      .limit(25);
-
-    let refreshOrgId = refreshUserData.defaultOrganizationId;
-    if (!refreshOrgId || !refreshMemberships.some(m => m.organizationId === refreshOrgId)) {
-      refreshOrgId = refreshMemberships[0]?.organizationId || null;
-    }
 
     if (!refreshOrgId) {
       return res.status(403).json({
@@ -1608,7 +1666,7 @@ router.get('/me', async (req: Request, res: Response) => {
       lastName: meLastName,
       displayName: meDisplayName,
       roles: meRoles,
-      permissions: [],
+      permissions: sessionPermissions(meRole),
       organizationId: meOrgId,
       organizationName: meOrgName,
     });
@@ -1629,13 +1687,65 @@ router.get('/me', async (req: Request, res: Response) => {
   }
 });
 
+type MfaChallenge = NonNullable<ReturnType<typeof mfaService.verifyMfaChallengeToken>>;
+
+/**
+ * A challenge issued before the account was suspended or deprovisioned (VSR-001
+ * F-29), or locked, does not become a session after it. Checked before the code,
+ * so neither spends one. Answers whether it refused.
+ *
+ * Nor does a sign-in begun before the account's sessions were ended (plan
+ * P0-4b R3): the first factor was shown at the challenge's issue, so a
+ * challenge from before a password change, a sign-out everywhere or a removal
+ * from the organisation is a session begun before it, and is asked the one
+ * question every door asks (sessionEndedByStanding). Until 2026-10-01 a
+ * challenge won with the old password became a session for five minutes after
+ * the change.
+ */
+async function refuseAccountAtSecondFactor(
+  req: Request,
+  res: Response,
+  challenge: MfaChallenge,
+  userId: number,
+  challengeId: string,
+) {
+  const standing = await readAccountStanding(userId, organizationIdOfClaims(challenge));
+  const inactive = !standing.active;
+  if (!inactive && sessionEndedByStanding(jwt.decode(challengeId), standing)) {
+    await recordAuthEvent({ action: 'user_login', userId, tenantId: challenge.organizationId, email: challenge.email, outcome: 'failure', reason: 'sign_in_begun_before_sessions_ended', ipAddress: req.ip, userAgent: req.headers['user-agent'] });
+    res.status(401).json({ success: false, error: { code: 'MFA_002', message: 'This sign-in has ended. Sign in again.' } });
+    return true;
+  }
+  if (!inactive && !(await isAccountLocked(userId)).locked) return false;
+  const reason = inactive ? 'account_inactive' : 'account_locked';
+  await recordAuthEvent({ action: 'user_login', userId, tenantId: challenge.organizationId, email: challenge.email, outcome: 'failure', reason, ipAddress: req.ip, userAgent: req.headers['user-agent'] });
+  if (inactive) res.status(403).json({ success: false, error: { code: 'AUTH_ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE } });
+  else res.status(423).json(ACCOUNT_LOCKED_BODY);
+  return true;
+}
+
+/**
+ * A wrong authenticator or recovery code counts toward the password step's
+ * lockout, in the users row, so every API task sees it (U17). An emailed code
+ * keeps its own cap (emailOtpService).
+ */
+async function refuseWrongSecondFactor(req: Request, res: Response, challenge: MfaChallenge, userId: number, counts: boolean) {
+  const locked = counts && (await recordFailedLogin(userId)).locked;
+  const reason = locked ? 'invalid_code_threshold_exceeded' : 'invalid_code';
+  await recordAuthEvent({ action: 'user_login_mfa_failed', userId, tenantId: challenge.organizationId, email: challenge.email, outcome: 'failure', reason, ipAddress: req.ip, userAgent: req.headers['user-agent'] });
+  res.status(401).json({
+    success: false,
+    error: { code: 'AUTH_004', message: 'Invalid or expired verification code. Each code works once; if you just used it, wait for the next.' },
+  });
+}
+
 /**
  * POST /api/auth/mfa/verify
  * Complete MFA verification during login.
  * Accepts the challenge token (from login response) + TOTP code,
  * and returns the real JWT access/refresh tokens.
  */
-router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
+router.post('/mfa/verify', signInLimits.secondFactor, async (req: Request, res: Response) => {
   try {
     const { challengeId, code, method } = req.body;
 
@@ -1666,26 +1776,7 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
     }
 
     const userId = parseInt(challenge.userId);
-
-    // A challenge issued before the account was suspended or deprovisioned does
-    // not become a session after it (VSR-001 F-29). Checked before the code, so
-    // an account out of use spends none.
-    if (!(await isAccountActive(userId))) {
-      await recordAuthEvent({
-        action: 'user_login',
-        userId,
-        tenantId: challenge.organizationId,
-        email: challenge.email,
-        outcome: 'failure',
-        reason: 'account_inactive',
-        ipAddress: req.ip,
-        userAgent: req.headers['user-agent'],
-      });
-      return res.status(403).json({
-        success: false,
-        error: { code: 'AUTH_ACCOUNT_INACTIVE', message: ACCOUNT_INACTIVE_MESSAGE },
-      });
-    }
+    if (await refuseAccountAtSecondFactor(req, res, challenge, userId, challengeId)) return;
 
     // The factor this account signs in with (mfa-enrolment.ts). An account with
     // an authenticator never completes sign-in with an emailed code: the emailed
@@ -1710,30 +1801,12 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
       isValid = (await mfaService.verifyLoginSecondFactor(userId, code)) !== null;
     }
 
-    if (!isValid) {
-      await recordAuthEvent({
-        action: 'user_login_mfa_failed',
-        userId,
-        tenantId: challenge.organizationId,
-        email: challenge.email,
-        outcome: 'failure',
-        reason: 'invalid_code',
-        ipAddress: req.ip,
-        userAgent: req.headers['user-agent'],
-      });
-      return res.status(401).json({
-        success: false,
-        error: {
-          code: 'AUTH_004',
-          message: 'Invalid or expired verification code. Each code works once; if you just used it, wait for the next.',
-        },
-      });
-    }
+    if (!isValid) return await refuseWrongSecondFactor(req, res, challenge, userId, authenticatorAccount);
 
-    // MFA verified — update last login and issue full tokens
+    // Sign-in complete: clear the lockout count and stamp last login.
     if (!requireDb(res)) return;
 
-    await db.update(users).set({ lastLogin: new Date() }).where(eq(users.id, userId));
+    await resetFailedLogins(userId);
 
     const [userData] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
 
@@ -1817,7 +1890,7 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
         lastName: mfaLastName,
         displayName: mfaDisplayName,
         roles: mfaRoles,
-        permissions: [],
+        permissions: sessionPermissions(mfaRole),
         organizationId: challenge.organizationId,
         organizationName: mfaOrgName,
         organizationUuid: challenge.organizationUuid,
@@ -1843,7 +1916,7 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
  * Rate limited per IP, and at most emailOtpService.MAX_RESENDS re-issued codes
  * per challenge (429 MFA_RESEND_LIMIT beyond it; a new sign-in starts again).
  */
-router.post('/mfa/resend', mfaLimiter, async (req: Request, res: Response) => {
+router.post('/mfa/resend', signInLimits.secondFactor, async (req: Request, res: Response) => {
   try {
     const { challengeId } = req.body;
 
@@ -2409,13 +2482,17 @@ async function handleResetPassword(req: Request, res: Response) {
     // requests carrying one token — both past the read during the bcrypt hash —
     // both reported success and the later password silently won (D6, the class
     // of VSR-001 §13.3 item 1).
+    // The first whole second after the reset (R3, account-standing.ts
+    // endingStampOf): every session begun before it, in its own second too, is
+    // over; the answer waits for that second, so the sign-in that follows is not.
+    const resetStamp = endingStampOf();
     const reset = await db
       .update(users)
       .set({
         passwordHash,
         resetToken: null,
         resetTokenExpiresAt: null,
-        passwordChangedAt: new Date(),
+        passwordChangedAt: resetStamp,
         mustChangePassword: false,
       })
       .where(
@@ -2465,6 +2542,7 @@ async function handleResetPassword(req: Request, res: Response) {
 
     logger.info('Password reset completed', { userId: userData.id });
 
+    await untilStampHasBegun(resetStamp);
     return res.json({
       success: true,
       message: 'Password reset successfully',
@@ -2523,7 +2601,12 @@ router.post('/password/change', async (req: Request, res: Response) => {
       });
     }
 
-    const { currentPassword, newPassword, terminateOtherSessions } = req.body;
+    // `terminateOtherSessions` is not read, and is not an opt-out: a password
+    // change ends every session that began before it, this one included, at
+    // its next request (sessionEndedByStanding). A holder who changed the
+    // password because it was stolen must not be able to leave the thief's
+    // session running (IAM-04).
+    const { currentPassword, newPassword } = req.body;
 
     if (!currentPassword || !newPassword) {
       return res.status(400).json({
@@ -2606,11 +2689,15 @@ router.post('/password/change', async (req: Request, res: Response) => {
     const history = ((userData.passwordHistory as string[]) || []).slice(0, 4);
     history.unshift(userData.passwordHash);
 
+    // The first whole second after the change (R3, account-standing.ts
+    // endingStampOf): every session begun before it, in its own second too, is
+    // over; the answer waits for that second, so the sign-in that follows is not.
+    const changeStamp = endingStampOf();
     await db
       .update(users)
       .set({
         passwordHash: newHash,
-        passwordChangedAt: new Date(),
+        passwordChangedAt: changeStamp,
         passwordHistory: history,
         mustChangePassword: false,
       })
@@ -2630,6 +2717,7 @@ router.post('/password/change', async (req: Request, res: Response) => {
       userAgent: req.headers['user-agent'],
     });
 
+    await untilStampHasBegun(changeStamp);
     return res.json({
       success: true,
       message: 'Password changed successfully',

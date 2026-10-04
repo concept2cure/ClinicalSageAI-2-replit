@@ -1,0 +1,15 @@
+=== td-no-scanner — new preflight
+::error::CLAMAV_HOST is not set in the API container's environment. Production refuses every upload the virus scanner did not see, so no Vault upload would be accepted. terraform/modules/ecs-fargate runs clamd beside the API and sets it.
+[terraform-preflight-proof] FAIL — deploy-aws.yml's preflight refused the task definition (exit 1)
+=== td-loopback-without-scanner — new preflight
+::error::CLAMAV_HOST is 127.0.0.1, but the task runs no scanner the API waits on: no essential, health-checked container that api depends on (condition HEALTHY). Every upload would be refused as unscanned.
+[terraform-preflight-proof] FAIL — deploy-aws.yml's preflight refused the task definition (exit 1)
+=== td-scanner-not-waited-on — new preflight
+::error::CLAMAV_HOST is 127.0.0.1, but the task runs no scanner the API waits on: no essential, health-checked container that api depends on (condition HEALTHY). Every upload would be refused as unscanned.
+[terraform-preflight-proof] FAIL — deploy-aws.yml's preflight refused the task definition (exit 1)
+=== td-scanner-without-health-check — new preflight
+::error::CLAMAV_HOST is 127.0.0.1, but the task runs no scanner the API waits on: no essential, health-checked container that api depends on (condition HEALTHY). Every upload would be refused as unscanned.
+[terraform-preflight-proof] FAIL — deploy-aws.yml's preflight refused the task definition (exit 1)
+=== api-td.rendered — new preflight
+[terraform-preflight-proof] ok — deploy-aws.yml's preflight accepted the task definition
+[terraform-preflight-proof] every check holds.

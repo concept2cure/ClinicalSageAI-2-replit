@@ -10,6 +10,7 @@ import { PJ_LIFECYCLE, PJ_STAGE_TOOLS, Ring, pjInitials, fileTone } from '../fix
 import { useChatUpload, readyAttachmentLabel } from '../../hooks/useChatUpload';
 import { updateShellProject } from '../shellProject';
 import { ProjectRecords } from './ProjectRecords';
+import { ConversationFilesAdopt } from './ConversationFilesAdopt';
 import { DEVICE_FLAGS } from '@shared/constants/domain/device-classification';
 import { DEVICE_FAMILY_PRODUCT_TYPES } from '@shared/constants/domain/product-types';
 import '../styles/project-home-v2.css';
@@ -578,6 +579,10 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
         }
       />
 
+      {/* The caller's chat files with no project yet (PF-07): one audited adopt
+          brings a file into this Data Room, and the list reloads. */}
+      {pid && <ConversationFilesAdopt pid={pid} onAdopted={() => setReloadKey((k) => k + 1)} />}
+
       <div className="cm-pushbar" style={{ marginTop: 12 }}>
         <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('source-tracer')}>
           Trace a claim to its source {I.right}
@@ -921,8 +926,8 @@ function AuthorWorkspace({
   /* Launch-scope verdicts, for the workspace tool grid below. */
   const { verdictFor } = useNavEntitlements();
   /* The program's own AnA threads — REAL. Threads carry the program they were
-     started in (chat_threads.metadata.programId, written when the stream
-     mints the thread), so this lists exactly the conversations held on this
+     started in (chat_threads.program_id, bound when the stream mints the
+     thread, only to a program of its organization), so this lists exactly the conversations held on this
      project, newest first, and opens one back into the thread surface. Until
      that key existed this section was an honest empty with nothing behind it:
      there was no way to resume a project chat from the project. */

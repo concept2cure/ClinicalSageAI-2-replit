@@ -82,7 +82,7 @@ function richDossier(): DocumentLineageDossier {
       { turn: 1, action: 'interject', message: 'Focus on the pediatric subgroup', round: 2, at: '2026-07-01T00:01:00.000Z' },
     ],
     dataLineage: [
-      { sourceObjectType: 'external_evidence', sourceObjectId: 'PMID:12345', sourceTitle: 'Efficacy of X', sourceContentHash: 'srch', targetObjectType: 'artifact', targetObjectId: 'artifact_abc', linkageType: 'cited_by', transformationType: 'ai_generation', confidenceScore: 88, aiModelUsed: 'anthropic/claude', createdAt: '2026-07-01T00:00:00.000Z' },
+      { sourceObjectType: 'external_evidence', sourceObjectId: 'PMID:12345', sourceTitle: 'Efficacy of X', sourceContentHash: 'srch', targetObjectType: 'artifact', targetObjectId: 'artifact_abc', linkageType: 'cited_by', transformationType: 'ai_generation', confidenceScore: 88, confidenceBasis: 'retrieval_relevance', aiModelUsed: 'anthropic/claude', createdAt: '2026-07-01T00:00:00.000Z' },
     ],
   };
 }
@@ -114,6 +114,45 @@ describe('computeLineageConfidence', () => {
 
   it('is clamped to [30, 95]', () => {
     expect(computeLineageConfidence(richDossier())).toBeLessThanOrEqual(95);
+  });
+
+  /* Reporting review 2026-10-01 (PROVENANCE-5): every decision counted toward
+     the sealing threshold whatever its state, and the model's reasoning added
+     five. */
+  const withDecision = (actionState: string): DocumentLineageDossier => {
+    const d = richDossier();
+    return { ...d, decisions: [{ ...d.decisions[0], actionState, approvalState: null }] };
+  };
+
+  it('a recommendation nobody acted on does not count as a decision', () => {
+    expect(computeLineageConfidence(withDecision('recommended_only'))).toBe(computeLineageConfidence(richDossier()) - 15);
+  });
+
+  it('a recommendation a person rejected counts: a person decided it', () => {
+    expect(computeLineageConfidence(withDecision('rejected'))).toBe(computeLineageConfidence(richDossier()));
+  });
+
+  it("the model's own reasoning does not raise the score", () => {
+    expect(computeLineageConfidence({ ...richDossier(), reasoning: [] })).toBe(computeLineageConfidence(richDossier()));
+  });
+});
+
+describe('the data-lineage table names what its figure is', () => {
+  const lineageTable = (d: DocumentLineageDossier) =>
+    dossierToRenderedReport(d, META).sections.find((x) => x.id === 'data-lineage')!.blocks[0] as { columns: string[]; rows: unknown[][] };
+
+  it('prints the recorded confidence beside its basis, never a bare "Confidence"', () => {
+    const t = lineageTable(richDossier());
+    expect(t.columns).toContain('Recorded confidence');
+    expect(t.columns).toContain('Confidence basis');
+    expect(t.columns).not.toContain('Confidence');
+    expect(t.rows[0][t.columns.indexOf('Confidence basis')]).toBe('retrieval_relevance');
+  });
+
+  it('says the basis was not recorded when the writer recorded none', () => {
+    const d = richDossier();
+    const t = lineageTable({ ...d, dataLineage: [{ ...d.dataLineage[0], confidenceBasis: null }] });
+    expect(t.rows[0][t.columns.indexOf('Confidence basis')]).toBe('not recorded');
   });
 });
 

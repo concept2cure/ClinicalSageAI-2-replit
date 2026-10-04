@@ -1,0 +1,876 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > the list (1) > lists what the server returns, open by default, with the summary, the three anchors and stale notes 335ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > the list (1) > says when nothing is open on any version 9ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > a list that could not be read (2) > a 500 says so and never reads as no open annotations 19ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > a list that could not be read (2) > a 200 that is not the expected shape says so too 15ms
+ × client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > posting (3) > claims a whole-document comment only once the server answered 201 41ms
+   → expected <div class="vd-d-idx" …(1)></div> to be null
+ × client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > posting (3) > a 409 shows the server message, keeps the form and claims nothing 5022ms
+   → Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+<div
+  class="vd-d-filing"
+  data-testid="vault-annotations-add"
+>
+  <label
+    class="vd-d-filing-row"
+  >
+    <span
+      class="k"
+    >
+      Kind
+    </span>
+    <select
+      class="vd-d-move-sel"
+      data-testid="vault-annotations-kind"
+    >
+      <option
+        value="comment"
+      >
+        Comment
+      </option>
+      <option
+        value="request_changes"
+      >
+        Change request
+      </option>
+    </select>
+  </label>
+  <label
+    class="vd-d-filing-row"
+  >
+    <span
+      class="k"
+    >
+      Annotation
+    </span>
+    <textarea
+      class="vd-d-filing-reason"
+      data-testid="vault-annotations-body"
+      placeholder="At most 4,000 characters."
+      rows="4"
+    >
+      Check the units.
+    </textarea>
+  </label>
+  <div
+    aria-label="Anchored to"
+    class="vd-d-filing-row"
+    role="radiogroup"
+  >
+    <span
+      class="k"
+    >
+      Anchored to
+    </span>
+    <label>
+      <input
+        checked=""
+        name="anchor-22222222-2222-4222-8222-222222222222"
+        type="radio"
+      />
+       
+      Whole document
+    </label>
+    <label>
+      <input
+        name="anchor-22222222-2222-4222-8222-222222222222"
+        type="radio"
+      />
+       
+      Page
+    </label>
+    <label>
+      <input
+        name="anchor-22222222-2222-4222-8222-222222222222"
+        type="radio"
+      />
+       
+      Passage
+    </label>
+  </div>
+  <div
+    class="vd-d-filing-acts"
+  >
+    <button
+      class="sp-primary"
+      data-testid="vault-annotations-post"
+    >
+      Post annotation
+    </button>
+    <button
+      class="sp-ask"
+    >
+      Cancel
+    </button>
+  </div>
+</div>
+
+Ignored nodes: comments, script, style
+<div
+  class="vd-d-filing"
+  data-testid="vault-annotations-add"
+>
+  <label
+    class="vd-d-filing-row"
+  >
+    <span
+      class="k"
+    >
+      Kind
+    </span>
+    <select
+      class="vd-d-move-sel"
+      data-testid="vault-annotations-kind"
+    >
+      <option
+        value="comment"
+      >
+        Comment
+      </option>
+      <option
+        value="request_changes"
+      >
+        Change request
+      </option>
+    </select>
+  </label>
+  <label
+    class="vd-d-filing-row"
+  >
+    <span
+      class="k"
+    >
+      Annotation
+    </span>
+    <textarea
+      class="vd-d-filing-reason"
+      data-testid="vault-annotations-body"
+      placeholder="At most 4,000 characters."
+      rows="4"
+    >
+      Check the units.
+    </textarea>
+  </label>
+  <div
+    aria-label="Anchored to"
+    class="vd-d-filing-row"
+    role="radiogroup"
+  >
+    <span
+      class="k"
+    >
+      Anchored to
+    </span>
+    <label>
+      <input
+        checked=""
+        name="anchor-22222222-2222-4222-8222-222222222222"
+        type="radio"
+      />
+       
+      Whole document
+    </label>
+    <label>
+      <input
+        name="anchor-22222222-2222-4222-8222-222222222222"
+        type="radio"
+      />
+       
+      Page
+    </label>
+    <label>
+      <input
+        name="anchor-22222222-2222-4222-8222-222222222222"
+        type="radio"
+      />
+       
+      Passage
+    </label>
+  </div>
+  <div
+    class="vd-d-filing-acts"
+  >
+    <button
+      class="sp-primary"
+      data-testid="vault-annotations-post"
+    >
+      Post annotation
+    </button>
+    <button
+      class="sp-ask"
+    >
+      Cancel
+    </button>
+  </div>
+</div>
+ × client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > posting (3) > a returned 401 is not a success either 5020ms
+   → Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+<div
+  class="vd-d-filing"
+  data-testid="vault-annotations-add"
+>
+  <label
+    class="vd-d-filing-row"
+  >
+    <span
+      class="k"
+    >
+      Kind
+    </span>
+    <select
+      class="vd-d-move-sel"
+      data-testid="vault-annotations-kind"
+    >
+      <option
+        value="comment"
+      >
+        Comment
+      </option>
+      <option
+        value="request_changes"
+      >
+        Change request
+      </option>
+    </select>
+  </label>
+  <label
+    class="vd-d-filing-row"
+  >
+    <span
+      class="k"
+    >
+      Annotation
+    </span>
+    <textarea
+      class="vd-d-filing-reason"
+      data-testid="vault-annotations-body"
+      placeholder="At most 4,000 characters."
+      rows="4"
+    >
+      Check the units.
+    </textarea>
+  </label>
+  <div
+    aria-label="Anchored to"
+    class="vd-d-filing-row"
+    role="radiogroup"
+  >
+    <span
+      class="k"
+    >
+      Anchored to
+    </span>
+    <label>
+      <input
+        checked=""
+        name="anchor-22222222-2222-4222-8222-222222222222"
+        type="radio"
+      />
+       
+      Whole document
+    </label>
+    <label>
+      <input
+        name="anchor-22222222-2222-4222-8222-222222222222"
+        type="radio"
+      />
+       
+      Page
+    </label>
+    <label>
+      <input
+        name="anchor-22222222-2222-4222-8222-222222222222"
+        type="radio"
+      />
+       
+      Passage
+    </label>
+  </div>
+  <div
+    class="vd-d-filing-acts"
+  >
+    <button
+      class="sp-primary"
+      data-testid="vault-annotations-post"
+    >
+      Post annotation
+    </button>
+    <button
+      class="sp-ask"
+    >
+      Cancel
+    </button>
+  </div>
+</div>
+
+Ignored nodes: comments, script, style
+<div
+  class="vd-d-filing"
+  data-testid="vault-annotations-add"
+>
+  <label
+    class="vd-d-filing-row"
+  >
+    <span
+      class="k"
+    >
+      Kind
+    </span>
+    <select
+      class="vd-d-move-sel"
+      data-testid="vault-annotations-kind"
+    >
+      <option
+        value="comment"
+      >
+        Comment
+      </option>
+      <option
+        value="request_changes"
+      >
+        Change request
+      </option>
+    </select>
+  </label>
+  <label
+    class="vd-d-filing-row"
+  >
+    <span
+      class="k"
+    >
+      Annotation
+    </span>
+    <textarea
+      class="vd-d-filing-reason"
+      data-testid="vault-annotations-body"
+      placeholder="At most 4,000 characters."
+      rows="4"
+    >
+      Check the units.
+    </textarea>
+  </label>
+  <div
+    aria-label="Anchored to"
+    class="vd-d-filing-row"
+    role="radiogroup"
+  >
+    <span
+      class="k"
+    >
+      Anchored to
+    </span>
+    <label>
+      <input
+        checked=""
+        name="anchor-22222222-2222-4222-8222-222222222222"
+        type="radio"
+      />
+       
+      Whole document
+    </label>
+    <label>
+      <input
+        name="anchor-22222222-2222-4222-8222-222222222222"
+        type="radio"
+      />
+       
+      Page
+    </label>
+    <label>
+      <input
+        name="anchor-22222222-2222-4222-8222-222222222222"
+        type="radio"
+      />
+       
+      Passage
+    </label>
+  </div>
+  <div
+    class="vd-d-filing-acts"
+  >
+    <button
+      class="sp-primary"
+      data-testid="vault-annotations-post"
+    >
+      Post annotation
+    </button>
+    <button
+      class="sp-ask"
+    >
+      Cancel
+    </button>
+  </div>
+</div>
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > passages in code points (4) > codePointRange converts UTF-16 offsets and refuses a split character or an empty range 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > passages in code points (4) > posts the selected passage at its absolute code-point offset with the hash as read 58ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > acting on an annotation (5) > offers Retract only on the actor’s own annotations and replies 53ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > acting on an annotation (5) > a 422 on resolve shows the server message and keeps the form 71ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > acting on an annotation (5) > a retraction is claimed after the 200, with its reason sent 59ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > acting on an annotation (5) > a reply is claimed after the 201, and its form closes 58ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > page anchors (6) > offers the page input when the text read gives a page count 40ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > page anchors (6) > does not offer it when the version has no recorded page count 21ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > openAnnotationsSentence (7) > says what was open, or that it could not be read 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > posting (3) > claims a whole-document comment only once the server answered 201
+AssertionError: expected <div class="vd-d-idx" …(1)></div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  class="vd-d-idx"
+  role="status"
+>
+  Annotation posted. Recorded in the document's history.
+</div>
+
+ ❯ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx:154:42
+    152|     fireEvent.click(within(form).getByTestId('vault-annotations-post')…
+    153|     await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('POST'…
+    154|     expect(screen.queryByRole('status')).toBeNull();
+       |                                          ^
+    155|     expect(within(form).getByTestId('vault-annotations-post').textCont…
+    156|     expect(onChanged).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > posting (3) > a 409 shows the server message, keeps the form and claims nothing
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+<div
+  class="vd-d-filing"
+  data-testid="vault-annotations-add"
+>
+  <label
+    class="vd-d-filing-row"
+  >
+    <span
+      class="k"
+    >
+      Kind
+    </span>
+    <select
+      class="vd-d-move-sel"
+      data-testid="vault-annotations-kind"
+    >
+      <option
+        value="comment"
+      >
+        Comment
+      </option>
+      <option
+        value="request_changes"
+      >
+        Change request
+      </option>
+    </select>
+  </label>
+  <label
+    class="vd-d-filing-row"
+  >
+    <span
+      class="k"
+    >
+      Annotation
+    </span>
+    <textarea
+      class="vd-d-filing-reason"
+      data-testid="vault-annotations-body"
+      placeholder="At most 4,000 characters."
+      rows="4"
+    >
+      Check the units.
+    </textarea>
+  </label>
+  <div
+    aria-label="Anchored to"
+    class="vd-d-filing-row"
+    role="radiogroup"
+  >
+    <span
+      class="k"
+    >
+      Anchored to
+    </span>
+    <label>
+      <input
+        checked=""
+        name="anchor-22222222-2222-4222-8222-222222222222"
+        type="radio"
+      />
+       
+      Whole document
+    </label>
+    <label>
+      <input
+        name="anchor-22222222-2222-4222-8222-222222222222"
+        type="radio"
+      />
+       
+      Page
+    </label>
+    <label>
+      <input
+        name="anchor-22222222-2222-4222-8222-222222222222"
+        type="radio"
+      />
+       
+      Passage
+    </label>
+  </div>
+  <div
+    class="vd-d-filing-acts"
+  >
+    <button
+      class="sp-primary"
+      data-testid="vault-annotations-post"
+    >
+      Post annotation
+    </button>
+    <button
+      class="sp-ask"
+    >
+      Cancel
+    </button>
+  </div>
+</div>
+
+Ignored nodes: comments, script, style
+<div
+  class="vd-d-filing"
+  data-testid="vault-annotations-add"
+>
+  <label
+    class="vd-d-filing-row"
+  >
+    <span
+      class="k"
+    >
+      Kind
+    </span>
+    <select
+      class="vd-d-move-sel"
+      data-testid="vault-annotations-kind"
+    >
+      <option
+        value="comment"
+      >
+        Comment
+      </option>
+      <option
+        value="request_changes"
+      >
+        Change request
+      </option>
+    </select>
+  </label>
+  <label
+    class="vd-d-filing-row"
+  >
+    <span
+      class="k"
+    >
+      Annotation
+    </span>
+    <textarea
+      class="vd-d-filing-reason"
+      data-testid="vault-annotations-body"
+      placeholder="At most 4,000 characters."
+      rows="4"
+    >
+      Check the units.
+    </textarea>
+  </label>
+  <div
+    aria-label="Anchored to"
+    class="vd-d-filing-row"
+    role="radiogroup"
+  >
+    <span
+      class="k"
+    >
+      Anchored to
+    </span>
+    <label>
+      <input
+        checked=""
+        name="anchor-22222222-2222-4222-8222-222222222222"
+        type="radio"
+      />
+       
+      Whole document
+    </label>
+    <label>
+      <input
+        name="anchor-22222222-2222-4222-8222-222222222222"
+        type="radio"
+      />
+       
+      Page
+    </label>
+    <label>
+      <input
+        name="anchor-22222222-2222-4222-8222-222222222222"
+        type="radio"
+      />
+       
+      Passage
+    </label>
+  </div>
+  <div
+    class="vd-d-filing-acts"
+  >
+    <button
+      class="sp-primary"
+      data-testid="vault-annotations-post"
+    >
+      Post annotation
+    </button>
+    <button
+      class="sp-ask"
+    >
+      Cancel
+    </button>
+  </div>
+</div>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx:170:32
+    168|     fireEvent.change(within(form).getByTestId('vault-annotations-body'…
+    169|     fireEvent.click(within(form).getByTestId('vault-annotations-post')…
+    170|     expect((await within(form).findByRole('alert')).textContent)
+       |                                ^
+    171|       .toBe('The annotation was not posted. The annotation record refu…
+    172|     expect(screen.getByTestId('vault-annotations-add')).toBe(form);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx > posting (3) > a returned 401 is not a success either
+TestingLibraryElementError: Unable to find role="alert"
+
+Ignored nodes: comments, script, style
+<div
+  class="vd-d-filing"
+  data-testid="vault-annotations-add"
+>
+  <label
+    class="vd-d-filing-row"
+  >
+    <span
+      class="k"
+    >
+      Kind
+    </span>
+    <select
+      class="vd-d-move-sel"
+      data-testid="vault-annotations-kind"
+    >
+      <option
+        value="comment"
+      >
+        Comment
+      </option>
+      <option
+        value="request_changes"
+      >
+        Change request
+      </option>
+    </select>
+  </label>
+  <label
+    class="vd-d-filing-row"
+  >
+    <span
+      class="k"
+    >
+      Annotation
+    </span>
+    <textarea
+      class="vd-d-filing-reason"
+      data-testid="vault-annotations-body"
+      placeholder="At most 4,000 characters."
+      rows="4"
+    >
+      Check the units.
+    </textarea>
+  </label>
+  <div
+    aria-label="Anchored to"
+    class="vd-d-filing-row"
+    role="radiogroup"
+  >
+    <span
+      class="k"
+    >
+      Anchored to
+    </span>
+    <label>
+      <input
+        checked=""
+        name="anchor-22222222-2222-4222-8222-222222222222"
+        type="radio"
+      />
+       
+      Whole document
+    </label>
+    <label>
+      <input
+        name="anchor-22222222-2222-4222-8222-222222222222"
+        type="radio"
+      />
+       
+      Page
+    </label>
+    <label>
+      <input
+        name="anchor-22222222-2222-4222-8222-222222222222"
+        type="radio"
+      />
+       
+      Passage
+    </label>
+  </div>
+  <div
+    class="vd-d-filing-acts"
+  >
+    <button
+      class="sp-primary"
+      data-testid="vault-annotations-post"
+    >
+      Post annotation
+    </button>
+    <button
+      class="sp-ask"
+    >
+      Cancel
+    </button>
+  </div>
+</div>
+
+Ignored nodes: comments, script, style
+<div
+  class="vd-d-filing"
+  data-testid="vault-annotations-add"
+>
+  <label
+    class="vd-d-filing-row"
+  >
+    <span
+      class="k"
+    >
+      Kind
+    </span>
+    <select
+      class="vd-d-move-sel"
+      data-testid="vault-annotations-kind"
+    >
+      <option
+        value="comment"
+      >
+        Comment
+      </option>
+      <option
+        value="request_changes"
+      >
+        Change request
+      </option>
+    </select>
+  </label>
+  <label
+    class="vd-d-filing-row"
+  >
+    <span
+      class="k"
+    >
+      Annotation
+    </span>
+    <textarea
+      class="vd-d-filing-reason"
+      data-testid="vault-annotations-body"
+      placeholder="At most 4,000 characters."
+      rows="4"
+    >
+      Check the units.
+    </textarea>
+  </label>
+  <div
+    aria-label="Anchored to"
+    class="vd-d-filing-row"
+    role="radiogroup"
+  >
+    <span
+      class="k"
+    >
+      Anchored to
+    </span>
+    <label>
+      <input
+        checked=""
+        name="anchor-22222222-2222-4222-8222-222222222222"
+        type="radio"
+      />
+       
+      Whole document
+    </label>
+    <label>
+      <input
+        name="anchor-22222222-2222-4222-8222-222222222222"
+        type="radio"
+      />
+       
+      Page
+    </label>
+    <label>
+      <input
+        name="anchor-22222222-2222-4222-8222-222222222222"
+        type="radio"
+      />
+       
+      Passage
+    </label>
+  </div>
+  <div
+    class="vd-d-filing-acts"
+  >
+    <button
+      class="sp-primary"
+      data-testid="vault-annotations-post"
+    >
+      Post annotation
+    </button>
+    <button
+      class="sp-ask"
+    >
+      Cancel
+    </button>
+  </div>
+</div>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/vaultAnnotations.test.tsx:184:32
+    182|     fireEvent.change(within(form).getByTestId('vault-annotations-body'…
+    183|     fireEvent.click(within(form).getByTestId('vault-annotations-post')…
+    184|     expect((await within(form).findByRole('alert')).textContent).toMat…
+       |                                ^
+    185|     expect(screen.queryByRole('status')).toBeNull();
+    186|     expect(onChanged).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 13 passed (16)
+   Start at  21:40:56
+   Duration  12.14s (transform 301ms, setup 207ms, import 324ms, tests 10.83s, environment 583ms)
+

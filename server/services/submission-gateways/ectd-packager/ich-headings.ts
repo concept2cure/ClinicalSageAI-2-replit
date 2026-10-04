@@ -28,6 +28,28 @@
  */
 
 /**
+ * The XLink namespace URI an eCTD v3.2.2 backbone root declares.
+ *
+ * 2026-10-01 (W5/D7, sweep F01): this is deliberately NOT the W3C's
+ * "http://www.w3.org/1999/xlink". The ICH eCTD 3.2 DTD (on ectd:ectd) and FDA's
+ * us-regional 3.3 DTD (on fda-regional:fda-regional) both declare
+ * `xmlns:xlink CDATA #FIXED "http://www.w3c.org/1999/xlink"`, the long-standing
+ * non-W3C spelling that FDA's own us-regional.xml example uses
+ * (docs/ectd/SPEC_DIGEST.md). A #FIXED attribute with any other value is a DTD
+ * validity error. Both backbones declared the W3C value, so every index.xml and
+ * us-regional.xml was DTD-invalid, and the structural validator required the
+ * wrong value too. Do not "correct" this to w3.org.
+ *
+ * It lives here because the packager's backbone builders and the structural
+ * validator (ectd-validator-hardening `validateDtdConformance`) both import this
+ * module, so the value emitted and the value required cannot drift apart.
+ * Pinned by regional-backbone-dtd-path.test.ts and submission-orchestrator.test.ts.
+ * The EU, JP and CA regional builders still declare the W3C value. No text of
+ * those DTDs is in the repository to show what they fix, so they are unchanged.
+ */
+export const ECTD_XLINK_NS = 'http://www.w3c.org/1999/xlink';
+
+/**
  * The minimal shape a leaf needs for heading placement. Structurally satisfied
  * by EctdLeaf and by any generator's granule record — no cast required.
  */

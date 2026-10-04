@@ -124,7 +124,13 @@ export function appsFor(opts: {
     ids.add('analytical_performance');
   }
 
-  if (productClasses.includes('biosimilar') || productClasses.includes('generic')) {
+  // Only when the filing is EXCLUSIVELY a generic/biosimilar pathway (ANDA
+  // ['generic'], 351(k) ['biosimilar']) — matching resolveEvidenceModel in
+  // client-segments.ts. BLA/IND lists merely *cover* biosimilar (#940).
+  if (
+    productClasses.length > 0 &&
+    productClasses.every((p) => p === 'generic' || p === 'biosimilar')
+  ) {
     ids.add('analytical_similarity');
   }
 

@@ -13,6 +13,22 @@ import {
   buildClientIntelligenceContext,
   buildProjectIntelligenceContext,
 } from '../client-intelligence-memory.js';
+/**
+ * The integer project whose intelligence the prefix loads, or null (PF-10 S6a).
+ * This was parseInt(projectId): parseInt('7abb1c22-…') is 7, a valid, wrong
+ * project of the same organization, whose intelligence and learned wisdom AnA
+ * then read as this project's. The one resolution of a project ref instead
+ * (services/c2c/project-ref.ts): an integer, a program's anchor row, or none.
+ */
+async function intelligenceProject(organizationId: number, projectId: number | string | undefined): Promise<number | null> {
+  if (projectId === undefined || projectId === null || projectId === '') return null;
+  const { integerProjectForRef } = await import('../c2c/project-ref.js');
+  return integerProjectForRef(async () => (await import('../../db.js')).db, {
+    ref: projectId,
+    orgId: organizationId,
+    context: 'intelligence-prefix',
+  });
+}
 
 // ─── TTL cache ───────────────────────────────────────────────────────────────
 //
@@ -30,8 +46,9 @@ const INTELLIGENCE_PREFIX_TTL_MS = 60_000;
 const INTELLIGENCE_PREFIX_CACHE_LIMIT = 200;
 const intelligencePrefixCache = new Map<string, IntelligencePrefixCacheEntry>();
 
-function intelligencePrefixCacheKey(orgId: number, projectId: number | null): string {
-  return `${orgId}:${projectId ?? ''}`;
+/** Keyed by the project as given, so a program and the integer its digits spell never share an entry. */
+function intelligencePrefixCacheKey(orgId: number, projectId: number | string | undefined): string {
+  return `${orgId}:${projectId === undefined || projectId === null ? '' : String(projectId).trim().toLowerCase()}`;
 }
 
 /** Invalidate cached intelligence prefix for a project (e.g., after a write). */
@@ -40,8 +57,7 @@ export function invalidateIntelligencePrefix(
   projectId?: number | string
 ): void {
   if (!organizationId) return;
-  const parsed = projectId ? parseInt(String(projectId), 10) : null;
-  intelligencePrefixCache.delete(intelligencePrefixCacheKey(organizationId, parsed));
+  intelligencePrefixCache.delete(intelligencePrefixCacheKey(organizationId, projectId));
 }
 
 /**
@@ -60,10 +76,8 @@ export async function getIntelligencePrefix(
 ): Promise<string> {
   if (!organizationId) return '';
 
-  const parsedProjectId = projectId ? parseInt(String(projectId), 10) : null;
-
   // Serve from cache when fresh. Cache misses populate on the way out.
-  const cacheKey = intelligencePrefixCacheKey(organizationId, parsedProjectId);
+  const cacheKey = intelligencePrefixCacheKey(organizationId, projectId);
   const cached = intelligencePrefixCache.get(cacheKey);
   const now = Date.now();
   if (cached && cached.expiresAt > now) {
@@ -74,6 +88,7 @@ export async function getIntelligencePrefix(
   }
 
   try {
+    const parsedProjectId = await intelligenceProject(organizationId, projectId);
     const [clientCtx, projectCtx, wisdomBlock] = await Promise.all([
       buildClientIntelligenceContext(organizationId).catch(() => null),
       parsedProjectId

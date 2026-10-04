@@ -36,6 +36,9 @@ import {
   type ValidationResult as LeafValidationResult,
 } from '../services/ectd/ectd4-validator';
 import { registerExportGovernanceQuick } from '../services/compute/exportGovernance';
+import { createAuditedUnplacedExport } from '../services/export/governedExportConsequence';
+import { resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
+import { requestDb } from '../db/requestDb';
 import {
   applyExportGovernanceHeaders,
   evaluateExportGovernance,
@@ -122,6 +125,13 @@ function classifyError(error: unknown): {
       code: 'REGION_MISMATCH',
       message: raw,
     };
+  }
+  // The program's record decides the application number (assembleSubmissionEctd).
+  if (/does not match the program's recorded application number/i.test(raw)) {
+    return { status: 409, code: 'APPLICATION_NUMBER_MISMATCH', message: raw };
+  }
+  if (/is not a usable application number/i.test(raw)) {
+    return { status: 400, code: 'APPLICATION_NUMBER_INVALID', message: raw };
   }
   // A rehearsal asked of an original sequence: nothing precedes 0000.
   if (/rehearsal binds a follow-up sequence/i.test(raw)) {
@@ -439,9 +449,89 @@ function validateExportGovernance(req: Request, res: Response) {
   return evaluation.governance;
 }
 
+/**
+ * Record a governed eCTD export against the project that anchors the
+ * submission's program (projects.regulatory_program_id, Document Identity
+ * Contract C1), through the one resolver for that bridge. With no anchor — a
+ * program created before C1, a seeded one, or a submission with no program —
+ * the export is delivered audited-unplaced by the one implementation the CER,
+ * eSTAR and technical-file exports share: an EXPORT_GENERATED row carrying the
+ * delivered bytes' SHA-256, refused if that row does not persist.
+ *
+ * 2026-09-29 (W5/D7, WO-9 Click 6): the route registered the export with
+ * projectId = the SUBMISSION id. concept2cure_artifacts.project_id is a foreign
+ * key to projects.id — a different id space. On a clean build (submission 6,
+ * no project 6) every export 500'd; where a project happened to share the id,
+ * the governed record was filed under an unrelated project.
+ *
+ * Returns 'placed' or 'unplaced'; null when registry placement was refused.
+ */
+async function recordGovernedEctdExport(
+  req: Request,
+  p: {
+    organizationId: number;
+    userId: number;
+    userName: string;
+    submissionId: number;
+    packageSha256: string;
+    result: Awaited<ReturnType<typeof assembleSubmissionEctd>>;
+  },
+): Promise<'placed' | 'unplaced' | null> {
+  const { result } = p;
+  const backendRoute = `/api/ectd/export/${p.submissionId}`;
+  const anchorProjectId = result.programId
+    ? await resolveProgramProjectAnchor(requestDb(req), {
+        programId: result.programId,
+        orgId: p.organizationId,
+        context: 'ectd-export',
+      })
+    : null;
+  if (anchorProjectId === null) {
+    await createAuditedUnplacedExport({
+      organizationId: p.organizationId,
+      userId: p.userId,
+      sourceType: 'export_zip',
+      backendRoute,
+      resourceType: 'ectd_export',
+      resourceId: result.programId ?? `submission:${p.submissionId}`,
+      programUuid: result.programId,
+      filename: result.filename,
+      mimeType: 'application/zip',
+      buffer: result.buffer,
+      metadata: {
+        submissionId: p.submissionId,
+        sequenceNumber: result.sequenceNumber,
+        region: result.region,
+        priorState: result.priorState,
+        unfiledPriorSequences: result.unfiledPriorSequences,
+      },
+    });
+    return 'unplaced';
+  }
+  const governanceResult = await registerExportGovernanceQuick({
+    organizationId: p.organizationId,
+    projectId: anchorProjectId,
+    userId: p.userId,
+    userName: p.userName,
+    title:
+      result.priorState === 'rehearsal'
+        ? `eCTD Package (rehearsal — prior not filed: ${result.unfiledPriorSequences.join(', ') || 'none'}): ${result.filename}`
+        : `eCTD Package: ${result.filename}`,
+    exportFormat: 'zip',
+    exportFilename: result.filename,
+    exportFileSize: result.buffer.length,
+    exportHash: p.packageSha256,
+    docType: 'ectd_package',
+    backendRoute,
+    ipAddress: req.ip,
+  });
+  return governanceResult ? 'placed' : null;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/ectd/export/:submissionId — Generate & download eCTD package
 // ─────────────────────────────────────────────────────────────────────────────
+
 
 // Body schema for the export route. The canonical core records the sequence's
 // region and the submission's application type, so both are OPTIONAL here:
@@ -546,8 +636,49 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
         (validation ? ` — valid: ${validation.valid}` : '')
     );
 
+    /* Record the governed export BEFORE any download header is set, so a
+       refusal below is a JSON error — not a body labelled application/zip
+       with an attachment disposition. Fail-closed for the regulated path. */
+    // SECURITY: the org/user attribution on the export audit record
+    // must be the JWT principal. requireTenant() already guaranteed an
+    // organizationId at the top; we re-fetch the user object here for
+    // the user.id required by the governance service.
+    const user = (req as any).user;
+    if (user?.id == null) {
+      return res.status(403).json({ error: 'Tenant context required for governed export' });
+    }
+    /* The integrity hash must cover the PACKAGE, not the words describing it.
+       Without `exportHash`, registerExportGovernanceQuick falls back to
+       sha256(`${title}:${filename}:${size}`) — a digest over metadata, which
+       cannot answer the only question a governed export record exists to
+       answer: is this file the file that was exported. Two different packages
+       of the same byte-length under the same name hash identically, and the
+       delivered bytes are never covered at all.
+       `result.buffer` is exactly what `res.send` returns below, so hashing it
+       here binds the record to the artifact the agency receives. The same
+       defect was fixed on the DOCX route (20dc3980b); this is the eCTD package,
+       where it matters most. */
+    const packageSha256 = createHash('sha256').update(result.buffer).digest('hex');
+    const registry = await recordGovernedEctdExport(req, {
+      organizationId,
+      userId: Number(user.id),
+      userName: user?.name || user?.email || 'unknown',
+      submissionId,
+      packageSha256,
+      result,
+    });
+    if (registry === null) {
+      return res.status(500).json({
+        error: 'Governed export registration failed',
+        code: 'EXPORT_GOVERNANCE_REQUIRED',
+      });
+    }
+
     // Set headers for file download
     res.setHeader('Content-Type', 'application/zip');
+    // Whether the artifact registry holds this export ('placed') or only the
+    // audit log does ('unplaced' — the program has no project anchor yet).
+    res.setHeader('X-Export-Registry', registry);
     // WO-16C: a ZIP body cannot carry the assembly's audit outcome, so it
     // travels as the header pair the client transport reads.
     setAuditRowHeaders(res, result.auditTrail);
@@ -577,51 +708,6 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
       if (validation.errors.length > 0) {
         res.setHeader('X-ECTD-Validation-Errors', String(validation.errors.length));
       }
-    }
-
-    // Register governed export (fail-closed for regulated export path).
-    // SECURITY: the org/user attribution on the export audit record
-    // must be the JWT principal. requireTenant() already guaranteed an
-    // organizationId at the top; we re-fetch the user object here for
-    // the user.id required by the governance service.
-    const user = (req as any).user;
-    if (user?.id == null) {
-      return res.status(403).json({ error: 'Tenant context required for governed export' });
-    }
-    /* The integrity hash must cover the PACKAGE, not the words describing it.
-       Without `exportHash`, registerExportGovernanceQuick falls back to
-       sha256(`${title}:${filename}:${size}`) — a digest over metadata, which
-       cannot answer the only question a governed export record exists to
-       answer: is this file the file that was exported. Two different packages
-       of the same byte-length under the same name hash identically, and the
-       delivered bytes are never covered at all.
-       `result.buffer` is exactly what `res.send` returns below, so hashing it
-       here binds the record to the artifact the agency receives. The same
-       defect was fixed on the DOCX route (20dc3980b); this is the eCTD package,
-       where it matters most. */
-    const packageSha256 = createHash('sha256').update(result.buffer).digest('hex');
-    const governanceResult = await registerExportGovernanceQuick({
-      organizationId,
-      projectId: submissionId,
-      userId: Number(user.id),
-      userName: user?.name || user?.email || 'unknown',
-      title:
-        result.priorState === 'rehearsal'
-          ? `eCTD Package (rehearsal — prior not filed: ${result.unfiledPriorSequences.join(', ') || 'none'}): ${result.filename}`
-          : `eCTD Package: ${result.filename}`,
-      exportFormat: 'zip',
-      exportFilename: result.filename,
-      exportFileSize: result.buffer.length,
-      exportHash: packageSha256,
-      docType: 'ectd_package',
-      backendRoute: `/api/ectd/export/${submissionId}`,
-      ipAddress: req.ip,
-    });
-    if (!governanceResult) {
-      return res.status(500).json({
-        error: 'Governed export registration failed',
-        code: 'EXPORT_GOVERNANCE_REQUIRED',
-      });
     }
 
     // Audit the export BEFORE returning the buffer. Even if the

@@ -36,6 +36,12 @@ const h = vi.hoisted(() => {
     toolRuns: 0,
     resumeAbandoned: 0,
     stops: 0,
+    /** The context each tool call was handed. */
+    toolCtx: [] as any[],
+    /** What each held governed call asked the run row to record. */
+    approvals: [] as any[],
+    /** When set, minting the thread fails (persistence down). */
+    mintFails: false,
   };
   const pool = {
     query: async () => ({ rows: [], rowCount: 0 }),
@@ -56,9 +62,10 @@ const h = vi.hoisted(() => {
       return { content: text, toolUses: [], model: 'm', provider: 'p', usage: {}, latencyMs: 1 };
     },
   };
-  const handlers: Record<string, (input: any) => Promise<string>> = {
-    list_app_screens: async () => {
+  const handlers: Record<string, (input: any, ctx?: any) => Promise<string>> = {
+    list_app_screens: async (_input, ctx) => {
       state.toolRuns++;
+      state.toolCtx.push(ctx);
       return JSON.stringify({ screens: ['vault'] });
     },
   };
@@ -86,6 +93,8 @@ vi.mock('../../../services/ana/AnaToolExecutor.js', () => ({
 vi.mock('../../../services/ana/governed-toolset.js', () => ({
   governedToolsetFor: async () => [
     { name: 'list_app_screens', description: 'list_app_screens', input_schema: { type: 'object', properties: {} } },
+    // Confirm-class (tool-authorization.register.json): it is held, never dispatched.
+    { name: 'draft_authoring_document', description: 'draft', input_schema: { type: 'object', properties: {} } },
   ],
 }));
 vi.mock('../../../services/ana/run-control.js', async importOriginal => {
@@ -113,7 +122,10 @@ vi.mock('../../../services/ana/run-control.js', async importOriginal => {
     readRun: async () => null,
     releaseLocalRun: () => {},
     consumeInterjections: async () => [],
-    requestApproval: async () => false,
+    requestApproval: async (_pool: unknown, _runId: string, pending: unknown) => {
+      h.state.approvals.push(pending);
+      return false;
+    },
     recordApprovalDecision: async () => false,
     readApprovalDecision: async () => null,
     stopRunInternally: async () => {
@@ -154,7 +166,10 @@ vi.mock('../../../services/ana-ri/context-enrichment.js', () => ({
   enrichContextForChat: async () => ({ block: '', sources: [] }),
 }));
 vi.mock('../../../services/chat-thread-helpers.js', () => ({
-  getOrCreateThread: async () => 'thread-1',
+  getOrCreateThread: async () => {
+    if (h.state.mintFails) throw new Error('thread store down');
+    return 'thread-1';
+  },
   getThreadMessages: async () => [],
   saveChatMessage: async () => {},
   programIdForThread: () => null,
@@ -192,10 +207,10 @@ app.use('/api/ana-ri', router);
 
 type SseEvent = Record<string, any> & { type: string };
 
-async function turn(): Promise<SseEvent[]> {
+async function turn(body: Record<string, unknown> = {}): Promise<SseEvent[]> {
   const res = await request(app)
     .post('/api/ana-ri/stream')
-    .send({ message: 'which screens are there?' })
+    .send({ message: 'which screens are there?', ...body })
     .buffer(true)
     .parse((r, cb) => {
       let data = '';
@@ -224,6 +239,9 @@ beforeEach(() => {
     toolRuns: 0,
     resumeAbandoned: 0,
     stops: 0,
+    toolCtx: [],
+    approvals: [],
+    mintFails: false,
   });
   const realNow = Date.now.bind(Date);
   vi.spyOn(Date, 'now').mockImplementation(() => realNow() + h.state.clockOffset);
@@ -231,6 +249,37 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
+});
+
+describe('the tool context names the conversation, the turn and the model (PF-10 S5, LX-06)', () => {
+  it('a dispatched tool receives the resolved thread, the run as its turn, and the served model', async () => {
+    h.state.statuses = ['running'];
+    await turn();
+    // A document a tool creates records these as its provenance (authoring-draft-tool.ts).
+    expect(h.state.toolCtx).toHaveLength(1);
+    expect(h.state.toolCtx[0]).toMatchObject({ threadId: 'thread-1', turnId: 'run_test', model: 'm' });
+  });
+
+  it('a held governed call records the same: the only path a confirm-class draft takes in production', async () => {
+    h.state.statuses = ['running'];
+    h.state.script = [[{ id: 'draft_1', name: 'draft_authoring_document', input: { title: 'Clinical overview' } }], 'Done.'];
+    await turn();
+    expect(h.state.approvals).toHaveLength(1);
+    expect(h.state.approvals[0].toolContext).toMatchObject({
+      threadId: 'thread-1',
+      turnId: 'run_test',
+      servingModel: { model: 'm' },
+    });
+  });
+
+  it("when the thread could not be persisted, the held call names no conversation — never the client's thread id", async () => {
+    h.state.statuses = ['running'];
+    h.state.mintFails = true;
+    h.state.script = [[{ id: 'draft_2', name: 'draft_authoring_document', input: { title: 'Clinical overview' } }], 'Done.'];
+    await turn({ thread_id: 'ana-ri_supplied_by_the_client' });
+    expect(h.state.approvals).toHaveLength(1);
+    expect(h.state.approvals[0].toolContext).toMatchObject({ threadId: null, turnId: 'run_test' });
+  });
 });
 
 describe('the stream pause, unchanged by the move', () => {

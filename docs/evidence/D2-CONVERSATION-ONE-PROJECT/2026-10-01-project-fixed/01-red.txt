@@ -1,0 +1,21 @@
+# server/routes/chat/__tests__/thread-messages-store.test.ts, new cases, against HEAD 301ab17d4
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > GET /threads/:id/messages > serves an AnA thread its own transcript from chat_messages
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > GET /threads/:id/messages > serves a submission-chat thread from ai_messages, not from the other store
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > GET /threads/:id/messages > resolves the store org-scoped, so another tenant's thread is not found
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > GET /threads/:id/messages > needs an organization
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > PATCH /thread/:id > updates the store the thread lives in
+ × server/routes/chat/__tests__/thread-messages-store.test.ts > PATCH /thread/:id > writes a title change scoped to the organization, not by id alone
+   → expected 'UPDATE chat_threads SET title = $1, u…' to match /WHERE id = \$\d+ AND organization_id …/
+ × server/routes/chat/__tests__/thread-messages-store.test.ts > PATCH /thread/:id — a conversation stays in the project it was held in (PF-10 S8) > a project change on the chat store (42) is refused 409, and nothing is written
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/chat/__tests__/thread-messages-store.test.ts > PATCH /thread/:id — a conversation stays in the project it was held in (PF-10 S8) > a project change on the chat store (0f3c1a2b-1111-4222-8333-444455556666) is refused 409, and nothing is written
+   → expected 400 to be 409 // Object.is equality
+ × server/routes/chat/__tests__/thread-messages-store.test.ts > PATCH /thread/:id — a conversation stays in the project it was held in (PF-10 S8) > a project change on the chat store (null) is refused 409, and nothing is written
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/chat/__tests__/thread-messages-store.test.ts > PATCH /thread/:id — a conversation stays in the project it was held in (PF-10 S8) > a project change on the ai store (0f3c1a2b-1111-4222-8333-444455556666) is refused 409, and nothing is written
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/chat/__tests__/thread-messages-store.test.ts > PATCH /thread/:id — a conversation stays in the project it was held in (PF-10 S8) > a colleague's conversation is refused 403, and nothing is written
+   → expected 200 to be 403 // Object.is equality
+ ✓ server/routes/chat/__tests__/thread-messages-store.test.ts > PATCH /thread/:id — a conversation stays in the project it was held in (PF-10 S8) > the owner renames their own conversation
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  6 failed | 6 passed (12)

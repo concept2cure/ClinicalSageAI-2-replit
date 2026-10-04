@@ -4,7 +4,8 @@
  * Governed agreement authoring: create an agreement, edit it, read the deterministic
  * HIPAA execution-readiness gate (45 CFR 164.514), read a portfolio roll-up, and
  * execute behind that gate. Every mutation runs BEGIN → Tx → recordGovernedAction →
- * COMMIT, org-scoped. Mounted at /api/research-agreements.
+ * COMMIT, org-scoped; execution is an electronic signature (governed-signed-act.ts).
+ * Mounted at /api/research-agreements.
  *
  * @module server/routes/research-agreements
  */
@@ -13,6 +14,8 @@ import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import { pool } from '../db';
 import { recordGovernedAction } from './c2c/actions';
+import { signedActAttempts, signGovernedAct } from './governed-signed-act';
+import { DECISION_ACT_MEANINGS } from '../services/part11/signature-meanings';
 import {
   createAgreementTx, updateAgreementTx, executeAgreementTx, getReadiness, getPortfolio, listAgreements, getAgreement,
 } from '../services/research-agreements/research-agreements-service';
@@ -146,15 +149,20 @@ router.get('/agreements/:id/readiness', async (req, res) => {
   try { res.json(await getReadiness(orgId, id)); } catch (err) { fail(res, err); }
 });
 
-router.post('/agreements/:id/execute', async (req, res) => {
+// Executing an agreement is an electronic signature (P0-10a): governed-signed-act.ts.
+router.post('/agreements/:id/execute', signedActAttempts, async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
-  const parsed = z.object({ reason }).safeParse(req.body ?? {});
-  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
-  await governed(req, res, 'sign', parsed.data.reason, async (client, orgId, userId) => {
-    const result = await executeAgreementTx(client, orgId, userId, id);
-    recordAgreementExecuted();
-    return { target: `research-agreement:${id}`, body: { id, ...result } };
+  await signGovernedAct(req, res, {
+    domain: 'protocol_development',
+    target: `research-agreement:${id}`,
+    meanings: DECISION_ACT_MEANINGS,
+    codeStatus: CODE_STATUS,
+    run: async (client, orgId, userId) => {
+      const result = await executeAgreementTx(client, orgId, userId, id);
+      recordAgreementExecuted();
+      return { target: `research-agreement:${id}`, payload: { executed: true }, body: { id, ...result } };
+    },
   });
 });
 

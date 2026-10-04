@@ -53,6 +53,8 @@ import { createScopedLogger } from '../utils/logger.js';
 import { pool } from '../db.js';
 import { generateDocxBuffer } from '../services/docxGenerator.js';
 import { shouldEnforceExportReviewGate } from '../services/export/exportReviewGate.js';
+import { isUnauditedExportRefusal, sendAuditedDownload } from '../services/export/governedExportConsequence.js';
+import { authedUserId } from '../utils/authedActor.js';
 
 const logger = createScopedLogger('artifacts-center-routes');
 
@@ -248,7 +250,11 @@ export default function createArtifactsCenterRoutes(): Router {
               LIMIT 1
            )                                               AS signed_version
          FROM concept2cure_artifacts a
-         LEFT JOIN projects p ON p.id = a.project_id
+         -- The project is read only when it is the artifact's own organization's
+         -- (PF-03): an artifact written under another organization's project id
+         -- showed that organization's project code and name here. Such a row
+         -- falls back to proj_<id>, which names nothing.
+         LEFT JOIN projects p ON p.id = a.project_id AND p.organization_id = a.organization_id
          WHERE a.organization_id = $1
          ORDER BY a.updated_at DESC
          LIMIT ${MAX_ROWS}`,
@@ -434,19 +440,44 @@ export default function createArtifactsCenterRoutes(): Router {
       const title = row.title || 'artifact';
       const safeTitle = title.replace(/[^\w.-]+/g, '_').slice(0, 80) || 'artifact';
 
-      if (format === 'txt') {
-        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-        res.setHeader('Content-Disposition', `attachment; filename="${safeTitle}.txt"`);
-        return res.send(exportContent);
+      /* Recorded before it is delivered (D5, 2026-10-01): approved or signed
+         content leaving the system is an EXPORT_GENERATED row carrying the
+         SHA-256 of the exact bytes and who took them, and no file without it. */
+      const userId = authedUserId(req);
+      if (!userId) {
+        return res.status(401).json({ success: false, error: 'An identified user is required to export.' });
       }
-
-      const buffer = await generateDocxBuffer(title, exportContent);
-      res.setHeader(
-        'Content-Type',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-      );
-      res.setHeader('Content-Disposition', `attachment; filename="${safeTitle}.docx"`);
-      return res.send(buffer);
+      const file =
+        format === 'txt'
+          ? { buffer: Buffer.from(exportContent, 'utf8'), mimeType: 'text/plain; charset=utf-8', ext: 'txt', sourceType: 'export_txt' as const }
+          : {
+              buffer: await generateDocxBuffer(title, exportContent),
+              mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+              ext: 'docx',
+              sourceType: 'export_docx' as const,
+            };
+      try {
+        await sendAuditedDownload(res, {
+          organizationId: orgId,
+          userId,
+          sourceType: file.sourceType,
+          backendRoute: '/api/artifacts-center/:artifactId/export',
+          resourceType: 'artifacts_center_export',
+          resourceId: artifactId,
+          programUuid: null,
+          filename: `${safeTitle}.${file.ext}`,
+          mimeType: file.mimeType,
+          buffer: file.buffer,
+          metadata: { version: row.version, authorization: row.is_reviewed ? 'persisted-review-decision' : row.is_signed ? 'current-version-signature' : 'none' },
+        });
+      } catch (err) {
+        if (!isUnauditedExportRefusal(err)) throw err;
+        return res.status(503).json({
+          success: false,
+          code: 'UNAUDITED_EXPORT_REFUSED',
+          error: 'The file was not delivered because its record could not be written. Try again.',
+        });
+      }
     } catch (error) {
       logger.error('artifact export failed', {
         err: error instanceof Error ? error.message : String(error),

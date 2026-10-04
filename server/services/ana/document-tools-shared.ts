@@ -23,11 +23,8 @@ import type { ToolContext } from './AnaToolExecutor.js';
 export const CATALOG_GATED_TOOLS: readonly string[] = [
   'catalog_project_document',
   'file_chat_upload_to_vault',
-  'list_project_documents',
   'place_project_document',
-  'read_project_document',
   'search_document_passages',
-  'search_project_documents',
 ];
 
 /**
@@ -93,6 +90,24 @@ export function unknownDocumentRefusal(documentId: string, toolName: string): st
       'Call list_project_documents to see what the project folder actually holds — vault documents carry UUID ids.',
     idSpace: 'unknown',
   });
+}
+
+/**
+ * Shared preamble for the Vault tools every organisation has: list, read and
+ * search (D2, 2026-10-01, founder direction: "Vault search should not depend on
+ * an OpenAI key or a Claude key or any key"). They need the tenant and nothing
+ * else: no feature flag, no embedding provider. The catalog flag still gates
+ * what costs an embedding or files into the Vault (CATALOG_GATED_TOOLS).
+ */
+export async function requireDocumentAccess(
+  ctx: ToolContext | undefined,
+  toolName: string,
+): Promise<{ svc: CatalogService; orgId: number } | { refusal: string }> {
+  if (!ctx?.organizationId) {
+    return { refusal: `${toolName} requires an organization context.` };
+  }
+  const svc = await import('../vault/document-catalog.service.js');
+  return { svc, orgId: ctx.organizationId };
 }
 
 /** Shared preamble: tenant present + feature on, else the honest refusal. */

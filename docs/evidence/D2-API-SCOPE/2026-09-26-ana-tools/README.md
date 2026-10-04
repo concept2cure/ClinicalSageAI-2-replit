@@ -91,20 +91,78 @@ The neighbouring suites pass: `governed-toolset`, `catalog-gated-tools`,
 
 ## Not closed here: inside other lanes' 24-hour windows
 
-- **Platform commands.** The 47 hidden-app commands are classified, and
-  `HIDDEN_APP_COMMANDS` is exported. Refusing them belongs in `authorizeCommand`
-  (`command-rbac.ts`, window ends 2026-09-27 02:26 UTC). That one check covers
-  all four dispatch paths: the bridge, `/execute`, `/governed-action` and chat
-  command blocks.
-- **Execution.** Withholding a tool from the offered set is what the model
-  sees. A refusal at execution belongs in the `registerToolHandler` wrapper
-  (`AnaToolExecutor.ts`, window ends 2026-09-27 12:39 UTC), the one place every
-  dispatch path passes through.
-- **The realtime door.** `ana-realtime.ts` builds its toolset from
-  `getAllEnabledTools()` directly, which bypasses the tenant deny-list and
-  this filter. It is handed to its lane in `docs/work-orders/README.md`
-  (window ends 2026-09-27 04:43 UTC).
+- ~~**Platform commands.**~~ **Done 2026-09-29.** See the section below.
+- ~~**Execution.**~~ **Done 2026-09-30.** See "Hidden-app tools refused at
+  execution" below.
+- ~~**The realtime door.**~~ **Picked up by its lane.** `ana-realtime.ts`
+  now composes through `governedToolsetFor`, so the tenant deny-list and this
+  filter hold on the socket too.
 - **Navigation.** `list_app_screens`/`navigate_to` honour only the locked
   screens the client sends, and only the streaming door sends them. A
   server-side launch-scope lock needs `DEEP_LINK_ALIASES` in `shared/` and
   the handlers in `AnaToolExecutor.ts`.
+
+## Platform commands refused (2026-09-29)
+
+`authorizeCommand` (`server/services/ana-ri/command-rbac.ts`) is where the four
+command paths meet: `execute_platform_command`, `POST /execute`,
+`POST /governed-action` and chat command blocks. It now refuses a command
+classified `hiddenApp` whenever launch scope is enforced (production by
+default), with `LAUNCH_SCOPE` and the API's wording. The step runs after the
+metadata check and before the tenant policy and the read-only early return. So
+a hidden app's reads are refused too, and a tenant allow-list cannot re-open
+what the release excludes. In-scope commands and development servers are
+unchanged.
+
+| Proof | Red | Green |
+|---|---|---|
+| `command-rbac.test.ts` launch-scope cases: `pdev.program.get`, `q_sub.create`, `post_market.document.create`, `cmc_status` and `search_precedents` refused for an admin; `list_projects`, `create_task`, `audit.explain` and `module3_build_all` untouched; dev unchanged | 1 failed of 35 (`commands-red.txt`) | 35/35 (`commands-green.txt`) |
+
+The inventory guard has already done its job once. On 2026-09-28 `7f82872dd`
+added sixteen protocol-authoring tools without classifying them.
+`ana-launch-scope.test.ts` failed, and that lane classified them in
+`759049b5c`.
+
+Unrelated and not touched: `artifact-status-approval-version.pglite.test.ts`
+fails 2 of its tests on trunk without this change. The cause is
+`update_artifact_status` message wording, in a file `…01YZFCXR` edited in
+`c0056614d`.
+
+## Hidden-app tools refused at execution (2026-09-30)
+
+Withholding a tool from the offered set only changes what the model is shown.
+Every dispatch path resolves a handler **by name** from the registry, offered
+or not. Before this change, in production:
+
+- The stream's `[INTELLIGENCE_ANSWER]` fast path
+  (`server/routes/ana-ri/stream.ts`) called `answer_intelligence_question`, the
+  CMC interview (hidden: `cmc`), directly. No model was involved, and any client
+  could send that message prefix.
+- The agentic loop and the stream's dispatch ran any registered name the model
+  emitted. That covered the 70 hidden tools the authorization register classes
+  `read` and the 2 it classes `self`. The 105 `confirm` tools were proposed to a
+  person for confirmation, and ran once confirmed.
+
+The `registerToolHandler` wrapper (`AnaToolExecutor.ts`) is the one place every
+path passes through: stream, loop, a tool calling another tool's handler, the
+confirmed-tool route and the MCP connector. `preHandlerRefusal` now refuses a
+tool classified `hiddenApp` whenever launch scope is enforced, with
+`LAUNCH_SCOPE` returned as a tool result the model relays. It is the first
+rule, so a hidden write is never put to a person to confirm. In-scope tools and
+development servers are unchanged. A surface promoted into the launch catalog
+brings its tools back with no edit here, because the check is
+`anaCapabilityInLaunchScope`.
+
+| Proof | Red | Green |
+|---|---|---|
+| `ana-launch-scope-execution.test.ts`: in production, `answer_intelligence_question` (`self`) and `review_ha_interaction` (`read`) are refused and their handlers never run; `create_ha_interaction` (`confirm`) is refused before any confirmation or reason is asked; `search_literature` still runs; with launch scope off, a hidden tool runs | 2 failed of 5 (`execution-red.txt`): the CMC interview ran, and the hidden write asked for a reason | 5/5 (`execution-green.txt`) |
+
+Neighbouring suites pass: `server/services/ana`, `server/services/ana-ri`,
+`server/routes/ana-ri`, `server/mcp`, `server/services/entitlements` and
+`server/middleware` (337 files, 4,510 tests). Typecheck and lint are clean for
+the touched files.
+
+Still open: **Navigation.** `list_app_screens`/`navigate_to` honour only the
+locked screens the client sends. A server-side lock needs `DEEP_LINK_ALIASES`
+moved to `shared/`, and three CI scripts plus `surfaceContextIds.test.ts` parse
+`registryModel.ts`.

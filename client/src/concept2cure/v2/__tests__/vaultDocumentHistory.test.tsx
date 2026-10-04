@@ -63,9 +63,26 @@ describe('Vault document history', () => {
     expect(failure.closest('[role]')?.getAttribute('role')).toBe('alert');
   });
 
-  it('a broken chain is reported, not hidden', async () => {
-    mockApi(() => ok({ success: true, data: { entries, chain: { ...verified, ok: false, brokenAt: 'AUD-9' } } }));
+  it('a broken chain is reported, not hidden, at the entry the server names', async () => {
+    mockApi(() => ok({ success: true, data: { entries, chain: { ...verified, ok: false, brokenAt: { segment: 'sequenced', id: 'AUD-9', commitsTo: null } } } }));
     render(<Vault {...props()} />);
-    await screen.findByText(/audit chain check failed/i);
+    const alert = await screen.findByText(/audit chain check failed at entry AUD-9/i);
+    expect(alert.textContent).not.toMatch(/object Object/);
+  });
+
+  it("a break in another organisation's row is reported without naming it", async () => {
+    mockApi(() => ok({ success: true, data: { entries, chain: { ...verified, ok: false, brokenAt: { segment: 'legacy', row: 'another organization', commitsTo: 'another organization' } } } }));
+    render(<Vault {...props()} />);
+    await screen.findByText(/audit chain check failed at an entry of another organization/i);
+  });
+
+  it('nothing to verify reads as not verified, with the reason: neither verified nor failed', async () => {
+    const reason = 'No chained rows exist for this organisation, so there is no chain to verify.';
+    mockApi(() => ok({ success: true, data: { entries, chain: { ...verified, ok: null, rowsChecked: 0, reason } } }));
+    render(<Vault {...props()} />);
+    const panel = await screen.findByTestId('vault-document-history');
+    await screen.findByText(/audit chain not verified/i);
+    expect(panel.textContent).toContain(reason);
+    expect(panel.textContent).not.toMatch(/audit chain verified|check failed/i);
   });
 });

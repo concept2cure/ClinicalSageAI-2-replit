@@ -75,8 +75,11 @@ const sectionKey = (code: string): string => {
    'signed' said a Form 1571 had been signed when nobody signed it. 'locked' is
    the surface's own complete-but-unsigned state: the content is sealed and
    locked, and nothing more is claimed. 'signed' is kept only for a stored
-   'signed'. Whether an unsigned freeze should count as complete at all is a
-   founder decision and is unchanged here: 'locked' is still COMPLETE. */
+   'signed'. Whether an unsigned freeze should count as complete at all was
+   left as a founder decision; it was decided 2026-10-01 (DP-35): it does
+   not. 'finalized' now maps to 'frozen', ranked with a bare lock and never
+   COMPLETE: sealed, not approved. The eCTD resolver refuses to transmit it
+   for the same reason (ectd/leaf-source-resolver.ts). */
 /** coauthor_documents.status (real, coarse) → the surface's SectionStatus vocabulary. */
 const STATUS_MAP: Record<string, string> = {
   draft: 'drafting',
@@ -84,7 +87,7 @@ const STATUS_MAP: Record<string, string> = {
   in_progress: 'drafting',
   review: 'qa_review',
   approved: 'approved',
-  finalized: 'locked',
+  finalized: 'frozen',
   signed: 'signed',
   locked: 'locked',
 };
@@ -99,7 +102,7 @@ const mapStatus = (raw: unknown): string => STATUS_MAP[str(raw).toLowerCase()] ?
  *  a frozen one shows the approval, never less than the truth. */
 const RANK: Record<string, number> = {
   not_started: 0, data_gathering: 1, drafting: 2, revision: 3, internal_review: 3,
-  qa_review: 4, locked: 5, approved: 6, signed: 7,
+  qa_review: 4, frozen: 5, locked: 5, approved: 6, signed: 7,
 };
 const COMPLETE = new Set(['approved', 'signed', 'locked']);
 

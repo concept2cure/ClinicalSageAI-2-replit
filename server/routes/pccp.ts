@@ -14,10 +14,9 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
-import { db } from '../db';
-import { regulatoryPrograms } from '../../shared/schema/programs';
+import { db, pool } from '../db';
 import { aiMlPccpPlans, aiMlModifications } from '../../shared/schema/ai-ml-pccp';
 import { authenticateToken } from '../middleware/auth';
 import {
@@ -33,7 +32,13 @@ import {
   validatePlan,
 } from '../services/ai-ml-pccp/pccp.service';
 import { serverError } from '../lib/api-response';
+import { z } from 'zod';
+import { reverifySigner } from '../services/part11/reverify-signer';
+import { signerReverificationDeps } from '../services/part11/reverify-signer-deps';
+import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role';
+import { isSigningAuthorized } from '../services/part11/signing-authority';
 import { createScopedLogger } from '../utils/logger';
+import { programInOrganization } from '../services/c2c/program-access';
 
 const router = Router();
 
@@ -53,12 +58,7 @@ async function requireProgramAccess(req: Request, res: Response, next: NextFunct
     res.status(403).json({ error: 'Organization context required' });
     return;
   }
-  const [row] = await db
-    .select({ id: regulatoryPrograms.id })
-    .from(regulatoryPrograms)
-    .where(and(eq(regulatoryPrograms.id, String(req.params.programId)), eq(regulatoryPrograms.organizationId, orgId)))
-    .limit(1);
-  if (!row) {
+    if (!(await programInOrganization(pool, String(req.params.programId), orgId))) {
     res.status(403).json({ error: 'Access denied' });
     return;
   }
@@ -223,22 +223,64 @@ router.post('/plans/:planId/validate', requirePlanAccess, async (req: Request, r
   }
 });
 
+/* Approving a PCCP locks it: the plan becomes the device's authorized change
+   envelope. That is a Part 11 signed act, and this route used to treat it as a
+   field update:
+     - `approvedBy` fell back to the literal 'system' when no user was on the
+       request, so a plan could be locked "approved by system";
+     - `signatureId` was whatever string the client sent, stored on the locked
+       plan and never checked — a signature reference to nothing;
+     - no password, second factor, signing authority or reason was required.
+   It now follows the platform's one signing ceremony, as the RBM approve route
+   does: the signer re-authenticates server-side (§11.200), must hold signing
+   authority (§11.10(g)), and states a reason; the approver recorded is that
+   verified user. No client-supplied signature id is stored. */
+const approvePlanBody = z.object({
+  reason: z.string().min(3).max(2000),
+  password: z.string().min(1),
+  mfaToken: z.string().optional(),
+});
+
 router.post('/plans/:planId/approve', requirePlanAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req)!;
-  const userIdRaw = (req as any).user?.id;
-  const approvedBy =
-    typeof userIdRaw === 'string' ? userIdRaw : userIdRaw != null ? String(userIdRaw) : 'system';
-  const signatureId = typeof req.body?.signatureId === 'string' ? req.body.signatureId : undefined;
+  const parsed = approvePlanBody.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    return res.status(422).json({
+      error: 'A reason for approval and the signer\'s password are required',
+      details: parsed.error.flatten().fieldErrors,
+    });
+  }
+  const signerRaw = (req as any).user?.id;
+  const signerId = typeof signerRaw === 'number' ? signerRaw : Number.parseInt(String(signerRaw ?? ''), 10);
+  if (!Number.isFinite(signerId)) {
+    return res.status(401).json({ error: 'An authenticated signer is required to approve' });
+  }
+  const signoff = await reverifySigner(
+    signerId,
+    { password: parsed.data.password, mfaToken: parsed.data.mfaToken },
+    signerReverificationDeps(),
+  );
+  if (!signoff.ok) return res.status(signoff.status).json({ error: signoff.error, code: signoff.code });
+  const signerRole = await resolveSignerOrgRole(signerId, orgId);
+  if (!isSigningAuthorized(signerRole)) {
+    return res.status(403).json({
+      error: 'Your role does not permit approving this plan (21 CFR Part 11 §11.10(g)).',
+      code: 'PCCP_NO_SIGNING_AUTHORITY',
+    });
+  }
   try {
     const result = await approvePlan({
       organizationId: orgId,
       planId: String(req.params.planId),
-      approvedBy,
-      signatureId,
+      approvedBy: String(signerId),
+      reason: parsed.data.reason,
     });
     if ('error' in result) {
       if (result.error === 'NOT_FOUND') return res.status(404).json({ error: 'Plan not found' });
       if (result.error === 'ALREADY_LOCKED') return res.status(409).json({ error: 'Already locked' });
+      if (result.error === 'AUDIT_WRITE_FAILED') {
+        return res.status(500).json({ error: 'The approval could not be recorded, so it was not applied', code: 'AUDIT_WRITE_FAILED' });
+      }
       if (result.error === 'GATE_BLOCKED') {
         return res.status(409).json({
           error: 'Validation gate blocked approval',

@@ -1,0 +1,36 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts > a red guardrail does not skip the production-posture jobs > the jobs this contract names still exist, and each orders itself after lint 3ms
+ ✓ tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts > a red guardrail does not skip the production-posture jobs > every job that needs lint runs after a red lint, unless it aggregates verdicts 1ms
+ × tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts > a red guardrail does not skip the production-posture jobs > the aggregates stay strict: Build and the release evidence still refuse on any failure 6ms
+   → build would now run after a failed dependency: expected true to be false // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts > a red guardrail does not skip the production-posture jobs > the aggregates stay strict: Build and the release evidence still refuse on any failure
+AssertionError: build would now run after a failed dependency: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/ci/posture-jobs-run-after-lint-failure.contract.test.ts:70:89
+     68|     for (const k of AGGREGATES) {
+     69|       expect(jobs[k], `${k} is gone from ci.yml`).toBeDefined();
+     70|       expect(runsAfterFailure(jobs[k]), `${k} would now run after a fa…
+       |                                                                                         ^
+     71|     }
+     72|     expect(needsOf(jobs.build)).toEqual(expect.arrayContaining(['lint'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  08:54:45
+   Duration  520ms (transform 91ms, setup 97ms, import 49ms, tests 14ms, environment 0ms)
+

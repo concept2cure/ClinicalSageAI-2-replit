@@ -79,6 +79,15 @@ vi.mock('../../services/auditService', () => ({
   default: { logAction: (...args: unknown[]) => logActionMock(...args) },
 }));
 
+// The one settings writer (DP-73): its transaction and chained row are proven
+// on PostgreSQL in tests/db/organizations-writes.dbtest.ts. Here: what the
+// route asks of it, and how the route answers what it returns.
+const writerMock = vi.fn();
+vi.mock('../../services/tenant/tenant-settings-writer', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/tenant/tenant-settings-writer')>()),
+  writeTenantSettings: (...a: unknown[]) => writerMock(...a),
+}));
+
 // authMiddleware stub — reads a JSON user from the x-test-user header.
 vi.mock('../../auth', () => ({
   authMiddleware: (req: any, _res: any, next: any) => {
@@ -128,6 +137,7 @@ const PLATFORM = JSON.stringify({ id: 4, role: 'super_admin', organizationId: 1 
 beforeEach(() => {
   logActionMock.mockReset();
   systemScopeMock.mockClear();
+  writerMock.mockReset();
   nextSelectRows = [];
   nextUpdateRows = [];
   lastUpdate.values = undefined;
@@ -282,9 +292,8 @@ describe('PATCH /api/organizations/:id/settings', () => {
     expect(res.status).toBe(400);
   });
 
-  it('applies the governed form and audits section keys + reason (never values)', async () => {
-    nextSelectRows = [orgRow];
-    nextUpdateRows = [{ id: 7 }];
+  it('writes through the one settings writer: laid over the stored settings, its sections and reason (DP-73)', async () => {
+    writerMock.mockImplementation(async (_req: unknown, _id: number, change: any) => change.next(orgRow.settings, 'standard'));
     const res = await request(makeApp())
       .patch('/api/organizations/7/settings')
       .set('x-test-user', ORG7_ADMIN)
@@ -296,42 +305,67 @@ describe('PATCH /api/organizations/:id/settings', () => {
         reason: 'Enable SSO rollout',
       });
     expect(res.status).toBe(200);
-    // Merge is shallow at the section level: new sections land on old settings.
-    expect((lastUpdate.values?.settings as Record<string, unknown>).translation).toEqual({
-      enabled: true,
-      targets: ['ja-JP'],
-    });
-    expect(logActionMock).toHaveBeenCalledTimes(1);
-    const entry = logActionMock.mock.calls[0][0];
-    expect(entry.resourceType).toBe('organization_settings');
-    expect(entry.details.reason).toBe('Enable SSO rollout');
-    expect(entry.details.sections.sort()).toEqual(['security', 'translation']);
-    // Setting VALUES must not be duplicated into the audit log.
-    expect(JSON.stringify(entry.details)).not.toContain('ja-JP');
+    expect(writerMock).toHaveBeenCalledTimes(1);
+    const [, orgId, change] = writerMock.mock.calls[0];
+    expect(orgId).toBe(7);
+    expect(change).toMatchObject({ action: 'tenant_settings_changed', reason: 'Enable SSO rollout' });
+    // Laid over, not section-replaced (DP-62's rule, now at this door too):
+    // keys the body does not name survive, among them server-enforced ones.
+    const stored = { security: { mfaEnabled: true, maxConcurrentSessions: 3 }, anaToolPolicy: { deny: ['x'] } };
+    const next = change.next(stored, 'standard');
+    expect(next.security).toEqual({ mfaEnabled: false, ssoEnabled: true, maxConcurrentSessions: 3 });
+    expect(next.anaToolPolicy).toEqual({ deny: ['x'] });
+    expect(next.translation).toEqual({ enabled: true, targets: ['ja-JP'] });
+    expect(change.sections(stored, next).sort()).toEqual(['security', 'translation']);
+    // The record is the writer's chained row, in the change's transaction:
+    // no second, best-effort row.
+    expect(logActionMock).not.toHaveBeenCalled();
+    expect(res.body.auditTrail).toEqual({ persisted: true, chained: true });
   });
 
-  it('still accepts the legacy bare-partial body (audited with reason null)', async () => {
-    nextSelectRows = [orgRow];
-    nextUpdateRows = [{ id: 7 }];
+  it('still accepts the legacy bare-partial body (recorded with no reason)', async () => {
+    writerMock.mockImplementation(async (_req: unknown, _id: number, change: any) => change.next({}, 'standard'));
     const res = await request(makeApp())
       .patch('/api/organizations/7/settings')
       .set('x-test-user', ORG7_ADMIN)
       .send({ notifications: { emailEnabled: false } });
     expect(res.status).toBe(200);
-    const entry = logActionMock.mock.calls[0][0];
-    expect(entry.details.reason).toBeNull();
-    expect(entry.details.sections).toEqual(['notifications']);
+    const change = writerMock.mock.calls[0][2];
+    expect(change.reason ?? null).toBeNull();
+    expect(change.sections({}, {})).toEqual(['notifications']);
   });
 
-  it('404s an update that matched no row, and audits nothing (it used to answer success)', async () => {
-    nextSelectRows = [orgRow];
-    nextUpdateRows = [];
+  it('404s when there is no such organization, and claims nothing', async () => {
+    writerMock.mockResolvedValue(null);
     const res = await request(makeApp())
       .patch('/api/organizations/7/settings')
       .set('x-test-user', ORG7_ADMIN)
       .send({ settings: { branding: { primaryColor: '#000' } }, reason: 'rebrand' });
     expect(res.status).toBe(404);
-    expect(logActionMock).not.toHaveBeenCalled();
+    expect(res.body.auditTrail).toBeUndefined();
+  });
+
+  it('a change that would move the connector is refused by the writer: 403, nothing written', async () => {
+    const { ConnectorSettingRefusedError } = await import('../../mcp/auth/connector-enablement');
+    writerMock.mockRejectedValue(new ConnectorSettingRefusedError());
+    const res = await request(makeApp())
+      .patch('/api/organizations/7/settings')
+      .set('x-test-user', ORG7_ADMIN)
+      .send({ settings: { integrations: { note: 'x' } }, reason: 'integration note' });
+    expect(res.status).toBe(403);
+    expect(res.body.success).toBe(false);
+  });
+
+  it('a change whose record is refused is not made: 500, nothing claimed saved, no store text', async () => {
+    writerMock.mockRejectedValue(new Error('audit_logs refused the row: secret-detail'));
+    const res = await request(makeApp())
+      .patch('/api/organizations/7/settings')
+      .set('x-test-user', ORG7_ADMIN)
+      .send({ settings: { translation: { enabled: true } }, reason: 'Enable translation' });
+    expect(res.status).toBe(500);
+    expect(res.body.success).toBe(false);
+    expect(res.body.error).toMatch(/Nothing was changed/);
+    expect(JSON.stringify(res.body)).not.toContain('secret-detail');
   });
 
   it('400s an empty settings object', async () => {
@@ -407,34 +441,7 @@ describe('organization writes carry the audit-row outcome', () => {
     expect(res.body.auditTrail).toEqual({ persisted: true, chained: true });
   });
 
-  it('settings: a lost row still answers 200, and says the row is missing', async () => {
-    nextSelectRows = [{ id: 7, settings: {} }];
-    nextUpdateRows = [{ id: 7 }];
-    logActionMock.mockResolvedValueOnce(LOST as any);
-
-    const res = await request(makeApp())
-      .patch('/api/organizations/7/settings')
-      .set('x-test-user', ORG7_ADMIN)
-      .send({ settings: { translation: { enabled: true } }, reason: 'Enable translation' });
-
-    expect(res.status).toBe(200);
-    expect(res.body.success).toBe(true);
-    expect(res.body.auditTrail).toMatchObject({
-      persisted: false,
-      code: 'AUDIT_ROW_NOT_PERSISTED',
-    });
-  });
-
-  it('settings: a written row says so', async () => {
-    nextSelectRows = [{ id: 7, settings: {} }];
-    nextUpdateRows = [{ id: 7 }];
-    logActionMock.mockResolvedValueOnce({ persisted: true, chained: false, tamperProof: true });
-
-    const res = await request(makeApp())
-      .patch('/api/organizations/7/settings')
-      .set('x-test-user', ORG7_ADMIN)
-      .send({ settings: { translation: { enabled: true } }, reason: 'Enable translation' });
-
-    expect(res.body.auditTrail).toEqual({ persisted: true, chained: false });
-  });
+  // Settings: superseded by DP-73 (2026-10-01). The settings door writes
+  // through the one settings writer, so a change and its record commit
+  // together and there is no lost-row answer; see the settings describe above.
 });

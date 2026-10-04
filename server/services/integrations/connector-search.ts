@@ -35,6 +35,8 @@ interface CatalogEntry {
   name?: string;
   configured: boolean;
   healthy: boolean;
+  /** false: nothing searches this connector on the platform (connector-interface.ts). */
+  available?: false;
 }
 
 export interface ConnectorSearchDeps {
@@ -67,6 +69,32 @@ const defaultDeps: ConnectorSearchDeps = {
 };
 
 /**
+ * Which requested connectors to search; the rest go to `skipped` with why.
+ */
+function partitionRequested(
+  requested: string[],
+  byId: Map<string, CatalogEntry>,
+  skipped: Array<{ connector: string; reason: string }>,
+): string[] {
+  const toSearch: string[] = [];
+  for (const id of requested) {
+    const entry = byId.get(id);
+    if (!entry) {
+      skipped.push({ connector: id, reason: 'unknown connector' });
+    } else if (entry.available === false) {
+      skipped.push({ connector: id, reason: 'no search is connected for this source on the platform' });
+    } else if (!entry.configured) {
+      skipped.push({ connector: id, reason: 'not connected for this organization' });
+    } else if (!entry.healthy) {
+      skipped.push({ connector: id, reason: 'credentials invalid or connector unhealthy' });
+    } else {
+      toSearch.push(id);
+    }
+  }
+  return toSearch;
+}
+
+/**
  * Search the organization's connected repositories. Never throws — connector or
  * credential problems are reported in `skipped` so AnA can tell the user which
  * systems need connecting.
@@ -87,19 +115,7 @@ export async function searchConnectedRepositories(
     ? params.connectors
     : catalog.map(c => c.id);
 
-  const toSearch: string[] = [];
-  for (const id of requested) {
-    const entry = byId.get(id);
-    if (!entry) {
-      skipped.push({ connector: id, reason: 'unknown connector' });
-    } else if (!entry.configured) {
-      skipped.push({ connector: id, reason: 'not connected for this organization' });
-    } else if (!entry.healthy) {
-      skipped.push({ connector: id, reason: 'credentials invalid or connector unhealthy' });
-    } else {
-      toSearch.push(id);
-    }
-  }
+  const toSearch = partitionRequested(requested, byId, skipped);
 
   if (toSearch.length === 0) {
     return {
@@ -118,9 +134,13 @@ export async function searchConnectedRepositories(
   });
 
   const documents: ConnectorSearchResponse['documents'] = [];
+  const failed = new Set<string>();
   for (const c of perConnector) {
     if (c.error) {
+      // A failed search is not a search that found nothing: it is reported
+      // as skipped, and not listed in `searched`.
       skipped.push({ connector: c.connectorId, reason: c.error });
+      failed.add(c.connectorId);
       continue;
     }
     for (const r of c.results) {
@@ -139,7 +159,7 @@ export async function searchConnectedRepositories(
 
   return {
     source: 'Connected Repositories',
-    searched: toSearch,
+    searched: toSearch.filter((id) => !failed.has(id)),
     skipped,
     resultCount: top.length,
     documents: top,

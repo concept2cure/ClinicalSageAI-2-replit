@@ -38,7 +38,7 @@ vi.mock('@/hooks/useGlobalRiCatalog', () => ({
 
 import { Review } from '../surfaces/Review';
 import { TaskBoard } from '../surfaces/TaskBoard';
-import { GlobalRiBrowser } from '../surfaces/Surfaces';
+import { GlobalRiBrowser } from '../surfaces/GlobalRiBrowser';
 import {
   __resetSurfaceActionBus,
   applySurfaceAction,

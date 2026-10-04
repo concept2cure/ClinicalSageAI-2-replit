@@ -56,6 +56,8 @@ import {
   NotFoundError,
 } from '../services/capa-mdr/capaMdr.service';
 import { InvalidTransitionError } from '../services/capa-mdr/stateMachine';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 import {
   COMPLAINT_SOURCES,
   COMPLAINT_CHANNELS,
@@ -75,6 +77,7 @@ import {
   VIGILANCE_EVENT_KINDS,
 } from '../../shared/schema/capa-mdr';
 
+const capaLog = createScopedLogger('capa-mdr');
 const router = Router();
 router.use(authenticateToken);
 
@@ -133,8 +136,7 @@ function err(res: Response, e: unknown): Response {
   if (e instanceof TenantAccessError) return res.status(403).json({ error: e.message });
   if (e instanceof NotFoundError) return res.status(404).json({ error: e.message });
   if (e instanceof InvalidTransitionError) return res.status(422).json({ error: e.message });
-  const detail = e instanceof Error ? e.message : 'unknown';
-  return res.status(500).json({ error: 'Operation failed', detail });
+  return serverError(res, capaLog, 'completing the CAPA / MDR operation', e);
 }
 
 // ─── Triage queue ───────────────────────────────────────────────────────────

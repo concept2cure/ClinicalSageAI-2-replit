@@ -1,0 +1,59 @@
+# Fix round 2: server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts, run unmodified in a scratch copy of the working tree (server, shared, tests, scripts, migrations, db; node_modules linked) with proposed/shared-schema-sessions-ended-at.patch applied. 2026-10-01T15:41:21Z
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/54adf5a4-792f-5e11-8798-ae17682e5284/scratchpad/p04b/root
+
+stderr | server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > 5 wrong codes lock the account in its users row; the right code is then refused 423 AUTH_002 without being spent
+{
+  "timestamp": "2026-10-01T15:41:27.017Z",
+  "level": "warn",
+  "message": "[auth-security] Account locked for user 7 after 5 failed attempts",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > 5 wrong codes lock the account in its users row; the right code is then refused 423 AUTH_002 without being spent 3092ms
+stderr | server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > the count is one per account across tasks: wrong codes on two tasks lock it, and a third task refuses the right code
+{
+  "timestamp": "2026-10-01T15:41:27.289Z",
+  "level": "warn",
+  "message": "[auth-security] Account locked for user 7 after 5 failed attempts",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > the count is one per account across tasks: wrong codes on two tasks lock it, and a third task refuses the right code 362ms
+stderr | server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > the last wrong code is audited as the one that locked the account
+{
+  "timestamp": "2026-10-01T15:41:27.531Z",
+  "level": "warn",
+  "message": "[auth-security] Account locked for user 7 after 5 failed attempts",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > the last wrong code is audited as the one that locked the account 147ms
+stderr | server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > a right password does not clear what the second factor counted, so signing in again buys no fresh guesses
+{
+  "timestamp": "2026-10-01T15:41:27.715Z",
+  "level": "warn",
+  "message": "[auth-security] Account locked for user 7 after 5 failed attempts",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > a right password does not clear what the second factor counted, so signing in again buys no fresh guesses 184ms
+ ✓ server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > a completed sign-in (right code) clears the count the wrong codes built 164ms
+stderr | server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > wrong passwords and wrong codes are one count, one threshold: the password step refuses an account the codes locked
+{
+  "timestamp": "2026-10-01T15:41:28.120Z",
+  "level": "warn",
+  "message": "[auth-security] Account locked for user 7 after 5 failed attempts",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an authenticator account (U17) > wrong passwords and wrong codes are one count, one threshold: the password step refuses an account the codes locked 241ms
+ ✓ server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an account whose second factor is an emailed code > a locked account completes no sign-in with a challenge issued before the lock, even with a code that would verify 143ms
+ ✓ server/routes/__tests__/auth-mfa-totp-lockout.pglite.integration.test.ts > POST /api/auth/mfa/verify — an account whose second factor is an emailed code > control: wrong emailed codes keep their own cap (emailOtpService) and are not added to the account lockout 165ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  15:41:22
+   Duration  6.27s (transform 1.14s, setup 95ms, import 1.49s, tests 4.52s, environment 0ms)
+

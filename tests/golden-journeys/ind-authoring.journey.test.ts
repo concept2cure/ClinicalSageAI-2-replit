@@ -97,6 +97,15 @@ const OUTSIDER = {
   name: 'Iris Intruder',
 };
 
+// The project the IND document is authored IN. PF-07 (founder decision
+// 2026-09-26): a document belongs to a project, so POST /docs refuses a create
+// that names none (400 PROJECT_REQUIRED), and LX-20 refuses one that names a
+// project its organization does not own as a live regulatory_programs row
+// (404). The journey therefore opens a real IND project of org 1 — seeded into
+// the real table (migrations/20260524_program_workbench_schema.sql) below —
+// and authors its document there, the way the shipped UI does.
+const IND_PROGRAM = '5a1d0c7e-2b4f-4e8a-9c3d-6f7e8a9b0c1d';
+
 // Subject ids are INTEGERS because that is what the product has: users.id is a
 // serial (shared/schema.ts) and organization_users.user_id is an integer
 // referencing it. These were UUIDs sharing a '3f1c2a10…' prefix, seeded under
@@ -135,7 +144,10 @@ const PREREQ = `
     old_values    JSON,
     new_values    JSON,
     ip_address    TEXT,
-    user_agent    TEXT
+    user_agent    TEXT,
+    -- The person's stated reason, as migrations/20260527_mutation_primitives.sql
+    -- adds it; writeChainedAuditRow writes it when an act states one (D5).
+    reason        TEXT
   );
   -- \`uuid\` as db/migrations/20260129_add_org_uuid_alignment.sql adds it; the
   -- org-membership middleware LEFT JOINs it on every request and, without it,
@@ -211,7 +223,28 @@ beforeAll(async () => {
       // gained password_changed_at (613c6e00) and, without it, every signature
       // here was refused ACCOUNT_STATE_UNKNOWN — fail-closed, correctly.
       'db/migrations/20260725_users_signing_lockout_columns.sql',
+      // The account standing every authenticator and the signer re-verify read
+      // gained users.sessions_ended_at (P0-4b); without it every signature is
+      // refused REAUTH_ACCOUNT_STATE_UNKNOWN, fail-closed.
+      'migrations/20261001_users_sessions_ended_at.sql',
+      // The project the document belongs to (PF-07). createDocument checks the
+      // anchor against the real regulatory_programs table (LX-20:
+      // programInOrganization — this org, not soft-deleted), so the table is
+      // built from its own migration rather than hand-mirrored.
+      'migrations/20260524_program_workbench_schema.sql',
+      // A create inside a project asks which governed filing it contributes to
+      // (resolveGovernedDocument reads c2c_documents for an IND × FDA
+      // project). The system-of-record table, with the c2c_ana_actions table
+      // its section-version FK names, from the files that create them — so the
+      // binding read answers "this project has no governed document yet"
+      // against a real table instead of a 42P01 the schema-gap check would
+      // (rightly) reject. The document stays unbound, as it was before PF-07.
+      'migrations/20260527_mutation_primitives.sql',
+      'migrations/20260528_phase9_document_schema.sql',
       'db/migrations/20260725_authoring_document_loop_tables.sql',
+      // authoring_documents.client_program_id — the column the project anchor
+      // is written to. Guarded on the loop tables above, so it follows them.
+      'migrations/20260727_authoring_document_program_scope.sql',
       'db/migrations/20260730_authoring_comments_router_columns.sql',
       // ALTERs doc_revisions above with the ledger columns the router now writes
       // (content/chain hashes, origin, input manifest) and installs the
@@ -267,6 +300,15 @@ beforeAll(async () => {
   h.db = jdb.db;
   h.pool = jdb.pool;
 
+  // The live IND project of org 1 that the document is created in (PF-07).
+  // Only the NOT NULL columns; the rest take the migration's defaults.
+  await jdb.pool.query(
+    `INSERT INTO regulatory_programs
+       (id, organization_id, name, code, program_type, product_type, primary_agency, product_name)
+     VALUES ($1, $2, 'IND 12345', 'IND-12345', 'ind', 'drug', 'FDA', 'C2C-001')`,
+    [IND_PROGRAM, AUTHOR.organizationId],
+  );
+
   for (const u of [AUTHOR, APPROVER, OUTSIDER]) tokens.set(u.id, await mint(u));
 
   const { default: authoringRouter } = await import('../../server/routes/authoring.router');
@@ -300,21 +342,63 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
 
   it('runs the authoring spine', async () => {
     // ── KNOWN-BAD: no title → 400, honest validation ─────────────────────────
+    // Sent inside the project (PF-07), so the only thing missing is the title:
+    // without it the 400 could equally be the no-project refusal below.
     await R.expectBlocked('create-doc-without-title', async () => {
-      const res = await asUser(AUTHOR)(request(app).post('/api/authoring/docs')).send({});
+      const res = await asUser(AUTHOR)(request(app).post('/api/authoring/docs')).send({
+        client_program_id: IND_PROGRAM,
+      });
       return { blocked: res.status === 400, status: res.status, error: res.body.error };
     });
 
-    // ── 1. Create the IND Module 2 document ─────────────────────────────────
+    // ── KNOWN-BAD: no project → 400 PROJECT_REQUIRED, nothing written ────────
+    // PF-07 (founder decision 2026-09-26): a document belongs to a project. The
+    // create that step 1 used to make — titled, with no client_program_id —
+    // is refused before anything is written, where it used to land org-wide.
+    // Keyed on the refusal's message, which POST /docs returns verbatim; the
+    // service's PROJECT_REQUIRED code is recorded as evidence when the route
+    // forwards it.
+    // The request and the row counts run OUTSIDE expectBlocked: it files any
+    // thrown non-assertion error as the block, so a failing count query inside
+    // it would read as the refusal this step exists to prove.
+    const docsBefore = await jdb.pool.query(`SELECT count(*)::int AS n FROM authoring_documents`);
+    const noProject = await asUser(AUTHOR)(request(app).post('/api/authoring/docs')).send({
+      title: 'IND 12345 — Module 2.5 Clinical Overview',
+      module: 'M2',
+      product_code: 'C2C-001',
+    });
+    const docsAfter = await jdb.pool.query(`SELECT count(*)::int AS n FROM authoring_documents`);
+    const written = (docsAfter.rows[0] as { n: number }).n - (docsBefore.rows[0] as { n: number }).n;
+    await R.expectBlocked('create-doc-without-project', async () => ({
+      blocked: noProject.status === 400 && noProject.body.code === 'PROJECT_REQUIRED' && written === 0,
+      status: noProject.status,
+      code: noProject.body.code,
+      error: noProject.body.error,
+      documentsWritten: written,
+    }));
+
+    // ── 1. Create the IND Module 2 document, in its project ─────────────────
     await R.step('create-document', async () => {
       const res = await asUser(AUTHOR)(request(app).post('/api/authoring/docs')).send({
         title: 'IND 12345 — Module 2.5 Clinical Overview',
         module: 'M2',
         product_code: 'C2C-001',
+        client_program_id: IND_PROGRAM,
       });
       expect(res.status).toBe(201);
       docId = res.body.document.id;
-      return { docId, status: res.body.document.status, createdBy: res.body.document.created_by };
+      // Anchored to the project it was created in, read back from durable state.
+      const row = await jdb.pool.query(
+        `SELECT client_program_id FROM authoring_documents WHERE id = $1 AND tenant_id = 1`,
+        [docId],
+      );
+      expect(row.rows).toEqual([{ client_program_id: IND_PROGRAM }]);
+      return {
+        docId,
+        status: res.body.document.status,
+        createdBy: res.body.document.created_by,
+        clientProgramId: (row.rows[0] as { client_program_id: string }).client_program_id,
+      };
     });
 
     // ── 2. Author a section (creates the initial revision) ──────────────────
@@ -459,7 +543,8 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
     await R.step('freeze-document', async () => {
       const res = await asUser(AUTHOR)(
         request(app).post(`/api/authoring/docs/${docId}/freeze`),
-      ).send({ reason: 'Pre-signature freeze for IND submission' });
+        // DP-35 (2026-10-01): a freeze is signed — its meaning and the re-verified password.
+      ).send({ reason: 'Pre-signature freeze for IND submission', meaning: 'AUTHOR', password: AUTHOR_PASSWORD });
       expect(res.status).toBe(200);
       const frozen = await asUser(AUTHOR)(
         request(app).get(`/api/authoring/docs/${docId}/frozen`),
@@ -546,7 +631,9 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
         [docId],
       );
       const emails = sigs.rows.map((r) => (r as { signer_email: string }).signer_email);
-      expect(emails).toEqual([AUTHOR.email, APPROVER.email]);
+      // DP-35 (2026-10-01): the freeze is itself a signature, so the author signs
+      // twice — sealing it, then attesting authorship — before the approver.
+      expect(emails).toEqual([AUTHOR.email, AUTHOR.email, APPROVER.email]);
       return { signers: sigs.rows };
     });
 
@@ -561,7 +648,7 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
       );
       expect(res.status).toBe(200);
       const list = res.body.signatures as { signer_email: string; meaning: string; method: string }[];
-      expect(list).toHaveLength(2);
+      expect(list).toHaveLength(3); // the signed freeze, the author's e-sign, the approval
       expect(new Set(list.map((s) => s.meaning))).toEqual(new Set(['AUTHOR', 'APPROVER']));
       // What the ceremony verified: the password, no second factor enrolled.
       expect(list.every((s) => s.method === 'password')).toBe(true);
@@ -605,7 +692,7 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
         signature_digest: string; covered_freeze_version: string | null;
         covered_content_hash: string | null;
       }[];
-      expect(rows.length).toBe(2);
+      expect(rows.length).toBe(3); // the signed freeze (DP-35), the author's e-sign, the approval
 
       for (const r of rows) {
         // The link: each signature names the snapshot in force when it was made.

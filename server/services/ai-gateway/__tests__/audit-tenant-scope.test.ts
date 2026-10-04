@@ -148,6 +148,106 @@ describe('GatewayAuditLogger — which failures latch', () => {
     await logger.log(entry);
     expect(probes).toBe(afterFirst);
   });
+
+  it('stops re-probing once the table is known to lack a column the writer inserts', async () => {
+    // A migration not yet applied will not apply itself: re-probing on every AI
+    // call cost three round trips each and recorded nothing (2026-09-26 review).
+    let probes = 0;
+    let inserts = 0;
+    const behind = {
+      query: async (sql: string) => {
+        if (String(sql).startsWith('INSERT')) {
+          inserts += 1;
+          return { rows: [] };
+        }
+        probes += 1;
+        if (String(sql).includes('to_regclass')) return { rows: [{ present: true }] };
+        if (String(sql).includes('has_table_privilege')) return { rows: [{ role: 'app_service', can_insert: true }] };
+        return { rows: LEDGER_COLUMNS.filter(c => c !== 'run_id').map(column_name => ({ column_name })) };
+      },
+    };
+
+    const logger = new GatewayAuditLogger(behind);
+    await logger.log(entry);
+    const afterFirst = probes;
+    await logger.log(entry);
+    await logger.log(entry);
+    expect(probes).toBe(afterFirst);
+    expect(inserts).toBe(0);
+  });
+});
+
+describe('GatewayAuditLogger — every value binds to its own column (D6)', () => {
+  // The provenance cases read the in-memory buffer; this reads what the INSERT
+  // is handed, so a parameter out of order against LEDGER_INSERT_SQL fails.
+  it('binds each provenance field to the column of the same name', async () => {
+    let sql = '';
+    let params: unknown[] = [];
+    const pool = {
+      query: async (text: string, values?: unknown[]) => {
+        if (String(text).startsWith('INSERT')) {
+          sql = String(text);
+          params = values ?? [];
+          return { rows: [] };
+        }
+        if (String(text).includes('to_regclass')) return { rows: [{ present: true }] };
+        if (String(text).includes('has_table_privilege')) return { rows: [{ role: 'app_service', can_insert: true }] };
+        return { rows: LEDGER_COLUMNS.map(column_name => ({ column_name })) };
+      },
+    };
+    await new GatewayAuditLogger(pool).log({
+      ...entry,
+      region: 'eu',
+      payloadProvenance: 'tenant_derived',
+      dataClass: 'pii',
+      tenantPolicyResolution: 'resolved',
+      tenantBoundFrom: 'ambient_scope',
+      placementReasonCode: 'ALLOW_APPROVED_DATA_CLASS',
+      approvedModelId: 'claude-opus-4-8',
+      pinnedVersion: 'claude-opus-4-8',
+      pqStatus: 'pending',
+      riskTier: 'high',
+      runId: 'run-7',
+      parentRunId: 'run-1',
+      serverToolsUsed: ['web_search'],
+      serverToolsWithheld: [{ name: 'web_fetch', reason: 'not_first_party' }],
+    } as AuditLogEntry);
+
+    const bound = (column: string) => params[LEDGER_COLUMNS.indexOf(column)];
+    expect(sql.match(/\$\d+/g)).toHaveLength(LEDGER_COLUMNS.length);
+    expect(params).toHaveLength(LEDGER_COLUMNS.length);
+    expect({
+      region: bound('region'),
+      payload_provenance: bound('payload_provenance'),
+      data_class: bound('data_class'),
+      tenant_policy_resolution: bound('tenant_policy_resolution'),
+      tenant_bound_from: bound('tenant_bound_from'),
+      placement_reason_code: bound('placement_reason_code'),
+      approved_model_id: bound('approved_model_id'),
+      pinned_version: bound('pinned_version'),
+      pq_status: bound('pq_status'),
+      risk_tier: bound('risk_tier'),
+      run_id: bound('run_id'),
+      parent_run_id: bound('parent_run_id'),
+      server_tools_used: JSON.parse(String(bound('server_tools_used'))),
+      server_tools_withheld: JSON.parse(String(bound('server_tools_withheld'))),
+    }).toEqual({
+      region: 'eu',
+      payload_provenance: 'tenant_derived',
+      data_class: 'pii',
+      tenant_policy_resolution: 'resolved',
+      tenant_bound_from: 'ambient_scope',
+      placement_reason_code: 'ALLOW_APPROVED_DATA_CLASS',
+      approved_model_id: 'claude-opus-4-8',
+      pinned_version: 'claude-opus-4-8',
+      pq_status: 'pending',
+      risk_tier: 'high',
+      run_id: 'run-7',
+      parent_run_id: 'run-1',
+      server_tools_used: ['web_search'],
+      server_tools_withheld: [{ name: 'web_fetch', reason: 'not_first_party' }],
+    });
+  });
 });
 
 describe('GatewayAuditLogger — the probe checks the columns the writer inserts (D6)', () => {

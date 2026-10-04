@@ -29,8 +29,7 @@
 import type { Request, Response, Router } from 'express';
 
 import { requestConnectable, requestPgClient } from '../../db/requestDb.js';
-import { writeChainedAuditRow } from '../../services/auditService.js';
-import { verifyTenantChainOnAdminScope } from '../../services/audit/tenant-chain-verdict.js';
+import { sendAuditedExport, walkTenantChain } from '../../services/audit/audited-export.js';
 import { TURN_RECORD_RESOURCE } from '../../services/ana/turn-record.js';
 import {
   listTurnRecords,
@@ -174,73 +173,39 @@ async function exportRecord(req: Request, res: Response) {
   if (!record) return;
 
   const verdict = verifyStoredTurnRecord(record);
-  // The whole tenant chain, walked now. A walk that could not run is
-  // reported as unknown — an export never implies a check that did not happen.
-  let tenantChain: { ok: boolean | null; rowsChecked?: number; brokenAt?: unknown; reason?: string };
-  try {
-    const walk = await verifyTenantChainOnAdminScope(access.orgId);
-    tenantChain = { ok: walk.ok, rowsChecked: walk.rowsChecked, ...(walk.brokenAt ? { brokenAt: walk.brokenAt } : {}) };
-  } catch (err: any) {
-    console.error('[turn-records] tenant chain walk failed:', err?.message);
-    tenantChain = { ok: null, reason: 'The audit chain could not be walked at export time.' };
-  }
-
+  const tenantChain = await walkTenantChain(access.orgId);
   const exportedAt = new Date().toISOString();
-  // The export is recorded before anything leaves; no row, no export.
-  const client = await requestConnectable(req).connect();
-  try {
-    await client.query('BEGIN');
-    await writeChainedAuditRow(client, {
-      tenantId: access.orgId,
-      userId: access.userId ?? undefined,
-      action: TURN_RECORD_EXPORT_ACTION,
-      resourceType: TURN_RECORD_RESOURCE,
-      resourceId: record.id,
-      details: {
-        recordSha256: record.recordSha256,
-        format: TURN_RECORD_EXPORT_FORMAT,
-        verdictOk: verdict.ok,
-        tenantChainOk: tenantChain.ok,
-        exportedAt,
-      },
-      ipAddress: req.ip,
-      userAgent: req.get('user-agent') ?? undefined,
-    });
-    await client.query('COMMIT');
-  } catch (err: any) {
-    await client.query('ROLLBACK').catch(() => undefined);
-    console.error('[turn-records] export not recorded:', err?.message);
-    return sendError(
-      res,
-      503,
-      'The export was refused because it could not be recorded in the audit trail. Nothing was exported.',
-      null,
-      'TURN_RECORD_EXPORT_NOT_RECORDED',
-    );
-  } finally {
-    client.release();
-  }
-
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.setHeader('Content-Disposition', `attachment; filename="ana-turn-${record.id}.json"`);
-  res.setHeader('X-Turn-Record-Sha256', record.recordSha256);
-  return res.send(
-    JSON.stringify(
-      {
-        format: TURN_RECORD_EXPORT_FORMAT,
-        exportedAt,
-        exportedBy: { userId: access.userId },
-        record: { ...metaOf(record), recordText: record.recordText },
-        texts: Object.fromEntries(record.texts),
-        chain: record.chain,
-        verdict,
-        tenantChain,
-        howToVerify: HOW_TO_VERIFY,
-      },
-      null,
-      2,
-    ),
-  );
+  // Recorded on the chain before anything leaves; no row, no export.
+  return sendAuditedExport(requestConnectable(req), res, {
+    tenantId: access.orgId,
+    userId: access.userId,
+    action: TURN_RECORD_EXPORT_ACTION,
+    resourceType: TURN_RECORD_RESOURCE,
+    resourceId: record.id,
+    details: {
+      recordSha256: record.recordSha256,
+      format: TURN_RECORD_EXPORT_FORMAT,
+      verdictOk: verdict.ok,
+      tenantChainOk: tenantChain.ok,
+      exportedAt,
+    },
+    ipAddress: req.ip,
+    userAgent: req.get('user-agent') ?? undefined,
+    filename: `ana-turn-${record.id}.json`,
+    headers: { 'X-Turn-Record-Sha256': record.recordSha256 },
+    refusalCode: 'TURN_RECORD_EXPORT_NOT_RECORDED',
+    body: {
+      format: TURN_RECORD_EXPORT_FORMAT,
+      exportedAt,
+      exportedBy: { userId: access.userId },
+      record: { ...metaOf(record), recordText: record.recordText },
+      texts: Object.fromEntries(record.texts),
+      chain: record.chain,
+      verdict,
+      tenantChain,
+      howToVerify: HOW_TO_VERIFY,
+    },
+  });
 }
 
 /** Register the turn-record read endpoints on the given router. */

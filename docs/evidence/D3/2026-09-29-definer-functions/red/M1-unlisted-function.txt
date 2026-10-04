@@ -1,0 +1,9 @@
+# M1: ectd.seed_project_hierarchy removed from the baseline (the state of any new, unreviewed definer function)
+ ✓ tests/db/security-definer-functions.dbtest.ts > SECURITY DEFINER functions the runtime role can call are reviewed (D3) > the runtime role exists, so the privilege check means something 9ms
+ ✓ tests/db/security-definer-functions.dbtest.ts > SECURITY DEFINER functions the runtime role can call are reviewed (D3) > every baseline entry carries a status and a reason 0ms
+ ✓ tests/db/security-definer-functions.dbtest.ts > SECURITY DEFINER functions the runtime role can call are reviewed (D3) > self-test: a definer function planted in a rolled-back transaction is caught 9ms
+ × tests/db/security-definer-functions.dbtest.ts > SECURITY DEFINER functions the runtime role can call are reviewed (D3) > no callable definer function is missing from the reviewed baseline 11ms
+   → each runs past RLS: read it and add it to scripts/ci/security-definer-baseline.json with a reason: expected [ Array(1) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: each runs past RLS: read it and add it to scripts/ci/security-definer-baseline.json with a reason: expected [ Array(1) ] to deeply equal []
+      Tests  1 failed | 3 passed (4)

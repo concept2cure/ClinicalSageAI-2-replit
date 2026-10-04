@@ -1,0 +1,161 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > PATCH /settings/security: ROLLBACK, no COMMIT, 500 without the error text
+{
+  "timestamp": "2026-10-01T03:16:07.224Z",
+  "level": "error",
+  "message": "[tenant-config-api] Error updating security settings for tenant 900",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > PATCH /settings: ROLLBACK, no COMMIT, 500 without the error text
+{
+  "timestamp": "2026-10-01T03:16:07.230Z",
+  "level": "error",
+  "message": "[tenant-config-api] Error updating settings for tenant 900",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > POST /settings/reset: ROLLBACK, no COMMIT, 500 without the error text
+{
+  "timestamp": "2026-10-01T03:16:07.234Z",
+  "level": "error",
+  "message": "[tenant-config-api] Error resetting settings for tenant 900",
+  "context": {}
+}
+
+ × server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > PATCH /settings/security: one chained row inside the write transaction, before COMMIT 2334ms
+   → expected { tenantId: 900, userId: 5, …(6) } to match object { tenantId: 900, userId: 5, …(4) }
+(2 matching properties omitted from actual)
+ × server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > PATCH /settings: names every section written; values only for security and audit retention 8ms
+   → expected { notifications: { …(2) }, …(1) } to deeply equal { qmp: { before: { …(1) }, …(1) } }
+ × server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > a stored secret in a section that is value-audited is still not carried 7ms
+   → expected '[{"tenantId":900,"userId":5,"action":…' not to contain 'stored-signing-secret'
+ × server/routes/__tests__/tenant-config-audit.test.ts > a reset to defaults is recorded > POST /settings/reset: one tenant_settings_reset row naming every section, with the security and retention values 6ms
+   → expected { before: { …(2) }, after: { …(3) } } to deeply equal { before: { …(1) }, after: { …(1) } }
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > PATCH /settings/security: ROLLBACK, no COMMIT, 500 without the error text 14ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > PATCH /settings: ROLLBACK, no COMMIT, 500 without the error text 4ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > POST /settings/reset: ROLLBACK, no COMMIT, 500 without the error text 8ms
+ ✓ server/routes/__tests__/tenant-config-audit.test.ts > a failed audit write is a failed settings write > an unknown tenant is 404, rolled back, and nothing is recorded 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > PATCH /settings/security: one chained row inside the write transaction, before COMMIT
+AssertionError: expected { tenantId: 900, userId: 5, …(6) } to match object { tenantId: 900, userId: 5, …(4) }
+(2 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -22,11 +22,10 @@
+              "minLength": 8,
+            },
+            "sessionTimeoutMinutes": 15,
+          },
+          "before": {
+-           "ipRestrictions": null,
+            "mfaRequired": false,
+            "passwordPolicy": {
+              "minLength": 8,
+            },
+            "sessionTimeoutMinutes": 60,
+
+ ❯ server/routes/__tests__/tenant-config-audit.test.ts:128:35
+    126|     expect(h.auditCalls).toHaveLength(1);
+    127|     expect(h.auditCalls[0].client).toBe(client);
+    128|     expect(h.auditCalls[0].entry).toMatchObject({
+       |                                   ^
+    129|       tenantId: ORG,
+    130|       userId: 5,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > PATCH /settings: names every section written; values only for security and audit retention
+AssertionError: expected { notifications: { …(2) }, …(1) } to deeply equal { qmp: { before: { …(1) }, …(1) } }
+
+- Expected
++ Received
+
+  {
++   "notifications": {
++     "after": {
++       "slackEnabled": true,
++       "slackWebhook": "https://hooks.example.invalid/services/T000/B000/s3cr3t-webhook-token",
++     },
++     "before": {
++       "slackEnabled": false,
++     },
++   },
+    "qmp": {
+      "after": {
+        "auditTrailRetentionDays": 3650,
+      },
+      "before": {
+        "auditTrailRetentionDays": 365,
++       "requireQmpForAllProjects": false,
+      },
+    },
+  }
+
+ ❯ server/routes/__tests__/tenant-config-audit.test.ts:163:28
+    161|       qmp: ['auditTrailRetentionDays', 'requireQmpForAllProjects'],
+    162|     });
+    163|     expect(details.values).toEqual({
+       |                            ^
+    164|       qmp: { before: { auditTrailRetentionDays: 365 }, after: { auditT…
+    165|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/routes/__tests__/tenant-config-audit.test.ts > a security settings change is recorded with its values before and after > a stored secret in a section that is value-audited is still not carried
+AssertionError: expected '[{"tenantId":900,"userId":5,"action":…' not to contain 'stored-signing-secret'
+
+Expected: "stored-signing-secret"
+Received: "[{"tenantId":900,"userId":5,"action":"tenant_settings_changed","resourceType":"organization_settings","resourceId":"900","ipAddress":"127.0.0.1","details":{"sections":["security"],"changedFields":{"security":["mfaRequired"]},"values":{"security":{"before":{"mfaRequired":false,"sessionTimeoutMinutes":60,"passwordPolicy":{"minLength":8},"samlSigningKey":"stored-signing-secret"},"after":{"mfaRequired":true,"sessionTimeoutMinutes":60,"passwordPolicy":{"minLength":8},"samlSigningKey":"stored-signing-secret"}}}}}]"
+
+ ❯ server/routes/__tests__/tenant-config-audit.test.ts:174:29
+    172|     (h.tenant!.settings.security as Record<string, unknown>).samlSigni…
+    173|     await request(app).patch(`/api/tenant-config/${ORG}/settings/secur…
+    174|     expect(auditText()).not.toContain('stored-signing-secret');
+       |                             ^
+    175|   });
+    176| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/routes/__tests__/tenant-config-audit.test.ts > a reset to defaults is recorded > POST /settings/reset: one tenant_settings_reset row naming every section, with the security and retention values
+AssertionError: expected { before: { …(2) }, after: { …(3) } } to deeply equal { before: { …(1) }, after: { …(1) } }
+
+- Expected
++ Received
+
+  {
+    "after": {
+      "auditTrailRetentionDays": 3650,
++     "enforceStrictCompliance": true,
++     "requireQmpForAllProjects": true,
+    },
+    "before": {
+      "auditTrailRetentionDays": 365,
++     "requireQmpForAllProjects": false,
+    },
+  }
+
+ ❯ server/routes/__tests__/tenant-config-audit.test.ts:190:32
+    188|     expect(details.values.security.before).toMatchObject({ mfaRequired…
+    189|     expect(details.values.security.after).toMatchObject({ mfaRequired:…
+    190|     expect(details.values.qmp).toEqual({ before: { auditTrailRetention…
+       |                                ^
+    191|   });
+    192| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 4 passed (8)
+   Start at  03:16:03
+   Duration  3.55s (transform 1.56s, setup 158ms, import 359ms, tests 2.39s, environment 0ms)
+

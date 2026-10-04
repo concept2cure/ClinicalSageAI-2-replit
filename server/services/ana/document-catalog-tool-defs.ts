@@ -109,12 +109,13 @@ export const CATALOG_PROJECT_DOCUMENT: AnaTool = {
 export const SEARCH_PROJECT_DOCUMENTS: AnaTool = {
   name: 'search_project_documents',
   description:
-    'Semantic search over the CATALOGED project files — "which of the client\'s documents covers X?". Matches ' +
-    'against the comprehension records written by catalog_project_document (kind, purpose, summary, key data ' +
-    'after a full read), so every hit is a document that has actually been studied. The response also states how ' +
-    'many documents are NOT yet searchable (uncataloged or failed extraction) — absence from these results never ' +
-    'means the file does not exist; use list_project_documents for full discovery. If the semantic index is ' +
-    'unavailable the tool says so instead of returning an empty result.',
+    'Search the client\'s Vault documents — "which of the client\'s documents covers X?". Always available: it ' +
+    'matches the words of the query against every current document\'s title, file name and full extracted text ' +
+    '(the same search the Vault gives users), ranks documents that match more of the words higher, and returns a ' +
+    'snippet for a match in the body. Prefer distinctive terms (study ids, batch numbers, product names, CTD ' +
+    'sections). When the organisation\'s catalog is on and a semantic index is available, documents matching by ' +
+    'meaning are added (matchedBy "meaning", with the recorded summary and key data). A text match means the ' +
+    'words appear, not that the document answers the question: read_project_document before relying on it.',
   input_schema: {
     type: 'object',
     properties: {

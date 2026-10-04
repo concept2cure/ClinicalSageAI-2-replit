@@ -1,0 +1,22 @@
+ ✓ server/api/cmc/__tests__/module3ProjectScope.test.ts > module3-os — another organization's project > post /source-objects/foreign-proj is not found, and nothing is read or written 29ms
+ ✓ server/api/cmc/__tests__/module3ProjectScope.test.ts > module3-os — another organization's project > post /compile/foreign-proj is not found, and nothing is read or written 5ms
+ ✓ server/api/cmc/__tests__/module3ProjectScope.test.ts > module3-os — another organization's project > post /source-changed/foreign-proj is not found, and nothing is read or written 6ms
+ ✓ server/api/cmc/__tests__/module3ProjectScope.test.ts > module3-os — another organization's project > get /sections/foreign-proj is not found, and nothing is read or written 6ms
+ ✓ server/api/cmc/__tests__/module3ProjectScope.test.ts > module3-os — another organization's project > get /sections/foreign-proj/3.2.P.5 is not found, and nothing is read or written 5ms
+ ✓ server/api/cmc/__tests__/module3ProjectScope.test.ts > module3-os — another organization's project > get /provenance/foreign-proj/3.2.P.5 is not found, and nothing is read or written 10ms
+ ✓ server/api/cmc/__tests__/module3ProjectScope.test.ts > module3-os — another organization's project > get /readiness/foreign-proj is not found, and nothing is read or written 3ms
+ ✓ server/api/cmc/__tests__/module3ProjectScope.test.ts > module3-os — another organization's project > post /sections/foreign-proj/3.2.P.5/approve is not found, and nothing is read or written 5ms
+ ✓ server/api/cmc/__tests__/module3ProjectScope.test.ts > module3-os — another organization's project > post /sections/foreign-proj/3.2.P.5/refresh is not found, and nothing is read or written 7ms
+ ✓ server/api/cmc/__tests__/module3ProjectScope.test.ts > module3-os — another organization's project > post /guard/final-export/foreign-proj is not found, and nothing is read or written 3ms
+ ✓ server/api/cmc/__tests__/module3ProjectScope.test.ts > module3-os — another organization's project > post /place-into-submission/foreign-proj is not found, and nothing is read or written 2ms
+ × server/api/cmc/__tests__/module3ProjectScope.test.ts > module3-os — another organization's project > get /api/cmc/module3-build/build-state/foreign-proj is not found — never an empty build state — and nothing is read or written 24ms
+ × server/api/cmc/__tests__/module3ProjectScope.test.ts > module3-os — another organization's project > get /api/cmc/module3-build/uploaded-sources/foreign-proj is not found — never an empty build state — and nothing is read or written 5ms
+ × server/api/cmc/__tests__/module3ProjectScope.test.ts > module3-os — another organization's project > post /api/cmc/module3-convergence/classify-artifact/foreign-proj is not found — never an empty build state — and nothing is read or written 8ms
+ × server/api/cmc/__tests__/module3ProjectScope.test.ts > module3-os — another organization's project > post /api/cmc/module3-convergence/build-section/foreign-proj/3.2.P.5 is not found — never an empty build state — and nothing is read or written 6ms
+ × server/api/cmc/__tests__/module3ProjectScope.test.ts > module3-os — another organization's project > get /api/cmc/module3-convergence/source-lineage/foreign-proj/3.2.P.5 is not found — never an empty build state — and nothing is read or written 5ms
+ ✓ server/api/cmc/__tests__/module3ProjectScope.test.ts > module3-os — another organization's project > the organization asked about is the caller's own 7ms
+ ✓ server/api/cmc/__tests__/module3ProjectScope.test.ts > module3-os — another organization's project > a project lookup that cannot complete is a 500, never a "not found" 4ms
+ ✓ server/api/cmc/__tests__/module3ProjectScope.test.ts > module3-os — another organization's project > with no organization in context, the handler's own refusal stands and no project is looked up 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  5 failed | 14 passed (19)

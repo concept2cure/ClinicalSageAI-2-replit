@@ -13,8 +13,10 @@ import {
   assertAuditSealPostureForProduction,
   assertAuditChainSecretForProduction,
 } from '../services/audit/auditSealPosture';
+import { assertAuditExportKeyPostureForProduction } from '../services/audit/auditExportKeyPosture';
 import {
   assertAiGovernancePostureForProduction,
+  assertAiProviderElectionPostureForProduction,
   assertDeterministicModePostureForProduction,
 } from '../startup/ai-governance-posture';
 import { assertSensitivePlacementConfiguration } from '../services/ai-gateway/sensitive-placement-policy';
@@ -306,6 +308,15 @@ assertAuditSealPostureForProduction();
 // records to stdout. A refusal a caller can catch is not a boot gate; this is.
 assertAuditChainSecretForProduction();
 
+// Audit EXPORT signing key: the third audit key, the one an inspector's signed
+// export is sealed under (P1-19b, DP-11). In production it must be provisioned
+// (>= 32 chars, distinct from the JWT secret), and its _PREV pair, if set,
+// complete and distinct; there is no accept flag. Before this, a deployment
+// without it sealed every export under the JWT secret, silently. Fires on
+// import (same contract as the asserts above). No-op outside production.
+// See server/services/audit/auditExportKeyPosture.ts.
+assertAuditExportKeyPostureForProduction();
+
 // AI-governance boot posture (runbook B19/B20, 2026-09-20): in production the
 // two AI content-safety gates default STRICT — AI_PII_ENFORCEMENT unset means
 // 'block', AI_GROUNDEDNESS_ENFORCE unset means enforced. An explicit permissive
@@ -322,6 +333,10 @@ assertAiGovernancePostureForProduction();
 // that risk, and AI_GOVERNANCE_REQUIRE_ENFORCE=true refuses it regardless. The
 // gateway enforces the same rule per request. No-op outside production.
 assertDeterministicModePostureForProduction();
+// Provider election (ADR-0014 §1, P1-45): Moonshot (Kimi) is not a production
+// lane for any organization, so KIMI_API_KEY / MOONSHOT_API_KEY refuse to boot.
+// No acceptance flag. No-op outside production.
+assertAiProviderElectionPostureForProduction();
 assertSensitivePlacementConfiguration();
 // Private-cloud residency (D6, 2026-09-25): a declared AI_BEDROCK_RESIDENCY /
 // AI_VERTEX_RESIDENCY that the region the client calls does not serve refuses

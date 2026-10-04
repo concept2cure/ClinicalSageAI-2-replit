@@ -608,6 +608,9 @@ describe.skipIf(!fsSync.existsSync(NIVD_TEMPLATE))(
             byteLength: PDF.length,
             sha256: createHash('sha256').update(PDF).digest('hex'),
             token: '<<Cover Letter.pdf|/CHAPTER 1/CH1.01/>>',
+            // Which document it was, not only its bytes' hash: the Vault
+            // version a reviewer can open (plan critique 15, where-used).
+            source: { kind: 'vault_document', documentId: 'd1' },
           },
         ],
       });

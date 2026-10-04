@@ -1,0 +1,2 @@
+[ci:migration-prefix-collisions] OK — no NEW collisions (3 baselined collision prefix(es) tolerated)
+exit 0

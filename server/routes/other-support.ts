@@ -5,8 +5,8 @@
  * funding-source entries, read the committed person-month summary, read disclosure
  * readiness, and certify behind the deterministic readiness gate (effort
  * overcommitment + missing major-goals/overlap/foreign-country blockers). Every
- * mutation runs BEGIN → Tx → recordGovernedAction → COMMIT, org-scoped. Mounted at
- * /api/other-support.
+ * mutation runs BEGIN → Tx → recordGovernedAction → COMMIT, org-scoped; certify is
+ * an electronic signature (governed-signed-act.ts). Mounted at /api/other-support.
  *
  * @module server/routes/other-support
  */
@@ -15,6 +15,8 @@ import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import { pool } from '../db';
 import { recordGovernedAction } from './c2c/actions';
+import { signedActAttempts, signGovernedAct } from './governed-signed-act';
+import { DECISION_ACT_MEANINGS } from '../services/part11/signature-meanings';
 import {
   createDocumentTx,
   addEntryTx,
@@ -178,15 +180,20 @@ router.patch('/entries/:id', async (req, res) => {
 
 // ─── Certify ───────────────────────────────────────────────────────────────
 
-router.post('/documents/:id/certify', async (req, res) => {
+// Certifying is an electronic signature (P0-10a): governed-signed-act.ts.
+router.post('/documents/:id/certify', signedActAttempts, async (req, res) => {
   const documentId = Number(req.params.id);
   if (!Number.isInteger(documentId)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
-  const parsed = z.object({ reason }).safeParse(req.body ?? {});
-  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
-  await governed(req, res, 'sign', parsed.data.reason, async (client, orgId, userId) => {
-    const result = await certifyDocumentTx(client, orgId, userId, documentId);
-    recordOtherSupportCertified();
-    return { target: `other-support:${documentId}`, payload: { activePersonMonths: result.readiness.summary.active.total }, body: { documentId, ...result } };
+  await signGovernedAct(req, res, {
+    domain: 'protocol_development',
+    target: `other-support:${documentId}`,
+    meanings: DECISION_ACT_MEANINGS,
+    codeStatus: CODE_STATUS,
+    run: async (client, orgId, userId) => {
+      const result = await certifyDocumentTx(client, orgId, userId, documentId);
+      recordOtherSupportCertified();
+      return { target: `other-support:${documentId}`, payload: { activePersonMonths: result.readiness.summary.active.total }, body: { documentId, ...result } };
+    },
   });
 });
 

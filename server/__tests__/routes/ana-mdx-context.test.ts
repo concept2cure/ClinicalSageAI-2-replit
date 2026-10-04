@@ -106,10 +106,29 @@ describe('GET /api/ana/mdx-context-snapshot', () => {
     );
   });
 
-  it('returns 500 with detail when the resolver throws', async () => {
-    resolverMock.mockRejectedValue(new Error('boom'));
-    const res = await request(app).get('/api/ana/mdx-context-snapshot');
+  /* D6 / IAM-18 (1), P1-17 paydown 2. This case used to PIN the leak: it asserted
+     that `detail` carried the thrower's text. A resolver failure is a driver
+     error in practice, and its text is a relation name; the client gets the
+     envelope and the request id, the text goes to the log. */
+  it('a resolver failure answers 500 with the envelope, never the thrower\'s text', async () => {
+    const boom = new Error('relation "mdx_context_snapshots" does not exist') as Error & { code: string };
+    boom.code = '42P01';
+    resolverMock.mockRejectedValue(boom);
+    const withRequestId = express();
+    withRequestId.use((_req, res, next) => {
+      res.setHeader('X-Request-Id', 'req-p1-17-2');
+      next();
+    });
+    withRequestId.use('/api/ana', (await import('../../routes/ana-mdx-context')).default);
+
+    const res = await request(withRequestId).get('/api/ana/mdx-context-snapshot');
+
     expect(res.status).toBe(500);
-    expect(res.body.detail).toContain('boom');
+    expect(res.body.error).toBe('INTERNAL_ERROR');
+    expect(res.body.correlationId).toBe('req-p1-17-2');
+    expect(res.body.detail).toBeUndefined();
+    const body = JSON.stringify(res.body);
+    expect(body).not.toContain('mdx_context_snapshots');
+    expect(body).not.toMatch(/relation |does not exist|42P01/i);
   });
 });

@@ -1,0 +1,34 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T19:04:15.869Z","pid":26372,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T19:04:15.871Z","pid":26372,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T19:04:15.871Z","pid":26372,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/platform-role-grant-record.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/platform-role-grant-record.dbtest.ts > a platform role grant and its record commit together (DP-75) > runs as a role RLS applies to (not the owner, not BYPASSRLS) 4ms
+stdout | tests/db/platform-role-grant-record.dbtest.ts > a platform role grant and its record commit together (DP-75) > writes the grant and one chained platform row with its reason
+[database] Database connection successful
+
+stdout | tests/db/platform-role-grant-record.dbtest.ts > a platform role grant and its record commit together (DP-75) > writes the grant and one chained platform row with its reason
+[database] Database connection successful { timestamp: '2026-10-01T19:04:16.505Z', poolSize: 1 }
+
+{"level":40,"time":"2026-10-01T19:04:16.525Z","pid":26372,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:04:16.527Z","pid":26372,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+ ✓ tests/db/platform-role-grant-record.dbtest.ts > a platform role grant and its record commit together (DP-75) > writes the grant and one chained platform row with its reason 134ms
+{"level":40,"time":"2026-10-01T19:04:16.581Z","pid":26372,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:04:16.583Z","pid":26372,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":50,"time":"2026-10-01T19:04:16.591Z","pid":26372,"hostname":"vm","context":{"userId":3590,"role":"platform_admin","error":"refused by the DP-75 dbtest"},"msg":"[admin-access-management] Grant not recorded; rolled back"}
+{"level":40,"time":"2026-10-01T19:04:16.610Z","pid":26372,"hostname":"vm","context":{"caller":"read","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":40,"time":"2026-10-01T19:04:16.613Z","pid":26372,"hostname":"vm","context":{"caller":"activity","error":"relation \"session_activity\" does not exist"},"msg":"[session-inactivity] Session store could not be reached; this process's memory decides"}
+{"level":30,"time":"2026-10-01T19:04:16.623Z","pid":26372,"hostname":"vm","context":{"userId":3593,"tenantId":0,"resourceId":"3590:support"},"msg":"[audit-service] [AUDIT] data_modify platform_role_grant"}
+ ✓ tests/db/platform-role-grant-record.dbtest.ts > a platform role grant and its record commit together (DP-75) > when the record is refused, nothing is granted: 503, no grant row, no record 31ms
+ ✓ tests/db/platform-role-grant-record.dbtest.ts > a platform role grant and its record commit together (DP-75) > a revocation stands and says its row was written 41ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  19:04:13
+   Duration  3.29s (transform 1.28s, setup 110ms, import 2.28s, tests 549ms, environment 0ms)
+
+exit 0

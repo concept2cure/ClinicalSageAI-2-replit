@@ -84,8 +84,8 @@ import { setTenantContextTx } from '../services/tenant/governed-tenant-context.j
 import {
   AUDIT_CHAIN_HEAD_ORDER_SQL,
   AUDIT_CHAIN_ORDER_ASC_SQL,
-  type ChainVerificationResult,
 } from '../services/audit/chain.js';
+import { tenantChainVerdict } from '../services/audit/audited-export.js';
 
 const logger = createScopedLogger('audit-trail-ledger-routes');
 
@@ -453,6 +453,12 @@ function withSignature(entry: AuditLedgerEntry, sig: LinkedSignature | undefined
  * rows only (the WHERE is applied before it), so nothing of another tenant is
  * read; the prev_hash of the chain's first row is NULL → 'genesis'.
  */
+// The actor's name comes from public.actor_name, not a join on users: since
+// users took row-level security (2026-09-28) a tenant scope reads only its own
+// current members, so someone who acted here and then left read `user <id>`.
+// actor_name answers name and email only, for members of this organization and
+// actors in its own audit trail (migrations/20260929_actor_names.sql;
+// docs/evidence/D3/2026-09-29-actor-names/).
 const AUDIT_LOGS_SQL = `
   WITH chained AS (
     SELECT a.id, a.action, a.actor_id, a.target, a.table_name, a.record_id, a.reason,
@@ -468,7 +474,7 @@ const AUDIT_LOGS_SQL = `
          u.name  AS user_name,
          u.email AS user_email
     FROM chained c
-    LEFT JOIN users u ON u.id = c.actor_id
+    LEFT JOIN LATERAL public.actor_name(c.actor_id) u ON TRUE
    ORDER BY ${AUDIT_CHAIN_HEAD_ORDER_SQL}
    LIMIT $2`;
 
@@ -504,9 +510,35 @@ const AUDIT_EVENTS_SQL = `
  * verdict. audit_events has its own per-organisation chain and is not covered
  * here (`store` says so).
  */
-export interface AuditLedgerChainVerdict extends Omit<ChainVerificationResult, 'tenants'> {
+/**
+ * The tenant chain's verdict as this organization may read it
+ * (services/audit/audited-export.ts tenantChainVerdict): `ok: null` with a
+ * `reason` when there was nothing to verify or the anchor could not be read
+ * (fix round DP-72), and a break that names only this organization's own rows.
+ */
+export interface AuditLedgerChainVerdict {
   store: 'audit_logs';
+  ok: boolean | null;
+  rowsChecked: number;
+  legacyRows: number;
+  sequencedRows: number;
+  reason?: string;
+  brokenAt?: Record<string, unknown>;
+  /**
+   * The chain head against the latest anchor, this organisation's only
+   * (tenant-chain-verdict.ts): verified, broken with its breaks, or a reason
+   * beginning "head not verified against the anchor" (fix round DP-71).
+   */
+  head?: TenantChainHead;
 }
+
+/** The verifier's walk, stated for `orgId`. */
+const ledgerVerdict = (orgId: number, v: Awaited<ReturnType<TenantChainVerifier>>): AuditLedgerChainVerdict => ({
+  store: 'audit_logs',
+  legacyRows: v.legacyRows,
+  sequencedRows: v.sequencedRows,
+  ...tenantChainVerdict(orgId, v),
+});
 
 export interface AuditLedgerResponse {
   success: true;
@@ -530,6 +562,7 @@ export interface AuditLedgerResponse {
 export type { TenantChainVerifier } from '../services/audit/tenant-chain-verdict.js';
 import {
   verifyTenantChainOnAdminScope as verifyOnSuperAdminScope,
+  type TenantChainHead,
   type TenantChainVerifier,
 } from '../services/audit/tenant-chain-verdict.js';
 
@@ -553,15 +586,7 @@ export async function readAuditLedger(
   const sources: Record<AuditLedgerSource, number> = { audit_logs: 0, audit_events: 0 };
   for (const e of merged) sources[e.source] += 1;
   // Whole chain (not the window), on a scope that can see cross-tenant legacy links.
-  const v = await verifyTenantChain(orgId);
-  const chain: AuditLedgerChainVerdict = {
-    store: 'audit_logs',
-    ok: v.ok,
-    rowsChecked: v.rowsChecked,
-    legacyRows: v.legacyRows,
-    sequencedRows: v.sequencedRows,
-    ...(v.brokenAt ? { brokenAt: v.brokenAt } : {}),
-  };
+  const chain = ledgerVerdict(orgId, await verifyTenantChain(orgId));
   return { success: true, data: merged, sources, meta: { chain } };
 }
 
@@ -594,10 +619,10 @@ const RECORD_HISTORY_SQL = `
        ORDER BY p.chain_seq DESC
        LIMIT 1
     ) prev ON TRUE
-    LEFT JOIN users u ON u.id = a.actor_id
+    LEFT JOIN LATERAL public.actor_name(a.actor_id) u ON TRUE
    WHERE a.tenant_id = $1
      AND a.table_name = $2
-     AND a.record_id = $3
+     AND a.record_id = ANY($3::text[])
      AND a.sha256_chain IS NOT NULL
    ORDER BY a.chain_seq DESC NULLS LAST, a.occurred_at DESC, a.id DESC
    LIMIT $4`;
@@ -610,30 +635,19 @@ export interface RecordAuditHistory {
 export async function readRecordAuditHistory(
   client: Pick<PoolClient, 'query'>,
   orgId: number,
-  record: { tableName: string; recordId: string; limit?: number },
+  /** One record, or several read as one history: a Vault document's versions (VR-09). */
+  record: { tableName: string; recordId: string | string[]; limit?: number },
   verifyTenantChain: TenantChainVerifier = verifyOnSuperAdminScope,
 ): Promise<RecordAuditHistory> {
   const limit = Math.min(Math.max(record.limit ?? 200, 1), 1000);
-  const rows = await client.query(RECORD_HISTORY_SQL, [orgId, record.tableName, record.recordId, limit]);
+  const ids = Array.isArray(record.recordId) ? record.recordId : [record.recordId];
+  const rows = await client.query(RECORD_HISTORY_SQL, [orgId, record.tableName, ids, limit]);
   const signatures = await linkedSignatures(client, orgId, rows.rows as Record<string, unknown>[]);
   const data = rows.rows.map((r: Record<string, unknown>) => ({
     ...withSignature(auditLogEntry(r), signatures.get(String(r.id))),
     prevHash: r.prev_hash == null ? '' : String(r.prev_hash),
   }));
-  const v = await verifyTenantChain(orgId);
-  return {
-    data,
-    meta: {
-      chain: {
-        store: 'audit_logs',
-        ok: v.ok,
-        rowsChecked: v.rowsChecked,
-        legacyRows: v.legacyRows,
-        sequencedRows: v.sequencedRows,
-        ...(v.brokenAt ? { brokenAt: v.brokenAt } : {}),
-      },
-    },
-  };
+  return { data, meta: { chain: ledgerVerdict(orgId, await verifyTenantChain(orgId)) } };
 }
 
 // ─── Router Factory ───────────────────────────────────────────────────────────

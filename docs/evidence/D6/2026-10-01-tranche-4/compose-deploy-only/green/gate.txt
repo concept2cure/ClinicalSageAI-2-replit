@@ -1,0 +1,2 @@
+[ci:compose-boot-contract] OK — 2 production Compose stack(s) carry the boot contract (28 preflight names + ALLOWED_ORIGINS).
+exit 0

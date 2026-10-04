@@ -172,6 +172,73 @@ describe('authorizeCommand — role enforcement on mutations', () => {
   });
 });
 
+/* DP-53 (security audit 2026-09-24), plan P1-42. `audit.explain` reads one
+   audit_logs row — with the actor's IP address and user agent — and had no
+   role tier, so any member of the organisation could have AnA read it to them.
+   It now carries the audit-reader tier (owner/admin/manager in
+   audit-api-authority's AUDIT_READER_ROLES; 'manager' in the RBAC hierarchy
+   admits manager, admin and super_admin), and the tier is enforced for a READ:
+   until this change the read branch returned ok before any role was looked
+   at, so a minRole on a read would have been decoration. */
+describe('authorizeCommand — audit.explain is limited to the audit-reader tier', () => {
+  /** hasRole that answers like the real hierarchy for a caller holding `held`. */
+  function holds(held: 'viewer' | 'member' | 'manager' | 'admin') {
+    const level = { viewer: 0, member: 1, manager: 2, admin: 3 } as const;
+    rbac.hasRole.mockImplementation((async (_u: number, required: keyof typeof level) => level[held] >= level[required]) as any);
+  }
+
+  it.each(['viewer', 'member'] as const)('REFUSES a %s (RBAC_DENIED), naming the manager tier', async (role) => {
+    holds(role);
+    const decision = await authorizeCommand('audit.explain', ctx());
+    expect(decision.ok).toBe(false);
+    if (decision.ok) return;
+    expect(decision.result.error).toBe('RBAC_DENIED');
+    expect(decision.result.message).toContain('manager');
+    expect(rbac.hasRole).toHaveBeenCalledWith(7, 'manager', 3);
+  });
+
+  it.each(['manager', 'admin'] as const)('ADMITS a %s', async (role) => {
+    holds(role);
+    await expect(authorizeCommand('audit.explain', ctx())).resolves.toEqual({ ok: true });
+    expect(rbac.hasRole).toHaveBeenCalledWith(7, 'manager', 3);
+  });
+
+  it('REFUSES when the role lookup throws (fail closed)', async () => {
+    rbac.hasRole.mockRejectedValue(new Error('connection lost'));
+    const decision = await authorizeCommand('audit.explain', ctx());
+    expect(decision.ok).toBe(false);
+    if (decision.ok) return;
+    expect(decision.result.error).toBe('RBAC_DENIED');
+  });
+
+  it('REFUSES without a provable identity, before any role lookup', async () => {
+    const decision = await authorizeCommand('audit.explain', ctx({ userId: 0 }));
+    expect(decision.ok).toBe(false);
+    if (decision.ok) return;
+    expect(decision.result.error).toBe('RBAC_CONTEXT_MISSING');
+    expect(rbac.hasRole).not.toHaveBeenCalled();
+  });
+
+  it('a self-asserted ctx.userRole does not stand in for the RBAC lookup', async () => {
+    holds('member');
+    const decision = await authorizeCommand('audit.explain', ctx({ userRole: 'admin' }));
+    expect(decision.ok).toBe(false);
+  });
+
+  it('stays a read: the tier is checked while governance is unresolved, and a manager is still admitted', async () => {
+    holds('manager');
+    await expect(authorizeCommand('audit.explain', ctx({ governanceUnavailable: true }))).resolves.toEqual({ ok: true });
+    holds('member');
+    const decision = await authorizeCommand('audit.explain', ctx({ governanceUnavailable: true }));
+    expect(decision.ok).toBe(false);
+  });
+
+  it('leaves untiered reads open to every member without a role lookup', async () => {
+    await expect(authorizeCommand('list_projects', ctx())).resolves.toEqual({ ok: true });
+    expect(rbac.hasRole).not.toHaveBeenCalled();
+  });
+});
+
 describe('authorizeCommand — fail-closed governance', () => {
   it('BLOCKS every mutation when tenant governance config could not be resolved', async () => {
     rbac.hasRole.mockResolvedValue(true); // role is fine; governance is not
@@ -275,11 +342,15 @@ describe('authorization registry — total coverage (anti-drift CI guard)', () =
     expect(unguarded, `write commands with no minRole: ${unguarded.join(', ')}`).toEqual([]);
   });
 
-  it('never puts a role tier on a plain read (reads are not RBAC-gated)', () => {
-    const odd = Object.entries(COMMAND_AUTHORIZATION)
+  it('puts a role tier on a read only where the read returns the audit trail (audit.explain, manager)', () => {
+    // Reads are open to every member by default (the degraded-read mode). The
+    // exception is a read whose result is an audit row with the actor's IP and
+    // user agent: that is the audit-reader set's data (DP-53, P1-42), and the
+    // tier is ENFORCED for it (see 'audit.explain — audit-reader tier').
+    const tiered = Object.entries(COMMAND_AUTHORIZATION)
       .filter(([, a]) => a.effect === 'read' && a.minRole)
-      .map(([n]) => n);
-    expect(odd).toEqual([]);
+      .map(([n, a]) => [n, a.minRole]);
+    expect(tiered).toEqual([['audit.explain', 'manager']]);
   });
 
   it('marks every dispatchable Part 11 governed command as a manager-tier write', () => {
@@ -308,5 +379,51 @@ describe('authorization registry — total coverage (anti-drift CI guard)', () =
       (n) => COMMAND_AUTHORIZATION[n]?.effect === 'read',
     );
     expect(reads).toEqual([]);
+  });
+});
+
+/* Launch scope (D2/D6, 2026-09-29). The API has refused hidden apps' routes
+   since 2026-09-25 and AnA has not been offered their tools since 2026-09-26,
+   but execute_platform_command, /execute, /governed-action and chat command
+   blocks all dispatch here by name. A command classified hiddenApp in
+   services/ana/ana-launch-scope.inventory.json is refused whenever launch
+   scope is enforced (production by default), reads included, before any
+   tenant policy or role check. */
+describe('launch scope', () => {
+  const HIDDEN = ['pdev.program.get', 'q_sub.create', 'post_market.document.create', 'cmc_status', 'search_precedents'];
+  const KEPT = ['list_projects', 'create_task', 'audit.explain', 'module3_build_all'];
+
+  it('refuses a hidden-app command in production, read or write, whatever the role', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('LAUNCH_SCOPE_ENFORCE', '');
+    rbac.hasRole.mockResolvedValue(true);
+    rbac.getUserRoles.mockResolvedValue(['admin', 'regulatory-author', 'reviewer']);
+    for (const cmd of HIDDEN) {
+      const d = await authorizeCommand(cmd, ctx());
+      expect(d.ok, cmd).toBe(false);
+      expect((d as any).result.error, cmd).toBe('LAUNCH_SCOPE');
+    }
+    vi.unstubAllEnvs();
+  });
+
+  it('leaves in-scope commands to the normal checks', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('LAUNCH_SCOPE_ENFORCE', '');
+    rbac.hasRole.mockResolvedValue(true);
+    rbac.getUserRoles.mockResolvedValue(['admin', 'regulatory-author', 'reviewer']);
+    for (const cmd of KEPT) {
+      const d = await authorizeCommand(cmd, ctx());
+      expect((d as any).result?.error, cmd).not.toBe('LAUNCH_SCOPE');
+    }
+    vi.unstubAllEnvs();
+  });
+
+  it('with launch scope off (a development server), a hidden-app command reaches the normal checks', async () => {
+    vi.stubEnv('LAUNCH_SCOPE_ENFORCE', 'off');
+    rbac.hasRole.mockResolvedValue(true);
+    rbac.getUserRoles.mockResolvedValue(['admin', 'regulatory-author', 'reviewer']);
+    const d = await authorizeCommand('pdev.program.get', ctx());
+    expect((d as any).result?.error).not.toBe('LAUNCH_SCOPE');
+    vi.unstubAllEnvs();
   });
 });

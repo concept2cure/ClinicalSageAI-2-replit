@@ -1,0 +1,126 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/audit-trail-ledger.routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/vault-document-history.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/vault-document-history.pglite.test.ts
+{
+  "timestamp": "2026-09-29T01:14:15.680Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/audit-trail-ledger.routes.test.ts
+{
+  "timestamp": "2026-09-29T01:14:15.679Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ client/src/concept2cure/v2/__tests__/auditTrailSignedRow.test.tsx > Audit trail — a signed act > shows the signed mark on the signed row only, named for a reader 258ms
+ ✓ client/src/concept2cure/v2/__tests__/auditTrailSignedRow.test.tsx > Audit trail — a signed act > the drawer keeps the record’s reference and names the signature record 86ms
+ ✓ client/src/concept2cure/v2/__tests__/auditTrailSignedRow.test.tsx > Audit trail — a signed act > finds the row by its record reference, though the table shows its name 36ms
+stdout | server/routes/c2c/__tests__/vault-document-history.pglite.test.ts
+{
+  "timestamp": "2026-09-29T01:14:16.456Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-29T01:14:16.456Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/vault-document-history.pglite.test.ts
+{
+  "timestamp": "2026-09-29T01:14:16.457Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/vault-document-history-route.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/vault-document-history-route.test.ts
+{
+  "timestamp": "2026-09-29T01:14:17.192Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/vault-document-history-route.test.ts
+{
+  "timestamp": "2026-09-29T01:14:17.508Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-09-29T01:14:17.508Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/vault-document-history-route.test.ts
+{
+  "timestamp": "2026-09-29T01:14:17.508Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/vault-document-history-route.test.ts > document history route > a failed read is an error, never an empty history
+{
+  "timestamp": "2026-09-29T01:14:17.657Z",
+  "level": "error",
+  "message": "[c2c-project-vault-routes] vault document history read failed",
+  "context": {
+    "documentId": "22222222-2222-4222-8222-222222222222",
+    "err": "boom"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/vault-document-history-route.test.ts > document history route > reads this document's rows from the ledger, in a tenant-stamped transaction 54ms
+ ✓ server/routes/c2c/__tests__/vault-document-history-route.test.ts > document history route > 404s a document that is not this program's or this org's, and reads nothing 9ms
+ ✓ server/routes/c2c/__tests__/vault-document-history-route.test.ts > document history route > a failed read is an error, never an empty history 8ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > shows a governed write the moment it is chained (audit_logs), labelled by source 76ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > never shows another tenant's governed writes (organisation from the verified JWT) 21ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > merges audit_events (SCIM / projects-management / IVDR) newest-first with their own chain values 25ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > applies limit across both stores 20ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > refuses a member (403) before reading anything: the ledger names every user in the organisation 5ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > refuses without tenant context (403) rather than reading anything 7ms
+ ✓ server/routes/c2c/__tests__/vault-document-history.pglite.test.ts > a Vault download joins the sequenced chain > is written as a sequenced row, not a legacy one 23ms
+ ✓ server/routes/c2c/__tests__/vault-document-history.pglite.test.ts > a Vault download joins the sequenced chain > leaves the tenant chain verifiable 28ms
+ ✓ server/routes/c2c/__tests__/vault-document-history.pglite.test.ts > readRecordAuditHistory — one document, from the one ledger > lists this document's events only, newest first, with who did them 28ms
+ ✓ server/routes/c2c/__tests__/vault-document-history.pglite.test.ts > readRecordAuditHistory — one document, from the one ledger > names each row's predecessor in the TENANT chain, not the document's previous row 14ms
+ ✓ server/routes/c2c/__tests__/vault-document-history.pglite.test.ts > readRecordAuditHistory — one document, from the one ledger > carries the tenant chain verdict, not a verdict of its own 6ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger > fails closed (503, not an empty ledger) when the chained schema is missing 1785ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — the verdict sees cross-tenant legacy links > verifies a legacy row that linked to ANOTHER tenant's head (the pre-fix global recipe) 23ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — an entry names the account that acted (F-42) > tells apart two accounts that share a display name 18ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — an entry names the account that acted (F-42) > names the account on an audit_events entry too, and names none for the system 10ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row > an SOP approval: signed, the declared meaning, the act and the document named, linked to its signature row 20ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row > a document e-sign: signed, by the signature the row records — for that document only 22ms
+ ✓ server/routes/__tests__/audit-trail-ledger.routes.test.ts > GET /api/audit-trail/ledger — a signed act shows as signed, from its signature row > claims nothing it cannot link: no signature row, or another organisation’s, leaves the row unsigned 21ms
+
+ Test Files  4 passed (4)
+      Tests  24 passed (24)
+   Start at  01:14:13
+   Duration  7.36s (transform 3.10s, setup 328ms, import 6.75s, tests 8.73s, environment 593ms)
+

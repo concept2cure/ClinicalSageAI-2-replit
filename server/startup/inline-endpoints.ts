@@ -718,10 +718,17 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
           .json({ error: 'Shadow service health check failed', details: payload });
       }
       return res.json(payload);
-    } catch (error: any) {
-      return res
-        .status(502)
-        .json({ error: 'Shadow service unavailable', message: error?.message || 'Unknown error' });
+    } catch (error) {
+      // Mounted behind the auth boundary but not operator-gated: every
+      // signed-in user of every tenant reaches it. The transport's text names
+      // the shadow service's internal host and port (ECONNREFUSED 10.x:8001),
+      // so it goes to the log; the 502 keeps its status and sentence (P1-17,
+      // IAM-18 (1)).
+      logger.error('shadow health probe failed', {
+        err: error instanceof Error ? error.message : String(error),
+        correlationId: res.getHeader('X-Request-Id') ?? null,
+      });
+      return res.status(502).json({ error: 'Shadow service unavailable' });
     }
   });
 }

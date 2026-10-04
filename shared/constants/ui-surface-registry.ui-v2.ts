@@ -126,7 +126,9 @@ export const UI_V2_SURFACES: UiSurface[] = [
     icon: 'workflow',
     uiKit: 'biopharma',
     // Launch-scope API (2026-09-25, ci:launch-scope-api): BiopharmaJourney reads the journey.
-    apiPrefixes: ['/api/biopharma/programs', '/api/rim', '/api/regulatory-correspondence', '/api/ectd', '/api/program-journey'],
+    // 2026-09-29: '/api/rim' removed: ProgramJourney does not call it; it is
+    // the hidden Registrations app's API.
+    apiPrefixes: ['/api/biopharma/programs', '/api/regulatory-correspondence', '/api/ectd', '/api/program-journey'],
     anaToolFamilies: ['plan_submission', 'assess_filing_readiness'],
     sharedContract: '@shared/types/submission-api',
     discoveryCatalog: null,
@@ -839,14 +841,45 @@ export const UI_V2_SURFACES: UiSurface[] = [
     group: 'evidence',
     icon: 'barChart',
     uiKit: null,
-    apiPrefixes: ['/api/report-os', '/api/insights'],
-    anaToolFamilies: ['list_report_types', 'generate_report', 'portfolio_readiness', 'compare_regions', 'get_prediction', 'explain_blockers'],
+    // Launch-scope API (2026-09-30, ci:launch-scope-api): the canvas reads its
+    // bootstrap from /api/insights-canvas, which a path-boundary match on
+    // /api/insights does not cover; unclaimed, production refused it.
+    // 2026-10-01 (reporting review, IAM-21 / DP-64): the surface claimed all of
+    // /api/report-os and /api/insights, so joining the launch catalog made 21
+    // routes no launch screen calls reachable in production: program groups,
+    // bundles, deliveries, subscriptions and the live prediction run among them.
+    // It now claims what the canvas calls (POST /runs, GET /runs/:id/rendered,
+    // POST /runs/:id/finalize, GET /runs/:id/export.pdf) and its bootstrap;
+    // /api/report-os/portfolio is AnA Command's. The rest stay unmapped, which
+    // production refuses, until a screen needs one.
+    apiPrefixes: ['/api/report-os/runs', '/api/insights-canvas'],
+    anaToolFamilies: ['list_report_types', 'generate_report', 'portfolio_readiness', 'compare_regions', 'explain_blockers'],
     sharedContract: null,
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
     notes: 'AnA Reporting Canvas — conversational governed reporting over the Report-OS render model, with a per-segment catalog, entitlement tiers and best-practice packs.',
     engineering: 'Contract ref (not yet a @shared file): server/services/report-os/taxonomy.ts.',
+  },
+  {
+    id: 'compliance-reports',
+    label: 'Audit & compliance reports',
+    navTier: 'project',
+    layoutMode: 'audit',
+    group: 'evidence',
+    icon: 'fileCheck',
+    uiKit: null,
+    // Launch-scope API (2026-09-30): the catalog and every run are under /api/audit,
+    // which is never gated (the audit trail is never switchable); the run is
+    // role-gated to organisation owners, admins and managers.
+    apiPrefixes: ['/api/audit'],
+    anaToolFamilies: [],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [PART11, A11Y, TONE],
+    notes: 'Reports an auditor or inspector asks an organisation for: user access review, sign-in and session events, administrative changes, the e-signature register, audit trail integrity, retention and legal holds, and the controlled document register. Each run is drawn from the organisation\'s own records, sealed, and recorded on the audit trail; what the platform does not record is listed with the report.',
+    engineering: 'server/services/audit/compliance-reports/ (catalog, queries, sealed generation); server/routes/audit-compliance-reports.ts; client/src/concept2cure/v2/surfaces/ComplianceReports.tsx.',
   },
   {
     id: 'pediatric',
@@ -1289,7 +1322,11 @@ export const UI_V2_SURFACES: UiSurface[] = [
     uiKit: null,
     // Launch-scope API (2026-09-25, ci:launch-scope-api): AdminAccess invites members.
     // '/api/mdx/admin' (2026-09-26): AdminAccess.tsx.
-    apiPrefixes: ['/api/admin/access', '/api/admin/scim-tenants', '/api/api-keys', '/api/setup', '/api/tenant-users', '/api/mdx/admin'],
+    // '/api/tenant-config' (2026-10-01, INF-35, P1-47): the organisation settings API is the
+    // admin console's. Admin → Settings reads and changes the connector for Claude there
+    // (ClaudeConnectorSetting.tsx). Its writes are admin-gated and audited through the one
+    // settings writer (server/services/tenant/tenant-settings-writer.ts).
+    apiPrefixes: ['/api/admin/access', '/api/admin/scim-tenants', '/api/api-keys', '/api/setup', '/api/tenant-users', '/api/mdx/admin', '/api/tenant-config'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,

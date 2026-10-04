@@ -7,8 +7,8 @@
  */
 
 import { pool } from '../../db.js';
-import crypto from 'crypto';
 import { isSafePublicUrl } from '../../utils/ssrfGuard.js';
+import { encryptCredential, decryptCredential } from '../security/credential-cipher.js';
 import {
   DataConnector,
   ConnectorQuery,
@@ -40,93 +40,46 @@ import { EllucianBannerConnector } from './ellucian-banner.js';
 // ENCRYPTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// Dedicated key only. Reusing JWT_SECRET as the AES key couples two unrelated
-// trust domains: a JWT-signing leak would also expose stored connector
-// credentials and vice versa. Require CONNECTOR_ENCRYPTION_KEY and refuse to
-// silently fall back to JWT_SECRET or a hardcoded value.
-const ENCRYPTION_KEY_FROM_ENV = process.env.CONNECTOR_ENCRYPTION_KEY;
-
-// Production must supply a real, dedicated key. Refuse to load with a hardcoded
-// fallback so encrypted connector credentials cannot be trivially decrypted by
-// anyone with code access.
-if (!ENCRYPTION_KEY_FROM_ENV && process.env.NODE_ENV === 'production') {
-  throw new Error(
-    'Connector credential encryption requires a dedicated CONNECTOR_ENCRYPTION_KEY ' +
-      'in production. Refusing to start without one (JWT_SECRET reuse and hardcoded ' +
-      'fallbacks are not permitted).'
-  );
-}
-
-const ENCRYPTION_KEY = ENCRYPTION_KEY_FROM_ENV || 'default-dev-key-change-in-prod';
-
-// Derive the AES key once per process. scryptSync is an intentionally expensive
-// KDF; recomputing it on every encrypt/decrypt was pure overhead since the
-// secret and salt are fixed. Cache keyed by the secret so a config change (or
-// test that mutates the secret) still derives correctly. Salt/derivation are
-// unchanged, so existing ciphertext remains decryptable.
-const derivedKeyCache = new Map<string, Buffer>();
-
-function getDerivedKey(secret: string): Buffer {
-  let key = derivedKeyCache.get(secret);
-  if (!key) {
-    key = crypto.scryptSync(secret, 'salt', 32);
-    derivedKeyCache.set(secret, key);
-  }
-  return key;
-}
-
-function encrypt(text: string): string {
-  const iv = crypto.randomBytes(16);
-  const key = getDerivedKey(ENCRYPTION_KEY);
-  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
-  let encrypted = cipher.update(text, 'utf8', 'hex');
-  encrypted += cipher.final('hex');
-  const authTag = cipher.getAuthTag().toString('hex');
-  return `${iv.toString('hex')}:${authTag}:${encrypted}`;
-}
-
-function decrypt(text: string): string {
-  const [ivHex, authTagHex, encryptedHex] = text.split(':');
-  const iv = Buffer.from(ivHex, 'hex');
-  const authTag = Buffer.from(authTagHex, 'hex');
-  const key = getDerivedKey(ENCRYPTION_KEY);
-  const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
-  decipher.setAuthTag(authTag);
-  let decrypted = decipher.update(encryptedHex, 'hex', 'utf8');
-  decrypted += decipher.final('utf8');
-  return decrypted;
-}
+// Encryption lives in ../security/credential-cipher.ts (shared with the agency
+// gateway accounts since 2026-10-01); it still refuses to load in production
+// without CONNECTOR_ENCRYPTION_KEY.
+const encrypt = encryptCredential;
+const decrypt = decryptCredential;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // REGISTRY
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// In-memory connector instances (shared, not org-specific)
-const connectors: Map<string, DataConnector> = new Map();
+// How to build each connector. Never a shared instance: getAuthenticatedConnector
+// writes the calling organization's credentials onto the instance, and the
+// Drive, Box and OneDrive connectors keep their access token while it is
+// valid — so one instance shared across tenants sent organization B's search
+// out with organization A's token (D6, 2026-10-01). One instance per call.
+const connectors: Map<string, () => DataConnector> = new Map();
 
 function initializeConnectors(): void {
   if (connectors.size > 0) return;
 
-  connectors.set('clinical_trials_gov', new ClinicalTrialsGovConnector());
-  connectors.set('pubmed', new PubMedConnector());
-  connectors.set('fda_drugs', new FDADrugsConnector());
-  connectors.set('ema_epar', new EMAEPARConnector());
+  connectors.set('clinical_trials_gov', () => new ClinicalTrialsGovConnector());
+  connectors.set('pubmed', () => new PubMedConnector());
+  connectors.set('fda_drugs', () => new FDADrugsConnector());
+  connectors.set('ema_epar', () => new EMAEPARConnector());
   // Live EU/global data connectors (close the geographic data gap).
-  connectors.set('eudamed', new EudamedConnector());
-  connectors.set('eu_ctis', new EuCtisConnector());
-  connectors.set('pmda_reviews', new PMDAConnector());
-  connectors.set('nmpa_cde', new NMPACDEConnector());
-  connectors.set('veeva_vault', new VeevaVaultConnector());
-  connectors.set('medidata_rave', new MedidataRaveConnector());
-  connectors.set('sharepoint', new SharePointConnector());
-  connectors.set('fhir-r4', new FHIRR4Connector());
-  connectors.set('onedrive', new OneDriveConnector());
-  connectors.set('google_drive', new GoogleDriveConnector());
-  connectors.set('box', new BoxConnector());
+  connectors.set('eudamed', () => new EudamedConnector());
+  connectors.set('eu_ctis', () => new EuCtisConnector());
+  connectors.set('pmda_reviews', () => new PMDAConnector());
+  connectors.set('nmpa_cde', () => new NMPACDEConnector());
+  connectors.set('veeva_vault', () => new VeevaVaultConnector());
+  connectors.set('medidata_rave', () => new MedidataRaveConnector());
+  connectors.set('sharepoint', () => new SharePointConnector());
+  connectors.set('fhir-r4', () => new FHIRR4Connector());
+  connectors.set('onedrive', () => new OneDriveConnector());
+  connectors.set('google_drive', () => new GoogleDriveConnector());
+  connectors.set('box', () => new BoxConnector());
   // Sponsored programs / research administration.
-  connectors.set('grants_gov', new GrantsGovConnector());
-  connectors.set('sam_exclusions', new SamExclusionsConnector());
-  connectors.set('ellucian_banner', new EllucianBannerConnector());
+  connectors.set('grants_gov', () => new GrantsGovConnector());
+  connectors.set('sam_exclusions', () => new SamExclusionsConnector());
+  connectors.set('ellucian_banner', () => new EllucianBannerConnector());
 }
 
 /**
@@ -160,7 +113,9 @@ export async function getConnectorCatalog(
 
   return CONNECTOR_CATALOG.map(entry => ({
     ...entry,
-    configured: !entry.requiresCredentials || credMap.has(entry.id),
+    // An unavailable connector has nothing behind it, so it is never
+    // "configured": a credential-free entry used to read as connected.
+    configured: entry.available !== false && (!entry.requiresCredentials || credMap.has(entry.id)),
     healthy: credMap.get(entry.id) !== false,
   }));
 }
@@ -215,15 +170,17 @@ export async function storeCredentials(
 }
 
 /**
- * Load and authenticate a connector with org-specific credentials.
+ * A new connector instance, authenticated with this organization's own
+ * credentials. Never reused across calls or tenants.
  */
 async function getAuthenticatedConnector(
   organizationId: number,
   connectorId: string
 ): Promise<DataConnector | null> {
   initializeConnectors();
-  const connector = connectors.get(connectorId);
-  if (!connector) return null;
+  const make = connectors.get(connectorId);
+  if (!make) return null;
+  const connector = make();
 
   // Load credentials if needed
   if (connector.requiresCredentials) {

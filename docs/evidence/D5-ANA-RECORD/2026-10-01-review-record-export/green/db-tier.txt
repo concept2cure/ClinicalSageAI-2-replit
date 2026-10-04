@@ -1,0 +1,23 @@
+$ npm run test:db   # every database test file, PostgreSQL 16.13, on a database rebuilt from empty by install-fresh + deploy-migrate at trunk 78e0649e0
+ ✓ tests/db/review-comments-record.dbtest.ts > posting > commits the comment with a chained row carrying its words and their sha256 125ms
+ ✓ tests/db/review-comments-record.dbtest.ts > posting > writes neither when the chained row cannot be written 49ms
+ ✓ tests/db/review-comments-record.dbtest.ts > posting > refuses another tenant's caller on this thread 22ms
+ ✓ tests/db/review-comments-record.dbtest.ts > the words are fixed > PATCH is refused with COMMENT_TEXT_FIXED, and the words are unchanged 50ms
+ ✓ tests/db/review-comments-record.dbtest.ts > the words are fixed > the database refuses a rewrite, a direct delete and a truncate from the owner 54ms
+ ✓ tests/db/review-comments-record.dbtest.ts > retraction > hides the comment, keeps its words, and chains who retracted it and why 90ms
+ ✓ tests/db/review-comments-record.dbtest.ts > a comment goes only with what it belongs to > deleting its thread removes it (the cascade), and the chained rows remain 58ms
+ ✓ tests/db/review-comments-record.dbtest.ts > who takes part in a review: the organisation’s own roles > a member doing the work comments and asks for changes 118ms
+ ✓ tests/db/review-comments-record.dbtest.ts > who takes part in a review: the organisation’s own roles > a member cannot reassign the thread; a manager can, and resolves it 75ms
+ ✓ tests/db/review-comments-record.dbtest.ts > who takes part in a review: the organisation’s own roles > a viewer reads and cannot comment 31ms
+ ✓ tests/db/review-record-export.dbtest.ts > an audit reader takes the review record > every thread and comment, a retraction with who and why, each intact against its chained row 46ms
+ ✓ tests/db/review-record-export.dbtest.ts > an audit reader takes the review record > the package alone lets an inspector check every comment against its chained row 42ms
+ ✓ tests/db/review-record-export.dbtest.ts > an audit reader takes the review record > the export itself is on the chain: who took which record, and what it said 53ms
+ ✓ tests/db/review-record-export.dbtest.ts > the record says when it does not match > a comment rewritten past the triggers is reported, and only that one 32ms
+ ✓ tests/db/review-record-export.dbtest.ts > the record says when it does not match > a comment with no chained row (as before 2026-10-01) is not chained, never intact 40ms
+ ✓ tests/db/review-record-export.dbtest.ts > the record says when it does not match > a retraction the row shows but the chain does not is reported 36ms
+ ✓ tests/db/review-record-export.dbtest.ts > who may take it, and when it may not leave > the Review queue offers the export exactly to those the route serves 46ms
+ ✓ tests/db/review-record-export.dbtest.ts > who may take it, and when it may not leave > a member is refused (DP-18: the audit trail is read by owners, admins and managers) 15ms
+ ✓ tests/db/review-record-export.dbtest.ts > who may take it, and when it may not leave > another organisation's administrator does not reach this artifact 36ms
+ ✓ tests/db/review-record-export.dbtest.ts > who may take it, and when it may not leave > when the export cannot be recorded it is refused, and nothing leaves 65ms
+ Test Files  127 passed (127)
+      Tests  1333 passed (1333)

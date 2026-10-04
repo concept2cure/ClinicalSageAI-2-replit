@@ -61,6 +61,12 @@ export interface ReportSubscription {
 export interface DeliveryDecision {
   allowed: boolean;
   requiresESignature: boolean;
+  /**
+   * The electronic_signatures row that met the e-signature requirement: the
+   * report-run:<id> signature its finalize applied (P1-44b). Present only when
+   * one was required and the report carries it.
+   */
+  signatureId?: number;
   watermark: boolean;
   reason?: string;
 }

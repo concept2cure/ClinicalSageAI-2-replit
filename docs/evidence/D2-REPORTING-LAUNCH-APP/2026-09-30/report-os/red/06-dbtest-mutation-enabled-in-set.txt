@@ -1,0 +1,54 @@
+# Mutation run: the upsert's SET list is given 'enabled = true' (diff below), then the dbtest is run. The idempotency case must fail: an operator's disable would be reverted by every deploy. Restored afterwards by regenerating (cmp identical).
+$ diff <scratch>/seed.sql.bak migrations/20260930_report_type_registry_seed.sql
+> enabled = true,
+
+$ TEST_DATABASE_URL='postgresql://postgres@127.0.0.1:5432/c2c_testdb?sslmode=disable' APP_DATABASE_URL='postgresql://app_service:local-testdb-app-service-password@127.0.0.1:5432/c2c_testdb?sslmode=disable' RLS_ENFORCE=on NODE_OPTIONS=--max-old-space-size=3072 npx vitest run --config vitest.db.config.ts tests/db/report-os-registry-seed.dbtest.ts   # MUTATION: enabled = true added to the SET list of the migration
+# run at 2026-10-01T00:16:54Z
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-01T00:16:58.694Z","pid":11454,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-01T00:16:58.697Z","pid":11454,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-01T00:16:58.697Z","pid":11454,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/report-os-registry-seed.dbtest.ts
+[database] Database connection successful { timestamp: '2026-10-01T00:16:59.009Z', poolSize: 1 }
+
+stdout | tests/db/report-os-registry-seed.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/report-os-registry-seed.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > report type registry seed (D2) > applies to the provisioned database and registers every in-code type, column for column 24ms
+ × tests/db/report-os-registry-seed.dbtest.ts > report type registry seed (D2) > re-applies idempotently: the code's values return, an operator's disable survives 34ms
+   → an operator's disable must survive the deploy: expected true to be false // Object.is equality
+ ✓ tests/db/report-os-registry-seed.dbtest.ts > report type registry seed (D2) > as app_service under RLS, POST /runs for a seeded type creates the run and records it 187ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/report-os-registry-seed.dbtest.ts > report type registry seed (D2) > re-applies idempotently: the code's values return, an operator's disable survives
+AssertionError: an operator's disable must survive the deploy: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ tests/db/report-os-registry-seed.dbtest.ts:145:74
+    143|     expect(after).toHaveLength(seededTotal);
+    144|     const row = after.find((r) => r.type_id === DISABLED)!;
+    145|     expect(row.enabled, "an operator's disable must survive the deploy…
+       |                                                                          ^
+    146|     expect(row.label, "the code's label is restored").toBe(REPORT_TYPE…
+    147|     expect((row.updated_at as Date).getTime()).toBeGreaterThanOrEqual(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  00:16:55
+   Duration  4.85s (transform 2.25s, setup 88ms, import 3.62s, tests 653ms, environment 0ms)
+
+exit=1

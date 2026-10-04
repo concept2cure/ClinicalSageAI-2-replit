@@ -1,0 +1,1 @@
+[ci:tenant-column-types] OK — all tenant columns are integer-typed

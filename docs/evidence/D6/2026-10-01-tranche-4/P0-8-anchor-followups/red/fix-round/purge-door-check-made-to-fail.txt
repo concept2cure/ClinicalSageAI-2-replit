@@ -1,0 +1,5 @@
+# The corrected purge-door check made to fail on the cases it exists to catch. Each grant change is inside a transaction that is rolled back; 2026-10-01T15:51:03Z
+as deployed (app_service in the new posture): []
+with INSERT granted on public.audit_log_archives (uncommitted): ["public.audit_log_archives"]
+with INSERT revoked on public.audit_logs (uncommitted): ["public.audit_logs"]
+after both rollbacks: []

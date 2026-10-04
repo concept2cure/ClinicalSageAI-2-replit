@@ -1,0 +1,125 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-29T19:11:02.354Z","pid":2793,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-29T19:11:02.355Z","pid":2793,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-29T19:11:02.355Z","pid":2793,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ × tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > refuses a change to the recorded hash 1580ms
+   → the change was applied: expected true to be false // Object.is equality
+ × tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > refuses a new version label, document code, program or tenant 6ms
+   → the change was applied: expected true to be false // Object.is equality
+ × tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > refuses re-pointing a stored copy, or rewriting lineage or retention 6ms
+   → the change was applied: expected true to be false // Object.is equality
+ × tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > refuses TRUNCATE 217ms
+   → expected 'truncated' to match /IMMUTABILITY_VIOLATION/
+ ✓ tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > still allows what the named writers do 17ms
+ × tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > allows a soft delete, and refuses undoing one 8ms
+   → the change was applied: expected true to be false // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > refuses a change to the recorded hash
+AssertionError: the change was applied: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ refused tests/db/vault-record-immutability.dbtest.ts:56:42
+     54|
+     55| const refused = (r: Awaited<ReturnType<typeof asRuntime>>) => {
+     56|   expect(r.ok, 'the change was applied').toBe(false);
+       |                                          ^
+     57|   if (!r.ok) expect(r.message).toMatch(/IMMUTABILITY_VIOLATION/);
+     58| };
+ ❯ tests/db/vault-record-immutability.dbtest.ts:111:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > refuses a new version label, document code, program or tenant
+AssertionError: the change was applied: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ refused tests/db/vault-record-immutability.dbtest.ts:56:42
+     54|
+     55| const refused = (r: Awaited<ReturnType<typeof asRuntime>>) => {
+     56|   expect(r.ok, 'the change was applied').toBe(false);
+       |                                          ^
+     57|   if (!r.ok) expect(r.message).toMatch(/IMMUTABILITY_VIOLATION/);
+     58| };
+ ❯ tests/db/vault-record-immutability.dbtest.ts:115:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > refuses re-pointing a stored copy, or rewriting lineage or retention
+AssertionError: the change was applied: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ refused tests/db/vault-record-immutability.dbtest.ts:56:42
+     54|
+     55| const refused = (r: Awaited<ReturnType<typeof asRuntime>>) => {
+     56|   expect(r.ok, 'the change was applied').toBe(false);
+       |                                          ^
+     57|   if (!r.ok) expect(r.message).toMatch(/IMMUTABILITY_VIOLATION/);
+     58| };
+ ❯ tests/db/vault-record-immutability.dbtest.ts:122:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > refuses TRUNCATE
+AssertionError: expected 'truncated' to match /IMMUTABILITY_VIOLATION/
+
+- Expected:
+/IMMUTABILITY_VIOLATION/
+
++ Received:
+"truncated"
+
+ ❯ tests/db/vault-record-immutability.dbtest.ts:137:17
+    135|       // every suite sharing this database.
+    136|       const r = await client.query('TRUNCATE vault.documents CASCADE')…
+    137|       expect(r).toMatch(/IMMUTABILITY_VIOLATION/);
+       |                 ^
+    138|     } finally {
+    139|       await client.query('ROLLBACK');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  tests/db/vault-record-immutability.dbtest.ts > a recorded Vault version cannot be rewritten (VR-06, D5) > allows a soft delete, and refuses undoing one
+AssertionError: the change was applied: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ refused tests/db/vault-record-immutability.dbtest.ts:56:42
+     54|
+     55| const refused = (r: Awaited<ReturnType<typeof asRuntime>>) => {
+     56|   expect(r.ok, 'the change was applied').toBe(false);
+       |                                          ^
+     57|   if (!r.ok) expect(r.message).toMatch(/IMMUTABILITY_VIOLATION/);
+     58| };
+ ❯ tests/db/vault-record-immutability.dbtest.ts:156:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 1 passed (6)
+   Start at  19:11:00
+   Duration  2.30s (transform 867ms, setup 80ms, import 28ms, tests 1.90s, environment 0ms)
+

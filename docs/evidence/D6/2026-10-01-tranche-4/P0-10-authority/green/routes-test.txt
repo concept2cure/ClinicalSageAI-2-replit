@@ -1,0 +1,12 @@
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 19ms
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 5ms
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IRB approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 6ms
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 13ms
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 6ms
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IACUC approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 4ms
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 4ms
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 3ms
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'IBC approval' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 4ms
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > refuses a wrong password, and writes nothing 4ms
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > with the ceremony: the act, the ledger sign and the signature row commit together 5ms
+ × server/routes/__tests__/domain-sign-ceremony.routes.test.ts > 'RIM label recorded as approved' is a signature, so it runs the ceremony > a signature row that cannot be written rolls the act back 4ms

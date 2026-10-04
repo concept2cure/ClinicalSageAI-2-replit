@@ -7,7 +7,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const ownership = vi.hoisted(() => ({ check: vi.fn(async () => true) }));
+const ownership = vi.hoisted(() => ({ check: vi.fn(async (_programId: string, _orgId: number) => true) }));
 const { svc, audit } = vi.hoisted(() => ({
   svc: {
     upsertMapping: vi.fn(),
@@ -32,6 +32,17 @@ vi.mock('../../gspr-postmarket/post-market.service', () => ({
   getDocument: vi.fn(),
 }));
 
+// post_market.document.create authors through the canonical engine (PR #1315
+// port): the same authorPostMarketDocument the REST /generate route uses.
+const authoring = vi.hoisted(() => ({
+  author: vi.fn(),
+  TYPES: ['pms_plan', 'pms_report', 'pmcf_plan', 'pmcf_evaluation', 'psur', 'sscp'],
+}));
+vi.mock('../../gspr-postmarket/post-market-authoring', () => ({
+  authorPostMarketDocument: (...a: any[]) => authoring.author(...a),
+  AUTHORABLE_DOCUMENT_TYPES: authoring.TYPES,
+}));
+
 vi.mock('../../evidence-sufficiency/evidence-sufficiency.service', () => ({
   assessSufficiency: (...a: any[]) => svc.assessSufficiency(...a),
 }));
@@ -44,7 +55,15 @@ vi.mock('../../auditService', () => ({ default: audit }));
 // The tool proves program ownership through the canonical guard (ledger L195);
 // these tests exercise what happens after it answers, so it answers yes unless a
 // case says otherwise.
-vi.mock('../../../routes/innovation-routes', () => ({ programBelongsToOrg: ownership.check }));
+// The one program check (server/services/c2c/program-access.ts), answered by the test.
+vi.mock('../../c2c/program-access', async importOriginal => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  programInOrganization: (_db: unknown, programId: string, orgId: number) => ownership.check(programId, orgId),
+}));
+vi.mock('../../c2c/program-access.js', async importOriginal => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  programInOrganization: (_db: unknown, programId: string, orgId: number) => ownership.check(programId, orgId),
+}));
 
 
 import {
@@ -86,7 +105,7 @@ describe('gspr.mapping.upsert', () => {
 
   it('says so when ownership could not be checked, and writes nothing', async () => {
     ownership.check.mockRejectedValueOnce(
-      Object.assign(new Error('ownership check could not be completed'), { name: 'GuardUnavailableError' })
+      Object.assign(new Error('program ownership check could not be run'), { name: 'VerificationUnavailableError' })
     );
     const r = await gsprMappingUpsert(CTX, {
       ...goodGate,
@@ -128,25 +147,93 @@ describe('gspr.mapping.upsert', () => {
 });
 
 describe('post_market.document.create', () => {
+  const authored = {
+    document: { id: 'd-1', documentType: 'psur', code: 'PSUR', title: 'PSUR — Acme (draft)', version: 2, status: 'draft' },
+    validation: { passesGate: false, criticalCount: 1, warningCount: 2, findings: [{ severity: 'critical', message: 'x' }] },
+  };
+
   it('rejects missing required fields', async () => {
     const r = await postMarketDocumentCreate(CTX, {
       ...goodGate,
       programId: PROGRAM_UUID,
-      // missing documentType / code / title
+      // missing documentType / device
     });
     expect(r.error).toBe('INVALID_INPUT');
   });
 
-  it('audits on success', async () => {
-    svc.createDocument.mockResolvedValue({ id: 'd-1', code: 'PMCF-1' });
+  it('refuses a documentType the engine cannot author, and writes nothing', async () => {
+    // 'PMCF' is not a post_market_documents type; the handler used to cast it
+    // through `as any` and INSERT a row no validator has an entry for.
     const r = await postMarketDocumentCreate(CTX, {
       ...goodGate,
       programId: PROGRAM_UUID,
       documentType: 'PMCF',
       code: 'PMCF-1',
       title: 'Q3 PMCF',
+      deviceName: 'Acme Stent',
+    });
+    expect(r.error).toBe('INVALID_INPUT');
+    expect(r.message).toContain(authoring.TYPES.join(', '));
+    expect(svc.createDocument).not.toHaveBeenCalled();
+    expect(authoring.author).not.toHaveBeenCalled();
+  });
+
+  it('requires a device (deviceName or relatedCerReportId), and writes nothing', async () => {
+    const r = await postMarketDocumentCreate(CTX, {
+      ...goodGate,
+      programId: PROGRAM_UUID,
+      documentType: 'psur',
+      code: 'PSUR-1',
+      title: 'PSUR 2026',
+    });
+    expect(r.error).toBe('INVALID_INPUT');
+    expect(svc.createDocument).not.toHaveBeenCalled();
+    expect(authoring.author).not.toHaveBeenCalled();
+  });
+
+  it("refuses a program that is not the caller's, and writes nothing", async () => {
+    ownership.check.mockResolvedValueOnce(false);
+    const r = await postMarketDocumentCreate(CTX, {
+      ...goodGate,
+      programId: PROGRAM_UUID,
+      documentType: 'psur',
+      deviceName: 'Acme Stent',
+    });
+    expect(r.error).toBe('NOT_FOUND');
+    expect(authoring.author).not.toHaveBeenCalled();
+    expect(svc.createDocument).not.toHaveBeenCalled();
+  });
+
+  it('authors through the canonical engine (scaffold + version + validation), not a bare INSERT, and audits', async () => {
+    authoring.author.mockResolvedValue(authored);
+    const r = await postMarketDocumentCreate(CTX, {
+      ...goodGate,
+      programId: PROGRAM_UUID,
+      documentType: 'psur',
+      deviceName: 'Acme Stent',
+      deviceClass: 'III',
+      regulation: 'MDR',
+      reportingPeriodStart: '2025-01-01',
+      reportingPeriodEnd: 'not-a-date',
     });
     expect(r.success).toBe(true);
+    expect(svc.createDocument).not.toHaveBeenCalled();
+    expect(authoring.author).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: CTX.organizationId,
+        programId: PROGRAM_UUID,
+        documentType: 'psur',
+        deviceName: 'Acme Stent',
+        deviceClass: 'III',
+        regulation: 'MDR',
+        createdBy: `ana:${CTX.userId}`,
+        reportingPeriodStart: new Date('2025-01-01'),
+        // An unparseable date is left for the engine to default AND flag, never "now".
+        reportingPeriodEnd: undefined,
+      }),
+    );
+    expect((r.data as any).validation.passesGate).toBe(false);
+    expect(r.message).toMatch(/does NOT pass the compliance gate/i);
     expect(audit.logAction).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'agent.ana.post_market.document.create' }),
     );

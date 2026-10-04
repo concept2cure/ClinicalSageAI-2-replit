@@ -32,16 +32,33 @@ export interface SequenceLeafManifestEntry {
   href: string;
   /** Published MD5 checksum of the leaf bytes. */
   md5: string;
+  /**
+   * md5 of the bytes the packager was HANDED, when it changed them (PDF/A
+   * normalization) — what the next sequence's "unchanged" decision compares
+   * against, because its desired md5 is computed over the staged bytes, before
+   * the packager converts them. Absent when the shipped bytes are those bytes.
+   */
+  sourceMd5?: string;
   /** Lifecycle operation this leaf carried in its own sequence. */
   operation?: string;
   /**
    * For replace/append/delete: the ICH modified-file pointer the backbone
    * carried — the filed leaf this one acts on, from this sequence's root
-   * (e.g. '../0000/m3/…'). What an act was bound to is part of the record.
+   * (e.g. '../0000/index.xml#leaf-3-2-S-4-2-…'). What an act was bound to is
+   * part of the record.
    */
   modifiedFile?: string;
   /** Optional display title. */
   title?: string;
+  /**
+   * The XML ID this leaf carries in its backbone, and that backbone's path from
+   * the sequence root ('index.xml', 'm1/us/us-regional.xml'). A later
+   * sequence's modified-file names the leaf by exactly these. Absent on
+   * manifests recorded before 2026-09-29 (W5/D7); such a leaf cannot be acted
+   * on until its sequence is recorded again.
+   */
+  leafId?: string;
+  backbone?: string;
 }
 
 /** The minimal leaf shape the manifest builder reads (satisfied by the export
@@ -53,11 +70,15 @@ export interface PublishableLeaf {
   href: string;
   /** Published MD5. */
   md5: string;
+  /** md5 of the bytes handed to the packager, when it changed them. */
+  sourceMd5?: string;
   /** Optional filename; derived from href when absent. */
   fileName?: string;
   operation?: string;
   modifiedFile?: string;
   title?: string;
+  leafId?: string;
+  backbone?: string;
 }
 
 /** POSIX basename of a package href. */
@@ -80,9 +101,11 @@ export function buildLeafManifest(leaves: PublishableLeaf[]): SequenceLeafManife
       fileName: l.fileName ?? baseName(l.href),
       href: l.href,
       md5: l.md5,
+      ...(l.sourceMd5 ? { sourceMd5: l.sourceMd5 } : {}),
       ...(l.operation ? { operation: l.operation } : {}),
       ...(l.modifiedFile ? { modifiedFile: l.modifiedFile } : {}),
       ...(l.title ? { title: l.title } : {}),
+      ...(l.leafId && l.backbone ? { leafId: l.leafId, backbone: l.backbone } : {}),
     });
   }
   return out;
@@ -97,6 +120,24 @@ export function buildLeafManifest(leaves: PublishableLeaf[]): SequenceLeafManife
  * a non-array, or entries missing required fields, yield an empty/filtered list
  * rather than throwing.
  */
+/** The optional fields a stored entry contributes to a PriorLeaf, each copied
+ *  only when it has the right type — a stored manifest is untrusted JSON. */
+function optionalPriorFields(e: Partial<SequenceLeafManifestEntry>): Partial<PriorLeaf> {
+  const str = (v: unknown): v is string => typeof v === 'string';
+  return {
+    // The comparand for "did this document change" when the packager
+    // normalized it; without it the diff compares two stages of one file.
+    ...(str(e.sourceMd5) && e.sourceMd5 ? { sourceMd5: e.sourceMd5 } : {}),
+    ...(str(e.href) ? { href: e.href } : {}),
+    ...(str(e.title) ? { title: e.title } : {}),
+    // Carried through so a caller folding several sequences into one effective
+    // prior state can drop a leaf whose last operation was a withdrawal.
+    ...(str(e.operation) ? { operation: e.operation } : {}),
+    // What a later act's modified-file names; the operator validates both.
+    ...(str(e.leafId) && str(e.backbone) ? { leafId: e.leafId, backbone: e.backbone } : {}),
+  };
+}
+
 export function manifestToPriorLeaves(manifest: unknown): PriorLeaf[] {
   if (!Array.isArray(manifest)) return [];
   const out: PriorLeaf[] = [];
@@ -106,16 +147,7 @@ export function manifestToPriorLeaves(manifest: unknown): PriorLeaf[] {
     if (typeof e.ctdSection !== 'string' || typeof e.md5 !== 'string') continue;
     const fileName = typeof e.fileName === 'string' ? e.fileName : e.href ? baseName(e.href) : '';
     if (!fileName) continue;
-    out.push({
-      ctdSection: e.ctdSection,
-      fileName,
-      md5: e.md5,
-      ...(typeof e.href === 'string' ? { href: e.href } : {}),
-      ...(typeof e.title === 'string' ? { title: e.title } : {}),
-      // Carried through so a caller folding several sequences into one effective
-      // prior state can drop a leaf whose last operation was a withdrawal.
-      ...(typeof e.operation === 'string' ? { operation: e.operation } : {}),
-    });
+    out.push({ ctdSection: e.ctdSection, fileName, md5: e.md5, ...optionalPriorFields(e) });
   }
   return out;
 }

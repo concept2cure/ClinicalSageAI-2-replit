@@ -59,7 +59,7 @@ describe('packageEctdSubmission — a delete leaf never ships bytes', () => {
       const run = pkg(work, '0001', [
         {
           ctdSection: '3.2.S.2', operation: 'delete', sourcePath: withdrawn, fileName: 'old-manufacture.pdf',
-          title: 'Old Manufacture', modifiedFile: '../0000/m3/3-2-s-2/old-manufacture.pdf',
+          title: 'Old Manufacture', modifiedFile: '../0000/index.xml#leaf-3-2-S-2-old-manufacture',
         },
         { ctdSection: '1.2', operation: 'new', sourcePath: cover, fileName: 'cover.pdf', title: 'Cover' },
       ]);
@@ -87,12 +87,15 @@ describe('packageEctdSubmission — a delete leaf never ships bytes', () => {
     });
   });
 
-  it('packages a backbone-only delete with a modified-file: no file, no checksum line, href at the filed copy', async () => {
+  // 2026-09-29 (W5/D7): the delete's href used to be the withdrawn file's path
+  // and it carried that file's checksum. A delete ships no file: it carries its
+  // modified-file (the filed leaf's backbone + '#' + ID) and nothing else.
+  it('packages a backbone-only delete with a modified-file: no file, no checksum line, no href, no checksum', async () => {
     await withWork(async (work, cover) => {
       const bundle = await pkg(work, '0001', [
         {
           ctdSection: '3.2.S.2', operation: 'delete', sourcePath: '', fileName: 'old-manufacture.pdf',
-          title: 'Old Manufacture', md5: 'c'.repeat(32), modifiedFile: '../0000/m3/3-2-s-2/old-manufacture.pdf',
+          title: 'Old Manufacture', md5: 'c'.repeat(32), modifiedFile: '../0000/index.xml#leaf-3-2-S-2-old-manufacture',
         },
         { ctdSection: '1.2', operation: 'new', sourcePath: cover, fileName: 'cover.pdf', title: 'Cover' },
       ]);
@@ -101,16 +104,16 @@ describe('packageEctdSubmission — a delete leaf never ships bytes', () => {
       expect(files.some((f) => f.endsWith('old-manufacture.pdf'))).toBe(false);
       const xml = (await zip.file('index.xml')?.async('string')) ?? '';
       const del = (xml.match(/<leaf[^>]*operation="delete"[^>]*>/) ?? [''])[0];
-      expect(del).toContain('modified-file="../0000/m3/3-2-s-2/old-manufacture.pdf"');
-      expect(del).toContain('xlink:href="../0000/m3/3-2-s-2/old-manufacture.pdf"');
+      expect(del).toContain('modified-file="../0000/index.xml#leaf-3-2-S-2-old-manufacture"');
+      expect(del).not.toMatch(/\bxlink:href=|\bchecksum=|\bchecksum-type=/);
       const manifestDelete = (bundle.leafManifest ?? []).find((m) => m.operation === 'delete');
-      expect(manifestDelete?.href).toBe('../0000/m3/3-2-s-2/old-manufacture.pdf');
+      expect(manifestDelete?.href).toBe('../0000/index.xml#leaf-3-2-S-2-old-manufacture');
     });
   });
 
   it('refuses any delete in sequence 0000, where nothing is on file to withdraw', async () => {
     await withWork(async (work, cover) => {
-      for (const modifiedFile of [undefined, '../0000/m3/3-2-s-2/ghost.pdf']) {
+      for (const modifiedFile of [undefined, '../0000/index.xml#leaf-3-2-S-2-ghost']) {
         const run = pkg(work, '0000', [
           { ctdSection: '3.2.S.2', operation: 'delete', sourcePath: '', fileName: 'ghost.pdf', title: 'Ghost',
             ...(modifiedFile ? { modifiedFile } : {}) },

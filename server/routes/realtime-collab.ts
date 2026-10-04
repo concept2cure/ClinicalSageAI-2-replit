@@ -34,6 +34,14 @@
  * the same room even when they hold the same document id. Document ownership is
  * verified against `authoring_documents` before a caller may join a room or
  * touch a lock, using the same authorizer the collaboration socket uses.
+ *
+ * SHARED STATE ACROSS TASKS
+ * Production runs two API tasks behind an ALB with no stickiness. Section locks
+ * live in `collab_section_locks` (DurableLockManager) and the presence roster
+ * in `collab_presence` (DurablePresenceManager, 2026-10-01, audit U16), so any
+ * task answers any request the same way and a deploy loses neither. The
+ * in-memory Maps below are only the explicit not-durable fallback for a
+ * database that has not run the migrations.
  * =============================================================================
  */
 
@@ -41,6 +49,7 @@ import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { parseFiniteInt } from '../middleware/orgMembership';
 import { authorizeResource } from '../services/collab/collab-authorization';
+import { statedReasonOrNull } from './governed-reason';
 
 // ---------------------------------------------------------------------------
 // LAZY INFRASTRUCTURE
@@ -180,6 +189,17 @@ const CURSOR_COLORS = [
   '#718096',
 ];
 
+/**
+ * One colour per author, the same on every task. It used to be assigned from a
+ * per-process counter, so the same author was painted differently depending on
+ * which task answered the heartbeat.
+ */
+function colorFor(userId: string): string {
+  let h = 0;
+  for (let i = 0; i < userId.length; i++) h = (h * 31 + userId.charCodeAt(i)) >>> 0;
+  return CURSOR_COLORS[h % CURSOR_COLORS.length];
+}
+
 // ---------------------------------------------------------------------------
 // IDENTITY AND ACCESS
 // ---------------------------------------------------------------------------
@@ -276,10 +296,15 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
  */
 const PRESENCE_TTL_MS = 90 * 1000;
 
+/**
+ * The process-local roster, retained ONLY as the not-durable fallback (a
+ * database that has not run 20261001_collab_presence.sql). Behind more than
+ * one task it is per task: a heartbeat answered by a task that did not serve
+ * the join finds no room, which DurablePresenceManager reports as
+ * `roomKnown: false` rather than as an empty roster.
+ */
 class YjsRoomManager {
   private rooms: Map<string, CollabRoom> = new Map();
-  private userColors: Map<string, string> = new Map();
-  private colorIndex = 0;
 
   /** Drop members whose lastSeen exceeds the TTL. Runs on every read path. */
   private pruneIdle(room: CollabRoom): void {
@@ -325,15 +350,9 @@ class YjsRoomManager {
     if (!room) return null;
     this.pruneIdle(room);
 
-    // Assign a persistent color
-    if (!this.userColors.has(user.userId)) {
-      this.userColors.set(user.userId, CURSOR_COLORS[this.colorIndex % CURSOR_COLORS.length]);
-      this.colorIndex++;
-    }
-
     const collabUser: CollabUser = {
       ...user,
-      color: this.userColors.get(user.userId)!,
+      color: colorFor(user.userId),
       connectedAt: new Date(),
       lastSeen: new Date(),
     };
@@ -423,7 +442,272 @@ class YjsRoomManager {
   }
 }
 
-const roomManager = new YjsRoomManager();
+// ---------------------------------------------------------------------------
+// PRESENCE — durable roster over collab_presence
+// ---------------------------------------------------------------------------
+
+/** Who is asking about which room. Identity is the authenticated principal's. */
+interface PresenceTarget {
+  tenantId: number;
+  documentId: string;
+  sectionId: string | null;
+  user: Principal;
+}
+
+interface RoomView {
+  id: string;
+  documentId: string;
+  sectionId?: string;
+  connectedUsers: CollabUser[];
+}
+
+/** Raised when the backend answers in a way real Postgres cannot (a stubbed pool). */
+class PresenceBackendAnomaly extends Error {}
+
+/** Only the awareness fields the roster shows, bounded so a row cannot grow without limit. */
+const AWARENESS_KEYS = ['cursor', 'selection', 'isTyping', 'focusedField'] as const;
+const AWARENESS_MAX_BYTES = 4096;
+function awarenessOf(body: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const key of AWARENESS_KEYS) {
+    if (body[key] !== undefined) out[key] = body[key];
+  }
+  return JSON.stringify(out).length <= AWARENESS_MAX_BYTES ? out : {};
+}
+
+const roomIdFor = (documentId: string, sectionId: string | null) =>
+  sectionId ? `${documentId}:${sectionId}` : documentId;
+
+const PRESENCE_UPSERT_SQL = `
+  INSERT INTO collab_presence
+    (organization_id, document_id, section_id, user_id, display_name, email, awareness,
+     connected_at, last_seen_at)
+  VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, NOW(), NOW())
+  ON CONFLICT (organization_id, document_id, user_id) DO UPDATE SET
+    connected_at = CASE
+      WHEN collab_presence.section_id IS NOT DISTINCT FROM EXCLUDED.section_id
+       AND collab_presence.last_seen_at > NOW() - make_interval(secs => $8)
+      THEN collab_presence.connected_at ELSE NOW() END,
+    awareness = CASE
+      WHEN collab_presence.section_id IS NOT DISTINCT FROM EXCLUDED.section_id
+      THEN collab_presence.awareness || EXCLUDED.awareness ELSE EXCLUDED.awareness END,
+    section_id = EXCLUDED.section_id,
+    display_name = EXCLUDED.display_name,
+    email = EXCLUDED.email,
+    last_seen_at = NOW()
+  RETURNING user_id`;
+
+const PRESENCE_ROSTER_SQL = `
+  SELECT user_id, display_name, email, awareness, connected_at, last_seen_at
+    FROM collab_presence
+   WHERE organization_id = $1 AND document_id = $2
+     AND section_id IS NOT DISTINCT FROM $3
+     AND last_seen_at > NOW() - make_interval(secs => $4)
+   ORDER BY connected_at, user_id`;
+
+/**
+ * Presence roster over `collab_presence` (20261001_collab_presence.sql), shared
+ * by every API task. Before it, the roster was YjsRoomManager's Map: only
+ * POST /rooms created a room, so a heartbeat routed to the other task answered
+ * an empty roster, and every deploy emptied them all (audit U16).
+ *
+ * Semantics:
+ *   · join and heartbeat both UPSERT the caller's own row — so a heartbeat to
+ *     a task that never saw the join, or to a task started by a deploy,
+ *     re-joins rather than reporting an empty room;
+ *   · the roster is the rows in the caller's section heard from in the last
+ *     PRESENCE_TTL_MS (90 s);
+ *   · leave deletes only the caller's row, and only for the section named, so
+ *     a late leave from the previous section cannot remove the new presence;
+ *   · rows idle for an hour are reaped opportunistically on join.
+ *
+ * Falls back to the process-local roster on the same conditions as the lock
+ * manager — the table is unprovisioned (42P01), or the call has no tenant
+ * scope — and when the backend answers an upsert with no row, which real
+ * Postgres never does. A heartbeat on that fallback for a room this process
+ * does not hold says `roomKnown: false`, so the client keeps its roster.
+ */
+class DurablePresenceManager {
+  private fallback = new YjsRoomManager();
+  /** Sticky, like DurableLockManager.useFallback: set only by demoteOn. */
+  private useFallback = false;
+
+  get storageMode(): string {
+    return this.useFallback
+      ? 'in-memory fallback (per process; not durable, not shared across replicas)'
+      : 'durable (collab_presence)';
+  }
+
+  private demoteOn(err: unknown): boolean {
+    if (err instanceof PresenceBackendAnomaly) return true;
+    if (typeof err === 'object' && err !== null && (err as { code?: string }).code === '42P01') return true;
+    const message = err instanceof Error ? err.message : String(err);
+    return /requires an active tenant scope/i.test(message);
+  }
+
+  /** Run on the durable store, demoting to the process-local roster only as documented above. */
+  private async run<T>(what: string, durable: (pool: PgPoolLike) => Promise<T>, memory: () => T): Promise<T> {
+    const pool = await getDbPool();
+    if (this.useFallback || !pool) return memory();
+    try {
+      return await durable(pool);
+    } catch (err) {
+      if (!this.demoteOn(err)) throw err;
+      this.useFallback = true;
+      console.warn(
+        `[realtime-collab] durable presence unavailable on ${what} — per-process roster fallback:`,
+        err instanceof Error ? err.message : err
+      );
+      return memory();
+    }
+  }
+
+  private rowToUser(r: Record<string, unknown>): CollabUser {
+    const awareness = (r.awareness ?? {}) as { cursor?: CursorPosition; selection?: SelectionRange };
+    const userId = String(r.user_id);
+    return {
+      userId,
+      displayName: String(r.display_name),
+      email: String(r.email ?? ''),
+      color: colorFor(userId),
+      cursor: awareness.cursor,
+      selection: awareness.selection,
+      connectedAt: new Date(r.connected_at as string),
+      lastSeen: new Date(r.last_seen_at as string),
+    };
+  }
+
+  private async upsert(pool: PgPoolLike, t: PresenceTarget, awareness: Record<string, unknown>): Promise<void> {
+    const result = await pool.query(PRESENCE_UPSERT_SQL, [
+      t.tenantId, t.documentId, t.sectionId, t.user.userId, t.user.label, t.user.email,
+      JSON.stringify(awareness), PRESENCE_TTL_MS / 1000,
+    ]);
+    if (!result.rows[0]) {
+      throw new PresenceBackendAnomaly('presence upsert returned no row');
+    }
+  }
+
+  private async roster(pool: PgPoolLike, t: PresenceTarget): Promise<CollabUser[]> {
+    const result = await pool.query(PRESENCE_ROSTER_SQL, [
+      t.tenantId, t.documentId, t.sectionId, PRESENCE_TTL_MS / 1000,
+    ]);
+    return result.rows.map(r => this.rowToUser(r));
+  }
+
+  async join(t: PresenceTarget, projectId: number): Promise<{ room: RoomView; user: CollabUser | null }> {
+    return this.run(
+      'join',
+      async pool => {
+        await this.upsert(pool, t, {});
+        void pool
+          .query(
+            `DELETE FROM collab_presence
+              WHERE organization_id = $1 AND document_id = $2 AND last_seen_at < NOW() - INTERVAL '1 hour'`,
+            [t.tenantId, t.documentId]
+          )
+          .catch(() => {});
+        const connectedUsers = await this.roster(pool, t);
+        const room: RoomView = {
+          id: roomIdFor(t.documentId, t.sectionId),
+          documentId: t.documentId,
+          sectionId: t.sectionId ?? undefined,
+          connectedUsers,
+        };
+        return { room, user: connectedUsers.find(u => u.userId === t.user.userId) ?? null };
+      },
+      () => {
+        const key = scopedKey(t.tenantId, t.documentId, t.sectionId);
+        const room = this.fallback.getOrCreateRoom(key, t.documentId, projectId, t.tenantId, t.sectionId ?? undefined);
+        const user = this.fallback.addUser(key, {
+          userId: t.user.userId,
+          displayName: t.user.label,
+          email: t.user.email,
+        });
+        return {
+          room: { id: room.id, documentId: room.documentId, sectionId: room.sectionId, connectedUsers: room.connectedUsers },
+          user,
+        };
+      }
+    );
+  }
+
+  async heartbeat(
+    t: PresenceTarget,
+    awareness: Record<string, unknown>
+  ): Promise<{ users: CollabUser[]; roomKnown: boolean }> {
+    return this.run(
+      'heartbeat',
+      async pool => {
+        await this.upsert(pool, t, awareness);
+        return { users: await this.roster(pool, t), roomKnown: true };
+      },
+      () => this.memoryHeartbeat(t, awareness)
+    );
+  }
+
+  /** The old Map heartbeat, unchanged except that it says when it did not know the room. */
+  private memoryHeartbeat(
+    t: PresenceTarget,
+    awareness: Record<string, unknown>
+  ): { users: CollabUser[]; roomKnown: boolean } {
+    const key = scopedKey(t.tenantId, t.documentId, t.sectionId);
+    this.fallback.updateAwareness(key, t.user.userId, { ...awareness, userId: t.user.userId, clientId: 0 });
+    const room = this.fallback.getRoom(key);
+    if (!room) return { users: [], roomKnown: false };
+    // A heartbeat from a member the idle sweep evicted re-joins them.
+    if (!room.connectedUsers.some(u => u.userId === t.user.userId)) {
+      this.fallback.addUser(key, { userId: t.user.userId, displayName: t.user.label, email: t.user.email });
+    }
+    return { users: room.connectedUsers, roomKnown: true };
+  }
+
+  async leave(t: PresenceTarget): Promise<boolean> {
+    return this.run(
+      'leave',
+      async pool => {
+        const result = await pool.query(
+          `DELETE FROM collab_presence
+            WHERE organization_id = $1 AND document_id = $2 AND user_id = $3
+              AND section_id IS NOT DISTINCT FROM $4
+          RETURNING user_id`,
+          [t.tenantId, t.documentId, t.user.userId, t.sectionId]
+        );
+        return (result.rowCount ?? 0) > 0;
+      },
+      () => this.fallback.removeUser(scopedKey(t.tenantId, t.documentId, t.sectionId), t.user.userId)
+    );
+  }
+
+  /** Active rooms for ONE tenant (see YjsRoomManager.getRoomStats for why it is scoped). */
+  async stats(tenantId: number): Promise<ReturnType<YjsRoomManager['getRoomStats']>> {
+    return this.run(
+      'stats',
+      async pool => {
+        const result = await pool.query(
+          `SELECT document_id, section_id, count(*)::int AS n
+             FROM collab_presence
+            WHERE organization_id = $1 AND last_seen_at > NOW() - make_interval(secs => $2)
+            GROUP BY document_id, section_id
+            ORDER BY document_id, section_id`,
+          [tenantId, PRESENCE_TTL_MS / 1000]
+        );
+        const rooms = result.rows.map(r => ({
+          roomId: roomIdFor(String(r.document_id), r.section_id != null ? String(r.section_id) : null),
+          documentId: String(r.document_id),
+          userCount: Number(r.n),
+        }));
+        return {
+          totalRooms: rooms.length,
+          totalUsers: rooms.reduce((sum, r) => sum + r.userCount, 0),
+          rooms,
+        };
+      },
+      () => this.fallback.getRoomStats(tenantId)
+    );
+  }
+}
+
+const presence = new DurablePresenceManager();
 
 // ---------------------------------------------------------------------------
 // LOCK MANAGER — Document section-level locking
@@ -794,16 +1078,10 @@ function auditLockEvent(params: {
       userId,
       command: params.command,
       target: `document:${params.documentId}${params.sectionId ? `:${params.sectionId}` : ''}`,
-      // The ledger requires a reason string; supply the command's default when
-      // the caller gave none (mirrors task-audit's defaultReason pattern).
-      reason:
-        params.reason && params.reason.trim()
-          ? params.reason.trim()
-          : params.command === 'collab.lock_takeover'
-            ? 'Section lock takeover via realtime-collab API'
-            : params.command === 'collab.lock_release'
-              ? 'Section lock released via realtime-collab API'
-              : 'Section lock acquired via realtime-collab API',
+      // The reason the person gave (a takeover requires one), or null. Until
+      // 2026-10-01 a lock event with none recorded "Section lock acquired via
+      // realtime-collab API"; the command already says what happened (D5).
+      reason: statedReasonOrNull(params.reason),
       payload: params.payload ?? {},
       domain: 'collab',
       surface: 'realtime-collab-api',
@@ -823,10 +1101,15 @@ const router = Router();
  * GET /rooms
  * Active collaboration rooms for the caller's organization.
  */
-router.get('/rooms', (req: Request, res: Response) => {
+router.get('/rooms', async (req: Request, res: Response) => {
   const actor = requirePrincipal(req, res);
   if (!actor) return;
-  res.json({ success: true, data: roomManager.getRoomStats(actor.tenantId) });
+  try {
+    res.json({ success: true, data: await presence.stats(actor.tenantId) });
+  } catch (err) {
+    console.error('[realtime-collab] room listing failed:', err);
+    res.status(500).json({ success: false, error: 'Failed to list rooms' });
+  }
 });
 
 /**
@@ -855,32 +1138,16 @@ router.post('/rooms', async (req: Request, res: Response) => {
   }
   if (await denyDocumentAccess(String(documentId), section, actor.tenantId, res)) return;
 
-  const roomKey = scopedKey(actor.tenantId, String(documentId), section);
-  const room = roomManager.getOrCreateRoom(
-    roomKey,
-    String(documentId),
-    Number(projectId),
-    actor.tenantId,
-    section ?? undefined
-  );
-  const user = roomManager.addUser(roomKey, {
-    userId: actor.userId,
-    displayName: actor.label,
-    email: actor.email,
-  });
-
-  res.json({
-    success: true,
-    data: {
-      room: {
-        id: room.id,
-        documentId: room.documentId,
-        sectionId: room.sectionId,
-        connectedUsers: room.connectedUsers,
-      },
-      user,
-    },
-  });
+  try {
+    const joined = await presence.join(
+      { tenantId: actor.tenantId, documentId: String(documentId), sectionId: section, user: actor },
+      Number(projectId)
+    );
+    res.json({ success: true, data: joined });
+  } catch (err) {
+    console.error('[realtime-collab] room join failed:', err);
+    res.status(500).json({ success: false, error: 'Failed to join the room' });
+  }
 });
 
 /**
@@ -891,50 +1158,55 @@ router.post('/rooms', async (req: Request, res: Response) => {
  * principal. The previous shape — `/rooms/:roomKey/users/:userId` — let a
  * caller evict any other user from any room by naming both in the path.
  */
-router.delete('/rooms/:documentId/users/me', (req: Request, res: Response) => {
+router.delete('/rooms/:documentId/users/me', async (req: Request, res: Response) => {
   const actor = requirePrincipal(req, res);
   if (!actor) return;
   const documentId = String(req.params.documentId);
   const section = req.query.sectionId ? String(req.query.sectionId) : null;
-  const removed = roomManager.removeUser(
-    scopedKey(actor.tenantId, documentId, section),
-    actor.userId
-  );
-  res.json({ success: true, removed });
+  try {
+    const removed = await presence.leave({ tenantId: actor.tenantId, documentId, sectionId: section, user: actor });
+    res.json({ success: true, removed });
+  } catch (err) {
+    console.error('[realtime-collab] room leave failed:', err);
+    res.status(500).json({ success: false, error: 'Failed to leave the room' });
+  }
 });
 
 /**
  * PUT /rooms/:documentId/awareness
  * Publish the caller's own presence and read back the room roster.
+ *
+ * The heartbeat is also a join: it UPSERTs the caller's presence row, so a
+ * heartbeat answered by a task that never saw POST /rooms — the other API
+ * task, or one started by a deploy — returns the real roster instead of an
+ * empty one (audit U16). Because it can join, it checks document ownership as
+ * POST /rooms does. `roomKnown: false` is only ever sent on the not-durable
+ * fallback, for a room this process does not hold; the client keeps its
+ * roster rather than adopting that empty list.
  */
-router.put('/rooms/:documentId/awareness', (req: Request, res: Response) => {
+router.put('/rooms/:documentId/awareness', async (req: Request, res: Response) => {
   const actor = requirePrincipal(req, res);
   if (!actor) return;
   const documentId = String(req.params.documentId);
-  const { cursor, selection, isTyping, focusedField, sectionId } = req.body ?? {};
-  const roomKey = scopedKey(actor.tenantId, documentId, sectionId ? String(sectionId) : null);
-
-  // Awareness is published for the caller and nobody else — a body `userId`
-  // previously let one client move another client's cursor.
-  roomManager.updateAwareness(roomKey, actor.userId, {
-    userId: actor.userId,
-    clientId: 0,
-    cursor,
-    selection,
-    isTyping,
-    focusedField,
-  });
-  const room = roomManager.getRoom(roomKey);
-  // A heartbeat from a member the idle sweep evicted (laptop slept, tab
-  // resumed) re-joins them rather than leaving their own roster without them.
-  if (room && !room.connectedUsers.some(u => u.userId === actor.userId)) {
-    roomManager.addUser(roomKey, {
-      userId: actor.userId,
-      displayName: actor.label,
-      email: actor.email,
-    });
+  const body = (req.body ?? {}) as Record<string, unknown>;
+  const section = body.sectionId ? String(body.sectionId) : null;
+  if (!UUID_RE.test(documentId) || (section && !UUID_RE.test(section))) {
+    return res.status(400).json({ success: false, error: 'documentId and sectionId must be UUIDs' });
   }
-  res.json({ success: true, connectedUsers: room?.connectedUsers || [] });
+  if (await denyDocumentAccess(documentId, section, actor.tenantId, res)) return;
+
+  try {
+    // Awareness is published for the caller and nobody else — a body `userId`
+    // previously let one client move another client's cursor.
+    const result = await presence.heartbeat(
+      { tenantId: actor.tenantId, documentId, sectionId: section, user: actor },
+      awarenessOf(body)
+    );
+    res.json({ success: true, connectedUsers: result.users, roomKnown: result.roomKnown });
+  } catch (err) {
+    console.error('[realtime-collab] presence heartbeat failed:', err);
+    res.status(500).json({ success: false, error: 'Failed to update presence' });
+  }
 });
 
 // ---------------------------------------------------------------------------
@@ -1123,9 +1395,9 @@ function sendDisplacedNotification(
  * GET /health
  * Health check for the collaboration presence/locking service.
  */
-router.get('/health', (req: Request, res: Response) => {
+router.get('/health', async (req: Request, res: Response) => {
   const actor = principal(req);
-  const stats = actor ? roomManager.getRoomStats(actor.tenantId) : null;
+  const stats = actor ? await presence.stats(actor.tenantId).catch(() => null) : null;
   res.json({
     status: 'healthy',
     service: 'realtime-collab',
@@ -1135,6 +1407,7 @@ router.get('/health', (req: Request, res: Response) => {
     // `conflictResolution: 'automatic-crdt'` from a router that does none of
     // those things.
     storage: lockManager.storageMode,
+    presenceStorage: presence.storageMode,
     activeRooms: stats?.totalRooms ?? null,
     connectedUsers: stats?.totalUsers ?? null,
   });

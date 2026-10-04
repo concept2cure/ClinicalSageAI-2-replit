@@ -43,12 +43,40 @@ export type GovernedESignature =
 
 export async function verifyGovernedESignature(
   userId: number,
-  body: Record<string, unknown>
+  body: Record<string, unknown>,
+  /**
+   * The meaning the act fixes (part11-governance.ts requiredSignatureMeaning),
+   * or null when the signer chooses. Any other is refused here, before the
+   * password is checked, as the status route refuses it (2026-10-01, D5).
+   */
+  requiredMeaning: GovernedSignMeaning | null = null,
 ): Promise<GovernedESignature> {
   const posted = body.params && typeof body.params === 'object' ? (body.params as Record<string, unknown>) : {};
   const declared = resolveDeclaredSignatureMeaning(posted.signatureMeaning);
   if (!declared.ok) {
     return { ok: false, status: 400, error: declared.error, code: declared.code, details: { code: declared.code } };
+  }
+  // Release is offered for the act that is signed with it (locking an
+  // artifact) and is not a meaning any other action took before 2026-10-01.
+  if (!requiredMeaning && declared.meaning === 'release') {
+    const code = 'SIGNATURE_MEANING_UNKNOWN';
+    return {
+      ok: false,
+      status: 400,
+      error: "Release is the meaning of locking a document; this action is not signed with it. Nothing was run.",
+      code,
+      details: { code },
+    };
+  }
+  if (requiredMeaning && declared.meaning !== requiredMeaning) {
+    const code = 'SIGNATURE_MEANING_MISMATCH';
+    return {
+      ok: false,
+      status: 400,
+      error: `This action is signed with the meaning '${requiredMeaning}'. Nothing was signed.`,
+      code,
+      details: { code },
+    };
   }
   const password = typeof body.password === 'string' ? body.password : '';
   const mfaToken = typeof body.mfaToken === 'string' ? body.mfaToken : undefined;

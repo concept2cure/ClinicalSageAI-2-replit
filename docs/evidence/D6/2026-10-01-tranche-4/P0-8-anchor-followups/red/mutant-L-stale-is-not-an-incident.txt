@@ -1,0 +1,9 @@
+# 2026-10-01T15:02:44Z. Mutant L of this change: a stale anchor is not an incident (INCIDENT_STATUSES without 'stale').
+$ npx vitest run server/jobs/__tests__/auditChainIntegritySweep.test.ts
+ × server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > an anchor older than 48 hours is an incident: alerted, and a fresh anchor is still written to close the window 12ms
+ × server/jobs/__tests__/auditChainIntegritySweep.test.ts > runAuditChainIntegrityCheck reports how old the latest anchor is (P0-8 follow-up) > a stale anchor beside another incident does not get a new anchor written over that incident 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected true to be false // Object.is equality
+AssertionError: expected [ 'audit_logs.seals' ] to deeply equal [ 'audit_logs.seals', …(1) ]
+ Test Files  1 failed (1)
+      Tests  2 failed | 30 passed (32)

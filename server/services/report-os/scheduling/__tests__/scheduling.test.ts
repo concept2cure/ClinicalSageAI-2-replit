@@ -122,11 +122,27 @@ describe('isDue', () => {
 });
 
 describe('decideDelivery', () => {
-  it('external + final requires e-signature and is not watermarked', () => {
-    const decision = decideDelivery({ status: 'final' }, 'external');
+  /* P1-44b (2026-10-01): finalizing a run is its signature, so the gate now
+     knows whether the report carries one. Before, it could only say that one
+     was required, and the route refused every external send of a final report. */
+  it('external + final with the signature it was finalized under is allowed, not watermarked, and names that signature', () => {
+    const decision = decideDelivery({ status: 'final', signatureId: 900 }, 'external');
     expect(decision.allowed).toBe(true);
     expect(decision.requiresESignature).toBe(true);
+    expect(decision.signatureId).toBe(900);
     expect(decision.watermark).toBe(false);
+  });
+
+  it('external + final without a signature is refused: the e-signature rule is the gate, not advice to the caller', () => {
+    const decision = decideDelivery({ status: 'final' }, 'external');
+    expect(decision.allowed).toBe(false);
+    expect(decision.requiresESignature).toBe(true);
+    expect(decision.signatureId).toBeUndefined();
+    expect(decision.reason).toMatch(/carries none/);
+  });
+
+  it('a null signature is no signature', () => {
+    expect(decideDelivery({ status: 'final', signatureId: null }, 'external').allowed).toBe(false);
   });
 
   it('external + partial is watermarked and does not require e-signature', () => {
@@ -146,11 +162,13 @@ describe('decideDelivery', () => {
   it('sealed flag forces e-signature on external even when not final', () => {
     const decision = decideDelivery({ status: 'draft', sealed: true }, 'external');
     expect(decision.requiresESignature).toBe(true);
+    expect(decision.allowed).toBe(false);
     expect(decision.watermark).toBe(false);
   });
 
   it('platform + final has no watermark and no e-signature', () => {
     const decision = decideDelivery({ status: 'final' }, 'platform');
+    expect(decision.allowed).toBe(true);
     expect(decision.requiresESignature).toBe(false);
     expect(decision.watermark).toBe(false);
   });
@@ -164,7 +182,7 @@ describe('decideDelivery', () => {
 
 describe('describeDeliveryAudit', () => {
   it('returns the expected normalized keys', () => {
-    const decision = decideDelivery({ status: 'final' }, 'external');
+    const decision = decideDelivery({ status: 'final', signatureId: 900 }, 'external');
     const audit = describeDeliveryAudit({
       subscriptionId: 42,
       reportTypeId: 'readiness_summary',
@@ -181,6 +199,7 @@ describe('describeDeliveryAudit', () => {
       recipients: ['a@example.com', 'b@example.com'],
       allowed: true,
       requiresESignature: true,
+      signatureId: 900,
       watermark: false,
       reason: decision.reason ?? null,
       at: '2026-06-15T00:00:00.000Z',
@@ -197,6 +216,7 @@ describe('describeDeliveryAudit', () => {
     });
     expect(audit.subscriptionId).toBeNull();
     expect(audit.reason).toBeNull();
+    expect(audit.signatureId).toBeNull();
     expect(audit.recipientCount).toBe(0);
   });
 });

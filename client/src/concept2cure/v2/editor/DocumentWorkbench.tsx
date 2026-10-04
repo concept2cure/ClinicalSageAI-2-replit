@@ -65,6 +65,7 @@ import { AuthoringPlaceIntoFiling } from '../surfaces/AuthoringPlaceIntoFiling';
 import { AuthoringCollab } from '../surfaces/AuthoringCollab';
 import { AuthoringCreateExport } from '../surfaces/AuthoringCreateExport';
 import { newDocumentAction } from '../newDocumentAction';
+import { downloadBlob, safeFileName } from '../download';
 import { ProjectFilesPanel } from './ProjectFilesPanel';
 import { ReviewTasksPanel } from './ReviewTasksPanel';
 import { FileToVaultDialog } from './FileToVaultDialog';
@@ -76,7 +77,12 @@ import { AuthoringRevisionDiff } from '../surfaces/AuthoringRevisionDiff';
 import { AuthoringAiDraft, type AcceptedAttribution } from '../surfaces/AuthoringAiDraft';
 import { AuthoringExports } from '../surfaces/AuthoringExports';
 import { RichSectionEditor, type RichSectionEditorHandle } from './RichSectionEditor';
-import type { SuggestionDecision } from './suggestions';
+import type {
+  ProposeRefusal,
+  ReplacementProposal,
+  SuggestionAuthor,
+  SuggestionDecision,
+} from './suggestions';
 import type { CommentAnchorPayload } from './commentAnchor';
 import { citedSourceIdsInHtml } from './citationNode';
 import { captionedObjectsInHtml } from './captionNumbering';
@@ -200,6 +206,48 @@ interface AuthAuditEvent {
    *  richest part of several governed records — which model produced a draft,
    *  which redline a reviewer refused — was written and unreadable. */
   metadata: Record<string, unknown> | null;
+  /** The server's verdict on this row against its entry on the tenant audit
+   *  chain, computed at read time (authoring-record.ts). `chained: false` is a
+   *  row no chain entry names — written before the chain carried trail ids —
+   *  and is unknown, neither a failure nor a pass. Absent from older servers. */
+  integrity?: AuditRowIntegrity | null;
+}
+
+interface AuditRowIntegrity {
+  chained: boolean;
+  intact: boolean | null;
+  mismatches: string[];
+  chainPayloadIntact?: boolean | null;
+}
+
+/** What each field the server compares reads as on the rail. */
+const AUDIT_MISMATCH_LABELS: Record<string, string> = {
+  before_content: 'text before',
+  after_content: 'text after',
+  metadata: 'details',
+  change_reason: 'reason',
+  operation_type: 'operation',
+  chain_payload: 'chain entry',
+};
+
+/**
+ * The warning an audit row carries when it no longer matches its chained
+ * record, or null.
+ *
+ * Only `intact === false` speaks. A row the chain does not name (`chained:
+ * false`) and a row with no verdict are unknown, and unknown is not rendered as
+ * a failure; an intact row gets no badge either, because silence is the rail's
+ * default and a "verified" mark on every row would stop being read.
+ */
+export function auditIntegrityNote(integrity: AuditRowIntegrity | null | undefined): string | null {
+  if (!integrity || integrity.chained !== true || integrity.intact !== false) return null;
+  const fields = (Array.isArray(integrity.mismatches) ? integrity.mismatches : [])
+    .filter((m): m is string => typeof m === 'string' && m.length > 0)
+    .map(m => AUDIT_MISMATCH_LABELS[m] ?? m.replace(/_/g, ' '));
+  return (
+    'This entry no longer matches its record on the audit chain' +
+    (fields.length > 0 ? ` (${fields.join(', ')}).` : '.')
+  );
 }
 
 /** How each recorded operation reads to a reviewer. Unknown operations are
@@ -212,6 +260,8 @@ const AUDIT_EVENT_LABELS: Record<string, string> = {
   REVERT: 'reverted to a prior revision',
   tracked_change_decision: 'tracked change decided',
   tracked_change_bulk_decision: 'tracked changes decided in bulk',
+  comment_added: 'comment added',
+  reply_added: 'reply added',
   REORDER_SECTIONS: 'sections reordered',
   RENAME: 'renamed',
   TRACK_CHANGES: 'track changes toggled',
@@ -235,6 +285,7 @@ const AUDIT_EVENT_LABELS: Record<string, string> = {
  *   ai-draft-accept — which model and provider produced the text, and whether
  *     the author edited it before accepting (so "accepted AI draft" cannot
  *     vouch for words the model never wrote).
+ *   comment_added / reply_added — the passage the comment was anchored to.
  *
  * Unrecognised metadata is left alone rather than dumped as JSON: a rail is a
  * reading surface, and raw payloads are not read.
@@ -273,6 +324,13 @@ export function describeAuditMetadata(
     const count = typeof metadata.count === 'number' ? metadata.count : null;
     if (!decision || count === null) return null;
     const verb = decision === 'accept' ? 'accepted' : 'rejected';
+    /* Every change decided is on the row now, whole (2026-09-26), so the rail
+       shows a sample of the first three and the export carries the rest.
+       Rows written before that were capped at twenty changes and said how
+       many they left out in `changesOmittedFromSummary`. The trail is
+       immutable, so those rows still exist and still read that way: a
+       truncated record that reads as complete is worse than one that admits
+       its limit. */
     const omitted =
       typeof metadata.changesOmittedFromSummary === 'number'
         ? metadata.changesOmittedFromSummary
@@ -283,13 +341,20 @@ export function describeAuditMetadata(
       .map(c => (c && typeof (c as any).text === 'string' ? (c as any).text : null))
       .filter((t): t is string => !!t)
       .map(t => `“${t.length > 80 ? t.slice(0, 80) + '…' : t}”`);
-    /* When the stored summary was capped, the row says so. A truncated record
-       that reads as complete is worse than one that admits its limit. */
     return (
       `${verb} ${count} tracked change${count === 1 ? '' : 's'} in one action` +
       (sample.length > 0 ? ` — including ${sample.join(', ')}` : '') +
       (omitted > 0 ? ` (${omitted} more not summarised on this row)` : '')
     );
+  }
+
+  if (eventType === 'comment_added' || eventType === 'reply_added') {
+    /* The passage the comment was anchored to, as the server stored it. The
+       comment's own words are the row's content (and in the export); the
+       quote is what places it in the document. */
+    const quote = str('quote');
+    if (!quote) return null;
+    return `commented on “${quote.length > 80 ? quote.slice(0, 80) + '…' : quote}”`;
   }
 
   if (metadata.source === 'section-metadata') {
@@ -489,8 +554,10 @@ async function readJson<T = any>(
     const res = await apiRequest('GET', path);
     const body = (await res.json().catch(() => null)) as T | null;
     return { ok: res.ok, status: res.status, body };
-  } catch {
-    return { ok: false, status: 0, body: null };
+  } catch (err) {
+    // apiRequest throws on a non-2xx other than 401; the status still says
+    // what the answer was (a 403 is a refusal, not a failed read).
+    return { ok: false, status: err instanceof ApiRequestError ? err.status : 0, body: null };
   }
 }
 
@@ -601,6 +668,112 @@ const STATUSES = ['all', 'draft', 'in_review', 'approved', 'frozen'];
 /** The document rows the host lists — the shape GET /api/authoring/docs returns. */
 export type { AuthDoc };
 
+/** What an embedding host may do with the open section (see `embedded.onEditorBridge`). */
+export interface EditorBridge {
+  docId: string;
+  sectionCode: string;
+  sectionTitle: string;
+  /** False while the document is sealed: open and readable, but nothing can be inserted. */
+  editable: boolean;
+  /** The document and section open, as this editor's own chat sends them; null with no project. */
+  authoringContext: AuthoringContextPack | null;
+  /** Insert text as an attributed tracked suggestion; false when the section cannot take it. */
+  insert: (text: string, author: SuggestionAuthor) => boolean;
+  /**
+   * Redline one quoted passage of the open section as an attributed tracked
+   * suggestion (the editor handle's `proposeReplacement`). Asynchronous: the
+   * base hash is checked over the loaded content with WebCrypto. Refuses
+   * `wrong-section`, `no-base`, `stale` and `not-editable` for itself (see
+   * EditorBridgeProposeResult); otherwise the editor's own refusals.
+   */
+  propose: (proposal: EditorBridgeProposal, author: SuggestionAuthor) => Promise<EditorBridgeProposeResult>;
+}
+
+/** An anchored proposal as the conversation hands it to the open section. */
+export interface EditorBridgeProposal extends ReplacementProposal {
+  /** The section the proposal is for. Only the open section takes it. */
+  sectionId: string;
+  /**
+   * The version of the section AnA read, as the section reader reports it
+   * (server/services/authoring/authoring-read.ts): `baseSha256` is the hex
+   * SHA-256 of the section's STORED content, `baseUpdatedAt` its
+   * `updated_at`. At least one is required, and every one given must be the
+   * section as this editor loaded it.
+   */
+  baseSha256?: string | null;
+  baseUpdatedAt?: string | null;
+}
+
+/**
+ * Why the bridge refused, beyond the editor's own reasons:
+ *   - wrong-section: the proposal is for a section that is not the open one,
+ *     so its quote was read from other text;
+ *   - no-base: it names no version of the section, so nothing shows the quote
+ *     was chosen against the text that is there now;
+ *   - stale: the section was saved (or reverted, or the editor reopened) after
+ *     AnA read it, so the quote was chosen against text that is no longer the
+ *     record.
+ */
+export type EditorBridgeProposeResult =
+  | { ok: true }
+  | { ok: false; reason: ProposeRefusal | 'stale' | 'wrong-section' | 'no-base' };
+
+/**
+ * Whether a proposal's base is the section version this editor loaded. Both
+ * are `updated_at` values, which reach the client through different
+ * serializers (a tool result, a route row), so the same instant may be written
+ * with or without milliseconds: compared as instants when both parse, as
+ * strings otherwise. A base with no loaded version to compare is not a match.
+ */
+function isLoadedVersion(base: string, loaded: string | null): boolean {
+  if (loaded == null) return false;
+  const a = Date.parse(base);
+  const b = Date.parse(loaded);
+  if (Number.isFinite(a) && Number.isFinite(b)) return a === b;
+  return base === loaded;
+}
+
+/**
+ * Hex SHA-256 of `text` as UTF-8 — what the section reader computes in SQL
+ * (`encode(sha256(convert_to(content, 'UTF8')), 'hex')`) — or null where
+ * WebCrypto is not available or fails, which the bridge treats as a base it
+ * cannot confirm.
+ */
+async function sha256Hex(text: string): Promise<string | null> {
+  const subtle = globalThis.crypto?.subtle;
+  if (!subtle) return null;
+  try {
+    const digest = await subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('');
+  } catch {
+    return null;
+  }
+}
+
+/** The section a bridge was built for, as its editor loaded it. */
+interface LoadedSection {
+  id: string;
+  updatedAt: string | null;
+  /** Hex SHA-256 of the stored content, computed once, on first need. */
+  sha256: () => Promise<string | null>;
+}
+
+/**
+ * Why a proposal's base is not the section as loaded — `no-base` when it
+ * names none, `stale` when any it names differs — or null when it is.
+ */
+async function baseRefusal(
+  proposal: EditorBridgeProposal,
+  loaded: LoadedSection,
+): Promise<'no-base' | 'stale' | null> {
+  const baseSha = proposal.baseSha256?.trim().toLowerCase() || null;
+  const baseAt = proposal.baseUpdatedAt?.trim() || null;
+  if (!baseSha && !baseAt) return 'no-base';
+  if (baseAt && !isLoadedVersion(baseAt, loaded.updatedAt)) return 'stale';
+  if (baseSha && (await loaded.sha256()) !== baseSha) return 'stale';
+  return null;
+}
+
 export interface DocumentWorkbenchProps {
   onNav: (id: string) => void;
   liveDrive?: OwnedSurfaceViewProps['liveDrive'];
@@ -626,7 +799,16 @@ export interface DocumentWorkbenchProps {
    *  the document canvas's bar does — so this component does not draw a
    *  second one into its crumb trail. `onBack` is still the one callback the
    *  way back runs, whoever draws the control. */
-  embedded?: { onBack: () => void; backLabel?: string; hostShowsBack?: boolean } | null;
+  embedded?: {
+    onBack: () => void;
+    backLabel?: string;
+    hostShowsBack?: boolean;
+    /** The host is told which section is open and given its suggestion door,
+     *  or null with no section open. A sealed document is reported as not editable. */
+    onEditorBridge?: (bridge: EditorBridge | null) => void;
+    /** A section the host asks to show; each new nonce is one request. */
+    focusSection?: { id: string; nonce: number } | null;
+  } | null;
   /** Surface-action bus id to register under, or null to register nothing —
    *  the canvas must not claim the bus while ConversationThread is on. */
   surfaceActionId?: string | null;
@@ -862,7 +1044,18 @@ export function DocumentWorkbench({
      purpose: a failed read of the compliance record must never render as "no
      governed acts have occurred". */
   const [auditEvents, setAuditEvents] = useState<AuthAuditEvent[]>([]);
-  const [auditState, setAuditState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  // 'forbidden': the server answered that this person may not read this
+  // document's record (403) — not a failed read, and not an empty trail.
+  const [auditState, setAuditState] = useState<'idle' | 'loading' | 'ready' | 'error' | 'forbidden'>('idle');
+  /* The record export — busy while the server records the export on the chain
+     and builds the package; `error` is the reason it did not arrive, kept on
+     the rail until the next attempt. Scoped to the document it was asked for,
+     so a refusal is never shown under a different document's trail. */
+  const [recordExport, setRecordExport] = useState<{
+    docId: string | null;
+    busy: boolean;
+    error: string | null;
+  }>({ docId: null, busy: false, error: null });
   /* The revision ledger's recomputed verdict — null until asked, 'error' on a
      failed read (which is a failure to CHECK, never a claim about the chain). */
   const [ledger, setLedger] = useState<LedgerVerdict | 'error' | 'checking' | null>(null);
@@ -1011,6 +1204,19 @@ export function DocumentWorkbench({
     [dirty, activeSectionId, activeDocId, applyNav]
   );
 
+  /* The host asking for a section (the conversation canvas: "Ask AnA to draft"
+     opens the editor at it). Through requestLeave, so unsaved text in the open
+     section is held for the author to decide. Each request is applied once,
+     when its section is in the list, and never again on a later reload. */
+  const focusSection = embedded?.focusSection ?? null;
+  const appliedFocusRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!focusSection || appliedFocusRef.current === focusSection.nonce) return;
+    if (!sections.some(s => s.id === focusSection.id)) return;
+    appliedFocusRef.current = focusSection.nonce;
+    requestLeave({ kind: 'section', id: focusSection.id });
+  }, [focusSection, sections, requestLeave]);
+
   /** Save through the editor's one save path, then move. A refused save keeps
    *  the author here with the text intact — the toast says why. */
   const saveAndLeave = useCallback(async () => {
@@ -1064,6 +1270,67 @@ export function DocumentWorkbench({
       activeSection?.title,
     ]
   );
+  /* Embedded in the conversation, this workbench draws no AnA rail of its
+     own, and that rail held the one control that put AnA's text into the
+     section ("Insert into … as tracked suggestion"). So it hands the host the
+     same door instead: the open section, and an insert through the editor's
+     `insertSuggestion`, which refuses honestly when the section cannot take
+     it (2026-10-01, the canvas → editor work). It hands over this editor's
+     own `authoringContext` too, so the host's turns name the document and
+     section the person has open, as this editor's own chat does. A sealed
+     document is still open, so it is still reported, as not editable. */
+  const onEditorBridge = embedded?.onEditorBridge;
+  useEffect(() => {
+    if (!onEditorBridge) return undefined;
+    if (!activeSection || !activeDocId) {
+      onEditorBridge(null);
+      return undefined;
+    }
+    /* The section as this editor loaded it. The row is replaced on every
+       save (and a revert or a section switch replaces the editor), and each
+       of those re-runs this effect, so a bridge whose effect has been
+       cleaned up describes a section that may no longer be the record: it
+       refuses `stale`. (So does one rebuilt for another reason — a sealed
+       flag, a new authoring context — which costs the caller one re-read,
+       never a redline on the wrong text.) */
+    const content = activeSection.content ?? '';
+    let sha: Promise<string | null> | null = null;
+    const loaded: LoadedSection = {
+      id: activeSection.id,
+      updatedAt: activeSection.updated_at ?? null,
+      sha256: () => (sha ??= sha256Hex(content)),
+    };
+    let live = true;
+    onEditorBridge({
+      docId: activeDocId,
+      sectionCode: activeSection.code,
+      sectionTitle: activeSection.title,
+      editable: !docSealed,
+      authoringContext,
+      insert: (text, author) => editorRef.current?.insertSuggestion(text, author) ?? false,
+      /* A proposal is anchored to text AnA read, in one section. It must name
+         this section and the version of it AnA read; every base it gives is
+         checked against the section as this editor loaded it, so a section
+         saved since is refused rather than redlined on a guess. Sealed before
+         the base: re-reading would not make a frozen document take it. The
+         hash is WebCrypto's, so this is asynchronous — and the section is
+         checked again after it, since a save can land while it runs. */
+      propose: async (proposal, author) => {
+        if (!live) return { ok: false, reason: 'stale' };
+        if (proposal.sectionId !== loaded.id) return { ok: false, reason: 'wrong-section' };
+        if (docSealed) return { ok: false, reason: 'not-editable' };
+        const refused = await baseRefusal(proposal, loaded);
+        if (refused) return { ok: false, reason: refused };
+        if (!live) return { ok: false, reason: 'stale' };
+        return editorRef.current?.proposeReplacement(proposal, author) ?? { ok: false, reason: 'not-editable' };
+      },
+    });
+    return () => {
+      live = false;
+      onEditorBridge(null);
+    };
+  }, [onEditorBridge, activeDocId, activeSection, docSealed, authoringContext]);
+
   /* With no project open there is no AuthoringContextPack to build (it requires
      a projectId), so the document/section identity still travels as module
      context rather than being dropped. */
@@ -1744,10 +2011,15 @@ export function DocumentWorkbench({
     // wrong document is worse than a late one.
     auditDocRef.current = docId;
     setAuditState('loading');
-    const { ok, body } = await readJson<{ events?: AuthAuditEvent[] }>(
+    const { ok, status, body } = await readJson<{ events?: AuthAuditEvent[] }>(
       `/api/authoring/docs/${encodeURIComponent(docId)}/audit?limit=100`
     );
     if (auditDocRef.current !== docId) return;
+    if (status === 403) {
+      setAuditState('forbidden');
+      setAuditEvents([]);
+      return;
+    }
     if (!ok || !body) {
       setAuditState('error');
       setAuditEvents([]);
@@ -1755,6 +2027,48 @@ export function DocumentWorkbench({
     }
     setAuditEvents(Array.isArray(body.events) ? body.events : []);
     setAuditState('ready');
+  }, []);
+
+  /* ── Download the document's authoring record ──
+     GET /docs/:docId/audit/export — every trail row whole, its chain entry and
+     verdict, the tenant chain walked now, and how to check it all offline.
+     Through apiRequest, so the bearer token and tenant header travel with it
+     (the API takes no cookie). The server records the export on the chain
+     BEFORE it sends anything and answers 503 when it cannot; that refusal, like
+     any other, stays on the rail in the server's own words. */
+  const downloadAuditRecord = useCallback(async (docId: string) => {
+    setRecordExport({ docId, busy: true, error: null });
+    const settle = (error: string | null) =>
+      setRecordExport(prev => (prev.docId === docId ? { docId, busy: false, error } : prev));
+    try {
+      const res = await apiRequest(
+        'GET',
+        `/api/authoring/docs/${encodeURIComponent(docId)}/audit/export`
+      );
+      // apiRequest RETURNS a 401 rather than throwing it.
+      if (!res.ok) {
+        const json = await res.json().catch(() => null);
+        settle(
+          'The record was not downloaded. ' +
+            (serverMessage(json) ?? 'Your session isn’t authenticated.')
+        );
+        return;
+      }
+      const blob = await res.blob();
+      const saved = downloadBlob(`authoring-record-${safeFileName(docId, 'document')}.json`, blob);
+      settle(
+        saved
+          ? null
+          : 'The record was prepared, but this browser did not save the file. Try again.'
+      );
+    } catch (err) {
+      settle(
+        'The record was not downloaded. ' +
+          (err instanceof ApiRequestError
+            ? serverMessage(err.payload) ?? err.message
+            : 'The service could not be reached.')
+      );
+    }
   }, []);
 
   /* ── The sources this section is drafted from ──
@@ -2838,6 +3152,7 @@ export function DocumentWorkbench({
         authorId: d.authorId ?? undefined,
         authorName: d.authorName ?? undefined,
         at: d.at ?? undefined,
+        sourceRecord: d.sourceRecord ?? undefined,
       });
       const decision = batch[0].decision;
       try {
@@ -4300,6 +4615,9 @@ export function DocumentWorkbench({
                             const ok = editorRef.current?.insertSuggestion(m.text, {
                               id: 'ana',
                               name: 'AnA (AI draft)',
+                              /* The turn that wrote this text, so accepting or
+                                 rejecting it later names that turn's record. */
+                              ...(m.turnRecord?.status === 'recorded' ? { sourceRecord: m.turnRecord.id } : {}),
                             });
                             if (ok) {
                               fireToast(
@@ -4560,8 +4878,26 @@ export function DocumentWorkbench({
       {rail === 'audit' && (
         <aside className="ed-comments">
           <div className="ed-comments-h ed-comments-h-row">
-            <span>Audit trail{activeDoc ? ` · ${activeDoc.title}` : ''}</span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              Audit trail{activeDoc ? ` · ${activeDoc.title}` : ''}
+            </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+              {/* The whole record, for someone who is not in this product: every
+                  row with its full content, its chain entry and verdict, and
+                  how to check them offline. The server records the export
+                  before it sends it. */}
+              <button
+                type="button"
+                className="nda-open"
+                onClick={() => activeDocId && void downloadAuditRecord(activeDocId)}
+                disabled={
+                  !activeDocId || (recordExport.busy && recordExport.docId === activeDocId)
+                }
+              >
+                {recordExport.busy && recordExport.docId === activeDocId
+                  ? 'Preparing the record…'
+                  : 'Download the record'}
+              </button>
               <button
                 type="button"
                 className="nda-open"
@@ -4573,11 +4909,27 @@ export function DocumentWorkbench({
               <RailClose label="Close audit trail" onClose={closeRail} />
             </span>
           </div>
+          {activeDocId && recordExport.docId === activeDocId && recordExport.error && (
+            <div
+              className="scaf-note"
+              role="alert"
+              data-testid="audit-export-error"
+              style={{ marginTop: 0, padding: '8px 12px', fontSize: 12, borderLeftColor: 'var(--error)' }}
+            >
+              {recordExport.error}
+            </div>
+          )}
           {!activeDocId ? (
             <EmptyState
               icon={I.activity}
               title="No document selected"
               hint="Select a document to review its audit trail."
+            />
+          ) : auditState === 'forbidden' ? (
+            <EmptyState
+              icon={I.lock}
+              title="No access to this document’s record"
+              hint="Reading it needs access to the document, or an audit role in the organization. Ask the document’s owner or your quality lead."
             />
           ) : auditState === 'error' ? (
             <EmptyState
@@ -4601,8 +4953,9 @@ export function DocumentWorkbench({
               const section = ev.section_id
                 ? sections.find(s => s.id === ev.section_id) ?? null
                 : null;
+              const integrityNote = auditIntegrityNote(ev.integrity);
               return (
-                <div key={ev.id} className="cmt">
+                <div key={ev.id} className="cmt" data-testid="audit-event">
                   <div className="cmt-meta">
                     <span className="cmt-av">
                       {(ev.actor ?? '·')
@@ -4671,6 +5024,20 @@ export function DocumentWorkbench({
                         {(ev.content_hash_before ?? '—').slice(0, 8)} →{' '}
                         {(ev.content_hash_after ?? '—').slice(0, 8)}
                       </span>
+                    )}
+                    {/* The server's check of this row against its chained
+                        record, said only when it fails. A row the chain does
+                        not name is unknown and gets nothing; an intact row gets
+                        nothing either. */}
+                    {integrityNote && (
+                      <div className="ana-msg-warnings" role="note" data-testid="audit-integrity-note">
+                        <div className="ana-msg-warning">
+                          <span className="ana-msg-warning-ic" aria-hidden="true">
+                            {I.alertTriangle}
+                          </span>
+                          <span>{integrityNote}</span>
+                        </div>
+                      </div>
                     )}
                   </div>
                 </div>

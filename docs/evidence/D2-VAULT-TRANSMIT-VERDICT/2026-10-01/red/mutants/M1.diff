@@ -1,0 +1,13 @@
+diff --git a<scratchpad>/placedialog/VaultPlaceIntoSubmission.impl.tsx b/client/src/concept2cure/v2/surfaces/VaultPlaceIntoSubmission.tsx
+index c97221e55..4bf4465d8 100644
+--- a<scratchpad>/placedialog/VaultPlaceIntoSubmission.impl.tsx
++++ b/client/src/concept2cure/v2/surfaces/VaultPlaceIntoSubmission.tsx
+@@ -307,7 +307,7 @@ export function VaultPlaceIntoSubmission({
+   const stage = useVersionStage(projectId, documentUuid, !notPdf);
+ 
+   const confirmedSection = confirmedSectionOf(filing);
+-  const [section, setSection] = React.useState(confirmedSection ?? '');
++  const [section, setSection] = React.useState('');
+   const [op, setOp] = React.useState('new');
+   const [reason, setReason] = React.useState('');
+   const [placing, setPlacing] = React.useState(false);

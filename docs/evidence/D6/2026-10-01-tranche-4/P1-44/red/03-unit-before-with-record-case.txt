@@ -1,0 +1,298 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts
+{
+  "timestamp": "2026-10-01T03:28:24.626Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a refused delivery record is not sent: 503, the letter rolls back with it, no chain row
+{
+  "timestamp": "2026-10-01T03:28:24.923Z",
+  "level": "error",
+  "message": "[report-os] saving deliveries failed",
+  "context": {
+    "err": "pool insert refused: secret-detail-xyz",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ × server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > answers 'sent' only after the correspondence row, the delivery record and report_os.delivery_sent commit 61ms
+   → expected [] to deeply equal [ 'BEGIN', …(1) ]
+ × server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a refused correspondence write is not sent: 503, no chain row, nothing recorded 8ms
+   → expected 201 to be 503 // Object.is equality
+ × server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a refused delivery record is not sent: 503, the letter rolls back with it, no chain row 6ms
+   → expected 500 to be 503 // Object.is equality
+ × server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a refused chain row is not sent: 503, the letter and the record roll back with it 8ms
+   → expected 201 to be 503 // Object.is equality
+ × server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > the learning memory is written inside the same transaction 10ms
+   → expected [] to have a length of 2 but got +0
+ × server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a delivery with a message at the schema limit is stored whole, so it can be listed again 16ms
+   → a cut record is unreadable by GET /deliveries: expected [Function] to not throw an error but 'SyntaxError: Unterminated string in J…' was thrown
+ × server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a delivery with no project is refused (422), not answered and stored nowhere 11ms
+   → expected 201 to be 422 // Object.is equality
+ ✓ server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a final report is sent inside the platform without an e-signature (the platform channel has no signature gate) 4ms
+ × server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts > POST /deliveries external_pdf_export (P1-44) > records 'exported' with report_os.delivery_exported on one transaction, and no letter 7ms
+   → expected [] to deeply equal [ 'BEGIN', …(1) ]
+ × server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts > POST /deliveries external_pdf_export (P1-44) > refuses a final run without an e-signature (409 E_SIGNATURE_REQUIRED) and records nothing 8ms
+   → expected 201 to be 409 // Object.is equality
+ × server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts > POST /deliveries external_pdf_export (P1-44) > refuses a bundle holding a run that is final NOW, whatever the bundle recorded when it was made 4ms
+   → expected 201 to be 409 // Object.is equality
+ × server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts > POST /correspondence/capture: a letter that was not stored is not a 201 (P1-44, the helper's other caller) > writes the letter, its issues and the learning memory on one transaction 4ms
+   → expected undefined to be '4c80b9d9-84a4-4de3-9ee4-dd49b18ac752' // Object.is equality
+ × server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts > POST /correspondence/capture: a letter that was not stored is not a 201 (P1-44, the helper's other caller) > answers 503 with nothing captured when the letter is refused, and writes no learning memory 3ms
+   → expected 201 to be 503 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > answers 'sent' only after the correspondence row, the delivery record and report_os.delivery_sent commit
+AssertionError: expected [] to deeply equal [ 'BEGIN', …(1) ]
+
+- Expected
++ Received
+
+- [
+-   "BEGIN",
+-   "SELECT set_config('app.current_tenant_id', $1, true)",
+- ]
++ []
+
+ ❯ server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts:197:38
+    195|     expect(status).toBe('sent');
+    196|     expect(correspondenceId).toMatch(/^[0-9a-f-]{36}$/);
+    197|     expect(h.statements.slice(0, 2)).toEqual(['BEGIN', STAMP]);
+       |                                      ^
+    198|     expect(h.statements.slice(-2)).toEqual(['COMMIT', '<released>']);
+    199|     expect(at(CORRESPONDENCE)).toBeGreaterThan(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a refused correspondence write is not sent: 503, no chain row, nothing recorded
+AssertionError: expected 201 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 201
+
+ ❯ expectNothingClaimed server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts:162:22
+    160| /** A refused delivery: 503, nothing claimed, no detail, rolled back, …
+    161| function expectNothingClaimed(res: request.Response) {
+    162|   expect(res.status).toBe(503);
+       |                      ^
+    163|   expect(res.body).toMatchObject({ success: false, error: { code: 'REP…
+    164|   expect(res.body.error.message).toMatch(/not sent/i);
+ ❯ server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts:220:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a refused delivery record is not sent: 503, the letter rolls back with it, no chain row
+AssertionError: expected 500 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 500
+
+ ❯ expectNothingClaimed server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts:162:22
+    160| /** A refused delivery: 503, nothing claimed, no detail, rolled back, …
+    161| function expectNothingClaimed(res: request.Response) {
+    162|   expect(res.status).toBe(503);
+       |                      ^
+    163|   expect(res.body).toMatchObject({ success: false, error: { code: 'REP…
+    164|   expect(res.body.error.message).toMatch(/not sent/i);
+ ❯ server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts:228:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/12]⎯
+
+ FAIL  server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a refused chain row is not sent: 503, the letter and the record roll back with it
+AssertionError: expected 201 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 201
+
+ ❯ expectNothingClaimed server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts:162:22
+    160| /** A refused delivery: 503, nothing claimed, no detail, rolled back, …
+    161| function expectNothingClaimed(res: request.Response) {
+    162|   expect(res.status).toBe(503);
+       |                      ^
+    163|   expect(res.body).toMatchObject({ success: false, error: { code: 'REP…
+    164|   expect(res.body.error.message).toMatch(/not sent/i);
+ ❯ server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts:236:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/12]⎯
+
+ FAIL  server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > the learning memory is written inside the same transaction
+AssertionError: expected [] to have a length of 2 but got +0
+
+- Expected
++ Received
+
+- 2
++ 0
+
+ ❯ server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts:244:73
+    242|     expect(res.status).toBe(201);
+    243|     const commit = at(/^COMMIT$/);
+    244|     expect(h.statements.slice(0, commit).filter((s) => MEMORY.test(s))…
+       |                                                                         ^
+    245|     expect(h.poolWrites).toEqual([]);
+    246|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/12]⎯
+
+ FAIL  server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a delivery with a message at the schema limit is stored whole, so it can be listed again
+AssertionError: a cut record is unreadable by GET /deliveries: expected [Function] to not throw an error but 'SyntaxError: Unterminated string in J…' was thrown
+
+- Expected:
+undefined
+
++ Received:
+"SyntaxError: Unterminated string in JSON at position 20000 (line 1 column 20001)"
+
+ ❯ server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts:259:93
+    257|     ].find((p): p is string => typeof p === 'string' && p.startsWith('…
+    258|     expect(written, 'the delivery record must be written').toBeDefined…
+    259|     expect(() => JSON.parse(written!), 'a cut record is unreadable by …
+       |                                                                                             ^
+    260|     expect(JSON.parse(written!).deliveryRecord.message).toHaveLength(2…
+    261|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/12]⎯
+
+ FAIL  server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts > POST /deliveries platform_send: the letter, the record and the chain row, together (P1-44) > a delivery with no project is refused (422), not answered and stored nowhere
+AssertionError: expected 201 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 201
+
+ ❯ server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts:266:24
+    264|     h.tables.report_runs = [[run('completed', { scopeType: 'submission…
+    265|     const res = await deliver(SEND);
+    266|     expect(res.status).toBe(422);
+       |                        ^
+    267|     expect(JSON.stringify(res.body)).not.toMatch(/"sent"/);
+    268|     expect(h.statements).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/12]⎯
+
+ FAIL  server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts > POST /deliveries external_pdf_export (P1-44) > records 'exported' with report_os.delivery_exported on one transaction, and no letter
+AssertionError: expected [] to deeply equal [ 'BEGIN', …(1) ]
+
+- Expected
++ Received
+
+- [
+-   "BEGIN",
+-   "SELECT set_config('app.current_tenant_id', $1, true)",
+- ]
++ []
+
+ ❯ server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts:288:38
+    286|     expect(res.body.data.status).toBe('exported');
+    287|     expect(count(CORRESPONDENCE)).toBe(0);
+    288|     expect(h.statements.slice(0, 2)).toEqual(['BEGIN', STAMP]);
+       |                                      ^
+    289|     expect(at(/<audit row>/)).toBeGreaterThan(at(MEMORY));
+    290|     expect(h.statements.slice(-2)).toEqual(['COMMIT', '<released>']);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/12]⎯
+
+ FAIL  server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts > POST /deliveries external_pdf_export (P1-44) > refuses a final run without an e-signature (409 E_SIGNATURE_REQUIRED) and records nothing
+AssertionError: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts:302:24
+    300|     h.tables.report_runs = [[run('final')]];
+    301|     const res = await deliver(EXPORT);
+    302|     expect(res.status).toBe(409);
+       |                        ^
+    303|     expect(res.body).toMatchObject({ success: false, error: { code: 'E…
+    304|     expect(h.statements).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/12]⎯
+
+ FAIL  server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts > POST /deliveries external_pdf_export (P1-44) > refuses a bundle holding a run that is final NOW, whatever the bundle recorded when it was made
+AssertionError: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts:318:24
+    316|     h.tables.report_runs = [[{ id: 41, status: 'completed' }, { id: 42…
+    317|     const res = await deliver({ ...EXPORT, runId: undefined, bundleId:…
+    318|     expect(res.status).toBe(409);
+       |                        ^
+    319|     expect(res.body.error.code).toBe('E_SIGNATURE_REQUIRED');
+    320|     expect(h.statements).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/12]⎯
+
+ FAIL  server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts > POST /correspondence/capture: a letter that was not stored is not a 201 (P1-44, the helper's other caller) > writes the letter, its issues and the learning memory on one transaction
+AssertionError: expected undefined to be '4c80b9d9-84a4-4de3-9ee4-dd49b18ac752' // Object.is equality
+
+- Expected:
+"4c80b9d9-84a4-4de3-9ee4-dd49b18ac752"
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts:338:73
+    336|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+    337|     expect(res.body.data.persistedToPlatform).toBe(true);
+    338|     expect(h.calls.find((c) => CORRESPONDENCE.test(c.text))?.params[0]…
+       |                                                                         ^
+    339|     expect(h.statements.slice(0, 2)).toEqual(['BEGIN', STAMP]);
+    340|     expect(at(/^INSERT INTO c2c_correspondence_issues/)).toBeGreaterTh…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/12]⎯
+
+ FAIL  server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts > POST /correspondence/capture: a letter that was not stored is not a 201 (P1-44, the helper's other caller) > answers 503 with nothing captured when the letter is refused, and writes no learning memory
+AssertionError: expected 201 to be 503 // Object.is equality
+
+- Expected
++ Received
+
+- 503
++ 201
+
+ ❯ server/routes/__tests__/report-os-delivery-recording.p144-head.test.ts:349:24
+    347|     h.fail.re = /INSERT INTO c2c_correspondence \(/;
+    348|     const res = await capture();
+    349|     expect(res.status).toBe(503);
+       |                        ^
+    350|     expect(res.body).toMatchObject({ success: false, error: { code: 'C…
+    351|     expect(res.body.error.message).toMatch(/Nothing was recorded/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/12]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  12 failed | 1 passed (13)
+   Start at  03:28:21
+   Duration  3.49s (transform 1.53s, setup 127ms, import 2.80s, tests 156ms, environment 0ms)
+

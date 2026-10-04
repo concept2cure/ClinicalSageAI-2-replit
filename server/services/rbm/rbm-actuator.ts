@@ -27,8 +27,10 @@ import {
   bandFromScore,
   kriStatus,
   qtlStatus,
+  qtlRangeError,
   defaultPlanStrategy,
   type KriDirection,
+  type QtlDirection,
 } from './rbm-engine';
 
 /** Minimal pg-compatible executor: `pool`, a pooled client, or a test double. */
@@ -184,19 +186,40 @@ export interface SetQtlInput {
   threshold?: number | null;
   secondaryLimit?: number | null;
   currentValue?: number | null;
+  /** Which way the limit bites. Defaults to `upper` — the historical behaviour. */
+  direction?: QtlDirection;
+  /** two_sided only: the lower bound and its early-warning limit. */
+  thresholdLower?: number | null;
+  secondaryLimitLower?: number | null;
 }
 
 /** Create a QTL. Infers the secondary early-warning limit (75% of threshold)
- *  when omitted, and the within/approaching/breached status from the value. */
+ *  when omitted — for an UPPER limit only: 75% of a lower bound would sit on
+ *  the breached side of it — and the within/approaching/breached status from
+ *  the value, evaluated in the limit's own direction. Throws on a two-sided
+ *  limit that is not a usable range rather than storing one that can never
+ *  evaluate. */
 export async function setQtl(exec: Exec, organizationId: number, input: SetQtlInput) {
-  const secondary = input.secondaryLimit ?? inferSecondaryLimit(input.threshold);
-  const status = qtlStatus(input.currentValue ?? null, input.threshold ?? null, secondary);
+  const direction: QtlDirection = input.direction ?? 'upper';
+  const rangeErr = qtlRangeError({ direction, threshold: input.threshold, thresholdLower: input.thresholdLower });
+  if (rangeErr) throw new Error(rangeErr);
+  const secondary = input.secondaryLimit
+    ?? (direction === 'upper' ? inferSecondaryLimit(input.threshold) : null);
+  const status = qtlStatus(input.currentValue ?? null, {
+    threshold: input.threshold ?? null,
+    secondaryLimit: secondary,
+    direction,
+    thresholdLower: input.thresholdLower ?? null,
+    secondaryLimitLower: input.secondaryLimitLower ?? null,
+  });
   const { rows } = await exec.query(
-    `INSERT INTO rbm_qtls (organization_id, program_id, parameter, rationale, threshold, secondary_limit, current_value, breached, status)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+    `INSERT INTO rbm_qtls (organization_id, program_id, parameter, rationale, threshold, secondary_limit,
+       direction, threshold_lower, secondary_limit_lower, current_value, breached, status)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
     [
       organizationId, input.programId ?? null, input.parameter, input.rationale ?? null,
-      input.threshold ?? null, secondary, input.currentValue ?? null, status === 'breached', status,
+      input.threshold ?? null, secondary, direction, input.thresholdLower ?? null,
+      input.secondaryLimitLower ?? null, input.currentValue ?? null, status === 'breached', status,
     ],
   );
   return { qtl: rows[0], inferred: { secondaryLimit: secondary, status } };
@@ -286,10 +309,23 @@ export async function draftPlan(exec: Exec, organizationId: number, input: Draft
   }
   strategy = strategy ?? 'risk_based';
   const title = input.title ?? 'Risk-based monitoring plan';
+  // A new plan is a new VERSION in the study's chain. Two drafts off one study
+  // have no defined merge, so an open draft is reported, not duplicated.
+  const programId = input.programId ?? null;
+  const open = await openDraftPlan(exec, organizationId, programId);
+  if (open) {
+    return {
+      plan: null,
+      refused: 'draft_already_open' as const,
+      message: `A draft monitoring plan (v${open.version}, id ${open.id}) is already open for this study — edit or approve it instead of drafting another.`,
+      inferred: { strategy, fromOverallRisk: overall },
+    };
+  }
+  const version = await nextPlanVersion(exec, organizationId, programId);
   const { rows } = await exec.query(
-    `INSERT INTO rbm_monitoring_plans (organization_id, program_id, assessment_id, title, strategy, status)
-     VALUES ($1,$2,$3,$4,$5,'draft') RETURNING *`,
-    [organizationId, input.programId ?? null, input.assessmentId ?? null, title, strategy],
+    `INSERT INTO rbm_monitoring_plans (organization_id, program_id, assessment_id, title, strategy, status, version)
+     VALUES ($1,$2,$3,$4,$5,'draft',$6) RETURNING *`,
+    [organizationId, programId, input.assessmentId ?? null, title, strategy, version],
   );
   return { plan: rows[0], inferred: { strategy, fromOverallRisk: overall } };
 }
@@ -396,7 +432,7 @@ export async function amendAssessment(
 export interface GeneratePlanResult {
   generated: boolean;
   /** Why nothing was generated, when `generated` is false. */
-  reason?: 'no_assessment' | 'assessment_not_approved';
+  reason?: 'no_assessment' | 'assessment_not_approved' | 'draft_already_open';
   plan?: any;
   actions?: any[];
   derivedFrom?: { assessmentId: number; overallRisk: string; criticalFactors: number; enhancedSites: number };
@@ -468,13 +504,20 @@ export async function generatePlanFromAssessment(
     : 'medium';
   const strategy = defaultPlanStrategy(overall);
 
+  // Generating lands a new plan VERSION, so it cannot silently sit alongside an
+  // amendment someone else has open: two drafts off one study have no defined
+  // merge, and picking one would discard the other's work.
+  const openDraft = await openDraftPlan(exec, organizationId, input.programId);
+  if (openDraft) return { generated: false, reason: 'draft_already_open' };
+  const version = await nextPlanVersion(exec, organizationId, input.programId);
+
   const plan = (await exec.query(
     /* created_by is the author of record for the Part 11 two-person rule. */
-    `INSERT INTO rbm_monitoring_plans (organization_id, program_id, assessment_id, title, strategy, status, metadata, created_by)
-     VALUES ($1,$2,$3,$4,$5,'draft',$6,$7) RETURNING *`,
+    `INSERT INTO rbm_monitoring_plans (organization_id, program_id, assessment_id, title, strategy, status, version, metadata, created_by)
+     VALUES ($1,$2,$3,$4,$5,'draft',$6,$7,$8) RETURNING *`,
     [
       organizationId, input.programId, assessment.id,
-      input.title ?? `Monitoring plan — ${assessment.title}`, strategy,
+      input.title ?? `Monitoring plan — ${assessment.title}`, strategy, version,
       JSON.stringify({
         generatedFrom: 'rbm_risk_assessment',
         assessmentId: assessment.id,
@@ -522,6 +565,108 @@ export async function generatePlanFromAssessment(
   };
 }
 
+/**
+ * The next monitoring-plan version for a study. Numbered across EVERY version
+ * of the plan on file — archived and soft-deleted ones included — so a version
+ * number is never reused: a reused number would make two different signed
+ * documents indistinguishable in the audit trail.
+ */
+export async function nextPlanVersion(
+  exec: Exec,
+  organizationId: number,
+  programId: string | null,
+): Promise<number> {
+  const { rows } = await exec.query(
+    `SELECT COALESCE(MAX(version), 0) AS v FROM rbm_monitoring_plans
+      WHERE organization_id = $1 AND program_id IS NOT DISTINCT FROM $2`,
+    [organizationId, programId],
+  );
+  return Number(rows[0]?.v ?? 0) + 1;
+}
+
+/** An open (draft) plan version for the study, if any. */
+async function openDraftPlan(exec: Exec, organizationId: number, programId: string | null) {
+  const { rows } = await exec.query(
+    `SELECT id, version FROM rbm_monitoring_plans
+      WHERE organization_id = $1 AND program_id IS NOT DISTINCT FROM $2
+        AND deleted_at IS NULL AND status = 'draft'
+      ORDER BY version DESC LIMIT 1`,
+    [organizationId, programId],
+  );
+  return rows[0] ?? null;
+}
+
+export interface AmendPlanResult {
+  amended: boolean;
+  reason?: 'not_found' | 'not_approved' | 'amendment_already_open';
+  plan?: any;
+  /** The version this amendment was opened from. */
+  supersedes?: number;
+}
+
+/**
+ * Open a versioned amendment to an APPROVED monitoring plan.
+ *
+ * The same argument as amendAssessment, applied to the document that actually
+ * directs monitoring activity. An active plan's e-signature attests to a
+ * specific strategy and a specific set of actions; editing it in place would
+ * leave the approver's name and timestamp attached to content they never saw.
+ * Monitoring plans genuinely change mid-study — that is the premise of
+ * risk-proportionate monitoring — so revision is supported, just not silently.
+ *
+ * Monitoring actions are NOT copied. They are execution records — issues,
+ * CAPAs, visits, queries, escalations raised while the study runs under its
+ * approved plan (ICH E6(R3)) — not part of the signed plan content. They stay
+ * logged against the plan in force, and the draft governs nothing until it is
+ * approved; approvePlan then moves the unfinished ones onto the new version.
+ * (Until 2026-10 this copied unfinished actions into the draft, reset to
+ * `open`; that duplicated live work onto a version that governed nothing.)
+ *
+ * The new version carries NO approval fields — copying the previous signer
+ * forward would forge a signature — and records the amender as its author
+ * (created_by) so the two-person rule applies to its approval.
+ *
+ * The caller owns the transaction.
+ */
+export async function amendMonitoringPlan(
+  exec: Exec,
+  organizationId: number,
+  input: { planId: number; reason: string; openedBy?: number | null },
+): Promise<AmendPlanResult> {
+  const current = (await exec.query(
+    `SELECT * FROM rbm_monitoring_plans
+      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+    [input.planId, organizationId],
+  )).rows[0];
+  if (!current) return { amended: false, reason: 'not_found' };
+  // A draft is already editable, so amending one would fork it for no reason.
+  if (current.status !== 'active') return { amended: false, reason: 'not_approved' };
+
+  const open = await openDraftPlan(exec, organizationId, current.program_id ?? null);
+  if (open) return { amended: false, reason: 'amendment_already_open' };
+
+  const version = await nextPlanVersion(exec, organizationId, current.program_id ?? null);
+
+  const plan = (await exec.query(
+    `INSERT INTO rbm_monitoring_plans (
+       organization_id, program_id, assessment_id, title, strategy, status, version, metadata, created_by
+     ) VALUES ($1,$2,$3,$4,$5,'draft',$6,$7,$8) RETURNING *`,
+    [
+      organizationId, current.program_id ?? null, current.assessment_id ?? null, current.title,
+      current.strategy, version,
+      JSON.stringify({
+        amendmentOf: current.id,
+        amendmentOfVersion: current.version,
+        amendmentReason: input.reason,
+        amendmentOpenedBy: input.openedBy ?? null,
+      }),
+      input.openedBy ?? null,
+    ],
+  )).rows[0];
+
+  return { amended: true, plan, supersedes: current.version };
+}
+
 export interface CreateActionInput {
   planId: number;
   riskItemId?: number | null;
@@ -533,14 +678,109 @@ export interface CreateActionInput {
   dueDate?: string | null;
 }
 
-/** Create a monitoring action under a plan (verifying the plan is in-tenant).
- *  Returns null when the plan is not found in the tenant. */
-export async function createAction(exec: Exec, organizationId: number, input: CreateActionInput) {
+/** The plan in force for a study: its active (approved) version. Null for a
+ *  plan with no study (program_id NULL) — such plans are never superseded by
+ *  approvePlan, so there is no "plan in force" to compare against. */
+async function planInForce(exec: Exec, organizationId: number, programId: string | null) {
+  if (programId == null) return null;
+  const { rows } = await exec.query(
+    `SELECT id, version FROM rbm_monitoring_plans
+      WHERE organization_id = $1 AND program_id = $2
+        AND deleted_at IS NULL AND status = 'active'
+      ORDER BY version DESC LIMIT 1`,
+    [organizationId, programId],
+  );
+  return rows[0] ?? null;
+}
+
+/**
+ * The plan new monitoring actions are logged against, from a study's plan
+ * versions: the active version if there is one, else a draft (the study's
+ * first plan, before approval), else null. An open amendment draft is never
+ * it — it governs nothing until approved. Pure, so the board and the tests
+ * share createAction's rule.
+ */
+export function governingPlanId(
+  plans: ReadonlyArray<{ id: number; status: string | null; version?: number | null }>,
+): number | null {
+  const byVersion = [...plans].sort((x, y) => (y.version ?? 0) - (x.version ?? 0));
+  const active = byVersion.find(p => p.status === 'active');
+  if (active) return active.id;
+  const draft = byVersion.find(p => p.status === 'draft');
+  return draft ? draft.id : null;
+}
+
+export type CreateActionResult =
+  | { created: true; action: any }
+  | { created: false; reason: 'plan_not_found' }
+  | {
+      created: false;
+      reason: 'plan_superseded' | 'amendment_not_in_force';
+      planStatus: string;
+      /** The plan in force for the study — where the action belongs — or null. */
+      governingPlanId: number | null;
+      message: string;
+    };
+
+/**
+ * Create a monitoring action, logged against the plan in force.
+ *
+ * Monitoring actions are execution records raised while a study runs under its
+ * approved plan (ICH E6(R3)); they are not part of the signed plan content,
+ * which stays locked (PATCH 409, /amend). So an action is accepted on:
+ *   - the ACTIVE plan (the plan in force), or
+ *   - a DRAFT that is the study's first plan, before any version is approved.
+ * It is refused (409) on:
+ *   - an ARCHIVED version → `plan_superseded`, naming the plan in force;
+ *   - a draft AMENDMENT while an active plan exists → `amendment_not_in_force`:
+ *     the draft governs nothing until approved, and approvePlan moves the open
+ *     actions onto it at that point.
+ * Both refusals return `governingPlanId` so a caller can retry on the right
+ * plan. This is the one implementation behind POST /rbm-monitoring-actions,
+ * POST /rbm-signals/:id/investigate and the AnA tool.
+ */
+export async function createAction(
+  exec: Exec,
+  organizationId: number,
+  input: CreateActionInput,
+): Promise<CreateActionResult> {
   const own = await exec.query(
-    `SELECT 1 FROM rbm_monitoring_plans WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+    `SELECT id, status, version, program_id FROM rbm_monitoring_plans WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
     [input.planId, organizationId],
   );
-  if (own.rows.length === 0) return { created: false as const, reason: 'plan_not_found' };
+  if (own.rows.length === 0) return { created: false, reason: 'plan_not_found' };
+  const plan = own.rows[0];
+  const status = String(plan.status);
+
+  if (status !== 'active') {
+    const inForce = await planInForce(exec, organizationId, plan.program_id ?? null);
+    const governing = inForce ? Number(inForce.id) : null;
+    const inForceLabel = inForce
+      ? `plan ${inForce.id}${inForce.version != null ? ` (v${inForce.version})` : ''}`
+      : null;
+    if (status !== 'draft') {
+      return {
+        created: false,
+        reason: 'plan_superseded',
+        planStatus: status,
+        governingPlanId: governing,
+        message: inForceLabel
+          ? `Monitoring plan ${input.planId} is ${status}. Actions are logged against the plan in force, ${inForceLabel}.`
+          : `Monitoring plan ${input.planId} is ${status}, and this study has no approved plan in force to log the action against.`,
+      };
+    }
+    if (inForce && governing !== Number(plan.id)) {
+      return {
+        created: false,
+        reason: 'amendment_not_in_force',
+        planStatus: status,
+        governingPlanId: governing,
+        message: `Monitoring plan ${input.planId} is an amendment that is not yet approved. `
+          + `Actions are logged against the plan in force, ${inForceLabel}, and move to the amendment when it is approved.`,
+      };
+    }
+  }
+
   const { rows } = await exec.query(
     `INSERT INTO rbm_monitoring_actions (organization_id, plan_id, risk_item_id, signal_id, action_type, description, priority, owner, due_date, status)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'open') RETURNING *`,
@@ -550,7 +790,7 @@ export async function createAction(exec: Exec, organizationId: number, input: Cr
       input.owner ?? null, input.dueDate ?? null,
     ],
   );
-  return { created: true as const, action: rows[0] };
+  return { created: true, action: rows[0] };
 }
 
 export interface UpdateActionInput {
@@ -694,5 +934,35 @@ export async function approvePlan(
       opts.authorKnown === false ? 'not_applicable_no_author_recorded' : 'enforced',
     ],
   );
-  return rows[0] ?? null;
+  if (rows.length === 0) return null;
+  /* Approving a version supersedes the one it replaces, so a study never has
+     two plans claiming to direct monitoring at once. Atomic with the UPDATE
+     above only when the caller passes its transaction client — the route does.
+     The archived row's content is untouched: that is the signed record.
+
+     Its UNFINISHED actions move to the new version in the same executor.
+     Actions are execution records under the plan in force, not signed plan
+     content, so open work follows the plan that now governs it; each moved row
+     records where it came from (carriedFromPlanId / carriedFromVersion).
+     Completed actions stay with the archived version as its history. */
+  if (rows[0].program_id) {
+    const archived = await exec.query(
+      `UPDATE rbm_monitoring_plans SET status = 'archived', updated_at = NOW()
+        WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
+          AND id <> $3 AND status = 'active'
+        RETURNING id, version`,
+      [organizationId, rows[0].program_id, planId],
+    );
+    for (const old of archived.rows ?? []) {
+      await exec.query(
+        `UPDATE rbm_monitoring_actions
+            SET plan_id = $1, updated_at = NOW(),
+                metadata = COALESCE(metadata, '{}'::jsonb)
+                           || jsonb_build_object('carriedFromPlanId', $3::int, 'carriedFromVersion', $4::int)
+          WHERE organization_id = $2 AND plan_id = $3 AND status <> 'done'`,
+        [planId, organizationId, old.id, old.version ?? null],
+      );
+    }
+  }
+  return rows[0];
 }

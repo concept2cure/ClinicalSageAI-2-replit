@@ -1,0 +1,72 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-09-29T19:29:06.465Z","pid":7650,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-09-29T19:29:06.467Z","pid":7650,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-09-29T19:29:06.467Z","pid":7650,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/correspondence-work-items.dbtest.ts
+[database] Database connection successful { timestamp: '2026-09-29T19:29:06.818Z', poolSize: 1 }
+
+stdout | tests/db/correspondence-work-items.dbtest.ts
+[database] Database connection successful
+
+stderr | tests/db/correspondence-work-items.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+{"level":50,"time":"2026-09-29T19:29:07.451Z","pid":7650,"hostname":"vm","context":{"correspondenceId":"a3dd741a-a791-4270-a0db-3cdaf0c32a8f","projectId":6,"submissionId":"f0722584-1d47-41b7-a46b-e23360c32595","err":"duplicate key value violates unique constraint \"c2c_pwi_org_source_type_source_id_unique\"","correlationId":null,"code":"23505"},"msg":"[regulatory-correspondence] ingesting agency correspondence failed"}
+{"level":50,"time":"2026-09-29T19:29:07.496Z","pid":7650,"hostname":"vm","context":{"correspondenceId":"d0c85658-a6b1-4656-bc21-f74521db1100","projectId":6,"submissionId":"f0722584-1d47-41b7-a46b-e23360c32595","err":"duplicate key value violates unique constraint \"c2c_pwi_org_source_type_source_id_unique\"","correlationId":null,"code":"23505"},"msg":"[regulatory-correspondence] ingesting agency correspondence failed"}
+ × tests/db/correspondence-work-items.dbtest.ts > an agency letter becomes one work item per issue > a letter raising several issues is recorded whole: 201, one work item for each 191ms
+   → {"error":"INTERNAL_ERROR","message":"Something went wrong while ingesting agency correspondence. The problem has been logged."}: expected 500 to be 201 // Object.is equality
+{"level":50,"time":"2026-09-29T19:29:07.544Z","pid":7650,"hostname":"vm","context":{"correspondenceId":"03d92825-8938-40e6-9814-8e9a2333f15b","projectId":6,"submissionId":"f0722584-1d47-41b7-a46b-e23360c32595","err":"permission denied for table c2c_correspondence_issues","correlationId":null,"code":"42501"},"msg":"[regulatory-correspondence] ingesting agency correspondence failed"}
+ × tests/db/correspondence-work-items.dbtest.ts > an agency letter becomes one work item per issue > the organisation's next letter is recorded too 33ms
+   → {"error":"INTERNAL_ERROR","message":"Something went wrong while ingesting agency correspondence. The problem has been logged."}: expected 500 to be 201 // Object.is equality
+ ✓ tests/db/correspondence-work-items.dbtest.ts > the key still deduplicates what it was added to deduplicate > two work items for the same integer-keyed source in one organisation are refused 5ms
+ ✓ tests/db/correspondence-work-items.dbtest.ts > the key still deduplicates what it was added to deduplicate > the same correspondence issue cannot be written twice 13ms
+ ✓ tests/db/correspondence-work-items.dbtest.ts > a failed intake says so without shipping the database error > answers 500 with no PostgreSQL text in the body 32ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/correspondence-work-items.dbtest.ts > an agency letter becomes one work item per issue > a letter raising several issues is recorded whole: 201, one work item for each
+AssertionError: {"error":"INTERNAL_ERROR","message":"Something went wrong while ingesting agency correspondence. The problem has been logged."}: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ tests/db/correspondence-work-items.dbtest.ts:205:50
+    203|   it('a letter raising several issues is recorded whole: 201, one work…
+    204|     const res = await intake('Refuse-to-file letter', MULTI_ISSUE_LETT…
+    205|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                  ^
+    206|     const issueIds = (res.body.issues as Array<{ id: string }>).map((i…
+    207|     expect(issueIds.length).toBeGreaterThanOrEqual(2);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/db/correspondence-work-items.dbtest.ts > an agency letter becomes one work item per issue > the organisation's next letter is recorded too
+AssertionError: {"error":"INTERNAL_ERROR","message":"Something went wrong while ingesting agency correspondence. The problem has been logged."}: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ tests/db/correspondence-work-items.dbtest.ts:216:50
+    214|     const before = (await workItems()).length;
+    215|     const res = await intake('Deficiency letter', SECOND_LETTER);
+    216|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+       |                                                  ^
+    217|     const issueIds = (res.body.issues as Array<{ id: string }>).map((i…
+    218|     expect(issueIds.length).toBeGreaterThanOrEqual(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)
+   Start at  19:29:03
+   Duration  5.63s (transform 1.79s, setup 92ms, import 275ms, tests 4.91s, environment 0ms)
+

@@ -24,10 +24,28 @@ on before its precondition is met would block real transmits.
 | `ECTD_REQUIRE_DTD` | `ectd/dtd-bundler.ts` | **off** (report-only) | a production eCTD package referencing `util/dtd/*.dtd` or `util/style/*.xsl` it does not contain | the licensed ICH + regional DTDs **and** stylesheets are vendored into `assets/ectd-dtd/` for every region in use |
 | `ECTD_REQUIRE_RPS_SCHEMA` | `ectd/schema-bundler.ts` | **off** | a production eCTD **v4.0** package that is not schema-validatable (no-op for v3.2.2, which needs no XSD) | `rps-message.xsd` is vendored into `assets/ectd-schema/` |
 | `ESTAR_REQUIRE_TEMPLATE` | `pathway-engines/estar/estar-template-registry.ts` | **off** | a production device build whose official FDA eSTAR/PreSTAR template is not vendored | every template in `ESTAR_TEMPLATE_MANIFEST` is in `assets/estar-templates/` |
-| `ECTD_REQUIRE_PDFA` | `ectd/pdfa-readiness.ts` | **off** | a production package whose PDF leaves are not PDF/A | Ghostscript + veraPDF are in the deploy image |
+| `ECTD_REQUIRE_PDFA` | `ectd/pdfa-readiness.ts` | **off** (decided 2026-10-01) | a production package whose PDF leaves are not PDF/A | a deployment serves only organisations whose own procedures require PDF/A. One organisation's requirement is its own setting (below). |
 | `ECTD_REQUIRE_XREF` | `ectd/cross-reference-resolver.ts` | **off** | a production package with dangling / withdrawn-target cross-references | declared cross-references are authored on the production package paths |
 | `ECTD_REQUIRE_EVALIDATOR` | `ectd/external-validator/config.ts` | **off** | a production transmit with no agency-grade validation report | a licensed validator is configured (`<PROVIDER>_VALIDATOR_URL`) and reachable |
 | `ECTD_REQUIRE_REGIONAL_BACKBONE` | `ectd/regional-backbone-readiness.ts` | **off** | a production transmit whose regional Module 1 backbone is not agency-structured (11 of 12 regions today) | the eleven non-conformant backbones are actually built — **engineering, not procurement** |
+
+> **2026-10-01, `ECTD_REQUIRE_PDFA`.** Its precondition, Ghostscript and veraPDF in the deploy image, is met:
+> `Dockerfile.optimized` installs both since `cd02466a4`. It stays off anyway, on a different ground. The gate
+> refuses a production package if **any** PDF leaf was not converted to PDF/A, and its message says *"a production
+> eCTD submission requires PDF/A"*. FDA and EMA both accept plain PDF 1.4–1.7 as well as PDF/A, so on, it would
+> refuse packages the agency accepts: a leaf Ghostscript cannot convert would hold a whole submission. Before it
+> is switched on, the rule needs deciding: block only where the region requires PDF/A, or where a leaf is
+> *declared* PDF/A without being converted. The binary being present is not, on its own, the reason to flip it.
+>
+> **Decided, 2026-10-01 (D7, the PDF/A rule; `ectd/pdfa-requirement.ts`).** PDF/A is never required by default.
+> Every agency the catalog transmits to accepts plain PDF 1.4–1.7 as well as PDF/A, and refusing a package the agency
+> accepts helps no client. PDF/A is required only where someone chose it. An **organisation** whose own procedures
+> require it turns on *Require PDF/A* in Admin, Setup (`settings.submission.requirePdfA`). A **deployment** sets
+> `ECTD_REQUIRE_PDFA`. The transmit guard resolves both before the wire. A production transmit with an unconverted
+> PDF leaf is refused only then, and the refusal names which of the two required PDF/A. A setting that cannot be
+> read refuses rather than sending plain PDF. Neither message claims any more that an agency requires PDF/A.
+> Declared-but-unconverted is not made a separate refusal, because no agency's validation criteria test a PDF/A
+> claim. Evidence: `docs/evidence/D7/2026-10-01-pdfa-rule/`.
 
 ## What each asset-gated flag would do *today*
 

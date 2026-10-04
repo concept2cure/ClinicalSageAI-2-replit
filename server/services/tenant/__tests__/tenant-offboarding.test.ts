@@ -16,6 +16,7 @@ import {
   MINIMUM_RETENTION_DAYS,
   OffboardingStateError,
   PURGE_CHILD_TABLES,
+  PURGE_DOORS,
   purgeTenant,
   requestDeletion,
 } from '../tenant-offboarding';
@@ -403,6 +404,15 @@ describe('purgeTenant — what it actually does', () => {
         childTables: ['projects; DROP TABLE organizations'],
       })
     ).rejects.toThrow(OffboardingStateError);
+  });
+
+  it('lists every table a purge door erases, since a door opens only for a listed table', () => {
+    // The 3938f0659 merge dropped ana_turn_records and ana_record_blobs from
+    // the list while their door stayed, so a purge erased no turn record and
+    // reported nothing wrong.
+    for (const door of PURGE_DOORS) {
+      for (const table of door.tables) expect(PURGE_CHILD_TABLES, door.fn).toContain(table);
+    }
   });
 
   it('ships a frozen child-table list that excludes the audit trail and billing', async () => {

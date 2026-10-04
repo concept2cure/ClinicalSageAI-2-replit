@@ -349,6 +349,18 @@ describe('Admin → Setup claims no control it does not have', () => {
     }
   });
 
+  it('offers the agency gateway account choice (D7, founder decision 2026-10-01)', async () => {
+    const { container } = renderSurface();
+    await loaded(container);
+    expect(container.querySelector('[data-testid="gateway-accounts-setting"]')).not.toBeNull();
+  });
+
+  it('offers Require PDF/A, the organisation\'s own choice (D7, the PDF/A rule, 2026-10-01)', async () => {
+    const { container } = renderSurface();
+    await loaded(container);
+    expect(container.querySelector('[data-testid="pdfa-requirement-setting"]')).not.toBeNull();
+  });
+
   it('states the approval guardrails as always enforced', async () => {
     const { container } = renderSurface();
     await loaded(container);

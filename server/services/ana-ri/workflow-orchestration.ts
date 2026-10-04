@@ -420,14 +420,21 @@ export interface WorkflowStatus {
   type: string;
   name: string;
   totalSteps: number;
+  /** Steps something in the system can evidence (an artifact type or a CTD
+   *  section). The rest are `untrackedSteps`: no record here can say whether
+   *  they happened. */
+  trackedSteps: number;
+  untrackedSteps: number;
   completedSteps: number;
   currentPhase: string;
   nextStep: WorkflowStep | null;
   criticalBlockers: string[];
-  progressPercent: number;
+  /** Of TRACKED steps; null when none is tracked. */
+  progressPercent: number | null;
   phases: Array<{
     name: string;
-    steps: Array<{ id: string; title: string; complete: boolean; critical: boolean }>;
+    /** complete is null for an untracked step — unknown, never assumed done. */
+    steps: Array<{ id: string; title: string; complete: boolean | null; critical: boolean }>;
   }>;
 }
 
@@ -481,6 +488,7 @@ export async function getWorkflowStatus(
 
   const allSteps = workflow.phases.flatMap(p => p.steps);
   let completedCount = 0;
+  let trackedCount = 0;
   let currentPhase = workflow.phases[0].name;
   let nextStep: WorkflowStep | null = null;
   const criticalBlockers: string[] = [];
@@ -488,13 +496,23 @@ export async function getWorkflowStatus(
   const phases = workflow.phases.map(phase => ({
     name: phase.name,
     steps: phase.steps.map(step => {
-      const hasArtifacts = step.requiredArtifacts.length === 0 ||
-        step.requiredArtifacts.some(a => existingArtifacts.includes(a));
-      const hasSection = !step.ctdSection || populatedSections.includes(step.ctdSection);
-      const complete = hasArtifacts || hasSection;
+      /* A step is complete only on evidence. These read
+           hasArtifacts = requiredArtifacts.length === 0 || …
+           hasSection   = !step.ctdSection || …
+         so a step requiring no artifact, or naming no CTD section, was
+         complete for EVERY project — 50 of 87 steps, among them "Submit IND
+         package to FDA", "Submit 510(k) to FDA", "Submit MAA" and the pre-
+         submission meeting requests. That went into AnA's prompt as the
+         project's progress, with the instruction "Be directive". A step with
+         nothing that could evidence it is untracked, not done. */
+      const tracked = step.requiredArtifacts.length > 0 || Boolean(step.ctdSection);
+      const hasArtifacts = step.requiredArtifacts.some(a => existingArtifacts.includes(a));
+      const hasSection = Boolean(step.ctdSection) && populatedSections.includes(step.ctdSection as string);
+      const complete: boolean | null = tracked ? hasArtifacts || hasSection : null;
+      if (tracked) trackedCount++;
 
       if (complete) completedCount++;
-      if (!complete && step.criticalPath) {
+      if (complete === false && step.criticalPath) {
         criticalBlockers.push(step.title);
       }
       if (!complete && !nextStep) {
@@ -510,11 +528,13 @@ export async function getWorkflowStatus(
     type: workflow.type,
     name: workflow.name,
     totalSteps: allSteps.length,
+    trackedSteps: trackedCount,
+    untrackedSteps: allSteps.length - trackedCount,
     completedSteps: completedCount,
     currentPhase,
     nextStep,
     criticalBlockers: criticalBlockers.slice(0, 5),
-    progressPercent: Math.round((completedCount / allSteps.length) * 100),
+    progressPercent: trackedCount > 0 ? Math.round((completedCount / trackedCount) * 100) : null,
     phases,
   };
 }
@@ -532,7 +552,9 @@ export async function buildWorkflowContext(
 
   const parts: string[] = [
     `## Submission Workflow: ${status.name}`,
-    `**Progress:** ${status.completedSteps}/${status.totalSteps} steps (${status.progressPercent}%)`,
+    status.progressPercent === null
+      ? `**Progress:** not tracked — none of the ${status.totalSteps} steps can be evidenced from project records`
+      : `**Progress:** ${status.completedSteps}/${status.trackedSteps} tracked steps (${status.progressPercent}%); ${status.untrackedSteps} step(s) are not tracked and may or may not have happened — ask, do not assume`,
     `**Current Phase:** ${status.currentPhase}`,
   ];
 
@@ -557,9 +579,13 @@ export async function buildWorkflowContext(
   // Phase summary
   parts.push('\n**Phases:**');
   for (const phase of status.phases) {
-    const done = phase.steps.filter(s => s.complete).length;
-    const total = phase.steps.length;
-    const icon = done === total ? 'DONE' : `${done}/${total}`;
+    const done = phase.steps.filter(s => s.complete === true).length;
+    const trackedInPhase = phase.steps.filter(s => s.complete !== null).length;
+    const untrackedInPhase = phase.steps.length - trackedInPhase;
+    const icon =
+      trackedInPhase === 0
+        ? 'not tracked'
+        : `${done}/${trackedInPhase} tracked${untrackedInPhase ? ` · ${untrackedInPhase} not tracked` : ''}`;
     parts.push(`- ${phase.name}: ${icon}`);
   }
 

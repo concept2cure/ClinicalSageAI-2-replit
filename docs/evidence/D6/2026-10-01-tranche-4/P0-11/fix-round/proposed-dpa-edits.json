@@ -1,0 +1,17 @@
+{
+  "name": "P0-11 fix round: corrected DPA proposal, against the DPA as rewritten by P1-45 (d29275b1). Adds one clause in two places; removes nothing",
+  "edits": [
+    {
+      "op": "replace",
+      "where": "§6.2 table, row \"OpenAI API\", Notes cell",
+      "find": "for generation, fallback and embeddings; the platform enforces this in production.",
+      "replace": "for generation, fallback and embeddings; the platform enforces this in production. No OpenAI key is provisioned in a deployment unless a tenant's Order Form elects OpenAI (`openai_enabled` in `terraform/stack`)."
+    },
+    {
+      "op": "replace",
+      "where": "Annex III, row \"OpenAI, L.L.C.\", Basis / posture cell",
+      "find": "in production nothing of a Customer's reaches OpenAI without it |",
+      "replace": "in production nothing of a Customer's reaches OpenAI without it. No OpenAI key is provisioned in a deployment unless a Customer's Order Form elects OpenAI (`openai_enabled` in `terraform/stack`) |"
+    }
+  ]
+}

@@ -10,6 +10,14 @@
  *
  * Phase 1: Direct promotion with version snapshot and audit trail.
  * Phase 2: Add approval gates, multi-section promotion, dossier placement.
+ *
+ * 2026-09-29 (D5): promotion is not an approval. It creates the governed
+ * document, as a draft, from the artifact, under a human confirmation with a
+ * reason, and leaves the artifact's status where it was. It flipped the
+ * artifact to 'approved' and wrote a 'signature_apply' audit event with no
+ * signature anywhere: an approval nobody signed, recorded as a signature that
+ * never happened. An artifact is approved only by the status route's review →
+ * approved, an electronic signature (server/services/artifact-signed-act.ts).
  */
 
 import { governedActor } from '../../part11/governed-actor';
@@ -83,7 +91,7 @@ const promoteArtifactHandler: AIActionHandler = {
         409
       );
     }
-    if (artifact.status === 'approved' && (artifact.metadata as any)?.promotedToDocumentId) {
+    if ((artifact.metadata as any)?.promotedToDocumentId) {
       throw new AIActionHandlerError(
         'ALREADY_PROMOTED',
         `Artifact was already promoted to document ${(artifact.metadata as any).promotedToDocumentId}`,
@@ -91,13 +99,12 @@ const promoteArtifactHandler: AIActionHandler = {
       );
     }
 
-    // 2a. 21 CFR Part 11 human-approval gate.
-    // Promoting an AI-generated artifact to an 'approved'/governed-submission
-    // document is a governed action and MUST NOT happen without an explicit,
-    // authenticated human approval. Enforced here (in addition to the
-    // dispatcher's role pre-check) because promotion stamps lifecycleStatus
-    // 'approved' and flips the artifact to 'approved'.
-    const approval = requireHumanApproval(request, ctx);
+    // 2a. Human confirmation gate. Promoting an AI-generated artifact to a
+    // governed document is a governed action and MUST NOT happen without an
+    // explicit, authenticated human confirmation with a reason. Enforced here
+    // in addition to the dispatcher's role pre-check. It is not an approval:
+    // the artifact's status is not changed (header note, 2026-09-29).
+    const confirmation = requireHumanApproval(request, ctx);
 
     // 2b. Check contradiction governance — hard block if unresolved blocking findings
     try {
@@ -147,7 +154,8 @@ const promoteArtifactHandler: AIActionHandler = {
       artifactId: artifact.id,
       documentType: artifact.type || 'regulatory_document',
       generationMode: 'amendment',
-      lifecycleStatus: 'approved',
+      // The document is created as a draft: promotion approves nothing.
+      lifecycleStatus: 'draft',
       originSurface: 'api_route',
       clientTrack:
         existingHarness.clientTrack === 'device'
@@ -236,15 +244,15 @@ const promoteArtifactHandler: AIActionHandler = {
             ctdSection: artifact.ctdSection || (payload.ctdSection as string) || null,
             contentHash,
             promotionActionId: ctx.actionId,
-            approval: {
-              approvedBy: ctx.user.userId,
-              approvedByName: ctx.user.userName,
-              approverRole: ctx.user.userRole,
-              approvedAt: approval.approvedAt,
-              approvalReason: approval.reason,
+            // Who confirmed the promotion, and why. Not an approval: nothing
+            // was signed (header note, 2026-09-29).
+            promotion: {
+              confirmedBy: ctx.user.userId,
+              confirmedByName: ctx.user.userName,
+              confirmerRole: ctx.user.userRole,
+              confirmedAt: confirmation.approvedAt,
+              reason: confirmation.reason,
               sourceSurface: request.sourceSurface,
-              // TODO(compliance): require electronic_signatures record (server/routes/esignature.ts)
-              // for promotion to approved — bind signatureId/manifestHash here.
             },
           },
         })
@@ -260,32 +268,22 @@ const promoteArtifactHandler: AIActionHandler = {
         organizationId: doc.organizationId,
       });
 
-      // 4c. Update artifact status
+      // 4c. Record the promotion on the artifact. Its status is not changed.
       // 2026-09-23 (W5/D7, final pass): promotion is not the approval act, so
-      // it records no approved version (HEAD behaviour; the residual-repair
-      // rounds' recording here was reverted — it made an artifact filable
-      // through APPROVAL_ROLES without the status route's role table or the P12
-      // review quorum). Only the governed act (the status route's review →
-      // approved, authoring-actions approve-artifact) records one. An approval
-      // revoked earlier was cleared when the status left approved/locked (the
-      // trigger in migrations/20260923b_artifact_approval_follows_status.sql),
-      // so it is not resurrected here. RETURNING reads what was written, so the
-      // warning below is judged on it.
+      // it records no approved version. 2026-09-29 (D5): nor does it set the
+      // status to 'approved' — an approval is the status route's electronic
+      // signature (server/services/artifact-signed-act.ts). RETURNING reads
+      // what was written, so the warning below is judged on it.
       const [promotedRow] = await tx
         .update(concept2cureArtifacts)
         .set({
-          status: 'approved',
           metadata: {
             ...(artifactMetadata || {}),
             promotedToDocumentId: doc.id,
             promotedAt: new Date().toISOString(),
             promotedBy: ctx.user.userId,
             promotionActionId: ctx.actionId,
-            approvedBy: ctx.user.userId,
-            approvedByName: ctx.user.userName,
-            approverRole: ctx.user.userRole,
-            approvedAt: approval.approvedAt,
-            approvalReason: approval.reason,
+            promotionReason: confirmation.reason,
             harness: {
               ...existingHarness,
               clientTrack: governedResolution.contract.clientTrack,
@@ -316,30 +314,36 @@ const promoteArtifactHandler: AIActionHandler = {
       return { newDoc: doc, promoted: promotedRow };
     });
 
-    // 5. Emit audit log for this governed approval/promotion. Awaited (not
-    // fire-and-forget) because this is a 21 CFR Part 11 governed action.
-    await auditService.logAction({
+    // 5. The audit entry for the promotion. It was action 'signature_apply'
+    // with event 'artifact_promoted_to_approved': a signature recorded that no
+    // one applied (2026-09-29, D5). Its outcome is read, not discarded: a
+    // promotion whose entry was not written says so in its warnings.
+    const audit = await auditService.logAction({
       organizationId: ctx.user.organizationId,
       userId: ctx.user.userId,
-      action: 'signature_apply',
+      action: 'data_modify',
       resourceType: 'document',
       resourceId: newDoc.id,
       ipAddress: ctx.ipAddress,
       details: {
-        event: 'artifact_promoted_to_approved',
+        event: 'artifact_promoted',
         actionType: 'promote_artifact',
         actionId: ctx.actionId,
         artifactId: artifact.id,
         artifactExternalId: artifact.artifactId,
         documentId: newDoc.id,
         projectId: request.projectId,
-        approvedBy: ctx.user.userId,
-        approverRole: ctx.user.userRole,
-        approvalReason: approval.reason,
-        approvedAt: approval.approvedAt,
+        confirmedBy: ctx.user.userId,
+        confirmerRole: ctx.user.userRole,
+        reason: confirmation.reason,
+        confirmedAt: confirmation.approvedAt,
+        artifactStatus: promoted?.status ?? null,
         sourceSurface: request.sourceSurface,
       },
     });
+    const auditWarnings = audit?.persisted
+      ? []
+      : ['The audit entry for this promotion could not be written. The document was created; the failure has been logged.'];
 
     // 6. Build response
     const createdObjects: AIActionObjectRef[] = [
@@ -384,7 +388,7 @@ const promoteArtifactHandler: AIActionHandler = {
       },
       createdObjects,
       updatedObjects,
-      warnings: [...buildWarnings(artifact), ...filingWarnings(promoted)],
+      warnings: [...buildWarnings(artifact), ...filingWarnings(promoted), ...auditWarnings],
       errors: [],
       provenance,
       nextSuggestedActions: [
@@ -430,22 +434,24 @@ const createDocumentFromArtifactHandler: AIActionHandler = {
 // ---------------------------------------------------------------------------
 
 /**
- * 21 CFR Part 11 human-approval gate for promoting an AI-generated artifact
- * to an 'approved'/governed-submission document.
+ * Human confirmation gate for promoting an AI-generated artifact to a
+ * governed document. (Named for its payload fields — confirmApproval,
+ * approvalReason — which callers already send; it approves nothing.)
  *
  * Enforces:
  *  - an authenticated human actor (req.user from JWT) is present;
  *  - the actor holds an approval-capable role (no AI/system self-approval);
- *  - automated/AI surfaces (workflow_trigger) cannot self-approve;
+ *  - automated/AI surfaces (workflow_trigger) cannot confirm a promotion;
  *  - an explicit approval intent: a non-empty approvalReason/reasonForChange
  *    plus an explicit confirmation flag.
  *
  * Returns the captured approval reason + timestamp to be recorded on the
  * promotion. Throws AIActionHandlerError (401/403/400) otherwise.
  *
- * TODO(compliance): require an electronic_signatures record
- * (server/routes/esignature.ts) bound to this promotion — capture and verify
- * a signatureId before flipping status to 'approved'.
+ * 2026-09-29 (D5): the TODO that stood here — require a signature before
+ * flipping the status to 'approved' — is resolved the other way: promotion no
+ * longer changes the status. The approval is the status route's electronic
+ * signature.
  */
 const APPROVAL_ROLES = ['editor', 'admin', 'super_admin', 'regulatory', 'approver'];
 
@@ -457,7 +463,7 @@ function requireHumanApproval(
   if (!ctx.user || ctx.user.userId == null) {
     throw new AIActionHandlerError(
       'APPROVAL_UNAUTHENTICATED',
-      'Promotion to an approved governed document requires an authenticated human approver.',
+      'Promotion to a governed document requires an authenticated person to confirm it.',
       401
     );
   }
@@ -467,7 +473,7 @@ function requireHumanApproval(
   if (request.sourceSurface === 'workflow_trigger') {
     throw new AIActionHandlerError(
       'APPROVAL_HUMAN_REQUIRED',
-      'Automated/AI actors cannot self-approve a governed promotion. A human approver must perform this action.',
+      'An automated or AI actor cannot confirm a governed promotion. A person must perform this action.',
       403
     );
   }
@@ -477,7 +483,7 @@ function requireHumanApproval(
   if (!role || !APPROVAL_ROLES.includes(role)) {
     throw new AIActionHandlerError(
       'APPROVAL_FORBIDDEN',
-      `Role '${role ?? 'none'}' is not permitted to approve a governed promotion. Required: ${APPROVAL_ROLES.join(', ')}`,
+      `Role '${role ?? 'none'}' is not permitted to confirm a governed promotion. Required: ${APPROVAL_ROLES.join(', ')}`,
       403
     );
   }
@@ -490,7 +496,7 @@ function requireHumanApproval(
   if (!reason || !confirmed) {
     throw new AIActionHandlerError(
       'APPROVAL_REASON_REQUIRED',
-      'Promotion to an approved governed document requires an explicit approvalReason (reason-for-change) and confirmApproval: true.',
+      'Promotion to a governed document requires an explicit approvalReason (reason-for-change) and confirmApproval: true.',
       400
     );
   }

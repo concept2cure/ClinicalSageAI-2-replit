@@ -32,6 +32,8 @@ vi.hoisted(() => {
 
   process.env.FDA_ESG_URL = 'https://esg.fda.gov';
   process.env.FDA_ESG_AS2_FROM = 'SPONSOR-AS2';
+  // FDA's AS2 identifier has no default (2026-10-01, W5/D7, sweep F16).
+  process.env.FDA_ESG_AS2_TO = 'FDA-AS2-ID-TEST';
   process.env.FDA_ESG_CERT_PATH = '/tmp/fda-cert.pem';
   process.env.FDA_ESG_KEY_PATH = '/tmp/fda-key.pem';
   process.env.FDA_ESG_FDA_CERT_PATH = '/tmp/fda-pub.pem';
@@ -368,6 +370,22 @@ describe('SFTP path — the application number is required, never invented', () 
     req.bundle.sizeBytes = 2 * 1_073_741_824;
     req.metadata = { applicationId: 'UNASSIGNED-SEQ-9', sequence: '0002', environment: 'production' } as any;
     await expect(new FdaEsgGateway().transmit(req)).rejects.toMatchObject({ errorClass: 'validation' });
+  });
+
+  /* 2026-10-01 (W5/D7, sweep F18): the number names the directory FDA's
+     /incoming/<application>/<sequence>/ deposit is made in, and the stored
+     transmission id, but was only trimmed — '../', '/' or a space reached the
+     PUT path. It is held to the repo's one identifier rule
+     (ectd/regulatory-identifiers), refused before any row, with the proof
+     that nothing was sent. */
+  it.each(['../../outgoing', '/', 'IND 123456', 'IND123456/0001', ' '])('refuses %j as the application number before any transmittal row exists', async (applicationId) => {
+    const req = SMALL_AS2_REQUEST();
+    req.bundle.sizeBytes = 2 * 1_073_741_824;
+    req.metadata = { applicationId, sequence: '0002', environment: 'production' } as any;
+    await expect(new FdaEsgGateway().transmit(req)).rejects.toMatchObject({
+      errorClass: 'validation', transmitted: false, message: /application number/,
+    });
+    expect(poolQueries.some((q) => /INSERT INTO submission_transmittals/i.test(q.sql))).toBe(false);
   });
 });
 

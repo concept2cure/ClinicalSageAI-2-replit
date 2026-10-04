@@ -94,6 +94,21 @@ WHERE c.table_schema NOT IN ('pg_catalog', 'information_schema')
     'intelligence.template_validations',
     'precedent.quality_checkpoints'
   ])
+  -- The 21 CFR Part 11 tamper-proof store: ONE hash chain across every tenant,
+  -- by design. Its organization_id (DP-28, added in place to
+  -- db/migrations/20260813_audit_tamper_proof_log.sql on 2026-10-01) labels a
+  -- row's tenant and is sealed into its hash; it is not a partition. The writer
+  -- (server/lib/tamper-proof-audit.ts log()) links each row to the previous row
+  -- of the WHOLE table under one advisory lock, so a tenant policy would hide the
+  -- other tenants' tail from it and fork the chain, and the sweep and verifier
+  -- walk every row. Tenant reads are confined in that library: a request scope
+  -- reads its own tenant's rows only, and naming another tenant is refused
+  -- before the query runs. The runtime role holds SELECT and INSERT on it, no
+  -- UPDATE or DELETE, and a trigger refuses both. Database-level tenant
+  -- isolation for this store needs the chain tail read through a definer
+  -- function first (register DP-28 residual). Do not "fix" this row with a
+  -- tenant_isolation_policy: that is the fork.
+  AND (c.table_schema || '.' || c.table_name) <> 'audit.tamper_proof_log'
   AND NOT EXISTS (
     SELECT 1 FROM pg_policies p
     WHERE p.schemaname = c.table_schema
