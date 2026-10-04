@@ -33,6 +33,7 @@ import {
 import { ArtifactActConflictError, commitSignedArtifactAct } from '../../services/artifact-signed-act';
 import { SignerNotAttributableError } from '../../services/part11/resolve-signer-identity';
 import { interceptArtifactChange, interceptFeedback } from '../../services/intelligence/rim-interceptors.js';
+import { actorLabel, resolveActorNames } from '../../services/tenant/actor-names';
 import { evaluateAndInterceptGovernedDocument } from '../../src/control-plane/governed-document-evaluator';
 import * as crypto from 'crypto';
 import { and, desc, eq, inArray } from 'drizzle-orm';
@@ -3623,13 +3624,15 @@ router.get(
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
-      const assignments = await db
+      // No join on users: since users took row-level security (D3, 2026-09-28)
+      // an inner join dropped every assignment, and its decision, whose reviewer
+      // had left the organization. Names come from public.actor_name
+      // (docs/evidence/D3/2026-09-29-actor-names/).
+      const assignmentRows = await db
         .select({
           id: concept2cureReviewAssignments.id,
           assignmentId: concept2cureReviewAssignments.assignmentId,
           reviewerId: concept2cureReviewAssignments.reviewerId,
-          reviewerName: users.name,
-          reviewerEmail: users.email,
           reviewRound: concept2cureReviewAssignments.reviewRound,
           status: concept2cureReviewAssignments.status,
           dueDate: concept2cureReviewAssignments.dueDate,
@@ -3637,7 +3640,6 @@ router.get(
           createdAt: concept2cureReviewAssignments.createdAt,
         })
         .from(concept2cureReviewAssignments)
-        .innerJoin(users, eq(users.id, concept2cureReviewAssignments.reviewerId))
         .where(
           and(
             eq(concept2cureReviewAssignments.artifactId, artifact.id),
@@ -3648,6 +3650,12 @@ router.get(
           desc(concept2cureReviewAssignments.reviewRound),
           concept2cureReviewAssignments.createdAt
         );
+      const reviewerNames = await resolveActorNames(assignmentRows.map(a => a.reviewerId));
+      const assignments = assignmentRows.map(a => ({
+        ...a,
+        reviewerName: reviewerNames.get(a.reviewerId)?.name ?? null,
+        reviewerEmail: reviewerNames.get(a.reviewerId)?.email ?? null,
+      }));
 
       // Load decisions for each assignment
       const assignmentIds = assignments.map(a => a.id);
@@ -4147,16 +4155,9 @@ router.get(
 
       const decisionMap = new Map(decisions.map(d => [d.reviewerId, d]));
 
-      // Get reviewer details
-      const reviewerIds = roundAssignments.map(a => a.reviewerId);
-      const reviewerDetails =
-        reviewerIds.length > 0
-          ? await db
-              .select({ id: users.id, name: users.name, email: users.email })
-              .from(users)
-              .where(inArray(users.id, reviewerIds))
-          : [];
-      const reviewerMap = new Map(reviewerDetails.map(u => [u.id, u]));
+      // Reviewer names through public.actor_name (D3): a users look-up found
+      // no one who had left, and rendered them "Unknown".
+      const reviewerMap = await resolveActorNames(roundAssignments.map(a => a.reviewerId));
 
       const totalAssigned = activeAssignments.length;
       const completedCount = activeAssignments.filter(a => a.status === 'completed').length;
@@ -4185,7 +4186,7 @@ router.get(
           return {
             assignmentId: a.assignmentId,
             reviewerId: a.reviewerId,
-            reviewerName: reviewer?.name || 'Unknown',
+            reviewerName: actorLabel(reviewerMap, a.reviewerId),
             reviewerEmail: reviewer?.email || '',
             status: a.status,
             dueDate: a.dueDate,

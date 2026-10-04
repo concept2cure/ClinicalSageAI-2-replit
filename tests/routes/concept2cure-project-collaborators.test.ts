@@ -80,6 +80,18 @@ vi.mock('../../server/middleware/tenantContext', () => ({
   requireOrganizationContext: (_req: any, _res: any, next: any) => next(),
 }));
 
+// Names resolve through public.actor_name (D3); the directory answers for 10 and 11.
+vi.mock('../../server/services/tenant/actor-names', async importOriginal => ({
+  ...(await importOriginal<typeof import('../../server/services/tenant/actor-names')>()),
+  resolveActorNames: vi.fn(
+    async () =>
+      new Map([
+        [10, { name: 'Ada Lovelace', email: 'ada@example.com' }],
+        [11, { name: 'Grace Hopper', email: 'grace@example.com' }],
+      ])
+  ),
+}));
+
 vi.mock('../../server/middleware/redisRateLimiter', () => ({
   createRedisRateLimiter: () => (_req: any, _res: any, next: any) => next(),
 }));
@@ -135,10 +147,6 @@ describe('Concept2Cure project collaborator routes', () => {
           },
         },
       ],
-      [
-        { userId: 10, name: 'Ada Lovelace', email: 'ada@example.com' },
-        { userId: 11, name: 'Grace Hopper', email: 'grace@example.com' },
-      ],
     ]);
 
     const req = createMockRequest({
@@ -162,8 +170,8 @@ describe('Concept2Cure project collaborator routes', () => {
       data: expect.objectContaining({
         projectId: 'proj_1',
         collaborators: expect.arrayContaining([
-          expect.objectContaining({ userId: 10, permission: 'can_edit' }),
-          expect.objectContaining({ userId: 11, permission: 'can_use' }),
+          expect.objectContaining({ userId: 10, permission: 'can_edit', name: 'Ada Lovelace', email: 'ada@example.com' }),
+          expect.objectContaining({ userId: 11, permission: 'can_use', name: 'Grace Hopper', email: 'grace@example.com' }),
         ]),
       }),
     });

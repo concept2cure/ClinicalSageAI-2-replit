@@ -125,6 +125,7 @@ const SubmissionTypeEnum = z
 // Registry-driven instruction builder replaces hardcoded templates.
 // Works for every application type in the Global Document Registry.
 import { buildInstructionsFromLegacyType } from '../services/regulatory/defaultInstructionBuilder.js';
+import { resolveActorNames } from '../services/tenant/actor-names';
 import { clientIpKey } from '../utils/client-ip';
 
 function generateDefaultCustomInstructions(
@@ -1623,19 +1624,11 @@ router.get('/projects/:projectId/collaborators', async (req: Request, res: Respo
         (member.permission === 'can_use' || member.permission === 'can_edit')
     );
 
-    const memberIds = normalizedTeam.map(member => member.userId);
-    const memberDirectory =
-      memberIds.length > 0
-        ? await db
-            .select({
-              userId: users.id,
-              name: users.name,
-              email: users.email,
-            })
-            .from(users)
-            .where(inArray(users.id, memberIds))
-        : [];
-    const directoryById = new Map(memberDirectory.map(member => [member.userId, member]));
+    // Named through public.actor_name, not a users look-up: since users took
+    // row-level security (D3, 2026-09-28) that found nothing for a collaborator
+    // who had left the organization, so the one entry an administrator most
+    // needs to remove had no name (docs/evidence/D3/2026-09-29-actor-names/).
+    const directoryById = await resolveActorNames(normalizedTeam.map(member => member.userId));
 
     const collaborators = normalizedTeam.map(member => ({
       userId: member.userId,
