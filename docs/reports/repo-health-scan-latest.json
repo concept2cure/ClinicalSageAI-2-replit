@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-02T00:17:50.580Z",
+  "generatedAt": "2026-10-04T17:53:46.548Z",
   "git": {
-    "sha": "3fae22430cf0585d704c42a1ba5951583be671ed",
+    "sha": "7bca94d4118a23ceb56cf3ff48172d7e0ae99220",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2463,6 +2463,10 @@
         "lines": 2068
       },
       {
+        "file": "client/src/concept2cure/v2/editor/suggestions.ts",
+        "lines": 2029
+      },
+      {
         "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
         "lines": 2029
       },
@@ -2525,10 +2529,6 @@
       {
         "file": "server/services/ana-ri/orchestrator.ts",
         "lines": 1896
-      },
-      {
-        "file": "client/src/concept2cure/v2/editor/suggestions.ts",
-        "lines": 1895
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
