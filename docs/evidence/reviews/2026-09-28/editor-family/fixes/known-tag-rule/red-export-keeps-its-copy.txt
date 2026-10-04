@@ -1,0 +1,3 @@
+   → the export keeps its own allowlist: expected '/***Sectioncontent→exportblocks,forth…' not to match /<\\\/\?\(([…/\?\(([a-z0-9|[\]{}\-^]+)\)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: the export keeps its own allowlist: expected '/***Sectioncontent→exportblocks,forth…' not to match /<\\\/\?\(([…/\?\(([a-z0-9|[\]{}\-^]+)\)
