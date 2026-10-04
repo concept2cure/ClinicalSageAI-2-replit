@@ -20,6 +20,20 @@
  * now marked `unavailable: 'artifacts_unreadable'`, and check_dossier_consistency
  * answers with an error instead of a verdict.
  *
+ * 2026-10-04 (b1-consistency-defects): three honesty fixes.
+ *   - A two-number fact (CI, age range) keeps its signed lower bound in
+ *     `value` and its upper bound in `upper`. The upper bound was stored as
+ *     the fact's `unit`, and the CI's minus sign sat outside the capture, so
+ *     "95% CI -0.10 to 0.30" matched "95% CI 0.10 to 0.30".
+ *   - A label stated more than once in either document is compared as a set,
+ *     not on its first occurrence ("Drug X n=305; placebo n=303" against a
+ *     CSR that lists placebo first was a false critical blocker).
+ *   - A report that compared nothing says so (`notCompared`), and one cut
+ *     short by the artifact cap says so (`truncated`). The within-document
+ *     check no longer issues 'likely_inconsistency' from a severity label;
+ *     check_numerical_integrity takes that verdict only from the canonical
+ *     in-document rule (ana/terminology-consistency checkValueConsistency).
+ *
  * @module server/services/intelligence/cross-artifact-consistency
  */
 
@@ -37,6 +51,11 @@ export interface NumericalFact {
   readonly label: string;
   /** The raw numeric value as it appears in text. */
   readonly value: string;
+  /**
+   * The upper bound of a two-number fact (confidence interval, age range);
+   * `value` is then the lower bound. Undefined for single-number facts.
+   */
+  readonly upper?: string;
   /** Optional unit if detected (%, mg, kg, etc.). */
   readonly unit?: string;
   /** The surrounding sentence or phrase for the reviewer to inspect. */
@@ -78,6 +97,15 @@ export interface ConsistencyReport {
    * shown as one.
    */
   readonly unavailable?: 'artifacts_unreadable';
+  /**
+   * Set when nothing was compared for a reason other than a failed read: an
+   * invalid project, a draft too short to check, or a draft with no labelled
+   * figures and no section to cross-reference. Like `unavailable`, the
+   * verdict of such a report means nothing and must not be shown as one.
+   */
+  readonly notCompared?: 'invalid_project' | 'draft_too_short' | 'no_draft_facts';
+  /** Set when the project held more artifacts than `maxArtifacts`; only that many were compared. */
+  readonly truncated?: true;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -92,7 +120,7 @@ export interface ConsistencyReport {
 const LABELLED_NUMERIC_PATTERNS: Array<{ label: string; pattern: RegExp }> = [
   { label: 'sample_size',     pattern: /\b(?:N|n|sample\s+size|enrolled|randomi[sz]ed)\s*[=:]\s*([0-9,]+)/gi },
   { label: 'p_value',         pattern: /\bp\s*[<=]\s*(0?\.[0-9]+|[0-9]+(?:\.[0-9]+)?[eE]-?[0-9]+)/gi },
-  { label: 'confidence_interval', pattern: /\b(?:95|99)\s*%?\s*CI[:\s]*[-−]?([0-9.]+)\s*(?:to|,|-|–|—)\s*[-−]?([0-9.]+)/gi },
+  { label: 'confidence_interval', pattern: /\b(?:95|99)\s*%?\s*CI[:\s]*([-−]?[0-9.]+)\s*(?:to|,|-|–|—)\s*([-−]?[0-9.]+)/gi },
   { label: 'lsm_difference',  pattern: /\bLSM\s+difference[:\s]*[-−]?([0-9.]+)\s*%?/gi },
   { label: 'mean_change',     pattern: /\bmean\s+change\s+(?:from\s+baseline\s+)?(?:of\s+|[=:]\s*)[-−]?([0-9.]+)/gi },
   { label: 'hba1c_reduction', pattern: /\bHbA1[cC]\s+reduction\s*(?:of\s+|[=:]\s*)[-−]?([0-9.]+)\s*%/gi },
@@ -123,6 +151,14 @@ const LABELLED_NUMERIC_PATTERNS: Array<{ label: string; pattern: RegExp }> = [
   { label: 'rpn',              pattern: /\bRPN\s*(?:of|was|is|=|:)\s*([0-9]+(?:\.[0-9]+)?)/gi },
 ];
 
+/** Labels whose second capture is an upper bound, not a unit. */
+const TWO_BOUND_LABELS = new Set(['confidence_interval', 'age_range']);
+
+/** A Unicode minus (U+2212) does not parse; normalise it to '-'. */
+function normaliseSign(v: string): string {
+  return v.replace(/−/g, '-');
+}
+
 export function extractNumericalFacts(text: string): NumericalFact[] {
   if (!text || text.length < 20) return [];
   const facts: NumericalFact[] = [];
@@ -132,7 +168,8 @@ export function extractNumericalFacts(text: string): NumericalFact[] {
     pattern.lastIndex = 0;
     let match: RegExpExecArray | null;
     while ((match = pattern.exec(text)) !== null) {
-      const value = match[1];
+      const twoBound = TWO_BOUND_LABELS.has(label);
+      const value = normaliseSign(match[1]);
       const offset = match.index;
       const context = extractSentenceContext(text, offset);
       // Dedup by label+value+offset so a single line isn't double-counted
@@ -144,7 +181,8 @@ export function extractNumericalFacts(text: string): NumericalFact[] {
         value,
         context,
         offset,
-        unit: match[2] || undefined,
+        upper: twoBound ? normaliseSign(match[2]) : undefined,
+        unit: twoBound ? undefined : match[2] || undefined,
       });
     }
   }
@@ -216,7 +254,7 @@ function severityFor(label: string): DivergenceSeverity {
   return SEVERITY_BY_LABEL[label] ?? 'medium';
 }
 
-function valuesMatch(a: string, b: string): boolean {
+function numbersMatch(a: string, b: string): boolean {
   // Tolerant comparison: strip commas, trim, parse as numbers when possible.
   const na = a.replace(/,/g, '').trim();
   const nb = b.replace(/,/g, '').trim();
@@ -229,6 +267,19 @@ function valuesMatch(a: string, b: string): boolean {
     return Math.abs(fa - fb) <= tolerance;
   }
   return false;
+}
+
+/** Two facts match when their values match and, for a two-number fact, their upper bounds too. */
+function valuesMatch(a: NumericalFact, b: NumericalFact): boolean {
+  if (!numbersMatch(a.value, b.value)) return false;
+  if (a.upper === undefined && b.upper === undefined) return true;
+  return a.upper !== undefined && b.upper !== undefined && numbersMatch(a.upper, b.upper);
+}
+
+/** A fact as a reader would write it: "-0.10 to 0.30", "50 mg/kg/day". */
+function formatFact(f: NumericalFact): string {
+  const range = f.upper !== undefined ? `${f.value} to ${f.upper}` : f.value;
+  return f.unit ? `${range} ${f.unit}` : range;
 }
 
 export async function checkDossierConsistency(params: {
@@ -255,11 +306,11 @@ export async function checkDossierConsistency(params: {
     generatedAt: new Date().toISOString(),
   };
 
-  if (!Number.isFinite(projectId) || projectId <= 0) return emptyReport;
-  if (!draftContent || draftContent.length < 100) return emptyReport;
+  if (!Number.isFinite(projectId) || projectId <= 0) return { ...emptyReport, notCompared: 'invalid_project' };
+  if (!draftContent || draftContent.length < 100) return { ...emptyReport, notCompared: 'draft_too_short' };
 
   const draftFacts = extractNumericalFacts(draftContent);
-  if (draftFacts.length === 0 && !draftCtdSection) return emptyReport;
+  if (draftFacts.length === 0 && !draftCtdSection) return { ...emptyReport, notCompared: 'no_draft_facts' };
 
   let relatedArtifacts: Array<{
     id: number;
@@ -269,6 +320,7 @@ export async function checkDossierConsistency(params: {
     ctdSection: string | null;
     status: string;
   }> = [];
+  let truncated: boolean;
 
   try {
     const rows = await db
@@ -293,8 +345,10 @@ export async function checkDossierConsistency(params: {
               eq(concept2cureArtifacts.organizationId, organizationId),
             ),
       )
-      .limit(maxArtifacts);
-    relatedArtifacts = rows;
+      // One row past the cap tells us the comparison was cut short.
+      .limit(maxArtifacts + 1);
+    truncated = rows.length > maxArtifacts;
+    relatedArtifacts = rows.slice(0, maxArtifacts);
   } catch (err) {
     logger.warn(
       `[cross-artifact] Failed to load related artifacts: ${err instanceof Error ? err.message : 'unknown'}`,
@@ -310,31 +364,34 @@ export async function checkDossierConsistency(params: {
     const existingFacts = extractNumericalFacts(existing.content);
     if (existingFacts.length === 0) continue;
 
-    // Group facts by label. Compare the FIRST occurrence of each label in
-    // both documents. This intentionally avoids the n^2 explosion of
-    // comparing every fact against every other fact, which would produce a
-    // lot of within-document noise (e.g. a document naming two sample
-    // sizes for two different study arms).
-    const draftByLabel = new Map<string, NumericalFact>();
-    for (const f of draftFacts) {
-      if (!draftByLabel.has(f.label)) draftByLabel.set(f.label, f);
-    }
-    const existingByLabel = new Map<string, NumericalFact>();
-    for (const f of existingFacts) {
-      if (!existingByLabel.has(f.label)) existingByLabel.set(f.label, f);
-    }
+    // Group facts by label. A label with one distinct value on each side is
+    // compared directly. A label with several distinct values on either side
+    // (two arms, two cohorts) cannot be paired by position, so the sets are
+    // compared and only a disjoint pair is flagged — at medium, because the
+    // checker cannot tell which value belongs to which arm.
+    const draftByLabel = groupByLabel(draftFacts);
+    const existingByLabel = groupByLabel(existingFacts);
 
-    for (const [label, draftFact] of draftByLabel) {
-      const existingFact = existingByLabel.get(label);
-      if (!existingFact) continue;
-      if (valuesMatch(draftFact.value, existingFact.value)) continue;
+    for (const [label, draftGroup] of draftByLabel) {
+      const existingGroup = existingByLabel.get(label);
+      if (!existingGroup) continue;
+      const draftDistinct = distinctFacts(draftGroup);
+      const existingDistinct = distinctFacts(existingGroup);
+      if (draftDistinct.some(d => existingDistinct.some(e => valuesMatch(d, e)))) continue;
 
+      const draftFact = draftDistinct[0];
+      const existingFact = existingDistinct[0];
+      const single = draftDistinct.length === 1 && existingDistinct.length === 1;
+      const draftValue = draftDistinct.map(formatFact).join('; ');
+      const existingValue = existingDistinct.map(formatFact).join('; ');
       divergences.push({
         kind: 'numeric_divergence',
-        severity: severityFor(label),
-        description: `${humanLabel(label)} differs: draft says ${draftFact.value}${draftFact.unit ? ' ' + draftFact.unit : ''}, existing artifact "${existing.title}" says ${existingFact.value}${existingFact.unit ? ' ' + existingFact.unit : ''}.`,
-        draftValue: draftFact.value,
-        existingValue: existingFact.value,
+        severity: single ? severityFor(label) : 'medium',
+        description: single
+          ? `${humanLabel(label)} differs: draft says ${draftValue}, existing artifact "${existing.title}" says ${existingValue}.`
+          : `${humanLabel(label)} values do not overlap: draft states ${draftValue}, existing artifact "${existing.title}" states ${existingValue}. The arms or sets could not be paired, so check each one.`,
+        draftValue,
+        existingValue,
         existingArtifactId: existing.artifactId,
         existingArtifactTitle: existing.title,
         existingCtdSection: existing.ctdSection,
@@ -379,7 +436,25 @@ export async function checkDossierConsistency(params: {
     divergences,
     verdict,
     generatedAt: new Date().toISOString(),
+    ...(truncated ? { truncated: true as const } : {}),
   };
+}
+
+function groupByLabel(facts: readonly NumericalFact[]): Map<string, NumericalFact[]> {
+  const byLabel = new Map<string, NumericalFact[]>();
+  for (const f of facts) {
+    const list = byLabel.get(f.label) ?? [];
+    list.push(f);
+    byLabel.set(f.label, list);
+  }
+  return byLabel;
+}
+
+/** One fact per distinct value, so a figure repeated verbatim counts once. */
+function distinctFacts(group: readonly NumericalFact[]): NumericalFact[] {
+  const out: NumericalFact[] = [];
+  for (const f of group) if (!out.some(o => valuesMatch(o, f))) out.push(f);
+  return out;
 }
 
 function humanLabel(label: string): string {
@@ -427,9 +502,9 @@ function computeVerdict(divergences: ConsistencyDivergence[]): ConsistencyReport
 // WITHIN-DOCUMENT NUMERICAL INTEGRITY
 //
 // Regulatory prose and its accompanying tables must report the same numbers.
-// "N=648" in the narrative and "N=641" in Table 14.1 is a classic RTF trigger,
-// as is a p-value stated in text that differs from the value in the same
-// table. This check surfaces CANDIDATES — same labelled quantity stated with
+// "N=648" in the narrative and "N=641" in Table 14.1 is a defect a reviewer
+// will query, as is a p-value stated in text that differs from the value in
+// the same table. This check surfaces CANDIDATES — same labelled quantity stated with
 // multiple distinct values within the same draft — for Claude or the author
 // to adjudicate. Some multi-arm / multi-timepoint variation is legitimate
 // ("N=648 at Week 26, N=612 at Week 52"), so the checker deliberately does
@@ -444,6 +519,7 @@ export interface InternalNumericalCandidate {
   readonly distinctValues: readonly string[];
   readonly occurrences: ReadonlyArray<{
     readonly value: string;
+    readonly upper?: string;
     readonly unit?: string;
     readonly context: string;
   }>;
@@ -454,7 +530,12 @@ export interface NumericalIntegrityReport {
   readonly factsExtracted: number;
   readonly candidateCount: number;
   readonly candidates: readonly InternalNumericalCandidate[];
-  readonly verdict: 'clean' | 'review_candidates' | 'likely_inconsistency';
+  /**
+   * Candidates only. A 'likely inconsistency' is the canonical in-document
+   * rule's call (ana/terminology-consistency checkValueConsistency), which
+   * check_numerical_integrity applies on top of this report.
+   */
+  readonly verdict: 'clean' | 'review_candidates';
   readonly generatedAt: string;
 }
 
@@ -482,35 +563,26 @@ export function checkInternalNumericalIntegrity(content: string): NumericalInteg
   }
 
   // Group by label; canonicalize value (strip commas, normalize negative sign)
-  // so "1,000" and "1000" don't register as different.
-  const byLabel = new Map<string, NumericalFact[]>();
-  for (const fact of facts) {
-    const list = byLabel.get(fact.label) ?? [];
-    list.push(fact);
-    byLabel.set(fact.label, list);
-  }
+  // so "1,000" and "1000" don't register as different. A two-number fact is
+  // keyed on both bounds, so "ages 18 to 65" and "ages 18 to 75" differ.
+  const byLabel = groupByLabel(facts);
 
   const candidates: InternalNumericalCandidate[] = [];
   for (const [label, group] of byLabel) {
     if (group.length < 2) continue;
     const distinctValuesSet = new Set<string>();
     for (const f of group) {
-      const normalized = f.value.replace(/,/g, '').trim();
-      distinctValuesSet.add(normalized);
+      const lower = f.value.replace(/,/g, '').trim();
+      distinctValuesSet.add(f.upper !== undefined ? `${lower} to ${f.upper.trim()}` : lower);
     }
     if (distinctValuesSet.size < 2) continue;
 
     // Suppress if the values cluster within the tolerance bucket — avoids
     // noise for things like "approximately 648" vs "648" that are effectively
-    // the same reading.
-    const numericDistincts = Array.from(distinctValuesSet)
-      .map(v => parseFloat(v))
-      .filter(n => Number.isFinite(n));
-    if (numericDistincts.length === distinctValuesSet.size && numericDistincts.length >= 2) {
-      const max = Math.max(...numericDistincts);
-      const min = Math.min(...numericDistincts);
-      const spread = max === 0 ? 0 : (max - min) / Math.max(Math.abs(max), Math.abs(min));
-      if (spread < 0.005) continue;
+    // the same reading. A two-number fact must cluster on both bounds.
+    if (clustersWithinTolerance(group.map(f => f.value)) &&
+        (group.every(f => f.upper === undefined) || clustersWithinTolerance(group.map(f => f.upper ?? '')))) {
+      continue;
     }
 
     candidates.push({
@@ -520,6 +592,7 @@ export function checkInternalNumericalIntegrity(content: string): NumericalInteg
       distinctValues: Array.from(distinctValuesSet),
       occurrences: group.map(f => ({
         value: f.value,
+        upper: f.upper,
         unit: f.unit,
         context: f.context,
       })),
@@ -538,14 +611,24 @@ export function checkInternalNumericalIntegrity(content: string): NumericalInteg
   };
 }
 
+/** True when every value parses and they all sit within the 0.5% tolerance bucket. */
+function clustersWithinTolerance(values: readonly string[]): boolean {
+  const nums = values.map(v => parseFloat(v.replace(/,/g, '').trim()));
+  if (nums.length < 2 || !nums.every(n => Number.isFinite(n))) return false;
+  const max = Math.max(...nums);
+  const min = Math.min(...nums);
+  // Equal values (including all zero) cluster; otherwise relative to the
+  // larger magnitude, so a zero upper end does not hide a negative lower one.
+  if (max === min) return true;
+  return (max - min) / Math.max(Math.abs(max), Math.abs(min)) < 0.005;
+}
+
 function computeIntegrityVerdict(
   candidates: InternalNumericalCandidate[],
 ): NumericalIntegrityReport['verdict'] {
-  if (candidates.length === 0) return 'clean';
-  // Critical-severity labels with multiple distinct values are very likely
-  // real inconsistencies — dose, NOAEL, MRSD, sample size rarely have a
-  // legitimate "different value in different places" interpretation within
-  // a single drafted section.
-  if (candidates.some(c => c.severity === 'critical')) return 'likely_inconsistency';
-  return 'review_candidates';
+  // No 'likely_inconsistency' from a severity label: two arms, two cohorts and
+  // two analysis sets legitimately state a critical-label quantity twice
+  // ("Drug X n=305; placebo n=303"). That call belongs to the canonical
+  // in-document rule, checkValueConsistency, applied by the tool handler.
+  return candidates.length === 0 ? 'clean' : 'review_candidates';
 }

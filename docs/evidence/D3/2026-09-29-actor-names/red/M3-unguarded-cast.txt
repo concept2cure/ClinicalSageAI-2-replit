@@ -1,0 +1,87 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-10-04T20:46:09.817Z","pid":2958,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-04T20:46:09.819Z","pid":2958,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-04T20:46:09.819Z","pid":2958,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/actor-displays.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/actor-displays.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/actor-displays.dbtest.ts
+✅ Template tables initialized
+
+{"level":30,"time":"2026-10-04T20:46:12.732Z","pid":2958,"hostname":"vm","context":{"userId":46,"tenantId":90301,"resourceId":"23:m2.5-actor-displays"},"msg":"[audit-service] [AUDIT] data_modify project_section"}
+{"level":30,"time":"2026-10-04T20:46:12.753Z","pid":2958,"hostname":"vm","context":{"userId":46,"tenantId":90301,"resourceId":"a73f859f-8ce6-4e6d-b25c-e9b998703cfe"},"msg":"[audit-service] [AUDIT] data_modify regulatory_programs"}
+stdout | tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > a section's revision history names a reviser who left, and a non-numeric author is no error
+[database] Database connection successful { timestamp: '2026-10-04T20:46:12.793Z', poolSize: 1 }
+
+{"level":50,"time":"2026-10-04T20:46:12.828Z","pid":2958,"hostname":"vm","context":{"err":"invalid input syntax for type integer: \"system\"","correlationId":null,"code":"22P02"},"msg":"[authoring-router] loading history failed"}
+stderr | tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > a section's revision history names a reviser who left, and a non-numeric author is no error
+Error getting revision history: error: invalid input syntax for type integer: "system"
+    at /home/user/ClinicalSageAI-2-replit/node_modules/pg/lib/client.js:652:17
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at runQueryScoped (/home/user/ClinicalSageAI-2-replit/server/db/poolInstrumentation.ts:198:21)
+    at /home/user/ClinicalSageAI-2-replit/server/routes/authoring.router.ts:2217:20 {
+  length: 112,
+  severity: 'ERROR',
+  code: '22P02',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'numutils.c',
+  line: '617',
+  routine: 'pg_strtoint32_safe'
+}
+
+ ↓ tests/db/actor-displays.dbtest.ts > project sections keep the records of people who left (D3) > the comment thread keeps every comment, named where A knows the author
+ ↓ tests/db/actor-displays.dbtest.ts > project sections keep the records of people who left (D3) > the section's history names who changed it
+ ↓ tests/db/actor-displays.dbtest.ts > project sections keep the records of people who left (D3) > the team workload keeps sections assigned to people who left
+ ↓ tests/db/actor-displays.dbtest.ts > project sections keep the records of people who left (D3) > the section list names the leaver as assignee
+ ↓ tests/db/actor-displays.dbtest.ts > a program keeps its lead's and editors' names (D3) > the lead who left is still named on the program
+ ↓ tests/db/actor-displays.dbtest.ts > a program keeps its lead's and editors' names (D3) > activity names the editor, and never calls a person "System"
+ ↓ tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the project activity feed answers
+ ↓ tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the MDx audit list names the leaver's audit entries
+ ↓ tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the MDx admin audit band names the leaver, not 'Unknown account'
+ ↓ tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the c2c program portfolio names the lead who left
+ ↓ tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > the collaborator list names a collaborator who left, so they can be removed
+ × tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > a section's revision history names a reviser who left, and a non-numeric author is no error 70ms
+   → {"error":"INTERNAL_ERROR","message":"Something went wrong while loading history. The problem has been logged."}: expected 500 to be 200 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/actor-displays.dbtest.ts > activity feeds and the MDx audit list name people who left (D3) > a section's revision history names a reviser who left, and a non-numeric author is no error
+AssertionError: {"error":"INTERNAL_ERROR","message":"Something went wrong while loading history. The problem has been logged."}: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ tests/db/actor-displays.dbtest.ts:314:64
+    312|   it("a section's revision history names a reviser who left, and a non…
+    313|     const res = await request(app).get(`/api/authoring/sections/${revi…
+    314|     expect(res.status, JSON.stringify(res.body).slice(0, 200)).toBe(20…
+       |                                                                ^
+    315|     expect(
+    316|       (res.body.revisions as Array<{ created_by: string; created_by_na…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 skipped (12)
+   Start at  20:46:07
+   Duration  5.11s (transform 2.53s, setup 73ms, import 4.32s, tests 436ms, environment 0ms)
+

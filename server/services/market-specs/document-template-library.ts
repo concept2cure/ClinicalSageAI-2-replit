@@ -16,10 +16,15 @@
  * purpose notes — NOT drafted regulatory prose and NOT a substitute for the current
  * agency template. Authors fill the content; this provides the spine.
  *
+ * The CSR outline is not kept here: it is read from the canonical ICH E3 tree
+ * (server/services/ind/ctd, csr-e3-*.ts), so it cannot drift from it.
+ *
  * PURE + DETERMINISTIC data + lookups: no DB, no network, no LLM.
  *
  * @module server/services/market-specs/document-template-library
  */
+
+import { e3TopLevel, e3Children, type E3Section } from '../ind/ctd/index.js';
 
 export interface TemplateSection {
   /** Section number within the document (e.g. "2.5.4", "4.1", "I.1"). */
@@ -41,6 +46,13 @@ export interface DocumentTemplateStructure {
   /** Published structure source. */
   regulatoryBasis: string;
   sections: TemplateSection[];
+}
+
+/** One ICH E3 top-level heading as a template section: its purpose, or what it carries, or the headings under it. */
+function e3TemplateSection(s: E3Section): TemplateSection {
+  const purpose = s.purpose
+    ?? (s.contains?.length ? s.contains.join('; ') : `Covers ${e3Children(s.number).map((c) => `${c.number} ${c.title}`).join('; ')}.`);
+  return { number: s.number, heading: s.title, purpose, required: s.applies === 'always' };
 }
 
 export const DOCUMENT_TEMPLATES: DocumentTemplateStructure[] = [
@@ -110,8 +122,8 @@ export const DOCUMENT_TEMPLATES: DocumentTemplateStructure[] = [
     id: 'cover_letter',
     title: 'Submission Cover Letter',
     families: ['ectd', 'estar', 'ctis'],
-    ctdSection: '1.1',
-    regulatoryBasis: 'Regional Module 1 administrative guidance (FDA eCTD / EU M1 / PMDA)',
+    // No ctdSection: the Module 1 placement differs by region (1.1 is FDA Forms).
+    regulatoryBasis: 'Regional Module 1 administrative guidance — FDA M1 1.2 Cover letters; EU M1 1.0; NMPA 1.0; MFDS 1.2 (server/services/regional-ctd-templates.ts)',
     sections: [
       { number: '1', heading: 'Applicant and Product Identification', purpose: 'Applicant/sponsor, product, application/sequence number, and submission type.', required: true },
       { number: '2', heading: 'Purpose of the Submission', purpose: 'What this sequence contains and why it is being filed.', required: true },
@@ -239,7 +251,10 @@ export const DOCUMENT_TEMPLATES: DocumentTemplateStructure[] = [
     id: 'pbrer',
     title: 'Periodic Benefit-Risk Evaluation Report (PBRER/PSUR)',
     families: ['ectd'],
-    regulatoryBasis: 'ICH E2C(R2); EU GVP Module VII',
+    regulatoryBasis: 'ICH E2C(R2) §1–§19; EU GVP Module VII',
+    // Interim hand copy of the E2C(R2) numbering until one canonical E2C(R2)
+    // tree exists; the heading facts are in docs/evidence/D2-ANA-DOCUMENT-
+    // INTELLIGENCE/2026-10-04-depth/b1-template-library-facts.md.
     sections: [
       { number: '1', heading: 'Introduction', purpose: 'Reporting interval, product(s), and scope.', required: true },
       { number: '2', heading: 'Worldwide Marketing Authorisation Status', purpose: 'Authorisation dates and indications by country.', required: true },
@@ -252,10 +267,14 @@ export const DOCUMENT_TEMPLATES: DocumentTemplateStructure[] = [
       { number: '9', heading: 'Information from Other Clinical Trials and Sources', purpose: 'Other relevant safety information.', required: false },
       { number: '10', heading: 'Non-Clinical Data', purpose: 'Relevant nonclinical safety findings.', required: false },
       { number: '11', heading: 'Literature', purpose: 'Relevant published literature.', required: false },
-      { number: '15', heading: 'Signal and Risk Evaluation', purpose: 'Summary of safety concerns, signal evaluation, and risk characterisation.', required: true },
-      { number: '16', heading: 'Benefit Evaluation', purpose: 'Baseline and newly identified benefit information.', required: true },
-      { number: '17', heading: 'Integrated Benefit-Risk Analysis', purpose: 'Integrated benefit-risk for approved indications.', required: true },
-      { number: '18', heading: 'Conclusions and Actions', purpose: 'Conclusions and any proposed/needed actions.', required: true },
+      { number: '12', heading: 'Other Periodic Reports', purpose: 'Significant findings from other periodic reports, including those from partners, not presented elsewhere.', required: false },
+      { number: '13', heading: 'Lack of Efficacy in Controlled Clinical Trials', purpose: 'Lack-of-efficacy data from clinical trials in the interval that bear on benefit-risk.', required: true },
+      { number: '14', heading: 'Late-Breaking Information', purpose: 'Significant safety or efficacy information arising after the data lock point.', required: true },
+      { number: '15', heading: 'Overview of Signals: New, Ongoing, or Closed', purpose: 'Signals new, ongoing, or closed during the reporting interval.', required: true },
+      { number: '16', heading: 'Signal and Risk Evaluation', purpose: 'Summary of safety concerns, signal evaluation, and risk characterisation.', required: true },
+      { number: '17', heading: 'Benefit Evaluation', purpose: 'Baseline and newly identified benefit information.', required: true },
+      { number: '18', heading: 'Integrated Benefit-Risk Analysis for Approved Indications', purpose: 'Integrated benefit-risk for approved indications.', required: true },
+      { number: '19', heading: 'Conclusions and Actions', purpose: 'Conclusions and any proposed/needed actions.', required: true },
     ],
   },
 
@@ -265,20 +284,8 @@ export const DOCUMENT_TEMPLATES: DocumentTemplateStructure[] = [
     title: 'Clinical Study Report (CSR)',
     families: ['ectd'],
     ctdSection: '5.3.5.1',
-    regulatoryBasis: 'ICH E3 — Structure and Content of Clinical Study Reports',
-    sections: [
-      { number: '1', heading: 'Title Page', purpose: 'Study identification.', required: true },
-      { number: '2', heading: 'Synopsis', purpose: 'Brief structured summary of the study.', required: true },
-      { number: '6', heading: 'Introduction', purpose: 'Background and rationale.', required: true },
-      { number: '7', heading: 'Study Objectives', purpose: 'Primary and secondary objectives.', required: true },
-      { number: '8', heading: 'Investigational Plan', purpose: 'Design, methodology, randomisation, blinding, treatments, and endpoints.', required: true },
-      { number: '9', heading: 'Study Patients', purpose: 'Disposition, protocol deviations.', required: true },
-      { number: '10', heading: 'Efficacy Evaluation', purpose: 'Analysis populations, efficacy results, and statistical methods.', required: true },
-      { number: '11', heading: 'Safety Evaluation', purpose: 'Exposure, adverse events, deaths/SAEs, labs, vital signs.', required: true },
-      { number: '12', heading: 'Discussion and Overall Conclusions', purpose: 'Integrated interpretation of efficacy and safety.', required: true },
-      { number: '14', heading: 'Tables, Figures and Graphs', purpose: 'Referenced in-text displays.', required: false },
-      { number: '16', heading: 'Appendices', purpose: 'Protocol, sample CRF, statistical documentation, and listings.', required: false },
-    ],
+    regulatoryBasis: 'ICH E3 — Structure and Content of Clinical Study Reports (canonical tree: server/services/ind/ctd/csr-e3-guidance.ts, with a basis per section)',
+    sections: e3TopLevel().map(e3TemplateSection),
   },
 ];
 
