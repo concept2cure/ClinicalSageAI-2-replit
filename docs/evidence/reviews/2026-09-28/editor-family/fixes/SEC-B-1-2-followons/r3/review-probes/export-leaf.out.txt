@@ -1,0 +1,281 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 <scratch>/review-figure
+
+stdout | export-leaf.probe.test.ts > P1 placeholder never prints the payload > P1a: a type-less data: URI (no alt) -- label
+P1a label = "inline ivborw0kggoaaaansuheugaaaaeaaaabcayaaaaf data"
+
+stdout | export-leaf.probe.test.ts > P1 placeholder never prints the payload > P1b: a type-less data: URI (no alt) -- leaf, PDF html, Word
+P1b leaf = "Stability.\n\n[Figure: inline ivborw0kggoaaaansuheugaaaaeaaaabcayaaaaf data]"
+P1b pdf  = "<p>Stability.</p><p class=\"img-missing\">[Figure not exported: inline ivborw0kggoaaaansuheugaaaaeaaaabcayaaaaf data]</p>"
+
+stdout | export-leaf.probe.test.ts > P1 placeholder never prints the payload > P1b: a type-less data: URI (no alt) -- leaf, PDF html, Word
+P1b save refuses = [{"position":1,"src":"data:iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="}]
+
+ × export-leaf.probe.test.ts > P1 placeholder never prints the payload > P1a: a type-less data: URI (no alt) -- label 15ms
+   → expected 'inline ivborw0kggoaaaansuheugaaaaeaaa…' not to contain 'ivborw0kggoaaaansuhe'
+stdout | export-leaf.probe.test.ts > P2 <pre> holding a valid inline figure (the save accepts it) > P2a: the save/create check accepts it, a browser shows an <img>
+P2a save refuses = []
+P2a browser imgs = ["data:image/png;base64,iVBORw0KGgoAAAANSU"]
+
+stdout | export-leaf.probe.test.ts > P2 <pre> holding a valid inline figure (the save accepts it) > P2b: the eCTD leaf prints no base64
+P2b leaf = "Chromatogram.\n\n<img src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==\" alt=\"Figure 1\">"
+
+stdout | export-leaf.probe.test.ts > P2 <pre> holding a valid inline figure (the save accepts it) > P2c: the PDF export html prints no base64 as text
+P2c pdf = "<p>Chromatogram.</p><p>&lt;img src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==\" alt=\"Figure 1\"&gt;</p>"
+
+stdout | export-leaf.probe.test.ts > P3 element/attribute forms that carry a URL or payload > picture/source srcset
+P3 [picture/source srcset] save-refuses=1 leaf="[Figure: from another site]" pdfPlaceholders=["[Figure not exported: from another site]"] media=0
+
+stdout | export-leaf.probe.test.ts > P3 element/attribute forms that carry a URL or payload > svg image href
+P3 [svg image href] save-refuses=0 leaf="x" pdfPlaceholders=null media=0
+
+stdout | export-leaf.probe.test.ts > P3 element/attribute forms that carry a URL or payload > object data
+P3 [object data] save-refuses=0 leaf="x" pdfPlaceholders=null media=0
+
+stdout | export-leaf.probe.test.ts > P3 element/attribute forms that carry a URL or payload > embed src
+P3 [embed src] save-refuses=0 leaf="x" pdfPlaceholders=null media=0
+
+ × export-leaf.probe.test.ts > P1 placeholder never prints the payload > P1b: a type-less data: URI (no alt) -- leaf, PDF html, Word 157ms
+   → expected 'stability.\n\n[figure: inline ivborw0…' not to contain 'ivborw0kggoaaaansuhe'
+ ✓ export-leaf.probe.test.ts > P2 <pre> holding a valid inline figure (the save accepts it) > P2a: the save/create check accepts it, a browser shows an <img> 16ms
+ × export-leaf.probe.test.ts > P2 <pre> holding a valid inline figure (the save accepts it) > P2b: the eCTD leaf prints no base64 2ms
+   → expected 'Chromatogram.\n\n<img src="data:image…' not to contain 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAA…'
+ × export-leaf.probe.test.ts > P2 <pre> holding a valid inline figure (the save accepts it) > P2c: the PDF export html prints no base64 as text 2ms
+   → expected '<p>Chromatogram.</p><p>&lt;img src="d…' not to contain 'iVBORw0KGgoAAAANSUhEUgAAAAEAAA'
+ × export-leaf.probe.test.ts > P2 <pre> holding a valid inline figure (the save accepts it) > P2d: the Word file prints no base64 as text 20ms
+   → expected '<?xml version="1.0" encoding="UTF-8" …' not to contain 'iVBORw0KGgoAAAANSUhEUgAAAAEAAA'
+ ✓ export-leaf.probe.test.ts > P3 element/attribute forms that carry a URL or payload > picture/source srcset 16ms
+ ✓ export-leaf.probe.test.ts > P3 element/attribute forms that carry a URL or payload > svg image href 15ms
+ ✓ export-leaf.probe.test.ts > P3 element/attribute forms that carry a URL or payload > object data 15ms
+ ✓ export-leaf.probe.test.ts > P3 element/attribute forms that carry a URL or payload > embed src 10ms
+stdout | export-leaf.probe.test.ts > P3 element/attribute forms that carry a URL or payload > input type=image
+P3 [input type=image] save-refuses=0 leaf="x" pdfPlaceholders=null media=0
+
+stdout | export-leaf.probe.test.ts > P3 element/attribute forms that carry a URL or payload > css url()
+P3 [css url()] save-refuses=0 leaf="x" pdfPlaceholders=null media=0
+
+stdout | export-leaf.probe.test.ts > P3 element/attribute forms that carry a URL or payload > img srcset only
+P3 [img srcset only] save-refuses=0 leaf="x\n\n[Figure: unresolved image reference]" pdfPlaceholders=null media=0
+
+stdout | export-leaf.probe.test.ts > P3 element/attribute forms that carry a URL or payload > video poster
+P3 [video poster] save-refuses=0 leaf="x" pdfPlaceholders=null media=0
+
+ ✓ export-leaf.probe.test.ts > P3 element/attribute forms that carry a URL or payload > input type=image 15ms
+ ✓ export-leaf.probe.test.ts > P3 element/attribute forms that carry a URL or payload > css url() 41ms
+ ✓ export-leaf.probe.test.ts > P3 element/attribute forms that carry a URL or payload > img srcset only 36ms
+stdout | export-leaf.probe.test.ts > P3 element/attribute forms that carry a URL or payload > upper-case data URI
+P3 [upper-case data URI] save-refuses=1 leaf="x\n\n[Figure: inline image/webp data]" pdfPlaceholders=["[Figure not exported: inline image/webp data]"] media=0
+
+stdout | export-leaf.probe.test.ts > P3 element/attribute forms that carry a URL or payload > data URI with leading space
+P3 [data URI with leading space] save-refuses=1 leaf="x\n\n[Figure: not from the image store]" pdfPlaceholders=["[Figure not exported: inline image/webp data]"] media=0
+
+stdout | export-leaf.probe.test.ts > P3 element/attribute forms that carry a URL or payload > data URI with inner newline
+P3 [data URI with inner newline] save-refuses=1 leaf="x\n\n[Figure: inline image/png data]" pdfPlaceholders=["[Figure not exported: inline image/png data]"] media=0
+
+stdout | export-leaf.probe.test.ts > P3 element/attribute forms that carry a URL or payload > image (parsed as img by a browser)
+P3 [image (parsed as img by a browser)] save-refuses=1 leaf="x" pdfPlaceholders=null media=0
+
+stdout | export-leaf.probe.test.ts > P3 element/attribute forms that carry a URL or payload > img inside a link
+P3 [img inside a link] save-refuses=1 leaf="x\n\n[Figure: from another site]" pdfPlaceholders=["[Figure not exported: from another site]"] media=0
+
+ ✓ export-leaf.probe.test.ts > P3 element/attribute forms that carry a URL or payload > video poster 22ms
+ ✓ export-leaf.probe.test.ts > P3 element/attribute forms that carry a URL or payload > upper-case data URI 27ms
+ ✓ export-leaf.probe.test.ts > P3 element/attribute forms that carry a URL or payload > data URI with leading space 19ms
+ ✓ export-leaf.probe.test.ts > P3 element/attribute forms that carry a URL or payload > data URI with inner newline 17ms
+ ✓ export-leaf.probe.test.ts > P3 element/attribute forms that carry a URL or payload > image (parsed as img by a browser) 10ms
+ ✓ export-leaf.probe.test.ts > P3 element/attribute forms that carry a URL or payload > img inside a link 16ms
+stdout | export-leaf.probe.test.ts > P4 the export files a figure the browser parser (canvas) does not show > bogus comment <!x
+P4 [bogus comment <!x] save-refuses=0 browser-imgs=[] export-keys=["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAA"] filed=[["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAA","X8jx0gAAAABJRU5ErkJggg=="]] docx-media-tails=["X8jx0gAAAABJRU5ErkJggg=="] loaderCalls=0
+
+stdout | export-leaf.probe.test.ts > P4 the export files a figure the browser parser (canvas) does not show > processing-instruction-like <?
+P4 [processing-instruction-like <?] save-refuses=0 browser-imgs=[] export-keys=["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAA"] filed=[["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAA","X8jx0gAAAABJRU5ErkJggg=="]] docx-media-tails=["X8jx0gAAAABJRU5ErkJggg=="] loaderCalls=0
+
+stdout | export-leaf.probe.test.ts > P4 the export files a figure the browser parser (canvas) does not show > end-tag bogus comment </ 
+P4 [end-tag bogus comment </ ] save-refuses=0 browser-imgs=[] export-keys=["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAA"] filed=[["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAA","X8jx0gAAAABJRU5ErkJggg=="]] docx-media-tails=["X8jx0gAAAABJRU5ErkJggg=="] loaderCalls=0
+
+stdout | export-leaf.probe.test.ts > P4 the export files a figure the browser parser (canvas) does not show > textarea (RCDATA)
+P4 [textarea (RCDATA)] save-refuses=0 browser-imgs=[] export-keys=["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAA"] filed=[["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAA","X8jx0gAAAABJRU5ErkJggg=="]] docx-media-tails=["X8jx0gAAAABJRU5ErkJggg=="] loaderCalls=0
+
+ × export-leaf.probe.test.ts > P4 the export files a figure the browser parser (canvas) does not show > bogus comment <!x 36ms
+   → expected [ Array(1) ] to deeply equal []
+ × export-leaf.probe.test.ts > P4 the export files a figure the browser parser (canvas) does not show > processing-instruction-like <? 29ms
+   → expected [ Array(1) ] to deeply equal []
+ × export-leaf.probe.test.ts > P4 the export files a figure the browser parser (canvas) does not show > end-tag bogus comment </  39ms
+   → expected [ Array(1) ] to deeply equal []
+stdout | export-leaf.probe.test.ts > P4 the export files a figure the browser parser (canvas) does not show > xmp (RAWTEXT)
+P4 [xmp (RAWTEXT)] save-refuses=0 browser-imgs=[] export-keys=["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAA"] filed=[["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAA","X8jx0gAAAABJRU5ErkJggg=="]] docx-media-tails=["X8jx0gAAAABJRU5ErkJggg=="] loaderCalls=0
+
+stdout | export-leaf.probe.test.ts > P4 the export files a figure the browser parser (canvas) does not show > template
+P4 [template] save-refuses=0 browser-imgs=[] export-keys=["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAA"] filed=[["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAA","X8jx0gAAAABJRU5ErkJggg=="]] docx-media-tails=["X8jx0gAAAABJRU5ErkJggg=="] loaderCalls=0
+
+ × export-leaf.probe.test.ts > P4 the export files a figure the browser parser (canvas) does not show > textarea (RCDATA) 38ms
+   → expected [ Array(1) ] to deeply equal []
+ × export-leaf.probe.test.ts > P4 the export files a figure the browser parser (canvas) does not show > xmp (RAWTEXT) 70ms
+   → expected [ Array(1) ] to deeply equal []
+ × export-leaf.probe.test.ts > P4 the export files a figure the browser parser (canvas) does not show > template 29ms
+   → expected [ Array(1) ] to deeply equal []
+stdout | export-leaf.probe.test.ts > P4 the export files a figure the browser parser (canvas) does not show > governed ref hidden in a bogus comment
+P4 [governed ref hidden in a bogus comment] save-refuses=0 browser-imgs=[] export-keys=["/api/authoring/images/file_1727500000000_k3v9qa"] filed=[["/api/authoring/images/file_1727500000000_k3v9qa","60e6kgAAAABJRU5ErkJggg=="]] docx-media-tails=["60e6kgAAAABJRU5ErkJggg=="] loaderCalls=2
+
+stdout | export-leaf.probe.test.ts > P4 the export files a figure the browser parser (canvas) does not show > duplicate src, second in upper case
+P4 [duplicate src, second in upper case] save-refuses=0 browser-imgs=["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAA"] export-keys=["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAA"] filed=[["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAA","X8jx0gAAAABJRU5ErkJggg=="]] docx-media-tails=["X8jx0gAAAABJRU5ErkJggg=="] loaderCalls=0
+
+stdout | export-leaf.probe.test.ts > P5 <pre><code> from the editor (context: raw-text handling of pre) > a code block with an escaped < prints its tags literally?
+P5 leaf = "<code>if (x < 1) {}</code>"
+
+stdout | export-leaf.probe.test.ts > P5 <pre><code> from the editor (context: raw-text handling of pre) > a code block with an escaped < prints its tags literally?
+P5 pdf  = "<p>&lt;code&gt;if (x &lt; 1) {}&lt;/code&gt;</p>"
+
+ × export-leaf.probe.test.ts > P4 the export files a figure the browser parser (canvas) does not show > governed ref hidden in a bogus comment 53ms
+   → expected [ Array(1) ] to deeply equal []
+ × export-leaf.probe.test.ts > P4 the export files a figure the browser parser (canvas) does not show > duplicate src, second in upper case 26ms
+   → expected [ Array(1) ] to deeply equal []
+ ✓ export-leaf.probe.test.ts > P5 <pre><code> from the editor (context: raw-text handling of pre) > a code block with an escaped < prints its tags literally? 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  export-leaf.probe.test.ts > P1 placeholder never prints the payload > P1a: a type-less data: URI (no alt) -- label
+AssertionError: expected 'inline ivborw0kggoaaaansuheugaaaaeaaa…' not to contain 'ivborw0kggoaaaansuhe'
+
+Expected: "ivborw0kggoaaaansuhe"
+Received: "inline ivborw0kggoaaaansuheugaaaaeaaaabcayaaaaf data"
+
+ ❯ export-leaf.probe.test.ts:69:37
+     67|     const label = unfiledFigureLabel({ src: `data:${PNG_A}` });
+     68|     console.log('P1a label =', JSON.stringify(label));
+     69|     expect(label.toLowerCase()).not.toContain(PNG_A.slice(0, 20).toLow…
+       |                                     ^
+     70|   });
+     71|   it('P1b: a type-less data: URI (no alt) -- leaf, PDF html, Word', as…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+
+ FAIL  export-leaf.probe.test.ts > P1 placeholder never prints the payload > P1b: a type-less data: URI (no alt) -- leaf, PDF html, Word
+AssertionError: expected 'stability.\n\n[figure: inline ivborw0…' not to contain 'ivborw0kggoaaaansuhe'
+
+- Expected
++ Received
+
+- ivborw0kggoaaaansuhe
++ stability.
++
++ [figure: inline ivborw0kggoaaaansuheugaaaaeaaaabcayaaaaf data]
+
+ ❯ export-leaf.probe.test.ts:79:71
+     77|     console.log('P1b pdf  =', JSON.stringify(pdf));
+     78|     console.log('P1b save refuses =', JSON.stringify(await refusedFigu…
+     79|     for (const out of [leaf, pdf, xml]) expect(out.toLowerCase()).not.…
+       |                                                                       ^
+     80|   });
+     81| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/13]⎯
+
+ FAIL  export-leaf.probe.test.ts > P2 <pre> holding a valid inline figure (the save accepts it) > P2b: the eCTD leaf prints no base64
+AssertionError: expected 'Chromatogram.\n\n<img src="data:image…' not to contain 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAA…'
+
+- Expected
++ Received
+
+- iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==
++ Chromatogram.
++
++ <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==" alt="Figure 1">
+
+ ❯ export-leaf.probe.test.ts:92:22
+     90|     const leaf = htmlToPlainText(section);
+     91|     console.log('P2b leaf =', JSON.stringify(leaf));
+     92|     expect(leaf).not.toContain(PNG_A);
+       |                      ^
+     93|   });
+     94|   it('P2c: the PDF export html prints no base64 as text', async () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/13]⎯
+
+ FAIL  export-leaf.probe.test.ts > P2 <pre> holding a valid inline figure (the save accepts it) > P2c: the PDF export html prints no base64 as text
+AssertionError: expected '<p>Chromatogram.</p><p>&lt;img src="d…' not to contain 'iVBORw0KGgoAAAANSUhEUgAAAAEAAA'
+
+Expected: "iVBORw0KGgoAAAANSUhEUgAAAAEAAA"
+Received: "<p>Chromatogram.</p><p>&lt;img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==" alt="Figure 1"&gt;</p>"
+
+ ❯ export-leaf.probe.test.ts:99:24
+     97|     // the only legitimate place for the payload is inside an <img src…
+     98|     const asText = pdf.replace(/<img src="data:[^"]*"/g, '<img src="(b…
+     99|     expect(asText).not.toContain(PNG_A.slice(0, 30));
+       |                        ^
+    100|   });
+    101|   it('P2d: the Word file prints no base64 as text', async () => {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/13]⎯
+
+ FAIL  export-leaf.probe.test.ts > P2 <pre> holding a valid inline figure (the save accepts it) > P2d: the Word file prints no base64 as text
+AssertionError: expected '<?xml version="1.0" encoding="UTF-8" …' not to contain 'iVBORw0KGgoAAAANSUhEUgAAAAEAAA'
+
+Expected: "iVBORw0KGgoAAAANSUhEUgAAAAEAAA"
+Received: "<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document mc:Ignorable="w14 w15 wp14" xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:wp14="http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:w10="urn:schemas-microsoft-com:office:word" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml" xmlns:w15="http://schemas.microsoft.com/office/word/2012/wordml" xmlns:wpg="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup" xmlns:wpi="http://schemas.microsoft.com/office/word/2010/wordprocessingInk" xmlns:wne="http://schemas.microsoft.com/office/word/2006/wordml" xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape" xmlns:cx="http://schemas.microsoft.com/office/drawing/2014/chartex" xmlns:cx1="http://schemas.microsoft.com/office/drawing/2015/9/8/chartex" xmlns:cx2="http://schemas.microsoft.com/office/drawing/2015/10/21/chartex" xmlns:cx3="http://schemas.microsoft.com/office/drawing/2016/5/9/chartex" xmlns:cx4="http://schemas.microsoft.com/office/drawing/2016/5/10/chartex" xmlns:cx5="http://schemas.microsoft.com/office/drawing/2016/5/11/chartex" xmlns:cx6="http://schemas.microsoft.com/office/drawing/2016/5/12/chartex" xmlns:cx7="http://schemas.microsoft.com/office/drawing/2016/5/13/chartex" xmlns:cx8="http://schemas.microsoft.com/office/drawing/2016/5/14/chartex" xmlns:aink="http://schemas.microsoft.com/office/drawing/2016/ink" xmlns:am3d="http://schemas.microsoft.com/office/drawing/2017/model3d" xmlns:w16cex="http://schemas.microsoft.com/office/word/2018/wordml/cex" xmlns:w16cid="http://schemas.microsoft.com/office/word/2016/wordml/cid" xmlns:w16="http://schemas.microsoft.com/office/word/2018/wordml" xmlns:w16sdtdh="http://schemas.microsoft.com/office/word/2020/wordml/sdtdatahash" xmlns:w16se="http://schemas.microsoft.com/office/word/2015/wordml/symex"><w:body><w:p><w:r><w:t xml:space="preserve">Chromatogram.</w:t></w:r></w:p><w:p><w:r><w:t xml:space="preserve">&lt;img src=&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==&quot; alt=&quot;Figure 1&quot;&gt;</w:t></w:r></w:p><w:sectPr><w:pgSz w:w="11906" w:h="16838" w:orient="portrait"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="708" w:footer="708" w:gutter="0"/><w:pgNumType/><w:docGrid w:linePitch="360"/></w:sectPr></w:body></w:document>"
+
+ ❯ export-leaf.probe.test.ts:103:21
+    101|   it('P2d: the Word file prints no base64 as text', async () => {
+    102|     const { xml } = await docxXml(section);
+    103|     expect(xml).not.toContain(PNG_A.slice(0, 30));
+       |                     ^
+    104|   });
+    105| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/13]⎯
+
+ FAIL  export-leaf.probe.test.ts > P4 the export files a figure the browser parser (canvas) does not show > bogus comment <!x
+ FAIL  export-leaf.probe.test.ts > P4 the export files a figure the browser parser (canvas) does not show > processing-instruction-like <?
+ FAIL  export-leaf.probe.test.ts > P4 the export files a figure the browser parser (canvas) does not show > end-tag bogus comment </ 
+ FAIL  export-leaf.probe.test.ts > P4 the export files a figure the browser parser (canvas) does not show > textarea (RCDATA)
+ FAIL  export-leaf.probe.test.ts > P4 the export files a figure the browser parser (canvas) does not show > xmp (RAWTEXT)
+ FAIL  export-leaf.probe.test.ts > P4 the export files a figure the browser parser (canvas) does not show > template
+ FAIL  export-leaf.probe.test.ts > P4 the export files a figure the browser parser (canvas) does not show > duplicate src, second in upper case
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==",
++ ]
+
+ ❯ export-leaf.probe.test.ts:162:52
+    160|     const filedSrcs = [...(await resolveAuthoringImages([section], ORG…
+    161|     expect(refused).toEqual([]); // the save would store it
+    162|     expect(filedSrcs.filter((s) => !shown.has(s))).toEqual([]);
+       |                                                    ^
+    163|   });
+    164| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/13]⎯
+
+ FAIL  export-leaf.probe.test.ts > P4 the export files a figure the browser parser (canvas) does not show > governed ref hidden in a bogus comment
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "/api/authoring/images/file_1727500000000_k3v9qa",
++ ]
+
+ ❯ export-leaf.probe.test.ts:162:52
+    160|     const filedSrcs = [...(await resolveAuthoringImages([section], ORG…
+    161|     expect(refused).toEqual([]); // the save would store it
+    162|     expect(filedSrcs.filter((s) => !shown.has(s))).toEqual([]);
+       |                                                    ^
+    163|   });
+    164| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/13]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  13 failed | 15 passed (28)
+   Start at  17:51:59
+   Duration  3.01s (transform 375ms, setup 116ms, import 1.91s, tests 798ms, environment 0ms)
+

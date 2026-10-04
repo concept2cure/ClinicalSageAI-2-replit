@@ -471,3 +471,53 @@ describe('renderLeafPdf', () => {
     expect(reloaded.getPageCount()).toBe(1);
   });
 });
+
+/* Round 3 (2026-10-04), the figure rule's refute-review, D2: the leaf read
+   <pre> as raw text, so a figure inside one printed its markup, base64 payload
+   and all, into the filed leaf, and a <code> inside one printed its tags. */
+describe('htmlToPlainText — a <pre> is read as markup, verbatim', () => {
+  const PNG_SRC = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+
+  it('names a figure inside it, and prints no payload', () => {
+    const text = htmlToPlainText(`<p>Chromatogram.</p><pre><img src="${PNG_SRC}" alt="Figure 1"></pre>`);
+    expect(text).toContain('[Figure: Figure 1]');
+    expect(text).not.toContain('base64');
+    expect(text).not.toContain('<img');
+  });
+
+  it('prints the code, not its tags, and keeps its indentation', () => {
+    expect(htmlToPlainText('<pre><code>if (x &lt; 1) {\n    y();\n}</code></pre>')).toBe('if (x < 1) {\n    y();\n}');
+  });
+});
+
+/* Round 3 (2026-10-04), the figure rule's refute-review, O1. The leaf parsed
+   every stored string as HTML. The section editor and the authoring export
+   read a string with no known tag as plain text, every character of it
+   (looksLikeHtml, shared/authoring/plain-text-html.ts). The CMC Module 3
+   placement stores its composed markdown that way, so "Impurity B was <LOQ in
+   all 3 batches" lost everything from "<LOQ" to the next ">" in the filed
+   leaf. The leaf now opens stored content as the editor does. */
+describe('renderLeafPdf — content with no known tag is read as the editor reads it', () => {
+  const pageText = async (pdf: Buffer) => {
+    const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
+    const doc = await getDocument({ data: new Uint8Array(pdf), useSystemFonts: true }).promise;
+    const items = (await (await doc.getPage(1)).getTextContent()).items as Array<{ str: string }>;
+    return items.map((i) => i.str).join(' ');
+  };
+
+  it('the Module 3 placement\'s markdown keeps every character', async () => {
+    const placed =
+      '## Impurities (Drug Substance)\n\n' +
+      'Impurity B was <LOQ in all 3 batches; assay was within limits (>98.0%).\n\n' +
+      '### Batch Analyses\n\n| Test | Result |\n| --- | --- |\n| Impurity B | <LOQ |';
+    const text = await pageText(await renderLeafPdf(placed, { title: 'Module 3', sectionCode: 'm3.2.S.3.2' }));
+    expect(text, 'words were swallowed as a tag').toContain('Impurity B was <LOQ in all 3 batches; assay was within limits (>98.0%).');
+    expect(text).toContain('| Impurity B | <LOQ |');
+  }, 20_000);
+
+  it('content holding a known tag is still read as HTML (guard)', async () => {
+    const text = await pageText(await renderLeafPdf('<p>Assay <b>within</b> limits.</p>', { title: 'T' }));
+    expect(text).toContain('Assay within limits.');
+    expect(text).not.toContain('<b>');
+  }, 20_000);
+});

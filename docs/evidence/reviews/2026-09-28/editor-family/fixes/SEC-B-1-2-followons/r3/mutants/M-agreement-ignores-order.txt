@@ -1,0 +1,6 @@
+mutant M-agreement-ignores-order: server/services/authoring/authoring-html-sanitizer.ts
+-   for (let i = 0; i < n; i++) if (exported[i] !== shown[i]) return i;
++   for (let i = 0; i < n; i++) if (!shown.includes(exported[i]) || !exported.includes(shown[i])) return i;
+
+ Test Files  2 passed (2)
+      Tests  76 passed (76)

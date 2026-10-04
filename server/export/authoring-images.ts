@@ -30,14 +30,13 @@
  * pulled in for three well-documented fixed headers.
  */
 
-import { parse } from 'node-html-parser';
 import {
   AUTHORING_IMAGE_URL_PREFIX,
   isGovernedImageRef,
   isInlineFigureImage,
 } from '@shared/authoring/figure-refs';
 import { loadUploadedFile } from '../services/ana/uploaded-file-access.js';
-import { refusedKind } from '../services/authoring/authoring-html-sanitizer';
+import { exportImageSrcs, imageReadingsDiffer, refusedKind } from '../services/authoring/authoring-html-sanitizer';
 import { createScopedLogger } from '../utils/logger';
 
 const logger = createScopedLogger('authoring-images');
@@ -121,13 +120,35 @@ export function sniffImageDimensions(
 export function collectImageSrcs(contents: Array<string | null | undefined>): string[] {
   const seen = new Set<string>();
   for (const content of contents) {
-    if (!content) continue;
-    for (const img of parse(String(content)).querySelectorAll('img')) {
-      const src = img.getAttribute('src');
-      if (src) seen.add(src);
-    }
+    for (const src of exportImageSrcs(content)) if (src) seen.add(src);
   }
   return [...seen];
+}
+
+/**
+ * Sources the export must not file: every image src of a section whose images
+ * the export's parser and a browser read differently (refute-review of the
+ * figure rule, 2026-10-04, round 3: D1, D3).
+ *
+ * A browser keeps the first of two duplicated attributes and the parser the
+ * last, so `<img src=A SRC=B>` is shown as A and was filed as B. And a browser
+ * builds no image from markup inside a comment, a raw-text element or a
+ * <template>, which the parser reads as images and filed. Comparing source
+ * lists cannot say which image went wrong, only that one did, so none of the
+ * section's images is filed. The map is keyed by source, shared by every
+ * section of the export, so none of those sources is filed for any section:
+ * each such image prints its placeholder. Failing closed costs a placeholder
+ * where a figure could have been; the alternative files a figure the canvas
+ * never showed, into a regulated document.
+ */
+async function unfileableSrcs(contents: Array<string | null | undefined>): Promise<Set<string>> {
+  const out = new Set<string>();
+  for (const content of contents) {
+    if (!content) continue;
+    if ((await imageReadingsDiffer(String(content))) === null) continue;
+    for (const src of exportImageSrcs(content)) if (src) out.add(src);
+  }
+  return out;
 }
 
 /** The bytes of an inline figure. `isInlineFigureImage` has already fixed the
@@ -186,7 +207,9 @@ export async function resolveAuthoringImages(
   organizationId: number,
 ): Promise<Map<string, ResolvedImage>> {
   const out = new Map<string, ResolvedImage>();
+  const unfileable = await unfileableSrcs(contents);
   for (const src of collectImageSrcs(contents)) {
+    if (unfileable.has(src)) continue;
     let image: ResolvedImage | null = null;
     if (isGovernedImageRef(src)) {
       image = await loadGovernedFigure(src.slice(AUTHORING_IMAGE_URL_PREFIX.length), organizationId);

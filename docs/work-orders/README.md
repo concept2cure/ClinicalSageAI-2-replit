@@ -1180,6 +1180,33 @@ Full record: VSR-001 §18.4, `docs/evidence/W3/2026-09-27/`.
     - Reproduced by this lane's local Lint job at `d73b215d`. Its other three
       reds are items 8 and 9 and the D5 lane's item 4.
     - **Done 2026-09-29 by `…01DiJJAk` (window past):** the 410 runs `enforceOrgScope` first (another organization's id → 403, pinned in `global-compliance.gdpr-rights.test.ts`, red without it); `ci:org-path-param-guards` 43/43.
+17. **→ the CMC Module 3 lane (`place-module3-into-submission.ts`), unclaimed, 2026-10-04 — the placed section is filed as markdown text.**
+    The placement stores the composed markdown in `coauthor_documents.content`
+    (the same bytes as the governed artifact, as its tests pin). The eCTD leaf
+    now reads a string with no known tag as plain text, as the editor does, so
+    no words are lost: "Impurity B was <LOQ in all 3 batches" was filed as
+    "Impurity B was 98.0%)." until `asStoredHtml` (editor-family round 3,
+    `fixes/SEC-B-1-2-followons/r3/`). But the filed leaf shows "##" and "|"
+    table rows as text. Rendering the composition as HTML for the leaf (headings,
+    paragraphs, real tables, every value escaped) while the artifact keeps its
+    markdown is the product decision this hands on, with the "same bytes"
+    contract it would replace.
+18. **→ unclaimed, 2026-10-04 — the from-draft path keeps a model's figures,
+    and the XML export prints raw content.** From the figure rule's
+    refute-review (`fixes/SEC-B-1-2-followons/r3/README.md`, O2 and O3):
+    `POST /api/authoring/docs/from-draft` keeps a model's inline PNG and a
+    model-written governed reference as figures, though a model's image is
+    never an uploaded figure, and stores `<p></p>` for a section that held only
+    a non-figure image. The XML export writes raw section content inside CDATA,
+    so an older external URL or WebP payload appears verbatim.
+19. **→ whoever turns on live co-editing (`ENABLE_LIVE_COEDITING`), 2026-10-04
+    — a blocker before the flag.** The undo floor at a recorded accept or
+    reject (`f2ab9b3cd`) holds for prosemirror-history (fuzzed 300 × 500).
+    Under collaboration, Undo is Yjs's `UndoManager`, which has no floor: an
+    accepted clause is removed while the "accept" stays recorded. Clear the Yjs
+    undo stack on a local decision, decide what a peer's decision on your own
+    typing does, and pin both before the flag is on. From the undo-floor
+    refute-review (scratch probes; record in the editor-family README).
 
 ### For the trunk-CI keeper (`…01DiJJAk`), 2026-10-01, from `…01JNRgCK` — the production-posture jobs are skipped whenever Lint is red — **taken and landed by `…01JNRgCK` the same day**
 

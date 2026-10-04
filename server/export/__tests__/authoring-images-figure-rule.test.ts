@@ -141,3 +141,86 @@ describe('unfiledFigureLabel', () => {
     expect(unfiledFigureLabel({ src, alt: '' })).toBe('inline image/webp data');
   });
 });
+
+/* ── The export files an image only where a browser shows the same one
+   (refute-review of the figure rule, 2026-10-04, round 3: D1, D3) ─────────
+   The export reads sections with node-html-parser; the save check, the canvas
+   and the read view read them as a browser does. The two disagree on a
+   duplicated attribute (a browser keeps the first, the parser the last) and on
+   markup a browser reads as text or not at all: a comment, a raw-text element,
+   a <template>. So the export could file an image the canvas never showed, or
+   a different one from the one it showed. Now a section whose two readings of
+   its images differ files none of them, and its sources are filed for no
+   other section of the export either: every such image prints its placeholder. */
+describe('the export files an image only where a browser shows the same one', () => {
+  const pngWith = (marker: string) => `data:image/png;base64,${PNG_B64.slice(0, -4)}${marker}==`;
+  const A = pngWith('AAAA');
+  const B = pngWith('BBBB');
+
+  it.each([
+    ['a duplicated src: the browser shows the first, the parser files the last', `<img src="${A}" SRC="${B}" alt="Figure 1">`],
+    ['the same, where the second is also shown elsewhere in the section', `<img src="${B}" alt="0"><img src="${A}" SRC="${B}" alt="Figure 1">`],
+    ['inside a bogus comment', `<p>x</p><!x<img src="${B}" alt="Figure 1">`],
+    ['inside a processing-instruction-shaped comment', `<p>x</p><?x<img src="${B}" alt="Figure 1">`],
+    ['inside a textarea', `<textarea><img src="${B}" alt="Figure 1"></textarea>`],
+    ['inside an xmp', `<xmp><img src="${B}" alt="Figure 1"></xmp>`],
+    ['inside a template', `<template><img src="${B}" alt="Figure 1"></template>`],
+    // A browser moves an image that sits in a table but in no cell to before
+    // the table (foster parenting); the parser keeps it where it is written.
+    // The same two figures, in an order the canvas does not show.
+    ['in a table but in no cell', `<table><tbody><tr><td><img src="${A}" alt="1"></td></tr><img src="${B}" alt="2"></tbody></table>`],
+  ])('%s: nothing from the section is filed', async (_label, html) => {
+    const images = await resolveAuthoringImages([html], ORG);
+    expect([...images.keys()].map((k) => k.slice(-8)), 'filed an image the canvas does not show as it is').toEqual([]);
+  });
+
+  it('a governed reference behind a duplicated src is not even loaded', async () => {
+    const html = '<img src="/api/authoring/images/file_1_a" SRC="/api/authoring/images/file_2_b" alt="Figure 1">';
+    const images = await resolveAuthoringImages([html], ORG);
+    expect(h.loadUploadedFile).not.toHaveBeenCalled();
+    expect([...images.keys()]).toEqual([]);
+  });
+
+  it('a source hidden or swapped in one section is filed for no other section of the export', async () => {
+    const images = await resolveAuthoringImages([img(B), `<img src="${A}" SRC="${B}" alt="Figure 2">`], ORG);
+    expect([...images.keys()]).toEqual([]);
+  });
+
+  it('a section both readers read alike still files every figure (guard)', async () => {
+    const ref = '/api/authoring/images/file_1727500000000_k3v9qa';
+    const html = `<p>Two figures.</p><img src="${ref}" alt="Figure 1"><table><tbody><tr><td><IMG SRC=${A}></td></tr></tbody></table>`;
+    const images = await resolveAuthoringImages([html, img(B)], ORG);
+    expect([...images.keys()].sort()).toEqual([ref, A, B].sort());
+  });
+});
+
+/* D5: refusedKind read any 40 characters after `data:` as a type, so a data:
+   URI with no type had 40 characters of its payload printed as one. */
+describe('a typeless data: URI is named without its payload', () => {
+  it.each([
+    [`data:${PNG_B64}`, 'inline data'],
+    [`data:,${PNG_B64}`, 'inline data'],
+    [`data:image/webp;base64,${PNG_B64}`, 'inline image/webp data'],
+    ['data:image/svg+xml,<svg/>', 'inline image/svg+xml data'],
+  ])('%#', (src, expected) => {
+    expect(unfiledFigureLabel({ src })).toBe(expected);
+  });
+});
+
+/* D2: the export read <pre> as raw text, so a figure inside one printed its
+   markup and payload into the PDF and the Word file, and a <code> its tags. */
+describe('a <pre> is read as markup by the export', () => {
+  it('a figure inside one is a figure: filed, and its payload never printed', async () => {
+    const html = `<p>Chromatogram.</p><pre><img src="data:image/png;base64,${PNG_B64}" alt="Figure 1"></pre>`;
+    const images = await resolveAuthoringImages([html], ORG);
+    expect([...images.keys()]).toEqual([`data:image/png;base64,${PNG_B64}`]);
+    const blocks = sectionContentToBlocks(html);
+    expect(blocks.some((b) => b.kind === 'image')).toBe(true);
+    expect(JSON.stringify(blocks.filter((b) => b.kind !== 'image'))).not.toContain('base64');
+  });
+
+  it('a <code> inside one prints its text, not its tags', () => {
+    const runs = sectionContentToBlocks('<pre><code>if (x &lt; 1) {}</code></pre>').flatMap((b) => b.runs.map((r) => r.text));
+    expect(runs.join('')).toBe('if (x < 1) {}');
+  });
+});

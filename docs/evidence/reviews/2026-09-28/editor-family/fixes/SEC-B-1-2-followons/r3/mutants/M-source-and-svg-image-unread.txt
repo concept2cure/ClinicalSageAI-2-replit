@@ -1,0 +1,11 @@
+mutant M-source-and-svg-image-unread: server/services/authoring/authoring-html-sanitizer.ts
+-   doc.querySelectorAll('source, image').forEach((el) => {
++   doc.querySelectorAll('nothing-at-all').forEach((el) => {
+
+ × server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — markup the editor and the filed document would read differently > a source a reader loads that is not a figure: a picture source 10ms
+   → expected [] to deeply equal [ 'https://b.example/p.png' ]
+ × server/services/authoring/__tests__/authoring-html-sanitizer.test.ts > refusedFigures — markup the editor and the filed document would read differently > a source a reader loads that is not a figure: an SVG image 5ms
+   → expected [] to deeply equal [ 'https://c.example/p.png' ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  2 failed | 35 passed (37)
