@@ -18,6 +18,11 @@
  * Each `platform` entry was read from the code on 2026-10-04 (the D2 survey in
  * docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-04/README.md); a change
  * to an enforcement point changes the entry with it.
+ *
+ * PLR_FORMAT_RULES holds the 21 CFR 201.57 format rules for a US Prescribing
+ * Information (area 'labeling'). They are the source assess_plr_structure
+ * states its formatting from and plan_labeling_authoring takes its Highlights
+ * statements from (b1-plr-rules-elsa-facts.md in the 2026-10-04-depth evidence).
  */
 
 import type { E3Basis } from './types.js';
@@ -28,8 +33,10 @@ const FDA_ECTD_TCG: E3Basis = { ref: 'FDA, eCTD Technical Conformance Guide', co
 const FDA_ISS_ISE: E3Basis = { ref: 'FDA, Placement of ISS/ISE in the eCTD', confidence: 'regulator-text', url: 'https://www.fda.gov/drugs/electronic-regulatory-submission-and-review/placement-integrated-summaries-safety-and-effectiveness-issise-applications-submitted-ectd-format', checked: CHECKED };
 const M4E_R2: E3Basis = { ref: 'ICH M4E(R2), as published by FDA', confidence: 'regulator-text', url: 'https://www.fda.gov/media/93569/download', checked: CHECKED };
 const CFR_314_101: E3Basis = { ref: '21 CFR 314.101(d)(3)', confidence: 'regulator-text', url: 'https://www.ecfr.gov/current/title-21/chapter-I/subchapter-D/part-314/subpart-D/section-314.101', checked: CHECKED };
+/** 21 CFR 201.57 at one paragraph, e.g. cfr201_57('(d)(6)'). */
+const cfr201_57 = (para: string): E3Basis => ({ ref: `21 CFR 201.57${para}`, confidence: 'regulator-text', url: 'https://www.ecfr.gov/current/title-21/chapter-I/subchapter-C/part-201/subpart-B/section-201.57', checked: CHECKED });
 
-export type RuleArea = 'pdf' | 'ectd' | 'study-data' | 'content';
+export type RuleArea = 'pdf' | 'ectd' | 'study-data' | 'content' | 'labeling';
 
 /** enforced: a package that breaks it is refused. partial: some paths check it. not-checked: nothing does. */
 export type PlatformCheck = 'enforced' | 'partial' | 'not-checked';
@@ -43,6 +50,8 @@ export interface TechnicalRule {
   consequence: string;
   basis: E3Basis;
   platform: { check: PlatformCheck; note: string };
+  /** Text the rule requires word for word, where it does: its fixed part, without the (insert …) slots. */
+  verbatim?: string;
 }
 
 export const FDA_TECHNICAL_RULES: readonly TechnicalRule[] = Object.freeze<TechnicalRule[]>([
@@ -77,7 +86,7 @@ export const FDA_TECHNICAL_RULES: readonly TechnicalRule[] = Object.freeze<Techn
   {
     id: 'pdf-text', area: 'pdf',
     rule: 'PDFs are text searchable. Avoid image-based PDFs; a document that must be scanned is made text searchable, and OCR output is checked for complete and accurate conversion.',
-    consequence: 'An image-only page cannot be searched, copied or quoted — by the reviewer, or by an AI-assisted review tool.',
+    consequence: 'Does not meet FDA’s PDF specification. An image-only page cannot be searched, copied or quoted without conversion, and any OCR FDA applies is outside the sponsor’s control.',
     basis: FDA_PDF_SPECS,
     platform: { check: 'not-checked', note: 'The package gate checks the PDF header and encryption only; no check refuses an image-only leaf.' },
   },
@@ -160,6 +169,77 @@ export const FDA_TECHNICAL_RULES: readonly TechnicalRule[] = Object.freeze<Techn
   },
 ]);
 
+const GUARD_ONLY = 'Only plan_labeling_authoring’s section guard checks it, on a draft passed to it.';
+
+/**
+ * 21 CFR 201.57 format rules for a US Prescribing Information. Kept out of
+ * FDA_TECHNICAL_RULES: list_fda_technical_rules prints that set in brief, and
+ * these would carry it past RESULT_BUDGET. Reached by area 'labeling'.
+ */
+export const PLR_FORMAT_RULES: readonly TechnicalRule[] = Object.freeze<TechnicalRule[]>([
+  {
+    id: 'plr-hl-limitation-statement', area: 'labeling',
+    rule: 'Highlights carry the verbatim statement "These highlights do not include all the information needed to use (name of drug product) safely and effectively. See full prescribing information for (name of drug product)."',
+    consequence: 'Does not meet 201.57(a)(1); the reader is not told that Highlights are incomplete.',
+    basis: cfr201_57('(a)(1)'),
+    platform: { check: 'partial', note: GUARD_ONLY },
+    verbatim: 'These highlights do not include all the information needed to use',
+  },
+  {
+    id: 'plr-hl-initial-approval', area: 'labeling',
+    rule: 'The verbatim statement "Initial U.S. Approval" with the four-digit year of FDA’s first approval of the new molecular entity, new biological product or new combination of active ingredients, on the line immediately beneath the established or proper name.',
+    consequence: 'Does not meet 201.57(a)(3).',
+    basis: cfr201_57('(a)(3)'),
+    platform: { check: 'partial', note: GUARD_ONLY },
+    verbatim: 'Initial U.S. Approval',
+  },
+  {
+    id: 'plr-hl-boxed-warning', area: 'labeling',
+    rule: 'A boxed warning in Highlights is a concise summary of not more than 20 lines, boxed and bolded, under an upper-case heading containing "WARNING". The verbatim statement "See full prescribing information for complete boxed warning." immediately follows the heading.',
+    consequence: 'Does not meet 201.57(a)(4).',
+    basis: cfr201_57('(a)(4)'),
+    platform: { check: 'not-checked', note: 'The boxed warning is conditional, so the section guard does not require its statement; nothing counts its lines.' },
+    verbatim: 'See full prescribing information for complete boxed warning.',
+  },
+  {
+    id: 'plr-hl-rmc-one-year', area: 'labeling',
+    rule: 'Recent Major Changes lists each substantively changed section among Boxed Warning, Indications and Usage, Dosage and Administration, Contraindications, or Warnings and Precautions, with its number and the month/year of the change. A changed section stays listed for at least 1 year after the labeling change and is removed at the first printing after that year.',
+    consequence: 'Does not meet 201.57(a)(5): a current change not flagged, or a stale one still flagged.',
+    basis: cfr201_57('(a)(5)'),
+    platform: { check: 'not-checked', note: 'Nothing dates or ages Recent Major Changes entries.' },
+  },
+  {
+    id: 'plr-hl-ae-reporting', area: 'labeling',
+    rule: 'Highlights carry the verbatim statement "To report SUSPECTED ADVERSE REACTIONS, contact (manufacturer) at (phone) or FDA at (current FDA phone number and web address for voluntary reporting)"; for a vaccine, VAERS in place of FDA.',
+    consequence: 'Does not meet 201.57(a)(11); the reader is not told where to report.',
+    basis: cfr201_57('(a)(11)'),
+    platform: { check: 'partial', note: GUARD_ONLY },
+    verbatim: 'To report SUSPECTED ADVERSE REACTIONS',
+  },
+  {
+    id: 'plr-contents', area: 'labeling',
+    rule: '"Full Prescribing Information: Contents" lists each section and subsection heading with its number. Where a required section or subsection is omitted, the Contents heading is followed by an asterisk and Contents ends "* Sections or subsections omitted from the full prescribing information are not listed."',
+    consequence: 'Does not meet 201.57(b), which requires Contents whatever the length.',
+    basis: cfr201_57('(b)'),
+    platform: { check: 'partial', note: GUARD_ONLY },
+    verbatim: 'Full Prescribing Information: Contents',
+  },
+  {
+    id: 'plr-type-size', area: 'labeling',
+    rule: 'All labeling text, headings and subheadings are at least 8-point type; labeling on or within the package from which the drug is dispensed is at least 6-point.',
+    consequence: 'Does not meet 201.57(d)(6).',
+    basis: cfr201_57('(d)(6)'),
+    platform: { check: 'not-checked', note: 'No check reads type size in a label.' },
+  },
+  {
+    id: 'plr-hl-length', area: 'labeling',
+    rule: 'Highlights, excluding the boxed warning, fit on one-half of an 8½ by 11 inch page printed in 2 columns, single-spaced, in 8-point type with ½-inch margins on all sides and between columns.',
+    consequence: 'Does not meet 201.57(d)(8), unless FDA waives the limit; its PLR guidance says a waiver may be requested.',
+    basis: cfr201_57('(d)(8)'),
+    platform: { check: 'not-checked', note: 'No check measures the length of Highlights.' },
+  },
+]);
+
 /** What FDA has said about Elsa, and what follows for a sponsor — dated, sourced. */
 export const ELSA_NOTE = {
   checked: CHECKED,
@@ -167,12 +247,15 @@ export const ELSA_NOTE = {
     { text: 'FDA launched Elsa, an agency-wide generative-AI tool, on 2 June 2025; its models do not train on data submitted by industry.', url: 'https://www.fda.gov/news-events/press-announcements/fda-launches-agency-wide-ai-tool-optimize-performance-american-people' },
     { text: 'FDA reviewers have used it to summarise adverse events, compare labels and summarise literature, and reviewed and verified what it produced.', url: 'https://fda.gov/media/189421/download' },
     { text: 'In December 2025 FDA deployed agentic AI to all staff, for work that includes pre-market review and review validation.', url: 'https://www.fda.gov/news-events/press-announcements/fda-expands-artificial-intelligence-capabilities-agentic-ai-deployment' },
+    { text: 'FDA said in June 2025 it was already using Elsa to accelerate clinical protocol reviews, shorten scientific evaluations and identify high-priority inspection targets.', url: 'https://www.fda.gov/news-events/press-announcements/fda-launches-agency-wide-ai-tool-optimize-performance-american-people' },
+    { text: 'Elsa 4.0 (May 2026) adds custom agents, document generation, quantitative analysis, OCR of scanned documents and images, and search of large document repositories. FDA consolidated 40+ application and submission data sources into HALO and began integrating it with Elsa, so staff can query that data without uploading documents.', url: 'https://www.fda.gov/news-events/press-announcements/fda-expands-ai-capabilities-and-completes-data-platform-consolidation' },
   ],
   guidance:
-    'FDA has published no acceptance criteria for Elsa, and nothing here can certify that a dossier will "pass" it. What a sponsor controls is conformance to the specifications above and the internal consistency of the dossier — the same number in the CSR, the ISS/ISE, 2.7 and 2.5 — which an AI-assisted read surfaces as readily as a reviewer does. That last point is this platform’s view, not an FDA statement.',
+    'FDA has published no acceptance criteria for Elsa, and nothing here can certify that a dossier will "pass" it. What a sponsor controls is conformance to the specifications above and the internal consistency of the dossier — the same number in the CSR, the ISS/ISE, 2.7 and 2.5 — which an AI-assisted read surfaces as readily as a reviewer does, and more so as FDA connects Elsa to its submission data. That last point is this platform’s view, not an FDA statement.',
 } as const;
 
+/** One area's rules. With no area, the brief set: FDA_TECHNICAL_RULES only, never PLR_FORMAT_RULES. */
 export function rulesByArea(area?: string | null): TechnicalRule[] {
   const a = String(area ?? '').trim().toLowerCase();
-  return a ? FDA_TECHNICAL_RULES.filter((r) => r.area === a) : [...FDA_TECHNICAL_RULES];
+  return a ? [...FDA_TECHNICAL_RULES, ...PLR_FORMAT_RULES].filter((r) => r.area === a) : [...FDA_TECHNICAL_RULES];
 }

@@ -1,0 +1,134 @@
+# npx vitest run tests/regulatory/plr-format-rules.test.ts --reporter=verbose (per-test list), before any code change
+ × tests/regulatory/plr-format-rules.test.ts > assess_plr_structure formatting matches 21 CFR 201.57 > drops the wrong type size, paragraph citations and conditions 6ms
+ × tests/regulatory/plr-format-rules.test.ts > assess_plr_structure formatting matches 21 CFR 201.57 > states the 20-line boxed-warning limit, (d)(6) type size and (d)(8) length 1ms
+ × tests/regulatory/plr-format-rules.test.ts > assess_plr_structure formatting matches 21 CFR 201.57 > Recent Major Changes is conditional, listed for at least 1 year 2ms
+ × tests/regulatory/plr-format-rules.test.ts > assess_plr_structure formatting matches 21 CFR 201.57 > the Highlights boxed warning carries the 20-line limit 1ms
+ × tests/regulatory/plr-format-rules.test.ts > PLR format rules are regulator text > lists the 201.57 format rules, each sourced to eCFR 1ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > PLR format rules are regulator text > keeps the unfiltered brief within the result budget 1ms
+ × tests/regulatory/plr-format-rules.test.ts > US section guard requires Highlights and Contents > requires the Highlights heading, its verbatim statements and Contents 2ms
+ × tests/regulatory/plr-format-rules.test.ts > US section guard requires Highlights and Contents > fails a PI that has every FPI section but no Highlights or Contents 1ms
+ × tests/regulatory/plr-format-rules.test.ts > the Elsa note is current > records Elsa 4.0 and HALO from FDA’s May 2026 announcement 1ms
+ × tests/regulatory/plr-format-rules.test.ts > the Elsa note is current > records FDA’s use of Elsa for protocol reviews and inspection targets 1ms
+ × tests/regulatory/plr-format-rules.test.ts > the Elsa note is current > rests the image-only PDF consequence on the specification, not a tool limit 1ms
+ ✓ tests/regulatory/plr-format-rules.test.ts > the Elsa note is current > still says FDA has published no acceptance criteria for Elsa 0ms
+
+# npx vitest run tests/regulatory/plr-format-rules.test.ts 2>&1 | tail -60
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/regulatory/plr-format-rules.test.ts:96:176
+     94| describe('the Elsa note is current', () => {
+     95|   it('records Elsa 4.0 and HALO from FDA’s May 2026 announcement', () …
+     96|     expect(ELSA_NOTE.facts.some((f) => f.url === 'https://www.fda.gov/…
+       |                                                                                                                                                                                ^
+     97|     expect(ELSA_NOTE.facts.some((f) => /began integrating/i.test(f.tex…
+     98|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  tests/regulatory/plr-format-rules.test.ts > the Elsa note is current > records FDA’s use of Elsa for protocol reviews and inspection targets
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/regulatory/plr-format-rules.test.ts:101:104
+     99|
+    100|   it('records FDA’s use of Elsa for protocol reviews and inspection ta…
+    101|     expect(ELSA_NOTE.facts.some((f) => /protocol review/i.test(f.text)…
+       |                                                                                                        ^
+    102|   });
+    103|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  tests/regulatory/plr-format-rules.test.ts > the Elsa note is current > rests the image-only PDF consequence on the specification, not a tool limit
+AssertionError: expected 'An image-only page cannot be searched…' not to match /AI-assisted review tool/
+
+- Expected:
+/AI-assisted review tool/
+
++ Received:
+"An image-only page cannot be searched, copied or quoted — by the reviewer, or by an AI-assisted review tool."
+
+ ❯ tests/regulatory/plr-format-rules.test.ts:105:83
+    103|
+    104|   it('rests the image-only PDF consequence on the specification, not a…
+    105|     expect(FDA_TECHNICAL_RULES.find((r) => r.id === 'pdf-text')!.conse…
+       |                                                                                   ^
+    106|   });
+    107|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 2 passed (12)
+   Start at  20:43:27
+   Duration  1.21s (transform 691ms, setup 117ms, import 669ms, tests 22ms, environment 0ms)
+
+
+# npx vitest run server/services/ana/__tests__/labeling-authoring.test.ts (extended with the Highlights/Contents guard case), before any code change
+ ✓ server/services/ana/__tests__/labeling-authoring.test.ts > labeling-authoring mode specs > maps US → uspi/PLR and EU → smpc/QRD 2ms
+ ✓ server/services/ana/__tests__/labeling-authoring.test.ts > labeling-authoring mode specs > cites the FDA PLR and EMA QRD bases 0ms
+ ✓ server/services/ana/__tests__/labeling-authoring.test.ts > required section headers (PLR vs QRD checklists) > US PLR carries the mandatory numbered full-text sections 1ms
+ ✓ server/services/ana/__tests__/labeling-authoring.test.ts > required section headers (PLR vs QRD checklists) > EU QRD carries the full fixed section set including driving + MAH 1ms
+ ✓ server/services/ana/__tests__/labeling-authoring.test.ts > required section headers (PLR vs QRD checklists) > the two checklists differ (mode-specific completeness) 1ms
+ ✓ server/services/ana/__tests__/labeling-authoring.test.ts > required_strings derivation per mode > derives required_strings identical to the mode section guard 1ms
+ ✓ server/services/ana/__tests__/labeling-authoring.test.ts > section guard (completeness) > reports complete when every US header is present (case/space tolerant) 1ms
+ ✓ server/services/ana/__tests__/labeling-authoring.test.ts > section guard (completeness) > flags a missing US section (e.g. dropped Warnings and Precautions) 0ms
+ × server/services/ana/__tests__/labeling-authoring.test.ts > section guard (completeness) > flags a US draft with every FPI section but no Highlights or Contents (21 CFR 201.57(a), (b)) 7ms
+ ✓ server/services/ana/__tests__/labeling-authoring.test.ts > section guard (completeness) > flags a missing EU QRD section (e.g. dropped 4.8 Undesirable effects) 0ms
+ ✓ server/services/ana/__tests__/labeling-authoring.test.ts > build_from_template replacements > seeds product name, title, basis and a placeholder per section 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 passed (11)
+
+# Second red, 2026-10-04: two assertions added after review of the new PLR_FORMAT_RULES text against eCFR 201.57(a)(5) and (b), run before the rule text was corrected
+# npx vitest run tests/regulatory/plr-format-rules.test.ts 2>&1 | tail -40
+/Boxed Warning, Indications and Usage, Dosage and Administration, Contraindications, or Warnings and Precautions/
+
++ Received:
+"Recent Major Changes lists each section of the full prescribing information with a substantive change, with its number and the month/year of the change. A changed section stays listed for at least 1 year after approval and is removed at the first printing after that year."
+
+ ❯ tests/regulatory/plr-format-rules.test.ts:71:22
+     69|   it('limits Recent Major Changes to the five sections (a)(5) names', …
+     70|     const rmc = rulesByArea('labeling').find((r) => r.id === 'plr-hl-r…
+     71|     expect(rmc.rule).toMatch(/Boxed Warning, Indications and Usage, Do…
+       |                      ^
+     72|   });
+     73|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/regulatory/plr-format-rules.test.ts > PLR format rules are regulator text > puts the omitted-sections asterisk on the Contents heading, not on an omitted heading (b)
+AssertionError: expected '"Full Prescribing Information: Conten…' to match /Contents" heading is followed by an a…/
+
+- Expected:
+/Contents" heading is followed by an asterisk/
+
++ Received:
+"\"Full Prescribing Information: Contents\" lists each section and subsection heading with its number. Where a required section is omitted, the heading carries an asterisk and Contents ends \"* Sections or subsections omitted from the full prescribing information are not listed.\""
+
+ ❯ tests/regulatory/plr-format-rules.test.ts:76:22
+     74|   it('puts the omitted-sections asterisk on the Contents heading, not …
+     75|     const toc = rulesByArea('labeling').find((r) => r.id === 'plr-cont…
+     76|     expect(toc.rule).toMatch(/Contents" heading is followed by an aste…
+       |                      ^
+     77|     expect(toc.rule).not.toMatch(/the heading carries an asterisk/);
+     78|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 12 passed (14)
+   Start at  21:09:52
+   Duration  1.66s (transform 1.03s, setup 152ms, import 1.05s, tests 20ms, environment 0ms)
+
