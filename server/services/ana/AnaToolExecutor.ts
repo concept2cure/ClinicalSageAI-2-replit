@@ -6627,17 +6627,29 @@ registerToolHandler('generate_declaration_of_conformity', async (input: Record<s
 registerToolHandler('build_postmarket_report', async (input: Record<string, unknown>) => {
   const reportType = String(input.reportType ?? '');
   const fields = (input.fields ?? {}) as Record<string, unknown>;
+  // One PSUR builder: a PSUR is a governed post-market document of a program,
+  // authored by post-market-authoring.ts authorPostMarketDocument and validated
+  // by validatePsur. This tool has no program context, so it points there.
+  if (reportType === 'psur') {
+    return JSON.stringify({
+      status: 'needs_parameters',
+      message:
+        'A PSUR is not built by this tool. Author it as a post-market document of the program: the ' +
+        'post_market.document.create command with documentType "psur" (programId, deviceName or ' +
+        'relatedCerReportId, regulation, reporting period), or POST ' +
+        '/api/post-market/programs/:programId/documents/psur/generate.',
+    });
+  }
   try {
     const authoring = await import('../postmarket/report-authoring.js');
     const builder: Record<string, (f: any) => unknown> = {
       emdr: authoring.buildEmdr,
       mir: authoring.buildMir,
       fsn: authoring.buildFsn,
-      psur: authoring.buildPsur,
     };
     const build = builder[reportType];
     if (!build) {
-      return JSON.stringify({ status: 'needs_parameters', message: "reportType must be one of: emdr, mir, fsn, psur" });
+      return JSON.stringify({ status: 'needs_parameters', message: "reportType must be one of: emdr, mir, fsn" });
     }
     const result = build(fields);
     return ivdComputed(result, 'If valid, present the report payload; if not, list exactly the missing[] required fields.');
@@ -9543,6 +9555,8 @@ registerToolHandler('generate_stf', async (input) => {
       href: l.href,
       title: l.title,
       operation: l.operation,
+      indexLeafId: l.index_leaf_id,
+      indexRelPath: l.index_rel_path,
     }));
     const studyMeta = (Array.isArray(input.study_meta) ? input.study_meta : []).map((m: any) => ({
       studyId: m.study_id,

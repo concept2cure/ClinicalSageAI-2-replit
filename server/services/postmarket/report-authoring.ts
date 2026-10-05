@@ -1,10 +1,19 @@
 /**
  * Post-market regulatory report authoring/serialization.
  *
- * Pure and deterministic. Closes the audit gaps "vigilance authoring is
- * missing" and "PSUR authoring workflow — none": the platform could detect
- * signals and transmit via the EUDAMED gateway, but had no way to construct the
- * eMDR (FDA 3500A), EU MIR, FSN/FSCA, or PSUR payloads.
+ * Pure and deterministic. Closes the audit gap "vigilance authoring is
+ * missing": the platform could detect signals and transmit via the EUDAMED
+ * gateway, but had no way to construct the eMDR (FDA 3500A), EU MIR or FSN/FSCA
+ * payloads.
+ *
+ * No PSUR here. A second PSUR builder (buildPsur) used to live in this file,
+ * with its own field set and no class rules, reachable from AnA
+ * build_postmarket_report and POST /api/ivd-lifecycle/authoring/psur. It was
+ * retired on 2026-10-05: the one PSUR is
+ * server/services/gspr-postmarket/post-market-authoring.ts
+ * authorPostMarketDocument (POST /api/post-market/programs/:programId/documents/psur/generate;
+ * AnA command post_market.document.create), validated by validatePsur, and its
+ * serious-incident rate moved there as computePsurIncidentRate.
  *
  * These builders produce structured, validated payloads ready to render or to
  * hand to the existing submission gateways. They do not transmit.
@@ -13,7 +22,6 @@
  *   - FDA Form 3500A / 21 CFR 803 — Medical Device Report (eMDR)
  *   - EU MDR/IVDR Manufacturer Incident Report (MIR) form v7.2
  *   - EU MDR Art. 89 / IVDR Art. 84 — Field Safety Notice (FSN/FSCA)
- *   - EU MDR Art. 86 / IVDR Art. 81 — PSUR
  */
 
 export interface BuildResult<T> {
@@ -187,82 +195,6 @@ export function buildFsn(input: FscaInput): BuildResult<FscaPayload> {
     riskToHealth: input.riskToHealth,
     userAction: input.recommendedUserAction,
     contact: input.contactDetails,
-  };
-  return { valid: missing.length === 0, missing, payload };
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// PSUR (Periodic Safety Update Report)
-// ─────────────────────────────────────────────────────────────────────────────
-
-export interface PsurInput {
-  deviceName: string;
-  riskClass: string;
-  reportingPeriodStart: string;
-  reportingPeriodEnd: string;
-  unitsSold?: number;
-  complaintCount: number;
-  seriousIncidentCount: number;
-  fscaCount: number;
-  /** Disproportionality / trend signals detected in the period. */
-  signalsDetected: number;
-  benefitRiskConclusion: string;
-  capaSummary?: string;
-}
-
-export interface PsurPayload {
-  documentType: 'PSUR';
-  device: string;
-  riskClass: string;
-  period: { start: string; end: string };
-  sections: {
-    salesAndExposure: Record<string, unknown>;
-    complaintsAndIncidents: Record<string, unknown>;
-    correctiveActions: Record<string, unknown>;
-    signalEvaluation: Record<string, unknown>;
-    benefitRisk: Record<string, unknown>;
-  };
-  /** Reporting rate (incidents per unit sold) when units are known. */
-  incidentRate: number | null;
-}
-
-/** Build a PSUR payload (EU MDR Art. 86 / IVDR Art. 81). */
-export function buildPsur(input: PsurInput): BuildResult<PsurPayload> {
-  const missing: string[] = [];
-  if (!input.deviceName) missing.push('deviceName');
-  if (!input.reportingPeriodStart) missing.push('reportingPeriodStart');
-  if (!input.reportingPeriodEnd) missing.push('reportingPeriodEnd');
-  if (!input.benefitRiskConclusion) missing.push('benefitRiskConclusion');
-  if (
-    input.reportingPeriodStart &&
-    input.reportingPeriodEnd &&
-    new Date(input.reportingPeriodEnd) <= new Date(input.reportingPeriodStart)
-  ) {
-    missing.push('reportingPeriodEnd (must be after start)');
-  }
-
-  const incidentRate =
-    input.unitsSold && input.unitsSold > 0
-      ? Math.round((input.seriousIncidentCount / input.unitsSold) * 1e6) / 1e6
-      : null;
-
-  const payload: PsurPayload = {
-    documentType: 'PSUR',
-    device: input.deviceName,
-    riskClass: input.riskClass,
-    period: { start: input.reportingPeriodStart, end: input.reportingPeriodEnd },
-    sections: {
-      salesAndExposure: { unitsSold: input.unitsSold ?? null },
-      complaintsAndIncidents: {
-        complaints: input.complaintCount,
-        seriousIncidents: input.seriousIncidentCount,
-        fsca: input.fscaCount,
-      },
-      correctiveActions: { summary: input.capaSummary ?? null },
-      signalEvaluation: { signalsDetected: input.signalsDetected },
-      benefitRisk: { conclusion: input.benefitRiskConclusion },
-    },
-    incidentRate,
   };
   return { valid: missing.length === 0, missing, payload };
 }

@@ -24,7 +24,7 @@
  *   Surveillance
  *     POST /signal/disproportionality
  *   Post-market authoring
- *     POST /authoring/emdr  /mir  /fsn  /psur
+ *     POST /authoring/emdr  /mir  /fsn   (PSUR: /api/post-market/.../documents/psur/generate)
  *   Registration / market access
  *     POST /registration/fda  /eu         POST /declaration-of-conformity
  *     GET  /pathways  POST /pathways/readiness
@@ -47,7 +47,7 @@ import {
   assessProcessValidation, computeProcessCapability, evaluateLotRelease,
 } from '../services/regulatory/process-validation';
 import { computeDisproportionality } from '../services/stats/signal-disproportionality';
-import { buildEmdr, buildMir, buildFsn, buildPsur } from '../services/postmarket/report-authoring';
+import { buildEmdr, buildMir, buildFsn } from '../services/postmarket/report-authoring';
 import {
   assessFdaRegistration, assessEuRegistration, generateDeclarationOfConformity,
 } from '../services/regulatory/registration-listing';
@@ -474,7 +474,9 @@ router.post('/signal/disproportionality', calcK(computeDisproportionality, 'sign
 router.post('/authoring/emdr', calcK(buildEmdr, 'authoring.emdr'));
 router.post('/authoring/mir', calcK(buildMir, 'authoring.mir'));
 router.post('/authoring/fsn', calcK(buildFsn, 'authoring.fsn'));
-router.post('/authoring/psur', calcK(buildPsur, 'authoring.psur'));
+// No /authoring/psur. A PSUR is a program's post-market document with one
+// builder: POST /api/post-market/programs/:programId/documents/psur/generate
+// (post-market-authoring.ts authorPostMarketDocument), validated by validatePsur.
 
 // ── Registration / market access ────────────────────────────────────────────
 router.post('/registration/fda', calcK(assessFdaRegistration, 'registration.fda'));

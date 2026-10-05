@@ -38,6 +38,46 @@ export interface DeviceAuthoringContext {
   deviceClass?: string | null;
   regulation?: 'MDR' | 'IVDR';
   cerReference?: string | null;
+  /** PSUR only: sales and serious-incident figures the sponsor supplied. */
+  psurExposure?: PsurExposureFigures;
+}
+
+/**
+ * Figures for a PSUR's reporting period that only the sponsor can supply. The
+ * generator never invents them: without them the PSUR keeps its FACTUAL FIELD
+ * placeholder and states no rate.
+ */
+export interface PsurExposureFigures {
+  /** Units placed on the market in the reporting period (the volume of sales). */
+  unitsPlacedOnMarket: number;
+  /** Serious incidents reported in the reporting period. */
+  seriousIncidentCount: number;
+}
+
+function badInput(message: string): Error {
+  return Object.assign(new Error(message), { code: 'PM_BAD_INPUT' });
+}
+
+/**
+ * Serious incidents per unit placed on the market in the reporting period.
+ * Deterministic; the one figure the retired report-authoring.ts buildPsur
+ * computed, moved here so the PSUR has a single builder. Not rounded: buildPsur
+ * rounded to 1e-6, which reported one incident in ten million units as zero.
+ * Returns null, never 0, when no units were placed on the market, because the
+ * rate is then undefined. The numerator can exceed the denominator: incidents in
+ * the period may involve units placed on the market earlier.
+ */
+export function computePsurIncidentRate(f: PsurExposureFigures): number | null {
+  for (const [name, v] of [
+    ['unitsPlacedOnMarket', f.unitsPlacedOnMarket],
+    ['seriousIncidentCount', f.seriousIncidentCount],
+  ] as const) {
+    if (typeof v !== 'number' || !Number.isInteger(v) || v < 0) {
+      throw badInput(`${name} must be a non-negative integer (got ${String(v)}).`);
+    }
+  }
+  if (f.unitsPlacedOnMarket === 0) return null;
+  return f.seriousIncidentCount / f.unitsPlacedOnMarket;
 }
 
 type ContentRecord = Record<string, string>;
@@ -113,6 +153,25 @@ export function buildPmcfEvaluationContent(ctx: DeviceAuthoringContext): Content
 
 export function buildPsurContent(ctx: DeviceAuthoringContext): ContentRecord {
   const d = ctx.deviceName.trim();
+  const exposure = ctx.psurExposure;
+  const rate = exposure ? computePsurIncidentRate(exposure) : null;
+  const incidents = exposure
+    ? `${exposure.seriousIncidentCount} serious ${exposure.seriousIncidentCount === 1 ? 'incident' : 'incidents'}`
+    : '';
+  const figures: ContentRecord = exposure
+    ? {
+        volumeOfSales:
+          `${exposure.unitsPlacedOnMarket} units of ${d} placed on the market during the reporting ` +
+          'period, as supplied by the sponsor.',
+        seriousIncidentRate:
+          rate === null
+            ? `${incidents} in the reporting period; no rate, ` +
+              'because no units were placed on the market in the period.'
+            : `${incidents} over ${exposure.unitsPlacedOnMarket} units ` +
+              `placed on the market in the reporting period: ${Number((rate * 1000).toPrecision(6))} per ` +
+              '1,000 units (computed).',
+      }
+    : {};
   return {
     summaryOfBenefitRisk:
       `Summary of the benefit-risk determination for ${d} over the reporting period and main conclusions ` +
@@ -128,6 +187,7 @@ export function buildPsurContent(ctx: DeviceAuthoringContext): ContentRecord {
     sizeAndCharacteristicsOfUsersPopulation:
       `${DRAFT} FACTUAL FIELD — insert the actual estimated size and characteristics of the population ` +
       `using ${d}, and where available the usage frequency. This must be the real figure; it is not generated.`,
+    ...figures,
   };
 }
 
@@ -323,6 +383,8 @@ export interface AuthorPostMarketArgs {
   title?: string;
   reportingPeriodStart?: Date;
   reportingPeriodEnd?: Date;
+  /** PSUR only: the sponsor's sales and serious-incident figures for the period. */
+  psurExposure?: PsurExposureFigures;
 }
 
 export interface AuthorPostMarketResult {
@@ -393,7 +455,16 @@ export async function authorPostMarketDocument(
       { code: 'PM_BAD_TYPE' }
     );
   }
-  const content = spec.build({ deviceName, deviceClass, regulation, cerReference });
+  if (args.psurExposure && args.documentType !== 'psur') {
+    throw badInput(`psurExposure applies to a PSUR only, not to ${args.documentType}.`);
+  }
+  const content = spec.build({
+    deviceName,
+    deviceClass,
+    regulation,
+    cerReference,
+    psurExposure: args.psurExposure,
+  });
 
   // Reporting period for report-style documents.
   let reportingPeriodStart: Date | null = args.reportingPeriodStart ?? null;
