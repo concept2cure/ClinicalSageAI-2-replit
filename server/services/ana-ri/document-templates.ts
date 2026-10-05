@@ -702,7 +702,7 @@ export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
     displayName: 'FDA Information Request Response',
     chipLabel: 'IR Response',
     authority: 'FDA',
-    submissionFamily: 'NDA/BLA/510(k)',
+    submissionFamily: 'NDA/BLA',
     detectionPatterns: [
       /\bfda\s+(?:ir|information\s+request)\s+response\b/i,
       /\binformation\s+request\s+(?:response|reply|letter)\b/i,
@@ -710,10 +710,17 @@ export const DOCUMENT_TEMPLATES: Record<string, RegulatoryDocumentTemplate> = {
       /\bdraft\s+(?:an?\s+)?(?:fda\s+)?ir\s+(?:response|letter)\b/i,
     ],
     minConfidence: 0.70,
-    draftingInstructions: 'Draft a formal FDA Information Request (IR) response. This is a regulatory submission — every statement is on the record. Lead with clear, direct answers to each IR question. Provide evidence, cite the relevant sections of the submission, and summarize what action has been taken. Do not hedge. If a question cannot be answered, state so explicitly and propose an alternative path.',
-    regulatoryReferences: ['21 CFR 314.100–314.110 (review timelines)', 'FDA MAPP for review staff', 'FDA Complete Response Letter Guidance'],
+    draftingInstructions: 'Draft a formal FDA Information Request (IR) response. This is a regulatory submission — every statement is on the record. Lead with clear, direct answers to each IR question. Provide evidence, cite the relevant sections of the submission, and summarize what action has been taken. Do not hedge. If a question cannot be answered, state so explicitly and propose an alternative path. The response is an amendment to the pending application (21 CFR 314.60 for an NDA). A 510(k) Additional Information request is a different procedure and is not covered by this template.',
+    // Until 2026-10-05 this cited 21 CFR 314.100–314.110 (review timelines) and
+    // FDA's complete-response-letter guidance, neither of which governs a reply
+    // to an IR, and claimed 510(k) on the same basis
+    // (docs/evidence/D2-ANA-DOCUMENT-INTELLIGENCE/2026-10-05-record/g-post-filing-citation-facts-facts.md).
+    regulatoryReferences: [
+      '21 CFR 314.60 — amendment to an unapproved NDA: a major amendment filed within 3 months of the end of the review cycle extends that cycle by 3 months, or FDA may instead defer review of the amendment to the next cycle; a cycle is extended only once for a major amendment',
+      'BLA: the reply is an amendment to the pending BLA; no 21 CFR Part 601 provision for it is encoded here (recall, not checked against regulator text)',
+    ],
     sections: [
-      { heading: 'Cover Letter', required: true, targetWords: [150, 300], guidance: 'Reference the FDA IR letter (date, reference number), the submission (NDA/BLA/510(k) number), and briefly state the purpose of this response.' },
+      { heading: 'Cover Letter', required: true, targetWords: [150, 300], guidance: 'Reference the FDA IR letter (date, reference number), the application (NDA or BLA number), and briefly state the purpose of this response.' },
       { heading: 'Response to Question [1]', required: true, targetWords: [300, 600], guidance: 'Quote the FDA question verbatim. Then provide a direct answer in the first sentence. Support with data, analysis, or citation to submission sections. If new data is provided, include it as a labeled appendix.' },
       { heading: 'Response to Question [2]', required: false, targetWords: [300, 600], guidance: 'Repeat structure for each additional question. Each question should stand alone — do not cross-reference previous answers without explanation.' },
       { heading: 'Summary of Actions Taken', required: true, targetWords: [150, 300], guidance: 'List all amendments to the submission triggered by this IR. Reference the section/module and the nature of the change (new data added, label revised, module updated).' },

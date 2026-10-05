@@ -666,7 +666,7 @@ export function createBriefingBookFlow(): FlowDefinition {
         question:
           'Has there been any safety update since the NDA/BLA submission? Post-submission safety data must be presented.',
         guidance:
-          'FDA regulations require the applicant to submit any new safety information that becomes available after the NDA/BLA submission and before the Advisory Committee meeting. Per 21 CFR 314.81(b)(1) and FDA guidance, a 120-Day Safety Update is required for NDA submissions. For the briefing document, include: updated exposure data, any new safety signals, any new SUSARs, and updated benefit-risk assessment. Advisory Committee members will specifically ask whether any new safety concerns have emerged.',
+          'Under 21 CFR 314.50(d)(5)(vi)(b), an NDA applicant must update its pending application with new safety information that may reasonably affect the contraindications, warnings, precautions and adverse reactions in the draft labeling. The safety update is filed in the same format as the integrated summary of safety, with case report forms for each patient who died or did not complete a study because of an adverse event unless FDA waives this, at three points: 4 months after the initial submission (the "120-Day Safety Update"), in a resubmission following a complete response letter, and whenever FDA requests one. For a BLA the same update is FDA practice; it is not codified in 21 CFR 314, and its BLA basis is not encoded from regulator text here. For the briefing document, present the most recent update filed: updated exposure, any new safety signals, any new SUSARs, and the updated benefit-risk assessment. Advisory Committee members will specifically ask whether any new safety concerns have emerged.',
         fields: [
           {
             id: 'safety_update_available',
@@ -709,8 +709,8 @@ export function createBriefingBookFlow(): FlowDefinition {
             severity: 'critical',
             title: 'Missing Post-Submission Safety Update',
             message:
-              'A post-submission safety update is expected for the Advisory Committee briefing document. Per 21 CFR 314.81(b)(1), NDA applicants must provide a 120-Day Safety Update. Advisory Committee members will ask about any new safety information since the application was submitted. Failure to present updated safety data undermines credibility.',
-            reference: '21 CFR 314.81(b)(1); FDA Guidance: Advisory Committee Meetings (2008)',
+              'A post-submission safety update is expected for the Advisory Committee briefing document. Under 21 CFR 314.50(d)(5)(vi)(b), an NDA applicant must file a safety update 4 months after the initial submission (the 120-Day Safety Update), in any resubmission following a complete response letter, and whenever FDA requests one. Advisory Committee members will ask about any new safety information since the application was submitted. Failure to present updated safety data undermines credibility.',
+            reference: '21 CFR 314.50(d)(5)(vi)(b); FDA Guidance: Advisory Committee Meetings (2008)',
           },
         ],
       },

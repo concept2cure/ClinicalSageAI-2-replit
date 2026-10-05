@@ -2002,7 +2002,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
         question:
           'Address the pediatric development strategy. PREA requirements apply to most NDAs, and the initial Pediatric Study Plan (iPSP) should be submitted.',
         guidance:
-          'Per the Pediatric Research Equity Act (PREA, 21 USC 355c, as amended by FDARA 2017), sponsors of new drugs must submit an initial Pediatric Study Plan (iPSP) no later than 60 days after the End-of-Phase 2 (EOP2) meeting or equivalent timepoint. The iPSP should outline the planned pediatric studies, including age groups, formulation, and study design. Orphan-designated drugs are exempt from PREA. Pediatric exclusivity (21 USC 355a, BPCA) provides 6 months of additional market exclusivity if FDA-issued Written Requests for pediatric studies are fulfilled. Per ICH E11(R1), age-appropriate formulations and juvenile animal studies (ICH S11) must be considered.',
+          'Under the Pediatric Research Equity Act (PREA, 21 USC 355c), section 505B(e) of the FD&C Act (added by FDASIA 2012) requires a sponsor to submit an initial Pediatric Study Plan (iPSP) no later than 60 calendar days after the end-of-phase 2 (EOP2) meeting, or at another time agreed with FDA, and before the pediatric assessments are submitted. The iPSP should outline the planned pediatric studies, including age groups, formulation, and study design, and any planned deferral or waiver requests. An indication with orphan designation is exempt from PREA, except that since 2020-08-18 (FDARA 2017, RACE for Children Act) an original application for a new active ingredient (NDA or BLA) submitted on or after 2020-08-18 for a drug intended to treat an adult cancer and directed at a molecular target FDA determines is substantially relevant to the growth or progression of a pediatric cancer must include reports of a molecularly targeted pediatric cancer investigation, even when the indication is orphan-designated. Pediatric exclusivity (21 USC 355a, BPCA) provides 6 months of additional market exclusivity if FDA-issued Written Requests for pediatric studies are fulfilled. Per ICH E11(R1), age-appropriate formulations and juvenile animal studies (ICH S11) must be considered.',
         fields: [
           {
             id: 'prea_applicable',
@@ -2022,7 +2022,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             type: 'yes_no',
             visibleWhen: { field: 'prea_applicable', operator: 'eq', value: 'yes' },
             helpText:
-              'Per FDARA 2017, the iPSP should be submitted no later than 60 days after the EOP2 meeting request. FDA provides feedback within 90 days, and the agreed-upon iPSP forms the basis for PREA commitments.',
+              'Under FD&C Act 505B(e), the iPSP is due no later than 60 calendar days after the end-of-phase 2 (EOP2) meeting, or at another time agreed with FDA. FDA reviews it within 90 days; the sponsor then has 90 days to submit an agreed iPSP; FDA confirms agreement or disagreement within 30 days of receiving it, so the cycle runs up to 210 days. The agreed iPSP forms the basis for PREA commitments.',
           },
           {
             id: 'pediatric_studies_planned',
@@ -2063,8 +2063,8 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             severity: 'warning',
             title: 'iPSP Should Be Submitted',
             message:
-              'PREA applies to this product, but the initial Pediatric Study Plan (iPSP) has not been submitted to FDA. Per FDARA 2017, the iPSP should be submitted no later than 60 days after the EOP2 meeting request. Failure to submit the iPSP may delay NDA approval, as FDA may require pediatric study commitments as a condition of approval.',
-            reference: 'PREA (21 USC 355c); FDARA 2017; FDA Guidance: Pediatric Study Plans (2020)',
+              'PREA applies to this product, but the initial Pediatric Study Plan (iPSP) has not been submitted to FDA. Under FD&C Act 505B(e), the iPSP is due no later than 60 calendar days after the end-of-phase 2 (EOP2) meeting, or at another time agreed with FDA. Failure to submit the iPSP may delay NDA approval, as FDA may require pediatric study commitments as a condition of approval.',
+            reference: 'PREA (21 USC 355c); FD&C Act 505B(e) (FDASIA 2012); FDA Guidance: Pediatric Study Plans (2020)',
           },
         ],
       },
