@@ -1805,7 +1805,7 @@
   "draft_quality_overall_summary_m2_3": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts:5200"
+   "site": "cmc-quality-summary-tool.ts:113"
   },
   "draft_safety_narrative": {
    "class": "read",
