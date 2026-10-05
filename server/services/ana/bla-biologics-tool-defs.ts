@@ -738,27 +738,15 @@ export const ASSESS_NONCLINICAL_SAFETY: AnaTool = {
 export const DRAFT_QUALITY_OVERALL_SUMMARY_M2_3: AnaTool = {
   name: 'draft_quality_overall_summary_m2_3',
   description:
-    "Draft the Module 2.3 Quality Overall Summary (ICH M4Q) deterministically — the CMC summary of drug substance (3.2.S) and drug product (3.2.P). Supply the program's CMC source objects as cmcSources[]; the tool composes Module 3 through the platform's convergence engine and then builds the QOS, returning the 2.3.S / 2.3.P narrative, the headline tables, completeness, and the missing-section gaps. This is the deterministic, data-grounded counterpart to the generic generate_document path — parity with draft_nonclinical_overview_m2_4 / draft_clinical_overview_m2_5 / draft_clinical_summary_m2_7. Report completeness and gaps honestly.",
+    "Draft the Module 2.3 Quality Overall Summary (ICH M4Q) of the OPEN program, deterministically, from the CMC " +
+    "data that program has recorded — the same source records and the same composition engine as its Module 3 " +
+    "build. Takes no CMC data: never pass figures, specifications or stability results; a call that does is " +
+    "refused. Returns the 2.3.S / 2.3.P narrative, the headline tables, completeness and the missing-section gaps, " +
+    "or says no program is open or that it has no recorded CMC data. Report completeness and gaps honestly.",
   input_schema: {
     type: 'object',
-    properties: {
-      cmcSources: {
-        type: 'array',
-        description: 'CMC source objects feeding Module 3 / the QOS.',
-        items: {
-          type: 'object',
-          properties: {
-            id: { type: 'string' },
-            sourceType: { type: 'string', description: 'CMC source type (e.g. drug substance manufacture/characterisation/specification/stability; drug product description/development/manufacture/control/stability).' },
-            sourcePayload: { type: 'object', description: 'The structured CMC data for this source.' },
-          },
-          required: ['sourceType', 'sourcePayload'],
-        },
-      },
-      drugSubstanceName: { type: 'string' },
-      drugProductName: { type: 'string' },
-    },
-    required: ['cmcSources'],
+    properties: {},
+    required: [],
   },
 };
 

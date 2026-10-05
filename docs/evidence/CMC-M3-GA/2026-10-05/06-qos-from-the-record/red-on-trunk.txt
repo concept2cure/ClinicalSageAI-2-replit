@@ -1,0 +1,5 @@
+ ✓ server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > nonclinical & clin-pharm tools — registration + exposure > registers a handler and exposes draft_quality_overall_summary_m2_3 in ALL_ANA_TOOLS 2ms
+ × server/services/ana/__tests__/nonclinical-clinpharm-tools.test.ts > draft_quality_overall_summary_m2_3 handler > refuses CMC data supplied in the call, rather than composing from it 343ms
+   → .toMatch() expects to receive a string, but got undefined
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 1 passed | 39 skipped (41)
