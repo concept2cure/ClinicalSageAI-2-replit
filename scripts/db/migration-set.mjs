@@ -3008,6 +3008,15 @@ export const C2C_MIGRATION_FILES = [
   // EXISTS, no DROP. Evidence docs/evidence/CMC-M3-GA/2026-10-05/08-cmc-evidence-from-the-vault/.
   'migrations/20261005b_cmc_source_evidence.sql',
 
+  // ── Module 3 history append-only (2026-10-05, DP-84; rows D2, D5, D6) ──────
+  // The signed section snapshots (cmc_module3_section_versions) and the Module 3
+  // provenance trail (cmc_provenance_events) refuse UPDATE, DELETE and TRUNCATE
+  // for every role, through public.domain_history_append_only() from
+  // 20261001_domain_history_append_only.sql above. Census in the file: every
+  // writer INSERTs only. Creates no table, drops nothing another file creates.
+  // Evidence docs/evidence/CMC-M3-GA/2026-10-05/19-module3-history-append-only/.
+  'migrations/20261005c_cmc_module3_history_append_only.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Parent-scoped RLS for child tables (added 2026-08-13; moved 2026-09-29)
