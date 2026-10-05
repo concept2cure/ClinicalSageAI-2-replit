@@ -408,7 +408,7 @@ Structure the response as a comprehensive regulatory strategy document.`;
       analyticalMethods: {
         title: 'Analytical Methods',
         required: generateAnalyticalMethods(drugType, dosageForm),
-        validationRequirements: 'ICH Q2(R1) compliance required',
+        validationRequirements: 'ICH Q2(R2) compliance required',
       },
       stabilityStudies: {
         title: 'Stability Studies',
@@ -494,7 +494,7 @@ async function createComplianceFramework(projectId: string, params: any) {
   // Generate compliance items based on drug type and region
   const complianceItems = [
     {
-      guideline: 'ICH Q2(R1)',
+      guideline: 'ICH Q2(R2)',
       requirement: 'Analytical method validation',
       status: 'pending',
       riskLevel: 'high',
@@ -707,7 +707,7 @@ function getStabilityConditions(region: string): any {
 }
 
 function getApplicableGuidelines(drugType: string, region: string): string[] {
-  const guidelines = ['ICH Q2(R1)', 'ICH Q1A(R2)', 'ICH Q6A'];
+  const guidelines = ['ICH Q2(R2)', 'ICH Q1A(R2)', 'ICH Q6A'];
 
   if (drugType === 'Monoclonal Antibody') {
     guidelines.push('ICH Q6B');

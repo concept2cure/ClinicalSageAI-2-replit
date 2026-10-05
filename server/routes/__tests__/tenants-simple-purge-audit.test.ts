@@ -21,9 +21,10 @@ import express from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import request from 'supertest';
 
-const { authState, purgeTenant } = vi.hoisted(() => ({
+const { authState, purgeTenant, grantQuery } = vi.hoisted(() => ({
   authState: { user: null as Record<string, unknown> | null },
   purgeTenant: vi.fn(),
+  grantQuery: vi.fn(),
 }));
 
 vi.mock('postgres', () => ({ default: () => Object.assign(() => Promise.resolve([]), {}) }));
@@ -31,8 +32,17 @@ vi.mock('../../auth', () => ({
   authMiddleware: (req: Request, res: Response, next: NextFunction) => {
     if (!authState.user) return res.status(401).json({ error: 'unauthorized' });
     (req as unknown as { user: unknown }).user = authState.user;
+    // server/auth.ts sets req.userId; the platform-grant lookup keys on it.
+    (req as unknown as { userId: unknown }).userId = authState.user.id;
     next();
   },
+}));
+// Platform standing is an active platform_role_grants row, as in production —
+// the request role is the tenant membership role and is not read (D6,
+// docs/evidence/D6/2026-10-05-platform-standing/).
+vi.mock('../../db', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../db')>()),
+  query: grantQuery,
 }));
 vi.mock('../../services/tenant/tenant-offboarding', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../services/tenant/tenant-offboarding')>()),
@@ -45,6 +55,12 @@ let app: express.Express;
 beforeEach(async () => {
   vi.clearAllMocks();
   authState.user = { id: 11, organizationId: 1, role: 'super_admin', roles: ['super_admin'] };
+  // User 11 is the platform administrator by its grant row, not by `role` above.
+  grantQuery.mockImplementation(async (sql: string, params?: unknown[]) => ({
+    rows: /FROM platform_role_grants/.test(sql) && params?.[0] === 11
+      && Array.isArray(params[1]) && (params[1] as string[]).includes('super_admin')
+      ? [{ '?column?': 1 }] : [],
+  }));
   purgeTenant.mockResolvedValue({
     organizationId: ORG,
     name: 'Acme Bio',

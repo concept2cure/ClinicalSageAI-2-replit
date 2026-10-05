@@ -11,8 +11,12 @@
  * `requireRole(...)` helper in ./auth.ts — it has NO org-`admin` bypass. A
  * tenant administrator must never reach platform-wide data. Access is granted
  * only to:
- *   1. members whose resolved role is a platform role (super_admin /
- *      platform_admin / support), or
+ *   1. (removed 2026-10-05) a request role of super_admin / platform_admin /
+ *      support. Behind server/auth.ts the request role is the TENANT
+ *      membership role (organization_users.role, a column with no CHECK), so a
+ *      membership row naming a platform role opened every organisation's data
+ *      (D6, docs/evidence/D6/2026-10-05-platform-standing/). Platform
+ *      standing is (2) or (3), never a membership;
  *   2. emails on the PLATFORM_ADMIN_EMAILS allowlist (comma-separated env var)
  *      — the bootstrap path for the platform owner before a platform role is
  *      provisioned in the database. It applies to the owner's OWN (password)
@@ -60,11 +64,7 @@ export function tokenProvider(req: Request): string {
 
 /** True when the authenticated request belongs to a platform administrator. */
 export function isPlatformAdmin(req: Request): boolean {
-  const primaryRole = (req.userRole || req.user?.role || '').toString().toLowerCase();
-  const roles = (req.user?.roles || []).map(r => String(r).toLowerCase());
-  if (PLATFORM_ROLES.has(primaryRole)) return true;
-  if (roles.some(r => PLATFORM_ROLES.has(r))) return true;
-
+  // No request role is read: it is the tenant membership role (header, 1).
   // The e-mail allowlist does not apply to a federated identity: its e-mail is
   // the identity provider's word, not the owner's password (see header, 2).
   const email = (req.userEmail || req.user?.email || '').toString().toLowerCase();

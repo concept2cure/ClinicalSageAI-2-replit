@@ -170,7 +170,7 @@ const CMC_ACTIVITIES: PdevActivity[] = [
     workstream: 'cmc',
     stage: 'late_pdev',
     title: 'Analytical qualification',
-    description: 'Method qualification or validation per ICH Q2(R1).',
+    description: 'Method qualification or validation per ICH Q2(R2) (phase-appropriate).',
     requiredDocuments: [
       { code: 'cmc-analytical-qualification-report', title: 'Analytical qualification report', ectdModule: 'm3', ectdSection: '3.2.S.4.3', mandatoryForInd: true },
     ],

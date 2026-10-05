@@ -7,10 +7,11 @@
 
 import { describe, it, expect } from 'vitest';
 import {
-  checkQ1A, checkQ2, checkQ3AandQ3B, checkQ3D, checkQ6AandQ6B,
+  checkQ1A, checkQ3AandQ3B, checkQ3D, checkQ6AandQ6B,
   checkQ8, checkQ9, checkQ10,
   type ProjectInputs,
 } from '../server/services/cmc/ich-compliance-rules';
+import { checkQ2 } from '../server/services/cmc/ich-compliance-q2';
 
 function emptyInputs(): ProjectInputs {
   return {
@@ -78,7 +79,7 @@ describe('ICH Q1A(R2) — stability', () => {
   });
 });
 
-describe('ICH Q2(R1) — analytical method validation', () => {
+describe('ICH Q2(R2) — analytical method validation (no stage recorded: the marketing standard)', () => {
   it('fails when there are no methods', () => {
     const f = checkQ2(emptyInputs());
     expect(f[0].status).toBe('fail');
@@ -132,7 +133,7 @@ describe('ICH Q2(R1) — analytical method validation', () => {
     expect(f.some(x => x.ruleId === 'Q2_INCOMPLETE_VALIDATION')).toBe(false);
   });
 
-  it('flags missing linearity for a quantitative impurity method (ICH Q2(R1) — impurities/quantitation requires linearity)', () => {
+  it('flags missing linearity for a quantitative impurity method (ICH Q2(R2) — impurities/quantitation requires linearity)', () => {
     const inp = emptyInputs();
     inp.methods = [
       // Validated impurity method with accuracy + precision + specificity but NO linearity.
@@ -259,7 +260,7 @@ describe('ICH Q8(R2) — pharmaceutical development', () => {
   });
 });
 
-describe('ICH Q9 — quality risk management', () => {
+describe('ICH Q9(R1) — quality risk management', () => {
   it('warns when no risk-related source object or section narrative exists', () => {
     const f = checkQ9(emptyInputs());
     expect(f[0].status).toBe('warning');

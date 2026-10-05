@@ -6,8 +6,10 @@
  * manufacturing_processes, cmc_source_objects, cmc_module3_sections) and
  * delegates to the pure rules module for per-guideline evaluation.
  *
- * Covers Q1A(R2), Q2(R1), Q3A(R2)/Q3B(R2), Q3D(R2), Q6A/Q6B, Q8(R2),
- * Q9, Q10 — i.e. the guidelines most commonly cited at FDA RTF.
+ * Covers Q1A(R2), Q2(R2), Q3A(R2)/Q3B(R2), Q3D(R2), Q6A/Q6B, Q8(R2),
+ * Q9(R1), Q10 — i.e. the guidelines most commonly cited at FDA RTF — at the
+ * revisions the CMC regulatory record holds as current. Analytical validation
+ * is judged at the program's stage (program-stage.ts, ich-compliance-q2.ts).
  *
  * @module server/services/cmc/ich-compliance-checker
  */
@@ -18,19 +20,23 @@ import { loadProjectStabilityStudies } from './stability-source';
 import { loadProjectAnalyticalMethods } from './analytical-method-source';
 import { loadProjectDrugSubstances } from './drug-substance-source';
 import {
-  checkQ1A, checkQ2, checkQ3AandQ3B, checkQ3D,
+  checkQ1A, checkQ3AandQ3B, checkQ3D,
   checkQ6AandQ6B, checkQ8, checkQ9, checkQ10,
+  ICH_GUIDELINES_CHECKED,
   type IchGuideline, type CheckStatus, type IchCheckFinding,
   type ProjectInputs, type ProjectInputKey,
 } from './ich-compliance-rules';
+import { checkQ2 } from './ich-compliance-q2';
+import { readProgramStage, type ProgramStage } from './program-stage';
 
 export type {
   IchGuideline, CheckStatus, IchCheckFinding, ProjectInputs, ProjectInputKey,
 } from './ich-compliance-rules';
 export {
-  checkQ1A, checkQ2, checkQ3AandQ3B, checkQ3D,
+  checkQ1A, checkQ3AandQ3B, checkQ3D,
   checkQ6AandQ6B, checkQ8, checkQ9, checkQ10,
 } from './ich-compliance-rules';
+export { checkQ2 } from './ich-compliance-q2';
 
 const log = createScopedLogger('cmc-ich-compliance');
 
@@ -84,18 +90,9 @@ export async function runIchComplianceCheck(
   const unevaluatedInputs = Object.entries(inputs.unavailable ?? {})
     .map(([input, reason]) => ({ input: input as ProjectInputKey, reason: String(reason) }));
 
-  const guidelineStatus: Record<IchGuideline, CheckStatus> = {
-    'Q1A(R2)': 'not_applicable',
-    'Q2(R1)':  'not_applicable',
-    'Q3A(R2)': 'not_applicable',
-    'Q3B(R2)': 'not_applicable',
-    'Q3D(R2)': 'not_applicable',
-    'Q6A':     'not_applicable',
-    'Q6B':     'not_applicable',
-    'Q8(R2)':  'not_applicable',
-    'Q9':      'not_applicable',
-    'Q10':     'not_applicable',
-  };
+  const guidelineStatus = Object.fromEntries(
+    ICH_GUIDELINES_CHECKED.map((g) => [g, 'not_applicable']),
+  ) as Record<IchGuideline, CheckStatus>;
   // `not_evaluated` outranks warning/pass so a guideline whose check could not
   // run never rolls up as green, but stays below `fail`, which is a real
   // observed deficiency.
@@ -242,8 +239,18 @@ async function gatherInputs(orgId: number, projectId: string): Promise<ProjectIn
   }
   const stability = stabilityResult.studies as unknown as Array<Record<string, unknown>>;
 
+  // What the program files and its recorded phase. A read that cannot complete
+  // is an unavailable input: the stage-dependent rule then reports it could
+  // not evaluate rather than judging at a guessed stage.
+  let stage: ProgramStage | null = null;
+  try {
+    stage = await readProgramStage(pool, orgId, projectIdParam);
+  } catch (err) {
+    unavailable.stage = err instanceof Error ? err.message : String(err);
+  }
+
   return {
-    specs, methods, stability, drugSubs, processes, sourceObjects, sections,
+    specs, methods, stability, drugSubs, processes, sourceObjects, sections, stage,
     unavailable: Object.keys(unavailable).length > 0 ? unavailable : undefined,
   };
 }

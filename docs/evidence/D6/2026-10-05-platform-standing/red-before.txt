@@ -1,0 +1,19 @@
+# trunk sources (requirePlatformAdmin.ts, master-admin.ts), every updated suite
+$ npx vitest run <the twelve suites>
+ × server/routes/admin/__tests__/master-admin.test.ts > access gating > 403s a tenant membership role of super_admin with no platform grant
+ × server/__tests__/security/tenant-isolation-tenants-simple.contract.test.ts > Tenant list — membership scoping > a membership role of super_admin does NOT get the cross-tenant list (D6)
+ × server/__tests__/security/scim-ip-allowlist-admin.test.ts > admin SCIM IP-allowlist API > forbids a tenant membership role of super_admin with no platform grant (403)
+ × server/services/audit/__tests__/chain-head-on-demand.test.ts > IAM-26: verify-chain gives a caller who is not a platform administrator their own organisation only > a tenant membership role of super_admin with no platform grant gets its own organisation only
+ × server/__tests__/security/scim-tenants-admin.test.ts > admin SCIM-tenants API > forbids a tenant membership role of super_admin with no platform grant (403)
+ × server/services/entitlements/__tests__/master-admin-designation.test.ts > resolveMasterAdmin — in-app designations > a request role of super_admin is no sync owner signal: without a grant row it is not the owner
+ × server/routes/__tests__/module-subscriptions-platform-admin.test.ts > GET /navigation — platformAdmin agrees with requirePlatformAdmin > a membership role of super_admin with no grant: platformAdmin false, and the console refuses them
+ × server/middleware/__tests__/requirePlatformAdmin.test.ts > isPlatformAdmin > a tenant membership role of super_admin is not platform standing
+ × server/middleware/__tests__/requirePlatformAdmin.test.ts > isPlatformAdmin > a tenant membership role of platform_admin is not platform standing
+ × server/middleware/__tests__/requirePlatformAdmin.test.ts > isPlatformAdmin > a tenant membership role of support is not platform standing
+ × server/middleware/__tests__/requirePlatformAdmin.test.ts > requirePlatformAdmin > 403s a membership role of super_admin with no platform grant
+ × server/services/entitlements/__tests__/master-admin.test.ts > isMasterAdminIdentity — email signal > does not match a federated (SAML) session: its e-mail is the identity provider's word
+ × server/services/entitlements/__tests__/master-admin.test.ts > isMasterAdminIdentity — no request role is a signal > a role of super_admin is not the owner signal, however it is spelled
+ × server/services/entitlements/__tests__/master-admin.test.ts > isMasterAdminIdentity — no request role is a signal > a roles[] entry of super_admin is not the owner signal
+ × server/services/entitlements/__tests__/master-admin.test.ts > isMasterAdmin(req) — the request adapter > does not read userRole or req.user.role / req.user.roles (the tenant membership role)
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  15 failed | 153 passed (168)

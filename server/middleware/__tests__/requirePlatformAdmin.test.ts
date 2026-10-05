@@ -18,9 +18,8 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-vi.mock('../../db', () => ({
-  query: vi.fn(async () => ({ rows: [] })),
-}));
+const { query } = vi.hoisted(() => ({ query: vi.fn(async (..._a: unknown[]) => ({ rows: [] as unknown[] })) }));
+vi.mock('../../db', () => ({ query }));
 
 import { isPlatformAdmin, requirePlatformAdmin } from '../requirePlatformAdmin';
 
@@ -58,16 +57,18 @@ describe('isPlatformAdmin', () => {
     else process.env.PLATFORM_ADMIN_EMAILS = savedEnv;
   });
 
-  it.each(['super_admin', 'platform_admin', 'support'])('accepts platform role %s', role => {
-    expect(isPlatformAdmin(mkReq({ userRole: role }))).toBe(true);
-  });
-
-  it('accepts a platform role from req.user.role', () => {
-    expect(isPlatformAdmin(mkReq({ user: { role: 'super_admin' } }))).toBe(true);
-  });
-
-  it('accepts a platform role from req.user.roles[]', () => {
-    expect(isPlatformAdmin(mkReq({ user: { roles: ['member', 'support'] } }))).toBe(true);
+  /* D6, 2026-10-05 (docs/evidence/D6/2026-10-05-platform-standing/). These
+     three cases read "accepts platform role %s" and pinned the defect.
+     Behind server/auth.ts the request role IS the tenant membership role
+     (organization_users.role), and that column has no CHECK: a membership row
+     that said super_admin, platform_admin or support, whether legacy, from a
+     future writer or hand-edited, opened every organisation's data. Platform
+     standing is the allowlist (the owner's own sign-in) or a
+     platform_role_grants row, never a membership. */
+  it.each(['super_admin', 'platform_admin', 'support'])('a tenant membership role of %s is not platform standing', role => {
+    expect(isPlatformAdmin(mkReq({ userRole: role }))).toBe(false);
+    expect(isPlatformAdmin(mkReq({ user: { role } }))).toBe(false);
+    expect(isPlatformAdmin(mkReq({ user: { roles: ['member', role] } }))).toBe(false);
   });
 
   it.each(['admin', 'manager', 'member', 'viewer', ''])('rejects org role %s (no bypass)', role => {
@@ -104,8 +105,20 @@ describe('requirePlatformAdmin', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
-  it('calls next() for a platform admin (sync fast-path, no db)', async () => {
-    const req = mkReq({ userId: 1, user: { id: 1 }, userRole: 'super_admin' });
+  it('403s a membership role of super_admin with no platform grant', async () => {
+    query.mockImplementation(async () => ({ rows: [] }));
+    const req = mkReq({ userId: 9, user: { id: 9, role: 'super_admin' }, userRole: 'super_admin' });
+    const res = mkRes();
+    const next = vi.fn();
+    await requirePlatformAdmin(req, res, next);
+    expect(res.statusCode).toBe(403);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('calls next() for a platform grant holder, whatever the tenant role', async () => {
+    query.mockImplementation(async (_sql: unknown, params?: unknown) =>
+      ({ rows: Array.isArray(params) && params[0] === 1 ? [{ ok: 1 }] : [] }));
+    const req = mkReq({ userId: 1, user: { id: 1, role: 'member' }, userRole: 'member' });
     const res = mkRes();
     const next = vi.fn();
     await requirePlatformAdmin(req, res, next);

@@ -129,7 +129,7 @@ const regulatoryKnowledgeBase: Record<string, any> = {
   '3.2.S.4': {
     title: 'Drug Substance Control',
     ichReferences: ['ICH Q6A', 'ICH Q3A', 'ICH Q3D'],
-    fdaGuidance: ['Pharmaceutical Development Q8', 'Analytical Procedures Q2(R1)'],
+    fdaGuidance: ['Pharmaceutical Development Q8', 'Analytical Procedures Q2(R2)'],
     emaGuidance: ['EMA/CHMP/ICH/295/95', 'EMA/CHMP/167068/2004'],
     whoGuidance: ['WHO TRS 986', 'WHO Technical Report Series No. 937'],
     requiredElements: [
@@ -237,7 +237,7 @@ const regulatoryKnowledgeBase: Record<string, any> = {
   },
   '3.2.P.5': {
     title: 'Control of Drug Product',
-    ichReferences: ['ICH Q6A', 'ICH Q3B', 'ICH Q2(R1)'],
+    ichReferences: ['ICH Q6A', 'ICH Q3B', 'ICH Q2(R2)'],
     fdaGuidance: ['Pharmaceutical Development Q8', 'PAT Guidance'],
     emaGuidance: ['EMA/CHMP/ICH/295/95'],
     requiredElements: [
@@ -559,7 +559,7 @@ function generateContextualGuidance(
 
   // Provide context-aware guidance based on the query
   if (lowerQuery.includes('validation')) {
-    return `For ${drugInfo?.dosageForm || 'your dosage form'} in ${drugInfo?.region || 'your target region'}, analytical method validation should follow ICH Q2(R1) guidelines.
+    return `For ${drugInfo?.dosageForm || 'your dosage form'} in ${drugInfo?.region || 'your target region'}, analytical method validation should follow ICH Q2(R2) guidelines.
 
 Key validation parameters required:
 • Specificity: Demonstrate method can distinguish analyte from impurities

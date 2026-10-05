@@ -208,7 +208,7 @@ export const GAP_RULES: GapRule[] = [
     prefix: true,
     patterns: ['drug product specification', 'analytical procedures', 'validation of analytical'],
     severity: 'critical',
-    guidance: 'ICH Q6A, ICH Q2(R1)',
+    guidance: 'ICH Q6A, ICH Q2(R2)',
     message: 'Drug product specification / analytical method validation missing.',
   },
   {

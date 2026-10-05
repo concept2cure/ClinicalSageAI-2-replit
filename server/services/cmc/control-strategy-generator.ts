@@ -125,7 +125,7 @@ export async function generateControlStrategy(
       ichBasis,
       justification: method
         ? `${cqa.name} is identified as a CQA via ${cqa.source.replace('_', ' ')}; controlled by validated method "${method.methodName}" (${method.validationStatus}).`
-        : `${cqa.name} is identified as a CQA via ${cqa.source.replace('_', ' ')}; no validated method linked yet (ICH Q2(R1) gap).`,
+        : `${cqa.name} is identified as a CQA via ${cqa.source.replace('_', ' ')}; no validated method linked yet (ICH Q2(R2) gap).`,
     });
     if (!method) {
       /* Only a gap when the method register was actually READ. With an
@@ -134,7 +134,7 @@ export async function generateControlStrategy(
          every CQA in the project. */
       gaps.push(
         methodResult.available
-          ? `No validated analytical method linked to CQA "${cqa.name}" (${cqa.materialType}). Required per ICH Q2(R1).`
+          ? `No validated analytical method linked to CQA "${cqa.name}" (${cqa.materialType}). Required per ICH Q2(R2).`
           : `Analytical methods could not be read, so no method could be linked to CQA "${cqa.name}" (${cqa.materialType}). This is not a finding against the project: ${methodResult.reason}`,
       );
     }

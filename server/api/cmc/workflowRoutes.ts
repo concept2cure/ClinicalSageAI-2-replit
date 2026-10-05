@@ -287,7 +287,7 @@ const WORKFLOW_TEMPLATES: Record<string, WorkflowTemplate> = {
         requirements: ['Validation summary', 'Statistical analysis', 'Method transfer'],
       },
     ],
-    regulations: ['ICH Q2(R1)', 'USP General Chapters', 'FDA Analytical Procedures'],
+    regulations: ['ICH Q2(R2)', 'USP General Chapters', 'FDA Analytical Procedures'],
     deliverables: ['Validation protocol', 'Validation report', 'Analytical method'],
   },
   'qbd-development': {
