@@ -70,7 +70,10 @@ const dbDouble = vi.hoisted(() => {
           : [];
     return c;
   };
-  const db = { select: (fields?: Record<string, unknown>) => chainFor(fields), update: () => chainFor() };
+  // The pre-auth account lookup (public.user_id_for_email, pre-auth-account.ts)
+  // answers with the account the test signs in as.
+  const execute = async () => ({ rows: [{ id: (state.userRow as { id?: number } | null)?.id ?? null }] });
+  const db = { select: (fields?: Record<string, unknown>) => chainFor(fields), update: () => chainFor(), execute };
   return { db, pool, getPool: () => pool, getDb: () => db };
 });
 vi.mock('../../db', () => dbDouble);
@@ -216,6 +219,7 @@ describe('POST /api/auth/enterprise/verify-password: when the count is cleared (
 describe('wrong codes are limited per account, whatever the address (IAM-30)', () => {
   it('the account key reads the enterprise partial token, verified', () => {
     expect(secondFactorAccountKey({ partialToken: partialToken(9) })).toBe('user:9');
+    // nosemgrep: hardcoded-jwt-secret -- a forged token: the test signs with a wrong secret to prove it is refused
     const forged = jwt.sign({ userId: '9', mfaPending: true }, 'not-the-secret-not-the-secret-not-the-secret');
     expect(secondFactorAccountKey({ partialToken: forged })).toBeNull();
     expect(secondFactorAccountKey({ partialToken: jwt.sign({ userId: '9' }, SECRET) }), 'a token that is not a challenge').toBeNull();

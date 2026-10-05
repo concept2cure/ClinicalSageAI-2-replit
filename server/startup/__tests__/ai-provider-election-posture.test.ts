@@ -21,6 +21,7 @@ describe('assertAiProviderElectionPostureForProduction', () => {
   it.each(['MOONSHOT_API_KEY', 'KIMI_API_KEY'])('refuses %s in production, naming it and ADR-0014 §1', variable => {
     expect(() =>
       assertAiProviderElectionPostureForProduction({ NODE_ENV: 'production', [variable]: 'sk-probe' }),
+    // nosemgrep: detect-non-literal-regexp -- a test: variable is a literal environment variable name
     ).toThrow(new RegExp(`REFUSING TO BOOT: .*${variable}.*ADR-0014 §1`));
   });
 

@@ -48,6 +48,9 @@ const dbDouble = vi.hoisted(() => {
     return c;
   };
   const db = chain(() => (state.userRow ? [state.userRow] : []));
+  // The pre-auth account lookup (public.user_id_for_email / user_id_for_reset_token,
+  // services/auth/pre-auth-account.ts) answers with the id of the row this double reads.
+  db.execute = async () => ({ rows: [{ id: (state.userRow as { id?: number } | null)?.id ?? null }] });
   return { db, pool, getPool: () => pool, getDb: () => db };
 });
 vi.mock('../../db', () => dbDouble);

@@ -186,6 +186,7 @@ describe('generateSection stores the model body as text', () => {
     const modelBody = 'Summary.<script>fetch("https://collector.example")</script>';
     await generate(modelBody);
     const stored = storedContent();
+    // nosemgrep: unknown-value-with-script-tag -- the test feeds a script tag on purpose and asserts no reader receives it
     expectEveryReaderReads(stored, modelBody);
     expect(stored).toBe('<p>Summary.&lt;script&gt;fetch("https://collector.example")&lt;/script&gt;</p>');
   });
