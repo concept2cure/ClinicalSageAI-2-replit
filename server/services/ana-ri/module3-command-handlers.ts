@@ -14,6 +14,7 @@ import { composeProjectModule3, persistComposedSection } from '../cmc/module3-co
 import { bridgeCompileToArtifact, classifyAndMapArtifactToSource, getModule3BuildStatus } from '../module3-convergence-service';
 import { detectContradictions, deriveImpactTasks } from '../cmc-impact-contradiction-engine';
 import { readContradictionRegisters } from '../cmc/contradiction-registers';
+import { evaluateFinalExportGate, type FinalExportGateVerdict } from '../cmc/final-export-gate';
 
 interface CommandContext {
   userId: number;
@@ -297,34 +298,39 @@ export async function module3RefreshStale(ctx: CommandContext, params: Record<st
 // ── module3_readiness ─────────────────────────────────────────────────────────
 
 export async function module3Readiness(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
-  const pool = getPool();
   const orgId = ctx.organizationId;
   const projectId = (params.projectId as string) || String(ctx.activeProjectId || '');
   if (!projectId) return { success: false, action: 'module3_readiness', message: 'Project ID required' };
 
-  const [sectionsRes, contradictionsRes] = await Promise.all([
-    pool.query(`SELECT approval_state, stale FROM cmc_module3_sections WHERE organization_id=$1 AND project_id=$2`, [orgId, projectId]),
-    pool.query(`SELECT severity, status FROM cmc_contradictions WHERE organization_id=$1 AND project_id=$2`, [orgId, projectId]),
-  ]);
-
-  const total = sectionsRes.rows.length;
-  const approved = sectionsRes.rows.filter((r: any) => r.approval_state === 'approved').length;
-  const stale = sectionsRes.rows.filter((r: any) => r.stale).length;
-  const openCritical = contradictionsRes.rows.filter((r: any) => r.severity === 'critical' && r.status !== 'resolved').length;
-  const exportReady = total > 0 && approved === total && stale === 0 && openCritical === 0;
+  /* The ONE final-export gate (services/cmc/final-export-gate). This command
+     used to count approvals, stale flags and critical contradictions itself
+     and say "Export READY" when they cleared, while the gate also refuses on
+     source drift, superseded Vault evidence, missing lineage, incomplete or
+     unplaceable approved sections and the governed-decision fabric. AnA told a
+     user Module 3 was ready when export and placement then refused. */
+  const verdict = await evaluateFinalExportGate({ orgId, projectId, actorId: String(ctx.userId) });
+  const { totalSections: total, approvedSections: approved, staleSections: stale, openCriticalContradictions: openCritical } = verdict.data;
+  const exportReady = verdict.allowed;
 
   const blockers: string[] = [];
   if (stale > 0) blockers.push(`${stale} stale section${stale > 1 ? 's' : ''} — use **/m3 refresh** to recompile`);
   if (openCritical > 0) blockers.push(`${openCritical} unresolved critical contradiction${openCritical > 1 ? 's' : ''} — use **/m3 contradictions** to review`);
   if (approved < total) blockers.push(`${total - approved} section${total - approved > 1 ? 's' : ''} not yet approved`);
-  const blockerBlock = blockers.length > 0 ? `\n\n**Blockers:**\n${blockers.map(b => `- ${b}`).join('\n')}` : '';
+  const blockerBlock = exportBlockerBlock(verdict, blockers);
 
   return {
     success: true,
     action: 'module3_readiness',
     message: `**Module 3 Readiness:** ${approved}/${total} sections approved, ${stale} stale, ${openCritical} critical contradictions. Export ${exportReady ? '**READY**' : '**BLOCKED**'}.${blockerBlock}`,
-    data: { totalSections: total, approvedSections: approved, staleSections: stale, openCriticalContradictions: openCritical, exportReady },
+    data: { totalSections: total, approvedSections: approved, staleSections: stale, openCriticalContradictions: openCritical, exportReady, blockedBecause: verdict.error ?? null },
   };
+}
+
+/** The gate's own sentence first, then the command hints that apply. */
+function exportBlockerBlock(verdict: FinalExportGateVerdict, hints: string[]): string {
+  if (verdict.allowed) return '';
+  const lines = [`Export gate: ${verdict.error ?? 'final export is refused'}`, ...hints];
+  return `\n\n**Blockers:**\n${lines.map(b => `- ${b}`).join('\n')}`;
 }
 
 // ── module3_contradictions ────────────────────────────────────────────────────
@@ -405,7 +411,10 @@ export async function cmcStatus(ctx: CommandContext, params: Record<string, unkn
   const projectId = (params.projectId as string) || String(ctx.activeProjectId || '');
   if (!projectId) return { success: false, action: 'cmc_status', message: 'Project ID required' };
 
-  const [sourcesRes, sectionsRes, contradictionsRes] = await Promise.all([
+  // Section counts and the export verdict come from the ONE final-export gate,
+  // as in module3Readiness above; the inventory and high-severity count are
+  // this command's own reads.
+  const [sourcesRes, contradictionsRes, verdict] = await Promise.all([
     pool.query(
       `SELECT source_type AS "sourceType", COUNT(*)::int AS "count"
        FROM cmc_source_objects
@@ -414,17 +423,12 @@ export async function cmcStatus(ctx: CommandContext, params: Record<string, unkn
       [orgId, projectId],
     ),
     pool.query(
-      `SELECT approval_state AS "approvalState", stale
-       FROM cmc_module3_sections
-       WHERE organization_id = $1 AND project_id = $2`,
-      [orgId, projectId],
-    ),
-    pool.query(
       `SELECT severity, status
        FROM cmc_contradictions
        WHERE organization_id = $1 AND project_id = $2`,
       [orgId, projectId],
     ),
+    evaluateFinalExportGate({ orgId, projectId, actorId: String(ctx.userId) }),
   ]);
 
   const sourceTypeBreakdown: Record<string, number> = {};
@@ -436,20 +440,11 @@ export async function cmcStatus(ctx: CommandContext, params: Record<string, unkn
     totalSources += n;
   }
 
-  const totalSections = sectionsRes.rows.length;
-  const approvedSections = sectionsRes.rows.filter((r: any) => r.approvalState === 'approved').length;
-  const staleSections = sectionsRes.rows.filter((r: any) => r.stale).length;
-
-  const openContradictions = contradictionsRes.rows.filter(
-    (r: any) => r.status !== 'resolved' && r.status !== 'closed',
-  );
-  const openCritical = openContradictions.filter((r: any) => r.severity === 'critical').length;
-  const openHigh = openContradictions.filter((r: any) => r.severity === 'high').length;
-
-  const exportReady = totalSections > 0
-    && approvedSections === totalSections
-    && staleSections === 0
-    && openCritical === 0;
+  const { totalSections, approvedSections, staleSections, openCriticalContradictions: openCritical } = verdict.data;
+  const openHigh = contradictionsRes.rows.filter(
+    (r: any) => r.status !== 'resolved' && r.status !== 'closed' && r.severity === 'high',
+  ).length;
+  const exportReady = verdict.allowed;
 
   const sourceLines = totalSources === 0
     ? '_No CMC source objects uploaded._'
@@ -464,9 +459,7 @@ export async function cmcStatus(ctx: CommandContext, params: Record<string, unkn
   if (totalSections > 0 && approvedSections < totalSections) {
     blockerLines.push(`${totalSections - approvedSections} section${totalSections - approvedSections > 1 ? 's' : ''} not yet approved`);
   }
-  const blockerBlock = blockerLines.length > 0
-    ? `\n\n**Blockers:**\n${blockerLines.map(b => `- ${b}`).join('\n')}`
-    : '';
+  const blockerBlock = exportBlockerBlock(verdict, blockerLines);
 
   const message =
     `**CMC status**\n` +
@@ -489,6 +482,7 @@ export async function cmcStatus(ctx: CommandContext, params: Record<string, unkn
       openCritical,
       openHigh,
       exportReady,
+      blockedBecause: verdict.error ?? null,
     },
   };
 }
