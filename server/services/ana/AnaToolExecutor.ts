@@ -5219,6 +5219,7 @@ registerToolHandler('check_numerical_integrity', async (input: Record<string, un
         evidence: f.evidence,
       })),
       factsExtracted: report.factsExtracted,
+      labelsCompared: report.labelsCompared,
       candidateCount: report.candidateCount,
       candidates: report.candidates.slice(0, 15).map(c => ({
         label: c.humanLabel,

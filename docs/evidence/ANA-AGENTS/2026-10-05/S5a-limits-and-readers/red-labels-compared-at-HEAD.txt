@@ -1,0 +1,6 @@
+ × server/services/intelligence/__tests__/cross-artifact-consistency-labels-compared.test.ts > checkInternalNumericalIntegrity labelsCompared > is 0 when every labelled figure is stated once (clean, but nothing compared) 8ms
+ × server/services/intelligence/__tests__/cross-artifact-consistency-labels-compared.test.ts > checkInternalNumericalIntegrity labelsCompared > counts a label stated twice with the same value 2ms
+ × server/services/intelligence/__tests__/cross-artifact-consistency-labels-compared.test.ts > checkInternalNumericalIntegrity labelsCompared > counts a label stated twice with different values 1ms
+ × server/services/intelligence/__tests__/cross-artifact-consistency-labels-compared.test.ts > checkInternalNumericalIntegrity labelsCompared > is 0 for text with no labelled figure 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed (4)
