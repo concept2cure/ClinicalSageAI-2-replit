@@ -63,14 +63,35 @@ still "JS".
 - **Mutant:** with the rule never adding the address, all three new test files
   fail (4 tests).
 
-## Not shown live
+## Live, in the running app (added 2026-10-05, after `735c3c46`)
 
-This change was **not** exercised in the running app. The populated demo
-database the earlier sweeps used is not in this session's container, and
-rebuilding it to watch a label render was not worth doing here. The
-verification is the route test through the real router, the form-config test,
-and the mutant. The next launch sweep should look at the Task form's
-"Assign to".
+The first commit of this change could not be run live: this session's new
+container had no populated database. It was run afterwards, on the local
+`clinicalsage` database.
+
+**Database preparation.** The repository's own `deploy-migrate` was applied:
+all 357 files, with `pgvector` installed and the runtime role `c2c` named, so
+its grants were refreshed. The runtime role is non-superuser and NOBYPASSRLS.
+
+**Colleagues.** The colleague sharing the admin's name, and one other, were
+added the way a customer adds them: `POST /api/tenant-users` as the
+organisation admin, 201 each ([`live-setup.jsonl`](live-setup.jsonl)). The
+organisation then holds two accounts named "JM Smith".
+
+The Task form ("Assign to") was read in headless Chromium, signed in as the
+admin ([`live-task-form.json`](live-task-form.json)):
+
+| | Chips, separated by semicolons |
+|---|---|
+| before: `CollabLauncher.tsx` and `taskBoard.routes.ts` at `735c3c46^` ([png](live-before-task-form.png)) | Auto; **JM Smith**; **JM Smith**; Dana Reyes |
+| after: trunk ([png](live-after-task-form.png)) | Auto; JM Smith · jm.smith@concept2cure.pro; JM Smith · jm.smith.qa@concept2cure.pro; Dana Reyes |
+
+A unique name is unchanged, and the avatar initials stay "JS". The endpoint
+itself returns the same labels
+([`live-assignees-endpoint.jsonl`](live-assignees-endpoint.jsonl), addresses
+shortened). The protocol reviewer select was not opened live, because this
+database has no protocol project. It uses the same function, and its
+form-config test covers it.
 
 ## Gates
 
