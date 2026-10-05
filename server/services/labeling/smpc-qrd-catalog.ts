@@ -2,8 +2,9 @@
  * EU SmPC (Summary of Product Characteristics) — QRD template section catalog.
  *
  * The authoritative section structure of an EU SmPC per the EMA/HMA QRD
- * (Quality Review of Documents) human product-information template (v10.x):
- * sections 1–10 with the section-4/5/6 sub-sections. Pure, deterministic, DB-free
+ * (Quality Review of Documents) human product-information template (v10.4,
+ * 02/2024; see SMPC_QRD_BASIS): sections 1–10 with the section-4/5/6
+ * sub-sections, and 11–12 for radiopharmaceuticals only. Pure, deterministic, DB-free
  * so it can be unit-tested and drives both the read route's skeleton and the
  * completeness rollup. This is the EU companion to the USPI (21 CFR 201.57)
  * structure the c2c_labeling_pi store already carries.
@@ -12,18 +13,57 @@
  * @compliance EMA/HMA QRD human product-information template; Dir 2001/83/EC Art. 11.
  */
 
+import type { E3Basis } from '../ind/ctd/types';
+
+/**
+ * Basis for the SmPC headings below. The EMA-hosted QRD v10.4 template
+ * (02/2024) was found by search on 2026-10-05, but its PDF could not be read
+ * (ema.europa.eu is refused by this environment's egress proxy), so the
+ * heading wording is recall until the template text is read.
+ */
+export const SMPC_QRD_BASIS: E3Basis = {
+  ref: 'EMA QRD human product-information template v10.4 (02/2024), Annex I SmPC',
+  confidence: 'recall',
+  url: 'https://www.ema.europa.eu/en/documents/template-form/qrd-product-information-template-version-104-highlighted_en.pdf',
+};
+
 export interface SmpcSection {
   /** QRD section number, e.g. '4', '4.1'. */
   number: string;
+  /** QRD heading in sentence case; `qrdHeader` gives the form an SmPC prints. */
   title: string;
   /** 0 = top-level section, 1 = sub-section (e.g. 4.1). */
   depth: number;
-  /** Sections a first authorisation must have authored content in to be complete. */
+  /**
+   * Sections a first authorisation must have authored content in to be complete.
+   * This is content readiness, not heading presence: every heading 1-10 is in
+   * the section guard (`qrdGuardHeader`) whether or not this is set.
+   */
   required: boolean;
+  /**
+   * The heading the section guard looks for when the QRD heading carries
+   * optional bracketed text. 6.6 reads 'Special precautions for disposal
+   * <and other handling>' in the template; a draft that leaves the bracket out
+   * is correct, so the guard looks for the part that is always there.
+   */
+  guardHeader?: string;
+  /** Sections 11 and 12 exist only in the SmPC of a radiopharmaceutical. */
+  radiopharmaceuticalOnly?: true;
 }
 
-/** The QRD SmPC section tree (sections 1–10 + 4.x / 5.x / 6.x sub-sections). */
-export const SMPC_QRD_SECTIONS: SmpcSection[] = [
+/**
+ * The QRD SmPC section tree: sections 1-10 with the 4.x / 5.x / 6.x
+ * sub-sections, then 11 and 12, which only a radiopharmaceutical carries.
+ * The section guard (`labeling-authoring.ts`), the placement advisor
+ * (`labeling-structure.ts`), `structure_smpc`
+ * (`labeling-intelligence-knowledge.ts`) and the document template
+ * (`document-template-library.ts`) read it and add their own per-number
+ * overlays. One copy still holds its own literals:
+ * `server/services/global-ri/labeling-requirements.ts` LABELING_REQUIREMENTS.EMA,
+ * which also lacks 5.1-5.3 and 6.1-6.6. Until it reads this catalog, this is
+ * not the only list of SmPC headings.
+ */
+const SMPC_QRD_TREE: SmpcSection[] = [
   { number: '1', title: 'Name of the medicinal product', depth: 0, required: true },
   { number: '2', title: 'Qualitative and quantitative composition', depth: 0, required: true },
   { number: '3', title: 'Pharmaceutical form', depth: 0, required: true },
@@ -47,12 +87,38 @@ export const SMPC_QRD_SECTIONS: SmpcSection[] = [
   { number: '6.3', title: 'Shelf life', depth: 1, required: true },
   { number: '6.4', title: 'Special precautions for storage', depth: 1, required: true },
   { number: '6.5', title: 'Nature and contents of container', depth: 1, required: true },
-  { number: '6.6', title: 'Special precautions for disposal and other handling', depth: 1, required: true },
+  { number: '6.6', title: 'Special precautions for disposal and other handling', depth: 1, required: true, guardHeader: '6.6 Special precautions for disposal' },
   { number: '7', title: 'Marketing authorisation holder', depth: 0, required: true },
   { number: '8', title: 'Marketing authorisation number(s)', depth: 0, required: false },
-  { number: '9', title: 'Date of first authorisation / renewal of the authorisation', depth: 0, required: false },
+  { number: '9', title: 'Date of first authorisation/renewal of the authorisation', depth: 0, required: false },
   { number: '10', title: 'Date of revision of the text', depth: 0, required: false },
+  { number: '11', title: 'Dosimetry', depth: 0, required: true, radiopharmaceuticalOnly: true },
+  { number: '12', title: 'Instructions for preparation of radiopharmaceuticals', depth: 0, required: true, radiopharmaceuticalOnly: true },
 ];
+
+/**
+ * The SmPC sections for a product, in document order. Sections 11 and 12 are
+ * included only for a radiopharmaceutical.
+ */
+export function smpcQrdSections(opts: { radiopharmaceutical?: boolean } = {}): SmpcSection[] {
+  return SMPC_QRD_TREE.filter((s) => opts.radiopharmaceutical || !s.radiopharmaceuticalOnly);
+}
+
+/** The QRD SmPC section tree of a medicinal product that is not a radiopharmaceutical (sections 1-10). */
+export const SMPC_QRD_SECTIONS: SmpcSection[] = smpcQrdSections();
+
+/**
+ * The heading as the QRD template prints it: a top-level section as
+ * 'N. UPPER CASE TITLE', a sub-section as 'N.N Sentence case title'.
+ */
+export function qrdHeader(s: SmpcSection): string {
+  return s.depth === 0 ? `${s.number}. ${s.title.toUpperCase()}` : `${s.number} ${s.title}`;
+}
+
+/** The heading the section guard requires verbatim in a draft (optional QRD text left out). */
+export function qrdGuardHeader(s: SmpcSection): string {
+  return s.guardHeader ?? qrdHeader(s);
+}
 
 const REQUIRED_NUMBERS = new Set(SMPC_QRD_SECTIONS.filter((s) => s.required).map((s) => s.number));
 

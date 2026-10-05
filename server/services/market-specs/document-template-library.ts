@@ -25,6 +25,7 @@
  */
 
 import { e3TopLevel, e3Children, type E3Section } from '../ind/ctd/index.js';
+import { SMPC_QRD_SECTIONS } from '../labeling/smpc-qrd-catalog';
 
 export interface TemplateSection {
   /** Section number within the document (e.g. "2.5.4", "4.1", "I.1"). */
@@ -54,6 +55,20 @@ function e3TemplateSection(s: E3Section): TemplateSection {
     ?? (s.contains?.length ? s.contains.join('; ') : `Covers ${e3Children(s.number).map((c) => `${c.number} ${c.title}`).join('; ')}.`);
   return { number: s.number, heading: s.title, purpose, required: s.applies === 'always' };
 }
+
+/** What each top-level SmPC section is for, keyed by QRD section number (sections 1–10). */
+const SMPC_PURPOSE: Record<string, string> = {
+  '1': 'Invented name, strength, and pharmaceutical form.',
+  '2': 'Active substance(s) and excipients with known effect.',
+  '3': 'The pharmaceutical form and appearance.',
+  '4': 'Indications, posology, contraindications, warnings, interactions, fertility/pregnancy, effects on driving, undesirable effects, overdose (4.1–4.9).',
+  '5': 'Pharmacodynamic, pharmacokinetic, and preclinical safety properties (5.1–5.3).',
+  '6': 'Excipients, incompatibilities, shelf life, storage, container, handling (6.1–6.6).',
+  '7': 'Name and address of the MAH.',
+  '8': 'The MA number(s).',
+  '9': 'Authorisation and renewal dates.',
+  '10': 'Date the SmPC text was last revised.',
+};
 
 export const DOCUMENT_TEMPLATES: DocumentTemplateStructure[] = [
   // ── CTD Module 2 summaries (ICH M4) ─────────────────────────────────────────
@@ -156,19 +171,15 @@ export const DOCUMENT_TEMPLATES: DocumentTemplateStructure[] = [
     id: 'smpc',
     title: 'Summary of Product Characteristics (SmPC)',
     families: ['ectd'],
-    regulatoryBasis: 'Directive 2001/83/EC Art. 11; EU SmPC guideline / QRD template',
-    sections: [
-      { number: '1', heading: 'Name of the Medicinal Product', purpose: 'Invented name, strength, and pharmaceutical form.', required: true },
-      { number: '2', heading: 'Qualitative and Quantitative Composition', purpose: 'Active substance(s) and excipients with known effect.', required: true },
-      { number: '3', heading: 'Pharmaceutical Form', purpose: 'The pharmaceutical form and appearance.', required: true },
-      { number: '4', heading: 'Clinical Particulars', purpose: 'Indications, posology, contraindications, warnings, interactions, fertility/pregnancy, effects on driving, undesirable effects, overdose (4.1–4.9).', required: true },
-      { number: '5', heading: 'Pharmacological Properties', purpose: 'Pharmacodynamic, pharmacokinetic, and preclinical safety properties (5.1–5.3).', required: true },
-      { number: '6', heading: 'Pharmaceutical Particulars', purpose: 'Excipients, incompatibilities, shelf life, storage, container, handling (6.1–6.6).', required: true },
-      { number: '7', heading: 'Marketing Authorisation Holder', purpose: 'Name and address of the MAH.', required: true },
-      { number: '8', heading: 'Marketing Authorisation Number(s)', purpose: 'The MA number(s).', required: true },
-      { number: '9', heading: 'Date of First Authorisation / Renewal', purpose: 'Authorisation and renewal dates.', required: true },
-      { number: '10', heading: 'Date of Revision of the Text', purpose: 'Date the SmPC text was last revised.', required: true },
-    ],
+    regulatoryBasis: 'Directive 2001/83/EC Art. 11; EU SmPC guideline / QRD template v10.4 (02/2024)',
+    // Numbers and headings from the one SmPC record (smpc-qrd-catalog.ts);
+    // the purpose notes are this library's overlay, keyed by number.
+    sections: SMPC_QRD_SECTIONS.filter((s) => s.depth === 0).map((s) => ({
+      number: s.number,
+      heading: s.title,
+      purpose: SMPC_PURPOSE[s.number] ?? '',
+      required: true,
+    })),
   },
 
   // ── EU device — GSPR (MDR Annex I) ──────────────────────────────────────────

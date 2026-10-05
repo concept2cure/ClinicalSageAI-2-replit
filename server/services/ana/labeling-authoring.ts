@@ -22,6 +22,7 @@
 
 import type { LabelFormat } from './labeling-structure';
 import { PLR_FORMAT_RULES } from '../ind/ctd/fda-technical-rules.js';
+import { smpcQrdSections, qrdHeader, qrdGuardHeader, SMPC_QRD_BASIS } from '../labeling/smpc-qrd-catalog';
 
 export type LabelingMode = 'us' | 'eu';
 
@@ -30,6 +31,12 @@ export interface RequiredLabelSection {
   number: string;
   /** The exact header text expected verbatim in the authored draft. */
   header: string;
+  /**
+   * The heading the scaffold prints, when it is longer than what the guard
+   * requires: the QRD 6.6 heading carries optional text the guard does not
+   * insist on, but the scaffold an author receives carries the full heading.
+   */
+  scaffoldHeader?: string;
 }
 
 export interface LabelingModeSpec {
@@ -86,30 +93,20 @@ const US_REQUIRED: RequiredLabelSection[] = [
 ];
 
 /**
- * EU SmPC mandatory QRD sections (EMA QRD template; fixed numbering). The QRD
- * template requires every numbered heading be present (omitted content is
- * marked "Not applicable"), so the section guard checks the full fixed set.
+ * EU SmPC mandatory QRD headings, in document order, read from the QRD
+ * catalog (`server/services/labeling/smpc-qrd-catalog.ts`): every heading of
+ * sections 1–10, top-level and sub-section. The QRD template keeps every
+ * numbered heading (a section with nothing to say is marked "Not applicable"),
+ * so the guard checks all of them. Sections 11 and 12 (radiopharmaceuticals
+ * only) are not in it. Until 2026-10-05 this was a hand-typed list of 18
+ * headings with no 4, 5, 6, 6.2, 6.3, 6.5, 6.6, 8, 9 or 10, so an SmPC with no
+ * shelf life or container section was reported complete.
  */
-const EU_REQUIRED: RequiredLabelSection[] = [
-  { number: '1', header: '1. NAME OF THE MEDICINAL PRODUCT' },
-  { number: '2', header: '2. QUALITATIVE AND QUANTITATIVE COMPOSITION' },
-  { number: '3', header: '3. PHARMACEUTICAL FORM' },
-  { number: '4.1', header: '4.1 Therapeutic indications' },
-  { number: '4.2', header: '4.2 Posology and method of administration' },
-  { number: '4.3', header: '4.3 Contraindications' },
-  { number: '4.4', header: '4.4 Special warnings and precautions for use' },
-  { number: '4.5', header: '4.5 Interaction with other medicinal products and other forms of interaction' },
-  { number: '4.6', header: '4.6 Fertility, pregnancy and lactation' },
-  { number: '4.7', header: '4.7 Effects on ability to drive and use machines' },
-  { number: '4.8', header: '4.8 Undesirable effects' },
-  { number: '4.9', header: '4.9 Overdose' },
-  { number: '5.1', header: '5.1 Pharmacodynamic properties' },
-  { number: '5.2', header: '5.2 Pharmacokinetic properties' },
-  { number: '5.3', header: '5.3 Preclinical safety data' },
-  { number: '6.1', header: '6.1 List of excipients' },
-  { number: '6.4', header: '6.4 Special precautions for storage' },
-  { number: '7', header: '7. MARKETING AUTHORISATION HOLDER' },
-];
+const EU_REQUIRED: RequiredLabelSection[] = smpcQrdSections().map((s) => {
+  const header = qrdGuardHeader(s);
+  const full = qrdHeader(s);
+  return full === header ? { number: s.number, header } : { number: s.number, header, scaffoldHeader: full };
+});
 
 const SPECS: Record<LabelingMode, LabelingModeSpec> = {
   us: {
@@ -124,7 +121,7 @@ const SPECS: Record<LabelingMode, LabelingModeSpec> = {
     mode: 'eu',
     format: 'smpc',
     label: 'EU Summary of Product Characteristics (SmPC / QRD)',
-    basis: 'EMA QRD template; Directive 2001/83/EC Article 11',
+    basis: `${SMPC_QRD_BASIS.ref} (heading wording: ${SMPC_QRD_BASIS.confidence}); Directive 2001/83/EC Article 11`,
     structure: 'QRD',
     requiredSections: EU_REQUIRED,
   },
@@ -220,7 +217,7 @@ export function buildTemplateReplacements(
   for (const s of spec.requiredSections) {
     // INTEGRATION: live section body text replaces the header-only scaffold when
     // the approved/source label content is joined in.
-    replacements[`{{SECTION_${s.number.replace(/\./g, '_')}}}`] = s.header;
+    replacements[`{{SECTION_${s.number.replace(/\./g, '_')}}}`] = s.scaffoldHeader ?? s.header;
   }
   return replacements;
 }
