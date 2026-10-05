@@ -32,7 +32,7 @@
 import { Router, Request, Response } from 'express';
 import { authMiddleware } from '../../auth';
 import { requirePlatformAdmin } from '../../middleware/requirePlatformAdmin';
-import { isBusinessAdmin } from '../../middleware/requireBusinessAdmin';
+import { hasBusinessStanding } from '../../middleware/requireBusinessAdmin';
 import { query, transaction } from '../../db';
 import { createScopedLogger } from '../../utils/logger';
 import { writeChainedAuditRow } from '../../services/auditService';
@@ -147,8 +147,10 @@ router.post('/grants', async (req: Request, res: Response) => {
     const reason = body.reason.trim();
 
     // Designating finance personnel is stricter: the CALLER must themselves be
-    // a business admin to grant a business-tier role.
-    if (BUSINESS_TIER_ROLES.has(role) && !isBusinessAdmin(req)) {
+    // a business admin to grant a business-tier role. That is platform
+    // standing (allowlist or an active business grant), never the caller's
+    // tenant membership role (D6, 2026-10-05).
+    if (BUSINESS_TIER_ROLES.has(role) && !(await hasBusinessStanding(req))) {
       return res.status(403).json({
         error: 'Granting a business-tier role (owner / business_admin / super_admin) requires the caller to be a business administrator.',
       });

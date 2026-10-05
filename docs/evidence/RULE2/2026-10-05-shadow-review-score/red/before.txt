@@ -1,0 +1,193 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — only a countable assessment completes a run > counts a "Critical" finding as critical
+{
+  "timestamp": "2026-10-05T01:34:22.472Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "AI_GENERATE",
+    "resourceType": "shadow_review_run",
+    "resourceId": 2
+  }
+}
+
+stdout | server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — only a countable assessment completes a run > counts a "Critical" finding as critical
+{
+  "timestamp": "2026-10-05T01:34:22.473Z",
+  "level": "info",
+  "message": "[shadow-review-service] Shadow review complete",
+  "context": {
+    "runId": 2,
+    "sequenceId": 2,
+    "organizationId": 7,
+    "findings": 1
+  }
+}
+
+stderr | server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — only a countable assessment completes a run > completes a run whose model returned an explicit, empty findings list
+{
+  "timestamp": "2026-10-05T01:34:22.490Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "AI_GENERATE",
+    "resourceType": "shadow_review_run",
+    "resourceId": 4
+  }
+}
+
+stdout | server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — only a countable assessment completes a run > completes a run whose model returned an explicit, empty findings list
+{
+  "timestamp": "2026-10-05T01:34:22.490Z",
+  "level": "info",
+  "message": "[shadow-review-service] Shadow review complete",
+  "context": {
+    "runId": 4,
+    "sequenceId": 4,
+    "organizationId": 7,
+    "findings": 0
+  }
+}
+
+stderr | server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview carries its audit-row outcome > a lost row: the run completes and the result says the row is missing
+{
+  "timestamp": "2026-10-05T01:34:22.498Z",
+  "level": "error",
+  "message": "[audit-write-outcome] Audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist",
+  "context": {
+    "action": "AI_GENERATE",
+    "resourceType": "shadow_review_run",
+    "resourceId": 5,
+    "reason": "audit store unreachable"
+  }
+}
+
+stdout | server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview carries its audit-row outcome > a lost row: the run completes and the result says the row is missing
+{
+  "timestamp": "2026-10-05T01:34:22.498Z",
+  "level": "info",
+  "message": "[shadow-review-service] Shadow review complete",
+  "context": {
+    "runId": 5,
+    "sequenceId": 4,
+    "organizationId": 7,
+    "findings": 0
+  }
+}
+
+stdout | server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview carries its audit-row outcome > a written row says so
+{
+  "timestamp": "2026-10-05T01:34:22.507Z",
+  "level": "info",
+  "message": "[shadow-review-service] Shadow review complete",
+  "context": {
+    "runId": 6,
+    "sequenceId": 4,
+    "organizationId": 7,
+    "findings": 0
+  }
+}
+
+stderr | server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — the gate score is the severity aggregate, never the model's estimate > a model's 0.95 beside one minor finding: the run records the aggregate of that one finding
+{
+  "timestamp": "2026-10-05T01:34:22.513Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "AI_GENERATE",
+    "resourceType": "shadow_review_run",
+    "resourceId": 7
+  }
+}
+
+stdout | server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — the gate score is the severity aggregate, never the model's estimate > a model's 0.95 beside one minor finding: the run records the aggregate of that one finding
+{
+  "timestamp": "2026-10-05T01:34:22.513Z",
+  "level": "info",
+  "message": "[shadow-review-service] Shadow review complete",
+  "context": {
+    "runId": 7,
+    "sequenceId": 4,
+    "organizationId": 7,
+    "findings": 1
+  }
+}
+
+stderr | server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — the gate score is the severity aggregate, never the model's estimate > an empty sequence is a critical refuse-to-file finding the server records, whatever the model says
+{
+  "timestamp": "2026-10-05T01:34:22.523Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "AI_GENERATE",
+    "resourceType": "shadow_review_run",
+    "resourceId": 8
+  }
+}
+
+stdout | server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — the gate score is the severity aggregate, never the model's estimate > an empty sequence is a critical refuse-to-file finding the server records, whatever the model says
+{
+  "timestamp": "2026-10-05T01:34:22.523Z",
+  "level": "info",
+  "message": "[shadow-review-service] Shadow review complete",
+  "context": {
+    "runId": 8,
+    "sequenceId": 5,
+    "organizationId": 7,
+    "findings": 0
+  }
+}
+
+ ✓ server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — only a countable assessment completes a run > fails a reply with no findings array instead of completing a run with 0 criticals 23ms
+ ✓ server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — only a countable assessment completes a run > counts a "Critical" finding as critical 12ms
+ ✓ server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — only a countable assessment completes a run > fails a reply whose severity is not one the gate knows 7ms
+ ✓ server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — only a countable assessment completes a run > completes a run whose model returned an explicit, empty findings list 9ms
+ ✓ server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview carries its audit-row outcome > a lost row: the run completes and the result says the row is missing 8ms
+ ✓ server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview carries its audit-row outcome > a written row says so 7ms
+ × server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — the gate score is the severity aggregate, never the model's estimate > a model's 0.95 beside one minor finding: the run records the aggregate of that one finding 10ms
+   → expected 0.95 to be close to 0.275, received difference is 0.6749999999999999, but expected 0.0005
+ × server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — the gate score is the severity aggregate, never the model's estimate > an empty sequence is a critical refuse-to-file finding the server records, whatever the model says 8ms
+   → expected +0 to be 1 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — the gate score is the severity aggregate, never the model's estimate > a model's 0.95 beside one minor finding: the run records the aggregate of that one finding
+AssertionError: expected 0.95 to be close to 0.275, received difference is 0.6749999999999999, but expected 0.0005
+ ❯ server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts:142:33
+    140|     const result = await runShadowReview({ sequenceId: 4, organization…
+    141|     const expected = aggregateRisk([{ dimension: 'rtf', severity: 'min…
+    142|     expect(result.rtfRiskScore).toBeCloseTo(expected.rtf, 3);
+       |                                 ^
+    143|     expect(result.crlRiskScore).toBe(0);
+    144|     const stored = await scoresOf(result.runId);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts > runShadowReview — the gate score is the severity aggregate, never the model's estimate > an empty sequence is a critical refuse-to-file finding the server records, whatever the model says
+AssertionError: expected +0 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/services/shadow-review/__tests__/shadow-review-output-validation.pglite.test.ts:160:33
+    158|     holder.reply = '{"rtfRiskScore":0.0,"crlRiskScore":0.0,"findings":…
+    159|     const result = await runShadowReview({ sequenceId: 5, organization…
+    160|     expect(result.rtfRiskScore).toBe(1);
+       |                                 ^
+    161|     expect(await gateInputs(5)).toEqual({ completedRuns: 1, openCritic…
+    162|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 passed (8)
+   Start at  01:34:14
+   Duration  7.68s (transform 913ms, setup 95ms, import 1.96s, tests 4.72s, environment 0ms)
+

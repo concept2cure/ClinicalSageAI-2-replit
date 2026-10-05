@@ -1,0 +1,12 @@
+Mutant G03-depth-unbounded: a deep proposal overflows the stack
+
+--- server/services/ana/proposal-check.ts
+- const MAX_DEPTH = 32;
++ const MAX_DEPTH = Infinity;
+
+Tests run: tests/services/proposal-check.test.ts
+Result: KILLED
+
+ × tests/services/proposal-check.test.ts > the prose a proposal would store > stops at a fixed depth, so no proposal shape can overflow the stack 38ms
+      Tests  1 failed | 6 passed (7)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

@@ -1,0 +1,13 @@
+Mutant G12-frame-check-unvalidated: a malformed check from the frame is rendered as if it were one
+
+--- client/src/concept2cure/components/ana/useGovernedAction.ts
+- // The strip's own reader: a malformed check is no check, never a guess.
+  const check = readAnswerCheck(event.check);
++ const check = event.check as AnswerCheckView | undefined;
+
+Tests run: client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the approval frame carries the server's check of the draft > a malformed check is no check, and the prompt still opens 6ms
+      Tests  1 failed | 6 passed (7)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

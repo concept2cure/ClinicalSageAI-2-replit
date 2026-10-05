@@ -1,0 +1,12 @@
+Mutant S54-no-sources-hides-person: with nothing consulted, the rows do not say which claims are the person's
+
+--- client/src/concept2cure/components/ana/AnswerCheckRows.tsx
+- {check.fromPerson.length > 0 && (
++ {false && (
+
+Tests run: client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/v2/__tests__/anaGrounding.test.tsx > AnaGrounding — what the engine could not check is said, never passed > with no source consulted, a claim only in the person's message is said to be theirs (F1) 12ms
+      Tests  1 failed | 28 passed (29)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
