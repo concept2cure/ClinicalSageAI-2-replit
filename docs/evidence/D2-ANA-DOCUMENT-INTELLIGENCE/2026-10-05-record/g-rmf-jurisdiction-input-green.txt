@@ -1,0 +1,200 @@
+# g-rmf-jurisdiction-input green, 2026-10-05 (after extracting parseRmfJurisdiction)
+# new test, verbose:
+ ✓ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > declares an optional jurisdiction input whose values are exactly the RMF jurisdictions 6ms
+ ✓ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > returns the EU AFAP policy beside the RMF structure for an EU MDR file 4ms
+ ✓ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > returns the policy beside the assessment when sections are given (EU IVDR) 2ms
+ ✓ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > returns riskAcceptabilityPolicy(EU_MDR) unchanged, with no restated copy 5ms
+ ✓ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > returns riskAcceptabilityPolicy(EU_IVDR) unchanged, with no restated copy 1ms
+ ✓ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > returns riskAcceptabilityPolicy(FDA) unchanged, with no restated copy 0ms
+ ✓ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > returns riskAcceptabilityPolicy(OTHER) unchanged, with no restated copy 0ms
+ ✓ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > states the FDA policy as manufacturer-defined, not AFAP 0ms
+ ✓ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > returns no policy when no jurisdiction is given, rather than assuming one 1ms
+ ✓ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > refuses an unknown jurisdiction instead of ignoring it 0ms
+ ✓ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > refuses a jurisdiction for a CER or PER, where no acceptability policy is modelled 1ms
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+
+# new test + tests of the touched files and the policy module:
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk management structure (ISO 14971) > has the core RMF sections with reviewer questions 7ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk management structure (ISO 14971) > asks about pre-defined acceptability criteria and foreseeable misuse 1ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk management structure (ISO 14971) > assesses completeness deterministically 1ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk management structure (ISO 14971) > looks up a section 1ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > EU MDR and EU IVDR require AFAP with no economic justification, citing Annex I §2 1ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > FDA follows the manufacturer-defined ISO 14971:2019 criteria (clauses 4.2 and 4.4) 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > OTHER is not modelled and says so, asserting no economic permission it does not model 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > FDA basis says clause 4.2 NOTE 1 lets the manufacturer's policy adopt ALARP, so economics are the manufacturer's choice 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > never states that ISO 14971:2019 does not use ALARP: clause 4.2 NOTE 1 lists ALARP, ALARA and AFAP as policy options 1ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > FDA statement is labelled recall and calls ISO 14971:2019 a recognised consensus standard, not an FDA rule 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > the EU statement is scoped to devices 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > every basis is well formed and none is presented as checked regulator text 1ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > risk acceptability policy by jurisdiction > is exported from the default export 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags ALARP with a cost justification for the EU 4ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags the spelled-out phrase once, not again as "reasonably practicable" 7ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags "reasonably practicable" on its own 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags economic or disproportionate stopping rules near residual risk 1ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > does not flag AFAP language that rules economics out 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > does not flag the EU policy statement itself 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags an economic stopping rule stated as a reason, as cost-effectiveness or as an absent budget: Further mitigation of the residual risk was not implemented for economic reasons. 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags an economic stopping rule stated as a reason, as cost-effectiveness or as an absent budget: The residual risk is accepted; additional controls are not cost-effective. 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags an economic stopping rule stated as a reason, as cost-effectiveness or as an absent budget: Risk reduction was stopped as there was no budget for a redesign. 9ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > still does not flag a sentence that rules a budget out as a reason 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > does not flag a cost stated as a fact, with no stopping or justification cue 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > does not flag ALARP that the sentence says was not applied 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > flags ALARP used as a criterion even when a negation sits earlier in the sentence 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > returns [] for FDA and OTHER, where ISO 14971:2019 leaves the criteria to the manufacturer 0ms
+ ✓ server/services/market-specs/__tests__/risk-management-structure.test.ts > checkRmfAcceptabilityLanguage > returns [] for empty input 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > keeps dotted section codes and annex keys (it used to return only ["see"]) 11ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > keeps eSTAR CH tokens whole, without a stray "05.06" fragment 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > takes a code at the end of a sentence or in brackets without the punctuation 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > takes a CTD Module 3 code with a letter segment whole, never a "3.2" fragment 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > emits no fragment from a code followed by a dot and a word 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > never emits the region acronyms eu, us or jp 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > tokenize — section codes, annex keys and eSTAR CH tokens > is additive: the word tokens it produced before are unchanged 3ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > "2.5" reaches a tool describing 2.5, and never one describing only 12.5 or 2.5.1 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > a code in the description (+2) outranks one matching word (+1) 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > a code in the name (+3) outranks a code in the description (+2) 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > a CTD Module 3 code does not reach a tool described only by "21 CFR 3.2(e)" 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > an annex key does not match inside a longer one ("ii.6.1" is not "iii.6.1") 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > scoring — a code token matches on a code boundary and outweighs one word > a single-number annex key is a code token too ("ii.6" is not inside "iii.6.1" or "ii.61") 0ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > Module 3 codes on the real catalog — no combination-product tools for a drug-substance turn > "draft 3.2.P.5.1" offers none of the 21 CFR 3.2(e) tools 5ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > Module 3 codes on the real catalog — no combination-product tools for a drug-substance turn > "what goes in 3.2.S.4.1 specification for the drug substance" offers none of the 21 CFR 3.2(e) tools 31ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'draft_clinical_summary_m2_7'" for: "'write the 2.7.3 for our EU MAA'" 7ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'draft_nonclinical_summaries_m2_6'" for: "'write sections 2.6.2 and 2.6.4 for th…'" 13ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'get_csr_template'" for: "'what goes in 5.3.5.3'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'get_document_section_requirements'" for: "'what goes in the 2.7.3 summary of cli…'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'get_document_section_requirements'" for: "'what should the clinical overview 2.5…'" 21ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — full catalog, cap 50 > offers "'assess_device_evidence_structure'" for: "'what goes in the performance evaluati…'" 5ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > every expected tool is in the launch-scoped pool (so the cases cannot pass vacuously) 1ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'draft_clinical_summary_m2_7'" for: "'write the 2.7.3 for our EU MAA'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'draft_nonclinical_summaries_m2_6'" for: "'write sections 2.6.2 and 2.6.4 for th…'" 2ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'get_csr_template'" for: "'what goes in 5.3.5.3'" 4ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'what goes in the 2.7.3 summary of cli…'" 7ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'get_document_section_requirements'" for: "'what should the clinical overview 2.5…'" 12ms
+ ✓ server/services/ana/__tests__/tool-selection-tokenize.test.ts > routing on section codes — production composition (launch-scoped pool, self-drive pinned) > offers "'assess_device_evidence_structure'" for: "'what goes in the performance evaluati…'" 12ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > does not call every outline a factual spine from published guidance 2ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > names every outline the tool serves, by template id 1ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > calls an outline record-derived only when the library reads it from that record 2ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > names every other outline as kept by hand — PBRER, IB, RMP and the cover letter among them 3ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > says the PBRER list is an interim E2C(R2) copy and the cover-letter headings are not a regulator text 0ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > tells AnA to present a hand-kept outline as the platform's, not as the guidance's text 0ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > keeps the rule, the input usage and the record list ahead of the OpenAI trim, with the hand-kept list last 0ms
+ ✓ server/services/ana/__tests__/document-template-description.test.ts > get_document_template description — says which outlines are canonical > keeps the input contract 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission-center AnA tools — registration > registers a handler for every submission-center tool 6ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission-center AnA tools — registration > exposes every submission-center tool in ALL_ANA_TOOLS with a valid schema 5ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > diffs prior vs desired and assigns operations 38ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > forwards the prior leaf ID + backbone and prior_sequence_prefix so a replace names the leaf it supersedes 12ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > never names a prior leaf by its file path: listed with only an href, a replace carries no pointer 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > refuses to auto-load a prior sequence without tenant context (org from ToolContext only) 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > does NOT engage auto-load when explicit prior_leaves are supplied (org not required) 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > convert_to_rps_v4 (pure) > maps v3 operations to RPS and emits one document + CoU per leaf 769ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > convert_to_rps_v4 (pure) > points relatedContextOfUse at the prior sequence for a lifecycle op 2ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > convert_to_rps_v4 (pure) > returns serialized RPS message XML when include_xml is set 2ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > generate_stf (pure) > produces one stf-<study-id>.xml per study, pointing at index.xml leaf IDs 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > generate_stf (pure) > returns a structured error when a leaf has no index.xml leaf ID 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > generate_stf (pure) > returns a structured error when a tagged leaf is missing its file-tag 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > check_ectd_cross_references (pure) > resolves present references and flags missing targets 2ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > validate_ectd_package (pure) > returns a verdict, score, and findings for a leaf set 140ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > plan_submission refuses without org/user context 2ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > plan_submission validates required inputs 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > explain_validation_findings refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > cross_region_gap_analysis validates required inputs 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > dispatch_qc_check refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > trace_provenance refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > place_into_sequence refuses without org/user context (upsertLeaf is tenant-scoped) 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > place_into_sequence validates required inputs before touching the core 14ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > check_consistency validates required inputs 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_readiness refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_readiness validates the pathway enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_pathway_manifest refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_pathway_manifest validates the pathway enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > list_validation_rules returns the corpus without tenant context 23ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > list_validation_rules validates the region enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_market_submission_spec returns a single spec by id 91ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_market_submission_spec filters by market without tenant context 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_market_submission_spec validates the family enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_document_template returns a document spine by id 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_document_template lists a family without tenant context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > validate_market_formatting enforces a spec and flags a bad name 66ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > validate_market_formatting errors on an unknown spec 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_submission_requirements returns and assesses a type 20ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_eligibility checks all-criteria-met 12ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_eligibility errors on an unknown designation 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_post_submission_change recommends a category from flags 19ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_post_submission_change lists the catalog without flags 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_device_evidence_structure gap-checks a CER 31ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_device applies the MDR rules 2ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_device_reviewer_checklist returns the 510(k) reviewer questions 84ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_device validates the framework 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_biocompatibility_endpoints returns endpoints for a permanent implant 21ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_device_evidence_structure now handles rmf 3ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_device_blueprint assembles the reverse-workflow view 100ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_device_blueprint validates the submission type 5ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_stored_cer refuses without tenant context 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_stored_cer requires a report_id 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_global_device_strategy maps device evidence across regions 17ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_global_device_strategy validates the kind 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_regulatory_timeline returns the 510(k) RTA + decision goal 13ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_device_blueprint now includes a readiness scorecard 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > validate_udi computes the GS1 check digit 20ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_electrical_standards adds collaterals from facts 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_sterilization_requirements resolves the method standard 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > list_regulatory_capabilities enumerates the layer 16ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_combination_product maps PMOA to the lead center 24ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_combination_product validates components 2ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_qms returns the clause structure and gap-checks 46ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_device_labeling adds sterile elements for a sterile device 38ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > classify_submission_document refuses without org/user context 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > classify_submission_document requires a numeric document_id 4ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > extract_submission_document refuses without org/user context 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > extract_submission_document validates required inputs 1ms
+ ✓ server/services/ana/__tests__/gateway-region-enum-parity.test.ts > advertised tool enums match the region/gateway constants > package_ectd_for_region advertises all twelve regions 13ms
+ ✓ server/services/ana/__tests__/gateway-region-enum-parity.test.ts > advertised tool enums match the region/gateway constants > transmit_submission advertises all twelve regions 1ms
+ ✓ server/services/ana/__tests__/gateway-region-enum-parity.test.ts > advertised tool enums match the region/gateway constants > transmit_submission advertises all thirteen gateways 1ms
+ ✓ server/services/ana/__tests__/gateway-region-enum-parity.test.ts > the constants match the gateway registry > binds at least one gateway for every advertised region 1ms
+ ✓ server/services/ana/__tests__/gateway-region-enum-parity.test.ts > the constants match the gateway registry > advertises every region the registry binds 0ms
+ ✓ server/services/ana/__tests__/gateway-region-enum-parity.test.ts > the constants match the gateway registry > advertises exactly the gateway names the registry binds 0ms
+ ✓ server/services/ana/__tests__/gateway-region-enum-parity.test.ts > tool descriptions name every jurisdiction > package_ectd_for_region names each region agency 1ms
+ ✓ server/services/ana/__tests__/gateway-region-enum-parity.test.ts > tool descriptions name every jurisdiction > transmit_submission names the eight jurisdictions its enum used to hide 0ms
+ ✓ server/services/ana/__tests__/gateway-region-enum-parity.test.ts > the handlers accept what the schema now advertises > package_ectd_for_region does not refuse a previously hidden region 46ms
+ ✓ server/services/ana/__tests__/gateway-region-enum-parity.test.ts > the handlers accept what the schema now advertises > package_ectd_for_region refuses an unknown region, listing all twelve 1ms
+ ✓ server/services/ana/__tests__/gateway-region-enum-parity.test.ts > the handlers accept what the schema now advertises > transmit_submission refuses an unknown gateway, listing all thirteen 1ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > project_knowledge_search is registered, classed read, and in launch scope 2ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > search_document_passages is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > search_project_documents is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > list_project_documents is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > list_vault_documents is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > read_vault_document is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > get_document_versions is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > list_governed_documents is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > read_governed_document is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > compare_vault_versions is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > lookup_ich_guideline is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > check_regulatory_currency is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > check_guidance_freshness is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > search_literature is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > search_clinical_evidence is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > search_drug_adverse_events is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > search_device_adverse_events is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > harness check check_grounding is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > harness check check_numerical_integrity is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > harness check check_dossier_consistency is registered, classed read, and in launch scope 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > never includes a tool that delegates, calls a model, checks for the agent, or reads a path 1ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > RESEARCH_TOOLS > no input of any child tool or check names a path, a directory or a folder 1ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > childToolsFrom > is the research tools the parent was offered, and nothing the parent was not 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > childToolsFrom > a tool the tenant denied (absent from the parent set) is absent from the child set 1ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > run_agent itself > is registered under RUN_AGENT_TOOL, the name the run policy and the toolset read 0ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > source pins > the child never reads the tenant policy, the full tool list or a model override 1ms
+ ✓ server/services/ana/__tests__/sub-agent-toolset.test.ts > source pins > the host carries no provider or model 0ms
+ ✓ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > declares an optional jurisdiction input whose values are exactly the RMF jurisdictions 2ms
+ ✓ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > returns the EU AFAP policy beside the RMF structure for an EU MDR file 3ms
+ ✓ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > returns the policy beside the assessment when sections are given (EU IVDR) 2ms
+ ✓ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > returns riskAcceptabilityPolicy(EU_MDR) unchanged, with no restated copy 1ms
+ ✓ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > returns riskAcceptabilityPolicy(EU_IVDR) unchanged, with no restated copy 0ms
+ ✓ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > returns riskAcceptabilityPolicy(FDA) unchanged, with no restated copy 0ms
+ ✓ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > returns riskAcceptabilityPolicy(OTHER) unchanged, with no restated copy 0ms
+ ✓ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > states the FDA policy as manufacturer-defined, not AFAP 1ms
+ ✓ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > returns no policy when no jurisdiction is given, rather than assuming one 1ms
+ ✓ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > refuses an unknown jurisdiction instead of ignoring it 1ms
+ ✓ server/services/ana/__tests__/rmf-jurisdiction-input.test.ts > assess_device_evidence_structure: RMF jurisdiction input > refuses a jurisdiction for a CER or PER, where no acceptability policy is modelled 0ms
+ Test Files  7 passed (7)
+      Tests  181 passed (181)

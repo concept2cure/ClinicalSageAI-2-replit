@@ -35,6 +35,8 @@ import {
   regionList,
 } from '../submission-gateways/region-constants.js';
 import { ANA_MACHINE_AUTHOR_ID } from '../authoring/revision-ledger.js';
+// The RMF jurisdictions assess_device_evidence_structure advertises and accepts: one list.
+import { RMF_JURISDICTIONS } from './submission-center-tool-defs.js';
 // Type-only: the prior-sequence auto-load path assigns loadPriorSequenceManifest's
 // PriorLeaf[] into the same local as the hand-mapped input leaves. Without this
 // annotation the local is inferred from `p: any`, which makes every field
@@ -10187,11 +10189,27 @@ registerToolHandler('classify_post_submission_change', async (input) => {
   }
 });
 
+/**
+ * The RMF jurisdiction for assess_device_evidence_structure. Its risk-acceptability
+ * policy comes from the one place it is stated (risk-management-structure.ts). An
+ * unknown value, or one given for a document with no modelled policy, is refused
+ * rather than ignored (g-rmf-jurisdiction-input).
+ */
+function parseRmfJurisdiction(document: string, raw: unknown): { jurisdiction: (typeof RMF_JURISDICTIONS)[number] | null } | { error: string } {
+  if (raw === undefined || raw === null) return { jurisdiction: null };
+  if (document !== 'rmf') return { error: "jurisdiction applies to document 'rmf' only; no acceptability policy is modelled for a CER or PER." };
+  const jurisdiction = RMF_JURISDICTIONS.find((j) => j === raw);
+  return jurisdiction ? { jurisdiction } : { error: `jurisdiction must be one of: ${RMF_JURISDICTIONS.join(', ')}.` };
+}
+
 registerToolHandler('assess_device_evidence_structure', async (input) => {
   // Static structure + pure assessment — no tenant context required.
   const document = ['cer', 'per', 'rmf'].includes(input.document as string) ? (input.document as string) : '';
   if (!document) return JSON.stringify({ error: "document must be one of: cer, per, rmf." });
   const present = Array.isArray(input.present_section_ids) ? (input.present_section_ids as string[]) : null;
+  const parsed = parseRmfJurisdiction(document, input.jurisdiction);
+  if ('error' in parsed) return JSON.stringify({ error: parsed.error });
+  const { jurisdiction } = parsed;
   try {
     if (document === 'cer') {
       const m = await import('../market-specs/cer-structure.js');
@@ -10200,8 +10218,9 @@ registerToolHandler('assess_device_evidence_structure', async (input) => {
     }
     if (document === 'rmf') {
       const m = await import('../market-specs/risk-management-structure.js');
-      if (!present) return JSON.stringify({ ok: true, sections: m.RMF_SECTIONS });
-      return JSON.stringify({ ok: true, assessment: m.assessRmfStructure(present) });
+      const policy = jurisdiction ? { acceptabilityPolicy: m.riskAcceptabilityPolicy(jurisdiction) } : {};
+      if (!present) return JSON.stringify({ ok: true, sections: m.RMF_SECTIONS, ...policy });
+      return JSON.stringify({ ok: true, assessment: m.assessRmfStructure(present), ...policy });
     }
     const m = await import('../market-specs/per-structure.js');
     if (!present) return JSON.stringify({ ok: true, pillars: m.PER_PILLARS, sections: m.PER_SECTIONS });
