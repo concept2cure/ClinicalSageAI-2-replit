@@ -1,0 +1,95 @@
+  "promotional",
+]
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts:119:36
+    117|     for (const tool of [CRITIQUE_DRAFT, VERIFY_REVISION, CRITIQUE_DOCU…
+    118|       const props = tool.input_schema.properties as Record<string, { e…
+    119|       expect(props.register?.enum).toEqual(['submission', 'promotional…
+       |                                    ^
+    120|     }
+    121|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/20]⎯
+
+ FAIL  server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > register threads through verify_revision, critique_document and the tools > critique_draft reports the register it applied and honours an explicit one
+AssertionError: expected undefined to be 'submission' // Object.is equality
+
+- Expected:
+"submission"
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts:127:26
+    125|     const text = TERMS_OF_ART[1][1];
+    126|     const sub = JSON.parse(await handler({ text }, {}));
+    127|     expect(sub.register).toBe('submission');
+       |                          ^
+    128|     expect(sub.findings.filter((f: { category: string }) => f.category…
+    129|     const promo = JSON.parse(await handler({ text, register: 'promotio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/20]⎯
+
+ FAIL  server/services/ana/__tests__/writing-gate-regulatory-register.test.ts > register threads through verify_revision, critique_document and the tools > verify_revision and critique_document report the register
+AssertionError: expected undefined to be 'submission' // Object.is equality
+
+- Expected:
+"submission"
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/writing-gate-regulatory-register.test.ts:137:25
+    135|     const text = TERMS_OF_ART[0][1];
+    136|     const vr = JSON.parse(await getToolHandler('verify_revision')!({ o…
+    137|     expect(vr.register).toBe('submission');
+       |                         ^
+    138|     const cd = JSON.parse(await getToolHandler('critique_document')!({…
+    139|     expect(cd.register).toBe('promotional');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/20]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  20 failed | 13 passed (33)
+   Start at  23:40:32
+   Duration  6.00s (transform 3.70s, setup 90ms, import 5.57s, tests 46ms, environment 0ms)
+
+
+== per-test status (same run, pre-change code) ==
+ × writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > A1 ICH E3 §5.3 consent statement gives no claims finding 15ms
+ × writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > A2 statutory designation gives no claims finding 5ms
+ × writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > A3 superiority hypothesis gives no claims finding 1ms
+ × writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > A4 antibacterial endpoint gives no claims finding 1ms
+ × writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > A5 PK elimination gives no claims finding 1ms
+ × writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > A6 AE outcome gives no claims finding 1ms
+ × writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > A7 dose optimization gives no claims finding 1ms
+ × writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > best supportive care gives no claims finding 1ms
+ × writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > BCVA endpoint gives no claims finding 2ms
+ × writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > RECIST best overall response gives no claims finding 1ms
+ × writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > eligibility term gives no claims finding 1ms
+ × writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > microbiological eradication gives no claims finding 1ms
+ × writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > follow-up census gives no claims finding 1ms
+ × writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > reports the register and the basis of each exemption it applied 1ms
+ ✓ writing-gate-regulatory-register.test.ts > submission register (the gate default) exempts regulatory terms of art > exempts only the term of art, not another over-claim in the same sentence 0ms
+ × writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > flags a predicted approval and trial success as high regulatory_outcome findings 1ms
+ ✓ writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > does not flag the standard protocol statement about IRB approval 0ms
+ ✓ writing-gate-regulatory-register.test.ts > submission register catches regulatory-outcome claims (composes governance.detectUnsupportedClaims) > the promotional register does not add the governance lexicon 0ms
+ ✓ writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: All patients responded to treatment. keeps a high claims finding 0ms
+ ✓ writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: The drug works in all patients. keeps a high claims finding 0ms
+ ✓ writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: The treatment cures the disease and eliminates recurrence. keeps a high claims finding 0ms
+ ✓ writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Drug X is the best option. keeps a high claims finding 0ms
+ ✓ writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > submission: Our breakthrough therapy is the most effective option. keeps a high claims finding 0ms
+ ✓ writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: All patients responded to treatment. keeps a high claims finding 0ms
+ ✓ writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: The drug works in all patients. keeps a high claims finding 0ms
+ ✓ writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: The treatment cures the disease and eliminates recurrence. keeps a high claims finding 0ms
+ ✓ writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: Drug X is the best option. keeps a high claims finding 0ms
+ ✓ writing-gate-regulatory-register.test.ts > genuine over-claims stay flagged in both registers > promotional: Our breakthrough therapy is the most effective option. keeps a high claims finding 0ms
+ × writing-gate-regulatory-register.test.ts > promotional register (screen_promotional_language default) is unchanged > still flags "All patients" in the consent statement 0ms
+ × writing-gate-regulatory-register.test.ts > register threads through verify_revision, critique_document and the tools > verifyRevision and critiqueDocument use the submission register by default 1ms
+ × writing-gate-regulatory-register.test.ts > register threads through verify_revision, critique_document and the tools > each tool declares the register input 0ms
+ × writing-gate-regulatory-register.test.ts > register threads through verify_revision, critique_document and the tools > critique_draft reports the register it applied and honours an explicit one 2ms
+ × writing-gate-regulatory-register.test.ts > register threads through verify_revision, critique_document and the tools > verify_revision and critique_document report the register 1ms

@@ -9,7 +9,7 @@
  */
 
 import type { E3Section } from './types.js';
-import { CDISC_CONVENTION, FDA_E3 } from './csr-e3-basis.js';
+import { CDISC_CONVENTION, FDA_E3, FDA_OCMQ, FDA_STF_IG } from './csr-e3-basis.js';
 
 export const E3_RESULTS_SECTIONS: E3Section[] = [
   { number: '10', title: 'Study Patients', applies: 'always' },
@@ -96,11 +96,17 @@ export const E3_RESULTS_SECTIONS: E3Section[] = [
   {
     number: '12.2.2', title: 'Display of Adverse Events', applies: 'always',
     contains: ['All adverse events occurring after study treatment began, displayed in summary tables in section 14.3.1 by body system and preferred term and by treatment group, with the number of patients having each event — including events likely related to the underlying disease or a concomitant illness, unless the authority has agreed otherwise', 'In the body of the report, a summary table of the relatively common adverse events', 'Displays by severity and by the investigator’s assessment of relationship to treatment'],
+    presentation: ['Anticipate FDA’s own Standard Safety Tables and Figures outputs: OND reviewers regenerate AE tables from the ADaM data grouped by OCMQ, by organ system, ordered by decreasing risk difference. The CSR is not required to use this layout'],
     pitfalls: ['Disease-related events left out of the tables without a prior agreement'],
     see: ['14.3.1', '16.2.7'],
-    basis: [FDA_E3],
+    basis: [FDA_E3, FDA_STF_IG, FDA_OCMQ],
   },
-  { number: '12.2.3', title: 'Analysis of Adverse Events', applies: 'always', contains: ['The common adverse events compared between treatment groups, and analysed for factors that may affect their frequency: time course, dose or concentration, demographic characteristics'] },
+  {
+    number: '12.2.3', title: 'Analysis of Adverse Events', applies: 'always',
+    contains: ['The common adverse events compared between treatment groups, and analysed for factors that may affect their frequency: time course, dose or concentration, demographic characteristics'],
+    pitfalls: ['Imbalances visible only when PTs are grouped (OCMQ/SMQ) left for the reviewer to find'],
+    basis: [FDA_STF_IG, FDA_OCMQ],
+  },
   {
     number: '12.2.4', title: 'Listing of Adverse Events by Patient', applies: 'always',
     contains: ['Every adverse event for each patient, including the same event on several occasions, listed in Appendix 16.2.7 with both the preferred term and the original term the investigator used'],

@@ -73,8 +73,19 @@ describe('detectDocumentTemplate — positive matches', () => {
     ['PMA SSED', 'pma summary of safety and effectiveness', 'pma_summary_safety_effectiveness'],
     ['CSR', 'draft a clinical study report', 'clinical_study_report'],
     ['DSUR', 'write the dsur for this ind', 'dsur'],
-    ['Type B Meeting', 'draft a type b meeting request package', 'fda_type_b_meeting_package'],
-    ['EOP2 meeting', 'end of phase 2 meeting', 'fda_type_b_meeting_package'],
+    // One template per lifecycle meeting entry since 2026-10-04 (was one
+    // hand-kept fda_type_b_meeting_package; tests/regulatory/meetings-and-dsur-truth.test.ts).
+    ['Type B Meeting', 'draft a type b meeting request package', 'fda_formal_meeting_package'],
+    ['EOP2 meeting', 'end of phase 2 meeting', 'fda_eop_meeting_package'],
+    ['EOP2 abbreviation', 'draft the EOP2 meeting package', 'fda_eop_meeting_package'],
+    ['Pre-Phase 3 meeting', 'pre-phase 3 meeting briefing', 'fda_eop_meeting_package'],
+    // An EOP1 meeting is Type B(EOP) only for subpart E/H products, otherwise
+    // plain Type B; it gets the generic package, which names the type first.
+    ['EOP1 meeting', 'end of phase 1 meeting', 'fda_formal_meeting_package'],
+    ['EOP1 abbreviation', 'EOP1 meeting package', 'fda_formal_meeting_package'],
+    ['Pre-IND meeting', 'draft our pre-IND meeting package', 'fda_pre_ind_meeting_package'],
+    ['Pre-NDA meeting', 'pre-NDA meeting briefing document', 'fda_pre_nda_meeting_package'],
+    ['Pre-BLA meeting', 'pre-BLA meeting request', 'fda_pre_bla_meeting_package'],
     ['PBRER', 'draft a pbrer', 'psur_pbrer'],
     ['Safety Narrative', 'write a safety narrative for this sae', 'safety_narrative'],
     ['FDA IR Response', 'draft an fda information request response', 'fda_information_request_response'],

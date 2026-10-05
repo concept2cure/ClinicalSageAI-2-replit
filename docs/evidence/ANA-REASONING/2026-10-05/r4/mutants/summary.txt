@@ -1,0 +1,11 @@
+Round 4's mutants, final run: each reverts one rule; KILLED means a test failed with the rule removed.
+
+E01-no-high-stakes-floor: KILLED — a high-stakes turn runs at the effort chosen: the floor does not reach an adaptive model (MC-RL-5) (2 failing)
+E02-floor-yields-to-pin: KILLED — a pinned strategy switches the high-stakes floor off (1 failing)
+E03-fast-not-exempt: KILLED — a Fast turn the person chose is raised to high (1 failing)
+E04-pin-sends-effort: KILLED — the person's effort is sent under a kernel-pinned strategy, smuggling the override back in (1 failing)
+E05-max-mapped: KILLED — an effort mapped above 'high' would be lowered by the floor (2 failing)
+E06-stream-floor-unused: KILLED — the stream sends the effort chosen, as before MC-RL-5 (1 failing)
+F01-followups-unthinking: KILLED — the rounds that read the evidence do not reason, as before MC-RL-6 (1 failing)
+F02-demo-followups-reason: KILLED — a demonstration's talking points move into the reasoning panel (1 failing)
+F03-followups-other-config: KILLED — the follow-up rounds reason under a different config than the first call's (1 failing)

@@ -62,6 +62,26 @@ export const CFR_314_50_F: E3Basis = {
   checked: CHECKED,
 };
 
+/**
+ * FDA OND, Standard Safety Tables and Figures (ST&F): Integrated Guide. A
+ * reviewer tool, not a sponsor requirement; facts in
+ * 2026-10-04-depth/b3-safety-presentation-facts.md.
+ */
+export const FDA_STF_IG: E3Basis = {
+  ref: 'FDA OND, Standard Safety Tables and Figures: Integrated Guide (reviewer tool; MAPP at fda.gov/media/187067)',
+  confidence: 'regulator-text',
+  url: 'https://www.fda.gov/media/187065/download',
+  checked: '2026-10-05',
+};
+
+/** FDA OND Custom Medical Queries (formerly FMQs); voluntary for sponsors. */
+export const FDA_OCMQ: E3Basis = {
+  ref: 'FDA OND Custom Medical Queries (OCMQs, formerly FMQs), MAPP 6025.8',
+  confidence: 'regulator-text',
+  url: 'https://www.fda.gov/drugs/development-resources/office-new-drugs-custom-medical-queries-ocmqs',
+  checked: '2026-10-05',
+};
+
 /** The usual CDISC source for a display — practice, not a requirement. */
 export const CDISC_CONVENTION: E3Basis = {
   ref: 'CDISC SDTM / ADaM practice (the SAP and define.xml decide)',
