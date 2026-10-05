@@ -108,4 +108,11 @@ create the sequence is not treated as its author.
 
 - The route and the client were not driven together against a live server;
   the signing HTTP call itself is exercised by its own suites, not here.
-- `transmit` UI gating was not re-examined.
+- ~~`transmit` UI gating was not re-examined.~~ **Checked 2026-10-05, no
+  defect.** The Dispatch tab carries no Transmit control, only a note pointing
+  to the governed path. Transmit is on `GatewayTransmittals.tsx`, which gates
+  its control on no pre-signing verdict at all — the server enforces the gate.
+  The step-verdict deadlock cannot occur there: by transmit the release
+  signature (the dispatch signature) already exists, and the transmit-intent
+  signature is a separate Gate 1 checked at the request, not a precondition a
+  hidden button waits on.

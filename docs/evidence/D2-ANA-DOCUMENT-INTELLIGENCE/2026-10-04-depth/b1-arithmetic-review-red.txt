@@ -1,0 +1,37 @@
+# b1-arithmetic review fix — red run against the unfixed dossierReconciliation.ts (2026-10-04)
+# npx vitest run server/services/ana/__tests__/clinical-arithmetic.test.ts
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — percent of n/N > flags a percentage that does not match its own n/N, with the recomputed value 4ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — percent of n/N > accepts a percentage that rounds correctly at its stated precision 1ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — percent of n/N > judges an integer percentage at integer precision (USPI §6 convention) 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — percent of n/N > reads the n/N (x%) order and thousands separators 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — percent of n/N > still recomputes a pair whose N merely falls in the year range 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — percent of n/N > accepts an exact half either way 0ms
+ × server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — percent of n/N > skips bounded percentages, impossible pairs and a pair the parenthesis does not close on 7ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > flags arm counts that do not sum to the randomized total 1ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > reads the total after the verb and the "<arm> (n=<int>)" form 1ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > accepts arms that add up, including treated totals and thousands separators 0ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > raises no finding on a randomization ratio or a parenthetical that is not an arm list 0ms
+ × server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not sum a parenthetical that lists analysis populations: A total of 612 subjects were randomized (610 in the FAS and 598 in the PP population). 1ms
+ × server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not sum a parenthetical that lists analysis populations: A total of 612 subjects were randomized (610 received at least one dose and 598 received all doses). 1ms
+ × server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not sum a parenthetical that lists analysis populations: 612 subjects were randomized (612 in the ITT and 600 in the safety set). 1ms
+ × server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not sum a parenthetical that lists analysis populations: A total of 612 subjects were randomized (306 to drug and 300 in the per-protocol set). 1ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not sum a parenthetical that lists analysis populations: 612 patients were enrolled (612 in the mITT population, 590 completed the study). 0ms
+ × server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > reads the "<arm>, n=<int>" form 1ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkTerminologyConsistency — arithmetic > fails a draft whose percentage does not match its own n/N 3ms
+ ✓ server/services/ana/__tests__/clinical-arithmetic.test.ts > checkTerminologyConsistency — arithmetic > stays ok on arithmetic that holds 2ms
+
+AssertionError: Overall, 12/2023 (45%).: expected [ { kind: 'percent_of', …(3) } ] to deeply equal []
+AssertionError: expected [ { kind: 'arm_sum', …(3) } ] to deeply equal []
+AssertionError: expected [ { kind: 'arm_sum', …(3) } ] to deeply equal []
+AssertionError: expected [ { kind: 'arm_sum', …(3) } ] to deeply equal []
+AssertionError: expected [ { kind: 'arm_sum', …(3) } ] to deeply equal []
+AssertionError: expected +0 to be 1 // Object.is equality
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 13 passed (19)
+   Start at  21:24:25
+   Duration  1.71s (transform 790ms, setup 93ms, import 1.32s, tests 28ms, environment 0ms)

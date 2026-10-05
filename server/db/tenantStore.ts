@@ -52,6 +52,16 @@ export interface TenantScope {
    * script filename for one-offs. Used in metrics labels.
    */
   caller?: string;
+
+  /**
+   * The one account a pre-auth scope may act as, once the server has
+   * established it: from a verified token, a server-signed challenge, or the
+   * account found for this sign-in. Mirrors `app.current_account_id`, which the
+   * `public.users` policy admits in place of the whole table (D3, 2026-10-04;
+   * migrations/20260928_users_membership_rls.sql). Set only through
+   * `bindPreAuthAccount` or `runAsAccount`.
+   */
+  accountId?: number | null;
 }
 
 const tenantStorage = new AsyncLocalStorage<TenantScope>();
@@ -123,13 +133,15 @@ export function runWithOrgJobScope<T>(organizationId: number, caller: string, fn
  * to distinguish from "somebody forgot". It satisfies no other table's tenant
  * policy: a role-less tenantId '0' matches no organization.
  *
- * `public.users` is the exception, by name. Since 2026-09-28 it carries row
- * security that limits a tenant scope to its own organization's members
- * (migrations/20260928_users_membership_rls.sql;
- * docs/evidence/D3/2026-09-28-users-rls/), and that policy admits the two
- * tenantId '0' scopes, this one included, to the whole table. Sign-in, password
- * reset, email OTP and token refresh look an account up before any tenant
- * exists; that is what this scope is for.
+ * Nor does it read `public.users` (D3, 2026-10-04): that table's policy admits
+ * this scope to no row at all, only to the one account it has been bound to
+ * (`bindPreAuthAccount`). Sign-in, password reset, email OTP and token refresh
+ * resolve an email or reset token to an id through a definer function
+ * (`public.user_id_for_email`, `public.user_id_for_reset_token`), then bind;
+ * a request that holds a verified access token is bound to that token's
+ * account when the pre-auth mount opens. Until 2026-10-04 the policy admitted
+ * this scope to the whole table, and only application code kept a handler from
+ * another person's row (docs/evidence/D3/2026-09-29-pre-auth-scope/).
  *
  * Nesting is safe: AsyncLocalStorage gives the innermost scope, so a request
  * that goes on to authenticate runs its remaining work in the real tenant scope
@@ -138,6 +150,60 @@ export function runWithOrgJobScope<T>(organizationId: number, caller: string, fn
 export function runWithPreAuthScope<T>(caller: string, fn: () => T): T {
   if (!caller.trim()) throw new Error('runWithPreAuthScope: caller is required');
   return runWithTenantScope({ tenantId: '0', role: null, source: 'request', caller }, fn);
+}
+
+function isPreAuthScope(scope: TenantScope | undefined): scope is TenantScope {
+  return !!scope && scope.tenantId === '0' && !scope.role;
+}
+
+function assertAccountId(userId: number, fn: string): void {
+  if (!Number.isInteger(userId) || userId <= 0) {
+    throw new Error(`${fn}: a positive integer account id is required (got ${userId})`);
+  }
+}
+
+/** Whether the current scope is a pre-auth scope (tenant '0', no role). */
+export function inPreAuthScope(): boolean {
+  return isPreAuthScope(tenantStorage.getStore());
+}
+
+/**
+ * Bind the current pre-auth scope to the one account the request has
+ * established — the account a verified token names, or the account found for
+ * this sign-in. From then on the request's statements reach that account's
+ * `public.users` row and no other (D3, 2026-10-04).
+ *
+ * The pre-auth scope no longer reads the whole of `users`: it resolves an email
+ * or reset token to an id through a definer function, and acts as that id
+ * through here. A pre-auth request acts as at most ONE account: binding a
+ * second, different id throws, so a handler cannot be steered from one person's
+ * row to another's. In a tenant or system scope this throws too — that scope
+ * already decides what `users` it reaches. With no scope it does nothing.
+ */
+export function bindPreAuthAccount(userId: number): void {
+  assertAccountId(userId, 'bindPreAuthAccount');
+  const scope = tenantStorage.getStore();
+  // No scope at all: nothing to narrow. Under RLS_ENFORCE=on the pool refuses
+  // every unscoped statement anyway; with enforcement off no policy applies.
+  if (!scope) return;
+  if (!isPreAuthScope(scope)) {
+    throw new Error('bindPreAuthAccount: only a pre-auth scope can be bound to an account');
+  }
+  if (scope.accountId != null && scope.accountId !== userId) {
+    throw new Error('bindPreAuthAccount: this request is already bound to another account');
+  }
+  scope.accountId = userId;
+}
+
+/**
+ * Run `fn` in a pre-auth scope bound to one account: for services that act on
+ * an account they were handed an id for (account standing, token revocation),
+ * with no request scope of their own to bind.
+ */
+export function runAsAccount<T>(userId: number, caller: string, fn: () => T): T {
+  assertAccountId(userId, 'runAsAccount');
+  if (!caller.trim()) throw new Error('runAsAccount: caller is required');
+  return runWithTenantScope({ tenantId: '0', role: null, source: 'request', caller, accountId: userId }, fn);
 }
 
 /**

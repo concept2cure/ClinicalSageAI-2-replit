@@ -27,6 +27,7 @@ vi.mock('../../server/services/emailService', async importOriginal => ({
 import express from 'express';
 import request from 'supertest';
 import { getPool } from '../../server/db';
+import { bindAccountByEmail } from '../../server/services/auth/pre-auth-account';
 import {
   runWithPreAuthScope,
   runWithSystemTenantScope,
@@ -193,16 +194,31 @@ describe('what a tenant scope still reaches (D3)', () => {
   });
 });
 
-describe('the tenant-less scopes keep the whole table (D3)', () => {
-  it('pre-auth: the sign-in lookup by email finds any tenant’s user, and writes it', async () => {
+describe('the tenant-less scopes: pre-auth reaches only its bound account, the system scope the whole table (D3)', () => {
+  // Until 2026-10-04 the pre-auth scope read and wrote every row here. It now
+  // reaches none until the request is bound to one account
+  // (tenantStore.bindPreAuthAccount; docs/evidence/D3/2026-10-04-pre-auth-narrowing/,
+  // whose own contract is tests/db/pre-auth-narrowing.dbtest.ts).
+  it('pre-auth, unbound: no account is read or written, by email or by id', async () => {
     const { rows } = await asPreAuth(`SELECT ${CREDENTIALS} FROM users WHERE email = $1`, [emailB]);
+    expect(rows).toEqual([]);
+    expect(
+      await written(() =>
+        asPreAuth('UPDATE users SET failed_login_attempts = failed_login_attempts WHERE id = $1', [userB])
+      )
+    ).toBe(0);
+  });
+
+  it('pre-auth, bound: the sign-in finds its account by email and writes its counters', async () => {
+    const { rows, n } = await runWithPreAuthScope('users-rls.dbtest', async () => {
+      const id = await bindAccountByEmail(emailB);
+      const read = await getPool().query(`SELECT ${CREDENTIALS} FROM users WHERE id = $1`, [id]);
+      const w = await written(() =>
+        getPool().query('UPDATE users SET failed_login_attempts = failed_login_attempts WHERE id = $1', [userB])
+      );
+      return { rows: read.rows, n: w };
+    });
     expect(rows.map(r => Number(r.id))).toEqual([userB]);
-    // Failed-attempt counters, reset tokens and OTP hashes are written pre-auth.
-    const n = await written(() =>
-      asPreAuth('UPDATE users SET failed_login_attempts = failed_login_attempts WHERE id = $1', [
-        userB,
-      ])
-    );
     expect(n).toBe(1);
   });
 

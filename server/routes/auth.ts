@@ -18,6 +18,13 @@ import { serverError } from '../lib/api-response';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 import { verifyLiveToken } from '../services/token-revocation';
 import {
+  accountIdForEmail,
+  bindAccountByEmail,
+  bindAccountByResetToken,
+  bindNewAccountId,
+  bindPreAuthAccount,
+} from '../services/auth/pre-auth-account';
+import {
   ABSOLUTE_SESSION_HOURS,
   continuedSessionClaims,
   idleWindowSecondsOfClaims,
@@ -412,7 +419,11 @@ router.post('/login', signInLimits.login, async (req: Request, res: Response) =>
     // All login attempts validated against database with bcrypt
     if (!requireDb(res)) return;
     const normalizedEmail = email.trim().toLowerCase();
-    const user = await db.select().from(users).where(eq(users.email, normalizedEmail)).limit(1);
+    // The account this address names, bound to the request: from here the
+    // sign-in reads and writes that row and no other (D3, 2026-10-04).
+    const accountId = await bindAccountByEmail(normalizedEmail);
+    const user =
+      accountId === null ? [] : await db.select().from(users).where(eq(users.id, accountId)).limit(1);
 
     if (!user.length) {
       // The same bcrypt cost a wrong password pays, so the response time does
@@ -740,11 +751,9 @@ router.post('/dev-login', async (req: Request, res: Response) => {
 
     if (!requireDb(res)) return;
     const normalizedEmail = email.trim().toLowerCase();
-    const [userData] = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, normalizedEmail))
-      .limit(1);
+    const accountId = await bindAccountByEmail(normalizedEmail);
+    const [userData] =
+      accountId === null ? [] : await db.select().from(users).where(eq(users.id, accountId)).limit(1);
 
     if (!userData) {
       return res.status(401).json({
@@ -921,8 +930,7 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
       }
     }
 
-    const existing = await db.select().from(users).where(eq(users.email, email)).limit(1);
-    if (existing.length) {
+    if ((await accountIdForEmail(email)) !== null) {
       // SECURITY: Return generic message to prevent email enumeration
       return res.status(409).json({
         success: false,
@@ -969,6 +977,10 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
     // organization. See server/db/tenantAdmission.ts.
     await assertCanAdmitNewTenant();
 
+    // The new account's id, bound before the transaction opens (D3, 2026-10-04):
+    // the pre-auth scope reaches only its bound account, RETURNING included.
+    const newUserId = await bindNewAccountId();
+
     const result = await db.transaction(async tx => {
       const [org] = await tx
         .insert(organizations)
@@ -986,6 +998,7 @@ router.post('/signup', signupLimiter, async (req: Request, res: Response) => {
       const [user] = await tx
         .insert(users)
         .values({
+          id: newUserId,
           email,
           passwordHash,
           name: fullName,
@@ -1190,6 +1203,8 @@ router.post('/verify-email', verificationLimiter, async (req: Request, res: Resp
       return res.status(400).json({ success: false, error: { code: 'AUTH_VERIFY_INVALID', message: VERIFICATION_LINK_INVALID_MESSAGE } });
     }
     if (!requireDb(res)) return;
+    // The link is server-signed: its subject is the account (D3, 2026-10-04).
+    bindPreAuthAccount(subject.userId);
     const activated = await db
       .update(users)
       .set({ status: ACCOUNT_STATUS_ACTIVE })
@@ -1241,11 +1256,15 @@ router.post('/resend-verification', verificationLimiter, async (req: Request, re
   if (!requireDb(res)) return;
   try {
     const baseUrl = resolveAppBaseUrl(req);
-    const [account] = await db
-      .select({ id: users.id, name: users.name, status: users.status })
-      .from(users)
-      .where(eq(users.email, email))
-      .limit(1);
+    const accountId = await bindAccountByEmail(email);
+    const [account] =
+      accountId === null
+        ? []
+        : await db
+            .select({ id: users.id, name: users.name, status: users.status })
+            .from(users)
+            .where(eq(users.id, accountId))
+            .limit(1);
     if (account && isPendingVerificationStatus(account.status) && isEmailConfigured()) {
       const verifyUrl = emailVerificationUrl(baseUrl, mintEmailVerificationToken(account.id, email));
       sendVerificationEmail(email, account.name || email.split('@')[0], verifyUrl).catch(err =>
@@ -1436,10 +1455,20 @@ router.post('/refresh', async (req: Request, res: Response) => {
     // instead of hardcoding organizationId: '2'. This prevents a refresh token
     // from granting access to an arbitrary tenant.
     if (!requireDb(res)) return;
+    // The refresh token is server-signed: its subject is the account the
+    // request is bound to (D3, 2026-10-04).
+    const refreshAccountId = Number.parseInt(String(decoded.userId), 10);
+    if (!Number.isInteger(refreshAccountId) || refreshAccountId <= 0) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Invalid refresh token' },
+      });
+    }
+    bindPreAuthAccount(refreshAccountId);
     const refreshUser = await db
       .select()
       .from(users)
-      .where(eq(users.id, parseInt(decoded.userId)))
+      .where(eq(users.id, refreshAccountId))
       .limit(1);
 
     if (!refreshUser.length) {
@@ -1776,6 +1805,8 @@ router.post('/mfa/verify', signInLimits.secondFactor, async (req: Request, res: 
     }
 
     const userId = parseInt(challenge.userId);
+    // The challenge is server-signed: its subject is the account (D3, 2026-10-04).
+    if (Number.isInteger(userId) && userId > 0) bindPreAuthAccount(userId);
     if (await refuseAccountAtSecondFactor(req, res, challenge, userId, challengeId)) return;
 
     // The factor this account signs in with (mfa-enrolment.ts). An account with
@@ -1936,6 +1967,8 @@ router.post('/mfa/resend', signInLimits.secondFactor, async (req: Request, res: 
     }
 
     const userId = parseInt(challenge.userId);
+    // The challenge is server-signed: its subject is the account (D3, 2026-10-04).
+    if (Number.isInteger(userId) && userId > 0) bindPreAuthAccount(userId);
 
     // An authenticator account has no emailed code to resend: minting one here
     // was the fallback that let such an account finish sign-in without the
@@ -2307,11 +2340,15 @@ async function handleForgotPassword(req: Request, res: Response) {
       message: 'If the email exists, a password reset link will be sent',
     };
 
-    const user = await db
-      .select({ id: users.id, email: users.email, defaultOrganizationId: users.defaultOrganizationId })
-      .from(users)
-      .where(eq(users.email, email.toLowerCase()))
-      .limit(1);
+    const resetAccountId = await bindAccountByEmail(email.toLowerCase());
+    const user =
+      resetAccountId === null
+        ? []
+        : await db
+            .select({ id: users.id, email: users.email, defaultOrganizationId: users.defaultOrganizationId })
+            .from(users)
+            .where(eq(users.id, resetAccountId))
+            .limit(1);
 
     if (!user.length) {
       /* Audited even though no account matched. §11.10(e) wants the ATTEMPT —
@@ -2399,7 +2436,9 @@ async function handleResetPassword(req: Request, res: Response) {
     // Hash the incoming token to compare against stored hash
     const tokenHash = hashPasswordSetupToken(token);
 
-    const user = await db
+    // The account that holds this token, bound to the request (D3, 2026-10-04).
+    const resetAccountId = await bindAccountByResetToken(tokenHash);
+    const user = resetAccountId === null ? [] : await db
       .select({
         id: users.id,
         email: users.email,
@@ -2409,7 +2448,7 @@ async function handleResetPassword(req: Request, res: Response) {
         defaultOrganizationId: users.defaultOrganizationId,
       })
       .from(users)
-      .where(eq(users.resetToken, tokenHash))
+      .where(and(eq(users.id, resetAccountId), eq(users.resetToken, tokenHash)))
       .limit(1);
 
     if (!user.length) {

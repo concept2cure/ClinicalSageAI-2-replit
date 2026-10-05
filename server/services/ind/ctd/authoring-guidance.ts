@@ -1298,18 +1298,16 @@ export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
     ],
     "contentType": "narrative",
     "guidance": "Subsection 2.5.6 is the culminating benefit-risk assessment — the sponsor's integrated conclusion that, for the proposed indication and population, the benefits outweigh the risks. It synthesizes efficacy (2.5.4) and safety (2.5.5) in the context of the disease and available therapies, and states how risks are managed. FDA reviewers and the signatory authority read it as the bottom-line justification for approval; acceptability depends on a balanced, evidence-anchored conclusion that acknowledges uncertainties and aligns with the proposed labeling and any risk-management commitments.",
-    "authoringGuidance": "Frame the benefit-risk in the context of the disease severity, the unmet need, and the current treatment options. Concisely restate the key benefits (magnitude, durability, clinical meaningfulness) and the key risks (severity, frequency, reversibility, manageability), then weigh them for the proposed population. Address residual uncertainties and how they are mitigated through labeling, monitoring, pharmacovigilance, or a REMS/risk-management plan. Use a structured benefit-risk framework where appropriate (consistent with FDA's Benefit-Risk Assessment framework and ICH M4E(R2)). Keep it concise and free of new data. Conclusions must follow logically from 2.5.4 and 2.5.5 and align exactly with the proposed indication and labeling.",
+    "authoringGuidance": "Follow the ICH M4E(R2) headings: 2.5.6.1 Therapeutic Context (2.5.6.1.1 Disease or Condition; 2.5.6.1.2 Current Therapies), 2.5.6.2 Benefits, 2.5.6.3 Risks, 2.5.6.4 Benefit-Risk Assessment, and 2.5.6.5 Appendix. These headings align (a platform reading) with FDA's Benefit-Risk Framework: Analysis of Condition, Current Treatment Options, Benefit, and Risk and Risk Management. Keep the product's own benefits and risks out of 2.5.6.1; state them factually in 2.5.6.2 and 2.5.6.3. Open 2.5.6.4 with a succinct explanation of the reasoning, then weigh benefits against risks for the proposed population and address residual uncertainties and how they are managed. A descriptive approach is acceptable; quantitative methods are optional, with their detail in 2.5.6.5. Introduce no new data; conclusions must follow from 2.5.4 and 2.5.5 and align exactly with the proposed indication and labeling.",
     "keyContentElements": [
-      "Disease context: severity, unmet need, and current treatment landscape",
-      "Concise restatement of key benefits with magnitude, durability, and clinical meaningfulness",
-      "Concise restatement of key risks with severity, frequency, reversibility, and manageability",
-      "Integrated weighing of benefits against risks for the specific proposed population",
-      "Discussion of residual uncertainties and their mitigation",
-      "Risk-management strategy (labeling, monitoring, pharmacovigilance, REMS if applicable)",
-      "Use of a structured benefit-risk framework (FDA BR framework / ICH M4E(R2))",
+      "2.5.6.1 Therapeutic Context — 2.5.6.1.1 Disease or Condition (severity, intended population, unmet need); 2.5.6.1.2 Current Therapies (their benefits, risks and uncertainties)",
+      "2.5.6.2 Benefits — factual summary of the key benefits (magnitude, durability, clinical meaningfulness)",
+      "2.5.6.3 Risks — factual summary of the key risks (severity, frequency, reversibility, manageability)",
+      "2.5.6.4 Benefit-Risk Assessment — the applicant's conclusion, opening with a succinct explanation of the reasoning; weighing for the proposed population, residual uncertainties, risk management (labeling, monitoring, pharmacovigilance, REMS if applicable)",
+      "2.5.6.5 Appendix — detailed benefit-risk methods/results when used (e.g., effects table, value tree, forest plot)",
       "Overall conclusion aligned with the proposed indication and labeling"
     ],
-    "generationPrompt": "Draft CTD Module 2.5.6 Benefits and Risks Conclusions for {{PRODUCT_NAME}} ({{SPONSOR}}) in {{INDICATION}}. Frame the disease severity, unmet need, and current therapies; concisely restate the key benefits (magnitude, durability, clinical meaningfulness) and key risks (severity, frequency, reversibility, manageability); and integrate them into a weighed conclusion for the proposed population using a structured benefit-risk framework (FDA BR framework / ICH M4E(R2)). Address residual uncertainties and the risk-management strategy (labeling, monitoring, pharmacovigilance, REMS if applicable). Introduce no new data; ensure the conclusion follows from 2.5.4 and 2.5.5 and aligns with the proposed indication and labeling.",
+    "generationPrompt": "Draft CTD Module 2.5.6 Benefits and Risks Conclusions for {{PRODUCT_NAME}} ({{SPONSOR}}) in {{INDICATION}} under the ICH M4E(R2) headings, in order: 2.5.6.1 Therapeutic Context, with 2.5.6.1.1 Disease or Condition (severity, intended population, unmet need) and 2.5.6.1.2 Current Therapies (their benefits, risks and uncertainties), keeping the product's own data out of it; 2.5.6.2 Benefits, a factual summary of the key benefits (magnitude, durability, clinical meaningfulness); 2.5.6.3 Risks, a factual summary of the key risks (severity, frequency, reversibility, manageability); 2.5.6.4 Benefit-Risk Assessment, opening with a succinct explanation of the reasoning, then weighing benefits against risks for the proposed population, residual uncertainties, and the risk-management strategy (labeling, monitoring, pharmacovigilance, REMS if applicable); and 2.5.6.5 Appendix, only when detailed benefit-risk methods or results are used. Introduce no new data; ensure the conclusion follows from 2.5.4 and 2.5.5 and aligns with the proposed indication and labeling.",
     "parentCode": "2.5",
     "expectedData": [
       "Structured benefit-risk summary table (optional)"
@@ -1317,10 +1315,10 @@ export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
     "commonPitfalls": [
       "Restating efficacy and safety separately without an integrated weighing",
       "Conclusion not grounded in disease context, unmet need, and available therapies",
-      "Ignoring or under-stating residual uncertainties and how they are managed",
+      "Product benefit or risk data placed in 2.5.6.1 Therapeutic Context instead of 2.5.6.2 / 2.5.6.3",
       "Introducing new data or analyses not presented in 2.5.4/2.5.5 or 2.7",
       "Benefit-risk conclusion broader than, or inconsistent with, the proposed indication/labeling",
-      "No risk-management or pharmacovigilance framing when the safety profile warrants it"
+      "Residual uncertainties, or the risk-management and pharmacovigilance approach the safety profile warrants, not addressed"
     ],
     "wordCountRange": [
       1000,
@@ -1701,7 +1699,6 @@ export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
       4000
     ],
     "dependencies": [
-      "2.5.2",
       "2.7.2",
       "2.3.P"
     ]
@@ -1751,7 +1748,6 @@ export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
       6000
     ],
     "dependencies": [
-      "2.5.3",
       "2.7.1",
       "2.7.3",
       "2.7.4"
@@ -1803,7 +1799,6 @@ export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
       12000
     ],
     "dependencies": [
-      "2.5.4",
       "2.7.2",
       "2.7.6",
       "2.7.4"
@@ -1857,7 +1852,6 @@ export const CTD_AUTHORING_GUIDANCE: Record<string, CtdSection> = {
       14000
     ],
     "dependencies": [
-      "2.5.5",
       "2.7.3",
       "2.7.6",
       "2.7.2"

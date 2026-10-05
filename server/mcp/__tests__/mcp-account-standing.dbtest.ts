@@ -597,8 +597,9 @@ describe('a sign-out of every session ends the connector grants authorised befor
 
     // What POST /api/auth/logout with terminateAllSessions writes, as the runtime role writes it.
     const { endEverySessionOf } = await import('../../services/account-standing');
-    const { runWithPreAuthScope } = await import('../../db/tenantStore');
-    expect(await runWithPreAuthScope('dbd8:sign-out-everywhere', () => endEverySessionOf(m.id))).toBe(true);
+    // Bound to the account, as the route is once its token verifies (D3, 2026-10-04).
+    const { runAsAccount } = await import('../../db/tenantStore');
+    expect(await runAsAccount(m.id, 'dbd8:sign-out-everywhere', () => endEverySessionOf(m.id))).toBe(true);
     try {
       const access = await mcp(g.access);
       expect(access.status, 'a connector token issued before the sign-out everywhere still opened /mcp').toBe(401);

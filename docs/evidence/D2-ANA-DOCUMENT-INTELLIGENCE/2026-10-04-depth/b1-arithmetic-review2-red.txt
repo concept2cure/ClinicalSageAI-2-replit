@@ -1,0 +1,75 @@
+# Failing tests (full list, from the same run command):
+ × server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not compare a total with a second population clause: Of the 612 subjects randomized, 610 received at least one dose (305 to Drug X and 305 to placebo). 8ms
+ × server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not compare a total with a second population clause: A total of 612 subjects were randomized, and 598 completed the study (300 in Drug X and 298 in placebo). 1ms
+ × server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not compare a total with a second population clause: 612 subjects were randomized; 610 were treated (305 to Drug X and 305 to placebo). 1ms
+ × server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not compare a total with a second population clause: Of 612 patients randomized, 600 were treated (300 received Drug X and 300 received placebo). 1ms
+ × server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not compare a total with a second population clause: 612 subjects were randomized and those completing the study were analysed (300 in Drug X and 298 in placebo). 1ms
+ × server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > compares the arm list with the count immediately before it 2ms
+ FAIL  server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not compare a total with a second population clause: Of the 612 subjects randomized, 610 received at least one dose (305 to Drug X and 305 to placebo).
+ FAIL  server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not compare a total with a second population clause: A total of 612 subjects were randomized, and 598 completed the study (300 in Drug X and 298 in placebo).
+ FAIL  server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not compare a total with a second population clause: 612 subjects were randomized; 610 were treated (305 to Drug X and 305 to placebo).
+ FAIL  server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not compare a total with a second population clause: Of 612 patients randomized, 600 were treated (300 received Drug X and 300 received placebo).
+ FAIL  server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not compare a total with a second population clause: 612 subjects were randomized and those completing the study were analysed (300 in Drug X and 298 in placebo).
+ FAIL  server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > compares the arm list with the count immediately before it
+
+# tail -60:
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > does not compare a total with a second population clause: 612 subjects were randomized and those completing the study were analysed (300 in Drug X and 298 in placebo).
+AssertionError: expected [ { kind: 'arm_sum', …(3) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "clause": "612 subjects were randomized and those completing the study were analysed (300 in Drug X and 298 in placebo)",
++     "kind": "arm_sum",
++     "recomputed": 598,
++     "stated": 612,
++   },
++ ]
+
+ ❯ server/services/ana/__tests__/clinical-arithmetic.test.ts:136:24
+    134|   ] as const)('does not compare a total with a second population claus…
+    135|     const r = checkFigureArithmetic(text);
+    136|     expect(r.findings).toEqual([]);
+       |                        ^
+    137|     expect(r.armSumsChecked).toBe(checked);
+    138|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/services/ana/__tests__/clinical-arithmetic.test.ts > checkFigureArithmetic — arm counts sum to the stated total > compares the arm list with the count immediately before it
+AssertionError: expected [ { kind: 'arm_sum', …(3) } ] to match object [ { kind: 'arm_sum', …(2) } ]
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  [
+    {
+      "kind": "arm_sum",
+      "recomputed": 611,
+-     "stated": 610,
++     "stated": 612,
+    },
+  ]
+
+ ❯ server/services/ana/__tests__/clinical-arithmetic.test.ts:143:24
+    141|     const r = checkFigureArithmetic('Of the 612 subjects randomized, 6…
+    142|     expect(r.armSumsChecked).toBe(1);
+    143|     expect(r.findings).toMatchObject([{ kind: 'arm_sum', stated: 610, …
+       |                        ^
+    144|   });
+    145|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 19 passed (25)
+   Start at  23:43:54
+   Duration  2.44s (transform 1.06s, setup 144ms, import 1.78s, tests 32ms, environment 0ms)
+
