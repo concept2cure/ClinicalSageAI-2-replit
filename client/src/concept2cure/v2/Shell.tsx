@@ -32,6 +32,7 @@ import { TaskTray } from './TaskTray';
 import type { OnboardingWelcome } from './onboardingWelcome';
 import { AnaActivity, type AnaActivityProps } from './AnaActivity';
 import { AnaMessageWarnings } from './AnaMessageWarnings';
+import { EngineChoices } from './EngineChoices';
 import { CONTINUE_PROMPT, continueTurnIndex } from './anaWorkModel';
 import { AnaProgressChip, AnaWorkPanel } from './AnaWorkPanel';
 import { RunControlStrip } from './AnaWorkSections';
@@ -726,6 +727,7 @@ export function AnaRail({
   const policyLabel = useRunPolicyLabel();
   const [plusOpen, setPlusOpen] = React.useState(false);
   const [modeOpen, setModeOpen] = React.useState(false);
+  const modeMenuId = React.useId();
   /* The progress panel: shown by default, hidden by one shared per-browser
      choice (workDock.ts) that every host honours. The chip in the header is
      its one control — the panel sits directly beneath it, and a second close
@@ -1276,6 +1278,9 @@ export function AnaRail({
               <button
                 type="button"
                 className="ana-modepull"
+                aria-haspopup="dialog"
+                aria-expanded={modeOpen}
+                aria-controls={modeOpen ? modeMenuId : undefined}
                 onClick={() => {
                   setModeOpen((o) => !o);
                   setPlusOpen(false);
@@ -1418,7 +1423,7 @@ export function AnaRail({
             </div>
           )}
           {modeOpen && (
-            <div className="ana-menu" onMouseLeave={() => setModeOpen(false)}>
+            <div className="ana-menu" role="dialog" aria-label="Control & engine" id={modeMenuId} onMouseLeave={() => setModeOpen(false)}>
               <div className="ana-menu-sec">Control</div>
               <button
                 type="button"
@@ -1507,19 +1512,7 @@ export function AnaRail({
                 </>
               )}
               <div className="ana-menu-sec">Engine</div>
-              {ANA_MODES.map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  className="ana-menu-item"
-                  data-on={mode === m.id || undefined}
-                  onClick={() => setMode(m.id)}
-                >
-                  <span className="ico">{I.zap}</span>
-                  {m.effortLabel}
-                  <span className="mh">{m.desc}</span>
-                </button>
-              ))}
+              <EngineChoices variant="rail" mode={mode} onChoose={setMode} />
             </div>
           )}
           {liveDrive?.on && (
