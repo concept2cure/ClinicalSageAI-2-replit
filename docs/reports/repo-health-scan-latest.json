@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-10-05T02:49:50.237Z",
+  "generatedAt": "2026-10-05T02:59:10.497Z",
   "git": {
-    "sha": "28c63cd22e8f0675c247aabf82034997c8de2ac0",
+    "sha": "f2ee5e0f19da971b10eeff1f913f443ba394a798",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2657,6 +2657,10 @@
         "lines": 1616
       },
       {
+        "file": "server/services/module3-extensions.ts",
+        "lines": 1615
+      },
+      {
         "file": "server/routes/mdx-rbm.ts",
         "lines": 1612
       },
@@ -2679,10 +2683,6 @@
       {
         "file": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
         "lines": 1577
-      },
-      {
-        "file": "server/services/module3-extensions.ts",
-        "lines": 1557
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx",
