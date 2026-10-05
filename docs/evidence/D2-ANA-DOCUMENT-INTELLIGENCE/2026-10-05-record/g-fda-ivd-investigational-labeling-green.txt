@@ -1,0 +1,284 @@
+== GREEN: the step test and every test importing a changed file, working tree (2026-10-05T11:28:12Z)
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > 809.10 — IVD label and package insert > (a) an IVD gets the 809.10(a) label elements and the 809.10(b)(1)–(b)(12) insert items 3ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > 809.10 — IVD label and package insert > a non-IVD device gets no 809.10 element 0ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > 809.10 — IVD label and package insert > an RUO IVD carries the 809.10(c)(2)(i) statement and is exempt from (a) and (b) 0ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > 809.10 — IVD label and package insert > every 809.10 / 812.5 element carries a well-formed basisDetail; regulator text points at eCFR 8ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > 812.5 — investigational devices > (b) a device for clinical investigation carries the 812.5(a) caution statement on the FDA label 0ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > 812.5 — investigational devices > (c) an IVD study exempt under 812.2(c)(3) gets the IUO statement and no 812.5 element 0ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > 812.5 — investigational devices > an investigational IVD not shown exempt gets both the IUO statement and 812.5 2ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > checkAuthoredLabeling — found / not_found / not_checkable, never a verdict > (d) an IVD insert without a Limitations heading reports 809.10(b)(10) as not_found 4ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > checkAuthoredLabeling — found / not_found / not_checkable, never a verdict > with the heading present, 809.10(b)(10) is found 2ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > checkAuthoredLabeling — found / not_found / not_checkable, never a verdict > no section, or only an unauthored one, is not_checkable rather than not_found 3ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > checkAuthoredLabeling — found / not_found / not_checkable, never a verdict > the 812.5(a) caution statement is found only when its wording is present 1ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > one requirement list — the ivd-knowledge prose points at the engine > labeling-rules no longer enumerates (and misnumbers) the 809.10(b) items 0ms
+ ✓ server/services/market-specs/__tests__/device-labeling-ivd.test.ts > one requirement list — the ivd-knowledge prose points at the engine > fda-ivd no longer holds a parallel package-insert list 0ms
+ ✓ server/services/ana-advisory/__tests__/ivd-knowledge-advisor.test.ts > lookupIvdKnowledge > returns grounded, citation-backed entries for a real IVD query 17ms
+ ✓ server/services/ana-advisory/__tests__/ivd-knowledge-advisor.test.ts > lookupIvdKnowledge > honestly reports no match for an unrelated query (nothing invented) 4ms
+ ✓ server/services/ana-advisory/__tests__/ivd-knowledge-advisor.test.ts > lookupIvdKnowledge > respects the limit (capped at 15) and a domain filter 2ms
+ ✓ server/services/ana-advisory/__tests__/ivd-knowledge-advisor.test.ts > lookupIvdKnowledge > caps an over-large limit at 15 5ms
+ ✓ server/services/ana-advisory/__tests__/ivd-knowledge-advisor.test.ts > lookupIvdKnowledge > carries corpus version + provenance 3ms
+ ✓ server/services/ana-advisory/__tests__/ivd-knowledge-advisor.test.ts > lookupIvdKnowledge > exposes a well-formed tool spec 0ms
+ ✓ server/services/regulatory/__tests__/program-plan.test.ts > buildProgramPlan > chains classification, study design, review, sensitivity, and timeline 38ms
+ ✓ server/services/regulatory/__tests__/program-plan.test.ts > buildProgramPlan > executive summary top next actions come from the sensitivity tornado 18ms
+ ✓ server/services/regulatory/__tests__/program-plan.test.ts > buildProgramPlan > a complete dossier yields a high readiness summary 19ms
+ ✓ server/services/regulatory/__tests__/program-plan.test.ts > buildProgramPlan > all aggregated citations resolve to real corpus entries 8ms
+ ✓ server/services/regulatory/__tests__/program-plan.test.ts > compareProgramScenarios > ranks a well-evidenced scenario above a bare one 31ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII > blood-screening transmissible-agent test is Class D (Rule 1) 2ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII > companion diagnostic is Class C (Rule 3a) 1ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII > cancer detection is Class C (Rule 3b) 1ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII > a self-test is Class C under Rule 4(a) when criticality is not stated 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII > takes the Rule 4(a) Class B exception only on an explicitly low-risk result, and says it did 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII > near-patient testing sets no class of its own (Rule 4(b)) 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII > a device matching no rule is Class B by the Rule 6 catch-all, and needs a notified body 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII > never awards Class A, and explains that Rule 5 is the manufacturer's to assert 1ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII > highest applicable class wins (CDx + cancer + near-patient → C) 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII > blood grouping by intended purpose is Class D (Rule 2) 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII > emits the complete Annex VIII rule set, all seven rules 0ms
+ ✓ server/services/regulatory/__tests__/ivdr-classification.test.ts > classifyIvdrAnnexVIII > every knowledge ref resolves to a real corpus entry 0ms
+ ✓ server/services/regulatory/__tests__/reviewer-simulation-ivd.test.ts > simulateIvdReview > an empty-evidence quantitative 510(k) is not substantially complete with majors 2ms
+ ✓ server/services/regulatory/__tests__/reviewer-simulation-ivd.test.ts > simulateIvdReview > a complete quantitative dossier reaches likely acceptance 0ms
+ ✓ server/services/regulatory/__tests__/reviewer-simulation-ivd.test.ts > simulateIvdReview > IVDR pathway flags a missing PMPF plan 0ms
+ ✓ server/services/regulatory/__tests__/reviewer-simulation-ivd.test.ts > simulateIvdReview > NGS assay flags bioinformatics + software + cybersecurity 1ms
+ ✓ server/services/regulatory/__tests__/reviewer-simulation-ivd.test.ts > simulateIvdReview > a recognized biomarker downgrades the scientific-validity finding to minor 0ms
+ ✓ server/services/regulatory/__tests__/reviewer-simulation-ivd.test.ts > simulateIvdReview > every finding cites a real corpus entry 0ms
+ ✓ server/services/regulatory/__tests__/cdx-study-design.test.ts > designIvdStudyProgram > quantitative assay recommends the full CLSI EP analytical set 2ms
+ ✓ server/services/regulatory/__tests__/cdx-study-design.test.ts > designIvdStudyProgram > NGS assay recommends panel + bioinformatics + reference materials + variant classification 2ms
+ ✓ server/services/regulatory/__tests__/cdx-study-design.test.ts > designIvdStudyProgram > ctDNA specimen adds the ultra-low-LoD / CHIP study 0ms
+ ✓ server/services/regulatory/__tests__/cdx-study-design.test.ts > designIvdStudyProgram > CDx intended use adds a bridging study and a contemporaneous-review note 1ms
+ ✓ server/services/regulatory/__tests__/cdx-study-design.test.ts > designIvdStudyProgram > euIvdr flag pulls in the performance-evaluation framing and ISO 20916 0ms
+ ✓ server/services/regulatory/__tests__/cdx-study-design.test.ts > designIvdStudyProgram > every cited knowledge id resolves to a real corpus entry 1ms
+stdout | server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+{
+  "timestamp": "2026-10-05T11:28:16.570Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T11:28:16.571Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+{
+  "timestamp": "2026-10-05T11:28:16.571Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/submission-center-tools.test.ts
+{
+  "timestamp": "2026-10-05T11:28:16.574Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T11:28:16.575Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/ana/__tests__/submission-center-tools.test.ts
+{
+  "timestamp": "2026-10-05T11:28:16.575Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/submission-center-tools.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stderr | server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/services/ana/__tests__/submission-center-tools.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/ana/__tests__/submission-center-tools.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+stdout | server/services/regulatory/__tests__/ivd-assessments.test.ts
+{
+  "timestamp": "2026-10-05T11:28:17.170Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-10-05T11:28:17.172Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "on"
+  }
+}
+
+stderr | server/services/regulatory/__tests__/ivd-assessments.test.ts
+{
+  "timestamp": "2026-10-05T11:28:17.172Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/regulatory/__tests__/ivd-assessments.test.ts
+[database] Database connection test failed {
+  error: "Cannot destructure property 'rows' of '(intermediate value)' as it is undefined."
+}
+
+stdout | server/services/regulatory/__tests__/ivd-assessments.test.ts
+[database] Application will continue with limited functionality
+[database] Automatic reconnection disabled - connections will be attempted on-demand
+
+stderr | server/services/regulatory/__tests__/ivd-assessments.test.ts
+[database] Initial connection test failed: Cannot destructure property 'rows' of '(intermediate value)' as it is undefined.
+
+ ✓ server/services/regulatory/__tests__/ivd-assessments.test.ts > assessment/document type guards > accepts known assessment types 3ms
+ ✓ server/services/regulatory/__tests__/ivd-assessments.test.ts > assessment/document type guards > accepts known document types 3ms
+ ✓ server/services/regulatory/__tests__/ivd-assessments.test.ts > assessment/document type guards > covers every calculator family that can be saved 1ms
+ ✓ server/services/regulatory/__tests__/ivd-assessments.test.ts > corpusVersion > is stable across calls and well-formed 1ms
+ ✓ server/services/regulatory/__tests__/ivd-assessments.test.ts > corpusVersion > encodes the corpus entry count 0ms
+ ✓ server/services/market-specs/__tests__/device-labeling.test.ts > device labeling — always-on elements > a basic device carries manufacturer, UDI, and intended use on both regions 2ms
+ ✓ server/services/market-specs/__tests__/device-labeling.test.ts > device labeling — always-on elements > does not include sterile / single-use / Rx-only for a basic device 1ms
+ ✓ server/services/market-specs/__tests__/device-labeling.test.ts > device labeling — conditional elements > adds sterile state + sterile symbol + IFU sterile handling for a sterile device 1ms
+ ✓ server/services/market-specs/__tests__/device-labeling.test.ts > device labeling — conditional elements > adds single-use + do-not-reuse for a single-use device 0ms
+ ✓ server/services/market-specs/__tests__/device-labeling.test.ts > device labeling — conditional elements > adds reprocessing IFU for a reusable device 0ms
+ ✓ server/services/market-specs/__tests__/device-labeling.test.ts > device labeling — conditional elements > adds Rx-only for a prescription device 0ms
+ ✓ server/services/market-specs/__tests__/device-labeling.test.ts > device labeling — conditional elements > notes the implant card for implantable devices 1ms
+ ✓ server/services/market-specs/__tests__/device-labeling.test.ts > device labeling — conditional elements > always surfaces the labeling reviewer questions 0ms
+ ✓ server/services/regulatory/__tests__/cdx-pairing.test.ts > lookupBiomarkerValidity > resolves a known biomarker by alias 2ms
+ ✓ server/services/regulatory/__tests__/cdx-pairing.test.ts > lookupBiomarkerValidity > resolves HER2 via the erbb2 alias 0ms
+ ✓ server/services/regulatory/__tests__/cdx-pairing.test.ts > lookupBiomarkerValidity > resolves KRAS G12C to the KRAS entry 0ms
+ ✓ server/services/regulatory/__tests__/cdx-pairing.test.ts > lookupBiomarkerValidity > does not recognize an unknown marker 0ms
+ ✓ server/services/regulatory/__tests__/cdx-pairing.test.ts > pairCompanionDiagnostic > a recognized biomarker satisfies the biomarkerDefined element and surfaces citations 1ms
+ ✓ server/services/regulatory/__tests__/cdx-pairing.test.ts > pairCompanionDiagnostic > an unknown biomarker yields a scientific-validity recommendation and no linkage 4ms
+ ✓ server/services/regulatory/__tests__/cdx-pairing.test.ts > pairCompanionDiagnostic > flags missing clinical validation and contemporaneous review 0ms
+ ✓ server/services/regulatory/__tests__/cdx-pairing.test.ts > pairCompanionDiagnostic > every knowledge ref resolves to a real corpus entry 0ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > does not report an EU CTA submittable through the medicines dossier gateway 2ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > names the channel it cannot transmit to, rather than reporting a bare gap 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > does not report a centralised-procedure filing submittable through CESP 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > routes every centralised EMA eCTD filing to the eSubmission Gateway, not CESP 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > keeps national, MRP and DCP filings on CESP — the positive control 0ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > is the one channel function: CTIS is a portal, an EMA device filing goes to EUDAMED 0ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > lists the unconnected centralised filings in the integration backlog 2ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > submittability honours the channel the entry declares > counts the portal-only channel in the report rather than hiding it in submittable 1ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > an EMA filing outside the centralised procedure is not sent to the eSubmission Gateway > does not claim the centralised procedure or the eSubmission Gateway for an EMA IRIS filing 2ms
+ ✓ server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts > an EMA filing outside the centralised procedure is not sent to the eSubmission Gateway > fails closed for an EMA filing whose channel is not modelled — never the CESP region default 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission-center AnA tools — registration > registers a handler for every submission-center tool 3ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission-center AnA tools — registration > exposes every submission-center tool in ALL_ANA_TOOLS with a valid schema 3ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > diffs prior vs desired and assigns operations 12ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > forwards the prior leaf ID + backbone and prior_sequence_prefix so a replace names the leaf it supersedes 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > never names a prior leaf by its file path: listed with only an href, a replace carries no pointer 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > refuses to auto-load a prior sequence without tenant context (org from ToolContext only) 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > does NOT engage auto-load when explicit prior_leaves are supplied (org not required) 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > convert_to_rps_v4 (pure) > maps v3 operations to RPS and emits one document + CoU per leaf 166ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > convert_to_rps_v4 (pure) > points relatedContextOfUse at the prior sequence for a lifecycle op 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > convert_to_rps_v4 (pure) > returns serialized RPS message XML when include_xml is set 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > generate_stf (pure) > produces one stf.xml per study 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > generate_stf (pure) > returns a structured error when a tagged leaf is missing its file-tag 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > check_ectd_cross_references (pure) > resolves present references and flags missing targets 2ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > validate_ectd_package (pure) > returns a verdict, score, and findings for a leaf set 125ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > plan_submission refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > plan_submission validates required inputs 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > explain_validation_findings refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > cross_region_gap_analysis validates required inputs 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > dispatch_qc_check refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > trace_provenance refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > place_into_sequence refuses without org/user context (upsertLeaf is tenant-scoped) 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > place_into_sequence validates required inputs before touching the core 14ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > check_consistency validates required inputs 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_readiness refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_readiness validates the pathway enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_pathway_manifest refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_pathway_manifest validates the pathway enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > list_validation_rules returns the corpus without tenant context 15ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > list_validation_rules validates the region enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_market_submission_spec returns a single spec by id 46ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_market_submission_spec filters by market without tenant context 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_market_submission_spec validates the family enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_document_template returns a document spine by id 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_document_template lists a family without tenant context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > validate_market_formatting enforces a spec and flags a bad name 12ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > validate_market_formatting errors on an unknown spec 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_submission_requirements returns and assesses a type 11ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_eligibility checks all-criteria-met 13ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_eligibility errors on an unknown designation 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_post_submission_change recommends a category from flags 7ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_post_submission_change lists the catalog without flags 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_device_evidence_structure gap-checks a CER 26ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_device applies the MDR rules 48ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_device_reviewer_checklist returns the 510(k) reviewer questions 37ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_device validates the framework 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_biocompatibility_endpoints returns endpoints for a permanent implant 7ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_device_evidence_structure now handles rmf 11ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_device_blueprint assembles the reverse-workflow view 51ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_device_blueprint validates the submission type 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_stored_cer refuses without tenant context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_stored_cer requires a report_id 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_global_device_strategy maps device evidence across regions 7ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_global_device_strategy validates the kind 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_regulatory_timeline returns the 510(k) RTA + decision goal 12ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_device_blueprint now includes a readiness scorecard 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > validate_udi computes the GS1 check digit 7ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_electrical_standards adds collaterals from facts 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_sterilization_requirements resolves the method standard 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > list_regulatory_capabilities enumerates the layer 8ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_combination_product maps PMOA to the lead center 7ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_combination_product validates components 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_qms returns the clause structure and gap-checks 24ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_device_labeling adds sterile elements for a sterile device 3ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > classify_submission_document refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > classify_submission_document requires a numeric document_id 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > extract_submission_document refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > extract_submission_document validates required inputs 0ms
+
+ Test Files  11 passed (11)
+      Tests  146 passed (146)
+   Start at  11:28:13
+   Duration  10.80s (transform 10.32s, setup 469ms, import 16.36s, tests 1.05s, environment 1ms)
+
+
+== mutation 1: 812.5 kept for an IVD study exempt under 812.2(c)(3) (drop '&& !sel.ivdStudyExempt')
+applied: 1
+ × server/services/market-specs/__tests__/device-labeling-ivd.test.ts > 812.5 — investigational devices > (c) an IVD study exempt under 812.2(c)(3) gets the IUO statement and no 812.5 element 16ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 12 passed (13)
+
+== mutation 2: unauthored section read as authored (s.authored && ... -> true && ...)
+applied: 1
+ × server/services/market-specs/__tests__/device-labeling-ivd.test.ts > checkAuthoredLabeling — found / not_found / not_checkable, never a verdict > no section, or only an unauthored one, is not_checkable rather than not_found 9ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 12 passed (13)
+
+== mutation 3: Limitations heading match narrowed for 809.10(b)(10)
+applied: 1
+ × server/services/market-specs/__tests__/device-labeling-ivd.test.ts > checkAuthoredLabeling — found / not_found / not_checkable, never a verdict > with the heading present, 809.10(b)(10) is found 9ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 12 passed (13)
+(engine restored after each mutation; cmp: identical)

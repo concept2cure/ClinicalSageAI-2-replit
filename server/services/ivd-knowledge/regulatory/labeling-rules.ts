@@ -18,18 +18,18 @@ export const LABELING_RULES_KNOWLEDGE: KnowledgeEntry[] = [
     jurisdictions: ['US'],
     appliesTo: ['ivd'],
     summary:
-      '21 CFR 809.10 prescribes the content of IVD labels and package inserts: §809.10(a) governs the outer label, §809.10(b) the package insert with a fixed set of sections including intended use, principle, reagents, procedure, quality control, limitations, and specific performance characteristics.',
+      '21 CFR 809.10 prescribes the content of IVD labels and package inserts: §809.10(a) governs the label, §809.10(b) the package insert with a fixed set of sections including intended use, principle, reagents, procedure, quality control, limitations, and specific performance characteristics.',
     detail:
-      '21 CFR 809.10 is the IVD-specific labeling rule. §809.10(a) (the container/outer label) requires the proprietary/established name, "in vitro diagnostic use" statement, manufacturer details, lot number, expiration date, storage conditions, quantity/contents, and any warnings/precautions. §809.10(b) (the package insert / instructions for use) requires a defined section set: (1) proprietary and established name, intended use; (2) summary and explanation of the test; (3) principle of the procedure; (4) reagents (with warnings/precautions, e.g., labeling for hazardous components); (5) instruments; (6) specimen collection and preparation; (7) procedure; (8) results/interpretation; (9) limitations of the procedure; (10) expected values/reference intervals; and (11) specific performance characteristics — accuracy, precision, analytical sensitivity and specificity (interferences), and, where applicable, clinical performance. The "limitations" and "specific performance characteristics" sections are where analytical/clinical validation results and IFU warnings (interferences, hook effect, specimen constraints) are surfaced to the user.',
+      '21 CFR 809.10 is the IVD-specific labeling rule. §809.10(a) governs the label, §809.10(b) the package insert, read in a fixed order from intended use through the date of the last labeling revision, and §809.10(c)(2) the RUO/IUO statements under which a shipment is exempt from (a) and (b). The requirement list itself, with each item\'s paragraph number and whether its wording was checked against the eCFR text, is the device labeling engine: deviceLabelingRequirements({ isIvd: true }) in server/services/market-specs/device-labeling.ts (AnA tool get_device_labeling). This entry does not repeat it, so the numbering cannot drift. The limitations section (809.10(b)(10)) and the specific performance characteristics section (809.10(b)(12)) are where analytical/clinical validation results and IFU warnings (interferences, hook effect, specimen constraints) are surfaced to the user.',
     keyPoints: [
-      '§809.10(a) = outer label; §809.10(b) = package insert with a fixed section set.',
+      '§809.10(a) = label; §809.10(b) = package insert with a fixed section set; §809.10(c)(2) = RUO/IUO statements.',
       'Performance characteristics (accuracy, precision, sensitivity/specificity) are mandatory insert content.',
       'Limitations section carries interference/hook/specimen warnings from validation.',
       'Expected values/reference intervals are a required section.',
     ],
     pitfalls: [
       'Omitting quantitative performance data that 809.10(b)(12) requires.',
-      'Burying interference/limitation findings instead of stating them as labeled limitations.',
+      'Burying interference/limitation findings instead of stating them in the 809.10(b)(10) limitation-of-the-procedure section.',
     ],
     citations: [
       { label: '21 CFR 809.10 (IVD labeling)', source: 'FDA', url: 'https://www.ecfr.gov/current/title-21/section-809.10' },
