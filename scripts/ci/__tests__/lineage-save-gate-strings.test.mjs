@@ -93,6 +93,7 @@ function runGate() {
 }
 
 const reported = (out, file) =>
+  // nosemgrep: detect-non-literal-regexp -- a test: the file name is a fixture constant and its dots are escaped
   new RegExp(`\\[ci:lineage-save-gate\\] FAIL ${file.replace(/[.]/g, '\\.')}\\n {2}✗ unguarded-writer`).test(out);
 
 test('the gate ran against the fixture tree, not the repository', () => {

@@ -200,7 +200,7 @@ AssertionError: promise resolved "{ …(5) }" instead of rejecting
 - Error {
 -   "message": "rejected promise",
 + {
-+   "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIzIiwiZW1haWwiOm51bGwsIm9yZ2FuaXphdGlvbklkIjoiNyIsIm9yZ2FuaXphdGlvblV1aWQiOm51bGwsInJvbGUiOiJtZW1iZXIiLCJ0eXBlIjoiYWNjZXNzIiwidG9rZW5fdXNlIjoibWNwIiwiY2xpZW50X2lkIjoiY2xpZW50LTEiLCJzY29wZSI6ImMyYzpyZWFkIiwic2lkIjoiNjEyZDhlYTMtNDI2YS00ZjBmLWEyZWMtZGNlZDA4MmM5NDhiIiwic3N0IjoxNzkwODQ1MzgzLCJpZGwiOjM2MDAsImlhdCI6MTc5MDg0NTM4MywiZXhwIjoxNzkwODQ4OTgzLCJhdWQiOiJodHRwOi8vbG9jYWxob3N0OjUzMDAvbWNwIn0.IuJSCE33fm8Kdan2Uli5HS7LiAMKLXpwxE7VgCdbXnw",
++   "access_token": "<HS256 JWT elided 2026-10-05: signed with the test suite secret, expired 2026-09-28>",
 +   "expires_in": 3600,
 +   "refresh_token": "7.issued-refresh-token-issued-refresh-token-issued-refresh",
 +   "scope": "c2c:read",
@@ -226,7 +226,7 @@ AssertionError: promise resolved "{ …(5) }" instead of rejecting
 - Error {
 -   "message": "rejected promise",
 + {
-+   "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIzIiwiZW1haWwiOm51bGwsIm9yZ2FuaXphdGlvbklkIjoiNyIsIm9yZ2FuaXphdGlvblV1aWQiOm51bGwsInJvbGUiOiJtZW1iZXIiLCJ0eXBlIjoiYWNjZXNzIiwidG9rZW5fdXNlIjoibWNwIiwiY2xpZW50X2lkIjoiY2xpZW50LTEiLCJzY29wZSI6ImMyYzpyZWFkIiwic2lkIjoiYzBiNTMyZWYtZjk1Yi00YTVjLWFkZDAtMjE5YjA1YzU3NjI4Iiwic3N0IjoxNzkwODQ1MzgzLCJpZGwiOjM2MDAsImlhdCI6MTc5MDg0NTM4MywiZXhwIjoxNzkwODQ4OTgzLCJhdWQiOiJodHRwOi8vbG9jYWxob3N0OjUzMDAvbWNwIn0.IwIjiwtfci9NyhwBuNA3zIYQo7gfWyJe1ZdwMuTatf8",
++   "access_token": "<HS256 JWT elided 2026-10-05: signed with the test suite secret, expired 2026-09-28>",
 +   "expires_in": 3600,
 +   "refresh_token": "7.issued-refresh-token-issued-refresh-token-issued-refresh",
 +   "scope": "c2c:read",

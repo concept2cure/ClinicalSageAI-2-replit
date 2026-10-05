@@ -1,0 +1,291 @@
+ DEPRECATED  `test.poolOptions` was removed in Vitest 4. All previous `poolOptions` are now top-level options. Please, refer to the migration guide: https://vitest.dev/guide/migration#pool-rework
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > puts the assembled bundle bytes on the wire with a real AS2 envelope 254ms
+   → handler refused: Action failed: Connector credential encryption requires a dedicated CONNECTOR_ENCRYPTION_KEY in production. Refusing to start without one (JWT_SECRET reuse and hardcoded fallbacks are not permitted).: expected false to be true // Object.is equality
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > signs the AS2 body with the sponsor key rather than a placeholder 2ms
+   → Cannot read properties of undefined (reading 'body')
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > records a rejected transmittal — never an acknowledgement — on an agency HTTP error 3ms
+   → expected 'EXECUTION_FAILED' to be 'TRANSMIT_FAILED' // Object.is equality
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > records the transmittal in transit — never rejected, never an acknowledgement — on HTTP 500 after the whole bundle 1ms
+   → expected 'EXECUTION_FAILED' to be 'TRANSMIT_FAILED' // Object.is equality
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > with no ESG credentials the result is a structured refusal naming the missing configuration > names every missing FDA_ESG_* variable and transmits nothing 1ms
+   → expected 'EXECUTION_FAILED' to be 'GATEWAY_NOT_CONFIGURED' // Object.is equality
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > with no ESG credentials the result is a structured refusal naming the missing configuration > is the same refusal for staging — no environment quietly simulates 1ms
+   → expected 'EXECUTION_FAILED' to be 'GATEWAY_NOT_CONFIGURED' // Object.is equality
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the ESG NextGen REST transport is selectable behind the same path and refuses honestly > FDA_ESG_TRANSPORT=rest with REST credentials → TRANSPORT_NOT_VERIFIED, nothing on the wire, no identifier 1ms
+   → expected 'EXECUTION_FAILED' to be 'TRANSPORT_NOT_VERIFIED' // Object.is equality
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the ESG NextGen REST transport is selectable behind the same path and refuses honestly > FDA_ESG_TRANSPORT=rest without REST credentials → GATEWAY_NOT_CONFIGURED naming the REST variables 1ms
+   → expected 'EXECUTION_FAILED' to be 'GATEWAY_NOT_CONFIGURED' // Object.is equality
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a package whose descriptor carries no structural-validation evidence 2ms
+   → expected 'EXECUTION_FAILED' to be 'BUNDLE_VALIDATION_UNKNOWN' // Object.is equality
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a package with error-severity structural findings 1ms
+   → expected 'EXECUTION_FAILED' to be 'BUNDLE_VALIDATION_ERRORS' // Object.is equality
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a descriptor pointing outside the submission-bundle namespace 1ms
+   → expected 'EXECUTION_FAILED' to be 'BUNDLE_OUTSIDE_NAMESPACE' // Object.is equality
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses when the package has never been assembled 1ms
+   → expected 'EXECUTION_FAILED' to be 'BUNDLE_NOT_ASSEMBLED' // Object.is equality
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > a check that failed without blocking is recorded, not dropped > carries the failed dtd-self-contained check and the guard warnings on the audit row, the sign ledger and the returned data 1ms
+   → handler refused: Action failed: Connector credential encryption requires a dedicated CONNECTOR_ENCRYPTION_KEY in production. Refusing to start without one (JWT_SECRET reuse and hardcoded fallbacks are not permitted).: expected false to be true // Object.is equality
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the transmit records the declared signature meaning > a signer who declared Authorship is recorded as Authorship on the ledger, the signature row and the transmittal 1ms
+   → handler refused: Action failed: Connector credential encryption requires a dedicated CONNECTOR_ENCRYPTION_KEY in production. Refusing to start without one (JWT_SECRET reuse and hardcoded fallbacks are not permitted).: expected false to be true // Object.is equality
+ × server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the transmit records the declared signature meaning > the dialog's raw token is not a meaning the signature writer accepts — the route's mapping is what makes it one 2ms
+   → expected [] to have a length of 1 but got +0
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > puts the assembled bundle bytes on the wire with a real AS2 envelope
+AssertionError: handler refused: Action failed: Connector credential encryption requires a dedicated CONNECTOR_ENCRYPTION_KEY in production. Refusing to start without one (JWT_SECRET reuse and hardcoded fallbacks are not permitted).: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts:284:56
+    282|     const r = await esgTransmit(SIGNED_CTX as any, TRANSMIT_PARAMS);
+    283|
+    284|     expect(r.success, `handler refused: ${r.message}`).toBe(true);
+       |                                                        ^
+    285|
+    286|     // 1. The bytes actually reached the transport.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/15]⎯
+
+ FAIL  server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > signs the AS2 body with the sponsor key rather than a placeholder
+TypeError: Cannot read properties of undefined (reading 'body')
+ ❯ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts:337:36
+    335|     // exact bytes that went out.
+    336|     const signer = createSign('RSA-SHA256');
+    337|     signer.update(httpsRequests[0].body);
+       |                                    ^
+    338|     expect(signer.sign(privateKeyPem, 'base64').length).toBeGreaterTha…
+    339|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/15]⎯
+
+ FAIL  server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > records a rejected transmittal — never an acknowledgement — on an agency HTTP error
+AssertionError: expected 'EXECUTION_FAILED' to be 'TRANSMIT_FAILED' // Object.is equality
+
+Expected: "TRANSMIT_FAILED"
+Received: "EXECUTION_FAILED"
+
+ ❯ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts:351:21
+    349|     const r = await esgTransmit(SIGNED_CTX as any, TRANSMIT_PARAMS);
+    350|     expect(r.success).toBe(false);
+    351|     expect(r.error).toBe('TRANSMIT_FAILED');
+       |                     ^
+    352|     expect(r.data).toBeUndefined();
+    353|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/15]⎯
+
+ FAIL  server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the 510(k) transmit affordance reaches the real FDA ESG AS2 transport > records the transmittal in transit — never rejected, never an acknowledgement — on HTTP 500 after the whole bundle
+AssertionError: expected 'EXECUTION_FAILED' to be 'TRANSMIT_FAILED' // Object.is equality
+
+Expected: "TRANSMIT_FAILED"
+Received: "EXECUTION_FAILED"
+
+ ❯ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts:374:21
+    372|     const r = await esgTransmit(SIGNED_CTX as any, TRANSMIT_PARAMS);
+    373|     expect(r.success).toBe(false);
+    374|     expect(r.error).toBe('TRANSMIT_FAILED');
+       |                     ^
+    375|     expect(r.message).toMatch(/may hold it/);
+    376|     expect(r.data).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/15]⎯
+
+ FAIL  server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > with no ESG credentials the result is a structured refusal naming the missing configuration > names every missing FDA_ESG_* variable and transmits nothing
+AssertionError: expected 'EXECUTION_FAILED' to be 'GATEWAY_NOT_CONFIGURED' // Object.is equality
+
+Expected: "GATEWAY_NOT_CONFIGURED"
+Received: "EXECUTION_FAILED"
+
+ ❯ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts:398:21
+    396|
+    397|     expect(r.success).toBe(false);
+    398|     expect(r.error).toBe('GATEWAY_NOT_CONFIGURED');
+       |                     ^
+    399|     for (const v of [
+    400|       'FDA_ESG_URL',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/15]⎯
+
+ FAIL  server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > with no ESG credentials the result is a structured refusal naming the missing configuration > is the same refusal for staging — no environment quietly simulates
+AssertionError: expected 'EXECUTION_FAILED' to be 'GATEWAY_NOT_CONFIGURED' // Object.is equality
+
+Expected: "GATEWAY_NOT_CONFIGURED"
+Received: "EXECUTION_FAILED"
+
+ ❯ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts:433:21
+    431|     const r = await esgTransmit(SIGNED_CTX as any, { ...TRANSMIT_PARAM…
+    432|     expect(r.success).toBe(false);
+    433|     expect(r.error).toBe('GATEWAY_NOT_CONFIGURED');
+       |                     ^
+    434|     expect(r.message).toContain('FDA_ESG_STAGING_URL');
+    435|     expect(httpsRequests).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/15]⎯
+
+ FAIL  server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the ESG NextGen REST transport is selectable behind the same path and refuses honestly > FDA_ESG_TRANSPORT=rest with REST credentials → TRANSPORT_NOT_VERIFIED, nothing on the wire, no identifier
+AssertionError: expected 'EXECUTION_FAILED' to be 'TRANSPORT_NOT_VERIFIED' // Object.is equality
+
+Expected: "TRANSPORT_NOT_VERIFIED"
+Received: "EXECUTION_FAILED"
+
+ ❯ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts:450:21
+    448|
+    449|     expect(r.success).toBe(false);
+    450|     expect(r.error).toBe('TRANSPORT_NOT_VERIFIED');
+       |                     ^
+    451|     expect(r.message).toMatch(/Nothing was transmitted/);
+    452|     expect(r.message).toMatch(/has not been verified/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/15]⎯
+
+ FAIL  server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the ESG NextGen REST transport is selectable behind the same path and refuses honestly > FDA_ESG_TRANSPORT=rest without REST credentials → GATEWAY_NOT_CONFIGURED naming the REST variables
+AssertionError: expected 'EXECUTION_FAILED' to be 'GATEWAY_NOT_CONFIGURED' // Object.is equality
+
+Expected: "GATEWAY_NOT_CONFIGURED"
+Received: "EXECUTION_FAILED"
+
+ ❯ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts:462:21
+    460|     const r = await esgTransmit(SIGNED_CTX as any, TRANSMIT_PARAMS);
+    461|     expect(r.success).toBe(false);
+    462|     expect(r.error).toBe('GATEWAY_NOT_CONFIGURED');
+       |                     ^
+    463|     expect(r.message).toContain('FDA_ESG_REST_URL');
+    464|     expect(r.message).not.toContain('FDA_ESG_AS2_FROM');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/15]⎯
+
+ FAIL  server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a package whose descriptor carries no structural-validation evidence
+AssertionError: expected 'EXECUTION_FAILED' to be 'BUNDLE_VALIDATION_UNKNOWN' // Object.is equality
+
+Expected: "BUNDLE_VALIDATION_UNKNOWN"
+Received: "EXECUTION_FAILED"
+
+ ❯ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts:478:21
+    476|     const r = await esgTransmit(SIGNED_CTX as any, TRANSMIT_PARAMS);
+    477|     expect(r.success).toBe(false);
+    478|     expect(r.error).toBe('BUNDLE_VALIDATION_UNKNOWN');
+       |                     ^
+    479|     expect(httpsRequests).toHaveLength(0);
+    480|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/15]⎯
+
+ FAIL  server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a package with error-severity structural findings
+AssertionError: expected 'EXECUTION_FAILED' to be 'BUNDLE_VALIDATION_ERRORS' // Object.is equality
+
+Expected: "BUNDLE_VALIDATION_ERRORS"
+Received: "EXECUTION_FAILED"
+
+ ❯ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts:491:21
+    489|     const r = await esgTransmit(SIGNED_CTX as any, TRANSMIT_PARAMS);
+    490|     expect(r.success).toBe(false);
+    491|     expect(r.error).toBe('BUNDLE_VALIDATION_ERRORS');
+       |                     ^
+    492|     expect(httpsRequests).toHaveLength(0);
+    493|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/15]⎯
+
+ FAIL  server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses a descriptor pointing outside the submission-bundle namespace
+AssertionError: expected 'EXECUTION_FAILED' to be 'BUNDLE_OUTSIDE_NAMESPACE' // Object.is equality
+
+Expected: "BUNDLE_OUTSIDE_NAMESPACE"
+Received: "EXECUTION_FAILED"
+
+ ❯ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts:504:21
+    502|     const r = await esgTransmit(SIGNED_CTX as any, TRANSMIT_PARAMS);
+    503|     expect(r.success).toBe(false);
+    504|     expect(r.error).toBe('BUNDLE_OUTSIDE_NAMESPACE');
+       |                     ^
+    505|     expect(httpsRequests).toHaveLength(0);
+    506|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/15]⎯
+
+ FAIL  server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the package gate travels with the transmit, wherever it is invoked from > refuses when the package has never been assembled
+AssertionError: expected 'EXECUTION_FAILED' to be 'BUNDLE_NOT_ASSEMBLED' // Object.is equality
+
+Expected: "BUNDLE_NOT_ASSEMBLED"
+Received: "EXECUTION_FAILED"
+
+ ❯ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts:514:21
+    512|     const r = await esgTransmit(SIGNED_CTX as any, TRANSMIT_PARAMS);
+    513|     expect(r.success).toBe(false);
+    514|     expect(r.error).toBe('BUNDLE_NOT_ASSEMBLED');
+       |                     ^
+    515|     expect(httpsRequests).toHaveLength(0);
+    516|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/15]⎯
+
+ FAIL  server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > a check that failed without blocking is recorded, not dropped > carries the failed dtd-self-contained check and the guard warnings on the audit row, the sign ledger and the returned data
+AssertionError: handler refused: Action failed: Connector credential encryption requires a dedicated CONNECTOR_ENCRYPTION_KEY in production. Refusing to start without one (JWT_SECRET reuse and hardcoded fallbacks are not permitted).: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts:536:58
+    534|
+    535|       const r = await esgTransmit(SIGNED_CTX as any, TRANSMIT_PARAMS);
+    536|       expect(r.success, `handler refused: ${r.message}`).toBe(true);
+       |                                                          ^
+    537|       expect(httpsRequests).toHaveLength(1);
+    538|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/15]⎯
+
+ FAIL  server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the transmit records the declared signature meaning > a signer who declared Authorship is recorded as Authorship on the ledger, the signature row and the transmittal
+AssertionError: handler refused: Action failed: Connector credential encryption requires a dedicated CONNECTOR_ENCRYPTION_KEY in production. Refusing to start without one (JWT_SECRET reuse and hardcoded fallbacks are not permitted).: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts:586:56
+    584|
+    585|     const r = await esgTransmit(ctxDeclaring('authorship') as any, TRA…
+    586|     expect(r.success, `handler refused: ${r.message}`).toBe(true);
+       |                                                        ^
+    587|
+    588|     const ledger = recordGovernedAction.mock.calls[0]![1] as any;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/15]⎯
+
+ FAIL  server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts > the transmit records the declared signature meaning > the dialog's raw token is not a meaning the signature writer accepts — the route's mapping is what makes it one
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ server/services/ana-ri/__tests__/mdx-esg-transmit-gateway.test.ts:613:27
+    611|     // Refused before any signature INSERT, and the sign transaction r…
+    612|     // back — after the bytes had already reached the agency.
+    613|     expect(httpsRequests).toHaveLength(1);
+       |                           ^
+    614|     expect(poolQueries.some((q) => q.sql.includes('INSERT INTO electro…
+    615|     expect(poolQueries.some((q) => q.sql.trim() === 'ROLLBACK')).toBe(…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/15]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  15 failed (15)
+   Start at  05:00:30
+   Duration  3.84s (transform 1.55s, setup 91ms, import 3.08s, tests 341ms, environment 0ms)
+

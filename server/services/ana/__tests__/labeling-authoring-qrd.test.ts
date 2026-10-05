@@ -150,10 +150,12 @@ describe('no second copy of the SmPC headings', () => {
   const copiesIn = (src: string) =>
     cat.SMPC_QRD_SECTIONS.filter((s) => {
       const t = esc(s.title).replace(/\\? ?\/ ?/g, ' ?/ ?');
+      // nosemgrep: detect-non-literal-regexp -- a test: the section number is escaped (esc) and t is built from the template table
       const row = new RegExp(
         `['"\`]${esc(s.number)}['"\`],?[^\\n]*(?:\\n[^\\n]*)?(?:label|title|heading|header|sectionTitle)\\s*:\\s*['"\`]${t}['"\`]`,
         'i',
       );
+      // nosemgrep: detect-non-literal-regexp -- a test: the section number is escaped (esc) and t is built from the template table
       const header = new RegExp(`['"\`]${esc(s.number)}\\.?\\s+${t}['"\`]`, 'i');
       return row.test(src) || header.test(src);
     }).map((s) => s.number);

@@ -1,0 +1,13 @@
+Mutant F06-non-strings-read: an object the summarizer returned is read as a sentence
+
+--- server/services/ana/memory-fact-check.ts
+- if (typeof item !== 'string' || !item.trim()) return false;
++ if (!item) return false;
+
+Tests run: server/services/ana/__tests__/memory-fact-check.test.ts
+Result: KILLED
+
+ × server/services/ana/__tests__/memory-fact-check.test.ts > an item is kept only when one checked answer found all it claims > withholds what is not a sentence 6ms
+ × server/services/ana/__tests__/memory-fact-check.test.ts > the summary, settled field by field > keeps every field the reader renders only as far as it was found, and records what it withheld 1ms
+      Tests  2 failed | 11 passed (13)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

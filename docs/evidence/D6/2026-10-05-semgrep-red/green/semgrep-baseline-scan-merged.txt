@@ -1,0 +1,8 @@
+semgrep 1.177.0 scan --baseline-commit c064711c4, the nine rules that fired in run 37259089968,
+over the tree merged with origin/concept2cure-v2 at 35095fedd (2026-10-05):
+
+0 findings over baseline
+
+(Before the merge the incoming 43 commits added 5 more detect-non-literal-regexp sites; each
+was reviewed and marked in the follow-up commit: currency-registry.ts escapes its needle; the
+other four are test literals.)

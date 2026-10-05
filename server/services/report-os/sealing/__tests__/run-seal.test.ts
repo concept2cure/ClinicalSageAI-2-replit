@@ -88,6 +88,7 @@ describe('verifyStoredSeal', () => {
   ])("is a mismatch when only the stored seal's %s was changed", (field, change) => {
     const v = verdict({ seal: { ...SEAL, ...change } });
     expect(v.verdict).toBe('mismatch');
+    // nosemgrep: detect-non-literal-regexp -- a test: field is a literal seal field name from the table
     expect(v.checks.find((c) => c.check === 'stored-seal')?.detail).toMatch(new RegExp(field));
   });
 

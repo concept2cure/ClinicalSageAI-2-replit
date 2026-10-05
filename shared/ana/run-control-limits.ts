@@ -70,3 +70,49 @@ export const AUTO_WALL_MS = 2 * AUTO_ACTIVE_MS + MAX_PAUSE_MS;
  * model is offered it, and nothing matches it.
  */
 export const RUN_AGENT_TOOL = 'run_agent';
+
+/*
+ * Sub-agent ceilings (row 74, S5; ADR-0015 §4). A sub-agent is a bounded,
+ * read-only child loop started by `run_agent`. Every number below is a hard
+ * stop the server applies; the tool description states the ones the model has
+ * to plan around (per round, per turn, rounds, minutes).
+ */
+
+/** Agents one parent turn may start in total. The seventh is refused. */
+export const MAX_AGENTS_PER_TURN = 6;
+
+/** Agents that run together in one parent round. The fifth in a round is refused. */
+export const MAX_AGENTS_PER_ROUND = 4;
+
+/**
+ * Agents live at once for one organization, **per server process** — not
+ * across the fleet. A counter in memory; it bounds what one tenant can make
+ * one process do, it is not a global quota.
+ */
+export const MAX_LIVE_AGENTS_PER_ORG = 8;
+
+/** Agents live at once across every organization, per server process (ADR-0015 §6). */
+export const MAX_LIVE_AGENTS_PER_PROCESS = 10;
+
+/** A child loop's round ceiling. It never earns an extension. */
+export const CHILD_MAX_ROUNDS = 6;
+
+/**
+ * A child's token budget. Soft by up to two calls: the loop asks after a tool
+ * round, so the call that crosses it and one closing call still run.
+ */
+export const CHILD_TOKEN_BUDGET = 200_000;
+
+/** Past this much active time the child's next call is its closing report. */
+export const CHILD_WRAP_UP_MS = 150_000;
+
+/** A child's active-time ceiling: its timer aborts it here. Time held for a person does not count. */
+export const CHILD_ACTIVE_MS = 180_000;
+
+/** Tools one child runs at once. */
+export const CHILD_TOOL_CONCURRENCY = 2;
+
+/** `run_agent` input caps, in characters. Longer input is refused, not truncated. */
+export const AGENT_OBJECTIVE_MAX = 200;
+export const AGENT_INSTRUCTIONS_MAX = 8_000;
+export const AGENT_TEXT_TO_CHECK_MAX = 40_000;

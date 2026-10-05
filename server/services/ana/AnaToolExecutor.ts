@@ -5219,6 +5219,7 @@ registerToolHandler('check_numerical_integrity', async (input: Record<string, un
         evidence: f.evidence,
       })),
       factsExtracted: report.factsExtracted,
+      labelsCompared: report.labelsCompared,
       candidateCount: report.candidateCount,
       candidates: report.candidates.slice(0, 15).map(c => ({
         label: c.humanLabel,
@@ -15975,10 +15976,13 @@ export async function executeAgenticLoop(
   // Failure-adaptation guidance from the latest round (cleared after use).
   let pendingAdaptationNote = '';
 
+  // The lost-input marker travels with the call, so dispatch can refuse to run
+  // a handler on the `{}` that stands in for arguments that never arrived.
   const toToolCall = (c: AnaToolUse): ToolCall => ({
     id: c.id,
     name: c.name,
     input: (c.input ?? {}) as Record<string, unknown>,
+    ...(c.inputParseError ? { inputParseError: c.inputParseError } : {}),
   });
 
   // First model turn. Streaming (when the request carries onStream) and tool

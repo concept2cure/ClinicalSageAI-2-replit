@@ -21,8 +21,36 @@
  */
 import express from 'express';
 import request from 'supertest';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+/**
+ * Platform standing for the seal check (holdsPlatformRole in
+ * server/middleware/requirePlatformAdmin.ts) is an active platform_role_grants
+ * row, looked up through `query` from server/db. Added 2026-10-05 (D6,
+ * docs/evidence/D6/2026-10-05-cross-tenant-staff/) so the guard is exercised
+ * as production decides it: `grants` maps a user id to the platform role its
+ * grant row names, and nobody holds one by default.
+ */
+const { grants, grantQuery } = vi.hoisted(() => {
+  const grants = new Map<number, string>();
+  const grantQuery = vi.fn(async (sql: string, params: unknown[] = []) => {
+    const granted = grants.get(Number(params[0]));
+    const asked = Array.isArray(params[1]) ? (params[1] as string[]) : [];
+    return { rows: /FROM platform_role_grants/.test(sql) && granted && asked.includes(granted) ? [{ '?column?': 1 }] : [] };
+  });
+  return { grants, grantQuery };
+});
+vi.mock('../../db', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../db')>()),
+  query: grantQuery,
+}));
+
 import part11Router from '../part11-compliance';
+
+beforeEach(() => {
+  grants.clear();
+  grantQuery.mockClear();
+});
 
 /**
  * `req.dbClient` is what `establishRequestTenantScope` really attaches — the
@@ -124,14 +152,40 @@ describe('GET /audit-trail/seal-integrity — org admin is not a platform admin'
     expect(res.status).toBe(403);
   });
 
-  it('still admits a genuine platform role', async () => {
+  // Inverted 2026-10-05 (D6): the request role is the tenant membership role; standing is a platform grant — docs/evidence/D6/2026-10-05-cross-tenant-staff/
+  it('a request role of super_admin alone, with no platform grant, is refused (403)', async () => {
     const query = rows([]);
     const res = await request(app(query, { roles: ['super_admin'] }))
       .get('/audit-trail/seal-integrity');
+    expect(res.status).toBe(403);
+  });
+
+  it.each(['super_admin', 'platform_admin'])('refuses a tenant membership role of %s with no platform grant (403)', async (role) => {
+    const query = rows([]);
+    const res = await request(app(query, { id: 31, role, roles: [role], organizationId: 7 }))
+      .get('/audit-trail/seal-integrity');
+    expect(res.status).toBe(403);
+    expect(res.body.error.code).toBe('FORBIDDEN');
+    // The lookup ran for this user and found no grant.
+    expect(grantQuery).toHaveBeenCalledWith(expect.stringMatching(/FROM platform_role_grants/), [31, ['platform_admin', 'super_admin']]);
+  });
+
+  it.each(['super_admin', 'platform_admin'])('admits a %s platform grant holder whose membership role is member', async (granted) => {
+    grants.set(32, granted);
+    const query = rows([]);
+    const res = await request(app(query, { id: 32, role: 'member', roles: ['member'], organizationId: 7 }))
+      .get('/audit-trail/seal-integrity');
     // Not asserting 200: the route is deliberately still unconnected, because
     // a request-scoped client would make it report a false "chain broken" under
-    // RLS. What is asserted is that the GUARD no longer refuses the right
-    // caller for the wrong reason.
+    // RLS. What is asserted is that the GUARD admits the right caller.
     expect(res.status).not.toBe(403);
+  });
+
+  it('a support grant is not standing for the seal check (403)', async () => {
+    grants.set(33, 'support');
+    const query = rows([]);
+    const res = await request(app(query, { id: 33, role: 'member', roles: ['member'], organizationId: 7 }))
+      .get('/audit-trail/seal-integrity');
+    expect(res.status).toBe(403);
   });
 });

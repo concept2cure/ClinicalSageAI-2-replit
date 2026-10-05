@@ -35,6 +35,12 @@ const ENCRYPTION_KEY = ENCRYPTION_KEY_FROM_ENV || 'default-dev-key-change-in-pro
 // unchanged, so existing ciphertext remains decryptable.
 const derivedKeyCache = new Map<string, Buffer>();
 
+// The tag is checked at its full length. Without authTagLength, Node's GCM
+// decipher accepts a tag of 4 to 16 bytes and checks only that many, so a
+// forged ciphertext needed about 2^32 tries (Semgrep gcm-no-tag-length;
+// 2026-10-05, docs/evidence/D6/2026-10-05-semgrep-red/).
+const AUTH_TAG_LENGTH = 16;
+
 function getDerivedKey(secret: string): Buffer {
   let key = derivedKeyCache.get(secret);
   if (!key) {
@@ -47,7 +53,7 @@ function getDerivedKey(secret: string): Buffer {
 export function encryptCredential(text: string): string {
   const iv = crypto.randomBytes(16);
   const key = getDerivedKey(ENCRYPTION_KEY);
-  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv, { authTagLength: AUTH_TAG_LENGTH });
   let encrypted = cipher.update(text, 'utf8', 'hex');
   encrypted += cipher.final('hex');
   const authTag = cipher.getAuthTag().toString('hex');
@@ -59,7 +65,7 @@ export function decryptCredential(text: string): string {
   const iv = Buffer.from(ivHex, 'hex');
   const authTag = Buffer.from(authTagHex, 'hex');
   const key = getDerivedKey(ENCRYPTION_KEY);
-  const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+  const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv, { authTagLength: AUTH_TAG_LENGTH });
   decipher.setAuthTag(authTag);
   let decrypted = decipher.update(encryptedHex, 'hex', 'utf8');
   decrypted += decipher.final('utf8');

@@ -22,6 +22,7 @@ locals {
 # Retained and keyed as the application log groups are (modules/ecs-fargate):
 # CloudWatch's own key. tests/boot_contract.tftest.hcl holds both to that.
 
+# nosemgrep: aws-cloudwatch-log-group-unencrypted -- keyed as the application log groups are (CloudWatch key), held by stack/tests/boot_contract.tftest.hcl; a customer-managed key for all three is open (docs/evidence/D6/2026-10-05-semgrep-red/)
 resource "aws_cloudwatch_log_group" "this" {
   name              = "/ecs/${var.name}/embeddings"
   retention_in_days = var.log_retention_days
