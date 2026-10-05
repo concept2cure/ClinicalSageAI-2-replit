@@ -1,0 +1,12 @@
+Mutant G13-dialog-hides-check: the dialog does not show the check before the person approves
+
+--- client/src/concept2cure/components/ana/GovernedActionSignoff.tsx
+- {signoff.check && (
++ {false && (
+
+Tests run: client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx
+Result: KILLED
+
+ × client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the dialog shows the check before the person approves > quotes what was not found in this turn's sources, and names the verdict 49ms
+      Tests  1 failed | 6 passed (7)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

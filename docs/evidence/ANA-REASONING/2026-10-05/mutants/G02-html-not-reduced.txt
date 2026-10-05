@@ -1,0 +1,12 @@
+Mutant G02-html-not-reduced: HTML is checked with its tags in it
+
+--- server/services/ana/proposal-check.ts
+- const text = htmlToPlainText(s).trim();
++ const text = s.trim();
+
+Tests run: tests/services/proposal-check.test.ts
+Result: KILLED
+
+ × tests/services/proposal-check.test.ts > the prose a proposal would store > reads every free-text field, at any depth, and no other field 8ms
+      Tests  1 failed | 6 passed (7)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

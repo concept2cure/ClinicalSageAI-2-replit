@@ -88,7 +88,7 @@ Found by round 2's own mutants, and fixed:
 
 | ID | Sev | Finding |
 |---|---|---|
-| GRD-2, FV-FIG-3 | high | A governed draft (`draft_authoring_document` and the vault writes) is approved with no check of its figures. The approval dialog cuts strings to 80 characters and shows arrays as "N items". Proposal: run `checkAnswer` over the draft against the turn's sources at approval time, and show the not-found figures in the dialog. |
+| GRD-2, FV-FIG-3 | high | A governed draft (`draft_authoring_document` and the vault writes) is approved with no check of its figures. The approval dialog cuts strings to 80 characters and shows arrays as "N items". **Fixed in round 3** (`../2026-10-05/`): the draft's prose is checked against the turn's sources when it is held and at the end of a turn. The dialog shows the check in the strip's rows, and lists by their items' names. The sign-off audit row names what the approver was shown. |
 | MC-RL-3 | high | The risk tier comes from the lens alone, with no turn state (section, artifact status, contradictions). It should come from deterministic signals. |
 | MC-RL-6, RT-missed | medium-high | Follow-up model calls send no `thinking`. The reasoning shown and recorded is the first call's, not the call that read the evidence and wrote the answer. |
 | MC-RL-5 | medium | The high-risk thinking floor never reaches an adaptive model. |

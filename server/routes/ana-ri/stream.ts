@@ -120,6 +120,7 @@ import {
   type GenerationCapture,
 } from '../../services/ai-gateway/generation-capture.js';
 import { toolEvidence, type EvidenceEntry } from '../../services/ana/answer-grounding.js';
+import { checkProposal } from '../../services/ana/proposal-check.js';
 import { runStreamPostProcessing } from './post-processing.js';
 import {
   canonicalJson,
@@ -1916,6 +1917,18 @@ export function mountStreamRoute(router: Router): void {
           return out;
         };
 
+        /**
+         * The prose a held proposal would store, checked against what AnA
+         * consulted before she wrote it (GRD-2, proposal-check.ts), as the
+         * fields it adds to the held row and the approval frame: shown to the
+         * person who approves it, named on the sign-off row. Advisory: the
+         * person decides. None when it stores no prose.
+         */
+        const proposalCheckFields = (params: Record<string, unknown>) => {
+          const check = checkProposal(params, [...turnContextSources, ...toolEvidenceCorpus]);
+          return check ? { check } : {};
+        };
+
         /** Put one action to the person and hold the turn until they answer. */
         const awaitDecision = async (
           toolUse: ToolCall,
@@ -1939,11 +1952,13 @@ export function mountStreamRoute(router: Router): void {
             },
           });
 
+          const checked = proposalCheckFields(verdict.params);
           const opened = await requestApproval(getPool(), runId, {
             toolUseId: toolUse.id,
             command: verdict.command,
             params: verdict.params,
             tier: verdict.tier,
+            ...checked,
             requestedAt: new Date().toISOString(),
             rationale: typeof (verdict.params as any)?.reason === 'string'
               ? String((verdict.params as any).reason)
@@ -1979,6 +1994,7 @@ export function mountStreamRoute(router: Router): void {
             openModal: proposal.openModal,
             data: proposal.data,
             message: `${proposal.message} AnA is waiting on this before she goes on.`,
+            ...checked,
           });
 
           // The wait. Same machinery as pause: woken by the decision, with the

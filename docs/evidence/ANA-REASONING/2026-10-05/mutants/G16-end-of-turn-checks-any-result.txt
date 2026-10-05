@@ -1,0 +1,12 @@
+Mutant G16-end-of-turn-checks-any-result: a result that is not put to a person is given a check
+
+--- server/services/ana/proposal-check.ts
+- if (!env || typeof env.error !== 'string' || !PROPOSAL_ERRORS.has(env.error)) return r;
++ if (!env) return r;
+
+Tests run: server/routes/ana-ri/__tests__/post-processing-proposal-check.test.ts
+Result: KILLED
+
+ × server/routes/ana-ri/__tests__/post-processing-proposal-check.test.ts > an end-of-turn proposal carries the check of its prose > a result that is not put to a person carries no check 10ms
+      Tests  1 failed | 1 passed (2)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
