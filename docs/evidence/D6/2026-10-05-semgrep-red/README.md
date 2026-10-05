@@ -109,3 +109,43 @@ every request answered 500.
   embedding log groups should move to a customer-managed KMS key. The contract
   test makes it one decision for all three.
 - **The 711 pre-existing findings.** They do not block. Nobody has triaged them.
+
+## The whole unit tier, after the push (2026-10-05)
+
+`npx vitest run` over the merged tree: 3,374 of 3,398 files pass, 16 fail
+(51 tests). Each failing file was rerun in isolation, on an export of HEAD
+without the checkout's ignored `.env`, and on exports of earlier commits.
+
+**Four were the checkout, not the code.** An ignored local `.env` (2026-09-28)
+sets `RLS_ENFORCE=on` and a `DATABASE_URL`, and the test setup loads it. These
+pass on a clean export:
+
+- `document-consequence`
+- `conversation-os`
+- `transmit-guard-reports-checks`
+- `CrossReferenceMapping.no-fabricated-content`
+
+**Six were already red before this session's D3 work** (`dd73adb63`), and still are:
+
+- `auditChainIntegritySweep`
+- `mdx-esg-transmit-gateway`
+- `test-assembly.routes`
+- `scanned-pdf-native-canvas`
+- `founder-critical-path-proof`
+- `governed-reason-not-invented`
+
+**Six were broken since, each fixed here.** Each was found by bisecting on
+clean exports.
+
+| Suite | Broken by | Cause | Fix |
+|---|---|---|---|
+| `session-open-contract` | mine, `proposal-seal.ts` (item 22) | The contract reads every `jwt.sign` payload literal, and the seal passed a variable. | The payload is an object literal at the call. |
+| `audit-compliance-reports` | `fe916edf4` (D6 platform standing) | The test granted platform standing through the request role `support`, which that commit closed on purpose. | The tenant role `support` cannot run reports; the owner allowlist can. `canReadAuditTrail` is one of the synchronous `isPlatformAdmin` sites that do not read grant rows, which `fe916edf4` handed on as board item 3. |
+| `unifiedTasks-governed` | `90b34d33c` (D2 CMC registers) | The Drizzle model reads `stability_studies.project_id`, and the suite's schema lacked it. | The suite runs that migration's `stability_studies` statements as written. |
+| `deepening-tools` | `8d919b1f8` (writing gate) | `AnaToolDefinitions` now reaches the instrumented pool before the test's mock is set. | It is imported after the mock is set. |
+| `device-blueprint` | `433200b94` (510(k) readiness) | It expected the old form `eSTAR 510(k) template`. | It expects the canonical `eSTAR (submitted via CDRH Portal)` and `FDA 3601`. |
+| `workbenchAssignReview` | the calendar | Its due date was 2026-10-05, which is today, so the row read "due today". | The date is 2099-10-05. |
+
+A note on method: an in-place `git bisect` over the main checkout named a
+wrong commit, because the checkout's `.env` follows every step. These were
+bisected on `git archive` exports instead.

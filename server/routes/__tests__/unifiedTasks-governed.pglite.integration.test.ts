@@ -77,6 +77,13 @@ const DDL = [
     'db/migrations/20260807_task_graph_org_columns.sql',
     'db/migrations/20260807_unified_tasks_soft_delete.sql',
   ].map(f => fs.readFileSync(path.join(REPO_ROOT, f), 'utf8')),
+  // stability_studies.project_id (D2, 90b34d33c), which the Drizzle model reads:
+  // that migration's own stability_studies statements, as written. Its other
+  // tables are not built here.
+  ...fs
+    .readFileSync(path.join(REPO_ROOT, 'migrations/20261005_cmc_core_registers_project.sql'), 'utf8')
+    .split('\n')
+    .filter(l => /^(ALTER TABLE IF EXISTS|CREATE INDEX IF NOT EXISTS) .*\bstability_studies\b/.test(l)),
   // No column is added here: cross_module_task_links is exactly what the
   // migration set builds (the baseline's columns plus organization_id), so the
   // link test fails if the Drizzle model names a column the database lacks.
