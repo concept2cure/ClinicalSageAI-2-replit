@@ -1,0 +1,44 @@
+# g-ich-m4-headings — RED (2026-10-05, before ich-m4-headings.ts exists)
+
+## 1. npx vitest run tests/regulatory/ich-m4-headings.test.ts tests/regulatory/ich-backbone-parity.test.ts (tail)
+     22| } from '../../server/services/submission-gateways/ectd-packager/ich-he…
+     23| import { isIchHeading } from '../../server/services/ind/ctd/ich-m4-hea…
+       | ^
+     24|
+     25| /** Every backbone section that is not a heading of the record, in tre…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/regulatory/ich-m4-headings.test.ts [ tests/regulatory/ich-m4-headings.test.ts ]
+Error: Cannot find module '../../server/services/ind/ctd/ich-m4-headings' imported from /home/user/ClinicalSageAI-2-replit/tests/regulatory/ich-m4-headings.test.ts
+ ❯ tests/regulatory/ich-m4-headings.test.ts:25:1
+     23|  */
+     24| import { describe, it, expect } from 'vitest';
+     25| import {
+       | ^
+     26|   ICH_M4_HEADINGS,
+     27|   isIchHeading,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  no tests
+   Start at  05:05:46
+   Duration  455ms (transform 205ms, setup 203ms, import 0ms, tests 0ms, environment 0ms)
+
+
+## 2. Behavioural probe over the HEAD record (scratchpad m4redprobe.mts): the only heading list is CTD_AUTHORING_GUIDANCE
+probe: is "4.3.1" a heading of the record at HEAD? no (but nothing exposes a refusal: no isIchHeading exists)
+probe: is "2.1"/"2.7"/"5.3.1.1"/"4.2.3" (real ICH headings) in the record at HEAD? 2.1=false 2.7=false 5.3.1.1=false 4.2.3=false
+ICH_BACKBONE sections absent from the only heading list at HEAD: 16: 2, 2.6, 2.7, 3, 3.2, 3.2.S, 3.2.P, 3.3, 4, 4.2, 4.2.1, 4.2.2, 4.2.3, 5, 5.3, 5.3.5
+=> a parity gate over the HEAD record cannot tell real structural headings (2.6, 4.2.1, 5.3.5) from an invented 4.3.1: both are simply absent.
+
+## 3. Live offender the record must refuse
+1037:    name: 'Module_4_3_1_Single_Dose_Toxicity',
+1046:    content: `MODULE 4.3.1 - SINGLE DOSE TOXICITY
+1151:  // (Skipping Module 4.2.3 and 4.3.1 for brevity)
