@@ -1586,6 +1586,35 @@ in all of them. Reproduced locally at `6bd237ca9`.
    - Scope: 27 server files use the guard, and 22 test files give platform
      identity through the request role. Each needs a grant row instead.
 
+3. **→ D6, unclaimed — six cross-tenant staff powers are decided by the
+   tenant membership role** (measured 2026-10-05 by `…01PwLFr8`, after item
+   2). Each grants an across-organisations power to a request role that,
+   behind `server/auth.ts`, is the caller's membership role. That column has
+   no CHECK. A real platform grant holder never reaches these paths, because
+   none of them consults `platform_role_grants`:
+   - `server/routes/organizations-routes.ts` `isPlatformStaff`: lists every
+     organisation, and writes any one in the system scope
+     (`staffCrossOrgScope`);
+   - `server/routes/tenant-config.ts` `isStaff: userRole === 'super_admin'`:
+     any tenant's settings, in the system scope;
+   - `server/routes/clients-routes.ts` `getAuthedRole(req) === 'super_admin'`:
+     any organisation's client workspace;
+   - `server/routes/tenant-users.ts` `callerRole === 'super_admin'`: user
+     administration of any organisation;
+   - `server/middleware/tenantLifecycleGuard.ts` `isPlatformActor`: passes a
+     suspended or offboarded tenant's lifecycle block;
+   - `server/routes/part11-compliance.ts:1282`: the estate-wide `audit_logs`
+     integrity verification, with hash material.
+
+   Suggested shape: one async `holdsPlatformRole(req, roles)` in
+   `requirePlatformAdmin.ts` (the owner's own sign-in on the allowlist, or an
+   active grant for one of `roles`, memoised on the request), with
+   `staffCrossOrgScope` accepting an async `isStaff`. Each site keeps its own
+   role set.
+
+   About 45 test files touch these seven sites (tenantLifecycleGuard 13,
+   part11-compliance 16, tenant-users 9, and others).
+
 ## 1. The rules come first
 
 `CLAUDE.md` at the repo root is authoritative and overrides any instruction in a
