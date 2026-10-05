@@ -75,6 +75,34 @@ CODE=$(req ds POST /api/cmc/drug-substances "{\"substanceName\":\"BX-701\",\"inn
 A2CHECK=$(cat "$OUT/ds.json" | jq -r '.data.viralSafetyEvaluation // empty' 2>/dev/null)
 [ -n "$A2CHECK" ] && ok "the drug substance carries its ICH Q5A(R2) record" || bad "the substance's viral safety evaluation did not persist"
 
+step "3b. A read-only colleague reads the CMC registers and writes none of them"
+# The org admin adds a viewer through the members API (the product path); the
+# viewer then signs in. Every /api/cmc write must refuse that session, and the
+# computations that save nothing must still answer it.
+VIEWER_EMAIL="cmc-viewer-sim@concept2cure.pro"
+CODE=$(req viewer_create POST /api/tenant-users "{\"email\":\"$VIEWER_EMAIL\",\"name\":\"CMC Viewer\",\"role\":\"viewer\"}")
+echo "   meta: add viewer → $CODE $(head -c 160 "$OUT/viewer_create.json")"
+VCODE=$(curl -sS -X POST "$BASE/api/auth/dev-login" -H 'Content-Type: application/json' \
+  -d "{\"email\":\"$VIEWER_EMAIL\"}" -o "$OUT/viewer_login.json" -w '%{http_code}')
+VTOKEN=$(cat "$OUT/viewer_login.json" | JQ '.accessToken // empty')
+VROLE=$(cat "$OUT/viewer_login.json" | JQ '.user.roles[0] // empty')
+if [ "$VCODE" = 200 ] && [ -n "$VTOKEN" ] && [ "$VROLE" = viewer ]; then
+  ok "a viewer of this organization is signed in"
+  DSID=$(cat "$OUT/ds.json" | JQ '.data.id // empty')
+  CODE=$(TOKEN="$VTOKEN" req v_read GET "/api/cmc/drug-substances?projectId=$PROGRAM")
+  [ "$CODE" = 200 ] && ok "the viewer reads the drug substance register (200)" || bad "the viewer could not read the register ($CODE)"
+  CODE=$(TOKEN="$VTOKEN" req v_create POST /api/cmc/drug-substances "{\"substanceName\":\"VIEWER-WROTE-THIS\",\"projectId\":\"$PROGRAM\",\"status\":\"development\"}")
+  [ "$CODE" = 403 ] && ok "the viewer cannot register a drug substance (403)" || bad "a viewer registered a drug substance ($CODE)"
+  CODE=$(TOKEN="$VTOKEN" req v_edit PUT "/api/cmc/drug-substances/$DSID" '{"casNumber":"0000-00-0"}')
+  [ "$CODE" = 403 ] && ok "the viewer cannot edit the registered substance (403)" || bad "a viewer edited the registered substance ($CODE)"
+  CODE=$(TOKEN="$VTOKEN" req v_sweep POST "/api/cmc/module3-os/contradictions/$PROGRAM")
+  [ "$CODE" = 403 ] && ok "the viewer cannot run the contradiction sweep (403)" || bad "a viewer ran the contradiction sweep ($CODE)"
+  CODE=$(TOKEN="$VTOKEN" req v_ich POST /api/cmc/ich-compliance "{\"projectId\":\"$PROGRAM\"}")
+  [ "$CODE" = 200 ] && ok "the viewer runs the ICH compliance check, which saves nothing (200)" || bad "the viewer's ICH compliance check was refused ($CODE)"
+else
+  bad "no viewer session to test with ($VCODE, role '$VROLE'): $(head -c 200 "$OUT/viewer_login.json")"
+fi
+
 step "4. Analytical development registers the assay method (feeds 3.2.S.4)"
 CODE=$(req method POST /api/cmc/analytical-methods "{\"methodCode\":\"AM-001\",\"title\":\"RP-HPLC Assay\",\"purpose\":\"assay\",\"analyte\":\"BX-701\",\"matrix\":\"drug substance\",\"technique\":\"HPLC\",\"status\":\"validated\",\"validationDate\":\"2026-06-01T00:00:00.000Z\",\"ichQ2Parameters\":{\"characteristics\":[\"accuracy\",\"precision\",\"specificity\"]},\"projectId\":\"$PROGRAM\"}")
 [ "$CODE" = 200 -o "$CODE" = 201 ] && ok "method registered ($CODE)" || bad "method failed ($CODE): $(head -c300 "$OUT/method.json")"
