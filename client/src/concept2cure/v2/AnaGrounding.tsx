@@ -36,17 +36,18 @@
  *   risk summary, shown verbatim.
  * - Every row carries its own glyph and words (WCAG 1.4.1).
  *
+ * The check's rows are AnswerCheckRows (components/ana/AnswerCheckRows.tsx),
+ * one renderer shared with the sign-off dialog, which shows the same check of
+ * a governed draft before a person approves it (GRD-2, 2026-10-05). The
+ * labels' rows stay here.
+ *
  * @module client/src/concept2cure/v2/AnaGrounding
  */
 
 import React from 'react';
 
-import type {
-  AnaGroundingEvidence,
-  AnswerCheckView,
-  CheckedClaim,
-} from '../components/ana/anaAnswerCheck';
-import { I } from './icons';
+import type { AnaGroundingEvidence } from '../components/ana/anaAnswerCheck';
+import { AnswerCheckRows, CheckRow as Row } from '../components/ana/AnswerCheckRows';
 
 export type { AnaGroundingEvidence } from '../components/ana/anaAnswerCheck';
 
@@ -57,39 +58,6 @@ const FLAG_WORD: Record<string, string> = {
   contradiction: 'contradiction',
 };
 
-/** What each kind of checked claim is called. */
-const CLAIM_WORD: Record<string, string> = {
-  nct: 'trial id',
-  isrctn: 'trial id',
-  eudract: 'trial id',
-  pmid: 'citation',
-  doi: 'citation',
-  fda_510k: 'submission number',
-  fda_pma: 'submission number',
-  fda_denovo: 'submission number',
-  fda_nda: 'submission number',
-  fda_bla: 'submission number',
-  fda_anda: 'submission number',
-  cfr: 'regulation',
-  ich: 'guideline',
-  quote: 'quote',
-  figure: 'figure',
-};
-
-/** Claims listed under a row, at most; the rest are counted. */
-const MAX_LISTED = 3;
-
-const claimsWord = (n: number) => `${n} specific claim${n === 1 ? '' : 's'}`;
-
-/** A source as a person would name it. */
-function sourceName(source: string): string {
-  if (source.startsWith('tool:')) return source.slice(5).replace(/_/g, ' ');
-  if (source.startsWith('attachment:')) return source.slice('attachment:'.length);
-  if (source === 'context') return 'project context';
-  if (source === 'person') return 'your message';
-  return source;
-}
-
 /** "one overclaim, one unlabelled": the label flags, counted and named. */
 function describeFlags(flags: AnaGroundingEvidence['flaggedClaims']): string {
   if (!flags || flags.length === 0) return '';
@@ -99,132 +67,6 @@ function describeFlags(flags: AnaGroundingEvidence['flaggedClaims']): string {
     counts.set(w, (counts.get(w) ?? 0) + 1);
   }
   return [...counts.entries()].map(([w, n]) => (n === 1 ? `one ${w}` : `${n} ${w}s`)).join(', ');
-}
-
-/* No tone certifies: "found" means the value is in this turn's sources, not
-   that the sentence is right, so no row earns a check mark (round 2 of the
-   engine: a check mark read as verification it never was). */
-type Tone = 'weak' | 'unknown';
-const GLYPH: Record<Tone, React.ReactElement> = { weak: I.alertTriangle, unknown: I.info };
-
-function Row({ tone, children }: { tone: Tone; children: React.ReactNode }) {
-  return (
-    <div className="ana-grounding-row">
-      <span className={`ana-grounding-ic is-${tone}`} aria-hidden="true">
-        {GLYPH[tone]}
-      </span>
-      <span>{children}</span>
-    </div>
-  );
-}
-
-/** Up to MAX_LISTED claims quoted with their kind, then a count of the rest. */
-function Listed({ items }: { items: CheckedClaim[] }) {
-  if (items.length === 0) return null;
-  const more = items.length - MAX_LISTED;
-  return (
-    <>
-      {items.slice(0, MAX_LISTED).map((c, i) => (
-        <div className="ana-grounding-claim" key={`${c.kind}-${i}`}>
-          “{c.text}” — {CLAIM_WORD[c.kind] ?? c.kind}
-        </div>
-      ))}
-      {more > 0 && <div className="ana-grounding-risk">and {more} more</div>}
-    </>
-  );
-}
-
-const countWord = (n: number) => (n === 1 ? '1 is' : `${n} are`);
-
-/** What the check compared, and how each claim ended, when AnA consulted something. */
-function SourcesRows({ check }: { check: AnswerCheckView }) {
-  const { claims, found, notFound, fromInput, fromPerson, unchecked, unreadable } = check;
-  if (claims === 0) return <Row tone="unknown">No specific claims to check against this turn's sources</Row>;
-  const inputTools = [...new Set(fromInput.map((c) => sourceName(c.source)))];
-  return (
-    <>
-      {notFound.length > 0 ? (
-        <>
-          <Row tone="weak">
-            {notFound.length} of {claimsWord(claims)} not found in this turn's sources
-          </Row>
-          <Listed items={notFound} />
-        </>
-      ) : (
-        <Row tone="unknown">
-          {found === claims
-            ? claims === 1
-              ? "The one specific claim was found in this turn's sources"
-              : `All ${claims} specific claims found in this turn's sources`
-            : `${found} of ${claimsWord(claims)} found in this turn's sources`}
-        </Row>
-      )}
-      {fromInput.length > 0 && (
-        <>
-          <Row tone="unknown">
-            {countWord(fromInput.length)} AnA's own input to {inputTools.join(', ')}, not a result
-          </Row>
-          <Listed items={fromInput} />
-        </>
-      )}
-      {fromPerson.length > 0 && (
-        <>
-          <Row tone="unknown">{fromPerson.length} only in your message, not in this turn's sources</Row>
-          <Listed items={fromPerson} />
-        </>
-      )}
-      {unchecked.length > 0 && (
-        <>
-          <Row tone="unknown">
-            {claimsWord(unchecked.length)} not checked — may be in {unreadable.map(sourceName).join(', ')}, which this
-            check cannot read
-          </Row>
-          <Listed items={unchecked} />
-        </>
-      )}
-      {unchecked.length === 0 && unreadable.length > 0 && (
-        <div className="ana-grounding-risk">Not readable by this check: {unreadable.map(sourceName).join(', ')}</div>
-      )}
-      {check.sources.length > 0 && (
-        <div className="ana-grounding-risk">Checked against: {check.sources.map(sourceName).join(', ')}</div>
-      )}
-    </>
-  );
-}
-
-/** The engine's check: what was found in this turn's sources, and what was not. */
-function CheckRows({ check }: { check: AnswerCheckView }) {
-  return (
-    <>
-      {check.basis === 'no_sources' ? (
-        <>
-          <Row tone="unknown">
-            {check.unchecked.length > 0
-              ? `No source consulted this turn — ${claimsWord(check.unchecked.length)} not checked`
-              : 'No source consulted this turn'}
-          </Row>
-          <Listed items={check.unchecked} />
-          {check.fromPerson.length > 0 && (
-            <>
-              <Row tone="unknown">{check.fromPerson.length} only in your message, not checked against a source</Row>
-              <Listed items={check.fromPerson} />
-            </>
-          )}
-        </>
-      ) : (
-        <SourcesRows check={check} />
-      )}
-      {check.verdicts.length > 0 && (
-        <>
-          <Row tone="weak">
-            {check.verdicts.length === 1 ? 'States a verdict' : `States ${check.verdicts.length} verdicts`}, not
-            checked — a verdict needs an engine result behind it
-          </Row>
-          <Listed items={check.verdicts.map((v) => ({ kind: 'verdict', text: v.text }))} />
-        </>
-      )}
-    </>
-  );
 }
 
 /** "11 claims labelled · 2 unlabelled or overclaimed · 1 marked missing". */
@@ -279,7 +121,7 @@ export function AnaGrounding({ evidence }: { evidence?: AnaGroundingEvidence }) 
   if (!evidence) return null;
   return (
     <div className="ana-grounding">
-      {evidence.check && <CheckRows check={evidence.check} />}
+      {evidence.check && <AnswerCheckRows check={evidence.check} />}
       <LabelRows evidence={evidence} hasCheck={Boolean(evidence.check)} />
     </div>
   );

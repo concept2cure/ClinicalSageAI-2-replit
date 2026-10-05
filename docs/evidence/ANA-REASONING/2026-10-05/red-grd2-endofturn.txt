@@ -1,0 +1,17 @@
+Red first: the end-of-turn path (post_done's proposals and the client's reader of them), before withProposalChecks and before extractPendingSignoffs read the check (2 failing).
+Command: env -u DATABASE_URL RLS_ENFORCE=off npx vitest run server/routes/ana-ri/__tests__/post-processing-proposal-check.test.ts client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx
+
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the approval frame carries the server's check of the draft > reads it with the strip's own reader 2ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the approval frame carries the server's check of the draft > a malformed check is no check, and the prompt still opens 1ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the approval frame carries the server's check of the draft > a frame with no check opens the prompt with none 0ms
+ × client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > an end-of-turn proposal carries the check too > reads the check from a HUMAN_CONFIRMATION_REQUIRED envelope in post_done, and drops a malformed one 6ms
+   → expected undefined to deeply equal [ { kind: 'figure', text: '31%' } ]
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the dialog shows the check before the person approves > quotes what was not found in this turn's sources, and names the verdict 58ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the dialog shows the check before the person approves > shows no check when the proposal carried none 6ms
+ ✓ client/src/concept2cure/components/ana/__tests__/governed-action-signoff-check.test.tsx > the dialog shows the check before the person approves > shows a list by its items' titles, not as "N items" 9ms
+ × server/routes/ana-ri/__tests__/post-processing-proposal-check.test.ts > an end-of-turn proposal carries the check of its prose > post_done names what the proposed draft states that this turn's sources do not hold 30ms
+   → Cannot read properties of undefined (reading 'engine')
+ ✓ server/routes/ana-ri/__tests__/post-processing-proposal-check.test.ts > an end-of-turn proposal carries the check of its prose > a result that is not a proposal carries no check 15ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  2 failed | 7 passed (9)

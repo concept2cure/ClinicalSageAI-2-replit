@@ -1,0 +1,12 @@
+Mutant G15-end-of-turn-unchecked: a proposal made at the end of a turn reaches the dialog unchecked
+
+--- server/routes/ana-ri/post-processing.ts
+- executedCommands = withProposalChecks(executedCommands, toolEvidenceCorpus);
++ 
+
+Tests run: server/routes/ana-ri/__tests__/post-processing-proposal-check.test.ts
+Result: KILLED
+
+ × server/routes/ana-ri/__tests__/post-processing-proposal-check.test.ts > an end-of-turn proposal carries the check of its prose > post_done names what the proposed draft states that this turn's sources do not hold 29ms
+      Tests  1 failed | 1 passed (2)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯

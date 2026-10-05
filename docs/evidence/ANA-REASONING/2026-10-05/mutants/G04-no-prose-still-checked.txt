@@ -1,0 +1,13 @@
+Mutant G04-no-prose-still-checked: a proposal that stores no prose is given an empty check, which reads as checked
+
+--- server/services/ana/proposal-check.ts
+- return prose ? checkAnswer(prose, sources) : null;
++ return checkAnswer(prose, sources);
+
+Tests run: tests/services/proposal-check.test.ts server/routes/ana-ri/__tests__/stream-proposal-check.test.ts
+Result: KILLED
+
+ × tests/services/proposal-check.test.ts > a proposal checked against this turn's sources > a proposal that stores no prose has nothing to check 6ms
+ × server/routes/ana-ri/__tests__/stream-proposal-check.test.ts > a governed draft is checked before the person approves it > a proposal that stores no prose carries no check 16ms
+      Tests  2 failed | 8 passed (10)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯

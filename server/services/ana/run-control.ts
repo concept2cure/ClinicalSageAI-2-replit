@@ -94,6 +94,7 @@ import type { Pool, PoolClient } from 'pg';
 
 import { runWithSystemTenantScope, runWithTenantScope } from '../../db/tenantStore.js';
 import { createScopedLogger } from '../../utils/logger';
+import type { AnswerCheck } from './answer-grounding';
 import {
   canTransitionRunStatus,
   isLiveRunStatus,
@@ -997,6 +998,13 @@ export interface PendingToolApproval {
    * with it, so the Part 11 row names the gateway request (agentAuditDetails).
    */
   proposedBy?: { provider: string | null; model: string | null; requestId: string | null } | null;
+  /**
+   * The check of the prose this proposal would store, against what AnA
+   * consulted before she wrote it (proposal-check.ts): shown in the sign-off
+   * dialog, and named on the sign-off audit row (governedActionTrace). Absent
+   * when the proposal stores no prose.
+   */
+  check?: AnswerCheck;
 }
 
 /** What the person decided, and what came of it. */
